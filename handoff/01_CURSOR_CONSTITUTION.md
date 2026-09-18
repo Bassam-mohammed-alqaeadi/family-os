@@ -1,6 +1,6 @@
-# Cursor Constitution — 25 Absolute Rules
+# Cursor Constitution — 26 Absolute Rules
 **Any violation = the task is rejected and redone. No exceptions.**
-(Source: doc 43 §2, owner-approved; amended 2026-09-18 with rules 23–25 by logged owner decisions. Mirror this file into `.cursor/rules/constitution.mdc` of the Flutter repo.)
+(Source: doc 43 §2, owner-approved; amended 2026-09-18 with rules 23–26 by logged owner decisions. Mirror this file into `.cursor/rules/constitution.mdc` of the Flutter repo.)
 
 ## A · Authority & Boundaries
 1. **Single source of truth**: `family_os_app.html` (frozen v1.0) + `04_POLICY_REGISTER_EN.md` + `_REGISTRY/screens.csv` + `_CONTRACTS/schema.sql`. **No design improvisation**: every screen is ported as-is — text, order, and behavior.
@@ -52,6 +52,14 @@ The UI must NEVER know where data comes from. When the real backend arrives, con
 - All models are freezed/immutable with explicit json serialization ready — even while only mocks exist.
 - Repository methods return domain types (`Minutes`, `ChildId`…) never raw maps/dynamic.
 - PERMANENT ACCEPTANCE TEST: swapping `mock/` for the real API layer = zero lines changed in `features/` and `app/`. A CI test compiles the app with a fake alternative implementation to prove the seam holds.
+
+26. **AI INTEGRATION LAW (the Brain is a backend service; the app is hooks)**
+This platform is AI-founded (AI Core Charter, doc 08), yet NO inference runs inside the app. Therefore:
+- All AI features flow through exactly three repository gateways: `AdvisorRepository` (Family Advisor chat/suggestions/voice/control panel), `InsightsRepository` (patterns, personal timeline, growth map, weekly report), `TutorRepository` (Socratic tutor, recitation feedback, interactive stories, smart plan). Same seam law as rule 25 — mock now, AI Gateway later, zero UI change.
+- Every feature emits typed `FamilyEvent`s (task completed, time expired, Quran portion done, SOS, mode change…) to a local EventBus drained by the sync queue — the "AI hooks from day one" mandated by the charter. Identity abstraction (e.g., `child_a7f3`) is applied ON DEVICE before any event leaves it.
+- The charter's five stages (silent monitor → analyst → advisor → interactive assistant → delegated agent) are SERVER-SIDE feature flags, not app versions. UI for not-yet-active stages renders its designed "coming soon"/inactive state.
+- Sovereignty is structural: the `AiSuggestion` type has NO `execute()` method — only `approve()` requiring an active FatherSession, and `reject()`. The Socratic tutor never returns direct answers (refusal layer is part of the repository contract, not the prompt). Quran text comes exclusively from the licensed source — the AI never generates verses. All child↔tutor conversations are logged to the father, and the child sees a transparency line.
+- Mock `AdvisorRepository` must reproduce the exact suggestions/insights shown in the frozen prototype, so all 19 AI screens are built and tested before any real model exists.
 
 ## E · Workflow Constitution
 19. **One task = one system (or one screen).** "Convert ten screens at once" is forbidden. Each task card provides: system number, screen list, original HTML snippet, relevant policy clauses.
