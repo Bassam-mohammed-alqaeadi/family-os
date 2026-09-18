@@ -1695,11 +1695,11 @@ const SCREENS = {
 
 'SHR-005':{hubIcon:'📡',t:'خطأ الشبكة (قالب)',grp:'مشتركة',app:'shared',bare:true,
  note:['قالب الأخطاء الموحد لضمان الاستمرارية', 'إشعار لطيف وتوجيه واضح لإصلاح الاتصال', 'زر تجربة للتحقق من سلامة الواجهة'],
- r:()=>`${hd('خطأ الشبكة','قالب موحّد')}<div class="bigstate"><div class="em">📡</div><h3>تعذّر الاتصال</h3><p class="mut">لم نستطع الوصول للخادم. بياناتك المحفوظة ما زالت أمامك، وسنعيد المحاولة تلقائيًا.<br>الاستغاثة تعمل دائمًا حتى بلا اتصال.</p><br><button class="btn" onclick="playSound('success');toast('✅ عاد الاتصال — تمت مزامنة آخر حالة للعائلة')">إعادة المحاولة</button><button class="btn ghost" onclick="playSound('pop');toast('📴 تعمل الآن دون اتصال — آخر حالة محفوظة، وستتزامن تلقائيًا فور عودة الشبكة')">العمل دون اتصال</button></div>`},
+ r:()=>`${hd('خطأ الشبكة','قالب موحّد')}<div class="bigstate"><div class="em">📡</div><h3>تعذّر الاتصال</h3><p class="mut">لم نستطع الوصول للخادم. بياناتك المحفوظة ما زالت أمامك، وسنعيد المحاولة تلقائيًا.<br>الاستغاثة تعمل دائمًا حتى بلا اتصال.</p><br><button class="btn">إعادة المحاولة</button><button class="btn ghost">العمل دون اتصال</button></div>`},
 
 'SHR-006':{hubIcon:'🌤',t:'الحالة الفارغة (قالب)',grp:'مشتركة',app:'shared',bare:true,
  note:['عرض ودود في حالة خلو البيانات المؤقت', 'رسومات مريحة واقتراح فعل إيجابي دائم'],
- r:()=>`${hd('الحالة الفارغة','قالب موحّد')}<div class="bigstate"><div class="em">🌤️</div><h3>لا يوجد شيء هنا بعد</h3><p class="mut">عندما يحدث جديد ستجده هنا أولًا — وسنخبرك فورًا.</p><br><button class="btn sec" onclick="playSound('pop');toast('💡 اقتراح: أضف مهمة صباحية لخالد — تبدأ يومه بإنجاز')">اقتراح الخطوة التالية</button></div>`},
+ r:()=>`${hd('الحالة الفارغة','قالب موحّد')}<div class="bigstate"><div class="em">🌤️</div><h3>لا يوجد شيء هنا بعد</h3><p class="mut">عندما يحدث جديد ستجده هنا أولًا — وسنخبرك فورًا.</p><br><button class="btn sec">اقتراح الخطوة التالية</button></div>`},
 
 /* ───── إعداد الوالد ───── */
 
@@ -2204,7 +2204,7 @@ const SCREENS = {
  note:['محادثة عائلية خاصة ومشفرة بأعلى معايير الأمان', 'إمكانية تعديل الرسائل الحديثة وحفظ الخصوصية', 'بيئة تواصل دافئة بين أفراد البيت الواحد'],
  r:()=>{
   const W=S.chatWith||'khaled';
-  const inp=`<div style="display:flex;gap:8px"><button class="btn sec" style="width:46px;height:46px;padding:0;border-radius:50%;margin:0;font-size:17px" onclick="toast('📎 شارك صورة أو تسجيلًا صوتيًا (يصل مفرغًا نصًا) أو ملفًا — داخل دائرة العائلة فقط')">📎</button><input style="flex:1;padding:12px 14px;border:1.5px solid var(--border);border-radius:99px;font-family:inherit;font-size:13px" placeholder="اكتب رسالة…"><button class="btn" style="width:46px;padding:0;border-radius:50%;height:46px;margin:0" onclick="playSound('pop');toast('📨 وصلت رسالتك لخالد فورًا')">◀</button></div>`;
+  const inp=`<div style="display:flex;gap:8px"><button class="btn sec" style="width:46px;height:46px;padding:0;border-radius:50%;margin:0;font-size:17px" onclick="toast('📎 شارك صورة أو تسجيلًا صوتيًا (يصل مفرغًا نصًا) أو ملفًا — داخل دائرة العائلة فقط')">📎</button><input style="flex:1;padding:12px 14px;border:1.5px solid var(--border);border-radius:99px;font-family:inherit;font-size:13px" placeholder="اكتب رسالة…"><button class="btn" style="width:46px;padding:0;border-radius:50%;height:46px;margin:0">◀</button></div>`;
   const pref=(S.chatPrefs&&S.chatPrefs[W])||{bg:'#FDFCFF',theme:'p'};
   const enc=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span class="tag p">🔒 مشفّرة طرفيًا</span><span class="tag t" style="cursor:pointer" onclick="openChatSettingsSheet('${W}')">⚙️ إعدادات المحادثة</span></div>`;
   if(W==='family')return `${hd('عائلة عبدالله 👨‍👩‍👧‍👦','٥ أعضاء')}<div class="pad" style="background:${pref.bg};min-height:60vh">${enc}
@@ -2244,9 +2244,9 @@ const SCREENS = {
   <h3 style="font-size:22px;font-weight:800;margin:16px 0 4px">خالد</h3>
   <p class="mut">جارية · ٠٣:٢٦</p>
   <div style="display:flex;gap:14px;justify-content:center;margin-top:34px">
-   <button onclick="playSound('pop');toast('🔇 كتمت صوتك مؤقتًا — اضغط مجددًا لإعادته')" class="qact-b" style="width:58px;height:58px;border-radius:50%;border:0;background:var(--surface);box-shadow:var(--sh-card);font-size:20px;cursor:pointer">🎙</button>
-   <button onclick="playSound('pop');toast('🔊 مكبر الصوت يعمل')" style="width:58px;height:58px;border-radius:50%;border:0;background:var(--surface);box-shadow:var(--sh-card);font-size:20px;cursor:pointer">🔊</button>
-   <button onclick="playSound('pop');toast('📹 الكاميرا تعمل — خالد يراك الآن 😊')" style="width:58px;height:58px;border-radius:50%;border:0;background:var(--surface);box-shadow:var(--sh-card);font-size:20px;cursor:pointer">📹</button>
+   <button class="qact-b" style="width:58px;height:58px;border-radius:50%;border:0;background:var(--surface);box-shadow:var(--sh-card);font-size:20px;cursor:pointer">🎙</button>
+   <button style="width:58px;height:58px;border-radius:50%;border:0;background:var(--surface);box-shadow:var(--sh-card);font-size:20px;cursor:pointer">🔊</button>
+   <button style="width:58px;height:58px;border-radius:50%;border:0;background:var(--surface);box-shadow:var(--sh-card);font-size:20px;cursor:pointer">📹</button>
    <button onclick="go('FAT-024')" style="width:58px;height:58px;border-radius:50%;border:0;background:linear-gradient(135deg,#FF7A7E,#F0464C);font-size:20px;cursor:pointer;box-shadow:var(--sh-coral)">📵</button></div>
   <p class="sml" style="margin-top:30px">صوت وفيديو عبر LiveKit — بيانات وصفية فقط، لا تسجيل · 🔔 مكالمات الاطمئنان ترنّ عند الابن حتى لو كان جهازه صامتًا</p>
   <div class="card" style="margin-top:12px;text-align:right"><h3>🎮 العبا معًا أثناء المكالمة</h3>
@@ -3344,8 +3344,8 @@ const SCREENS = {
    <div style="display:flex;gap:6px;margin-top:6px">${[['din','🕌','دينية'],['occ','🎂','مناسبة'],['sch','🏫','دراسة'],['act','⚽','نشاط']].map(([k,ic,nm],x)=>`<button class="btn ${x===0?'teal':'sec'}" style="flex:1;margin:0;padding:9px 4px;font-size:11px" onclick="this.parentElement.querySelectorAll('button').forEach(b=>b.className='btn sec');this.className='btn teal';S._evCat='${k}'">${ic} ${nm}</button>`).join('')}</div></div>
   <div class="card"><h3>التاريخ</h3>
    <div style="display:flex;gap:8px;margin-bottom:10px">
-    <button class="btn teal" style="margin:0;padding:9px;font-size:12px" onclick="playSound('pop');this.className='btn teal';this.nextElementSibling.className='btn ghost';toast('🌙 التقويم الهجري معتمد')">🌙 هجري</button>
-    <button class="btn ghost" style="margin:0;padding:9px;font-size:12px" onclick="playSound('pop');this.className='btn teal';this.previousElementSibling.className='btn ghost';toast('📅 التقويم الميلادي معتمد')">ميلادي</button></div>
+    <button class="btn sec" style="margin:0;padding:9px;font-size:12px">🌙 هجري</button>
+    <button class="btn ghost" style="margin:0;padding:9px;font-size:12px">ميلادي</button></div>
    <div class="inp"><input value="٢٣ ربيع الأول ١٤٤٨"><p class="sml" style="margin-top:4px">= الاثنين ١٥ سبتمبر — التحويل تلقائي</p></div></div>
   <div class="inp"><label>الوقت</label><select><option>🕌 بعد المغرب مباشرة</option><option>🕌 بعد العشاء</option><option>⏰ ساعة محددة</option></select></div>
   <div class="inp"><label>المكان (اختياري) 📍</label><input placeholder="المنزل، المسجد، النادي…"></div>
@@ -3499,7 +3499,7 @@ const SCREENS = {
 
 'FAT-059':{hubIcon:'📝',t:'الخصوصية والبيانات',grp:'عام',app:'parent',tab:'settings',
  note:['احترام خصوصية بيانات العائلة والأبناء بالكامل', 'أمان محلي ومشفر مع إمكانية التصدير أو الحذف بنقرة'],
- r:()=>S.role!=='parent'?`${hd('الخصوصية والبيانات')}<div class="pad"><div class="banner a">🔒 الخصوصية والبيانات للمالك وحده.</div></div>`:`${hd('الخصوصية والبيانات')}<div class="pad">
+ r:()=>`${hd('الخصوصية والبيانات')}<div class="pad">
   <div class="card"><h3>ما نجمعه — بشفافية</h3>
    <div class="row"><span>📍</span><div class="tx"><b>المواقع</b><span>٩٠ يومًا ثم حذف تلقائي</span></div></div>
    <div class="row"><span>💬</span><div class="tx"><b>الرسائل</b><span>مشفرة طرفيًا — لا نقرؤها</span></div></div>
@@ -3512,7 +3512,7 @@ const SCREENS = {
 
 'FAT-060':{hubIcon:'📋',t:'سجل التدقيق',grp:'عام',app:'parent',tab:'settings',
  note:['append-only — يُفرض في قاعدة البيانات (REVOKE UPDATE)','دليلنا عند أي مراجعة'],
- r:()=>S.role!=='parent'?`${hd('سجل التدقيق')}<div class="pad"><div class="banner a">🔒 سجل التدقيق للمالك وحده.</div></div>`:`${hd('سجل التدقيق')}<div class="pad">
+ r:()=>`${hd('سجل التدقيق')}<div class="pad">
   <div class="banner p">📜 يُضاف ولا يُعدل ولا يُحذف — أبدًا. حياديته حمايتك.</div>
   <div class="card">
    <div class="row"><span>🚨</span><div class="tx"><b>بلاغ استغاثة — خالد</b><span>اليوم ٣:٤٧ م · أُغلق يدويًا بعد ٦ د</span></div></div>
