@@ -588,7 +588,6 @@ const S = {
   streak: { days: 5 },
   athkar: { done: 3, total: 10, session:'المساء' },
   timeReqMins: 30,
-  dinnerQIdx: 0,
   motherWhisper: {
     active: true,
     toFather: 'خالد بذل جهداً كبيراً اليوم، أقترح تقديم موعد نومه ۳۰ دقيقة ليرتاح 🌸',
@@ -898,11 +897,6 @@ function removeModeException(modeId,idx){ const md=S.familyModes.list.find(m=>m.
 /* عل-٢: إنشاء محادثة */
 /* عل-٤ (قرار ب): جهات اتصال الهاتف الأساسي — العائلة أولًا */
 /* صقل م١: إدخال رمز الربط يدويًا */
-const DINNER_QS=['لو فتحنا مطعمًا عائليًا — ماذا نسميه وما طبقنا الأشهر؟','ما أجمل شيء صار لك اليوم… وما الشيء الذي تمنيت لو صار أفضل؟','لو تبادلنا الأدوار يومًا كاملًا — من يأخذ دور من؟ ولماذا؟'];
-function nextDinnerQ(){S.dinnerQIdx=(S.dinnerQIdx+1)%DINNER_QS.length;playSound('pop');render();}
-function routerGuide(){sheet('<b style="font-weight:800">📡 ضبط راوترك — ٣ خطوات فقط</b><div class="row"><span>1️⃣</span><div class="tx"><b>افتح إعدادات الراوتر</b><span>اكتب 192.168.1.1 في متصفحك</span></div></div><div class="row"><span>2️⃣</span><div class="tx"><b>بدّل عنوان DNS</b><span>ألصق عنواني «عائلتي» — انسخهما بزر واحد</span></div></div><div class="row"><span>3️⃣</span><div class="tx"><b>اختبر الحماية</b><span>نتحقق تلقائيًا ونؤكد لك النتيجة</span></div></div><button class="btn teal" onclick="closeSheet();toast(\'✅ تم الفحص — راوترك محمي وكل الأجهزة خلف الفلترة\')">اختبر الآن</button><button class="btn ghost" onclick="closeSheet()">لاحقًا</button>');}
-function wipeStep1(){sheet('<b style="font-weight:800">🗑 الحذف النهائي — الخطوة ١ من ٢</b><p style="font-size:12.5px;margin:10px 0;line-height:1.8">سيُمحى كل شيء: الرسائل، المواقع، الأنماط، الإعدادات، الذكريات.<br><b>لا رجعة بعد التأكيد الثاني.</b> ننصحك بتصدير نسخة أولًا.</p><button class="btn coral" onclick="wipeStep2()">أفهم العواقب — متابعة</button><button class="btn ghost" onclick="closeSheet()">تراجع</button>');}
-function wipeStep2(){closeSheet();setTimeout(()=>sheet('<b style="font-weight:800;color:var(--coral)">⚠️ التأكيد الأخير — الخطوة ٢ من ٢</b><p style="font-size:12.5px;margin:10px 0;line-height:1.8">هذه آخر فرصة للتراجع. بعد التأكيد تبدأ مهلة أمان <b>٧ أيام</b> ثم يُنفذ المحو الكامل.</p><button class="btn coral" onclick="closeSheet();toast(\'📨 سُجل طلب الحذف — لديك ٧ أيام للتراجع، وقُيد في سجل التدقيق\')">نعم — احذف كل شيء</button><button class="btn ghost" onclick="closeSheet()">تراجع الآن</button>'),250);}
 function sayThikr(){ const a=S.athkar; if(a.done>=a.total){ toast('🌟 أتممت أذكارك اليوم — الأجر عند الله'); return; } a.done++; playSound(a.done>=a.total?'success':'pop'); if(a.done>=a.total){ triggerConfetti(); toast('🕌 ما شاء الله! أتممت أذكار '+a.session+' كاملة — ووصلت أباك بشرى البركة 🤍',true); } else { toast('✓ '+AR(a.done)+' من '+AR(a.total)+' — أحسنت! التالي…'); } render(); }
 function openSiteRequestSheet(){ playSound('pop'); sheet('<h3 style="margin-bottom:8px">اطلب فتح الموقع من أبيك 🌐</h3>'+
  '<p class="sml" style="margin-bottom:10px">موقع «عالم الفلك للأطفال» محجوب ضمن سياسة العائلة. إن كان مهمًا لدراستك اشرح السبب — والقرار لوالدك:</p>'+
@@ -3475,7 +3469,6 @@ const SCREENS = {
    <p class="sml" style="margin:0 0 10px">باقٍ ٩ أيام من التجربة المجانية (تنتهي في ٢٤ سبتمبر ٢٠٢٦)</p>
    <div class="row" style="padding:6px 0"><span class="tx"><b>التجديد التلقائي</b></span><span class="tag t">غير مفعل (لن نخصم منك)</span></div>
    <div class="row" style="padding:6px 0"><span class="tx"><b>طريقة الدفع</b></span><span>مدى ···· ٤٠١٩</span></div>
-   <div class="row" style="padding:6px 0"><span class="tx"><b>تذكير قبل نهاية التجربة</b></span><span class="tag g">سنذكّرك قبل ٣ أيام — بلا مفاجآت</span></div>
   </div>
 
   <div style="display:flex;gap:8px;margin-top:12px">
@@ -3507,7 +3500,6 @@ const SCREENS = {
   <div class="card"><h3>حقوقك</h3>
    <div class="row" style="cursor:pointer" onclick="toast('يُجهز ملف التصدير — يصلك بريد خلال ٢٤ ساعة')"><span>📦</span><div class="tx"><b>تصدير كل البيانات</b></div><span class="end">←</span></div>
    <div class="row" style="cursor:pointer" onclick="sheet('<b style=&quot;font-weight:800&quot;>🧹 زر النسيان</b><p style=&quot;font-size:12.5px;margin:10px 0;line-height:1.8&quot;>يمحو ذاكرة مستشار العائلة عن خالد (الأنماط وخط الأساس) ويبدأ من صفر.<br><b>لا يمس</b> الرسائل ولا سجل التدقيق.</p><button class=&quot;btn coral&quot; onclick=&quot;toast(\\'نُسيت أنماط خالد — سُجل في التدقيق\\');closeSheet()&quot;>امحُ ذاكرة مستشار العائلة</button><button class=&quot;btn ghost&quot; onclick=&quot;closeSheet()&quot;>تراجع</button>')"><span>🧹</span><div class="tx"><b>زر النسيان</b><span>امحُ ذاكرة مستشار العائلة عن ابن</span></div><span class="end">←</span></div>
-   <div class="row" style="cursor:pointer" onclick="wipeStep1()"><span>🗑</span><div class="tx"><b style="color:var(--coral)">حذف بيانات العائلة نهائيًا</b><span>محو كامل — بتأكيد مزدوج ومهلة تراجع ٧ أيام</span></div><span class="end">←</span></div>
    <div class="row" style="cursor:pointer" onclick="go('FAT-060')"><span>📜</span><div class="tx"><b>سجل التدقيق</b></div><span class="end">←</span></div></div></div>`},
 
 'FAT-060':{hubIcon:'📋',t:'سجل التدقيق',grp:'عام',app:'parent',tab:'settings',
@@ -3618,10 +3610,6 @@ const SCREENS = {
       <span class="tag p" style="font-size:10px">الأساس</span>
     </div>
    </div>
-   <div class="card" style="padding:14px;margin-top:10px"><h3>🍽 سؤال العشاء الليلة</h3>
-    <p style="font-size:13.5px;line-height:1.9;margin:8px 0;font-weight:700">«${DINNER_QS[S.dinnerQIdx]}»</p>
-    <div style="display:flex;gap:8px"><button class="btn sec" style="margin:0;width:auto;padding:8px 14px;font-size:12px" onclick="nextDinnerQ()">سؤال آخر 🔄</button><button class="btn teal" style="margin:0;width:auto;padding:8px 14px;font-size:12px" onclick="playSound('pop');toast('📨 أُرسل لمحادثة العائلة — نقاش الليلة جاهز 😄')">أرسله للعائلة</button></div>
-    <p class="sml" style="margin-top:6px">من مستشار العائلة — ليعمق حواركم حول المائدة</p></div>
   </div>`;
  }},
 
@@ -4485,7 +4473,6 @@ const SCREENS = {
    <div class="row"><span>1️⃣</span><div class="tx"><b>DNS عائلي على الراوتر</b><span>إعداد مرة واحدة — ندلّك خطوة خطوة</span></div><span class="tag g">مفعّل</span></div>
    <div class="row"><span>2️⃣</span><div class="tx"><b>نفس فئات الفلترة الـ٢٩</b><span>سياسة موحدة: الجهاز والمنزل</span></div><span class="tag g">متزامن</span></div>
    <div class="row"><span>3️⃣</span><div class="tx"><b>خارج المنزل؟</b><span>فلترة جهاز الابن تبقى تعمل — لا فجوة</span></div><span class="tag t">تلقائي</span></div></div>
-  <button class="btn sec" style="margin:0 0 10px" onclick="routerGuide()">📖 دليل الضبط خطوة بخطوة</button>
   <div class="banner t">💡 ضيف تسلل بجهازه لشبكتك؟ محمي تلقائيًا — وأنت المتحكم بالاستثناءات.</div></div>`},
 
 'FAT-079':{hubIcon:'⚙️',t:'مساعدي الذكي — ماذا يفعل عني',grp:'مساعدي الذكي',app:'parent',tab:'today',
