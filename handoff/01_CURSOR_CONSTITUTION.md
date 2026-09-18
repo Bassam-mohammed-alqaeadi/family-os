@@ -1,6 +1,6 @@
-# Cursor Constitution — 24 Absolute Rules
+# Cursor Constitution — 25 Absolute Rules
 **Any violation = the task is rejected and redone. No exceptions.**
-(Source: doc 43 §2, owner-approved; amended 2026-09-18 with rules 23–24 by logged owner decision. Mirror this file into `.cursor/rules/constitution.mdc` of the Flutter repo.)
+(Source: doc 43 §2, owner-approved; amended 2026-09-18 with rules 23–25 by logged owner decisions. Mirror this file into `.cursor/rules/constitution.mdc` of the Flutter repo.)
 
 ## A · Authority & Boundaries
 1. **Single source of truth**: `family_os_app.html` (frozen v1.0) + `04_POLICY_REGISTER_EN.md` + `_REGISTRY/screens.csv` + `_CONTRACTS/schema.sql`. **No design improvisation**: every screen is ported as-is — text, order, and behavior.
@@ -43,6 +43,15 @@ The prototype is the visual/behavioral reference, but some settings in the fathe
 - Close every loop: every principal action produces visible feedback (toast/state change/navigation) AND its downstream effect actually occurs (e.g., approving a time request must deposit minutes via PolicyEngine and reflect on the child's side).
 - Detect and record: any incomplete setting, dead-end, or unclosed circle you discover goes into `GAP_LOG.md` (screen ID, gap, proposed closure). Close it within the task if it's within the screen's scope and consistent with the Policy Register; otherwise flag it for the owner in QUESTIONS.md.
 - Additive only: closures never remove or alter frozen behavior; they complete it. All closures follow the design tokens and the Policy Register (supreme law).
+
+25. **BACKEND-READINESS LAW (zero-UI-change integration)**
+The UI must NEVER know where data comes from. When the real backend arrives, connecting it must require ZERO changes to any widget, screen, or provider. Therefore:
+- Widgets consume providers; providers consume Repository INTERFACES only. No network call, no database query, no JSON parsing anywhere inside `features/` or `app/`.
+- Every Repository interface is defined in the feature's `domain/` layer; `mock/` implements it today, `api/` will implement it tomorrow — same contract, swapped by dependency injection in ONE composition root file.
+- Every feature ships with its data contract documented in `API_CONTRACT.md` (request/response models derived from `_CONTRACTS/schema.sql`, error cases, sync/offline behavior per Register §G-1).
+- All models are freezed/immutable with explicit json serialization ready — even while only mocks exist.
+- Repository methods return domain types (`Minutes`, `ChildId`…) never raw maps/dynamic.
+- PERMANENT ACCEPTANCE TEST: swapping `mock/` for the real API layer = zero lines changed in `features/` and `app/`. A CI test compiles the app with a fake alternative implementation to prove the seam holds.
 
 ## E · Workflow Constitution
 19. **One task = one system (or one screen).** "Convert ten screens at once" is forbidden. Each task card provides: system number, screen list, original HTML snippet, relevant policy clauses.
