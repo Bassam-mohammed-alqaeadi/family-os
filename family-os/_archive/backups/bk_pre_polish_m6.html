@@ -1834,7 +1834,7 @@ const SCREENS = {
    <!-- ١. الترحيب والأبناء -->
    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
      <div>
-       <h2 style="font-size:19px;font-weight:800">${S.role==='mother'?'صباح الخير نوال 🌸':'صباح الخير عبدالله 👋'}</h2>${S.role==='mother'?`<span class="tag t" style="margin-top:2px">شراكة التوجيه · ${({observer:'مطّلعة 👁',partner:'مشاركة 🤝',full:'كاملة ⭐'})[S.mlevel]}</span>`:''}
+       <h2 style="font-size:19px;font-weight:800">${S.role==='mother'?'صباح الخير نوال 🌸':'صباح الخير عبدالله 👋'}</h2>
        <p class="mut" style="font-size:12px;margin:0">أبناؤك بخير وبأمان تام اليوم</p>
      </div>
      <div style="display:flex;gap:6px">
@@ -2543,7 +2543,7 @@ const SCREENS = {
      </div>
    ` : ''}
 
-   ${mw.active && mw.approvedByFather ? `
+   ${mw.active ? `
      <div class="card" style="background:linear-gradient(135deg,#FFF5F7,#FFEBF0);border:1.5px solid #FF8FA3;padding:10px 14px;margin-bottom:10px">
        <div style="display:flex;align-items:center;gap:8px">
          <span style="font-size:20px" class="pulse-heart">🌸</span>
@@ -2764,8 +2764,7 @@ const SCREENS = {
       </div><span class="tag a">بانتظار ردك</span></div>
     <div class="card" style="background:var(--p50);border:1px dashed var(--p400);padding:10px 12px;margin:8px 0 14px">
       <div style="font-size:12px;color:var(--ink)"><b>السبب:</b> «${req.reason}»</div></div>
-    ${!can('extra')?`<div class="banner a">🔒 قرارات الوقت تتطلب مستوى «مشاركة» أو أعلى — يمكنك الاطلاع فقط</div>`:''}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;${!can('extra')?'opacity:.4;pointer-events:none':''}">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
       <button class="btn mint" style="margin:0;padding:11px;font-size:12.5px" onclick="openGrantSheet('${req.id}')">أقبل — بوقتي أنا ✅</button>
       <button class="btn teal" style="margin:0;padding:11px;font-size:12.5px" onclick="openTaskForTimeSheet('${req.id}')">وقت مقابل إنجاز 🌱</button></div>
     <button class="btn ghost" style="margin-top:6px;padding:9px" onclick="decideTimeRequest('${req.id}','reject')">رفض بلطف الآن 🌙</button>
