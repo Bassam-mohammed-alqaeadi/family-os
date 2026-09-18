@@ -33,6 +33,9 @@ Supreme reference on any conflict: handoff/04_POLICY_REGISTER_EN.md
 17. Every feature ships with unit tests + widget tests proving render, live buttons, loop closure.
 18. flutter analyze zero warnings + dart format before commit.
 
+## Data dynamism
+23. Prototype data = sample rendering, NEVER content. All displayed values bind to state/repos; zero hardcoded display data in widgets; render empty/loading/error states too; notifications come from real event pipelines; mock family lives only in mock/ behind Repository interfaces (deleting mock/ must not break UI).
+
 ## Workflow
 19. One task = one system (or one screen). Never batch.
 20. Every task ends with code + green tests + one line in CONVERSION_LOG.md.

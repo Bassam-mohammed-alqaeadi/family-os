@@ -28,6 +28,14 @@
 17. Every feature ships with: unit tests for logic + a widget test proving (a) it renders, (b) **every button has a working action**, (c) loop closure (toast / state change / navigation — no screen may pretend nothing happened).
 18. `flutter analyze` with zero warnings + `dart format` before every commit.
 
+## D2 · Data Dynamism Law (rule 23 — owner directive 2026-09-18)
+23. **Every value displayed in the prototype is a SAMPLE RENDERING, never content.** The prototype's mock data (names, streaks like "9 days", counts like "12 devices", notification cards, wallet balances, chart figures) exists ONLY to show what the UI looks like when populated. In Flutter:
+   - Every displayed value binds to state/providers/repositories — **zero hardcoded display data inside widgets**.
+   - Screens must correctly render the FULL state range: empty state, loading, one item, many items, error — not just the prototype's "happy snapshot" (the prototype's SHR-005/006 templates show how).
+   - Notifications/alerts seen in the prototype define the notification TYPES and their look — each must be emitted by a real event pipeline, never planted statically.
+   - The mock family (Register §10) lives exclusively in `mock/` repositories behind the same Repository interfaces the real backend will implement — deleting `mock/` must leave the UI compiling and functional.
+   - CI check: widget code containing literal numerals/names that mirror prototype sample values is flagged for review.
+
 ## E · Workflow Constitution
 19. **One task = one system (or one screen).** "Convert ten screens at once" is forbidden. Each task card provides: system number, screen list, original HTML snippet, relevant policy clauses.
 20. Every task ends with: code + green tests + one line in `CONVERSION_LOG.md` (screen ID, commitments honored, any declared deviation).
