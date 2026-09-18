@@ -2403,7 +2403,7 @@ const SCREENS = {
  r:()=>`<div style="background:linear-gradient(160deg,#FF6A6E,#E03A40);min-height:100%;color:#fff;padding:26px 18px">
   <div style="text-align:center"><div style="font-size:46px" class="pulse">🚨</div>
   <h2 style="font-size:22px;font-weight:800;margin:8px 0 2px">خالد يطلب النجدة</h2>
-  <p style="font-size:12.5px;opacity:.9">🔊 أطلقنا صفارة الإنذار في جوالك وجوال الأم — تخترق الوضع الصامت</p><p style="font-size:12.5px;opacity:.9">اليوم · البث الحي والموقع مستمران الآن</p></div>
+  <p style="font-size:12.5px;opacity:.9">اليوم · البث الحي والموقع مستمران الآن</p></div>
   <div class="map" style="margin:16px 0;border:3px solid rgba(255,255,255,.4)">${mapScape()}<div class="pin" style="top:58px;right:140px"><span>🦁</span></div></div>
   <div style="background:rgba(255,255,255,.15);border-radius:16px;padding:12px 14px;font-size:12.5px;line-height:1.8;margin-bottom:14px">📍 شارع الأمير سعود — قرب حديقة الحي<br>🔋 ٨٣٪ · يتحرك ببطء شرقًا · دقة ± ٨ م</div>
   <button class="btn" style="background:#fff;color:#E03A40;box-shadow:none;font-weight:800" onclick="playSound('pop');go('FAT-023')">📞 اتصل بخالد الآن (مكالمة طارئة فورية)</button>
@@ -2732,7 +2732,7 @@ const SCREENS = {
 
 'FAT-032':{hubIcon:'📝',t:'وقت الشاشة لابن',grp:'الحماية والأمان',app:'parent',tab:'kids',
  note:['تنظيم وقت الشاشة وجدول النوم والاستخدام اليومي', 'استثناء أوقات التعلّم والقرآن من الحد اليومي', 'مرونة كاملة للوالدين لضبط التوازن المنزلي'],
- r:()=>`${hd('وقت شاشة خالد')}<div class="pad"> ${(()=>{const md=activeMode();return md?`<div class="banner t">${md.icon} وضع «${md.name}» نشط الآن — جدولته مقدَّمة مؤقتًا على الحدود أدناه، وتعود تلقائيًا عند إيقافه</div>`:''})()}
+ r:()=>`${hd('وقت شاشة خالد')}<div class="pad">
   ${!can('rules')?'<div class="banner a">🔒 عرض فقط — تعديل الحدود يتطلب مستوى «كاملة»</div>':''}
   <div class="card" style="text-align:center"><p class="sml">الحد اليومي</p><div class="hero-num" style="color:var(--p600)" id="dailyCapLbl">${AR(Math.round(S.dailyCapMins/60))} ساعات</div>    <input type="range" min="1" max="8" value="${Math.round(S.dailyCapMins/60)}" style="width:90%" ${can('rules')?'':'disabled'} oninput="S.dailyCapMins=this.value*60;document.getElementById('dailyCapLbl').textContent=AR(+this.value)+' ساعات'" onchange="playSound('success');toast('✓ الحد اليومي أصبح '+AR(+this.value)+' ساعات — انعكس على جهاز خالد')">
    <div class="banner g" style="margin:10px 0 0">🎓 وقت التعليم مجاني دائمًا — لا يُحسب من الحد</div></div>
