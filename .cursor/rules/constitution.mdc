@@ -1,0 +1,40 @@
+---
+description: Family OS binding constitution — applies to EVERY task in this repository
+alwaysApply: true
+---
+
+# Family OS — Cursor Constitution (22 absolute rules)
+Any violation = the task is rejected and redone. Full text: handoff/01_CURSOR_CONSTITUTION.md
+Supreme reference on any conflict: handoff/04_POLICY_REGISTER_EN.md
+
+## Authority
+1. Sources of truth: family-os/family_os_app.html (frozen v1.0) + handoff/04_POLICY_REGISTER_EN.md + family-os/_REGISTRY/screens.csv + family-os/_CONTRACTS/schema.sql. No design improvisation — port screens as-is.
+2. On ambiguity: STOP, write the question in QUESTIONS.md, halt. Never guess.
+3. Exactly 129 screens. Never resurrect: OTP, green v1 design, two-app model, role-picker.
+
+## Economy (highest sanctity)
+4. Only currency = minutes. `Minutes` value object mandatory; raw int for rewards forbidden; no "points/XP/coins" anywhere.
+5. All earning flows through PolicyEngine.earn() — direct balance writes forbidden.
+6. Father sets reward value at creation — no hidden defaults.
+
+## Sovereignty & safety
+7. AI suggests, never executes — parent-approval button ends every AI action.
+8. Role guarding ONLY via RoleGuard in the router. Owner-only: subscription/billing/privacy/audit.
+9. SOS/location/family-chat never gated by subscription, never disabled.
+10. Audit log repo has no update/delete methods at all.
+11. Time expiry never locks: family chat, Quran, SOS.
+
+## Code
+12. All UI strings from ARB files — no hardcoded user-facing literals.
+13. No child names outside mock/ — child screens are functions of ChildId.
+14. Colors/shadows/radii from tokens.dart only.
+15. New visual components go to core/design/components/ once — no local duplicates.
+16. Semantics label on every interactive element; touch targets >= 48dp.
+17. Every feature ships with unit tests + widget tests proving render, live buttons, loop closure.
+18. flutter analyze zero warnings + dart format before commit.
+
+## Workflow
+19. One task = one system (or one screen). Never batch.
+20. Every task ends with code + green tests + one line in CONVERSION_LOG.md.
+21. Never modify: core/policy/, tokens.dart, .cursor/rules/ — owner decision required.
+22. One feature per commit (core/ only under a declared task).

@@ -1,23 +1,15 @@
-# 🦁 عائلتي — Family OS
+# Family OS — "عائلتي"
+Family digital-wellbeing OS. **Design v1.0 is FROZEN (ADR-030)** — this repo is the single source of truth for the Flutter build.
 
-نظام تشغيل عائلي متكامل (رقابة أبوية + تربية + قرآن + تواصل أسري) — نموذج أولي تفاعلي كامل من ١٢٩ شاشة في صفحة واحدة، مع حزمة مواصفات وحوكمة كاملة.
+## Start here (in order)
+1. `handoff/00_START_HERE.md` — map of everything + how to work
+2. `handoff/01_CURSOR_CONSTITUTION.md` — the 22 binding rules (mirrored in `.cursor/rules/`)
+3. `handoff/02_ARCHITECTURE.md` — mandatory architecture & structure
+4. `handoff/03_EXECUTION_PHASES.md` — phases F0→F7 + first task cards
+5. `handoff/04_POLICY_REGISTER_EN.md` — **SUPREME LAW** for business logic
 
-## البنية
-- `family-os/family_os_app.html` — ⭐ النموذج الرسمي (١٢٩ شاشة، عربي RTL، بلا أي اعتماديات خارجية — يعمل بفتح الملف مباشرة)
-- `family-os/*.md` — وثائق المواصفات والحوكمة المرقمة (قرارات ADR، جلسات مختومة، سجلات تدقيق، خطط تنفيذ)
-- `family-os/_REGISTRY/` — سجلات الخدمات/الشاشات/الرحلات + مدققا اتساق (`validate.py`, `check_consistency.py`)
-- `family-os/_CONTRACTS/` — عقود البيانات (`schema.sql`)
-- `family-os/_archive/` — نسخ مؤرشفة ونسخ احتياطية
-- `polish-lab/` — مولد عينات الصقل
+## The frozen prototype
+Open `family-os/family_os_app.html` in a browser — 129 fully navigable screens (Arabic, RTL). This is the pixel/behavior reference for every conversion task.
 
-## الحالة (١٨ سبتمبر ٢٠٢٦)
-- دفعة توجيهات المالك ١: **مكتملة ١٠٠٪** (المراحل ١–٥ مختومة بمحاضر 31A)
-- مسار الصقل (خطة 28): المحطة م١ منفذة — بوابتها بانتظار توقيع المالك
-- لوحة الأنظمة الـ٥٤: ١١ ✅ مختوم · ١٠ 🟡 جزئي · ٣٣ ⬜ (خريطة تغطيتها عبر محطات م٢–م٨)
-- قنوات الكسب الخمس (دقائق فقط — ع-١) محمية دستوريًا
-
-## التشغيل
-افتح `family-os/family_os_app.html` في أي متصفح — أو:
-```bash
-python3 -m http.server 8000 --directory family-os
-```
+## Language policy
+Engineering language: English (handoff/, code, commits). Product UI language: Arabic first via ARB (i18n from day one). Arabic docs in `family-os/*.md` are the historical decision record (ADR-001→031) — consult, don't modify.
