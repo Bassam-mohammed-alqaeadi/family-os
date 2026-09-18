@@ -586,7 +586,6 @@ const S = {
     { id: 'z4', name: 'نادي الحي', icon: '⚽', desc: 'الملعب الرياضي' }
   ],
   streak: { days: 5 },
-  athkar: { done: 3, total: 10, session:'المساء' },
   motherWhisper: {
     active: true,
     toFather: 'خالد بذل جهداً كبيراً اليوم، أقترح تقديم موعد نومه ۳۰ دقيقة ليرتاح 🌸',
@@ -896,7 +895,6 @@ function removeModeException(modeId,idx){ const md=S.familyModes.list.find(m=>m.
 /* عل-٢: إنشاء محادثة */
 /* عل-٤ (قرار ب): جهات اتصال الهاتف الأساسي — العائلة أولًا */
 /* صقل م١: إدخال رمز الربط يدويًا */
-function sayThikr(){ const a=S.athkar; if(a.done>=a.total){ toast('🌟 أتممت أذكارك اليوم — الأجر عند الله'); return; } a.done++; playSound(a.done>=a.total?'success':'pop'); if(a.done>=a.total){ triggerConfetti(); toast('🕌 ما شاء الله! أتممت أذكار '+a.session+' كاملة — ووصلت أباك بشرى البركة 🤍',true); } else { toast('✓ '+AR(a.done)+' من '+AR(a.total)+' — أحسنت! التالي…'); } render(); }
 function openSiteRequestSheet(){ playSound('pop'); sheet('<h3 style="margin-bottom:8px">اطلب فتح الموقع من أبيك 🌐</h3>'+
  '<p class="sml" style="margin-bottom:10px">موقع «عالم الفلك للأطفال» محجوب ضمن سياسة العائلة. إن كان مهمًا لدراستك اشرح السبب — والقرار لوالدك:</p>'+
  '<input id="siteReqReason" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:12px;font-family:inherit;font-size:13px" placeholder="مثال: أحتاجه لبحث مادة العلوم">'+
@@ -1920,7 +1918,6 @@ const SCREENS = {
           <b style="font-size:13px;color:#995D00">طلب تطبيق جديد: سناب شات</b>
           <p class="sml" style="margin:1px 0 0;color:#7A4B00">طلب خالد التثبيت اليوم · بانتظار قرارك</p>
         </div>
-   ${S.athkar&&S.athkar.done>=S.athkar.total?`<div class="card" style="background:linear-gradient(135deg,#F0FBF4,#E3F7EB);border:1.5px solid var(--mint,#37C978)"><div class="row"><span style="font-size:22px">🕌</span><div class="tx"><b>بشرى بركة: خالد أتم أذكار ${S.athkar.session} كاملة</b><span>«الأجر عند الله — والبيت عامر بالذكر» 🤍</span></div><span class="tag g">ما شاء الله</span></div></div>`:''}
       </div>
       <span class="tag a">قرار الوالد ←</span>
     </div>
@@ -4348,12 +4345,12 @@ const SCREENS = {
  note:['أذكار الصباح والمساء اليومية بأسلوب تفاعلي محبب', 'تذكير لطيف يشجع الابن دون إكراه'],
  r:()=>`${hd('أذكاري 🌤')}<div class="pad">
   <div class="card" style="border:2px solid var(--teal);text-align:center">
-   <p class="sml">ذكر ${S.athkar.session} · ${AR(S.athkar.done)} من ${AR(S.athkar.total)}</p>
+   <p class="sml">ذكر المساء · ٣ من ١٠</p>
    <p style="font-family:serif;font-size:16px;line-height:2.2;margin:10px 0">«اللهم بك أمسينا وبك أصبحنا، وبك نحيا وبك نموت وإليك النشور»</p>
-   <button class="btn teal" style="padding:11px" onclick="sayThikr()">${S.athkar.done>=S.athkar.total?'أتممتها كلها اليوم 🌟':'قلتها ✓ (مرة واحدة)'}</button></div>
+   <button class="btn teal" style="padding:11px" onclick="toast('✓ +١ — أحسنت! التالي…')">قلتها ✓ (مرة واحدة)</button></div>
   <div class="grid2">
    <div class="card" style="margin:0;text-align:center"><p class="sml">صباح</p><b style="color:var(--teal600);font-weight:800">١٠/١٠ ✓</b></div>
-   <div class="card" style="margin:0;text-align:center"><p class="sml">مساء</p><b style="font-weight:800">${AR(S.athkar.done)}/${AR(S.athkar.total)}</b></div></div>
+   <div class="card" style="margin:0;text-align:center"><p class="sml">مساء</p><b style="font-weight:800">٣/١٠</b></div></div>
   <div class="banner t">🤍 تذكير لطيف لا إلزام — الأجر عند الله، والدقائق تشجيع من أبيك.</div></div>`},
 
 'CHD-028':{hubIcon:'📊',t:'خطتي الذكية',grp:'التعلّم الذكي',app:'child',tab:'learn',
