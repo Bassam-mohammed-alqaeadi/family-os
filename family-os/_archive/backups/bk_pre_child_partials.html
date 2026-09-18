@@ -585,7 +585,6 @@ const S = {
     { id: 'z3', name: 'بيت الجد', icon: '👴', desc: 'حي الروضة' },
     { id: 'z4', name: 'نادي الحي', icon: '⚽', desc: 'الملعب الرياضي' }
   ],
-  streak: { days: 5 },
   motherWhisper: {
     active: true,
     toFather: 'خالد بذل جهداً كبيراً اليوم، أقترح تقديم موعد نومه ۳۰ دقيقة ليرتاح 🌸',
@@ -895,12 +894,6 @@ function removeModeException(modeId,idx){ const md=S.familyModes.list.find(m=>m.
 /* عل-٢: إنشاء محادثة */
 /* عل-٤ (قرار ب): جهات اتصال الهاتف الأساسي — العائلة أولًا */
 /* صقل م١: إدخال رمز الربط يدويًا */
-function openSiteRequestSheet(){ playSound('pop'); sheet('<h3 style="margin-bottom:8px">اطلب فتح الموقع من أبيك 🌐</h3>'+
- '<p class="sml" style="margin-bottom:10px">موقع «عالم الفلك للأطفال» محجوب ضمن سياسة العائلة. إن كان مهمًا لدراستك اشرح السبب — والقرار لوالدك:</p>'+
- '<input id="siteReqReason" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:12px;font-family:inherit;font-size:13px" placeholder="مثال: أحتاجه لبحث مادة العلوم">'+
- '<button class="btn teal" style="margin-top:12px;padding:12px" onclick="submitSiteRequest()">إرسال الطلب لوالدي 📨</button>'); }
-function submitSiteRequest(){ if(!S.siteRequests)S.siteRequests=[]; const inp=document.getElementById('siteReqReason'); S.siteRequests.push({id:'sr_'+Date.now(),site:'عالم الفلك للأطفال',reason:(inp&&inp.value)||'بحث مدرسي',status:'pending'}); playSound('success'); toast('📨 وصل طلبك لوالدك — سيقرر بحكمته وسيصلك رده'); closeSheet(); render(); }
-function decideSiteRequest(id,action){ const r=(S.siteRequests||[]).find(x=>x.id===id); if(!r)return; playSound(action==='ok'?'success':'pop'); r.status=action==='ok'?'approved':'rejected'; toast(action==='ok'?'✓ فُتح الموقع لخالد — ووصله خبر موافقتك بفرحة 🎉':'أُرسل لخالد بلطف: «ليس الآن — نناقشه معًا»'); render(); }
 function openManualCodeSheet(){ playSound('pop');
   sheet(`<h2 style="font-size:16px;font-weight:800;margin:2px 0 8px">⌨️ أدخل رمز الربط</h2>
    <p class="sml" style="margin-bottom:8px">الرمز المكوّن من ٨ أحرف الظاهر أسفل شاشة والدك</p>
@@ -2537,7 +2530,6 @@ const SCREENS = {
      </div>
    ` : ''}
 
-   ${(S.siteRequests&&S.siteRequests.some(r=>r.status==='pending'))?`<div class="card" style="border:1.5px dashed var(--border)"><div class="row"><span>🌐</span><div class="tx"><b>طلبك عند والدك 🤞</b><span>فتح «عالم الفلك للأطفال» — سيصلك رده</span></div><span class="tag t">قيد المراجعة</span></div></div>`:`<div class="card" style="border:1.5px dashed var(--border)"><div class="row"><span>🌐</span><div class="tx"><b>موقع محجوب أثناء تصفحك؟</b><span>«محتوى لا يناسبك الآن» — إن كان مهمًا لدراستك اطلب فتحه</span></div><button class="btn sec" style="width:auto;padding:8px 12px;margin:0;font-size:11.5px" onclick="openSiteRequestSheet()">اطلب من أبيك</button></div></div>`}
    <!-- ٤. وضع المدرسة وهمسات الأم -->
    ${sm.active ? `
      <div class="card" style="background:linear-gradient(135deg,#EEF6FC,#E0EEFA);border:1.5px solid #4FC3F7;padding:10px 14px;margin-bottom:10px">
@@ -2889,7 +2881,6 @@ const SCREENS = {
     <div style="font-size:28px">🌱</div><b style="font-size:13px">هذه الصفحة غير متاحة</b>
     <p class="sml" style="margin-top:4px">«هذا المحتوى لا يناسبك الآن. إن كنت تراه مهمًا لدراستك، اطلب فتحه من أبيك بضغطة زر»</p>
     <span class="tag t" style="margin-top:6px">طلب فتح الموقع ←</span></div>
-   ${(S.siteRequests&&S.siteRequests.some(r=>r.status==='pending'))?`<div class="card" style="border:2px solid var(--teal)"><h3>🌐 طلب من خالد: فتح موقع</h3>${S.siteRequests.filter(r=>r.status==='pending').map(r=>`<div class="row"><span>🔓</span><div class="tx"><b>${r.site}</b><span>سببه: «${r.reason}»</span></div></div><div style="display:flex;gap:8px"><button class="btn mint" style="flex:1;padding:10px;margin:0;font-size:12px" onclick="decideSiteRequest('${r.id}','ok')">✓ افتحه له</button><button class="btn ghost" style="flex:1;padding:10px;margin:0;font-size:12px" onclick="decideSiteRequest('${r.id}','no')">ليس الآن (بلطف)</button></div>`).join('')}</div>`:''}
    <p class="sml" style="margin-top:6px">بلا تفاصيل محرجة ولا لوم — والطلب يصلك في الإشعارات</p></div></div>`},
 
 'FAT-037':{hubIcon:'🔒',t:'القفل الفوري والراحة',grp:'الحماية والأمان',app:'parent',tab:'kids',
@@ -3615,7 +3606,7 @@ const SCREENS = {
    <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-weight:800;font-size:16px">المستوى ٣ — مستكشف 🧭</b><span style="font-size:12px">⏱ ٣٤٠ دقيقة مكتسبة هذا الشهر</span></div>
    <div class="prog" style="background:rgba(255,255,255,.25);margin-top:10px"><i style="width:68%;background:#fff"></i></div>
    <div style="display:flex;gap:8px;margin-top:12px">
-    <span style="background:rgba(255,255,255,.18);border-radius:12px;padding:6px 12px;font-size:11.5px">🔥 <b>${AR(S.streak.days)} أيام</b> متتالية</span>
+    <span style="background:rgba(255,255,255,.18);border-radius:12px;padding:6px 12px;font-size:11.5px">🔥 <b>٥ أيام</b> متتالية</span>
     <span style="background:rgba(255,255,255,.18);border-radius:12px;padding:6px 12px;font-size:11.5px">🎓 وقته <b>مجاني</b></span></div></div>
   <div class="card" style="border:2px solid var(--teal)"><h3>🎯 تحدي والدك</h3>
    <p style="font-size:13.5px;margin-bottom:10px">اختبار الكسور — <b>+٣٥ دقيقة لعب</b> إذا أتقنت!</p>
@@ -3810,7 +3801,7 @@ const SCREENS = {
    <div class="card" style="background:var(--grad-teal);color:#fff;text-align:center">
     <div class="hero-num">${total>0?total:'٠'} دقيقة</div>
     <div style="font-size:11.5px;opacity:.92">رصيدك الكلي من الدقائق المكتسبة 💪</div>
-    <div style="display:flex;justify-content:center;gap:10px;font-size:11.5px;opacity:.9;margin-top:6px"><span>🔥 ${AR(S.streak.days)} أيام التزام</span><span>🏅 ٧ شارات</span></div></div>
+    <div style="display:flex;justify-content:center;gap:10px;font-size:11.5px;opacity:.9;margin-top:6px"><span>🔥 ٥ أيام التزام</span><span>🏅 ٧ شارات</span></div></div>
    <div class="card"><h3>⏱ محافظ تطبيقاتي</h3>
     <p class="sml" style="margin:2px 0 8px">كل تطبيق له محفظته — تعمل بعد انتهاء وقته اليومي (ولا تفتح الممنوع 🤍)</p>
     ${apps.map(a=>`<div class="row"><span>${a.icon}</span><div class="tx"><b>${a.name}</b><span>${a.walletMins>0?('رصيدك: '+a.walletMins+' دقيقة'):'لا رصيد بعد — اكسب بمهمة!'}</span></div>
@@ -3821,7 +3812,7 @@ const SCREENS = {
     <div class="row" style="cursor:pointer" onclick="go('CHD-015')"><span>🎯</span><div class="tx"><b>تحديات التعلم</b><span>تعلّم والعب أكثر</span></div><span class="end">←</span></div></div>
    <div class="card"><h3>🏅 شاراتي — فخر لا عملة</h3>
     <p class="sml" style="margin:2px 0 8px">شاراتك وسام إنجاز يبقى لك — الدقائق تُكسب بالعمل فقط.</p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:22px"><span title="حافظ الملك">📖</span><span title="${AR(S.streak.days)} أيام التزام">🔥</span><span title="بطل المهام">🛠</span><span title="نجم الأذكار">🌟</span><span title="صادق الوعد">🤝</span><span>➕</span></div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:22px"><span title="حافظ الملك">📖</span><span title="٥ أيام التزام">🔥</span><span title="بطل المهام">🛠</span><span title="نجم الأذكار">🌟</span><span title="صادق الوعد">🤝</span><span>➕</span></div></div>
   </div>`;
  }},  
 'CHD-020':{hubIcon:'📝',t:'طلب وقت إضافي',grp:'يومي',app:'child',tab:'myday',
@@ -4207,7 +4198,7 @@ const SCREENS = {
    <button class="aisug" onclick="go('FAT-073')">📋 أعطني تقرير الأسبوع بتوصية</button>
    <button class="aisug" onclick="sheet('<b style=&quot;font-weight:800&quot;>فكرة نشاط 🎨</b><p style=&quot;font-size:13px;line-height:1.9;margin:10px 0&quot;>الجو غدًا لطيف، وخالد أبدع في مشروع الحديقة — ما رأيك برحلة لمشتل قريب ثم زراعة شتلة جديدة معًا؟ نورة ستحب توثيقها بالصور.</p><button class=&quot;btn&quot; onclick=&quot;toast(\\'أُضيفت للتقويم العائلي 🎉\\');closeSheet()&quot;>أضفها للتقويم</button>')">🎨 اقترح نشاطًا عائليًا لعطلتنا</button>
    <button class="aisug" onclick="go('FAT-062')">📈 أرني أنماط عائلتي</button></div>
-  <div class="card"><h3>قدرات مستشار العائلة — ٨ كاملة (٤ بطاقات حية أعلاه + ٤ أدوات هنا)</h3>
+  <div class="card"><h3>قدرات مستشار العائلة</h3>
    <div class="row" style="cursor:pointer" onclick="go('FAT-083')"><span>🎙</span><div class="tx"><b>المحادثة الصوتية</b><span>تحدث معه وأنت مشغول اليدين</span></div><span class="end">←</span></div>
    <div class="row" style="cursor:pointer" onclick="go('FAT-079')"><span>🤖</span><div class="tx"><b>المساعد المفوَّض</b><span>ينفذ عنك ما فوضته فقط</span></div><span class="end">←</span></div>
    <div class="row" style="cursor:pointer" onclick="go('FAT-064')"><span>🗺</span><div class="tx"><b>خرائط معرفة الأبناء</b><span>أين يتقن كل ابن وأين يتعثر</span></div><span class="end">←</span></div>
@@ -4666,7 +4657,7 @@ const SCREENS = {
   <div class="card"><h3>ملصقاتك</h3>
    <div style="display:flex;gap:10px;font-size:30px;flex-wrap:wrap;padding:4px">🦁 😂 🌟 💪 🏆 🕌 ⚽ 🍕 <span style="opacity:.3">🔒</span> <span style="opacity:.3">🔒</span></div>
    <p class="sml" style="margin-top:6px">🔒 حزمة «الفضاء» تُفتح بإنجاز وردين — أنت قريب!</p>
-   <button class="btn ghost" style="margin-top:8px" onclick="toast('🚀 حزمة الفضاء تُفتح تلقائيًا فور إتمام وردين — أنت على بعد ورد واحد! 📖')">تُفتح بإنجاز وردين 📖</button></div>
+   <button class="btn ghost" style="margin-top:8px" onclick="toast('🚀 فُتحت حزمة الفضاء! ٨ ملصقات جديدة — وأمك وصلها إشعار بمشترياتك')">افتح الحزمة ⭐٣٠</button></div>
   <div class="card"><h3>خلفية محادثة العائلة</h3>
    <div style="display:flex;gap:8px">
     ${['linear-gradient(135deg,#00BFA5,#00796B)','linear-gradient(135deg,#5C6BC0,#3949AB)','linear-gradient(135deg,#FFB74D,#F57C00)'].map((g,i)=>`<div onclick="toast('✓ تغيرت خلفيتك — شكلها رهيب!')" style="flex:1;height:70px;border-radius:14px;background:${g};cursor:pointer;${i==0?'outline:3px solid var(--teal);outline-offset:2px':''}"></div>`).join('')}</div></div>
