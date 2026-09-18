@@ -3044,7 +3044,7 @@ const SCREENS = {
     <span class="tag p">أ) ٥/٧ ✓</span> <span class="tag" style="background:var(--border)">ب) ٥/١٤</span> <span class="tag" style="background:var(--border)">ج) ٦/٧</span><br>
     <b>س٢:</b> ١/٥ + ٢/٥ = ؟ …</div>
    <div style="display:flex;gap:8px;margin-top:10px">
-    <button class="btn sec" style="padding:9px;font-size:12px;margin:0" onclick="toast('س٣ استُبدل بسؤال أسهل')">🔄 بدّل سؤالًا</button> <button class="btn sec" style="padding:9px;font-size:12px;margin:0" onclick="toast('✏️ افتح أي سؤال وعدّل نصه وخياراته قبل الإرسال')">✏️ عدّل سؤالًا</button> <button class="btn sec" style="padding:9px;font-size:12px;margin:0" onclick="toast('🗑 حُذف السؤال — لن يصل خالد إلا ما اعتمدتَه')">🗑 احذف</button>
+    <button class="btn sec" style="padding:9px;font-size:12px;margin:0" onclick="toast('س٣ استُبدل بسؤال أسهل')">🔄 بدّل سؤالًا</button>
     <button class="btn sec" style="padding:9px;font-size:12px;margin:0" onclick="toast('عُدّل مستوى الصعوبة')">🎚 أسهل/أصعب</button></div></div>
   <div class="card"><h3>📚 الدرس <span class="tag g">جاهز</span></h3><p class="mut">«تخيل بيتزا مقسومة ٧ قطع…» — شرح بالأمثلة البصرية</p></div>
   <button class="btn mint" onclick="go('FAT-045')">✓ اعتمد الكل — أسنده الآن</button>
@@ -3663,10 +3663,6 @@ const SCREENS = {
        <div style="background:rgba(77,208,199,0.15);border-radius:10px;padding:6px 12px;font-size:11.5px;color:var(--teal700);margin-top:10px">
          💡 ${card.hint}
        </div>
-       <div style="display:flex;gap:8px;margin-top:12px;width:100%">
-        <button class="btn mint" style="flex:1;padding:9px;font-size:12px;margin:0" onclick="event.stopPropagation();playSound('success');toast('🌟 رائع — سنراجعها لك متباعدًا حتى ترسخ');if(lesson.currentCardIndex<cards.length-1){lesson.currentCardIndex++};lesson.isCardFlipped=false;render()">😎 أعرفها</button>
-        <button class="btn sec" style="flex:1;padding:9px;font-size:12px;margin:0" onclick="event.stopPropagation();playSound('pop');toast('👍 صراحتك قوة — سنكررها لك قريبًا حتى تتقنها');lesson.isCardFlipped=false;render()">🤔 أحتاج مراجعة</button>
-       </div>
      `}
    </div>
 
@@ -3745,7 +3741,7 @@ const SCREENS = {
 'CHD-017':{hubIcon:'💬',t:'معلمي الذكي',grp:'تعلّمي',app:'child',tab:'learn',
  note:['المعلم الذكي الصبور: يشرح خطوة بخطوة ولا يعطي الحل جاهزاً', 'غرس روح الفهم والبحث دون اتكال'],
  r:()=>`${hd('معلمي 🤖','لا يحل عنك')}<div class="pad">
-  <div class="banner t">🤖 أنا أساعدك تفهم — <b>ما أعطيك الجواب الجاهز أبدًا.</b> كذا تصير أنت البطل 💪</div> <p class="sml" style="text-align:center;margin:2px 0 8px">💚 والدك يطّلع على محادثاتنا — بيتنا كله شفاف وآمن</p>
+  <div class="banner t">🤖 أنا أساعدك تفهم — <b>ما أعطيك الجواب الجاهز أبدًا.</b> كذا تصير أنت البطل 💪</div>
   <div class="bub yo">مرحبا خالد! شفت إنك واقف عند ٣/٥ + ١/٢ … من وين نبدأ؟</div>
   <div class="bub me">ما أعرف أجمعها، الأسفل مختلف!</div>
   <div class="bub yo">ملاحظة ممتازة! 👏 هنا السر: نحتاج نخلي الأسفل <b>نفس الرقم</b>.<br>سؤالي لك: ما هو أصغر رقم يقبل القسمة على ٥ وعلى ٢ معًا؟ 🤔</div>
@@ -4324,7 +4320,7 @@ const SCREENS = {
  r:()=>`${hd('حفظي 🗺')}<div class="pad">
   <div class="card" style="text-align:center"><p class="sml">محفوظك حتى اليوم</p><div class="hero-num" style="color:var(--teal600)">٣ سور + ١٥ آية</div>
    <div style="display:flex;gap:5px;justify-content:center;margin-top:8px">
-    <span class="tag g">الفاتحة ✓</span><span class="tag g">الإخلاص ✓</span><span class="tag g">النبأ ✓</span><span class="tag t">الملك ٥٠٪</span></div> <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px"> <span class="tag g">⭐ أول سورة ✓</span> <span class="tag g">📖 ٣ سور ✓</span> <span class="tag" style="background:var(--border)">🌙 نصف جزء عمّ</span> <span class="tag" style="background:var(--border)">👑 الحافظ الصغير</span></div> <p class="sml" style="margin-top:6px;text-align:center">شاراتك القادمة تنتظرك — واصل يا بطل 🚀</p></div>
+    <span class="tag g">الفاتحة ✓</span><span class="tag g">الإخلاص ✓</span><span class="tag g">النبأ ✓</span><span class="tag t">الملك ٥٠٪</span></div></div>
   <div class="card"><h3>🔄 مراجعاتي المستحقة</h3>
    <div class="row"><span>📖</span><div class="tx"><b>تبارك ١–١٠</b><span>آخر مراجعة قبل ٤ أيام</span></div><button class="btn teal" style="width:auto;padding:8px 12px;margin:0;font-size:12px" onclick="toast('🎙 سمّع — ومستشار العائلة يتابع معك بمصحف مرخّص')">راجع</button></div>
    <div class="row"><span>📖</span><div class="tx"><b>النبأ كاملة</b><span>مستحقة غدًا</span></div><span class="end">غدًا</span></div></div>
@@ -4348,7 +4344,7 @@ const SCREENS = {
   <div class="card" style="border:2px solid var(--teal)"><h3>🔍 اكتشفنا سر تعثرك!</h3>
    <p style="font-size:13.5px;line-height:1.9">أخطاؤك في القسمة الطويلة سببها مفهوم واحد صغير: <b>جدول ضرب الـ٧</b>. نقوّيه ٣ أيام — وستنطلق 🚀</p>
    <button class="btn teal" style="padding:11px" onclick="toast('🎯 خطة الأيام الثلاثة بدأت — ١٠ دقائق يوميًا فقط')">ابدأ خطة الإصلاح</button></div>
-  <div class="card" style="border:2px solid var(--teal)"><h3>🏗 مشروعنا العائلي — «حديقة المنزل»</h3> <p class="sml" style="margin:4px 0">مرحلتك الآن: <b>المرحلة ٢ — زراعة الشتلات</b> (أسندها لك والدك)</p> <button class="btn teal" style="padding:10px" onclick="playSound('success');toast('🌱 عاش! سجلنا إنجاز مرحلتك — ووصل والدك الخبر بفرحة')">أنجزت مرحلتي ✓</button></div> <div class="card"><h3>🗺 مساري البصري</h3>
+  <div class="card"><h3>🗺 مساري البصري</h3>
    <div style="display:flex;align-items:center;gap:4px;margin:8px 0">
     ${['✓','✓','✓','٤','٥','٦'].map((s,i)=>`<div style="flex:1;text-align:center"><div style="width:34px;height:34px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;${i<3?'background:var(--mint);color:#fff':i==3?'background:var(--teal);color:#fff':'background:var(--border)'}">${s}</div></div>`).join('')}</div>
    <p class="sml">الجمع ✓ الطرح ✓ الضرب ✓ — أنت الآن في القسمة</p></div>
@@ -4605,8 +4601,8 @@ const SCREENS = {
    <b style="font-weight:800;font-size:16px">🏜 كنز الصحراء — الفصل ٣</b>
    <p style="font-size:12.5px;line-height:1.9;margin-top:8px">وصلتَ أنت ورفيقك عند بئر قديمة. وجدتما كيسًا فيه دنانير ذهبية منقوش عليها اسم «تاجر القافلة»… ورفيقك يهمس: «لن يعرف أحد!»</p></div>
   <div class="card"><h3>ماذا تفعل يا خالد؟</h3>
-   <button class="btn sec" style="margin-bottom:8px" onclick="toast('🌟 اخترت الأمانة! التاجر سيكافئك بما لم تتخيل… وخاتمة الفصل: «من ترك شيئًا لله عوّضه الله خيرًا منه» 💛')">نبحث عن التاجر ونعيد الكيس</button>
-   <button class="btn sec" style="margin-bottom:8px" onclick="toast('🤔 مسار آخر… وستكتشف بنفسك في الخاتمة: راحة القلب لا تُشترى بذهب الدنيا كله')">نأخذها — لن يعرف أحد</button>
+   <button class="btn sec" style="margin-bottom:8px" onclick="toast('🌟 اخترت الأمانة! القصة تتفرع: التاجر سيكافئك بما لم تتخيل…')">نبحث عن التاجر ونعيد الكيس</button>
+   <button class="btn sec" style="margin-bottom:8px" onclick="toast('🤔 مسار آخر: ستكتشف بنفسك لماذا الأمانة أثمن من الذهب…')">نأخذها — لن يعرف أحد</button>
    <button class="btn sec" style="margin:0" onclick="toast('💡 حكمة! سؤال الكبار طريق الحكماء — أبوك في القصة سيدهشك')">نسأل والدي أولًا</button></div>
   <p class="sml" style="text-align:center;margin-top:10px">قراراتك تكتب الحكاية — لا توجد نهاية واحدة 🎭</p></div>`},
 
