@@ -587,7 +587,6 @@ const S = {
   ],
   streak: { days: 5 },
   athkar: { done: 3, total: 10, session:'المساء' },
-  timeReqMins: 30,
   motherWhisper: {
     active: true,
     toFather: 'خالد بذل جهداً كبيراً اليوم، أقترح تقديم موعد نومه ۳۰ دقيقة ليرتاح 🌸',
@@ -2242,10 +2241,7 @@ const SCREENS = {
    <button style="width:58px;height:58px;border-radius:50%;border:0;background:var(--surface);box-shadow:var(--sh-card);font-size:20px;cursor:pointer">🔊</button>
    <button style="width:58px;height:58px;border-radius:50%;border:0;background:var(--surface);box-shadow:var(--sh-card);font-size:20px;cursor:pointer">📹</button>
    <button onclick="go('FAT-024')" style="width:58px;height:58px;border-radius:50%;border:0;background:linear-gradient(135deg,#FF7A7E,#F0464C);font-size:20px;cursor:pointer;box-shadow:var(--sh-coral)">📵</button></div>
-  <p class="sml" style="margin-top:30px">صوت وفيديو عبر LiveKit — بيانات وصفية فقط، لا تسجيل · 🔔 مكالمات الاطمئنان ترنّ عند الابن حتى لو كان جهازه صامتًا</p>
-  <div class="card" style="margin-top:12px;text-align:right"><h3>🎮 العبا معًا أثناء المكالمة</h3>
-   <div class="row"><span>🎨</span><div class="tx"><b>لوحة رسم مشتركة</b><span>ترسمان معًا في اللحظة نفسها — تقريب المسافات</span></div><button class="btn sec" style="width:auto;padding:8px 12px;margin:0;font-size:11.5px" onclick="toast('🎨 فُتحت اللوحة المشتركة — خالد يرى خطوطك لحظيًا')">افتح</button></div>
-   <div class="row"><span>❌⭕</span><div class="tx"><b>إكس-أو سريعة</b><span>جولة خفيفة وأنتما تتكلمان</span></div><button class="btn sec" style="width:auto;padding:8px 12px;margin:0;font-size:11.5px" onclick="toast('❌⭕ بدأت الجولة — دور خالد أولًا 😄')">العب</button></div></div></div>`},
+  <p class="sml" style="margin-top:30px">صوت وفيديو عبر LiveKit — بيانات وصفية فقط، لا تسجيل · 🔔 مكالمات الاطمئنان ترنّ عند الابن حتى لو كان جهازه صامتًا</p></div>`},
 
 'FAT-024':{hubIcon:'📋',t:'سجل المكالمات',grp:'تبويب العائلة',app:'parent',tab:'family',
  note:['سجل المكالمات الأسرية الواردة والصادرة والفائتة', 'إمكانية الرد السريع أو إرسال رسالة حب'],
@@ -2707,7 +2703,7 @@ const SCREENS = {
   <div class="bub yo">استمتع يا بطل — وخلّ عينك عالساعة<span class="t">٤:١١ م</span></div>
   <div style="display:flex;gap:8px;margin-top:14px">
    <input style="flex:1;padding:12px 14px;border:1.5px solid var(--border);border-radius:99px;font-family:inherit;font-size:13px" placeholder="اكتب…">
-   <button class="btn teal" style="width:46px;height:46px;padding:0;border-radius:50%;margin:0" onclick="playSound('pop');toast('📨 وصلت رسالتك لأبيك — سيرد عليك بسرعة 🤍')">◀</button></div></div>`},
+   <button class="btn teal" style="width:46px;height:46px;padding:0;border-radius:50%;margin:0">◀</button></div></div>`},
 
 'CHD-009':{hubIcon:'📞',t:'مكالمة (الابن)',grp:'الأساسية',app:'child',tab:'cfam',
  note:['نفس مكوّنات المكالمة بهوية الابن الفيروزية'],
@@ -2715,8 +2711,8 @@ const SCREENS = {
   <div class="av pulse" style="background:var(--p500);width:110px;height:110px;font-size:48px;margin:0 auto">👨</div>
   <h3 style="font-size:22px;font-weight:800;margin:16px 0 4px">أبي</h3><p class="mut">جارية · ٠١:١٢</p>
   <div style="display:flex;gap:14px;justify-content:center;margin-top:34px">
-   <button onclick="playSound('pop');toast('🔇 كتمت صوتك مؤقتًا — اضغط مجددًا لإعادته')" style="width:58px;height:58px;border-radius:50%;border:0;background:var(--surface);box-shadow:var(--sh-card);font-size:20px;cursor:pointer">🎙</button>
-   <button onclick="playSound('pop');toast('🔊 مكبر الصوت يعمل')" style="width:58px;height:58px;border-radius:50%;border:0;background:var(--surface);box-shadow:var(--sh-card);font-size:20px;cursor:pointer">🔊</button>
+   <button style="width:58px;height:58px;border-radius:50%;border:0;background:var(--surface);box-shadow:var(--sh-card);font-size:20px;cursor:pointer">🎙</button>
+   <button style="width:58px;height:58px;border-radius:50%;border:0;background:var(--surface);box-shadow:var(--sh-card);font-size:20px;cursor:pointer">🔊</button>
    <button onclick="go('CHD-007')" style="width:58px;height:58px;border-radius:50%;border:0;background:linear-gradient(135deg,#FF7A7E,#F0464C);font-size:20px;cursor:pointer;box-shadow:var(--sh-coral)">📵</button></div></div>`},
 
 'CHD-010':{hubIcon:'👁',t:'ماذا يُجمع عني',grp:'الأساسية',app:'child',tab:'me',
@@ -3817,15 +3813,7 @@ const SCREENS = {
    <div class="card" style="background:var(--grad-teal);color:#fff;text-align:center">
     <div class="hero-num">${total>0?total:'٠'} دقيقة</div>
     <div style="font-size:11.5px;opacity:.92">رصيدك الكلي من الدقائق المكتسبة 💪</div>
-    <div style="display:flex;justify-content:center;gap:10px;font-size:11.5px;opacity:.9;margin-top:6px"><span>🔥 ${AR(S.streak.days)} أيام التزام</span><span>🏅 ٧ شارات</span></div>
-  <div class="card"><h3>🏆 نافس نفسك — لا أحد غيرك</h3>
-   <div class="row"><span>🔥</span><div class="tx"><b>رقمك القياسي: ٩ أيام التزام متتالية</b><span>أنت الآن على ${AR(S.streak.days)} — اقترب موعد كسر رقمك! 💪</span></div></div>
-   <p class="sml" style="margin-top:4px">منافستك الوحيدة هي أرقامك السابقة — وهذا سر الأبطال 🤍</p></div>
-  <div class="card"><h3>🏅 خزانة شاراتي</h3>
-   <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
-    <span class="tag g">⭐ أول ورد ✓</span><span class="tag g">📿 أسبوع أذكار ✓</span><span class="tag g">🎯 ٥ جلسات تركيز ✓</span>
-    <span class="tag" style="background:var(--border)">🌙 شهر التزام</span><span class="tag" style="background:var(--border)">👑 بطل العائلة</span></div>
-   <p class="sml" style="margin-top:6px">٧ شارات محققة — والقادمة أجمل 🚀</p></div></div>
+    <div style="display:flex;justify-content:center;gap:10px;font-size:11.5px;opacity:.9;margin-top:6px"><span>🔥 ${AR(S.streak.days)} أيام التزام</span><span>🏅 ٧ شارات</span></div></div>
    <div class="card"><h3>⏱ محافظ تطبيقاتي</h3>
     <p class="sml" style="margin:2px 0 8px">كل تطبيق له محفظته — تعمل بعد انتهاء وقته اليومي (ولا تفتح الممنوع 🤍)</p>
     ${apps.map(a=>`<div class="row"><span>${a.icon}</span><div class="tx"><b>${a.name}</b><span>${a.walletMins>0?('رصيدك: '+a.walletMins+' دقيقة'):'لا رصيد بعد — اكسب بمهمة!'}</span></div>
@@ -3850,7 +3838,7 @@ const SCREENS = {
   <div class="card">
    <h3 style="font-size:14px;margin-bottom:8px">كم تحتاج من الوقت؟</h3>
    <div style="display:flex;gap:8px">
-     ${[['١٥ دقيقة',15],['٣٠ دقيقة',30],['ساعة كاملة',60]].map(([x,v])=>`<button class="btn ${S.timeReqMins===v?'teal':'sec'}" style="margin:0;padding:10px;font-size:12px${S.timeReqMins===v?';font-weight:800':''}" onclick="S.timeReqMins=${v};playSound('pop');render()">${x}</button>`).join('')}
+     ${['١٥ دقيقة','٣٠ دقيقة','ساعة كاملة'].map((x,i)=>`<button class="btn ${i==1?'teal':'sec'}" style="margin:0;padding:10px;font-size:12px">${x}</button>`).join('')}
    </div>
   </div>
 
@@ -4660,7 +4648,6 @@ const SCREENS = {
   <div class="card" style="margin-top:14px"><h3>مع وضع التركيز 🎯</h3>
    <div class="row"><div class="tx"><b>تشغيل تلقائي مع جلسة التركيز</b><span>يبدأ الصوت ويتوقف معها</span></div><span class="swt on"></span></div>
    <div class="row"><div class="tx"><b>خفوت تدريجي آخر دقيقتين</b><span>ينبهك بلطف أن الجلسة تنتهي</span></div><span class="swt on"></span></div></div>
-  <button class="btn teal" style="padding:12px;margin-bottom:10px" onclick="playSound('pop');go('CHD-018')">ابدأ جلسة تركيز الآن 🎯 — والصوت معك</button>
   <div class="banner t">🧠 أصوات طبيعية ثابتة بلا كلمات ولا إيقاع — العلم يقول: هذا ما يساعد الدماغ على التركيز.</div></div>`},
 
 'CHD-036':{hubIcon:'📞',t:'مرح المكالمة',grp:'المرح والإبداع',app:'child',tab:'cfam',
