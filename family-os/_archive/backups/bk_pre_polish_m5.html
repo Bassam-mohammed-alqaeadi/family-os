@@ -2187,7 +2187,7 @@ const SCREENS = {
  note:['محادثة عائلية خاصة ومشفرة بأعلى معايير الأمان', 'إمكانية تعديل الرسائل الحديثة وحفظ الخصوصية', 'بيئة تواصل دافئة بين أفراد البيت الواحد'],
  r:()=>{
   const W=S.chatWith||'khaled';
-  const inp=`<div style="display:flex;gap:8px"><button class="btn sec" style="width:46px;height:46px;padding:0;border-radius:50%;margin:0;font-size:17px" onclick="toast('📎 شارك صورة أو تسجيلًا صوتيًا (يصل مفرغًا نصًا) أو ملفًا — داخل دائرة العائلة فقط')">📎</button><input style="flex:1;padding:12px 14px;border:1.5px solid var(--border);border-radius:99px;font-family:inherit;font-size:13px" placeholder="اكتب رسالة…"><button class="btn" style="width:46px;padding:0;border-radius:50%;height:46px;margin:0">◀</button></div>`;
+  const inp=`<div style="display:flex;gap:8px"><input style="flex:1;padding:12px 14px;border:1.5px solid var(--border);border-radius:99px;font-family:inherit;font-size:13px" placeholder="اكتب رسالة…"><button class="btn" style="width:46px;padding:0;border-radius:50%;height:46px;margin:0">◀</button></div>`;
   const pref=(S.chatPrefs&&S.chatPrefs[W])||{bg:'#FDFCFF',theme:'p'};
   const enc=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span class="tag p">🔒 مشفّرة طرفيًا</span><span class="tag t" style="cursor:pointer" onclick="openChatSettingsSheet('${W}')">⚙️ إعدادات المحادثة</span></div>`;
   if(W==='family')return `${hd('عائلة عبدالله 👨‍👩‍👧‍👦','٥ أعضاء')}<div class="pad" style="background:${pref.bg};min-height:60vh">${enc}
@@ -2231,7 +2231,7 @@ const SCREENS = {
    <button style="width:58px;height:58px;border-radius:50%;border:0;background:var(--surface);box-shadow:var(--sh-card);font-size:20px;cursor:pointer">🔊</button>
    <button style="width:58px;height:58px;border-radius:50%;border:0;background:var(--surface);box-shadow:var(--sh-card);font-size:20px;cursor:pointer">📹</button>
    <button onclick="go('FAT-024')" style="width:58px;height:58px;border-radius:50%;border:0;background:linear-gradient(135deg,#FF7A7E,#F0464C);font-size:20px;cursor:pointer;box-shadow:var(--sh-coral)">📵</button></div>
-  <p class="sml" style="margin-top:30px">صوت وفيديو عبر LiveKit — بيانات وصفية فقط، لا تسجيل · 🔔 مكالمات الاطمئنان ترنّ عند الابن حتى لو كان جهازه صامتًا</p></div>`},
+  <p class="sml" style="margin-top:30px">صوت وفيديو عبر LiveKit — بيانات وصفية فقط، لا تسجيل</p></div>`},
 
 'FAT-024':{hubIcon:'📋',t:'سجل المكالمات',grp:'تبويب العائلة',app:'parent',tab:'family',
  note:['سجل المكالمات الأسرية الواردة والصادرة والفائتة', 'إمكانية الرد السريع أو إرسال رسالة حب'],
@@ -2675,7 +2675,7 @@ const SCREENS = {
 
 'CHD-007':{hubIcon:'📋',t:'محادثاتي',grp:'الأساسية',app:'child',tab:'cfam',
  note:['دائرة مغلقة — كل جهة اعتمدها الأب','لا غرباء إطلاقًا'],
- r:()=>`${hd('عائلتي 💬')}<div class="pad"> <p class="sml" style="text-align:center;margin:0 0 8px">🔒 كل محادثاتكم مشفّرة طرفيًا — ولا تُقفل أبدًا حتى بانتهاء وقتك</p> <div class="card">
+ r:()=>`${hd('عائلتي 💬')}<div class="pad"><div class="card">
   <div class="row" style="cursor:pointer" onclick="go('CHD-008')"><div class="av" style="background:var(--grad-teal)">👨‍👩‍👧‍👦</div><div class="tx"><b>عائلة عبدالله 📌</b><span>أمي: العشاء جاهز 🍽</span></div><div class="end"><span class="tag t">٢</span></div></div>
   <div class="row" style="cursor:pointer" onclick="go('CHD-008')"><div class="av" style="background:var(--p500)">👨</div><div class="tx"><b>أبي</b><span>اتفقنا — وارجع قبل المغرب 😊</span></div><div class="end">١:٥٢ م</div></div>
   <div class="row" style="cursor:pointer" onclick="go('CHD-008')"><div class="av" style="background:#FF8FA3">👩</div><div class="tx"><b>أمي</b><span>🎤 رسالة صوتية</span></div><div class="end">أمس</div></div></div>
@@ -2685,7 +2685,6 @@ const SCREENS = {
 'CHD-008':{hubIcon:'💬',t:'المحادثة (الابن)',grp:'الأساسية',app:'child',tab:'cfam',
  note:['قرار مثبّت: المحادثة لا تُقفل أبدًا حتى بنفاد الوقت','الاتصال بالوالدين حق دائم'],
  r:()=>`${hd('أبي 👨','متصل')}<div class="pad">
-  <div class="card" style="display:flex;align-items:center;gap:10px;border:2px solid var(--teal)"><span style="font-size:26px" class="pulse">📞</span><div class="tx" style="flex:1"><b>أبوك يتصل بك الآن</b><span>مكالمة اطمئنان — ترنّ حتى بالصامت</span></div><button class="btn teal" style="width:auto;padding:10px 18px;margin:0" onclick="playSound('success');toast('📞 رددت بلمسة واحدة — أبوك يسمعك الآن 🤍')">رد ✓</button></div>
   <div class="banner t" style="font-size:11px">💬 هذي المحادثة ما تقفل أبدًا — حتى لو خلص وقت اللعب. أهلك دايمًا موجودين.</div>
   <div class="bub yo">اتفقنا — وارجع قبل المغرب 😊<span class="t">١:٥٢ م</span></div>
   <div class="bub me">توّي واصل النادي مع فهد ⚽<span class="t">٤:١٠ م ✓✓</span></div>
