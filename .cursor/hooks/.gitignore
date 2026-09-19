@@ -1,0 +1,3 @@
+# Runtime hook state (local)
+.alerts_watermark
+protected-edit-*.diff
