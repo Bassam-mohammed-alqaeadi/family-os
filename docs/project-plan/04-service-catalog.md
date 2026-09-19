@@ -480,15 +480,15 @@ Spec template per Section B phase 3. `R#` = constitution rule.
 
 | ID | Item | Status |
 |---|---|---|
-| **ADR-036** | `S-EDU-030` نقاط · `S-EDU-032` استبدال النقاط بوقت شاشة · `S-EDU-033` XP ومستويات + 5 screens + 2 journeys use points/XP vocabulary, which Rule 4 / Register E-1 forbid | `REQUIRES PRODUCT DECISION` |
-| **ADR-037** | `S-EDU-036` أقسام تنافسية vs Register G-8 (no demotivating leaderboard) | `REQUIRES PRODUCT DECISION` |
-| **ADR-038** (new) | `S-AIC-030…034` الوكيل المفوَّض performs **automatic execution within delegation** with a 10-minute undo — tension with Rule 7 ("AI suggests, never executes") and Rule 26 ("`AiSuggestion` has no `execute()`"), while Register **A-5** explicitly sanctions a father-built rules agent with a log | `REQUIRES PRODUCT DECISION` — see below |
-| **T-1** (traceability) | `S-SEC-058/059/060` (وضع المدرسة) are bound only to the **tombstoned** `SCR-FAT-039`; they need a surviving host screen | Flag for phase 12 |
+| **ADR-036** | Registry points/XP labels vs minutes-only law | **RESOLVED-BY-OWNER-AUDIT** — legacy naming; map `S-EDU-030`→minutes ledger · `S-EDU-032`→`SUPERSEDED-BY-E-1` · `S-EDU-033`→badges only |
+| **ADR-037** | `S-EDU-036` vs G-8 | **RESOLVED-BY-OWNER-AUDIT** — cooperative challenges, no ranking; P2 post-v1 |
+| **ADR-038** | Delegated agent vs AI execute | **RESOLVED-BY-OWNER-AUDIT** — `RulesEngine` ≠ `AiSuggestion`; auto-run under conditions (a–f) |
+| **T-1** (traceability) | `S-SEC-058/059/060` rebound off tombstone FAT-039 | **Resolved** — primary host **`SCR-FAT-085`**; status **`SCR-CHD-004`** / **`SCR-FAT-063`**; focus **`SCR-CHD-018`** |
 | **D-1…D-5** (data) | No tables for screen-time policy, per-app wallets/ledger, time requests/grants, tasks, lock state | Phase 10 `ALTER`-style proposals |
 
-### 5.1 ADR-038 framing (not decided)
+### 5.1 ADR-038 architecture note (settled)
 
-The charter's **stage 5 (delegated agent)** and Register **A-5** allow the father to author if/then rules the assistant then runs, with a permanent action log and a 10-minute undo. Constitution Rules 7 and 26 state the app-side type system must make execution impossible. These are reconcilable in exactly one way the agent can see — **the father's pre-approval *is* the approval, and execution happens server-side under a father-authored rule, never as an app-side `AiSuggestion.execute()`** — but that reading changes what "every AI action ends with a parent-approval button" means in practice. Because it touches the highest-sanctity sovereignty rules, it is escalated rather than assumed.
+Two systems, no conflict: (1) AI gateways produce `AiSuggestion` with approve/reject only; (2) father-authored deterministic **`RulesEngine`** may auto-execute under ADR-038 conditions (a–f). RulesEngine lives **outside** Advisor/Insights/Tutor repositories.
 
 ---
 

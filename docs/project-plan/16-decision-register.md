@@ -59,69 +59,84 @@
 ---
 
 ## ADR-036 — Registry names “points / XP” while law says minutes only
-**Status:** `REQUIRES PRODUCT DECISION`  
-**Problem:** The service/screen/journey registry still uses legacy points/XP vocabulary, which constitution **Rule 4** and Register **E-1** forbid ("no points, no XP, no virtual coins — ever").
+**Status:** `RESOLVED-BY-OWNER-AUDIT` (2026-09-19)  
+**Problem:** The service/screen/journey registry still uses legacy points/XP vocabulary, which constitution **Rule 4** and Register **E-1** forbid.
 
-**Evidence (found in phase 3):**
+**Owner ruling — LEGACY NAMING, NOT BEHAVIOR:**
+- The frozen HTML has **ZERO** points/XP surfaces. `SCR-CHD-019` already renders **«محافظ تطبيقاتي»** (per-app wallets), repurposed under ق-٢ / Register **S-2**.
+- **Do NOT edit** `_REGISTRY` CSVs (additive-only law).
+- Discovery / implementation mapping (docs + code domain only):
 
-| Artifact | ID | Legacy name |
+| Registry ID | Legacy label | Binding meaning |
 |---|---|---|
-| Service | `S-EDU-030` | نقاط (points) |
-| Service | `S-EDU-032` | استبدال النقاط بوقت شاشة (exchange points for screen time) |
-| Service | `S-EDU-033` | XP ومستويات (XP and levels) |
-| Screen | `SCR-CHD-019` | نقاطي وشاراتي — "نقاط + شارات + مستويات + استبدال بوقت" |
-| Screen | `SCR-CHD-004` | note: "وقتي ونقاطي" |
-| Screen | `SCR-CHD-012` | note: "موادي + XP + سلسلة الأيام" |
-| Screen | `SCR-FAT-045` | note: "مكافأة نقاط/وقت" |
-| Screen | `SCR-FAT-055` | note: "مكافأة نقاط أو وقت" |
-| Journey | `JRN-CHD-07` | goal: "كسب نقاطًا" |
-| Journey | `JRN-CHD-10` | goal: "استبدل نقاطًا بوقت لعب" |
+| `S-EDU-030` | نقاط | **Minutes-earning ledger** (wallet deposits via `PolicyEngine.earn()`) |
+| `S-EDU-032` | استبدال النقاط بوقت شاشة | **`SUPERSEDED-BY-E-1`** — no exchange step; minutes *are* the currency |
+| `S-EDU-033` | XP ومستويات | **Celebration badges / progress levels with NO exchange value** (never a currency) |
 
-**Why it matters:** Register is supreme, so the *behavior* is already settled (minutes only, no exchange step). The open question is **naming/semantics of these registry entries**, which affects screen titles, ARB keys, and whether `S-EDU-032` (exchange) and `S-EDU-033` (XP/levels) survive at all.
+- Currency CI / Rule 4 hooks ban **CODE** (`points`/`coins`/`xp` in Dart), **not** historical CSV strings.
+- Domain vocabulary everywhere in Flutter: **`Minutes` / `Duration` only**.
 
-**Options (not selected — owner call):**
-1. **Reinterpret** — treat these as minutes-domain services: `S-EDU-030` = minutes wallet, `S-EDU-032` = **void** (no exchange needed, minutes are already the currency), `S-EDU-033` = progress levels **without XP currency**; rename UI copy to minutes language.
-2. **Retire** — mark `S-EDU-030/032/033` as superseded by minutes services; add replacement IDs additively.
-3. **Registry amendment** — owner-logged rename inside `_REGISTRY` (touches a LAW file; needs explicit authorization).
-
-**Agent recommendation:** Option 1 for behavior + Option 3 for naming hygiene, as one logged owner decision — because leaving "نقاط/XP" in the registry will collide with the `check_hardcoded_strings` / currency CI checks and the Rule 4 hook tripwire on every related screen.
-
-**Blocked:** Phase 3 full specs for `S-EDU-030/032/033` and the CHD-019 screen family.
+**Consequences:** Screen ports use minutes ARB copy matching the frozen HTML. Registry rows kept as historical labels. `S-EDU-032` is a no-op / documentation tombstone in the service catalog.
 
 ---
 
 ## ADR-037 — `S-EDU-036` “competitive divisions” vs no-leaderboard law
-**Status:** `REQUIRES PRODUCT DECISION`  
-**Problem:** `S-EDU-036` «أقسام تنافسية» (competitive divisions/leagues, P2, wave 3) conflicts with Register **G-8**: family challenges have no demotivating leaderboard, "no ranking that embarrasses anyone".
+**Status:** `RESOLVED-BY-OWNER-AUDIT` (2026-09-19)  
+**Problem:** `S-EDU-036` «أقسام تنافسية» appeared to conflict with Register **G-8**.
 
-**Options (not selected):**
-1. Retire `S-EDU-036`.
-2. Redefine as **non-ranking** cohorts (e.g. personal-progress tiers visible only to the child and parents).
-3. Keep as-is → would require amending G-8 (supreme law) — not recommended.
+**Owner ruling — REINTERPRET:**
+- `S-EDU-036` = **cooperative family challenges**: one shared family goal; **each child’s own progress is celebrated**; **NO ranking / leaderboard** (G-8 wins).
+- Remains **P2**, **post-v1**.
 
-**Agent recommendation:** Option 2 if the owner wants to keep the motivational idea; otherwise Option 1. Either way, no descending cross-child ranking may ship.
-
-**Blocked:** Phase 3 spec for `S-EDU-036`; phase 13 gap classification for the gamification subsystem.
+**Consequences:** No descending cross-child ranking may ship. UI shows personal progress + shared goal completion only.
 
 ---
 
 ## ADR-038 — Delegated agent (`S-AIC-030…034`) vs “AI never executes”
-**Status:** `REQUIRES PRODUCT DECISION`  
-**Problem:** The AIC subsystem و «الوكيل المفوَّض» contains `S-AIC-031` **التنفيذ التلقائي ضمن التفويض** (automatic execution within delegation) and `S-AIC-033` **زر التراجع خلال ١٠ دقائق** (10-minute undo). Constitution **Rule 7** ("all intelligence suggests, never executes — every AI action ends with a parent-approval button") and **Rule 26** ("`AiSuggestion` has NO `execute()` method") appear to forbid exactly that, while Register **A-5** explicitly sanctions a father-built if/then rules agent with a log of everything it did, and the AI charter lists *delegated agent* as stage 5.
+**Status:** `RESOLVED-BY-OWNER-AUDIT` (2026-09-19)  
+**Problem:** Auto-execution in `S-AIC-031` appeared to conflict with Rules 7 and 26, while Register **A-5** sanctions a father-built rules agent.
 
-**Context:** All three sources are sealed law. The tension is about **where consent lives in time**: pre-authorized rule vs per-action button.
+**Owner ruling — TWO SYSTEMS, NO CONFLICT:**
+1. **A-5’s agent = deterministic father-authored if/then `RulesEngine`** (the father’s pre-written will) — **not** an `AiSuggestion`.
+2. **Rule 26** governs **AI proposals only** (`AdvisorRepository` / `InsightsRepository` / `TutorRepository`).
+3. **`S-AIC-031` auto-execution is ALLOWED** when all of the following hold:
+   - (a) Rules authored by the **father only**
+   - (b) Every action → `audit_log` **and** a visible action feed
+   - (c) **10-minute undo** mandatory (`S-AIC-033`)
+   - (d) **NEVER** performs ADR-035 owner-only actions (anti-tamper, unlock father-blocked apps, edit delegation level)
+   - (e) Never mints minutes beyond father-defined rule amounts
+   - (f) AI may only **SUGGEST** rules → father approves them into the RulesEngine
+4. **Architecture:** `RulesEngine` lives **OUTSIDE** the three AI gateways.
 
-**Options (not selected):**
-1. **Pre-approval reading** — the father's authored rule *is* the approval; execution occurs **server-side** under that rule; the app still has no `execute()` path, and every action is logged + undoable for 10 minutes. (Preserves Rule 26's type-level guarantee.)
-2. **Strict reading** — the delegated agent only ever *queues* actions and each still needs a tap; `S-AIC-031` is downgraded to "auto-prepare, manual confirm".
-3. **Amend Rule 7** to carve out father-authored rules explicitly (touches highest-sanctity sovereignty law).
+**Consequences:** Architecture docs must show two paths: AI suggest→approve vs RulesEngine execute-under-authored-rule. Type system still forbids `AiSuggestion.execute()`.
 
-**Agent recommendation:** Option 1 **if and only if** the owner confirms that a father-authored rule counts as prior approval, with three hard conditions: execution never happens app-side, every action writes to `audit_log` (`S-AIC-034`), and the 10-minute undo is guaranteed offline as well. Otherwise Option 2. The agent will not assume which reading is intended, because Rule 7 and Rule 26 are in the highest-sanctity tier.
+---
 
-**Blocked:** Phase 3 batch B7 (5 services), phase 8 AI architecture section, phase 13 severity ranking for the delegated-agent subsystem.
+## T-1 — School-mode services rebound off tombstone FAT-039
+**Status:** `RESOLVED-BY-OWNER-AUDIT` (2026-09-19)  
+**Problem:** `S-SEC-058/059/060` were bound only to tombstoned `SCR-FAT-039`, while «وضع المدرسة» is still alive in the frozen HTML (exactly **5** string hits).
+
+**Evidence (frozen HTML):**
+| Location | Screen | Role |
+|---|---|---|
+| `smartModes.modes.school` + management UI | **`SCR-FAT-085`** الأوضاع الذكية | **Primary config host** (schedule, kids, allowed apps, activate) |
+| Status card «وضع المدرسة نشط» | **`SCR-CHD-004`** لوحة يومي | Child-facing active status |
+| Timeline stop «وضع المدرسة نشط» | **`SCR-FAT-063`** الخط الزمني للفرد | Parent insight timeline |
+| Focus / school focus state | **`SCR-CHD-018`** (already lists `S-SEC-060`) | Focus state surface |
+| State comment (`activeId` / day-board notes) | supporting | Prototype notes only |
+
+**Binding (docs only — registry CSV not edited):**
+
+| Service | Rebind hosts |
+|---|---|
+| `S-SEC-058` جدول وضع المدرسة | **`SCR-FAT-085`** (primary) · journey `JRN-FAT-20` |
+| `S-SEC-059` التفعيل التلقائي بالموقع | **`SCR-FAT-085`** |
+| `S-SEC-060` حالة Focus | **`SCR-CHD-018`** + status mirrors on **`SCR-CHD-004`** / **`SCR-FAT-063`** |
+
+Tombstone `SCR-FAT-039` remains unroutable (ADR-034).
 
 ---
 
 ## Register hygiene
 - Next free ADR ID: **ADR-039**.
-- Doc-drift items (CWF-002 "22 rules", CWF-003 stale 71/128 counts in `README`/`START_HERE`) are **documentation hygiene**, not product decisions; they need an owner-approved doc commit because `handoff/` is outside discovery's write scope.
+- Doc-drift items (CWF-002 "22 rules", CWF-003 stale counts in `README`/`START_HERE`) are **documentation hygiene**, not product decisions; they need an owner-approved doc commit because `handoff/` is outside discovery's write scope.
