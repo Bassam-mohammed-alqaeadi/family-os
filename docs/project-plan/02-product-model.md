@@ -65,7 +65,7 @@ Secondary:
 3. **Sovereignty & safety** — Child cannot bypass; SOS always works; chat/Quran/SOS never locked by expiry; anti-tamper switches.
 4. **Communication** — E2EE family chat; critical-alert check-ins; LiveKit metadata-only calls.
 5. **Intelligence** — Advisor / Insights / Tutor repositories; server-side stage flags; on-device identity abstraction before events leave device.
-6. **Platform** — Offline-first last-synced state; 129/130 screens (see CWF-001); Arabic human copy; additive fixes only.
+6. **Platform** — Offline-first last-synced state; **129 active screens + 1 tombstone (FAT-039)**; Arabic human copy; additive fixes only.
 
 ---
 
@@ -119,7 +119,9 @@ A feature is complete only when (Rule 24 + Register):
 
 | ID | Topic | Why not decided here |
 |---|---|---|
-| CWF-001 | Seal 129 vs CSV 130 screens | Count authority |
+| ~~CWF-001~~ | ~~Seal 129 vs CSV 130 screens~~ | **Resolved** — ADR-034 (129 active + tombstone) |
+| CWF-004 / ADR-036 | Registry «نقاط / XP» naming vs minutes-only law | Supreme law says minutes; registry rename is an owner call |
+| CWF-005 / ADR-037 | Competitive divisions vs no-leaderboard law | Owner call |
 | Preflight A1–A2 | Flutter/Dart pin + Arabic font | Owner pick before F0 |
 | Preflight C1 | Bundle ID / display name | Store identity |
 | Doc 20 future | Ownership transfer | Explicitly wave 2 |

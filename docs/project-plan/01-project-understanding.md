@@ -57,19 +57,23 @@ Family OS («عائلتي») is a **documentation + frozen prototype** package p
 
 Per Section A2: trust sealed counts; **flag deltas — do not overwrite**.
 
-| Artifact | Sealed claim (A2 / START_HERE) | Actual CSV (2026-09-19) | Delta |
+| Artifact | Sealed claim (A2 / START_HERE) | Actual CSV (2026-09-19) | Verdict |
 |---|---:|---:|---|
-| Screens | **129** (FAT 85 / CHD 37 / SHR 7) | **130** (FAT/الوالدان **86** / CHD **37** / SHR **7**) | **+1 screen** → `CONFLICT-WITH-FROZEN` |
+| Screens | **129 active** | **130 rows** = 129 active **+ 1 tombstone** | **Match** — see below |
 | Services | **240** | **240** | Match |
 | Journeys | **73** | **73** | Match |
 
-**Screens by wave (CSV):** W1=51 · W2=46 · W3=33 (=130)
+**CWF-001 — RESOLVED by owner audit (ADR-034).** `screens.csv` holds 130 rows, but `SCR-FAT-039` («وضع المدرسة») is a **tombstone row**: its name field carries `[محذوفة نهائيًا بقرار أد-١٢ + ق-١٢ في 37]`, matching Register **§G-2** ("Official screen count: 129 — FAT-039 permanently deleted"). Verified: it is the **only** tombstone in the registry. `SCR-FAT-086` (لحظات عائلتنا) is legitimate — present in the frozen prototype and bound to `JRN-FAT-45` (لحظة الفخر الأسبوعية, wave 1).
+
+**Counting convention for all discovery docs:** *129 active screens + 1 tombstone (FAT-039)*. The registry is **not** edited (additive-only law).
+
+**Screens by wave (CSV rows incl. tombstone):** W1=51 · W2=46 · W3=33 (=130)
 
 **Services by domain (CSV):** SEC 60 · COM 39 · EDU 65 · AIC 34 · ADM 42 (=240)
 
 **Journeys by actor (CSV):** FAT/الأب 45 · MOT/الأم 9 · CHD/الابن 18 · SHR/مشترك 1 (=73)
 
-Extra screen ID observed vs FAT-85 claim: **`SCR-FAT-086`** (لحظات عائلتنا) — candidate for the +1 delta. Owner must confirm whether sealed count updates to 130 or registry row is erroneous.
+Parent-app rows total 86, of which **85 are active** (86 − FAT-039 tombstone) — exactly matching the sealed FAT 85 / CHD 37 / SHR 7 split.
 
 ---
 
@@ -120,9 +124,11 @@ Architecture maps these to feature folders `features/nXX_<system>/` (54 audited 
 
 | ID | Conflict | Evidence | Action |
 |---|---|---|---|
-| **CWF-001** | Screen count 129 vs 130 | A2 / constitution Rule 3 / START_HERE vs `screens.csv` + product README 130 | Owner: confirm sealed count or fix registry |
+| **CWF-001** | Screen count 129 vs 130 | Tombstone `SCR-FAT-039` + Register §G-2 | **RESOLVED-BY-OWNER-AUDIT** (ADR-034): 129 active + 1 tombstone |
 | **CWF-002** | START_HERE / root README still say **22** constitution rules | Files vs `01_CURSOR_CONSTITUTION.md` title **26** | Doc hygiene — constitution file wins; update START_HERE in a later owner-approved doc commit (out of discovery touch scope for `handoff/`) |
-| **CWF-003** | Some product README rows still cite 71 journeys / 128 screens | Stale table vs CSV 73/130 | Flag only — do not overwrite registry |
+| **CWF-003** | Some product README rows still cite 71 journeys / 128 screens | Stale table vs CSV 73/130 rows | Flag only — do not overwrite registry |
+| **CWF-004** | Registry still names **points / XP** as reward currency | `S-EDU-030` نقاط · `S-EDU-032` استبدال النقاط بوقت شاشة · `S-EDU-033` XP ومستويات + 5 screens + 2 journeys | Conflicts Rule 4 / Register **E-1** (minutes only). Register is supreme → registry naming is legacy. **REQUIRES PRODUCT DECISION** (ADR-036) |
+| **CWF-005** | `S-EDU-036` «أقسام تنافسية» (competitive divisions) | Register **G-8**: no demotivating leaderboard | **REQUIRES PRODUCT DECISION** (ADR-037) |
 
 Frozen product decisions (minutes-only, no OTP, one-app, AI suggests-never-acts, offline-first, SOS free forever, SCR-SHR-004 deleted) — **no conflict found**; treated as inputs.
 

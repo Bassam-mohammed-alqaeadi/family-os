@@ -77,9 +77,13 @@ Mother levels (father-set, default **PARTNER / مشاركة**):
 | Approve time-extension request | ✅ | ⛔ | ✅ (≤30 min per doc 20) | ✅ | ⛔ | Request | Suggest |
 | Manual grant / wallet gift | ✅ | ⛔ | ◐ if delegated | ◐ | ⛔ | — | Suggest |
 | Edit rules / daily caps / blocks | ✅ | ⛔ | ⛔ | ✅ | ⛔ | ⛔ | Suggest |
-| Instant lock child apps | ✅ | ⛔ | ⛔ | ◐ full | ⛔ | ⛔ | ⛔ |
+| **Instant lock** child device/apps | ✅ | ⛔ | ⛔ | **✅** (protective; father reversible) | ⛔ | ⛔ | ⛔ |
+| **Unlock a father-blocked app** | ✅ **owner-only** | ⛔ | ⛔ | **⛔** | ⛔ | ⛔ | ⛔ |
+| **Edit the delegation level itself** | ✅ **owner-only** | ⛔ | ⛔ | **⛔** | ⛔ | ⛔ | ⛔ |
 | Smart modes create/edit | ✅ | ⛔ | ⛔ | ✅ | ⛔ | Sees tint/card | Suggest |
 | Bypass father limits | — | ⛔ | ⛔ | ⛔ | ⛔ | **Never** | ⛔ |
+
+**ADR-035 (owner ruling, 2026-09-19):** At Mother **FULL**, *instant lock* is **allowed** as a protective action that the father can reverse. **Father-only even at FULL:** anti-tamper switches, unlocking a father-blocked app, and changing the delegation level. On simultaneous conflicting actions, **the father always wins**; every such action and conflict resolution writes to `audit_log`.
 
 ### 3.4 Safety, location, network
 
@@ -88,7 +92,7 @@ Mother levels (father-set, default **PARTNER / مشاركة**):
 | Configure geofences / safe zones | ✅ | ⛔ | ⛔ | ✅ | ⛔ | — | Suggest |
 | Configure SOS escalation ladder | ✅ | ⛔ | ⛔ | ⛔* | ⛔ | Trigger SOS | — |
 | Web filter level / lists | ✅ | ⛔ | ⛔ | ✅ | ⛔ | Sees block page | Suggest |
-| Anti-tamper switches | ✅ | ⛔ | ⛔ | ◐ | ⛔ | Subject to | — |
+| **Anti-tamper switches** | ✅ **owner-only** | ⛔ | ⛔ | **⛔** | ⛔ | Subject to | — |
 | Contact whitelist / strangers block | ✅ | ⛔ | ⛔ | ✅ | ⛔ | Uses approved | — |
 
 \*Emergency contact setup is father-owned in registry (`SCR-FAT-028`); mother always **receives** SOS (right that does not grade).
@@ -161,8 +165,8 @@ Absence of a “Mother app” in `screens.csv` is **consistent** with dual-mode 
 |---|---|---|
 | — | Schema has no `CHILD` in `member_role` | **Consistent** with A3 (child = `child` table). Not a conflict. |
 | — | Guardian secondary | **Consistent** with CHECK + doc 20. |
-| **CWF-001** | 129 vs 130 screens | Unrelated to roles; still open from inventory. |
-| **REQUIRES PRODUCT DECISION** (later) | Exact Mother FULL vs Father overlap on instant lock / anti-tamper | Doc 20 says FULL can edit rules & geofences; edge capabilities to confirm in service catalog phase. |
+| **CWF-001** | 129 vs 130 screens | **Resolved** (ADR-034) — 129 active + tombstone FAT-039. |
+| ~~Mother FULL edges~~ | Instant lock / anti-tamper / block-unlock / level edit | **Resolved** (ADR-035) — encoded in §3.3–§3.4 above. |
 
 ---
 
