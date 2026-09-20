@@ -64,3 +64,32 @@ Verified locally against current main (line-level evidence in verdict doc). 20 m
 | GAP-A-CHILD-002 | P1 | FAT-034, CHD-010 | No age-band engine or band-transition event (consent at 13, independence at 18) | ANALYSIS-GAP |
 
 **Closure specs**: the 11-field specs from the hunter report are ADOPTED as drafted (with the 3 revisions above) — to be transplanted into 08-gap-closure-specs.md §GH-1 during conversion planning. Nothing touches frozen v1.0 surfaces; all closures are additive spec-layer work.
+
+## Batch GH-2 — CHILD-APP (Session Pass 6) · merged 2026-09-21
+
+Source: external gap-hunter, fresh public-repo clone. Verified line-by-line against frozen prototype (verdict: docs/project-plan/11-gap-hunter-batch2-verdict.md). 20 findings: 18 merged, 2 revised-then-merged, 0 rejected (rejection archive: docs/gap-review/rejected.md). Closure specs (11-field) adopted by reference; transplant into docs/project-plan/08-gap-closure-specs.md #GH-2 during conversion planning. IDs keep domain suffix (normalization deferred to spec transplant — see verdict doc).
+
+| ID | Sev | Where | Finding (verified evidence) | Class |
+|---|---|---|---|---|
+| GAP-A-CHILD-003 | P1 | CHD-001/002/003/005/006/011 | bare:true screens outside stateGuard — no offline/empty/error states | ANALYSIS-GAP |
+| GAP-A-CHILD-004 | P0 | approve flow | L1067 depositWallet(req.appId||'youtube') — no wallet-routing contract, silent misroute | ANALYSIS-GAP |
+| GAP-A-CHILD-005 | P0 | CHD-023/CHD-036 | Off-channel minting: L3658 & L4405 pay +10 min outside the 5 sacred channels | ANALYSIS-GAP |
+| GAP-A-CHILD-006 | P0 | quran flow | Contradictory prices L3640(+35)/L3170(+50)/L3735(+20)/L3739(+70)/L4352(hardcoded +30 vs q.rewardMins) | ANALYSIS-GAP |
+| GAP-A-CHILD-007 | P0 | CHD-025 quiz | L3729 qList[0] single question; correct:0 x6 -> first-option-wins; attempts never consumed (farmable) | ANALYSIS-GAP |
+| GAP-A-CHILD-008 | P0 | CHD-011 | One-click reveal L2747; promised 3-strike/24h lockout (L2406/L2751) has zero logic | ANALYSIS-GAP |
+| GAP-A-CHILD-009 | P1 | CHD-020/004 | L2478 reply map hardcodes father attribution; mother grants (ADR-039) invisible to child | ANALYSIS-GAP |
+| GAP-A-CHILD-010 | P0 | CHD-003 | Consent = setRole('child') only (L2467); no consent record/version/timestamp anywhere | ANALYSIS-GAP |
+| GAP-A-CHILD-011 | P1 | CHD-010 | No retention/export/disclosure content in privacy screen | ANALYSIS-GAP |
+| GAP-A-CHILD-012 | P1 | global | No ChildId param: 'خالد' x244 literals; L3921 t.kid filter; L977 KIDS[0] | ANALYSIS-GAP |
+| GAP-A-CHILD-013 | P1 | CHD-018/035 | Focus start = toast only (L3813); no session record; S-5 auto-reward absent; inert swt toggles | ANALYSIS-GAP |
+| GAP-A-CHILD-014 | P1 | time requests | tradeOffer written (L393/L3884) never read by decideTimeRequest — child bargain dropped | ANALYSIS-GAP |
+| GAP-A-CHILD-015 | P0 | family modes | Child-side onclick nulls S.familyModes.graceLeft (L2485); setFamilyMode actorless toggle (L1063) — ADR-035 breach path | ANALYSIS-GAP |
+| GAP-D-CHILD-002 | P2 | CHD-022/004 | 3rd-person pronoun on child screen; dual field extraMins||points (L2654) | ANALYSIS-GAP |
+| GAP-D-CHILD-003 | P1 | CHD-019 | Blocked apps filtered out of child wallet WITH their balances (L878) | ANALYSIS-GAP |
+| GAP-D-CHILD-004 | P2 | CHD-023 | 'احتاج مراجعة' = card flip + toast, no review queue (L3698) | ANALYSIS-GAP |
+| GAP-D-CHILD-005 | P1 | arrival alert | REVISED: father widget DOES render battery/sentLove (L1817-1916); real gap = promised child-side received-love never rendered; battery has no data contract (static everywhere) | ANALYSIS-GAP |
+| GAP-OPP-CHILD-001 | OPP | refusals | Fairness receipt on refusal (why/who/what-next) | V1.1-SUPREMACY |
+| GAP-OPP-CHILD-002 | OPP | child home | Weekly child trust digest | V1.1-SUPREMACY |
+| GAP-OPP-CHILD-003 | OPP | offline | Offline promise card (what still works offline) | V1.1-SUPREMACY |
+
+P0 cumulative after GH-2 = 10. Economic-integrity cluster (GH-1 SEC-002 + A-004/005/006/007) closes as ONE architecture: the Minute Ledger (single source of truth; channel whitelist = the 5; one rewards price table; server-side attempt consumption).
