@@ -250,11 +250,11 @@ Spec template per Section B phase 3. `R#` = constitution rule.
 |---|---|
 | **Purpose** | Child asks for more time; parent decides; effect is immediate and visible |
 | **Primary role** | Child (initiates) |
-| **Other affected** | Father (decides), Mother **②/③** (may approve, ≤30 min per doc 20), Advisor (may suggest) |
+| **Other affected** | Father (decides), Mother **②/③** (may approve ≤ **active ceiling**, default 30 min — **ADR-039**), Advisor (may suggest) |
 | **Entry screens** | Child request sheet → parent request inbox / alert |
 | **Inputs** | requested `Minutes`, reason |
 | **Outputs** | approve → grant; reject → reason; **both** visible to child |
-| **Settings** | mother approval ceiling (≤30 min) · quiet-hours behavior |
+| **Settings** | mother approval ceiling (default ≤30 min; FULL may edit rule value if father exposed — ADR-039) · quiet-hours behavior |
 | **Business rules** | **Ruling C**: a manual grant intersecting a scheduled mode must raise the conflict dialog with `complete` \| `freeze` chosen at grant time · grant respects cap unless `allowWalletOverflow` · **Rule 24**: approval must actually deposit and reflect on the child side |
 | **Permissions** | Mother ① cannot approve |
 | **State** | request entity + grant entity |
@@ -269,7 +269,7 @@ Spec template per Section B phase 3. `R#` = constitution rule.
 | **Audit** | Every decision + approver identity |
 | **Testing** | Integration: request → mother② approve → child balance +N → audit row |
 | **Status / missing** | Registry "موجودة"; DB + loop closure missing |
-| **Ambiguities** | Whether mother ③ also has the 30-min ceiling → **clarify with owner** (doc 20 states the ceiling under level ②) |
+| **Ambiguities** | **Resolved by ADR-039** — FULL inherits ≤30 min per-grant ceiling; over-ceiling = OWNER-only |
 
 ---
 

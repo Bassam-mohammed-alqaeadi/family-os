@@ -44,7 +44,8 @@ Every row below follows:
 | Action | Other-role UX | Domain state | FamilyEvent / sync | DB write | Notification? | Timing | Offline | SET / law |
 |---|---|---|---|---|---|---|---|---|
 | Father approves child task proof | Child sees wallet balance ↑; Moments/thanks path as designed | `Minutes` deposit via **PolicyEngine.earn() only** | `TaskApproved` → sync | ledger / wallet (phase 10 drift); `audit_log` | Child success toast; optional Moments | **Immediate** after sync ack | Queue approve; deposit applies on reconnect; child shows pending if designed | E-1/E-2; matrix §5 |
-| Mother ②/③ approves request | Same child wallet path; Father sees actor = mother in audit | Same PolicyEngine deposit | `TaskApproved` (actor=PARENT) | same + audit actor | Child same; Father optional digest | Immediate after sync | Same queue rules | E-4 (mother tasks ≠ minutes when she is assignee) |
+| Mother ②/③ approves **time** request | Child balance ↑ within ceiling; over-ceiling denied for mother | Grant ≤ active ceiling | `TimeGranted` | grant + audit | Child decision toast | Immediate after sync | Queue | **ADR-039**; UF-05 |
+| Mother ②/③ approves task proof | Same child wallet path; Father sees actor = mother in audit | Same PolicyEngine deposit | `TaskApproved` (actor=PARENT) | same + audit actor | Child same; Father optional digest | Immediate after sync | Same queue rules | E-4 (mother tasks ≠ minutes when she is assignee) |
 | Father sets reward `Minutes` at task create | Child sees reward on task card (no hidden default) | Task reward bound | `TaskCreated` | task store | Child new-task | On create sync | Child sees after sync | Rule 6; SET economy law-bound |
 | Father wallet overflow switch (default off) | Child overflow behavior matches flag | Ruling B flag | `WalletPolicyChanged` | policy store (**SET-024**) | None critical | Same session after sync | Last-synced flag | **SET-024** |
 
@@ -187,4 +188,4 @@ No new `REQUIRES PRODUCT DECISION` items opened in this phase.
 - [x] SET IDs cross-linked to `GAP_LOG.md`
 - [x] Actor model 3+2 respected
 
-**Next:** Phase 6 — user flow analysis (`07-user-flows.md` per master command naming).
+**Next:** Phase 6 — user flow analysis (`07-user-flows.md`) — **complete**; continue Phase 7.
