@@ -155,6 +155,34 @@ Tombstone `SCR-FAT-039` remains unroutable (ADR-034).
 ---
 
 ## Register hygiene
-- Next free ADR ID: **ADR-039**.
+- Next free ADR ID: **ADR-040**.
 - ADR-035-b is a lettered extension of ADR-035 (not a new numeric slot).
 - Doc-drift items (CWF-002 "22 rules", CWF-003 stale counts in `README`/`START_HERE`) are **documentation hygiene**, not product decisions; they need an owner-approved doc commit because `handoff/` is outside discovery's write scope.
+
+---
+
+## ADR-039 — Mother grant ceiling ≤30 min for PARTNER and FULL
+**Status:** `RESOLVED-BY-OWNER-AUDIT` (2026-09-20)  
+**Supersedes:** FLOW-AMB-001 (`REQUIRES PRODUCT DECISION`)
+
+**Problem:** UF-05 / `S-SEC-004` was unclear whether Mother **③ FULL** inherits the ≤30 minute per-grant ceiling stated for level ②, or may approve any duration.
+
+**Evidence (authoritative):** `family-os/20_MOTHER_PERMISSIONS.md` §3 delegation table:
+
+| Permission row | ① OBSERVER | ② PARTNER | ③ FULL |
+|---|:-:|:-:|:-:|
+| **منح وقت إضافي (≤٣٠ د)** | ⛔ | ✅ | ✅ |
+| **تعديل القواعد والحدود** | ⛔ | ⛔ | ✅ |
+
+The ceiling **≤٣٠ د** is part of the grant permission itself — the same cell applies to PARTNER and FULL. No FULL exemption exists in the table.
+
+**Decision:**
+1. Mother **FULL inherits** the ≤30 min **per-grant** ceiling (same as PARTNER).
+2. FULL’s extra power is **تعديل القواعد والحدود**: she may edit the ceiling **value as a rule** only if the father exposed that ceiling as an editable rule — but a **single grant** can never exceed the **active** ceiling.
+3. Exceeding the ceiling in-the-moment (one-shot over-ceiling grant) is **OWNER-only**.
+
+**Consequences:**
+- `PermissionMatrix` / UF-05 validation: Mother ② and ③ both capped at active ceiling (default 30 min unless rule edited).
+- Over-ceiling approve UI is father-only; mother attempt → permission-denied.
+- Encoded in `03-role-permission-matrix.md` §3.3, `07-user-flows.md` UF-05, `04-service-catalog.md` `S-SEC-004`.
+- Next free ADR remains **ADR-040**.

@@ -74,7 +74,7 @@ Mother levels (father-set, default **PARTNER / مشاركة**):
 | Create task with **minutes** reward | ✅ sets amount | ⛔ | ◐ add/edit task | ◐ | ⛔ | Complete/proof | Suggest only |
 | Assign task to mother (help request) | ✅ | Receives (no minutes) | same | same | ⛔ | — | — |
 | Approve child proof → deposit minutes | ✅ | ⛔ | ✅ | ✅ | ⛔ | — | Propose; father/mother²⁺ approve |
-| Approve time-extension request | ✅ | ⛔ | ✅ (≤30 min per doc 20) | ✅ | ⛔ | Request | Suggest |
+| Approve time-extension request | ✅ (may exceed active ceiling) | ⛔ | ✅ (**≤30 min** / active ceiling — ADR-039) | ✅ (**≤30 min** / active ceiling — ADR-039) | ⛔ | Request | Suggest |
 | Manual grant / wallet gift | ✅ | ⛔ | ◐ if delegated | ◐ | ⛔ | — | Suggest |
 | Edit rules / daily caps / blocks | ✅ | ⛔ | ⛔ | ✅ | ⛔ | ⛔ | Suggest |
 | **Instant lock** child device/apps | ✅ | ⛔ | ⛔ | **✅** (protective; father reversible) | ⛔ | ⛔ | ⛔ |
@@ -86,6 +86,8 @@ Mother levels (father-set, default **PARTNER / مشاركة**):
 **ADR-035 (owner ruling, 2026-09-19):** At Mother **FULL**, *instant lock* is **allowed** as a protective action that the father can reverse. **Father-only even at FULL:** anti-tamper switches, unlocking a father-blocked app, and changing the delegation level. On simultaneous conflicting actions, **the father always wins**; every such action and conflict resolution writes to `audit_log`.
 
 **ADR-035-b (owner ruling, 2026-09-20):** Anti-tamper is not only non-editable for the mother — it is **INVISIBLE** in her UI at **every** delegation level (OBSERVER / PARTNER / FULL). RoleGuard / composition omits the surface.
+
+**ADR-039 (owner ruling, 2026-09-20):** Doc 20 table row **«منح وقت إضافي (≤٣٠ د)»** is ✅ for PARTNER **and** FULL — the ceiling is part of the permission. FULL may edit the ceiling **rule value** only via **«تعديل القواعد والحدود»** when the father exposed it; a single grant never exceeds the active ceiling; over-ceiling grants are **OWNER-only**.
 
 ### 3.4 Safety, location, network
 
