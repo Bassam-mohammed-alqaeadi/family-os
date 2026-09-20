@@ -17,13 +17,17 @@ def rtl(p):
     bidi = OxmlElement('w:bidi'); bidi.set(qn('w:val'), '1')
     pPr.append(bidi)
 
-def set_font(run, size=12, bold=False, color=INK):
+def set_font(run, size=12, bold=False, color=INK, rtl_run=True):
     run.font.name = FONT; run.font.size = Pt(size); run.font.bold = bold
     run.font.color.rgb = color
     rPr = run._r.get_or_add_rPr()
     rFonts = rPr.get_or_add_rFonts()
     rFonts.set(qn('w:cs'), FONT); rFonts.set(qn('w:ascii'), FONT); rFonts.set(qn('w:hAnsi'), FONT)
     cs = OxmlElement('w:szCs'); cs.set(qn('w:val'), str(size*2)); rPr.append(cs)
+    if bold:
+        bCs = OxmlElement('w:bCs'); bCs.set(qn('w:val'), '1'); rPr.append(bCs)
+    if rtl_run:
+        r = OxmlElement('w:rtl'); r.set(qn('w:val'), '1'); rPr.append(r)
 
 def h(doc, text, size=18, color=BRAND):
     p = doc.add_paragraph(); rtl(p); p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
@@ -55,22 +59,22 @@ if __name__ == '__main__':
     for s in doc.sections:
         s.page_width, s.page_height = Cm(21), Cm(29.7)
     # صفحة العينة — بوابة و٠
-    h(doc, 'عائلتي — Family OS', 26)
-    h(doc, 'صفحة عينة الأنماط (بوابة و٠)', 16, INK)
+    h(doc, 'نظام «عائلتي» (Family OS)', 26)
+    h(doc, 'صفحة عينة الأنماط — بوابة المحطة و٠', 16, INK)
     h(doc, '١-١ عنوان فرعي من المستوى الثاني', 14)
     body(doc, 'هذه فقرة نصية عادية بخط Cairo واتجاه من اليمين إلى اليسار، تحاكي أسلوب فقرات المرجع الزراعي. يعد نظام «عائلتي» منصة تربوية متكاملة تربط إنجاز الأبناء بعملة الدقائق، وتمنح الأب تحكمًا كاملًا وشفافًا بلا خداع.')
     body(doc, 'وتتفرع المشكلة العامة إلى المشكلات الآتية: (عينة من نمط التفريع في المرجع).')
     h(doc, 'جدول ١-١: عينة بنسق «المرحلة/الأعمال/المخرج المتوقع»', 12, INK)
     table(doc,
         ['المرحلة', 'الأعمال التي ستُنفَّذ', 'المخرج المتوقع'],
-        [['التحليل', 'جرد الخدمات والرحلات من السجل الرسمي', '٢٤٠ خدمة موزعة على ٥ دومينات'],
-         ['النمذجة', 'مخططات UML: حالات استخدام وتسلسل ونشاط', 'حزمة drawio + SVG'],
-         ['التصميم', 'ERD وجداول الحقل/الوصف من schema.sql', '٢٠ جدول قاعدة بيانات موثقًا']])
+        [['التحليل', 'جرد الخدمات والرحلات من السجل الرسمي (_REGISTRY)', '٢٤٠ خدمة موزعة على ٥ مجالات'],
+         ['النمذجة', 'نمذجة موحدة (UML): حالات استخدام وتسلسل ونشاط', 'حزمة مصادر (drawio) وصور (SVG)'],
+         ['التصميم', 'مخطط الكيانات (ERD) وجداول الحقل/الوصف من عقد قاعدة البيانات (schema.sql)', '٢٠ جدولًا موثقًا']])
     doc.add_paragraph()
     h(doc, 'جدول ١-٢: عينة بنسق «الحقل/الوصف»', 12, INK)
     table(doc, ['الحقل', 'الوصف'],
-        [['id', 'معرف فريد للسجل (uuid)'],
-         ['family_id', 'مفتاح أجنبي إلى جدول العائلة'],
-         ['role', 'دور العضو: OWNER أو PARENT أو GUARDIAN']])
+        [['id', 'معرّف فريد للسجل من نوع (uuid)'],
+         ['family_id', 'مفتاح أجنبي (FK) إلى جدول العائلة (family)'],
+         ['role', 'دور العضو: مالك (OWNER) أو والد (PARENT) أو وصي (GUARDIAN)']])
     doc.save('صفحة_العينة_و0.docx')
     print('✅ صفحة_العينة_و0.docx')
