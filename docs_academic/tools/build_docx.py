@@ -76,5 +76,5 @@ if __name__ == '__main__':
         [['id', 'معرّف فريد للسجل من نوع (uuid)'],
          ['family_id', 'مفتاح أجنبي (FK) إلى جدول العائلة (family)'],
          ['role', 'دور العضو: مالك (OWNER) أو والد (PARENT) أو وصي (GUARDIAN)']])
-    doc.save('صفحة_العينة_و0.docx')
-    print('✅ صفحة_العينة_و0.docx')
+    doc.save('samples/صفحة_العينة_و0.docx')
+    print('✅ samples/صفحة_العينة_و0.docx')
