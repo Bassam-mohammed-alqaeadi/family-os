@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="2350" font-family="Segoe UI, Tahoma" direction="rtl">
+<defs>
+<marker id="tri" markerWidth="16" markerHeight="14" refX="15" refY="7" orient="auto"><path d="M1,1 L15,7 L1,13 Z" fill="white" stroke="#1A1D2E" stroke-width="1.3"/></marker>
+<marker id="arr" markerWidth="12" markerHeight="10" refX="11" refY="5" orient="auto"><path d="M1,1 L11,5 L1,9" fill="none" stroke="#1A1D2E" stroke-width="1.3"/></marker>
+</defs>
+<rect width="1600" height="2350" fill="#FAFAFC"/>
+<rect x="330" y="40" width="1090" height="2260" fill="white" stroke="#1A1D2E" stroke-width="1.6" rx="4"/>
+<text x="875" y="72" text-anchor="middle" font-size="18" font-weight="bold" fill="#7C5CE6">يوز كيس الابن التفصيلي ٣/٣ — التعلم والقرآن</text>
+<text x="875" y="92" text-anchor="middle" font-size="12" fill="#666">المجموعتان: تعلمي (١٧ عملية — الأثقل) · قرآني وأذكاري (٥ عمليات — قناة دستورية)</text>
+<g stroke="#1A1D2E" stroke-width="1.6" fill="none">
+<circle cx="1450" cy="1000" r="13"/><line x1="1450" y1="1013" x2="1450" y2="1048"/>
+<line x1="1430" y1="1025" x2="1470" y2="1025"/>
+<line x1="1450" y1="1048" x2="1434" y2="1075"/><line x1="1450" y1="1048" x2="1466" y2="1075"/></g>
+<text x="1450" y="1094" text-anchor="middle" font-size="13.5" font-weight="bold">الابن</text><text x="1450" y="1110" text-anchor="middle" font-size="11" fill="#555">(Child)</text>
+<g stroke="#1A1D2E" stroke-width="1.6" fill="none">
+<circle cx="170" cy="500" r="13"/><line x1="170" y1="513" x2="170" y2="548"/>
+<line x1="150" y1="525" x2="190" y2="525"/>
+<line x1="170" y1="548" x2="154" y2="575"/><line x1="170" y1="548" x2="186" y2="575"/></g>
+<text x="170" y="594" text-anchor="middle" font-size="13.5" font-weight="bold">المستشار</text><text x="170" y="610" text-anchor="middle" font-size="11" fill="#555">(AI — نظامي: يصحح ويقترح)</text>
+<g stroke="#1A1D2E" stroke-width="1.6" fill="none">
+<circle cx="170" cy="1800" r="13"/><line x1="170" y1="1813" x2="170" y2="1848"/>
+<line x1="150" y1="1825" x2="190" y2="1825"/>
+<line x1="170" y1="1848" x2="154" y2="1875"/><line x1="170" y1="1848" x2="186" y2="1875"/></g>
+<text x="170" y="1894" text-anchor="middle" font-size="13.5" font-weight="bold">الأب</text><text x="170" y="1910" text-anchor="middle" font-size="11" fill="#555">(Father)</text>
+<rect x="360" y="115" width="820" height="30" fill="#F5F0FF" stroke="none"/><text x="770" y="136" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#7C5CE6">المجموعة ٦ — تعلمي (١٧ عملية)</text>
+<ellipse cx="1060" cy="185" rx="110" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="189" text-anchor="middle" font-size="11.5" font-weight="bold">ع٣٩ موادي الدراسية</text>
+<ellipse cx="1060" cy="265" rx="125" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="269" text-anchor="middle" font-size="11.5" font-weight="bold">ع٤٠ عرض الدرس + المستورد</text>
+<ellipse cx="1060" cy="345" rx="125" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="349" text-anchor="middle" font-size="11.5" font-weight="bold">⭐ ع٤١ واجبي: عرض وإرسال وحالة</text>
+<ellipse cx="1060" cy="430" rx="128" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="434" text-anchor="middle" font-size="11.5" font-weight="bold">🔔 ع٤٢ تصحيح واجبي تلقائيًا</text>
+<ellipse cx="620" cy="410" rx="140" ry="26" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="414" text-anchor="middle" font-size="11.5" font-weight="bold">بالمستشار (AIC-020) — بلا تنفيذ ذاتي</text>
+<line x1="932" y1="420" x2="765" y2="412" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="855" y="404" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1060" cy="510" rx="125" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="514" text-anchor="middle" font-size="11.5" font-weight="bold">ع٤٣ أداء اختبار + تحديد مستوى</text>
+<ellipse cx="1060" cy="590" rx="105" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="594" text-anchor="middle" font-size="11.5" font-weight="bold">ع٤٤ نتيجتي</text>
+<ellipse cx="1060" cy="670" rx="128" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="674" text-anchor="middle" font-size="11.5" font-weight="bold">⭐ ع٤٥ معلمي الذكي (شرح متدرج)</text>
+<ellipse cx="620" cy="650" rx="140" ry="26" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="654" text-anchor="middle" font-size="11.5" font-weight="bold">بالتدرج لا بالجواب الجاهز (EDU-020)</text>
+<line x1="932" y1="660" x2="765" y2="652" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="855" y="644" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1060" cy="750" rx="122" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="754" text-anchor="middle" font-size="11.5" font-weight="bold">ع٤٦ حل مسألة بالكاميرا</text>
+<ellipse cx="1060" cy="830" rx="128" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="834" text-anchor="middle" font-size="11.5" font-weight="bold">ع٤٧ توصيات مهاراتي + كتابتي</text>
+<ellipse cx="1060" cy="910" rx="128" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="914" text-anchor="middle" font-size="11.5" font-weight="bold">⭐ ع٤٨ خطتي الذكية (تكيفية)</text>
+<ellipse cx="620" cy="890" rx="125" ry="25" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="894" text-anchor="middle" font-size="11.5" font-weight="bold">تتكيف مع مستواي وفجواتي</text>
+<line x1="932" y1="900" x2="747" y2="892" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="845" y="884" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1060" cy="990" rx="128" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="994" text-anchor="middle" font-size="11.5" font-weight="bold">ع٤٩ تمارين متدرجة + مسارات</text>
+<ellipse cx="1060" cy="1070" rx="125" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1074" text-anchor="middle" font-size="11.5" font-weight="bold">🔔 ع٥٠ كشف مفهومي المفقود</text>
+<ellipse cx="1060" cy="1150" rx="128" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1154" text-anchor="middle" font-size="11.5" font-weight="bold">ع٥١ مراجعة يومي (متباعدة)</text>
+<ellipse cx="1060" cy="1230" rx="120" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1234" text-anchor="middle" font-size="11.5" font-weight="bold">ع٥٢ قصصي التفاعلية</text>
+<ellipse cx="1060" cy="1310" rx="135" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1314" text-anchor="middle" font-size="11.5" font-weight="bold">ع٥٣ التحديات العائلية التعاونية</text>
+<ellipse cx="620" cy="1290" rx="140" ry="26" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="1294" text-anchor="middle" font-size="11.5" font-weight="bold">بلا ترتيب محبط (G-8 + ADR-037)</text>
+<line x1="925" y1="1300" x2="765" y2="1292" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="852" y="1284" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1060" cy="1390" rx="122" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1394" text-anchor="middle" font-size="11.5" font-weight="bold">ع٥٤ استكشاف «قادم لك 🎁»</text>
+<ellipse cx="1060" cy="1470" rx="125" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1474" text-anchor="middle" font-size="11.5" font-weight="bold">ع٥٥ مرح وإبداع متقدم</text>
+<rect x="360" y="1540" width="820" height="30" fill="#EFFBF5" stroke="none"/><text x="770" y="1561" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#0E8F6E">المجموعة ٧ — قرآني وأذكاري (٥ عمليات — قناة كسب دستورية لا تُحجب)</text>
+<ellipse cx="1060" cy="1610" rx="128" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1614" text-anchor="middle" font-size="11.5" font-weight="bold">⭐ ع٥٦ وردي: حفظ وتلاوة</text>
+<ellipse cx="1060" cy="1695" rx="125" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1699" text-anchor="middle" font-size="11.5" font-weight="bold">ع٥٧ متابعة حفظي وتقدمي</text>
+<ellipse cx="1060" cy="1775" rx="128" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1779" text-anchor="middle" font-size="11.5" font-weight="bold">⭐ ع٥٨ تلاوتي الذكية</text>
+<ellipse cx="620" cy="1755" rx="140" ry="26" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="1759" text-anchor="middle" font-size="11.5" font-weight="bold">تصحيح بلطف وعلم (AIC-023)</text>
+<line x1="932" y1="1765" x2="765" y2="1757" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="855" y="1749" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1060" cy="1855" rx="115" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1859" text-anchor="middle" font-size="11.5" font-weight="bold">ع٥٩ أذكاري اليومية</text>
+<ellipse cx="1060" cy="1935" rx="135" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1939" text-anchor="middle" font-size="11.5" font-weight="bold">🔔 ع٦٠ استقبال هدية سورة من أبي</text>
+<ellipse cx="620" cy="1915" rx="135" ry="26" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="1919" text-anchor="middle" font-size="11.5" font-weight="bold">نص + تلاوة + إشعار هدية (S-6)</text>
+<line x1="925" y1="1925" x2="760" y2="1917" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="850" y="1909" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<line x1="1435" y1="1040" x2="1185" y2="187" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1040" x2="1185" y2="267" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1040" x2="1185" y2="347" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1040" x2="1185" y2="432" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1040" x2="1185" y2="512" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1040" x2="1185" y2="592" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1040" x2="1185" y2="672" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1040" x2="1185" y2="752" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1040" x2="1185" y2="832" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1040" x2="1185" y2="912" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1040" x2="1185" y2="992" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1040" x2="1185" y2="1072" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1040" x2="1185" y2="1152" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1040" x2="1185" y2="1232" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1040" x2="1185" y2="1312" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1040" x2="1185" y2="1392" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1040" x2="1185" y2="1472" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1040" x2="1185" y2="1612" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1040" x2="1185" y2="1697" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1040" x2="1185" y2="1777" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1040" x2="1185" y2="1857" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1040" x2="1185" y2="1937" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="215" y1="540" x2="932" y2="432" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.45" stroke-dasharray="5,3"/>
+<line x1="215" y1="540" x2="932" y2="672" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.45" stroke-dasharray="5,3"/>
+<line x1="215" y1="540" x2="932" y2="912" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.45" stroke-dasharray="5,3"/>
+<line x1="215" y1="540" x2="935" y2="1072" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.45" stroke-dasharray="5,3"/>
+<line x1="215" y1="540" x2="932" y2="1777" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.45" stroke-dasharray="5,3"/>
+<text x="330" y="700" font-size="10.5" fill="#888" transform="rotate(20 330 700)">يصحح ويرشد — بلا تنفيذ ذاتي (ADR-033)</text>
+<line x1="215" y1="1840" x2="925" y2="1940" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.5" stroke-dasharray="5,3"/>
+<text x="430" y="1905" font-size="10.5" fill="#888">يهدي السورة</text>
+<g font-size="12"><rect x="20" y="2000" width="270" height="150" rx="8" fill="white" stroke="#D0D3E0"/>
+<text x="155" y="2022" text-anchor="middle" font-weight="bold" fill="#7C5CE6">مفتاح القراءة</text>
+<line x1="35" y1="2042" x2="80" y2="2042" stroke="#1A1D2E" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="90" y="2046">&#171;include&#187; إلزامي دائمًا</text>
+<line x1="35" y1="2067" x2="80" y2="2067" stroke="#1A1D2E" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="90" y="2071">&#171;extend&#187; شرطي أحيانًا</text>
+<line x1="35" y1="2092" x2="80" y2="2092" stroke="#1A1D2E" marker-end="url(#tri)"/><text x="90" y="2096">generalization وراثة</text>
+<text x="35" y="2121">⭐ عمود فقري · 🔔 حدثية (G-6) · برتقالي = مشترَكة</text>
+<text x="35" y="2140" fill="#888">منقّط باهت = مشاهدة (observer)</text></g>
+</svg>
