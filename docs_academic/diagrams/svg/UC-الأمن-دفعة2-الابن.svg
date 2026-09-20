@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1560" height="1350" font-family="Segoe UI, Tahoma" direction="rtl">
+<defs>
+<marker id="tri" markerWidth="16" markerHeight="14" refX="15" refY="7" orient="auto"><path d="M1,1 L15,7 L1,13 Z" fill="white" stroke="#1A1D2E" stroke-width="1.3"/></marker>
+<marker id="arr" markerWidth="12" markerHeight="10" refX="11" refY="5" orient="auto"><path d="M1,1 L11,5 L1,9" fill="none" stroke="#1A1D2E" stroke-width="1.3"/></marker>
+</defs>
+<rect width="1560" height="1350" fill="#FAFAFC"/>
+<rect x="330" y="40" width="1050" height="1260" fill="white" stroke="#1A1D2E" stroke-width="1.6" rx="4"/>
+<text x="855" y="72" text-anchor="middle" font-size="18" font-weight="bold" fill="#7C5CE6">نظام الأمن (SEC) — الدفعة ٢: عمليات الابن</text>
+<text x="855" y="92" text-anchor="middle" font-size="12" fill="#666">الابن فاعلًا أساسيًا — الحالات مع كل عملياتها الفرعية</text>
+<g stroke="#1A1D2E" stroke-width="1.6" fill="none">
+<circle cx="1400" cy="560" r="13"/><line x1="1400" y1="573" x2="1400" y2="608"/>
+<line x1="1380" y1="585" x2="1420" y2="585"/>
+<line x1="1400" y1="608" x2="1384" y2="635"/><line x1="1400" y1="608" x2="1416" y2="635"/></g>
+<text x="1400" y="654" text-anchor="middle" font-size="13.5" font-weight="bold">الابن</text><text x="1400" y="670" text-anchor="middle" font-size="11" fill="#555">(Child)</text>
+<g stroke="#1A1D2E" stroke-width="1.6" fill="none">
+<circle cx="160" cy="300" r="13"/><line x1="160" y1="313" x2="160" y2="348"/>
+<line x1="140" y1="325" x2="180" y2="325"/>
+<line x1="160" y1="348" x2="144" y2="375"/><line x1="160" y1="348" x2="176" y2="375"/></g>
+<text x="160" y="394" text-anchor="middle" font-size="13.5" font-weight="bold">الوالد</text><text x="160" y="410" text-anchor="middle" font-size="11" fill="#555">(Parent — مستقبِل)</text>
+<g stroke="#1A1D2E" stroke-width="1.6" fill="none">
+<circle cx="150" cy="950" r="13"/><line x1="150" y1="963" x2="150" y2="998"/>
+<line x1="130" y1="975" x2="170" y2="975"/>
+<line x1="150" y1="998" x2="134" y2="1025"/><line x1="150" y1="998" x2="166" y2="1025"/></g>
+<text x="150" y="1044" text-anchor="middle" font-size="13.5" font-weight="bold">الجد</text><text x="150" y="1060" text-anchor="middle" font-size="11" fill="#555">(Guardian — OBSERVER)</text>
+<ellipse cx="1010" cy="170" rx="115" ry="34" fill="#FFE9E9" stroke="#1A1D2E" stroke-width="1.3"/><text x="1010" y="174" text-anchor="middle" font-size="11.5" font-weight="bold">⭐ 🔔 UC-12 طلب الاستغاثة (SOS)</text>
+<ellipse cx="600" cy="130" rx="108" ry="25" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="134" text-anchor="middle" font-size="11.5" font-weight="bold">ضغطة ٣ ثوانٍ</text>
+<ellipse cx="600" cy="190" rx="110" ry="25" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="194" text-anchor="middle" font-size="11.5" font-weight="bold">بث الموقع والصوت</text>
+<ellipse cx="600" cy="250" rx="135" ry="26" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="254" text-anchor="middle" font-size="11.5" font-weight="bold">اختراق كل الأقفال والصامت (P-4)</text>
+<line x1="902" y1="155" x2="708" y2="133" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="795" y="128" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<line x1="898" y1="172" x2="710" y2="188" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="800" y="192" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<line x1="905" y1="192" x2="745" y2="247" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="810" y="240" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1010" cy="360" rx="112" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1010" y="364" text-anchor="middle" font-size="11.5" font-weight="bold">⭐ UC-18 طلب وقت إضافي</text>
+<ellipse cx="600" cy="335" rx="108" ry="25" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="339" text-anchor="middle" font-size="11.5" font-weight="bold">طلب مهذب بسبب</text>
+<ellipse cx="600" cy="395" rx="128" ry="26" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="399" text-anchor="middle" font-size="11.5" font-weight="bold">شاشة «انتهى الوقت بلطف»</text>
+<line x1="900" y1="350" x2="708" y2="337" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="795" y="330" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<line x1="903" y1="375" x2="728" y2="392" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="805" y="395" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1010" cy="480" rx="122" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1010" y="484" text-anchor="middle" font-size="11.5" font-weight="bold">⭐ UC-43 الفتح المشروط (قناة ٥)</text>
+<ellipse cx="600" cy="460" rx="120" ry="25" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="464" text-anchor="middle" font-size="11.5" font-weight="bold">رؤية الشرط على البطاقة</text>
+<ellipse cx="600" cy="520" rx="125" ry="26" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="524" text-anchor="middle" font-size="11.5" font-weight="bold">إنجاز الشرط ← فتح المحفظة</text>
+<line x1="893" y1="470" x2="720" y2="462" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="800" y="452" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<line x1="897" y1="495" x2="725" y2="518" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="805" y="518" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1010" cy="600" rx="112" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1010" y="604" text-anchor="middle" font-size="11.5" font-weight="bold">UC-22 جلسة تركيز للمذاكرة</text>
+<ellipse cx="600" cy="580" rx="132" ry="26" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="584" text-anchor="middle" font-size="11.5" font-weight="bold">وقت الجلسة لا يُحسب من الرصيد</text>
+<ellipse cx="600" cy="640" rx="110" ry="25" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="644" text-anchor="middle" font-size="11.5" font-weight="bold">أصوات تركيز هادئة</text>
+<line x1="893" y1="590" x2="745" y2="582" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="818" y="572" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<line x1="897" y1="615" x2="710" y2="638" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="800" y="638" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1010" cy="720" rx="110" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1010" y="724" text-anchor="middle" font-size="11.5" font-weight="bold">إشعار «أنا وصلت» (من UC-10)</text>
+<ellipse cx="600" cy="700" rx="115" ry="25" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="704" text-anchor="middle" font-size="11.5" font-weight="bold">مشاركة موقعي بضغطة</text>
+<line x1="898" y1="710" x2="715" y2="702" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="800" y="695" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1010" cy="830" rx="118" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1010" y="834" text-anchor="middle" font-size="11.5" font-weight="bold">فهم قواعدي وما يُجمع عني</text>
+<ellipse cx="600" cy="810" rx="120" ry="25" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="814" text-anchor="middle" font-size="11.5" font-weight="bold">شاشة «ماذا يُجمع عني»</text>
+<ellipse cx="600" cy="870" rx="128" ry="26" fill="#EEF2FF" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="874" text-anchor="middle" font-size="11.5" font-weight="bold">صفحة الحجب المهذبة + طلب فتح</text>
+<line x1="895" y1="820" x2="725" y2="812" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="805" y="802" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<line x1="732" y1="868" x2="898" y2="842" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="800" y="878" text-anchor="middle" font-size="11" font-style="italic" fill="#C0392B" font-weight="bold">&#171;extend&#187;</text>
+<ellipse cx="1010" cy="950" rx="120" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1010" y="954" text-anchor="middle" font-size="11.5" font-weight="bold">دخول وضع الابن (النمط الثنائي)</text>
+<ellipse cx="600" cy="930" rx="118" ry="25" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="934" text-anchor="middle" font-size="11.5" font-weight="bold">المدخل السري (وثيقة ١٩)</text>
+<ellipse cx="600" cy="990" rx="125" ry="26" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="994" text-anchor="middle" font-size="11.5" font-weight="bold">قفل وضع الابن عند الخروج</text>
+<line x1="893" y1="940" x2="722" y2="932" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="800" y="922" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<line x1="897" y1="965" x2="727" y2="988" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="805" y="988" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<g font-size="11">
+<rect x="820" y="1060" width="380" height="120" rx="8" fill="#FFF9F0" stroke="#E8B04B"/>
+<text x="1010" y="1082" text-anchor="middle" font-weight="bold" fill="#B7791F">قيود دستورية على عمليات الابن (ليست حالات)</text>
+<text x="1185" y="1105" text-anchor="end">• لا يتجاوز حدود الأب أبدًا — انتهاء الرصيد = قفل تلقائي</text>
+<text x="1185" y="1125" text-anchor="end">• المحظور الصلب لا يفتحه إلا الأب</text>
+<text x="1185" y="1145" text-anchor="end">• المحادثة/القرآن/الاستغاثة لا تُحجب عنه أبدًا (P-4)</text>
+<text x="1185" y="1165" text-anchor="end">• كل ما يُراقب معروض له بشفافية — لا خداع</text></g>
+<line x1="1385" y1="600" x2="1123" y2="172" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="1.0"/>
+<line x1="1385" y1="600" x2="1120" y2="362" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="1.0"/>
+<line x1="1385" y1="600" x2="1130" y2="482" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="1.0"/>
+<line x1="1385" y1="600" x2="1120" y2="602" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="1.0"/>
+<line x1="1385" y1="600" x2="1118" y2="722" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="1.0"/>
+<line x1="1385" y1="600" x2="1126" y2="832" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="1.0"/>
+<line x1="1385" y1="600" x2="1128" y2="952" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="1.0"/>
+<line x1="205" y1="340" x2="893" y2="180" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.5" stroke-dasharray="5,3"/>
+<line x1="205" y1="340" x2="895" y2="368" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.5" stroke-dasharray="5,3"/>
+<line x1="205" y1="340" x2="897" y2="728" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.5" stroke-dasharray="5,3"/>
+<text x="410" y="245" font-size="10.5" fill="#888">يستقبل: البلاغ / الطلب / أنا وصلت</text>
+<line x1="195" y1="970" x2="890" y2="195" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.4" stroke-dasharray="3,3"/>
+<text x="360" y="690" font-size="10.5" fill="#888" transform="rotate(-63 360 690)">يستقبل البلاغ — observer</text>
+<g font-size="12"><rect x="20" y="1060" width="270" height="150" rx="8" fill="white" stroke="#D0D3E0"/>
+<text x="155" y="1082" text-anchor="middle" font-weight="bold" fill="#7C5CE6">مفتاح القراءة</text>
+<line x1="35" y1="1102" x2="80" y2="1102" stroke="#1A1D2E" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="90" y="1106">&#171;include&#187; إلزامي دائمًا</text>
+<line x1="35" y1="1127" x2="80" y2="1127" stroke="#1A1D2E" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="90" y="1131">&#171;extend&#187; شرطي أحيانًا</text>
+<line x1="35" y1="1152" x2="80" y2="1152" stroke="#1A1D2E" marker-end="url(#tri)"/><text x="90" y="1156">generalization وراثة</text>
+<text x="35" y="1181">⭐ عمود فقري · 🔔 حدثية (G-6) · برتقالي = مشترَكة</text>
+<text x="35" y="1200" fill="#888">منقّط باهت = مشاهدة (observer)</text></g>
+</svg>
