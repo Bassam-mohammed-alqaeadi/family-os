@@ -267,7 +267,8 @@ Applied the same 14 questions at cluster level (expand to row-level in phase 7 i
 
 ## 7. Priority backlog for conversion
 
-**Living store:** root [`GAP_LOG.md`](../../GAP_LOG.md) — `SET-001…024` seeded as `CONVERSION-BACKLOG` (Rule 23: not prototype defects). Phase 13 imports these IDs; do not fork.
+**Living store:** root [`GAP_LOG.md`](../../GAP_LOG.md) — IDs only.  
+**Full analytical closures:** [`08-gap-closure-specs.md`](08-gap-closure-specs.md) (Phase 6.5 — owner directive). One-line closures are not sufficient.
 
 | Priority | IDs | Why first |
 |---|---|---|
@@ -277,7 +278,7 @@ Applied the same 14 questions at cluster level (expand to row-level in phase 7 i
 | P1 | SET-008, SET-009, SET-011→014, SET-016, SET-017, SET-024 | Completeness + honesty |
 | P2 | Cluster language/calendar polish | After spine |
 
-Each conversion task that touches a settings screen must: bind → persist → enforce in `core/policy/` → close child/parent loop → update `GAP_LOG.md` status if anything remains out of scope (Rule 24).
+Each conversion task that touches a settings screen must: implement the matching **GAP-CLOSURE** in `08-gap-closure-specs.md` → persist → enforce in `core/policy/` → close child/parent loop → update `GAP_LOG.md` status (Rule 24).
 
 ---
 

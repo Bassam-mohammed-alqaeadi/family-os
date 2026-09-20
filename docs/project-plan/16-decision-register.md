@@ -150,13 +150,14 @@ Tombstone `SCR-FAT-039` remains unroutable (ADR-034).
 - Instant lock remains allowed at Mother FULL (ADR-035) — that is a separate permission key (`INSTANT_LOCK`), not anti-tamper.
 - Encoded in `03-role-permission-matrix.md` §3.4 / §5 and cross-role maps in `06-cross-role-dependencies.md`.
 
-**Does not replace ADR-035** — lettered extension only. Next free numeric ADR remains **ADR-039**.
+**Does not replace ADR-035** — lettered extension only. Next free numeric ADR remains **ADR-040** (ADR-039 assigned to grant ceiling).
 
 ---
 
 ## Register hygiene
 - Next free ADR ID: **ADR-040**.
 - ADR-035-b is a lettered extension of ADR-035 (not a new numeric slot).
+- PROC-001 is a process note, not an ADR number.
 - Doc-drift items (CWF-002 "22 rules", CWF-003 stale counts in `README`/`START_HERE`) are **documentation hygiene**, not product decisions; they need an owner-approved doc commit because `handoff/` is outside discovery's write scope.
 
 ---
@@ -186,3 +187,17 @@ The ceiling **≤٣٠ د** is part of the grant permission itself — the same c
 - Over-ceiling approve UI is father-only; mother attempt → permission-denied.
 - Encoded in `03-role-permission-matrix.md` §3.3, `07-user-flows.md` UF-05, `04-service-catalog.md` `S-SEC-004`.
 - Next free ADR remains **ADR-040**.
+
+---
+
+## PROC-001 — Phase 6.5 gap-closure specs (owner process directive)
+**Status:** `RESOLVED-BY-OWNER-AUDIT` (2026-09-20) · process note (not a product ADR)
+
+**Directive:** Analytical closure of gaps must happen **inside discovery**. One-line GAP_LOG closures are not acceptable. Every `SET-001…024` (and every Phase 7 `UI-*` gap) requires a full **GAP-CLOSURE** block (owner/controller, storage, change semantics, cross-role, offline, edges, validation, notification, acceptance criteria, bound laws).
+
+**File numbering override (vs master command list):**
+- `08-gap-closure-specs.md` = Phase **6.5** (SET closures)
+- `09-ui-ux-gap-analysis.md` = Phase **7** (UI audit + UI closures)
+- Next architecture doc = `10-system-architecture.md`
+
+**Consequences:** `GAP_LOG.md` retains IDs as an index with pointers; full text lives in `08-` / `09-`. No production code in this phase (Rule 23).
