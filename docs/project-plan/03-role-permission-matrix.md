@@ -85,6 +85,8 @@ Mother levels (father-set, default **PARTNER / مشاركة**):
 
 **ADR-035 (owner ruling, 2026-09-19):** At Mother **FULL**, *instant lock* is **allowed** as a protective action that the father can reverse. **Father-only even at FULL:** anti-tamper switches, unlocking a father-blocked app, and changing the delegation level. On simultaneous conflicting actions, **the father always wins**; every such action and conflict resolution writes to `audit_log`.
 
+**ADR-035-b (owner ruling, 2026-09-20):** Anti-tamper is not only non-editable for the mother — it is **INVISIBLE** in her UI at **every** delegation level (OBSERVER / PARTNER / FULL). RoleGuard / composition omits the surface.
+
 ### 3.4 Safety, location, network
 
 | Capability | Father | Mother ① | Mother ② | Mother ③ | Guardian | Child | Advisor |
@@ -92,7 +94,7 @@ Mother levels (father-set, default **PARTNER / مشاركة**):
 | Configure geofences / safe zones | ✅ | ⛔ | ⛔ | ✅ | ⛔ | — | Suggest |
 | Configure SOS escalation ladder | ✅ | ⛔ | ⛔ | ⛔* | ⛔ | Trigger SOS | — |
 | Web filter level / lists | ✅ | ⛔ | ⛔ | ✅ | ⛔ | Sees block page | Suggest |
-| **Anti-tamper switches** | ✅ **owner-only** | ⛔ | ⛔ | **⛔** | ⛔ | Subject to | — |
+| **Anti-tamper switches** | ✅ **owner-only** | ⛔ **UI omitted** | ⛔ **UI omitted** | ⛔ **UI omitted** (**ADR-035-b**) | ⛔ | Subject to | — |
 | Contact whitelist / strangers block | ✅ | ⛔ | ⛔ | ✅ | ⛔ | Uses approved | — |
 
 \*Emergency contact setup is father-owned in registry (`SCR-FAT-028`); mother always **receives** SOS (right that does not grade).
@@ -133,14 +135,16 @@ Mother FULL still **cannot** take owner-only billing/privacy/audit/wipe.
 
 ## 5. Cross-role propagation rules (matrix companions)
 
-Every mutating action must define the other side (phase 5 will expand). Minimum laws already sealed:
+Full dependency maps: [`06-cross-role-dependencies.md`](06-cross-role-dependencies.md). Minimum laws already sealed:
 
 | When… | Then… |
 |---|---|
 | Father approves task | Child wallet updates **instantly**; Moments/thanks paths as designed |
 | Mother ②/③ approves request | Same deposit path via PolicyEngine; audit shows actor |
 | Father changes mother level | Mother notified; approval log append-only; downgrade double-confirm |
-| Time expires | Entertainment locks; **chat / Quran / SOS stay up** |
+| Mother opens device-defense settings | Anti-tamper surface **absent** (**ADR-035-b**) — not greyed, not shown |
+| Time expires | Entertainment locks; **chat / Quran / SOS stay up** (P-4 / Rules 9/11) |
+| Quiet hours / DND active | **Cannot** silence SOS/critical — Register **P-4** |
 | Advisor suggests | UI shows approve/reject; no silent apply |
 | Child goes offline | Last-synced state; honest offline template |
 
@@ -166,7 +170,7 @@ Absence of a “Mother app” in `screens.csv` is **consistent** with dual-mode 
 | — | Schema has no `CHILD` in `member_role` | **Consistent** with A3 (child = `child` table). Not a conflict. |
 | — | Guardian secondary | **Consistent** with CHECK + doc 20. |
 | **CWF-001** | 129 vs 130 screens | **Resolved** (ADR-034) — 129 active + tombstone FAT-039. |
-| ~~Mother FULL edges~~ | Instant lock / anti-tamper / block-unlock / level edit | **Resolved** (ADR-035) — encoded in §3.3–§3.4 above. |
+| ~~Mother FULL edges~~ | Instant lock / anti-tamper / block-unlock / level edit | **Resolved** (ADR-035 + **ADR-035-b** invisible anti-tamper) — encoded in §3.3–§3.4 above. |
 
 ---
 

@@ -137,6 +137,24 @@ Tombstone `SCR-FAT-039` remains unroutable (ADR-034).
 
 ---
 
+## ADR-035-b — Anti-tamper invisible in mother’s UI
+**Status:** `RESOLVED-BY-OWNER-AUDIT` (2026-09-20)  
+**Problem:** ADR-035 correctly makes anti-tamper **father-only**, but “non-editable” controls still leak owner capability into the mother’s UI if the surface is shown (disabled toggles, greyed rows). Phase 4 flagged this as `SET-OWNER-LEAK` / `SET-007`.
+
+**Context:** Register **R-2** (mother = delegated agent), ADR-035 (anti-tamper OWNER-only even at FULL), constitution Rule 8 (RoleGuard), owner audit of Phase 4 settings.
+
+**Decision:** Anti-tamper controls must be **INVISIBLE** in the mother’s UI at **every** delegation level (OBSERVER / PARTNER / FULL) — not merely non-editable. RoleGuard / UI composition **omits the surface**; the mother must not see anti-tamper rows, switches, or related affordances.
+
+**Consequences:**
+- `SET-007` / `SET-OWNER-LEAK` closure = **not rendered** for `member_role = PARENT` (and GUARDIAN), regardless of permission level.
+- Instant lock remains allowed at Mother FULL (ADR-035) — that is a separate permission key (`INSTANT_LOCK`), not anti-tamper.
+- Encoded in `03-role-permission-matrix.md` §3.4 / §5 and cross-role maps in `06-cross-role-dependencies.md`.
+
+**Does not replace ADR-035** — lettered extension only. Next free numeric ADR remains **ADR-039**.
+
+---
+
 ## Register hygiene
 - Next free ADR ID: **ADR-039**.
+- ADR-035-b is a lettered extension of ADR-035 (not a new numeric slot).
 - Doc-drift items (CWF-002 "22 rules", CWF-003 stale counts in `README`/`START_HERE`) are **documentation hygiene**, not product decisions; they need an owner-approved doc commit because `handoff/` is outside discovery's write scope.

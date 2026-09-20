@@ -26,7 +26,7 @@ For every visible setting (toggle, slider, choice, level picker, list editor) we
 
 **Evidence sources:** frozen HTML (`family_os_app.html`), `_REGISTRY/screens.csv`, Policy Register, ADR-035/036/038.
 
-**Prototype honesty:** many toggles call only `this.classList.toggle('on')` — **visual only**. Some bind to in-memory `S.*` (webFilter, antiTamper, smartModes) — **partial**: state exists for the session, but there is no Drift/policy/child-device enforcement yet (Flutter not started). Both classes are gaps under Rule 24 until conversion closes them.
+**Prototype honesty:** many toggles call only `this.classList.toggle('on')` — **visual only**. Some bind to in-memory `S.*` (webFilter, antiTamper, smartModes) — **partial**: state exists for the session, but there is no Drift/policy/child-device enforcement yet (Flutter not started). Per **Rule 23** and owner audit, `VISUAL` / mock toggles are **deliberate sample rendering**, not product defects. `SET-001…024` are **conversion backlog** (bind → persist → policy → loop) living in root `GAP_LOG.md` — not defect filings against the frozen prototype.
 
 **Status codes used below:**
 
@@ -98,9 +98,9 @@ Full row-by-row audit for the **constitutional spine** is §3. Remaining screens
 | Setting | Why | Who | Controls | Default | On change | Store | Affected | Policy | Perm | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
 | Instant lock / internet-only / timed | Ladder top | Father; **Mother FULL** (ADR-035) | Device lock | off | Overlay on child; audit | lock state **D-5 missing** | Child, Father (if mother acts) | TimeEngine short-circuit | INSTANT_LOCK | Exempt chat/Quran/SOS |
-| Anti-tamper ×6 (noDelete, noClockChange, noVPN, simAlert, settingsPin, bypassAlert) | P-6 | **OWNER only** (ADR-035) | Device defenses | mix in prototype | Enable OS intents + alerts | `S.antiTamper` SESSION | Child device, Father alerts | P-6 | OWNER-ONLY | **SESSION** in HTML; mother FULL must not see editable controls |
+| Anti-tamper ×6 (noDelete, noClockChange, noVPN, simAlert, settingsPin, bypassAlert) | P-6 | **OWNER only** (ADR-035 / **ADR-035-b**) | Device defenses | mix in prototype | Enable OS intents + alerts | `S.antiTamper` SESSION | Child device, Father alerts | P-6 | OWNER-ONLY | **SESSION** in HTML; mother UI must **omit** anti-tamper entirely (invisible at every level) |
 
-**Gaps:** `SET-007` RoleGuard must hide anti-tamper from mother even at FULL · `SET-008` each switch needs a documented “what happens when enabled” line (Register already requires it) · `SET-009` conflict: mother lock vs father unlock → father wins + audit.
+**Gaps:** `SET-007` RoleGuard must **not render** anti-tamper for mother at any level (**ADR-035-b**) · `SET-008` each switch needs a documented “what happens when enabled” line (Register already requires it) · `SET-009` conflict: mother lock vs father unlock → father wins + audit.
 
 ---
 
@@ -111,12 +111,12 @@ Full row-by-row audit for the **constitutional spine** is §3. Remaining screens
 | Critical / SOS channel | P-4, C-4 | System + father prefs for non-critical | Pierce silent | Always on for SOS | **Cannot disable SOS** (Rule 9) |
 | Child requests | Time/app requests | Father; Mother by level | Inbox noise | on | Mother ① still sees; approve only ②+ |
 | Advisor alerts | AIC | Father; Mother notified (R-3 / `S-AIC-029`) | Urgency tiers | on | Mother informed, not controller |
-| Quiet hours | Reduce noise | Father | Schedule | sample | Must **never** silence SOS/critical |
+| Quiet hours | Reduce noise | Father | Schedule | sample | **P-4** — quiet hours / DND **cannot** silence SOS/critical (outside every gate; Rules 9/11) |
 | Digest instead of spam | `S-ADM-029` | Father | Bundle | on | |
 | Evening summary | Convenience | Father | 8:30pm sample | on | |
 
 **Prototype:** several rows `VISUAL`.  
-**Gaps:** `SET-010` quiet hours must hard-exclude critical channel · `SET-011` mother notification identity (R-3) not a father clone.
+**Gaps:** `SET-010` quiet hours enforce **existing Register P-4** (no new rule) — hard-exclude SOS/critical · `SET-011` mother notification identity (R-3) not a father clone.
 
 ---
 
@@ -227,7 +227,7 @@ Full row-by-row audit for the **constitutional spine** is §3. Remaining screens
 | **SET-ONE-SIDE** | Parent UI without child mirror | Filter/monitoring without transparency / block page | P-7 / P-8 violation | Pair every parent switch with child-visible effect |
 | **SET-PAYWALL-RISK** | Subscription screens near safety | FAT-056 exists | Must never disable SOS/chat/location | RoleGuard + explicit non-gating tests |
 | **SET-TOMBSTONE** | School mode on FAT-039 | Registry CSV | Dead config path | Use FAT-085 (T-1); skip tombstone in router |
-| **SET-OWNER-LEAK** | Anti-tamper / delegation / brain if shown to mother FULL | HTML `can('rules')` vs ADR-035 | Sovereignty leak | Split `can('rules')` from owner-only keys |
+| **SET-OWNER-LEAK** | Anti-tamper / delegation / brain if shown to mother FULL | HTML `can('rules')` vs ADR-035 / **ADR-035-b** | Sovereignty leak | Split `can('rules')` from owner-only keys; anti-tamper **not rendered** (invisible) |
 
 ---
 
@@ -258,24 +258,26 @@ Applied the same 14 questions at cluster level (expand to row-level in phase 7 i
 | Unclear purpose | None in spine after ADR-036/037/038 — legacy names reinterpreted |
 | Duplicates | School mode: tombstone FAT-039 vs live FAT-085 — **resolved by T-1** (do not implement both) |
 | Contradictions | Points labels vs minutes — **resolved by ADR-036** (labels ignored in code) |
-| Missing from correct role | Anti-tamper must not appear for mother FULL |
+| Missing from correct role | Anti-tamper must be **invisible** for mother at every level (**ADR-035-b**) |
 | Backend setting missing from UI | Wallet overflow flag (Ruling B) — needs explicit father switch (default off) — **flagged SET-024** |
 | UI setting missing from backend | All SESSION settings above |
 | Should be derived | Education countable=false — prefer derived invariant over manual father toggle where Register mandates |
 
 ---
 
-## 7. Priority backlog for conversion (feeds GAP_LOG later)
+## 7. Priority backlog for conversion
+
+**Living store:** root [`GAP_LOG.md`](../../GAP_LOG.md) — `SET-001…024` seeded as `CONVERSION-BACKLOG` (Rule 23: not prototype defects). Phase 13 imports these IDs; do not fork.
 
 | Priority | IDs | Why first |
 |---|---|---|
-| P0 | SET-007, SET-010, SET-015, SET-018, SET-020, SET-021 | Safety / sovereignty / tombstone |
+| P0 | SET-007, SET-010, SET-015, SET-018, SET-020, SET-021 | Safety / sovereignty / tombstone (SET-010 = **P-4**; SET-007 = **ADR-035-b**) |
 | P0 | SET-001→003, SET-004→006 | Time + web are daily paths |
 | P0 | SET-022, SET-023 | ADR-038 architecture seam |
 | P1 | SET-008, SET-009, SET-011→014, SET-016, SET-017, SET-024 | Completeness + honesty |
 | P2 | Cluster language/calendar polish | After spine |
 
-Each conversion task that touches a settings screen must: bind → persist → enforce in `core/policy/` → close child/parent loop → append `GAP_LOG.md` if anything remains out of scope (Rule 24).
+Each conversion task that touches a settings screen must: bind → persist → enforce in `core/policy/` → close child/parent loop → update `GAP_LOG.md` status if anything remains out of scope (Rule 24).
 
 ---
 
@@ -286,6 +288,7 @@ Each conversion task that touches a settings screen must: bind → persist → e
 - [x] Visual / session / law-bound classes named
 - [x] Cross-role and owner-only leaks flagged
 - [x] ADR-036/037/038/T-1 applied (no open product blockers in this phase)
+- [x] Owner audit binds: quiet hours → **P-4**; anti-tamper invisible → **ADR-035-b**; SET backlog → `GAP_LOG.md`
 - [ ] Row-level audit for every remaining form control — deferred to phase 7 UI audit with the same codes
 
-**Next:** Phase 5 — cross-role dependency maps.
+**Next:** Phase 5 — cross-role dependency maps (`06-cross-role-dependencies.md`).
