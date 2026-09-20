@@ -32,3 +32,35 @@ Incomplete settings, dead-ends, and unclosed loops discovered during conversion 
 | SCR-FAT-079 | SET-023: Rule editor blocks owner-only consequents | See 08-gap-closure-specs.md SET-023 | CONVERSION-BACKLOG |
 | SCR-FAT-032 | SET-024: Wallet overflow father switch missing (Ruling B) | See 08-gap-closure-specs.md SET-024 | CONVERSION-BACKLOG |
 | (UI cross-cut) | UI-001…018: production UI completeness gaps | See [09-ui-ux-gap-analysis.md §8](docs/project-plan/09-ui-ux-gap-analysis.md) | CONVERSION-BACKLOG |
+
+
+---
+
+## Batch GH-1 — Gap-Hunter sweep (2026-09-20) · verdict: docs/project-plan/10-gap-hunter-batch1-verdict.md
+Verified locally against current main (line-level evidence in verdict doc). 20 merged / 1 rejected (GAP-A-AIC-002 = countdown snapshot, not a violation → replaced by conversion note: central `undo_window=600s`).
+
+| ID | Sev (post-audit) | Screen(s) | Gap | Class |
+|---|---|---|---|---|
+| GAP-A-SEC-001 | P1 | all non-bare (stateGuard) | No offline/partial-sync/expired states; lastSync hardcoded | ANALYSIS-GAP |
+| GAP-A-SEC-002 | **P0** | CHD-019, FAT-072/054/037/033 | No minute_ledger: every ±minute lacks an auditable transaction (E-1) | ANALYSIS-GAP |
+| GAP-D-SEC-001 | P1 (revised) | CHD-020 | Duration choice works but send button ignores S.timeReqMins → always 30 | CONVERSION-BACKLOG |
+| GAP-A-SEC-003 | P1 | CHD-020, FAT-033 | No request-spam cap; father screen renders only first pending request | ANALYSIS-GAP |
+| GAP-A-SEC-004 | P1 (revised from P0) | FAT-037, FAT-080, FAT-085 | These 3 control screens have zero can() gating (others ARE gated) | ANALYSIS-GAP |
+| GAP-D-COM-001 | P1 (revised from P0) | FAT-022, CHD-008 | Send is mock-toast (Rule 23); real gap = no message-insert/delivery spec, no Enter-key path | CONVERSION-BACKLOG |
+| GAP-A-COM-001 | P1 | FAT-022, CHD-023 | Voice-note Arabic transcript promised in UI copy but specified nowhere | ANALYSIS-GAP |
+| GAP-OPP-COM-001 | OPP | FAT-052, FAT-085 | Prayer times as mode-engine trigger (culturally unclonable) | V1.1-SUPREMACY |
+| GAP-A-EDU-001 | P1 | FAT-049/050, CHD-028/012 | No placement test — adaptive plan without baseline (EDU rule 3) | ANALYSIS-GAP |
+| GAP-A-EDU-002 | P1 | CHD-019/012/026, FAT-072 | No streak-freeze despite approved recommendation (09 §و-5) | ANALYSIS-GAP |
+| GAP-A-EDU-003 | P1 | FAT-043/044/045 | Editing already-assigned content undefined; need content_version + pinned_version | ANALYSIS-GAP |
+| GAP-OPP-EDU-001 | OPP | CHD-025/026/029, FAT-072 | Unified spaced-repetition engine across Quran + flashcards | V1.1-SUPREMACY |
+| GAP-A-AIC-001 | P1 | FAT-079/080 | Agent rule-conflict resolution undefined (modes have "strictest wins", agent doesn't) | ANALYSIS-GAP |
+| ~~GAP-A-AIC-002~~ | REJECTED | FAT-080 | 5:42 is a mid-countdown snapshot of the 10-min window; conversion note: central undo_window=600s | — |
+| GAP-OPP-AIC-001 | OPP | FAT-074/062/073 | Evidence-backed insights: source + freshness + confidence per claim | V1.1-SUPREMACY |
+| GAP-A-ADM-001 | **P0** | FAT-056/057 | No purchase-restore or downgrade surface — S-ADM-024 registered but surfaceless; store-rejection risk | ANALYSIS-GAP |
+| GAP-A-ADM-002 | P1 | FAT-027/031 | No backup-guardian flow — S-ADM-013 registered but "لا يُرقّى" only | ANALYSIS-GAP |
+| GAP-D-ADM-001 | P1 | FAT-061 | English row dead; zero LTR path | CONVERSION-BACKLOG |
+| GAP-A-CHILD-001 | **P0** | CHD-006 | SOS cancel = one tap + sheet confirm, zero authentication (violates 06 §هـ) | ANALYSIS-GAP |
+| GAP-D-CHILD-001 | P1 | CHD-010 | Objection button is toast-only; no storage, no father inbox | ANALYSIS-GAP |
+| GAP-A-CHILD-002 | P1 | FAT-034, CHD-010 | No age-band engine or band-transition event (consent at 13, independence at 18) | ANALYSIS-GAP |
+
+**Closure specs**: the 11-field specs from the hunter report are ADOPTED as drafted (with the 3 revisions above) — to be transplanted into 08-gap-closure-specs.md §GH-1 during conversion planning. Nothing touches frozen v1.0 surfaces; all closures are additive spec-layer work.
