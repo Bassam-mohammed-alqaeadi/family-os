@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="2150" font-family="Segoe UI, Tahoma" direction="rtl">
+<defs>
+<marker id="tri" markerWidth="16" markerHeight="14" refX="15" refY="7" orient="auto"><path d="M1,1 L15,7 L1,13 Z" fill="white" stroke="#1A1D2E" stroke-width="1.3"/></marker>
+<marker id="arr" markerWidth="12" markerHeight="10" refX="11" refY="5" orient="auto"><path d="M1,1 L11,5 L1,9" fill="none" stroke="#1A1D2E" stroke-width="1.3"/></marker>
+</defs>
+<rect width="1600" height="2150" fill="#FAFAFC"/>
+<rect x="330" y="40" width="1090" height="2060" fill="white" stroke="#1A1D2E" stroke-width="1.6" rx="4"/>
+<text x="875" y="72" text-anchor="middle" font-size="18" font-weight="bold" fill="#7C5CE6">يوز كيس الأب التفصيلي م٣/٥ — الموقع والسلامة والمراقبة</text>
+<text x="875" y="92" text-anchor="middle" font-size="12" fill="#666">المجموعتان: هـ الموقع والسلامة (١٠ عمليات) · و مراقبة التواصل والمحتوى (٩ عمليات)</text>
+<g stroke="#1A1D2E" stroke-width="1.6" fill="none">
+<circle cx="1450" cy="950" r="13"/><line x1="1450" y1="963" x2="1450" y2="998"/>
+<line x1="1430" y1="975" x2="1470" y2="975"/>
+<line x1="1450" y1="998" x2="1434" y2="1025"/><line x1="1450" y1="998" x2="1466" y2="1025"/></g>
+<text x="1450" y="1044" text-anchor="middle" font-size="13.5" font-weight="bold">الأب</text><text x="1450" y="1060" text-anchor="middle" font-size="11" fill="#555">(Father — OWNER)</text>
+<g stroke="#1A1D2E" stroke-width="1.6" fill="none">
+<circle cx="170" cy="300" r="13"/><line x1="170" y1="313" x2="170" y2="348"/>
+<line x1="150" y1="325" x2="190" y2="325"/>
+<line x1="170" y1="348" x2="154" y2="375"/><line x1="170" y1="348" x2="186" y2="375"/></g>
+<text x="170" y="394" text-anchor="middle" font-size="13.5" font-weight="bold">الابن</text><text x="170" y="410" text-anchor="middle" font-size="11" fill="#555">(Child — مصدر الأحداث)</text>
+<g stroke="#1A1D2E" stroke-width="1.6" fill="none">
+<circle cx="170" cy="900" r="13"/><line x1="170" y1="913" x2="170" y2="948"/>
+<line x1="150" y1="925" x2="190" y2="925"/>
+<line x1="170" y1="948" x2="154" y2="975"/><line x1="170" y1="948" x2="186" y2="975"/></g>
+<text x="170" y="994" text-anchor="middle" font-size="13.5" font-weight="bold">الأم</text><text x="170" y="1010" text-anchor="middle" font-size="11" fill="#555">(Mother — ترث 👥)</text>
+<g stroke="#1A1D2E" stroke-width="1.6" fill="none">
+<circle cx="170" cy="1450" r="13"/><line x1="170" y1="1463" x2="170" y2="1498"/>
+<line x1="150" y1="1475" x2="190" y2="1475"/>
+<line x1="170" y1="1498" x2="154" y2="1525"/><line x1="170" y1="1498" x2="186" y2="1525"/></g>
+<text x="170" y="1544" text-anchor="middle" font-size="13.5" font-weight="bold">الجد</text><text x="170" y="1560" text-anchor="middle" font-size="11" fill="#555">(Guardian — طوارئ فقط)</text>
+<rect x="360" y="115" width="820" height="30" fill="#EFFBF5" stroke="none"/><text x="770" y="136" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#0E8F6E">المجموعة هـ — الموقع والسلامة (١٠ عمليات)</text>
+<ellipse cx="1060" cy="185" rx="132" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="189" text-anchor="middle" font-size="11.5" font-weight="bold">⭐ هـ١ التتبع اللحظي وسجل المواقع</text>
+<ellipse cx="1060" cy="270" rx="128" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="274" text-anchor="middle" font-size="11.5" font-weight="bold">هـ٢ مناطق آمنة وتنبيه وصول/مغادرة</text>
+<ellipse cx="620" cy="250" rx="135" ry="26" fill="#EEF2FF" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="254" text-anchor="middle" font-size="11.5" font-weight="bold">الرسم على الخريطة للأب — المشاهدة 👥</text>
+<line x1="932" y1="260" x2="758" y2="252" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="850" y="243" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1060" cy="350" rx="135" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="354" text-anchor="middle" font-size="11.5" font-weight="bold">هـ٣ الأماكن المتكررة وتنبيه عدم الوصول</text>
+<ellipse cx="1060" cy="430" rx="128" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="434" text-anchor="middle" font-size="11.5" font-weight="bold">هـ٤ بطارية أجهزة الأبناء</text>
+<ellipse cx="1060" cy="515" rx="135" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="519" text-anchor="middle" font-size="11.5" font-weight="bold">⭐ 🔔 هـ٥ استقبال الاستغاثة</text>
+<ellipse cx="620" cy="490" rx="140" ry="26" fill="#EEF2FF" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="494" text-anchor="middle" font-size="11.5" font-weight="bold">صافرة تخترق الوضع الصامت (P-4)</text>
+<ellipse cx="620" cy="550" rx="135" ry="26" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="554" text-anchor="middle" font-size="11.5" font-weight="bold">بث لحظي + اتصال تلقائي بالأب</text>
+<line x1="925" y1="505" x2="765" y2="492" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="852" y="483" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<line x1="927" y1="527" x2="760" y2="547" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="850" y="552" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1060" cy="600" rx="138" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="604" text-anchor="middle" font-size="11.5" font-weight="bold">هـ٦ جهات طوارئ خارجية وربط وطني</text>
+<ellipse cx="1060" cy="680" rx="120" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="684" text-anchor="middle" font-size="11.5" font-weight="bold">🔔 هـ٧ كشف الحوادث</text>
+<ellipse cx="1060" cy="760" rx="138" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="764" text-anchor="middle" font-size="11.5" font-weight="bold">هـ٨ تقرير القيادة وتنبيه الجوال أثناءها</text>
+<ellipse cx="1060" cy="840" rx="128" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="844" text-anchor="middle" font-size="11.5" font-weight="bold">🔔 هـ٩ استقبال «أنا وصلت»</text>
+<ellipse cx="1060" cy="920" rx="115" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="924" text-anchor="middle" font-size="11.5" font-weight="bold">هـ١٠ طلب موقع ابن</text>
+<rect x="360" y="990" width="820" height="30" fill="#FFF0F0" stroke="none"/><text x="770" y="1011" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#C0392B">المجموعة و — مراقبة التواصل والمحتوى (٩ عمليات — الضبط حصري 🔒)</text>
+<ellipse cx="1060" cy="1060" rx="138" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1064" text-anchor="middle" font-size="11.5" font-weight="bold">⭐ و١ كشف الكلمات المريبة والمشاعر</text>
+<ellipse cx="620" cy="1040" rx="140" ry="26" fill="#EEF2FF" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="1044" text-anchor="middle" font-size="11.5" font-weight="bold">الضبط للأب — التنبيه يصل 👥</text>
+<line x1="922" y1="1050" x2="765" y2="1042" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="852" y="1033" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1060" cy="1145" rx="132" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1149" text-anchor="middle" font-size="11.5" font-weight="bold">و٢ كشف العامية والعربيزي</text>
+<ellipse cx="1060" cy="1225" rx="140" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1229" text-anchor="middle" font-size="11.5" font-weight="bold">⭐ و٣ كشف الصور الحساسة ومنع الجنسي</text>
+<ellipse cx="1060" cy="1310" rx="132" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1314" text-anchor="middle" font-size="11.5" font-weight="bold">و٤ قائمة مراقبة جهات الاتصال</text>
+<ellipse cx="1060" cy="1390" rx="135" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1394" text-anchor="middle" font-size="11.5" font-weight="bold">و٥ مراقبة المنصات الأربع</text>
+<ellipse cx="620" cy="1370" rx="140" ry="26" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="1374" text-anchor="middle" font-size="11.5" font-weight="bold">واتساب/سناب/إنستغرام/تيك توك</text>
+<line x1="925" y1="1380" x2="765" y2="1372" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="852" y="1363" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1060" cy="1475" rx="140" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1479" text-anchor="middle" font-size="11.5" font-weight="bold">⭐ و٦ اعتماد جهات خارجية ودائرة الأقارب</text>
+<ellipse cx="1060" cy="1560" rx="132" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1564" text-anchor="middle" font-size="11.5" font-weight="bold">⭐ 🔔 و٧ البت في طلب صديق</text>
+<ellipse cx="620" cy="1540" rx="135" ry="26" fill="#EEF2FF" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="1544" text-anchor="middle" font-size="11.5" font-weight="bold">اعتماد الأب حصري (COM-022)</text>
+<line x1="928" y1="1550" x2="758" y2="1542" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="850" y="1533" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1060" cy="1640" rx="132" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1644" text-anchor="middle" font-size="11.5" font-weight="bold">و٨ حظر المجهولين (ضبط القيد)</text>
+<ellipse cx="1060" cy="1720" rx="128" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1724" text-anchor="middle" font-size="11.5" font-weight="bold">و٩ جدول التواصل المسموح</text>
+<line x1="1435" y1="990" x2="1198" y2="187" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="990" x2="1198" y2="272" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="990" x2="1198" y2="352" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="990" x2="1198" y2="432" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="990" x2="1198" y2="517" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="990" x2="1198" y2="602" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="990" x2="1198" y2="682" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="990" x2="1198" y2="762" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="990" x2="1198" y2="842" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="990" x2="1198" y2="922" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="990" x2="1198" y2="1062" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="990" x2="1198" y2="1147" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="990" x2="1198" y2="1227" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="990" x2="1198" y2="1312" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="990" x2="1198" y2="1392" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="990" x2="1198" y2="1477" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="990" x2="1198" y2="1562" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="990" x2="1198" y2="1642" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="990" x2="1198" y2="1722" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="215" y1="340" x2="925" y2="517" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.45" stroke-dasharray="5,3"/>
+<line x1="215" y1="340" x2="932" y2="842" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.45" stroke-dasharray="5,3"/>
+<line x1="215" y1="340" x2="928" y2="1562" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.45" stroke-dasharray="5,3"/>
+<text x="330" y="290" font-size="10.5" fill="#888">يستغيث / يعلن وصوله / يطلب صديقًا</text>
+<line x1="215" y1="940" x2="928" y2="187" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.4" stroke-dasharray="5,3"/>
+<line x1="215" y1="940" x2="925" y2="352" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.4" stroke-dasharray="5,3"/>
+<line x1="215" y1="940" x2="932" y2="432" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.4" stroke-dasharray="5,3"/>
+<line x1="215" y1="940" x2="925" y2="517" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.4" stroke-dasharray="5,3"/>
+<line x1="215" y1="940" x2="940" y2="682" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.4" stroke-dasharray="5,3"/>
+<line x1="215" y1="940" x2="932" y2="842" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.4" stroke-dasharray="5,3"/>
+<line x1="215" y1="940" x2="945" y2="922" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.4" stroke-dasharray="5,3"/>
+<line x1="215" y1="940" x2="922" y2="1062" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.4" stroke-dasharray="5,3"/>
+<text x="330" y="1005" font-size="10.5" fill="#888">ترث المشاهدة والتنبيهات 👥 — لا الضبط</text>
+<line x1="215" y1="1490" x2="925" y2="530" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.5" stroke-dasharray="5,3"/>
+<text x="310" y="1390" font-size="10.5" fill="#888" transform="rotate(-42 310 1390)">يستقبل الاستغاثة فقط — لا يرى شيئًا آخر</text>
+<g font-size="12"><rect x="20" y="1750" width="270" height="150" rx="8" fill="white" stroke="#D0D3E0"/>
+<text x="155" y="1772" text-anchor="middle" font-weight="bold" fill="#7C5CE6">مفتاح القراءة</text>
+<line x1="35" y1="1792" x2="80" y2="1792" stroke="#1A1D2E" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="90" y="1796">&#171;include&#187; إلزامي دائمًا</text>
+<line x1="35" y1="1817" x2="80" y2="1817" stroke="#1A1D2E" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="90" y="1821">&#171;extend&#187; شرطي أحيانًا</text>
+<line x1="35" y1="1842" x2="80" y2="1842" stroke="#1A1D2E" marker-end="url(#tri)"/><text x="90" y="1846">generalization وراثة</text>
+<text x="35" y="1871">⭐ عمود فقري · 🔔 حدثية (G-6) · برتقالي = مشترَكة</text>
+<text x="35" y="1890" fill="#888">منقّط باهت = مشاهدة (observer)</text></g>
+</svg>
