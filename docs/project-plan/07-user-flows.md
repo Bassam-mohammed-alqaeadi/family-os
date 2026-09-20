@@ -483,7 +483,8 @@ Walk rule: only navigate via **visible** buttons (no deep-link cheating).
 | ID | Item | Status |
 |---|---|---|
 | **ADR-039** | Mother FULL inherits ≤30 min per-grant ceiling (doc 20); over-ceiling = OWNER-only | `RESOLVED-BY-OWNER-AUDIT` → [`16-decision-register.md`](16-decision-register.md) |
-| SET / schema gaps | SET-001…024, D-1…D-5 | Living in `GAP_LOG.md` / phase 10 |
+| SET / schema gaps | SET-001…024, D-1…D-5 | Full specs: [`08-gap-closure-specs.md`](08-gap-closure-specs.md); index: `GAP_LOG.md` |
+| UI completeness | UI-001…018 | Full specs: [`09-ui-ux-gap-analysis.md`](09-ui-ux-gap-analysis.md) §8 |
 | No new SOS/quiet-hours ADR | Bound to **P-4** | Sealed |
 
 ---
@@ -496,4 +497,4 @@ Walk rule: only navigate via **visible** buttons (no deep-link cheating).
 - [x] Acceptance S1–S5 composite map
 - [x] Ambiguity logged then resolved (**ADR-039**)
 
-**Next:** Phase 7 — UI/UX completeness audit (`08-ui-ux-gap-analysis.md`).
+**Next:** Phase 7 — UI/UX completeness (`09-ui-ux-gap-analysis.md`) after Phase 6.5 gap closures (`08-gap-closure-specs.md`).
