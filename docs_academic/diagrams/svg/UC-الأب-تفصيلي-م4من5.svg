@@ -1,0 +1,166 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="2950" font-family="Segoe UI, Tahoma" direction="rtl">
+<defs>
+<marker id="tri" markerWidth="16" markerHeight="14" refX="15" refY="7" orient="auto"><path d="M1,1 L15,7 L1,13 Z" fill="white" stroke="#1A1D2E" stroke-width="1.3"/></marker>
+<marker id="arr" markerWidth="12" markerHeight="10" refX="11" refY="5" orient="auto"><path d="M1,1 L11,5 L1,9" fill="none" stroke="#1A1D2E" stroke-width="1.3"/></marker>
+</defs>
+<rect width="1600" height="2950" fill="#FAFAFC"/>
+<rect x="330" y="40" width="1090" height="2860" fill="white" stroke="#1A1D2E" stroke-width="1.6" rx="4"/>
+<text x="875" y="72" text-anchor="middle" font-size="18" font-weight="bold" fill="#7C5CE6">يوز كيس الأب التفصيلي م٤/٥ — التواصل والمهام والاستوديو</text>
+<text x="875" y="92" text-anchor="middle" font-size="12" fill="#666">المجموعتان: ز التواصل والمهام والتقويم (١١ عملية + قيد) · ح الاستوديو التعليمي (١٩ عملية)</text>
+<g stroke="#1A1D2E" stroke-width="1.6" fill="none">
+<circle cx="1450" cy="1350" r="13"/><line x1="1450" y1="1363" x2="1450" y2="1398"/>
+<line x1="1430" y1="1375" x2="1470" y2="1375"/>
+<line x1="1450" y1="1398" x2="1434" y2="1425"/><line x1="1450" y1="1398" x2="1466" y2="1425"/></g>
+<text x="1450" y="1444" text-anchor="middle" font-size="13.5" font-weight="bold">الأب</text><text x="1450" y="1460" text-anchor="middle" font-size="11" fill="#555">(Father — OWNER)</text>
+<g stroke="#1A1D2E" stroke-width="1.6" fill="none">
+<circle cx="170" cy="420" r="13"/><line x1="170" y1="433" x2="170" y2="468"/>
+<line x1="150" y1="445" x2="190" y2="445"/>
+<line x1="170" y1="468" x2="154" y2="495"/><line x1="170" y1="468" x2="186" y2="495"/></g>
+<text x="170" y="514" text-anchor="middle" font-size="13.5" font-weight="bold">الابن</text><text x="170" y="530" text-anchor="middle" font-size="11" fill="#555">(Child — مستلم ومؤكد)</text>
+<g stroke="#1A1D2E" stroke-width="1.6" fill="none">
+<circle cx="170" cy="1150" r="13"/><line x1="170" y1="1163" x2="170" y2="1198"/>
+<line x1="150" y1="1175" x2="190" y2="1175"/>
+<line x1="170" y1="1198" x2="154" y2="1225"/><line x1="170" y1="1198" x2="186" y2="1225"/></g>
+<text x="170" y="1244" text-anchor="middle" font-size="13.5" font-weight="bold">الأم</text><text x="170" y="1260" text-anchor="middle" font-size="11" fill="#555">(Mother — ترث 👥)</text>
+<g stroke="#1A1D2E" stroke-width="1.6" fill="none">
+<circle cx="170" cy="2100" r="13"/><line x1="170" y1="2113" x2="170" y2="2148"/>
+<line x1="150" y1="2125" x2="190" y2="2125"/>
+<line x1="170" y1="2148" x2="154" y2="2175"/><line x1="170" y1="2148" x2="186" y2="2175"/></g>
+<text x="170" y="2194" text-anchor="middle" font-size="13.5" font-weight="bold">العقل</text><text x="170" y="2210" text-anchor="middle" font-size="11" fill="#555">(AI — يولد ويقترح)</text>
+<rect x="360" y="115" width="820" height="30" fill="#EFF6FF" stroke="none"/><text x="770" y="136" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#1D6FB8">المجموعة ز — التواصل والمهام والتقويم (١١ عملية + قيد دستوري)</text>
+<ellipse cx="1060" cy="185" rx="135" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="189" text-anchor="middle" font-size="11.5" font-weight="bold">ز١ محادثات العائلة</text>
+<ellipse cx="620" cy="165" rx="130" ry="25" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="169" text-anchor="middle" font-size="11.5" font-weight="bold">جماعية / فردية / مجموعات فرعية</text>
+<line x1="925" y1="175" x2="750" y2="167" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="840" y="158" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1060" cy="268" rx="128" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="272" text-anchor="middle" font-size="11.5" font-weight="bold">ز٢ أدوات الرسالة الخمس</text>
+<ellipse cx="620" cy="248" rx="135" ry="25" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="252" text-anchor="middle" font-size="11.5" font-weight="bold">رد/قراءة/تعديل/حذف/تثبيت</text>
+<line x1="932" y1="258" x2="755" y2="250" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="845" y="241" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1060" cy="350" rx="125" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="354" text-anchor="middle" font-size="11.5" font-weight="bold">ز٣ المكالمات والسجل</text>
+<ellipse cx="620" cy="330" rx="120" ry="25" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="334" text-anchor="middle" font-size="11.5" font-weight="bold">صوت / فيديو / جماعية</text>
+<line x1="935" y1="340" x2="740" y2="332" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="838" y="323" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1060" cy="430" rx="120" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="434" text-anchor="middle" font-size="11.5" font-weight="bold">ز٤ مشاركة الوسائط</text>
+<ellipse cx="1060" cy="512" rx="138" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="516" text-anchor="middle" font-size="11.5" font-weight="bold">⭐ ز٥ التقويم الهجري والميلادي</text>
+<ellipse cx="620" cy="492" rx="130" ry="25" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="496" text-anchor="middle" font-size="11.5" font-weight="bold">مواقيت الصلاة مدمجة</text>
+<line x1="922" y1="502" x2="750" y2="494" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="842" y="485" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1060" cy="595" rx="122" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="599" text-anchor="middle" font-size="11.5" font-weight="bold">ز٦ إدارة الأحداث</text>
+<ellipse cx="620" cy="575" rx="115" ry="25" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="579" text-anchor="middle" font-size="11.5" font-weight="bold">ألوان لكل فرد</text>
+<line x1="938" y1="585" x2="735" y2="577" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="835" y="568" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1060" cy="675" rx="132" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="679" text-anchor="middle" font-size="11.5" font-weight="bold">ز٧ الملخص اليومي/الأسبوعي</text>
+<ellipse cx="1060" cy="758" rx="130" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="762" text-anchor="middle" font-size="11.5" font-weight="bold">⭐ ز٨ إنشاء مهمة وتذكير</text>
+<ellipse cx="1060" cy="842" rx="135" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="846" text-anchor="middle" font-size="11.5" font-weight="bold">⭐ ز٩ إسناد مهمة لابن بمكافأة</text>
+<ellipse cx="620" cy="822" rx="140" ry="26" fill="#EEF2FF" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="826" text-anchor="middle" font-size="11.5" font-weight="bold">الأب يحدد الدقائق عند الإنشاء (E-2)</text>
+<line x1="925" y1="832" x2="765" y2="824" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="852" y="815" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1060" cy="928" rx="138" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="932" text-anchor="middle" font-size="11.5" font-weight="bold">⭐ 🔔 ز١٠ اعتماد الإنجاز ← إيداع</text>
+<ellipse cx="620" cy="908" rx="138" ry="26" fill="#EEF2FF" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="912" text-anchor="middle" font-size="11.5" font-weight="bold">إيداع تلقائي في محفظة الابن</text>
+<line x1="922" y1="918" x2="763" y2="910" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="850" y="901" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1060" cy="1012" rx="135" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1016" text-anchor="middle" font-size="11.5" font-weight="bold">ز١١ التوزيع الذكي (ChoreAI)</text>
+<ellipse cx="620" cy="992" rx="130" ry="25" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="996" text-anchor="middle" font-size="11.5" font-weight="bold">اقتراح عادل حسب الأعمار</text>
+<line x1="925" y1="1002" x2="750" y2="994" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="842" y="985" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<rect x="820" y="1070" width="480" height="58" rx="8" fill="#FFF0F0" stroke="#FF5A5F" stroke-width="1.2"/>
+<text x="1060" y="1094" text-anchor="middle" font-size="12" font-weight="bold" fill="#C0392B">قيد دستوري (E-4): مهمة للأم = طلب مساعدة بلا دقائق</text>
+<text x="1060" y="1114" text-anchor="middle" font-size="11" fill="#C0392B">الدقائق عملة الأبناء وحدهم — ليست عملية تُنفذ</text>
+<rect x="360" y="1165" width="820" height="30" fill="#F5F0FF" stroke="none"/><text x="770" y="1186" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#7C5CE6">المجموعة ح — الاستوديو التعليمي (١٩ عملية — السلاح التنافسي 🔒)</text>
+<ellipse cx="1060" cy="1235" rx="132" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1239" text-anchor="middle" font-size="11.5" font-weight="bold">ح١ إدارة المواد والدروس</text>
+<ellipse cx="1060" cy="1315" rx="138" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1319" text-anchor="middle" font-size="11.5" font-weight="bold">ح٢ استيراد درس + مكتبة فيديو</text>
+<ellipse cx="1060" cy="1398" rx="132" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1402" text-anchor="middle" font-size="11.5" font-weight="bold">🔔 ح٣ إنشاء واجب وحالته</text>
+<ellipse cx="620" cy="1378" rx="125" ry="25" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="1382" text-anchor="middle" font-size="11.5" font-weight="bold">تنبيه الواجب المتأخر</text>
+<line x1="928" y1="1388" x2="745" y2="1380" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="840" y="1371" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1060" cy="1480" rx="135" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1484" text-anchor="middle" font-size="11.5" font-weight="bold">ح٤ مراجعة التصحيح التلقائي</text>
+<ellipse cx="620" cy="1460" rx="135" ry="26" fill="#EEF2FF" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="1464" text-anchor="middle" font-size="11.5" font-weight="bold">العقل يصحح — الأب يعتمد</text>
+<line x1="925" y1="1470" x2="755" y2="1462" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="848" y="1453" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1060" cy="1562" rx="132" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1566" text-anchor="middle" font-size="11.5" font-weight="bold">ح٥ إنشاء اختبار والنتائج</text>
+<ellipse cx="1060" cy="1642" rx="130" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1646" text-anchor="middle" font-size="11.5" font-weight="bold">ح٦ توليد أسئلة من الدرس</text>
+<ellipse cx="1060" cy="1722" rx="132" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1726" text-anchor="middle" font-size="11.5" font-weight="bold">ح٧ تقارير فجوات المهارات</text>
+<ellipse cx="1060" cy="1805" rx="135" ry="34" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1809" text-anchor="middle" font-size="11.5" font-weight="bold">⭐ ح٨ الإنشاء من ٥ مصادر</text>
+<ellipse cx="620" cy="1785" rx="140" ry="26" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="1789" text-anchor="middle" font-size="11.5" font-weight="bold">كاميرا/رابط/ملف/موضوع/شرح صوتي</text>
+<line x1="925" y1="1795" x2="765" y2="1787" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="852" y="1778" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1060" cy="1890" rx="130" ry="34" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1894" text-anchor="middle" font-size="11.5" font-weight="bold">⭐ ح٩ التوليد الذكي</text>
+<ellipse cx="620" cy="1870" rx="140" ry="26" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="1874" text-anchor="middle" font-size="11.5" font-weight="bold">درس/واجب/اختبار/بطاقات حفظ</text>
+<line x1="930" y1="1880" x2="765" y2="1872" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="852" y="1863" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1060" cy="1975" rx="140" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="1979" text-anchor="middle" font-size="11.5" font-weight="bold">ح١٠ توليد تحدٍّ بمكافأة ولعبة</text>
+<ellipse cx="620" cy="1955" rx="140" ry="26" fill="#EEF2FF" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="1959" text-anchor="middle" font-size="11.5" font-weight="bold">قناة كسب — امتداد لمكافأة الوقت ج٤ (م٢)</text>
+<line x1="920" y1="1965" x2="765" y2="1957" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="850" y="1948" text-anchor="middle" font-size="11" font-style="italic" fill="#C0392B" font-weight="bold">&#171;extend&#187;</text>
+<ellipse cx="1060" cy="2058" rx="128" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="2062" text-anchor="middle" font-size="11.5" font-weight="bold">ح١١ توليد ورد قرآني</text>
+<ellipse cx="1060" cy="2138" rx="138" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="2142" text-anchor="middle" font-size="11.5" font-weight="bold">ح١٢ مسار تعليمي ومشروع بمراحل</text>
+<ellipse cx="1060" cy="2220" rx="138" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="2224" text-anchor="middle" font-size="11.5" font-weight="bold">ح١٣ مكتبة المجتمع: استيراد ونشر</text>
+<ellipse cx="620" cy="2200" rx="120" ry="25" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="2204" text-anchor="middle" font-size="11.5" font-weight="bold">مراجعة قبل النشر</text>
+<line x1="922" y1="2210" x2="740" y2="2202" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="838" y="2193" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1060" cy="2303" rx="140" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="2307" text-anchor="middle" font-size="11.5" font-weight="bold">⭐ ح١٤ إسناد المحتوى وتحديد المكافأة</text>
+<ellipse cx="620" cy="2283" rx="135" ry="26" fill="#EEF2FF" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="2287" text-anchor="middle" font-size="11.5" font-weight="bold">سقف ٠٣٩ يسري هنا أيضًا</text>
+<line x1="920" y1="2293" x2="755" y2="2285" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="848" y="2276" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1060" cy="2385" rx="132" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="2389" text-anchor="middle" font-size="11.5" font-weight="bold">ح١٥ اقتراحات العقل اليوم</text>
+<ellipse cx="1060" cy="2468" rx="132" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="2472" text-anchor="middle" font-size="11.5" font-weight="bold">⭐ ح١٦ متابعة حفظ القرآن</text>
+<ellipse cx="1060" cy="2550" rx="132" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="2554" text-anchor="middle" font-size="11.5" font-weight="bold">ح١٧ مراجعة تصحيح التلاوة</text>
+<ellipse cx="620" cy="2530" rx="138" ry="26" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="2534" text-anchor="middle" font-size="11.5" font-weight="bold">العقل يحلل بلطف (AIC-023)</text>
+<line x1="928" y1="2540" x2="758" y2="2532" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="850" y="2523" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1060" cy="2633" rx="125" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="2637" text-anchor="middle" font-size="11.5" font-weight="bold">🔔 ح١٨ إهداء سورة (S-6)</text>
+<ellipse cx="620" cy="2613" rx="140" ry="26" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="620" y="2617" text-anchor="middle" font-size="11.5" font-weight="bold">نص + تلاوة + إشعار هدية للابن</text>
+<line x1="935" y1="2623" x2="765" y2="2615" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="852" y="2606" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="1060" cy="2715" rx="120" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="1060" y="2719" text-anchor="middle" font-size="11.5" font-weight="bold">ح١٩ تقرير التركيز</text>
+<line x1="1435" y1="1390" x2="1200" y2="187" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="270" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="352" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="432" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="514" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="597" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="677" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="760" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="844" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="930" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="1014" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="1237" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="1317" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="1400" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="1482" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="1564" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="1644" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="1724" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="1807" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="1892" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="1977" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="2060" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="2140" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="2222" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="2305" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="2387" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="2470" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="2552" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="2635" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="1435" y1="1390" x2="1200" y2="2717" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.8"/>
+<line x1="215" y1="460" x2="925" y2="844" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.45" stroke-dasharray="5,3"/>
+<line x1="215" y1="460" x2="922" y2="930" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.45" stroke-dasharray="5,3"/>
+<line x1="215" y1="460" x2="920" y2="2305" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.45" stroke-dasharray="5,3"/>
+<line x1="215" y1="460" x2="935" y2="2635" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.45" stroke-dasharray="5,3"/>
+<text x="300" y="600" font-size="10.5" fill="#888" transform="rotate(30 300 600)">مستلم المهام والمحتوى والهدايا — ومصدر تأكيد الإنجاز</text>
+<line x1="215" y1="1190" x2="925" y2="187" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.35" stroke-dasharray="5,3"/>
+<line x1="215" y1="1190" x2="932" y2="270" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.35" stroke-dasharray="5,3"/>
+<line x1="215" y1="1190" x2="935" y2="352" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.35" stroke-dasharray="5,3"/>
+<line x1="215" y1="1190" x2="940" y2="432" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.35" stroke-dasharray="5,3"/>
+<line x1="215" y1="1190" x2="922" y2="514" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.35" stroke-dasharray="5,3"/>
+<line x1="215" y1="1190" x2="938" y2="597" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.35" stroke-dasharray="5,3"/>
+<line x1="215" y1="1190" x2="928" y2="677" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.35" stroke-dasharray="5,3"/>
+<line x1="215" y1="1190" x2="930" y2="760" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.35" stroke-dasharray="5,3"/>
+<line x1="215" y1="1190" x2="922" y2="930" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.35" stroke-dasharray="5,3"/>
+<line x1="215" y1="1190" x2="928" y2="1400" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.35" stroke-dasharray="5,3"/>
+<line x1="215" y1="1190" x2="928" y2="1724" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.35" stroke-dasharray="5,3"/>
+<line x1="215" y1="1190" x2="928" y2="2387" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.35" stroke-dasharray="5,3"/>
+<line x1="215" y1="1190" x2="930" y2="2470" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.35" stroke-dasharray="5,3"/>
+<line x1="215" y1="1190" x2="928" y2="2552" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.35" stroke-dasharray="5,3"/>
+<line x1="215" y1="1190" x2="945" y2="2717" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.35" stroke-dasharray="5,3"/>
+<text x="300" y="1340" font-size="10.5" fill="#888" transform="rotate(35 300 1340)">ترث التواصل والمتابعة 👥 — الاستوديو الإنشائي حصري 🔒</text>
+<line x1="215" y1="2140" x2="925" y2="1014" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.45" stroke-dasharray="5,3"/>
+<line x1="215" y1="2140" x2="925" y2="1482" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.45" stroke-dasharray="5,3"/>
+<line x1="215" y1="2140" x2="930" y2="1644" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.45" stroke-dasharray="5,3"/>
+<line x1="215" y1="2140" x2="925" y2="1807" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.45" stroke-dasharray="5,3"/>
+<line x1="215" y1="2140" x2="930" y2="1892" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.45" stroke-dasharray="5,3"/>
+<line x1="215" y1="2140" x2="920" y2="1977" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.45" stroke-dasharray="5,3"/>
+<line x1="215" y1="2140" x2="932" y2="2060" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.45" stroke-dasharray="5,3"/>
+<line x1="215" y1="2140" x2="922" y2="2140" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.45" stroke-dasharray="5,3"/>
+<text x="330" y="2020" font-size="10.5" fill="#888" transform="rotate(-12 330 2020)">يولّد ويقترح — والأب يعتمد (ADR-033)</text>
+<g font-size="12"><rect x="20" y="2500" width="270" height="150" rx="8" fill="white" stroke="#D0D3E0"/>
+<text x="155" y="2522" text-anchor="middle" font-weight="bold" fill="#7C5CE6">مفتاح القراءة</text>
+<line x1="35" y1="2542" x2="80" y2="2542" stroke="#1A1D2E" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="90" y="2546">&#171;include&#187; إلزامي دائمًا</text>
+<line x1="35" y1="2567" x2="80" y2="2567" stroke="#1A1D2E" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="90" y="2571">&#171;extend&#187; شرطي أحيانًا</text>
+<line x1="35" y1="2592" x2="80" y2="2592" stroke="#1A1D2E" marker-end="url(#tri)"/><text x="90" y="2596">generalization وراثة</text>
+<text x="35" y="2621">⭐ عمود فقري · 🔔 حدثية (G-6) · برتقالي = مشترَكة</text>
+<text x="35" y="2640" fill="#888">منقّط باهت = مشاهدة (observer)</text></g>
+</svg>
