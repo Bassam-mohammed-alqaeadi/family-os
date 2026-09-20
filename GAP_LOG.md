@@ -93,3 +93,34 @@ Source: external gap-hunter, fresh public-repo clone. Verified line-by-line agai
 | GAP-OPP-CHILD-003 | OPP | offline | Offline promise card (what still works offline) | V1.1-SUPREMACY |
 
 P0 cumulative after GH-2 = 10. Economic-integrity cluster (GH-1 SEC-002 + A-004/005/006/007) closes as ONE architecture: the Minute Ledger (single source of truth; channel whitelist = the 5; one rewards price table; server-side attempt consumption).
+
+## Batch GH-3 — SEC Session Pass 2 · merged 2026-09-21
+
+Source: external gap-hunter, current repo clone (read GAP_LOG + handoff/04 + prior batches; exclusion discipline verified). Verified line-by-line (verdict: docs/project-plan/12-gap-hunter-batch3-verdict.md). 22 findings: 21 merged, 1 revised-then-merged, 0 rejected. Verifier added bonus evidence on A-006/A-011 (add-sheet hardcodes delay:60 + location:true) and A-016 (routerGuide fake verification toast, L903). Auditor note: emergencyContacts fixture duplicated at L454 and L2323 with divergent shapes — conversion cleanup item.
+
+| ID | Sev | Where | Finding (verified evidence) | Class |
+|---|---|---|---|---|
+| GAP-A-SEC-005 | P0 | FAT-017/016 | Safe-zone alert switches DOM-only (classList.toggle x3); saved zone has no alert/radius/child fields (L2184); S-SEC-022/024 P0 orphaned | ANALYSIS-GAP |
+| GAP-A-SEC-006 | P0 | FAT-028/018 | Escalation ladder stateless; delay read-only + add-sheet hardcodes delay:60; FAT-018 L2432 contradicts: 'no escalation exists' | ANALYSIS-GAP |
+| GAP-A-SEC-007 | P0 | FAT-018 · CHD-006 | No ack model; child told 'he is on his way' by string literal (L2693); close toast claims a safety log that does not exist | ANALYSIS-GAP |
+| GAP-A-SEC-008 | P0 | FAT-018 · CHD-005/006 | REVISED: audio named only in desktop doc-aside note (hidden mobile); child in-app copy is location-only — audio leg unserviced + undisclosed (P-7) | ANALYSIS-GAP |
+| GAP-A-SEC-009 | P0 | FAT-018/038/065/069 | No security-event store anywhere; announced VPN auto-action leaves no record; substrate finding | ANALYSIS-GAP |
+| GAP-A-SEC-010 | P1 | FAT-015/069/065 | Retention asserted 4 ways (90d/30d/device-forever/S-SEC-052=30d); wipe+forget flows surfaceless | ANALYSIS-GAP |
+| GAP-A-SEC-011 | P0 | FAT-028/018 | External contacts seeded verified:true with location:true; add flow grants location by default, no verification/consent artifact | ANALYSIS-GAP |
+| GAP-A-SEC-012 | P1 | FAT-038 | Anti-tamper: no runtime contract; S-SEC-046 (P0) surfaceless (confirmed x0); simAlert/settingsPin serviceless; S-SEC-048 also unsurfaced | ANALYSIS-GAP |
+| GAP-A-SEC-013 | P1 | FAT-038 | settingsPin = boolean with no key: no set/change/recover/lockout path (PIN field x0) | ANALYSIS-GAP |
+| GAP-A-SEC-014 | P1 | FAT-013 + child screens | CHILDPREVIEW = live role switch (L666); S.preview read once (visual bar); every child action stays armed in preview | ANALYSIS-GAP |
+| GAP-A-SEC-015 | P1 | FAT-036 | Web filter family-global while tiles are age-labelled; no child binding (G-5 / Ruling D) | ANALYSIS-GAP |
+| GAP-A-SEC-016 | P1 | FAT-078 | Router: '12 devices' literal; guest 'protected automatically' unbacked; routerGuide test = hardcoded success toast (L903) | ANALYSIS-GAP |
+| GAP-A-SEC-017 | P1 | FAT-028 | National emergency hardcoded '911'; no region resolution/fallback; S-SEC-030 P0 unbound | ANALYSIS-GAP |
+| GAP-A-SEC-018 | P1 | CHD-004 · FAT-036 | Site-unlock loop one-way: decideSiteRequest toasts to father; child screen has no approved/denied branch | ANALYSIS-GAP |
+| GAP-A-SEC-019 | P2 | FAT-015 | Repeated-places inference uncorrectable/unprovenanced (no confidence/threshold/actions) | ANALYSIS-GAP |
+| GAP-A-SEC-020 | P2 | FAT-065/069 | Screenshot capture: no retention/access/scope contract; copy contradicts report model | ANALYSIS-GAP |
+| GAP-D-SEC-002 | P0 | FAT-036/032/038 | Registered P0 controls inert: safe-search + incognito-block switches have NO handler (S-SEC-016/017); category+schedule toggles persist nothing | ANALYSIS-GAP |
+| GAP-D-SEC-003 | P2 | FAT-017/016 | Zone radius persisted as prose in desc; center coords never persisted; geofence unconsumable | ANALYSIS-GAP |
+| GAP-OPP-SEC-001 | OPP | SOS surfaces | Emergency receipt: who knows / who acked / what next — parent + child alike | V1.1-SUPREMACY |
+| GAP-OPP-SEC-002 | OPP | FAT-038/013 | Protection-health surface admitting silent monitoring death + one-tap restore | V1.1-SUPREMACY |
+| GAP-OPP-SEC-003 | OPP | FAT-028 · CHD-005/006 | Region-aware emergency intelligence + offline emergency card for the child | V1.1-SUPREMACY |
+| GAP-OPP-SEC-004 | OPP | FAT-038/069/018 | Signed exportable tamper-evident security ledger (rides on A-009 store; ADR-031 already append-only) | V1.1-SUPREMACY |
+
+P0 cumulative after GH-3 = 17. Emergency-chain cluster (A-006/007/008 + OPP-001) closes as ONE architecture: EmergencyService (events + acks + escalation runs + capture sessions); A-009's security-event store is the shared substrate for both this and the GH-2 Minute Ledger.
