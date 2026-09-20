@@ -187,4 +187,4 @@ No new `REQUIRES PRODUCT DECISION` items opened in this phase.
 - [x] SET IDs cross-linked to `GAP_LOG.md`
 - [x] Actor model 3+2 respected
 
-**Next:** Phase 6 — user flow analysis (`07-user-flows.md` per master command naming).
+**Next:** Phase 6 — user flow analysis (`07-user-flows.md`) — **complete**; continue Phase 7.

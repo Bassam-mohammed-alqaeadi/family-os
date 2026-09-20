@@ -158,3 +158,17 @@ Tombstone `SCR-FAT-039` remains unroutable (ADR-034).
 - Next free ADR ID: **ADR-039**.
 - ADR-035-b is a lettered extension of ADR-035 (not a new numeric slot).
 - Doc-drift items (CWF-002 "22 rules", CWF-003 stale counts in `README`/`START_HERE`) are **documentation hygiene**, not product decisions; they need an owner-approved doc commit because `handoff/` is outside discovery's write scope.
+
+---
+
+## FLOW-AMB-001 — Mother FULL ceiling on extra-time approval
+**Status:** `REQUIRES PRODUCT DECISION` (logged phase 6, 2026-09-20)  
+**Problem:** `20_MOTHER_PERMISSIONS.md` states a ≤30 minute approval ceiling under mother level ② (PARTNER). Spine service `S-SEC-004` / UF-05 is silent on whether Mother **③ FULL** inherits the same ceiling or may approve any duration.
+
+**Context:** Register R-2 (graded authority), ADR-035 (FULL edges for lock/anti-tamper — not time grants), doc 20.
+
+**Options (for owner):** (a) FULL inherits ≤30 min; (b) FULL has no ceiling (father-equivalent for grants); (c) FULL has a higher explicit ceiling.
+
+**Selected:** — (awaiting owner)
+
+**Consequences:** Until resolved, implementation must not invent a ceiling for FULL; conversion of UF-05 stays blocked on this decision or defaults only after ADR-039.
