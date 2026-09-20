@@ -192,7 +192,7 @@ first-time · normal · edge · empty · loading · failure · permission-denied
 |---|---|
 | Entry | CHD-020 · parent request surface / FAT-033 |
 | Action | Child requests `Minutes` + reason |
-| Validation | Throttle duplicates; mother② ceiling ≤30 min (doc 20) |
+| Validation | Throttle duplicates; Mother ② **and** ③ capped at **active ceiling** (default ≤30 min per doc 20 / **ADR-039**); over-ceiling grant = OWNER-only |
 | Confirmation | Parent decision sheet |
 | Processing | Grant or reject; Ruling C if intersects mode |
 | Result | Child toast + new remaining |
@@ -208,14 +208,14 @@ first-time · normal · edge · empty · loading · failure · permission-denied
 | Empty | No pending |
 | Loading | Deciding… |
 | Failure | Deposit fail → no false success UI |
-| Permission denied | Mother ① cannot approve |
+| Permission denied | Mother ① cannot approve; Mother ②/③ cannot approve **above active ceiling** (ADR-039) |
 | Network | Child offline queues request; parent decides when online |
-| Invalid input | 0 / over ceiling |
+| Invalid input | 0 / over active ceiling (mother path rejects; father may still grant) |
 | Expired session | Parent re-auth |
 | Conflicting | Simultaneous father reject + mother approve → **father wins** + audit |
 | Cancellation | Child cancels pending; parent dismisses |
 
-**Ambiguity (open):** Whether Mother **③ FULL** also has the 30-min ceiling — doc 20 states it under level ②. Logged as **FLOW-AMB-001** → decision register `REQUIRES PRODUCT DECISION` (not guessed).
+**Ceiling (ADR-039):** Doc 20 table — **«منح وقت إضافي (≤٣٠ د)»** applies to PARTNER **and** FULL. FULL may edit the ceiling **rule** only if father exposed it under rules-edit; a single grant never exceeds the active ceiling; in-the-moment over-ceiling is OWNER-only.
 
 **GAP:** D-3 `time_request` / `time_grant`.
 
@@ -482,7 +482,7 @@ Walk rule: only navigate via **visible** buttons (no deep-link cheating).
 
 | ID | Item | Status |
 |---|---|---|
-| **FLOW-AMB-001** | Mother FULL (③) extra-time approval ceiling — same ≤30 min as ②? | `REQUIRES PRODUCT DECISION` → [`16-decision-register.md`](16-decision-register.md) |
+| **ADR-039** | Mother FULL inherits ≤30 min per-grant ceiling (doc 20); over-ceiling = OWNER-only | `RESOLVED-BY-OWNER-AUDIT` → [`16-decision-register.md`](16-decision-register.md) |
 | SET / schema gaps | SET-001…024, D-1…D-5 | Living in `GAP_LOG.md` / phase 10 |
 | No new SOS/quiet-hours ADR | Bound to **P-4** | Sealed |
 
@@ -494,6 +494,6 @@ Walk rule: only navigate via **visible** buttons (no deep-link cheating).
 - [x] All 12 spine services mapped end-to-end
 - [x] Cross-links to P-4, ADR-035 / 035-b, ADR-038, GAP_LOG
 - [x] Acceptance S1–S5 composite map
-- [x] Ambiguity logged (not guessed)
+- [x] Ambiguity logged then resolved (**ADR-039**)
 
 **Next:** Phase 7 — UI/UX completeness audit (`08-ui-ux-gap-analysis.md`).
