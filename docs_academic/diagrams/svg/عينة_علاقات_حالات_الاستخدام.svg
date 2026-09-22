@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="780" font-family="Segoe UI, Tahoma" direction="rtl">
+<defs>
+<marker id="tri" markerWidth="16" markerHeight="14" refX="15" refY="7" orient="auto"><path d="M1,1 L15,7 L1,13 Z" fill="white" stroke="#1A1D2E" stroke-width="1.3"/></marker>
+<marker id="arr" markerWidth="12" markerHeight="10" refX="11" refY="5" orient="auto"><path d="M1,1 L11,5 L1,9" fill="none" stroke="#1A1D2E" stroke-width="1.3"/></marker>
+</defs>
+<rect width="1160" height="780" fill="#FAFAFC"/>
+<rect x="270" y="40" width="640" height="700" fill="white" stroke="#1A1D2E" stroke-width="1.5"/>
+<text x="590" y="70" text-anchor="middle" font-size="17" font-weight="bold" fill="#7C5CE6">نظام «عائلتي» (Family OS)</text>
+
+<!-- الفاعلون -->
+<g stroke="#1A1D2E" stroke-width="1.6" fill="none">
+<circle cx="150" cy="290" r="14"/><line x1="150" y1="304" x2="150" y2="345"/><line x1="128" y1="318" x2="172" y2="318"/><line x1="150" y1="345" x2="132" y2="375"/><line x1="150" y1="345" x2="168" y2="375"/>
+<circle cx="70" cy="480" r="14"/><line x1="70" y1="494" x2="70" y2="535"/><line x1="48" y1="508" x2="92" y2="508"/><line x1="70" y1="535" x2="52" y2="565"/><line x1="70" y1="535" x2="88" y2="565"/>
+<circle cx="225" cy="480" r="14"/><line x1="225" y1="494" x2="225" y2="535"/><line x1="203" y1="508" x2="247" y2="508"/><line x1="225" y1="535" x2="207" y2="565"/><line x1="225" y1="535" x2="243" y2="565"/>
+</g>
+<text x="150" y="398" text-anchor="middle" font-size="13" font-weight="bold">الوالد (Parent)</text>
+<text x="70" y="588" text-anchor="middle" font-size="13" font-weight="bold">الأب (OWNER)</text>
+<text x="225" y="588" text-anchor="middle" font-size="13" font-weight="bold">الأم (PARENT)</text>
+
+<!-- تعميم الفاعلين: مثلث مفرغ -->
+<line x1="82" y1="468" x2="138" y2="382" stroke="#1A1D2E" stroke-width="1.4" marker-end="url(#tri)"/>
+<line x1="213" y1="468" x2="163" y2="382" stroke="#1A1D2E" stroke-width="1.4" marker-end="url(#tri)"/>
+<text x="60" y="430" font-size="11" fill="#7C5CE6" font-weight="bold">تعميم ▲</text>
+
+<!-- الحالات -->
+<g stroke="#1A1D2E" stroke-width="1.4">
+<ellipse cx="450" cy="150" rx="110" ry="36" fill="#E7F7EE"/>
+<ellipse cx="780" cy="150" rx="118" ry="36" fill="#FFF6E0"/>
+<ellipse cx="455" cy="320" rx="122" ry="38" fill="#E7F7EE"/>
+<ellipse cx="790" cy="320" rx="115" ry="36" fill="#FFE9E9"/>
+<ellipse cx="450" cy="500" rx="105" ry="36" fill="#E7F7EE"/>
+<ellipse cx="765" cy="455" rx="80" ry="30" fill="#EEF2FF"/>
+<ellipse cx="775" cy="545" rx="105" ry="30" fill="#EEF2FF"/>
+<ellipse cx="780" cy="660" rx="115" ry="33" fill="#FFF6E0"/>
+</g>
+<text x="450" y="156" text-anchor="middle" font-size="13" font-weight="bold">اعتماد إنجاز مهمة</text>
+<text x="780" y="156" text-anchor="middle" font-size="13" font-weight="bold">إيداع دقائق في المحفظة</text>
+<text x="455" y="316" text-anchor="middle" font-size="13" font-weight="bold">منح وقت إضافي</text>
+<text x="455" y="334" text-anchor="middle" font-size="11">(سقف ≤ ٣٠ دقيقة)</text>
+<text x="790" y="326" text-anchor="middle" font-size="13" font-weight="bold">تجاوز السقف (الأب حصراً)</text>
+<text x="450" y="506" text-anchor="middle" font-size="13" font-weight="bold">قفل جهاز الابن</text>
+<text x="765" y="460" text-anchor="middle" font-size="12" font-weight="bold">قفل فوري</text>
+<text x="775" y="550" text-anchor="middle" font-size="12" font-weight="bold">قفل مجدول (وضع النوم)</text>
+<text x="780" y="666" text-anchor="middle" font-size="13" font-weight="bold">تسجيل في سجل التدقيق</text>
+
+<!-- تضمين: متقطع من الأساس إلى المضمَّنة -->
+<line x1="562" y1="150" x2="660" y2="150" stroke="#1A1D2E" stroke-width="1.3" stroke-dasharray="6,4" marker-end="url(#arr)"/>
+<text x="610" y="138" text-anchor="middle" font-size="12" fill="#0E8F6E" font-weight="bold">«تضمين»</text>
+<line x1="530" y1="530" x2="672" y2="640" stroke="#1A1D2E" stroke-width="1.3" stroke-dasharray="6,4" marker-end="url(#arr)"/>
+<text x="580" y="600" text-anchor="middle" font-size="12" fill="#0E8F6E" font-weight="bold">«تضمين»</text>
+
+<!-- توسيع: متقطع من الموسِّعة إلى الأساس -->
+<line x1="673" y1="320" x2="580" y2="320" stroke="#1A1D2E" stroke-width="1.3" stroke-dasharray="6,4" marker-end="url(#arr)"/>
+<text x="628" y="306" text-anchor="middle" font-size="12" fill="#C0392B" font-weight="bold">«توسيع»</text>
+
+<!-- تعميم الحالات -->
+<line x1="688" y1="468" x2="552" y2="492" stroke="#1A1D2E" stroke-width="1.4" marker-end="url(#tri)"/>
+<line x1="673" y1="537" x2="552" y2="512" stroke="#1A1D2E" stroke-width="1.4" marker-end="url(#tri)"/>
+
+<!-- ارتباطات -->
+<g stroke="#1A1D2E" stroke-width="1.2">
+<line x1="172" y1="310" x2="340" y2="165"/>
+<line x1="172" y1="320" x2="333" y2="320"/>
+<line x1="170" y1="330" x2="348" y2="488"/>
+<line x1="92" y1="500" x2="676" y2="345" stroke-opacity="0.55"/>
+</g>
+
+<!-- مفتاح القراءة -->
+<g font-size="12">
+<rect x="20" y="640" width="230" height="120" rx="8" fill="white" stroke="#D0D3E0"/>
+<text x="135" y="662" text-anchor="middle" font-weight="bold" fill="#7C5CE6">مفتاح العلاقات</text>
+<line x1="40" y1="680" x2="90" y2="680" stroke="#1A1D2E" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="100" y="684">تضمين — إلزامي دائماً</text>
+<line x1="40" y1="705" x2="90" y2="705" stroke="#1A1D2E" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="100" y="709">توسيع — شرطي أحياناً</text>
+<line x1="40" y1="730" x2="90" y2="730" stroke="#1A1D2E" marker-end="url(#tri)"/><text x="100" y="734">تعميم — وراثة أب/ابن</text>
+</g>
+</svg>

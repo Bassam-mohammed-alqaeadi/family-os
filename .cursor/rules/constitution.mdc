@@ -1,0 +1,50 @@
+---
+description: Family OS binding constitution — applies to EVERY task in this repository
+alwaysApply: true
+---
+
+# Family OS — Cursor Constitution (26 absolute rules)
+Any violation = the task is rejected and redone. Full text: handoff/01_CURSOR_CONSTITUTION.md
+Supreme reference on any conflict: handoff/04_POLICY_REGISTER_EN.md
+Amended 2026-09-18: rules 23–26 (logged owner decisions).
+
+## Authority
+1. Sources of truth: family-os/family_os_app.html (frozen v1.0) + handoff/04_POLICY_REGISTER_EN.md + family-os/_REGISTRY/screens.csv + family-os/_CONTRACTS/schema.sql. No design improvisation — port screens as-is.
+2. On ambiguity: STOP, write the question in QUESTIONS.md, halt. Never guess.
+3. Exactly 129 screens. Never resurrect: OTP, green v1 design, two-app model, role-picker.
+
+## Economy (highest sanctity)
+4. Only currency = minutes. `Minutes` value object mandatory; raw int for rewards forbidden; no "points/XP/coins" anywhere.
+5. All earning flows through PolicyEngine.earn() — direct balance writes forbidden.
+6. Father sets reward value at creation — no hidden defaults.
+
+## Sovereignty & safety
+7. AI suggests, never executes — parent-approval button ends every AI action.
+8. Role guarding ONLY via RoleGuard in the router. Owner-only: subscription/billing/privacy/audit.
+9. SOS/location/family-chat never gated by subscription, never disabled.
+10. Audit log repo has no update/delete methods at all.
+11. Time expiry never locks: family chat, Quran, SOS.
+
+## Code
+12. All UI strings from ARB files — no hardcoded user-facing literals.
+13. No child names outside mock/ — child screens are functions of ChildId.
+14. Colors/shadows/radii from tokens.dart only.
+15. New visual components go to core/design/components/ once — no local duplicates.
+16. Semantics label on every interactive element; touch targets >= 48dp.
+17. Every feature ships with unit tests + widget tests proving render, live buttons, loop closure.
+18. flutter analyze zero warnings + dart format before commit.
+
+## D2 · Data & Completeness Laws
+23. DATA DYNAMISM LAW — Prototype values are SAMPLE RENDERING only, never content. Every displayed value binds to state/providers/repositories (zero hardcoded display data in widgets). Every screen renders full state range: empty, loading, one item, many items, error (SHR-005/006 define the look). Prototype notifications define TYPES + appearance — each emitted by a real event pipeline, never planted statically. Mock family (Register §10) lives exclusively in mock/ behind the same Repository interfaces; deleting mock/ must leave the app compiling and functional. CI/review flag: widget literals mirroring prototype sample numerals/names.
+
+24. GAP-CLOSING MANDATE — Settings completeness & loop closure. Every setting REAL: toggle/slider/choice binds to state, persists, enforced through core/policy/ (a switch that changes nothing is a violation). Close every loop: principal action → visible feedback AND real downstream effect (e.g. approve time request → PolicyEngine deposit → child side reflects). Detect and record incomplete settings/dead-ends/unclosed circles in GAP_LOG.md (screen ID, gap, proposed closure); close within task if in scope + Policy Register–consistent, else QUESTIONS.md. Additive only: closures complete frozen behavior, never remove/alter it; follow design tokens + Policy Register (supreme law).
+
+25. BACKEND-READINESS LAW (zero-UI-change integration) — UI never knows data source. Widgets → providers → Repository INTERFACES only; no network/DB/JSON parsing in features/ or app/. Repository interfaces live in feature domain/; mock/ today, api/ tomorrow — swapped by DI in ONE composition root. Every feature documents its contract in API_CONTRACT.md (models from _CONTRACTS/schema.sql, errors, sync/offline per Register §G-1). Models freezed/immutable with json serialization ready even under mocks. Repos return domain types (Minutes, ChildId…) never maps/dynamic. PERMANENT ACCEPTANCE: swap mock/→API = zero lines changed in features/ and app/; CI compiles with a fake alternative implementation to prove the seam.
+
+26. AI INTEGRATION LAW (Brain = backend service; app = hooks) — No on-device inference. All AI via exactly three repos: AdvisorRepository (Family Advisor chat/suggestions/voice/control), InsightsRepository (patterns, timeline, growth map, weekly report), TutorRepository (Socratic tutor, recitation, stories, smart plan). Same seam as rule 25 — mock now, AI Gateway later, zero UI change. Features emit typed FamilyEvents to local EventBus → sync queue (AI hooks from day one); identity abstraction (e.g. child_a7f3) ON DEVICE before events leave. Charter's five stages are SERVER-SIDE feature flags, not app versions; inactive stages show designed coming-soon/inactive UI. Sovereignty structural: AiSuggestion has NO execute() — only approve() (FatherSession required) and reject(). Socratic refusal is repository-contract, not prompt-only. Quran from licensed source only — AI never generates verses. Child↔tutor logged to father; child sees transparency line. Mock AdvisorRepository reproduces exact frozen-prototype suggestions/insights so all 19 AI screens build/test before any real model.
+
+## Workflow
+19. One task = one system (or one screen). Never batch.
+20. Every task ends with code + green tests + one line in CONVERSION_LOG.md.
+21. Never modify: core/policy/, tokens.dart, .cursor/rules/ — owner decision required.
+22. One feature per commit (core/ only under a declared task).

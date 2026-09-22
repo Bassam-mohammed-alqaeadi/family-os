@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1250" font-family="Segoe UI, Tahoma" direction="rtl">
+<defs>
+<marker id="tri" markerWidth="16" markerHeight="14" refX="15" refY="7" orient="auto"><path d="M1,1 L15,7 L1,13 Z" fill="white" stroke="#1A1D2E" stroke-width="1.3"/></marker>
+<marker id="arr" markerWidth="12" markerHeight="10" refX="11" refY="5" orient="auto"><path d="M1,1 L11,5 L1,9" fill="none" stroke="#1A1D2E" stroke-width="1.3"/></marker>
+</defs><rect width="1500" height="1250" fill="#FAFAFC"/>
+<rect x="330" y="40" width="840" height="1160" fill="white" stroke="#1A1D2E" stroke-width="1.6" rx="4"/>
+<text x="750" y="72" text-anchor="middle" font-size="18" font-weight="bold" fill="#7C5CE6">المجال الأول: الإدارة والحوكمة (ADM)</text>
+<text x="750" y="92" text-anchor="middle" font-size="12" fill="#666">نظام «عائلتي» (Family OS) — حالات UC-01…UC-09 مع عملياتها الفرعية</text>
+<g stroke="#1A1D2E" stroke-width="1.6" fill="none">
+<circle cx="1330" cy="150" r="13"/><line x1="1330" y1="163" x2="1330" y2="198"/>
+<line x1="1310" y1="175" x2="1350" y2="175"/>
+<line x1="1330" y1="198" x2="1314" y2="225"/><line x1="1330" y1="198" x2="1346" y2="225"/></g>
+<text x="1330" y="244" text-anchor="middle" font-size="13.5" font-weight="bold">الأب</text><text x="1330" y="260" text-anchor="middle" font-size="11" fill="#555">(Father — OWNER)</text>
+<g stroke="#1A1D2E" stroke-width="1.6" fill="none">
+<circle cx="1400" cy="560" r="13"/><line x1="1400" y1="573" x2="1400" y2="608"/>
+<line x1="1380" y1="585" x2="1420" y2="585"/>
+<line x1="1400" y1="608" x2="1384" y2="635"/><line x1="1400" y1="608" x2="1416" y2="635"/></g>
+<text x="1400" y="654" text-anchor="middle" font-size="13.5" font-weight="bold">الوالد</text><text x="1400" y="670" text-anchor="middle" font-size="11" fill="#555">(Parent — مجرد)</text>
+<g stroke="#1A1D2E" stroke-width="1.6" fill="none">
+<circle cx="1330" cy="980" r="13"/><line x1="1330" y1="993" x2="1330" y2="1028"/>
+<line x1="1310" y1="1005" x2="1350" y2="1005"/>
+<line x1="1330" y1="1028" x2="1314" y2="1055"/><line x1="1330" y1="1028" x2="1346" y2="1055"/></g>
+<text x="1330" y="1074" text-anchor="middle" font-size="13.5" font-weight="bold">الأم</text><text x="1330" y="1090" text-anchor="middle" font-size="11" fill="#555">(Mother — PARENT)</text>
+<g stroke="#1A1D2E" stroke-width="1.6" fill="none">
+<circle cx="160" cy="300" r="13"/><line x1="160" y1="313" x2="160" y2="348"/>
+<line x1="140" y1="325" x2="180" y2="325"/>
+<line x1="160" y1="348" x2="144" y2="375"/><line x1="160" y1="348" x2="176" y2="375"/></g>
+<text x="160" y="394" text-anchor="middle" font-size="13.5" font-weight="bold">الابن</text><text x="160" y="410" text-anchor="middle" font-size="11" fill="#555">(Child)</text>
+<g stroke="#1A1D2E" stroke-width="1.6" fill="none">
+<circle cx="140" cy="900" r="13"/><line x1="140" y1="913" x2="140" y2="948"/>
+<line x1="120" y1="925" x2="160" y2="925"/>
+<line x1="140" y1="948" x2="124" y2="975"/><line x1="140" y1="948" x2="156" y2="975"/></g>
+<text x="140" y="994" text-anchor="middle" font-size="13.5" font-weight="bold">الجد</text><text x="140" y="1010" text-anchor="middle" font-size="11" fill="#555">(Guardian — OBSERVER)</text>
+<line x1="1345" y1="255" x2="1390" y2="545" stroke="#1A1D2E" stroke-width="1.3" marker-end="url(#tri)"/>
+<line x1="1345" y1="965" x2="1392" y2="678" stroke="#1A1D2E" stroke-width="1.3" marker-end="url(#tri)"/>
+<text x="1432" y="400" font-size="10.5" fill="#7C5CE6" font-weight="bold">generalization</text>
+<ellipse cx="960" cy="150" rx="110" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="960" y="154" text-anchor="middle" font-size="11.5" font-weight="bold">UC-01 إنشاء الحساب والعائلة</text>
+<ellipse cx="600" cy="120" rx="95" ry="26" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="124" text-anchor="middle" font-size="11.5" font-weight="bold">التحقق من الهوية</text>
+<ellipse cx="600" cy="185" rx="100" ry="26" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="189" text-anchor="middle" font-size="11.5" font-weight="bold">تهيئة ملف العائلة الأول</text>
+<ellipse cx="600" cy="250" rx="105" ry="26" fill="#EEF2FF" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="254" text-anchor="middle" font-size="11.5" font-weight="bold">UC-02 تجربة ببيانات تجريبية</text>
+<line x1="852" y1="138" x2="697" y2="124" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="775" y="118" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<line x1="855" y1="162" x2="702" y2="182" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="790" y="185" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<line x1="700" y1="250" x2="868" y2="172" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="800" y="230" text-anchor="middle" font-size="11" font-style="italic" fill="#C0392B" font-weight="bold">&#171;extend&#187;</text>
+<ellipse cx="960" cy="330" rx="105" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="960" y="334" text-anchor="middle" font-size="11.5" font-weight="bold">⭐ UC-03 ربط جهاز ابن</text>
+<ellipse cx="600" cy="315" rx="110" ry="26" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="319" text-anchor="middle" font-size="11.5" font-weight="bold">توليد رمز الاقتران (pairing)</text>
+<ellipse cx="600" cy="378" rx="115" ry="26" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="382" text-anchor="middle" font-size="11.5" font-weight="bold">عرض الشفافية وموافقة الابن</text>
+<ellipse cx="600" cy="441" rx="100" ry="26" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="445" text-anchor="middle" font-size="11.5" font-weight="bold">فحص صحة الجهاز</text>
+<line x1="857" y1="320" x2="712" y2="316" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="785" y="306" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<line x1="860" y1="345" x2="718" y2="374" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="790" y="372" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<line x1="872" y1="355" x2="702" y2="436" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="800" y="415" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="960" cy="520" rx="115" ry="32" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="960" y="524" text-anchor="middle" font-size="11.5" font-weight="bold">⭐ UC-04 دعوة الأم وتحديد التفويض</text>
+<ellipse cx="600" cy="505" rx="110" ry="26" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="509" text-anchor="middle" font-size="11.5" font-weight="bold">اختيار مستوى (١/٢/٣)</text>
+<ellipse cx="600" cy="568" rx="105" ry="26" fill="#EEF2FF" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="572" text-anchor="middle" font-size="11.5" font-weight="bold">تعديل المستوى لاحقًا</text>
+<line x1="848" y1="510" x2="712" y2="506" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="782" y="496" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<line x1="707" y1="566" x2="853" y2="540" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="790" y="568" text-anchor="middle" font-size="11" font-style="italic" fill="#C0392B" font-weight="bold">&#171;extend&#187;</text>
+<ellipse cx="960" cy="680" rx="100" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="960" y="684" text-anchor="middle" font-size="11.5" font-weight="bold">UC-05 لوحة اليوم</text>
+<ellipse cx="960" cy="790" rx="110" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="960" y="794" text-anchor="middle" font-size="11.5" font-weight="bold">UC-06 متابعة ملف ابن</text>
+<ellipse cx="600" cy="760" rx="100" ry="26" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="764" text-anchor="middle" font-size="11.5" font-weight="bold">عرض الخط الزمني</text>
+<ellipse cx="600" cy="823" rx="110" ry="26" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="827" text-anchor="middle" font-size="11.5" font-weight="bold">مؤشرات الحالة اللحظية</text>
+<line x1="853" y1="780" x2="702" y2="762" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="780" y="758" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<line x1="855" y1="802" x2="712" y2="820" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="790" y="825" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<ellipse cx="960" cy="910" rx="110" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="960" y="914" text-anchor="middle" font-size="11.5" font-weight="bold">UC-07 إدارة أجهزة العائلة</text>
+<ellipse cx="600" cy="895" rx="115" ry="26" fill="#EEF2FF" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="899" text-anchor="middle" font-size="11.5" font-weight="bold">🔔 معالجة انقطاع جهاز</text>
+<ellipse cx="600" cy="958" rx="120" ry="26" fill="#EEF2FF" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="962" text-anchor="middle" font-size="11.5" font-weight="bold">🔔 تنبيه استنزاف البطارية (OEM)</text>
+<line x1="717" y1="893" x2="853" y2="902" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="788" y="884" text-anchor="middle" font-size="11" font-style="italic" fill="#C0392B" font-weight="bold">&#171;extend&#187;</text>
+<line x1="722" y1="954" x2="860" y2="925" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="800" y="952" text-anchor="middle" font-size="11" font-style="italic" fill="#C0392B" font-weight="bold">&#171;extend&#187;</text>
+<ellipse cx="960" cy="1030" rx="110" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="960" y="1034" text-anchor="middle" font-size="11.5" font-weight="bold">UC-08 إدارة الاشتراك</text>
+<ellipse cx="960" cy="1130" rx="118" ry="30" fill="#E7F7EE" stroke="#1A1D2E" stroke-width="1.3"/><text x="960" y="1134" text-anchor="middle" font-size="11.5" font-weight="bold">UC-09 التحكم بالخصوصية والبيانات</text>
+<ellipse cx="600" cy="1060" rx="105" ry="28" fill="#FFE9CB" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="1064" text-anchor="middle" font-size="11.5" font-weight="bold">تسجيل في سجل التدقيق</text>
+<ellipse cx="600" cy="1130" rx="110" ry="26" fill="#FFF6E0" stroke="#1A1D2E" stroke-width="1.3"/><text x="600" y="1134" text-anchor="middle" font-size="11.5" font-weight="bold">عرض «ماذا يُجمع عني» للابن</text>
+<line x1="845" y1="1040" x2="707" y2="1058" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="778" y="1038" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<line x1="843" y1="1135" x2="712" y2="1130" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="780" y="1120" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<line x1="880" y1="362" x2="650" y2="1035" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="725" y="700" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<line x1="872" y1="550" x2="640" y2="1042" stroke="#1A1D2E" stroke-width="1.15" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="700" y="810" text-anchor="middle" font-size="11" font-style="italic" fill="#0E8F6E" font-weight="bold">&#171;include&#187;</text>
+<text x="960" y="1072" text-anchor="middle" font-size="10" fill="#C0392B">{قيد: لا يحجب قنوات الأمان أبدًا — P-4}</text>
+<line x1="1318" y1="190" x2="1068" y2="150" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="1.0"/>
+<line x1="1318" y1="190" x2="1063" y2="330" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="1.0"/>
+<line x1="1318" y1="190" x2="1073" y2="522" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="1.0"/>
+<line x1="1318" y1="190" x2="1068" y2="910" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="1.0"/>
+<line x1="1318" y1="190" x2="1068" y2="1030" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="1.0"/>
+<line x1="1318" y1="190" x2="1076" y2="1128" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="1.0"/>
+<line x1="1388" y1="600" x2="1058" y2="682" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="1.0"/>
+<line x1="1388" y1="615" x2="1068" y2="792" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="1.0"/>
+<line x1="205" y1="330" x2="494" y2="378" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.65"/>
+<line x1="210" y1="345" x2="492" y2="1125" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.65"/>
+<text x="300" y="360" font-size="10" fill="#666">مشارك بالموافقة</text>
+<line x1="185" y1="920" x2="862" y2="690" stroke="#1A1D2E" stroke-width="1.15" stroke-opacity="0.45" stroke-dasharray="3,3"/>
+<text x="420" y="835" font-size="10.5" fill="#888">observer — مشاهدة فقط</text>
+<g font-size="12"><rect x="20" y="1060" width="270" height="150" rx="8" fill="white" stroke="#D0D3E0"/>
+<text x="155" y="1082" text-anchor="middle" font-weight="bold" fill="#7C5CE6">مفتاح القراءة</text>
+<line x1="35" y1="1102" x2="80" y2="1102" stroke="#1A1D2E" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="90" y="1106">&#171;include&#187; إلزامي دائمًا</text>
+<line x1="35" y1="1127" x2="80" y2="1127" stroke="#1A1D2E" stroke-dasharray="6,4" marker-end="url(#arr)"/><text x="90" y="1131">&#171;extend&#187; شرطي أحيانًا</text>
+<line x1="35" y1="1152" x2="80" y2="1152" stroke="#1A1D2E" marker-end="url(#tri)"/><text x="90" y="1156">generalization وراثة</text>
+<text x="35" y="1181">⭐ عمود فقري · 🔔 حدثية (G-6) · برتقالي = مشترَكة</text>
+<text x="35" y="1200" fill="#888">منقّط باهت = مشاهدة (observer)</text></g>
+</svg>
