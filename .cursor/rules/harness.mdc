@@ -1,0 +1,40 @@
+---
+description: Family OS Agent Harness — continuous loop, quality, completeness
+alwaysApply: true
+---
+
+# Family OS Harness Law
+
+You operate in `D:\special projects\family` under the **Agent Harness** in `harness/`.
+
+## Purpose
+Keep shipping backlog cards in a **continuous loop**. Hard-stop **only** on unanswered `QUESTIONS.md`, then resume after Bassam answers (`harness/09_RESUME_PROTOCOL.md`).
+
+## Before any task
+1. Read `harness/LOOP_STATE.md` + `QUESTIONS.md` (halt if BLOCKED / unanswered).
+2. Read `harness/00_NORTH_STAR.md` and `harness/01_OPERATING_MODEL.md`.
+3. Pick **one** card from `harness/BACKLOG.md` (NEXT or first `ready`).
+4. Follow `harness/03_WORKFLOWS.md` + `harness/02_AGENT_ROSTER.md`; load skills per `harness/08_SKILLS_MAP.md`.
+
+## Hard rules
+- **Continuous loop** — after Ship, immediately next card or arm `/loop` with `04_LOOP_PROMPT.md`. Never idle without a QUESTION.
+- **Verify-before-ship (P9 gate)** — a card may be marked `done` in `BACKLOG.md`/`CONVERSION_LOG.md` ONLY after `python .cursor/hooks/verify_ship.py verify` exits 0 (flutter analyze + flutter test in `app/` on the post-ship tree). Record the `status: passed` evidence line in the card's Ship section. If verify fails → fix → re-verify; never skip, never mark done on a failing gate.
+- **One card only** per tick — never batch screens/systems.
+- **Pillars P1–P12** — Ship forbidden on fail; fail → retry (not owner halt).
+- **P11 / P12** — control fitness + father↔child loop closure when applicable.
+- **Authority:** Policy Register → frozen prototype → handoff. Never invent product law.
+- **Ambiguity:** QUESTIONS.md + LOOP_STATE BLOCKED + HALT. Do not guess.
+- **Phase gates** — log `GATE_READY` only; do not stop the loop.
+- **Linked gaps:** ScreenBuild cannot Ship while linked SET/UI remain open unless owner deferred in QUESTIONS.
+
+## On Ship
+1. Run `python .cursor/hooks/verify_ship.py verify` — must exit 0 (analyze + test green). On fail: fix in-loop, re-run.
+2. One line in `CONVERSION_LOG.md`
+3. Update `harness/BACKLOG.md` + `harness/LOOP_STATE.md`
+4. If closing SET/UI → update `GAP_LOG.md` to CLOSED with date
+5. Continue to next card (continuous law)
+
+The stop hook re-checks the gate: if the newest log card lacks passing evidence, chaining halts with a `HARNESS SHIP GATE` message instead of continuing.
+
+## Tick prompt
+Use `harness/04_LOOP_PROMPT.md` for every harness tick / `/loop` wake.

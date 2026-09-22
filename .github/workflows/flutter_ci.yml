@@ -1,0 +1,29 @@
+name: Flutter CI
+
+on:
+  push:
+    paths:
+      - "app/**"
+      - ".github/workflows/flutter_ci.yml"
+  pull_request:
+    paths:
+      - "app/**"
+      - ".github/workflows/flutter_ci.yml"
+
+jobs:
+  analyze-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.35.7"
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      - run: flutter analyze --fatal-infos
+      - run: flutter test

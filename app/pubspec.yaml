@@ -1,0 +1,40 @@
+name: family_os
+description: Family OS (عائلتي) — parent+child digital wellbeing. Mock-first Flutter app.
+publish_to: "none"
+version: 1.0.0+1
+
+# Pinned to owner PC SDK (QUESTIONS Q-PREFLIGHT-001 resolved 2026-09-20):
+# Flutter 3.35.7 stable · Dart 3.9.2 · C:\src\flutter
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  intl: any
+  go_router: ^17.2.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  generate: true
+  uses-material-design: true
+
+  fonts:
+    - family: IBMPlexSansArabic
+      fonts:
+        - asset: assets/fonts/IBMPlexSansArabic-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/IBMPlexSansArabic-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/IBMPlexSansArabic-Bold.ttf
+          weight: 700
+        # No ExtraBold in IBM Plex Sans Arabic; map display-800 to Bold until F0-A tokens refine.
+        - asset: assets/fonts/IBMPlexSansArabic-Bold.ttf
+          weight: 800
