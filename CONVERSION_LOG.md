@@ -123,3 +123,137 @@ Format: `YYYY-MM-DD | <task-id> | <summary> | evidence`
 2026-09-22 | SCR-FAT-055 | CreateTaskScreen wired; minutes-only rewards; mother help; save→FAT-054; mother levels; P-4 SOS; Rule 12/23; NEXT→SCR-FAT-060 (056/057 UI-007) | status: passed — analyze OK; flutter test 860/860 green (verify_ship .verify/SCR-FAT-055.json)
 2026-09-22 | SCR-FAT-060 | AuditLogScreen empty/one/many; append-only R10 banner; mother view per levels; no delete; P-4 SOS; Rule 12/23; NEXT→SCR-FAT-061 | status: passed — analyze OK; flutter test 868/868 green (verify_ship .verify/SCR-FAT-060.json)
 2026-09-22 | SCR-FAT-061 | LanguageHelpScreen AR/EN rows+help→026/030+support toast; mother levels; P-4 SOS; Rule 12/23; NEXT→SCR-FAT-062 | status: passed — analyze OK; flutter test 889/889 green (verify_ship .verify/SCR-FAT-061.json)
+2026-09-22 | SCR-FAT-062 | FamilyPatternsScreen confidence seals+pattern tags→063; mother levels; P-4 SOS; Rule 12/23; NEXT→SCR-FAT-063 | status: passed — analyze OK; flutter test 889/889 green (verify_ship .verify/SCR-FAT-062.json)
+2026-09-22 | SCR-FAT-063 | IndividualTimelineScreen cross-domain insight+today thread; mother levels; P-4 SOS; Rule 12/23; NEXT→SCR-FAT-064 | status: passed — analyze OK; flutter test 889/889 green (verify_ship .verify/SCR-FAT-063.json)
+2026-09-22 | SCR-FAT-064 | KnowledgeMapsScreen learning+social+dinner; →072/049; mother levels; P-4 SOS; Rule 12/23; NEXT→SCR-CHD-012 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-FAT-064.json)
+2026-09-22 | Q-SPEED-001 | Fast path: Wave2 CHD-012…024 unlocked; Wave3+FAT-086 deferred; quality gates unchanged; NEXT=SCR-CHD-012 | status: policy
+2026-09-22 | SCR-CHD-012 | ChildLearnHomeScreen level+challenge+materials+qact; →013/014/015/017/018; parent lean; P-4 SOS; Rule 12/23; NEXT→SCR-CHD-013 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-CHD-012.json)
+
+2026-09-22 | SCR-CHD-013 | ChildLessonScreen pizza fractions; next→014 tutor→017; parent lean; P-4 SOS; Rule 12/23; NEXT→SCR-CHD-014 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-CHD-013.json)
+
+2026-09-22 | SCR-CHD-014 | ChildFlashcardsScreen flip+know/review; quiz→015; parent lean; P-4 SOS; Rule 12/23; NEXT→SCR-CHD-015 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-CHD-014.json)
+
+2026-09-22 | SCR-CHD-015 | ChildQuizScreen MCQ+minutes-only reward; success→016; parent lean; P-4 SOS; Rule 12/23; NEXT→SCR-CHD-016 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-CHD-015.json)
+
+
+2026-09-22 | SCR-CHD-016 | ChildResultScreen score+minutes reward+retry→015; parent lean; P-4 SOS; Rule 12/23; NEXT→SCR-CHD-017 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-CHD-016.json)
+
+
+2026-09-22 | SCR-CHD-017 | ChildTutorScreen guided choices+photo mock; empty→012; parent lean; P-4 SOS; Rule 12/23; NEXT→SCR-CHD-018 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-CHD-017.json)
+
+
+2026-09-22 | Q-SPEED-002 | Supersede Q-SPEED-001 deferrals: Wave3+FAT-086 restored ready; full catalog before Phase 1.5; /loop 5m; NEXT=SCR-CHD-018 | status: policy
+
+2026-09-22 | SCR-CHD-018 | ChildFocusScreen timer+praise+gift minutes; sounds→035; parent lean; P-4 SOS; Rule 12/23; NEXT→SCR-CHD-019 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-CHD-018.json)
+
+
+2026-09-22 | SCR-CHD-019 | ChildWalletScreen minutes wallets+pride badges; earn→022/015/025; parent lean; P-4 SOS; Rule 12/23; NEXT→SCR-CHD-020 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-CHD-019.json)
+
+
+2026-09-22 | SCR-CHD-020 | ChildTimeRequestScreen mins+trade wheel; submit→004; tasked→022; parent lean; P-4 SOS; Rule 12/23; NEXT→SCR-CHD-022 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-CHD-020.json)
+
+
+2026-09-22 | SCR-CHD-022 | ChildTasksScreen list+minutes rewards; proof mock toast; parent lean; P-4 SOS; Rule 12/23; NEXT→SCR-CHD-023 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-CHD-022.json)
+
+
+2026-09-22 | SCR-CHD-023 | ChildMediaShareScreen photo/voice/file qact+recent+safe-circle; parent lean; P-4 SOS; Rule 12/23; NEXT→SCR-CHD-024 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-CHD-023.json)
+
+
+2026-09-22 | Q-VERIFY-TIERED | P9 ship gate: scoped tests per card + full suite every 3 ships / end-of-wake; hard --full before Phase 1.5, merge, Stage 3; see harness/12_VERIFY_TIER.md | status: policy — verify_ship auto tier
+
+2026-09-22 | SCR-CHD-024 | ChildArrivalScreen safe-zone check-in+live status; →004; parent lean; P-4 SOS; Rule 12/23; NEXT→SCR-FAT-065 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-CHD-024.json)
+
+
+2026-09-22 | SCR-FAT-065 | SmartAlertsScreen amber alerts+tools+honesty; →066/067; mother levels; P-4 SOS; Rule 12/23; NEXT→SCR-FAT-066 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-FAT-065.json)
+
+
+2026-09-22 | SCR-FAT-066 | SmartAlertDetailScreen behavior banner+dialogue CTAs; empty→065; P-4 SOS; Rule 12/23; NEXT→SCR-FAT-069 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-FAT-066.json)
+
+2026-09-22 | SCR-FAT-069 | ChildUsageReportScreen week bars+categories+30-day retention; empty→003; P-4 SOS; Rule 12/23; NEXT→SCR-FAT-070 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-FAT-069.json)
+
+2026-09-22 | SCR-FAT-070 | OuterCircleScreen relatives+friends+pending→071; strangers blocked; P-4 SOS; Rule 12/23; NEXT→SCR-FAT-071 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-FAT-070.json)
+
+2026-09-22 | SCR-FAT-071 | FriendApprovalScreen channels+approve/decline; mother levels; empty→070; P-4 SOS; Rule 12/23; NEXT→SCR-FAT-072 | status: passed — analyze OK; flutter test full green (verify_ship .verify/SCR-FAT-071.json)
+
+2026-09-22 | SCR-FAT-072 | QuranProgressScreen ward+offline+approve minutes; mother levels; empty→003; P-4 SOS; Rule 12/23; NEXT→SCR-FAT-073 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-FAT-072.json)
+
+2026-09-22 | SCR-FAT-073 | WeeklyReportScreen tip+settings+sections; mother levels; empty→003; P-4 SOS; Rule 12/23; NEXT→SCR-FAT-074 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-FAT-073.json)
+
+2026-09-22 | SCR-FAT-074 | FamilyAdvisorHubScreen chips+honesty+capabilities; empty→003; P-4 SOS; Rule 12/23; NEXT→SCR-FAT-076 | status: passed — analyze OK; flutter test full green (verify_ship .verify/SCR-FAT-074.json)
+
+2026-09-22 | SCR-FAT-076 | MotherAiFeedScreen whisper+summaries; mother levels; empty→003; P-4 SOS; Rule 12/23; NEXT→SCR-FAT-077 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-FAT-076.json)
+
+2026-09-22 | SCR-FAT-077 | RoadSafetyScreen crash+phone toggles+trip sample; Android-first honesty; P-4 SOS; Rule 12/23; NEXT→SCR-CHD-025 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-FAT-077.json)
+
+
+2026-09-22 | SCR-CHD-025 | ChildQuranWardScreen ward+offline ayah+record; licensed mushaf; minutes reward; parent lean; P-4 SOS; Rule 12/23; NEXT→SCR-CHD-026 | status: passed — analyze OK; flutter test full green (verify_ship .verify/SCR-CHD-025.json)
+
+
+2026-09-22 | SCR-CHD-026 | ChildMemorizationScreen map+badges+due reviews; licensed mushaf toast; parent lean; P-4 SOS; Rule 12/23; NEXT→SCR-CHD-027 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-CHD-026.json)
+
+
+2026-09-22 | SCR-CHD-027 | ChildAthkarScreen morning+evening thikr; gentle no-pressure; parent lean; P-4 SOS; Rule 12/23; NEXT→SCR-CHD-028 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-CHD-027.json)
+
+
+2026-09-22 | SCR-CHD-028 | ChildSmartPlanScreen gap+project+path; minutes-sized exercise; parent lean; P-4 SOS; Rule 12/23; NEXT→SCR-CHD-029 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-CHD-028.json)
+
+
+2026-09-22 | SCR-CHD-029 | ChildDailyReviewScreen spaced cards+5min; minutes reward toast; parent lean; P-4 SOS; Rule 12/23; NEXT→SCR-CHD-030 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-CHD-029.json)
+
+
+2026-09-22 | SCR-CHD-030 | ChildFriendsScreen approved circle+add request; father gate; parent lean; P-4 SOS; Rule 12/23; NEXT→SCR-CHD-031 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-CHD-030.json)
+
+
+2026-09-22 | SCR-CHD-031 | ChildComingGiftsScreen teaser hub+deep links; no date promises; parent lean; P-4 SOS; Rule 12/23; NEXT→SCR-FAT-078 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-CHD-031.json)
+
+
+2026-09-22 | SCR-FAT-078 | HomeRouterFilterScreen DNS+29cats+away; mother levels; empty→003; P-4 SOS; Rule 12/23; NEXT→SCR-FAT-080 | status: passed — analyze OK; flutter test full green (verify_ship .verify/SCR-FAT-078.json)
+
+
+2026-09-22 | SCR-FAT-080 | AgentActionLogScreen live bless/undo+weekly; minutes; mother levels; empty→003; P-4 SOS; Rule 12/23; NEXT→SCR-FAT-081 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-FAT-080.json)
+
+
+2026-09-22 | SCR-FAT-081 | PeerCompareScreen anonymous cohort+compass; empty→003; P-4 SOS; Rule 12/23; NEXT→SCR-FAT-082 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-FAT-081.json)
+
+
+2026-09-22 | SCR-FAT-082 | SmartChoreDistributorScreen ChoreAI approve→054+shuffle; mother levels; empty→003; P-4 SOS; Rule 12/23; NEXT→SCR-FAT-083 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-FAT-082.json)
+
+
+2026-09-22 | SCR-FAT-083 | AdvisorVoiceScreen press-talk+honesty; empty→003; P-4 SOS; Rule 12/23; NEXT→SCR-FAT-084 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-FAT-083.json)
+
+
+2026-09-22 | SCR-FAT-084 | StagedProjectScreen stages+minutes confirm; empty→003; P-4 SOS; Rule 12/23; NEXT→SCR-FAT-086 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-FAT-084.json)
+
+
+2026-09-22 | SCR-FAT-086 | FamilyMomentsScreen weekly pride+album; empty→003; P-4 SOS; Rule 12/23; NEXT→SCR-CHD-032 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-FAT-086.json)
+
+
+2026-09-22 | SCR-CHD-032 | ChildSmartTilawahScreen licensed tip+listen; empty→014; P-4 SOS; Rule 12/23; NEXT→SCR-CHD-033 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-CHD-032.json)
+
+
+2026-09-22 | SCR-CHD-033 | ChildInteractiveStoriesScreen value choices; empty→014; P-4 SOS; Rule 12/23; NEXT→SCR-CHD-034 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-CHD-033.json)
+
+
+2026-09-22 | SCR-CHD-034 | ChildFamilyChallengesScreen friendly race; empty→001; P-4 SOS; Rule 12/23; NEXT→SCR-CHD-035 | status: passed — analyze OK; flutter test green FULL (verify_ship .verify/SCR-CHD-034.json)
+
+
+2026-09-22 | SCR-CHD-035 | ChildFocusSoundsScreen nature loops→018; empty→018; P-4 SOS; Rule 12/23; NEXT→SCR-CHD-036 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-CHD-035.json)
+
+
+2026-09-22 | SCR-CHD-036 | ChildCallPlayScreen safe-circle games; empty→007; P-4 SOS; Rule 12/23; NEXT→SCR-CHD-037 | status: passed — analyze OK; flutter test green (verify_ship .verify/SCR-CHD-036.json)
+
+
+2026-09-22 | SCR-CHD-037 | ChildStickersBackgroundsScreen stickers+wallpaper; empty→007; P-4 SOS; Rule 12/23; catalog COMPLETE | status: passed — analyze OK; flutter test green FULL (verify_ship .verify/SCR-CHD-037.json)
+
+2026-09-22 | GATE_READY | Phase-1.5-entry | all ScreenBuilds shipped | full verify passed | start UX completeness
+
+2026-09-22 | P15-EDU-001 | Education+Studio scored Shell (6Q); seeded P15-EDU-002…007 GapClose; score→harness/PHASE15_EDU_SCORE.md; NEXT→P15-EDU-002 | status: passed — score+seed (no code ship)
+
+2026-09-22 | phase15 | domain=Education+Studio | score=Shell | cards_seeded=6 | stage3_still_blocked=yes
+
+2026-09-22 | P15-EDU-002 | LearningAssignment seam: FAT-045/049 assign → CHD-012 challenge+material live (P12); Minutes reward; ARB; unit+widget | status: passed — analyze OK; flutter test green FULL (verify_ship .verify/phase15.json)
+
+2026-09-22 | P15-EDU-003 | FAT-041 SourceRef library: PDF/device/link/topic/voice attach persist (P11); attached strip; mock URI seam | status: passed — analyze OK; flutter test green FULL (verify_ship .verify/P15-EDU-003.json)
+
+2026-09-22 | PRT-1 | generator groundwork: shell_config.dart (5/4 branches, 17/5 tabless, hubIndex 9 tabs) from screens.csv; router behaviour unchanged | evidence: analyze clean; shell_config_test green; verify_ship .verify/PRT-1.json
+

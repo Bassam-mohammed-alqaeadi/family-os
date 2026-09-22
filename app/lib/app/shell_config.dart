@@ -1,0 +1,927 @@
+// GENERATED — do not edit by hand. Run: dart run tool/gen_routes.dart
+
+/// Shell tab branch derived from screens.csv (PRT-1 groundwork).
+class ShellTab {
+  const ShellTab({
+    required this.tabId,
+    required this.arbLabelKey,
+    required this.rootScreenId,
+    required this.icon,
+    required this.screenIds,
+  });
+
+  final String tabId;
+  final String arbLabelKey;
+  final String rootScreenId;
+  final String icon;
+  final List<String> screenIds;
+}
+
+/// Hub tile for a screen inside a shell tab.
+class HubEntry {
+  const HubEntry({
+    required this.screenId,
+    required this.name,
+    required this.icon,
+    required this.type,
+  });
+
+  final String screenId;
+  final String name;
+  final String icon;
+  final String type;
+}
+
+/// Parent shell tabs (exactly 5) — frozen prototype order.
+const List<ShellTab> parentShellTabs = <ShellTab>[
+  ShellTab(
+    tabId: 'today',
+    arbLabelKey: 'tabParentToday',
+    rootScreenId: 'SCR-FAT-010',
+    icon: '🏠',
+    screenIds: <String>[
+    'SCR-FAT-010',
+    'SCR-FAT-011',
+    'SCR-FAT-019',
+    'SCR-FAT-020',
+    'SCR-FAT-062',
+    'SCR-FAT-063',
+    'SCR-FAT-064',
+    'SCR-FAT-073',
+    'SCR-FAT-074',
+    'SCR-FAT-076',
+    'SCR-FAT-079',
+    'SCR-FAT-080',
+    'SCR-FAT-083',
+    'SCR-FAT-086',
+    ],
+  ),
+  ShellTab(
+    tabId: 'kids',
+    arbLabelKey: 'tabParentKids',
+    rootScreenId: 'SCR-FAT-012',
+    icon: '👦',
+    screenIds: <String>[
+    'SCR-FAT-012',
+    'SCR-FAT-013',
+    'SCR-FAT-014',
+    'SCR-FAT-015',
+    'SCR-FAT-016',
+    'SCR-FAT-017',
+    'SCR-FAT-032',
+    'SCR-FAT-033',
+    'SCR-FAT-034',
+    'SCR-FAT-035',
+    'SCR-FAT-036',
+    'SCR-FAT-037',
+    'SCR-FAT-038',
+    'SCR-FAT-065',
+    'SCR-FAT-066',
+    'SCR-FAT-067',
+    'SCR-FAT-068',
+    'SCR-FAT-069',
+    'SCR-FAT-072',
+    'SCR-FAT-077',
+    'SCR-FAT-081',
+    'SCR-FAT-085',
+    ],
+  ),
+  ShellTab(
+    tabId: 'family',
+    arbLabelKey: 'tabParentFamily',
+    rootScreenId: 'SCR-FAT-021',
+    icon: '💬',
+    screenIds: <String>[
+    'SCR-FAT-021',
+    'SCR-FAT-022',
+    'SCR-FAT-023',
+    'SCR-FAT-024',
+    'SCR-FAT-052',
+    'SCR-FAT-053',
+    'SCR-FAT-054',
+    'SCR-FAT-055',
+    'SCR-FAT-070',
+    'SCR-FAT-071',
+    'SCR-FAT-082',
+    ],
+  ),
+  ShellTab(
+    tabId: 'studio',
+    arbLabelKey: 'tabParentStudio',
+    rootScreenId: 'SCR-FAT-040',
+    icon: '📚',
+    screenIds: <String>[
+    'SCR-FAT-040',
+    'SCR-FAT-041',
+    'SCR-FAT-042',
+    'SCR-FAT-043',
+    'SCR-FAT-044',
+    'SCR-FAT-045',
+    'SCR-FAT-046',
+    'SCR-FAT-047',
+    'SCR-FAT-048',
+    'SCR-FAT-049',
+    'SCR-FAT-050',
+    'SCR-FAT-051',
+    'SCR-FAT-084',
+    ],
+  ),
+  ShellTab(
+    tabId: 'settings',
+    arbLabelKey: 'tabParentSettings',
+    rootScreenId: 'SCR-FAT-025',
+    icon: '⚙️',
+    screenIds: <String>[
+    'SCR-FAT-025',
+    'SCR-FAT-028',
+    'SCR-FAT-026',
+    'SCR-FAT-027',
+    'SCR-FAT-029',
+    'SCR-FAT-030',
+    'SCR-FAT-031',
+    'SCR-FAT-056',
+    'SCR-FAT-057',
+    'SCR-FAT-058',
+    'SCR-FAT-059',
+    'SCR-FAT-060',
+    'SCR-FAT-061',
+    'SCR-FAT-075',
+    'SCR-FAT-078',
+    ],
+  )
+];
+
+/// Child shell tabs (exactly 4) — frozen prototype order.
+const List<ShellTab> childShellTabs = <ShellTab>[
+  ShellTab(
+    tabId: 'myday',
+    arbLabelKey: 'tabChildMyDay',
+    rootScreenId: 'SCR-CHD-004',
+    icon: '🏠',
+    screenIds: <String>[
+    'SCR-CHD-004',
+    'SCR-CHD-020',
+    'SCR-CHD-021',
+    'SCR-CHD-022',
+    'SCR-CHD-027',
+    ],
+  ),
+  ShellTab(
+    tabId: 'learn',
+    arbLabelKey: 'tabChildLearn',
+    rootScreenId: 'SCR-CHD-012',
+    icon: '📚',
+    screenIds: <String>[
+    'SCR-CHD-012',
+    'SCR-CHD-013',
+    'SCR-CHD-014',
+    'SCR-CHD-015',
+    'SCR-CHD-016',
+    'SCR-CHD-017',
+    'SCR-CHD-018',
+    'SCR-CHD-025',
+    'SCR-CHD-026',
+    'SCR-CHD-028',
+    'SCR-CHD-029',
+    'SCR-CHD-032',
+    'SCR-CHD-033',
+    'SCR-CHD-035',
+    ],
+  ),
+  ShellTab(
+    tabId: 'cfam',
+    arbLabelKey: 'tabChildFamily',
+    rootScreenId: 'SCR-CHD-007',
+    icon: '💬',
+    screenIds: <String>[
+    'SCR-CHD-007',
+    'SCR-CHD-008',
+    'SCR-CHD-009',
+    'SCR-CHD-023',
+    'SCR-CHD-024',
+    'SCR-CHD-030',
+    'SCR-CHD-036',
+    'SCR-CHD-037',
+    ],
+  ),
+  ShellTab(
+    tabId: 'me',
+    arbLabelKey: 'tabChildMe',
+    rootScreenId: 'SCR-CHD-010',
+    icon: '👤',
+    screenIds: <String>[
+    'SCR-CHD-010',
+    'SCR-CHD-011',
+    'SCR-CHD-019',
+    'SCR-CHD-031',
+    'SCR-CHD-034',
+    ],
+  )
+];
+
+/// Parent + shared onboarding/templates screens with tab == '-'.
+const List<String> parentTablessScreenIds = <String>[
+  'SCR-SHR-001',
+  'SCR-SHR-002',
+  'SCR-SHR-003',
+  'SCR-FAT-001',
+  'SCR-FAT-002',
+  'SCR-FAT-003',
+  'SCR-FAT-004',
+  'SCR-FAT-005',
+  'SCR-FAT-006',
+  'SCR-FAT-007',
+  'SCR-FAT-008',
+  'SCR-FAT-009',
+  'SCR-FAT-018',
+  'SCR-SHR-005',
+  'SCR-SHR-006',
+  'SCR-SHR-007',
+  'SCR-SHR-008',
+];
+
+/// Child screens with tab == '-'.
+const List<String> childTablessScreenIds = <String>[
+  'SCR-CHD-001',
+  'SCR-CHD-002',
+  'SCR-CHD-003',
+  'SCR-CHD-005',
+  'SCR-CHD-006',
+];
+
+/// Hub index keyed by tabId — registry order, type→icon from frozen prototype.
+const Map<String, List<HubEntry>> hubIndex = <String, List<HubEntry>>{
+  'today': <HubEntry>[
+    HubEntry(
+      screenId: 'SCR-FAT-010',
+      name: 'لوحة اليوم',
+      icon: '📊',
+      type: 'لوحة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-011',
+      name: 'اقتراحات العقل',
+      icon: '📋',
+      type: 'قائمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-019',
+      name: 'مركز التنبيهات',
+      icon: '📋',
+      type: 'قائمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-020',
+      name: 'تفصيل التنبيه',
+      icon: '🔎',
+      type: 'تفصيل',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-062',
+      name: 'أنماط العائلة',
+      icon: '📊',
+      type: 'لوحة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-063',
+      name: 'الخط الزمني للفرد',
+      icon: '🔎',
+      type: 'تفصيل',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-064',
+      name: 'خرائط المعرفة',
+      icon: '🔎',
+      type: 'تفصيل',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-073',
+      name: 'التقرير الأسبوعي بتوصية',
+      icon: '👁',
+      type: 'عرض',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-074',
+      name: 'عقل عائلتي (المساعد الذكي)',
+      icon: '💬',
+      type: 'محادثة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-076',
+      name: 'إخطارات الذكاء للأم',
+      icon: '📋',
+      type: 'قائمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-079',
+      name: 'مساعدي الذكي — ماذا يفعل عني',
+      icon: '⚙️',
+      type: 'إعدادات',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-080',
+      name: 'ماذا فعل المساعد',
+      icon: '📋',
+      type: 'قائمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-083',
+      name: 'المحادثة الصوتية مع العقل',
+      icon: '💬',
+      type: 'محادثة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-086',
+      name: 'لحظات عائلتنا',
+      icon: '👁',
+      type: 'عرض',
+    ),
+  ],
+  'kids': <HubEntry>[
+    HubEntry(
+      screenId: 'SCR-FAT-012',
+      name: 'قائمة الأبناء',
+      icon: '📋',
+      type: 'قائمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-013',
+      name: 'ملف الابن',
+      icon: '🔎',
+      type: 'تفصيل',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-014',
+      name: 'خريطة الموقع',
+      icon: '🗺',
+      type: 'خريطة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-015',
+      name: 'سجل المواقع',
+      icon: '📋',
+      type: 'قائمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-016',
+      name: 'المناطق الآمنة',
+      icon: '📋',
+      type: 'قائمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-017',
+      name: 'إنشاء منطقة آمنة',
+      icon: '📝',
+      type: 'نموذج',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-032',
+      name: 'وقت الشاشة لابن',
+      icon: '📝',
+      type: 'نموذج',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-033',
+      name: 'طلبات الوقت الإضافي',
+      icon: '📋',
+      type: 'قائمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-034',
+      name: 'تطبيقات الابن',
+      icon: '📋',
+      type: 'قائمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-035',
+      name: 'موافقة تطبيق جديد',
+      icon: '🔎',
+      type: 'تفصيل',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-036',
+      name: 'فلترة الإنترنت',
+      icon: '📝',
+      type: 'نموذج',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-037',
+      name: 'القفل الفوري',
+      icon: '📝',
+      type: 'نموذج',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-038',
+      name: 'تنبيهات التحايل',
+      icon: '📋',
+      type: 'قائمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-065',
+      name: 'التنبيهات الذكية',
+      icon: '📊',
+      type: 'لوحة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-066',
+      name: 'تفصيل التنبيه وخطوة الحوار',
+      icon: '🔎',
+      type: 'تفصيل',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-067',
+      name: 'إعدادات الرقابة الذكية',
+      icon: '⚙️',
+      type: 'إعدادات',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-068',
+      name: 'مراقبة المنصات',
+      icon: '⚙️',
+      type: 'إعدادات',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-069',
+      name: 'تقرير استخدام الابن',
+      icon: '👁',
+      type: 'عرض',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-072',
+      name: 'متابعة حفظ القرآن',
+      icon: '👁',
+      type: 'عرض',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-077',
+      name: 'السلامة على الطريق',
+      icon: '📊',
+      type: 'لوحة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-081',
+      name: 'مقارنة الأقران',
+      icon: '👁',
+      type: 'عرض',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-085',
+      name: 'الأوضاع الذكية',
+      icon: '⚡',
+      type: 'إجراء',
+    ),
+  ],
+  'family': <HubEntry>[
+    HubEntry(
+      screenId: 'SCR-FAT-021',
+      name: 'قائمة المحادثات',
+      icon: '📋',
+      type: 'قائمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-022',
+      name: 'المحادثة',
+      icon: '💬',
+      type: 'محادثة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-023',
+      name: 'مكالمة جارية',
+      icon: '📞',
+      type: 'مكالمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-024',
+      name: 'سجل المكالمات',
+      icon: '📋',
+      type: 'قائمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-052',
+      name: 'التقويم العائلي',
+      icon: '📊',
+      type: 'لوحة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-053',
+      name: 'إضافة حدث',
+      icon: '📝',
+      type: 'نموذج',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-054',
+      name: 'المهام العائلية',
+      icon: '📋',
+      type: 'قائمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-055',
+      name: 'إنشاء مهمة بمكافأة',
+      icon: '📝',
+      type: 'نموذج',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-070',
+      name: 'الدائرة الخارجية',
+      icon: '📋',
+      type: 'قائمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-071',
+      name: 'موافقة طلب صديق',
+      icon: '✅',
+      type: 'تأكيد',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-082',
+      name: 'موزع المهام الذكي',
+      icon: '⚡',
+      type: 'إجراء',
+    ),
+  ],
+  'studio': <HubEntry>[
+    HubEntry(
+      screenId: 'SCR-FAT-040',
+      name: 'لوحة الاستوديو',
+      icon: '📊',
+      type: 'لوحة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-041',
+      name: 'أضف من أي مصدر',
+      icon: '📋',
+      type: 'قائمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-042',
+      name: 'التقاط من الكاميرا',
+      icon: '📷',
+      type: 'التقاط',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-043',
+      name: 'مخرجات التوليد',
+      icon: '📋',
+      type: 'قائمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-044',
+      name: 'معاينة واعتماد',
+      icon: '🔎',
+      type: 'تفصيل',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-045',
+      name: 'الإسناد والمكافأة',
+      icon: '📝',
+      type: 'نموذج',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-046',
+      name: 'مكتبة المجتمع',
+      icon: '📋',
+      type: 'قائمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-047',
+      name: 'المسار التعليمي',
+      icon: '🔎',
+      type: 'تفصيل',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-048',
+      name: 'المواد والدروس',
+      icon: '📋',
+      type: 'قائمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-049',
+      name: 'إنشاء واجب واختبار',
+      icon: '📝',
+      type: 'نموذج',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-050',
+      name: 'متابعة النتائج',
+      icon: '📊',
+      type: 'لوحة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-051',
+      name: 'تقرير التركيز',
+      icon: '🔎',
+      type: 'تفصيل',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-084',
+      name: 'مشروع بمراحل',
+      icon: '🪄',
+      type: 'معالج',
+    ),
+  ],
+  'settings': <HubEntry>[
+    HubEntry(
+      screenId: 'SCR-FAT-025',
+      name: 'الإعدادات',
+      icon: '📋',
+      type: 'قائمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-028',
+      name: 'إعداد الطوارئ',
+      icon: '📝',
+      type: 'نموذج',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-026',
+      name: 'تفصيل الجهاز',
+      icon: '🔎',
+      type: 'تفصيل',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-027',
+      name: 'أعضاء العائلة',
+      icon: '📋',
+      type: 'قائمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-029',
+      name: 'لوحة تحكم العقل',
+      icon: '⚙️',
+      type: 'إعدادات',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-030',
+      name: 'طلب فتح وضع الوالد (المفتاح الثاني)',
+      icon: '⚡',
+      type: 'إجراء',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-031',
+      name: 'مستوى صلاحية الأم',
+      icon: '⚡',
+      type: 'إجراء',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-056',
+      name: 'الباقات والاشتراك',
+      icon: '👁',
+      type: 'عرض',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-057',
+      name: 'إدارة الاشتراك',
+      icon: '📝',
+      type: 'نموذج',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-058',
+      name: 'الإشعارات',
+      icon: '📝',
+      type: 'نموذج',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-059',
+      name: 'الخصوصية والبيانات',
+      icon: '📝',
+      type: 'نموذج',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-060',
+      name: 'سجل التدقيق',
+      icon: '📋',
+      type: 'قائمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-061',
+      name: 'اللغة والمساعدة',
+      icon: '📝',
+      type: 'نموذج',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-075',
+      name: 'ميزات قادمة ✨',
+      icon: '👁',
+      type: 'عرض',
+    ),
+    HubEntry(
+      screenId: 'SCR-FAT-078',
+      name: 'فلترة الراوتر المنزلي',
+      icon: '⚙️',
+      type: 'إعدادات',
+    ),
+  ],
+  'myday': <HubEntry>[
+    HubEntry(
+      screenId: 'SCR-CHD-004',
+      name: 'لوحة يومي',
+      icon: '📊',
+      type: 'لوحة',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-020',
+      name: 'طلب وقت إضافي',
+      icon: '📝',
+      type: 'نموذج',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-021',
+      name: 'انتهى الوقت — بلطف',
+      icon: '👁',
+      type: 'عرض',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-022',
+      name: 'مهامي',
+      icon: '📋',
+      type: 'قائمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-027',
+      name: 'أذكاري اليومية',
+      icon: '📚',
+      type: 'تعليمي',
+    ),
+  ],
+  'learn': <HubEntry>[
+    HubEntry(
+      screenId: 'SCR-CHD-012',
+      name: 'تعلّمي — الرئيسة',
+      icon: '📊',
+      type: 'لوحة',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-013',
+      name: 'الدرس',
+      icon: '🔎',
+      type: 'تفصيل',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-014',
+      name: 'واجبي',
+      icon: '📝',
+      type: 'نموذج',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-015',
+      name: 'الاختبار',
+      icon: '📝',
+      type: 'نموذج',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-016',
+      name: 'نتيجتي',
+      icon: '✅',
+      type: 'تأكيد',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-017',
+      name: 'معلمي الذكي',
+      icon: '💬',
+      type: 'محادثة',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-018',
+      name: 'وضع التركيز',
+      icon: '👁',
+      type: 'عرض',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-025',
+      name: 'وردي — حفظ وتلاوة',
+      icon: '📚',
+      type: 'تعليمي',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-026',
+      name: 'حفظي وتقدمي',
+      icon: '👁',
+      type: 'عرض',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-028',
+      name: 'خطتي الذكية',
+      icon: '📊',
+      type: 'لوحة',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-029',
+      name: 'مراجعة اليوم',
+      icon: '📚',
+      type: 'تعليمي',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-032',
+      name: 'تلاوتي الذكية',
+      icon: '📚',
+      type: 'تعليمي',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-033',
+      name: 'قصصي التفاعلية',
+      icon: '📚',
+      type: 'تعليمي',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-035',
+      name: 'أصوات التركيز',
+      icon: '⚡',
+      type: 'إجراء',
+    ),
+  ],
+  'cfam': <HubEntry>[
+    HubEntry(
+      screenId: 'SCR-CHD-007',
+      name: 'محادثاتي',
+      icon: '📋',
+      type: 'قائمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-008',
+      name: 'المحادثة',
+      icon: '💬',
+      type: 'محادثة',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-009',
+      name: 'مكالمة',
+      icon: '📞',
+      type: 'مكالمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-023',
+      name: 'مشاركة وسائط',
+      icon: '📝',
+      type: 'نموذج',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-024',
+      name: 'أنا وصلت + موقعي',
+      icon: '👁',
+      type: 'عرض',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-030',
+      name: 'أصدقائي',
+      icon: '📋',
+      type: 'قائمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-036',
+      name: 'مرح المكالمة',
+      icon: '📞',
+      type: 'مكالمة',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-037',
+      name: 'ملصقاتي وخلفياتي',
+      icon: '⚡',
+      type: 'إجراء',
+    ),
+  ],
+  'me': <HubEntry>[
+    HubEntry(
+      screenId: 'SCR-CHD-010',
+      name: 'ماذا يُجمع عني',
+      icon: '👁',
+      type: 'شفافية',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-011',
+      name: 'قفل وضع الابن + المدخل السري',
+      icon: '⚡',
+      type: 'إجراء',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-019',
+      name: 'نقاطي وشاراتي',
+      icon: '📊',
+      type: 'لوحة',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-031',
+      name: 'قادم لك 🎁',
+      icon: '👁',
+      type: 'عرض',
+    ),
+    HubEntry(
+      screenId: 'SCR-CHD-034',
+      name: 'التحديات العائلية',
+      icon: '👁',
+      type: 'عرض',
+    ),
+  ],
+};
+
+/// Deep-link path for each tab root screen.
+const Map<String, String> shellRoutesByTabRoot = <String, String>{
+  'today': '/scr-fat-010',
+  'kids': '/scr-fat-012',
+  'family': '/scr-fat-021',
+  'studio': '/scr-fat-040',
+  'settings': '/scr-fat-025',
+  'myday': '/scr-chd-004',
+  'learn': '/scr-chd-012',
+  'cfam': '/scr-chd-007',
+  'me': '/scr-chd-010',
+};

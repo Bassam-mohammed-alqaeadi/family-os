@@ -2,10 +2,10 @@
 
 ```
 status: RUNNING
-current_card: SCR-FAT-062
+current_card: PRT-2
 blocked_by: (none)
 last_tick: 2026-09-22
-resume_hint: FAT-061 shipped. NEXT=SCR-FAT-062 FamilyPatterns (wired+tested). Chain 062→063→064. Cadence ≥3 ships/wake.
+resume_hint: PRT-1 shipped (shell_config.dart generator groundwork). NEXT=PRT-2 shell/TabsBar wiring. Parity track before Phase 1.5 shell UX. /loop 5m.
 ```
 
 ## Field meanings

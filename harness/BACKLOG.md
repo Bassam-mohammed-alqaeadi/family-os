@@ -267,6 +267,15 @@ Each card imports linked SET ids when screen matches. Cannot Ship while linked S
 
 ---
 
+## Lane Parity — Prototype-shape (precedes Phase 1.5 shell wiring)
+
+| id | workflow | status | goal | notes |
+|---|---|---|---|---|
+| PRT-1 | ScreenBuild | **done** | Generator groundwork: shell_config.dart + hubIndex from screens.csv | shipped 2026-09-22 · kids=22 (excl. FAT-039 tombstone; Q-PRT-1) |
+| **NEXT → PRT-2** | ScreenBuild | **ready** | Shell widget / TabsBar wiring (no generator change) | after PRT-1 |
+
+---
+
 ## Orchestrator tip
 
 Until Stage 1 unlock, the only productive ticks are: improve harness docs, answer QUESTIONS, or prepare evidence templates. Do **not** invent Flutter code.
