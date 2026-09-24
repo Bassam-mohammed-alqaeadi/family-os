@@ -13,7 +13,13 @@ CREATE TYPE device_mode      AS ENUM ('PARENT','CHILD_LOCKED','CHILD_PREVIEW');
 CREATE TYPE perm_key         AS ENUM ('LOCATION_FG','LOCATION_BG','ACCESSIBILITY',
                                       'BATTERY_UNRESTRICTED','AUTOSTART','NOTIFICATIONS',
                                       'USAGE_STATS','SCREEN_TIME_IOS');
-CREATE TYPE perm_status      AS ENUM ('GRANTED','DENIED','RESTRICTED_BY_OS','NOT_APPLICABLE');
+-- ADR-050 (2026-09-24): فُصل DENIED إلى حالتين، لأن السلوك يختلف بينهما:
+--   DENIED_SOFT      = رفض غير نهائي ⇒ تُسمح بمعاودة واحدة عند فعل المستخدم
+--   DENIED_PERMANENT = الرفض الدائم (أندرويد: بعد رفضين لا تظهر نافذة النظام) ⇒ ممنوع الطلب
+--   NOT_ASKED        = لم تُطلب بعد ⇒ تُطلب في سياق الميزة مع تمهيد
+-- و NOT_APPLICABLE تبقى للصلاحيات غير المنطبقة على منصّة الجهاز (ADR-045).
+CREATE TYPE perm_status      AS ENUM ('NOT_ASKED','GRANTED','DENIED_SOFT',
+                                      'DENIED_PERMANENT','RESTRICTED_BY_OS','NOT_APPLICABLE');
 CREATE TYPE sos_status       AS ENUM ('ACTIVE','ACKNOWLEDGED','RESOLVED');
 CREATE TYPE conv_kind        AS ENUM ('FAMILY','DIRECT','SUBGROUP');
 CREATE TYPE ai_confidence    AS ENUM ('CONFIRMED','ANALYSIS','PRELIMINARY');
