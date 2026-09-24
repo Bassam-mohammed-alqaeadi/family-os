@@ -8,6 +8,7 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n12_devices/device_health_seam.dart';
+import 'package:family_os/features/n12_devices/devices_ux_bridge.dart';
 
 /// Widget keys for SCR-FAT-025 devices section / UI-012 acceptance.
 abstract final class DeviceHealthListKeys {
@@ -49,17 +50,10 @@ class DeviceHealthDevicesSection extends StatefulWidget {
 
 class _DeviceHealthDevicesSectionState
     extends State<DeviceHealthDevicesSection> {
-  late final DeviceHealthSeam _seam;
   StreamSubscription<List<DeviceHealthSnapshot>>? _sub;
   String? _subscribedFamilyId;
   List<DeviceHealthSnapshot> _devices = const [];
   var _loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _seam = widget.healthSeam ?? stage1DeviceHealthSeam;
-  }
 
   @override
   void didChangeDependencies() {
@@ -68,8 +62,19 @@ class _DeviceHealthDevicesSectionState
         CurrentIdentity.maybeOf(context)?.activeFamilyId.value ?? 'fam_stage1';
     if (_subscribedFamilyId == familyId && _sub != null) return;
     _subscribedFamilyId = familyId;
+    _bind(familyId);
+  }
+
+  /// DEV-1 — binds the real devices seam unless a test injects one.
+  Future<void> _bind(String familyId) async {
+    var seam = widget.healthSeam;
+    if (seam == null) {
+      await Stage1DevicesRuntime.ensureOpen();
+      if (!mounted) return;
+      seam = Stage1DevicesRuntime.seam;
+    }
     _sub?.cancel();
-    _sub = _seam.watchDevices(familyId: familyId).listen((list) {
+    _sub = seam.watchDevices(familyId: familyId).listen((list) {
       if (!mounted) return;
       setState(() {
         _devices = list;

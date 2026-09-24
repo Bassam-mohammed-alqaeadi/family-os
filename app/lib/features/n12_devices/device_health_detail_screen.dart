@@ -14,6 +14,7 @@ import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n12_devices/device_health_seam.dart';
+import 'package:family_os/features/n12_devices/devices_ux_bridge.dart';
 
 /// Widget keys for SCR-FAT-026 / UI-012 acceptance.
 abstract final class DeviceHealthDetailKeys {
@@ -82,7 +83,7 @@ class DeviceHealthDetailScreen extends StatefulWidget {
 }
 
 class _DeviceHealthDetailScreenState extends State<DeviceHealthDetailScreen> {
-  late final DeviceHealthSeam _seam;
+  DeviceHealthSeam? _seam;
   StreamSubscription<DeviceHealthSnapshot?>? _sub;
   DeviceHealthSnapshot? _snap;
   var _loading = true;
@@ -98,12 +99,6 @@ class _DeviceHealthDetailScreenState extends State<DeviceHealthDetailScreen> {
   bool get _isParent => _role == AppRole.father || _role == AppRole.mother;
 
   @override
-  void initState() {
-    super.initState();
-    _seam = widget.healthSeam ?? stage1DeviceHealthSeam;
-  }
-
-  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _familyId =
@@ -113,14 +108,22 @@ class _DeviceHealthDetailScreenState extends State<DeviceHealthDetailScreen> {
     _bootstrap();
   }
 
+  /// DEV-1 — the real devices seam unless a test injects one.
   Future<void> _bootstrap() async {
+    var seam = widget.healthSeam;
+    if (seam == null) {
+      await Stage1DevicesRuntime.ensureOpen();
+      if (!mounted) return;
+    }
+    seam ??= Stage1DevicesRuntime.seam;
+    _seam = seam;
     final id = widget.deviceId;
     if (id != null && id.isNotEmpty) {
       _resolvedId = id;
       _listen(id);
       return;
     }
-    final first = await _seam.watchDevices(familyId: _familyId).first;
+    final first = await seam.watchDevices(familyId: _familyId).first;
     if (!mounted) return;
     _resolvedId = first.isEmpty ? null : first.first.deviceId;
     final resolved = _resolvedId;
@@ -133,7 +136,7 @@ class _DeviceHealthDetailScreenState extends State<DeviceHealthDetailScreen> {
 
   void _listen(String deviceId) {
     _sub?.cancel();
-    _sub = _seam.watchDevice(deviceId, familyId: _familyId).listen((snap) {
+    _sub = _seam!.watchDevice(deviceId, familyId: _familyId).listen((snap) {
       if (!mounted) return;
       setState(() {
         _snap = snap;
@@ -200,7 +203,7 @@ class _DeviceHealthDetailScreenState extends State<DeviceHealthDetailScreen> {
     if (kind == null) return;
 
     final l10n = AppLocalizations.of(context);
-    await _seam.openSettings(deviceId: deviceId, kind: kind);
+    await _seam!.openSettings(deviceId: deviceId, kind: kind);
     if (widget.onOpenSettingsToast && mounted) {
       AppToast.show(
         context,
@@ -209,7 +212,7 @@ class _DeviceHealthDetailScreenState extends State<DeviceHealthDetailScreen> {
             : l10n.deviceHealthRepairRequestToast,
       );
     }
-    await _seam.recheck(deviceId);
+    await _seam!.recheck(deviceId);
   }
 
   @override
