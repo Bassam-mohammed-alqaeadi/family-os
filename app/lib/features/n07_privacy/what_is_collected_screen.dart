@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 
+import 'package:family_os/core/design/components/ai_safety_child_transparency_card.dart';
 import 'package:family_os/core/design/components/banner.dart';
+import 'package:family_os/core/design/components/screen_camera_transparency_card.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
+import 'package:family_os/core/fs_foundation/capability_status.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/offline_ai_safety/offline_ai_safety.dart';
 import 'package:family_os/core/policy/collection_scope.dart';
 import 'package:family_os/core/policy/desired_monitoring_prefs.dart';
 import 'package:family_os/core/policy/desired_monitoring_sync_bus.dart';
@@ -11,6 +15,7 @@ import 'package:family_os/core/policy/platform_id.dart';
 import 'package:family_os/core/policy/privacy_collection_policy.dart';
 import 'package:family_os/core/policy/privacy_collection_repository.dart';
 import 'package:family_os/core/policy/privacy_collection_sync_bus.dart';
+import 'package:family_os/core/screen_camera/screen_camera.dart';
 import 'package:family_os/features/n08_platform/effective_monitoring_transparency.dart';
 
 /// Widget keys for SCR-CHD-010 / SET-012 acceptance.
@@ -18,6 +23,7 @@ abstract final class WhatIsCollectedKeys {
   static const list = Key('what_is_collected_list');
   static const empty = Key('what_is_collected_empty');
   static const updatedAt = Key('what_is_collected_updated_at');
+  static const transparencyStack = Key('what_is_collected_transparency_stack');
 
   static Key scopeLine(CollectionScope scope) =>
       Key('what_is_collected_scope_${scope.key}');
@@ -37,6 +43,8 @@ class WhatIsCollectedScreen extends StatefulWidget {
     this.monitoringSyncBus,
     this.monitoringChildId = DesiredMonitoringPrefs.defaultChildId,
     this.monitoringPlatform = PlatformId.ios,
+    this.screenCamera,
+    this.offlineAi,
   });
 
   /// Stage-1 demo child when null.
@@ -54,6 +62,12 @@ class WhatIsCollectedScreen extends StatefulWidget {
   final String monitoringChildId;
   final PlatformId monitoringPlatform;
 
+  /// FS-004 domain seam — null hides Screen & Camera transparency.
+  final ScreenCameraService? screenCamera;
+
+  /// FS-007 domain seam — null hides Offline AI Safety child card.
+  final OfflineAiSafetyService? offlineAi;
+
   @override
   State<WhatIsCollectedScreen> createState() => _WhatIsCollectedScreenState();
 }
@@ -64,12 +78,15 @@ class _WhatIsCollectedScreenState extends State<WhatIsCollectedScreen> {
   late final PrivacyCollectionSyncBus _syncBus;
   late PrivacyCollectionPolicy _policy;
   var _loading = true;
+  ScreenCameraDocument? _scDoc;
+  ChildSafetyTransparency? _aiTransparency;
 
   @override
   void initState() {
     super.initState();
     _childId = widget.childId ?? ChildId('demo-child');
-    _repository = widget.repository ??
+    _repository =
+        widget.repository ??
         PrefsPrivacyCollectionRepository(
           stage1PrivacyCollectionPrefsStore,
           audit: stage1PrivacyCollectionAudit,
@@ -95,10 +112,60 @@ class _WhatIsCollectedScreenState extends State<WhatIsCollectedScreen> {
 
   Future<void> _load() async {
     final loaded = await _repository.load(_childId.value);
+    ScreenCameraDocument? scDoc;
+    var sc = widget.screenCamera;
+    if (sc == null) {
+      try {
+        await Stage1ScreenCameraRuntime.ensureOpen();
+        sc = Stage1ScreenCameraRuntime.service;
+      } catch (_) {
+        sc = null;
+      }
+    }
+    if (sc != null) {
+      try {
+        scDoc = await sc.loadEffective(_childId);
+      } catch (_) {
+        scDoc = null;
+      }
+    }
+    ChildSafetyTransparency? aiCard;
+    var ai = widget.offlineAi;
+    if (ai == null) {
+      try {
+        await Stage1OfflineAiSafetyRuntime.ensureOpen();
+        ai = Stage1OfflineAiSafetyRuntime.service;
+      } catch (_) {
+        ai = null;
+      }
+    }
+    if (ai != null) {
+      try {
+        final model = await ai.activeModel();
+        final localOk = model != null && model.mayExecute;
+        // KEEP/REFINE honesty: name configured tools even when local plane is
+        // degraded; never silently omit the child transparency surface.
+        aiCard = ai.childTransparency(
+          searchConfigured: true,
+          imageConfigured: true,
+          screenshotConfigured: scDoc?.monitorScreenshots ?? false,
+          localPlaneAvailable: localOk,
+        );
+      } catch (_) {
+        aiCard = ai.childTransparency(
+          searchConfigured: true,
+          imageConfigured: true,
+          screenshotConfigured: scDoc?.monitorScreenshots ?? false,
+          localPlaneAvailable: false,
+        );
+      }
+    }
     if (!mounted) return;
     _syncBus.hydrate(loaded);
     setState(() {
       _policy = loaded;
+      _scDoc = scDoc;
+      _aiTransparency = aiCard;
       _loading = false;
     });
   }
@@ -158,10 +225,7 @@ class _WhatIsCollectedScreenState extends State<WhatIsCollectedScreen> {
                       l10n.whatIsCollectedLastUpdated(
                         _policy.updatedAt!.toLocal().toIso8601String(),
                       ),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: colors.ink2,
-                      ),
+                      style: TextStyle(fontSize: 12, color: colors.ink2),
                     ),
                   ],
                   const SizedBox(height: 20),
@@ -199,6 +263,29 @@ class _WhatIsCollectedScreenState extends State<WhatIsCollectedScreen> {
                     platform: widget.monitoringPlatform,
                     syncBus: widget.monitoringSyncBus,
                   ),
+                  // Single ListView child so FS-004 + FS-007 cards always mount
+                  // together (sibling inflate after either card was dropping the next).
+                  if (_aiTransparency != null || _scDoc != null) ...[
+                    const SizedBox(height: 20),
+                    Column(
+                      key: WhatIsCollectedKeys.transparencyStack,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (_aiTransparency != null)
+                          AiSafetyChildTransparencyCard(
+                            transparency: _aiTransparency!,
+                          ),
+                        if (_aiTransparency != null && _scDoc != null)
+                          const SizedBox(height: 20),
+                        if (_scDoc != null)
+                          ScreenCameraTransparencyCard(
+                            document: _scDoc!,
+                            cameraOsPlane: CapabilityStatus.mockRemote,
+                            capturePlane: CapabilityStatus.mockRemote,
+                          ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),

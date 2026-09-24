@@ -1,3 +1,5 @@
+import 'package:family_os/features/education/learning_result_models.dart';
+import 'package:family_os/features/education/learning_result_repository.dart';
 import 'package:family_os/features/n14_studio/results_followup_models.dart';
 
 /// Rule 25 seam — Stage-1 mock results follow-up (no backend).
@@ -6,12 +8,19 @@ abstract class ResultsFollowupRepository {
 }
 
 /// In-memory mock — prototype FAT-050 shape by default.
+///
+/// P15-EDU-006: merges live [LearningResultRepository] submissions into the
+/// activity log so child quiz/result submit appears on father ResultsFollowup.
 final class InMemoryResultsFollowupRepository
     implements ResultsFollowupRepository {
-  InMemoryResultsFollowupRepository({ResultsFollowupSnapshot? seed})
-    : _snap = seed ?? resultsFollowupPrototypeFixture();
+  InMemoryResultsFollowupRepository({
+    ResultsFollowupSnapshot? seed,
+    LearningResultRepository? results,
+  }) : _snap = seed ?? resultsFollowupPrototypeFixture(),
+       _results = results ?? stage1LearningResultRepository;
 
   ResultsFollowupSnapshot _snap;
+  final LearningResultRepository _results;
 
   /// Optional gate for loading-state widget tests.
   Future<void> Function()? loadGate;
@@ -20,7 +29,28 @@ final class InMemoryResultsFollowupRepository
   Future<ResultsFollowupSnapshot> load() async {
     final gate = loadGate;
     if (gate != null) await gate();
-    return _copy(_snap);
+    final live = await _results.listRecent();
+    final liveActs = live.map(_mapSubmission).toList(growable: false);
+    final base = _copy(_snap);
+    // Live submissions first (newest), then fixture activities (dedupe by id).
+    final seen = <String>{};
+    final merged = <ResultsFollowupActivity>[];
+    for (final a in [...liveActs, ...base.activities]) {
+      if (seen.add(a.id)) merged.add(a);
+    }
+    return ResultsFollowupSnapshot(
+      child:
+          base.child ??
+          (live.isNotEmpty
+              ? ResultsFollowupChild(
+                  id: live.first.childId.value,
+                  nameKey: 'one',
+                )
+              : null),
+      mastery: base.mastery,
+      skillGap: base.skillGap,
+      activities: merged,
+    );
   }
 
   void seed(ResultsFollowupSnapshot snap) {
@@ -33,6 +63,24 @@ final class InMemoryResultsFollowupRepository
       mastery: s.mastery,
       skillGap: s.skillGap,
       activities: List<ResultsFollowupActivity>.from(s.activities),
+    );
+  }
+
+  ResultsFollowupActivity _mapSubmission(LearningResultSubmission s) {
+    final kind = switch (s.kind) {
+      LearningResultKind.quiz ||
+      LearningResultKind.homework => ResultsFollowupActivityKind.homework,
+      LearningResultKind.familyChallenge =>
+        ResultsFollowupActivityKind.familyChallenge,
+    };
+    final minutes = s.rewardMinutes.inMinutes;
+    return ResultsFollowupActivity(
+      id: s.id,
+      kind: kind,
+      titleKey: s.titleKey,
+      subtitleKey: minutes > 0 ? 'earnedMinutes' : 'justSubmitted',
+      statusKey: 'complete',
+      minutes: minutes > 0 ? minutes : null,
     );
   }
 }
@@ -50,10 +98,7 @@ ResultsFollowupSnapshot resultsFollowupEmptyFixture() {
 ResultsFollowupSnapshot resultsFollowupOneFixture() {
   return const ResultsFollowupSnapshot(
     child: ResultsFollowupChild(id: 'child_a', nameKey: 'one'),
-    mastery: ResultsFollowupMastery(
-      subjectKey: 'math',
-      percent: 75,
-    ),
+    mastery: ResultsFollowupMastery(subjectKey: 'math', percent: 75),
   );
 }
 
@@ -64,10 +109,7 @@ ResultsFollowupSnapshot resultsFollowupOneFixture() {
 ResultsFollowupSnapshot resultsFollowupPrototypeFixture() {
   return const ResultsFollowupSnapshot(
     child: ResultsFollowupChild(id: 'child_a', nameKey: 'one'),
-    mastery: ResultsFollowupMastery(
-      subjectKey: 'math',
-      percent: 82,
-    ),
+    mastery: ResultsFollowupMastery(subjectKey: 'math', percent: 82),
     skillGap: ResultsFollowupSkillGap(
       id: 'gap-fractions',
       titleKey: 'fractionDivision',

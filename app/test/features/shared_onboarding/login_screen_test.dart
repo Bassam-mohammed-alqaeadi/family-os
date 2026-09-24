@@ -14,14 +14,18 @@ import 'package:family_os/features/shared_onboarding/login_screen.dart';
 void main() {
   tearDown(AppToast.dismiss);
 
-  testWidgets('forgot password shows anti-enumeration toast', (tester) async {
+  testWidgets('forgot password shows honest local recovery toast', (
+    tester,
+  ) async {
     await _pumpLogin(tester);
 
     await tester.tap(find.byKey(const Key('login_forgot')));
     await tester.pump();
 
     expect(
-      find.text('أرسلنا رابط الاستعادة إن كان البريد مسجّلًا لدينا'),
+      find.text(
+        'جارٍ فتح استعادة الحساب المحلية. لا يُرسل بريد إعادة تعيين في هذا النموذج.',
+      ),
       findsOneWidget,
     );
     AppToast.dismiss();

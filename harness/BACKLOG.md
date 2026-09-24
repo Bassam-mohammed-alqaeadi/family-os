@@ -28,7 +28,7 @@ Template: [`05_TASK_CARD_TEMPLATE.md`](05_TASK_CARD_TEMPLATE.md)
 | F1-A | ScreenBuild | **done** | gen_routes from screens.csv + RoleGuard (go_router) | shipped 2026-09-20 |
 | F2-POLICY | ScreenBuild | **done** | PolicyEngine §1–§3 + unit tests per clause | shipped 2026-09-20 |
 
-> SET lane CLOSED 2026-09-21 (SET-001…024). UI lane CLOSED 2026-09-21 (UI-001…018). Owner sequence: Screens → Phase 1.5 UX → Stage 3. Cadence: ≥3 ships/wake · `/loop` 15m. ScreenBuild wave — **NEXT = SCR-FAT-062** (ready). Skills: `harness/08_SKILLS_MAP.md` + competitive lens + [`docs/project-plan/10-service-ux-completeness-rubric.md`](../docs/project-plan/10-service-ux-completeness-rubric.md).
+> SET lane CLOSED 2026-09-21. UI lane CLOSED 2026-09-21. **Lane 5 ScreenBuild CLOSED 2026-09-22**. **PRT-2 + PRT-2.1 done**. **Phase 1.5 Service UX** Education done · Quran parked (`deferred_campaign`). **Owner commission 2026-09-24:** FS-001…FS-007 — **Lane FS CLOSED**. **Phase 1.5 Platform Hardening (PHASE-1.5-HARDEN) COMPLETE 2026-09-24**. Stage 3 NOT STARTED. Do not arm next feature wave without Owner.
 
 ---
 
@@ -256,6 +256,61 @@ Each card imports linked SET ids when screen matches. Cannot Ship while linked S
 
 ---
 
+## Lane 5.5 — Phase 1.5 Service UX Completeness
+
+| id | domain | workflow | status | note |
+|---|---|---|---|---|
+| P15-EDU-001 | Education + Studio | GapClose | **done** | Scored Shell · `PHASE15_EDU_SCORE.md` · 2026-09-22 |
+| P15-EDU-002 | Education | GapClose | **done** | LearningAssignment FAT-045/049→CHD-012 · P12 · 2026-09-22 |
+| P15-EDU-003 | Studio sources | GapClose / ControlFit | **done** | FAT-041 SourceRef attach · P11 · 2026-09-22 |
+| P15-EDU-004 | Studio approve | GapClose | **done** | FAT-044 ApprovedLearningPack → CHD-015 · 2026-09-22 |
+| P15-EDU-005 | Studio reward | GapClose | **done** | FAT-045 Assign → WalletLedger/PolicyEngine.earn · 2026-09-22 |
+| P15-EDU-006 | Results loop | LoopClose | **done** | CHD-015 quiz submit → LearningResult → FAT-050 activity · P12 · 2026-09-23 |
+| P15-EDU-007 | Materials | GapClose | **done** | FAT-048 add subject/lesson persists rows · P11 · 2026-09-23 |
+| P15-EDU-008 | Day board | LoopClose | **done** | LearningResult → FAT-010 priority → FAT-050 · P12 · 2026-09-23 |
+| P15-QUR-001 | Quran + Athkar | GapClose | **done** | Scored Shell · `PHASE15_QUR_SCORE.md` · 2026-09-23 |
+| P15-QUR-002 | Ward plan | GapClose | **done** | QuranWardPlan seam FAT-072 publish → CHD-025 binds · P12 · 2026-09-23 |
+| P15-QUR-003 | Recitation loop | LoopClose | **done** | Child submit → FAT-072 pending; approve → WalletLedger.earn · P12 · 2026-09-23 |
+| P15-QUR-004 | Offline pack | GapClose | **deferred_campaign** | Parked — do not auto-resume after Phase 1.5; Owner re-order required |
+| P15-QUR-005 | Athkar board | LoopClose | **deferred_campaign** | Parked — Owner re-order required |
+| P15-QUR-006 | Memorization | GapClose | **deferred_campaign** | Parked — Owner re-order required |
+| P15-QUR-007 | Whisper | GapClose | **deferred_campaign** | Parked — Owner re-order required |
+
+---
+
+## Lane FS — Master Implementation Commission FS-001…FS-007
+
+**Plan:** [`docs/experience_discovery/FS_001_007_IMPLEMENTATION_MASTER_PLAN.md`](../docs/experience_discovery/FS_001_007_IMPLEMENTATION_MASTER_PLAN.md)  
+**Authority:** Owner commission 2026-09-24 · L2/L3 freezes · no backend.
+
+| id | phase | workflow | status | goal |
+|---|---|---|---|---|
+| **FS-A-FOUND** | A | GapClose | **done** | Capability registry + SQLite/Memory + MockRemote + delivery vocabulary · 2026-09-24 |
+| **FS-001-DOM** | B | GapClose | **done** | Location domain + SQLite trail/zones · 2026-09-24 |
+| **FS-001-UX** | B | GapClose | **done** | ADAPT FAT-014…017 + silent/check-in/SLR · 2026-09-24 |
+| **FS-001-XSYS** | B | GapClose | **done** | SOS handoff + Modes fact feed + schema v3 · 2026-09-24 |
+| **FS-002-OWN** | C | GapClose | **done** | Authoritative WF store + lists honesty · 2026-09-24 |
+| **FS-002-ENF** | C | GapClose | **done** | Delivery plane + timed unlock + interstitial · 2026-09-24 |
+| **FS-003-OWN** | D | GapClose | **done** | AC dispositions + protected apps + exception · 2026-09-24 |
+| **FS-003-UX** | D | GapClose | **done** | Hub/inventory/deny/disclosure ADAPT · 2026-09-24 |
+| **FS-004-OWN** | E | GapClose | **done** | Prevent/Monitor/Protect policy store · schema v7 · 2026-09-24 |
+| **FS-004-UX** | E | GapClose | **done** | Parent FAT-065 + child CHD-010 transparency · 2026-09-24 |
+| **FS-005-OWN** | F | GapClose | **done** | Lifestyle schedule + stack + tighten-only · schema v8 · 2026-09-24 |
+| **FS-005-UX** | F | GapClose | **done** | FAT-085 ADAPT + CHD-004 disclosure · 2026-09-24 |
+| **FS-006-LIFE** | G | GapClose | **done** | sos_final lifecycle/evidence/readiness · 2026-09-24 |
+| **FS-006-XSYS** | G | GapClose | **done** | exemptions + location honesty · 2026-09-24 |
+| **FS-007-SIG** | H | GapClose | **done** | Classifier signal + ticket + suggest-only · 2026-09-24 |
+| **FS-007-UX** | H | GapClose | **done** | Parent review + child transparency · 2026-09-24 |
+| **FS-I-RECON** | I | GapClose | **done** | Cross-system reconcile + closure report · 2026-09-24 |
+
+### Phase 1.5 Platform Hardening (post-FS)
+
+| id | workflow | status | note |
+|---|---|---|---|
+| **PHASE-1.5-HARDEN** | GapClose | **done** | Shared FsSessionKernel + honesty/RBAC/FAT-034/migration proof · 2026-09-24 · STOP — no next wave |
+
+---
+
 ## Lane 6 — Later (not active)
 
 | id | status | note |
@@ -271,8 +326,9 @@ Each card imports linked SET ids when screen matches. Cannot Ship while linked S
 
 | id | workflow | status | goal | notes |
 |---|---|---|---|---|
-| PRT-1 | ScreenBuild | **done** | Generator groundwork: shell_config.dart + hubIndex from screens.csv | shipped 2026-09-22 · kids=22 (excl. FAT-039 tombstone; Q-PRT-1) |
-| **NEXT → PRT-2** | ScreenBuild | **ready** | Shell widget / TabsBar wiring (no generator change) | after PRT-1 |
+| PRT-1 | ScreenBuild | **done** | Generator groundwork: shell_config.dart + hubIndex from screens.csv | shipped 2026-09-22 |
+| PRT-2 | ScreenBuild | **done** | FamilyShellHost TabsBar+hub+FABs · Q-PRT-2 | shipped 2026-09-22 |
+| PRT-2.1 | ScreenBuild | **done** | Shell harden + Register §10 day-board seed; StatefulShellRoute deferred | shipped 2026-09-23 |
 
 ---
 

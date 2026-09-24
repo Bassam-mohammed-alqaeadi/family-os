@@ -1,4 +1,4 @@
-﻿# CONVERSION_LOG
+# CONVERSION_LOG
 
 One line per completed task (screen or system). Append only; never rewrite history.
 
@@ -255,5 +255,46 @@ Format: `YYYY-MM-DD | <task-id> | <summary> | evidence`
 
 2026-09-22 | P15-EDU-003 | FAT-041 SourceRef library: PDF/device/link/topic/voice attach persist (P11); attached strip; mock URI seam | status: passed — analyze OK; flutter test green FULL (verify_ship .verify/P15-EDU-003.json)
 
-2026-09-22 | PRT-1 | generator groundwork: shell_config.dart (5/4 branches, 17/5 tabless, hubIndex 9 tabs) from screens.csv; router behaviour unchanged | evidence: analyze clean; shell_config_test green; verify_ship .verify/PRT-1.json
+2026-09-22 | P15-EDU-004 | FAT-044 ApprovedLearningPack: approve/reject persist; CHD-015 loads approved quiz (Rule 7) | status: passed — analyze OK; flutter test green FULL (verify_ship .verify/P15-EDU-004.json)
 
+2026-09-22 | PRT-2 | FamilyShellHost TabsBar+hub+AI/SOS FABs; bare hides tabs; Q-PRT-2 owner reopen | status: passed — analyze OK; flutter test green (verify_ship .verify/PRT-2.json)
+
+2026-09-22 | P15-EDU-005 | FAT-045 Assign → WalletLedger.earn (PolicyEngine) education+play wallets; Minutes only · P7 | status: passed — analyze OK; flutter test green FULL (verify_ship .verify/P15-EDU-005.json)
+
+2026-09-22 | PRT-2.1 | FamilyShellHost harden (delegate+provider listen, SafeArea, bounded layout); Register §10 day-board seed intact; StatefulShellRoute deferred (flat router risk) | status: passed — analyze OK; full suite + family_shell/day_board green (verify_ship .verify/PRT-2.1.json)
+
+2026-09-23 | SOS-UI | CHD-005/006 + FAT-018/028 SOS Flutter UI slice — honest delivery/location; Observer RBAC; ACK≠RESOLVE; max-5 verified backups; Break-glass UI; Panic Quiet; no backend | status: passed — analyze clean; flutter test n10_emergency+sos policy 42 green
+
+2026-09-23 | P15-EDU-006 | CHD-015 quiz correct → LearningResult submit → FAT-050 activity merge (P12); ARB quizSubmitted | status: passed — analyze OK; flutter test green FULL (verify_ship .verify/P15-EDU-006.json)
+
+2026-09-23 | P15-EDU-007 | FAT-048 add subject/lesson persist rows (P11); custom subject + lesson count; →FAT-041 after lesson | status: passed — analyze OK; flutter test green FULL (verify_ship .verify/P15-EDU-007.json)
+
+2026-09-23 | P15-EDU-008 | LearningResult → FAT-010 day-board priority → FAT-050 (P12); Q4 Usable · Education domain Usable | status: passed — analyze OK; flutter test green FULL (verify_ship .verify/P15-EDU-008.json)
+
+2026-09-23 | phase15 | domain=Quran+Athkar | score=Shell | cards_seeded=6 | stage3_still_blocked=yes
+
+2026-09-23 | P15-QUR-001 | Quran+Athkar scored Shell (6Q); seeded P15-QUR-002…007; score→harness/PHASE15_QUR_SCORE.md; NEXT→P15-QUR-002 | status: passed — analyze OK; flutter test green FULL (verify_ship .verify/P15-QUR-001.json)
+
+2026-09-23 | P15-QUR-002 | QuranWardPlan seam: FAT-072 cycle+publish → CHD-025 live surah/range/reward (P12) | status: passed — analyze OK; flutter test green FULL (verify_ship .verify/P15-QUR-002.json)
+
+2026-09-23 | P15-QUR-003 | QuranRecitation: CHD-025 submit→FAT-072 pending; approve→WalletLedger.earn play mins (P12·Rule5) | status: passed — analyze OK; flutter test green FULL (verify_ship .verify/P15-QUR-003.json)
+
+2026-09-24 | FS-A-FOUND | FS shared foundations: CapabilityRegistry + SQLite/Memory LocalDatabase + MockRemoteAdapter + PolicyDelivery Configured→Verified + CapabilityHonestyBadge | status: passed — analyze OK; scoped verify green (fs_foundation + honesty badge + router seam) (.verify/FS-A-FOUND.json)
+2026-09-24 | FS-001-DOM | Location domain: circle+polygon zones, assignment Q-LOC-12, trail honesty, ENTER/EXIT/NO_SHOW events, schema v2 SQLite tables | status: passed — analyze OK; scoped verify green (.verify/FS-001-DOM.json)
+
+2026-09-24 | FS-001-UX | ADAPT FAT-014…017 + CHD-024: GPS honesty NOT IMPLEMENTED, Q-LOC-12 assignment, SilentLocate sheet, domain bridge, check-in silent | status: passed — analyze OK; scoped verify green (.verify/FS-001-UX.json)
+2026-09-24 | FS-001-XSYS | SOS location handoff (never block fire) + Modes fact feed ENTER/EXIT/NO_SHOW/presence + schema v3; native_gps NOT IMPLEMENTED | status: passed — analyze OK; verify green (.verify/FS-001-XSYS.json)
+2026-09-24 | FS-002-OWN | Web Filter ownership: allow/block/dict + family baseline/child override SQLite v4; WF-OD-08 precedence; FAT-036 list honesty; native_block MOCK-REMOTE | status: passed — analyze OK; verify green (.verify/FS-002-OWN.json)
+2026-09-24 | FS-002-ENF | Web Filter ENF: delivery Configured→Verified + timed temp allow (Q-WF-09, never silent allowList) + interstitial source-of-deny/feedback; schema v5 wf_temp_allow; native_block MOCK-REMOTE | status: passed — analyze OK; verify green (.verify/FS-002-ENF.json)
+2026-09-24 | FS-003-OWN | App Control ownership: Allow/Block/Exempt + protected SOS/Chat/Quran/Family OS + timed Exception/Lock Now/install (schema v6); ST axes stay ST; os_intercept MOCK-REMOTE | status: passed — analyze OK; full verify green (.verify/FS-003-OWN.json)
+2026-09-24 | FS-003-UX | App Control UX ADAPT: FAT-034/035 bind AC domain + protected badges + Partner tickets-only + child AppDenyPage/Exception Request; os_intercept MOCK-REMOTE | status: passed — analyze OK; verify green (.verify/FS-003-UX.json)
+2026-09-24 | FS-004-OWN | Screen & Camera ownership: Prevent/Monitor/Protect + screenshot monitoring policy (P-7) + baseline/override schema v7; camera_os/capture MOCK-REMOTE; mic out of scope | status: passed — analyze OK; scoped verify green (.verify/FS-004-OWN.json)
+2026-09-24 | FS-004-UX | Screen & Camera UX ADAPT: FAT-065 parent panel binds SC domain (single P-7 store) + child CHD-010 transparency; capture/camera_os MOCK-REMOTE; mic out of scope | status: passed — analyze OK; full verify green (.verify/FS-004-UX.json)
+2026-09-24 | FS-005-OWN | Modes ownership: lifestyle schedule + multi-mode stack (tighten-only) + ModeException schema v8; consume FS-001 location facts; os_wake MOCK-REMOTE; ScheduleWindow not Mode authority | status: passed — analyze OK; scoped verify green (.verify/FS-005-OWN.json)
+2026-09-24 | FS-005-UX | Modes UX ADAPT: FAT-085 binds Modes domain (multi-mode + school clock) + CHD-004 ModeDisclosureCard; os_wake MOCK-REMOTE; exams→study; ScheduleWindow not Mode authority | status: passed — analyze OK; scoped verify green (.verify/FS-005-UX.json)
+2026-09-24 | FS-006-LIFE | SOS Final lifecycle ownership: durable incident+audit (indefinite) + ops samples 90d + readiness OD-21 + Break-glass allowlist RBAC; schema v9; remote_delivery MOCK-REMOTE; Observer cannot ack | status: passed — analyze OK; full verify green (.verify/FS-006-LIFE.json)
+2026-09-24 | FS-006-XSYS | SOS cross-system: OD-14 permanent exemptions audit + FS-001 location honesty bridge (never block fire; native_gps NOT IMPLEMENTED ok); remote_delivery MOCK-REMOTE; Break-glass≠Find | status: passed — analyze OK; scoped verify green (.verify/FS-006-XSYS.json)
+2026-09-24 | FS-007-SIG | Offline AI Safety signal plane: typed SafetySignal + B1 ticket gate + suggest-only (no silent WF/AC/Modes); signed models required; cloud classify UNSUPPORTED; never SOS; schema v10 | status: passed — analyze OK; scoped verify green (.verify/FS-007-SIG.json)
+2026-09-24 | FS-007-UX | Offline AI Safety UX: FAT-065 ticket review (redacted preview, non-numeric certainty/severity, never AI executor) + CHD-010 child on-device transparency; KEEP hosts; suggest-only | status: passed — analyze OK; full verify green (.verify/FS-007-UX.json)
+2026-09-24 | FS-I-RECON | FS-001…FS-007 campaign closure: cross-system ownership rollup + honesty capability table + KEEP/REFINE confirmation; residual mock debt explicit; Lane FS CLOSED | status: passed — analyze OK; full verify green (.verify/FS-I-RECON.json)
+2026-09-24 | PHASE-1.5-HARDEN | Platform hardening: shared FsSessionKernel (SQLite outside tests) + Location→Modes fact feed + post-campaign capability seeds + FAT-034 Domain AC bootstrap + child AppControlActor deny; P15-QUR parked; Stage 3 not started | status: passed — analyze OK; full verify green (.verify/PHASE-1.5-HARDEN.json)

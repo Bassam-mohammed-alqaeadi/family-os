@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_ladder.dart';
 import 'package:family_os/core/policy/sos_ladder_repository.dart';
@@ -76,12 +77,16 @@ void main() {
     expect(find.byKey(EmergencySetupKeys.backupRow('uncle')), findsOneWidget);
     expect(find.byKey(EmergencySetupKeys.backupRemove('uncle')), findsOneWidget);
 
+    await tester.ensureVisible(find.byKey(EmergencySetupKeys.backupSwitch('uncle')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(EmergencySetupKeys.backupSwitch('uncle')));
     await tester.pumpAndSettle();
 
     var ladder = await repo.load();
     expect(ladder.backups.single.enabled, isFalse);
 
+    await tester.ensureVisible(find.byKey(EmergencySetupKeys.backupRemove('uncle')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(EmergencySetupKeys.backupRemove('uncle')));
     await tester.pumpAndSettle();
 
@@ -94,6 +99,8 @@ void main() {
     final repo = InMemorySosLadderRepository();
     await _pump(tester, repository: repo);
 
+    await tester.ensureVisible(find.byKey(EmergencySetupKeys.addBackup));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(EmergencySetupKeys.addBackup));
     await tester.pumpAndSettle();
 
@@ -149,7 +156,10 @@ Future<void> _pump(
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: EmergencySetupScreen(repository: repository),
+      home: EmergencySetupScreen(
+        repository: repository,
+        roleOverride: AppRole.father,
+      ),
     ),
   );
   await tester.pumpAndSettle();

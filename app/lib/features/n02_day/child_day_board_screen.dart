@@ -1,20 +1,30 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import 'package:family_os/app/role_guard.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/banner.dart';
+import 'package:family_os/core/design/components/mode_disclosure_card.dart';
+import 'package:family_os/core/design/components/primary_btn.dart';
+import 'package:family_os/core/design/components/time_warning_banner.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/modes/modes.dart';
+import 'package:family_os/core/modes/modes_runtime.dart';
 import 'package:family_os/core/policy/policy_sync_bus.dart';
 import 'package:family_os/core/policy/screen_time_policy.dart';
 import 'package:family_os/core/policy/smart_mode_activation.dart';
 import 'package:family_os/core/policy/smart_mode_activation_bus.dart';
 import 'package:family_os/core/policy/smart_mode_prefs.dart';
 import 'package:family_os/core/policy/smart_modes.dart';
+import 'package:family_os/core/policy/time_request_repository.dart';
+import 'package:family_os/core/policy/time_request_service.dart';
 import 'package:family_os/features/n02_day/day_board_motion.dart';
+import 'package:family_os/features/n09_smart_modes/modes_ux_bridge.dart';
 
 /// Widget keys for SCR-CHD-004 / SET-019 / UI-005 / UI-017 acceptance.
 abstract final class ChildDayBoardKeys {
@@ -23,12 +33,18 @@ abstract final class ChildDayBoardKeys {
   static const modeExpiry = Key('child_day_board_mode_expiry');
   static const idleStatus = Key('child_day_board_idle_status');
   static const remainingMinutes = Key('child_day_board_remaining');
+  static const warningBanner = Key('child_day_board_warning_banner');
+  static const warningRequest = Key('child_day_board_warning_request');
+  static const warningQuran = Key('child_day_board_warning_quran');
+  static const warningChat = Key('child_day_board_warning_chat');
+  static const warningSos = Key('child_day_board_warning_sos');
   static const emptyState = Key('child_day_board_empty');
   static const offlineBanner = Key('child_day_board_offline_banner');
   static const lastSyncedLine = Key('child_day_board_last_synced');
 
   /// UI-017 — decorative status pulse (reduce-motion gated).
   static const statusMotion = Key('child_day_board_status_motion');
+  static const modeDisclosure = Key('child_day_board_mode_disclosure');
 }
 
 /// SCR-CHD-004 — لوحة يومي (SET-019 + UI-005).
@@ -42,6 +58,7 @@ class ChildDayBoardScreen extends StatefulWidget {
     ChildId? childId,
     this.activationBus,
     this.syncBus,
+    this.modes,
     this.initialPolicy,
     this.emptyDay = false,
     this.showModeNotices = true,
@@ -56,6 +73,9 @@ class ChildDayBoardScreen extends StatefulWidget {
 
   /// P12 screen-time policy sync — null → [stage1PolicySyncBus].
   final PolicySyncBus? syncBus;
+
+  /// FS-005 domain seam — when set, shows multi-mode disclosure (W-C01/02).
+  final ModesService? modes;
 
   /// Optional seed before first bus event (tests / hydrate from repo).
   final ScreenTimePolicy? initialPolicy;
@@ -79,9 +99,19 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
   StreamSubscription<ChildPolicyMirror>? _policySub;
   late SmartModeActivation _activation;
   late ChildPolicyMirror _mirror;
+  late final TimeRequestService _requestService;
+  ModesEvaluation? _modesEval;
+  ModesService? _bootstrappedModes;
+  int _temporaryGrantRemaining = 0;
   BuiltInModeId? _prevModeId;
   var _prevActive = false;
   var _hasExplicitPolicy = false;
+  bool _isExplicitMirror(ChildPolicyMirror mirror) {
+    return mirror.lastAppliedAt != null ||
+        mirror.applyCount > 0 ||
+        mirror.policy != ScreenTimePolicy.defaults() ||
+        mirror.temporaryGrantRemaining > 0;
+  }
 
   String get _childKey => widget.childId.value;
 
@@ -90,35 +120,62 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
     super.initState();
     _activationBus = widget.activationBus ?? stage1SmartModeActivationBus;
     _syncBus = widget.syncBus ?? stage1PolicySyncBus;
+    _requestService = TimeRequestService(
+      repository: PrefsTimeRequestRepository(stage1TimeRequestPrefsStore),
+      decisionBus: stage1TimeRequestDecisionBus,
+    );
     _activation = _activationBus.activationOf(_childKey);
     _prevModeId = _activation.active ? _activation.modeId : null;
     _prevActive = _activation.active;
     _activationBus.addListener(_onActivationBus);
+    if (widget.modes != null) {
+      _loadModesEval();
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _bootstrapModes();
+      });
+    }
 
     if (widget.initialPolicy != null) {
       _syncBus.hydrate(widget.childId, policy: widget.initialPolicy);
       _hasExplicitPolicy = true;
     }
     _mirror = _syncBus.mirrorOf(widget.childId);
-    if (_mirror.lastAppliedAt != null || _mirror.applyCount > 0) {
+    if (_isExplicitMirror(_mirror)) {
       _hasExplicitPolicy = true;
     }
     _policySub = _syncBus.watch(widget.childId).listen((next) {
       if (!mounted) return;
       setState(() {
         _mirror = next;
-        if (next.lastAppliedAt != null || next.applyCount > 0) {
+        if (_isExplicitMirror(next)) {
           _hasExplicitPolicy = true;
         }
       });
     });
+    stage1TimeRequestDecisionBus.addListener(_onDecision);
+    _refreshGrantRemaining();
   }
 
   @override
   void dispose() {
     _activationBus.removeListener(_onActivationBus);
     _policySub?.cancel();
+    stage1TimeRequestDecisionBus.removeListener(_onDecision);
     super.dispose();
+  }
+
+  void _onDecision() {
+    _refreshGrantRemaining();
+  }
+
+  Future<void> _refreshGrantRemaining() async {
+    final remaining = await _requestService.activeGrantRemaining(
+      widget.childId,
+    );
+    if (!mounted) return;
+    setState(() => _temporaryGrantRemaining = remaining);
   }
 
   void _onActivationBus() {
@@ -129,12 +186,39 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
     setState(() => _activation = next);
     _prevActive = next.active;
     _prevModeId = next.active ? next.modeId : null;
+    _loadModesEval();
     if (!widget.showModeNotices) return;
-    _maybeToast(
-      wasActive: wasActive,
-      wasMode: wasMode,
-      next: next,
-    );
+    _maybeToast(wasActive: wasActive, wasMode: wasMode, next: next);
+  }
+
+  Future<void> _bootstrapModes() async {
+    try {
+      await Stage1ModesRuntime.ensureOpen();
+      if (!mounted) return;
+      _bootstrappedModes = Stage1ModesRuntime.service;
+      await _loadModesEval();
+    } catch (_) {
+      // Modes optional — activation bus + ST Prefs still drive the board.
+    }
+  }
+
+  Future<void> _loadModesEval() async {
+    final modes = widget.modes ?? _bootstrappedModes;
+    if (modes == null) return;
+    try {
+      final eval = await modes.evaluateChild(widget.childId);
+      if (!mounted) return;
+      setState(() => _modesEval = eval);
+    } catch (_) {
+      // Domain optional — keep activation bus path.
+    }
+  }
+
+  Map<String, String> _modeDocLabels(AppLocalizations l10n) {
+    return {
+      for (final id in BuiltInModeId.values)
+        ModesUxBridge.modeDocumentId(id): _modeLabel(l10n, id),
+    };
   }
 
   void _maybeToast({
@@ -161,34 +245,34 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
   }
 
   String _modeLabel(AppLocalizations l10n, BuiltInModeId id) => switch (id) {
-        BuiltInModeId.sleep => l10n.smartModeSleep,
-        BuiltInModeId.school => l10n.smartModeSchool,
-        BuiltInModeId.study => l10n.smartModeStudy,
-        BuiltInModeId.ramadan => l10n.smartModeRamadan,
-        BuiltInModeId.exams => l10n.smartModeExams,
-        BuiltInModeId.vacation => l10n.smartModeVacation,
-        BuiltInModeId.custom => l10n.smartModeCustom,
-      };
+    BuiltInModeId.sleep => l10n.smartModeSleep,
+    BuiltInModeId.school => l10n.smartModeSchool,
+    BuiltInModeId.study => l10n.smartModeStudy,
+    BuiltInModeId.ramadan => l10n.smartModeRamadan,
+    BuiltInModeId.exams => l10n.smartModeExams,
+    BuiltInModeId.vacation => l10n.smartModeVacation,
+    BuiltInModeId.custom => l10n.smartModeCustom,
+  };
 
   Color _modeTint(FamilyColors colors, BuiltInModeId id) => switch (id) {
-        BuiltInModeId.sleep => colors.p100,
-        BuiltInModeId.school => colors.sky.withValues(alpha: 0.25),
-        BuiltInModeId.study => colors.amber100,
-        BuiltInModeId.ramadan => colors.teal100,
-        BuiltInModeId.exams => colors.coral100,
-        BuiltInModeId.vacation => colors.mint100,
-        BuiltInModeId.custom => colors.p50,
-      };
+    BuiltInModeId.sleep => colors.p100,
+    BuiltInModeId.school => colors.sky.withValues(alpha: 0.25),
+    BuiltInModeId.study => colors.amber100,
+    BuiltInModeId.ramadan => colors.teal100,
+    BuiltInModeId.exams => colors.coral100,
+    BuiltInModeId.vacation => colors.mint100,
+    BuiltInModeId.custom => colors.p50,
+  };
 
   Color _modeBorder(FamilyColors colors, BuiltInModeId id) => switch (id) {
-        BuiltInModeId.sleep => colors.p500,
-        BuiltInModeId.school => colors.sky,
-        BuiltInModeId.study => colors.amber,
-        BuiltInModeId.ramadan => colors.teal,
-        BuiltInModeId.exams => colors.coral,
-        BuiltInModeId.vacation => colors.mint,
-        BuiltInModeId.custom => colors.p400,
-      };
+    BuiltInModeId.sleep => colors.p500,
+    BuiltInModeId.school => colors.sky,
+    BuiltInModeId.study => colors.amber,
+    BuiltInModeId.ramadan => colors.teal,
+    BuiltInModeId.exams => colors.coral,
+    BuiltInModeId.vacation => colors.mint,
+    BuiltInModeId.custom => colors.p400,
+  };
 
   String _formatExpiry(DateTime expiresAt) {
     final local = expiresAt.toLocal();
@@ -207,6 +291,9 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
   bool get _showRemaining => _hasExplicitPolicy && !widget.emptyDay;
 
   bool get _childOffline => !_syncBus.isChildOnline(widget.childId);
+
+  int get _effectiveRemaining =>
+      _mirror.dailyRemaining + _temporaryGrantRemaining;
 
   @override
   Widget build(BuildContext context) {
@@ -293,9 +380,7 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
                     const SizedBox(height: 8),
                     Text(
                       key: ChildDayBoardKeys.remainingMinutes,
-                      l10n.childTimeMirrorRemainingMinutes(
-                        _mirror.remainingMinutes,
-                      ),
+                      l10n.childTimeMirrorRemainingMinutes(_effectiveRemaining),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -304,8 +389,60 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
                         color: colors.ink,
                       ),
                     ),
+                    if (TimeWarningBanner.shouldShow(_effectiveRemaining)) ...[
+                      const SizedBox(height: 8),
+                      TimeWarningBanner(
+                        key: ChildDayBoardKeys.warningBanner,
+                        remainingMinutes: _effectiveRemaining,
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          PrimaryBtn(
+                            key: ChildDayBoardKeys.warningRequest,
+                            label: l10n.childTimeRequestSubmitCta,
+                            variant: PrimaryBtnVariant.teal,
+                            onPressed: () =>
+                                context.push(screenPath('SCR-CHD-020')),
+                          ),
+                          PrimaryBtn(
+                            key: ChildDayBoardKeys.warningQuran,
+                            label: l10n.timeExpiryQuranCta,
+                            variant: PrimaryBtnVariant.sec,
+                            onPressed: () =>
+                                context.push(screenPath('SCR-CHD-025')),
+                          ),
+                          PrimaryBtn(
+                            key: ChildDayBoardKeys.warningChat,
+                            label: l10n.timeExpiryChatCta,
+                            variant: PrimaryBtnVariant.sec,
+                            onPressed: () =>
+                                context.push(screenPath('SCR-CHD-008')),
+                          ),
+                          PrimaryBtn(
+                            key: ChildDayBoardKeys.warningSos,
+                            label: l10n.timeExpirySosCta,
+                            variant: PrimaryBtnVariant.coral,
+                            onPressed: () =>
+                                context.push(screenPath('SCR-CHD-005')),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                   const SizedBox(height: 16),
+                  if (_modesEval != null) ...[
+                    KeyedSubtree(
+                      key: ChildDayBoardKeys.modeDisclosure,
+                      child: ModeDisclosureCard(
+                        evaluation: _modesEval!,
+                        labelsByModeId: _modeDocLabels(l10n),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   DayBoardMotionPulse(
                     key: ChildDayBoardKeys.statusMotion,
                     preferredDuration: const Duration(milliseconds: 1400),

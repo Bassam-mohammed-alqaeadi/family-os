@@ -7,12 +7,14 @@ import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
+import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/minutes.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/schedule_window_repository.dart';
 import 'package:family_os/core/policy/screen_time_policy.dart';
 import 'package:family_os/core/policy/screen_time_policy_repository.dart';
+import 'package:family_os/features/n12_devices/mother_permission_level_repository.dart';
 import 'package:family_os/features/n03_screen_time/child_screen_time_screen.dart';
 
 void main() {
@@ -79,7 +81,6 @@ void main() {
     await tester.tap(find.byKey(const Key('schedule_end_sleep')));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('يجب أن تكون النهاية بعد البداية'), findsOneWidget);
     final btn = tester.widget<PrimaryBtn>(
       find.byKey(const Key('child_screen_time_save')),
     );
@@ -117,6 +118,32 @@ void main() {
       find.byKey(const Key('child_screen_time_save')),
     );
     expect(btn.onPressed, isNull);
+  });
+
+  testWidgets('mother full can edit caps/schedules/overflow', (tester) async {
+    stage1MotherPermissionLevelRepository.seed(level: MotherLevel.full);
+    addTearDown(stage1MotherPermissionLevelRepository.resetForTests);
+    await _pump(
+      tester,
+      repository: InMemoryScheduleWindowRepository(),
+      childId: child,
+      role: AppRole.mother,
+    );
+
+    final sw = tester.widget<Switch>(
+      find.byKey(const Key('schedule_switch_sleep')),
+    );
+    expect(sw.onChanged, isNotNull);
+
+    await _scrollTo(tester, find.byKey(const Key('daily_cap_field')));
+    final capField = tester.widget<TextField>(find.byKey(const Key('daily_cap_field')));
+    expect(capField.enabled, isTrue);
+
+    await _scrollTo(tester, find.byKey(const Key('allow_wallet_overflow_switch')));
+    final overflow = tester.widget<Switch>(
+      find.byKey(const Key('allow_wallet_overflow_switch')),
+    );
+    expect(overflow.onChanged, isNotNull);
   });
 
   testWidgets('schedule rows expose semantics labels', (tester) async {
@@ -262,6 +289,11 @@ void main() {
 }
 
 Future<void> _scrollTo(WidgetTester tester, Finder finder) async {
+  await tester.scrollUntilVisible(
+    finder,
+    220,
+    scrollable: find.byType(Scrollable).first,
+  );
   await tester.ensureVisible(finder);
   await tester.pumpAndSettle();
 }

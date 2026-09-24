@@ -20,9 +20,9 @@ void main() {
   });
 
   testWidgets('empty inventory shows empty state', (tester) async {
-    final repo = InMemoryChildAppsRepository(seed: {
-      'demo-child': const <ChildAppEntry>[],
-    });
+    final repo = InMemoryChildAppsRepository(
+      seed: {'demo-child': const <ChildAppEntry>[]},
+    );
     await _pump(tester, repository: repo);
 
     expect(find.byKey(ChildAppsKeys.empty), findsOneWidget);
@@ -31,14 +31,17 @@ void main() {
   });
 
   testWidgets('one app shows single tile + categories', (tester) async {
-    final repo = InMemoryChildAppsRepository(seed: {
-      'demo-child': childAppsOneFixture(),
-    });
+    final repo = InMemoryChildAppsRepository(
+      seed: {'demo-child': childAppsOneFixture()},
+    );
     await _pump(tester, repository: repo);
 
     expect(find.byKey(ChildAppsKeys.list), findsOneWidget);
     expect(find.byKey(ChildAppsKeys.appTile('minecraft')), findsOneWidget);
-    expect(find.byKey(ChildAppsKeys.category(ChildAppCategory.games)), findsOneWidget);
+    expect(
+      find.byKey(ChildAppsKeys.category(ChildAppCategory.games)),
+      findsOneWidget,
+    );
     expect(find.byKey(ChildAppsKeys.pendingCta), findsNothing);
   });
 
@@ -57,12 +60,20 @@ void main() {
 
     expect(find.byKey(ChildAppsKeys.list), findsOneWidget);
     expect(find.byKey(ChildAppsKeys.pendingCta), findsOneWidget);
-    expect(find.byKey(ChildAppsKeys.appTile('snapchat')), findsOneWidget);
+    expect(find.byKey(ChildAppsKeys.honestyBanner), findsOneWidget);
 
     await tester.tap(find.byKey(ChildAppsKeys.pendingCta));
     await tester.pumpAndSettle();
     expect(openedChild, 'demo-child');
     expect(openedApp, 'snapchat');
+
+    await tester.scrollUntilVisible(
+      find.byKey(ChildAppsKeys.appTile('snapchat')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(ChildAppsKeys.appTile('snapchat')), findsOneWidget);
   });
 
   testWidgets('pending tile tap opens FAT-035 seam', (tester) async {
@@ -75,7 +86,11 @@ void main() {
     );
 
     final tile = find.byKey(ChildAppsKeys.appTile('snapchat'));
-    await tester.ensureVisible(tile);
+    await tester.scrollUntilVisible(
+      tile,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.pumpAndSettle();
     await tester.tap(tile);
     await tester.pumpAndSettle();
@@ -83,9 +98,9 @@ void main() {
   });
 
   testWidgets('father allow/block via sheet updates mock', (tester) async {
-    final repo = InMemoryChildAppsRepository(seed: {
-      'demo-child': childAppsOneFixture(),
-    });
+    final repo = InMemoryChildAppsRepository(
+      seed: {'demo-child': childAppsOneFixture()},
+    );
     await _pump(tester, repository: repo);
 
     await tester.tap(find.byKey(ChildAppsKeys.appTile('minecraft')));
@@ -97,13 +112,16 @@ void main() {
     AppToast.dismiss();
     await tester.pumpAndSettle();
 
-    expect(repo.appsFor(ChildId('demo-child')).first.status, ChildAppStatus.blocked);
+    expect(
+      repo.appsFor(ChildId('demo-child')).first.status,
+      ChildAppStatus.blocked,
+    );
   });
 
   testWidgets('toggle seam blocks allowed app', (tester) async {
-    final repo = InMemoryChildAppsRepository(seed: {
-      'demo-child': childAppsOneFixture(),
-    });
+    final repo = InMemoryChildAppsRepository(
+      seed: {'demo-child': childAppsOneFixture()},
+    );
     await _pump(tester, repository: repo);
 
     await tester.tap(find.byKey(ChildAppsKeys.statusToggle('minecraft')));
@@ -111,26 +129,45 @@ void main() {
     AppToast.dismiss();
     await tester.pumpAndSettle();
 
-    expect(repo.appsFor(ChildId('demo-child')).first.status, ChildAppStatus.blocked);
+    expect(
+      repo.appsFor(ChildId('demo-child')).first.status,
+      ChildAppStatus.blocked,
+    );
   });
 
-  testWidgets('mother partner can control apps', (tester) async {
-    final repo = InMemoryChildAppsRepository(seed: {
-      'demo-child': childAppsOneFixture(),
-    });
+  testWidgets('mother partner sees tickets hint — no permanent configure', (
+    tester,
+  ) async {
+    final repo = InMemoryChildAppsRepository(
+      seed: {'demo-child': childAppsOneFixture()},
+    );
     await _pump(
       tester,
       repository: repo,
       role: AppRole.mother,
       motherLevel: MotherLevel.partner,
     );
+    expect(find.byKey(ChildAppsKeys.partnerHint), findsOneWidget);
+    expect(find.byKey(ChildAppsKeys.statusToggle('minecraft')), findsNothing);
+  });
+
+  testWidgets('mother full can configure access', (tester) async {
+    final repo = InMemoryChildAppsRepository(
+      seed: {'demo-child': childAppsOneFixture()},
+    );
+    await _pump(
+      tester,
+      repository: repo,
+      role: AppRole.mother,
+      motherLevel: MotherLevel.full,
+    );
     expect(find.byKey(ChildAppsKeys.statusToggle('minecraft')), findsOneWidget);
   });
 
   testWidgets('mother observer is view-only', (tester) async {
-    final repo = InMemoryChildAppsRepository(seed: {
-      'demo-child': childAppsOneFixture(),
-    });
+    final repo = InMemoryChildAppsRepository(
+      seed: {'demo-child': childAppsOneFixture()},
+    );
     await _pump(
       tester,
       repository: repo,
@@ -151,10 +188,12 @@ void main() {
   });
 
   testWidgets('parametric childId empty inventory', (tester) async {
-    final repo = InMemoryChildAppsRepository(seed: {
-      'demo-child': childAppsOneFixture(),
-      'k2': const <ChildAppEntry>[],
-    });
+    final repo = InMemoryChildAppsRepository(
+      seed: {
+        'demo-child': childAppsOneFixture(),
+        'k2': const <ChildAppEntry>[],
+      },
+    );
     await _pump(tester, repository: repo, childId: 'k2');
     expect(find.byKey(ChildAppsKeys.empty), findsOneWidget);
   });

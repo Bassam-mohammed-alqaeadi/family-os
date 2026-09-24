@@ -1,18 +1,67 @@
+/// SOS domain - incident / location / delivery / connection (UI slice).
+library;
+
 import 'package:flutter/foundation.dart';
 
-/// Lifecycle of a parent-facing SOS alert (S-SEC-026 state machine).
+/// Incident lifecycle (separate from delivery / location).
 enum SosAlertStatus {
-  /// Live broadcast — siren + map + auto-call path active.
   active,
-
-  /// Parent acknowledged / arrived — alert closed, audit retained.
+  acknowledged,
+  escalating,
   resolved,
 }
 
-/// Parent SOS alert board payload (SCR-FAT-018 / S-SEC-026…030).
-///
-/// Rule 23: never plant person names in screen defaults — inject via
-/// [SosAlertRepository] fixtures in tests / demos only.
+/// How an open incident was closed.
+enum SosTerminalReason {
+  helped,
+  falseAlarm,
+  other,
+}
+
+/// Location honesty (OD-16) — independent of incident status.
+enum SosLocationClass {
+  ready,
+  acquiring,
+  stale,
+  unavailable,
+}
+
+/// Per-channel delivery honesty (OD-09 / OD-20).
+enum SosDeliveryClass {
+  pending,
+  delivered,
+  failed,
+  unavailable,
+  notConfigured,
+}
+
+enum SosConnectionClass {
+  online,
+  degraded,
+  offline,
+}
+
+/// One recipient×channel delivery row (mock-first).
+@immutable
+final class SosDeliveryRow {
+  const SosDeliveryRow({
+    required this.recipientId,
+    required this.channel,
+    required this.status,
+  });
+
+  final String recipientId;
+  final String channel; // push | in_app | sms | call
+  final SosDeliveryClass status;
+
+  SosDeliveryRow copyWith({SosDeliveryClass? status}) => SosDeliveryRow(
+        recipientId: recipientId,
+        channel: channel,
+        status: status ?? this.status,
+      );
+}
+
+/// Parent SOS incident payload (SCR-FAT-018 / CHD-006).
 @immutable
 final class SosAlert {
   const SosAlert({
@@ -27,8 +76,14 @@ final class SosAlert {
     required this.accuracyMeters,
     required this.recipientLabels,
     this.status = SosAlertStatus.active,
+    this.terminalReason,
+    this.locationClass = SosLocationClass.acquiring,
+    this.connectionClass = SosConnectionClass.online,
+    this.deliveries = const [],
+    this.acknowledgedAt,
     this.pinFracX = 0.62,
     this.pinFracY = 0.42,
+    this.panicQuietAtTrigger = false,
   });
 
   final String id;
@@ -40,17 +95,25 @@ final class SosAlert {
   final int batteryPercent;
   final String movementLabel;
   final int accuracyMeters;
-
-  /// Display labels for who received the piercing alert (father/mother/backup).
   final List<String> recipientLabels;
-
   final SosAlertStatus status;
-
-  /// Fractional pin on the stylized map canvas (0–1).
+  final SosTerminalReason? terminalReason;
+  final SosLocationClass locationClass;
+  final SosConnectionClass connectionClass;
+  final List<SosDeliveryRow> deliveries;
+  final DateTime? acknowledgedAt;
   final double pinFracX;
   final double pinFracY;
+  final bool panicQuietAtTrigger;
 
-  bool get isActive => status == SosAlertStatus.active;
+  bool get isOpen =>
+      status == SosAlertStatus.active ||
+      status == SosAlertStatus.acknowledged ||
+      status == SosAlertStatus.escalating;
+
+  bool get isActive => isOpen; // backward-compatible name for open incident
+
+  bool get isResolved => status == SosAlertStatus.resolved;
 
   SosAlert copyWith({
     String? id,
@@ -64,8 +127,16 @@ final class SosAlert {
     int? accuracyMeters,
     List<String>? recipientLabels,
     SosAlertStatus? status,
+    SosTerminalReason? terminalReason,
+    bool clearTerminalReason = false,
+    SosLocationClass? locationClass,
+    SosConnectionClass? connectionClass,
+    List<SosDeliveryRow>? deliveries,
+    DateTime? acknowledgedAt,
+    bool clearAcknowledgedAt = false,
     double? pinFracX,
     double? pinFracY,
+    bool? panicQuietAtTrigger,
   }) {
     return SosAlert(
       id: id ?? this.id,
@@ -79,43 +150,17 @@ final class SosAlert {
       accuracyMeters: accuracyMeters ?? this.accuracyMeters,
       recipientLabels: recipientLabels ?? this.recipientLabels,
       status: status ?? this.status,
+      terminalReason:
+          clearTerminalReason ? null : (terminalReason ?? this.terminalReason),
+      locationClass: locationClass ?? this.locationClass,
+      connectionClass: connectionClass ?? this.connectionClass,
+      deliveries: deliveries ?? this.deliveries,
+      acknowledgedAt: clearAcknowledgedAt
+          ? null
+          : (acknowledgedAt ?? this.acknowledgedAt),
       pinFracX: pinFracX ?? this.pinFracX,
       pinFracY: pinFracY ?? this.pinFracY,
+      panicQuietAtTrigger: panicQuietAtTrigger ?? this.panicQuietAtTrigger,
     );
   }
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is SosAlert &&
-          id == other.id &&
-          childId == other.childId &&
-          childDisplayName == other.childDisplayName &&
-          childEmoji == other.childEmoji &&
-          pressedAt == other.pressedAt &&
-          locationLabel == other.locationLabel &&
-          batteryPercent == other.batteryPercent &&
-          movementLabel == other.movementLabel &&
-          accuracyMeters == other.accuracyMeters &&
-          listEquals(recipientLabels, other.recipientLabels) &&
-          status == other.status &&
-          pinFracX == other.pinFracX &&
-          pinFracY == other.pinFracY;
-
-  @override
-  int get hashCode => Object.hash(
-        id,
-        childId,
-        childDisplayName,
-        childEmoji,
-        pressedAt,
-        locationLabel,
-        batteryPercent,
-        movementLabel,
-        accuracyMeters,
-        Object.hashAll(recipientLabels),
-        status,
-        pinFracX,
-        pinFracY,
-      );
 }

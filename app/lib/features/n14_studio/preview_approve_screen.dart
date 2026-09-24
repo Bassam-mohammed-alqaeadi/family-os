@@ -219,7 +219,7 @@ class _PreviewApproveScreenState extends State<PreviewApproveScreen> {
     AppToast.show(context, message: l10n.previewApproveDifficultyToast);
   }
 
-  void _onApprove() {
+  Future<void> _onApprove() async {
     final l10n = AppLocalizations.of(context);
     if (!_canEdit) {
       _blockedToast(l10n);
@@ -229,18 +229,22 @@ class _PreviewApproveScreenState extends State<PreviewApproveScreen> {
       AppToast.show(context, message: l10n.previewApproveCannotApproveToast);
       return;
     }
+    final snap = await _repo.approve();
+    if (!mounted) return;
+    setState(() => _snap = snap);
+    AppToast.show(context, message: l10n.previewApproveApprovedToast);
     _go('SCR-FAT-045');
   }
 
-  void _onReject() {
+  Future<void> _onReject() async {
     final l10n = AppLocalizations.of(context);
     if (!_canEdit) {
       _blockedToast(l10n);
       return;
     }
-    setState(() {
-      _snap = _snap.withRejected();
-    });
+    final snap = await _repo.reject();
+    if (!mounted) return;
+    setState(() => _snap = snap);
     AppToast.show(context, message: l10n.previewApproveRejectToast);
   }
 
@@ -696,7 +700,10 @@ class _EditChip extends StatelessWidget {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   child: Text(
                     label,
                     style: TextStyle(

@@ -11,6 +11,7 @@ abstract final class FamilyMembersMock {
   static const List<FamilyMemberEntry> fullFixture = [
     FamilyMemberEntry(
       id: 'member_owner',
+      familyId: 'fam_stage1',
       displayName: 'وليّ الأمر',
       kind: FamilyMemberKind.owner,
       monogram: 'و',
@@ -19,6 +20,7 @@ abstract final class FamilyMembersMock {
     ),
     FamilyMemberEntry(
       id: 'member_mother',
+      familyId: 'fam_stage1',
       displayName: 'وليّة أمر',
       kind: FamilyMemberKind.mother,
       monogram: 'أ',
@@ -27,6 +29,7 @@ abstract final class FamilyMembersMock {
     ),
     FamilyMemberEntry(
       id: 'member_guardian',
+      familyId: 'fam_stage1',
       displayName: 'وصيّ إضافي',
       kind: FamilyMemberKind.guardian,
       monogram: 'و',
@@ -36,6 +39,7 @@ abstract final class FamilyMembersMock {
     ),
     FamilyMemberEntry(
       id: 'child_a',
+      familyId: 'fam_stage1',
       displayName: 'ابن ١',
       kind: FamilyMemberKind.child,
       monogram: '🦁',
@@ -43,6 +47,7 @@ abstract final class FamilyMembersMock {
     ),
     FamilyMemberEntry(
       id: 'child_b',
+      familyId: 'fam_stage1',
       displayName: 'ابن ٢',
       kind: FamilyMemberKind.child,
       monogram: '🐱',
@@ -54,6 +59,7 @@ abstract final class FamilyMembersMock {
   static const List<FamilyMemberEntry> ownerOnlyFixture = [
     FamilyMemberEntry(
       id: 'member_owner',
+      familyId: 'fam_stage1',
       displayName: 'وليّ الأمر',
       kind: FamilyMemberKind.owner,
       monogram: 'و',

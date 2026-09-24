@@ -9,6 +9,7 @@ import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/policy/app_access_rules_repository.dart';
 import 'package:family_os/features/n03_screen_time/child_apps_mock.dart';
 import 'package:family_os/features/n03_screen_time/child_apps_models.dart';
 import 'package:family_os/features/n03_screen_time/child_apps_repository.dart';
@@ -87,7 +88,11 @@ void main() {
   });
 
   testWidgets('mother partner can decide', (tester) async {
-    final repo = InMemoryChildAppsRepository();
+    final repo = InMemoryChildAppsRepository(
+      accessRules: PrefsAppAccessRulesRepository(
+        MemoryAppAccessRulesPrefsStore(),
+      ),
+    );
     await _pump(
       tester,
       repository: repo,
@@ -98,7 +103,11 @@ void main() {
   });
 
   testWidgets('mother observer is view-only', (tester) async {
-    final repo = InMemoryChildAppsRepository();
+    final repo = InMemoryChildAppsRepository(
+      accessRules: PrefsAppAccessRulesRepository(
+        MemoryAppAccessRulesPrefsStore(),
+      ),
+    );
     await _pump(
       tester,
       repository: repo,

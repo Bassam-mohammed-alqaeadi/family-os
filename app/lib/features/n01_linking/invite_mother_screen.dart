@@ -6,6 +6,10 @@ import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/domain/mother_level.dart';
+import 'package:family_os/core/identity/adult_invite_repository.dart';
+import 'package:family_os/core/identity/identity_models.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 
 /// Mother permission level chosen by the father on invite (Wave-1).
@@ -26,10 +30,11 @@ enum MotherInviteLevel {
 /// person name. Toast uses typed email local-part only (no fixed name).
 /// No real email send / Firebase on this card.
 class InviteMotherScreen extends StatefulWidget {
-  const InviteMotherScreen({super.key, this.onInviteSent});
+  const InviteMotherScreen({super.key, this.repository, this.onInviteSent});
 
   /// Test seam — when null, shows toast and navigates to `/scr-fat-027`.
   final VoidCallback? onInviteSent;
+  final AdultInviteRepository? repository;
 
   @override
   State<InviteMotherScreen> createState() => _InviteMotherScreenState();
@@ -38,10 +43,13 @@ class InviteMotherScreen extends StatefulWidget {
 class _InviteMotherScreenState extends State<InviteMotherScreen> {
   final _emailController = TextEditingController();
   MotherInviteLevel _level = MotherInviteLevel.partner;
+  late final AdultInviteRepository _repo;
+  AdultInvite? _latest;
 
   @override
   void initState() {
     super.initState();
+    _repo = widget.repository ?? stage1AdultInviteRepository;
     _emailController.addListener(_onEmailChanged);
   }
 
@@ -53,7 +61,16 @@ class _InviteMotherScreenState extends State<InviteMotherScreen> {
     super.dispose();
   }
 
-  void _onEmailChanged() => setState(() {});
+  void _onEmailChanged() {
+    final email = _emailController.text.trim().toLowerCase();
+    final runtime = CurrentIdentity.maybeOf(context);
+    if (runtime != null && email.isNotEmpty) {
+      _latest = _repo.latestForTarget(runtime.activeFamilyId, email);
+    } else {
+      _latest = null;
+    }
+    setState(() {});
+  }
 
   bool get _canSubmit => _emailController.text.trim().isNotEmpty;
 
@@ -91,11 +108,54 @@ class _InviteMotherScreenState extends State<InviteMotherScreen> {
       return;
     }
 
+    final runtime = CurrentIdentity.maybeOf(context);
+    if (runtime != null) {
+      if (!runtime.authorizationContext.canInviteAdults) {
+        AppToast.show(context, message: l10n.settingsPersistError);
+        return;
+      }
+      final email = _emailController.text.trim().toLowerCase();
+      final mapped = switch (_level) {
+        MotherInviteLevel.observer => MotherLevel.observer,
+        MotherInviteLevel.partner => MotherLevel.partner,
+        MotherInviteLevel.full => MotherLevel.full,
+      };
+      try {
+        final latest = _repo.latestForTarget(runtime.activeFamilyId, email);
+        if (latest != null && latest.isActiveAt(DateTime.now().toUtc())) {
+          _latest = _repo.resendInvite(
+            inviteId: latest.id,
+            actorMemberId: runtime.activeMembership.id,
+          );
+        } else {
+          _latest = _repo.createInvite(
+            familyId: runtime.activeFamilyId,
+            target: email,
+            level: mapped,
+            actorMemberId: runtime.activeMembership.id,
+          );
+        }
+      } on InviteMutationDenied {
+        AppToast.show(context, message: l10n.settingsPersistError);
+        return;
+      }
+    }
+
     AppToast.show(
       context,
       message: l10n.inviteMotherToast(localPart, levelName),
     );
     context.go('/scr-fat-027');
+  }
+
+  String _stateLabel(AppLocalizations l10n, InviteLifecycleState state) {
+    return switch (state) {
+      InviteLifecycleState.created => l10n.inviteLifecyclePending,
+      InviteLifecycleState.active => l10n.inviteLifecycleActive,
+      InviteLifecycleState.accepted => l10n.inviteLifecycleAccepted,
+      InviteLifecycleState.expired => l10n.inviteLifecycleExpired,
+      InviteLifecycleState.revoked => l10n.inviteLifecycleRevoked,
+    };
   }
 
   @override
@@ -162,6 +222,29 @@ class _InviteMotherScreenState extends State<InviteMotherScreen> {
                     : null,
                 onTap: () => setState(() => _level = level),
               ),
+            if (_latest != null) ...[
+              const SizedBox(height: 2),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Tag(
+                  key: Key(
+                    'invite_mother_state_${_latest!.stateAt(DateTime.now().toUtc()).name}',
+                  ),
+                  label: _stateLabel(
+                    l10n,
+                    _latest!.stateAt(DateTime.now().toUtc()),
+                  ),
+                  variant: TagVariant.a,
+                ),
+              ),
+              TextButton(
+                key: const Key('invite_mother_status'),
+                onPressed: () => context.push(
+                  '/sys3-invite-status?inviteTokenId=${Uri.encodeComponent(_latest!.tokenId.value)}',
+                ),
+                child: Text(l10n.sys3InviteStatusCta),
+              ),
+            ],
             const SizedBox(height: 4),
             BannerNote(
               key: const Key('invite_mother_banner'),

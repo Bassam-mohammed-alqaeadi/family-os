@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import '../domain/child_id.dart';
 import '../domain/mother_level.dart';
 import '../domain/role.dart';
+import 'policy_sync_bus.dart';
+import 'temporary_grant_query.dart';
 import 'time_request.dart';
 import 'time_request_repository.dart';
 
@@ -126,13 +128,14 @@ final class TimeRequestService extends ChangeNotifier {
   }
 
   Future<List<TimeRequest>> listPending() async {
+    await expireStaleRequests();
     final all = await _repo.loadAll();
     return all.where((r) => r.isPending).toList(growable: false);
   }
 
   Future<TimeRequest?> getById(String id) => _repo.getById(id);
 
-  /// Child creates a pending extra-time request.
+  /// Child creates a pending extra-time request (ST-OD-006: max one pending).
   Future<TimeRequest> createRequest({
     required ChildId childId,
     required int requestedMinutes,
@@ -145,20 +148,62 @@ final class TimeRequestService extends ChangeNotifier {
         'must be > 0',
       );
     }
+    await expireStaleRequests();
+    final pending = await listPending();
+    for (final r in pending) {
+      if (r.childId == childId) {
+        throw TimeRequestNotAllowedException(
+          'Child ${childId.value} already has a pending time request',
+        );
+      }
+    }
+    final created = _clock().toUtc();
     final request = TimeRequest(
       id: _idFactory(),
       childId: childId,
       requestedMinutes: requestedMinutes,
       childReason: childReason,
       status: TimeRequestStatus.pending,
-      createdAt: _clock().toUtc(),
+      createdAt: created,
     );
     await _repo.save(request);
     notifyListeners();
     return request;
   }
 
-  /// Approve + deposit grant. Mother capped at [activeCeilingMinutes] (ADR-039).
+  /// Marks pending requests past ST-OD-007 timeout as [TimeRequestStatus.expired].
+  Future<void> expireStaleRequests() async {
+    final now = _clock().toUtc();
+    final all = await _repo.loadAll();
+    var changed = false;
+    for (final r in all) {
+      if (!r.isPending) continue;
+      final expires = TemporaryGrantQuery.requestOrGrantExpiresAt(r.createdAt);
+      if (!now.isBefore(expires)) {
+        await _repo.save(
+          r.copyWith(status: TimeRequestStatus.expired),
+        );
+        changed = true;
+      }
+    }
+    if (changed) notifyListeners();
+  }
+
+  /// Active Temporary Grant remaining for [childId] (G-A sum).
+  Future<int> activeGrantRemaining(ChildId childId) async {
+    final now = _clock();
+    final grants = TemporaryGrantQuery.sweepExpired(
+      await _repo.loadGrants(),
+      now: now,
+    );
+    return TemporaryGrantQuery.activeRemaining(
+      childId: childId,
+      grants: grants,
+      now: now,
+    ).inMinutes;
+  }
+
+  /// Approve + activate Temporary Grant (G-A). Does **not** call WalletLedger.
   Future<TimeRequest> approve(
     String requestId,
     TimeRequestActor actor, {
@@ -258,6 +303,7 @@ final class TimeRequestService extends ChangeNotifier {
     }
 
     final stamp = _clock().toUtc();
+    final expires = TemporaryGrantQuery.requestOrGrantExpiresAt(stamp);
     final decided = request.copyWith(
       status: TimeRequestStatus.approved,
       decidedBy: actor.auditLabel,
@@ -271,9 +317,17 @@ final class TimeRequestService extends ChangeNotifier {
         requestId: decided.id,
         childId: decided.childId,
         minutes: grantMinutes,
+        remainingMinutes: grantMinutes,
         grantedBy: actor.auditLabel,
         createdAt: stamp,
+        expiresAt: expires,
+        status: TimeGrantStatus.active,
       ),
+    );
+    final remaining = await activeGrantRemaining(decided.childId);
+    stage1PolicySyncBus.hydrate(
+      decided.childId,
+      temporaryGrantRemaining: remaining,
     );
     _bus.publish(decided);
     notifyListeners();
@@ -299,6 +353,11 @@ final class TimeRequestService extends ChangeNotifier {
       clearGrantedMinutes: true,
     );
     await _repo.save(decided);
+    final remaining = await activeGrantRemaining(decided.childId);
+    stage1PolicySyncBus.hydrate(
+      decided.childId,
+      temporaryGrantRemaining: remaining,
+    );
     _bus.publish(decided);
     notifyListeners();
     return decided;

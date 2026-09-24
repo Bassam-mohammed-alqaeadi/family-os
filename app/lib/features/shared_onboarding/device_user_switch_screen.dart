@@ -11,6 +11,8 @@ import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/identity/identity_runtime.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/shared_onboarding/device_user_switch_repository.dart';
 
@@ -70,8 +72,7 @@ class DeviceUserSwitchScreenState extends State<DeviceUserSwitchScreen> {
 
   AppRole get _role =>
       widget.roleOverride ??
-      CurrentRole.maybeNotifierOf(context)?.value ??
-      AppRole.father;
+      resolveAuthorizationContext(context, fallbackRole: AppRole.father).role;
 
   bool get _isParent => _role == AppRole.father || _role == AppRole.mother;
 
@@ -181,6 +182,22 @@ class DeviceUserSwitchScreenState extends State<DeviceUserSwitchScreen> {
   }
 
   void _applySwitch(DeviceUserProfile profile) {
+    final runtime = CurrentIdentity.maybeOf(context);
+    if (runtime != null && profile.accountId != null) {
+      final matching = runtime.sessions
+          .where((s) => s.accountId == profile.accountId)
+          .toList(growable: false);
+      if (matching.isNotEmpty) {
+        try {
+          runtime.switchSession(matching.first.id);
+        } on IdentityInvariantViolation {
+          runtime.startSession(accountId: profile.accountId!);
+        }
+      } else {
+        runtime.startSession(accountId: profile.accountId!);
+      }
+      runtime.setLegacyRoleFallback(profile.role);
+    }
     final notifier = CurrentRole.maybeNotifierOf(context);
     if (notifier != null) {
       notifier.value = profile.role;

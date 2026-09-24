@@ -11,7 +11,9 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
+import 'package:family_os/features/n02_day/location_ux_bridge.dart';
 import 'package:family_os/features/n02_day/safe_zones_repository.dart';
 
 /// Widget keys for SCR-FAT-016 acceptance.
@@ -22,6 +24,7 @@ abstract final class SafeZonesKeys {
   static const error = Key('safe_zones_error');
   static const body = Key('safe_zones_body');
   static const honestyBanner = Key('safe_zones_honesty');
+  static const gpsBanner = Key('safe_zones_gps_banner');
   static const readOnlyBanner = Key('safe_zones_readonly');
   static const section = Key('safe_zones_section');
   static const addHeaderCta = Key('safe_zones_add_header');
@@ -57,7 +60,8 @@ class SafeZonesScreen extends StatefulWidget {
   /// Optional route `?childId=` — forwarded to FAT-017; list is family-wide.
   final String? childId;
 
-  /// Null → [stage1SafeZonesRepository].
+  /// Null → FS-001 Domain via [Stage1LocationRuntime] (Slice 01 AUTH-FS001).
+  /// Inject [repository] in tests to keep Stage-1 InMemory.
   final SafeZonesRepository? repository;
 
   /// Test seam — when set, ignores [CurrentRole].
@@ -83,7 +87,7 @@ class SafeZonesScreen extends StatefulWidget {
 }
 
 class SafeZonesScreenState extends State<SafeZonesScreen> {
-  late final SafeZonesRepository _repo;
+  SafeZonesRepository? _repo;
   var _loading = true;
   var _loadFailed = false;
   var _sosBusy = false;
@@ -115,10 +119,9 @@ class SafeZonesScreenState extends State<SafeZonesScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1SafeZonesRepository;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      _load();
+      _bootstrapAndLoad();
     });
   }
 
@@ -126,17 +129,45 @@ class SafeZonesScreenState extends State<SafeZonesScreen> {
   void didUpdateWidget(covariant SafeZonesScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.repository != widget.repository) {
-      _load();
+      _bootstrapAndLoad();
     }
   }
 
-  Future<void> _load() async {
+  Future<void> _bootstrapAndLoad() async {
     setState(() {
       _loading = true;
       _loadFailed = false;
     });
     try {
-      final snap = await _repo.load();
+      if (widget.repository != null) {
+        _repo = widget.repository;
+      } else {
+        await Stage1LocationRuntime.ensureOpen();
+        if (!mounted) return;
+        _repo = DomainSafeZonesRepository(
+          domain: Stage1LocationRuntime.store,
+          familyId: const FamilyId('fam_stage1'),
+        );
+      }
+      await _load();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadFailed = true;
+      });
+    }
+  }
+
+  Future<void> _load() async {
+    final repo = _repo;
+    if (repo == null) return;
+    setState(() {
+      _loading = true;
+      _loadFailed = false;
+    });
+    try {
+      final snap = await repo.load();
       if (!mounted) return;
       setState(() {
         _snapshot = snap;
@@ -155,7 +186,9 @@ class SafeZonesScreenState extends State<SafeZonesScreen> {
 
   Future<void> _toggleAlerts(SafeZone zone, bool enabled) async {
     if (!_canEdit) return;
-    await _repo.setAlertsEnabled(zone.id, enabled);
+    final repo = _repo;
+    if (repo == null) return;
+    await repo.setAlertsEnabled(zone.id, enabled);
     if (!mounted) return;
     final snap = _snapshot;
     if (snap == null) return;
@@ -284,6 +317,12 @@ class SafeZonesScreenState extends State<SafeZonesScreen> {
             key: SafeZonesKeys.honestyBanner,
             variant: BannerVariant.t,
             message: l10n.safeZonesHonestyBanner,
+          ),
+          const SizedBox(height: 8),
+          BannerNote(
+            key: SafeZonesKeys.gpsBanner,
+            variant: BannerVariant.a,
+            message: l10n.locationGpsNotImplementedBanner,
           ),
           if (!_canEdit) ...[
             const SizedBox(height: 10),

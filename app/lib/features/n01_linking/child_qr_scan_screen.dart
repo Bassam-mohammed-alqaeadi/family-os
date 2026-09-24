@@ -6,6 +6,10 @@ import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/domain/identity_ids.dart';
+import 'package:family_os/core/identity/child_device_management_repository.dart';
+import 'package:family_os/core/identity/identity_runtime.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n01_linking/camera_permission_seam.dart';
 
@@ -19,10 +23,17 @@ abstract final class ChildQrScanKeys {
   static const manualSubmit = Key('child_qr_manual_submit');
   static const simulateScan = Key('child_qr_simulate_scan');
   static const manualLink = Key('child_qr_manual_link');
+  static const verifying = Key('child_qr_verifying');
+  static const progress = Key('child_qr_enrollment_progress');
+  static const failure = Key('child_qr_enrollment_failure');
 }
 
-/// UF-01 lean token shape: 8 alphanumeric chars (optional hyphen groups).
-final _tokenPattern = RegExp(r'^[A-Za-z0-9]{8}$|^[A-Za-z0-9]{4}-[A-Za-z0-9]{4}$');
+enum _ClaimPhase { idle, verifying, progress, failure }
+
+/// UF-01 lean token + System #3 pairing tokens (`pair_…`).
+final _tokenPattern = RegExp(
+  r'^(?:pair_[A-Za-z0-9]+|[A-Za-z0-9]{8}|[A-Za-z0-9]{4}-[A-Za-z0-9]{4})$',
+);
 
 bool isValidLinkToken(String raw) {
   final cleaned = raw.trim().replaceAll(' ', '');
@@ -33,7 +44,8 @@ bool isValidLinkToken(String raw) {
 ///
 /// Camera permission is local (`device_permission`). Father QR stays valid
 /// until TTL (FAT-004) — this screen never invalidates it.
-/// Mock-first: fake scan frame; no camera package / Firebase claim.
+/// When [managementRepository] can resolve a pending [PairingTokenId], claim
+/// finalizes that enrollment (honest — never fakes success).
 class ChildQrScanScreen extends StatefulWidget {
   const ChildQrScanScreen({
     super.key,
@@ -41,6 +53,8 @@ class ChildQrScanScreen extends StatefulWidget {
     this.initialStatus,
     this.onClaimed,
     this.onOpenSettingsToast = true,
+    this.claimToken,
+    this.managementRepository,
   });
 
   /// Injectable camera permission — null → [FakeCameraPermissionSeam] granted.
@@ -49,11 +63,16 @@ class ChildQrScanScreen extends StatefulWidget {
   /// Optional override used before first [CameraPermissionSeam.check].
   final CameraPermissionStatus? initialStatus;
 
-  /// Test seam — when null, navigates to `/scr-chd-003` after mock claim.
+  /// Test seam — when null, navigates to `/scr-chd-003` after successful claim.
   final VoidCallback? onClaimed;
 
   /// Show toast when settings deep-link is invoked (demo honesty).
   final bool onOpenSettingsToast;
+
+  /// Optional token from route / simulated scan (`?token=`).
+  final String? claimToken;
+
+  final ChildDeviceManagementRepository? managementRepository;
 
   @override
   State<ChildQrScanScreen> createState() => _ChildQrScanScreenState();
@@ -61,14 +80,19 @@ class ChildQrScanScreen extends StatefulWidget {
 
 class _ChildQrScanScreenState extends State<ChildQrScanScreen> {
   late final CameraPermissionSeam _seam;
+  late final ChildDeviceManagementRepository _managementRepo;
   CameraPermissionStatus? _status;
   var _loading = true;
   final _manualController = TextEditingController();
   String? _manualError;
+  _ClaimPhase _phase = _ClaimPhase.idle;
+  String? _failureMessage;
 
   @override
   void initState() {
     super.initState();
+    _managementRepo =
+        widget.managementRepository ?? stage1ChildDeviceManagementRepository;
     _seam = widget.permissionSeam ?? FakeCameraPermissionSeam();
     final initial = widget.initialStatus;
     if (initial != null) {
@@ -76,6 +100,10 @@ class _ChildQrScanScreenState extends State<ChildQrScanScreen> {
       if (seam is FakeCameraPermissionSeam) {
         seam.status = initial;
       }
+    }
+    final seeded = widget.claimToken?.trim();
+    if (seeded != null && seeded.isNotEmpty) {
+      _manualController.text = seeded;
     }
     _refreshPermission();
   }
@@ -110,15 +138,90 @@ class _ChildQrScanScreenState extends State<ChildQrScanScreen> {
     await _refreshPermission();
   }
 
-  void _claim() {
+  Future<void> _claimWithToken(String raw) async {
+    final l10n = AppLocalizations.of(context);
+    final cleaned = raw.trim().replaceAll(' ', '');
+    if (!isValidLinkToken(cleaned)) {
+      setState(() {
+        _phase = _ClaimPhase.failure;
+        _failureMessage = l10n.enrollmentFailureInvalidToken;
+      });
+      return;
+    }
+
+    // Test seam bypasses enrollment authority.
     if (widget.onClaimed != null) {
       widget.onClaimed!();
       return;
     }
-    context.go('/scr-chd-003');
+
+    setState(() {
+      _phase = _ClaimPhase.verifying;
+      _failureMessage = null;
+    });
+    await Future<void>.delayed(const Duration(milliseconds: 40));
+    if (!mounted) return;
+
+    final pending = _managementRepo.findPendingByPairingToken(
+      PairingTokenId(cleaned),
+    );
+    if (pending == null) {
+      // Legacy onboarding without pending enrollment in identity runtime.
+      if (CurrentIdentity.maybeOf(context) == null) {
+        context.go('/scr-chd-003');
+        return;
+      }
+      setState(() {
+        _phase = _ClaimPhase.failure;
+        _failureMessage = l10n.enrollmentFailureInvalidToken;
+      });
+      return;
+    }
+
+    setState(() => _phase = _ClaimPhase.progress);
+    await Future<void>.delayed(const Duration(milliseconds: 40));
+    if (!mounted) return;
+
+    try {
+      _managementRepo.finalizeEnrollment(pending.id);
+      context.go('/scr-chd-003');
+    } on IdentityInvariantViolation catch (error) {
+      final maxBlocked = error.message.contains('max 3');
+      setState(() {
+        _phase = _ClaimPhase.failure;
+        _failureMessage = maxBlocked
+            ? l10n.enrollmentFailureMaxDevices
+            : l10n.enrollmentFailureGeneric;
+      });
+    } on Object {
+      setState(() {
+        _phase = _ClaimPhase.failure;
+        _failureMessage = l10n.enrollmentFailureGeneric;
+      });
+    }
   }
 
-  void _onSimulateScan() => _claim();
+  void _onSimulateScan() {
+    final token = widget.claimToken?.trim();
+    if (token != null && token.isNotEmpty) {
+      _claimWithToken(token);
+      return;
+    }
+    if (widget.onClaimed != null) {
+      widget.onClaimed!();
+      return;
+    }
+    // Simulate without a concrete token cannot honestly enroll.
+    if (CurrentIdentity.maybeOf(context) != null) {
+      final l10n = AppLocalizations.of(context);
+      setState(() {
+        _phase = _ClaimPhase.failure;
+        _failureMessage = l10n.enrollmentFailureInvalidToken;
+      });
+      return;
+    }
+    context.go('/scr-chd-003');
+  }
 
   void _onManualSubmit() {
     final l10n = AppLocalizations.of(context);
@@ -128,7 +231,7 @@ class _ChildQrScanScreenState extends State<ChildQrScanScreen> {
       return;
     }
     setState(() => _manualError = null);
-    _claim();
+    _claimWithToken(raw);
   }
 
   void _onManualLinkTap() {
@@ -168,33 +271,132 @@ class _ChildQrScanScreenState extends State<ChildQrScanScreen> {
         ),
       ),
       body: SafeArea(
-        child: _loading || _status == null
+        child: _phase != _ClaimPhase.idle
+            ? _ClaimStatusBody(
+                phase: _phase,
+                failureMessage: _failureMessage,
+                onRetry: () => setState(() {
+                  _phase = _ClaimPhase.idle;
+                  _failureMessage = null;
+                }),
+              )
+            : _loading || _status == null
             ? const Center(child: CircularProgressIndicator())
             : switch (_status!) {
                 CameraPermissionStatus.granted => _ScanBody(
-                    onSimulate: _onSimulateScan,
-                    onManualLink: _onManualLinkTap,
-                  ),
+                  onSimulate: _onSimulateScan,
+                  onManualLink: _onManualLinkTap,
+                ),
                 CameraPermissionStatus.denied => _RepairBody(
-                    onOpenSettings: _onOpenSettings,
-                    onRetryRequest: _onRequestThenRefresh,
-                  ),
+                  onOpenSettings: _onOpenSettings,
+                  onRetryRequest: _onRequestThenRefresh,
+                ),
                 CameraPermissionStatus.permanentlyDenied => _PermanentBody(
-                    controller: _manualController,
-                    error: _manualError,
-                    onSubmit: _onManualSubmit,
-                  ),
+                  controller: _manualController,
+                  error: _manualError,
+                  onSubmit: _onManualSubmit,
+                ),
               },
       ),
     );
   }
 }
 
-class _ScanBody extends StatelessWidget {
-  const _ScanBody({
-    required this.onSimulate,
-    required this.onManualLink,
+class _ClaimStatusBody extends StatelessWidget {
+  const _ClaimStatusBody({
+    required this.phase,
+    required this.failureMessage,
+    required this.onRetry,
   });
+
+  final _ClaimPhase phase;
+  final String? failureMessage;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = Theme.of(context).extension<FamilyColors>()!;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+      child: Column(
+        children: [
+          if (phase == _ClaimPhase.verifying) ...[
+            const CircularProgressIndicator(),
+            const SizedBox(height: 18),
+            Text(
+              key: ChildQrScanKeys.verifying,
+              l10n.pairingVerificationTitle,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: colors.ink,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.pairingVerificationMessage,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: colors.ink2,
+                height: 1.5,
+              ),
+            ),
+          ] else if (phase == _ClaimPhase.progress) ...[
+            const CircularProgressIndicator(),
+            const SizedBox(height: 18),
+            Text(
+              key: ChildQrScanKeys.progress,
+              l10n.enrollmentProgressTitle,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: colors.ink,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.enrollmentProgressMessage,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: colors.ink2,
+                height: 1.5,
+              ),
+            ),
+          ] else ...[
+            Text(
+              key: ChildQrScanKeys.failure,
+              failureMessage ?? l10n.enrollmentFailureGeneric,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                color: colors.coral,
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 18),
+            PrimaryBtn(
+              label: l10n.linkQrRenew,
+              variant: PrimaryBtnVariant.sec,
+              onPressed: onRetry,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ScanBody extends StatelessWidget {
+  const _ScanBody({required this.onSimulate, required this.onManualLink});
 
   final VoidCallback onSimulate;
   final VoidCallback onManualLink;
@@ -431,8 +633,10 @@ class _PermanentBody extends StatelessWidget {
                   textAlign: TextAlign.center,
                   textCapitalization: TextCapitalization.characters,
                   inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9\-]')),
-                    LengthLimitingTextInputFormatter(9),
+                    FilteringTextInputFormatter.allow(
+                      RegExp(r'[A-Za-z0-9_\-]'),
+                    ),
+                    LengthLimitingTextInputFormatter(24),
                   ],
                   decoration: InputDecoration(
                     hintText: l10n.childQrManualPlaceholder,

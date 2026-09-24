@@ -64,12 +64,15 @@ void main() {
     activeCsvIds = csvIds.where((id) => id != 'SCR-FAT-039').toList();
   });
 
-  test('generatedScreenIds covers every active CSV screen_id (no tombstones)', () {
-    expect(generatedScreenIds.length, activeCsvIds.length);
-    expect(generatedScreenIds.toSet(), activeCsvIds.toSet());
-    expect(generatedScreenIds, isNot(contains('SCR-FAT-039')));
-    expect(tombstoneScreenIds, contains('SCR-FAT-039'));
-  });
+  test(
+    'generatedScreenIds covers every active CSV screen_id (no tombstones)',
+    () {
+      expect(generatedScreenIds.length, activeCsvIds.length);
+      expect(generatedScreenIds.toSet(), activeCsvIds.toSet());
+      expect(generatedScreenIds, isNot(contains('SCR-FAT-039')));
+      expect(tombstoneScreenIds, contains('SCR-FAT-039'));
+    },
+  );
 
   test('route table length matches active screens (+ gallery)', () {
     final role = RoleController(AppRole.father);
@@ -79,17 +82,31 @@ void main() {
       role.dispose();
     });
 
-    // Top-level GoRoutes: gallery + one per active CSV row (tombstones skipped).
-    expect(router.configuration.routes.length, activeCsvIds.length + 1);
+    final goRoutes = router.configuration.routes.whereType<GoRoute>().toList();
+    // Named SCR-* routes must cover every active CSV id (tombstones skipped).
+    final namedScr = goRoutes
+        .map((r) => r.name)
+        .whereType<String>()
+        .where((n) => n.startsWith('SCR-'))
+        .toSet();
+    expect(namedScr, activeCsvIds.toSet());
+    expect(namedScr, isNot(contains('SCR-FAT-039')));
 
-    final named = router.configuration.routes.whereType<GoRoute>().map((r) => r.name);
+    // Gallery remains; Identity (sys3-*) may add unnamed system routes.
+    expect(
+      goRoutes.any((r) => r.name == 'gallery' || r.path == '/gallery'),
+      isTrue,
+    );
+    expect(goRoutes.length, greaterThanOrEqualTo(activeCsvIds.length + 1));
+
+    final named = goRoutes.map((r) => r.name);
     expect(named, isNot(contains('SCR-FAT-039')));
-    final paths = router.configuration.routes.whereType<GoRoute>().map((r) => r.path);
+    final paths = goRoutes.map((r) => r.path);
     expect(paths, isNot(contains('/scr-fat-039')));
   });
 
   testWidgets(
-    'SCR-SHR-001/002/003/007 + SCR-FAT-001…010 build feature screens; others PlaceholderScreen',
+    'SCR catalog: live routes build real screens (zero PlaceholderScreen)',
     (tester) async {
       final role = RoleController(AppRole.father);
       final router = createAppRouter(roleListenable: role);
@@ -109,66 +126,29 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.textContaining('عائلتي'), findsWidgets);
 
-      // Pump a representative sample + all owner-only + last to keep CI fast.
-      // Wired screens are excluded from PlaceholderScreen assertions.
-      const wired = {
-        'SCR-SHR-001',
-        'SCR-SHR-002',
-        'SCR-SHR-003',
-        'SCR-SHR-007',
-        'SCR-SHR-008',
-        'SCR-FAT-001',
-        'SCR-FAT-002',
-        'SCR-FAT-003',
-        'SCR-FAT-004',
-        'SCR-FAT-005',
-        'SCR-FAT-006',
-        'SCR-FAT-007',
-        'SCR-FAT-008',
-        'SCR-FAT-009',
-        'SCR-FAT-010',
-        'SCR-FAT-011',
-        'SCR-FAT-012',
-        'SCR-FAT-013',
-        'SCR-FAT-014',
-        'SCR-FAT-032',
-        'SCR-FAT-034',
-        'SCR-FAT-035',
-        'SCR-FAT-036',
-        'SCR-FAT-037',
-        'SCR-FAT-038',
-        'SCR-FAT-056',
-        'SCR-FAT-057',
-        'SCR-FAT-058',
-        'SCR-FAT-059',
-        'SCR-FAT-060',
-        'SCR-FAT-029',
-        'SCR-FAT-031',
-        'SCR-FAT-067',
-        'SCR-FAT-068',
-        'SCR-FAT-085',
-        'SCR-CHD-001',
-        'SCR-CHD-002',
-        'SCR-CHD-003',
-        'SCR-CHD-004',
-        'SCR-CHD-005',
-        'SCR-CHD-006',
-        'SCR-CHD-007',
-        'SCR-CHD-010',
-      };
-      final sample = <String>{
+      // Former Wave-2/3 gaps that were PlaceholderScreen after a stale regenerate.
+      final rewiredSample = <String>{
+        'SCR-FAT-064',
+        'SCR-CHD-012',
+        'SCR-CHD-025',
+        'SCR-CHD-037',
+        'SCR-FAT-086',
+        'SCR-FAT-072',
+        'SCR-FAT-078',
         csvIds.last,
-        'SCR-FAT-011',
         ...ownerOnlyScreenIds,
         ...fatherOnlyScreenIds,
-      }.where(activeCsvIds.contains).where((id) => !wired.contains(id));
-
-      for (final id in sample) {
+      };
+      for (final id in rewiredSample.where(activeCsvIds.contains)) {
         final path = screenPath(id);
         router.go(path);
-        await tester.pumpAndSettle();
-        expect(find.byType(PlaceholderScreen), findsOneWidget, reason: path);
-        expect(find.text(id), findsWidgets, reason: path);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+        expect(
+          find.byType(PlaceholderScreen),
+          findsNothing,
+          reason: '$path must not be PlaceholderScreen',
+        );
       }
 
       router.go(screenPath('SCR-SHR-001'));

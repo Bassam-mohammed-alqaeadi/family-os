@@ -5,7 +5,10 @@ import '../domain/mother_level.dart';
 import '../domain/role.dart';
 
 /// Lifecycle of a child→parent extra-time request (UF-05 / UI-006 / D-3).
-enum TimeRequestStatus { pending, approved, rejected }
+enum TimeRequestStatus { pending, approved, rejected, expired }
+
+/// Lifecycle of a Temporary Grant (G-A / ST-OD-004) — not an earned wallet credit.
+enum TimeGrantStatus { active, exhausted, expired }
 
 /// Who decides a time request (UF-05 / ADR-039).
 @immutable
@@ -194,7 +197,10 @@ final class TimeRequest {
       );
 }
 
-/// Immutable grant row (D-3 `time_grant`) produced on approve.
+/// Immutable Temporary Grant row (D-3 `time_grant`) produced on approve.
+///
+/// G-A (ST-OD-004): increases today's remaining entertainment — **not**
+/// [WalletLedger] credit. Child-wide; does not pierce hard mode/lock/block.
 @immutable
 final class TimeGrant {
   const TimeGrant({
@@ -204,22 +210,69 @@ final class TimeGrant {
     required this.minutes,
     required this.grantedBy,
     required this.createdAt,
+    required this.expiresAt,
+    this.remainingMinutes,
+    this.status = TimeGrantStatus.active,
   });
 
   final String id;
   final String requestId;
   final ChildId childId;
+
+  /// Original granted amount (audit).
   final int minutes;
+
+  /// Minutes still usable toward today's remaining (G-A).
+  final int? remainingMinutes;
+
   final String grantedBy;
   final DateTime createdAt;
+
+  /// Family-local end-of-day (or earlier TTL) — ST-OD-007/008.
+  final DateTime expiresAt;
+
+  final TimeGrantStatus status;
+
+  int get activeRemaining {
+    if (status != TimeGrantStatus.active) return 0;
+    final rem = remainingMinutes ?? minutes;
+    return rem < 0 ? 0 : rem;
+  }
+
+  bool isActiveAt(DateTime now) {
+    if (status != TimeGrantStatus.active) return false;
+    if (!now.toUtc().isBefore(expiresAt.toUtc())) return false;
+    return activeRemaining > 0;
+  }
+
+  TimeGrant copyWith({
+    int? remainingMinutes,
+    TimeGrantStatus? status,
+    DateTime? expiresAt,
+  }) {
+    return TimeGrant(
+      id: id,
+      requestId: requestId,
+      childId: childId,
+      minutes: minutes,
+      grantedBy: grantedBy,
+      createdAt: createdAt,
+      expiresAt: expiresAt ?? this.expiresAt,
+      remainingMinutes: remainingMinutes ?? this.remainingMinutes,
+      status: status ?? this.status,
+    );
+  }
 
   Map<String, Object?> toJson() => {
         'id': id,
         'requestId': requestId,
         'childId': childId.value,
         'minutes': minutes,
+        'remainingMinutes': remainingMinutes ?? minutes,
         'grantedBy': grantedBy,
         'createdAt': createdAt.toUtc().toIso8601String(),
+        'expiresAt': expiresAt.toUtc().toIso8601String(),
+        'status': status.name,
       };
 
   factory TimeGrant.fromJson(Map<String, Object?> json) {
@@ -228,13 +281,28 @@ final class TimeGrant {
     if (rawCreated is String) {
       created = DateTime.tryParse(rawCreated)?.toUtc() ?? created;
     }
+    final rawExp = json['expiresAt'];
+    DateTime expires = created.add(const Duration(hours: 12));
+    if (rawExp is String) {
+      expires = DateTime.tryParse(rawExp)?.toUtc() ?? expires;
+    }
+    final mins = (json['minutes'] as num?)?.toInt() ?? 0;
+    final rem = (json['remainingMinutes'] as num?)?.toInt() ?? mins;
+    final statusName = json['status'] as String? ?? 'active';
+    final status = TimeGrantStatus.values.firstWhere(
+      (s) => s.name == statusName,
+      orElse: () => TimeGrantStatus.active,
+    );
     return TimeGrant(
       id: json['id'] as String? ?? '',
       requestId: json['requestId'] as String? ?? '',
       childId: ChildId(json['childId'] as String? ?? 'unknown'),
-      minutes: (json['minutes'] as num?)?.toInt() ?? 0,
+      minutes: mins,
+      remainingMinutes: rem,
       grantedBy: json['grantedBy'] as String? ?? '',
       createdAt: created,
+      expiresAt: expires,
+      status: status,
     );
   }
 }

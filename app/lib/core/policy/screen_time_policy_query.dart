@@ -6,20 +6,23 @@ import 'time_engine.dart';
 /// Builds [TimeContext] from stored policy + wallet for one app (SET-002).
 ///
 /// Cap exhaustion uses [ScreenTimePolicy.usedMinutesToday] vs
-/// [ScreenTimePolicy.dailyCapMinutes]. Non-countable education apps (S-1)
-/// do not exhaust the daily entertainment cap.
+/// [ScreenTimePolicy.dailyCapMinutes], reduced by active Temporary Grant
+/// remaining (G-A). Non-countable education apps (S-1) do not exhaust the
+/// daily entertainment cap.
 abstract final class ScreenTimePolicyQuery {
   /// Merges [policy] wallet/cap flags into [base] for [appId].
   static TimeContext timeContextFromPolicy({
     required TimeContext base,
     required ScreenTimePolicy policy,
     required String appId,
+    int temporaryGrantRemaining = 0,
   }) {
     final wallet = policy.walletFor(appId) ??
         AppWallet(appId: appId, earnedMinutes: Minutes.zero);
     final countable = wallet.countable;
-    final dailyLimitExhausted =
-        countable ? policy.isCapExhausted : false;
+    final capExhausted =
+        policy.isCapExhausted && temporaryGrantRemaining <= 0;
+    final dailyLimitExhausted = countable ? capExhausted : false;
 
     return TimeContext(
       childId: base.childId,
@@ -40,10 +43,12 @@ abstract final class ScreenTimePolicyQuery {
     required TimeContext base,
     required ScreenTimePolicySnapshot snapshot,
     required String appId,
+    int temporaryGrantRemaining = 0,
   }) =>
       timeContextFromPolicy(
         base: base,
         policy: snapshot.policy,
         appId: appId,
+        temporaryGrantRemaining: temporaryGrantRemaining,
       );
 }

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/app/role_guard.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n12_devices/device_health_list_screen.dart';
@@ -28,6 +28,12 @@ abstract final class SettingsHubKeys {
   static const motherShareRow = Key('settings_hub_mother_share');
   static const brainRow = Key('settings_hub_brain');
   static const billingRow = Key('settings_hub_billing');
+  static const logoutRow = Key('settings_hub_logout');
+  static const adultSessionsRow = Key('settings_hub_adult_sessions');
+  static const childSessionsRow = Key('settings_hub_child_sessions');
+  static const recoveryRow = Key('settings_hub_account_recovery');
+  static const deactivateRow = Key('settings_hub_account_deactivate');
+  static const familySelectorRow = Key('settings_hub_family_selector');
 
   static Key navRow(String screenId) => Key('settings_hub_nav_$screenId');
 }
@@ -70,8 +76,7 @@ class SettingsHubScreenState extends State<SettingsHubScreen> {
 
   AppRole get _role =>
       widget.roleOverride ??
-      CurrentRole.maybeNotifierOf(context)?.value ??
-      AppRole.father;
+      resolveAuthorizationContext(context, fallbackRole: AppRole.father).role;
 
   bool get _isParent => _role == AppRole.father || _role == AppRole.mother;
 
@@ -97,6 +102,14 @@ class SettingsHubScreenState extends State<SettingsHubScreen> {
       return;
     }
     context.push(screenPath(screenId));
+  }
+
+  void _goPath(String path) {
+    if (widget.onNavigate != null) {
+      widget.onNavigate!(path);
+      return;
+    }
+    context.push(path);
   }
 
   @override
@@ -182,6 +195,14 @@ class SettingsHubScreenState extends State<SettingsHubScreen> {
                 icon: Icons.lock_open_outlined,
                 onTap: () => _go('SCR-FAT-030'),
               ),
+              if (CurrentIdentity.maybeOf(context)?.needsFamilySelector ??
+                  false)
+                _HubNavRow(
+                  rowKey: SettingsHubKeys.familySelectorRow,
+                  title: l10n.sys3SettingsFamilySelector,
+                  icon: Icons.swap_horiz,
+                  onTap: () => _goPath('/sys3-family-select'),
+                ),
             ],
           ),
           const SizedBox(height: 12),
@@ -247,6 +268,24 @@ class SettingsHubScreenState extends State<SettingsHubScreen> {
                 icon: Icons.receipt_long_outlined,
                 onTap: () => _go('SCR-FAT-060'),
               ),
+              _HubNavRow(
+                rowKey: SettingsHubKeys.adultSessionsRow,
+                title: l10n.sys3SettingsAdultSessions,
+                icon: Icons.devices_outlined,
+                onTap: () => _goPath('/sys3-adult-sessions'),
+              ),
+              _HubNavRow(
+                rowKey: SettingsHubKeys.childSessionsRow,
+                title: l10n.sys3SettingsChildSessions,
+                icon: Icons.phonelink_erase_outlined,
+                onTap: () => _goPath('/sys3-child-sessions'),
+              ),
+              _HubNavRow(
+                rowKey: SettingsHubKeys.recoveryRow,
+                title: l10n.sys3SettingsRecovery,
+                icon: Icons.key_outlined,
+                onTap: () => _goPath('/sys3-account-recovery'),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -273,6 +312,18 @@ class SettingsHubScreenState extends State<SettingsHubScreen> {
                 icon: Icons.language,
                 onTap: () => _go('SCR-FAT-061'),
               ),
+              _HubNavRow(
+                rowKey: SettingsHubKeys.logoutRow,
+                title: l10n.sys3SettingsLogout,
+                icon: Icons.logout,
+                onTap: () => _goPath('/sys3-logout'),
+              ),
+              _HubNavRow(
+                rowKey: SettingsHubKeys.deactivateRow,
+                title: l10n.sys3SettingsDeactivate,
+                icon: Icons.person_off_outlined,
+                onTap: () => _goPath('/sys3-account-deactivate'),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -296,11 +347,7 @@ class SettingsHubScreenState extends State<SettingsHubScreen> {
 }
 
 class _HubSection extends StatelessWidget {
-  const _HubSection({
-    super.key,
-    required this.title,
-    required this.children,
-  });
+  const _HubSection({super.key, required this.title, required this.children});
 
   final String title;
   final List<Widget> children;
@@ -333,7 +380,10 @@ class _HubSection extends StatelessWidget {
                   border: Border.all(color: colors.border),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   child: children[i],
                 ),
               ),

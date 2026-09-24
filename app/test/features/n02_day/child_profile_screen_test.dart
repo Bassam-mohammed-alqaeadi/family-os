@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
@@ -11,7 +10,7 @@ import 'package:family_os/features/n02_day/child_profile_repository.dart';
 import 'package:family_os/features/n02_day/child_profile_screen.dart';
 
 void main() {
-  testWidgets('SCR-FAT-013 missing childId → AppEmptyState', (tester) async {
+  testWidgets('SCR-FAT-013 missing childId → child selection', (tester) async {
     await tester.pumpWidget(
       _app(
         child: ChildProfileScreen(
@@ -22,8 +21,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(ChildProfileKeys.missingId), findsOneWidget);
-    expect(find.byType(AppEmptyState), findsOneWidget);
+    // Without identity children, picker is empty (honest, not a dead blank).
+    expect(find.byKey(ChildProfileKeys.selectChildEmpty), findsOneWidget);
     expect(find.byKey(ChildProfileKeys.body), findsNothing);
   });
 

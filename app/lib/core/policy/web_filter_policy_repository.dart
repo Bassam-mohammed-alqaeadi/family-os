@@ -64,6 +64,8 @@ final class PrefsWebFilterPolicyRepository
       level: policy.level,
       categories: policy.categories,
       allowList: policy.allowList,
+      blockList: policy.blockList,
+      dictionaryKeywords: policy.dictionaryKeywords,
       policyVersion: policy.policyVersion,
       updatedAt: policy.updatedAt,
     );
@@ -75,7 +77,7 @@ final class PrefsWebFilterPolicyRepository
 final class InMemoryWebFilterPolicyRepository
     implements WebFilterPolicyRepository {
   InMemoryWebFilterPolicyRepository([Map<String, WebFilterPolicy>? seed])
-      : _byChild = seed ?? {};
+    : _byChild = seed ?? {};
 
   final Map<String, WebFilterPolicy> _byChild;
 
@@ -90,6 +92,8 @@ final class InMemoryWebFilterPolicyRepository
       level: policy.level,
       categories: policy.categories,
       allowList: policy.allowList,
+      blockList: policy.blockList,
+      dictionaryKeywords: policy.dictionaryKeywords,
       policyVersion: policy.policyVersion,
       updatedAt: policy.updatedAt,
     );

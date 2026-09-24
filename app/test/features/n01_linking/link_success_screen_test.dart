@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/placeholder_screen.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
-import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n01_linking/link_success_screen.dart';
@@ -21,7 +20,13 @@ void main() {
     expect(find.text('تمّ الربط!'), findsOneWidget);
     expect(find.text('١ من ٣ أبناء'), findsOneWidget);
     expect(find.text('🎉'), findsOneWidget);
-    expect(find.text('جهاز ابنك متصل الآن'), findsOneWidget);
+    // Legacy path (no IdentityRuntime enrollment): honest prototype, not managed success.
+    expect(
+      find.byKey(const Key('link_success_legacy_honesty')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('link_success_legacy_hero')), findsOneWidget);
+    expect(find.text('جهاز ابنك متصل الآن'), findsNothing);
     expect(find.textContaining('أول ثمرة'), findsOneWidget);
     expect(find.byKey(const Key('link_success_mini_map')), findsOneWidget);
     expect(find.bySemanticsLabel('معاينة الموقع الحالي'), findsOneWidget);
@@ -32,18 +37,33 @@ void main() {
   testWidgets('apply template → banner; undo clears', (tester) async {
     await _pumpScreen(tester);
 
-    expect(find.byKey(const Key('link_success_template_applied')), findsNothing);
+    expect(
+      find.byKey(const Key('link_success_template_applied')),
+      findsNothing,
+    );
 
     await _tapKey(tester, const Key('link_success_apply_template'));
 
-    expect(find.byKey(const Key('link_success_template_applied')), findsOneWidget);
-    expect(find.byType(BannerNote), findsOneWidget);
+    expect(
+      find.byKey(const Key('link_success_template_applied')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('link_success_legacy_honesty')),
+      findsOneWidget,
+    );
     expect(find.textContaining('ضُبط على قالب'), findsOneWidget);
 
     await _tapKey(tester, const Key('link_success_template_undo'));
 
-    expect(find.byKey(const Key('link_success_template_applied')), findsNothing);
-    expect(find.byKey(const Key('link_success_apply_template')), findsOneWidget);
+    expect(
+      find.byKey(const Key('link_success_template_applied')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const Key('link_success_apply_template')),
+      findsOneWidget,
+    );
 
     await _settleTimers(tester);
   });
@@ -54,7 +74,10 @@ void main() {
     await _tapKey(tester, const Key('link_success_manual'));
 
     expect(find.textContaining('تمام — تضبط كل أداة'), findsOneWidget);
-    expect(find.byKey(const Key('link_success_apply_template')), findsOneWidget);
+    expect(
+      find.byKey(const Key('link_success_apply_template')),
+      findsOneWidget,
+    );
 
     await _settleTimers(tester);
   });
@@ -146,9 +169,7 @@ void main() {
 }
 
 List<String> _linkSuccessValues(String arb) {
-  final re = RegExp(
-    r'"linkSuccess[^"]*"\s*:\s*"((?:\\.|[^"\\])*)"',
-  );
+  final re = RegExp(r'"linkSuccess[^"]*"\s*:\s*"((?:\\.|[^"\\])*)"');
   return re.allMatches(arb).map((m) => m.group(1)!).toList();
 }
 

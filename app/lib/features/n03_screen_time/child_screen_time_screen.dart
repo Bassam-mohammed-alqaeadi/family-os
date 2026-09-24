@@ -3,11 +3,16 @@ import 'package:flutter/services.dart';
 
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
+import 'package:family_os/core/design/components/enforcement_status_badge.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
+import 'package:family_os/core/design/components/remaining_minutes_card.dart';
 import 'package:family_os/core/design/components/settings_persist_toggle.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
+import 'package:family_os/core/domain/minutes.dart';
+import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/policy/policy_sync_bus.dart';
@@ -15,12 +20,15 @@ import 'package:family_os/core/policy/schedule_window.dart';
 import 'package:family_os/core/policy/schedule_window_repository.dart';
 import 'package:family_os/core/policy/screen_time_policy.dart';
 import 'package:family_os/core/policy/screen_time_policy_repository.dart';
+import 'package:family_os/core/policy/temporary_grant_query.dart';
+import 'package:family_os/core/policy/time_request_repository.dart';
+import 'package:family_os/core/policy/time_request_service.dart';
+import 'package:family_os/features/n12_devices/mother_permission_level_repository.dart';
+import 'package:family_os/features/n03_screen_time/stage1_child_scope.dart';
 
 /// Optional time-picker override for widget tests.
-typedef ScheduleTimePicker = Future<TimeOfDay?> Function(
-  BuildContext context,
-  TimeOfDay initial,
-);
+typedef ScheduleTimePicker =
+    Future<TimeOfDay?> Function(BuildContext context, TimeOfDay initial);
 
 /// Shared Stage-1 prefs store (survives within process; Rule 25 seam).
 final MemorySchedulePrefsStore stage1SchedulePrefsStore =
@@ -43,6 +51,7 @@ class ChildScreenTimeScreen extends StatefulWidget {
     this.syncBus,
     this.pickTime,
     this.canEditOverride,
+    this.motherLevel = MotherLevel.partner,
   });
 
   /// Stage-1 demo child when null; real selection arrives with SET-003.
@@ -62,13 +71,14 @@ class ChildScreenTimeScreen extends StatefulWidget {
 
   /// Test seam — when null, father may edit; mother/child read-only.
   final bool? canEditOverride;
+  final MotherLevel motherLevel;
 
   @override
   State<ChildScreenTimeScreen> createState() => _ChildScreenTimeScreenState();
 }
 
 class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
-  late final ChildId _childId;
+  late ChildId _childId;
   late final ScheduleWindowRepository _repository;
   late final ScreenTimePolicyRepository _policyRepository;
   late final PolicySyncBus _syncBus;
@@ -78,40 +88,76 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
   var _loading = true;
   var _saving = false;
   PolicySyncStatus? _syncStatus;
+  int _temporaryGrantRemaining = 0;
+  late final TimeRequestService _timeRequestService;
+  var _resolvedScopedChild = false;
 
   @override
   void initState() {
     super.initState();
-    _childId = widget.childId ?? ChildId('demo-child');
-    _repository = widget.repository ??
+    _childId = widget.childId ?? kStage1CanonicalChildId;
+    _repository =
+        widget.repository ??
         PrefsScheduleWindowRepository(stage1SchedulePrefsStore);
-    _policyRepository = widget.policyRepository ??
+    _policyRepository =
+        widget.policyRepository ??
         PrefsScreenTimePolicyRepository(stage1PolicyPrefsStore);
     _syncBus = widget.syncBus ?? stage1PolicySyncBus;
+    _timeRequestService = TimeRequestService(
+      repository: PrefsTimeRequestRepository(stage1TimeRequestPrefsStore),
+      decisionBus: stage1TimeRequestDecisionBus,
+    );
+    stage1TimeRequestDecisionBus.addListener(_onGrantDecision);
     _windows = [
       for (final kind in ScheduleKind.values)
         ScheduleWindow(kind: kind, enabled: false),
     ];
     _policy = ScreenTimePolicy.defaults();
-    _capController = TextEditingController(
-      text: '${_policy.dailyCapMinutes}',
+    _capController = TextEditingController(text: '${_policy.dailyCapMinutes}');
+    _load();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_resolvedScopedChild || widget.childId != null) return;
+    final runtime = CurrentIdentity.maybeOf(context);
+    if (runtime == null) return;
+    _childId = familyScopedChildId(
+      familyId: runtime.activeFamilyId,
+      childId: runtime.activeChildId,
     );
+    _resolvedScopedChild = true;
     _load();
   }
 
   @override
   void dispose() {
+    stage1TimeRequestDecisionBus.removeListener(_onGrantDecision);
     _capController.dispose();
     super.dispose();
+  }
+
+  Future<void> _onGrantDecision() async {
+    if (!mounted) return;
+    final grantRemaining = await _timeRequestService.activeGrantRemaining(
+      _childId,
+    );
+    if (!mounted) return;
+    setState(() => _temporaryGrantRemaining = grantRemaining);
   }
 
   Future<void> _load() async {
     final loaded = await _repository.load(_childId);
     final policy = await _policyRepository.load(_childId);
+    final grantRemaining = await _timeRequestService.activeGrantRemaining(
+      _childId,
+    );
     if (!mounted) return;
     setState(() {
       _windows = loaded;
       _policy = policy;
+      _temporaryGrantRemaining = grantRemaining;
       _capController.text = '${policy.dailyCapMinutes}';
       _loading = false;
     });
@@ -119,8 +165,22 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
 
   bool get _canEdit {
     if (widget.canEditOverride != null) return widget.canEditOverride!;
-    final role = CurrentRole.maybeNotifierOf(context)?.value ?? AppRole.father;
-    return role == AppRole.father;
+    final legacyRole =
+        CurrentRole.maybeNotifierOf(context)?.value ?? AppRole.father;
+    final auth = resolveAuthorizationContext(
+      context,
+      fallbackRole: legacyRole,
+      fallbackMotherLevel: widget.motherLevel,
+    );
+    if (auth.role == AppRole.father) return true;
+    if (auth.role == AppRole.mother && widget.motherLevel == MotherLevel.full) {
+      return true;
+    }
+    if (auth.role == AppRole.mother &&
+        stage1MotherPermissionLevelRepository.level == MotherLevel.full) {
+      return true;
+    }
+    return false;
   }
 
   bool get _allValid => _windows.every((w) => w.isValid);
@@ -154,10 +214,7 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
     _replace(next);
   }
 
-  Future<void> _pick(
-    ScheduleKind kind, {
-    required bool isStart,
-  }) async {
+  Future<void> _pick(ScheduleKind kind, {required bool isStart}) async {
     if (!_canEdit) return;
     final current = _window(kind);
     final initial = isStart
@@ -250,8 +307,7 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
     return switch (status) {
       PolicySyncStatus.delivered => TagVariant.g,
       PolicySyncStatus.pending ||
-      PolicySyncStatus.offlineQueued =>
-        TagVariant.a,
+      PolicySyncStatus.offlineQueued => TagVariant.a,
     };
   }
 
@@ -284,7 +340,12 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
     final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final radii = Theme.of(context).extension<FamilyRadii>()!;
-    final canEdit = _canEdit;
+    final childScope = resolveChildScope(context, explicitChildId: _childId);
+    final canEdit = _canEdit && childScope.childId == _childId;
+    final remaining = ScreenTimeRemaining.fromPolicy(
+      policy: _policy,
+      grantRemaining: Minutes(_temporaryGrantRemaining),
+    );
 
     return Scaffold(
       backgroundColor: colors.bg,
@@ -316,6 +377,18 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
                             height: 1.45,
                             color: colors.ink2,
                           ),
+                        ),
+                        const SizedBox(height: 16),
+                        Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: const EnforcementStatusBadge(),
+                        ),
+                        const SizedBox(height: 12),
+                        RemainingMinutesCard(
+                          dailyMinutes: remaining.dailyRemaining.inMinutes,
+                          grantMinutes:
+                              remaining.temporaryGrantRemaining.inMinutes,
+                          walletMinutes: remaining.earnedWalletTotal.inMinutes,
                         ),
                         const SizedBox(height: 16),
                         for (final kind in ScheduleKind.values) ...[

@@ -8,9 +8,21 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/web_filter_evaluator.dart';
 import 'package:family_os/core/policy/web_filter_policy.dart';
 import 'package:family_os/core/policy/web_unlock_service.dart';
+import 'package:family_os/core/web_filter/web_filter_enforcement.dart';
+import 'package:family_os/core/web_filter/web_filter_verdict.dart';
 
-/// Human Arabic reason for a deny category (G-3 — never raw key alone).
-String webFilterHumanReason(AppLocalizations l10n, String? categoryKey) {
+/// Human Arabic reason for a deny (G-3 — never raw key alone).
+String webFilterHumanReason(
+  AppLocalizations l10n,
+  String? categoryKey, {
+  WebFilterDenySource? denySource,
+}) {
+  if (denySource == WebFilterDenySource.blocklist) {
+    return l10n.webBlockReasonBlocklist;
+  }
+  if (denySource == WebFilterDenySource.dictionary) {
+    return l10n.webBlockReasonDictionary;
+  }
   return switch (categoryKey) {
     WebFilterCategories.adults => l10n.webBlockReasonAdults,
     WebFilterCategories.gambling => l10n.webBlockReasonGambling,
@@ -52,6 +64,7 @@ class WebBlockPage extends StatelessWidget {
     this.unlockService,
     this.childId,
     this.isPreview = false,
+    this.feedback = WebFilterInterstitialFeedback.none,
   });
 
   /// Shared verdict from [WebFilterDecisionSnapshot.evaluate].
@@ -68,6 +81,9 @@ class WebBlockPage extends StatelessWidget {
 
   /// When true, shows a small father-preview caption above the child UI.
   final bool isPreview;
+
+  /// Transient unlock feedback on this interstitial only (Q-WF-15).
+  final WebFilterInterstitialFeedback feedback;
 
   VoidCallback? _resolveUnlock(BuildContext context) {
     if (onRequestUnlock != null) return onRequestUnlock;
@@ -90,9 +106,25 @@ class WebBlockPage extends StatelessWidget {
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final radii = Theme.of(context).extension<FamilyRadii>()!;
     final denied = snapshot.isDenied;
-    final host = snapshot.host.isEmpty ? snapshot.url.toString() : snapshot.host;
-    final reason = webFilterHumanReason(l10n, snapshot.categoryKey);
+    final host = snapshot.host.isEmpty
+        ? snapshot.url.toString()
+        : snapshot.host;
+    final reason = webFilterHumanReason(
+      l10n,
+      snapshot.categoryKey,
+      denySource: snapshot.denySource,
+    );
     final unlock = _resolveUnlock(context);
+    final feedbackLabel = switch (feedback) {
+      WebFilterInterstitialFeedback.none => null,
+      WebFilterInterstitialFeedback.pending => l10n.webBlockFeedbackPending,
+      WebFilterInterstitialFeedback.approved => l10n.webBlockFeedbackApproved,
+      WebFilterInterstitialFeedback.denied => l10n.webBlockFeedbackDenied,
+      WebFilterInterstitialFeedback.expired => l10n.webBlockFeedbackExpired,
+    };
+    final sourceLabel = snapshot.denySource == null
+        ? null
+        : l10n.webBlockSourceOfDeny(snapshot.denySource!.reasonClass);
 
     return Material(
       color: colors.bg,
@@ -119,7 +151,9 @@ class WebBlockPage extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      denied ? Icons.shield_outlined : Icons.check_circle_outline,
+                      denied
+                          ? Icons.shield_outlined
+                          : Icons.check_circle_outline,
                       size: 56,
                       color: denied ? colors.ink2 : colors.ink,
                     ),
@@ -146,6 +180,19 @@ class WebBlockPage extends StatelessWidget {
                           color: colors.ink2,
                         ),
                       ),
+                      if (sourceLabel != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          key: const Key('web_block_source_of_deny'),
+                          sourceLabel,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            height: 1.4,
+                            color: colors.ink2,
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 16),
                     ] else ...[
                       Text(
@@ -159,6 +206,19 @@ class WebBlockPage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 16),
+                    ],
+                    if (feedbackLabel != null) ...[
+                      Text(
+                        key: const Key('web_block_feedback'),
+                        feedbackLabel,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: colors.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
                     ],
                     DecoratedBox(
                       decoration: BoxDecoration(

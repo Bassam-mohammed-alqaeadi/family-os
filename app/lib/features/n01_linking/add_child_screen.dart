@@ -3,6 +3,11 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:family_os/core/design/components/app_toast.dart';
+import 'package:family_os/core/domain/child_id.dart';
+import 'package:family_os/core/identity/child_device_management_repository.dart';
+import 'package:family_os/core/identity/identity_runtime.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
@@ -16,10 +21,7 @@ const List<int> kAddChildAges = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
 /// Mock-only anonymous analytics alias: `child_` + 4 hex chars.
 String generateMockChildAlias([Random? random]) {
   final r = random ?? Random();
-  final hex = List.generate(
-    4,
-    (_) => r.nextInt(16).toRadixString(16),
-  ).join();
+  final hex = List.generate(4, (_) => r.nextInt(16).toRadixString(16)).join();
   return 'child_$hex';
 }
 
@@ -42,6 +44,7 @@ class AddChildScreen extends StatefulWidget {
     super.key,
     this.onContinue,
     this.mockAlias,
+    this.managementRepository,
   });
 
   /// Test seam — when null, navigates to `/scr-fat-004`.
@@ -49,6 +52,7 @@ class AddChildScreen extends StatefulWidget {
 
   /// Optional stable alias for tests; otherwise a local mock is generated.
   final String? mockAlias;
+  final ChildDeviceManagementRepository? managementRepository;
 
   @override
   State<AddChildScreen> createState() => _AddChildScreenState();
@@ -83,21 +87,41 @@ class _AddChildScreenState extends State<AddChildScreen> {
 
   void _continue() {
     if (!_canContinue) return;
+    final repo =
+        widget.managementRepository ?? stage1ChildDeviceManagementRepository;
+    // Prefer the injected management runtime (explicit seam) over InheritedWidget
+    // lookup from an event handler — dependOnInheritedWidget is build-time only.
+    final IdentityRuntime? runtime =
+        repo is RuntimeChildDeviceManagementRepository
+        ? repo.runtime
+        : CurrentIdentity.maybeOf(context);
+    if (runtime != null) {
+      try {
+        repo.createChild(
+          familyId: runtime.activeFamilyId,
+          childId: ChildId(_alias),
+        );
+      } on IdentityInvariantViolation {
+        final l10n = AppLocalizations.of(context);
+        AppToast.show(context, message: l10n.settingsPersistError);
+        return;
+      }
+    }
     if (widget.onContinue != null) {
       widget.onContinue!();
       return;
     }
-    context.go('/scr-fat-004');
+    context.go('/scr-fat-004?childId=${Uri.encodeComponent(_alias)}');
   }
 
   List<Color> _kidColors(FamilyColors colors) => [
-        colors.p500,
-        colors.sky,
-        colors.amber,
-        colors.coral,
-        colors.mint,
-        colors.teal600,
-      ];
+    colors.p500,
+    colors.sky,
+    colors.amber,
+    colors.coral,
+    colors.mint,
+    colors.teal600,
+  ];
 
   String _ageLabel(AppLocalizations l10n, int age) {
     final years = l10n.localeName.startsWith('ar')

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:family_os/core/design/components/sos_cancel_confirmation.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
@@ -38,7 +39,7 @@ void main() {
     expect(find.byKey(ChildSosInProgressKeys.statusCard), findsOneWidget);
     expect(find.byKey(ChildSosInProgressKeys.callFather), findsOneWidget);
     expect(find.byKey(ChildSosInProgressKeys.cancelCta), findsOneWidget);
-    expect(find.textContaining('وصل بلاغك'), findsOneWidget);
+    expect(find.byKey(ChildSosInProgressKeys.p4Banner), findsOneWidget);
     expect(find.textContaining('لا تُكتم'), findsOneWidget);
     expect(find.byKey(ChildSosInProgressKeys.parentLean), findsNothing);
     // Rule 23 — no planted person name from demo fixture on child surface.
@@ -101,8 +102,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
-    expect(find.byKey(ChildSosInProgressKeys.cancelSheet), findsOneWidget);
-    await tester.tap(find.byKey(ChildSosInProgressKeys.confirmSafe));
+    expect(find.byKey(SosCancelConfirmationKeys.sheet), findsOneWidget);
+    await tester.tap(find.byKey(SosCancelConfirmationKeys.confirm));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 

@@ -12,6 +12,9 @@ import 'package:family_os/core/policy/screen_time_policy.dart';
 import 'package:family_os/core/policy/smart_mode_activation.dart';
 import 'package:family_os/core/policy/smart_mode_activation_bus.dart';
 import 'package:family_os/core/policy/smart_modes.dart';
+import 'package:family_os/core/policy/time_request.dart';
+import 'package:family_os/core/policy/time_request_repository.dart';
+import 'package:family_os/core/policy/time_request_service.dart';
 import 'package:family_os/features/n02_day/child_day_board_screen.dart';
 
 void main() {
@@ -185,6 +188,76 @@ void main() {
       expect(find.text('متبقي 200 دقيقة'), findsNothing);
     },
   );
+
+  testWidgets('S-3 warning appears at <=5 minutes with protected actions', (
+    tester,
+  ) async {
+    stage1TimeRequestPrefsStore.data.clear();
+    addTearDown(stage1TimeRequestDecisionBus.clear);
+    final syncBus = PolicySyncBus();
+    addTearDown(syncBus.dispose);
+    syncBus.hydrate(
+      child,
+      policy: ScreenTimePolicy(dailyCapMinutes: 60, usedMinutesToday: 55),
+    );
+
+    await tester.pumpWidget(
+      _wrap(
+        ChildDayBoardScreen(
+          childId: child,
+          syncBus: syncBus,
+          showModeNotices: false,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(ChildDayBoardKeys.warningBanner), findsOneWidget);
+    expect(find.byKey(ChildDayBoardKeys.warningRequest), findsOneWidget);
+    expect(find.byKey(ChildDayBoardKeys.warningQuran), findsOneWidget);
+    expect(find.byKey(ChildDayBoardKeys.warningChat), findsOneWidget);
+    expect(find.byKey(ChildDayBoardKeys.warningSos), findsOneWidget);
+  });
+
+  testWidgets('approved request grant increases child remaining display', (
+    tester,
+  ) async {
+    stage1TimeRequestPrefsStore.data.clear();
+    final service = TimeRequestService(
+      repository: PrefsTimeRequestRepository(stage1TimeRequestPrefsStore),
+      decisionBus: stage1TimeRequestDecisionBus,
+      clock: () => DateTime.now().toUtc(),
+    );
+    addTearDown(service.dispose);
+    addTearDown(stage1TimeRequestDecisionBus.clear);
+
+    syncSeed() {
+      final syncBus = PolicySyncBus();
+      syncBus.hydrate(
+        child,
+        policy: ScreenTimePolicy(dailyCapMinutes: 60, usedMinutesToday: 60),
+      );
+      return syncBus;
+    }
+
+    final req = await service.createRequest(childId: child, requestedMinutes: 15);
+    await service.approve(req.id, const TimeRequestActor.father(), grantMinutes: 15);
+
+    final syncBus = syncSeed();
+    addTearDown(syncBus.dispose);
+    await tester.pumpWidget(
+      _wrap(
+        ChildDayBoardScreen(
+          childId: child,
+          syncBus: syncBus,
+          showModeNotices: false,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('متبقي 15 دقيقة'), findsOneWidget);
+  });
 }
 
 Widget _wrap(Widget home) {

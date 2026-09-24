@@ -23,6 +23,7 @@ enum FamilyMemberKind {
 final class FamilyMemberEntry {
   const FamilyMemberEntry({
     required this.id,
+    required this.familyId,
     required this.displayName,
     required this.kind,
     required this.monogram,
@@ -33,6 +34,7 @@ final class FamilyMemberEntry {
   });
 
   final String id;
+  final String familyId;
   final String displayName;
   final FamilyMemberKind kind;
 
@@ -52,28 +54,47 @@ final class FamilyMemberEntry {
 
 /// Rule 25 seam — family roster for SCR-FAT-027 (Drift later).
 abstract class FamilyMembersRepository {
-  Future<List<FamilyMemberEntry>> listMembers();
+  Future<List<FamilyMemberEntry>> listMembers({String? familyId});
 }
 
 /// In-memory mock — default empty (Rule 23 · never plants person names).
 final class InMemoryFamilyMembersRepository implements FamilyMembersRepository {
   InMemoryFamilyMembersRepository({
     List<FamilyMemberEntry> members = const [],
+    Map<String, List<FamilyMemberEntry>> byFamily = const {},
     this.failLoad = false,
-  }) : _members = List.of(members);
+  }) : _members = List.of(members),
+       _byFamily = {
+         for (final entry in byFamily.entries) entry.key: List.of(entry.value),
+       };
 
   List<FamilyMemberEntry> _members;
+  final Map<String, List<FamilyMemberEntry>> _byFamily;
 
   /// Test seam — next [listMembers] throws.
   bool failLoad;
 
   void seed(List<FamilyMemberEntry> members) => _members = List.of(members);
+  void seedFamily(String familyId, List<FamilyMemberEntry> members) {
+    _byFamily[familyId] = List.of(members);
+  }
 
   @override
-  Future<List<FamilyMemberEntry>> listMembers() async {
+  Future<List<FamilyMemberEntry>> listMembers({String? familyId}) async {
     if (failLoad) {
       throw StateError('mock family members load failure');
     }
+    final id = familyId?.trim();
+    if (id != null && id.isNotEmpty) {
+      if (_byFamily.containsKey(id)) {
+        return List.unmodifiable(_byFamily[id]!);
+      }
+      return List.unmodifiable(
+        _members.where((m) => m.familyId == id).toList(growable: false),
+      );
+    }
+    // Stage-1 shim: unscoped seed for gallery/tests without CurrentIdentity.
+    // Production callers always pass activeFamilyId.
     return List.unmodifiable(_members);
   }
 }

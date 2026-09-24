@@ -1,10 +1,12 @@
 import 'package:flutter/foundation.dart';
 
 import '../domain/child_id.dart';
+import '../domain/identity_ids.dart';
 import '../domain/mother_level.dart';
 import '../domain/role.dart';
+import '../web_filter/web_filter_temp_allow.dart';
+import '../web_filter/web_filter_temp_allow_store.dart';
 import 'web_filter_policy.dart';
-import 'web_filter_policy_repository.dart';
 import 'web_unlock_request.dart';
 import 'web_unlock_request_repository.dart';
 
@@ -73,27 +75,34 @@ final class WebUnlockRequestResult {
   final bool throttled;
 }
 
-/// Child→parent web unlock loop (SET-006 / P12).
+/// Child→parent web unlock loop (SET-006 / P12 / FS-002-ENF).
 ///
-/// Competitive lens: Family Link app-approval — approve/deny produces allow-list
-/// effect + audit, not decorative buttons.
+/// Approve creates a **timed temporary allow** (Q-WF-09) — never a silent
+/// permanent allowList mutation.
 final class WebUnlockService extends ChangeNotifier {
   WebUnlockService({
     required WebUnlockRequestRepository requestRepository,
-    required WebFilterPolicyRepository policyRepository,
+    WebFilterTempAllowRepository? tempAllows,
+    FamilyId? familyId,
+    Duration? tempAllowDuration,
     AuditAppend? audit,
     WebUnlockDecisionBus? decisionBus,
     String Function()? idFactory,
     DateTime Function()? clock,
-  })  : _requests = requestRepository,
-        _policies = policyRepository,
-        _audit = audit ?? AuditAppend(),
-        _bus = decisionBus ?? WebUnlockDecisionBus(),
-        _idFactory = idFactory ?? _defaultId,
-        _clock = clock ?? DateTime.now;
+  }) : _requests = requestRepository,
+       _tempAllows = tempAllows ?? InMemoryWebFilterTempAllowStore(),
+       _familyId = familyId ?? FamilyId('fam_stage1'),
+       _tempDuration =
+           tempAllowDuration ?? WebFilterTempAllowDefaults.placeholderDuration,
+       _audit = audit ?? AuditAppend(),
+       _bus = decisionBus ?? WebUnlockDecisionBus(),
+       _idFactory = idFactory ?? _defaultId,
+       _clock = clock ?? DateTime.now;
 
   final WebUnlockRequestRepository _requests;
-  final WebFilterPolicyRepository _policies;
+  final WebFilterTempAllowRepository _tempAllows;
+  final FamilyId _familyId;
+  final Duration _tempDuration;
   final AuditAppend _audit;
   final WebUnlockDecisionBus _bus;
   final String Function() _idFactory;
@@ -101,6 +110,8 @@ final class WebUnlockService extends ChangeNotifier {
 
   AuditAppend get audit => _audit;
   WebUnlockDecisionBus get decisionBus => _bus;
+  WebFilterTempAllowRepository get tempAllows => _tempAllows;
+  FamilyId get familyId => _familyId;
 
   static var _seq = 0;
   static String _defaultId() {
@@ -148,18 +159,16 @@ final class WebUnlockService extends ChangeNotifier {
     return WebUnlockRequestResult(request: request, throttled: false);
   }
 
-  /// Approves a pending (or supersedes path handled in [deny]).
+  /// Approves a pending request.
   ///
   /// Mother observer → [WebUnlockNotAllowedException].
-  /// On success: host added to policy allowList + status approved + audit.
+  /// On success: creates timed temporary allow (Q-WF-09) — **not** allowList.
   Future<WebUnlockRequest> approve(
     String requestId,
     WebUnlockActor actor,
   ) async {
     if (!actor.canApproveUnlock) {
-      _audit.add(
-        'approve rejected actor=${actor.auditLabel} id=$requestId',
-      );
+      _audit.add('approve rejected actor=${actor.auditLabel} id=$requestId');
       throw WebUnlockNotAllowedException(
         'Actor ${actor.auditLabel} cannot approve web unlocks',
       );
@@ -168,7 +177,6 @@ final class WebUnlockService extends ChangeNotifier {
     final request = await _require(requestId);
     if (request.status == WebUnlockRequestStatus.denied &&
         request.decidedBy?.startsWith('father') == true) {
-      // Father already denied — mother approve cannot override (father wins).
       _audit.add(
         'approve blocked father-wins id=$requestId actor=${actor.auditLabel}',
       );
@@ -188,17 +196,19 @@ final class WebUnlockService extends ChangeNotifier {
       return request;
     }
 
-    final policy = await _policies.load(request.childId);
-    final nextAllow = {...policy.allowList, request.host};
     final stamp = _clock().toUtc();
-    await _policies.save(
-      request.childId,
-      policy.copyWith(
-        allowList: nextAllow,
-        policyVersion: policy.policyVersion + 1,
-        updatedAt: stamp,
-      ),
+    final allow = WebFilterTempAllow(
+      id: 'ta_${request.id}',
+      familyId: _familyId,
+      childId: request.childId,
+      host: request.host,
+      requestId: request.id,
+      startsAt: stamp,
+      expiresAt: stamp.add(_tempDuration),
+      status: WebFilterTempAllowStatus.active,
     );
+    await _tempAllows.save(allow);
+    // Explicit: do NOT mutate permanent allowList (Q-WF-09).
 
     final decided = request.copyWith(
       status: WebUnlockRequestStatus.approved,
@@ -208,22 +218,27 @@ final class WebUnlockService extends ChangeNotifier {
     await _requests.save(decided);
     _audit.add(
       'approved id=${decided.id} host=${decided.host} '
-      'actor=${actor.auditLabel}',
+      'actor=${actor.auditLabel} temp_allow=${allow.id} '
+      'expires=${allow.expiresAt.toIso8601String()} '
+      '(${WebFilterTempAllowDefaults.durationHonesty})',
     );
     _bus.publish(decided);
     notifyListeners();
     return decided;
   }
 
+  /// Active temporary-allow hosts for engine injection.
+  Future<Set<String>> activeTemporaryHosts(ChildId childId) {
+    return _tempAllows.activeHosts(_familyId, childId, now: _clock());
+  }
+
   /// Denies a request. Father deny after mother approve → father wins:
-  /// host removed from allowList + status denied + supersession audit.
+  /// revoke timed temp allow + status denied (no allowList mutation).
   Future<WebUnlockRequest> deny(
     String requestId,
     WebUnlockActor actor, {
     String? reason,
   }) async {
-    // Deny is allowed for father always; mother partner/full may deny pending;
-    // mother observer cannot decide.
     if (actor.role == AppRole.mother &&
         actor.motherLevel == MotherLevel.observer) {
       _audit.add('deny rejected observer id=$requestId');
@@ -237,20 +252,10 @@ final class WebUnlockService extends ChangeNotifier {
 
     final request = await _require(requestId);
 
-    // Father wins: reverse a prior mother approval.
+    // Father wins: revoke prior timed allow.
     if (request.status == WebUnlockRequestStatus.approved &&
         actor.role == AppRole.father) {
-      final policy = await _policies.load(request.childId);
-      final nextAllow = {...policy.allowList}..remove(request.host);
-      final stamp = _clock().toUtc();
-      await _policies.save(
-        request.childId,
-        policy.copyWith(
-          allowList: nextAllow,
-          policyVersion: policy.policyVersion + 1,
-          updatedAt: stamp,
-        ),
-      );
+      await _tempAllows.revokeForHost(_familyId, request.childId, request.host);
       final decided = request.copyWith(
         status: WebUnlockRequestStatus.denied,
         decidedBy: actor.auditLabel,
@@ -259,7 +264,7 @@ final class WebUnlockService extends ChangeNotifier {
       await _requests.save(decided);
       _audit.add(
         'father_wins supersede id=${decided.id} host=${decided.host} '
-        'prior=${request.decidedBy}',
+        'prior=${request.decidedBy} temp_allow_revoked',
       );
       _bus.publish(decided);
       notifyListeners();
@@ -298,7 +303,10 @@ final class WebUnlockService extends ChangeNotifier {
   Future<List<WebUnlockRequest>> listAll({ChildId? childId}) async {
     final all = await _requests.loadAll();
     if (childId == null) return all;
-    return [for (final r in all) if (r.childId == childId) r];
+    return [
+      for (final r in all)
+        if (r.childId == childId) r,
+    ];
   }
 
   Future<WebUnlockRequest> _require(String id) async {
@@ -312,8 +320,7 @@ final class WebUnlockService extends ChangeNotifier {
   static String _hostOf(String url) {
     final trimmed = url.trim();
     if (trimmed.isEmpty) return '';
-    final withScheme =
-        trimmed.contains('://') ? trimmed : 'https://$trimmed';
+    final withScheme = trimmed.contains('://') ? trimmed : 'https://$trimmed';
     return Uri.tryParse(withScheme)?.host ?? '';
   }
 }

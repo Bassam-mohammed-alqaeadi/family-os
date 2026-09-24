@@ -2,17 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/role_controller.dart';
+import 'package:family_os/core/app_control/app_control.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/banner.dart';
+import 'package:family_os/core/design/components/capability_honesty_badge.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/fs_foundation/capability_status.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
+import 'package:family_os/features/n03_screen_time/app_control_ux_bridge.dart';
 import 'package:family_os/features/n03_screen_time/child_apps_models.dart';
 import 'package:family_os/features/n03_screen_time/child_apps_repository.dart';
 
@@ -30,6 +34,7 @@ abstract final class NewAppApprovalKeys {
   static const backToApps = Key('new_app_approval_back_apps');
   static const observerHint = Key('new_app_approval_observer');
   static const toneNote = Key('new_app_approval_tone');
+  static const childScopedHonesty = Key('new_app_approval_child_scoped');
   static const childLean = Key('new_app_approval_child_lean');
   static const sosCta = Key('new_app_approval_sos');
   static const sosIconCta = Key('new_app_approval_sos_icon');
@@ -52,6 +57,7 @@ class NewAppApprovalScreen extends StatefulWidget {
     this.childId,
     this.appId,
     this.repository,
+    this.appControl,
     this.sosFire,
     this.roleOverride,
     this.motherLevel = MotherLevel.partner,
@@ -68,6 +74,9 @@ class NewAppApprovalScreen extends StatefulWidget {
 
   /// Rule 25 seam — null → [stage1ChildAppsRepository].
   final ChildAppsRepository? repository;
+
+  /// FS-003 domain seam — install tickets when non-null.
+  final AppControlService? appControl;
 
   /// P-4 SOS seam — null → [stage1SosFireService].
   final SosFireService? sosFire;
@@ -105,17 +114,16 @@ class _NewAppApprovalScreenState extends State<NewAppApprovalScreen> {
 
   bool get _isChild => _role == AppRole.child;
 
-  bool get _canDecide {
-    if (_role == AppRole.father) return true;
-    if (_role == AppRole.mother) {
-      return widget.motherLevel == MotherLevel.partner ||
-          widget.motherLevel == MotherLevel.full;
-    }
-    return false;
-  }
+  bool get _canDecide => AppControlUxBridge.canDecideTickets(
+    role: _role,
+    motherLevel: widget.motherLevel,
+  );
 
   bool get _isObserverMother =>
       _role == AppRole.mother && widget.motherLevel == MotherLevel.observer;
+
+  AppControlActor get _actor =>
+      AppControlUxBridge.actorFor(role: _role, motherLevel: widget.motherLevel);
 
   @override
   void initState() {
@@ -226,31 +234,58 @@ class _NewAppApprovalScreenState extends State<NewAppApprovalScreen> {
     return pending.isEmpty ? null : pending.first;
   }
 
-  void _approve(ChildAppEntry app) {
+  Future<void> _approve(ChildAppEntry app) async {
     if (!_canDecide) return;
+    final ac = widget.appControl;
+    if (ac != null) {
+      final ticket = await ac.observeInstall(
+        childId: _childId,
+        packageId: app.id,
+        label: app.name,
+      );
+      await ac.approveInstall(
+        ticketId: ticket.id,
+        childId: _childId,
+        actor: _actor,
+      );
+    }
     final ok = _repo.setStatus(_childId, app.id, ChildAppStatus.allowed);
     if (!ok) return;
     setState(() {
       _outcome = _DecisionOutcome.allowed;
       _decidedAppName = app.name;
     });
+    if (!mounted) return;
     AppToast.show(
       context,
-      message: AppLocalizations.of(context).newAppApprovalApprovedToast(
-        app.name,
-        kNewAppApprovalDefaultAllowMins,
-      ),
+      message: AppLocalizations.of(
+        context,
+      ).newAppApprovalApprovedToast(app.name, kNewAppApprovalDefaultAllowMins),
     );
   }
 
-  void _deny(ChildAppEntry app) {
+  Future<void> _deny(ChildAppEntry app) async {
     if (!_canDecide) return;
+    final ac = widget.appControl;
+    if (ac != null) {
+      final ticket = await ac.observeInstall(
+        childId: _childId,
+        packageId: app.id,
+        label: app.name,
+      );
+      await ac.denyInstall(
+        ticketId: ticket.id,
+        childId: _childId,
+        actor: _actor,
+      );
+    }
     final ok = _repo.setStatus(_childId, app.id, ChildAppStatus.blocked);
     if (!ok) return;
     setState(() {
       _outcome = _DecisionOutcome.blocked;
       _decidedAppName = app.name;
     });
+    if (!mounted) return;
     AppToast.show(
       context,
       message: AppLocalizations.of(context).newAppApprovalDeniedToast(app.name),
@@ -336,13 +371,48 @@ class _NewAppApprovalScreenState extends State<NewAppApprovalScreen> {
       children: [
         _HeroCard(app: pending, l10n: l10n, colors: colors),
         const SizedBox(height: 12),
+        DecoratedBox(
+          key: NewAppApprovalKeys.childScopedHonesty,
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(
+              Theme.of(context).extension<FamilyRadii>()!.card,
+            ),
+            border: Border.all(color: colors.border),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const CapabilityHonestyBadge(
+                  status: CapabilityStatus.mockRemote,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.newAppApprovalChildScopedHonesty,
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.35,
+                    color: colors.ink2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
         _InfoCard(app: pending, l10n: l10n, colors: colors),
         const SizedBox(height: 12),
         if (_isObserverMother)
           BannerNote(
             key: NewAppApprovalKeys.observerHint,
             variant: BannerVariant.a,
-            leading: Icon(Icons.visibility_outlined, size: 18, color: colors.amberDeep),
+            leading: Icon(
+              Icons.visibility_outlined,
+              size: 18,
+              color: colors.amberDeep,
+            ),
             message: l10n.newAppApprovalObserverHint,
           )
         else if (_canDecide) ...[

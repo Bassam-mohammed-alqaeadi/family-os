@@ -1,11 +1,11 @@
 # LOOP_STATE
 
 ```
-status: RUNNING
-current_card: PRT-2
+status: STOPPED
+current_card: (Phase 1.5 COMPLETE — no next feature armed)
 blocked_by: (none)
-last_tick: 2026-09-22
-resume_hint: PRT-1 shipped (shell_config.dart generator groundwork). NEXT=PRT-2 shell/TabsBar wiring. Parity track before Phase 1.5 shell UX. /loop 5m.
+last_tick: 2026-09-24
+resume_hint: PHASE-1.5-HARDEN shipped. FS lane CLOSED. P15-QUR-004…007 still deferred_campaign. Stage 3 NOT STARTED. Do NOT auto-start P15-QUR or Stage 3 — Owner must explicitly re-arm.
 ```
 
 ## Field meanings

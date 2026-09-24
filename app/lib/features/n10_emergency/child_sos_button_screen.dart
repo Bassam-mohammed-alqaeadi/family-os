@@ -8,10 +8,14 @@ import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/family_ui_mode.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/domain/child_id.dart';
+import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_alert_repository.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
+import 'package:family_os/core/policy/sos_settings.dart';
+import 'package:family_os/core/sos_final/sos_final.dart';
 
 /// Widget keys for SCR-CHD-005 acceptance.
 abstract final class ChildSosButtonKeys {
@@ -54,7 +58,8 @@ class ChildSosButtonScreen extends StatefulWidget {
   /// P-4 SOS seam — null → [stage1SosFireService].
   final SosFireService? sosFire;
 
-  /// Alert store for CHD-006 handoff — null → [stage1SosAlertRepository].
+  /// Alert store for CHD-006 handoff — null → sos_final Domain fire (Slice 01).
+  /// Inject [InMemorySosAlertRepository] in tests with [fireAndSeedSosAlert].
   final InMemorySosAlertRepository? alerts;
 
   /// Test seam — shorter hold in widget tests.
@@ -169,22 +174,45 @@ class _ChildSosButtonScreenState extends State<ChildSosButtonScreen>
       _secondsLeft = 0;
     });
     final fire = widget.sosFire ?? stage1SosFireService;
-    final alerts = widget.alerts ?? stage1SosAlertRepository;
-    await fireAndSeedSosAlert(
-      childId: widget.childId,
-      sosFire: fire,
-      alerts: alerts,
-    );
-    if (!mounted) return;
-    if (widget.onFired != null) {
-      widget.onFired!();
-      return;
+    final injected = widget.alerts;
+    late final String? alertId;
+    if (injected != null) {
+      await fireAndSeedSosAlert(
+        childId: widget.childId,
+        sosFire: fire,
+        alerts: injected,
+        settings: stage1SosSettingsStore,
+      );
+      if (!mounted) return;
+      if (widget.onFired != null) {
+        widget.onFired!();
+        return;
+      }
+      final seeded = await injected.loadActive();
+      alertId = seeded?.id;
+    } else {
+      // Production: durable sos_final lifecycle (AUTH-FS006).
+      await Stage1SosFinalRuntime.ensureOpen();
+      final panicQuiet =
+          stage1SosSettingsStore.settings.panicQuietPreferred;
+      final incident = await Stage1SosFinalRuntime.crossSystem.fireChildHold(
+        childId: ChildId(widget.childId),
+        deviceId: const DeviceId('dev_stage1'),
+        panicQuietAtTrigger: panicQuiet,
+      );
+      // Keep fire service audit path for P-4 parity (no entitlement).
+      await fire.fire(childId: widget.childId);
+      alertId = incident.id;
+      if (!mounted) return;
+      if (widget.onFired != null) {
+        widget.onFired!();
+        return;
+      }
     }
-    final seeded = await alerts.loadActive();
     if (!mounted) return;
     final params = <String, String>{
       'childId': widget.childId,
-      if (seeded != null) 'alertId': seeded.id,
+      if (alertId != null) 'alertId': alertId,
     };
     context.go(
       Uri(path: '/scr-chd-006', queryParameters: params).toString(),

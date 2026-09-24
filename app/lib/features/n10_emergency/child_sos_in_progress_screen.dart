@@ -5,11 +5,16 @@ import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/app_error_state.dart';
 import 'package:family_os/core/design/components/family_ui_mode.dart';
+import 'package:family_os/core/design/components/sos_cancel_confirmation.dart';
+import 'package:family_os/core/design/components/sos_delivery_status.dart';
+import 'package:family_os/core/design/components/sos_location_status.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_alert.dart';
 import 'package:family_os/core/policy/sos_alert_repository.dart';
+import 'package:family_os/core/policy/sos_role_actions.dart';
+import 'package:family_os/core/sos_final/sos_final.dart';
 
 /// Widget keys for SCR-CHD-006 acceptance.
 abstract final class ChildSosInProgressKeys {
@@ -33,9 +38,9 @@ abstract final class ChildSosInProgressKeys {
 
 /// SCR-CHD-006 — الاستغاثة جارية (child SOS in progress, mock-first).
 ///
-/// Prototype CHD-006: coral full-bleed board after CHD-005 fire —
-/// family notified + live location broadcast + who saw the alert +
-/// call father + safe cancel with confirmation → resolve → CHD-004.
+/// Honest delivery/location (no fake "seen" / live-stream claims).
+/// Cancel → [showSosCancelConfirmation] → resolve false-alarm as child.
+/// Panic Quiet: critical-only chrome; call CTA is UNAVAILABLE honesty.
 ///
 /// P-4 / UI-007: in-progress SOS is never muted or paywalled.
 /// RoleGuard: child body; parent lean. Rule 23: parametric ids only.
@@ -57,13 +62,13 @@ class ChildSosInProgressScreen extends StatefulWidget {
   /// Deep-link `?childId=` (Rule 23 parametric).
   final String? childId;
 
-  /// Null → [stage1SosAlertRepository].
+  /// Null → Domain via [Stage1SosFinalRuntime] (Slice 01 AUTH-FS006).
   final SosAlertRepository? repository;
 
   /// Test seam — when set, ignores [CurrentRole].
   final AppRole? roleOverride;
 
-  /// Test seam — when null, navigates to `/scr-chd-007`.
+  /// Test seam — when null (and not Panic Quiet), navigates to `/scr-chd-007`.
   final VoidCallback? onCallFather;
 
   /// Test seam — when null, navigates to `/scr-chd-004` after resolve.
@@ -79,7 +84,7 @@ class ChildSosInProgressScreen extends StatefulWidget {
 
 class _ChildSosInProgressScreenState extends State<ChildSosInProgressScreen>
     with SingleTickerProviderStateMixin {
-  late final SosAlertRepository _repo;
+  SosAlertRepository? _repo;
   late final AnimationController _pulse;
   var _loading = true;
   var _loadFailed = false;
@@ -100,14 +105,13 @@ class _ChildSosInProgressScreenState extends State<ChildSosInProgressScreen>
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1SosAlertRepository;
     _pulse = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      _load();
+      _bootstrapAndLoad();
     });
   }
 
@@ -116,7 +120,30 @@ class _ChildSosInProgressScreenState extends State<ChildSosInProgressScreen>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.alertId != widget.alertId ||
         oldWidget.repository != widget.repository) {
-      _load();
+      _bootstrapAndLoad();
+    }
+  }
+
+  Future<void> _bootstrapAndLoad() async {
+    setState(() {
+      _loading = true;
+      _loadFailed = false;
+    });
+    try {
+      if (widget.repository != null) {
+        _repo = widget.repository;
+      } else {
+        await Stage1SosFinalRuntime.ensureOpen();
+        if (!mounted) return;
+        _repo = DomainSosAlertRepository(Stage1SosFinalRuntime.service);
+      }
+      await _load();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadFailed = true;
+      });
     }
   }
 
@@ -127,12 +154,14 @@ class _ChildSosInProgressScreenState extends State<ChildSosInProgressScreen>
   }
 
   Future<void> _load() async {
+    final repo = _repo;
+    if (repo == null) return;
     setState(() {
       _loading = true;
       _loadFailed = false;
     });
     try {
-      var alert = await _repo.loadActive(alertId: _resolvedAlertId);
+      var alert = await repo.loadActive(alertId: _resolvedAlertId);
       final wantChild = widget.childId?.trim();
       if (alert != null &&
           wantChild != null &&
@@ -172,7 +201,13 @@ class _ChildSosInProgressScreenState extends State<ChildSosInProgressScreen>
     }
   }
 
-  void _callFather() {
+  void _callFather(AppLocalizations l10n, {required bool panicQuiet}) {
+    if (panicQuiet) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.childSosInProgressCallUnavailableToast)),
+      );
+      return;
+    }
     if (widget.onCallFather != null) {
       widget.onCallFather!();
       return;
@@ -188,97 +223,11 @@ class _ChildSosInProgressScreenState extends State<ChildSosInProgressScreen>
     context.go('/scr-chd-005');
   }
 
-  Future<void> _openCancelSheet(AppLocalizations l10n, Color coral) async {
+  Future<void> _openCancelSheet() async {
     if (_busy || _alert == null) return;
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (sheetContext) {
-        return Padding(
-          key: ChildSosInProgressKeys.cancelSheet,
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                l10n.childSosInProgressCancelSheetTitle,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  color: coral,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                l10n.childSosInProgressCancelSheetBody,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  height: 1.5,
-                  color: Color(0xFF3D3D3D),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Semantics(
-                button: true,
-                label: l10n.childSosInProgressConfirmSafeSemantics,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 48),
-                  child: Material(
-                    color: const Color(0xFF1FA97A),
-                    borderRadius: BorderRadius.circular(14),
-                    child: InkWell(
-                      key: ChildSosInProgressKeys.confirmSafe,
-                      onTap: () {
-                        Navigator.of(sheetContext).pop();
-                        _confirmSafe();
-                      },
-                      borderRadius: BorderRadius.circular(14),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 14,
-                        ),
-                        child: Text(
-                          l10n.childSosInProgressConfirmSafeCta,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Semantics(
-                button: true,
-                label: l10n.childSosInProgressCancelBackCta,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 48),
-                  child: TextButton(
-                    key: ChildSosInProgressKeys.cancelBack,
-                    onPressed: () => Navigator.of(sheetContext).pop(),
-                    child: Text(l10n.childSosInProgressCancelBackCta),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+    final confirmed = await showSosCancelConfirmation(context);
+    if (!confirmed || !mounted) return;
+    await _confirmSafe();
   }
 
   Future<void> _confirmSafe() async {
@@ -286,7 +235,11 @@ class _ChildSosInProgressScreenState extends State<ChildSosInProgressScreen>
     if (alert == null || _busy) return;
     setState(() => _busy = true);
     try {
-      await _repo.resolve(alert.id);
+      await _repo!.resolve(
+        alert.id,
+        actor: SosActor.child(),
+        reason: SosTerminalReason.falseAlarm,
+      );
       if (!mounted) return;
       _stopPulse();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -394,18 +347,21 @@ class _ChildSosInProgressScreenState extends State<ChildSosInProgressScreen>
     }
 
     return _InProgressBody(
+      alert: alert,
       l10n: l10n,
       colors: colors,
       pulse: _pulse,
       busy: _busy,
-      onCallFather: _callFather,
-      onCancel: () => _openCancelSheet(l10n, colors.coral),
+      onCallFather: () =>
+          _callFather(l10n, panicQuiet: alert.panicQuietAtTrigger),
+      onCancel: _openCancelSheet,
     );
   }
 }
 
 class _InProgressBody extends StatelessWidget {
   const _InProgressBody({
+    required this.alert,
     required this.l10n,
     required this.colors,
     required this.pulse,
@@ -414,6 +370,7 @@ class _InProgressBody extends StatelessWidget {
     required this.onCancel,
   });
 
+  final SosAlert alert;
   final AppLocalizations l10n;
   final FamilyColors colors;
   final AnimationController pulse;
@@ -421,10 +378,33 @@ class _InProgressBody extends StatelessWidget {
   final VoidCallback onCallFather;
   final VoidCallback onCancel;
 
+  String _locationLabel() => switch (alert.locationClass) {
+        SosLocationClass.acquiring => l10n.sosAlertLocationAcquiring,
+        SosLocationClass.ready => l10n.sosAlertLocationReady,
+        SosLocationClass.stale => l10n.sosAlertLocationStale,
+        SosLocationClass.unavailable => l10n.sosAlertLocationUnavailable,
+      };
+
+  String _deliveryLabel(SosDeliveryRow row) {
+    return switch (row.status) {
+      SosDeliveryClass.pending =>
+        l10n.sosAlertDeliveryPending(row.channel, row.recipientId),
+      SosDeliveryClass.delivered =>
+        l10n.sosAlertDeliveryDelivered(row.channel, row.recipientId),
+      SosDeliveryClass.failed =>
+        l10n.sosAlertDeliveryFailed(row.channel, row.recipientId),
+      SosDeliveryClass.unavailable =>
+        l10n.sosAlertDeliveryUnavailable(row.channel, row.recipientId),
+      SosDeliveryClass.notConfigured =>
+        l10n.sosAlertDeliveryNotConfigured(row.channel, row.recipientId),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final deepCoral = Color.lerp(colors.coral, colors.ink, 0.18)!;
     final onCoral = colors.surface;
+    final panicQuiet = alert.panicQuietAtTrigger;
 
     return DecoratedBox(
       key: ChildSosInProgressKeys.body,
@@ -440,30 +420,32 @@ class _InProgressBody extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            DecoratedBox(
-              key: ChildSosInProgressKeys.p4Banner,
-              decoration: BoxDecoration(
-                color: onCoral.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
+            if (!panicQuiet) ...[
+              DecoratedBox(
+                key: ChildSosInProgressKeys.p4Banner,
+                decoration: BoxDecoration(
+                  color: onCoral.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
-                  l10n.childSosInProgressP4Banner,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
-                    color: onCoral,
-                    height: 1.4,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  child: Text(
+                    l10n.childSosInProgressP4Banner,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: onCoral,
+                      height: 1.4,
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 18),
+              const SizedBox(height: 18),
+            ],
             ScaleTransition(
               scale: Tween<double>(begin: 1, end: 1.08).animate(pulse),
               child: const Text(
@@ -491,7 +473,7 @@ class _InProgressBody extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               key: ChildSosInProgressKeys.broadcast,
-              l10n.childSosInProgressBroadcast,
+              l10n.childSosInProgressDeliveryHonesty,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
@@ -513,35 +495,19 @@ class _InProgressBody extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text(
-                        l10n.childSosInProgressFatherSeen,
-                        textAlign: TextAlign.start,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: onCoral,
-                          height: 2,
-                        ),
+                      SosLocationStatus(
+                        locationClass: alert.locationClass,
+                        label: _locationLabel(),
+                        detail: alert.locationClass == SosLocationClass.acquiring
+                            ? l10n.childSosInProgressLocationPending
+                            : alert.locationLabel,
+                        onSurface: true,
                       ),
-                      Text(
-                        l10n.childSosInProgressMotherSeen,
-                        textAlign: TextAlign.start,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: onCoral,
-                          height: 2,
-                        ),
-                      ),
-                      Text(
-                        l10n.childSosInProgressBackupStandby,
-                        textAlign: TextAlign.start,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: onCoral,
-                          height: 2,
-                        ),
+                      const SizedBox(height: 10),
+                      SosDeliveryStatus(
+                        rows: alert.deliveries,
+                        labelFor: _deliveryLabel,
+                        onSurface: true,
                       ),
                     ],
                   ),

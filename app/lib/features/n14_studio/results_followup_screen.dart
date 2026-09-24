@@ -189,19 +189,18 @@ class _ResultsFollowupScreenState extends State<ResultsFollowupScreen> {
     return switch (act.titleKey) {
       'schoolFractions' => l10n.resultsFollowupActivitySchoolFractionsTitle,
       'dailyChallenge' => l10n.resultsFollowupActivityDailyChallengeTitle,
+      'quizSubmitted' => l10n.resultsFollowupActivityQuizSubmittedTitle,
       _ => l10n.resultsFollowupActivitySchoolFractionsTitle,
     };
   }
 
-  String _activitySubtitle(
-    AppLocalizations l10n,
-    ResultsFollowupActivity act,
-  ) {
+  String _activitySubtitle(AppLocalizations l10n, ResultsFollowupActivity act) {
     return switch (act.subtitleKey) {
       'onTimePhoto' => l10n.resultsFollowupActivityOnTimePhoto,
       'earnedMinutes' => l10n.resultsFollowupActivityEarnedMinutes(
         act.minutes ?? 0,
       ),
+      'justSubmitted' => l10n.resultsFollowupActivityJustSubmitted,
       _ => l10n.resultsFollowupActivityOnTimePhoto,
     };
   }
@@ -416,10 +415,7 @@ class _MasteryCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                Tag(
-                  label: tagLabel,
-                  variant: TagVariant.g,
-                ),
+                Tag(label: tagLabel, variant: TagVariant.g),
               ],
             ),
             const SizedBox(height: 6),
@@ -510,10 +506,7 @@ class _SkillGapCard extends StatelessWidget {
                   ? l10n.resultsFollowupGapMasteredDetail(
                       gap.masteryPercent ?? 90,
                     )
-                  : l10n.resultsFollowupGapPendingDetail(
-                      gap.missed,
-                      gap.total,
-                    ),
+                  : l10n.resultsFollowupGapPendingDetail(gap.missed, gap.total),
               detailColor: mastered ? colors.mintInk : colors.amberInk,
               trailing: mastered
                   ? Tag(

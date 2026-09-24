@@ -5,14 +5,20 @@ import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/app_error_state.dart';
 import 'package:family_os/core/design/components/banner.dart';
+import 'package:family_os/core/design/components/capability_honesty_badge.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/components/row_tile.dart';
+import 'package:family_os/core/design/components/silent_locate_sheet.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/domain/child_id.dart';
+import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/fs_foundation/capability_status.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
 import 'package:family_os/features/n02_day/location_map_repository.dart';
+import 'package:family_os/features/n02_day/location_ux_bridge.dart';
 
 Color _swatchColor(DayChildSwatch swatch, FamilyColors colors) =>
     switch (swatch) {
@@ -34,6 +40,8 @@ abstract final class LocationMapKeys {
   static const dayThread = Key('location_map_day_thread');
   static const safeZonesCta = Key('location_map_safe_zones');
   static const honestyBanner = Key('location_map_honesty');
+  static const gpsBanner = Key('location_map_gps_banner');
+  static const silentLocateCta = Key('location_map_silent_locate');
   static const sosCta = Key('location_map_sos');
   static const childLean = Key('location_map_child_lean');
 
@@ -58,6 +66,8 @@ class LocationMapScreen extends StatefulWidget {
     this.onOpenSafeZones,
     this.onSos,
     this.onAddChild,
+    this.onSilentLocate,
+    this.familyId,
   });
 
   /// From route `?childId=`; null → family map, thread defaults to first pin.
@@ -83,6 +93,12 @@ class LocationMapScreen extends StatefulWidget {
 
   /// Test seam — empty CTA → add child.
   final VoidCallback? onAddChild;
+
+  /// Test seam — silent locate (skips sheet when set).
+  final void Function(String childId)? onSilentLocate;
+
+  /// Family for silent locate domain lookup.
+  final FamilyId? familyId;
 
   @override
   LocationMapScreenState createState() => LocationMapScreenState();
@@ -178,6 +194,28 @@ class LocationMapScreenState extends State<LocationMapScreen> {
     context.push(path);
   }
 
+  Future<void> _openSilentLocate(String childId, String label) async {
+    if (widget.onSilentLocate != null) {
+      widget.onSilentLocate!(childId);
+      return;
+    }
+    await Stage1LocationRuntime.ensureOpen();
+    if (!mounted) return;
+    final family = widget.familyId ?? FamilyId('fam_stage1');
+    await SilentLocateSheet.show(
+      context,
+      childId: childId,
+      childLabel: label,
+      gpsStatus: CapabilityStatus.notImplemented,
+      onRequest: () => SilentLocateService.request(
+        domain: Stage1LocationRuntime.store,
+        familyId: family,
+        childId: ChildId(childId),
+        nativeGpsStatus: CapabilityStatus.notImplemented,
+      ),
+    );
+  }
+
   Future<void> _openSos() async {
     if (_sosBusy) return;
     if (widget.onSos != null) {
@@ -186,7 +224,8 @@ class LocationMapScreenState extends State<LocationMapScreen> {
     }
     setState(() => _sosBusy = true);
     final fire = widget.sosFire ?? stage1SosFireService;
-    final id = _resolvedChildId ??
+    final id =
+        _resolvedChildId ??
         _snapshot?.focusChildId ??
         _snapshot?.pins.firstOrNull?.id ??
         'family';
@@ -286,6 +325,19 @@ class LocationMapScreenState extends State<LocationMapScreen> {
             variant: BannerVariant.t,
             message: l10n.locationMapHonestyBanner,
           ),
+          const SizedBox(height: 8),
+          BannerNote(
+            key: LocationMapKeys.gpsBanner,
+            variant: BannerVariant.a,
+            message: l10n.locationGpsNotImplementedBanner,
+          ),
+          const SizedBox(height: 6),
+          const Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: CapabilityHonestyBadge(
+              status: CapabilityStatus.notImplemented,
+            ),
+          ),
           const SizedBox(height: 12),
           _MapCanvas(
             pins: snap.pins,
@@ -294,11 +346,7 @@ class LocationMapScreenState extends State<LocationMapScreen> {
             l10n: l10n,
           ),
           const SizedBox(height: 12),
-          _PinsCard(
-            pins: snap.pins,
-            l10n: l10n,
-            onOpenHistory: _goHistory,
-          ),
+          _PinsCard(pins: snap.pins, l10n: l10n, onOpenHistory: _goHistory),
           if (snap.threadStops.isNotEmpty) ...[
             const SizedBox(height: 12),
             _DayThreadCard(
@@ -310,6 +358,19 @@ class LocationMapScreenState extends State<LocationMapScreen> {
             ),
           ],
           const SizedBox(height: 12),
+          PrimaryBtn(
+            key: LocationMapKeys.silentLocateCta,
+            label: l10n.locationMapSilentLocateCta,
+            variant: PrimaryBtnVariant.sec,
+            onPressed: () => _openSilentLocate(
+              snap.focusChildId ?? snap.pins.first.id,
+              snap.focusDisplayName.isNotEmpty
+                  ? snap.focusDisplayName
+                  : (snap.pins.first.displayName),
+            ),
+            semanticsLabel: l10n.locationMapSilentLocateCta,
+          ),
+          const SizedBox(height: 8),
           PrimaryBtn(
             key: LocationMapKeys.safeZonesCta,
             label: l10n.locationMapSafeZonesCta,
@@ -369,9 +430,11 @@ class _MapCanvas extends StatelessWidget {
                       const Positioned.fill(child: _MapScapeBackground()),
                       for (final zone in zones)
                         Positioned(
-                          left: zone.xFraction * w -
+                          left:
+                              zone.xFraction * w -
                               (zone.diameterFraction * w) / 2,
-                          top: zone.yFraction * h -
+                          top:
+                              zone.yFraction * h -
                               (zone.diameterFraction * h) / 2,
                           width: zone.diameterFraction * w,
                           height: zone.diameterFraction * h,
@@ -559,7 +622,8 @@ class _LandmarkBlock extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          if (emoji.isNotEmpty) Text(emoji, style: const TextStyle(fontSize: 16)),
+          if (emoji.isNotEmpty)
+            Text(emoji, style: const TextStyle(fontSize: 16)),
           if (label.isNotEmpty)
             Text(
               label,
@@ -626,10 +690,7 @@ class _MapPinMarker extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  Color.lerp(base, colors.surface, 0.25)!,
-                  base,
-                ],
+                colors: [Color.lerp(base, colors.surface, 0.25)!, base],
               ),
               boxShadow: [
                 BoxShadow(
@@ -709,8 +770,7 @@ class _PinsCard extends StatelessWidget {
                 l10n: l10n,
                 onTap: () => onOpenHistory(pins[i].id),
               ),
-              if (i < pins.length - 1)
-                Divider(height: 1, color: colors.border),
+              if (i < pins.length - 1) Divider(height: 1, color: colors.border),
             ],
           ],
         ),
@@ -720,11 +780,7 @@ class _PinsCard extends StatelessWidget {
 }
 
 class _PinRow extends StatelessWidget {
-  const _PinRow({
-    required this.pin,
-    required this.l10n,
-    required this.onTap,
-  });
+  const _PinRow({required this.pin, required this.l10n, required this.onTap});
 
   final LocationMapPin pin;
   final AppLocalizations l10n;
@@ -735,10 +791,7 @@ class _PinRow extends StatelessWidget {
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final base = _swatchColor(pin.swatch, colors);
     final subtitle = pin.safeZoneLabel.isEmpty
-        ? l10n.locationMapPinSubtitle(
-            pin.lastSeenLabel,
-            pin.batteryLabel,
-          )
+        ? l10n.locationMapPinSubtitle(pin.lastSeenLabel, pin.batteryLabel)
         : l10n.locationMapPinSubtitleInZone(
             pin.safeZoneLabel,
             pin.lastSeenLabel,

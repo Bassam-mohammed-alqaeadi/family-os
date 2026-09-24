@@ -19,6 +19,7 @@ void main() {
         child: CreateSafeZoneScreen(
           repository: repo,
           roleOverride: AppRole.father,
+          childId: 'child_a',
           idFactory: () => 'z_test',
           onSos: () {},
           onSaved: () => saved = true,
@@ -192,6 +193,7 @@ void main() {
         child: CreateSafeZoneScreen(
           repository: repo,
           roleOverride: AppRole.father,
+          childId: 'child_a',
           idFactory: () => 'z_off',
           onSos: () {},
           onSaved: () {},

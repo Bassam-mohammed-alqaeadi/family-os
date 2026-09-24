@@ -6,6 +6,13 @@ import 'package:go_router/go_router.dart';
 import 'package:family_os/app/placeholder_screen.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/domain/child_id.dart';
+import 'package:family_os/core/domain/identity_ids.dart';
+import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/identity/child_device_management_repository.dart';
+import 'package:family_os/core/identity/identity_models.dart';
+import 'package:family_os/core/identity/identity_runtime.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n01_linking/add_child_screen.dart';
 
@@ -104,10 +111,7 @@ void main() {
     final aliasText = tester.widget<Text>(
       find.byKey(const Key('add_child_alias_ltr')),
     );
-    expect(
-      aliasText.data,
-      matches(RegExp(r'^child_[a-f0-9]{4}$')),
-    );
+    expect(aliasText.data, matches(RegExp(r'^child_[a-f0-9]{4}$')));
   });
 
   testWidgets('renders header, ages, characters, colors', (tester) async {
@@ -124,6 +128,73 @@ void main() {
     expect(find.byKey(const Key('add_child_color_0')), findsOneWidget);
     expect(find.byKey(const Key('add_child_color_5')), findsOneWidget);
     expect(find.text('١٤ سنة'), findsWidgets);
+  });
+
+  testWidgets('creates child through management repository', (tester) async {
+    final runtime = IdentityRuntime(
+      account: Account(id: AccountId('acc')),
+      session: Session(
+        id: SessionId('sess'),
+        accountId: AccountId('acc'),
+        startedAt: DateTime.utc(2026, 1, 1),
+      ),
+      families: [
+        Family(
+          id: FamilyId('fam_a'),
+          name: 'A',
+          ownerMemberId: MemberId('mem'),
+        ),
+      ],
+      memberships: [
+        FamilyMembership(
+          id: MemberId('mem'),
+          accountId: AccountId('acc'),
+          familyId: FamilyId('fam_a'),
+          role: AppRole.father,
+          tier: MembershipTier.primary,
+          isPrimaryOwner: true,
+        ),
+      ],
+      activeFamilyId: FamilyId('fam_a'),
+      activeChildScope: ChildScope(
+        familyId: FamilyId('fam_a'),
+        childId: ChildId('old_child'),
+      ),
+      children: [
+        ChildIdentity(id: ChildId('old_child'), familyId: FamilyId('fam_a')),
+      ],
+    );
+    final management = RuntimeChildDeviceManagementRepository(runtime: runtime);
+    await tester.pumpWidget(
+      CurrentIdentity(
+        runtime: runtime,
+        child: MaterialApp(
+          theme: buildFamilyTheme(),
+          locale: const Locale('ar'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: AddChildScreen(
+            managementRepository: management,
+            mockAlias: 'child_new1',
+            onContinue: () {},
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('add_child_name')), 'ولد');
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('add_child_continue')));
+    await tester.pumpAndSettle();
+    expect(
+      runtime.children.any((child) => child.id == ChildId('child_new1')),
+      isTrue,
+    );
   });
 }
 
@@ -143,10 +214,7 @@ Future<void> _pumpAddChild(
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: AddChildScreen(
-        onContinue: onContinue,
-        mockAlias: mockAlias,
-      ),
+      home: AddChildScreen(onContinue: onContinue, mockAlias: mockAlias),
     ),
   );
   await tester.pumpAndSettle();

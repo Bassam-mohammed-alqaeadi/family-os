@@ -1,16 +1,28 @@
+import 'package:family_os/features/education/approved_pack_repository.dart';
 import 'package:family_os/features/n14_studio/preview_approve_models.dart';
 
 /// Rule 25 seam — Stage-1 mock preview/approve content (no AI).
 abstract class PreviewApproveRepository {
   Future<PreviewApproveSnapshot> load();
+
+  /// Persists approved pack for child load (P15-EDU-004 · Rule 7).
+  Future<PreviewApproveSnapshot> approve();
+
+  /// Rejects pack — clears content; child cannot load (P15-EDU-004).
+  Future<PreviewApproveSnapshot> reject();
 }
 
 /// In-memory mock — prototype FAT-044 shape by default.
-final class InMemoryPreviewApproveRepository implements PreviewApproveRepository {
-  InMemoryPreviewApproveRepository({PreviewApproveSnapshot? seed})
-    : _snap = seed ?? previewApprovePrototypeFixture();
+final class InMemoryPreviewApproveRepository
+    implements PreviewApproveRepository {
+  InMemoryPreviewApproveRepository({
+    PreviewApproveSnapshot? seed,
+    ApprovedPackRepository? packs,
+  }) : _snap = seed ?? previewApprovePrototypeFixture(),
+       _packs = packs ?? stage1ApprovedPackRepository;
 
   PreviewApproveSnapshot _snap;
+  final ApprovedPackRepository _packs;
 
   /// Optional gate for loading-state widget tests.
   Future<void> Function()? loadGate;
@@ -19,6 +31,29 @@ final class InMemoryPreviewApproveRepository implements PreviewApproveRepository
   Future<PreviewApproveSnapshot> load() async {
     final gate = loadGate;
     if (gate != null) await gate();
+    return _copy();
+  }
+
+  @override
+  Future<PreviewApproveSnapshot> approve() async {
+    if (!_snap.canApprove) return _copy();
+    await _packs.approve(_snap);
+    _snap = _snap.withApproved();
+    return _copy();
+  }
+
+  @override
+  Future<PreviewApproveSnapshot> reject() async {
+    await _packs.reject();
+    _snap = _snap.withRejected();
+    return _copy();
+  }
+
+  void seed(PreviewApproveSnapshot snap) {
+    _snap = snap;
+  }
+
+  PreviewApproveSnapshot _copy() {
     return PreviewApproveSnapshot(
       quizTitleKey: _snap.quizTitleKey,
       lessonTitleKey: _snap.lessonTitleKey,
@@ -28,11 +63,8 @@ final class InMemoryPreviewApproveRepository implements PreviewApproveRepository
       elapsedSeconds: _snap.elapsedSeconds,
       ruleSeconds: _snap.ruleSeconds,
       rejected: _snap.rejected,
+      approved: _snap.approved,
     );
-  }
-
-  void seed(PreviewApproveSnapshot snap) {
-    _snap = snap;
   }
 }
 

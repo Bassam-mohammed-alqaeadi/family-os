@@ -4,15 +4,22 @@ import 'package:go_router/go_router.dart';
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/banner.dart';
+import 'package:family_os/core/design/components/capability_honesty_badge.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/components/row_tile.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/domain/child_id.dart';
+import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/fs_foundation/capability_status.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/location/safe_zone_definition.dart';
+import 'package:family_os/core/location/zone_geometry.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n01_linking/add_child_screen.dart'
     show toEasternDigits;
+import 'package:family_os/features/n02_day/location_ux_bridge.dart';
 import 'package:family_os/features/n02_day/safe_zones_repository.dart';
 
 /// Widget keys for SCR-FAT-017 acceptance.
@@ -33,10 +40,14 @@ abstract final class CreateSafeZoneKeys {
   static const alertArrival = Key('create_safe_zone_alert_arrival');
   static const alertDeparture = Key('create_safe_zone_alert_departure');
   static const alertNoShow = Key('create_safe_zone_alert_noshow');
+  static const assignSection = Key('create_safe_zone_assign');
+  static const gpsBadge = Key('create_safe_zone_gps_badge');
   static const saveCta = Key('create_safe_zone_save');
   static const appliesNote = Key('create_safe_zone_applies');
   static const sosCta = Key('create_safe_zone_sos');
   static const childLean = Key('create_safe_zone_child_lean');
+
+  static Key childChip(String id) => Key('create_safe_zone_child_$id');
 }
 
 /// SCR-FAT-017 — إنشاء منطقة آمنة (draw / create safe zone).
@@ -51,6 +62,9 @@ class CreateSafeZoneScreen extends StatefulWidget {
     super.key,
     this.childId,
     this.repository,
+    this.domainRepository,
+    this.familyId,
+    this.assignableChildren = const [],
     this.roleOverride,
     this.motherLevel = MotherLevel.partner,
     this.canEditOverride,
@@ -63,8 +77,17 @@ class CreateSafeZoneScreen extends StatefulWidget {
   /// Optional route `?childId=` — forwarded back to FAT-016 list context.
   final String? childId;
 
-  /// Null → [stage1SafeZonesRepository].
+  /// Null → Stage-1 list mirror only when Domain unset; production uses Domain.
   final SafeZonesRepository? repository;
+
+  /// When set (or bootstrapped), persists geometry to FS-001 domain.
+  final DomainSafeZonesRepository? domainRepository;
+
+  /// Family identity for domain save — defaults to demo family.
+  final FamilyId? familyId;
+
+  /// Children available for Q-LOC-12 multi-select.
+  final List<AssignableChild> assignableChildren;
 
   /// Test seam — when set, ignores [CurrentRole].
   final AppRole? roleOverride;
@@ -98,7 +121,10 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
   static const int _defaultRadius = 200;
 
   late final SafeZonesRepository _repo;
+  DomainSafeZonesRepository? _domainRepo;
+  var _bootstrapping = false;
   late final TextEditingController _nameController;
+  late final Set<String> _selectedChildIds;
 
   var _radiusMeters = _defaultRadius;
   Offset? _centerFrac;
@@ -136,7 +162,37 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
   void initState() {
     super.initState();
     _repo = widget.repository ?? stage1SafeZonesRepository;
+    _domainRepo = widget.domainRepository;
     _nameController = TextEditingController();
+    _selectedChildIds = {
+      if (_resolvedChildId != null) _resolvedChildId!,
+      // Single-option list → preselect (still explicit assignment).
+      if (widget.assignableChildren.length == 1)
+        widget.assignableChildren.first.id,
+    };
+    if (widget.repository == null && widget.domainRepository == null) {
+      _bootstrapping = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _bootstrapDomain();
+      });
+    }
+  }
+
+  Future<void> _bootstrapDomain() async {
+    try {
+      await Stage1LocationRuntime.ensureOpen();
+      if (!mounted) return;
+      setState(() {
+        _domainRepo = DomainSafeZonesRepository(
+          domain: Stage1LocationRuntime.store,
+          familyId: widget.familyId ?? const FamilyId('fam_stage1'),
+        );
+        _bootstrapping = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _bootstrapping = false);
+    }
   }
 
   @override
@@ -144,8 +200,9 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
     super.didChangeDependencies();
     if (!_nameSeeded) {
       _nameSeeded = true;
-      _nameController.text =
-          AppLocalizations.of(context).createSafeZoneNameHint;
+      _nameController.text = AppLocalizations.of(
+        context,
+      ).createSafeZoneNameHint;
     }
   }
 
@@ -186,36 +243,86 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
   }
 
   void _showNeedCenter(AppLocalizations l10n) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.createSafeZoneNeedCenter)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.createSafeZoneNeedCenter)));
   }
 
   Future<void> _save(AppLocalizations l10n) async {
-    if (!_canEdit || _saving) return;
+    if (!_canEdit || _saving || _bootstrapping) return;
     if (_centerFrac == null) {
       _showNeedCenter(l10n);
       return;
     }
 
+    // Q-LOC-12=B — explicit assignment required.
+    final assigned = <String>{..._selectedChildIds};
+    if (assigned.isEmpty && widget.assignableChildren.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.createSafeZoneNeedAssignment)),
+      );
+      return;
+    }
+    if (assigned.isEmpty) {
+      final fallback = _resolvedChildId;
+      if (fallback == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.createSafeZoneNeedAssignment)),
+        );
+        return;
+      }
+      assigned.add(fallback);
+    }
+    final assignedList = assigned.toList();
+
     final name = _nameController.text.trim().isEmpty
         ? l10n.createSafeZoneNameHint
         : _nameController.text.trim();
     final meters = _metersLabel(l10n);
-    final id = widget.idFactory?.call() ??
+    final id =
+        widget.idFactory?.call() ??
         'z_${DateTime.now().millisecondsSinceEpoch}';
     final alertsOn = _alertArrival || _alertDeparture || _alertNoShow;
+    final now = DateTime.now().toUtc();
+    final center = DecorativeMapProjection.fromFraction(
+      _centerFrac!.dx,
+      _centerFrac!.dy,
+    );
 
     setState(() => _saving = true);
-    await _repo.add(
-      SafeZone(
-        id: id,
-        emoji: '🥋',
-        name: name,
-        description: l10n.createSafeZoneRadiusDesc(meters),
-        alertsEnabled: alertsOn,
-      ),
-    );
+
+    final domainRepo = _domainRepo ?? widget.domainRepository;
+    if (domainRepo != null) {
+      await domainRepo.saveDefinition(
+        SafeZoneDefinition(
+          id: id,
+          familyId: widget.familyId ?? FamilyId('fam_stage1'),
+          name: name,
+          emoji: '🥋',
+          geometry: CircleGeometry(
+            center: center,
+            radiusMeters: _radiusMeters.toDouble(),
+          ),
+          assignedChildIds: [for (final c in assignedList) ChildId(c)],
+          alertEnter: _alertArrival,
+          alertExit: _alertDeparture,
+          alertNoShow: _alertNoShow,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+    } else {
+      await _repo.add(
+        SafeZone(
+          id: id,
+          emoji: '🥋',
+          name: name,
+          description: l10n.createSafeZoneRadiusDesc(meters),
+          alertsEnabled: alertsOn,
+          assignedChildIds: assignedList,
+        ),
+      );
+    }
     if (!mounted) return;
     setState(() => _saving = false);
 
@@ -300,6 +407,33 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
             variant: BannerVariant.t,
             message: l10n.createSafeZoneHonestyBanner,
           ),
+          const SizedBox(height: 8),
+          BannerNote(
+            variant: BannerVariant.a,
+            message: l10n.locationGpsNotImplementedBanner,
+          ),
+          const SizedBox(height: 6),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.locationGpsCapabilityLabel,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: colors.ink2,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const CapabilityHonestyBadge(
+                  key: CreateSafeZoneKeys.gpsBadge,
+                  status: CapabilityStatus.notImplemented,
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 10),
           BannerNote(
             key: CreateSafeZoneKeys.drawBanner,
@@ -356,9 +490,8 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
               divisions: (_maxRadius - _minRadius) ~/ _radiusStep,
               onChanged: _canEdit
                   ? (v) => setState(() {
-                        _radiusMeters =
-                            (v / _radiusStep).round() * _radiusStep;
-                      })
+                      _radiusMeters = (v / _radiusStep).round() * _radiusStep;
+                    })
                   : null,
               activeColor: colors.mint,
             ),
@@ -384,6 +517,51 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
             onDeparture: (v) => setState(() => _alertDeparture = v),
             onNoShow: (v) => setState(() => _alertNoShow = v),
           ),
+          if (widget.assignableChildren.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Text(
+              key: CreateSafeZoneKeys.assignSection,
+              l10n.createSafeZoneAssignHeading,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: colors.ink,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              l10n.createSafeZoneAssignHint,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: colors.ink2,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final c in widget.assignableChildren)
+                  FilterChip(
+                    key: CreateSafeZoneKeys.childChip(c.id),
+                    label: Text(c.label),
+                    selected: _selectedChildIds.contains(c.id),
+                    onSelected: !_canEdit
+                        ? null
+                        : (selected) {
+                            setState(() {
+                              if (selected) {
+                                _selectedChildIds.add(c.id);
+                              } else {
+                                _selectedChildIds.remove(c.id);
+                              }
+                            });
+                          },
+                  ),
+              ],
+            ),
+          ],
           const SizedBox(height: 16),
           PrimaryBtn(
             key: CreateSafeZoneKeys.saveCta,
@@ -472,8 +650,7 @@ class _DrawMap extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(99),
                                   boxShadow: [
                                     BoxShadow(
-                                      color:
-                                          colors.ink.withValues(alpha: 0.12),
+                                      color: colors.ink.withValues(alpha: 0.12),
                                       blurRadius: 8,
                                       offset: const Offset(0, 2),
                                     ),
@@ -690,7 +867,8 @@ class _LandmarkBlock extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          if (emoji.isNotEmpty) Text(emoji, style: const TextStyle(fontSize: 16)),
+          if (emoji.isNotEmpty)
+            Text(emoji, style: const TextStyle(fontSize: 16)),
           if (label.isNotEmpty)
             Text(
               label,

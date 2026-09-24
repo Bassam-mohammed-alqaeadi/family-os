@@ -4,10 +4,14 @@ import 'package:go_router/go_router.dart';
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/app_error_state.dart';
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/identity/child_device_management_repository.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n01_linking/add_child_screen.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
@@ -39,6 +43,7 @@ class ChildrenListScreen extends StatefulWidget {
   const ChildrenListScreen({
     super.key,
     this.repository,
+    this.managementRepository,
     this.roleOverride,
     this.onAddChild,
     this.onOpenChildProfile,
@@ -46,6 +51,7 @@ class ChildrenListScreen extends StatefulWidget {
 
   /// Null → [stage1ChildrenListRepository].
   final ChildrenListRepository? repository;
+  final ChildDeviceManagementRepository? managementRepository;
 
   /// Test seam — when set, ignores [CurrentRole].
   final AppRole? roleOverride;
@@ -62,6 +68,7 @@ class ChildrenListScreen extends StatefulWidget {
 
 class ChildrenListScreenState extends State<ChildrenListScreen> {
   late final ChildrenListRepository _repo;
+  late final ChildDeviceManagementRepository _managementRepo;
   var _loading = true;
   var _loadFailed = false;
   List<ChildrenListEntry> _children = const [];
@@ -75,11 +82,28 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
   bool get _isParent => _role == AppRole.father || _role == AppRole.mother;
 
   bool get _canEditShared => _role == AppRole.father;
+  bool get _canCreateChild {
+    final runtime = CurrentIdentity.maybeOf(context);
+    if (runtime == null) return _role == AppRole.father;
+    return _managementRepo
+        .capabilitiesFor(runtime.activeFamilyId)
+        .canCreateChild;
+  }
+
+  bool get _canDeleteChild {
+    final runtime = CurrentIdentity.maybeOf(context);
+    if (runtime == null) return _role == AppRole.father;
+    return _managementRepo
+        .capabilitiesFor(runtime.activeFamilyId)
+        .canDeleteChild;
+  }
 
   @override
   void initState() {
     super.initState();
     _repo = widget.repository ?? stage1ChildrenListRepository;
+    _managementRepo =
+        widget.managementRepository ?? stage1ChildDeviceManagementRepository;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _load();
@@ -92,11 +116,16 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
       _loadFailed = false;
     });
     try {
-      final kids = await _repo.listChildren();
+      final familyId = CurrentIdentity.maybeOf(context)?.activeFamilyId;
+      final kids = await _repo.listChildren(familyId: familyId);
+      final managed = familyId == null
+          ? const <ManagedChildRecord>[]
+          : _managementRepo.listChildren(familyId);
+      final merged = _mergeChildren(kids, managed);
       final policies = await _repo.loadSharedPolicies();
       if (!mounted) return;
       setState(() {
-        _children = kids;
+        _children = merged;
         _policies = policies;
         _loading = false;
         _loadFailed = false;
@@ -111,7 +140,45 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
     }
   }
 
+  List<ChildrenListEntry> _mergeChildren(
+    List<ChildrenListEntry> fromRepo,
+    List<ManagedChildRecord> managed,
+  ) {
+    if (managed.isEmpty) return fromRepo;
+    final byId = <String, ChildrenListEntry>{
+      for (final item in fromRepo) item.id: item,
+    };
+    final next = <ChildrenListEntry>[];
+    for (final child in managed) {
+      final record = byId[child.childId.value];
+      if (record != null) {
+        next.add(record);
+        continue;
+      }
+      next.add(
+        ChildrenListEntry(
+          id: child.childId.value,
+          displayName: child.childId.value,
+          emoji: '🧒',
+          swatch: DayChildSwatch.purple,
+          ageYears: 0,
+          locationLabel: '',
+          lastSeenLabel: '',
+          batteryLabel: '',
+          timeLeftLabel: '',
+          health: ChildListHealth.excellent,
+        ),
+      );
+    }
+    return next;
+  }
+
   void _goAddChild() {
+    if (!_canCreateChild) {
+      final l10n = AppLocalizations.of(context);
+      AppToast.show(context, message: l10n.childScreenTimeReadOnly);
+      return;
+    }
     if (widget.onAddChild != null) {
       widget.onAddChild!();
       return;
@@ -124,9 +191,23 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
       widget.onOpenChildProfile!(childId);
       return;
     }
-    context.push(
-      '/scr-fat-013?childId=${Uri.encodeComponent(childId)}',
+    context.push('/scr-fat-013?childId=${Uri.encodeComponent(childId)}');
+  }
+
+  Future<void> _deleteChild(String childId) async {
+    if (!_canDeleteChild) {
+      final l10n = AppLocalizations.of(context);
+      AppToast.show(context, message: l10n.childScreenTimeReadOnly);
+      return;
+    }
+    final runtime = CurrentIdentity.maybeOf(context);
+    if (runtime == null) return;
+    final ok = _managementRepo.deleteChild(
+      familyId: runtime.activeFamilyId,
+      childId: ChildId(childId),
     );
+    if (!ok) return;
+    await _load();
   }
 
   Future<void> _openSharedPolicies() async {
@@ -200,8 +281,8 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
                                 : PrimaryBtnVariant.sec,
                             onPressed: _canEditShared
                                 ? () => setSheet(() {
-                                      draft = draft.copyWith(scopeAll: true);
-                                    })
+                                    draft = draft.copyWith(scopeAll: true);
+                                  })
                                 : null,
                           ),
                         ),
@@ -214,8 +295,8 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
                                 : PrimaryBtnVariant.sec,
                             onPressed: _canEditShared
                                 ? () => setSheet(() {
-                                      draft = draft.copyWith(scopeAll: false);
-                                    })
+                                    draft = draft.copyWith(scopeAll: false);
+                                  })
                                 : null,
                           ),
                         ),
@@ -230,8 +311,7 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
                           for (final kid in _children)
                             FilterChip(
                               label: Text(kid.displayName),
-                              selected:
-                                  draft.selectedChildIds.contains(kid.id),
+                              selected: draft.selectedChildIds.contains(kid.id),
                               onSelected: _canEditShared
                                   ? (selected) {
                                       setSheet(() {
@@ -294,8 +374,8 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
                         value: draft.webFilterOn,
                         onChanged: _canEditShared
                             ? (v) => setSheet(() {
-                                  draft = draft.copyWith(webFilterOn: v);
-                                })
+                                draft = draft.copyWith(webFilterOn: v);
+                              })
                             : null,
                       ),
                     ),
@@ -388,155 +468,141 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
               message: l10n.childrenListChildLeanMessage,
             )
           : _loading
-              ? Center(
-                  key: ChildrenListKeys.loading,
-                  child: Semantics(
-                    label: l10n.childrenListLoadingSemantics,
-                    child: const CircularProgressIndicator(),
-                  ),
-                )
-              : _loadFailed
-                  ? AppErrorState(
-                      key: ChildrenListKeys.error,
-                      kind: AppErrorKind.network,
-                      onRetry: _load,
-                    )
-                  : _children.isEmpty
-                      ? AppEmptyState(
-                          key: ChildrenListKeys.empty,
-                          title: l10n.childrenListEmptyTitle,
-                          message: l10n.childrenListEmptyMessage,
-                          actionLabel: l10n.childrenListAddChild,
-                          onAction: _goAddChild,
-                        )
-                      : ListView(
-                          key: ChildrenListKeys.list,
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                          children: [
-                            Align(
-                              alignment: AlignmentDirectional.centerEnd,
-                              child: ConstrainedBox(
-                                constraints: const BoxConstraints(
-                                  minHeight: 48,
-                                ),
-                                child: TextButton(
-                                  key: ChildrenListKeys.addChild,
-                                  onPressed: _goAddChild,
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: colors.tealDeep,
-                                    backgroundColor: colors.teal100,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 10,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        radii.btn,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    l10n.childrenListAddChild,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Semantics(
-                              container: true,
-                              label: l10n.childrenListListSemantics,
-                              child: Column(
-                                children: [
-                                  for (final kid in _children) ...[
-                                    _ChildRosterCard(
-                                      entry: kid,
-                                      onTap: () => _goProfile(kid.id),
-                                    ),
-                                    const SizedBox(height: 10),
-                                  ],
-                                ],
-                              ),
-                            ),
-                            Semantics(
-                              button: true,
-                              label: l10n.childrenListSharedPoliciesTitle,
-                              child: Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  key: ChildrenListKeys.sharedPoliciesCard,
-                                  onTap: _openSharedPolicies,
-                                  borderRadius: BorderRadius.circular(
-                                    radii.card,
-                                  ),
-                                  child: Ink(
-                                    decoration: BoxDecoration(
-                                      color: colors.surface,
-                                      borderRadius: BorderRadius.circular(
-                                        radii.card,
-                                      ),
-                                      border: Border.all(
-                                        color: colors.p400,
-                                        width: 1.5,
-                                      ),
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 14,
-                                        vertical: 12,
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.settings_outlined,
-                                            color: colors.p600,
-                                            size: 22,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  l10n
-                                                      .childrenListSharedPoliciesTitle,
-                                                  style: TextStyle(
-                                                    fontSize: 13.5,
-                                                    fontWeight: FontWeight.w800,
-                                                    color: colors.ink,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 2),
-                                                Text(
-                                                  l10n
-                                                      .childrenListSharedPoliciesSubtitle,
-                                                  style: TextStyle(
-                                                    fontSize: 11.5,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: colors.ink2,
-                                                    height: 1.45,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          Icon(
-                                            Icons.chevron_left,
-                                            color: colors.ink2,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+          ? Center(
+              key: ChildrenListKeys.loading,
+              child: Semantics(
+                label: l10n.childrenListLoadingSemantics,
+                child: const CircularProgressIndicator(),
+              ),
+            )
+          : _loadFailed
+          ? AppErrorState(
+              key: ChildrenListKeys.error,
+              kind: AppErrorKind.network,
+              onRetry: _load,
+            )
+          : _children.isEmpty
+          ? AppEmptyState(
+              key: ChildrenListKeys.empty,
+              title: l10n.childrenListEmptyTitle,
+              message: l10n.childrenListEmptyMessage,
+              actionLabel: l10n.childrenListAddChild,
+              onAction: _goAddChild,
+            )
+          : ListView(
+              key: ChildrenListKeys.list,
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              children: [
+                Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 48),
+                    child: TextButton(
+                      key: ChildrenListKeys.addChild,
+                      onPressed: _goAddChild,
+                      style: TextButton.styleFrom(
+                        foregroundColor: colors.tealDeep,
+                        backgroundColor: colors.teal100,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
                         ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(radii.btn),
+                        ),
+                      ),
+                      child: Text(
+                        l10n.childrenListAddChild,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Semantics(
+                  container: true,
+                  label: l10n.childrenListListSemantics,
+                  child: Column(
+                    children: [
+                      for (final kid in _children) ...[
+                        _ChildRosterCard(
+                          entry: kid,
+                          onTap: () => _goProfile(kid.id),
+                          onDelete: _canDeleteChild
+                              ? () => _deleteChild(kid.id)
+                              : null,
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+                    ],
+                  ),
+                ),
+                Semantics(
+                  button: true,
+                  label: l10n.childrenListSharedPoliciesTitle,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      key: ChildrenListKeys.sharedPoliciesCard,
+                      onTap: _openSharedPolicies,
+                      borderRadius: BorderRadius.circular(radii.card),
+                      child: Ink(
+                        decoration: BoxDecoration(
+                          color: colors.surface,
+                          borderRadius: BorderRadius.circular(radii.card),
+                          border: Border.all(color: colors.p400, width: 1.5),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.settings_outlined,
+                                color: colors.p600,
+                                size: 22,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      l10n.childrenListSharedPoliciesTitle,
+                                      style: TextStyle(
+                                        fontSize: 13.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: colors.ink,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      l10n.childrenListSharedPoliciesSubtitle,
+                                      style: TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: colors.ink2,
+                                        height: 1.45,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(Icons.chevron_left, color: colors.ink2),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
     );
   }
 }
@@ -597,10 +663,12 @@ class _ChildRosterCard extends StatelessWidget {
   const _ChildRosterCard({
     required this.entry,
     required this.onTap,
+    this.onDelete,
   });
 
   final ChildrenListEntry entry;
   final VoidCallback onTap;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -637,9 +705,7 @@ class _ChildRosterCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: colors.surface,
               borderRadius: BorderRadius.circular(radii.card),
-              boxShadow: [
-                Theme.of(context).extension<FamilyShadows>()!.shCard,
-              ],
+              boxShadow: [Theme.of(context).extension<FamilyShadows>()!.shCard],
             ),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -689,6 +755,11 @@ class _ChildRosterCard extends StatelessWidget {
                       ],
                     ),
                   ),
+                  if (onDelete != null)
+                    IconButton(
+                      onPressed: onDelete,
+                      icon: const Icon(Icons.delete_outline),
+                    ),
                   const SizedBox(width: 8),
                   Tag(label: healthLabel, variant: healthVariant),
                 ],
@@ -703,10 +774,10 @@ class _ChildRosterCard extends StatelessWidget {
 
 extension on ChildrenListEntry {
   Color resolveColor(FamilyColors colors) => switch (swatch) {
-        DayChildSwatch.purple => colors.p500,
-        DayChildSwatch.sky => colors.sky,
-        DayChildSwatch.amber => colors.amber,
-      };
+    DayChildSwatch.purple => colors.p500,
+    DayChildSwatch.sky => colors.sky,
+    DayChildSwatch.amber => colors.amber,
+  };
 }
 
 class _StatusAvatar extends StatelessWidget {
@@ -734,13 +805,8 @@ class _StatusAvatar extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(2),
       child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-        ),
-        child: Center(
-          child: Text(emoji, style: const TextStyle(fontSize: 22)),
-        ),
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        child: Center(child: Text(emoji, style: const TextStyle(fontSize: 22))),
       ),
     );
   }
