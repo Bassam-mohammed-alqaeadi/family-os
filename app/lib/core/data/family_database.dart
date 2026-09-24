@@ -237,6 +237,55 @@ class GeofenceEventKindConverter
   String toSql(GeofenceEventKind value) => _toDb[value]!;
 }
 
+/// Contract `conv_kind` — a family circle, a direct line, or a subgroup.
+enum ConvKind { family, direct, subgroup }
+
+class ConvKindConverter extends TypeConverter<ConvKind, String> {
+  const ConvKindConverter();
+
+  static const Map<ConvKind, String> _toDb = {
+    ConvKind.family: 'FAMILY',
+    ConvKind.direct: 'DIRECT',
+    ConvKind.subgroup: 'SUBGROUP',
+  };
+
+  @override
+  ConvKind fromSql(String fromDb) => _toDb.entries
+      .firstWhere(
+        (e) => e.value == fromDb,
+        orElse: () => const MapEntry(ConvKind.family, 'FAMILY'),
+      )
+      .key;
+
+  @override
+  String toSql(ConvKind value) => _toDb[value]!;
+}
+
+/// Contract `ai_confidence` — "يغذّي ختم العقل": the confidence is shown to the
+/// parent, so it is a stored fact and never an implied one.
+enum AiConfidence { confirmed, analysis, preliminary }
+
+class AiConfidenceConverter extends TypeConverter<AiConfidence, String> {
+  const AiConfidenceConverter();
+
+  static const Map<AiConfidence, String> _toDb = {
+    AiConfidence.confirmed: 'CONFIRMED',
+    AiConfidence.analysis: 'ANALYSIS',
+    AiConfidence.preliminary: 'PRELIMINARY',
+  };
+
+  @override
+  AiConfidence fromSql(String fromDb) => _toDb.entries
+      .firstWhere(
+        (e) => e.value == fromDb,
+        orElse: () => const MapEntry(AiConfidence.preliminary, 'PRELIMINARY'),
+      )
+      .key;
+
+  @override
+  String toSql(AiConfidence value) => _toDb[value]!;
+}
+
 /// `prune_locations()` — "تُقلَّم تلقائيًا بعد ٩٠ يومًا".
 const int kLocationRetentionDays = 90;
 
@@ -515,6 +564,133 @@ class SosAlerts extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// Contract `conversation` — a family circle, a direct line, or a subgroup.
+/// `approvedBy` is NOT NULL there, so the closed circle is structural: no
+/// conversation exists that a parent did not open (Rule 12).
+class Conversations extends Table {
+  @override
+  String get tableName => 'conversation';
+
+  TextColumn get id => text()();
+  TextColumn get familyId => text()();
+  TextColumn get kind => text().map(const ConvKindConverter())();
+  TextColumn get title => text().nullable()();
+  TextColumn get approvedBy => text()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Contract `message` — the body is `ciphertext`, and that is all the store ever
+/// sees. The server holds no key; neither does this database. `senderAccount`
+/// XOR `senderChild` is the contract's `one_sender` CHECK, enforced on write in
+/// `DriftCommunicationRepository`.
+///
+/// There is no hard delete: "حذف للجميع" (S-COM-007) writes `deletedAt` and
+/// leaves the row, so a reply that points at it still resolves.
+class Messages extends Table {
+  @override
+  String get tableName => 'message';
+
+  TextColumn get id => text()();
+  TextColumn get conversationId => text()();
+  TextColumn get senderAccount => text().nullable()();
+  TextColumn get senderChild => text().nullable()();
+
+  /// `bytea` in the contract — bytes in, bytes out, never a String.
+  BlobColumn get ciphertext => blob()();
+  TextColumn get replyTo => text().nullable()();
+  DateTimeColumn get sentAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get editedAt => dateTime().nullable()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
+  TextColumn get requestId => text().unique()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Contract `call_log` — "⛔ عمدًا: لا تسجيل صوت ولا فيديو". There is no column
+/// that could hold a recording, and that absence is the design.
+class CallLogs extends Table {
+  @override
+  String get tableName => 'call_log';
+
+  TextColumn get id => text()();
+  TextColumn get familyId => text()();
+  DateTimeColumn get startedAt => dateTime()();
+  IntColumn get durationS => integer().nullable()();
+  TextColumn get kind => text()();
+  TextColumn get outcome => text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Contract `ai_event` — keyed by `childAlias`, never by name and never by child
+/// id. `payload` is a `jsonb` excerpt there ("مقتطف لا أرشيف", S-AIC-006); here
+/// it is text holding that JSON, with the excerpt rule enforced as a length.
+class AiEvents extends Table {
+  @override
+  String get tableName => 'ai_event';
+
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get familyId => text()();
+  TextColumn get childAlias => text()();
+  TextColumn get domain => text()();
+  TextColumn get kind => text()();
+  IntColumn get severity => integer()();
+  TextColumn get payload => text().withDefault(const Constant('{}'))();
+  DateTimeColumn get occurredAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+/// Contract `ai_suggestion` — the parent inbox, one action per row ("زر واحد
+/// فقط"), with `undoneAt` carrying the ten-minute undo.
+///
+/// Named `AiSuggestionRow` because `core/policy/advisor_repository.dart` already
+/// owns an `AiSuggestion` value type — two different things should not share a
+/// name inside one library.
+@DataClassName('AiSuggestionRow')
+class AiSuggestions extends Table {
+  @override
+  String get tableName => 'ai_suggestion';
+
+  TextColumn get id => text()();
+  TextColumn get familyId => text()();
+  TextColumn get childAlias => text().nullable()();
+  TextColumn get headline => text()();
+  TextColumn get actionLabel => text()();
+  TextColumn get actionKind => text()();
+  TextColumn get confidence => text().map(const AiConfidenceConverter())();
+  IntColumn get confidencePct => integer().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get appliedAt => dateTime().nullable()();
+  DateTimeColumn get undoneAt => dateTime().nullable()();
+  DateTimeColumn get dismissedAt => dateTime().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Contract `audit_log` — "🔒 append-only — دليلنا عند أي مراجعة". The contract
+/// enforces that with a database trigger; on device there is no mutation path at
+/// all, and `DriftAuditRepository` refuses both verbs explicitly so the rule is
+/// executable rather than merely implied.
+///
+/// `actor` NULL means automatic — the system acted, no person did.
+class AuditLogs extends Table {
+  @override
+  String get tableName => 'audit_log';
+
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get familyId => text()();
+  TextColumn get actor => text().nullable()();
+  TextColumn get action => text()();
+  TextColumn get target => text().nullable()();
+  TextColumn get detail => text().withDefault(const Constant('{}'))();
+  DateTimeColumn get occurredAt => dateTime().withDefault(currentDateAndTime)();
+}
+
 @DriftDatabase(
   tables: [
     Accounts,
@@ -531,15 +707,22 @@ class SosAlerts extends Table {
     GeofenceSchedules,
     GeofenceEvents,
     SosAlerts,
+    Conversations,
+    Messages,
+    CallLogs,
+    AiEvents,
+    AiSuggestions,
+    AuditLogs,
   ],
 )
 class FamilyDatabase extends _$FamilyDatabase {
   FamilyDatabase(super.e);
 
   /// v1 = identity core (PERS-2a) · v2 = devices + permissions (PERS-2b)
-  /// · v3 = location + geofence + emergency (PERS-2c, ADR-051).
+  /// · v3 = location + geofence + emergency (PERS-2c, ADR-051)
+  /// · v4 = communication + AI + audit (PERS-2d, ADR-052).
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -558,6 +741,14 @@ class FamilyDatabase extends _$FamilyDatabase {
             await m.createTable(geofenceSchedules);
             await m.createTable(geofenceEvents);
             await m.createTable(sosAlerts);
+          }
+          if (from < 4) {
+            await m.createTable(conversations);
+            await m.createTable(messages);
+            await m.createTable(callLogs);
+            await m.createTable(aiEvents);
+            await m.createTable(aiSuggestions);
+            await m.createTable(auditLogs);
           }
         },
       );
