@@ -7,6 +7,8 @@ import 'package:family_os/core/data/device_repository.dart';
 import 'package:family_os/core/data/family_database.dart';
 import 'package:family_os/core/data/permission_repository.dart';
 import 'package:family_os/features/n12_devices/device_health_seam.dart';
+import 'package:family_os/features/n12_devices/family_members_drift_repository.dart';
+import 'package:family_os/features/n12_devices/family_members_repository.dart';
 
 /// Stage-2 composition root for the devices domain (SCR-FAT-025/026).
 ///
@@ -53,6 +55,10 @@ final class Stage1DevicesRuntime {
 
   /// The shared seam the device screens bind to.
   static DeviceHealthSeam get seam => _require(_seam, 'seam');
+
+  /// DEV-2 — the roster seam over `member` + `account` + `child`.
+  static FamilyMembersRepository members({String? selfAccountId}) =>
+      DriftFamilyMembersRepository(db, selfAccountId: selfAccountId);
 
   static T _require<T>(T? value, String what) {
     if (value == null) {
