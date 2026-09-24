@@ -41,8 +41,8 @@ class TimeExpiryScreen extends StatefulWidget {
     this.onQuran,
     this.onSos,
     this.onEntertainment,
-  })  : childId = childId ?? ChildId('demo-child'),
-        policy = policy ?? TimeExpirySurface.exhaustedPolicy();
+  }) : childId = childId ?? ChildId('demo-child'),
+       policy = policy ?? TimeExpirySurface.exhaustedPolicy();
 
   final ChildId childId;
 
@@ -73,13 +73,16 @@ class _TimeExpiryScreenState extends State<TimeExpiryScreen> {
   bool get _entertainmentExpired => widget.policy.isCapExhausted;
 
   AppAccess get _entertainmentAccess => TimeExpirySurface.entertainmentAccess(
-        childId: widget.childId,
-        policy: widget.policy,
-      );
+    childId: widget.childId,
+    policy: widget.policy,
+  );
 
   bool get _chatEnabled =>
       TimeExpirySurface.chatUsable(availability: widget.chatAvailability) &&
-      TimeExpirySurface.isReachable('chat', entertainmentExpired: _entertainmentExpired);
+      TimeExpirySurface.isReachable(
+        'chat',
+        entertainmentExpired: _entertainmentExpired,
+      );
 
   bool get _quranEnabled {
     final access = TimeExpirySurface.quranAccess(
@@ -101,9 +104,9 @@ class _TimeExpiryScreenState extends State<TimeExpiryScreen> {
       );
 
   bool get _sosEnabled => TimeExpirySurface.isReachable(
-        'sos',
-        entertainmentExpired: _entertainmentExpired,
-      );
+    'sos',
+    entertainmentExpired: _entertainmentExpired,
+  );
 
   void _openChat() {
     if (!_chatEnabled) return;
@@ -170,26 +173,24 @@ class _TimeExpiryScreenState extends State<TimeExpiryScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
           children: [
-            const Center(
-              child: Text('🌙', style: TextStyle(fontSize: 52)),
-            ),
+            const Center(child: Text('🌙', style: TextStyle(fontSize: 52))),
             const SizedBox(height: 8),
             Text(
               l10n.timeExpiryHeadline,
               key: TimeExpiryKeys.headline,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: colors.ink,
-                    fontWeight: FontWeight.w800,
-                  ),
+                color: colors.ink,
+                fontWeight: FontWeight.w800,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               l10n.timeExpiryBody,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colors.ink2,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: colors.ink2),
             ),
             const SizedBox(height: 16),
             BannerNote(
@@ -224,9 +225,9 @@ class _TimeExpiryScreenState extends State<TimeExpiryScreen> {
                     Text(
                       l10n.timeExpiryStillAvailable,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            color: colors.ink,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        color: colors.ink,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     _ExpiryCtaRow(

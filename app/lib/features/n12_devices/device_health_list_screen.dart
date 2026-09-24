@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n12_devices/device_health_seam.dart';
 
@@ -12,8 +13,11 @@ import 'package:family_os/features/n12_devices/device_health_seam.dart';
 abstract final class DeviceHealthListKeys {
   static const screen = Key('device_health_list_screen');
   static const devicesSection = Key('device_health_devices_section');
+  static const manageEnrollment = Key('device_health_manage_enrollment');
   static Key deviceCard(String deviceId) => Key('device_health_card_$deviceId');
   static Key healthTag(String deviceId) => Key('device_health_tag_$deviceId');
+  static Key manageEnrollmentFor(String childId) =>
+      Key('device_health_manage_enrollment_$childId');
 }
 
 /// Devices health panel embedded on SCR-FAT-025 settings hub (UI-012).
@@ -26,6 +30,7 @@ class DeviceHealthDevicesSection extends StatefulWidget {
     super.key,
     this.healthSeam,
     this.onOpenDevice,
+    this.onManageEnrollment,
   });
 
   /// Injectable — null → [stage1DeviceHealthSeam].
@@ -33,6 +38,9 @@ class DeviceHealthDevicesSection extends StatefulWidget {
 
   /// Test / host seam — default pushes `/scr-fat-026?deviceId=…`.
   final void Function(String deviceId)? onOpenDevice;
+
+  /// Opens child profile enrollment authority (not health controls).
+  final void Function(String childId)? onManageEnrollment;
 
   @override
   State<DeviceHealthDevicesSection> createState() =>
@@ -43,6 +51,7 @@ class _DeviceHealthDevicesSectionState
     extends State<DeviceHealthDevicesSection> {
   late final DeviceHealthSeam _seam;
   StreamSubscription<List<DeviceHealthSnapshot>>? _sub;
+  String? _subscribedFamilyId;
   List<DeviceHealthSnapshot> _devices = const [];
   var _loading = true;
 
@@ -50,7 +59,17 @@ class _DeviceHealthDevicesSectionState
   void initState() {
     super.initState();
     _seam = widget.healthSeam ?? stage1DeviceHealthSeam;
-    _sub = _seam.watchDevices().listen((list) {
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final familyId =
+        CurrentIdentity.maybeOf(context)?.activeFamilyId.value ?? 'fam_stage1';
+    if (_subscribedFamilyId == familyId && _sub != null) return;
+    _subscribedFamilyId = familyId;
+    _sub?.cancel();
+    _sub = _seam.watchDevices(familyId: familyId).listen((list) {
       if (!mounted) return;
       setState(() {
         _devices = list;
@@ -73,6 +92,14 @@ class _DeviceHealthDevicesSectionState
     context.push('/scr-fat-026?deviceId=${Uri.encodeComponent(deviceId)}');
   }
 
+  void _openEnrollment(String childId) {
+    if (widget.onManageEnrollment != null) {
+      widget.onManageEnrollment!(childId);
+      return;
+    }
+    context.push('/scr-fat-013?childId=${Uri.encodeComponent(childId)}');
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -85,6 +112,11 @@ class _DeviceHealthDevicesSectionState
         child: Center(child: CircularProgressIndicator()),
       );
     }
+
+    final childIds = <String>{
+      for (final d in _devices)
+        if (d.childId.trim().isNotEmpty) d.childId,
+    }.toList(growable: false);
 
     return DecoratedBox(
       key: DeviceHealthListKeys.devicesSection,
@@ -134,6 +166,28 @@ class _DeviceHealthDevicesSectionState
                 onTap: () => _openDetail(d.deviceId),
               ),
             ],
+            if (childIds.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                key: DeviceHealthListKeys.manageEnrollment,
+                l10n.deviceHealthManageEnrollmentSub,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: colors.ink2,
+                  height: 1.4,
+                ),
+              ),
+              for (final childId in childIds)
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: TextButton(
+                    key: DeviceHealthListKeys.manageEnrollmentFor(childId),
+                    onPressed: () => _openEnrollment(childId),
+                    child: Text(l10n.deviceHealthManageEnrollment),
+                  ),
+                ),
+            ],
           ],
         ),
       ),
@@ -142,10 +196,7 @@ class _DeviceHealthDevicesSectionState
 }
 
 class _DeviceHealthCard extends StatelessWidget {
-  const _DeviceHealthCard({
-    required this.snapshot,
-    required this.onTap,
-  });
+  const _DeviceHealthCard({required this.snapshot, required this.onTap});
 
   final DeviceHealthSnapshot snapshot;
   final VoidCallback onTap;
@@ -156,20 +207,20 @@ class _DeviceHealthCard extends StatelessWidget {
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final (tagLabel, tagVariant, accent) = switch (snapshot.level) {
       DeviceHealthLevel.healthy => (
-          l10n.deviceHealthStatusHealthy,
-          TagVariant.g,
-          colors.mint,
-        ),
+        l10n.deviceHealthStatusHealthy,
+        TagVariant.g,
+        colors.mint,
+      ),
       DeviceHealthLevel.atRisk => (
-          l10n.deviceHealthStatusAtRisk,
-          TagVariant.a,
-          colors.amber,
-        ),
+        l10n.deviceHealthStatusAtRisk,
+        TagVariant.a,
+        colors.amber,
+      ),
       DeviceHealthLevel.offline => (
-          l10n.deviceHealthStatusOffline,
-          TagVariant.t,
-          colors.ink2,
-        ),
+        l10n.deviceHealthStatusOffline,
+        TagVariant.t,
+        colors.ink2,
+      ),
     };
 
     final meta = <String>[

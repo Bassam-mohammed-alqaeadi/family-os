@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
 
 /// Device / link health chip on SCR-FAT-012 (prototype `.tag g|a`).
@@ -75,7 +76,7 @@ final class SharedChildrenPolicies {
 
 /// Rule 25 seam — children roster for SCR-FAT-012 (Drift later).
 abstract class ChildrenListRepository {
-  Future<List<ChildrenListEntry>> listChildren();
+  Future<List<ChildrenListEntry>> listChildren({FamilyId? familyId});
 
   Future<SharedChildrenPolicies> loadSharedPolicies();
 
@@ -86,24 +87,43 @@ abstract class ChildrenListRepository {
 final class InMemoryChildrenListRepository implements ChildrenListRepository {
   InMemoryChildrenListRepository({
     List<ChildrenListEntry> children = const [],
+    Map<String, List<ChildrenListEntry>> byFamily = const {},
     SharedChildrenPolicies policies = const SharedChildrenPolicies(),
     this.failLoad = false,
-  })  : _children = List.of(children),
-        _policies = policies;
+  }) : _children = List.of(children),
+       _byFamily = {
+         for (final entry in byFamily.entries) entry.key: List.of(entry.value),
+       },
+       _policies = policies;
 
   List<ChildrenListEntry> _children;
+  final Map<String, List<ChildrenListEntry>> _byFamily;
   SharedChildrenPolicies _policies;
 
   /// Test seam — next [listChildren] throws.
   bool failLoad;
 
   void seed(List<ChildrenListEntry> children) => _children = List.of(children);
+  void seedFamily(FamilyId familyId, List<ChildrenListEntry> children) {
+    _byFamily[familyId.value] = List.of(children);
+  }
 
   @override
-  Future<List<ChildrenListEntry>> listChildren() async {
+  Future<List<ChildrenListEntry>> listChildren({FamilyId? familyId}) async {
     if (failLoad) {
       throw StateError('mock children list load failure');
     }
+    if (familyId != null) {
+      final scoped = _byFamily[familyId.value];
+      if (scoped != null) return List.unmodifiable(scoped);
+      return List.unmodifiable(
+        _children
+            .where((child) => child.id.startsWith('${familyId.value}::'))
+            .toList(),
+      );
+    }
+    // Stage-1 shim: unscoped seed for gallery/tests without CurrentIdentity.
+    // Production callers always pass activeFamilyId.
     return List.unmodifiable(_children);
   }
 

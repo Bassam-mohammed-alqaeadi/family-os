@@ -9,6 +9,7 @@ final class SafeZone {
     required this.name,
     required this.description,
     this.alertsEnabled = true,
+    this.assignedChildIds = const [],
   });
 
   final String id;
@@ -17,12 +18,16 @@ final class SafeZone {
   final String description;
   final bool alertsEnabled;
 
+  /// Explicit assignment list (Q-LOC-12=B) — empty on legacy Stage-1 rows.
+  final List<String> assignedChildIds;
+
   SafeZone copyWith({
     String? id,
     String? emoji,
     String? name,
     String? description,
     bool? alertsEnabled,
+    List<String>? assignedChildIds,
   }) {
     return SafeZone(
       id: id ?? this.id,
@@ -30,6 +35,7 @@ final class SafeZone {
       name: name ?? this.name,
       description: description ?? this.description,
       alertsEnabled: alertsEnabled ?? this.alertsEnabled,
+      assignedChildIds: assignedChildIds ?? this.assignedChildIds,
     );
   }
 }

@@ -85,21 +85,55 @@ void main() {
 
     nav.clear();
     await tester.tap(find.byKey(MaterialsLessonsKeys.addLessonCta));
+    await tester.pump();
+    AppToast.dismiss();
     await tester.pumpAndSettle();
     expect(nav, contains('SCR-FAT-041'));
   });
 
-  testWidgets('add subject toast', (tester) async {
+  testWidgets('add subject persists new row', (tester) async {
     final repo = InMemoryMaterialsLessonsRepository(
       seed: materialsLessonsOneFixture(),
     );
     await _pump(tester, repository: repo);
 
+    expect(
+      find.byKey(MaterialsLessonsKeys.subjectRow('subj-custom-1')),
+      findsNothing,
+    );
     await tester.tap(find.byKey(MaterialsLessonsKeys.addSubjectCta));
-    await tester.pump();
-    expect(find.textContaining('own color'), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(MaterialsLessonsKeys.subjectRow('subj-custom-1')),
+      findsOneWidget,
+    );
+    expect(find.text('New subject'), findsOneWidget);
+    expect(find.textContaining('Subject added'), findsOneWidget);
     AppToast.dismiss();
     await tester.pumpAndSettle();
+
+    final snap = await repo.load();
+    expect(snap.subjects, hasLength(2));
+    expect(snap.subjects.last.titleKey, 'custom');
+  });
+
+  testWidgets('add lesson persists count then → FAT-041', (tester) async {
+    final nav = <String>[];
+    final repo = InMemoryMaterialsLessonsRepository(
+      seed: materialsLessonsOneFixture(),
+    );
+    await _pump(tester, repository: repo, onNavigate: nav.add);
+
+    expect(find.textContaining('8 lessons'), findsOneWidget);
+    await tester.tap(find.byKey(MaterialsLessonsKeys.addLessonCta));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('9 lessons'), findsOneWidget);
+    expect(nav, contains('SCR-FAT-041'));
+    AppToast.dismiss();
+    await tester.pumpAndSettle();
+
+    final snap = await repo.load();
+    expect(snap.subjects.first.lessons, 9);
   });
 
   testWidgets('non-path subject toast', (tester) async {
@@ -109,9 +143,7 @@ void main() {
     );
     await _pump(tester, repository: repo, onNavigate: nav.add);
 
-    await tester.tap(
-      find.byKey(MaterialsLessonsKeys.subjectRow('subj-quran')),
-    );
+    await tester.tap(find.byKey(MaterialsLessonsKeys.subjectRow('subj-quran')));
     await tester.pump();
     expect(find.textContaining('Open lessons'), findsOneWidget);
     AppToast.dismiss();

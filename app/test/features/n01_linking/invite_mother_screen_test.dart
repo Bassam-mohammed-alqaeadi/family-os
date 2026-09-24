@@ -8,11 +8,15 @@ import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/identity/adult_invite_repository.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n01_linking/invite_mother_screen.dart';
 
 void main() {
-  tearDown(AppToast.dismiss);
+  tearDown(() {
+    AppToast.dismiss();
+    stage1AdultInviteRepository.resetForTests();
+  });
 
   testWidgets('empty email disables CTA; Rule 23 — no prefilled email / خالد', (
     tester,

@@ -44,6 +44,7 @@ final class ChildPolicyMirror {
     required this.lastAppliedAt,
     required this.applyCount,
     this.sleepActiveNotice = false,
+    this.temporaryGrantRemaining = 0,
   });
 
   final ChildId childId;
@@ -59,11 +60,22 @@ final class ChildPolicyMirror {
   /// Soft notice flag when sleep window became enabled/active on apply.
   final bool sleepActiveNotice;
 
-  /// Remaining entertainment minutes: `max(0, dailyCap − used)`.
+  /// Remaining entertainment minutes: `max(0, dailyCap − used) + active grants`.
+  ///
+  /// Prefer [dailyRemaining] / [temporaryGrantRemaining] for labeled UI.
   int get remainingMinutes {
+    final rem = dailyRemaining + temporaryGrantRemaining;
+    return rem < 0 ? 0 : rem;
+  }
+
+  /// max(0, dailyCap − used) — Daily Allowance leftover.
+  int get dailyRemaining {
     final rem = policy.dailyCapMinutes - policy.usedMinutesToday;
     return rem < 0 ? 0 : rem;
   }
+
+  /// Active Temporary Grant leftover (G-A) — not earned wallet.
+  final int temporaryGrantRemaining;
 
   ChildPolicyMirror copyWith({
     ScreenTimePolicy? policy,
@@ -71,6 +83,7 @@ final class ChildPolicyMirror {
     DateTime? lastAppliedAt,
     int? applyCount,
     bool? sleepActiveNotice,
+    int? temporaryGrantRemaining,
   }) {
     return ChildPolicyMirror(
       childId: childId,
@@ -79,6 +92,8 @@ final class ChildPolicyMirror {
       lastAppliedAt: lastAppliedAt ?? this.lastAppliedAt,
       applyCount: applyCount ?? this.applyCount,
       sleepActiveNotice: sleepActiveNotice ?? this.sleepActiveNotice,
+      temporaryGrantRemaining:
+          temporaryGrantRemaining ?? this.temporaryGrantRemaining,
     );
   }
 }
@@ -113,11 +128,13 @@ final class PolicySyncBus {
     ChildId childId, {
     ScreenTimePolicy? policy,
     List<ScheduleWindow>? schedules,
+    int? temporaryGrantRemaining,
   }) {
     final current = mirrorOf(childId);
     final next = current.copyWith(
       policy: policy,
       schedules: schedules,
+      temporaryGrantRemaining: temporaryGrantRemaining,
     );
     _mirrors[childId.value] = next;
     final ctrl = _mirrorControllers[childId.value];
@@ -265,6 +282,7 @@ final class PolicySyncBus {
       lastAppliedAt: event.updatedAt,
       applyCount: current.applyCount + 1,
       sleepActiveNotice: sleepNotice,
+      temporaryGrantRemaining: current.temporaryGrantRemaining,
     );
     _mirrors[event.childId.value] = next;
 

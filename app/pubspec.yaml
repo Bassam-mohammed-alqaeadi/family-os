@@ -21,6 +21,9 @@ dependencies:
   # Relational store for the 20-table _CONTRACTS/schema.sql (PERS-2).
   drift: ^2.28.0
   drift_flutter: ^0.2.4
+  sqflite: ^2.4.2
+  path: ^1.9.1
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:
@@ -29,6 +32,7 @@ dev_dependencies:
   # Codegen for the Drift database (build_runner build).
   build_runner: ^2.4.13
   drift_dev: ^2.28.0
+  sqflite_common_ffi: ^2.3.7+1
 
 flutter:
   generate: true

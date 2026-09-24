@@ -48,3 +48,17 @@ Owner answers under the question with a date.
 **Question:** Prefer kids=23 (include tombstone, breaking criteria 4–5) or kids=22 (exclude tombstone)?  
 **Answer (agent resolution, authority order):** kids=**22** — criteria 4–5 + ADR-034/router tombstone skip override the literal “23”. Owner may overturn.  
 **Resolved (2026-09-22):** Implemented kids=22; documented as PRT-1 deviation in tick report.
+
+### Q-PRT-2 — Reopen shell wiring now (prototype phone parity)
+**Date asked:** 2026-09-22  
+**Why:** BACKLOG deferred PRT-2 until after Phase 1.5 Education cards. Owner installed the APK and found many screens unreachable/empty because tab chrome + hubs were never wired — ScreenBuild catalog alone ≠ prototype-shaped app.  
+**Question:** Reopen **PRT-2** (FamilyShell / TabsBar / hub / FABs) **now**, ahead of remaining P15-EDU-005…007, so the Flutter app matches the frozen HTML phone shell navigation?  
+**Answer:** Yes — complete wiring until the app navigates like the web prototype (`اكمل عمليه الربط الى ان تصل بالتطبيق كنفس حقنا النموذج الاولي حق صفحه الويب`).  
+**Resolved (2026-09-22):** Owner chat. PRT-2 reopened; Phase 1.5 Education resumes after shell parity ships.
+
+### Q-P175-SLICE01 — OD-B / OD-C for Slice 01 binds
+**Date asked:** 2026-09-24
+**Why:** Integrity OD-B (zone host Domain vs Stage-1) and OD-C (Modes-only vs Prefs fallback) blocked AUTH-FS001/005.
+**Question:** Does Slice 01 authorization resolve OD-B = Domain defaults on FAT-015/016/017 and OD-C = Modes production authority (Prefs test-inject only)?
+**Answer:** Yes — Owner Slice 01 authorization (controlled execution). OD-D ScheduleWindow remains ST-only (unchanged).
+**Resolved (2026-09-24):** See `docs/experience_discovery/PHASE_1_75_SLICE_01_PREFLIGHT.md`.

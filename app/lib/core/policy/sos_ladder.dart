@@ -5,10 +5,24 @@ import 'package:flutter/foundation.dart';
 /// Competitive: Life360 / panic — parents are always on the emergency chain.
 const Set<String> kSosLadderFixedParentIds = {'father', 'mother'};
 
+/// Max editable backup contacts (FAT-028 / OD-04).
+const int kSosMaxBackupContacts = 5;
+
+/// Backup phone verification lifecycle (FAT-028).
+enum SosVerificationStatus {
+  unverified,
+  pending,
+  verified,
+  revoked,
+  failed,
+}
+
 /// Validation codes for illegal SOS ladder edits (SET-020).
 abstract final class SosLadderValidationCode {
   static const rung1ParentImmovable = 'rung1_parent_immovable';
   static const rung1ParentDisableForbidden = 'rung1_parent_disable_forbidden';
+  static const backupLimitExceeded = 'backup_limit_exceeded';
+  static const priorityOutOfRange = 'priority_out_of_range';
 }
 
 /// Thrown when API/UI attempts to remove or disable rung-1 parents.
@@ -32,6 +46,9 @@ final class SosBackupContact {
     this.relation = '',
     this.delaySeconds = 60,
     this.enabled = true,
+    this.priority = 1,
+    this.phoneE164 = '',
+    this.verification = SosVerificationStatus.unverified,
   });
 
   final String id;
@@ -40,12 +57,27 @@ final class SosBackupContact {
   final int delaySeconds;
   final bool enabled;
 
+  /// Escalation order among backups — must be 1..[kSosMaxBackupContacts].
+  final int priority;
+
+  /// Display/storage phone (E.164 preferred). Empty = not set.
+  final String phoneE164;
+
+  final SosVerificationStatus verification;
+
+  /// Only [SosVerificationStatus.verified] backups participate in escalation.
+  bool get isEscalationEligible =>
+      enabled && verification == SosVerificationStatus.verified;
+
   SosBackupContact copyWith({
     String? id,
     String? name,
     String? relation,
     int? delaySeconds,
     bool? enabled,
+    int? priority,
+    String? phoneE164,
+    SosVerificationStatus? verification,
   }) {
     return SosBackupContact(
       id: id ?? this.id,
@@ -53,6 +85,19 @@ final class SosBackupContact {
       relation: relation ?? this.relation,
       delaySeconds: delaySeconds ?? this.delaySeconds,
       enabled: enabled ?? this.enabled,
+      priority: priority ?? this.priority,
+      phoneE164: phoneE164 ?? this.phoneE164,
+      verification: verification ?? this.verification,
+    );
+  }
+
+  /// Changing phone forces re-verification (UNVERIFIED).
+  SosBackupContact withPhoneChanged(String nextPhone) {
+    final trimmed = nextPhone.trim();
+    if (trimmed == phoneE164) return this;
+    return copyWith(
+      phoneE164: trimmed,
+      verification: SosVerificationStatus.unverified,
     );
   }
 
@@ -62,15 +107,27 @@ final class SosBackupContact {
         'relation': relation,
         'delaySeconds': delaySeconds,
         'enabled': enabled,
+        'priority': priority,
+        'phoneE164': phoneE164,
+        'verification': verification.name,
       };
 
   factory SosBackupContact.fromJson(Map<String, dynamic> json) {
+    final vRaw = json['verification']?.toString();
+    final verification = SosVerificationStatus.values.firstWhere(
+      (e) => e.name == vRaw,
+      orElse: () => SosVerificationStatus.unverified,
+    );
+    final priority = (json['priority'] as num?)?.toInt() ?? 1;
     return SosBackupContact(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
       relation: json['relation']?.toString() ?? '',
       delaySeconds: (json['delaySeconds'] as num?)?.toInt() ?? 60,
       enabled: json['enabled'] != false,
+      priority: priority.clamp(1, kSosMaxBackupContacts),
+      phoneE164: json['phoneE164']?.toString() ?? '',
+      verification: verification,
     );
   }
 
@@ -82,10 +139,22 @@ final class SosBackupContact {
           name == other.name &&
           relation == other.relation &&
           delaySeconds == other.delaySeconds &&
-          enabled == other.enabled;
+          enabled == other.enabled &&
+          priority == other.priority &&
+          phoneE164 == other.phoneE164 &&
+          verification == other.verification;
 
   @override
-  int get hashCode => Object.hash(id, name, relation, delaySeconds, enabled);
+  int get hashCode => Object.hash(
+        id,
+        name,
+        relation,
+        delaySeconds,
+        enabled,
+        priority,
+        phoneE164,
+        verification,
+      );
 }
 
 /// SOS escalation ladder — rung 1 parents fixed; backups editable below (P-5).
@@ -113,6 +182,17 @@ final class SosLadder {
 
   /// Rung 2+ backup contacts (editable / removable / toggleable).
   final List<SosBackupContact> backups;
+
+  /// Backups sorted by [SosBackupContact.priority] ascending.
+  List<SosBackupContact> get backupsByPriority {
+    final list = List<SosBackupContact>.from(backups);
+    list.sort((a, b) => a.priority.compareTo(b.priority));
+    return list;
+  }
+
+  /// Verified + enabled backups only (escalation eligibility).
+  List<SosBackupContact> get verifiedEscalationBackups =>
+      backupsByPriority.where((b) => b.isEscalationEligible).toList();
 
   /// Ordered rung-1 member ids (father, mother when present).
   List<String> get rung1MemberIds {

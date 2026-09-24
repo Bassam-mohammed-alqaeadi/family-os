@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/app_error_state.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
@@ -27,8 +28,12 @@ abstract final class FamilyMembersKeys {
   static const footer = Key('family_members_footer');
   static const childLean = Key('family_members_child_lean');
   static const sosCta = Key('family_members_sos');
+  static const transferOwnership = Key('family_members_transfer_ownership');
+  static const familySelector = Key('family_members_family_selector');
+  static const leaveFamily = Key('family_members_leave_family');
 
   static Key memberRow(String id) => Key('family_members_row_$id');
+  static Key removeAdult(String id) => Key('family_members_remove_$id');
 }
 
 /// SCR-FAT-027 — أعضاء العائلة (roles · levels · invite).
@@ -69,7 +74,7 @@ class FamilyMembersScreen extends StatefulWidget {
 }
 
 class FamilyMembersScreenState extends State<FamilyMembersScreen> {
-  late final FamilyMembersRepository _repo;
+  late FamilyMembersRepository _repo;
   var _loading = true;
   var _loadFailed = false;
   var _sosBusy = false;
@@ -77,13 +82,26 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
 
   AppRole get _role =>
       widget.roleOverride ??
-      CurrentRole.maybeNotifierOf(context)?.value ??
-      AppRole.father;
+      resolveAuthorizationContext(context, fallbackRole: AppRole.father).role;
 
   bool get _isParent => _role == AppRole.father || _role == AppRole.mother;
 
   /// Invite CTA — sole owner (father). Product: one_owner_per_family.
-  bool get _isOwner => _role == AppRole.father;
+  bool get _isOwner =>
+      resolveAuthorizationContext(context, fallbackRole: _role).canInviteAdults;
+
+  bool get _showFamilySelector {
+    final runtime = CurrentIdentity.maybeOf(context);
+    if (runtime == null) return false;
+    return runtime.needsFamilySelector;
+  }
+
+  bool get _canLeaveFamily {
+    return resolveAuthorizationContext(
+      context,
+      fallbackRole: _role,
+    ).canLeaveFamily;
+  }
 
   @override
   void initState() {
@@ -95,13 +113,23 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
     });
   }
 
+  @override
+  void didUpdateWidget(covariant FamilyMembersScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.repository != widget.repository) {
+      _repo = widget.repository ?? stage1FamilyMembersRepository;
+      _load();
+    }
+  }
+
   Future<void> _load() async {
     setState(() {
       _loading = true;
       _loadFailed = false;
     });
     try {
-      final members = await _repo.listMembers();
+      final familyId = CurrentIdentity.maybeOf(context)?.activeFamilyId.value;
+      final members = await _repo.listMembers(familyId: familyId);
       if (!mounted) return;
       setState(() {
         _members = members;
@@ -151,6 +179,10 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
     context.push('/scr-fat-031');
   }
 
+  void _leaveFamily() {
+    context.push('/sys3-leave-family');
+  }
+
   Color _swatchColor(FamilyColors colors, DayChildSwatch swatch) {
     return switch (swatch) {
       DayChildSwatch.purple => colors.p500,
@@ -191,10 +223,10 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
       case FamilyMemberKind.mother:
         final level = m.motherLevel ?? MotherLevel.partner;
         final base = _levelLabel(l10n, level);
-        final variant =
-            level == MotherLevel.observer ? TagVariant.a : TagVariant.g;
-        final label =
-            _isOwner ? l10n.familyMembersTagMotherChange(base) : base;
+        final variant = level == MotherLevel.observer
+            ? TagVariant.a
+            : TagVariant.g;
+        final label = _isOwner ? l10n.familyMembersTagMotherChange(base) : base;
         return (label, variant);
       case FamilyMemberKind.guardian:
         return (l10n.familyMembersTagGuardianLocked, TagVariant.a);
@@ -282,11 +314,7 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
                 message: l10n.familyMembersEmptyMessage,
               ),
             ),
-            _InviteBlock(
-              isOwner: _isOwner,
-              l10n: l10n,
-              onInvite: _goInvite,
-            ),
+            _InviteBlock(isOwner: _isOwner, l10n: l10n, onInvite: _goInvite),
             const SizedBox(height: 10),
             Text(
               key: FamilyMembersKeys.footer,
@@ -308,6 +336,20 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
       key: FamilyMembersKeys.list,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
+        if (_showFamilySelector) ...[
+          _FamilySelector(
+            activeFamilyId: CurrentIdentity.of(context).activeFamilyId.value,
+            families: CurrentIdentity.of(context).families
+                .map((f) => (id: f.id.value, name: f.name))
+                .toList(growable: false),
+            onChanged: (value) async {
+              final runtime = CurrentIdentity.of(context);
+              runtime.switchActiveFamily(FamilyId(value));
+              await _load();
+            },
+          ),
+          const SizedBox(height: 10),
+        ],
         DecoratedBox(
           decoration: BoxDecoration(
             color: colors.surface,
@@ -327,7 +369,8 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
                   subtitle: _roleSubtitle(l10n, _members[i]),
                   tag: _tagFor(l10n, _members[i]),
                   avatarColor: _swatchColor(colors, _members[i].swatch),
-                  canOpenMotherLevel: _isOwner &&
+                  canOpenMotherLevel:
+                      _isOwner &&
                       _members[i].kind == FamilyMemberKind.mother &&
                       !_members[i].levelLocked,
                   onTap: () => _goMotherLevel(_members[i]),
@@ -336,12 +379,50 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
             ],
           ),
         ),
+        if (_isOwner) ...[
+          const SizedBox(height: 8),
+          for (final membership
+              in CurrentIdentity.maybeOf(context)?.adultMembershipsForFamily(
+                    CurrentIdentity.of(context).activeFamilyId,
+                  ) ??
+                  const [])
+            if (!membership.isPrimaryOwner)
+              TextButton(
+                key: FamilyMembersKeys.removeAdult(membership.id.value),
+                onPressed: () => context.push(
+                  '/sys3-remove-adult?memberId=${Uri.encodeComponent(membership.id.value)}',
+                ),
+                child: Text(
+                  '${l10n.sys3FamilyRemoveCta} · ${l10n.sys3MemberLabel(membership.id.value)}',
+                ),
+              ),
+          PrimaryBtn(
+            key: FamilyMembersKeys.transferOwnership,
+            label: l10n.sys3FamilyTransferCta,
+            variant: PrimaryBtnVariant.sec,
+            onPressed: () => context.push('/sys3-ownership-transfer'),
+          ),
+        ],
+        if (_showFamilySelector) ...[
+          const SizedBox(height: 8),
+          PrimaryBtn(
+            key: FamilyMembersKeys.familySelector,
+            label: l10n.sys3FamilySelectorCta,
+            variant: PrimaryBtnVariant.ghost,
+            onPressed: () => context.push('/sys3-family-select'),
+          ),
+        ],
         const SizedBox(height: 14),
-        _InviteBlock(
-          isOwner: _isOwner,
-          l10n: l10n,
-          onInvite: _goInvite,
-        ),
+        _InviteBlock(isOwner: _isOwner, l10n: l10n, onInvite: _goInvite),
+        if (_canLeaveFamily) ...[
+          const SizedBox(height: 8),
+          PrimaryBtn(
+            key: FamilyMembersKeys.leaveFamily,
+            label: l10n.sys3FamilyLeaveCta,
+            variant: PrimaryBtnVariant.ghost,
+            onPressed: _leaveFamily,
+          ),
+        ],
         const SizedBox(height: 10),
         Text(
           key: FamilyMembersKeys.footer,
@@ -470,9 +551,58 @@ class _MemberRow extends StatelessWidget {
     return Material(
       key: FamilyMembersKeys.memberRow(member.id),
       color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        child: content,
+      child: InkWell(onTap: onTap, child: content),
+    );
+  }
+}
+
+class _FamilySelector extends StatelessWidget {
+  const _FamilySelector({
+    required this.activeFamilyId,
+    required this.families,
+    required this.onChanged,
+  });
+
+  final String activeFamilyId;
+  final List<({String id, String name})> families;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<FamilyColors>()!;
+    final radii = Theme.of(context).extension<FamilyRadii>()!;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(radii.card),
+        border: Border.all(color: colors.border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: activeFamilyId,
+            isExpanded: true,
+            items: [
+              for (final family in families)
+                DropdownMenuItem<String>(
+                  value: family.id,
+                  child: Text(
+                    family.name,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: colors.ink,
+                    ),
+                  ),
+                ),
+            ],
+            onChanged: (value) {
+              if (value == null) return;
+              onChanged(value);
+            },
+          ),
+        ),
       ),
     );
   }

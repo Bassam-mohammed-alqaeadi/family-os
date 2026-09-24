@@ -19,14 +19,14 @@ void main() {
   var idSeq = 0;
 
   WebFilterPolicy adultsBlockPolicy() => WebFilterPolicy(
-        level: WebFilterLevel.open,
-        categories: {
-          for (final k in WebFilterCategories.known) k: false,
-          WebFilterCategories.adults: true,
-        },
-        allowList: const {},
-        policyVersion: 1,
-      );
+    level: WebFilterLevel.open,
+    categories: {
+      for (final k in WebFilterCategories.known) k: false,
+      WebFilterCategories.adults: true,
+    },
+    allowList: const {},
+    policyVersion: 1,
+  );
 
   setUp(() {
     child = ChildId('set006-child');
@@ -39,7 +39,6 @@ void main() {
     idSeq = 0;
     service = WebUnlockService(
       requestRepository: requestRepo,
-      policyRepository: policyRepo,
       audit: audit,
       decisionBus: bus,
       idFactory: () {
@@ -50,52 +49,74 @@ void main() {
     );
   });
 
-  test('request → partner approve → evaluator allows host', () async {
-    final url = 'https://adult.example/page';
-    final blocked = WebFilterEvaluator.decide(
-      Uri.parse(url),
-      await policyRepo.load(child),
-    );
-    expect(blocked.isDenied, isTrue);
+  test(
+    'request → partner approve → timed temp allow (not allowList)',
+    () async {
+      final url = 'https://adult.example/page';
+      final blocked = WebFilterEvaluator.decide(
+        Uri.parse(url),
+        await policyRepo.load(child),
+      );
+      expect(blocked.isDenied, isTrue);
 
-    final created = await service.requestUnlock(child, url);
-    expect(created.throttled, isFalse);
-    expect(created.request.status, WebUnlockRequestStatus.pending);
+      final created = await service.requestUnlock(child, url);
+      expect(created.throttled, isFalse);
+      expect(created.request.status, WebUnlockRequestStatus.pending);
 
-    final approved = await service.approve(
-      created.request.id,
-      const WebUnlockActor.mother(MotherLevel.partner),
-    );
-    expect(approved.status, WebUnlockRequestStatus.approved);
-    expect(approved.decidedBy, 'mother:partner');
+      final approved = await service.approve(
+        created.request.id,
+        const WebUnlockActor.mother(MotherLevel.partner),
+      );
+      expect(approved.status, WebUnlockRequestStatus.approved);
+      expect(approved.decidedBy, 'mother:partner');
 
-    final policy = await policyRepo.load(child);
-    expect(policy.allowList, contains('adult.example'));
-    final allowed = WebFilterEvaluator.decide(Uri.parse(url), policy);
-    expect(allowed.isDenied, isFalse);
+      final policy = await policyRepo.load(child);
+      // Q-WF-09: approve must NOT write permanent allowList.
+      expect(policy.allowList, isEmpty);
 
-    expect(bus.lastDecision?.id, approved.id);
-    expect(
-      audit.entries.any((e) => e.contains('approved') && e.contains('partner')),
-      isTrue,
-    );
-  });
+      final temps = await service.activeTemporaryHosts(child);
+      expect(temps, contains('adult.example'));
+      final allowed = WebFilterEvaluator.decide(
+        Uri.parse(url),
+        policy,
+        activeTemporaryAllows: temps,
+      );
+      expect(allowed.isDenied, isFalse);
 
-  test('request → father approve → evaluator allows host', () async {
+      expect(bus.lastDecision?.id, approved.id);
+      expect(
+        audit.entries.any(
+          (e) => e.contains('approved') && e.contains('partner'),
+        ),
+        isTrue,
+      );
+      expect(audit.entries.any((e) => e.contains('temp_allow')), isTrue);
+    },
+  );
+
+  test('request → father approve → evaluator allows via temp allow', () async {
     final url = 'https://adult.example/other';
     final created = await service.requestUnlock(child, url);
     await service.approve(created.request.id, const WebUnlockActor.father());
 
     final policy = await policyRepo.load(child);
+    expect(policy.allowList, isEmpty);
+    final temps = await service.activeTemporaryHosts(child);
     expect(
-      WebFilterEvaluator.decide(Uri.parse(url), policy).isDenied,
+      WebFilterEvaluator.decide(
+        Uri.parse(url),
+        policy,
+        activeTemporaryAllows: temps,
+      ).isDenied,
       isFalse,
     );
   });
 
   test('mother observer cannot approve', () async {
-    final created =
-        await service.requestUnlock(child, 'https://adult.example/x');
+    final created = await service.requestUnlock(
+      child,
+      'https://adult.example/x',
+    );
     expect(
       () => service.approve(
         created.request.id,
@@ -105,10 +126,7 @@ void main() {
     );
     final policy = await policyRepo.load(child);
     expect(policy.allowList, isEmpty);
-    expect(
-      audit.entries.any((e) => e.contains('approve rejected')),
-      isTrue,
-    );
+    expect(audit.entries.any((e) => e.contains('approve rejected')), isTrue);
   });
 
   test('duplicate pending same host is throttled', () async {
@@ -122,14 +140,19 @@ void main() {
   });
 
   test('father wins conflict after mother approve', () async {
-    final created =
-        await service.requestUnlock(child, 'https://adult.example/conflict');
+    final created = await service.requestUnlock(
+      child,
+      'https://adult.example/conflict',
+    );
     await service.approve(
       created.request.id,
       const WebUnlockActor.mother(MotherLevel.full),
     );
-    var policy = await policyRepo.load(child);
-    expect(policy.allowList, contains('adult.example'));
+    expect(
+      await service.activeTemporaryHosts(child),
+      contains('adult.example'),
+    );
+    expect((await policyRepo.load(child)).allowList, isEmpty);
 
     final denied = await service.deny(
       created.request.id,
@@ -139,19 +162,15 @@ void main() {
     expect(denied.status, WebUnlockRequestStatus.denied);
     expect(denied.decidedBy, 'father');
 
-    policy = await policyRepo.load(child);
-    expect(policy.allowList, isNot(contains('adult.example')));
+    expect(await service.activeTemporaryHosts(child), isEmpty);
     expect(
       WebFilterEvaluator.decide(
         Uri.parse('https://adult.example/conflict'),
-        policy,
+        await policyRepo.load(child),
       ).isDenied,
       isTrue,
     );
-    expect(
-      audit.entries.any((e) => e.contains('father_wins')),
-      isTrue,
-    );
+    expect(audit.entries.any((e) => e.contains('father_wins')), isTrue);
 
     // Mother cannot re-approve after father deny.
     expect(
@@ -169,7 +188,6 @@ void main() {
     final repo1 = PrefsWebUnlockRequestRepository(store);
     final svc1 = WebUnlockService(
       requestRepository: repo1,
-      policyRepository: policyRepo,
       idFactory: () => 'prefs-1',
     );
     await svc1.requestUnlock(child, 'https://adult.example/prefs');

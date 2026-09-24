@@ -191,6 +191,31 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tabChildMe => 'أنا';
 
   @override
+  String get shellMoreToolsHeading => 'المزيد من الأدوات';
+
+  @override
+  String get shellKidsPerChildNote =>
+      'وقت الشاشة والتطبيقات والفلترة والرقابة تُضبط لكل ابن من ملفه — افتح ملف الابن من الأعلى.';
+
+  @override
+  String get shellSettingsOtherHeading => 'أخرى';
+
+  @override
+  String get shellShortcutDeviceSwitch => 'تبديل المستخدم';
+
+  @override
+  String get shellShortcutAcceptInvite => 'الانضمام بدعوة';
+
+  @override
+  String get shellShortcutSosAlert => 'بلاغ الاستغاثة';
+
+  @override
+  String get shellAiFabSemantics => 'فتح مستشار العائلة';
+
+  @override
+  String get shellSosFabSemantics => 'فتح الاستغاثة';
+
+  @override
   String get galleryHubItem1 => 'المهام';
 
   @override
@@ -328,7 +353,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get loginForgotToast =>
-      'أرسلنا رابط الاستعادة إن كان البريد مسجّلًا لدينا';
+      'جارٍ فتح استعادة الحساب المحلية. لا يُرسل بريد إعادة تعيين في هذا النموذج.';
 
   @override
   String get loginSubmit => 'دخول';
@@ -1058,8 +1083,68 @@ class AppLocalizationsAr extends AppLocalizations {
       'اضغط على أي تطبيق للسماح أو الحظر أو مراجعة الحد — ينعكس على جهاز الابن.';
 
   @override
+  String get childAppsOsInterceptHonesty =>
+      'سياسة وصول الحزم محفوظة محليًا. اعتراض الجهاز يبقى محاكاة عن بُعد — لا ندّعي حظر نظام التشغيل هنا.';
+
+  @override
   String get childAppsObserverHint =>
-      'عرض فقط — مستوى مشاركة أو كاملة يمكنه السماح أو الحظر';
+      'عرض فقط — الشريك يقرر تذاكر التثبيت؛ ضبط الوصول يحتاج مستوى كاملة أو الأب';
+
+  @override
+  String get childAppsPartnerTicketsHint =>
+      'يمكنك الموافقة على التثبيتات الجديدة. السماح/الحظر الدائم يحتاج الأب أو مستوى كاملة.';
+
+  @override
+  String get childAppsProtectedBadge => 'محمي';
+
+  @override
+  String get childAppsProtectedCannotBlock =>
+      'التطبيقات المحمية (الاستغاثة، نظام العائلة، المحادثة، القرآن) لا يمكن حظرها.';
+
+  @override
+  String get childAppsPreviewDenyCta => 'معاينة حظر الابن';
+
+  @override
+  String get appDenyTitle => 'هذا التطبيق غير متاح';
+
+  @override
+  String get appDenyReasonBlocked => 'عائلتك حظرت هذا التطبيق.';
+
+  @override
+  String get appDenyReasonLockNow => 'هذا التطبيق مقفل مؤقتًا.';
+
+  @override
+  String get appDenyReasonPending =>
+      'بانتظار موافقة أحد الوالدين على هذا التطبيق.';
+
+  @override
+  String get appDenyReasonGeneric => 'هذا التطبيق غير متاح الآن.';
+
+  @override
+  String get appDenyDisclosure => 'حماية العائلة مفعّلة.';
+
+  @override
+  String get appDenyExceptionCta => 'اطلب وصولًا مؤقتًا';
+
+  @override
+  String get appDenyExceptionNotMinutes =>
+      'هذا ليس دقائق إضافية — ولا يزيل الحظر الدائم.';
+
+  @override
+  String get appDenyExceptionPending => 'أُرسل طلبك — بانتظار أحد الوالدين.';
+
+  @override
+  String get appDenyChatCta => 'محادثة العائلة';
+
+  @override
+  String get appDenyQuranCta => 'القرآن';
+
+  @override
+  String get appDenySosCta => 'استغاثة';
+
+  @override
+  String get newAppApprovalChildScopedHonesty =>
+      'الموافقة لهذا الابن فقط — لا موافقة عائلية صامتة.';
 
   @override
   String childAppsPendingCta(int count) {
@@ -1146,6 +1231,16 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childAppsSheetHint => 'هذا الضبط ينعكس فورًا على جهاز الابن.';
+
+  @override
+  String get childAppsUnlimitedToggle => 'بلا حد (تجاوز السقف اليومي)';
+
+  @override
+  String get childAppsUnlimitedHint =>
+      'لا يتجاوز الحظر أو القفل أو قواعد الوضع.';
+
+  @override
+  String get childAppsStatusUnlimited => 'بلا حد اليوم';
 
   @override
   String childAppsStatusUpdated(String name) {
@@ -2595,6 +2690,39 @@ class AppLocalizationsAr extends AppLocalizations {
   String get webFilterPreviewButton => 'معاينة ما يراه الابن';
 
   @override
+  String get webFilterListsHeading => 'سماح · حظر · قاموس';
+
+  @override
+  String get webFilterAllowListHeading => 'قائمة السماح';
+
+  @override
+  String get webFilterBlockListHeading => 'قائمة الحظر';
+
+  @override
+  String get webFilterDictionaryHeading => 'قاموس الكلمات';
+
+  @override
+  String get webFilterListAddHint => 'أضف نطاقاً أو كلمة';
+
+  @override
+  String get webFilterListAdd => 'إضافة';
+
+  @override
+  String get webFilterListEmpty => 'لا توجد عناصر بعد';
+
+  @override
+  String get webFilterPrecedenceNote =>
+      'الأولوية: قائمة الحظر ← سماح مؤقت ← قائمة السماح ← القاموس ← الفئة';
+
+  @override
+  String get webFilterTaxonomyTbdHonesty =>
+      'تسميات الفئات مؤقتة — التصنيف الكامل قيد التحديد';
+
+  @override
+  String get webFilterNativeBlockHonesty =>
+      'مستوى الحظر على الجهاز محاكاة عن بُعد — السياسة حقيقية؛ لا ندّعي VPN/DNS';
+
+  @override
   String get webFilterPreviewSheetTitle => 'كيف يراه الابن';
 
   @override
@@ -2637,6 +2765,36 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get webBlockReasonGeneric =>
       'هذا المحتوى لا يناسبك الآن. إن كنت تراه مهمًا لدراستك، اطلب فتحه من أبيك.';
+
+  @override
+  String get webBlockReasonBlocklist => 'هذا الموقع في قائمة الحظر العائلية.';
+
+  @override
+  String get webBlockReasonDictionary =>
+      'هذه الصفحة تطابق كلمة محظورة من قاموس العائلة.';
+
+  @override
+  String webBlockSourceOfDeny(String source) {
+    return 'المصدر: $source';
+  }
+
+  @override
+  String get webBlockFeedbackPending =>
+      'تم إرسال طلب الفتح — بانتظار أحد الوالدين';
+
+  @override
+  String get webBlockFeedbackApproved =>
+      'تمت الموافقة على فتح مؤقت — حاول مرة أخرى قريبًا';
+
+  @override
+  String get webBlockFeedbackDenied => 'تم رفض طلب الفتح';
+
+  @override
+  String get webBlockFeedbackExpired => 'انتهى الفتح المؤقت';
+
+  @override
+  String get webFilterDeliveryHonesty =>
+      'تتبّع تسليم السياسة محليًا (مضبوط→متحقق). حظر الجهاز يبقى محاكاة عن بُعد.';
 
   @override
   String get webUnlockInboxTitle => 'طلبات فتح المواقع';
@@ -4100,6 +4258,109 @@ class AppLocalizationsAr extends AppLocalizations {
       'افتح ملف الابن من قائمة الأبناء — لا يُعرض ملف بدون معرّف ابن.';
 
   @override
+  String get childProfileSelectChildTitle => 'اختر ابنًا';
+
+  @override
+  String get childProfileSelectChildMessage =>
+      'اختر ابنًا في هذه العائلة لفتح ملفه وإدارة تسجيل أجهزته.';
+
+  @override
+  String get childProfileSelectChildEmpty =>
+      'لا يوجد أبناء في هذه العائلة بعد — أضف ابنًا أولًا.';
+
+  @override
+  String get childProfileSelectChildSemantics => 'افتح ملف هذا الابن';
+
+  @override
+  String get childProfileAddDevice => '+ إضافة جهاز';
+
+  @override
+  String get childProfileMaxDevicesBlock =>
+      'لهذا الابن ٣ أجهزة مسجّلة بالفعل — ألغِ تسجيل جهاز قبل ربط جهاز جديد.';
+
+  @override
+  String get enrollmentStatePairingPending => 'بانتظار الربط';
+
+  @override
+  String get enrollmentStateEnrolled => 'مسجّل';
+
+  @override
+  String get enrollmentStateRevoked => 'ملغى';
+
+  @override
+  String get enrollmentStateLost => 'مفقود';
+
+  @override
+  String get enrollmentStateDecommissioned => 'مُخرج من الخدمة';
+
+  @override
+  String get enrollmentStateUnenrolled => 'غير مسجّل';
+
+  @override
+  String get enrollmentShowPairingCode => 'عرض رمز الربط';
+
+  @override
+  String get enrollmentFailureMaxDevices =>
+      'تعذّر التسجيل — الحد الأقصى ٣ أجهزة نشطة لهذا الابن.';
+
+  @override
+  String get enrollmentFailureInvalidToken =>
+      'رمز الربط غير صالح أو منتهٍ أو مُستخدم مسبقًا.';
+
+  @override
+  String get enrollmentFailureGeneric => 'تعذّر إكمال التسجيل.';
+
+  @override
+  String get pairingVerificationTitle => 'التحقق من الربط';
+
+  @override
+  String get pairingVerificationMessage =>
+      'نتحقق من رمز الربط مقابل تسجيل معلّق — التسجيل لا يكتمل إلا بعد نجاح التحقق.';
+
+  @override
+  String get enrollmentProgressTitle => 'التسجيل قيد التنفيذ';
+
+  @override
+  String get enrollmentProgressMessage =>
+      'تم التحقق من الربط. جاري إكمال تسجيل هذا الجهاز…';
+
+  @override
+  String get inviteLifecyclePending => 'دعوة معلّقة';
+
+  @override
+  String get inviteLifecycleActive => 'دعوة نشطة';
+
+  @override
+  String get inviteLifecycleAccepted => 'دعوة مقبولة';
+
+  @override
+  String get inviteLifecycleExpired => 'دعوة منتهية';
+
+  @override
+  String get inviteLifecycleRevoked => 'دعوة ملغاة';
+
+  @override
+  String get deviceHealthManageEnrollment => 'إدارة التسجيل';
+
+  @override
+  String get deviceHealthManageEnrollmentSub =>
+      'الإلغاء وإعادة الربط والجهاز الأساسي من ملف الابن — صحة الجهاز تبقى للمراقبة فقط.';
+
+  @override
+  String get linkQrSelectChildTitle => 'اختر جهاز أي ابن للربط';
+
+  @override
+  String get linkQrSelectChildMessage =>
+      'الربط يحتاج ابنًا في العائلة النشطة. اختر ابنًا لإصدار رمز ربط.';
+
+  @override
+  String get linkQrAwaitingClaim =>
+      'بانتظار مسح جهاز الابن — يبقى التسجيل معلّقًا حتى ينجح المطالبة بالرمز.';
+
+  @override
+  String get linkQrReturnToProfile => 'العودة إلى ملف الابن';
+
+  @override
   String get childProfileNotFoundTitle => 'الابن غير موجود';
 
   @override
@@ -4440,14 +4701,14 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get sosAlertSirenBanner =>
-      '🔊 أطلقنا صفارة الإنذار في جوالك وجوال الأم — تخترق الوضع الصامت';
+      'بلاغ الاستغاثة مفتوح — القنوات أدناه تعرض حالة التسليم بصدق';
 
   @override
   String get sosAlertLiveBroadcastNote =>
-      'اليوم · البث الحي والموقع مستمران الآن';
+      'الحادثة مفتوحة — الموقع والتسليم يُعرضان بصدق (بلا نجاح صامت)';
 
   @override
-  String get sosAlertAutoCallPending => '📞 اتصال تلقائي خلال ثوانٍ…';
+  String get sosAlertAutoCallPending => 'الاتصال: غير مُعدّ في هذا البناء';
 
   @override
   String sosAlertMetaLine(
@@ -4487,7 +4748,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String sosAlertRecipientsFooter(String names) {
-    return 'وصل البلاغ: $names — الاستغاثة لا تخضع لأي تدرّج';
+    return 'المستلمون: $names — الاستغاثة بلا اشتراك';
   }
 
   @override
@@ -4535,10 +4796,12 @@ class AppLocalizationsAr extends AppLocalizations {
       '✓ الحمد لله — أُغلق البلاغ وتم الاطمئنان وسُجّل في سجل الأمان';
 
   @override
-  String get sosAlertEscalatedToast => 'أُرسل التنبيه لجهات الطوارئ على السلّم';
+  String get sosAlertEscalatedToast =>
+      'طُلب التصعيد — حالة التسليم تبقى صادقة لكل قناة';
 
   @override
-  String get sosAlertCallStartedToast => 'بدء مكالمة طارئة (محاكاة مرحلة ١)';
+  String get sosAlertCallStartedToast =>
+      'الاتصال غير مُعدّ بعد — البلاغ يبقى نشطًا';
 
   @override
   String get alertsHubTitle => 'التنبيهات';
@@ -5119,18 +5382,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get childSosInProgressHeadline => 'وصل بلاغك لعائلتك';
 
   @override
-  String get childSosInProgressBroadcast => 'موقعك يُبث لوالديك مباشرة الآن';
+  String get childSosInProgressBroadcast =>
+      'طلب النجدة نشط — الحالة أدناه صادقة';
 
   @override
-  String get childSosInProgressFatherSeen =>
-      '✓ أبوك شاهد البلاغ — وهو يتصل بك وفي الطريق إليك';
+  String get childSosInProgressFatherSeen => 'قناة الأب: راجع حالة التسليم';
 
   @override
-  String get childSosInProgressMotherSeen => '✓ أمك شاهدت البلاغ';
+  String get childSosInProgressMotherSeen => 'قناة الأم: راجع حالة التسليم';
 
   @override
   String get childSosInProgressBackupStandby =>
-      '⏳ جهات الطوارئ الاحتياطية متأهبة';
+      'تصعيد الاحتياط: جهات موثّقة فقط عند الإعداد';
 
   @override
   String get childSosInProgressCallFatherCta => '📞 كلّم أبوك الآن';
@@ -6724,4 +6987,4572 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get familyPatternsSosCta => 'SOS';
+
+  @override
+  String knowledgeMapsTitle(String name) {
+    return 'خارطة نمو وتواصل $name';
+  }
+
+  @override
+  String get knowledgeMapsChildOne => 'الابن الأول';
+
+  @override
+  String get knowledgeMapsChildTwo => 'الابن الثاني';
+
+  @override
+  String get knowledgeMapsChildThree => 'الابن الثالث';
+
+  @override
+  String get knowledgeMapsEmptyTitle => 'لا توجد خريطة معرفة بعد';
+
+  @override
+  String get knowledgeMapsEmptyMessage =>
+      'أضف ابنًا لرؤية مسارات التعلّم واتزان التواصل وأسئلة العشاء.';
+
+  @override
+  String get knowledgeMapsEmptyCta => 'إضافة ابن';
+
+  @override
+  String get knowledgeMapsLoadingSemantics => 'جاري تحميل خرائط المعرفة';
+
+  @override
+  String get knowledgeMapsChildLeanTitle => 'خرائط المعرفة للوالدين';
+
+  @override
+  String get knowledgeMapsChildLeanMessage =>
+      'تُعرض خرائط النمو والتواصل على جهاز الوالد. زر SOS متاح دائمًا.';
+
+  @override
+  String get knowledgeMapsSosCta => 'SOS';
+
+  @override
+  String get knowledgeMapsObserverHint =>
+      'عرض فقط — روابط المسارات وإجراءات العشاء تتطلب مستوى شريك أو كاملة.';
+
+  @override
+  String get knowledgeMapsObserverBlocked =>
+      'عرض فقط — اطلب من الأب أو أم شريكة فتح المسارات أو إرسال أسئلة العشاء';
+
+  @override
+  String get knowledgeMapsLearningHeading => 'مسارات التعلّم والإتقان';
+
+  @override
+  String knowledgeMapsMasteryTag(int percent) {
+    return 'إتقان متصاعد ↗️ $percent٪';
+  }
+
+  @override
+  String get knowledgeMapsPathQuranTitle => 'القرآن الكريم — سورة الملك';
+
+  @override
+  String get knowledgeMapsPathQuranSubtitle =>
+      'أنجز ١٥ من ٣٠ آية · 🔥 ٥ أيام متواصلة';
+
+  @override
+  String get knowledgeMapsPathQuranCta => 'متابعة الورد ←';
+
+  @override
+  String get knowledgeMapsPathMathTitle => 'الرياضيات — الكسور الاعتيادية';
+
+  @override
+  String get knowledgeMapsPathMathSubtitle =>
+      'أتقن الجمع والطرح · يحتاج تثبيت القسمة';
+
+  @override
+  String get knowledgeMapsPathMathCta => 'تمرين تثبيت';
+
+  @override
+  String get knowledgeMapsSocialHeading => 'شبكة التواصل والاتزان الاجتماعي';
+
+  @override
+  String get knowledgeMapsSocialSafeTag => 'بيئة آمنة';
+
+  @override
+  String get knowledgeMapsSocialFamilyTitle => 'العائلة المباشرة (٨٠٪)';
+
+  @override
+  String get knowledgeMapsSocialFamilySubtitle => 'محادثات دافئة يومية';
+
+  @override
+  String get knowledgeMapsSocialFriendsTitle => 'الأصدقاء المعتمدون (١٥٪)';
+
+  @override
+  String get knowledgeMapsSocialNewTitle => 'تفاعل جديد (٥٪)';
+
+  @override
+  String get knowledgeMapsSocialFoundationTag => 'الأساس';
+
+  @override
+  String get knowledgeMapsDinnerHeading => 'سؤال العشاء الليلة';
+
+  @override
+  String get knowledgeMapsDinnerQ1 =>
+      'لو فتحنا مطعمًا عائليًا — ماذا نسميه وما طبقنا الأشهر؟';
+
+  @override
+  String get knowledgeMapsDinnerQ2 =>
+      'ما أجمل شيء صار لك اليوم… وما الشيء الذي تمنيت لو صار أفضل؟';
+
+  @override
+  String get knowledgeMapsDinnerQ3 =>
+      'لو تبادلنا الأدوار يومًا كاملًا — من يأخذ دور من؟ ولماذا؟';
+
+  @override
+  String get knowledgeMapsDinnerNextCta => 'سؤال آخر';
+
+  @override
+  String get knowledgeMapsDinnerSendCta => 'أرسله للعائلة';
+
+  @override
+  String get knowledgeMapsDinnerSendToast =>
+      'أُرسل لمحادثة العائلة — نقاش الليلة جاهز (محاكاة المرحلة ١)';
+
+  @override
+  String get knowledgeMapsDinnerFooter =>
+      'من مستشار العائلة — ليعمق حواركم حول المائدة';
+
+  @override
+  String get childLearnHomeTitle => 'تعلّمي';
+
+  @override
+  String get childLearnHomeChildChip => 'وضع الابن';
+
+  @override
+  String get childLearnHomeLevelExplorer => 'مستكشف';
+
+  @override
+  String childLearnHomeLevelLabel(int level, String title) {
+    return 'المستوى $level — $title';
+  }
+
+  @override
+  String childLearnHomeMinutesEarned(int minutes) {
+    return '$minutes دقيقة مكتسبة هذا الشهر';
+  }
+
+  @override
+  String childLearnHomeStreakDays(int days) {
+    return '$days أيام متتالية';
+  }
+
+  @override
+  String get childLearnHomeFreeTimeChip => 'وقته مجاني';
+
+  @override
+  String get childLearnHomeChallengeHeading => 'تحدي والدك';
+
+  @override
+  String get childLearnHomeChallengeFractions => 'اختبار الكسور';
+
+  @override
+  String childLearnHomeChallengeBody(String title, int minutes) {
+    return '$title — +$minutes دقيقة لعب إذا أتقنت!';
+  }
+
+  @override
+  String get childLearnHomeChallengeCta => 'ابدأ التحدي';
+
+  @override
+  String get childLearnHomeMaterialsHeading => 'موادي';
+
+  @override
+  String get childLearnHomeSubjectMath => 'رياضيات';
+
+  @override
+  String get childLearnHomeSubjectQuran => 'قرآن';
+
+  @override
+  String get childLearnHomeSubjectEnglish => 'إنجليزية';
+
+  @override
+  String get childLearnHomeMathNewLesson => 'درس جديد من والدك';
+
+  @override
+  String get childLearnHomeQuranWird => 'وردي: الملك ١١–١٥';
+
+  @override
+  String get childLearnHomeEnglishCardsLeft => '٦ بطاقات باقية';
+
+  @override
+  String get childLearnHomeTagNew => 'جديد';
+
+  @override
+  String childLearnHomeTagProgress(int percent) {
+    return '$percent٪';
+  }
+
+  @override
+  String get childLearnHomeMaterialSoonToast =>
+      'قريبًا على هذا المسار (محاكاة المرحلة ١)';
+
+  @override
+  String get childLearnHomeQuickTutor => 'معلمي';
+
+  @override
+  String get childLearnHomeQuickFocus => 'تركيز';
+
+  @override
+  String get childLearnHomeQuickHomework => 'واجبي';
+
+  @override
+  String get childLearnHomeEmptyTitle => 'لا مسار تعلّم بعد';
+
+  @override
+  String get childLearnHomeEmptyMessage =>
+      'عندما يسند والدك درسًا سيظهر هنا. زر الطوارئ يبقى متاحًا.';
+
+  @override
+  String get childLearnHomeEmptyCta => 'طوارئ';
+
+  @override
+  String get childLearnHomeLoadingSemantics => 'جاري تحميل تعلّمي';
+
+  @override
+  String get childLearnHomeParentLeanTitle => 'تعلّم الابن';
+
+  @override
+  String get childLearnHomeParentLeanMessage =>
+      'مركز التعلّم لجهاز الابن. أدوات التعليم للوالد من الاستوديو.';
+
+  @override
+  String get childLessonAppBar => 'الدرس';
+
+  @override
+  String get childLessonTitleAddingFractions => 'جمع الكسور';
+
+  @override
+  String get childLessonHookImaginePizza => 'تخيل بيتزا!';
+
+  @override
+  String get childLessonBodyPizzaFractions =>
+      'قسمنا بيتزا إلى ٧ قطع. أكلت أنت قطعتين (٢/٧) وأخوك ٣ قطع (٣/٧). نجمع الأعلى فقط: ٢+٣=٥ — يعني ٥/٧!';
+
+  @override
+  String childLessonRewardToast(int minutes) {
+    return '+$minutes دقائق — أكملت هذا الجزء!';
+  }
+
+  @override
+  String get childLessonNextCta => 'فهمت — التالي';
+
+  @override
+  String get childLessonTutorCta => 'ما فهمت — اسأل معلمي';
+
+  @override
+  String get childLessonEmptyTitle => 'لا درس مفتوح';
+
+  @override
+  String get childLessonEmptyMessage => 'افتح مادة من تعلّمي لبدء الدرس.';
+
+  @override
+  String get childLessonEmptyCta => 'عودة لتعلّمي';
+
+  @override
+  String get childLessonLoadingSemantics => 'جاري تحميل الدرس';
+
+  @override
+  String get childLessonParentLeanTitle => 'درس الابن';
+
+  @override
+  String get childLessonParentLeanMessage =>
+      'الدروس على جهاز الابن. أسند المحتوى من الاستوديو.';
+
+  @override
+  String get childFlashcardsTitle => 'بطاقاتي الذكية';
+
+  @override
+  String get childFlashcardsLessonFractionsOps => 'درس الكسور والعمليات';
+
+  @override
+  String get childFlashcardsSourceMathPdf => 'كتاب_الرياضيات_الفصل_الثاني.pdf';
+
+  @override
+  String childFlashcardsSourceLine(String source) {
+    return 'مستخرجة من: $source';
+  }
+
+  @override
+  String childFlashcardsCounter(int current, int total) {
+    return 'بطاقة $current من $total';
+  }
+
+  @override
+  String get childFlashcardsQOrdinaryFraction => 'ما هو الكسر الاعتيادي؟';
+
+  @override
+  String get childFlashcardsAOrdinaryFraction =>
+      'عدد يمثل جزءاً أو أكثر من أجزاء متساوية من الكل، ويتكون من بسط ومقام (مثال: ٣/٤).';
+
+  @override
+  String get childFlashcardsHPizza => 'تذكر البيتزا المقسمة بالتساوي';
+
+  @override
+  String get childFlashcardsQAddNumerators => 'متى نجمع بسطين مباشرة؟';
+
+  @override
+  String get childFlashcardsAAddNumerators =>
+      'عندما يكون المقامان متساويين تماماً! نجمع البسطين ونبقي المقام نفسه (مثال: ١/٥ + ٢/٥ = ٣/٥).';
+
+  @override
+  String get childFlashcardsHSameDenom => 'المقام المتطابق يبقى كما هو';
+
+  @override
+  String get childFlashcardsSideQuestion => 'السؤال والمفهوم';
+
+  @override
+  String get childFlashcardsSideAnswer => 'الشرح والجواب';
+
+  @override
+  String get childFlashcardsTapHint => 'اضغط على البطاقة لقلبها ومعرفة الإجابة';
+
+  @override
+  String get childFlashcardsKnownCta => 'أعرفها';
+
+  @override
+  String get childFlashcardsReviewCta => 'أحتاج مراجعة';
+
+  @override
+  String get childFlashcardsKnownToast => 'رائع — سنراجعها متباعدًا حتى ترسخ';
+
+  @override
+  String get childFlashcardsReviewToast =>
+      'صراحتك قوة — سنكررها قريبًا حتى تتقنها';
+
+  @override
+  String get childFlashcardsPrevCta => 'السابقة';
+
+  @override
+  String get childFlashcardsNextCta => 'التالية';
+
+  @override
+  String get childFlashcardsFirstToast => 'هذه أول بطاقة';
+
+  @override
+  String get childFlashcardsEndToast => 'أنهيت كل البطاقات! جاهز للاختبار';
+
+  @override
+  String childFlashcardsQuizCta(int minutes) {
+    return 'بدء الاختبار التفاعلي (+$minutes دقيقة)';
+  }
+
+  @override
+  String get childFlashcardsEmptyTitle => 'لا بطاقات بعد';
+
+  @override
+  String get childFlashcardsEmptyMessage =>
+      'عندما يستخرج الوالد بطاقات من درس تظهر هنا.';
+
+  @override
+  String get childFlashcardsEmptyCta => 'عودة لتعلّمي';
+
+  @override
+  String get childFlashcardsLoadingSemantics => 'جاري تحميل البطاقات';
+
+  @override
+  String get childFlashcardsParentLeanTitle => 'بطاقات الابن';
+
+  @override
+  String get childFlashcardsParentLeanMessage =>
+      'البطاقات لجهاز الابن. أنشئ المواد من الاستوديو.';
+
+  @override
+  String get childQuizTitle => 'تحدي المهارة';
+
+  @override
+  String get childQuizSkillDividingFractions => 'قسمة الكسور الاعتيادية';
+
+  @override
+  String childQuizSkillTag(String skill) {
+    return 'مهارة: $skill · من والدك';
+  }
+
+  @override
+  String get childQuizPromptHalfDivQuarter => '١/٢ ÷ ١/٤ = ؟';
+
+  @override
+  String childQuizEarnHint(int minutes) {
+    return 'اختر الإجابة الصحيحة لتكسب +$minutes دقيقة لعب';
+  }
+
+  @override
+  String get childQuizOpt2 => '٢';
+
+  @override
+  String get childQuizOpt1over8 => '١/٨';
+
+  @override
+  String get childQuizOpt1over2 => '١/٢';
+
+  @override
+  String get childQuizOpt4 => '٤';
+
+  @override
+  String get childQuizExplainHalfDivQuarter =>
+      'نضرب في مقلوب الكسر الثاني: ١/٢ × ٤/١ = ٢.';
+
+  @override
+  String childQuizCorrectToast(String explanation, int minutes) {
+    return 'إجابة عبقرية! $explanation كسبت +$minutes دقيقة.';
+  }
+
+  @override
+  String get childQuizHintNearMiss =>
+      'قريبة جداً! عند قسمة الكسور نقلب الكسر الثاني ونحوّل القسمة لضرب.';
+
+  @override
+  String get childQuizHintFlip =>
+      'ليست صحيحة — اقلب الكسر الثاني: ١/٤ يصبح ٤/١';
+
+  @override
+  String get childQuizHintMultiply => 'حاول ثانية — اضرب ١/٢ في ٤';
+
+  @override
+  String get childQuizStudyGiftNote =>
+      'وقت المذاكرة والتعلّم هدية لا يُخصم من وقت لعبك أبدًا';
+
+  @override
+  String get childQuizEmptyTitle => 'لا اختبار بعد';
+
+  @override
+  String get childQuizEmptyMessage => 'عندما يسند والدك تحدي مهارة سيظهر هنا.';
+
+  @override
+  String get childQuizEmptyCta => 'عودة لتعلّمي';
+
+  @override
+  String get childQuizLoadingSemantics => 'جاري تحميل الاختبار';
+
+  @override
+  String get childQuizParentLeanTitle => 'اختبار الابن';
+
+  @override
+  String get childQuizParentLeanMessage =>
+      'اختبارات المهارة تعمل على جهاز الابن.';
+
+  @override
+  String get childResultTitle => 'نتيجتك';
+
+  @override
+  String childResultScore(int correct, int total) {
+    return '$correct من $total';
+  }
+
+  @override
+  String get childResultPraiseMasteredAdd =>
+      'أتقنت جمع الكسور! والدك وصله الخبر.';
+
+  @override
+  String get childResultRewardsHeading => 'مكافآتك';
+
+  @override
+  String get childResultRewardWallet20 => '+٢٠ دقيقة لمحفظتك';
+
+  @override
+  String get childResultRewardPlay15 => '+١٥ دقيقة لعب';
+
+  @override
+  String get childResultRewardBonus30 => '+٣٠ دقيقة';
+
+  @override
+  String get childResultRewardNearLevel4 => 'اقتربت من المستوى ٤!';
+
+  @override
+  String get childResultTagArrived => 'وصلت';
+
+  @override
+  String get childResultTagAdded => 'أُضيفت';
+
+  @override
+  String get childResultTagProgress370 => '٣٧٠/٥٠٠';
+
+  @override
+  String get childResultMissedHeading => 'السؤال الوحيد الذي فاتك';
+
+  @override
+  String get childResultMissedQ7 => 'س٧ — قسمة الكسور.';
+
+  @override
+  String get childResultMissedDivisionOk =>
+      'مو مشكلة أبدًا — جهزنا لك شرحًا قصيرًا يوضحها.';
+
+  @override
+  String get childResultReviewCta => 'شاهد الشرح (دقيقتان)';
+
+  @override
+  String get childResultHomeCta => 'عودة لتعلّمي';
+
+  @override
+  String get childResultEmptyTitle => 'لا نتيجة بعد';
+
+  @override
+  String get childResultEmptyMessage =>
+      'أكمل اختبارًا لترى نتيجتك التشجيعية هنا.';
+
+  @override
+  String get childResultEmptyCta => 'عودة لتعلّمي';
+
+  @override
+  String get childResultLoadingSemantics => 'جاري تحميل النتيجة';
+
+  @override
+  String get childResultParentLeanTitle => 'نتيجة الابن';
+
+  @override
+  String get childResultParentLeanMessage =>
+      'النتائج تحتفي بالتقدّم على جهاز الابن.';
+
+  @override
+  String get childTutorTitle => 'معلمي';
+
+  @override
+  String get childTutorSubtitle => 'لا يحل عنك';
+
+  @override
+  String get childTutorPolicyBanner =>
+      'أنا أساعدك تفهم — ما أعطيك الجواب الجاهز أبدًا. كذا تصير أنت البطل.';
+
+  @override
+  String get childTutorTransparencyNote =>
+      'والدك يطّلع على محادثاتنا — بيتنا كله شفاف وآمن';
+
+  @override
+  String get childTutorBubbleGreetStuck =>
+      'مرحبا! شفت إنك واقف عند ٣/٥ + ١/٢ … من وين نبدأ؟';
+
+  @override
+  String get childTutorBubbleChildDifferentDenom =>
+      'ما أعرف أجمعها، الأسفل مختلف!';
+
+  @override
+  String get childTutorBubbleLcmPrompt =>
+      'ملاحظة ممتازة! هنا السر: نحتاج نخلي الأسفل نفس الرقم. سؤالي لك: ما هو أصغر رقم يقبل القسمة على ٥ وعلى ٢ معًا؟';
+
+  @override
+  String get childTutorChoiceTen => '١٠؟';
+
+  @override
+  String get childTutorChoiceSeven => '٧؟';
+
+  @override
+  String get childTutorReplyTen => 'بالضبط! ١٠ ✓ — الآن حوّل ٣/٥ إلى أعشار…';
+
+  @override
+  String get childTutorReplySeven => 'قريب! جرب: ٥×٢ كم؟';
+
+  @override
+  String get childTutorPhotoCta => 'صوّر مسألة من الكتاب';
+
+  @override
+  String get childTutorPhotoToast =>
+      'صوّر المسألة — وسأشرحها خطوة بخطوة (محاكاة المرحلة ١)';
+
+  @override
+  String get childTutorEmptyTitle => 'المعلم جاهز عندما تكون جاهزًا';
+
+  @override
+  String get childTutorEmptyMessage =>
+      'افتح درسًا أو اختبارًا ثم اسأل معلّمك عن تلميحات — بلا جواب جاهز.';
+
+  @override
+  String get childTutorEmptyCta => 'عودة لتعلّمي';
+
+  @override
+  String get childTutorLoadingSemantics => 'جاري تحميل المعلم';
+
+  @override
+  String get childTutorParentLeanTitle => 'معلم الابن';
+
+  @override
+  String get childTutorParentLeanMessage =>
+      'المعلم السقراطي على جهاز الابن. الوالد يرى المحادثة للشفافية.';
+
+  @override
+  String get childFocusTitle => 'وضع التركيز';
+
+  @override
+  String get childFocusTimerCaption => 'دقيقة تركيز صافٍ';
+
+  @override
+  String childFocusTimerSemantics(int minutes) {
+    return 'مؤقت تركيز $minutes دقيقة';
+  }
+
+  @override
+  String get childFocusGiftNote =>
+      'أثناء التركيز تهدأ التطبيقات المشتتة — وهذا الوقت هدية لا يُحسب من وقت لعبك أبدًا.';
+
+  @override
+  String get childFocusHonestyNote =>
+      'أثناء التركيز تهدأ التطبيقات المشتتة — وهذا الوقت هدية لا يُحسب من وقت لعبك أبدًا.';
+
+  @override
+  String childFocusStartCta(int minutes) {
+    return 'ابدأ $minutes دقيقة';
+  }
+
+  @override
+  String get childFocusRunningCta => 'جلسة التركيز جارية';
+
+  @override
+  String get childFocusStartToast => 'بدأ التركيز — كُتمت المشتتات. بالتوفيق!';
+
+  @override
+  String get childFocusSoundsCta => 'أصوات هادئة';
+
+  @override
+  String get childFocusPraiseHeading => 'رسالة فخر من والدك:';
+
+  @override
+  String get childFocusPraiseResistDistraction =>
+      'فخور بك — لاحظت مقاومتك للتشتيت!';
+
+  @override
+  String get childFocusEmptyTitle => 'لا جلسة تركيز جاهزة';
+
+  @override
+  String get childFocusEmptyMessage => 'افتح تعلّمي لبدء جلسة تركيز هدية.';
+
+  @override
+  String get childFocusEmptyCta => 'عودة لتعلّمي';
+
+  @override
+  String get childFocusLoadingSemantics => 'جاري تحميل وضع التركيز';
+
+  @override
+  String get childFocusParentLeanTitle => 'وضع تركيز الابن';
+
+  @override
+  String get childFocusParentLeanMessage =>
+      'جلسات التركيز على جهاز الابن. عيّن وقت الدراسة من أدوات الوالد.';
+
+  @override
+  String get childWalletTitle => 'محفظتي';
+
+  @override
+  String childWalletTotalMinutes(int minutes) {
+    return '$minutes دقيقة';
+  }
+
+  @override
+  String get childWalletTotalCaption => 'رصيدك الكلي من الدقائق المكتسبة';
+
+  @override
+  String childWalletStreakAndBadges(int days, int badges) {
+    return '$days أيام التزام · $badges شارات';
+  }
+
+  @override
+  String get childWalletCompeteHeading => 'نافس نفسك — لا أحد غيرك';
+
+  @override
+  String childWalletRecordLine(int days) {
+    return 'رقمك القياسي: $days أيام التزام متتالية';
+  }
+
+  @override
+  String childWalletCurrentStreakLine(int days) {
+    return 'أنت الآن على $days — اقترب موعد كسر رقمك!';
+  }
+
+  @override
+  String get childWalletBadgesHeading => 'خزانة شاراتي';
+
+  @override
+  String get childWalletBadgeFirstWird => 'أول ورد';
+
+  @override
+  String get childWalletBadgeAdhkarWeek => 'أسبوع أذكار';
+
+  @override
+  String get childWalletBadgeFocusFive => '٥ جلسات تركيز';
+
+  @override
+  String get childWalletBadgeMonthStreak => 'شهر التزام';
+
+  @override
+  String get childWalletBadgeFamilyHero => 'بطل العائلة';
+
+  @override
+  String childWalletBadgesFootnote(int count) {
+    return '$count شارات محققة — والقادمة أجمل';
+  }
+
+  @override
+  String get childWalletBadgesNotCurrency =>
+      'شاراتك وسام إنجاز — الدقائق تُكسب بالعمل فقط.';
+
+  @override
+  String get childWalletAppsHeading => 'محافظ تطبيقاتي';
+
+  @override
+  String get childWalletAppsCaption => 'كل تطبيق له محفظته — ولا تفتح الممنوع.';
+
+  @override
+  String get childWalletAppYoutube => 'يوتيوب';
+
+  @override
+  String get childWalletAppGames => 'الألعاب';
+
+  @override
+  String get childWalletAppSocial => 'تواصل';
+
+  @override
+  String get childWalletAppQuran => 'قرآن';
+
+  @override
+  String get childWalletSimulatedTag => 'تجريبي · محاكاة';
+
+  @override
+  String childWalletAppBalance(int minutes) {
+    return 'رصيدك: $minutes دقيقة';
+  }
+
+  @override
+  String get childWalletAppNoBalance => 'لا رصيد بعد — اكسب بمهمة!';
+
+  @override
+  String childWalletMinutesTag(int minutes) {
+    return '$minutes د';
+  }
+
+  @override
+  String get childWalletZeroTag => '٠';
+
+  @override
+  String get childWalletEarnHeading => 'كيف أكسب دقائق؟';
+
+  @override
+  String get childWalletEarnQuranTitle => 'وردي من القرآن';
+
+  @override
+  String get childWalletEarnQuranBody => 'أتمّه واكسب ما حدده أبي';
+
+  @override
+  String get childWalletEarnTasksTitle => 'مهامي';
+
+  @override
+  String get childWalletEarnTasksBody => 'كل مهمة = دقائق يحددها أبي';
+
+  @override
+  String get childWalletEarnQuizTitle => 'تحديات التعلم';
+
+  @override
+  String get childWalletEarnQuizBody => 'تعلّم والعب أكثر';
+
+  @override
+  String get childWalletEmptyTitle => 'المحفظة فارغة';
+
+  @override
+  String get childWalletEmptyMessage =>
+      'اكسب دقائق بالمهام والتعلّم — الشارات فخر لا عملة.';
+
+  @override
+  String get childWalletEmptyCta => 'عودة لتعلّمي';
+
+  @override
+  String get childWalletLoadingSemantics => 'جاري تحميل المحفظة';
+
+  @override
+  String get childWalletParentLeanTitle => 'محفظة الابن';
+
+  @override
+  String get childWalletParentLeanMessage =>
+      'محافظ الدقائق وشارات الفخر على جهاز الابن.';
+
+  @override
+  String get childTimeRequestTitle => 'طلب وقت إضافي';
+
+  @override
+  String get childTimeRequestHowMuch => 'كم تحتاج من الوقت؟';
+
+  @override
+  String get childTimeRequestMins15 => '١٥ دقيقة';
+
+  @override
+  String get childTimeRequestMins30 => '٣٠ دقيقة';
+
+  @override
+  String get childTimeRequestMins60 => 'ساعة كاملة';
+
+  @override
+  String get childTimeRequestReasonLabel => 'ما السبب؟ (ليعرف والداك)';
+
+  @override
+  String get childTimeRequestReasonFinishedHomework =>
+      'أنهيت واجباتي وأريد إكمال اللعب مع صديق';
+
+  @override
+  String get childTimeRequestTradeHeading =>
+      'عجلة المقايضة الذكية (اقترح عملاً صالحاً)';
+
+  @override
+  String get childTimeRequestTradeCaption =>
+      'اختر عملاً تلتزم به مقابل الوقت الإضافي ليزيد احتمال الموافقة.';
+
+  @override
+  String get childTimeRequestTradeWird => 'حفظ ورد اليوم من سورة الملك';
+
+  @override
+  String get childTimeRequestTradeTidy => 'ترتيب المكتب والغرفة';
+
+  @override
+  String get childTimeRequestTradeMath => 'مراجعة درس الرياضيات';
+
+  @override
+  String get childTimeRequestTradeDirect => 'طلب مباشر بدون مقايضة';
+
+  @override
+  String get childTimeRequestSubmitCta => 'أرسل طلب التفاوض لوالدي';
+
+  @override
+  String get childTimeRequestSubmitToast =>
+      'وصل طلبك لوالديك — سيردون عليك مع المقايضة';
+
+  @override
+  String get childTimeRequestStatusPendingTitle => 'طلبك عند والدك الآن';
+
+  @override
+  String childTimeRequestStatusPendingBody(int minutes) {
+    return 'طلبت $minutes دقيقة — سيصلك رده قريبًا';
+  }
+
+  @override
+  String childTimeRequestStatusApprovedTitle(int minutes) {
+    return 'وافق أبوك — بوقته هو: $minutes دقيقة';
+  }
+
+  @override
+  String get childTimeRequestStatusApprovedBody =>
+      'أُضيفت كمنحة مؤقتة لليوم — استمتع بحكمة';
+
+  @override
+  String get childTimeRequestStatusTaskedTitle => 'أبوك يقول: الوقت يُكسب!';
+
+  @override
+  String childTimeRequestStatusTaskedBody(String task, int minutes) {
+    return 'أنجز «$task» وستُودع $minutes دقيقة في محفظتك تلقائيًا';
+  }
+
+  @override
+  String get childTimeRequestTaskTidyDesk => 'ترتيب المكتب';
+
+  @override
+  String get childTimeRequestGoTasksCta => 'إلى مهامي';
+
+  @override
+  String get childTimeRequestStatusRejectedTitle => 'ليس الآن يا حبيبي';
+
+  @override
+  String get childTimeRequestStatusRejectedBody =>
+      'أبوك اعتذر بلطف — جرّب غدًا، أو اكسب وقتًا بمهمة من الآن';
+
+  @override
+  String get childTimeRequestEmptyTitle => 'الطلبات غير متاحة';
+
+  @override
+  String get childTimeRequestEmptyMessage =>
+      'عندما يفتح طلب الوقت الإضافي يظهر النموذج هنا. الطوارئ تبقى متاحة.';
+
+  @override
+  String get childTimeRequestEmptyCta => 'عودة ليومي';
+
+  @override
+  String get childTimeRequestLoadingSemantics => 'جاري تحميل طلب الوقت';
+
+  @override
+  String get childTimeRequestParentLeanTitle => 'طلب وقت الابن';
+
+  @override
+  String get childTimeRequestParentLeanMessage =>
+      'طلبات الوقت الإضافي تُرسل من جهاز الابن إلى صندوق الوالد.';
+
+  @override
+  String get childTimeRequestStatusExpiredTitle => 'انتهى الطلب';
+
+  @override
+  String get childTimeRequestStatusExpiredBody =>
+      'انتهت مهلة هذا الطلب — يمكنك إرسال طلب جديد.';
+
+  @override
+  String get childTimeRequestDuplicateError =>
+      'لديك طلب معلّق بالفعل — انتظر رد والديك.';
+
+  @override
+  String get enforcementSimulatedLabel => 'محاكاة';
+
+  @override
+  String get remainingMinutesCardTitle => 'الدقائق المتبقية';
+
+  @override
+  String get remainingMinutesDailyLabel => 'المتبقي اليومي';
+
+  @override
+  String get remainingMinutesGrantLabel => 'منحة مؤقتة';
+
+  @override
+  String get remainingMinutesWalletLabel => 'محفظة مكتسبة';
+
+  @override
+  String remainingMinutesValue(int minutes) {
+    return '$minutes د';
+  }
+
+  @override
+  String timeWarningBannerMessage(int minutes) {
+    return 'تبقّى $minutes دقائق فقط اليوم — أنهِ قريبًا.';
+  }
+
+  @override
+  String get childTasksTitle => 'مهامي';
+
+  @override
+  String get childTasksHeroCaption => 'أكمل مهامك واكسب وقت لعب إضافي!';
+
+  @override
+  String get childTasksHeroHeadline => 'كل مهمة تنجزها تقربك لجائزتك';
+
+  @override
+  String get childTasksTodayHeading => 'مهامك اليوم';
+
+  @override
+  String get childTasksTitleTidyRoom => 'ترتيب غرفتي';
+
+  @override
+  String get childTasksTitleMathReview => 'مراجعة درس الرياضيات';
+
+  @override
+  String get childTasksTitleWirdDone => 'إتمام ورد اليوم';
+
+  @override
+  String childTasksRewardLine(int minutes) {
+    return 'المكافأة: +$minutes دقيقة للمحفظة';
+  }
+
+  @override
+  String get childTasksSubmitCta => 'أنجزتها';
+
+  @override
+  String get childTasksSubmitToast =>
+      'أُرسل الإثبات — بانتظار تأكيد الوالد (محاكاة المرحلة ١)';
+
+  @override
+  String get childTasksTagPending => 'بانتظار التأكيد';
+
+  @override
+  String get childTasksTagRewarded => 'تمت المكافأة';
+
+  @override
+  String get childTasksEmptyTitle => 'لا مهام بعد';
+
+  @override
+  String get childTasksEmptyMessage =>
+      'عندما يسند والدك مهمة تظهر هنا مع مكافأة الدقائق.';
+
+  @override
+  String get childTasksEmptyCta => 'عودة ليومي';
+
+  @override
+  String get childTasksLoadingSemantics => 'جاري تحميل المهام';
+
+  @override
+  String get childTasksParentLeanTitle => 'مهام الابن';
+
+  @override
+  String get childTasksParentLeanMessage =>
+      'إنجاز المهام والإثبات على جهاز الابن. الوالد يؤكد من لوحة العائلة.';
+
+  @override
+  String get childMediaShareTitle => 'مشاركة وسائط';
+
+  @override
+  String get childMediaShareHeroHeadline => 'شارك لحظة';
+
+  @override
+  String get childMediaShareQuickPhoto => 'صورة';
+
+  @override
+  String get childMediaShareQuickVoice => 'صوتية';
+
+  @override
+  String get childMediaShareQuickFile => 'ملف';
+
+  @override
+  String get childMediaSharePhotoToast => 'التقط وشارك مع عائلتك';
+
+  @override
+  String get childMediaShareVoiceToast => 'اضغط وسجل — يوصل مكتوبًا أيضًا (P1)';
+
+  @override
+  String get childMediaShareFileToast => 'شارك ملف الواجب';
+
+  @override
+  String get childMediaShareRecentHeading => 'آخر مشاركاتي';
+
+  @override
+  String get childMediaShareTitlePhotoGoal => 'هدف المباراة';
+
+  @override
+  String get childMediaShareSubPhotoGoal => 'مجموعة العائلة · أعجب أبي';
+
+  @override
+  String get childMediaShareTitleVoiceShoes => '«أمي وين حذائي؟»';
+
+  @override
+  String get childMediaShareSubVoiceShoes => 'وصلت مفرغة نصًا أيضًا';
+
+  @override
+  String get childMediaShareSafeCircleBanner =>
+      'مشاركاتك داخل دائرة عائلتك فقط — ما تطلع لأي مكان آخر.';
+
+  @override
+  String get childMediaShareEmptyTitle => 'لا مشاركات بعد';
+
+  @override
+  String get childMediaShareEmptyMessage =>
+      'شارك صورًا أو رسائل صوتية أو ملفات بأمان مع عائلتك من هنا.';
+
+  @override
+  String get childMediaShareEmptyCta => 'عودة لمحادثاتي';
+
+  @override
+  String get childMediaShareLoadingSemantics => 'جاري تحميل مشاركة الوسائط';
+
+  @override
+  String get childMediaShareParentLeanTitle => 'مشاركة وسائط الابن';
+
+  @override
+  String get childMediaShareParentLeanMessage =>
+      'مشاركة الوسائط على جهاز الابن داخل دائرة العائلة المغلقة.';
+
+  @override
+  String get childMediaSharePhotoSemantics => 'شارك صورة مع العائلة';
+
+  @override
+  String get childMediaShareVoiceSemantics => 'سجّل وشارك رسالة صوتية';
+
+  @override
+  String get childMediaShareFileSemantics => 'شارك ملفًا مع العائلة';
+
+  @override
+  String get childArrivalTitle => 'أنا وصلت';
+
+  @override
+  String get childArrivalHeadline => 'أين وصلت يا بطل؟';
+
+  @override
+  String get childArrivalSubtitle =>
+      'اضغط على المكان لتطمئن والديك بلمسة واحدة:';
+
+  @override
+  String get childArrivalZoneSchool => 'المدرسة';
+
+  @override
+  String get childArrivalZoneSchoolDesc => 'منطقة المدرسة الثانوية';
+
+  @override
+  String get childArrivalZoneHome => 'المنزل';
+
+  @override
+  String get childArrivalZoneHomeDesc => 'المنطقة الآمنة في الحي';
+
+  @override
+  String childArrivalZoneCta(String place) {
+    return 'وصلت $place';
+  }
+
+  @override
+  String childArrivalCheckInToast(String place) {
+    return 'تم إرسال إشعار الاطمئنان لوالديك: «وصلت $place»';
+  }
+
+  @override
+  String get childArrivalLiveHeading => 'موقعك الجغرافي المباشر';
+
+  @override
+  String get childArrivalLiveConnected => 'متصل الآن بدقة عالية';
+
+  @override
+  String get childArrivalSafeTag => 'آمن';
+
+  @override
+  String get childArrivalEmptyTitle => 'لا أماكن آمنة بعد';
+
+  @override
+  String get childArrivalEmptyMessage =>
+      'عندما يضيف والدك مناطق آمنة يظهر تسجيل الوصول هنا.';
+
+  @override
+  String get childArrivalEmptyCta => 'عودة ليومي';
+
+  @override
+  String get childArrivalLoadingSemantics => 'جاري تحميل تسجيل الوصول';
+
+  @override
+  String get childArrivalParentLeanTitle => 'وصول الابن';
+
+  @override
+  String get childArrivalParentLeanMessage =>
+      'تسجيل الوصول على جهاز الابن. الوالد يدير المناطق الآمنة من الخريطة.';
+
+  @override
+  String get smartAlertsTitle => 'الرقابة الذكية';
+
+  @override
+  String get smartAlertsHonestyBanner =>
+      'الرقابة هنا مصارحة — ابنك يعلم أن مستشار العائلة يحمي محادثاته. لا تجسس في عائلتنا.';
+
+  @override
+  String get smartAlertsAlertWithdrawal => 'نمط انسحاب في المحادثات';
+
+  @override
+  String get smartAlertsAlertWithdrawalSub => 'تحليل المشاعر · آخر ٥ أيام';
+
+  @override
+  String get smartAlertsAlertArabizi => 'عبارة عربيزي مريبة رُصدت';
+
+  @override
+  String get smartAlertsAlertArabiziSub =>
+      'عامية مكتوبة بحروف لاتينية من جهة مجهولة';
+
+  @override
+  String get smartAlertsTagNew => 'جديد';
+
+  @override
+  String get smartAlertsTagYesterday => 'أمس';
+
+  @override
+  String get smartAlertsTagActive => 'نشط';
+
+  @override
+  String get smartAlertsWatchHeading => 'ماذا يرصد مستشار العائلة؟';
+
+  @override
+  String get smartAlertsWatchKeywords => 'كلمات مريبة';
+
+  @override
+  String get smartAlertsWatchKeywordsSub => 'فصحى وعامية وعربيزي — ميزة نادرة';
+
+  @override
+  String get smartAlertsWatchEmotions => 'تحليل المشاعر';
+
+  @override
+  String get smartAlertsWatchEmotionsSub => 'حزن، خوف، انسحاب';
+
+  @override
+  String get smartAlertsWatchImages => 'الصور الحساسة + الرسائل الجنسية';
+
+  @override
+  String get smartAlertsWatchImagesSub => 'حجب فوري ثم إخطار';
+
+  @override
+  String get smartAlertsToolsHeading => 'أدوات الرقابة — أنت تفعّلها';
+
+  @override
+  String get smartAlertsToolSearchScan => 'تحليل شريط البحث';
+
+  @override
+  String get smartAlertsToolSearchScanSub =>
+      'أي بحث في أي تطبيق — فصحى وعامية وعربيزي';
+
+  @override
+  String get smartAlertsToolImageScan => 'تصنيف الصور على الجهاز';
+
+  @override
+  String get smartAlertsToolImageScanSub => 'يصنّف محليًا — الصور لا تغادر';
+
+  @override
+  String get smartAlertsToolScreenshot => 'لقطة شاشة عند الدخول';
+
+  @override
+  String get smartAlertsToolScreenshotSub => 'للتطبيقات التي تحددها أنت فقط';
+
+  @override
+  String get smartAlertsToolOffline => 'يعمل بلا اتصال';
+
+  @override
+  String get smartAlertsToolOfflineSub =>
+      'التحليل محلي — والتقارير تُرسل عند عودة الشبكة';
+
+  @override
+  String get smartAlertsDetectHeading => 'عند اكتشاف محتوى غير مناسب';
+
+  @override
+  String get smartAlertsDetectBody =>
+      '١. حجب فوري على جهاز الابن\n٢. حفظ اللقطة مشفرة في جهازك أنت\n٣. تقرير يصلك: التطبيق والوقت والسبب — لتقرر أنت الخطوة';
+
+  @override
+  String get smartAlertsSettingsCta => 'إعدادات متقدمة';
+
+  @override
+  String get smartAlertsEmptyTitle => 'لا تنبيهات ذكية بعد';
+
+  @override
+  String get smartAlertsEmptyMessage =>
+      'عندما يرصد مستشار العائلة نمطًا تظهر تنبيهات كهرمانية هنا — تصف السلوك لا تحكم على الابن.';
+
+  @override
+  String get smartAlertsEmptyCta => 'أضف ابنًا';
+
+  @override
+  String get smartAlertsLoadingSemantics => 'جاري تحميل التنبيهات الذكية';
+
+  @override
+  String get smartAlertsChildLeanTitle => 'الرقابة الذكية';
+
+  @override
+  String get smartAlertsChildLeanMessage =>
+      'التنبيهات الذكية للوالدين. جهازك يظهر أن الحماية نشطة — الصراحة تبني الثقة.';
+
+  @override
+  String get smartAlertDetailTitle => 'تنبيه: نمط انسحاب';
+
+  @override
+  String get smartAlertDetailBehaviorBanner =>
+      'التنبيه يصف سلوكًا رصده مستشار العائلة — لا حكمًا على ابنك.';
+
+  @override
+  String get smartAlertDetailChangesHeading => 'ما الذي تغيّر؟';
+
+  @override
+  String get smartAlertDetailChangeShorter => 'ردوده أقصر بنحو ٦٠٪';
+
+  @override
+  String get smartAlertDetailChangeShorterSub => 'مقارنة بأسبوعه المعتاد';
+
+  @override
+  String get smartAlertDetailChangeLateNights => 'نشاط ليلي متأخر';
+
+  @override
+  String get smartAlertDetailChangeLateNightsSub => '٣ ليالٍ بعد ١١ م';
+
+  @override
+  String get smartAlertDetailChangeSadWords => 'مفردات حزينة تكررت';
+
+  @override
+  String get smartAlertDetailChangeSadWordsSub => 'عبارات تعب وانعدام الطاقة';
+
+  @override
+  String get smartAlertDetailDialogueHeading => 'خطوة الحوار المقترحة';
+
+  @override
+  String get smartAlertDetailDialogueQuote =>
+      '«لاحظت أنك متعب هالأيام… ودّك نطلع نتمشى ونتكلم؟»';
+
+  @override
+  String get smartAlertDetailDialogueHint =>
+      'ابدأ بالاهتمام لا بالاستجواب — ولا تذكر التطبيق.';
+
+  @override
+  String get smartAlertDetailScheduleCta => 'جدولة وقت معه';
+
+  @override
+  String get smartAlertDetailScheduleToast =>
+      'أُضيفت لتقويمك: مشوار معًا غدًا عصرًا';
+
+  @override
+  String get smartAlertDetailSilentCta => 'متابعة صامتة أسبوعًا';
+
+  @override
+  String get smartAlertDetailSilentToast =>
+      'سيتابع مستشار العائلة النمط ويوافيك — دون إزعاج ابنك';
+
+  @override
+  String get smartAlertDetailEmptyTitle => 'لا تفصيل تنبيه';
+
+  @override
+  String get smartAlertDetailEmptyMessage =>
+      'افتح تنبيهًا كهرمانيًا من الرقابة الذكية لترى السياق وخطوة الحوار.';
+
+  @override
+  String get smartAlertDetailEmptyCta => 'عودة للرقابة الذكية';
+
+  @override
+  String get smartAlertDetailLoadingSemantics => 'جاري تحميل تفصيل التنبيه';
+
+  @override
+  String get smartAlertDetailChildLeanTitle => 'تفصيل التنبيه';
+
+  @override
+  String get smartAlertDetailChildLeanMessage =>
+      'تفصيل التنبيه وخطوة الحوار للوالدين. جهازك يبقى صادقًا بأن الحماية نشطة.';
+
+  @override
+  String get childUsageReportTitle => 'تقرير استخدام الابن';
+
+  @override
+  String childUsageReportHeading(String name) {
+    return 'تقرير $name';
+  }
+
+  @override
+  String get childUsageReportThisWeek => 'هذا الأسبوع';
+
+  @override
+  String childUsageReportWeekTotal(int hours, int minutes) {
+    return '$hours س $minutes د';
+  }
+
+  @override
+  String get childUsageReportDaySat => 'س';
+
+  @override
+  String get childUsageReportDaySun => 'ح';
+
+  @override
+  String get childUsageReportDayMon => 'ن';
+
+  @override
+  String get childUsageReportDayTue => 'ث';
+
+  @override
+  String get childUsageReportDayWed => 'ر';
+
+  @override
+  String get childUsageReportDayThu => 'خ';
+
+  @override
+  String get childUsageReportDayFri => 'ج';
+
+  @override
+  String get childUsageReportWhereHeading => 'أين ذهب الوقت؟';
+
+  @override
+  String get childUsageReportCatLearning => 'تعلم';
+
+  @override
+  String get childUsageReportCatGames => 'ألعاب';
+
+  @override
+  String get childUsageReportCatChat => 'تواصل';
+
+  @override
+  String childUsageReportCatHours(String label, int hours) {
+    return '$label — $hours س';
+  }
+
+  @override
+  String get childUsageReportGiftNote => 'هدية — لا تُحسب من الحد';
+
+  @override
+  String childUsageReportRetentionBanner(int days) {
+    return 'البيانات تُحفظ $days يومًا فقط ثم تُمحى — وزر النسيان (الإعدادات) يمحوها فورًا. الخصوصية وعدٌ لا شعار.';
+  }
+
+  @override
+  String get childUsageReportChildOne => 'الابن الأول';
+
+  @override
+  String get childUsageReportChildTwo => 'الابن الثاني';
+
+  @override
+  String get childUsageReportChildThree => 'الابن الثالث';
+
+  @override
+  String get childUsageReportEmptyTitle => 'لا تقرير استخدام بعد';
+
+  @override
+  String get childUsageReportEmptyMessage =>
+      'أضف ابناً لترى استخدام الأسبوع وتصنيف الوقت ووعد الاحتفاظ ٣٠ يومًا.';
+
+  @override
+  String get childUsageReportEmptyCta => 'إضافة ابن';
+
+  @override
+  String get childUsageReportLoadingSemantics => 'جاري تحميل تقرير الاستخدام';
+
+  @override
+  String get childUsageReportChildLeanTitle => 'تقرير الاستخدام';
+
+  @override
+  String get childUsageReportChildLeanMessage =>
+      'تقارير الاستخدام التفصيلية للوالدين. جهازك يبقى صادقًا بأن الحماية نشطة.';
+
+  @override
+  String get childUsageReportSosCta => 'نداء الطوارئ';
+
+  @override
+  String get outerCircleTitle => 'الدائرة الخارجية المعتمدة';
+
+  @override
+  String get outerCircleStrangersBanner =>
+      'المجهولون محظورون دائمًا: هذا الإجراء يحمي أبناءك تلقائياً. كل تواصل خارجي يمر بموافقة الوالدين.';
+
+  @override
+  String get outerCircleRelativesHeading => 'دائرة الأقارب الموثوقة';
+
+  @override
+  String get outerCircleFriendsHeading => 'الأصدقاء المعتمدون';
+
+  @override
+  String get outerCircleScheduleHeading => 'جدول أوقات التواصل الخارجي';
+
+  @override
+  String get outerCircleScheduleFriendsEvening =>
+      'الأصدقاء: بعد المدرسة حتى أذان المغرب (٤–٧ م) · الأقارب: مفتوح دائمًا';
+
+  @override
+  String get outerCircleNameGrandpa => 'الجد';
+
+  @override
+  String get outerCircleNameAunt => 'الخالة';
+
+  @override
+  String get outerCircleNameFriendOne => 'الصديق الأول';
+
+  @override
+  String get outerCircleNamePendingFriend => 'صديق بانتظار الموافقة';
+
+  @override
+  String get outerCircleMetaCallsAnytime => 'مكالمات + رسائل في أي وقت';
+
+  @override
+  String get outerCircleMetaMessagesCalls => 'رسائل ومكالمات';
+
+  @override
+  String get outerCircleMetaClassmateSlot => 'زميل معتمد · جدول التواصل ٤–٧ م';
+
+  @override
+  String get outerCircleMetaClassmatePending => 'زميل دراسة · ينتظر قرارك الآن';
+
+  @override
+  String get outerCircleStatusApproved => 'معتمد ✓';
+
+  @override
+  String get outerCircleStatusAlwaysApproved => 'معتمد دائمًا';
+
+  @override
+  String get outerCircleStatusPending => 'بانتظار';
+
+  @override
+  String outerCirclePendingTitle(String name) {
+    return '$name — طلب جديد';
+  }
+
+  @override
+  String get outerCirclePendingCta => 'قرار ←';
+
+  @override
+  String outerCirclePendingSemantics(String name) {
+    return 'طلب صداقة بانتظار الموافقة من $name';
+  }
+
+  @override
+  String get outerCircleEmptyTitle => 'الدائرة الخارجية فارغة';
+
+  @override
+  String get outerCircleEmptyMessage =>
+      'أضف ابناً لإدارة الأقارب الموثوقين والأصدقاء المعتمدين. المجهولون يبقون محظورين.';
+
+  @override
+  String get outerCircleEmptyCta => 'إضافة ابن';
+
+  @override
+  String get outerCircleLoadingSemantics => 'جاري تحميل الدائرة الخارجية';
+
+  @override
+  String get outerCircleChildLeanTitle => 'الدائرة الخارجية';
+
+  @override
+  String get outerCircleChildLeanMessage =>
+      'الوالدان يديران جهات التواصل الموثوقة. محادثاتك تبقى مع من يعتمدونهم.';
+
+  @override
+  String get outerCircleSosCta => 'نداء الطوارئ';
+
+  @override
+  String get friendApprovalTitle => 'طلب صديق جديد';
+
+  @override
+  String get friendApprovalNamePending => 'صديق بانتظار الموافقة';
+
+  @override
+  String get friendApprovalSchoolClassmate => 'زميل في المدرسة';
+
+  @override
+  String get friendApprovalChildOne => 'الابن الأول';
+
+  @override
+  String get friendApprovalChildTwo => 'الابن الثاني';
+
+  @override
+  String get friendApprovalChildThree => 'الابن الثالث';
+
+  @override
+  String friendApprovalProfileSub(String child, String school) {
+    return 'زميل $child ($school) — أرسل الطلب اليوم';
+  }
+
+  @override
+  String get friendApprovalChannelsHeading => 'قنوات التواصل المسموحة';
+
+  @override
+  String get friendApprovalChannelText => 'رسائل نصية آمنة';
+
+  @override
+  String get friendApprovalChannelCalls => 'مكالمات صوتية';
+
+  @override
+  String get friendApprovalChannelSchedule => 'ضمن جدول التواصل';
+
+  @override
+  String get friendApprovalChannelScheduleSub => '٤–٧ مساءً فقط';
+
+  @override
+  String get friendApprovalScheduleAutoTag => 'تلقائي';
+
+  @override
+  String get friendApprovalApproveCta => 'اعتماد الصداقة كصديق آمن';
+
+  @override
+  String get friendApprovalDeclineCta => 'ليس الآن (اعتذار بلطف)';
+
+  @override
+  String friendApprovalApprovedToast(String name, String child) {
+    return 'تم اعتماد $name كصديق آمن — وأُخطر $child بفرحة';
+  }
+
+  @override
+  String friendApprovalDeclinedToast(String child, String name) {
+    return 'أُرسل الرد اللطيف لـ $child: «طلب $name يحتاج وقتاً — سنناقشه معاً»';
+  }
+
+  @override
+  String get friendApprovalObserverHint =>
+      'الاعتماد لمستوى «مشاركة» فما فوق — يمكنك الاطلاع';
+
+  @override
+  String get friendApprovalObserverBlocked =>
+      'اعتماد الأصدقاء يحتاج مستوى مشاركة أو أعلى';
+
+  @override
+  String get friendApprovalEmptyTitle => 'لا طلب صداقة بانتظار';
+
+  @override
+  String get friendApprovalEmptyMessage =>
+      'افتح الدائرة الخارجية عندما ينتظر طلب زميل جديد قرارك.';
+
+  @override
+  String get friendApprovalEmptyCta => 'عودة للدائرة الخارجية';
+
+  @override
+  String get friendApprovalLoadingSemantics => 'جاري تحميل طلب الصداقة';
+
+  @override
+  String get friendApprovalChildLeanTitle => 'موافقة صديق';
+
+  @override
+  String get friendApprovalChildLeanMessage =>
+      'الوالدان يعتمدون الأصدقاء الجدد. دائرتك الموثوقة تبقى آمنة.';
+
+  @override
+  String get friendApprovalSosCta => 'نداء الطوارئ';
+
+  @override
+  String get quranProgressTitle => 'متابعة حفظ القرآن';
+
+  @override
+  String quranProgressHeading(String name) {
+    return 'حفظ وتلاوة $name';
+  }
+
+  @override
+  String get quranProgressActiveWardTag => 'الورد الحالي النشط';
+
+  @override
+  String get quranProgressOfflineTag => 'أوفلاين متاح';
+
+  @override
+  String quranProgressSurahTitle(String surah) {
+    return 'سورة $surah';
+  }
+
+  @override
+  String quranProgressAyahRange(int from, int to, String reciter) {
+    return 'الآيات ($from–$to) · بصوت $reciter';
+  }
+
+  @override
+  String quranProgressCompleted(int done, int total) {
+    return 'أنجز $done من $total آية';
+  }
+
+  @override
+  String quranProgressStreak(int days) {
+    return '🔥 $days أيام التزام متواصلة';
+  }
+
+  @override
+  String quranProgressDownloadHeading(String name) {
+    return 'لوحة تنزيل التلاوة لجهاز $name';
+  }
+
+  @override
+  String get quranProgressInstalledTag => 'مثبتة بالجهاز ✓';
+
+  @override
+  String quranProgressDownloadBody(String surah, String size, String name) {
+    return 'التلاوة الصوتية لسورة «$surah» محملة على جهاز $name بحجم $size، ومتاحة للاستماع والترديد حتى مع انقطاع الإنترنت.';
+  }
+
+  @override
+  String quranProgressDownloadCta(String name) {
+    return 'تنزيل سورة أو صوت شيخ جديد لجهاز $name';
+  }
+
+  @override
+  String quranProgressDownloadToast(String name) {
+    return 'أُضيف التنزيل لطابور جهاز $name';
+  }
+
+  @override
+  String get quranProgressRecitationHeading => 'تلاوة جديدة بانتظار استماعك';
+
+  @override
+  String get quranProgressNewTag => 'جديد';
+
+  @override
+  String get quranProgressApprovedTag => 'تم الاعتماد ✓';
+
+  @override
+  String quranProgressRecitationSub(String name, String surah) {
+    return 'سجّل $name تلاوته لسورة $surah (الآيات ١٦–٢٠):';
+  }
+
+  @override
+  String quranProgressRecitationClip(String name, String surah) {
+    return 'تلاوة $name — سورة $surah';
+  }
+
+  @override
+  String get quranProgressClipDuration => '١:٢٤ د';
+
+  @override
+  String get quranProgressPlaySemantics => 'تشغيل أو إيقاف التلاوة';
+
+  @override
+  String quranProgressApproveCta(int minutes) {
+    return 'اعتماد وصرف المكافأة (+$minutes د)';
+  }
+
+  @override
+  String get quranProgressWhisperCta => 'همسة 💬';
+
+  @override
+  String quranProgressApproveToast(String name, int minutes) {
+    return 'تم اعتماد تلاوة $name وإضافة +$minutes دقيقة لوقت اللعب';
+  }
+
+  @override
+  String quranProgressWhisperToast(String name) {
+    return 'أُرسلت همسة تشجيعية لـ $name';
+  }
+
+  @override
+  String quranProgressApprovedBanner(int minutes) {
+    return '⭐ تم اعتماد هذا الورد وصرف مكافأة +$minutes دقيقة بنجاح';
+  }
+
+  @override
+  String get quranProgressPlanHeading => 'خطة الورد والمكافأة';
+
+  @override
+  String get quranProgressPlanSurah => 'السورة الحالية';
+
+  @override
+  String get quranProgressPlanReciter => 'الشيخ المقرئ';
+
+  @override
+  String get quranProgressPlanReward => 'مكافأة الإتمام';
+
+  @override
+  String quranProgressPlanRewardValue(int minutes) {
+    return '+$minutes دقيقة لعب للمحفظة';
+  }
+
+  @override
+  String get quranProgressSurahNaba => 'النبأ';
+
+  @override
+  String get quranProgressReciterDefault => 'المقرئ الافتراضي';
+
+  @override
+  String get quranProgressAudioSize184 => '١٨.٤ م.ب';
+
+  @override
+  String get quranProgressChildOne => 'الابن الأول';
+
+  @override
+  String get quranProgressChildTwo => 'الابن الثاني';
+
+  @override
+  String get quranProgressChildThree => 'الابن الثالث';
+
+  @override
+  String get quranProgressObserverHint =>
+      'اعتماد التلاوة لمستوى «مشاركة» فما فوق — يمكنك متابعة التقدم';
+
+  @override
+  String get quranProgressObserverBlocked =>
+      'اعتماد مكافآت القرآن يحتاج مستوى مشاركة أو أعلى';
+
+  @override
+  String get quranProgressEmptyTitle => 'لا ورد قرآن بعد';
+
+  @override
+  String get quranProgressEmptyMessage =>
+      'أضف ابناً لضبط خطة الورد وتنزيل التلاوة أوفلاين واعتماد التلاوات بمكافآت الدقائق.';
+
+  @override
+  String get quranProgressEmptyCta => 'إضافة ابن';
+
+  @override
+  String get quranProgressLoadingSemantics => 'جاري تحميل تقدم القرآن';
+
+  @override
+  String get quranProgressChildLeanTitle => 'تقدم القرآن';
+
+  @override
+  String get quranProgressChildLeanMessage =>
+      'الوالدان يتابعان وردك ويعتمدون التلاوة. وقت القرآن لا يُقفل بانتهاء الدقائق.';
+
+  @override
+  String get quranProgressSosCta => 'نداء الطوارئ';
+
+  @override
+  String get weeklyReportTitle => 'التقرير الأسبوعي بتوصية';
+
+  @override
+  String get weeklyReportSettingsHeading => 'إعدادات تقريرك';
+
+  @override
+  String get weeklyReportSettingsTag => 'يتبعها التقرير فورًا';
+
+  @override
+  String get weeklyReportWhenLabel => 'التوقيت';
+
+  @override
+  String get weeklyReportWhenFriday => 'الجمعة صباحًا';
+
+  @override
+  String get weeklyReportWhenSaturday => 'السبت مساءً';
+
+  @override
+  String weeklyReportWhenToast(String when) {
+    return 'توقيت التقرير: $when';
+  }
+
+  @override
+  String get weeklyReportStyleLabel => 'الشكل';
+
+  @override
+  String get weeklyReportStyleDetailed => 'مفصل';
+
+  @override
+  String get weeklyReportStyleBrief => 'مختصر';
+
+  @override
+  String get weeklyReportChangeCta => 'تغيير';
+
+  @override
+  String get weeklyReportToggleCta => 'تبديل';
+
+  @override
+  String get weeklyReportIncScreen => 'وقت الشاشة';
+
+  @override
+  String get weeklyReportIncPlaces => 'المواقع';
+
+  @override
+  String get weeklyReportIncWins => 'الإنجازات';
+
+  @override
+  String get weeklyReportIncQuran => 'القرآن';
+
+  @override
+  String get weeklyReportIncWatch => 'الرقابة';
+
+  @override
+  String get weeklyReportRecommendHeading => 'توصية الأسبوع — واحدة فقط';
+
+  @override
+  String weeklyReportRecommendBody(String name) {
+    return 'رياضيات $name تتحسن بثبات، لكن نومه يتأخر الخميس والجمعة ويهبط تركيزه السبت. جرّب تقديم «وضع النوم» ٣٠ دقيقة في العطلة.';
+  }
+
+  @override
+  String get weeklyReportApplyCta => 'طبّق الاقتراح';
+
+  @override
+  String get weeklyReportDeferCta => 'ليس الآن';
+
+  @override
+  String get weeklyReportApplyToast =>
+      'عُدّل جدول النوم — بتدرج لطيف على أسبوعين';
+
+  @override
+  String get weeklyReportDeferToast =>
+      'حسنًا — سيعيد مستشار العائلة التقييم الجمعة القادمة';
+
+  @override
+  String get weeklyReportAppliedBanner => '✓ طُبّق الاقتراح بموافقتك';
+
+  @override
+  String get weeklyReportDeferredBanner => 'أُجّل حتى مراجعة الجمعة القادمة';
+
+  @override
+  String get weeklyReportMetricLearn => 'تعلم';
+
+  @override
+  String get weeklyReportMetricSleep => 'نوم';
+
+  @override
+  String weeklyReportLearnDelta(int percent) {
+    return '↑ $percent٪';
+  }
+
+  @override
+  String weeklyReportSleepDelta(int minutes) {
+    return '↓ $minutes د';
+  }
+
+  @override
+  String get weeklyReportSecScreenTitle => 'وقت الشاشة';
+
+  @override
+  String get weeklyReportSecScreenBody =>
+      'المعدل ٢ س ١٢ د يوميًا — ضمن الحد. الخميس الأعلى (٣ س).';
+
+  @override
+  String get weeklyReportSecPlacesTitle => 'المواقع';
+
+  @override
+  String get weeklyReportSecPlacesBody =>
+      'كل التحركات ضمن المناطق الآمنة. مكان جديد واحد هذا الأسبوع.';
+
+  @override
+  String get weeklyReportSecWinsTitle => 'الإنجازات';
+
+  @override
+  String weeklyReportSecWinsBody(String one, String two, String three) {
+    return '$one: ورد كامل + ٥ جلسات تركيز · $two: تحدي العلوم · $three: أذكار ٧/٧.';
+  }
+
+  @override
+  String get weeklyReportSecQuranTitle => 'القرآن';
+
+  @override
+  String get weeklyReportSecQuranBody =>
+      'سورة النبأ: ٢٧/٤٠ آية — تسميع الثلاثاء معتمد.';
+
+  @override
+  String get weeklyReportSecWatchTitle => 'الرقابة الذكية';
+
+  @override
+  String get weeklyReportSecWatchBody =>
+      'تنبيهان كهرمانيان — عولجا بالحوار. لا شيء أحمر.';
+
+  @override
+  String get weeklyReportEmailBanner =>
+      'وصلتك نسخة بريدية — وللأم ملخصها حسب مستواها.';
+
+  @override
+  String get weeklyReportChildOne => 'الابن الأول';
+
+  @override
+  String get weeklyReportChildTwo => 'الابن الثاني';
+
+  @override
+  String get weeklyReportChildThree => 'الابن الثالث';
+
+  @override
+  String get weeklyReportObserverHint =>
+      'تطبيق التوصيات لمستوى «مشاركة» فما فوق — يمكنك قراءة التقرير';
+
+  @override
+  String get weeklyReportObserverBlocked =>
+      'تعديل التقرير الأسبوعي يحتاج مستوى مشاركة أو أعلى';
+
+  @override
+  String get weeklyReportEmptyTitle => 'لا تقرير أسبوعي بعد';
+
+  @override
+  String get weeklyReportEmptyMessage =>
+      'أضف ابناً لتصلك توصية واحدة مركزة مع خلاصات الأقسام كل أسبوع.';
+
+  @override
+  String get weeklyReportEmptyCta => 'إضافة ابن';
+
+  @override
+  String get weeklyReportLoadingSemantics => 'جاري تحميل التقرير الأسبوعي';
+
+  @override
+  String get weeklyReportChildLeanTitle => 'التقرير الأسبوعي';
+
+  @override
+  String get weeklyReportChildLeanMessage =>
+      'توصيات الأسبوع للوالدين. جهازك يبقى صادقًا بأن الحماية نشطة.';
+
+  @override
+  String get weeklyReportSosCta => 'نداء الطوارئ';
+
+  @override
+  String get familyAdvisorHubTitle => 'مستشار العائلة';
+
+  @override
+  String get familyAdvisorHubGreeting => 'مساء الخير';
+
+  @override
+  String get familyAdvisorHubSubtitle => 'كيف أساعدك مع عائلتك اليوم؟';
+
+  @override
+  String get familyAdvisorHubChipDay => 'كيف كان يوم أبنائي؟';
+
+  @override
+  String get familyAdvisorHubChipWeekly => 'أعطني تقرير الأسبوع بتوصية';
+
+  @override
+  String get familyAdvisorHubChipActivity => 'اقترح نشاطًا عائليًا لعطلتنا';
+
+  @override
+  String get familyAdvisorHubChipPatterns => 'أرني أنماط عائلتي';
+
+  @override
+  String get familyAdvisorHubSheetDay =>
+      'يوم هادئ: الواجبات أُنجزت والورد اكتمل — ملاحظة بطارية واحدة فقط. ابدأ بالحمد.';
+
+  @override
+  String get familyAdvisorHubSheetActivity =>
+      'الجو غدًا لطيف — رحلة لمشتل ثم زراعة شتلة معًا؟';
+
+  @override
+  String get familyAdvisorHubCapsHeading => 'قدرات مستشار العائلة';
+
+  @override
+  String get familyAdvisorHubSovHeading => 'أنت سيد المستشار';
+
+  @override
+  String get familyAdvisorHubCapVoice => 'المحادثة الصوتية';
+
+  @override
+  String get familyAdvisorHubCapVoiceSub => 'تحدث معه وأنت مشغول اليدين';
+
+  @override
+  String get familyAdvisorHubCapDelegate => 'المساعد المفوَّض';
+
+  @override
+  String get familyAdvisorHubCapDelegateSub => 'ينفذ فقط ما فوضته كتابةً';
+
+  @override
+  String get familyAdvisorHubCapMaps => 'خرائط معرفة الأبناء';
+
+  @override
+  String get familyAdvisorHubCapMapsSub => 'أين يتقن كل ابن وأين يتعثر';
+
+  @override
+  String get familyAdvisorHubCapMother => 'إخطارات الأم';
+
+  @override
+  String get familyAdvisorHubCapMotherSub => 'ما يصلها حسب مستواها';
+
+  @override
+  String get familyAdvisorHubCapLimits => 'حدود المستشار وصلاحياته';
+
+  @override
+  String get familyAdvisorHubCapLimitsSub => 'ماذا يرى — قرارك دائمًا';
+
+  @override
+  String get familyAdvisorHubCapAgentLog => 'ماذا فعل المساعد';
+
+  @override
+  String get familyAdvisorHubCapAgentLogSub => 'سجل دائم لكل تصرف مفوَّض';
+
+  @override
+  String get familyAdvisorHubHonestyQ =>
+      'هل يستخدم الابن الأول يوتيوب أثناء المذاكرة؟';
+
+  @override
+  String get familyAdvisorHubHonestyA =>
+      'لا أعلم بدقة كافية. متابعة التشغيل المتزامن غير مفعّلة على جهازه — أخبرك بحدودي بدل أن أخمّن. أفعّلها لك؟';
+
+  @override
+  String get familyAdvisorHubAskHint => 'اسأل عن أي شيء يخص عائلتك…';
+
+  @override
+  String get familyAdvisorHubAskSendSemantics => 'إرسال السؤال';
+
+  @override
+  String get familyAdvisorHubAskToast =>
+      'يفكر… إجابته من بيانات عائلتك وحدها — وبصدق «لا أعلم» عند النقص';
+
+  @override
+  String get familyAdvisorHubFooter =>
+      'يجيب من بيانات عائلتك فقط · لا يخمّن أبدًا';
+
+  @override
+  String get familyAdvisorHubEmptyTitle => 'مستشار العائلة بانتظارك';
+
+  @override
+  String get familyAdvisorHubEmptyMessage =>
+      'أضف ابناً ليجيب المستشار من بيانات العائلة الحقيقية — دون اختراع.';
+
+  @override
+  String get familyAdvisorHubEmptyCta => 'إضافة ابن';
+
+  @override
+  String get familyAdvisorHubLoadingSemantics => 'جاري تحميل مستشار العائلة';
+
+  @override
+  String get familyAdvisorHubChildLeanTitle => 'مستشار العائلة';
+
+  @override
+  String get familyAdvisorHubChildLeanMessage =>
+      'محادثات مستشار العائلة للوالدين. أدوات المعلّم والقرآن تبقى متاحة لك.';
+
+  @override
+  String get familyAdvisorHubSosCta => 'نداء الطوارئ';
+
+  @override
+  String get motherAiFeedTitle => 'إخطارات الذكاء للأم';
+
+  @override
+  String get motherAiFeedFatherWatchBanner =>
+      'أنت تشاهد ما يصل زوجتك — بهوية لوحتها';
+
+  @override
+  String get motherAiFeedWelcomeBanner =>
+      'بصفتك شريكة في التوجيه، يمكنك إرسال همسات حب للأبناء أو تقديم توصيات للأب بلمسة واحدة.';
+
+  @override
+  String get motherAiFeedWhisperHeading => 'همسة واقتراح لليوم';
+
+  @override
+  String get motherAiFeedPartnershipTag => 'شراكة والدية';
+
+  @override
+  String motherAiFeedWhisperBody(String name) {
+    return '«$name يبدو متعباً بعد تمرين النادي اليوم، ما رأيك أن نقدم موعد نومه ٣٠ دقيقة ونعوضه بوقت لعب إضافي غداً؟»';
+  }
+
+  @override
+  String get motherAiFeedWhisperCta => 'إرسال الاقتراح للأب والابن';
+
+  @override
+  String get motherAiFeedWhisperToast =>
+      'أُرسلت الهمسة والاقتراح — أُخطر الأب وشُجّع الابن';
+
+  @override
+  String get motherAiFeedWhisperSentBanner => '✓ أُرسلت الهمسة بمحبة';
+
+  @override
+  String get motherAiFeedSummariesHeading =>
+      'خلاصات مستشار العائلة المخصصة لكِ';
+
+  @override
+  String get motherAiFeedItemWeekTitle => 'ملخص الأسبوع التربوي';
+
+  @override
+  String motherAiFeedItemMathBody(String name) {
+    return '$name تحسن في الرياضيات بنسبة +١٥٪';
+  }
+
+  @override
+  String get motherAiFeedItemSleepTitle => 'ملاحظة النوم';
+
+  @override
+  String motherAiFeedItemSleepBody(String name) {
+    return 'موعد نوم $name تأخر في عطلة نهاية الأسبوع';
+  }
+
+  @override
+  String get motherAiFeedTagExcellent => 'ممتاز';
+
+  @override
+  String get motherAiFeedTagGood => 'جيد';
+
+  @override
+  String get motherAiFeedTagWatch => 'راقب';
+
+  @override
+  String get motherAiFeedChildOne => 'الابن الأول';
+
+  @override
+  String get motherAiFeedObserverHint =>
+      'إرسال الهمسات لمستوى «مشاركة» فما فوق — يمكنك قراءة الخلاصات';
+
+  @override
+  String get motherAiFeedObserverBlocked =>
+      'إرسال اقتراحات الأم يحتاج مستوى مشاركة أو أعلى';
+
+  @override
+  String get motherAiFeedEmptyTitle => 'لا لوحة أم بعد';
+
+  @override
+  String get motherAiFeedEmptyMessage =>
+      'أضف ابناً لتظهر هنا إخطارات الأم حسب مستواها الثلاثي.';
+
+  @override
+  String get motherAiFeedEmptyCta => 'إضافة ابن';
+
+  @override
+  String get motherAiFeedLoadingSemantics => 'جاري تحميل إخطارات الأم';
+
+  @override
+  String get motherAiFeedChildLeanTitle => 'إخطارات الأم';
+
+  @override
+  String get motherAiFeedChildLeanMessage =>
+      'اقتراحات شراكة الأم للوالدين. تشجيعاتك تصلك كهمسات.';
+
+  @override
+  String get motherAiFeedSosCta => 'نداء الطوارئ';
+
+  @override
+  String get roadSafetyTitle => 'السلامة على الطريق';
+
+  @override
+  String get roadSafetyHonestyBanner =>
+      'تعمل عبر مستشعرات جوال الابن — أندرويد أولًا وعلى آيفون لاحقًا حسب أذونات آبل. نقولها بصدق.';
+
+  @override
+  String get roadSafetyCrashTitle => 'كشف الحوادث';
+
+  @override
+  String get roadSafetyCrashSub =>
+      'ارتجاج قوي + توقف مفاجئ ← اتصال تحقق ثم تصعيد SOS';
+
+  @override
+  String get roadSafetyReportTitle => 'تقرير قيادة الابن السائق';
+
+  @override
+  String get roadSafetyReportSub => 'سرعة، فرملة حادة، تشتت';
+
+  @override
+  String get roadSafetyWeeklyTag => 'أسبوعي';
+
+  @override
+  String get roadSafetyPhoneTitle => 'الجوال أثناء القيادة';
+
+  @override
+  String get roadSafetyPhoneSub => 'تنبيه لطيف له — وملخص لك';
+
+  @override
+  String get roadSafetyTripHeading => 'رحلة أمس — مثال توضيحي';
+
+  @override
+  String get roadSafetyStatSpeed => 'أعلى سرعة';
+
+  @override
+  String roadSafetyStatSpeedValue(int kmh) {
+    return '$kmh كم/س';
+  }
+
+  @override
+  String get roadSafetyStatBrakes => 'فرملة حادة';
+
+  @override
+  String roadSafetyStatBrakesValue(int count) {
+    return '$count';
+  }
+
+  @override
+  String get roadSafetyStatPhone => 'لمس الجوال';
+
+  @override
+  String get roadSafetyStatPhoneZero => 'صفر ✓';
+
+  @override
+  String get roadSafetyDialogueStep =>
+      'خطوة الحوار: امدح «صفر لمس» أولًا — ثم اسأله عن سبب الفرملتين بهدوء.';
+
+  @override
+  String get roadSafetyObserverHint =>
+      'تعديل مفاتيح السلامة لمستوى «كامل» — يمكنك مراجعة الرحلات';
+
+  @override
+  String get roadSafetyObserverBlocked =>
+      'مفاتيح السلامة على الطريق تحتاج مستوى كامل أو الأب';
+
+  @override
+  String get roadSafetyEmptyTitle => 'لا سلامة طريق بعد';
+
+  @override
+  String get roadSafetyEmptyMessage =>
+      'أضف ابناً لتفعيل صدق أندرويد-أولًا وملخصات القيادة.';
+
+  @override
+  String get roadSafetyEmptyCta => 'إضافة ابن';
+
+  @override
+  String get roadSafetyLoadingSemantics => 'جاري تحميل السلامة على الطريق';
+
+  @override
+  String get roadSafetyChildLeanTitle => 'السلامة على الطريق';
+
+  @override
+  String get roadSafetyChildLeanMessage =>
+      'إعدادات سلامة القيادة للوالدين. نداء الطوارئ يبقى متاحًا إن احتجت.';
+
+  @override
+  String get roadSafetySosCta => 'نداء الطوارئ';
+
+  @override
+  String get childQuranWardTitle => 'وردي — حفظ وتلاوة';
+
+  @override
+  String get childQuranWardSurahMulk => 'الملك';
+
+  @override
+  String get childQuranWardSurahNaba => 'النبأ';
+
+  @override
+  String get childQuranWardReciterDefault => 'قارئ اختاره والدك';
+
+  @override
+  String get childQuranWardAyahMulk16 =>
+      'ءَأَمِنتُم مَّن فِى ٱلسَّمَآءِ أَن يَخْسِفَ بِكُمُ ٱلْأَرْضَ فَإِذَا هِىَ تَمُورُ ﴿١٦﴾';
+
+  @override
+  String childQuranWardGiftBanner(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count سور جديدة',
+      one: 'سورة جديدة',
+    );
+    return '🎁 أبوك أهداك $_temp0 — نصًا وتلاوة، جاهزة بلا إنترنت!';
+  }
+
+  @override
+  String get childQuranWardParentsSet => 'وردك المحدد من والديك 🤍';
+
+  @override
+  String get childQuranWardOfflineTag => '📥 تلاوة محملة لجهازك';
+
+  @override
+  String childQuranWardSurahTitle(String name) {
+    return 'سورة $name';
+  }
+
+  @override
+  String childQuranWardAyahRange(int from, int to, String reciter) {
+    return 'الآيات ($from–$to) · بصوت $reciter';
+  }
+
+  @override
+  String childQuranWardReward(int minutes) {
+    return '🎁 مكافأة الإتمام: +$minutes دقيقة لعب إضافية';
+  }
+
+  @override
+  String get childQuranWardOfflineNote =>
+      'تلاوة الشيخ مثبتة بجهازك — يمكنك الاستماع والترديد حتى لو انقطع الإنترنت.';
+
+  @override
+  String childQuranWardVoiceOf(String reciter) {
+    return 'بصوت $reciter';
+  }
+
+  @override
+  String get childQuranWardPlayCta => 'استمع وردّد مع الشيخ';
+
+  @override
+  String get childQuranWardRecordCta => 'سجّل تلاوتك لوالديك';
+
+  @override
+  String get childQuranWardPlayToast =>
+      '▶️ جاري تشغيل تلاوة الشيخ من ملفات جهازك (أوفلاين)';
+
+  @override
+  String get childQuranWardRecordToast =>
+      'تم إرسال التسجيل لوالديك وبانتظار التقييم';
+
+  @override
+  String get childQuranWardStatusHeading => 'حالة التسميع اليوم';
+
+  @override
+  String childQuranWardStatusApproved(int minutes) {
+    return 'تم الاعتماد — +$minutes دقيقة مودعة';
+  }
+
+  @override
+  String get childQuranWardStatusSent =>
+      'تم إرسال التسجيل — بانتظار مراجعة الوالد';
+
+  @override
+  String get childQuranWardStatusNone => 'سجّل عندما تكون جاهزًا';
+
+  @override
+  String get childQuranWardTagApproved => 'معتمد ✓';
+
+  @override
+  String get childQuranWardTagSent => 'أُرسل 🤞';
+
+  @override
+  String get childQuranWardTagNew => 'جاهز';
+
+  @override
+  String get childQuranWardEmptyTitle => 'لا ورد بعد';
+
+  @override
+  String get childQuranWardEmptyMessage =>
+      'عندما يحدّد والدك وردًا قرآنيًا، يظهر هنا مع تلاوة أوفلاين.';
+
+  @override
+  String get childQuranWardEmptyCta => 'تعلّمي';
+
+  @override
+  String get childQuranWardLoadingSemantics => 'جاري تحميل الورد القرآني';
+
+  @override
+  String get childQuranWardParentLeanTitle => 'الورد القرآني';
+
+  @override
+  String get childQuranWardParentLeanMessage =>
+      'مشغّل الورد للابن. تابع التقدّم من شاشة تقدّم القرآن.';
+
+  @override
+  String get childMemTitle => 'حفظي وتقدمي';
+
+  @override
+  String get childMemHeroLabel => 'محفوظك حتى اليوم';
+
+  @override
+  String childMemHeroValue(int surahs, int ayahs) {
+    return '$surahs سور + $ayahs آية';
+  }
+
+  @override
+  String get childMemSurahFatiha => 'الفاتحة';
+
+  @override
+  String get childMemSurahIkhlas => 'الإخلاص';
+
+  @override
+  String get childMemSurahNaba => 'النبأ';
+
+  @override
+  String get childMemSurahMulk => 'الملك';
+
+  @override
+  String get childMemBadgeFirst => '⭐ أول سورة';
+
+  @override
+  String get childMemBadgeThree => '📖 ٣ سور';
+
+  @override
+  String get childMemBadgeHalfAmma => '🌙 نصف جزء عمّ';
+
+  @override
+  String get childMemBadgeHafiz => '👑 الحافظ الصغير';
+
+  @override
+  String get childMemBadgesHint => 'شاراتك القادمة تنتظرك — واصل يا بطل 🚀';
+
+  @override
+  String get childMemReviewsHeading => '🔄 مراجعاتي المستحقة';
+
+  @override
+  String get childMemReviewTabarak => 'تبارك ١–١٠';
+
+  @override
+  String get childMemReviewNaba => 'النبأ كاملة';
+
+  @override
+  String get childMemReviewFourDays => 'آخر مراجعة قبل ٤ أيام';
+
+  @override
+  String get childMemReviewTomorrow => 'مستحقة غدًا';
+
+  @override
+  String get childMemReviewTomorrowShort => 'غدًا';
+
+  @override
+  String get childMemReviewCta => 'راجع';
+
+  @override
+  String get childMemReviewToast =>
+      '🎙 سمّع — ومستشار العائلة يتابع معك بمصحف مرخّص';
+
+  @override
+  String get childMemHadithBanner =>
+      '🌟 «خيركم من تعلم القرآن وعلمه» — والدك يرى تقدمك ويفرح فيك.';
+
+  @override
+  String get childMemEmptyTitle => 'لا خريطة حفظ بعد';
+
+  @override
+  String get childMemEmptyMessage => 'أتمّ أول ورد وستنمو خريطتك هنا.';
+
+  @override
+  String get childMemEmptyCta => 'وردي من القرآن';
+
+  @override
+  String get childMemLoadingSemantics => 'جاري تحميل الحفظ';
+
+  @override
+  String get childMemParentLeanTitle => 'خريطة الحفظ';
+
+  @override
+  String get childMemParentLeanMessage =>
+      'هذه الخريطة للابن. الوالدان يتابعان من تقدّم القرآن.';
+
+  @override
+  String get childAthkarTitle => 'أذكاري اليومية';
+
+  @override
+  String get childAthkarSessionMorning => 'صباح';
+
+  @override
+  String get childAthkarSessionEvening => 'مساء';
+
+  @override
+  String get childAthkarThikrAmsayna =>
+      '«اللهم بك أمسينا وبك أصبحنا، وبك نحيا وبك نموت وإليك النشور»';
+
+  @override
+  String childAthkarProgress(String session, int done, int total) {
+    return 'ذكر $session · $done من $total';
+  }
+
+  @override
+  String get childAthkarSayCta => 'قلتها ✓ (مرة واحدة)';
+
+  @override
+  String get childAthkarDoneCta => 'أتممتها كلها اليوم 🌟';
+
+  @override
+  String childAthkarProgressToast(int done, int total) {
+    return '$done من $total — أحسنت! التالي…';
+  }
+
+  @override
+  String get childAthkarCompleteToast => 'ما شاء الله — أتممت أذكار اليوم';
+
+  @override
+  String get childAthkarStatMorning => 'صباح';
+
+  @override
+  String get childAthkarStatEvening => 'مساء';
+
+  @override
+  String childAthkarStatValue(int done, int total) {
+    return '$done/$total';
+  }
+
+  @override
+  String get childAthkarGentleBanner =>
+      '🤍 تذكير لطيف لا إلزام — الأجر عند الله، والدقائق تشجيع من أبيك.';
+
+  @override
+  String get childAthkarEmptyTitle => 'لا جلسة أذكار';
+
+  @override
+  String get childAthkarEmptyMessage =>
+      'ستظهر جلسة أذكارك اليومية هنا عندما تكون جاهزة.';
+
+  @override
+  String get childAthkarEmptyCta => 'يومي';
+
+  @override
+  String get childAthkarLoadingSemantics => 'جاري تحميل الأذكار';
+
+  @override
+  String get childAthkarParentLeanTitle => 'الأذكار';
+
+  @override
+  String get childAthkarParentLeanMessage =>
+      'الأذكار اليومية للابن. تصلك همسات بركة عند إتمامه.';
+
+  @override
+  String get childSmartPlanTitle => 'خطتي الذكية';
+
+  @override
+  String get childSmartPlanGapHeading => '🔍 اكتشفنا سر تعثرك!';
+
+  @override
+  String get childSmartPlanGapTimes7 =>
+      'أخطاؤك في القسمة الطويلة سببها مفهوم واحد صغير: جدول ضرب الـ٧. نقوّيه ٣ أيام — وستنطلق 🚀';
+
+  @override
+  String get childSmartPlanStartCta => 'ابدأ خطة الإصلاح';
+
+  @override
+  String get childSmartPlanStartedCta => 'بدأت الخطة';
+
+  @override
+  String get childSmartPlanStartToast =>
+      '🎯 خطة الأيام الثلاثة بدأت — ١٠ دقائق يوميًا فقط';
+
+  @override
+  String get childSmartPlanProjectGarden => 'حديقة المنزل';
+
+  @override
+  String childSmartPlanProjectHeading(String name) {
+    return '🏗 مشروعنا العائلي — «$name»';
+  }
+
+  @override
+  String get childSmartPlanStage2 => 'المرحلة ٢ — زراعة الشتلات';
+
+  @override
+  String childSmartPlanProjectStage(String stage) {
+    return 'مرحلتك الآن: $stage (أسندها لك والدك)';
+  }
+
+  @override
+  String get childSmartPlanProjectCta => 'أنجزت مرحلتي ✓';
+
+  @override
+  String get childSmartPlanProjectDoneCta => 'سُجلت المرحلة';
+
+  @override
+  String get childSmartPlanProjectToast =>
+      '🌱 عاش! سجلنا إنجاز مرحلتك — ووصل والدك الخبر بفرحة';
+
+  @override
+  String get childSmartPlanPathHeading => '🗺 مساري البصري';
+
+  @override
+  String get childSmartPlanPathCaption =>
+      'الجمع ✓ الطرح ✓ الضرب ✓ — أنت الآن في القسمة';
+
+  @override
+  String get childSmartPlanExerciseHint =>
+      'متدرج: يسهل إذا تعثرت، ويتحدّاك إذا تألقت — مثل مدرب ذكي.';
+
+  @override
+  String get childSmartPlanEmptyTitle => 'لا خطة ذكية بعد';
+
+  @override
+  String get childSmartPlanEmptyMessage =>
+      'عند اكتشاف فجوات تعلّم، تظهر خطتك التكيفية هنا.';
+
+  @override
+  String get childSmartPlanEmptyCta => 'تعلّمي';
+
+  @override
+  String get childSmartPlanLoadingSemantics => 'جاري تحميل الخطة الذكية';
+
+  @override
+  String get childSmartPlanParentLeanTitle => 'الخطة الذكية';
+
+  @override
+  String get childSmartPlanParentLeanMessage =>
+      'الخطة التكيفية للابن. الوالدان يريان التقدّم من رؤى التعلّم.';
+
+  @override
+  String get childDailyReviewTitle => 'مراجعة اليوم';
+
+  @override
+  String get childDailyReviewHeroTitle => '٥ دقائق تحمي أسبوع تعب 🛡';
+
+  @override
+  String get childDailyReviewHeroSub =>
+      'مستشار العائلة يعرف متى توشك أن تنسى — فيراجعك قبلها بيوم';
+
+  @override
+  String childDailyReviewCardsHeading(int count) {
+    return 'بطاقات اليوم ($count)';
+  }
+
+  @override
+  String get childDailyReviewCardFractions => 'الكسور المتشابهة';
+
+  @override
+  String get childDailyReviewCardUnit4 => 'كلمات الوحدة ٤';
+
+  @override
+  String get childDailyReviewCardWaterCycle => 'دورة الماء';
+
+  @override
+  String get childDailyReviewMetaThreeDays =>
+      'تعلمتها قبل ٣ أيام — وقت التثبيت';
+
+  @override
+  String get childDailyReviewMetaOneWeek => 'قبل أسبوع';
+
+  @override
+  String get childDailyReviewMetaTwiceStrong => 'ثبّتها مرتان — شبه محفوظة!';
+
+  @override
+  String get childDailyReviewTagDue => 'مستحقة';
+
+  @override
+  String get childDailyReviewTagStrong => 'قوية';
+
+  @override
+  String get childDailyReviewStartCta => 'ابدأ الـ٥ دقائق';
+
+  @override
+  String get childDailyReviewDoneCta => 'اكتملت المراجعة';
+
+  @override
+  String childDailyReviewDoneToast(int minutes) {
+    return '🎉 ٦/٦ — ذاكرتك تبنى مثل العضلات! ⏱ +$minutes د';
+  }
+
+  @override
+  String get childDailyReviewEmptyTitle => 'لا بطاقات مراجعة';
+
+  @override
+  String get childDailyReviewEmptyMessage =>
+      'عندما تحتاج الدروس لمراجعة سريعة، تظهر البطاقات هنا.';
+
+  @override
+  String get childDailyReviewEmptyCta => 'تعلّمي';
+
+  @override
+  String get childDailyReviewLoadingSemantics => 'جاري تحميل مراجعة اليوم';
+
+  @override
+  String get childDailyReviewParentLeanTitle => 'مراجعة اليوم';
+
+  @override
+  String get childDailyReviewParentLeanMessage =>
+      'المراجعة المتباعدة للابن. الوالدان يريان الإتقان من رؤى التعلّم.';
+
+  @override
+  String get childFriendsTitle => 'أصدقائي';
+
+  @override
+  String get childFriendsNameOne => 'صديق معتمد';
+
+  @override
+  String get childFriendsNamePending => 'صديق قيد الانتظار';
+
+  @override
+  String get childFriendsMetaSlot47 => 'متاح الآن · جدول التواصل: ٤–٧ م';
+
+  @override
+  String get childFriendsMetaAwaiting => 'طلبك عند والدك للموافقة 🤞';
+
+  @override
+  String get childFriendsChatCta => 'محادثة';
+
+  @override
+  String get childFriendsCallCta => 'اتصال';
+
+  @override
+  String get childFriendsChatToast => '💬 فتحت المحادثة الآمنة';
+
+  @override
+  String get childFriendsCallToast => '📞 جاري الاتصال…';
+
+  @override
+  String get childFriendsPendingTag => 'قيد المراجعة';
+
+  @override
+  String get childFriendsAddHeading => 'تعرفت على زميل أو صديق جديد؟';
+
+  @override
+  String get childFriendsAddSub =>
+      'اطلب إضافته بأمان — والدك يراجعه لحمايتك 🤍';
+
+  @override
+  String get childFriendsAddCta => '+ طلب إضافة صديق جديد';
+
+  @override
+  String get childFriendsAddToast => '🎉 أُرسل الطلب لوالدك لاعتماده!';
+
+  @override
+  String get childFriendsSafetyBanner =>
+      '🛡️ أمان بدون غرباء: كل صديق في قائمتك معتمد من والدك شخصيًا لتبقى محادثاتكم في بيئة نقية ومطمئنة 🤍';
+
+  @override
+  String get childFriendsEmptyTitle => 'لا أصدقاء معتمدين بعد';
+
+  @override
+  String get childFriendsEmptyMessage =>
+      'اطلب من والدك اعتماد صديق لتتحدث بأمان.';
+
+  @override
+  String get childFriendsEmptyCta => 'طلب إضافة صديق';
+
+  @override
+  String get childFriendsLoadingSemantics => 'جاري تحميل الأصدقاء';
+
+  @override
+  String get childFriendsParentLeanTitle => 'أصدقاء الابن';
+
+  @override
+  String get childFriendsParentLeanMessage =>
+      'اعتمد الأصدقاء من شاشة اعتماد الأصدقاء. هذه القائمة من منظور الابن.';
+
+  @override
+  String get childComingGiftsTitle => 'قادم لك 🎁';
+
+  @override
+  String get childComingGiftsHeroTitle => 'أشياء حلوة قادمة…';
+
+  @override
+  String get childComingGiftsHeroSub => 'نجهزها لك بإتقان — بلا استعجال';
+
+  @override
+  String get childComingGiftsLinksHeading => 'وصلت كلها! جرّبها الآن 🎉';
+
+  @override
+  String get childComingGiftsCallPlay => 'مرح المكالمة';
+
+  @override
+  String get childComingGiftsCallPlaySub => 'العب مع جدّو وأنتما تتكلمان!';
+
+  @override
+  String get childComingGiftsChallenges => 'التحديات العائلية';
+
+  @override
+  String get childComingGiftsChallengesSub => 'تنافس ودي مع إخوتك';
+
+  @override
+  String get childComingGiftsStories => 'قصصي التفاعلية';
+
+  @override
+  String get childComingGiftsStoriesSub => 'أنت بطل الحكاية';
+
+  @override
+  String get childComingGiftsSounds => 'أصوات التركيز';
+
+  @override
+  String get childComingGiftsSoundsSub => 'أمواج ومطر وهدوء';
+
+  @override
+  String get childComingGiftsStickers => 'ملصقاتي وخلفياتي';
+
+  @override
+  String get childComingGiftsStickersSub => 'لوّن محادثاتك';
+
+  @override
+  String get childComingGiftsSmartTilawa => 'تلاوتي الذكية';
+
+  @override
+  String get childComingGiftsSmartTilawaSub => 'حسّن تلاوتك بلطف';
+
+  @override
+  String get childComingGiftsNewTag => 'جديد';
+
+  @override
+  String get childComingGiftsEmptyTitle => 'لا شيء جاهز بعد';
+
+  @override
+  String get childComingGiftsEmptyMessage =>
+      'عندما تُفتح هدايا جديدة، تظهر هنا — بلا وعود بتواريخ.';
+
+  @override
+  String get childComingGiftsEmptyCta => 'تعلّمي';
+
+  @override
+  String get childComingGiftsLoadingSemantics => 'جاري تحميل قادم لك';
+
+  @override
+  String get childComingGiftsParentLeanTitle => 'قادم لك';
+
+  @override
+  String get childComingGiftsParentLeanMessage =>
+      'هذا المركز التشويقي للابن. جاهزية الميزات تُدار بخطة المنتج.';
+
+  @override
+  String get homeRouterFilterTitle => 'فلترة الراوتر المنزلي';
+
+  @override
+  String get homeRouterFilterHeroProtected => 'راوتر المنزل محمي';
+
+  @override
+  String get homeRouterFilterHeroUnprotected => 'راوتر المنزل يحتاج ضبطًا';
+
+  @override
+  String homeRouterFilterHeroSub(int count) {
+    return '$count جهازًا خلف الفلترة — حتى تلفاز الصالة وأجهزة الضيوف';
+  }
+
+  @override
+  String get homeRouterFilterHowHeading => 'كيف تعمل؟';
+
+  @override
+  String get homeRouterFilterHowDnsTitle => 'DNS عائلي على الراوتر';
+
+  @override
+  String get homeRouterFilterHowDnsSub => 'إعداد مرة واحدة — ندلّك خطوة بخطوة';
+
+  @override
+  String get homeRouterFilterHowCatsTitle => 'نفس فئات الفلترة الـ٢٩';
+
+  @override
+  String get homeRouterFilterHowCatsSub => 'سياسة موحدة: الجهاز والمنزل';
+
+  @override
+  String get homeRouterFilterHowAwayTitle => 'خارج المنزل؟';
+
+  @override
+  String get homeRouterFilterHowAwaySub =>
+      'فلترة جهاز الابن تبقى تعمل — لا فجوة';
+
+  @override
+  String get homeRouterFilterTagActive => 'مفعّل';
+
+  @override
+  String get homeRouterFilterTagSynced => 'متزامن';
+
+  @override
+  String get homeRouterFilterTagAuto => 'تلقائي';
+
+  @override
+  String get homeRouterFilterTagOff => 'متوقف';
+
+  @override
+  String get homeRouterFilterGuideCta => 'دليل الضبط خطوة بخطوة';
+
+  @override
+  String get homeRouterFilterCheckCta => 'اختبر الحماية الآن';
+
+  @override
+  String get homeRouterFilterGuideToast => 'فُتح دليل ضبط الراوتر خطوة بخطوة';
+
+  @override
+  String get homeRouterFilterCheckToast =>
+      'تم الفحص — راوترك محمي وكل الأجهزة خلف الفلترة';
+
+  @override
+  String get homeRouterFilterGuestBanner =>
+      'ضيف تسلل بجهازه لشبكتك؟ محمي تلقائيًا — وأنت المتحكم بالاستثناءات.';
+
+  @override
+  String get homeRouterFilterObserverHint =>
+      'تغيير DNS الراوتر يحتاج مستوى شريكة أو أعلى — يمكنك مراجعة الحالة.';
+
+  @override
+  String get homeRouterFilterObserverBlocked =>
+      'إجراءات فلترة الراوتر تحتاج مستوى شريكة للأم أو الأب';
+
+  @override
+  String get homeRouterFilterEmptyTitle => 'لا شبكة منزل بعد';
+
+  @override
+  String get homeRouterFilterEmptyMessage =>
+      'أضف ابنًا لتغطية أجهزة المنزل بفلترة الراوتر.';
+
+  @override
+  String get homeRouterFilterEmptyCta => 'أضف ابنًا';
+
+  @override
+  String get homeRouterFilterLoadingSemantics => 'جاري تحميل فلترة الراوتر';
+
+  @override
+  String get homeRouterFilterChildLeanTitle => 'فلترة الراوتر المنزلي';
+
+  @override
+  String get homeRouterFilterChildLeanMessage =>
+      'ضبط DNS الراوتر للوالدين. فلترة جهازك تحميك خارج المنزل.';
+
+  @override
+  String get agentActionLogTitle => 'سجل تصرفات الوكيل';
+
+  @override
+  String get agentActionLogLiveHeading => 'تصرف تلقائي حديث بموجب تفويضك';
+
+  @override
+  String agentActionLogTagPending(int min, int sec) {
+    return 'متبقي $min:$sec للتعديل';
+  }
+
+  @override
+  String get agentActionLogTagBlessed => 'باركت القرار';
+
+  @override
+  String get agentActionLogTagUndone => 'تراجعت بلطف';
+
+  @override
+  String get agentActionLogChildOne => 'الابن أ';
+
+  @override
+  String agentActionLogGranted(int minutes, String child) {
+    return 'منح الوكيل +$minutes دقيقة لـ $child';
+  }
+
+  @override
+  String agentActionLogReason(String tasks) {
+    return 'السبب الموثق: أكمل ($tasks)';
+  }
+
+  @override
+  String agentActionLogUsage(String app) {
+    return 'الاستخدام: مخصص لتطبيق $app · قبل دقائق';
+  }
+
+  @override
+  String get agentActionLogTaskMath => 'واجب الرياضيات';
+
+  @override
+  String get agentActionLogTaskRoom => 'ترتيب الغرفة';
+
+  @override
+  String get agentActionLogAppBlocks => 'بناء المكعبات التعليمي';
+
+  @override
+  String get agentActionLogBlessCta => 'مباركة + همسة تشجيع';
+
+  @override
+  String get agentActionLogUndoCta => 'تراجع رحيم';
+
+  @override
+  String get agentActionLogBlessToast => 'أُرسلت همسة فخر';
+
+  @override
+  String get agentActionLogUndoToast => 'تراجعت عن القرار برحمة';
+
+  @override
+  String get agentActionLogBlessedNote =>
+      'أرسلت همسة فخر — استمتع بدقائقك المستحقة.';
+
+  @override
+  String get agentActionLogUndoneNote => 'تراجعت عن القرار برحمة.';
+
+  @override
+  String get agentActionLogWeeklyHeading => 'تصرفات الوكيل هذا الأسبوع';
+
+  @override
+  String get agentActionLogWeeklySleep => 'وضع النوم تفعّل ×٧ مرات';
+
+  @override
+  String get agentActionLogWeeklySleepMeta => 'حسب الجدول المعتمد';
+
+  @override
+  String get agentActionLogWeeklyReview => 'تذكير المراجعة والقرآن ×٥';
+
+  @override
+  String get agentActionLogWeeklyReviewMeta => 'استجاب الابن ٤ مرات';
+
+  @override
+  String get agentActionLogRule2 => 'القاعدة ٢';
+
+  @override
+  String get agentActionLogRule3 => 'القاعدة ٣';
+
+  @override
+  String get agentActionLogEmptyTitle => 'لا سجل وكيل بعد';
+
+  @override
+  String get agentActionLogEmptyMessage =>
+      'أضف ابنًا وفوّض قواعدًا لتظهر التصرفات التلقائية هنا.';
+
+  @override
+  String get agentActionLogEmptyCta => 'أضف ابنًا';
+
+  @override
+  String get agentActionLogLoadingSemantics => 'جاري تحميل سجل الوكيل';
+
+  @override
+  String get agentActionLogChildLeanTitle => 'سجل تصرفات الوكيل';
+
+  @override
+  String get agentActionLogChildLeanMessage =>
+      'تصرفات الوكيل المفوَّض للوالدين. دقائقك تظهر في محفظتك.';
+
+  @override
+  String get peerCompareTitle => 'مقارنة الأقران';
+
+  @override
+  String get peerComparePrivacyBanner =>
+      'مقارنة مجهولة بالكامل مع متوسطات عمرية عامة — لا أسماء، لا عائلات، لا تشهير. بياناتكم لا تغادر لأحد.';
+
+  @override
+  String get peerCompareChildOne => 'الابن أ';
+
+  @override
+  String peerCompareHeading(String child, int age) {
+    return '$child ($age سنة) مقابل فئته العمرية';
+  }
+
+  @override
+  String get peerCompareMetricScreen => 'وقت الشاشة';
+
+  @override
+  String get peerCompareDetailScreen => 'الابن: ٢:٤٠ س/يوم · المتوسط: ٣:١٥';
+
+  @override
+  String get peerCompareMetricLearn => 'وقت التعليم';
+
+  @override
+  String get peerCompareDetailLearn => 'الابن: ٥١ د/يوم · المتوسط: ٢٥ د';
+
+  @override
+  String get peerCompareMetricSleep => 'النوم';
+
+  @override
+  String get peerCompareDetailSleep => 'متأخر ٢٠ د عن الموصى به لعمره';
+
+  @override
+  String get peerCompareTagBetter => 'أفضل ✓';
+
+  @override
+  String get peerCompareTagImprove => 'فرصة تحسين';
+
+  @override
+  String get peerCompareCompassNote =>
+      'تذكير من مستشار العائلة: المقارنة بوصلة لا محكمة — ابنك يتفوق على نفسه أولًا. لا تجعلها موضوع عتاب.';
+
+  @override
+  String get peerCompareEmptyTitle => 'لا مقارنة أقران بعد';
+
+  @override
+  String get peerCompareEmptyMessage =>
+      'أضف ابنًا لتظهر متوسطات الفئة العمرية المجهولة هنا.';
+
+  @override
+  String get peerCompareEmptyCta => 'أضف ابنًا';
+
+  @override
+  String get peerCompareLoadingSemantics => 'جاري تحميل مقارنة الأقران';
+
+  @override
+  String get peerCompareChildLeanTitle => 'مقارنة الأقران';
+
+  @override
+  String get peerCompareChildLeanMessage =>
+      'متوسطات الأقران المجهولة للوالدين. نافس نفسك أولًا.';
+
+  @override
+  String get smartChoreTitle => 'موزع المهام الذكي';
+
+  @override
+  String get smartChoreProposalHeading => 'اقتراح توزيع هذا الأسبوع';
+
+  @override
+  String get smartChoreChildOne => 'الابن أ';
+
+  @override
+  String get smartChoreChildTwo => 'الابن ب';
+
+  @override
+  String get smartChoreChildThree => 'الابن ج';
+
+  @override
+  String get smartChoreDishesPlants => 'الصحون (٣ أيام) + النباتات';
+
+  @override
+  String get smartChoreLivingLaundry => 'ترتيب الصالة + الغسيل';
+
+  @override
+  String get smartChoreTrashWater => 'إخراج النفايات + سقي النباتات';
+
+  @override
+  String get smartChoreNoteExam => 'خفّف عنه الثلاثاء — عنده اختبار';
+
+  @override
+  String get smartChoreNoteRotated => 'بدّلنا مهامها — ملّت من الصحون';
+
+  @override
+  String get smartChoreNoteAge8 => 'مهام خفيفة تناسب ٨ سنوات';
+
+  @override
+  String get smartChoreApproveCta => 'اعتمد التوزيع';
+
+  @override
+  String get smartChoreApprovedCta => 'مُعتمد';
+
+  @override
+  String get smartChoreShuffleCta => 'بدّل';
+
+  @override
+  String get smartChoreApproveToast =>
+      'اعتُمد التوزيع — وصلت كل ابن مهامه بدقائقها المحددة';
+
+  @override
+  String get smartChoreShuffleToast => 'توزيع بديل جاهز — بنفس العدالة';
+
+  @override
+  String get smartChoreFairnessHeading => 'لماذا هذا التوزيع عادل؟';
+
+  @override
+  String get smartChoreFairnessBody =>
+      'دقائق متساوية لكل ابن حسب عمره · لا مهمة تتكرر لنفس الابن أسبوعين · الجداول الدراسية محسوبة.';
+
+  @override
+  String get smartChoreObserverHint =>
+      'اعتماد توزيع المهام يحتاج مستوى شريكة أو أعلى — يمكنك مراجعة الاقتراح.';
+
+  @override
+  String get smartChoreEmptyTitle => 'لا خطة مهام بعد';
+
+  @override
+  String get smartChoreEmptyMessage =>
+      'أضف أبناءً ليقترح موزع المهام توزيعًا عادلًا للأسبوع.';
+
+  @override
+  String get smartChoreEmptyCta => 'أضف ابنًا';
+
+  @override
+  String get smartChoreLoadingSemantics => 'جاري تحميل موزع المهام';
+
+  @override
+  String get smartChoreChildLeanTitle => 'موزع المهام';
+
+  @override
+  String get smartChoreChildLeanMessage =>
+      'تخطيط المهام الأسبوعية للوالدين. مهامك تظهر في مهامي.';
+
+  @override
+  String get advisorVoiceTitle => 'تحدث مع مستشار العائلة';
+
+  @override
+  String get advisorVoiceHint =>
+      'اضغط وتكلم — وأنت تقود السيارة أو مشغول اليدين';
+
+  @override
+  String get advisorVoiceTalkCta => 'اضغط وتحدث';
+
+  @override
+  String get advisorVoiceListeningToast =>
+      'يستمع… يجيب صوتًا من بيانات عائلتك فقط';
+
+  @override
+  String get advisorVoiceLastHeading => 'آخر محادثة';
+
+  @override
+  String get advisorVoiceUserHomework => 'هل أنهى الابن أ واجباته؟';
+
+  @override
+  String get advisorVoiceReplyHomework =>
+      'نعم — أنهى الرياضيات والعلوم قبل ساعة، وبقي له مراجعة الإنجليزية المستحقة غدًا.';
+
+  @override
+  String get advisorVoiceHonestyBanner =>
+      'نفس عهد الصدق: إن نقصت البيانات سيقولها صوتًا — «لا أعلم بدقة كافية».';
+
+  @override
+  String get advisorVoiceEmptyTitle => 'لا محادثة صوتية بعد';
+
+  @override
+  String get advisorVoiceEmptyMessage =>
+      'أضف ابنًا ليجيب مستشار العائلة صوتًا من بيانات العائلة.';
+
+  @override
+  String get advisorVoiceEmptyCta => 'أضف ابنًا';
+
+  @override
+  String get advisorVoiceLoadingSemantics => 'جاري تحميل المحادثة الصوتية';
+
+  @override
+  String get advisorVoiceChildLeanTitle => 'محادثة المستشار الصوتية';
+
+  @override
+  String get advisorVoiceChildLeanMessage =>
+      'الوضع الصوتي للوالدين. صوت معلّمك في تعلّمي.';
+
+  @override
+  String get stagedProjectTitle => 'مشروع بمراحل';
+
+  @override
+  String get stagedProjectHomeGarden => 'حديقتنا المنزلية';
+
+  @override
+  String get stagedProjectChildOne => 'الابن أ';
+
+  @override
+  String stagedProjectHeroTitle(String child, String name) {
+    return 'مشروع $child: $name';
+  }
+
+  @override
+  String stagedProjectHeroSub(int stages, int weeks, int current) {
+    return '$stages مراحل · $weeks أسابيع · المرحلة $current الآن';
+  }
+
+  @override
+  String get stagedProjectStageResearch => 'م١: البحث والتخطيط';
+
+  @override
+  String get stagedProjectStageResearchSub => 'اختار ٣ نباتات ورسم الحديقة';
+
+  @override
+  String get stagedProjectStagePlant => 'م٢: الزراعة';
+
+  @override
+  String get stagedProjectStagePlantSub =>
+      'صوّر إثبات الزراعة — بانتظار تأكيدك';
+
+  @override
+  String get stagedProjectStageWater => 'م٣: المتابعة والري';
+
+  @override
+  String get stagedProjectStageWaterSub => 'تُفتح بإتمام م٢';
+
+  @override
+  String get stagedProjectStageHarvest => 'م٤: الحصاد والعرض';
+
+  @override
+  String get stagedProjectStageHarvestSub => 'عرض تقديمي للعائلة!';
+
+  @override
+  String get stagedProjectConfirmCta => 'أكّد';
+
+  @override
+  String stagedProjectConfirmToast(int minutes) {
+    return 'اعتمدت المرحلة! +$minutes د أُودعت';
+  }
+
+  @override
+  String stagedProjectMinutesTag(int minutes) {
+    return '+$minutes د';
+  }
+
+  @override
+  String get stagedProjectTemplateCta => '+ مشروع جديد من قالب';
+
+  @override
+  String get stagedProjectTemplateToast =>
+      'قوالب جاهزة: مجسم علمي، بحث عائلي، تطبيق أول، مشروع خيري…';
+
+  @override
+  String get stagedProjectEmptyTitle => 'لا مشروع بمراحل بعد';
+
+  @override
+  String get stagedProjectEmptyMessage =>
+      'أضف ابنًا وأنشئ مشروعًا متعدد الأسابيع من الاستوديو.';
+
+  @override
+  String get stagedProjectEmptyCta => 'أضف ابنًا';
+
+  @override
+  String get stagedProjectLoadingSemantics => 'جاري تحميل المشروع بمراحل';
+
+  @override
+  String get stagedProjectChildLeanTitle => 'مشروع بمراحل';
+
+  @override
+  String get stagedProjectChildLeanMessage =>
+      'الوالدان يؤكدان المراحل. مرحلتك النشطة في تعلّمي / مهامي.';
+
+  @override
+  String get familyMomentsTitle => 'لحظات عائلتنا';
+
+  @override
+  String get familyMomentsWeekLabel => 'جمعة · أسبوع عائلتكم';
+
+  @override
+  String get familyMomentsHeroTitle => 'أسبوع يستحق الفخر!';
+
+  @override
+  String get familyMomentsStatLearn => 'ساعة تعلّم';
+
+  @override
+  String get familyMomentsStatVerses => 'آية حُفظت';
+
+  @override
+  String get familyMomentsStatTasks => 'مهمة أُنجزت';
+
+  @override
+  String get familyMomentsStatAlerts => 'تنبيه مقلق';
+
+  @override
+  String get familyMomentsStarsTitle => 'نجم الأسبوع';
+
+  @override
+  String get familyMomentsChildOne => 'الابن أ';
+
+  @override
+  String get familyMomentsChildTwo => 'الابن ب';
+
+  @override
+  String familyMomentsStarQuran(String child) {
+    return '$child — أنهى جزء عمّ كاملًا!';
+  }
+
+  @override
+  String get familyMomentsStarQuranSub => '٦ أشهر من المثابرة · لحظة تاريخية';
+
+  @override
+  String familyMomentsStarMath(String child) {
+    return '$child — قفز ١٧٪ في الرياضيات';
+  }
+
+  @override
+  String get familyMomentsStarMathSub => 'خطة «المفهوم المفقود» أثمرت';
+
+  @override
+  String familyMomentsStarSleep(String child) {
+    return '$child — أسبوع كامل نوم منتظم';
+  }
+
+  @override
+  String get familyMomentsStarSleepSub => 'أول مرة منذ شهرين';
+
+  @override
+  String get familyMomentsShareCta => 'شارك بطاقة الفخر مع العائلة';
+
+  @override
+  String get familyMomentsPrideToast =>
+      'وصلت بطاقة الفخر لمحادثة العائلة — شافوا تصفيقكم!';
+
+  @override
+  String get familyMomentsTouchTitle => 'لمسة الأسبوع القادم';
+
+  @override
+  String get familyMomentsTouchBody =>
+      'الابن ب اقترب من إنهاء سورة الملك — لو أنهاها، ما رأيك بمفاجأة «مشوار يختاره هو»؟ الأثر أعمق من أي دقائق.';
+
+  @override
+  String get familyMomentsTouchCta => 'أُحب الفكرة — ذكّرني';
+
+  @override
+  String get familyMomentsTouchToast =>
+      'وُعدت المفاجأة — سيصلك تذكير عند إتمام السورة';
+
+  @override
+  String get familyMomentsAlbumTitle => 'ألبوم اللحظات';
+
+  @override
+  String get familyMomentsCapGarden => 'يوم الحديقة';
+
+  @override
+  String get familyMomentsCapPrayer => 'فجر معًا';
+
+  @override
+  String get familyMomentsCapCook => 'ساعد في الطبخ';
+
+  @override
+  String get familyMomentsCapRead => 'ليلة قصة';
+
+  @override
+  String get familyMomentsCapWalk => 'مشية مسائية';
+
+  @override
+  String get familyMomentsCapLaugh => 'ضحكة عائلية';
+
+  @override
+  String get familyMomentsCapNew => 'لحظة جديدة';
+
+  @override
+  String get familyMomentsByMother => 'الأم';
+
+  @override
+  String get familyMomentsByFather => 'الأب';
+
+  @override
+  String get familyMomentsWhenYesterday => 'أمس';
+
+  @override
+  String get familyMomentsWhenTue => 'ثلاثاء';
+
+  @override
+  String get familyMomentsWhenMon => 'اثنين';
+
+  @override
+  String get familyMomentsWhenSun => 'أحد';
+
+  @override
+  String get familyMomentsWhenSat => 'سبت';
+
+  @override
+  String get familyMomentsWhenFri => 'جمعة';
+
+  @override
+  String get familyMomentsWhenNow => 'الآن';
+
+  @override
+  String get familyMomentsAddCta => '+ أضف لحظة';
+
+  @override
+  String get familyMomentsAddToast => 'أُضيفت للحظات — وأُخطرت العائلة';
+
+  @override
+  String get familyMomentsFridayBanner =>
+      'يصلك كل جمعة صباحًا — افتح، افرح، شارك. ثم أغلق مطمئنًا.';
+
+  @override
+  String get familyMomentsEmptyTitle => 'لا لحظات عائلية بعد';
+
+  @override
+  String get familyMomentsEmptyMessage =>
+      'أضف ابنًا ليضيء ملخص الفخر الأسبوعي ونجوم الأسبوع وألبوم اللحظات.';
+
+  @override
+  String get familyMomentsEmptyCta => 'أضف ابنًا';
+
+  @override
+  String get familyMomentsLoadingSemantics => 'جاري تحميل لحظات العائلة';
+
+  @override
+  String get familyMomentsChildLeanTitle => 'لحظات العائلة';
+
+  @override
+  String get familyMomentsChildLeanMessage =>
+      'الوالدان يفتحان ملخص الفخر الأسبوعي. نجومك تظهر في تعلّمي.';
+
+  @override
+  String get childSmartTilawahTitle => 'تلاوتي الذكية';
+
+  @override
+  String get childSmartTilawahSurahMulk => 'سورة الملك';
+
+  @override
+  String childSmartTilawahAyahMeta(String surah, int ayah) {
+    return '$surah · الآية $ayah';
+  }
+
+  @override
+  String get childSmartTilawahAyahMulk16 => 'ءَأَمِنتُم مَّن فِى ٱلسَّمَآءِ…';
+
+  @override
+  String get childSmartTilawahListenCta => 'اقرأ وأنا أستمع';
+
+  @override
+  String get childSmartTilawahListenToast =>
+      'يستمع لتلاوتك… ما شاء الله! ملاحظة لطيفة واحدة أدناه';
+
+  @override
+  String get childSmartTilawahTipTitle => 'ملاحظة اليوم — واحدة فقط';
+
+  @override
+  String get childSmartTilawahTipMadd => 'مدّ «السَّمَآء» ست حركات';
+
+  @override
+  String get childSmartTilawahTipMaddBody =>
+      'مدّ متصل بالهمزة — استمع للشيخ ثم أعد';
+
+  @override
+  String get childSmartTilawahSheikhCta => 'استمع';
+
+  @override
+  String get childSmartTilawahSheikhToast =>
+      'مقطع الشيخ للآية ١٦ — من مصحف مرخّص';
+
+  @override
+  String get childSmartTilawahPraise =>
+      'أحسنت في: مخارج الحروف ✓ · الغنّة ✓ · وقفك سليم ✓';
+
+  @override
+  String get childSmartTilawahBanner =>
+      'مرجع التصحيح تلاوات مشايخ معتمدين من مصاحف مرخّصة — ومستشار العائلة يلاحظ بلطف، ملاحظة واحدة كل مرة حتى لا تثقل عليك.';
+
+  @override
+  String get childSmartTilawahEmptyTitle => 'لا جلسة تلاوة بعد';
+
+  @override
+  String get childSmartTilawahEmptyMessage =>
+      'افتح وردك القرآني لتبدأ جلسة تلاوة ذكية لطيفة.';
+
+  @override
+  String get childSmartTilawahEmptyCta => 'وردي القرآني';
+
+  @override
+  String get childSmartTilawahLoadingSemantics => 'جاري تحميل التلاوة الذكية';
+
+  @override
+  String get childSmartTilawahParentLeanTitle => 'التلاوة الذكية';
+
+  @override
+  String get childSmartTilawahParentLeanMessage =>
+      'مدرب التلاوة اللطيف على جهاز الابن. التقدّم يظهر في تقدّم القرآن للوالدين.';
+
+  @override
+  String get childInteractiveStoriesTitle => 'قصصي';
+
+  @override
+  String get childInteractiveStoriesChapterTitle => 'كنز الصحراء — الفصل ٣';
+
+  @override
+  String get childInteractiveStoriesChapterBody =>
+      'وصلتَ أنت ورفيقك عند بئر قديمة. وجدتما كيسًا فيه دنانير ذهبية منقوش عليها اسم «تاجر القافلة»… ورفيقك يهمس: «لن يعرف أحد!»';
+
+  @override
+  String get childInteractiveStoriesPrompt => 'ماذا تفعل؟';
+
+  @override
+  String get childInteractiveStoriesChoiceReturn =>
+      'نبحث عن التاجر ونعيد الكيس';
+
+  @override
+  String get childInteractiveStoriesChoiceTake => 'نأخذها — لن يعرف أحد';
+
+  @override
+  String get childInteractiveStoriesChoiceAsk => 'نسأل والدي أولًا';
+
+  @override
+  String get childInteractiveStoriesToastReturn =>
+      'اخترت الأمانة! التاجر سيكافئك بما لم تتخيل… وخاتمة الفصل: «من ترك شيئًا لله عوّضه الله خيرًا منه»';
+
+  @override
+  String get childInteractiveStoriesToastTake =>
+      'مسار آخر… وستكتشف بنفسك في الخاتمة: راحة القلب لا تُشترى بذهب الدنيا كله';
+
+  @override
+  String get childInteractiveStoriesToastAsk =>
+      'حكمة! سؤال الكبار طريق الحكماء — والدك في القصة سيدهشك';
+
+  @override
+  String get childInteractiveStoriesFooter =>
+      'قراراتك تكتب الحكاية — لا توجد نهاية واحدة';
+
+  @override
+  String get childInteractiveStoriesEmptyTitle => 'لا فصل قصة بعد';
+
+  @override
+  String get childInteractiveStoriesEmptyMessage =>
+      'افتح تعلّمي لفتح فصل قصتك التفاعلي التالي.';
+
+  @override
+  String get childInteractiveStoriesEmptyCta => 'تعلّمي';
+
+  @override
+  String get childInteractiveStoriesLoadingSemantics =>
+      'جاري تحميل القصة التفاعلية';
+
+  @override
+  String get childInteractiveStoriesParentLeanTitle => 'القصص التفاعلية';
+
+  @override
+  String get childInteractiveStoriesParentLeanMessage =>
+      'قصص اختيارات القيم على جهاز الابن. الوالدان يريان الموضوعات في مستشار العائلة دون حرق للنهاية.';
+
+  @override
+  String get childFamilyChallengesTitle => 'تحديات العائلة';
+
+  @override
+  String get childFamilyChallengesActiveTitle =>
+      'تحدي الأسبوع: ماراثون المراجعة';
+
+  @override
+  String get childFamilyChallengesActiveSub =>
+      'من يكمل بطاقات مراجعته كل يوم؟ الجائزة: يختار وجهة مشوار الجمعة!';
+
+  @override
+  String get childFamilyChallengesYou => 'أنت';
+
+  @override
+  String get childFamilyChallengesSibling => 'أخ/أخت';
+
+  @override
+  String get childFamilyChallengesTieNote =>
+      'تعادل مثير! — وأبوكما يراقب مبتسمًا';
+
+  @override
+  String get childFamilyChallengesDoneTitle => 'تحدياتنا المنجزة';
+
+  @override
+  String get childFamilyChallengesDoneFajr => 'أسبوع الفجر جماعة';
+
+  @override
+  String get childFamilyChallengesDoneFajrSub => 'فزتم كلكم — مثلجات الجمعة';
+
+  @override
+  String get childFamilyChallengesDoneAmma => 'ختمة عمّ العائلية';
+
+  @override
+  String get childFamilyChallengesDoneAmmaSub => 'الأخ/الأخت أنهى أولًا';
+
+  @override
+  String get childFamilyChallengesDoneTag => 'تم';
+
+  @override
+  String get childFamilyChallengesBanner =>
+      'هنا نتنافس لنكبر معًا — لا ترتيب يُحرج أحدًا، والخاسر الوحيد هو الكسل.';
+
+  @override
+  String get childFamilyChallengesEmptyTitle => 'لا تحديات عائلية بعد';
+
+  @override
+  String get childFamilyChallengesEmptyMessage =>
+      'عندما يبدأ الأب تحديًا عائليًا، يضيء شريط أسبوعك هنا.';
+
+  @override
+  String get childFamilyChallengesEmptyCta => 'الرئيسية';
+
+  @override
+  String get childFamilyChallengesLoadingSemantics =>
+      'جاري تحميل التحديات العائلية';
+
+  @override
+  String get childFamilyChallengesParentLeanTitle => 'التحديات العائلية';
+
+  @override
+  String get childFamilyChallengesParentLeanMessage =>
+      'سباقات الإخوة الودية على جهاز الابن. الوالدان يضعان الجوائز من المهام / الاستوديو.';
+
+  @override
+  String get childFocusSoundsTitle => 'أصوات التركيز';
+
+  @override
+  String get childFocusSoundsRain => 'مطر هادئ';
+
+  @override
+  String get childFocusSoundsWaves => 'أمواج';
+
+  @override
+  String get childFocusSoundsForest => 'غابة';
+
+  @override
+  String get childFocusSoundsFire => 'موقد';
+
+  @override
+  String get childFocusSoundsToastRain => 'صوت المطر يعمل بهدوء…';
+
+  @override
+  String get childFocusSoundsToastWaves => 'أمواج البحر…';
+
+  @override
+  String get childFocusSoundsToastForest => 'حفيف الأشجار…';
+
+  @override
+  String get childFocusSoundsToastFire => 'دفء الموقد…';
+
+  @override
+  String get childFocusSoundsWithFocusTitle => 'مع وضع التركيز';
+
+  @override
+  String get childFocusSoundsAutoTitle => 'تشغيل تلقائي مع جلسة التركيز';
+
+  @override
+  String get childFocusSoundsAutoSub => 'يبدأ الصوت ويتوقف معها';
+
+  @override
+  String get childFocusSoundsFadeTitle => 'خفوت تدريجي آخر دقيقتين';
+
+  @override
+  String get childFocusSoundsFadeSub => 'ينبهك بلطف أن الجلسة تنتهي';
+
+  @override
+  String get childFocusSoundsStartCta => 'ابدأ جلسة تركيز الآن — والصوت معك';
+
+  @override
+  String get childFocusSoundsBanner =>
+      'أصوات طبيعية ثابتة بلا كلمات ولا إيقاع — هذا ما يساعد الدماغ على التركيز.';
+
+  @override
+  String get childFocusSoundsEmptyTitle => 'لا أصوات تركيز بعد';
+
+  @override
+  String get childFocusSoundsEmptyMessage =>
+      'افتح وضع التركيز لفتح حلقات الطبيعة الهادئة لجلساتك.';
+
+  @override
+  String get childFocusSoundsEmptyCta => 'وضع التركيز';
+
+  @override
+  String get childFocusSoundsLoadingSemantics => 'جاري تحميل أصوات التركيز';
+
+  @override
+  String get childFocusSoundsParentLeanTitle => 'أصوات التركيز';
+
+  @override
+  String get childFocusSoundsParentLeanMessage =>
+      'حلقات الطبيعة على جهاز الابن بجانب وضع التركيز. الوالدان يريان إحصاءات الجلسة لا قائمة الأصوات.';
+
+  @override
+  String get childCallPlayTitle => 'مرح المكالمة';
+
+  @override
+  String get childCallPlayPeerGrandpa => 'جدّو';
+
+  @override
+  String get childCallPlayYou => 'أنت';
+
+  @override
+  String childCallPlayHeroTitle(String peer) {
+    return 'مكالمة مع $peer';
+  }
+
+  @override
+  String get childCallPlayHeroSub => 'الآن — وتلعبان معًا!';
+
+  @override
+  String get childCallPlayGamesTitle => 'العبا وأنتما تتكلمان';
+
+  @override
+  String get childCallPlayGameDraw => 'لوحة رسم مشتركة';
+
+  @override
+  String get childCallPlayGameDrawSub => 'ترسمان معًا في نفس اللحظة';
+
+  @override
+  String get childCallPlayGameXo => 'إكس-أو';
+
+  @override
+  String get childCallPlayGameXoSub => 'جدّو بطل فيها — انتبه!';
+
+  @override
+  String get childCallPlayGameQuiz => 'سباق الأسئلة';
+
+  @override
+  String get childCallPlayGameQuizSub => 'من يجيب أسرع؟';
+
+  @override
+  String get childCallPlayCtaOpen => 'افتح';
+
+  @override
+  String get childCallPlayCtaPlay => 'العب';
+
+  @override
+  String get childCallPlayCtaChallenge => 'تحدَّ';
+
+  @override
+  String get childCallPlayToastDraw =>
+      'فُتحت اللوحة — جدّو يرسم نخلة! أكمل أنت البيت';
+
+  @override
+  String get childCallPlayToastXo => 'جدّو بدأ بالوسط — خطتك؟';
+
+  @override
+  String get childCallPlayToastQuiz => 'سؤال ١: عاصمة اليمن؟ — جدّو ضغط قبلك!';
+
+  @override
+  String get childCallPlayBanner =>
+      'الألعاب داخل مكالمات دائرتك الآمنة فقط — تقرّبك ممن تحب.';
+
+  @override
+  String get childCallPlayEmptyTitle => 'لا مكالمة حية للعب';
+
+  @override
+  String get childCallPlayEmptyMessage =>
+      'عندما تكون في مكالمة دائرة آمنة، تظهر هنا الرسم وإكس-أو وسباق الأسئلة.';
+
+  @override
+  String get childCallPlayEmptyCta => 'محادثاتي';
+
+  @override
+  String get childCallPlayLoadingSemantics => 'جاري تحميل مرح المكالمة';
+
+  @override
+  String get childCallPlayParentLeanTitle => 'مرح المكالمة';
+
+  @override
+  String get childCallPlayParentLeanMessage =>
+      'ألعاب المكالمة على جهاز الابن أثناء مكالمات الدائرة الآمنة. الوالدان يريان سجل المكالمات لا اللوحة.';
+
+  @override
+  String get childStickersBackgroundsTitle => 'ملصقاتي';
+
+  @override
+  String get childStickersBackgroundsStickersTitle => 'ملصقاتك';
+
+  @override
+  String get childStickersBackgroundsSpaceHint =>
+      'حزمة «الفضاء» تُفتح بإنجاز وردين — أنت قريب!';
+
+  @override
+  String get childStickersBackgroundsUnlockCta => 'تُفتح بإنجاز وردين';
+
+  @override
+  String childStickersBackgroundsUnlockToast(int wards) {
+    return 'حزمة الفضاء تُفتح تلقائيًا فور إتمام وردين — أنت على بعد $wards ورد!';
+  }
+
+  @override
+  String get childStickersBackgroundsBgTitle => 'خلفية محادثة العائلة';
+
+  @override
+  String childStickersBackgroundsBgSemantics(String id) {
+    return 'خلفية محادثة $id';
+  }
+
+  @override
+  String get childStickersBackgroundsBgToast => 'تغيرت خلفيتك — شكلها رهيب!';
+
+  @override
+  String get childStickersBackgroundsBanner =>
+      'كل الملصقات مرسومة بعناية ومهذبة — عبّر عن نفسك بشخصيتك الحلوة.';
+
+  @override
+  String get childStickersBackgroundsEmptyTitle => 'لا حزمة ملصقات بعد';
+
+  @override
+  String get childStickersBackgroundsEmptyMessage =>
+      'افتح محادثة العائلة لاختيار ملصقات وخلفية لمحادثاتك.';
+
+  @override
+  String get childStickersBackgroundsEmptyCta => 'محادثاتي';
+
+  @override
+  String get childStickersBackgroundsLoadingSemantics =>
+      'جاري تحميل الملصقات والخلفيات';
+
+  @override
+  String get childStickersBackgroundsParentLeanTitle => 'الملصقات والخلفيات';
+
+  @override
+  String get childStickersBackgroundsParentLeanMessage =>
+      'حزم الملصقات المهذبة على جهاز الابن. الوالدان يعتمدون الحزم من الاستوديو لا من المنتقي.';
+
+  @override
+  String get childLearnHomeChallengeAssigned => 'درس خصّصه ولي أمرك';
+
+  @override
+  String get childLearnHomeChallengeAssignedHomework => 'واجب من ولي أمرك';
+
+  @override
+  String get childLearnHomeChallengeAssignedSkill => 'تدريب مهارة من ولي أمرك';
+
+  @override
+  String get childLearnHomeChallengeAssignedFamily => 'تحدّي عائلي من ولي أمرك';
+
+  @override
+  String get childLearnHomeAssignedFromFather => 'خُصّص للتو من ولي أمرك';
+
+  @override
+  String addFromSourceAttachedTitle(int count) {
+    return 'مصادر مُرفقة ($count)';
+  }
+
+  @override
+  String addFromSourceAttachedSemantics(int count) {
+    return 'مصادر تعلّم مُرفقة، $count عناصر';
+  }
+
+  @override
+  String get addFromSourceLabelPdfMath => 'ملف PDF لكتاب الرياضيات';
+
+  @override
+  String get addFromSourceLabelPdfScience => 'ملف PDF لوحدة العلوم';
+
+  @override
+  String get addFromSourceLabelPdfDevice => 'ملف PDF من هذا الجهاز';
+
+  @override
+  String get addFromSourceLabelLink => 'رابط فيديو تعليمي';
+
+  @override
+  String get addFromSourceLabelTopic => 'بذرة موضوع للمستشار';
+
+  @override
+  String get addFromSourceLabelVoice => 'ملاحظة صوتية للمستشار';
+
+  @override
+  String get previewApproveApprovedToast =>
+      'تم الاعتماد — جاهز لتعيين المكافآت لابنك';
+
+  @override
+  String get childQuizSkillApprovedPack => 'درس اعتمده ولي أمرك';
+
+  @override
+  String get childQuizExplainApproved =>
+      'ولي أمرك اعتمد هذا السؤال لك — أحسنت!';
+
+  @override
+  String get sosAlertAcknowledgeCta => 'إقرار — رأيت هذا البلاغ';
+
+  @override
+  String get sosAlertAcknowledgeSemantics => 'إقرار بلاغ الاستغاثة دون إغلاقه';
+
+  @override
+  String get sosAlertAcknowledgedToast =>
+      'تم الإقرار — البلاغ يبقى مفتوحًا حتى يُغلق';
+
+  @override
+  String get sosAlertCallUnavailableToast =>
+      'الاتصال غير مُعدّ على هذا الجهاز بعد — البلاغ يبقى نشطًا';
+
+  @override
+  String get sosAlertStatusActive => 'الحادثة: نشطة';
+
+  @override
+  String get sosAlertStatusAcknowledged => 'الحادثة: مُقرّ بها';
+
+  @override
+  String get sosAlertStatusEscalating => 'الحادثة: تصعيد';
+
+  @override
+  String get sosAlertLocationAcquiring => 'الموقع: جاري التحديد';
+
+  @override
+  String get sosAlertLocationReady => 'الموقع: جاهز';
+
+  @override
+  String get sosAlertLocationStale => 'الموقع: قديم';
+
+  @override
+  String get sosAlertLocationUnavailable => 'الموقع: غير متاح';
+
+  @override
+  String sosAlertDeliveryPending(String channel, String recipient) {
+    return '$channel → $recipient: قيد الانتظار';
+  }
+
+  @override
+  String sosAlertDeliveryFailed(String channel, String recipient) {
+    return '$channel → $recipient: فشل';
+  }
+
+  @override
+  String sosAlertDeliveryUnavailable(String channel, String recipient) {
+    return '$channel → $recipient: غير متاح';
+  }
+
+  @override
+  String sosAlertDeliveryNotConfigured(String channel, String recipient) {
+    return '$channel → $recipient: غير مُعدّ';
+  }
+
+  @override
+  String sosAlertDeliveryDelivered(String channel, String recipient) {
+    return '$channel → $recipient: وصل';
+  }
+
+  @override
+  String get sosAlertBreakGlassCta => 'تجاوز مؤقت (كسر الزجاج)…';
+
+  @override
+  String get sosAlertBreakGlassSemantics => 'فتح ورقة التجاوز المؤقت';
+
+  @override
+  String get sosBreakGlassTitle => 'تجاوز مؤقت';
+
+  @override
+  String sosBreakGlassBody(int minutes) {
+    return 'يفتح مؤقتًا أدوات الاستجابة لمدة $minutes دقيقة. لا يغيّر سياسة الاستغاثة الدائمة ويُسجَّل في السجل.';
+  }
+
+  @override
+  String get sosBreakGlassReasonLabel => 'السبب / السياق';
+
+  @override
+  String get sosBreakGlassContinueCta => 'متابعة';
+
+  @override
+  String get sosBreakGlassConfirmCta => 'تأكيد التجاوز المؤقت';
+
+  @override
+  String get sosBreakGlassCancelCta => 'إلغاء';
+
+  @override
+  String get sosAlertObserverViewOnlyNote =>
+      'مراقبة: عرض وإقرار فقط — الإغلاق والتصعيد والإعداد غير متاحة';
+
+  @override
+  String get sosAlertHonestyBanner =>
+      'الاستغاثة متاحة دائمًا — تظهر حالات التسليم بصدق فقط';
+
+  @override
+  String get sosAlertIncidentNote =>
+      'حادثة طوارئ مفتوحة — حالة الموقع والتسليم أدناه صادقة';
+
+  @override
+  String get childSosInProgressLocationPending =>
+      'حالة الموقع صادقة — مزوّد GPS غير نشط في هذا البناء';
+
+  @override
+  String get childSosInProgressDeliveryHonesty =>
+      'حالة إبلاغ الوالدين لكل قناة — بلا نجاح صامت';
+
+  @override
+  String get childSosInProgressCallUnavailableToast =>
+      'الاتصال غير متاح في هذا البناء — الاستغاثة تبقى نشطة';
+
+  @override
+  String get sosLadderMaxBackupsError => 'الحد الأقصى ٥ جهات احتياط';
+
+  @override
+  String get sosLadderVerificationUnverified => 'غير موثّق';
+
+  @override
+  String get sosLadderVerificationPending => 'قيد التحقق';
+
+  @override
+  String get sosLadderVerificationVerified => 'موثّق';
+
+  @override
+  String get sosLadderVerificationRevoked => 'ملغى';
+
+  @override
+  String get sosLadderVerificationFailed => 'فشل';
+
+  @override
+  String sosLadderPriorityLabel(int priority) {
+    return 'أ$priority';
+  }
+
+  @override
+  String get sosLadderReadOnlyTitle => 'عرض فقط';
+
+  @override
+  String get sosLadderReadOnlyMessage =>
+      'ولي الأمر الأساسي أو الأم بصلاحية كاملة فقط يعدّلون جهات الطوارئ';
+
+  @override
+  String get sosPanicQuietTitle => 'وضع الهدوء أثناء الاستغاثة (طفل)';
+
+  @override
+  String get sosPanicQuietSubtitle =>
+      'عند التفعيل، شاشة الاستغاثة النشطة للطفل تعرض الحالة الحرجة فقط';
+
+  @override
+  String get sosReadinessTitle => 'جاهزية القدرات';
+
+  @override
+  String get sosReadinessBody =>
+      'الدفع والرسائل والاتصال غير مُعدّة في هذه الشريحة. الاستغاثة تعمل داخل التطبيق.';
+
+  @override
+  String get sosAlertConnectionOnline => 'الاتصال: متصل';
+
+  @override
+  String get sosAlertConnectionDegraded => 'الاتصال: متدهور';
+
+  @override
+  String get sosAlertConnectionOffline => 'الاتصال: غير متصل';
+
+  @override
+  String get sosBreakGlassCapabilityDefault => 'أدوات الاستجابة للاستغاثة';
+
+  @override
+  String get resultsFollowupActivityQuizSubmittedTitle => 'اختبار الابن مُرسل';
+
+  @override
+  String get resultsFollowupActivityJustSubmitted =>
+      'أُرسل للتو — بانتظار مراجعتك';
+
+  @override
+  String get materialsLessonsSubjectCustom => 'مادة جديدة';
+
+  @override
+  String get materialsLessonsMetaJustAdded => 'أُضيفت للتو — جاهزة للدروس';
+
+  @override
+  String materialsLessonsMetaLessonCount(int count) {
+    return '$count دروس';
+  }
+
+  @override
+  String get materialsLessonsAddSubjectPersistedToast =>
+      'أُضيفت المادة إلى موادك';
+
+  @override
+  String get materialsLessonsAddLessonPersistedToast =>
+      'أُضيف درس — اختر المصدر التالي';
+
+  @override
+  String get dayBoardPendingQuizSubmittedTitle => 'اختبار الابن مُرسل';
+
+  @override
+  String get dayBoardPendingJustSubmitted => 'أُرسل للتو — افتح متابعة النتائج';
+
+  @override
+  String dayBoardPendingEarnedMinutes(int minutes) {
+    return 'حصل على +$minutes دقيقة — راجع في النتائج';
+  }
+
+  @override
+  String get quranProgressSurahMulk => 'الملك';
+
+  @override
+  String get quranProgressCycleSurahCta => 'تبديل سورة الورد';
+
+  @override
+  String quranProgressCycleSurahToast(String surah) {
+    return 'سورة الورد أصبحت $surah — احفظ لإرسالها لابنك';
+  }
+
+  @override
+  String get quranProgressPublishPlanCta => 'حفظ الخطة للابن';
+
+  @override
+  String quranProgressPublishPlanToast(String surah, int minutes) {
+    return 'أُرسلت خطة الورد — $surah · مكافأة +$minutes دقيقة';
+  }
+
+  @override
+  String get childQuranWardAyahNaba1 => 'عَمَّ يَتَسَاءَلُونَ ﴿١﴾';
+
+  @override
+  String get sys3MockHonesty =>
+      'يحدّث هذا النموذج المحلي بيانات الهوية في الذاكرة. مزامنة الخادم غير متصلة بعد.';
+
+  @override
+  String get sys3SessionRestoreTitle => 'استعادة الجلسة';
+
+  @override
+  String get sys3SessionRestoreBody =>
+      'استعد هذه الجلسة المنتهية على هذا الجهاز.';
+
+  @override
+  String get sys3SessionRestoreAction => 'استعادة الجلسة';
+
+  @override
+  String get sys3SessionExpiredTitle => 'انتهت الجلسة';
+
+  @override
+  String get sys3SessionExpiredBody =>
+      'انتهت جلسة تسجيل الدخول. استعدها أو سجل الدخول مجددًا.';
+
+  @override
+  String get sys3SignInAgain => 'تسجيل الدخول مجددًا';
+
+  @override
+  String get sys3LogoutTitle => 'تسجيل الخروج';
+
+  @override
+  String get sys3LogoutBody =>
+      'هل تريد إنهاء جلسة البالغ الحالية على هذا الجهاز؟';
+
+  @override
+  String get sys3LogoutAction => 'تسجيل الخروج الآن';
+
+  @override
+  String get sys3RecoveryTitle => 'استعادة الحساب';
+
+  @override
+  String get sys3RecoveryBody =>
+      'أدخل بريدك. يؤكد النموذج الطلب محليًا دون الادعاء بإرسال بريد.';
+
+  @override
+  String get sys3RecoveryAction => 'طلب الاستعادة';
+
+  @override
+  String get sys3RecoverySuccess => 'تم تسجيل طلب الاستعادة محليًا.';
+
+  @override
+  String get sys3DeactivateTitle => 'تعطيل الحساب';
+
+  @override
+  String get sys3DeactivateBody => 'تعطيل هذا الحساب وإلغاء جميع جلساته؟';
+
+  @override
+  String get sys3DeactivateAction => 'تعطيل الحساب';
+
+  @override
+  String get sys3DeactivateSuccess => 'تم تعطيل الحساب وإلغاء الجلسات.';
+
+  @override
+  String get sys3FamilySelectTitle => 'اختيار العائلة';
+
+  @override
+  String get sys3FamilySelectBody => 'اختر سياق العائلة الذي تريد فتحه.';
+
+  @override
+  String get sys3FamilySingle => 'توجد عائلة واحدة فقط. جارٍ فتحها.';
+
+  @override
+  String get sys3RemoveAdultTitle => 'إزالة بالغ';
+
+  @override
+  String get sys3RemoveAdultBody =>
+      'هل تريد إزالة ولي الأمر المشارك من العائلة الحالية؟';
+
+  @override
+  String get sys3RemoveAdultAction => 'إزالة العضو';
+
+  @override
+  String get sys3TransferTitle => 'نقل الملكية';
+
+  @override
+  String get sys3TransferBody => 'اختر بالغًا مؤهلًا ليصبح المالك الأساسي.';
+
+  @override
+  String get sys3TransferAction => 'نقل الملكية';
+
+  @override
+  String get sys3LeaveTitle => 'مغادرة العائلة';
+
+  @override
+  String get sys3LeaveBody =>
+      'مغادرة العائلة الحالية؟ يجب على المالك الأساسي نقل الملكية أولًا.';
+
+  @override
+  String get sys3LeaveAction => 'مغادرة العائلة';
+
+  @override
+  String get sys3InviteStatusTitle => 'حالة الدعوة';
+
+  @override
+  String get sys3InviteStatusBody => 'أدخل رمز الدعوة لمعرفة حالتها الحالية.';
+
+  @override
+  String get sys3InviteTokenLabel => 'رمز الدعوة';
+
+  @override
+  String get sys3InviteLookupAction => 'فحص الحالة';
+
+  @override
+  String get sys3InviteUnknown => 'لا توجد دعوة مطابقة لهذا الرمز.';
+
+  @override
+  String get sys3AdultSessionsTitle => 'جلسات البالغين';
+
+  @override
+  String get sys3ChildSessionsTitle => 'جلسات الأطفال';
+
+  @override
+  String get sys3SessionsEmpty => 'لا توجد جلسات متاحة.';
+
+  @override
+  String get sys3RevokeAction => 'إلغاء';
+
+  @override
+  String get sys3RemoteEndTitle => 'إنهاء جلسة الطفل';
+
+  @override
+  String get sys3RemoteEndBody =>
+      'إنهاء جلسة الطفل عن بُعد؟ لن يؤدي ذلك إلى إزالة ربط الجهاز.';
+
+  @override
+  String get sys3RemoteEndAction => 'إنهاء الجلسة';
+
+  @override
+  String get sys3RevokeTitle => 'تأكيد الإلغاء';
+
+  @override
+  String get sys3RevokeBody => 'هل تريد إلغاء الجلسة أو الربط المحدد؟';
+
+  @override
+  String get sys3DeniedTitle => 'مطلوب المالك الأساسي';
+
+  @override
+  String get sys3DeniedBody => 'يمكن للمالك الأساسي فقط تنفيذ هذا الإجراء.';
+
+  @override
+  String get sys3SuccessTitle => 'اكتمل';
+
+  @override
+  String get sys3SuccessBody => 'تم تطبيق تغيير الهوية محليًا.';
+
+  @override
+  String get sys3ErrorTitle => 'تعذر الإكمال';
+
+  @override
+  String get sys3ErrorBody => 'تعذر تطبيق تغيير الهوية المطلوب.';
+
+  @override
+  String sys3MemberLabel(String id) {
+    return 'العضو $id';
+  }
+
+  @override
+  String sys3SessionLabel(String id) {
+    return 'الجلسة $id';
+  }
+
+  @override
+  String sys3EnrollmentLabel(String id) {
+    return 'الربط $id';
+  }
+
+  @override
+  String get sys3SettingsLogout => 'تسجيل الخروج';
+
+  @override
+  String get sys3SettingsAdultSessions => 'جلسات البالغين';
+
+  @override
+  String get sys3SettingsChildSessions => 'جلسات الأطفال';
+
+  @override
+  String get sys3SettingsRecovery => 'استعادة الحساب';
+
+  @override
+  String get sys3SettingsDeactivate => 'تعطيل الحساب';
+
+  @override
+  String get sys3SettingsFamilySelector => 'تبديل العائلة';
+
+  @override
+  String get sys3FamilyTransferCta => 'نقل ملكية العائلة';
+
+  @override
+  String get sys3FamilySelectorCta => 'فتح اختيار العائلة';
+
+  @override
+  String get sys3FamilyLeaveCta => 'مغادرة هذه العائلة';
+
+  @override
+  String get sys3FamilyRemoveCta => 'إزالة بالغ';
+
+  @override
+  String get sys3InviteStatusCta => 'عرض حالة الدعوة';
+
+  @override
+  String get capabilityStatusImplemented => 'IMPLEMENTED';
+
+  @override
+  String get capabilityStatusMockRemote => 'MOCK-REMOTE';
+
+  @override
+  String get capabilityStatusDegraded => 'DEGRADED';
+
+  @override
+  String get capabilityStatusUnsupported => 'UNSUPPORTED';
+
+  @override
+  String get capabilityStatusNotImplemented => 'NOT IMPLEMENTED';
+
+  @override
+  String get locationGpsCapabilityLabel => 'GPS الجهاز';
+
+  @override
+  String get locationGpsNotImplementedBanner =>
+      'GPS الجهاز غير مُنفَّذ (NOT IMPLEMENTED) في هذا البناء — الخرائط للعرض فقط؛ لا تُعامل هذه الشاشة كتتبع حي.';
+
+  @override
+  String get createSafeZoneAssignHeading => 'تعيين للأبناء';
+
+  @override
+  String get createSafeZoneAssignHint =>
+      'اختر ابناً واحداً على الأقل قبل الحفظ (إلزامي).';
+
+  @override
+  String get createSafeZoneNeedAssignment =>
+      'اختر ابناً واحداً على الأقل لهذه المنطقة.';
+
+  @override
+  String createSafeZoneChildChipSemantics(String name) {
+    return 'تعيين المنطقة لـ $name';
+  }
+
+  @override
+  String get silentLocateTitle => 'طلب موقع صامت';
+
+  @override
+  String silentLocateBody(String name) {
+    return 'طلب تحديد موقع بهدوء لـ $name. لن يرى الابن واجهة تفاعلية.';
+  }
+
+  @override
+  String get silentLocateConfirmCta => 'طلب التحديد';
+
+  @override
+  String get silentLocateDismissCta => 'تم';
+
+  @override
+  String get silentLocateResultPending => 'قيد الانتظار — جاري الاكتساب';
+
+  @override
+  String get silentLocateResultLocated => 'تم التحديد — آخر تثبيت صادق متاح';
+
+  @override
+  String get silentLocateResultStale => 'آخر معروف قديم — ليس تثبيتاً جديداً';
+
+  @override
+  String get silentLocateResultUnavailable => 'غير متاح — لا تثبيت صالح';
+
+  @override
+  String get silentLocateResultGpsNotImplemented =>
+      'GPS الجهاز NOT IMPLEMENTED — لا يمكن ادعاء تحديد صامت حي.';
+
+  @override
+  String get locationMapSilentLocateCta => 'تحديد صامت';
+
+  @override
+  String get childArrivalSilentBanner =>
+      'تسجيل وصول فقط — أماكن مسماة. لا خريطة حية ولا إحداثيات في جانب الابن.';
+
+  @override
+  String get fs004ParentPanelTitle => 'الشاشة والكاميرا (FS-004)';
+
+  @override
+  String get fs004PlanesHonestyHint =>
+      'مستويات كاميرا النظام والالتقاط — غير مفعّلة على الجهاز بعد';
+
+  @override
+  String get fs004PreventCameraOs => 'تقييد كاميرا الجهاز';
+
+  @override
+  String get fs004PreventCameraOsSub =>
+      'نية على مستوى النظام — ليست حظر تطبيق الكاميرا';
+
+  @override
+  String get fs004PreventCapture => 'منع الالتقاط';
+
+  @override
+  String get fs004PreventCaptureSub =>
+      'حيث يدعم النظام — ليس حظراً شاملاً لصور الشاشة';
+
+  @override
+  String get fs004MonitorScreenshots => 'مراقبة لقطات الشاشة';
+
+  @override
+  String get fs004MonitorScreenshotsSub =>
+      'الابن يرى إشعاراً واضحاً — السياسة هنا وليست مخزناً ثانياً في التنبيهات الذكية';
+
+  @override
+  String get fs004ProtectSurfaces => 'حماية أسطح نظام العائلة';
+
+  @override
+  String get fs004ProtectSurfacesSub =>
+      'يحمي شاشات نظام العائلة حيث يمكن الدعم';
+
+  @override
+  String get fs004PackageVsOsNote =>
+      'حظر تطبيق الكاميرا في التحكم بالتطبيقات (FS-003). تقييد كاميرا الجهاز أمر مختلف.';
+
+  @override
+  String get fs004MicOutOfScope => 'الميكروفون وصوت الطوارئ لا يُداران هنا.';
+
+  @override
+  String get fs004ChildPreviewHeading => 'ما يراه ابنك';
+
+  @override
+  String get fs004ChildTransparencyTitle => 'حالة الكاميرا والالتقاط';
+
+  @override
+  String get fs004ChildMonitorNotice =>
+      'مراقبة لقطات الشاشة / الالتقاط مفعّلة للتطبيقات المختارة. يمكن إشعار العائلة عند رصد التقاط (عند الدعم).';
+
+  @override
+  String get fs004ChildNotSecret => 'هذا ليس سراً.';
+
+  @override
+  String get fs004StatusCameraLabel => 'كاميرا الجهاز';
+
+  @override
+  String get fs004StatusCaptureLabel => 'منع الالتقاط';
+
+  @override
+  String get fs004StatusMonitorLabel => 'المراقبة';
+
+  @override
+  String get fs004StatusRestricted => 'مقيّدة';
+
+  @override
+  String get fs004StatusOff => 'متوقفة';
+
+  @override
+  String get fs004StatusOnLimited => 'مفعّلة (محدودة)';
+
+  @override
+  String get fs004StatusOnSeeNotice => 'مفعّلة — انظر الإشعار';
+
+  @override
+  String get fs004SmartAlertsPolicyOwned =>
+      'سياسة مراقبة لقطات الشاشة مملوكة للشاشة والكاميرا (FS-004). هذه الشاشة للدخول/الإشعار فقط.';
+
+  @override
+  String get fs005ModesOwnershipBanner =>
+      'جدولة أنماط الحياة مملوكة للأوضاع (FS-005). دقائق وقت الشاشة منفصلة. ScheduleWindow ليس سلطة وضع ثانية.';
+
+  @override
+  String get fs005OsWakeHonestyHint => 'إيقاظ الجهاز / جدولة Focus';
+
+  @override
+  String get fs005ExamsMapsToStudyHint =>
+      'الامتحانات تستخدم وضع الدراسة (وليست إدخالاً منفصلاً في الكتالوج).';
+
+  @override
+  String get fs005ChildModeIdle => 'لا يوجد وضع مفعّل الآن.';
+
+  @override
+  String fs005ChildModeOn(String modeName) {
+    return 'وضع $modeName مفعّل';
+  }
+
+  @override
+  String fs005ChildModesOn(String modeNames) {
+    return 'الأوضاع المفعّلة: $modeNames';
+  }
+
+  @override
+  String get fs005ChildModeLimited => 'بعض التطبيقات والمواقع محدودة الآن.';
+
+  @override
+  String get fs005ChildModesStricter =>
+      'تُطبَّق قواعد أشد بينما أكثر من وضع مفعّل.';
+
+  @override
+  String get fs005ChildReachability =>
+      'الطوارئ · دردشة العائلة · القرآن تبقى متاحة.';
+
+  @override
+  String get fs007TicketPanelTitle => 'تذاكر مراجعة السلامة';
+
+  @override
+  String get fs007SuggestOnlyBanner =>
+      'تصنيف الذكاء إشارة سلامة فقط. الاقتراحات تحتاج موافقتك — القوائم والتطبيقات والأوضاع لا تُغيَّر تلقائيًا.';
+
+  @override
+  String get fs007NotPolicyExecutor =>
+      'الذكاء الاصطناعي ليس منفّذ سياسة في هذه الشاشة.';
+
+  @override
+  String get fs007TicketEmpty => 'لا توجد تذاكر مراجعة مفتوحة.';
+
+  @override
+  String get fs007TicketDetailHeading => 'تفاصيل التذكرة';
+
+  @override
+  String get fs007TicketMetaMissing => 'البيانات الوصفية غير متاحة';
+
+  @override
+  String get fs007PreviewUnavailable =>
+      'المعاينة غير متاحة — بيانات وصفية فقط.';
+
+  @override
+  String get fs007ActionResolve => 'إغلاق';
+
+  @override
+  String get fs007ActionDismissFp => 'رفض كإيجابي كاذب';
+
+  @override
+  String get fs007ActionSuggestWf => 'اقتراح مراجعة فلتر الويب (موافقة بشرية)';
+
+  @override
+  String get fs007CategorySexual => 'محتوى جنسي';
+
+  @override
+  String get fs007CategorySensitiveVisual => 'مرئي حسّاس';
+
+  @override
+  String get fs007CategoryViolence => 'عنف أو تهديد';
+
+  @override
+  String get fs007CategorySelfHarm => 'إشارة إيذاء ذاتي';
+
+  @override
+  String get fs007CategoryPredatory => 'إشارة استغلال أو استدراج';
+
+  @override
+  String get fs007CategorySubstance => 'مواد أو قمار';
+
+  @override
+  String get fs007CategorySuspicious => 'لغة مريبة';
+
+  @override
+  String get fs007CategoryUncategorized => 'قلق غير مصنّف';
+
+  @override
+  String get fs007CertaintyUnknown => 'غير معروف';
+
+  @override
+  String get fs007CertaintyPreliminary => 'أولي';
+
+  @override
+  String get fs007CertaintyAnalysis => 'تحليل';
+
+  @override
+  String get fs007CertaintyConfirmed => 'مؤكّد';
+
+  @override
+  String get fs007SeverityLow => 'منخفض';
+
+  @override
+  String get fs007SeverityElevated => 'مرتفع';
+
+  @override
+  String get fs007SeverityHigh => 'عالٍ';
+
+  @override
+  String get fs007ChildTransparencyTitle => 'أدوات السلامة على الجهاز';
+
+  @override
+  String get fs007ChildOnDeviceNote =>
+      'عندما يكون التحليل مفعّلاً فإنه يعمل دون اتصال على هذا الجهاز — وليس ادعاء مراقبة سرية دائمة.';
+
+  @override
+  String get fs007ToolSearch => 'تحليل البحث';
+
+  @override
+  String get fs007ToolImage => 'تصنيف الصور';
+
+  @override
+  String get fs007ToolScreenshot => 'مراقبة لقطات الشاشة';
+
+  @override
+  String get fs007ToolStateOff => 'إيقاف';
+
+  @override
+  String get fs007ToolStateOnDevice => 'تشغيل (على الجهاز)';
+
+  @override
+  String get fs007ToolStateDegraded => 'متدهور';
+
+  @override
+  String get fs007ToolStateUnsupported => 'غير مدعوم';
+
+  @override
+  String get fs007SmartAlertsEntry =>
+      'تذاكر سلامة الذكاء دون اتصال (FS-007) — إشارات فقط؛ بلا حظر تلقائي.';
 }

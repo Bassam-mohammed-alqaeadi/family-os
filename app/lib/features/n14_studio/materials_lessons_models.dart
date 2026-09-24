@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 /// Subject kinds on SCR-FAT-048 (prototype FAT-048 rows).
-enum MaterialsSubjectKind { math, quran, english, science }
+enum MaterialsSubjectKind { math, quran, english, science, custom }
 
 @immutable
 final class MaterialsSubject {

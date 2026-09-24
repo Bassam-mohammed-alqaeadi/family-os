@@ -6,12 +6,18 @@ import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/identity/identity_models.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 
 /// SCR-FAT-006 — نجاح الربط (bare parent onboarding, mock-first).
 ///
 /// Wave-1: celebration + mini map first value → day board.
 /// Parametric / Rule 23: no default child name — «ابنك» / constructor display name.
+///
+/// Honesty: when IdentityRuntime has no active enrolled device for the active
+/// family, this screen is a **legacy prototype celebration** — not managed
+/// enrollment success. Managed pairing returns to FAT-013 while pairing-pending.
 class LinkSuccessScreen extends StatefulWidget {
   const LinkSuccessScreen({
     super.key,
@@ -37,6 +43,17 @@ class _LinkSuccessScreenState extends State<LinkSuccessScreen> {
   String get _resolvedName {
     final raw = widget.childDisplayName.trim();
     return raw.isEmpty ? '' : raw;
+  }
+
+  bool _hasManagedEnrollment(BuildContext context) {
+    final runtime = CurrentIdentity.maybeOf(context);
+    if (runtime == null) return false;
+    final familyId = runtime.activeFamilyId;
+    return runtime.enrollments.any(
+      (enrollment) =>
+          enrollment.familyId == familyId &&
+          enrollment.state == EnrollmentState.enrolled,
+    );
   }
 
   void _addNext(BuildContext context, AppLocalizations l10n) {
@@ -72,11 +89,14 @@ class _LinkSuccessScreenState extends State<LinkSuccessScreen> {
     final radii = Theme.of(context).extension<FamilyRadii>()!;
     final gradients = Theme.of(context).extension<FamilyGradients>()!;
     final shadows = Theme.of(context).extension<FamilyShadows>()!;
+    final managedEnrollment = _hasManagedEnrollment(context);
 
     // Prefer fixed hero; optional injected name only for tests — never a person default.
-    final heroTitle = _resolvedName.isEmpty
-        ? l10n.linkSuccessHeroTitle
-        : l10n.linkSuccessHeroTitleNamed(_resolvedName);
+    final heroTitle = !managedEnrollment
+        ? l10n.pairingVerificationMessage
+        : (_resolvedName.isEmpty
+              ? l10n.linkSuccessHeroTitle
+              : l10n.linkSuccessHeroTitleNamed(_resolvedName));
 
     return Scaffold(
       backgroundColor: colors.bg,
@@ -108,6 +128,14 @@ class _LinkSuccessScreenState extends State<LinkSuccessScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
           children: [
+            if (!managedEnrollment) ...[
+              BannerNote(
+                key: const Key('link_success_legacy_honesty'),
+                message: l10n.sys3MockHonesty,
+                variant: BannerVariant.a,
+              ),
+              const SizedBox(height: 10),
+            ],
             Text(
               '🎉',
               textAlign: TextAlign.center,
@@ -115,6 +143,11 @@ class _LinkSuccessScreenState extends State<LinkSuccessScreen> {
             ),
             const SizedBox(height: 4),
             Text(
+              key: Key(
+                managedEnrollment
+                    ? 'link_success_managed_hero'
+                    : 'link_success_legacy_hero',
+              ),
               heroTitle,
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -380,48 +413,72 @@ class _MiniMapPainter extends CustomPainter {
     // Blocks
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(size.width * 0.04, size.height * 0.06, size.width * 0.3,
-            size.height * 0.32),
+        Rect.fromLTWH(
+          size.width * 0.04,
+          size.height * 0.06,
+          size.width * 0.3,
+          size.height * 0.32,
+        ),
         const Radius.circular(6),
       ),
       building,
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(size.width * 0.46, size.height * 0.05, size.width * 0.26,
-            size.height * 0.33),
+        Rect.fromLTWH(
+          size.width * 0.46,
+          size.height * 0.05,
+          size.width * 0.26,
+          size.height * 0.33,
+        ),
         const Radius.circular(6),
       ),
       building,
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(size.width * 0.8, size.height * 0.04, size.width * 0.16,
-            size.height * 0.34),
+        Rect.fromLTWH(
+          size.width * 0.8,
+          size.height * 0.04,
+          size.width * 0.16,
+          size.height * 0.34,
+        ),
         const Radius.circular(6),
       ),
       school,
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(size.width * 0.05, size.height * 0.58, size.width * 0.24,
-            size.height * 0.34),
+        Rect.fromLTWH(
+          size.width * 0.05,
+          size.height * 0.58,
+          size.width * 0.24,
+          size.height * 0.34,
+        ),
         const Radius.circular(10),
       ),
       park,
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(size.width * 0.46, size.height * 0.57, size.width * 0.26,
-            size.height * 0.36),
+        Rect.fromLTWH(
+          size.width * 0.46,
+          size.height * 0.57,
+          size.width * 0.26,
+          size.height * 0.36,
+        ),
         const Radius.circular(6),
       ),
       park,
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(size.width * 0.78, size.height * 0.58, size.width * 0.18,
-            size.height * 0.34),
+        Rect.fromLTWH(
+          size.width * 0.78,
+          size.height * 0.58,
+          size.width * 0.18,
+          size.height * 0.34,
+        ),
         const Radius.circular(6),
       ),
       building,

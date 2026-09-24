@@ -1,5 +1,10 @@
 import 'package:flutter/foundation.dart';
 
+import 'package:family_os/core/domain/identity_ids.dart';
+import 'package:family_os/core/web_filter/web_filter_document.dart';
+import 'package:family_os/core/web_filter/web_filter_engine.dart';
+import 'package:family_os/core/web_filter/web_filter_verdict.dart';
+
 import 'web_filter_policy.dart';
 
 /// Outcome of [WebFilterEvaluator.decide] / [WebFilterDecisionSnapshot.evaluate].
@@ -15,13 +20,21 @@ sealed class WebFilterDecision {
   /// True when navigation must be blocked.
   bool get isDenied;
 
-  /// Category key when denied; null when allowed.
+  /// Category key when denied via category; null otherwise.
   String? get categoryKey;
+
+  /// Source-of-deny for interstitial honesty (null when allowed).
+  WebFilterDenySource? get denySource;
 }
 
 /// Navigation allowed.
 final class WebFilterAllow extends WebFilterDecision {
-  const WebFilterAllow({required super.policyVersion});
+  const WebFilterAllow({
+    required super.policyVersion,
+    this.allowSource = WebFilterAllowSource.defaultAllow,
+  });
+
+  final WebFilterAllowSource allowSource;
 
   @override
   bool get isDenied => false;
@@ -30,43 +43,55 @@ final class WebFilterAllow extends WebFilterDecision {
   String? get categoryKey => null;
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is WebFilterAllow && policyVersion == other.policyVersion;
+  WebFilterDenySource? get denySource => null;
 
   @override
-  int get hashCode => Object.hash(runtimeType, policyVersion);
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is WebFilterAllow &&
+          policyVersion == other.policyVersion &&
+          allowSource == other.allowSource;
+
+  @override
+  int get hashCode => Object.hash(runtimeType, policyVersion, allowSource);
 }
 
-/// Navigation denied because [category] is enabled on the policy.
+/// Navigation denied.
 final class WebFilterDeny extends WebFilterDecision {
-  const WebFilterDeny(this.category, {required super.policyVersion});
+  const WebFilterDeny(
+    this.category, {
+    required super.policyVersion,
+    this.source = WebFilterDenySource.category,
+  });
 
+  /// Category key when [source] is category; otherwise a reason token.
   final String category;
+
+  final WebFilterDenySource source;
 
   @override
   bool get isDenied => true;
 
   @override
-  String? get categoryKey => category;
+  String? get categoryKey =>
+      source == WebFilterDenySource.category ? category : null;
+
+  @override
+  WebFilterDenySource? get denySource => source;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is WebFilterDeny &&
           category == other.category &&
-          policyVersion == other.policyVersion;
+          policyVersion == other.policyVersion &&
+          source == other.source;
 
   @override
-  int get hashCode => Object.hash(runtimeType, category, policyVersion);
+  int get hashCode => Object.hash(runtimeType, category, policyVersion, source);
 }
 
 /// Shared URL+policy verdict used by child [WebBlockPage] and father preview.
-///
-/// UI-009 / SET-005 / P-8: both UIs MUST call this factory — never a parallel
-/// evaluator. Re-evaluate on each open: if the father changes policy while a
-/// preview sheet is closed, the next open uses the fresh `policy_version`
-/// snapshot (stale→refresh).
 @immutable
 final class WebFilterDecisionSnapshot {
   const WebFilterDecisionSnapshot({
@@ -77,9 +102,16 @@ final class WebFilterDecisionSnapshot {
   });
 
   /// Builds a snapshot via [WebFilterEvaluator.decide] — single path for both UIs.
-  factory WebFilterDecisionSnapshot.evaluate(Uri url, WebFilterPolicy policy) {
-    final decision = WebFilterEvaluator.decide(url, policy);
-    // Single source: decision.policyVersion (== policy.policyVersion).
+  factory WebFilterDecisionSnapshot.evaluate(
+    Uri url,
+    WebFilterPolicy policy, {
+    Set<String> activeTemporaryAllows = const {},
+  }) {
+    final decision = WebFilterEvaluator.decide(
+      url,
+      policy,
+      activeTemporaryAllows: activeTemporaryAllows,
+    );
     return WebFilterDecisionSnapshot(
       url: url,
       host: WebFilterPolicy.normalizeHost(url.host),
@@ -101,6 +133,8 @@ final class WebFilterDecisionSnapshot {
 
   String? get categoryKey => decision.categoryKey;
 
+  WebFilterDenySource? get denySource => decision.denySource;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -114,89 +148,48 @@ final class WebFilterDecisionSnapshot {
   int get hashCode => Object.hash(url, host, decision, policyVersion);
 }
 
-/// Stage-1 web filter decision engine (SET-004 / SET-005).
+/// Web filter decision engine — FS-002 precedence via [WebFilterEngine].
 ///
-/// Order: allow-list host → category match when enabled → else allow.
+/// Order: blocklist → temp allow → allowlist → dictionary → category → allow.
 /// Level `open` does **not** skip explicit category blocks (spec edge case).
 abstract final class WebFilterEvaluator {
   /// Decides whether [url] may load under [policy].
-  static WebFilterDecision decide(Uri url, WebFilterPolicy policy) {
-    final version = policy.policyVersion;
-    final host = WebFilterPolicy.normalizeHost(url.host);
-    if (host.isEmpty) return WebFilterAllow(policyVersion: version);
+  static WebFilterDecision decide(
+    Uri url,
+    WebFilterPolicy policy, {
+    Set<String> activeTemporaryAllows = const {},
+  }) {
+    // Bridge Stage-1 policy → domain document (ephemeral family id).
+    final doc = WebFilterDocument.fromStage1Policy(
+      familyId: FamilyId('wf_bridge'),
+      scopeKind: WebFilterScopeKind.familyBaseline,
+      policy: policy,
+    );
+    final verdict = WebFilterEngine.decide(
+      url,
+      doc,
+      activeTemporaryAllows: activeTemporaryAllows,
+    );
+    return _fromVerdict(verdict);
+  }
 
-    if (_isAllowListed(host, policy.allowList)) {
-      return WebFilterAllow(policyVersion: version);
+  static WebFilterDecision _fromVerdict(WebFilterVerdict v) {
+    if (!v.denied) {
+      return WebFilterAllow(
+        policyVersion: v.policyVersion,
+        allowSource: v.allowSource ?? WebFilterAllowSource.defaultAllow,
+      );
     }
-
-    final category = classifyHost(host);
-    if (category != null && policy.isCategoryEnabled(category)) {
-      return WebFilterDeny(category, policyVersion: version);
-    }
-
-    return WebFilterAllow(policyVersion: version);
+    final source = v.denySource ?? WebFilterDenySource.category;
+    final label = switch (source) {
+      WebFilterDenySource.blocklist => 'blocklist',
+      WebFilterDenySource.dictionary => 'dictionary',
+      WebFilterDenySource.category => v.categoryKey ?? 'category',
+    };
+    return WebFilterDeny(label, policyVersion: v.policyVersion, source: source);
   }
 
   /// Stage-1 fixture classifier — host token → category key.
-  ///
-  /// Example: `adult.example` → [WebFilterCategories.adults].
-  static String? classifyHost(String host) {
-    final h = WebFilterPolicy.normalizeHost(host);
-    if (h.isEmpty) return null;
-
-    // Explicit fixture hosts first.
-    const fixtures = <String, String>{
-      'adult.example': WebFilterCategories.adults,
-      'gambling.example': WebFilterCategories.gambling,
-      'casino.example': WebFilterCategories.gambling,
-      'violence.example': WebFilterCategories.violence,
-      'social.example': WebFilterCategories.social,
-      'games.example': WebFilterCategories.games,
-      'streaming.example': WebFilterCategories.streaming,
-    };
-    final exact = fixtures[h];
-    if (exact != null) return exact;
-
-    // Subdomain / keyword fallbacks for fixtures like adult.example.com.
-    if (_hostMatches(h, const ['adult', 'porn', 'xxx'])) {
-      return WebFilterCategories.adults;
-    }
-    if (_hostMatches(h, const ['gambling', 'casino', 'betting'])) {
-      return WebFilterCategories.gambling;
-    }
-    if (_hostMatches(h, const ['violence', 'gore'])) {
-      return WebFilterCategories.violence;
-    }
-    if (_hostMatches(h, const ['social', 'facebook', 'instagram', 'tiktok'])) {
-      return WebFilterCategories.social;
-    }
-    if (_hostMatches(h, const ['games', 'steam', 'roblox'])) {
-      return WebFilterCategories.games;
-    }
-    if (_hostMatches(h, const ['streaming', 'netflix', 'youtube', 'twitch'])) {
-      return WebFilterCategories.streaming;
-    }
-    return null;
-  }
-
-  static bool _isAllowListed(String host, Set<String> allowList) {
-    for (final entry in allowList) {
-      final a = WebFilterPolicy.normalizeHost(entry);
-      if (a.isEmpty) continue;
-      if (host == a || host.endsWith('.$a')) return true;
-    }
-    return false;
-  }
-
-  static bool _hostMatches(String host, List<String> tokens) {
-    for (final t in tokens) {
-      if (host == t ||
-          host.startsWith('$t.') ||
-          host.contains('.$t.') ||
-          host.endsWith('.$t')) {
-        return true;
-      }
-    }
-    return false;
-  }
+  static String? classifyHost(String host) =>
+      WebFilterEngine.classifyHost(host);
 }

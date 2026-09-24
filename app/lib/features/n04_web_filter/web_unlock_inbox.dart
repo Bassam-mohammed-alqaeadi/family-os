@@ -44,8 +44,8 @@ class _WebUnlockInboxState extends State<WebUnlockInbox> {
     return switch (role) {
       AppRole.father => const WebUnlockActor.father(),
       AppRole.mother => WebUnlockActor.mother(
-          widget.motherLevel ?? MotherLevel.partner,
-        ),
+        widget.motherLevel ?? MotherLevel.partner,
+      ),
       AppRole.child => const WebUnlockActor.child(),
     };
   }
@@ -131,11 +131,7 @@ class _WebUnlockInboxState extends State<WebUnlockInbox> {
         const SizedBox(height: 6),
         Text(
           l10n.webUnlockInboxSubtitle,
-          style: TextStyle(
-            fontSize: 13,
-            height: 1.4,
-            color: colors.ink2,
-          ),
+          style: TextStyle(fontSize: 13, height: 1.4, color: colors.ink2),
         ),
         const SizedBox(height: 12),
         if (_loading)

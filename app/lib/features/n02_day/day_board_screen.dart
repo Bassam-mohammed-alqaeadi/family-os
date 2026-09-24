@@ -55,7 +55,8 @@ class DayBoardScreen extends StatefulWidget {
   /// Empty → ARB generic guardian fallback (Rule 23).
   final String guardianDisplayName;
 
-  /// Rule 25 seam — null → [stage1DayBoardProjectionRepository] (empty).
+  /// Rule 25 seam — null → [stage1DayBoardProjectionRepository]
+  /// (Register §10 mock seed for Stage-1 demos; tests pass explicit empty).
   final DayBoardProjectionRepository? projectionRepository;
 
   /// Sync override for tests — skips async load when non-null.
@@ -100,7 +101,8 @@ class DayBoardScreenState extends State<DayBoardScreen> {
   @override
   void didUpdateWidget(covariant DayBoardScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.projection != null && widget.projection != oldWidget.projection) {
+    if (widget.projection != null &&
+        widget.projection != oldWidget.projection) {
       setState(() {
         _projection = widget.projection!;
         _loaded = true;
@@ -173,6 +175,30 @@ class DayBoardScreenState extends State<DayBoardScreen> {
     _go(context, widget.onPendingRequest, path);
   }
 
+  String _pendingTitle(AppLocalizations l10n, DayBoardPendingRequest pending) {
+    return switch (pending.titleKey) {
+      'quizSubmitted' => l10n.dayBoardPendingQuizSubmittedTitle,
+      _ =>
+        pending.title.isNotEmpty ? pending.title : l10n.dayBoardPriorityTitle,
+    };
+  }
+
+  String _pendingSubtitle(
+    AppLocalizations l10n,
+    DayBoardPendingRequest pending,
+  ) {
+    return switch (pending.subtitleKey) {
+      'earnedMinutes' => l10n.dayBoardPendingEarnedMinutes(
+        pending.minutes ?? 0,
+      ),
+      'justSubmitted' => l10n.dayBoardPendingJustSubmitted,
+      _ =>
+        pending.subtitle.isNotEmpty
+            ? pending.subtitle
+            : l10n.dayBoardPrioritySubtitle,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -211,7 +237,9 @@ class DayBoardScreenState extends State<DayBoardScreen> {
           ],
         ),
       ),
-      body: SafeArea(child: _buildBody(context, l10n, colors, radii, gradients)),
+      body: SafeArea(
+        child: _buildBody(context, l10n, colors, radii, gradients),
+      ),
     );
   }
 
@@ -299,10 +327,7 @@ class DayBoardScreenState extends State<DayBoardScreen> {
             timeLeft: l10n.dayBoardStatTimeLeft(active.timeLeftLabel),
             quran: l10n.dayBoardStatQuran(active.quranLabel),
             wallet: l10n.dayBoardStatWallet(active.walletLabel),
-            title: l10n.dayBoardChildTitle(
-              active.displayName,
-              active.ageYears,
-            ),
+            title: l10n.dayBoardChildTitle(active.displayName, active.ageYears),
             locationBattery: l10n.dayBoardLocationBattery(
               active.locationLabel,
               active.batteryLabel,
@@ -349,8 +374,8 @@ class DayBoardScreenState extends State<DayBoardScreen> {
           _PriorityCard(
             colors: colors,
             radii: radii,
-            title: pending.title,
-            subtitle: pending.subtitle,
+            title: _pendingTitle(l10n, pending),
+            subtitle: _pendingSubtitle(l10n, pending),
             tagLabel: l10n.dayBoardPriorityTag,
             onTap: () => _openPending(context),
           ),
@@ -527,10 +552,7 @@ class _PulseAvatar extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: Center(
-              child: Text(
-                child.emoji,
-                style: const TextStyle(fontSize: 15),
-              ),
+              child: Text(child.emoji, style: const TextStyle(fontSize: 15)),
             ),
           ),
         ),
@@ -968,8 +990,10 @@ class _QuickTile extends StatelessWidget {
               // UI-015 / Rule 16 — quick-lock (and peers) ≥48×48.
               constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 10,
+                  horizontal: 4,
+                ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

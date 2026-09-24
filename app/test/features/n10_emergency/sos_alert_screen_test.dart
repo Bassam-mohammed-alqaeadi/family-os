@@ -6,6 +6,7 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/policy/sos_alert.dart';
 import 'package:family_os/core/policy/sos_alert_repository.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n10_emergency/sos_alert_screen.dart';
@@ -35,24 +36,28 @@ void main() {
     expect(find.byKey(SosAlertKeys.body), findsOneWidget);
     expect(find.byKey(SosAlertKeys.sirenBanner), findsOneWidget);
     expect(find.byKey(SosAlertKeys.p4Banner), findsOneWidget);
+    expect(find.byKey(SosAlertKeys.statusBanner), findsOneWidget);
+    expect(find.byKey(SosAlertKeys.deliveryStatus), findsOneWidget);
+    expect(find.byKey(SosAlertKeys.locationStatus), findsOneWidget);
     expect(find.byKey(SosAlertKeys.map), findsOneWidget);
     expect(find.byKey(SosAlertKeys.pin), findsOneWidget);
     expect(find.byKey(SosAlertKeys.metaCard), findsOneWidget);
     expect(find.byKey(SosAlertKeys.callNow), findsOneWidget);
     expect(find.byKey(SosAlertKeys.liveMap), findsOneWidget);
+    expect(find.byKey(SosAlertKeys.acknowledge), findsOneWidget);
     expect(find.byKey(SosAlertKeys.resolve), findsOneWidget);
     expect(find.byKey(SosAlertKeys.escalate), findsOneWidget);
+    expect(find.byKey(SosAlertKeys.breakGlass), findsOneWidget);
     expect(find.byKey(SosAlertKeys.recipients), findsOneWidget);
     expect(find.byKey(SosAlertKeys.autoCallNote), findsOneWidget);
     expect(find.textContaining('ابن ١ يطلب النجدة'), findsOneWidget);
   });
 
-  testWidgets('SCR-FAT-018 mother observer can resolve (P-4 / SET-021)',
+  testWidgets('SCR-FAT-018 Observer CANNOT ack, resolve, or escalate',
       (tester) async {
     final repo = InMemorySosAlertRepository(
       initialActive: InMemorySosAlertRepository.demoActive(),
     );
-    var resolved = false;
 
     await tester.pumpWidget(
       _app(
@@ -61,17 +66,54 @@ void main() {
           roleOverride: AppRole.mother,
           motherLevel: MotherLevel.observer,
           autoCallDelay: const Duration(hours: 1),
-          onResolved: () => resolved = true,
+          onResolved: () {},
         ),
       ),
     );
     await tester.pumpAndSettle();
 
     expect(find.byKey(SosAlertKeys.body), findsOneWidget);
-    await _tapVisible(tester, SosAlertKeys.resolve);
-    expect(resolved, isTrue);
-    expect(repo.resolveCount, 1);
-    expect(await repo.loadActive(), isNull);
+    expect(find.byKey(SosAlertKeys.acknowledge), findsNothing);
+    expect(find.byKey(SosAlertKeys.resolve), findsNothing);
+    expect(find.byKey(SosAlertKeys.escalate), findsNothing);
+    expect(find.byKey(SosAlertKeys.breakGlass), findsNothing);
+    expect(find.byKey(SosAlertKeys.deniedObserverNote), findsOneWidget);
+    expect(repo.acknowledgeCount, 0);
+    expect(repo.resolveCount, 0);
+    expect(repo.escalateCount, 0);
+  });
+
+  testWidgets('SCR-FAT-018 Partner can acknowledge; ACK ≠ RESOLVE',
+      (tester) async {
+    final repo = InMemorySosAlertRepository(
+      initialActive: InMemorySosAlertRepository.demoActive(),
+    );
+    var acked = false;
+
+    await tester.pumpWidget(
+      _app(
+        child: SosAlertScreen(
+          repository: repo,
+          roleOverride: AppRole.mother,
+          motherLevel: MotherLevel.partner,
+          autoCallDelay: const Duration(hours: 1),
+          onAcknowledge: () => acked = true,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(SosAlertKeys.acknowledge), findsOneWidget);
+    expect(find.byKey(SosAlertKeys.resolve), findsOneWidget);
+    expect(find.byKey(SosAlertKeys.breakGlass), findsNothing);
+
+    await _tapVisible(tester, SosAlertKeys.acknowledge);
+    expect(acked, isTrue);
+    expect(repo.acknowledgeCount, 1);
+    expect(repo.resolveCount, 0);
+    final stillOpen = await repo.loadActive();
+    expect(stillOpen, isNotNull);
+    expect(stillOpen!.status, SosAlertStatus.acknowledged);
   });
 
   testWidgets('SCR-FAT-018 mother full can escalate', (tester) async {
@@ -96,6 +138,8 @@ void main() {
     await _tapVisible(tester, SosAlertKeys.escalate);
     expect(escalated, isTrue);
     expect(repo.escalateCount, 1);
+    final after = await repo.loadActive();
+    expect(after?.status, SosAlertStatus.escalating);
   });
 
   testWidgets('SCR-FAT-018 auto-call fires after delay (S-SEC-028)',
@@ -147,6 +191,24 @@ void main() {
     await tester.tap(find.byKey(SosAlertKeys.setupCta));
     await tester.pumpAndSettle();
     expect(setup, isTrue);
+  });
+
+  testWidgets('SCR-FAT-018 Observer empty has no setup CTA', (tester) async {
+    final repo = InMemorySosAlertRepository();
+
+    await tester.pumpWidget(
+      _app(
+        child: SosAlertScreen(
+          repository: repo,
+          roleOverride: AppRole.mother,
+          motherLevel: MotherLevel.observer,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(SosAlertKeys.empty), findsOneWidget);
+    expect(find.byKey(SosAlertKeys.setupCta), findsNothing);
   });
 
   testWidgets('SCR-FAT-018 child lean', (tester) async {

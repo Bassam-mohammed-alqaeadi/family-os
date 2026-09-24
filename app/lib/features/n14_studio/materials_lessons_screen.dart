@@ -160,6 +160,7 @@ class _MaterialsLessonsScreenState extends State<MaterialsLessonsScreen> {
       'quran' => l10n.materialsLessonsSubjectQuran,
       'english' => l10n.materialsLessonsSubjectEnglish,
       'science' => l10n.materialsLessonsSubjectScience,
+      'custom' => l10n.materialsLessonsSubjectCustom,
       _ => l10n.materialsLessonsSubjectMath,
     };
   }
@@ -175,6 +176,8 @@ class _MaterialsLessonsScreenState extends State<MaterialsLessonsScreen> {
         subject.flashcards,
       ),
       'scienceImported' => l10n.materialsLessonsMetaScienceImported,
+      'justAdded' => l10n.materialsLessonsMetaJustAdded,
+      'lessonCount' => l10n.materialsLessonsMetaLessonCount(subject.lessons),
       _ => l10n.materialsLessonsMetaScienceImported,
     };
   }
@@ -185,6 +188,7 @@ class _MaterialsLessonsScreenState extends State<MaterialsLessonsScreen> {
       MaterialsSubjectKind.quran => '📖',
       MaterialsSubjectKind.english => '🇬🇧',
       MaterialsSubjectKind.science => '🔬',
+      MaterialsSubjectKind.custom => '📚',
     };
   }
 
@@ -201,21 +205,37 @@ class _MaterialsLessonsScreenState extends State<MaterialsLessonsScreen> {
     AppToast.show(context, message: l10n.materialsLessonsSubjectToast);
   }
 
-  void _onAddSubject() {
+  Future<void> _onAddSubject() async {
     final l10n = AppLocalizations.of(context);
     if (!_canAct) {
       _blockedToast(l10n);
       return;
     }
-    AppToast.show(context, message: l10n.materialsLessonsAddSubjectToast);
+    await _repo.addSubject();
+    if (!mounted) return;
+    await _load();
+    if (!mounted) return;
+    AppToast.show(
+      context,
+      message: l10n.materialsLessonsAddSubjectPersistedToast,
+    );
   }
 
-  void _onAddLesson() {
+  Future<void> _onAddLesson() async {
     final l10n = AppLocalizations.of(context);
     if (!_canAct) {
       _blockedToast(l10n);
       return;
     }
+    await _repo.addLesson();
+    if (!mounted) return;
+    await _load();
+    if (!mounted) return;
+    AppToast.show(
+      context,
+      message: l10n.materialsLessonsAddLessonPersistedToast,
+    );
+    // Source attach remains the content path (FAT-041).
     _go('SCR-FAT-041');
   }
 

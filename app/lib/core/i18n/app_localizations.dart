@@ -458,6 +458,54 @@ abstract class AppLocalizations {
   /// **'أنا'**
   String get tabChildMe;
 
+  /// PRT-2 hub card heading on tab roots
+  ///
+  /// In ar, this message translates to:
+  /// **'المزيد من الأدوات'**
+  String get shellMoreToolsHeading;
+
+  /// PRT-2 kids hub per-child note
+  ///
+  /// In ar, this message translates to:
+  /// **'وقت الشاشة والتطبيقات والفلترة والرقابة تُضبط لكل ابن من ملفه — افتح ملف الابن من الأعلى.'**
+  String get shellKidsPerChildNote;
+
+  /// PRT-2 settings hub extras
+  ///
+  /// In ar, this message translates to:
+  /// **'أخرى'**
+  String get shellSettingsOtherHeading;
+
+  /// PRT-2 settings shortcut → SHR-008
+  ///
+  /// In ar, this message translates to:
+  /// **'تبديل المستخدم'**
+  String get shellShortcutDeviceSwitch;
+
+  /// PRT-2 settings shortcut → FAT-009
+  ///
+  /// In ar, this message translates to:
+  /// **'الانضمام بدعوة'**
+  String get shellShortcutAcceptInvite;
+
+  /// PRT-2 settings shortcut → FAT-018
+  ///
+  /// In ar, this message translates to:
+  /// **'بلاغ الاستغاثة'**
+  String get shellShortcutSosAlert;
+
+  /// PRT-2 parent AI FAB
+  ///
+  /// In ar, this message translates to:
+  /// **'فتح مستشار العائلة'**
+  String get shellAiFabSemantics;
+
+  /// PRT-2 child SOS FAB
+  ///
+  /// In ar, this message translates to:
+  /// **'فتح الاستغاثة'**
+  String get shellSosFabSemantics;
+
   /// No description provided for @galleryHubItem1.
   ///
   /// In ar, this message translates to:
@@ -716,10 +764,10 @@ abstract class AppLocalizations {
   /// **'نسيت كلمة المرور؟'**
   String get loginForgotLink;
 
-  /// SCR-SHR-003 anti-enumeration forgot toast — always same
+  /// SCR-SHR-003 forgot CTA — honest local recovery; no email-send claim
   ///
   /// In ar, this message translates to:
-  /// **'أرسلنا رابط الاستعادة إن كان البريد مسجّلًا لدينا'**
+  /// **'جارٍ فتح استعادة الحساب المحلية. لا يُرسل بريد إعادة تعيين في هذا النموذج.'**
   String get loginForgotToast;
 
   /// SCR-SHR-003 primary CTA
@@ -2024,11 +2072,119 @@ abstract class AppLocalizations {
   /// **'اضغط على أي تطبيق للسماح أو الحظر أو مراجعة الحد — ينعكس على جهاز الابن.'**
   String get childAppsTipBanner;
 
-  /// SCR-FAT-034 mother observer read-only hint
+  /// FS-003-OWN honesty: dispositions real, os_intercept MOCK-REMOTE
   ///
   /// In ar, this message translates to:
-  /// **'عرض فقط — مستوى مشاركة أو كاملة يمكنه السماح أو الحظر'**
+  /// **'سياسة وصول الحزم محفوظة محليًا. اعتراض الجهاز يبقى محاكاة عن بُعد — لا ندّعي حظر نظام التشغيل هنا.'**
+  String get childAppsOsInterceptHonesty;
+
+  /// SCR-FAT-034 mother observer / partner configure hint (FS-003-UX APP-OD-02)
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض فقط — الشريك يقرر تذاكر التثبيت؛ ضبط الوصول يحتاج مستوى كاملة أو الأب'**
   String get childAppsObserverHint;
+
+  /// FS-003-UX Partner on FAT-034 — tickets only
+  ///
+  /// In ar, this message translates to:
+  /// **'يمكنك الموافقة على التثبيتات الجديدة. السماح/الحظر الدائم يحتاج الأب أو مستوى كاملة.'**
+  String get childAppsPartnerTicketsHint;
+
+  /// FS-003-UX protected package badge (APP-OD-09)
+  ///
+  /// In ar, this message translates to:
+  /// **'محمي'**
+  String get childAppsProtectedBadge;
+
+  /// FS-003-UX toast when block attempted on protected
+  ///
+  /// In ar, this message translates to:
+  /// **'التطبيقات المحمية (الاستغاثة، نظام العائلة، المحادثة، القرآن) لا يمكن حظرها.'**
+  String get childAppsProtectedCannotBlock;
+
+  /// FS-003-UX parent preview of child deny interstitial
+  ///
+  /// In ar, this message translates to:
+  /// **'معاينة حظر الابن'**
+  String get childAppsPreviewDenyCta;
+
+  /// FS-003-UX child deny interstitial title
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا التطبيق غير متاح'**
+  String get appDenyTitle;
+
+  /// FS-003 source-of-deny permanent block
+  ///
+  /// In ar, this message translates to:
+  /// **'عائلتك حظرت هذا التطبيق.'**
+  String get appDenyReasonBlocked;
+
+  /// FS-003 source-of-deny Lock Now
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا التطبيق مقفل مؤقتًا.'**
+  String get appDenyReasonLockNow;
+
+  /// FS-003 source-of-deny pending unknown
+  ///
+  /// In ar, this message translates to:
+  /// **'بانتظار موافقة أحد الوالدين على هذا التطبيق.'**
+  String get appDenyReasonPending;
+
+  /// FS-003 generic deny reason
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا التطبيق غير متاح الآن.'**
+  String get appDenyReasonGeneric;
+
+  /// FS-003-UX child disclosure strip
+  ///
+  /// In ar, this message translates to:
+  /// **'حماية العائلة مفعّلة.'**
+  String get appDenyDisclosure;
+
+  /// FS-003-UX Exception Request CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'اطلب وصولًا مؤقتًا'**
+  String get appDenyExceptionCta;
+
+  /// FS-003 Exception ≠ Temporary Grant honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا ليس دقائق إضافية — ولا يزيل الحظر الدائم.'**
+  String get appDenyExceptionNotMinutes;
+
+  /// FS-003-UX exception pending status on deny page
+  ///
+  /// In ar, this message translates to:
+  /// **'أُرسل طلبك — بانتظار أحد الوالدين.'**
+  String get appDenyExceptionPending;
+
+  /// FS-003-UX always-reachable chat CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'محادثة العائلة'**
+  String get appDenyChatCta;
+
+  /// FS-003-UX always-reachable Quran CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'القرآن'**
+  String get appDenyQuranCta;
+
+  /// FS-003-UX always-reachable SOS CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'استغاثة'**
+  String get appDenySosCta;
+
+  /// FS-003-UX APP-OD-18 install approve honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'الموافقة لهذا الابن فقط — لا موافقة عائلية صامتة.'**
+  String get newAppApprovalChildScopedHonesty;
 
   /// SCR-FAT-034 CTA to FAT-035 when pending installs exist
   ///
@@ -2179,6 +2335,24 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'هذا الضبط ينعكس فورًا على جهاز الابن.'**
   String get childAppsSheetHint;
+
+  /// SCR-FAT-034 games unlimited axis
+  ///
+  /// In ar, this message translates to:
+  /// **'بلا حد (تجاوز السقف اليومي)'**
+  String get childAppsUnlimitedToggle;
+
+  /// SCR-FAT-034 unlimited honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يتجاوز الحظر أو القفل أو قواعد الوضع.'**
+  String get childAppsUnlimitedHint;
+
+  /// SCR-FAT-034 unlimited status line
+  ///
+  /// In ar, this message translates to:
+  /// **'بلا حد اليوم'**
+  String get childAppsStatusUnlimited;
 
   /// SCR-FAT-034 toast after allow/block
   ///
@@ -4700,6 +4874,66 @@ abstract class AppLocalizations {
   /// **'معاينة ما يراه الابن'**
   String get webFilterPreviewButton;
 
+  /// FS-002-OWN first-class lists section (Q-WF-08)
+  ///
+  /// In ar, this message translates to:
+  /// **'سماح · حظر · قاموس'**
+  String get webFilterListsHeading;
+
+  /// Allowlist manager label
+  ///
+  /// In ar, this message translates to:
+  /// **'قائمة السماح'**
+  String get webFilterAllowListHeading;
+
+  /// Blocklist manager label — highest deny
+  ///
+  /// In ar, this message translates to:
+  /// **'قائمة الحظر'**
+  String get webFilterBlockListHeading;
+
+  /// Dictionary manager label
+  ///
+  /// In ar, this message translates to:
+  /// **'قاموس الكلمات'**
+  String get webFilterDictionaryHeading;
+
+  /// Hint for list entry field
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف نطاقاً أو كلمة'**
+  String get webFilterListAddHint;
+
+  /// Add list entry button
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة'**
+  String get webFilterListAdd;
+
+  /// Empty list state
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد عناصر بعد'**
+  String get webFilterListEmpty;
+
+  /// WF-OD-08 deterministic precedence note
+  ///
+  /// In ar, this message translates to:
+  /// **'الأولوية: قائمة الحظر ← سماح مؤقت ← قائمة السماح ← القاموس ← الفئة'**
+  String get webFilterPrecedenceNote;
+
+  /// Q-WF-05 taxonomy honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'تسميات الفئات مؤقتة — التصنيف الكامل قيد التحديد'**
+  String get webFilterTaxonomyTbdHonesty;
+
+  /// WF-SF-10 native plane honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'مستوى الحظر على الجهاز محاكاة عن بُعد — السياسة حقيقية؛ لا ندّعي VPN/DNS'**
+  String get webFilterNativeBlockHonesty;
+
   /// SET-005 preview sheet caption
   ///
   /// In ar, this message translates to:
@@ -4771,6 +5005,54 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'هذا المحتوى لا يناسبك الآن. إن كنت تراه مهمًا لدراستك، اطلب فتحه من أبيك.'**
   String get webBlockReasonGeneric;
+
+  /// FS-002-ENF source-of-deny blocklist
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا الموقع في قائمة الحظر العائلية.'**
+  String get webBlockReasonBlocklist;
+
+  /// FS-002-ENF source-of-deny dictionary
+  ///
+  /// In ar, this message translates to:
+  /// **'هذه الصفحة تطابق كلمة محظورة من قاموس العائلة.'**
+  String get webBlockReasonDictionary;
+
+  /// Q-WF-12 source-of-deny label
+  ///
+  /// In ar, this message translates to:
+  /// **'المصدر: {source}'**
+  String webBlockSourceOfDeny(String source);
+
+  /// Q-WF-15 transient pending on interstitial
+  ///
+  /// In ar, this message translates to:
+  /// **'تم إرسال طلب الفتح — بانتظار أحد الوالدين'**
+  String get webBlockFeedbackPending;
+
+  /// Q-WF-15 transient approved on interstitial
+  ///
+  /// In ar, this message translates to:
+  /// **'تمت الموافقة على فتح مؤقت — حاول مرة أخرى قريبًا'**
+  String get webBlockFeedbackApproved;
+
+  /// Q-WF-15 transient denied on interstitial
+  ///
+  /// In ar, this message translates to:
+  /// **'تم رفض طلب الفتح'**
+  String get webBlockFeedbackDenied;
+
+  /// Q-WF-15 transient expired on interstitial
+  ///
+  /// In ar, this message translates to:
+  /// **'انتهى الفتح المؤقت'**
+  String get webBlockFeedbackExpired;
+
+  /// FS-002-ENF delivery plane honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'تتبّع تسليم السياسة محليًا (مضبوط→متحقق). حظر الجهاز يبقى محاكاة عن بُعد.'**
+  String get webFilterDeliveryHonesty;
 
   /// SET-006 parent inbox heading on FAT-036
   ///
@@ -7350,6 +7632,192 @@ abstract class AppLocalizations {
   /// **'افتح ملف الابن من قائمة الأبناء — لا يُعرض ملف بدون معرّف ابن.'**
   String get childProfileMissingIdMessage;
 
+  /// SCR-FAT-013 child picker when opened without childId
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر ابنًا'**
+  String get childProfileSelectChildTitle;
+
+  /// SCR-FAT-013 child picker subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر ابنًا في هذه العائلة لفتح ملفه وإدارة تسجيل أجهزته.'**
+  String get childProfileSelectChildMessage;
+
+  /// SCR-FAT-013 picker empty for active family
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد أبناء في هذه العائلة بعد — أضف ابنًا أولًا.'**
+  String get childProfileSelectChildEmpty;
+
+  /// SCR-FAT-013 picker row Semantics
+  ///
+  /// In ar, this message translates to:
+  /// **'افتح ملف هذا الابن'**
+  String get childProfileSelectChildSemantics;
+
+  /// SCR-FAT-013 add device CTA → FAT-004 pairing
+  ///
+  /// In ar, this message translates to:
+  /// **'+ إضافة جهاز'**
+  String get childProfileAddDevice;
+
+  /// SCR-FAT-013 / pairing max-3 enrolled devices block
+  ///
+  /// In ar, this message translates to:
+  /// **'لهذا الابن ٣ أجهزة مسجّلة بالفعل — ألغِ تسجيل جهاز قبل ربط جهاز جديد.'**
+  String get childProfileMaxDevicesBlock;
+
+  /// Enrollment lifecycle label
+  ///
+  /// In ar, this message translates to:
+  /// **'بانتظار الربط'**
+  String get enrollmentStatePairingPending;
+
+  /// Enrollment lifecycle label
+  ///
+  /// In ar, this message translates to:
+  /// **'مسجّل'**
+  String get enrollmentStateEnrolled;
+
+  /// Enrollment lifecycle label
+  ///
+  /// In ar, this message translates to:
+  /// **'ملغى'**
+  String get enrollmentStateRevoked;
+
+  /// Enrollment lifecycle label
+  ///
+  /// In ar, this message translates to:
+  /// **'مفقود'**
+  String get enrollmentStateLost;
+
+  /// Enrollment lifecycle label
+  ///
+  /// In ar, this message translates to:
+  /// **'مُخرج من الخدمة'**
+  String get enrollmentStateDecommissioned;
+
+  /// Enrollment lifecycle label
+  ///
+  /// In ar, this message translates to:
+  /// **'غير مسجّل'**
+  String get enrollmentStateUnenrolled;
+
+  /// Open FAT-004 for pending enrollment
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض رمز الربط'**
+  String get enrollmentShowPairingCode;
+
+  /// Pairing / claim max-3 failure
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر التسجيل — الحد الأقصى ٣ أجهزة نشطة لهذا الابن.'**
+  String get enrollmentFailureMaxDevices;
+
+  /// CHD-002 claim failure for unknown/inactive token
+  ///
+  /// In ar, this message translates to:
+  /// **'رمز الربط غير صالح أو منتهٍ أو مُستخدم مسبقًا.'**
+  String get enrollmentFailureInvalidToken;
+
+  /// Generic enrollment failure
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر إكمال التسجيل.'**
+  String get enrollmentFailureGeneric;
+
+  /// CHD-002 verification in progress
+  ///
+  /// In ar, this message translates to:
+  /// **'التحقق من الربط'**
+  String get pairingVerificationTitle;
+
+  /// CHD-002 verification honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'نتحقق من رمز الربط مقابل تسجيل معلّق — التسجيل لا يكتمل إلا بعد نجاح التحقق.'**
+  String get pairingVerificationMessage;
+
+  /// Enrollment progress state title
+  ///
+  /// In ar, this message translates to:
+  /// **'التسجيل قيد التنفيذ'**
+  String get enrollmentProgressTitle;
+
+  /// Enrollment progress honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'تم التحقق من الربط. جاري إكمال تسجيل هذا الجهاز…'**
+  String get enrollmentProgressMessage;
+
+  /// Adult invite lifecycle
+  ///
+  /// In ar, this message translates to:
+  /// **'دعوة معلّقة'**
+  String get inviteLifecyclePending;
+
+  /// Adult invite lifecycle
+  ///
+  /// In ar, this message translates to:
+  /// **'دعوة نشطة'**
+  String get inviteLifecycleActive;
+
+  /// Adult invite lifecycle
+  ///
+  /// In ar, this message translates to:
+  /// **'دعوة مقبولة'**
+  String get inviteLifecycleAccepted;
+
+  /// Adult invite lifecycle
+  ///
+  /// In ar, this message translates to:
+  /// **'دعوة منتهية'**
+  String get inviteLifecycleExpired;
+
+  /// Adult invite lifecycle
+  ///
+  /// In ar, this message translates to:
+  /// **'دعوة ملغاة'**
+  String get inviteLifecycleRevoked;
+
+  /// FAT-025/026 link to child profile device authority
+  ///
+  /// In ar, this message translates to:
+  /// **'إدارة التسجيل'**
+  String get deviceHealthManageEnrollment;
+
+  /// FAT-025 manage enrollment subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'الإلغاء وإعادة الربط والجهاز الأساسي من ملف الابن — صحة الجهاز تبقى للمراقبة فقط.'**
+  String get deviceHealthManageEnrollmentSub;
+
+  /// FAT-004 when opened without childId
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر جهاز أي ابن للربط'**
+  String get linkQrSelectChildTitle;
+
+  /// FAT-004 child picker message
+  ///
+  /// In ar, this message translates to:
+  /// **'الربط يحتاج ابنًا في العائلة النشطة. اختر ابنًا لإصدار رمز ربط.'**
+  String get linkQrSelectChildMessage;
+
+  /// FAT-004 managed pairing honesty banner
+  ///
+  /// In ar, this message translates to:
+  /// **'بانتظار مسح جهاز الابن — يبقى التسجيل معلّقًا حتى ينجح المطالبة بالرمز.'**
+  String get linkQrAwaitingClaim;
+
+  /// FAT-004 managed continue — does not fake enrollment
+  ///
+  /// In ar, this message translates to:
+  /// **'العودة إلى ملف الابن'**
+  String get linkQrReturnToProfile;
+
   /// SCR-FAT-013 unknown childId
   ///
   /// In ar, this message translates to:
@@ -7917,19 +8385,19 @@ abstract class AppLocalizations {
   /// SCR-FAT-018 piercing siren honesty (P-4)
   ///
   /// In ar, this message translates to:
-  /// **'🔊 أطلقنا صفارة الإنذار في جوالك وجوال الأم — تخترق الوضع الصامت'**
+  /// **'بلاغ الاستغاثة مفتوح — القنوات أدناه تعرض حالة التسليم بصدق'**
   String get sosAlertSirenBanner;
 
   /// SCR-FAT-018 live broadcast note S-SEC-027
   ///
   /// In ar, this message translates to:
-  /// **'اليوم · البث الحي والموقع مستمران الآن'**
+  /// **'الحادثة مفتوحة — الموقع والتسليم يُعرضان بصدق (بلا نجاح صامت)'**
   String get sosAlertLiveBroadcastNote;
 
   /// SCR-FAT-018 S-SEC-028 auto-call pending
   ///
   /// In ar, this message translates to:
-  /// **'📞 اتصال تلقائي خلال ثوانٍ…'**
+  /// **'الاتصال: غير مُعدّ في هذا البناء'**
   String get sosAlertAutoCallPending;
 
   /// SCR-FAT-018 location/battery/movement meta
@@ -7994,7 +8462,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-018 recipients footer SET-020/021
   ///
   /// In ar, this message translates to:
-  /// **'وصل البلاغ: {names} — الاستغاثة لا تخضع لأي تدرّج'**
+  /// **'المستلمون: {names} — الاستغاثة بلا اشتراك'**
   String sosAlertRecipientsFooter(String names);
 
   /// SCR-FAT-018 P-4 never muted/paywalled banner
@@ -8072,13 +8540,13 @@ abstract class AppLocalizations {
   /// SCR-FAT-018 escalate snackbar
   ///
   /// In ar, this message translates to:
-  /// **'أُرسل التنبيه لجهات الطوارئ على السلّم'**
+  /// **'طُلب التصعيد — حالة التسليم تبقى صادقة لكل قناة'**
   String get sosAlertEscalatedToast;
 
   /// SCR-FAT-018 call-now snackbar Stage-1
   ///
   /// In ar, this message translates to:
-  /// **'بدء مكالمة طارئة (محاكاة مرحلة ١)'**
+  /// **'الاتصال غير مُعدّ بعد — البلاغ يبقى نشطًا'**
   String get sosAlertCallStartedToast;
 
   /// SCR-FAT-019 app bar title
@@ -9140,25 +9608,25 @@ abstract class AppLocalizations {
   /// SCR-CHD-006 live location broadcast note
   ///
   /// In ar, this message translates to:
-  /// **'موقعك يُبث لوالديك مباشرة الآن'**
+  /// **'طلب النجدة نشط — الحالة أدناه صادقة'**
   String get childSosInProgressBroadcast;
 
   /// SCR-CHD-006 father saw alert status (role noun, Rule 23)
   ///
   /// In ar, this message translates to:
-  /// **'✓ أبوك شاهد البلاغ — وهو يتصل بك وفي الطريق إليك'**
+  /// **'قناة الأب: راجع حالة التسليم'**
   String get childSosInProgressFatherSeen;
 
   /// SCR-CHD-006 mother saw alert status (role noun, Rule 23)
   ///
   /// In ar, this message translates to:
-  /// **'✓ أمك شاهدت البلاغ'**
+  /// **'قناة الأم: راجع حالة التسليم'**
   String get childSosInProgressMotherSeen;
 
   /// SCR-CHD-006 backup contacts standby
   ///
   /// In ar, this message translates to:
-  /// **'⏳ جهات الطوارئ الاحتياطية متأهبة'**
+  /// **'تصعيد الاحتياط: جهات موثّقة فقط عند الإعداد'**
   String get childSosInProgressBackupStandby;
 
   /// SCR-CHD-006 call father CTA
@@ -11974,6 +12442,8112 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'SOS'**
   String get familyPatternsSosCta;
+
+  /// SCR-FAT-064 screen title via nameKey
+  ///
+  /// In ar, this message translates to:
+  /// **'خارطة نمو وتواصل {name}'**
+  String knowledgeMapsTitle(String name);
+
+  /// SCR-FAT-064 Rule 23 child label
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن الأول'**
+  String get knowledgeMapsChildOne;
+
+  /// SCR-FAT-064 Rule 23 child label
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن الثاني'**
+  String get knowledgeMapsChildTwo;
+
+  /// SCR-FAT-064 Rule 23 child label
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن الثالث'**
+  String get knowledgeMapsChildThree;
+
+  /// SCR-FAT-064 empty title
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد خريطة معرفة بعد'**
+  String get knowledgeMapsEmptyTitle;
+
+  /// SCR-FAT-064 empty message
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف ابنًا لرؤية مسارات التعلّم واتزان التواصل وأسئلة العشاء.'**
+  String get knowledgeMapsEmptyMessage;
+
+  /// SCR-FAT-064 empty CTA → FAT-003
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة ابن'**
+  String get knowledgeMapsEmptyCta;
+
+  /// SCR-FAT-064 loading semantics
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل خرائط المعرفة'**
+  String get knowledgeMapsLoadingSemantics;
+
+  /// SCR-FAT-064 child lean title
+  ///
+  /// In ar, this message translates to:
+  /// **'خرائط المعرفة للوالدين'**
+  String get knowledgeMapsChildLeanTitle;
+
+  /// SCR-FAT-064 child lean message
+  ///
+  /// In ar, this message translates to:
+  /// **'تُعرض خرائط النمو والتواصل على جهاز الوالد. زر SOS متاح دائمًا.'**
+  String get knowledgeMapsChildLeanMessage;
+
+  /// SCR-FAT-064 child lean SOS CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'SOS'**
+  String get knowledgeMapsSosCta;
+
+  /// SCR-FAT-064 observer banner
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض فقط — روابط المسارات وإجراءات العشاء تتطلب مستوى شريك أو كاملة.'**
+  String get knowledgeMapsObserverHint;
+
+  /// SCR-FAT-064 observer blocked toast
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض فقط — اطلب من الأب أو أم شريكة فتح المسارات أو إرسال أسئلة العشاء'**
+  String get knowledgeMapsObserverBlocked;
+
+  /// SCR-FAT-064 learning card heading
+  ///
+  /// In ar, this message translates to:
+  /// **'مسارات التعلّم والإتقان'**
+  String get knowledgeMapsLearningHeading;
+
+  /// SCR-FAT-064 mastery seal
+  ///
+  /// In ar, this message translates to:
+  /// **'إتقان متصاعد ↗️ {percent}٪'**
+  String knowledgeMapsMasteryTag(int percent);
+
+  /// SCR-FAT-064 quran path title
+  ///
+  /// In ar, this message translates to:
+  /// **'القرآن الكريم — سورة الملك'**
+  String get knowledgeMapsPathQuranTitle;
+
+  /// SCR-FAT-064 quran path subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'أنجز ١٥ من ٣٠ آية · 🔥 ٥ أيام متواصلة'**
+  String get knowledgeMapsPathQuranSubtitle;
+
+  /// SCR-FAT-064 quran CTA → FAT-072
+  ///
+  /// In ar, this message translates to:
+  /// **'متابعة الورد ←'**
+  String get knowledgeMapsPathQuranCta;
+
+  /// SCR-FAT-064 math path title
+  ///
+  /// In ar, this message translates to:
+  /// **'الرياضيات — الكسور الاعتيادية'**
+  String get knowledgeMapsPathMathTitle;
+
+  /// SCR-FAT-064 math path subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'أتقن الجمع والطرح · يحتاج تثبيت القسمة'**
+  String get knowledgeMapsPathMathSubtitle;
+
+  /// SCR-FAT-064 math CTA → FAT-049
+  ///
+  /// In ar, this message translates to:
+  /// **'تمرين تثبيت'**
+  String get knowledgeMapsPathMathCta;
+
+  /// SCR-FAT-064 social card heading
+  ///
+  /// In ar, this message translates to:
+  /// **'شبكة التواصل والاتزان الاجتماعي'**
+  String get knowledgeMapsSocialHeading;
+
+  /// SCR-FAT-064 social safe tag
+  ///
+  /// In ar, this message translates to:
+  /// **'بيئة آمنة'**
+  String get knowledgeMapsSocialSafeTag;
+
+  /// SCR-FAT-064 family share title
+  ///
+  /// In ar, this message translates to:
+  /// **'العائلة المباشرة (٨٠٪)'**
+  String get knowledgeMapsSocialFamilyTitle;
+
+  /// SCR-FAT-064 family share subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'محادثات دافئة يومية'**
+  String get knowledgeMapsSocialFamilySubtitle;
+
+  /// SCR-FAT-064 friends share
+  ///
+  /// In ar, this message translates to:
+  /// **'الأصدقاء المعتمدون (١٥٪)'**
+  String get knowledgeMapsSocialFriendsTitle;
+
+  /// SCR-FAT-064 new interaction share
+  ///
+  /// In ar, this message translates to:
+  /// **'تفاعل جديد (٥٪)'**
+  String get knowledgeMapsSocialNewTitle;
+
+  /// SCR-FAT-064 foundation tag
+  ///
+  /// In ar, this message translates to:
+  /// **'الأساس'**
+  String get knowledgeMapsSocialFoundationTag;
+
+  /// SCR-FAT-064 dinner card heading
+  ///
+  /// In ar, this message translates to:
+  /// **'سؤال العشاء الليلة'**
+  String get knowledgeMapsDinnerHeading;
+
+  /// SCR-FAT-064 dinner prompt 1
+  ///
+  /// In ar, this message translates to:
+  /// **'لو فتحنا مطعمًا عائليًا — ماذا نسميه وما طبقنا الأشهر؟'**
+  String get knowledgeMapsDinnerQ1;
+
+  /// SCR-FAT-064 dinner prompt 2
+  ///
+  /// In ar, this message translates to:
+  /// **'ما أجمل شيء صار لك اليوم… وما الشيء الذي تمنيت لو صار أفضل؟'**
+  String get knowledgeMapsDinnerQ2;
+
+  /// SCR-FAT-064 dinner prompt 3
+  ///
+  /// In ar, this message translates to:
+  /// **'لو تبادلنا الأدوار يومًا كاملًا — من يأخذ دور من؟ ولماذا؟'**
+  String get knowledgeMapsDinnerQ3;
+
+  /// SCR-FAT-064 next dinner CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'سؤال آخر'**
+  String get knowledgeMapsDinnerNextCta;
+
+  /// SCR-FAT-064 send dinner CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'أرسله للعائلة'**
+  String get knowledgeMapsDinnerSendCta;
+
+  /// SCR-FAT-064 send toast
+  ///
+  /// In ar, this message translates to:
+  /// **'أُرسل لمحادثة العائلة — نقاش الليلة جاهز (محاكاة المرحلة ١)'**
+  String get knowledgeMapsDinnerSendToast;
+
+  /// SCR-FAT-064 dinner footer
+  ///
+  /// In ar, this message translates to:
+  /// **'من مستشار العائلة — ليعمق حواركم حول المائدة'**
+  String get knowledgeMapsDinnerFooter;
+
+  /// SCR-CHD-012 screen title
+  ///
+  /// In ar, this message translates to:
+  /// **'تعلّمي'**
+  String get childLearnHomeTitle;
+
+  /// SCR-CHD-012 child mode chip
+  ///
+  /// In ar, this message translates to:
+  /// **'وضع الابن'**
+  String get childLearnHomeChildChip;
+
+  /// SCR-CHD-012 level title key
+  ///
+  /// In ar, this message translates to:
+  /// **'مستكشف'**
+  String get childLearnHomeLevelExplorer;
+
+  /// SCR-CHD-012 level hero line
+  ///
+  /// In ar, this message translates to:
+  /// **'المستوى {level} — {title}'**
+  String childLearnHomeLevelLabel(int level, String title);
+
+  /// SCR-CHD-012 minutes-only earned line
+  ///
+  /// In ar, this message translates to:
+  /// **'{minutes} دقيقة مكتسبة هذا الشهر'**
+  String childLearnHomeMinutesEarned(int minutes);
+
+  /// SCR-CHD-012 streak chip
+  ///
+  /// In ar, this message translates to:
+  /// **'{days} أيام متتالية'**
+  String childLearnHomeStreakDays(int days);
+
+  /// SCR-CHD-012 free-time chip
+  ///
+  /// In ar, this message translates to:
+  /// **'وقته مجاني'**
+  String get childLearnHomeFreeTimeChip;
+
+  /// SCR-CHD-012 challenge card
+  ///
+  /// In ar, this message translates to:
+  /// **'تحدي والدك'**
+  String get childLearnHomeChallengeHeading;
+
+  /// SCR-CHD-012 challenge title key
+  ///
+  /// In ar, this message translates to:
+  /// **'اختبار الكسور'**
+  String get childLearnHomeChallengeFractions;
+
+  /// SCR-CHD-012 challenge body minutes-only
+  ///
+  /// In ar, this message translates to:
+  /// **'{title} — +{minutes} دقيقة لعب إذا أتقنت!'**
+  String childLearnHomeChallengeBody(String title, int minutes);
+
+  /// SCR-CHD-012 challenge CTA → CHD-015
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ التحدي'**
+  String get childLearnHomeChallengeCta;
+
+  /// SCR-CHD-012 materials heading
+  ///
+  /// In ar, this message translates to:
+  /// **'موادي'**
+  String get childLearnHomeMaterialsHeading;
+
+  /// SCR-CHD-012 math row
+  ///
+  /// In ar, this message translates to:
+  /// **'رياضيات'**
+  String get childLearnHomeSubjectMath;
+
+  /// SCR-CHD-012 quran row
+  ///
+  /// In ar, this message translates to:
+  /// **'قرآن'**
+  String get childLearnHomeSubjectQuran;
+
+  /// SCR-CHD-012 english row
+  ///
+  /// In ar, this message translates to:
+  /// **'إنجليزية'**
+  String get childLearnHomeSubjectEnglish;
+
+  /// SCR-CHD-012 math subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'درس جديد من والدك'**
+  String get childLearnHomeMathNewLesson;
+
+  /// SCR-CHD-012 quran subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'وردي: الملك ١١–١٥'**
+  String get childLearnHomeQuranWird;
+
+  /// SCR-CHD-012 english subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'٦ بطاقات باقية'**
+  String get childLearnHomeEnglishCardsLeft;
+
+  /// SCR-CHD-012 new tag
+  ///
+  /// In ar, this message translates to:
+  /// **'جديد'**
+  String get childLearnHomeTagNew;
+
+  /// SCR-CHD-012 progress tag
+  ///
+  /// In ar, this message translates to:
+  /// **'{percent}٪'**
+  String childLearnHomeTagProgress(int percent);
+
+  /// SCR-CHD-012 non-linked material toast
+  ///
+  /// In ar, this message translates to:
+  /// **'قريبًا على هذا المسار (محاكاة المرحلة ١)'**
+  String get childLearnHomeMaterialSoonToast;
+
+  /// SCR-CHD-012 qact → CHD-017
+  ///
+  /// In ar, this message translates to:
+  /// **'معلمي'**
+  String get childLearnHomeQuickTutor;
+
+  /// SCR-CHD-012 qact → CHD-018
+  ///
+  /// In ar, this message translates to:
+  /// **'تركيز'**
+  String get childLearnHomeQuickFocus;
+
+  /// SCR-CHD-012 qact → CHD-014
+  ///
+  /// In ar, this message translates to:
+  /// **'واجبي'**
+  String get childLearnHomeQuickHomework;
+
+  /// SCR-CHD-012 empty title
+  ///
+  /// In ar, this message translates to:
+  /// **'لا مسار تعلّم بعد'**
+  String get childLearnHomeEmptyTitle;
+
+  /// SCR-CHD-012 empty message
+  ///
+  /// In ar, this message translates to:
+  /// **'عندما يسند والدك درسًا سيظهر هنا. زر الطوارئ يبقى متاحًا.'**
+  String get childLearnHomeEmptyMessage;
+
+  /// SCR-CHD-012 empty CTA SOS
+  ///
+  /// In ar, this message translates to:
+  /// **'طوارئ'**
+  String get childLearnHomeEmptyCta;
+
+  /// SCR-CHD-012 loading semantics
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل تعلّمي'**
+  String get childLearnHomeLoadingSemantics;
+
+  /// SCR-CHD-012 parent lean title
+  ///
+  /// In ar, this message translates to:
+  /// **'تعلّم الابن'**
+  String get childLearnHomeParentLeanTitle;
+
+  /// SCR-CHD-012 parent lean message
+  ///
+  /// In ar, this message translates to:
+  /// **'مركز التعلّم لجهاز الابن. أدوات التعليم للوالد من الاستوديو.'**
+  String get childLearnHomeParentLeanMessage;
+
+  /// SCR-CHD-013 default AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'الدرس'**
+  String get childLessonAppBar;
+
+  /// SCR-CHD-013 lesson title
+  ///
+  /// In ar, this message translates to:
+  /// **'جمع الكسور'**
+  String get childLessonTitleAddingFractions;
+
+  /// SCR-CHD-013 hook
+  ///
+  /// In ar, this message translates to:
+  /// **'تخيل بيتزا!'**
+  String get childLessonHookImaginePizza;
+
+  /// SCR-CHD-013 body
+  ///
+  /// In ar, this message translates to:
+  /// **'قسمنا بيتزا إلى ٧ قطع. أكلت أنت قطعتين (٢/٧) وأخوك ٣ قطع (٣/٧). نجمع الأعلى فقط: ٢+٣=٥ — يعني ٥/٧!'**
+  String get childLessonBodyPizzaFractions;
+
+  /// SCR-CHD-013 next toast
+  ///
+  /// In ar, this message translates to:
+  /// **'+{minutes} دقائق — أكملت هذا الجزء!'**
+  String childLessonRewardToast(int minutes);
+
+  /// SCR-CHD-013 → CHD-014
+  ///
+  /// In ar, this message translates to:
+  /// **'فهمت — التالي'**
+  String get childLessonNextCta;
+
+  /// SCR-CHD-013 → CHD-017
+  ///
+  /// In ar, this message translates to:
+  /// **'ما فهمت — اسأل معلمي'**
+  String get childLessonTutorCta;
+
+  /// SCR-CHD-013 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا درس مفتوح'**
+  String get childLessonEmptyTitle;
+
+  /// SCR-CHD-013 empty message
+  ///
+  /// In ar, this message translates to:
+  /// **'افتح مادة من تعلّمي لبدء الدرس.'**
+  String get childLessonEmptyMessage;
+
+  /// SCR-CHD-013 empty → CHD-012
+  ///
+  /// In ar, this message translates to:
+  /// **'عودة لتعلّمي'**
+  String get childLessonEmptyCta;
+
+  /// SCR-CHD-013 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل الدرس'**
+  String get childLessonLoadingSemantics;
+
+  /// SCR-CHD-013 parent lean
+  ///
+  /// In ar, this message translates to:
+  /// **'درس الابن'**
+  String get childLessonParentLeanTitle;
+
+  /// SCR-CHD-013 parent lean message
+  ///
+  /// In ar, this message translates to:
+  /// **'الدروس على جهاز الابن. أسند المحتوى من الاستوديو.'**
+  String get childLessonParentLeanMessage;
+
+  /// SCR-CHD-014 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'بطاقاتي الذكية'**
+  String get childFlashcardsTitle;
+
+  /// SCR-CHD-014 lesson title
+  ///
+  /// In ar, this message translates to:
+  /// **'درس الكسور والعمليات'**
+  String get childFlashcardsLessonFractionsOps;
+
+  /// SCR-CHD-014 source name key
+  ///
+  /// In ar, this message translates to:
+  /// **'كتاب_الرياضيات_الفصل_الثاني.pdf'**
+  String get childFlashcardsSourceMathPdf;
+
+  /// SCR-CHD-014 source line
+  ///
+  /// In ar, this message translates to:
+  /// **'مستخرجة من: {source}'**
+  String childFlashcardsSourceLine(String source);
+
+  /// SCR-CHD-014 counter
+  ///
+  /// In ar, this message translates to:
+  /// **'بطاقة {current} من {total}'**
+  String childFlashcardsCounter(int current, int total);
+
+  /// SCR-CHD-014 Q1
+  ///
+  /// In ar, this message translates to:
+  /// **'ما هو الكسر الاعتيادي؟'**
+  String get childFlashcardsQOrdinaryFraction;
+
+  /// SCR-CHD-014 A1
+  ///
+  /// In ar, this message translates to:
+  /// **'عدد يمثل جزءاً أو أكثر من أجزاء متساوية من الكل، ويتكون من بسط ومقام (مثال: ٣/٤).'**
+  String get childFlashcardsAOrdinaryFraction;
+
+  /// SCR-CHD-014 H1
+  ///
+  /// In ar, this message translates to:
+  /// **'تذكر البيتزا المقسمة بالتساوي'**
+  String get childFlashcardsHPizza;
+
+  /// SCR-CHD-014 Q2
+  ///
+  /// In ar, this message translates to:
+  /// **'متى نجمع بسطين مباشرة؟'**
+  String get childFlashcardsQAddNumerators;
+
+  /// SCR-CHD-014 A2
+  ///
+  /// In ar, this message translates to:
+  /// **'عندما يكون المقامان متساويين تماماً! نجمع البسطين ونبقي المقام نفسه (مثال: ١/٥ + ٢/٥ = ٣/٥).'**
+  String get childFlashcardsAAddNumerators;
+
+  /// SCR-CHD-014 H2
+  ///
+  /// In ar, this message translates to:
+  /// **'المقام المتطابق يبقى كما هو'**
+  String get childFlashcardsHSameDenom;
+
+  /// SCR-CHD-014 front
+  ///
+  /// In ar, this message translates to:
+  /// **'السؤال والمفهوم'**
+  String get childFlashcardsSideQuestion;
+
+  /// SCR-CHD-014 back
+  ///
+  /// In ar, this message translates to:
+  /// **'الشرح والجواب'**
+  String get childFlashcardsSideAnswer;
+
+  /// SCR-CHD-014 flip hint
+  ///
+  /// In ar, this message translates to:
+  /// **'اضغط على البطاقة لقلبها ومعرفة الإجابة'**
+  String get childFlashcardsTapHint;
+
+  /// SCR-CHD-014 known
+  ///
+  /// In ar, this message translates to:
+  /// **'أعرفها'**
+  String get childFlashcardsKnownCta;
+
+  /// SCR-CHD-014 review
+  ///
+  /// In ar, this message translates to:
+  /// **'أحتاج مراجعة'**
+  String get childFlashcardsReviewCta;
+
+  /// SCR-CHD-014 known toast
+  ///
+  /// In ar, this message translates to:
+  /// **'رائع — سنراجعها متباعدًا حتى ترسخ'**
+  String get childFlashcardsKnownToast;
+
+  /// SCR-CHD-014 review toast
+  ///
+  /// In ar, this message translates to:
+  /// **'صراحتك قوة — سنكررها قريبًا حتى تتقنها'**
+  String get childFlashcardsReviewToast;
+
+  /// SCR-CHD-014 prev
+  ///
+  /// In ar, this message translates to:
+  /// **'السابقة'**
+  String get childFlashcardsPrevCta;
+
+  /// SCR-CHD-014 next
+  ///
+  /// In ar, this message translates to:
+  /// **'التالية'**
+  String get childFlashcardsNextCta;
+
+  /// SCR-CHD-014 first toast
+  ///
+  /// In ar, this message translates to:
+  /// **'هذه أول بطاقة'**
+  String get childFlashcardsFirstToast;
+
+  /// SCR-CHD-014 end toast
+  ///
+  /// In ar, this message translates to:
+  /// **'أنهيت كل البطاقات! جاهز للاختبار'**
+  String get childFlashcardsEndToast;
+
+  /// SCR-CHD-014 → CHD-015
+  ///
+  /// In ar, this message translates to:
+  /// **'بدء الاختبار التفاعلي (+{minutes} دقيقة)'**
+  String childFlashcardsQuizCta(int minutes);
+
+  /// SCR-CHD-014 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا بطاقات بعد'**
+  String get childFlashcardsEmptyTitle;
+
+  /// SCR-CHD-014 empty message
+  ///
+  /// In ar, this message translates to:
+  /// **'عندما يستخرج الوالد بطاقات من درس تظهر هنا.'**
+  String get childFlashcardsEmptyMessage;
+
+  /// SCR-CHD-014 empty → CHD-012
+  ///
+  /// In ar, this message translates to:
+  /// **'عودة لتعلّمي'**
+  String get childFlashcardsEmptyCta;
+
+  /// SCR-CHD-014 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل البطاقات'**
+  String get childFlashcardsLoadingSemantics;
+
+  /// SCR-CHD-014 parent lean
+  ///
+  /// In ar, this message translates to:
+  /// **'بطاقات الابن'**
+  String get childFlashcardsParentLeanTitle;
+
+  /// SCR-CHD-014 parent lean message
+  ///
+  /// In ar, this message translates to:
+  /// **'البطاقات لجهاز الابن. أنشئ المواد من الاستوديو.'**
+  String get childFlashcardsParentLeanMessage;
+
+  /// SCR-CHD-015 title
+  ///
+  /// In ar, this message translates to:
+  /// **'تحدي المهارة'**
+  String get childQuizTitle;
+
+  /// SCR-CHD-015 skill name
+  ///
+  /// In ar, this message translates to:
+  /// **'قسمة الكسور الاعتيادية'**
+  String get childQuizSkillDividingFractions;
+
+  /// SCR-CHD-015 skill tag
+  ///
+  /// In ar, this message translates to:
+  /// **'مهارة: {skill} · من والدك'**
+  String childQuizSkillTag(String skill);
+
+  /// SCR-CHD-015 prompt
+  ///
+  /// In ar, this message translates to:
+  /// **'١/٢ ÷ ١/٤ = ؟'**
+  String get childQuizPromptHalfDivQuarter;
+
+  /// SCR-CHD-015 minutes-only earn hint
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر الإجابة الصحيحة لتكسب +{minutes} دقيقة لعب'**
+  String childQuizEarnHint(int minutes);
+
+  /// SCR-CHD-015 option
+  ///
+  /// In ar, this message translates to:
+  /// **'٢'**
+  String get childQuizOpt2;
+
+  /// SCR-CHD-015 option
+  ///
+  /// In ar, this message translates to:
+  /// **'١/٨'**
+  String get childQuizOpt1over8;
+
+  /// SCR-CHD-015 option
+  ///
+  /// In ar, this message translates to:
+  /// **'١/٢'**
+  String get childQuizOpt1over2;
+
+  /// SCR-CHD-015 option
+  ///
+  /// In ar, this message translates to:
+  /// **'٤'**
+  String get childQuizOpt4;
+
+  /// SCR-CHD-015 explanation
+  ///
+  /// In ar, this message translates to:
+  /// **'نضرب في مقلوب الكسر الثاني: ١/٢ × ٤/١ = ٢.'**
+  String get childQuizExplainHalfDivQuarter;
+
+  /// SCR-CHD-015 correct toast
+  ///
+  /// In ar, this message translates to:
+  /// **'إجابة عبقرية! {explanation} كسبت +{minutes} دقيقة.'**
+  String childQuizCorrectToast(String explanation, int minutes);
+
+  /// SCR-CHD-015 wrong hint
+  ///
+  /// In ar, this message translates to:
+  /// **'قريبة جداً! عند قسمة الكسور نقلب الكسر الثاني ونحوّل القسمة لضرب.'**
+  String get childQuizHintNearMiss;
+
+  /// SCR-CHD-015 wrong hint
+  ///
+  /// In ar, this message translates to:
+  /// **'ليست صحيحة — اقلب الكسر الثاني: ١/٤ يصبح ٤/١'**
+  String get childQuizHintFlip;
+
+  /// SCR-CHD-015 wrong hint
+  ///
+  /// In ar, this message translates to:
+  /// **'حاول ثانية — اضرب ١/٢ في ٤'**
+  String get childQuizHintMultiply;
+
+  /// SCR-CHD-015 study gift note
+  ///
+  /// In ar, this message translates to:
+  /// **'وقت المذاكرة والتعلّم هدية لا يُخصم من وقت لعبك أبدًا'**
+  String get childQuizStudyGiftNote;
+
+  /// SCR-CHD-015 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا اختبار بعد'**
+  String get childQuizEmptyTitle;
+
+  /// SCR-CHD-015 empty message
+  ///
+  /// In ar, this message translates to:
+  /// **'عندما يسند والدك تحدي مهارة سيظهر هنا.'**
+  String get childQuizEmptyMessage;
+
+  /// SCR-CHD-015 empty CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'عودة لتعلّمي'**
+  String get childQuizEmptyCta;
+
+  /// SCR-CHD-015 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل الاختبار'**
+  String get childQuizLoadingSemantics;
+
+  /// SCR-CHD-015 parent lean
+  ///
+  /// In ar, this message translates to:
+  /// **'اختبار الابن'**
+  String get childQuizParentLeanTitle;
+
+  /// SCR-CHD-015 parent lean message
+  ///
+  /// In ar, this message translates to:
+  /// **'اختبارات المهارة تعمل على جهاز الابن.'**
+  String get childQuizParentLeanMessage;
+
+  /// SCR-CHD-016 title
+  ///
+  /// In ar, this message translates to:
+  /// **'نتيجتك'**
+  String get childResultTitle;
+
+  /// SCR-CHD-016 score
+  ///
+  /// In ar, this message translates to:
+  /// **'{correct} من {total}'**
+  String childResultScore(int correct, int total);
+
+  /// SCR-CHD-016 praise
+  ///
+  /// In ar, this message translates to:
+  /// **'أتقنت جمع الكسور! والدك وصله الخبر.'**
+  String get childResultPraiseMasteredAdd;
+
+  /// SCR-CHD-016 rewards
+  ///
+  /// In ar, this message translates to:
+  /// **'مكافآتك'**
+  String get childResultRewardsHeading;
+
+  /// SCR-CHD-016 reward
+  ///
+  /// In ar, this message translates to:
+  /// **'+٢٠ دقيقة لمحفظتك'**
+  String get childResultRewardWallet20;
+
+  /// SCR-CHD-016 reward
+  ///
+  /// In ar, this message translates to:
+  /// **'+١٥ دقيقة لعب'**
+  String get childResultRewardPlay15;
+
+  /// SCR-CHD-016 reward
+  ///
+  /// In ar, this message translates to:
+  /// **'+٣٠ دقيقة'**
+  String get childResultRewardBonus30;
+
+  /// SCR-CHD-016 reward sub
+  ///
+  /// In ar, this message translates to:
+  /// **'اقتربت من المستوى ٤!'**
+  String get childResultRewardNearLevel4;
+
+  /// SCR-CHD-016 tag
+  ///
+  /// In ar, this message translates to:
+  /// **'وصلت'**
+  String get childResultTagArrived;
+
+  /// SCR-CHD-016 tag
+  ///
+  /// In ar, this message translates to:
+  /// **'أُضيفت'**
+  String get childResultTagAdded;
+
+  /// SCR-CHD-016 tag
+  ///
+  /// In ar, this message translates to:
+  /// **'٣٧٠/٥٠٠'**
+  String get childResultTagProgress370;
+
+  /// SCR-CHD-016 missed heading
+  ///
+  /// In ar, this message translates to:
+  /// **'السؤال الوحيد الذي فاتك'**
+  String get childResultMissedHeading;
+
+  /// SCR-CHD-016 missed title
+  ///
+  /// In ar, this message translates to:
+  /// **'س٧ — قسمة الكسور.'**
+  String get childResultMissedQ7;
+
+  /// SCR-CHD-016 missed body — no punishment
+  ///
+  /// In ar, this message translates to:
+  /// **'مو مشكلة أبدًا — جهزنا لك شرحًا قصيرًا يوضحها.'**
+  String get childResultMissedDivisionOk;
+
+  /// SCR-CHD-016 → CHD-013
+  ///
+  /// In ar, this message translates to:
+  /// **'شاهد الشرح (دقيقتان)'**
+  String get childResultReviewCta;
+
+  /// SCR-CHD-016 → CHD-012
+  ///
+  /// In ar, this message translates to:
+  /// **'عودة لتعلّمي'**
+  String get childResultHomeCta;
+
+  /// SCR-CHD-016 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا نتيجة بعد'**
+  String get childResultEmptyTitle;
+
+  /// SCR-CHD-016 empty message
+  ///
+  /// In ar, this message translates to:
+  /// **'أكمل اختبارًا لترى نتيجتك التشجيعية هنا.'**
+  String get childResultEmptyMessage;
+
+  /// SCR-CHD-016 empty CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'عودة لتعلّمي'**
+  String get childResultEmptyCta;
+
+  /// SCR-CHD-016 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل النتيجة'**
+  String get childResultLoadingSemantics;
+
+  /// SCR-CHD-016 parent lean
+  ///
+  /// In ar, this message translates to:
+  /// **'نتيجة الابن'**
+  String get childResultParentLeanTitle;
+
+  /// SCR-CHD-016 parent lean message
+  ///
+  /// In ar, this message translates to:
+  /// **'النتائج تحتفي بالتقدّم على جهاز الابن.'**
+  String get childResultParentLeanMessage;
+
+  /// SCR-CHD-017 title
+  ///
+  /// In ar, this message translates to:
+  /// **'معلمي'**
+  String get childTutorTitle;
+
+  /// SCR-CHD-017 subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يحل عنك'**
+  String get childTutorSubtitle;
+
+  /// SCR-CHD-017 Socratic policy
+  ///
+  /// In ar, this message translates to:
+  /// **'أنا أساعدك تفهم — ما أعطيك الجواب الجاهز أبدًا. كذا تصير أنت البطل.'**
+  String get childTutorPolicyBanner;
+
+  /// SCR-CHD-017 transparency
+  ///
+  /// In ar, this message translates to:
+  /// **'والدك يطّلع على محادثاتنا — بيتنا كله شفاف وآمن'**
+  String get childTutorTransparencyNote;
+
+  /// SCR-CHD-017 bubble
+  ///
+  /// In ar, this message translates to:
+  /// **'مرحبا! شفت إنك واقف عند ٣/٥ + ١/٢ … من وين نبدأ؟'**
+  String get childTutorBubbleGreetStuck;
+
+  /// SCR-CHD-017 bubble
+  ///
+  /// In ar, this message translates to:
+  /// **'ما أعرف أجمعها، الأسفل مختلف!'**
+  String get childTutorBubbleChildDifferentDenom;
+
+  /// SCR-CHD-017 bubble
+  ///
+  /// In ar, this message translates to:
+  /// **'ملاحظة ممتازة! هنا السر: نحتاج نخلي الأسفل نفس الرقم. سؤالي لك: ما هو أصغر رقم يقبل القسمة على ٥ وعلى ٢ معًا؟'**
+  String get childTutorBubbleLcmPrompt;
+
+  /// SCR-CHD-017 choice
+  ///
+  /// In ar, this message translates to:
+  /// **'١٠؟'**
+  String get childTutorChoiceTen;
+
+  /// SCR-CHD-017 choice
+  ///
+  /// In ar, this message translates to:
+  /// **'٧؟'**
+  String get childTutorChoiceSeven;
+
+  /// SCR-CHD-017 reply
+  ///
+  /// In ar, this message translates to:
+  /// **'بالضبط! ١٠ ✓ — الآن حوّل ٣/٥ إلى أعشار…'**
+  String get childTutorReplyTen;
+
+  /// SCR-CHD-017 reply
+  ///
+  /// In ar, this message translates to:
+  /// **'قريب! جرب: ٥×٢ كم؟'**
+  String get childTutorReplySeven;
+
+  /// SCR-CHD-017 photo CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'صوّر مسألة من الكتاب'**
+  String get childTutorPhotoCta;
+
+  /// SCR-CHD-017 photo toast
+  ///
+  /// In ar, this message translates to:
+  /// **'صوّر المسألة — وسأشرحها خطوة بخطوة (محاكاة المرحلة ١)'**
+  String get childTutorPhotoToast;
+
+  /// SCR-CHD-017 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'المعلم جاهز عندما تكون جاهزًا'**
+  String get childTutorEmptyTitle;
+
+  /// SCR-CHD-017 empty message
+  ///
+  /// In ar, this message translates to:
+  /// **'افتح درسًا أو اختبارًا ثم اسأل معلّمك عن تلميحات — بلا جواب جاهز.'**
+  String get childTutorEmptyMessage;
+
+  /// SCR-CHD-017 empty CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'عودة لتعلّمي'**
+  String get childTutorEmptyCta;
+
+  /// SCR-CHD-017 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل المعلم'**
+  String get childTutorLoadingSemantics;
+
+  /// SCR-CHD-017 parent lean
+  ///
+  /// In ar, this message translates to:
+  /// **'معلم الابن'**
+  String get childTutorParentLeanTitle;
+
+  /// SCR-CHD-017 parent lean message
+  ///
+  /// In ar, this message translates to:
+  /// **'المعلم السقراطي على جهاز الابن. الوالد يرى المحادثة للشفافية.'**
+  String get childTutorParentLeanMessage;
+
+  /// SCR-CHD-018 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'وضع التركيز'**
+  String get childFocusTitle;
+
+  /// SCR-CHD-018 timer caption
+  ///
+  /// In ar, this message translates to:
+  /// **'دقيقة تركيز صافٍ'**
+  String get childFocusTimerCaption;
+
+  /// SCR-CHD-018 timer a11y
+  ///
+  /// In ar, this message translates to:
+  /// **'مؤقت تركيز {minutes} دقيقة'**
+  String childFocusTimerSemantics(int minutes);
+
+  /// SCR-CHD-018 free-time honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'أثناء التركيز تهدأ التطبيقات المشتتة — وهذا الوقت هدية لا يُحسب من وقت لعبك أبدًا.'**
+  String get childFocusGiftNote;
+
+  /// SCR-CHD-018 honesty banner (alias)
+  ///
+  /// In ar, this message translates to:
+  /// **'أثناء التركيز تهدأ التطبيقات المشتتة — وهذا الوقت هدية لا يُحسب من وقت لعبك أبدًا.'**
+  String get childFocusHonestyNote;
+
+  /// SCR-CHD-018 start CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ {minutes} دقيقة'**
+  String childFocusStartCta(int minutes);
+
+  /// SCR-CHD-018 after start
+  ///
+  /// In ar, this message translates to:
+  /// **'جلسة التركيز جارية'**
+  String get childFocusRunningCta;
+
+  /// SCR-CHD-018 start toast
+  ///
+  /// In ar, this message translates to:
+  /// **'بدأ التركيز — كُتمت المشتتات. بالتوفيق!'**
+  String get childFocusStartToast;
+
+  /// SCR-CHD-018 → CHD-035
+  ///
+  /// In ar, this message translates to:
+  /// **'أصوات هادئة'**
+  String get childFocusSoundsCta;
+
+  /// SCR-CHD-018 praise heading
+  ///
+  /// In ar, this message translates to:
+  /// **'رسالة فخر من والدك:'**
+  String get childFocusPraiseHeading;
+
+  /// SCR-CHD-018 praise quote
+  ///
+  /// In ar, this message translates to:
+  /// **'فخور بك — لاحظت مقاومتك للتشتيت!'**
+  String get childFocusPraiseResistDistraction;
+
+  /// SCR-CHD-018 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا جلسة تركيز جاهزة'**
+  String get childFocusEmptyTitle;
+
+  /// SCR-CHD-018 empty message
+  ///
+  /// In ar, this message translates to:
+  /// **'افتح تعلّمي لبدء جلسة تركيز هدية.'**
+  String get childFocusEmptyMessage;
+
+  /// SCR-CHD-018 → CHD-012
+  ///
+  /// In ar, this message translates to:
+  /// **'عودة لتعلّمي'**
+  String get childFocusEmptyCta;
+
+  /// SCR-CHD-018 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل وضع التركيز'**
+  String get childFocusLoadingSemantics;
+
+  /// SCR-CHD-018 parent lean
+  ///
+  /// In ar, this message translates to:
+  /// **'وضع تركيز الابن'**
+  String get childFocusParentLeanTitle;
+
+  /// SCR-CHD-018 parent lean message
+  ///
+  /// In ar, this message translates to:
+  /// **'جلسات التركيز على جهاز الابن. عيّن وقت الدراسة من أدوات الوالد.'**
+  String get childFocusParentLeanMessage;
+
+  /// SCR-CHD-019 title — minutes not points
+  ///
+  /// In ar, this message translates to:
+  /// **'محفظتي'**
+  String get childWalletTitle;
+
+  /// SCR-CHD-019 hero minutes
+  ///
+  /// In ar, this message translates to:
+  /// **'{minutes} دقيقة'**
+  String childWalletTotalMinutes(int minutes);
+
+  /// SCR-CHD-019 caption
+  ///
+  /// In ar, this message translates to:
+  /// **'رصيدك الكلي من الدقائق المكتسبة'**
+  String get childWalletTotalCaption;
+
+  /// SCR-CHD-019 streak+badges meta
+  ///
+  /// In ar, this message translates to:
+  /// **'{days} أيام التزام · {badges} شارات'**
+  String childWalletStreakAndBadges(int days, int badges);
+
+  /// SCR-CHD-019 compete
+  ///
+  /// In ar, this message translates to:
+  /// **'نافس نفسك — لا أحد غيرك'**
+  String get childWalletCompeteHeading;
+
+  /// SCR-CHD-019 record
+  ///
+  /// In ar, this message translates to:
+  /// **'رقمك القياسي: {days} أيام التزام متتالية'**
+  String childWalletRecordLine(int days);
+
+  /// SCR-CHD-019 current streak
+  ///
+  /// In ar, this message translates to:
+  /// **'أنت الآن على {days} — اقترب موعد كسر رقمك!'**
+  String childWalletCurrentStreakLine(int days);
+
+  /// SCR-CHD-019 badges heading
+  ///
+  /// In ar, this message translates to:
+  /// **'خزانة شاراتي'**
+  String get childWalletBadgesHeading;
+
+  /// SCR-CHD-019 badge
+  ///
+  /// In ar, this message translates to:
+  /// **'أول ورد'**
+  String get childWalletBadgeFirstWird;
+
+  /// SCR-CHD-019 badge
+  ///
+  /// In ar, this message translates to:
+  /// **'أسبوع أذكار'**
+  String get childWalletBadgeAdhkarWeek;
+
+  /// SCR-CHD-019 badge
+  ///
+  /// In ar, this message translates to:
+  /// **'٥ جلسات تركيز'**
+  String get childWalletBadgeFocusFive;
+
+  /// SCR-CHD-019 badge
+  ///
+  /// In ar, this message translates to:
+  /// **'شهر التزام'**
+  String get childWalletBadgeMonthStreak;
+
+  /// SCR-CHD-019 badge
+  ///
+  /// In ar, this message translates to:
+  /// **'بطل العائلة'**
+  String get childWalletBadgeFamilyHero;
+
+  /// SCR-CHD-019 badges footnote
+  ///
+  /// In ar, this message translates to:
+  /// **'{count} شارات محققة — والقادمة أجمل'**
+  String childWalletBadgesFootnote(int count);
+
+  /// SCR-CHD-019 badges not currency
+  ///
+  /// In ar, this message translates to:
+  /// **'شاراتك وسام إنجاز — الدقائق تُكسب بالعمل فقط.'**
+  String get childWalletBadgesNotCurrency;
+
+  /// SCR-CHD-019 apps heading
+  ///
+  /// In ar, this message translates to:
+  /// **'محافظ تطبيقاتي'**
+  String get childWalletAppsHeading;
+
+  /// SCR-CHD-019 apps caption
+  ///
+  /// In ar, this message translates to:
+  /// **'كل تطبيق له محفظته — ولا تفتح الممنوع.'**
+  String get childWalletAppsCaption;
+
+  /// SCR-CHD-019 app name
+  ///
+  /// In ar, this message translates to:
+  /// **'يوتيوب'**
+  String get childWalletAppYoutube;
+
+  /// SCR-CHD-019 app name
+  ///
+  /// In ar, this message translates to:
+  /// **'الألعاب'**
+  String get childWalletAppGames;
+
+  /// SCR-CHD-019 app name
+  ///
+  /// In ar, this message translates to:
+  /// **'تواصل'**
+  String get childWalletAppSocial;
+
+  /// SCR-CHD-019 education wallet name
+  ///
+  /// In ar, this message translates to:
+  /// **'قرآن'**
+  String get childWalletAppQuran;
+
+  /// SCR-CHD-019 Stage-1 honesty tag
+  ///
+  /// In ar, this message translates to:
+  /// **'تجريبي · محاكاة'**
+  String get childWalletSimulatedTag;
+
+  /// SCR-CHD-019 app balance
+  ///
+  /// In ar, this message translates to:
+  /// **'رصيدك: {minutes} دقيقة'**
+  String childWalletAppBalance(int minutes);
+
+  /// SCR-CHD-019 no balance
+  ///
+  /// In ar, this message translates to:
+  /// **'لا رصيد بعد — اكسب بمهمة!'**
+  String get childWalletAppNoBalance;
+
+  /// SCR-CHD-019 minutes tag
+  ///
+  /// In ar, this message translates to:
+  /// **'{minutes} د'**
+  String childWalletMinutesTag(int minutes);
+
+  /// SCR-CHD-019 zero tag
+  ///
+  /// In ar, this message translates to:
+  /// **'٠'**
+  String get childWalletZeroTag;
+
+  /// SCR-CHD-019 earn heading
+  ///
+  /// In ar, this message translates to:
+  /// **'كيف أكسب دقائق؟'**
+  String get childWalletEarnHeading;
+
+  /// SCR-CHD-019 earn quran
+  ///
+  /// In ar, this message translates to:
+  /// **'وردي من القرآن'**
+  String get childWalletEarnQuranTitle;
+
+  /// SCR-CHD-019 earn quran body
+  ///
+  /// In ar, this message translates to:
+  /// **'أتمّه واكسب ما حدده أبي'**
+  String get childWalletEarnQuranBody;
+
+  /// SCR-CHD-019 earn tasks
+  ///
+  /// In ar, this message translates to:
+  /// **'مهامي'**
+  String get childWalletEarnTasksTitle;
+
+  /// SCR-CHD-019 earn tasks body
+  ///
+  /// In ar, this message translates to:
+  /// **'كل مهمة = دقائق يحددها أبي'**
+  String get childWalletEarnTasksBody;
+
+  /// SCR-CHD-019 earn quiz
+  ///
+  /// In ar, this message translates to:
+  /// **'تحديات التعلم'**
+  String get childWalletEarnQuizTitle;
+
+  /// SCR-CHD-019 earn quiz body
+  ///
+  /// In ar, this message translates to:
+  /// **'تعلّم والعب أكثر'**
+  String get childWalletEarnQuizBody;
+
+  /// SCR-CHD-019 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'المحفظة فارغة'**
+  String get childWalletEmptyTitle;
+
+  /// SCR-CHD-019 empty message
+  ///
+  /// In ar, this message translates to:
+  /// **'اكسب دقائق بالمهام والتعلّم — الشارات فخر لا عملة.'**
+  String get childWalletEmptyMessage;
+
+  /// SCR-CHD-019 empty CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'عودة لتعلّمي'**
+  String get childWalletEmptyCta;
+
+  /// SCR-CHD-019 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل المحفظة'**
+  String get childWalletLoadingSemantics;
+
+  /// SCR-CHD-019 parent lean
+  ///
+  /// In ar, this message translates to:
+  /// **'محفظة الابن'**
+  String get childWalletParentLeanTitle;
+
+  /// SCR-CHD-019 parent lean message
+  ///
+  /// In ar, this message translates to:
+  /// **'محافظ الدقائق وشارات الفخر على جهاز الابن.'**
+  String get childWalletParentLeanMessage;
+
+  /// SCR-CHD-020 title
+  ///
+  /// In ar, this message translates to:
+  /// **'طلب وقت إضافي'**
+  String get childTimeRequestTitle;
+
+  /// SCR-CHD-020 how much
+  ///
+  /// In ar, this message translates to:
+  /// **'كم تحتاج من الوقت؟'**
+  String get childTimeRequestHowMuch;
+
+  /// SCR-CHD-020 mins
+  ///
+  /// In ar, this message translates to:
+  /// **'١٥ دقيقة'**
+  String get childTimeRequestMins15;
+
+  /// SCR-CHD-020 mins
+  ///
+  /// In ar, this message translates to:
+  /// **'٣٠ دقيقة'**
+  String get childTimeRequestMins30;
+
+  /// SCR-CHD-020 mins
+  ///
+  /// In ar, this message translates to:
+  /// **'ساعة كاملة'**
+  String get childTimeRequestMins60;
+
+  /// SCR-CHD-020 reason label
+  ///
+  /// In ar, this message translates to:
+  /// **'ما السبب؟ (ليعرف والداك)'**
+  String get childTimeRequestReasonLabel;
+
+  /// SCR-CHD-020 sample reason — no planted names
+  ///
+  /// In ar, this message translates to:
+  /// **'أنهيت واجباتي وأريد إكمال اللعب مع صديق'**
+  String get childTimeRequestReasonFinishedHomework;
+
+  /// SCR-CHD-020 trade heading
+  ///
+  /// In ar, this message translates to:
+  /// **'عجلة المقايضة الذكية (اقترح عملاً صالحاً)'**
+  String get childTimeRequestTradeHeading;
+
+  /// SCR-CHD-020 trade caption
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر عملاً تلتزم به مقابل الوقت الإضافي ليزيد احتمال الموافقة.'**
+  String get childTimeRequestTradeCaption;
+
+  /// SCR-CHD-020 trade
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظ ورد اليوم من سورة الملك'**
+  String get childTimeRequestTradeWird;
+
+  /// SCR-CHD-020 trade
+  ///
+  /// In ar, this message translates to:
+  /// **'ترتيب المكتب والغرفة'**
+  String get childTimeRequestTradeTidy;
+
+  /// SCR-CHD-020 trade
+  ///
+  /// In ar, this message translates to:
+  /// **'مراجعة درس الرياضيات'**
+  String get childTimeRequestTradeMath;
+
+  /// SCR-CHD-020 trade
+  ///
+  /// In ar, this message translates to:
+  /// **'طلب مباشر بدون مقايضة'**
+  String get childTimeRequestTradeDirect;
+
+  /// SCR-CHD-020 submit
+  ///
+  /// In ar, this message translates to:
+  /// **'أرسل طلب التفاوض لوالدي'**
+  String get childTimeRequestSubmitCta;
+
+  /// SCR-CHD-020 toast
+  ///
+  /// In ar, this message translates to:
+  /// **'وصل طلبك لوالديك — سيردون عليك مع المقايضة'**
+  String get childTimeRequestSubmitToast;
+
+  /// SCR-CHD-020 pending
+  ///
+  /// In ar, this message translates to:
+  /// **'طلبك عند والدك الآن'**
+  String get childTimeRequestStatusPendingTitle;
+
+  /// SCR-CHD-020 pending body
+  ///
+  /// In ar, this message translates to:
+  /// **'طلبت {minutes} دقيقة — سيصلك رده قريبًا'**
+  String childTimeRequestStatusPendingBody(int minutes);
+
+  /// SCR-CHD-020 approved
+  ///
+  /// In ar, this message translates to:
+  /// **'وافق أبوك — بوقته هو: {minutes} دقيقة'**
+  String childTimeRequestStatusApprovedTitle(int minutes);
+
+  /// SCR-CHD-020 approved body (G-A Temporary Grant, not wallet)
+  ///
+  /// In ar, this message translates to:
+  /// **'أُضيفت كمنحة مؤقتة لليوم — استمتع بحكمة'**
+  String get childTimeRequestStatusApprovedBody;
+
+  /// SCR-CHD-020 tasked
+  ///
+  /// In ar, this message translates to:
+  /// **'أبوك يقول: الوقت يُكسب!'**
+  String get childTimeRequestStatusTaskedTitle;
+
+  /// SCR-CHD-020 tasked body
+  ///
+  /// In ar, this message translates to:
+  /// **'أنجز «{task}» وستُودع {minutes} دقيقة في محفظتك تلقائيًا'**
+  String childTimeRequestStatusTaskedBody(String task, int minutes);
+
+  /// SCR-CHD-020 task title
+  ///
+  /// In ar, this message translates to:
+  /// **'ترتيب المكتب'**
+  String get childTimeRequestTaskTidyDesk;
+
+  /// SCR-CHD-020 → CHD-022
+  ///
+  /// In ar, this message translates to:
+  /// **'إلى مهامي'**
+  String get childTimeRequestGoTasksCta;
+
+  /// SCR-CHD-020 rejected
+  ///
+  /// In ar, this message translates to:
+  /// **'ليس الآن يا حبيبي'**
+  String get childTimeRequestStatusRejectedTitle;
+
+  /// SCR-CHD-020 rejected body
+  ///
+  /// In ar, this message translates to:
+  /// **'أبوك اعتذر بلطف — جرّب غدًا، أو اكسب وقتًا بمهمة من الآن'**
+  String get childTimeRequestStatusRejectedBody;
+
+  /// SCR-CHD-020 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'الطلبات غير متاحة'**
+  String get childTimeRequestEmptyTitle;
+
+  /// SCR-CHD-020 empty message
+  ///
+  /// In ar, this message translates to:
+  /// **'عندما يفتح طلب الوقت الإضافي يظهر النموذج هنا. الطوارئ تبقى متاحة.'**
+  String get childTimeRequestEmptyMessage;
+
+  /// SCR-CHD-020 empty CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'عودة ليومي'**
+  String get childTimeRequestEmptyCta;
+
+  /// SCR-CHD-020 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل طلب الوقت'**
+  String get childTimeRequestLoadingSemantics;
+
+  /// SCR-CHD-020 parent lean
+  ///
+  /// In ar, this message translates to:
+  /// **'طلب وقت الابن'**
+  String get childTimeRequestParentLeanTitle;
+
+  /// SCR-CHD-020 parent lean message
+  ///
+  /// In ar, this message translates to:
+  /// **'طلبات الوقت الإضافي تُرسل من جهاز الابن إلى صندوق الوالد.'**
+  String get childTimeRequestParentLeanMessage;
+
+  /// SCR-CHD-020 expired title
+  ///
+  /// In ar, this message translates to:
+  /// **'انتهى الطلب'**
+  String get childTimeRequestStatusExpiredTitle;
+
+  /// SCR-CHD-020 expired body
+  ///
+  /// In ar, this message translates to:
+  /// **'انتهت مهلة هذا الطلب — يمكنك إرسال طلب جديد.'**
+  String get childTimeRequestStatusExpiredBody;
+
+  /// SCR-CHD-020 duplicate pending toast
+  ///
+  /// In ar, this message translates to:
+  /// **'لديك طلب معلّق بالفعل — انتظر رد والديك.'**
+  String get childTimeRequestDuplicateError;
+
+  /// Stage-1 enforcement honesty badge
+  ///
+  /// In ar, this message translates to:
+  /// **'محاكاة'**
+  String get enforcementSimulatedLabel;
+
+  /// Shared remaining minutes card title
+  ///
+  /// In ar, this message translates to:
+  /// **'الدقائق المتبقية'**
+  String get remainingMinutesCardTitle;
+
+  /// Shared daily remaining label
+  ///
+  /// In ar, this message translates to:
+  /// **'المتبقي اليومي'**
+  String get remainingMinutesDailyLabel;
+
+  /// Shared G-A temporary grant label
+  ///
+  /// In ar, this message translates to:
+  /// **'منحة مؤقتة'**
+  String get remainingMinutesGrantLabel;
+
+  /// Shared earned wallet minutes label
+  ///
+  /// In ar, this message translates to:
+  /// **'محفظة مكتسبة'**
+  String get remainingMinutesWalletLabel;
+
+  /// Shared minutes value
+  ///
+  /// In ar, this message translates to:
+  /// **'{minutes} د'**
+  String remainingMinutesValue(int minutes);
+
+  /// Shared ≤5 min warning banner
+  ///
+  /// In ar, this message translates to:
+  /// **'تبقّى {minutes} دقائق فقط اليوم — أنهِ قريبًا.'**
+  String timeWarningBannerMessage(int minutes);
+
+  /// SCR-CHD-022 title
+  ///
+  /// In ar, this message translates to:
+  /// **'مهامي'**
+  String get childTasksTitle;
+
+  /// SCR-CHD-022 hero caption
+  ///
+  /// In ar, this message translates to:
+  /// **'أكمل مهامك واكسب وقت لعب إضافي!'**
+  String get childTasksHeroCaption;
+
+  /// SCR-CHD-022 hero headline
+  ///
+  /// In ar, this message translates to:
+  /// **'كل مهمة تنجزها تقربك لجائزتك'**
+  String get childTasksHeroHeadline;
+
+  /// SCR-CHD-022 today heading
+  ///
+  /// In ar, this message translates to:
+  /// **'مهامك اليوم'**
+  String get childTasksTodayHeading;
+
+  /// SCR-CHD-022 task title
+  ///
+  /// In ar, this message translates to:
+  /// **'ترتيب غرفتي'**
+  String get childTasksTitleTidyRoom;
+
+  /// SCR-CHD-022 task title
+  ///
+  /// In ar, this message translates to:
+  /// **'مراجعة درس الرياضيات'**
+  String get childTasksTitleMathReview;
+
+  /// SCR-CHD-022 task title
+  ///
+  /// In ar, this message translates to:
+  /// **'إتمام ورد اليوم'**
+  String get childTasksTitleWirdDone;
+
+  /// SCR-CHD-022 reward minutes
+  ///
+  /// In ar, this message translates to:
+  /// **'المكافأة: +{minutes} دقيقة للمحفظة'**
+  String childTasksRewardLine(int minutes);
+
+  /// SCR-CHD-022 submit CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'أنجزتها'**
+  String get childTasksSubmitCta;
+
+  /// SCR-CHD-022 submit toast
+  ///
+  /// In ar, this message translates to:
+  /// **'أُرسل الإثبات — بانتظار تأكيد الوالد (محاكاة المرحلة ١)'**
+  String get childTasksSubmitToast;
+
+  /// SCR-CHD-022 pending tag
+  ///
+  /// In ar, this message translates to:
+  /// **'بانتظار التأكيد'**
+  String get childTasksTagPending;
+
+  /// SCR-CHD-022 completed tag
+  ///
+  /// In ar, this message translates to:
+  /// **'تمت المكافأة'**
+  String get childTasksTagRewarded;
+
+  /// SCR-CHD-022 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا مهام بعد'**
+  String get childTasksEmptyTitle;
+
+  /// SCR-CHD-022 empty message
+  ///
+  /// In ar, this message translates to:
+  /// **'عندما يسند والدك مهمة تظهر هنا مع مكافأة الدقائق.'**
+  String get childTasksEmptyMessage;
+
+  /// SCR-CHD-022 empty CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'عودة ليومي'**
+  String get childTasksEmptyCta;
+
+  /// SCR-CHD-022 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل المهام'**
+  String get childTasksLoadingSemantics;
+
+  /// SCR-CHD-022 parent lean
+  ///
+  /// In ar, this message translates to:
+  /// **'مهام الابن'**
+  String get childTasksParentLeanTitle;
+
+  /// SCR-CHD-022 parent lean message
+  ///
+  /// In ar, this message translates to:
+  /// **'إنجاز المهام والإثبات على جهاز الابن. الوالد يؤكد من لوحة العائلة.'**
+  String get childTasksParentLeanMessage;
+
+  /// SCR-CHD-023 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'مشاركة وسائط'**
+  String get childMediaShareTitle;
+
+  /// SCR-CHD-023 hero headline
+  ///
+  /// In ar, this message translates to:
+  /// **'شارك لحظة'**
+  String get childMediaShareHeroHeadline;
+
+  /// SCR-CHD-023 qact photo
+  ///
+  /// In ar, this message translates to:
+  /// **'صورة'**
+  String get childMediaShareQuickPhoto;
+
+  /// SCR-CHD-023 qact voice
+  ///
+  /// In ar, this message translates to:
+  /// **'صوتية'**
+  String get childMediaShareQuickVoice;
+
+  /// SCR-CHD-023 qact file
+  ///
+  /// In ar, this message translates to:
+  /// **'ملف'**
+  String get childMediaShareQuickFile;
+
+  /// SCR-CHD-023 photo toast (Stage 1 mock)
+  ///
+  /// In ar, this message translates to:
+  /// **'التقط وشارك مع عائلتك'**
+  String get childMediaSharePhotoToast;
+
+  /// SCR-CHD-023 voice toast (Stage 1 mock)
+  ///
+  /// In ar, this message translates to:
+  /// **'اضغط وسجل — يوصل مكتوبًا أيضًا (P1)'**
+  String get childMediaShareVoiceToast;
+
+  /// SCR-CHD-023 file toast (Stage 1 mock)
+  ///
+  /// In ar, this message translates to:
+  /// **'شارك ملف الواجب'**
+  String get childMediaShareFileToast;
+
+  /// SCR-CHD-023 recent list heading
+  ///
+  /// In ar, this message translates to:
+  /// **'آخر مشاركاتي'**
+  String get childMediaShareRecentHeading;
+
+  /// SCR-CHD-023 sample share title
+  ///
+  /// In ar, this message translates to:
+  /// **'هدف المباراة'**
+  String get childMediaShareTitlePhotoGoal;
+
+  /// SCR-CHD-023 sample share subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'مجموعة العائلة · أعجب أبي'**
+  String get childMediaShareSubPhotoGoal;
+
+  /// SCR-CHD-023 sample voice title
+  ///
+  /// In ar, this message translates to:
+  /// **'«أمي وين حذائي؟»'**
+  String get childMediaShareTitleVoiceShoes;
+
+  /// SCR-CHD-023 voice transcription note
+  ///
+  /// In ar, this message translates to:
+  /// **'وصلت مفرغة نصًا أيضًا'**
+  String get childMediaShareSubVoiceShoes;
+
+  /// SCR-CHD-023 family-circle banner
+  ///
+  /// In ar, this message translates to:
+  /// **'مشاركاتك داخل دائرة عائلتك فقط — ما تطلع لأي مكان آخر.'**
+  String get childMediaShareSafeCircleBanner;
+
+  /// SCR-CHD-023 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا مشاركات بعد'**
+  String get childMediaShareEmptyTitle;
+
+  /// SCR-CHD-023 empty message
+  ///
+  /// In ar, this message translates to:
+  /// **'شارك صورًا أو رسائل صوتية أو ملفات بأمان مع عائلتك من هنا.'**
+  String get childMediaShareEmptyMessage;
+
+  /// SCR-CHD-023 empty CTA → CHD-007
+  ///
+  /// In ar, this message translates to:
+  /// **'عودة لمحادثاتي'**
+  String get childMediaShareEmptyCta;
+
+  /// SCR-CHD-023 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل مشاركة الوسائط'**
+  String get childMediaShareLoadingSemantics;
+
+  /// SCR-CHD-023 parent lean
+  ///
+  /// In ar, this message translates to:
+  /// **'مشاركة وسائط الابن'**
+  String get childMediaShareParentLeanTitle;
+
+  /// SCR-CHD-023 parent lean message
+  ///
+  /// In ar, this message translates to:
+  /// **'مشاركة الوسائط على جهاز الابن داخل دائرة العائلة المغلقة.'**
+  String get childMediaShareParentLeanMessage;
+
+  /// SCR-CHD-023 photo qact semantics
+  ///
+  /// In ar, this message translates to:
+  /// **'شارك صورة مع العائلة'**
+  String get childMediaSharePhotoSemantics;
+
+  /// SCR-CHD-023 voice qact semantics
+  ///
+  /// In ar, this message translates to:
+  /// **'سجّل وشارك رسالة صوتية'**
+  String get childMediaShareVoiceSemantics;
+
+  /// SCR-CHD-023 file qact semantics
+  ///
+  /// In ar, this message translates to:
+  /// **'شارك ملفًا مع العائلة'**
+  String get childMediaShareFileSemantics;
+
+  /// SCR-CHD-024 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'أنا وصلت'**
+  String get childArrivalTitle;
+
+  /// SCR-CHD-024 headline
+  ///
+  /// In ar, this message translates to:
+  /// **'أين وصلت يا بطل؟'**
+  String get childArrivalHeadline;
+
+  /// SCR-CHD-024 subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'اضغط على المكان لتطمئن والديك بلمسة واحدة:'**
+  String get childArrivalSubtitle;
+
+  /// SCR-CHD-024 zone name
+  ///
+  /// In ar, this message translates to:
+  /// **'المدرسة'**
+  String get childArrivalZoneSchool;
+
+  /// SCR-CHD-024 zone desc — no planted names
+  ///
+  /// In ar, this message translates to:
+  /// **'منطقة المدرسة الثانوية'**
+  String get childArrivalZoneSchoolDesc;
+
+  /// SCR-CHD-024 zone name
+  ///
+  /// In ar, this message translates to:
+  /// **'المنزل'**
+  String get childArrivalZoneHome;
+
+  /// SCR-CHD-024 zone desc
+  ///
+  /// In ar, this message translates to:
+  /// **'المنطقة الآمنة في الحي'**
+  String get childArrivalZoneHomeDesc;
+
+  /// SCR-CHD-024 zone CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'وصلت {place}'**
+  String childArrivalZoneCta(String place);
+
+  /// SCR-CHD-024 check-in toast
+  ///
+  /// In ar, this message translates to:
+  /// **'تم إرسال إشعار الاطمئنان لوالديك: «وصلت {place}»'**
+  String childArrivalCheckInToast(String place);
+
+  /// SCR-CHD-024 live heading
+  ///
+  /// In ar, this message translates to:
+  /// **'موقعك الجغرافي المباشر'**
+  String get childArrivalLiveHeading;
+
+  /// SCR-CHD-024 live status
+  ///
+  /// In ar, this message translates to:
+  /// **'متصل الآن بدقة عالية'**
+  String get childArrivalLiveConnected;
+
+  /// SCR-CHD-024 safe tag
+  ///
+  /// In ar, this message translates to:
+  /// **'آمن'**
+  String get childArrivalSafeTag;
+
+  /// SCR-CHD-024 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا أماكن آمنة بعد'**
+  String get childArrivalEmptyTitle;
+
+  /// SCR-CHD-024 empty message
+  ///
+  /// In ar, this message translates to:
+  /// **'عندما يضيف والدك مناطق آمنة يظهر تسجيل الوصول هنا.'**
+  String get childArrivalEmptyMessage;
+
+  /// SCR-CHD-024 empty CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'عودة ليومي'**
+  String get childArrivalEmptyCta;
+
+  /// SCR-CHD-024 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل تسجيل الوصول'**
+  String get childArrivalLoadingSemantics;
+
+  /// SCR-CHD-024 parent lean
+  ///
+  /// In ar, this message translates to:
+  /// **'وصول الابن'**
+  String get childArrivalParentLeanTitle;
+
+  /// SCR-CHD-024 parent lean message
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل الوصول على جهاز الابن. الوالد يدير المناطق الآمنة من الخريطة.'**
+  String get childArrivalParentLeanMessage;
+
+  /// SCR-FAT-065 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'الرقابة الذكية'**
+  String get smartAlertsTitle;
+
+  /// SCR-FAT-065 honesty — no planted names
+  ///
+  /// In ar, this message translates to:
+  /// **'الرقابة هنا مصارحة — ابنك يعلم أن مستشار العائلة يحمي محادثاته. لا تجسس في عائلتنا.'**
+  String get smartAlertsHonestyBanner;
+
+  /// SCR-FAT-065 alert — behavior not child
+  ///
+  /// In ar, this message translates to:
+  /// **'نمط انسحاب في المحادثات'**
+  String get smartAlertsAlertWithdrawal;
+
+  /// SCR-FAT-065 alert sub
+  ///
+  /// In ar, this message translates to:
+  /// **'تحليل المشاعر · آخر ٥ أيام'**
+  String get smartAlertsAlertWithdrawalSub;
+
+  /// SCR-FAT-065 arabizi unique claim
+  ///
+  /// In ar, this message translates to:
+  /// **'عبارة عربيزي مريبة رُصدت'**
+  String get smartAlertsAlertArabizi;
+
+  /// SCR-FAT-065 arabizi sub
+  ///
+  /// In ar, this message translates to:
+  /// **'عامية مكتوبة بحروف لاتينية من جهة مجهولة'**
+  String get smartAlertsAlertArabiziSub;
+
+  /// SCR-FAT-065 tag
+  ///
+  /// In ar, this message translates to:
+  /// **'جديد'**
+  String get smartAlertsTagNew;
+
+  /// SCR-FAT-065 tag
+  ///
+  /// In ar, this message translates to:
+  /// **'أمس'**
+  String get smartAlertsTagYesterday;
+
+  /// SCR-FAT-065 active tag
+  ///
+  /// In ar, this message translates to:
+  /// **'نشط'**
+  String get smartAlertsTagActive;
+
+  /// SCR-FAT-065 watch heading
+  ///
+  /// In ar, this message translates to:
+  /// **'ماذا يرصد مستشار العائلة؟'**
+  String get smartAlertsWatchHeading;
+
+  /// SCR-FAT-065 watch row
+  ///
+  /// In ar, this message translates to:
+  /// **'كلمات مريبة'**
+  String get smartAlertsWatchKeywords;
+
+  /// SCR-FAT-065 watch sub
+  ///
+  /// In ar, this message translates to:
+  /// **'فصحى وعامية وعربيزي — ميزة نادرة'**
+  String get smartAlertsWatchKeywordsSub;
+
+  /// SCR-FAT-065 watch row
+  ///
+  /// In ar, this message translates to:
+  /// **'تحليل المشاعر'**
+  String get smartAlertsWatchEmotions;
+
+  /// SCR-FAT-065 watch sub
+  ///
+  /// In ar, this message translates to:
+  /// **'حزن، خوف، انسحاب'**
+  String get smartAlertsWatchEmotionsSub;
+
+  /// SCR-FAT-065 watch row
+  ///
+  /// In ar, this message translates to:
+  /// **'الصور الحساسة + الرسائل الجنسية'**
+  String get smartAlertsWatchImages;
+
+  /// SCR-FAT-065 watch sub
+  ///
+  /// In ar, this message translates to:
+  /// **'حجب فوري ثم إخطار'**
+  String get smartAlertsWatchImagesSub;
+
+  /// SCR-FAT-065 tools heading
+  ///
+  /// In ar, this message translates to:
+  /// **'أدوات الرقابة — أنت تفعّلها'**
+  String get smartAlertsToolsHeading;
+
+  /// SCR-FAT-065 tool
+  ///
+  /// In ar, this message translates to:
+  /// **'تحليل شريط البحث'**
+  String get smartAlertsToolSearchScan;
+
+  /// SCR-FAT-065 tool sub
+  ///
+  /// In ar, this message translates to:
+  /// **'أي بحث في أي تطبيق — فصحى وعامية وعربيزي'**
+  String get smartAlertsToolSearchScanSub;
+
+  /// SCR-FAT-065 tool
+  ///
+  /// In ar, this message translates to:
+  /// **'تصنيف الصور على الجهاز'**
+  String get smartAlertsToolImageScan;
+
+  /// SCR-FAT-065 tool sub
+  ///
+  /// In ar, this message translates to:
+  /// **'يصنّف محليًا — الصور لا تغادر'**
+  String get smartAlertsToolImageScanSub;
+
+  /// SCR-FAT-065 tool
+  ///
+  /// In ar, this message translates to:
+  /// **'لقطة شاشة عند الدخول'**
+  String get smartAlertsToolScreenshot;
+
+  /// SCR-FAT-065 tool sub
+  ///
+  /// In ar, this message translates to:
+  /// **'للتطبيقات التي تحددها أنت فقط'**
+  String get smartAlertsToolScreenshotSub;
+
+  /// SCR-FAT-065 tool
+  ///
+  /// In ar, this message translates to:
+  /// **'يعمل بلا اتصال'**
+  String get smartAlertsToolOffline;
+
+  /// SCR-FAT-065 tool sub
+  ///
+  /// In ar, this message translates to:
+  /// **'التحليل محلي — والتقارير تُرسل عند عودة الشبكة'**
+  String get smartAlertsToolOfflineSub;
+
+  /// SCR-FAT-065 detect heading
+  ///
+  /// In ar, this message translates to:
+  /// **'عند اكتشاف محتوى غير مناسب'**
+  String get smartAlertsDetectHeading;
+
+  /// SCR-FAT-065 detect body
+  ///
+  /// In ar, this message translates to:
+  /// **'١. حجب فوري على جهاز الابن\n٢. حفظ اللقطة مشفرة في جهازك أنت\n٣. تقرير يصلك: التطبيق والوقت والسبب — لتقرر أنت الخطوة'**
+  String get smartAlertsDetectBody;
+
+  /// SCR-FAT-065 → FAT-067
+  ///
+  /// In ar, this message translates to:
+  /// **'إعدادات متقدمة'**
+  String get smartAlertsSettingsCta;
+
+  /// SCR-FAT-065 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا تنبيهات ذكية بعد'**
+  String get smartAlertsEmptyTitle;
+
+  /// SCR-FAT-065 empty message
+  ///
+  /// In ar, this message translates to:
+  /// **'عندما يرصد مستشار العائلة نمطًا تظهر تنبيهات كهرمانية هنا — تصف السلوك لا تحكم على الابن.'**
+  String get smartAlertsEmptyMessage;
+
+  /// SCR-FAT-065 empty CTA → FAT-003
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف ابنًا'**
+  String get smartAlertsEmptyCta;
+
+  /// SCR-FAT-065 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل التنبيهات الذكية'**
+  String get smartAlertsLoadingSemantics;
+
+  /// SCR-FAT-065 child lean
+  ///
+  /// In ar, this message translates to:
+  /// **'الرقابة الذكية'**
+  String get smartAlertsChildLeanTitle;
+
+  /// SCR-FAT-065 child lean message
+  ///
+  /// In ar, this message translates to:
+  /// **'التنبيهات الذكية للوالدين. جهازك يظهر أن الحماية نشطة — الصراحة تبني الثقة.'**
+  String get smartAlertsChildLeanMessage;
+
+  /// SCR-FAT-066 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'تنبيه: نمط انسحاب'**
+  String get smartAlertDetailTitle;
+
+  /// SCR-FAT-066 amber behavior banner
+  ///
+  /// In ar, this message translates to:
+  /// **'التنبيه يصف سلوكًا رصده مستشار العائلة — لا حكمًا على ابنك.'**
+  String get smartAlertDetailBehaviorBanner;
+
+  /// SCR-FAT-066 changes heading
+  ///
+  /// In ar, this message translates to:
+  /// **'ما الذي تغيّر؟'**
+  String get smartAlertDetailChangesHeading;
+
+  /// SCR-FAT-066 change
+  ///
+  /// In ar, this message translates to:
+  /// **'ردوده أقصر بنحو ٦٠٪'**
+  String get smartAlertDetailChangeShorter;
+
+  /// SCR-FAT-066 change sub
+  ///
+  /// In ar, this message translates to:
+  /// **'مقارنة بأسبوعه المعتاد'**
+  String get smartAlertDetailChangeShorterSub;
+
+  /// SCR-FAT-066 change
+  ///
+  /// In ar, this message translates to:
+  /// **'نشاط ليلي متأخر'**
+  String get smartAlertDetailChangeLateNights;
+
+  /// SCR-FAT-066 change sub
+  ///
+  /// In ar, this message translates to:
+  /// **'٣ ليالٍ بعد ١١ م'**
+  String get smartAlertDetailChangeLateNightsSub;
+
+  /// SCR-FAT-066 change
+  ///
+  /// In ar, this message translates to:
+  /// **'مفردات حزينة تكررت'**
+  String get smartAlertDetailChangeSadWords;
+
+  /// SCR-FAT-066 change sub
+  ///
+  /// In ar, this message translates to:
+  /// **'عبارات تعب وانعدام الطاقة'**
+  String get smartAlertDetailChangeSadWordsSub;
+
+  /// SCR-FAT-066 dialogue heading
+  ///
+  /// In ar, this message translates to:
+  /// **'خطوة الحوار المقترحة'**
+  String get smartAlertDetailDialogueHeading;
+
+  /// SCR-FAT-066 dialogue quote — no planted names
+  ///
+  /// In ar, this message translates to:
+  /// **'«لاحظت أنك متعب هالأيام… ودّك نطلع نتمشى ونتكلم؟»'**
+  String get smartAlertDetailDialogueQuote;
+
+  /// SCR-FAT-066 dialogue hint
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ بالاهتمام لا بالاستجواب — ولا تذكر التطبيق.'**
+  String get smartAlertDetailDialogueHint;
+
+  /// SCR-FAT-066 schedule CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'جدولة وقت معه'**
+  String get smartAlertDetailScheduleCta;
+
+  /// SCR-FAT-066 schedule toast
+  ///
+  /// In ar, this message translates to:
+  /// **'أُضيفت لتقويمك: مشوار معًا غدًا عصرًا'**
+  String get smartAlertDetailScheduleToast;
+
+  /// SCR-FAT-066 silent CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'متابعة صامتة أسبوعًا'**
+  String get smartAlertDetailSilentCta;
+
+  /// SCR-FAT-066 silent toast
+  ///
+  /// In ar, this message translates to:
+  /// **'سيتابع مستشار العائلة النمط ويوافيك — دون إزعاج ابنك'**
+  String get smartAlertDetailSilentToast;
+
+  /// SCR-FAT-066 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا تفصيل تنبيه'**
+  String get smartAlertDetailEmptyTitle;
+
+  /// SCR-FAT-066 empty message
+  ///
+  /// In ar, this message translates to:
+  /// **'افتح تنبيهًا كهرمانيًا من الرقابة الذكية لترى السياق وخطوة الحوار.'**
+  String get smartAlertDetailEmptyMessage;
+
+  /// SCR-FAT-066 → FAT-065
+  ///
+  /// In ar, this message translates to:
+  /// **'عودة للرقابة الذكية'**
+  String get smartAlertDetailEmptyCta;
+
+  /// SCR-FAT-066 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل تفصيل التنبيه'**
+  String get smartAlertDetailLoadingSemantics;
+
+  /// SCR-FAT-066 child lean
+  ///
+  /// In ar, this message translates to:
+  /// **'تفصيل التنبيه'**
+  String get smartAlertDetailChildLeanTitle;
+
+  /// SCR-FAT-066 child lean message
+  ///
+  /// In ar, this message translates to:
+  /// **'تفصيل التنبيه وخطوة الحوار للوالدين. جهازك يبقى صادقًا بأن الحماية نشطة.'**
+  String get smartAlertDetailChildLeanMessage;
+
+  /// SCR-FAT-069 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'تقرير استخدام الابن'**
+  String get childUsageReportTitle;
+
+  /// SCR-FAT-069 heading
+  ///
+  /// In ar, this message translates to:
+  /// **'تقرير {name}'**
+  String childUsageReportHeading(String name);
+
+  /// SCR-FAT-069 week label
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا الأسبوع'**
+  String get childUsageReportThisWeek;
+
+  /// SCR-FAT-069 week total
+  ///
+  /// In ar, this message translates to:
+  /// **'{hours} س {minutes} د'**
+  String childUsageReportWeekTotal(int hours, int minutes);
+
+  /// SCR-FAT-069 day
+  ///
+  /// In ar, this message translates to:
+  /// **'س'**
+  String get childUsageReportDaySat;
+
+  /// SCR-FAT-069 day
+  ///
+  /// In ar, this message translates to:
+  /// **'ح'**
+  String get childUsageReportDaySun;
+
+  /// SCR-FAT-069 day
+  ///
+  /// In ar, this message translates to:
+  /// **'ن'**
+  String get childUsageReportDayMon;
+
+  /// SCR-FAT-069 day
+  ///
+  /// In ar, this message translates to:
+  /// **'ث'**
+  String get childUsageReportDayTue;
+
+  /// SCR-FAT-069 day
+  ///
+  /// In ar, this message translates to:
+  /// **'ر'**
+  String get childUsageReportDayWed;
+
+  /// SCR-FAT-069 day
+  ///
+  /// In ar, this message translates to:
+  /// **'خ'**
+  String get childUsageReportDayThu;
+
+  /// SCR-FAT-069 day
+  ///
+  /// In ar, this message translates to:
+  /// **'ج'**
+  String get childUsageReportDayFri;
+
+  /// SCR-FAT-069 categories
+  ///
+  /// In ar, this message translates to:
+  /// **'أين ذهب الوقت؟'**
+  String get childUsageReportWhereHeading;
+
+  /// SCR-FAT-069 category
+  ///
+  /// In ar, this message translates to:
+  /// **'تعلم'**
+  String get childUsageReportCatLearning;
+
+  /// SCR-FAT-069 category
+  ///
+  /// In ar, this message translates to:
+  /// **'ألعاب'**
+  String get childUsageReportCatGames;
+
+  /// SCR-FAT-069 category
+  ///
+  /// In ar, this message translates to:
+  /// **'تواصل'**
+  String get childUsageReportCatChat;
+
+  /// SCR-FAT-069 category hours
+  ///
+  /// In ar, this message translates to:
+  /// **'{label} — {hours} س'**
+  String childUsageReportCatHours(String label, int hours);
+
+  /// SCR-FAT-069 gift note
+  ///
+  /// In ar, this message translates to:
+  /// **'هدية — لا تُحسب من الحد'**
+  String get childUsageReportGiftNote;
+
+  /// SCR-FAT-069 retention honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'البيانات تُحفظ {days} يومًا فقط ثم تُمحى — وزر النسيان (الإعدادات) يمحوها فورًا. الخصوصية وعدٌ لا شعار.'**
+  String childUsageReportRetentionBanner(int days);
+
+  /// SCR-FAT-069 Rule 23 key
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن الأول'**
+  String get childUsageReportChildOne;
+
+  /// SCR-FAT-069 Rule 23 key
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن الثاني'**
+  String get childUsageReportChildTwo;
+
+  /// SCR-FAT-069 Rule 23 key
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن الثالث'**
+  String get childUsageReportChildThree;
+
+  /// SCR-FAT-069 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا تقرير استخدام بعد'**
+  String get childUsageReportEmptyTitle;
+
+  /// SCR-FAT-069 empty message
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف ابناً لترى استخدام الأسبوع وتصنيف الوقت ووعد الاحتفاظ ٣٠ يومًا.'**
+  String get childUsageReportEmptyMessage;
+
+  /// SCR-FAT-069 → FAT-003
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة ابن'**
+  String get childUsageReportEmptyCta;
+
+  /// SCR-FAT-069 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل تقرير الاستخدام'**
+  String get childUsageReportLoadingSemantics;
+
+  /// SCR-FAT-069 child lean
+  ///
+  /// In ar, this message translates to:
+  /// **'تقرير الاستخدام'**
+  String get childUsageReportChildLeanTitle;
+
+  /// SCR-FAT-069 child lean message
+  ///
+  /// In ar, this message translates to:
+  /// **'تقارير الاستخدام التفصيلية للوالدين. جهازك يبقى صادقًا بأن الحماية نشطة.'**
+  String get childUsageReportChildLeanMessage;
+
+  /// SCR-FAT-069 SOS
+  ///
+  /// In ar, this message translates to:
+  /// **'نداء الطوارئ'**
+  String get childUsageReportSosCta;
+
+  /// SCR-FAT-070 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'الدائرة الخارجية المعتمدة'**
+  String get outerCircleTitle;
+
+  /// SCR-FAT-070 strangers banner
+  ///
+  /// In ar, this message translates to:
+  /// **'المجهولون محظورون دائمًا: هذا الإجراء يحمي أبناءك تلقائياً. كل تواصل خارجي يمر بموافقة الوالدين.'**
+  String get outerCircleStrangersBanner;
+
+  /// SCR-FAT-070 relatives
+  ///
+  /// In ar, this message translates to:
+  /// **'دائرة الأقارب الموثوقة'**
+  String get outerCircleRelativesHeading;
+
+  /// SCR-FAT-070 friends
+  ///
+  /// In ar, this message translates to:
+  /// **'الأصدقاء المعتمدون'**
+  String get outerCircleFriendsHeading;
+
+  /// SCR-FAT-070 schedule
+  ///
+  /// In ar, this message translates to:
+  /// **'جدول أوقات التواصل الخارجي'**
+  String get outerCircleScheduleHeading;
+
+  /// SCR-FAT-070 schedule note
+  ///
+  /// In ar, this message translates to:
+  /// **'الأصدقاء: بعد المدرسة حتى أذان المغرب (٤–٧ م) · الأقارب: مفتوح دائمًا'**
+  String get outerCircleScheduleFriendsEvening;
+
+  /// SCR-FAT-070 Rule 23 key
+  ///
+  /// In ar, this message translates to:
+  /// **'الجد'**
+  String get outerCircleNameGrandpa;
+
+  /// SCR-FAT-070 Rule 23 key
+  ///
+  /// In ar, this message translates to:
+  /// **'الخالة'**
+  String get outerCircleNameAunt;
+
+  /// SCR-FAT-070 Rule 23 key
+  ///
+  /// In ar, this message translates to:
+  /// **'الصديق الأول'**
+  String get outerCircleNameFriendOne;
+
+  /// SCR-FAT-070 Rule 23 key
+  ///
+  /// In ar, this message translates to:
+  /// **'صديق بانتظار الموافقة'**
+  String get outerCircleNamePendingFriend;
+
+  /// SCR-FAT-070 meta
+  ///
+  /// In ar, this message translates to:
+  /// **'مكالمات + رسائل في أي وقت'**
+  String get outerCircleMetaCallsAnytime;
+
+  /// SCR-FAT-070 meta
+  ///
+  /// In ar, this message translates to:
+  /// **'رسائل ومكالمات'**
+  String get outerCircleMetaMessagesCalls;
+
+  /// SCR-FAT-070 meta
+  ///
+  /// In ar, this message translates to:
+  /// **'زميل معتمد · جدول التواصل ٤–٧ م'**
+  String get outerCircleMetaClassmateSlot;
+
+  /// SCR-FAT-070 meta
+  ///
+  /// In ar, this message translates to:
+  /// **'زميل دراسة · ينتظر قرارك الآن'**
+  String get outerCircleMetaClassmatePending;
+
+  /// SCR-FAT-070 status
+  ///
+  /// In ar, this message translates to:
+  /// **'معتمد ✓'**
+  String get outerCircleStatusApproved;
+
+  /// SCR-FAT-070 status
+  ///
+  /// In ar, this message translates to:
+  /// **'معتمد دائمًا'**
+  String get outerCircleStatusAlwaysApproved;
+
+  /// SCR-FAT-070 status
+  ///
+  /// In ar, this message translates to:
+  /// **'بانتظار'**
+  String get outerCircleStatusPending;
+
+  /// SCR-FAT-070 pending title
+  ///
+  /// In ar, this message translates to:
+  /// **'{name} — طلب جديد'**
+  String outerCirclePendingTitle(String name);
+
+  /// SCR-FAT-070 → FAT-071
+  ///
+  /// In ar, this message translates to:
+  /// **'قرار ←'**
+  String get outerCirclePendingCta;
+
+  /// SCR-FAT-070 pending a11y
+  ///
+  /// In ar, this message translates to:
+  /// **'طلب صداقة بانتظار الموافقة من {name}'**
+  String outerCirclePendingSemantics(String name);
+
+  /// SCR-FAT-070 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'الدائرة الخارجية فارغة'**
+  String get outerCircleEmptyTitle;
+
+  /// SCR-FAT-070 empty message
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف ابناً لإدارة الأقارب الموثوقين والأصدقاء المعتمدين. المجهولون يبقون محظورين.'**
+  String get outerCircleEmptyMessage;
+
+  /// SCR-FAT-070 → FAT-003
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة ابن'**
+  String get outerCircleEmptyCta;
+
+  /// SCR-FAT-070 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل الدائرة الخارجية'**
+  String get outerCircleLoadingSemantics;
+
+  /// SCR-FAT-070 child lean
+  ///
+  /// In ar, this message translates to:
+  /// **'الدائرة الخارجية'**
+  String get outerCircleChildLeanTitle;
+
+  /// SCR-FAT-070 child lean message
+  ///
+  /// In ar, this message translates to:
+  /// **'الوالدان يديران جهات التواصل الموثوقة. محادثاتك تبقى مع من يعتمدونهم.'**
+  String get outerCircleChildLeanMessage;
+
+  /// SCR-FAT-070 SOS
+  ///
+  /// In ar, this message translates to:
+  /// **'نداء الطوارئ'**
+  String get outerCircleSosCta;
+
+  /// SCR-FAT-071 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'طلب صديق جديد'**
+  String get friendApprovalTitle;
+
+  /// SCR-FAT-071 Rule 23 key
+  ///
+  /// In ar, this message translates to:
+  /// **'صديق بانتظار الموافقة'**
+  String get friendApprovalNamePending;
+
+  /// SCR-FAT-071 school meta
+  ///
+  /// In ar, this message translates to:
+  /// **'زميل في المدرسة'**
+  String get friendApprovalSchoolClassmate;
+
+  /// SCR-FAT-071 Rule 23 key
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن الأول'**
+  String get friendApprovalChildOne;
+
+  /// SCR-FAT-071 Rule 23 key
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن الثاني'**
+  String get friendApprovalChildTwo;
+
+  /// SCR-FAT-071 Rule 23 key
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن الثالث'**
+  String get friendApprovalChildThree;
+
+  /// SCR-FAT-071 profile sub
+  ///
+  /// In ar, this message translates to:
+  /// **'زميل {child} ({school}) — أرسل الطلب اليوم'**
+  String friendApprovalProfileSub(String child, String school);
+
+  /// SCR-FAT-071 channels
+  ///
+  /// In ar, this message translates to:
+  /// **'قنوات التواصل المسموحة'**
+  String get friendApprovalChannelsHeading;
+
+  /// SCR-FAT-071 channel
+  ///
+  /// In ar, this message translates to:
+  /// **'رسائل نصية آمنة'**
+  String get friendApprovalChannelText;
+
+  /// SCR-FAT-071 channel
+  ///
+  /// In ar, this message translates to:
+  /// **'مكالمات صوتية'**
+  String get friendApprovalChannelCalls;
+
+  /// SCR-FAT-071 channel
+  ///
+  /// In ar, this message translates to:
+  /// **'ضمن جدول التواصل'**
+  String get friendApprovalChannelSchedule;
+
+  /// SCR-FAT-071 channel sub
+  ///
+  /// In ar, this message translates to:
+  /// **'٤–٧ مساءً فقط'**
+  String get friendApprovalChannelScheduleSub;
+
+  /// SCR-FAT-071 auto tag
+  ///
+  /// In ar, this message translates to:
+  /// **'تلقائي'**
+  String get friendApprovalScheduleAutoTag;
+
+  /// SCR-FAT-071 approve
+  ///
+  /// In ar, this message translates to:
+  /// **'اعتماد الصداقة كصديق آمن'**
+  String get friendApprovalApproveCta;
+
+  /// SCR-FAT-071 decline
+  ///
+  /// In ar, this message translates to:
+  /// **'ليس الآن (اعتذار بلطف)'**
+  String get friendApprovalDeclineCta;
+
+  /// SCR-FAT-071 approve toast
+  ///
+  /// In ar, this message translates to:
+  /// **'تم اعتماد {name} كصديق آمن — وأُخطر {child} بفرحة'**
+  String friendApprovalApprovedToast(String name, String child);
+
+  /// SCR-FAT-071 decline toast
+  ///
+  /// In ar, this message translates to:
+  /// **'أُرسل الرد اللطيف لـ {child}: «طلب {name} يحتاج وقتاً — سنناقشه معاً»'**
+  String friendApprovalDeclinedToast(String child, String name);
+
+  /// SCR-FAT-071 observer
+  ///
+  /// In ar, this message translates to:
+  /// **'الاعتماد لمستوى «مشاركة» فما فوق — يمكنك الاطلاع'**
+  String get friendApprovalObserverHint;
+
+  /// SCR-FAT-071 blocked toast
+  ///
+  /// In ar, this message translates to:
+  /// **'اعتماد الأصدقاء يحتاج مستوى مشاركة أو أعلى'**
+  String get friendApprovalObserverBlocked;
+
+  /// SCR-FAT-071 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا طلب صداقة بانتظار'**
+  String get friendApprovalEmptyTitle;
+
+  /// SCR-FAT-071 empty message
+  ///
+  /// In ar, this message translates to:
+  /// **'افتح الدائرة الخارجية عندما ينتظر طلب زميل جديد قرارك.'**
+  String get friendApprovalEmptyMessage;
+
+  /// SCR-FAT-071 → FAT-070
+  ///
+  /// In ar, this message translates to:
+  /// **'عودة للدائرة الخارجية'**
+  String get friendApprovalEmptyCta;
+
+  /// SCR-FAT-071 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل طلب الصداقة'**
+  String get friendApprovalLoadingSemantics;
+
+  /// SCR-FAT-071 child lean
+  ///
+  /// In ar, this message translates to:
+  /// **'موافقة صديق'**
+  String get friendApprovalChildLeanTitle;
+
+  /// SCR-FAT-071 child lean message
+  ///
+  /// In ar, this message translates to:
+  /// **'الوالدان يعتمدون الأصدقاء الجدد. دائرتك الموثوقة تبقى آمنة.'**
+  String get friendApprovalChildLeanMessage;
+
+  /// SCR-FAT-071 SOS
+  ///
+  /// In ar, this message translates to:
+  /// **'نداء الطوارئ'**
+  String get friendApprovalSosCta;
+
+  /// SCR-FAT-072 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'متابعة حفظ القرآن'**
+  String get quranProgressTitle;
+
+  /// SCR-FAT-072 heading
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظ وتلاوة {name}'**
+  String quranProgressHeading(String name);
+
+  /// SCR-FAT-072 tag
+  ///
+  /// In ar, this message translates to:
+  /// **'الورد الحالي النشط'**
+  String get quranProgressActiveWardTag;
+
+  /// SCR-FAT-072 tag
+  ///
+  /// In ar, this message translates to:
+  /// **'أوفلاين متاح'**
+  String get quranProgressOfflineTag;
+
+  /// SCR-FAT-072 surah title
+  ///
+  /// In ar, this message translates to:
+  /// **'سورة {surah}'**
+  String quranProgressSurahTitle(String surah);
+
+  /// SCR-FAT-072 ayah range
+  ///
+  /// In ar, this message translates to:
+  /// **'الآيات ({from}–{to}) · بصوت {reciter}'**
+  String quranProgressAyahRange(int from, int to, String reciter);
+
+  /// SCR-FAT-072 progress
+  ///
+  /// In ar, this message translates to:
+  /// **'أنجز {done} من {total} آية'**
+  String quranProgressCompleted(int done, int total);
+
+  /// SCR-FAT-072 streak
+  ///
+  /// In ar, this message translates to:
+  /// **'🔥 {days} أيام التزام متواصلة'**
+  String quranProgressStreak(int days);
+
+  /// SCR-FAT-072 download heading
+  ///
+  /// In ar, this message translates to:
+  /// **'لوحة تنزيل التلاوة لجهاز {name}'**
+  String quranProgressDownloadHeading(String name);
+
+  /// SCR-FAT-072 installed
+  ///
+  /// In ar, this message translates to:
+  /// **'مثبتة بالجهاز ✓'**
+  String get quranProgressInstalledTag;
+
+  /// SCR-FAT-072 download body
+  ///
+  /// In ar, this message translates to:
+  /// **'التلاوة الصوتية لسورة «{surah}» محملة على جهاز {name} بحجم {size}، ومتاحة للاستماع والترديد حتى مع انقطاع الإنترنت.'**
+  String quranProgressDownloadBody(String surah, String size, String name);
+
+  /// SCR-FAT-072 download CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'تنزيل سورة أو صوت شيخ جديد لجهاز {name}'**
+  String quranProgressDownloadCta(String name);
+
+  /// SCR-FAT-072 download toast
+  ///
+  /// In ar, this message translates to:
+  /// **'أُضيف التنزيل لطابور جهاز {name}'**
+  String quranProgressDownloadToast(String name);
+
+  /// SCR-FAT-072 recitation
+  ///
+  /// In ar, this message translates to:
+  /// **'تلاوة جديدة بانتظار استماعك'**
+  String get quranProgressRecitationHeading;
+
+  /// SCR-FAT-072 new tag
+  ///
+  /// In ar, this message translates to:
+  /// **'جديد'**
+  String get quranProgressNewTag;
+
+  /// SCR-FAT-072 approved tag
+  ///
+  /// In ar, this message translates to:
+  /// **'تم الاعتماد ✓'**
+  String get quranProgressApprovedTag;
+
+  /// SCR-FAT-072 recitation sub
+  ///
+  /// In ar, this message translates to:
+  /// **'سجّل {name} تلاوته لسورة {surah} (الآيات ١٦–٢٠):'**
+  String quranProgressRecitationSub(String name, String surah);
+
+  /// SCR-FAT-072 clip title
+  ///
+  /// In ar, this message translates to:
+  /// **'تلاوة {name} — سورة {surah}'**
+  String quranProgressRecitationClip(String name, String surah);
+
+  /// SCR-FAT-072 duration
+  ///
+  /// In ar, this message translates to:
+  /// **'١:٢٤ د'**
+  String get quranProgressClipDuration;
+
+  /// SCR-FAT-072 play a11y
+  ///
+  /// In ar, this message translates to:
+  /// **'تشغيل أو إيقاف التلاوة'**
+  String get quranProgressPlaySemantics;
+
+  /// SCR-FAT-072 approve CTA minutes-only
+  ///
+  /// In ar, this message translates to:
+  /// **'اعتماد وصرف المكافأة (+{minutes} د)'**
+  String quranProgressApproveCta(int minutes);
+
+  /// SCR-FAT-072 whisper
+  ///
+  /// In ar, this message translates to:
+  /// **'همسة 💬'**
+  String get quranProgressWhisperCta;
+
+  /// SCR-FAT-072 approve toast
+  ///
+  /// In ar, this message translates to:
+  /// **'تم اعتماد تلاوة {name} وإضافة +{minutes} دقيقة لوقت اللعب'**
+  String quranProgressApproveToast(String name, int minutes);
+
+  /// SCR-FAT-072 whisper toast
+  ///
+  /// In ar, this message translates to:
+  /// **'أُرسلت همسة تشجيعية لـ {name}'**
+  String quranProgressWhisperToast(String name);
+
+  /// SCR-FAT-072 approved banner
+  ///
+  /// In ar, this message translates to:
+  /// **'⭐ تم اعتماد هذا الورد وصرف مكافأة +{minutes} دقيقة بنجاح'**
+  String quranProgressApprovedBanner(int minutes);
+
+  /// SCR-FAT-072 plan
+  ///
+  /// In ar, this message translates to:
+  /// **'خطة الورد والمكافأة'**
+  String get quranProgressPlanHeading;
+
+  /// SCR-FAT-072 plan row
+  ///
+  /// In ar, this message translates to:
+  /// **'السورة الحالية'**
+  String get quranProgressPlanSurah;
+
+  /// SCR-FAT-072 plan row
+  ///
+  /// In ar, this message translates to:
+  /// **'الشيخ المقرئ'**
+  String get quranProgressPlanReciter;
+
+  /// SCR-FAT-072 plan row
+  ///
+  /// In ar, this message translates to:
+  /// **'مكافأة الإتمام'**
+  String get quranProgressPlanReward;
+
+  /// SCR-FAT-072 reward value minutes-only
+  ///
+  /// In ar, this message translates to:
+  /// **'+{minutes} دقيقة لعب للمحفظة'**
+  String quranProgressPlanRewardValue(int minutes);
+
+  /// SCR-FAT-072 surah key
+  ///
+  /// In ar, this message translates to:
+  /// **'النبأ'**
+  String get quranProgressSurahNaba;
+
+  /// SCR-FAT-072 reciter key
+  ///
+  /// In ar, this message translates to:
+  /// **'المقرئ الافتراضي'**
+  String get quranProgressReciterDefault;
+
+  /// SCR-FAT-072 size key
+  ///
+  /// In ar, this message translates to:
+  /// **'١٨.٤ م.ب'**
+  String get quranProgressAudioSize184;
+
+  /// SCR-FAT-072 Rule 23 key
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن الأول'**
+  String get quranProgressChildOne;
+
+  /// SCR-FAT-072 Rule 23 key
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن الثاني'**
+  String get quranProgressChildTwo;
+
+  /// SCR-FAT-072 Rule 23 key
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن الثالث'**
+  String get quranProgressChildThree;
+
+  /// SCR-FAT-072 observer
+  ///
+  /// In ar, this message translates to:
+  /// **'اعتماد التلاوة لمستوى «مشاركة» فما فوق — يمكنك متابعة التقدم'**
+  String get quranProgressObserverHint;
+
+  /// SCR-FAT-072 blocked toast
+  ///
+  /// In ar, this message translates to:
+  /// **'اعتماد مكافآت القرآن يحتاج مستوى مشاركة أو أعلى'**
+  String get quranProgressObserverBlocked;
+
+  /// SCR-FAT-072 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا ورد قرآن بعد'**
+  String get quranProgressEmptyTitle;
+
+  /// SCR-FAT-072 empty message
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف ابناً لضبط خطة الورد وتنزيل التلاوة أوفلاين واعتماد التلاوات بمكافآت الدقائق.'**
+  String get quranProgressEmptyMessage;
+
+  /// SCR-FAT-072 → FAT-003
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة ابن'**
+  String get quranProgressEmptyCta;
+
+  /// SCR-FAT-072 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل تقدم القرآن'**
+  String get quranProgressLoadingSemantics;
+
+  /// SCR-FAT-072 child lean
+  ///
+  /// In ar, this message translates to:
+  /// **'تقدم القرآن'**
+  String get quranProgressChildLeanTitle;
+
+  /// SCR-FAT-072 child lean message
+  ///
+  /// In ar, this message translates to:
+  /// **'الوالدان يتابعان وردك ويعتمدون التلاوة. وقت القرآن لا يُقفل بانتهاء الدقائق.'**
+  String get quranProgressChildLeanMessage;
+
+  /// SCR-FAT-072 SOS
+  ///
+  /// In ar, this message translates to:
+  /// **'نداء الطوارئ'**
+  String get quranProgressSosCta;
+
+  /// SCR-FAT-073 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'التقرير الأسبوعي بتوصية'**
+  String get weeklyReportTitle;
+
+  /// SCR-FAT-073 settings
+  ///
+  /// In ar, this message translates to:
+  /// **'إعدادات تقريرك'**
+  String get weeklyReportSettingsHeading;
+
+  /// SCR-FAT-073 settings tag
+  ///
+  /// In ar, this message translates to:
+  /// **'يتبعها التقرير فورًا'**
+  String get weeklyReportSettingsTag;
+
+  /// SCR-FAT-073 when
+  ///
+  /// In ar, this message translates to:
+  /// **'التوقيت'**
+  String get weeklyReportWhenLabel;
+
+  /// SCR-FAT-073 when value
+  ///
+  /// In ar, this message translates to:
+  /// **'الجمعة صباحًا'**
+  String get weeklyReportWhenFriday;
+
+  /// SCR-FAT-073 when value
+  ///
+  /// In ar, this message translates to:
+  /// **'السبت مساءً'**
+  String get weeklyReportWhenSaturday;
+
+  /// SCR-FAT-073 when toast
+  ///
+  /// In ar, this message translates to:
+  /// **'توقيت التقرير: {when}'**
+  String weeklyReportWhenToast(String when);
+
+  /// SCR-FAT-073 style
+  ///
+  /// In ar, this message translates to:
+  /// **'الشكل'**
+  String get weeklyReportStyleLabel;
+
+  /// SCR-FAT-073 style value
+  ///
+  /// In ar, this message translates to:
+  /// **'مفصل'**
+  String get weeklyReportStyleDetailed;
+
+  /// SCR-FAT-073 style value
+  ///
+  /// In ar, this message translates to:
+  /// **'مختصر'**
+  String get weeklyReportStyleBrief;
+
+  /// SCR-FAT-073 change
+  ///
+  /// In ar, this message translates to:
+  /// **'تغيير'**
+  String get weeklyReportChangeCta;
+
+  /// SCR-FAT-073 toggle
+  ///
+  /// In ar, this message translates to:
+  /// **'تبديل'**
+  String get weeklyReportToggleCta;
+
+  /// SCR-FAT-073 include
+  ///
+  /// In ar, this message translates to:
+  /// **'وقت الشاشة'**
+  String get weeklyReportIncScreen;
+
+  /// SCR-FAT-073 include
+  ///
+  /// In ar, this message translates to:
+  /// **'المواقع'**
+  String get weeklyReportIncPlaces;
+
+  /// SCR-FAT-073 include
+  ///
+  /// In ar, this message translates to:
+  /// **'الإنجازات'**
+  String get weeklyReportIncWins;
+
+  /// SCR-FAT-073 include
+  ///
+  /// In ar, this message translates to:
+  /// **'القرآن'**
+  String get weeklyReportIncQuran;
+
+  /// SCR-FAT-073 include
+  ///
+  /// In ar, this message translates to:
+  /// **'الرقابة'**
+  String get weeklyReportIncWatch;
+
+  /// SCR-FAT-073 tip
+  ///
+  /// In ar, this message translates to:
+  /// **'توصية الأسبوع — واحدة فقط'**
+  String get weeklyReportRecommendHeading;
+
+  /// SCR-FAT-073 tip body Rule 23
+  ///
+  /// In ar, this message translates to:
+  /// **'رياضيات {name} تتحسن بثبات، لكن نومه يتأخر الخميس والجمعة ويهبط تركيزه السبت. جرّب تقديم «وضع النوم» ٣٠ دقيقة في العطلة.'**
+  String weeklyReportRecommendBody(String name);
+
+  /// SCR-FAT-073 apply — parent approve
+  ///
+  /// In ar, this message translates to:
+  /// **'طبّق الاقتراح'**
+  String get weeklyReportApplyCta;
+
+  /// SCR-FAT-073 defer
+  ///
+  /// In ar, this message translates to:
+  /// **'ليس الآن'**
+  String get weeklyReportDeferCta;
+
+  /// SCR-FAT-073 apply toast
+  ///
+  /// In ar, this message translates to:
+  /// **'عُدّل جدول النوم — بتدرج لطيف على أسبوعين'**
+  String get weeklyReportApplyToast;
+
+  /// SCR-FAT-073 defer toast
+  ///
+  /// In ar, this message translates to:
+  /// **'حسنًا — سيعيد مستشار العائلة التقييم الجمعة القادمة'**
+  String get weeklyReportDeferToast;
+
+  /// SCR-FAT-073 applied
+  ///
+  /// In ar, this message translates to:
+  /// **'✓ طُبّق الاقتراح بموافقتك'**
+  String get weeklyReportAppliedBanner;
+
+  /// SCR-FAT-073 deferred
+  ///
+  /// In ar, this message translates to:
+  /// **'أُجّل حتى مراجعة الجمعة القادمة'**
+  String get weeklyReportDeferredBanner;
+
+  /// SCR-FAT-073 metric
+  ///
+  /// In ar, this message translates to:
+  /// **'تعلم'**
+  String get weeklyReportMetricLearn;
+
+  /// SCR-FAT-073 metric
+  ///
+  /// In ar, this message translates to:
+  /// **'نوم'**
+  String get weeklyReportMetricSleep;
+
+  /// SCR-FAT-073 learn delta
+  ///
+  /// In ar, this message translates to:
+  /// **'↑ {percent}٪'**
+  String weeklyReportLearnDelta(int percent);
+
+  /// SCR-FAT-073 sleep delta
+  ///
+  /// In ar, this message translates to:
+  /// **'↓ {minutes} د'**
+  String weeklyReportSleepDelta(int minutes);
+
+  /// SCR-FAT-073 section
+  ///
+  /// In ar, this message translates to:
+  /// **'وقت الشاشة'**
+  String get weeklyReportSecScreenTitle;
+
+  /// SCR-FAT-073 section body
+  ///
+  /// In ar, this message translates to:
+  /// **'المعدل ٢ س ١٢ د يوميًا — ضمن الحد. الخميس الأعلى (٣ س).'**
+  String get weeklyReportSecScreenBody;
+
+  /// SCR-FAT-073 section
+  ///
+  /// In ar, this message translates to:
+  /// **'المواقع'**
+  String get weeklyReportSecPlacesTitle;
+
+  /// SCR-FAT-073 section body
+  ///
+  /// In ar, this message translates to:
+  /// **'كل التحركات ضمن المناطق الآمنة. مكان جديد واحد هذا الأسبوع.'**
+  String get weeklyReportSecPlacesBody;
+
+  /// SCR-FAT-073 section
+  ///
+  /// In ar, this message translates to:
+  /// **'الإنجازات'**
+  String get weeklyReportSecWinsTitle;
+
+  /// SCR-FAT-073 wins Rule 23
+  ///
+  /// In ar, this message translates to:
+  /// **'{one}: ورد كامل + ٥ جلسات تركيز · {two}: تحدي العلوم · {three}: أذكار ٧/٧.'**
+  String weeklyReportSecWinsBody(String one, String two, String three);
+
+  /// SCR-FAT-073 section
+  ///
+  /// In ar, this message translates to:
+  /// **'القرآن'**
+  String get weeklyReportSecQuranTitle;
+
+  /// SCR-FAT-073 section body
+  ///
+  /// In ar, this message translates to:
+  /// **'سورة النبأ: ٢٧/٤٠ آية — تسميع الثلاثاء معتمد.'**
+  String get weeklyReportSecQuranBody;
+
+  /// SCR-FAT-073 section
+  ///
+  /// In ar, this message translates to:
+  /// **'الرقابة الذكية'**
+  String get weeklyReportSecWatchTitle;
+
+  /// SCR-FAT-073 section body
+  ///
+  /// In ar, this message translates to:
+  /// **'تنبيهان كهرمانيان — عولجا بالحوار. لا شيء أحمر.'**
+  String get weeklyReportSecWatchBody;
+
+  /// SCR-FAT-073 email
+  ///
+  /// In ar, this message translates to:
+  /// **'وصلتك نسخة بريدية — وللأم ملخصها حسب مستواها.'**
+  String get weeklyReportEmailBanner;
+
+  /// SCR-FAT-073 Rule 23
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن الأول'**
+  String get weeklyReportChildOne;
+
+  /// SCR-FAT-073 Rule 23
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن الثاني'**
+  String get weeklyReportChildTwo;
+
+  /// SCR-FAT-073 Rule 23
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن الثالث'**
+  String get weeklyReportChildThree;
+
+  /// SCR-FAT-073 observer
+  ///
+  /// In ar, this message translates to:
+  /// **'تطبيق التوصيات لمستوى «مشاركة» فما فوق — يمكنك قراءة التقرير'**
+  String get weeklyReportObserverHint;
+
+  /// SCR-FAT-073 blocked
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل التقرير الأسبوعي يحتاج مستوى مشاركة أو أعلى'**
+  String get weeklyReportObserverBlocked;
+
+  /// SCR-FAT-073 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا تقرير أسبوعي بعد'**
+  String get weeklyReportEmptyTitle;
+
+  /// SCR-FAT-073 empty message
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف ابناً لتصلك توصية واحدة مركزة مع خلاصات الأقسام كل أسبوع.'**
+  String get weeklyReportEmptyMessage;
+
+  /// SCR-FAT-073 → FAT-003
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة ابن'**
+  String get weeklyReportEmptyCta;
+
+  /// SCR-FAT-073 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل التقرير الأسبوعي'**
+  String get weeklyReportLoadingSemantics;
+
+  /// SCR-FAT-073 child lean
+  ///
+  /// In ar, this message translates to:
+  /// **'التقرير الأسبوعي'**
+  String get weeklyReportChildLeanTitle;
+
+  /// SCR-FAT-073 child lean message
+  ///
+  /// In ar, this message translates to:
+  /// **'توصيات الأسبوع للوالدين. جهازك يبقى صادقًا بأن الحماية نشطة.'**
+  String get weeklyReportChildLeanMessage;
+
+  /// SCR-FAT-073 SOS
+  ///
+  /// In ar, this message translates to:
+  /// **'نداء الطوارئ'**
+  String get weeklyReportSosCta;
+
+  /// SCR-FAT-074 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'مستشار العائلة'**
+  String get familyAdvisorHubTitle;
+
+  /// SCR-FAT-074 greeting — no planted names
+  ///
+  /// In ar, this message translates to:
+  /// **'مساء الخير'**
+  String get familyAdvisorHubGreeting;
+
+  /// SCR-FAT-074 subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'كيف أساعدك مع عائلتك اليوم؟'**
+  String get familyAdvisorHubSubtitle;
+
+  /// SCR-FAT-074 chip
+  ///
+  /// In ar, this message translates to:
+  /// **'كيف كان يوم أبنائي؟'**
+  String get familyAdvisorHubChipDay;
+
+  /// SCR-FAT-074 chip
+  ///
+  /// In ar, this message translates to:
+  /// **'أعطني تقرير الأسبوع بتوصية'**
+  String get familyAdvisorHubChipWeekly;
+
+  /// SCR-FAT-074 chip
+  ///
+  /// In ar, this message translates to:
+  /// **'اقترح نشاطًا عائليًا لعطلتنا'**
+  String get familyAdvisorHubChipActivity;
+
+  /// SCR-FAT-074 chip
+  ///
+  /// In ar, this message translates to:
+  /// **'أرني أنماط عائلتي'**
+  String get familyAdvisorHubChipPatterns;
+
+  /// SCR-FAT-074 sheet toast
+  ///
+  /// In ar, this message translates to:
+  /// **'يوم هادئ: الواجبات أُنجزت والورد اكتمل — ملاحظة بطارية واحدة فقط. ابدأ بالحمد.'**
+  String get familyAdvisorHubSheetDay;
+
+  /// SCR-FAT-074 sheet toast
+  ///
+  /// In ar, this message translates to:
+  /// **'الجو غدًا لطيف — رحلة لمشتل ثم زراعة شتلة معًا؟'**
+  String get familyAdvisorHubSheetActivity;
+
+  /// SCR-FAT-074 caps
+  ///
+  /// In ar, this message translates to:
+  /// **'قدرات مستشار العائلة'**
+  String get familyAdvisorHubCapsHeading;
+
+  /// SCR-FAT-074 sovereignty
+  ///
+  /// In ar, this message translates to:
+  /// **'أنت سيد المستشار'**
+  String get familyAdvisorHubSovHeading;
+
+  /// SCR-FAT-074 cap
+  ///
+  /// In ar, this message translates to:
+  /// **'المحادثة الصوتية'**
+  String get familyAdvisorHubCapVoice;
+
+  /// SCR-FAT-074 cap sub
+  ///
+  /// In ar, this message translates to:
+  /// **'تحدث معه وأنت مشغول اليدين'**
+  String get familyAdvisorHubCapVoiceSub;
+
+  /// SCR-FAT-074 cap
+  ///
+  /// In ar, this message translates to:
+  /// **'المساعد المفوَّض'**
+  String get familyAdvisorHubCapDelegate;
+
+  /// SCR-FAT-074 cap sub
+  ///
+  /// In ar, this message translates to:
+  /// **'ينفذ فقط ما فوضته كتابةً'**
+  String get familyAdvisorHubCapDelegateSub;
+
+  /// SCR-FAT-074 cap
+  ///
+  /// In ar, this message translates to:
+  /// **'خرائط معرفة الأبناء'**
+  String get familyAdvisorHubCapMaps;
+
+  /// SCR-FAT-074 cap sub
+  ///
+  /// In ar, this message translates to:
+  /// **'أين يتقن كل ابن وأين يتعثر'**
+  String get familyAdvisorHubCapMapsSub;
+
+  /// SCR-FAT-074 cap
+  ///
+  /// In ar, this message translates to:
+  /// **'إخطارات الأم'**
+  String get familyAdvisorHubCapMother;
+
+  /// SCR-FAT-074 cap sub
+  ///
+  /// In ar, this message translates to:
+  /// **'ما يصلها حسب مستواها'**
+  String get familyAdvisorHubCapMotherSub;
+
+  /// SCR-FAT-074 cap
+  ///
+  /// In ar, this message translates to:
+  /// **'حدود المستشار وصلاحياته'**
+  String get familyAdvisorHubCapLimits;
+
+  /// SCR-FAT-074 cap sub
+  ///
+  /// In ar, this message translates to:
+  /// **'ماذا يرى — قرارك دائمًا'**
+  String get familyAdvisorHubCapLimitsSub;
+
+  /// SCR-FAT-074 cap
+  ///
+  /// In ar, this message translates to:
+  /// **'ماذا فعل المساعد'**
+  String get familyAdvisorHubCapAgentLog;
+
+  /// SCR-FAT-074 cap sub
+  ///
+  /// In ar, this message translates to:
+  /// **'سجل دائم لكل تصرف مفوَّض'**
+  String get familyAdvisorHubCapAgentLogSub;
+
+  /// SCR-FAT-074 honesty Q Rule 23
+  ///
+  /// In ar, this message translates to:
+  /// **'هل يستخدم الابن الأول يوتيوب أثناء المذاكرة؟'**
+  String get familyAdvisorHubHonestyQ;
+
+  /// SCR-FAT-074 honesty A
+  ///
+  /// In ar, this message translates to:
+  /// **'لا أعلم بدقة كافية. متابعة التشغيل المتزامن غير مفعّلة على جهازه — أخبرك بحدودي بدل أن أخمّن. أفعّلها لك؟'**
+  String get familyAdvisorHubHonestyA;
+
+  /// SCR-FAT-074 ask hint
+  ///
+  /// In ar, this message translates to:
+  /// **'اسأل عن أي شيء يخص عائلتك…'**
+  String get familyAdvisorHubAskHint;
+
+  /// SCR-FAT-074 ask send
+  ///
+  /// In ar, this message translates to:
+  /// **'إرسال السؤال'**
+  String get familyAdvisorHubAskSendSemantics;
+
+  /// SCR-FAT-074 ask toast
+  ///
+  /// In ar, this message translates to:
+  /// **'يفكر… إجابته من بيانات عائلتك وحدها — وبصدق «لا أعلم» عند النقص'**
+  String get familyAdvisorHubAskToast;
+
+  /// SCR-FAT-074 footer
+  ///
+  /// In ar, this message translates to:
+  /// **'يجيب من بيانات عائلتك فقط · لا يخمّن أبدًا'**
+  String get familyAdvisorHubFooter;
+
+  /// SCR-FAT-074 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'مستشار العائلة بانتظارك'**
+  String get familyAdvisorHubEmptyTitle;
+
+  /// SCR-FAT-074 empty message
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف ابناً ليجيب المستشار من بيانات العائلة الحقيقية — دون اختراع.'**
+  String get familyAdvisorHubEmptyMessage;
+
+  /// SCR-FAT-074 → FAT-003
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة ابن'**
+  String get familyAdvisorHubEmptyCta;
+
+  /// SCR-FAT-074 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل مستشار العائلة'**
+  String get familyAdvisorHubLoadingSemantics;
+
+  /// SCR-FAT-074 child lean
+  ///
+  /// In ar, this message translates to:
+  /// **'مستشار العائلة'**
+  String get familyAdvisorHubChildLeanTitle;
+
+  /// SCR-FAT-074 child lean message
+  ///
+  /// In ar, this message translates to:
+  /// **'محادثات مستشار العائلة للوالدين. أدوات المعلّم والقرآن تبقى متاحة لك.'**
+  String get familyAdvisorHubChildLeanMessage;
+
+  /// SCR-FAT-074 SOS
+  ///
+  /// In ar, this message translates to:
+  /// **'نداء الطوارئ'**
+  String get familyAdvisorHubSosCta;
+
+  /// SCR-FAT-076 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'إخطارات الذكاء للأم'**
+  String get motherAiFeedTitle;
+
+  /// SCR-FAT-076 father watch
+  ///
+  /// In ar, this message translates to:
+  /// **'أنت تشاهد ما يصل زوجتك — بهوية لوحتها'**
+  String get motherAiFeedFatherWatchBanner;
+
+  /// SCR-FAT-076 welcome
+  ///
+  /// In ar, this message translates to:
+  /// **'بصفتك شريكة في التوجيه، يمكنك إرسال همسات حب للأبناء أو تقديم توصيات للأب بلمسة واحدة.'**
+  String get motherAiFeedWelcomeBanner;
+
+  /// SCR-FAT-076 whisper
+  ///
+  /// In ar, this message translates to:
+  /// **'همسة واقتراح لليوم'**
+  String get motherAiFeedWhisperHeading;
+
+  /// SCR-FAT-076 tag
+  ///
+  /// In ar, this message translates to:
+  /// **'شراكة والدية'**
+  String get motherAiFeedPartnershipTag;
+
+  /// SCR-FAT-076 whisper body Rule 23
+  ///
+  /// In ar, this message translates to:
+  /// **'«{name} يبدو متعباً بعد تمرين النادي اليوم، ما رأيك أن نقدم موعد نومه ٣٠ دقيقة ونعوضه بوقت لعب إضافي غداً؟»'**
+  String motherAiFeedWhisperBody(String name);
+
+  /// SCR-FAT-076 whisper CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'إرسال الاقتراح للأب والابن'**
+  String get motherAiFeedWhisperCta;
+
+  /// SCR-FAT-076 whisper toast
+  ///
+  /// In ar, this message translates to:
+  /// **'أُرسلت الهمسة والاقتراح — أُخطر الأب وشُجّع الابن'**
+  String get motherAiFeedWhisperToast;
+
+  /// SCR-FAT-076 sent
+  ///
+  /// In ar, this message translates to:
+  /// **'✓ أُرسلت الهمسة بمحبة'**
+  String get motherAiFeedWhisperSentBanner;
+
+  /// SCR-FAT-076 summaries
+  ///
+  /// In ar, this message translates to:
+  /// **'خلاصات مستشار العائلة المخصصة لكِ'**
+  String get motherAiFeedSummariesHeading;
+
+  /// SCR-FAT-076 item
+  ///
+  /// In ar, this message translates to:
+  /// **'ملخص الأسبوع التربوي'**
+  String get motherAiFeedItemWeekTitle;
+
+  /// SCR-FAT-076 item body
+  ///
+  /// In ar, this message translates to:
+  /// **'{name} تحسن في الرياضيات بنسبة +١٥٪'**
+  String motherAiFeedItemMathBody(String name);
+
+  /// SCR-FAT-076 item
+  ///
+  /// In ar, this message translates to:
+  /// **'ملاحظة النوم'**
+  String get motherAiFeedItemSleepTitle;
+
+  /// SCR-FAT-076 item body
+  ///
+  /// In ar, this message translates to:
+  /// **'موعد نوم {name} تأخر في عطلة نهاية الأسبوع'**
+  String motherAiFeedItemSleepBody(String name);
+
+  /// SCR-FAT-076 tag
+  ///
+  /// In ar, this message translates to:
+  /// **'ممتاز'**
+  String get motherAiFeedTagExcellent;
+
+  /// SCR-FAT-076 tag
+  ///
+  /// In ar, this message translates to:
+  /// **'جيد'**
+  String get motherAiFeedTagGood;
+
+  /// SCR-FAT-076 tag
+  ///
+  /// In ar, this message translates to:
+  /// **'راقب'**
+  String get motherAiFeedTagWatch;
+
+  /// SCR-FAT-076 Rule 23
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن الأول'**
+  String get motherAiFeedChildOne;
+
+  /// SCR-FAT-076 observer
+  ///
+  /// In ar, this message translates to:
+  /// **'إرسال الهمسات لمستوى «مشاركة» فما فوق — يمكنك قراءة الخلاصات'**
+  String get motherAiFeedObserverHint;
+
+  /// SCR-FAT-076 blocked
+  ///
+  /// In ar, this message translates to:
+  /// **'إرسال اقتراحات الأم يحتاج مستوى مشاركة أو أعلى'**
+  String get motherAiFeedObserverBlocked;
+
+  /// SCR-FAT-076 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا لوحة أم بعد'**
+  String get motherAiFeedEmptyTitle;
+
+  /// SCR-FAT-076 empty message
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف ابناً لتظهر هنا إخطارات الأم حسب مستواها الثلاثي.'**
+  String get motherAiFeedEmptyMessage;
+
+  /// SCR-FAT-076 → FAT-003
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة ابن'**
+  String get motherAiFeedEmptyCta;
+
+  /// SCR-FAT-076 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل إخطارات الأم'**
+  String get motherAiFeedLoadingSemantics;
+
+  /// SCR-FAT-076 child lean
+  ///
+  /// In ar, this message translates to:
+  /// **'إخطارات الأم'**
+  String get motherAiFeedChildLeanTitle;
+
+  /// SCR-FAT-076 child lean message
+  ///
+  /// In ar, this message translates to:
+  /// **'اقتراحات شراكة الأم للوالدين. تشجيعاتك تصلك كهمسات.'**
+  String get motherAiFeedChildLeanMessage;
+
+  /// SCR-FAT-076 SOS
+  ///
+  /// In ar, this message translates to:
+  /// **'نداء الطوارئ'**
+  String get motherAiFeedSosCta;
+
+  /// SCR-FAT-077 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'السلامة على الطريق'**
+  String get roadSafetyTitle;
+
+  /// SCR-FAT-077 honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'تعمل عبر مستشعرات جوال الابن — أندرويد أولًا وعلى آيفون لاحقًا حسب أذونات آبل. نقولها بصدق.'**
+  String get roadSafetyHonestyBanner;
+
+  /// SCR-FAT-077 crash
+  ///
+  /// In ar, this message translates to:
+  /// **'كشف الحوادث'**
+  String get roadSafetyCrashTitle;
+
+  /// SCR-FAT-077 crash sub
+  ///
+  /// In ar, this message translates to:
+  /// **'ارتجاج قوي + توقف مفاجئ ← اتصال تحقق ثم تصعيد SOS'**
+  String get roadSafetyCrashSub;
+
+  /// SCR-FAT-077 report
+  ///
+  /// In ar, this message translates to:
+  /// **'تقرير قيادة الابن السائق'**
+  String get roadSafetyReportTitle;
+
+  /// SCR-FAT-077 report sub
+  ///
+  /// In ar, this message translates to:
+  /// **'سرعة، فرملة حادة، تشتت'**
+  String get roadSafetyReportSub;
+
+  /// SCR-FAT-077 weekly
+  ///
+  /// In ar, this message translates to:
+  /// **'أسبوعي'**
+  String get roadSafetyWeeklyTag;
+
+  /// SCR-FAT-077 phone
+  ///
+  /// In ar, this message translates to:
+  /// **'الجوال أثناء القيادة'**
+  String get roadSafetyPhoneTitle;
+
+  /// SCR-FAT-077 phone sub
+  ///
+  /// In ar, this message translates to:
+  /// **'تنبيه لطيف له — وملخص لك'**
+  String get roadSafetyPhoneSub;
+
+  /// SCR-FAT-077 trip
+  ///
+  /// In ar, this message translates to:
+  /// **'رحلة أمس — مثال توضيحي'**
+  String get roadSafetyTripHeading;
+
+  /// SCR-FAT-077 stat
+  ///
+  /// In ar, this message translates to:
+  /// **'أعلى سرعة'**
+  String get roadSafetyStatSpeed;
+
+  /// SCR-FAT-077 speed value
+  ///
+  /// In ar, this message translates to:
+  /// **'{kmh} كم/س'**
+  String roadSafetyStatSpeedValue(int kmh);
+
+  /// SCR-FAT-077 stat
+  ///
+  /// In ar, this message translates to:
+  /// **'فرملة حادة'**
+  String get roadSafetyStatBrakes;
+
+  /// SCR-FAT-077 brakes value
+  ///
+  /// In ar, this message translates to:
+  /// **'{count}'**
+  String roadSafetyStatBrakesValue(int count);
+
+  /// SCR-FAT-077 stat
+  ///
+  /// In ar, this message translates to:
+  /// **'لمس الجوال'**
+  String get roadSafetyStatPhone;
+
+  /// SCR-FAT-077 phone zero
+  ///
+  /// In ar, this message translates to:
+  /// **'صفر ✓'**
+  String get roadSafetyStatPhoneZero;
+
+  /// SCR-FAT-077 dialogue
+  ///
+  /// In ar, this message translates to:
+  /// **'خطوة الحوار: امدح «صفر لمس» أولًا — ثم اسأله عن سبب الفرملتين بهدوء.'**
+  String get roadSafetyDialogueStep;
+
+  /// SCR-FAT-077 observer
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل مفاتيح السلامة لمستوى «كامل» — يمكنك مراجعة الرحلات'**
+  String get roadSafetyObserverHint;
+
+  /// SCR-FAT-077 blocked
+  ///
+  /// In ar, this message translates to:
+  /// **'مفاتيح السلامة على الطريق تحتاج مستوى كامل أو الأب'**
+  String get roadSafetyObserverBlocked;
+
+  /// SCR-FAT-077 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا سلامة طريق بعد'**
+  String get roadSafetyEmptyTitle;
+
+  /// SCR-FAT-077 empty message
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف ابناً لتفعيل صدق أندرويد-أولًا وملخصات القيادة.'**
+  String get roadSafetyEmptyMessage;
+
+  /// SCR-FAT-077 → FAT-003
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة ابن'**
+  String get roadSafetyEmptyCta;
+
+  /// SCR-FAT-077 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل السلامة على الطريق'**
+  String get roadSafetyLoadingSemantics;
+
+  /// SCR-FAT-077 child lean
+  ///
+  /// In ar, this message translates to:
+  /// **'السلامة على الطريق'**
+  String get roadSafetyChildLeanTitle;
+
+  /// SCR-FAT-077 child lean message
+  ///
+  /// In ar, this message translates to:
+  /// **'إعدادات سلامة القيادة للوالدين. نداء الطوارئ يبقى متاحًا إن احتجت.'**
+  String get roadSafetyChildLeanMessage;
+
+  /// SCR-FAT-077 SOS
+  ///
+  /// In ar, this message translates to:
+  /// **'نداء الطوارئ'**
+  String get roadSafetySosCta;
+
+  /// SCR-CHD-025 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'وردي — حفظ وتلاوة'**
+  String get childQuranWardTitle;
+
+  /// SCR-CHD-025 surah
+  ///
+  /// In ar, this message translates to:
+  /// **'الملك'**
+  String get childQuranWardSurahMulk;
+
+  /// SCR-CHD-025 surah
+  ///
+  /// In ar, this message translates to:
+  /// **'النبأ'**
+  String get childQuranWardSurahNaba;
+
+  /// SCR-CHD-025 reciter
+  ///
+  /// In ar, this message translates to:
+  /// **'قارئ اختاره والدك'**
+  String get childQuranWardReciterDefault;
+
+  /// SCR-CHD-025 licensed ayah Mulk 16
+  ///
+  /// In ar, this message translates to:
+  /// **'ءَأَمِنتُم مَّن فِى ٱلسَّمَآءِ أَن يَخْسِفَ بِكُمُ ٱلْأَرْضَ فَإِذَا هِىَ تَمُورُ ﴿١٦﴾'**
+  String get childQuranWardAyahMulk16;
+
+  /// SCR-CHD-025 gift banner
+  ///
+  /// In ar, this message translates to:
+  /// **'🎁 أبوك أهداك {count, plural, =1{سورة جديدة} other{{count} سور جديدة}} — نصًا وتلاوة، جاهزة بلا إنترنت!'**
+  String childQuranWardGiftBanner(int count);
+
+  /// SCR-CHD-025 hero
+  ///
+  /// In ar, this message translates to:
+  /// **'وردك المحدد من والديك 🤍'**
+  String get childQuranWardParentsSet;
+
+  /// SCR-CHD-025 offline tag
+  ///
+  /// In ar, this message translates to:
+  /// **'📥 تلاوة محملة لجهازك'**
+  String get childQuranWardOfflineTag;
+
+  /// SCR-CHD-025 surah title
+  ///
+  /// In ar, this message translates to:
+  /// **'سورة {name}'**
+  String childQuranWardSurahTitle(String name);
+
+  /// SCR-CHD-025 ayah range
+  ///
+  /// In ar, this message translates to:
+  /// **'الآيات ({from}–{to}) · بصوت {reciter}'**
+  String childQuranWardAyahRange(int from, int to, String reciter);
+
+  /// SCR-CHD-025 reward minutes
+  ///
+  /// In ar, this message translates to:
+  /// **'🎁 مكافأة الإتمام: +{minutes} دقيقة لعب إضافية'**
+  String childQuranWardReward(int minutes);
+
+  /// SCR-CHD-025 offline note
+  ///
+  /// In ar, this message translates to:
+  /// **'تلاوة الشيخ مثبتة بجهازك — يمكنك الاستماع والترديد حتى لو انقطع الإنترنت.'**
+  String get childQuranWardOfflineNote;
+
+  /// SCR-CHD-025 voice of
+  ///
+  /// In ar, this message translates to:
+  /// **'بصوت {reciter}'**
+  String childQuranWardVoiceOf(String reciter);
+
+  /// SCR-CHD-025 play
+  ///
+  /// In ar, this message translates to:
+  /// **'استمع وردّد مع الشيخ'**
+  String get childQuranWardPlayCta;
+
+  /// SCR-CHD-025 record
+  ///
+  /// In ar, this message translates to:
+  /// **'سجّل تلاوتك لوالديك'**
+  String get childQuranWardRecordCta;
+
+  /// SCR-CHD-025 play toast
+  ///
+  /// In ar, this message translates to:
+  /// **'▶️ جاري تشغيل تلاوة الشيخ من ملفات جهازك (أوفلاين)'**
+  String get childQuranWardPlayToast;
+
+  /// SCR-CHD-025 record toast
+  ///
+  /// In ar, this message translates to:
+  /// **'تم إرسال التسجيل لوالديك وبانتظار التقييم'**
+  String get childQuranWardRecordToast;
+
+  /// SCR-CHD-025 status
+  ///
+  /// In ar, this message translates to:
+  /// **'حالة التسميع اليوم'**
+  String get childQuranWardStatusHeading;
+
+  /// SCR-CHD-025 approved
+  ///
+  /// In ar, this message translates to:
+  /// **'تم الاعتماد — +{minutes} دقيقة مودعة'**
+  String childQuranWardStatusApproved(int minutes);
+
+  /// SCR-CHD-025 sent
+  ///
+  /// In ar, this message translates to:
+  /// **'تم إرسال التسجيل — بانتظار مراجعة الوالد'**
+  String get childQuranWardStatusSent;
+
+  /// SCR-CHD-025 none
+  ///
+  /// In ar, this message translates to:
+  /// **'سجّل عندما تكون جاهزًا'**
+  String get childQuranWardStatusNone;
+
+  /// SCR-CHD-025 tag
+  ///
+  /// In ar, this message translates to:
+  /// **'معتمد ✓'**
+  String get childQuranWardTagApproved;
+
+  /// SCR-CHD-025 tag
+  ///
+  /// In ar, this message translates to:
+  /// **'أُرسل 🤞'**
+  String get childQuranWardTagSent;
+
+  /// SCR-CHD-025 tag
+  ///
+  /// In ar, this message translates to:
+  /// **'جاهز'**
+  String get childQuranWardTagNew;
+
+  /// SCR-CHD-025 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا ورد بعد'**
+  String get childQuranWardEmptyTitle;
+
+  /// SCR-CHD-025 empty msg
+  ///
+  /// In ar, this message translates to:
+  /// **'عندما يحدّد والدك وردًا قرآنيًا، يظهر هنا مع تلاوة أوفلاين.'**
+  String get childQuranWardEmptyMessage;
+
+  /// SCR-CHD-025 →012
+  ///
+  /// In ar, this message translates to:
+  /// **'تعلّمي'**
+  String get childQuranWardEmptyCta;
+
+  /// SCR-CHD-025 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل الورد القرآني'**
+  String get childQuranWardLoadingSemantics;
+
+  /// SCR-CHD-025 parent lean
+  ///
+  /// In ar, this message translates to:
+  /// **'الورد القرآني'**
+  String get childQuranWardParentLeanTitle;
+
+  /// SCR-CHD-025 parent lean msg
+  ///
+  /// In ar, this message translates to:
+  /// **'مشغّل الورد للابن. تابع التقدّم من شاشة تقدّم القرآن.'**
+  String get childQuranWardParentLeanMessage;
+
+  /// SCR-CHD-026 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظي وتقدمي'**
+  String get childMemTitle;
+
+  /// SCR-CHD-026 hero
+  ///
+  /// In ar, this message translates to:
+  /// **'محفوظك حتى اليوم'**
+  String get childMemHeroLabel;
+
+  /// SCR-CHD-026 hero value
+  ///
+  /// In ar, this message translates to:
+  /// **'{surahs} سور + {ayahs} آية'**
+  String childMemHeroValue(int surahs, int ayahs);
+
+  /// SCR-CHD-026 surah
+  ///
+  /// In ar, this message translates to:
+  /// **'الفاتحة'**
+  String get childMemSurahFatiha;
+
+  /// SCR-CHD-026 surah
+  ///
+  /// In ar, this message translates to:
+  /// **'الإخلاص'**
+  String get childMemSurahIkhlas;
+
+  /// SCR-CHD-026 surah
+  ///
+  /// In ar, this message translates to:
+  /// **'النبأ'**
+  String get childMemSurahNaba;
+
+  /// SCR-CHD-026 surah
+  ///
+  /// In ar, this message translates to:
+  /// **'الملك'**
+  String get childMemSurahMulk;
+
+  /// SCR-CHD-026 badge
+  ///
+  /// In ar, this message translates to:
+  /// **'⭐ أول سورة'**
+  String get childMemBadgeFirst;
+
+  /// SCR-CHD-026 badge
+  ///
+  /// In ar, this message translates to:
+  /// **'📖 ٣ سور'**
+  String get childMemBadgeThree;
+
+  /// SCR-CHD-026 badge
+  ///
+  /// In ar, this message translates to:
+  /// **'🌙 نصف جزء عمّ'**
+  String get childMemBadgeHalfAmma;
+
+  /// SCR-CHD-026 badge
+  ///
+  /// In ar, this message translates to:
+  /// **'👑 الحافظ الصغير'**
+  String get childMemBadgeHafiz;
+
+  /// SCR-CHD-026 badges hint
+  ///
+  /// In ar, this message translates to:
+  /// **'شاراتك القادمة تنتظرك — واصل يا بطل 🚀'**
+  String get childMemBadgesHint;
+
+  /// SCR-CHD-026 reviews
+  ///
+  /// In ar, this message translates to:
+  /// **'🔄 مراجعاتي المستحقة'**
+  String get childMemReviewsHeading;
+
+  /// SCR-CHD-026 review
+  ///
+  /// In ar, this message translates to:
+  /// **'تبارك ١–١٠'**
+  String get childMemReviewTabarak;
+
+  /// SCR-CHD-026 review
+  ///
+  /// In ar, this message translates to:
+  /// **'النبأ كاملة'**
+  String get childMemReviewNaba;
+
+  /// SCR-CHD-026 meta
+  ///
+  /// In ar, this message translates to:
+  /// **'آخر مراجعة قبل ٤ أيام'**
+  String get childMemReviewFourDays;
+
+  /// SCR-CHD-026 meta
+  ///
+  /// In ar, this message translates to:
+  /// **'مستحقة غدًا'**
+  String get childMemReviewTomorrow;
+
+  /// SCR-CHD-026 tomorrow
+  ///
+  /// In ar, this message translates to:
+  /// **'غدًا'**
+  String get childMemReviewTomorrowShort;
+
+  /// SCR-CHD-026 CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'راجع'**
+  String get childMemReviewCta;
+
+  /// SCR-CHD-026 toast
+  ///
+  /// In ar, this message translates to:
+  /// **'🎙 سمّع — ومستشار العائلة يتابع معك بمصحف مرخّص'**
+  String get childMemReviewToast;
+
+  /// SCR-CHD-026 banner
+  ///
+  /// In ar, this message translates to:
+  /// **'🌟 «خيركم من تعلم القرآن وعلمه» — والدك يرى تقدمك ويفرح فيك.'**
+  String get childMemHadithBanner;
+
+  /// SCR-CHD-026 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا خريطة حفظ بعد'**
+  String get childMemEmptyTitle;
+
+  /// SCR-CHD-026 empty msg
+  ///
+  /// In ar, this message translates to:
+  /// **'أتمّ أول ورد وستنمو خريطتك هنا.'**
+  String get childMemEmptyMessage;
+
+  /// SCR-CHD-026 →025
+  ///
+  /// In ar, this message translates to:
+  /// **'وردي من القرآن'**
+  String get childMemEmptyCta;
+
+  /// SCR-CHD-026 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل الحفظ'**
+  String get childMemLoadingSemantics;
+
+  /// SCR-CHD-026 parent lean
+  ///
+  /// In ar, this message translates to:
+  /// **'خريطة الحفظ'**
+  String get childMemParentLeanTitle;
+
+  /// SCR-CHD-026 parent lean msg
+  ///
+  /// In ar, this message translates to:
+  /// **'هذه الخريطة للابن. الوالدان يتابعان من تقدّم القرآن.'**
+  String get childMemParentLeanMessage;
+
+  /// SCR-CHD-027 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'أذكاري اليومية'**
+  String get childAthkarTitle;
+
+  /// SCR-CHD-027 session
+  ///
+  /// In ar, this message translates to:
+  /// **'صباح'**
+  String get childAthkarSessionMorning;
+
+  /// SCR-CHD-027 session
+  ///
+  /// In ar, this message translates to:
+  /// **'مساء'**
+  String get childAthkarSessionEvening;
+
+  /// SCR-CHD-027 thikr
+  ///
+  /// In ar, this message translates to:
+  /// **'«اللهم بك أمسينا وبك أصبحنا، وبك نحيا وبك نموت وإليك النشور»'**
+  String get childAthkarThikrAmsayna;
+
+  /// SCR-CHD-027 progress
+  ///
+  /// In ar, this message translates to:
+  /// **'ذكر {session} · {done} من {total}'**
+  String childAthkarProgress(String session, int done, int total);
+
+  /// SCR-CHD-027 say
+  ///
+  /// In ar, this message translates to:
+  /// **'قلتها ✓ (مرة واحدة)'**
+  String get childAthkarSayCta;
+
+  /// SCR-CHD-027 done
+  ///
+  /// In ar, this message translates to:
+  /// **'أتممتها كلها اليوم 🌟'**
+  String get childAthkarDoneCta;
+
+  /// SCR-CHD-027 progress toast
+  ///
+  /// In ar, this message translates to:
+  /// **'{done} من {total} — أحسنت! التالي…'**
+  String childAthkarProgressToast(int done, int total);
+
+  /// SCR-CHD-027 complete
+  ///
+  /// In ar, this message translates to:
+  /// **'ما شاء الله — أتممت أذكار اليوم'**
+  String get childAthkarCompleteToast;
+
+  /// SCR-CHD-027 morning
+  ///
+  /// In ar, this message translates to:
+  /// **'صباح'**
+  String get childAthkarStatMorning;
+
+  /// SCR-CHD-027 evening
+  ///
+  /// In ar, this message translates to:
+  /// **'مساء'**
+  String get childAthkarStatEvening;
+
+  /// SCR-CHD-027 stat
+  ///
+  /// In ar, this message translates to:
+  /// **'{done}/{total}'**
+  String childAthkarStatValue(int done, int total);
+
+  /// SCR-CHD-027 banner
+  ///
+  /// In ar, this message translates to:
+  /// **'🤍 تذكير لطيف لا إلزام — الأجر عند الله، والدقائق تشجيع من أبيك.'**
+  String get childAthkarGentleBanner;
+
+  /// SCR-CHD-027 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا جلسة أذكار'**
+  String get childAthkarEmptyTitle;
+
+  /// SCR-CHD-027 empty msg
+  ///
+  /// In ar, this message translates to:
+  /// **'ستظهر جلسة أذكارك اليومية هنا عندما تكون جاهزة.'**
+  String get childAthkarEmptyMessage;
+
+  /// SCR-CHD-027 →004
+  ///
+  /// In ar, this message translates to:
+  /// **'يومي'**
+  String get childAthkarEmptyCta;
+
+  /// SCR-CHD-027 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل الأذكار'**
+  String get childAthkarLoadingSemantics;
+
+  /// SCR-CHD-027 parent lean
+  ///
+  /// In ar, this message translates to:
+  /// **'الأذكار'**
+  String get childAthkarParentLeanTitle;
+
+  /// SCR-CHD-027 parent lean msg
+  ///
+  /// In ar, this message translates to:
+  /// **'الأذكار اليومية للابن. تصلك همسات بركة عند إتمامه.'**
+  String get childAthkarParentLeanMessage;
+
+  /// SCR-CHD-028 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'خطتي الذكية'**
+  String get childSmartPlanTitle;
+
+  /// SCR-CHD-028 gap
+  ///
+  /// In ar, this message translates to:
+  /// **'🔍 اكتشفنا سر تعثرك!'**
+  String get childSmartPlanGapHeading;
+
+  /// SCR-CHD-028 gap body
+  ///
+  /// In ar, this message translates to:
+  /// **'أخطاؤك في القسمة الطويلة سببها مفهوم واحد صغير: جدول ضرب الـ٧. نقوّيه ٣ أيام — وستنطلق 🚀'**
+  String get childSmartPlanGapTimes7;
+
+  /// SCR-CHD-028 start
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ خطة الإصلاح'**
+  String get childSmartPlanStartCta;
+
+  /// SCR-CHD-028 started
+  ///
+  /// In ar, this message translates to:
+  /// **'بدأت الخطة'**
+  String get childSmartPlanStartedCta;
+
+  /// SCR-CHD-028 toast
+  ///
+  /// In ar, this message translates to:
+  /// **'🎯 خطة الأيام الثلاثة بدأت — ١٠ دقائق يوميًا فقط'**
+  String get childSmartPlanStartToast;
+
+  /// SCR-CHD-028 project
+  ///
+  /// In ar, this message translates to:
+  /// **'حديقة المنزل'**
+  String get childSmartPlanProjectGarden;
+
+  /// SCR-CHD-028 project heading
+  ///
+  /// In ar, this message translates to:
+  /// **'🏗 مشروعنا العائلي — «{name}»'**
+  String childSmartPlanProjectHeading(String name);
+
+  /// SCR-CHD-028 stage
+  ///
+  /// In ar, this message translates to:
+  /// **'المرحلة ٢ — زراعة الشتلات'**
+  String get childSmartPlanStage2;
+
+  /// SCR-CHD-028 stage line
+  ///
+  /// In ar, this message translates to:
+  /// **'مرحلتك الآن: {stage} (أسندها لك والدك)'**
+  String childSmartPlanProjectStage(String stage);
+
+  /// SCR-CHD-028 project CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'أنجزت مرحلتي ✓'**
+  String get childSmartPlanProjectCta;
+
+  /// SCR-CHD-028 project done
+  ///
+  /// In ar, this message translates to:
+  /// **'سُجلت المرحلة'**
+  String get childSmartPlanProjectDoneCta;
+
+  /// SCR-CHD-028 project toast
+  ///
+  /// In ar, this message translates to:
+  /// **'🌱 عاش! سجلنا إنجاز مرحلتك — ووصل والدك الخبر بفرحة'**
+  String get childSmartPlanProjectToast;
+
+  /// SCR-CHD-028 path
+  ///
+  /// In ar, this message translates to:
+  /// **'🗺 مساري البصري'**
+  String get childSmartPlanPathHeading;
+
+  /// SCR-CHD-028 path caption
+  ///
+  /// In ar, this message translates to:
+  /// **'الجمع ✓ الطرح ✓ الضرب ✓ — أنت الآن في القسمة'**
+  String get childSmartPlanPathCaption;
+
+  /// SCR-CHD-028 exercise
+  ///
+  /// In ar, this message translates to:
+  /// **'متدرج: يسهل إذا تعثرت، ويتحدّاك إذا تألقت — مثل مدرب ذكي.'**
+  String get childSmartPlanExerciseHint;
+
+  /// SCR-CHD-028 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا خطة ذكية بعد'**
+  String get childSmartPlanEmptyTitle;
+
+  /// SCR-CHD-028 empty msg
+  ///
+  /// In ar, this message translates to:
+  /// **'عند اكتشاف فجوات تعلّم، تظهر خطتك التكيفية هنا.'**
+  String get childSmartPlanEmptyMessage;
+
+  /// SCR-CHD-028 →012
+  ///
+  /// In ar, this message translates to:
+  /// **'تعلّمي'**
+  String get childSmartPlanEmptyCta;
+
+  /// SCR-CHD-028 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل الخطة الذكية'**
+  String get childSmartPlanLoadingSemantics;
+
+  /// SCR-CHD-028 parent lean
+  ///
+  /// In ar, this message translates to:
+  /// **'الخطة الذكية'**
+  String get childSmartPlanParentLeanTitle;
+
+  /// SCR-CHD-028 parent lean msg
+  ///
+  /// In ar, this message translates to:
+  /// **'الخطة التكيفية للابن. الوالدان يريان التقدّم من رؤى التعلّم.'**
+  String get childSmartPlanParentLeanMessage;
+
+  /// SCR-CHD-029 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'مراجعة اليوم'**
+  String get childDailyReviewTitle;
+
+  /// SCR-CHD-029 hero
+  ///
+  /// In ar, this message translates to:
+  /// **'٥ دقائق تحمي أسبوع تعب 🛡'**
+  String get childDailyReviewHeroTitle;
+
+  /// SCR-CHD-029 hero sub
+  ///
+  /// In ar, this message translates to:
+  /// **'مستشار العائلة يعرف متى توشك أن تنسى — فيراجعك قبلها بيوم'**
+  String get childDailyReviewHeroSub;
+
+  /// SCR-CHD-029 cards
+  ///
+  /// In ar, this message translates to:
+  /// **'بطاقات اليوم ({count})'**
+  String childDailyReviewCardsHeading(int count);
+
+  /// SCR-CHD-029 card
+  ///
+  /// In ar, this message translates to:
+  /// **'الكسور المتشابهة'**
+  String get childDailyReviewCardFractions;
+
+  /// SCR-CHD-029 card
+  ///
+  /// In ar, this message translates to:
+  /// **'كلمات الوحدة ٤'**
+  String get childDailyReviewCardUnit4;
+
+  /// SCR-CHD-029 card
+  ///
+  /// In ar, this message translates to:
+  /// **'دورة الماء'**
+  String get childDailyReviewCardWaterCycle;
+
+  /// SCR-CHD-029 meta
+  ///
+  /// In ar, this message translates to:
+  /// **'تعلمتها قبل ٣ أيام — وقت التثبيت'**
+  String get childDailyReviewMetaThreeDays;
+
+  /// SCR-CHD-029 meta
+  ///
+  /// In ar, this message translates to:
+  /// **'قبل أسبوع'**
+  String get childDailyReviewMetaOneWeek;
+
+  /// SCR-CHD-029 meta
+  ///
+  /// In ar, this message translates to:
+  /// **'ثبّتها مرتان — شبه محفوظة!'**
+  String get childDailyReviewMetaTwiceStrong;
+
+  /// SCR-CHD-029 tag
+  ///
+  /// In ar, this message translates to:
+  /// **'مستحقة'**
+  String get childDailyReviewTagDue;
+
+  /// SCR-CHD-029 tag
+  ///
+  /// In ar, this message translates to:
+  /// **'قوية'**
+  String get childDailyReviewTagStrong;
+
+  /// SCR-CHD-029 start
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ الـ٥ دقائق'**
+  String get childDailyReviewStartCta;
+
+  /// SCR-CHD-029 done
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتملت المراجعة'**
+  String get childDailyReviewDoneCta;
+
+  /// SCR-CHD-029 toast
+  ///
+  /// In ar, this message translates to:
+  /// **'🎉 ٦/٦ — ذاكرتك تبنى مثل العضلات! ⏱ +{minutes} د'**
+  String childDailyReviewDoneToast(int minutes);
+
+  /// SCR-CHD-029 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا بطاقات مراجعة'**
+  String get childDailyReviewEmptyTitle;
+
+  /// SCR-CHD-029 empty msg
+  ///
+  /// In ar, this message translates to:
+  /// **'عندما تحتاج الدروس لمراجعة سريعة، تظهر البطاقات هنا.'**
+  String get childDailyReviewEmptyMessage;
+
+  /// SCR-CHD-029 →012
+  ///
+  /// In ar, this message translates to:
+  /// **'تعلّمي'**
+  String get childDailyReviewEmptyCta;
+
+  /// SCR-CHD-029 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل مراجعة اليوم'**
+  String get childDailyReviewLoadingSemantics;
+
+  /// SCR-CHD-029 parent lean
+  ///
+  /// In ar, this message translates to:
+  /// **'مراجعة اليوم'**
+  String get childDailyReviewParentLeanTitle;
+
+  /// SCR-CHD-029 parent lean msg
+  ///
+  /// In ar, this message translates to:
+  /// **'المراجعة المتباعدة للابن. الوالدان يريان الإتقان من رؤى التعلّم.'**
+  String get childDailyReviewParentLeanMessage;
+
+  /// SCR-CHD-030 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'أصدقائي'**
+  String get childFriendsTitle;
+
+  /// SCR-CHD-030 Rule 23 label
+  ///
+  /// In ar, this message translates to:
+  /// **'صديق معتمد'**
+  String get childFriendsNameOne;
+
+  /// SCR-CHD-030 Rule 23 label
+  ///
+  /// In ar, this message translates to:
+  /// **'صديق قيد الانتظار'**
+  String get childFriendsNamePending;
+
+  /// SCR-CHD-030 meta
+  ///
+  /// In ar, this message translates to:
+  /// **'متاح الآن · جدول التواصل: ٤–٧ م'**
+  String get childFriendsMetaSlot47;
+
+  /// SCR-CHD-030 awaiting
+  ///
+  /// In ar, this message translates to:
+  /// **'طلبك عند والدك للموافقة 🤞'**
+  String get childFriendsMetaAwaiting;
+
+  /// SCR-CHD-030 chat
+  ///
+  /// In ar, this message translates to:
+  /// **'محادثة'**
+  String get childFriendsChatCta;
+
+  /// SCR-CHD-030 call
+  ///
+  /// In ar, this message translates to:
+  /// **'اتصال'**
+  String get childFriendsCallCta;
+
+  /// SCR-CHD-030 chat toast
+  ///
+  /// In ar, this message translates to:
+  /// **'💬 فتحت المحادثة الآمنة'**
+  String get childFriendsChatToast;
+
+  /// SCR-CHD-030 call toast
+  ///
+  /// In ar, this message translates to:
+  /// **'📞 جاري الاتصال…'**
+  String get childFriendsCallToast;
+
+  /// SCR-CHD-030 pending
+  ///
+  /// In ar, this message translates to:
+  /// **'قيد المراجعة'**
+  String get childFriendsPendingTag;
+
+  /// SCR-CHD-030 add
+  ///
+  /// In ar, this message translates to:
+  /// **'تعرفت على زميل أو صديق جديد؟'**
+  String get childFriendsAddHeading;
+
+  /// SCR-CHD-030 add sub
+  ///
+  /// In ar, this message translates to:
+  /// **'اطلب إضافته بأمان — والدك يراجعه لحمايتك 🤍'**
+  String get childFriendsAddSub;
+
+  /// SCR-CHD-030 add CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'+ طلب إضافة صديق جديد'**
+  String get childFriendsAddCta;
+
+  /// SCR-CHD-030 add toast
+  ///
+  /// In ar, this message translates to:
+  /// **'🎉 أُرسل الطلب لوالدك لاعتماده!'**
+  String get childFriendsAddToast;
+
+  /// SCR-CHD-030 safety
+  ///
+  /// In ar, this message translates to:
+  /// **'🛡️ أمان بدون غرباء: كل صديق في قائمتك معتمد من والدك شخصيًا لتبقى محادثاتكم في بيئة نقية ومطمئنة 🤍'**
+  String get childFriendsSafetyBanner;
+
+  /// SCR-CHD-030 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا أصدقاء معتمدين بعد'**
+  String get childFriendsEmptyTitle;
+
+  /// SCR-CHD-030 empty msg
+  ///
+  /// In ar, this message translates to:
+  /// **'اطلب من والدك اعتماد صديق لتتحدث بأمان.'**
+  String get childFriendsEmptyMessage;
+
+  /// SCR-CHD-030 empty CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'طلب إضافة صديق'**
+  String get childFriendsEmptyCta;
+
+  /// SCR-CHD-030 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل الأصدقاء'**
+  String get childFriendsLoadingSemantics;
+
+  /// SCR-CHD-030 parent lean
+  ///
+  /// In ar, this message translates to:
+  /// **'أصدقاء الابن'**
+  String get childFriendsParentLeanTitle;
+
+  /// SCR-CHD-030 parent lean msg
+  ///
+  /// In ar, this message translates to:
+  /// **'اعتمد الأصدقاء من شاشة اعتماد الأصدقاء. هذه القائمة من منظور الابن.'**
+  String get childFriendsParentLeanMessage;
+
+  /// SCR-CHD-031 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'قادم لك 🎁'**
+  String get childComingGiftsTitle;
+
+  /// SCR-CHD-031 hero
+  ///
+  /// In ar, this message translates to:
+  /// **'أشياء حلوة قادمة…'**
+  String get childComingGiftsHeroTitle;
+
+  /// SCR-CHD-031 hero sub
+  ///
+  /// In ar, this message translates to:
+  /// **'نجهزها لك بإتقان — بلا استعجال'**
+  String get childComingGiftsHeroSub;
+
+  /// SCR-CHD-031 links
+  ///
+  /// In ar, this message translates to:
+  /// **'وصلت كلها! جرّبها الآن 🎉'**
+  String get childComingGiftsLinksHeading;
+
+  /// SCR-CHD-031 link
+  ///
+  /// In ar, this message translates to:
+  /// **'مرح المكالمة'**
+  String get childComingGiftsCallPlay;
+
+  /// SCR-CHD-031 link sub
+  ///
+  /// In ar, this message translates to:
+  /// **'العب مع جدّو وأنتما تتكلمان!'**
+  String get childComingGiftsCallPlaySub;
+
+  /// SCR-CHD-031 link
+  ///
+  /// In ar, this message translates to:
+  /// **'التحديات العائلية'**
+  String get childComingGiftsChallenges;
+
+  /// SCR-CHD-031 link sub
+  ///
+  /// In ar, this message translates to:
+  /// **'تنافس ودي مع إخوتك'**
+  String get childComingGiftsChallengesSub;
+
+  /// SCR-CHD-031 link
+  ///
+  /// In ar, this message translates to:
+  /// **'قصصي التفاعلية'**
+  String get childComingGiftsStories;
+
+  /// SCR-CHD-031 link sub
+  ///
+  /// In ar, this message translates to:
+  /// **'أنت بطل الحكاية'**
+  String get childComingGiftsStoriesSub;
+
+  /// SCR-CHD-031 link
+  ///
+  /// In ar, this message translates to:
+  /// **'أصوات التركيز'**
+  String get childComingGiftsSounds;
+
+  /// SCR-CHD-031 link sub
+  ///
+  /// In ar, this message translates to:
+  /// **'أمواج ومطر وهدوء'**
+  String get childComingGiftsSoundsSub;
+
+  /// SCR-CHD-031 link
+  ///
+  /// In ar, this message translates to:
+  /// **'ملصقاتي وخلفياتي'**
+  String get childComingGiftsStickers;
+
+  /// SCR-CHD-031 link sub
+  ///
+  /// In ar, this message translates to:
+  /// **'لوّن محادثاتك'**
+  String get childComingGiftsStickersSub;
+
+  /// SCR-CHD-031 link
+  ///
+  /// In ar, this message translates to:
+  /// **'تلاوتي الذكية'**
+  String get childComingGiftsSmartTilawa;
+
+  /// SCR-CHD-031 link sub
+  ///
+  /// In ar, this message translates to:
+  /// **'حسّن تلاوتك بلطف'**
+  String get childComingGiftsSmartTilawaSub;
+
+  /// SCR-CHD-031 tag
+  ///
+  /// In ar, this message translates to:
+  /// **'جديد'**
+  String get childComingGiftsNewTag;
+
+  /// SCR-CHD-031 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا شيء جاهز بعد'**
+  String get childComingGiftsEmptyTitle;
+
+  /// SCR-CHD-031 empty msg
+  ///
+  /// In ar, this message translates to:
+  /// **'عندما تُفتح هدايا جديدة، تظهر هنا — بلا وعود بتواريخ.'**
+  String get childComingGiftsEmptyMessage;
+
+  /// SCR-CHD-031 →012
+  ///
+  /// In ar, this message translates to:
+  /// **'تعلّمي'**
+  String get childComingGiftsEmptyCta;
+
+  /// SCR-CHD-031 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل قادم لك'**
+  String get childComingGiftsLoadingSemantics;
+
+  /// SCR-CHD-031 parent lean
+  ///
+  /// In ar, this message translates to:
+  /// **'قادم لك'**
+  String get childComingGiftsParentLeanTitle;
+
+  /// SCR-CHD-031 parent lean msg
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا المركز التشويقي للابن. جاهزية الميزات تُدار بخطة المنتج.'**
+  String get childComingGiftsParentLeanMessage;
+
+  /// SCR-FAT-078 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'فلترة الراوتر المنزلي'**
+  String get homeRouterFilterTitle;
+
+  /// SCR-FAT-078 hero
+  ///
+  /// In ar, this message translates to:
+  /// **'راوتر المنزل محمي'**
+  String get homeRouterFilterHeroProtected;
+
+  /// SCR-FAT-078 hero off
+  ///
+  /// In ar, this message translates to:
+  /// **'راوتر المنزل يحتاج ضبطًا'**
+  String get homeRouterFilterHeroUnprotected;
+
+  /// SCR-FAT-078 hero sub
+  ///
+  /// In ar, this message translates to:
+  /// **'{count} جهازًا خلف الفلترة — حتى تلفاز الصالة وأجهزة الضيوف'**
+  String homeRouterFilterHeroSub(int count);
+
+  /// SCR-FAT-078 how
+  ///
+  /// In ar, this message translates to:
+  /// **'كيف تعمل؟'**
+  String get homeRouterFilterHowHeading;
+
+  /// SCR-FAT-078 dns
+  ///
+  /// In ar, this message translates to:
+  /// **'DNS عائلي على الراوتر'**
+  String get homeRouterFilterHowDnsTitle;
+
+  /// SCR-FAT-078 dns sub
+  ///
+  /// In ar, this message translates to:
+  /// **'إعداد مرة واحدة — ندلّك خطوة بخطوة'**
+  String get homeRouterFilterHowDnsSub;
+
+  /// SCR-FAT-078 cats
+  ///
+  /// In ar, this message translates to:
+  /// **'نفس فئات الفلترة الـ٢٩'**
+  String get homeRouterFilterHowCatsTitle;
+
+  /// SCR-FAT-078 cats sub
+  ///
+  /// In ar, this message translates to:
+  /// **'سياسة موحدة: الجهاز والمنزل'**
+  String get homeRouterFilterHowCatsSub;
+
+  /// SCR-FAT-078 away
+  ///
+  /// In ar, this message translates to:
+  /// **'خارج المنزل؟'**
+  String get homeRouterFilterHowAwayTitle;
+
+  /// SCR-FAT-078 away sub
+  ///
+  /// In ar, this message translates to:
+  /// **'فلترة جهاز الابن تبقى تعمل — لا فجوة'**
+  String get homeRouterFilterHowAwaySub;
+
+  /// SCR-FAT-078 tag
+  ///
+  /// In ar, this message translates to:
+  /// **'مفعّل'**
+  String get homeRouterFilterTagActive;
+
+  /// SCR-FAT-078 tag
+  ///
+  /// In ar, this message translates to:
+  /// **'متزامن'**
+  String get homeRouterFilterTagSynced;
+
+  /// SCR-FAT-078 tag
+  ///
+  /// In ar, this message translates to:
+  /// **'تلقائي'**
+  String get homeRouterFilterTagAuto;
+
+  /// SCR-FAT-078 tag
+  ///
+  /// In ar, this message translates to:
+  /// **'متوقف'**
+  String get homeRouterFilterTagOff;
+
+  /// SCR-FAT-078 guide
+  ///
+  /// In ar, this message translates to:
+  /// **'دليل الضبط خطوة بخطوة'**
+  String get homeRouterFilterGuideCta;
+
+  /// SCR-FAT-078 check
+  ///
+  /// In ar, this message translates to:
+  /// **'اختبر الحماية الآن'**
+  String get homeRouterFilterCheckCta;
+
+  /// SCR-FAT-078 guide toast
+  ///
+  /// In ar, this message translates to:
+  /// **'فُتح دليل ضبط الراوتر خطوة بخطوة'**
+  String get homeRouterFilterGuideToast;
+
+  /// SCR-FAT-078 check toast
+  ///
+  /// In ar, this message translates to:
+  /// **'تم الفحص — راوترك محمي وكل الأجهزة خلف الفلترة'**
+  String get homeRouterFilterCheckToast;
+
+  /// SCR-FAT-078 guest
+  ///
+  /// In ar, this message translates to:
+  /// **'ضيف تسلل بجهازه لشبكتك؟ محمي تلقائيًا — وأنت المتحكم بالاستثناءات.'**
+  String get homeRouterFilterGuestBanner;
+
+  /// SCR-FAT-078 observer
+  ///
+  /// In ar, this message translates to:
+  /// **'تغيير DNS الراوتر يحتاج مستوى شريكة أو أعلى — يمكنك مراجعة الحالة.'**
+  String get homeRouterFilterObserverHint;
+
+  /// SCR-FAT-078 blocked
+  ///
+  /// In ar, this message translates to:
+  /// **'إجراءات فلترة الراوتر تحتاج مستوى شريكة للأم أو الأب'**
+  String get homeRouterFilterObserverBlocked;
+
+  /// SCR-FAT-078 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا شبكة منزل بعد'**
+  String get homeRouterFilterEmptyTitle;
+
+  /// SCR-FAT-078 empty msg
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف ابنًا لتغطية أجهزة المنزل بفلترة الراوتر.'**
+  String get homeRouterFilterEmptyMessage;
+
+  /// SCR-FAT-078 →003
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف ابنًا'**
+  String get homeRouterFilterEmptyCta;
+
+  /// SCR-FAT-078 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل فلترة الراوتر'**
+  String get homeRouterFilterLoadingSemantics;
+
+  /// SCR-FAT-078 child lean
+  ///
+  /// In ar, this message translates to:
+  /// **'فلترة الراوتر المنزلي'**
+  String get homeRouterFilterChildLeanTitle;
+
+  /// SCR-FAT-078 child lean msg
+  ///
+  /// In ar, this message translates to:
+  /// **'ضبط DNS الراوتر للوالدين. فلترة جهازك تحميك خارج المنزل.'**
+  String get homeRouterFilterChildLeanMessage;
+
+  /// SCR-FAT-080 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'سجل تصرفات الوكيل'**
+  String get agentActionLogTitle;
+
+  /// SCR-FAT-080 live
+  ///
+  /// In ar, this message translates to:
+  /// **'تصرف تلقائي حديث بموجب تفويضك'**
+  String get agentActionLogLiveHeading;
+
+  /// SCR-FAT-080 pending tag
+  ///
+  /// In ar, this message translates to:
+  /// **'متبقي {min}:{sec} للتعديل'**
+  String agentActionLogTagPending(int min, int sec);
+
+  /// SCR-FAT-080 blessed tag
+  ///
+  /// In ar, this message translates to:
+  /// **'باركت القرار'**
+  String get agentActionLogTagBlessed;
+
+  /// SCR-FAT-080 undone tag
+  ///
+  /// In ar, this message translates to:
+  /// **'تراجعت بلطف'**
+  String get agentActionLogTagUndone;
+
+  /// SCR-FAT-080 Rule 23 label
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن أ'**
+  String get agentActionLogChildOne;
+
+  /// SCR-FAT-080 granted
+  ///
+  /// In ar, this message translates to:
+  /// **'منح الوكيل +{minutes} دقيقة لـ {child}'**
+  String agentActionLogGranted(int minutes, String child);
+
+  /// SCR-FAT-080 reason
+  ///
+  /// In ar, this message translates to:
+  /// **'السبب الموثق: أكمل ({tasks})'**
+  String agentActionLogReason(String tasks);
+
+  /// SCR-FAT-080 usage
+  ///
+  /// In ar, this message translates to:
+  /// **'الاستخدام: مخصص لتطبيق {app} · قبل دقائق'**
+  String agentActionLogUsage(String app);
+
+  /// SCR-FAT-080 task
+  ///
+  /// In ar, this message translates to:
+  /// **'واجب الرياضيات'**
+  String get agentActionLogTaskMath;
+
+  /// SCR-FAT-080 task
+  ///
+  /// In ar, this message translates to:
+  /// **'ترتيب الغرفة'**
+  String get agentActionLogTaskRoom;
+
+  /// SCR-FAT-080 app
+  ///
+  /// In ar, this message translates to:
+  /// **'بناء المكعبات التعليمي'**
+  String get agentActionLogAppBlocks;
+
+  /// SCR-FAT-080 bless
+  ///
+  /// In ar, this message translates to:
+  /// **'مباركة + همسة تشجيع'**
+  String get agentActionLogBlessCta;
+
+  /// SCR-FAT-080 undo
+  ///
+  /// In ar, this message translates to:
+  /// **'تراجع رحيم'**
+  String get agentActionLogUndoCta;
+
+  /// SCR-FAT-080 bless toast
+  ///
+  /// In ar, this message translates to:
+  /// **'أُرسلت همسة فخر'**
+  String get agentActionLogBlessToast;
+
+  /// SCR-FAT-080 undo toast
+  ///
+  /// In ar, this message translates to:
+  /// **'تراجعت عن القرار برحمة'**
+  String get agentActionLogUndoToast;
+
+  /// SCR-FAT-080 blessed note
+  ///
+  /// In ar, this message translates to:
+  /// **'أرسلت همسة فخر — استمتع بدقائقك المستحقة.'**
+  String get agentActionLogBlessedNote;
+
+  /// SCR-FAT-080 undone note
+  ///
+  /// In ar, this message translates to:
+  /// **'تراجعت عن القرار برحمة.'**
+  String get agentActionLogUndoneNote;
+
+  /// SCR-FAT-080 weekly
+  ///
+  /// In ar, this message translates to:
+  /// **'تصرفات الوكيل هذا الأسبوع'**
+  String get agentActionLogWeeklyHeading;
+
+  /// SCR-FAT-080 weekly
+  ///
+  /// In ar, this message translates to:
+  /// **'وضع النوم تفعّل ×٧ مرات'**
+  String get agentActionLogWeeklySleep;
+
+  /// SCR-FAT-080 weekly
+  ///
+  /// In ar, this message translates to:
+  /// **'حسب الجدول المعتمد'**
+  String get agentActionLogWeeklySleepMeta;
+
+  /// SCR-FAT-080 weekly
+  ///
+  /// In ar, this message translates to:
+  /// **'تذكير المراجعة والقرآن ×٥'**
+  String get agentActionLogWeeklyReview;
+
+  /// SCR-FAT-080 weekly
+  ///
+  /// In ar, this message translates to:
+  /// **'استجاب الابن ٤ مرات'**
+  String get agentActionLogWeeklyReviewMeta;
+
+  /// SCR-FAT-080 rule
+  ///
+  /// In ar, this message translates to:
+  /// **'القاعدة ٢'**
+  String get agentActionLogRule2;
+
+  /// SCR-FAT-080 rule
+  ///
+  /// In ar, this message translates to:
+  /// **'القاعدة ٣'**
+  String get agentActionLogRule3;
+
+  /// SCR-FAT-080 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا سجل وكيل بعد'**
+  String get agentActionLogEmptyTitle;
+
+  /// SCR-FAT-080 empty msg
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف ابنًا وفوّض قواعدًا لتظهر التصرفات التلقائية هنا.'**
+  String get agentActionLogEmptyMessage;
+
+  /// SCR-FAT-080 →003
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف ابنًا'**
+  String get agentActionLogEmptyCta;
+
+  /// SCR-FAT-080 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل سجل الوكيل'**
+  String get agentActionLogLoadingSemantics;
+
+  /// SCR-FAT-080 child lean
+  ///
+  /// In ar, this message translates to:
+  /// **'سجل تصرفات الوكيل'**
+  String get agentActionLogChildLeanTitle;
+
+  /// SCR-FAT-080 child lean msg
+  ///
+  /// In ar, this message translates to:
+  /// **'تصرفات الوكيل المفوَّض للوالدين. دقائقك تظهر في محفظتك.'**
+  String get agentActionLogChildLeanMessage;
+
+  /// SCR-FAT-081 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'مقارنة الأقران'**
+  String get peerCompareTitle;
+
+  /// SCR-FAT-081 privacy
+  ///
+  /// In ar, this message translates to:
+  /// **'مقارنة مجهولة بالكامل مع متوسطات عمرية عامة — لا أسماء، لا عائلات، لا تشهير. بياناتكم لا تغادر لأحد.'**
+  String get peerComparePrivacyBanner;
+
+  /// SCR-FAT-081 Rule 23
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن أ'**
+  String get peerCompareChildOne;
+
+  /// SCR-FAT-081 heading
+  ///
+  /// In ar, this message translates to:
+  /// **'{child} ({age} سنة) مقابل فئته العمرية'**
+  String peerCompareHeading(String child, int age);
+
+  /// SCR-FAT-081 metric
+  ///
+  /// In ar, this message translates to:
+  /// **'وقت الشاشة'**
+  String get peerCompareMetricScreen;
+
+  /// SCR-FAT-081 detail
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن: ٢:٤٠ س/يوم · المتوسط: ٣:١٥'**
+  String get peerCompareDetailScreen;
+
+  /// SCR-FAT-081 metric
+  ///
+  /// In ar, this message translates to:
+  /// **'وقت التعليم'**
+  String get peerCompareMetricLearn;
+
+  /// SCR-FAT-081 detail
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن: ٥١ د/يوم · المتوسط: ٢٥ د'**
+  String get peerCompareDetailLearn;
+
+  /// SCR-FAT-081 metric
+  ///
+  /// In ar, this message translates to:
+  /// **'النوم'**
+  String get peerCompareMetricSleep;
+
+  /// SCR-FAT-081 detail
+  ///
+  /// In ar, this message translates to:
+  /// **'متأخر ٢٠ د عن الموصى به لعمره'**
+  String get peerCompareDetailSleep;
+
+  /// SCR-FAT-081 tag
+  ///
+  /// In ar, this message translates to:
+  /// **'أفضل ✓'**
+  String get peerCompareTagBetter;
+
+  /// SCR-FAT-081 tag
+  ///
+  /// In ar, this message translates to:
+  /// **'فرصة تحسين'**
+  String get peerCompareTagImprove;
+
+  /// SCR-FAT-081 compass
+  ///
+  /// In ar, this message translates to:
+  /// **'تذكير من مستشار العائلة: المقارنة بوصلة لا محكمة — ابنك يتفوق على نفسه أولًا. لا تجعلها موضوع عتاب.'**
+  String get peerCompareCompassNote;
+
+  /// SCR-FAT-081 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا مقارنة أقران بعد'**
+  String get peerCompareEmptyTitle;
+
+  /// SCR-FAT-081 empty msg
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف ابنًا لتظهر متوسطات الفئة العمرية المجهولة هنا.'**
+  String get peerCompareEmptyMessage;
+
+  /// SCR-FAT-081 →003
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف ابنًا'**
+  String get peerCompareEmptyCta;
+
+  /// SCR-FAT-081 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل مقارنة الأقران'**
+  String get peerCompareLoadingSemantics;
+
+  /// SCR-FAT-081 child lean
+  ///
+  /// In ar, this message translates to:
+  /// **'مقارنة الأقران'**
+  String get peerCompareChildLeanTitle;
+
+  /// SCR-FAT-081 child lean msg
+  ///
+  /// In ar, this message translates to:
+  /// **'متوسطات الأقران المجهولة للوالدين. نافس نفسك أولًا.'**
+  String get peerCompareChildLeanMessage;
+
+  /// SCR-FAT-082 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'موزع المهام الذكي'**
+  String get smartChoreTitle;
+
+  /// SCR-FAT-082 proposal
+  ///
+  /// In ar, this message translates to:
+  /// **'اقتراح توزيع هذا الأسبوع'**
+  String get smartChoreProposalHeading;
+
+  /// SCR-FAT-082 Rule 23
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن أ'**
+  String get smartChoreChildOne;
+
+  /// SCR-FAT-082 Rule 23
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن ب'**
+  String get smartChoreChildTwo;
+
+  /// SCR-FAT-082 Rule 23
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن ج'**
+  String get smartChoreChildThree;
+
+  /// SCR-FAT-082 chores
+  ///
+  /// In ar, this message translates to:
+  /// **'الصحون (٣ أيام) + النباتات'**
+  String get smartChoreDishesPlants;
+
+  /// SCR-FAT-082 chores
+  ///
+  /// In ar, this message translates to:
+  /// **'ترتيب الصالة + الغسيل'**
+  String get smartChoreLivingLaundry;
+
+  /// SCR-FAT-082 chores
+  ///
+  /// In ar, this message translates to:
+  /// **'إخراج النفايات + سقي النباتات'**
+  String get smartChoreTrashWater;
+
+  /// SCR-FAT-082 note
+  ///
+  /// In ar, this message translates to:
+  /// **'خفّف عنه الثلاثاء — عنده اختبار'**
+  String get smartChoreNoteExam;
+
+  /// SCR-FAT-082 note
+  ///
+  /// In ar, this message translates to:
+  /// **'بدّلنا مهامها — ملّت من الصحون'**
+  String get smartChoreNoteRotated;
+
+  /// SCR-FAT-082 note
+  ///
+  /// In ar, this message translates to:
+  /// **'مهام خفيفة تناسب ٨ سنوات'**
+  String get smartChoreNoteAge8;
+
+  /// SCR-FAT-082 approve
+  ///
+  /// In ar, this message translates to:
+  /// **'اعتمد التوزيع'**
+  String get smartChoreApproveCta;
+
+  /// SCR-FAT-082 approved
+  ///
+  /// In ar, this message translates to:
+  /// **'مُعتمد'**
+  String get smartChoreApprovedCta;
+
+  /// SCR-FAT-082 shuffle
+  ///
+  /// In ar, this message translates to:
+  /// **'بدّل'**
+  String get smartChoreShuffleCta;
+
+  /// SCR-FAT-082 toast
+  ///
+  /// In ar, this message translates to:
+  /// **'اعتُمد التوزيع — وصلت كل ابن مهامه بدقائقها المحددة'**
+  String get smartChoreApproveToast;
+
+  /// SCR-FAT-082 shuffle toast
+  ///
+  /// In ar, this message translates to:
+  /// **'توزيع بديل جاهز — بنفس العدالة'**
+  String get smartChoreShuffleToast;
+
+  /// SCR-FAT-082 fairness
+  ///
+  /// In ar, this message translates to:
+  /// **'لماذا هذا التوزيع عادل؟'**
+  String get smartChoreFairnessHeading;
+
+  /// SCR-FAT-082 fairness body
+  ///
+  /// In ar, this message translates to:
+  /// **'دقائق متساوية لكل ابن حسب عمره · لا مهمة تتكرر لنفس الابن أسبوعين · الجداول الدراسية محسوبة.'**
+  String get smartChoreFairnessBody;
+
+  /// SCR-FAT-082 observer
+  ///
+  /// In ar, this message translates to:
+  /// **'اعتماد توزيع المهام يحتاج مستوى شريكة أو أعلى — يمكنك مراجعة الاقتراح.'**
+  String get smartChoreObserverHint;
+
+  /// SCR-FAT-082 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا خطة مهام بعد'**
+  String get smartChoreEmptyTitle;
+
+  /// SCR-FAT-082 empty msg
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف أبناءً ليقترح موزع المهام توزيعًا عادلًا للأسبوع.'**
+  String get smartChoreEmptyMessage;
+
+  /// SCR-FAT-082 →003
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف ابنًا'**
+  String get smartChoreEmptyCta;
+
+  /// SCR-FAT-082 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل موزع المهام'**
+  String get smartChoreLoadingSemantics;
+
+  /// SCR-FAT-082 child lean
+  ///
+  /// In ar, this message translates to:
+  /// **'موزع المهام'**
+  String get smartChoreChildLeanTitle;
+
+  /// SCR-FAT-082 child lean msg
+  ///
+  /// In ar, this message translates to:
+  /// **'تخطيط المهام الأسبوعية للوالدين. مهامك تظهر في مهامي.'**
+  String get smartChoreChildLeanMessage;
+
+  /// SCR-FAT-083 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'تحدث مع مستشار العائلة'**
+  String get advisorVoiceTitle;
+
+  /// SCR-FAT-083 hint
+  ///
+  /// In ar, this message translates to:
+  /// **'اضغط وتكلم — وأنت تقود السيارة أو مشغول اليدين'**
+  String get advisorVoiceHint;
+
+  /// SCR-FAT-083 talk
+  ///
+  /// In ar, this message translates to:
+  /// **'اضغط وتحدث'**
+  String get advisorVoiceTalkCta;
+
+  /// SCR-FAT-083 toast
+  ///
+  /// In ar, this message translates to:
+  /// **'يستمع… يجيب صوتًا من بيانات عائلتك فقط'**
+  String get advisorVoiceListeningToast;
+
+  /// SCR-FAT-083 last
+  ///
+  /// In ar, this message translates to:
+  /// **'آخر محادثة'**
+  String get advisorVoiceLastHeading;
+
+  /// SCR-FAT-083 user · Rule 23
+  ///
+  /// In ar, this message translates to:
+  /// **'هل أنهى الابن أ واجباته؟'**
+  String get advisorVoiceUserHomework;
+
+  /// SCR-FAT-083 reply · Rule 23
+  ///
+  /// In ar, this message translates to:
+  /// **'نعم — أنهى الرياضيات والعلوم قبل ساعة، وبقي له مراجعة الإنجليزية المستحقة غدًا.'**
+  String get advisorVoiceReplyHomework;
+
+  /// SCR-FAT-083 honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'نفس عهد الصدق: إن نقصت البيانات سيقولها صوتًا — «لا أعلم بدقة كافية».'**
+  String get advisorVoiceHonestyBanner;
+
+  /// SCR-FAT-083 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا محادثة صوتية بعد'**
+  String get advisorVoiceEmptyTitle;
+
+  /// SCR-FAT-083 empty msg
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف ابنًا ليجيب مستشار العائلة صوتًا من بيانات العائلة.'**
+  String get advisorVoiceEmptyMessage;
+
+  /// SCR-FAT-083 →003
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف ابنًا'**
+  String get advisorVoiceEmptyCta;
+
+  /// SCR-FAT-083 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل المحادثة الصوتية'**
+  String get advisorVoiceLoadingSemantics;
+
+  /// SCR-FAT-083 child lean
+  ///
+  /// In ar, this message translates to:
+  /// **'محادثة المستشار الصوتية'**
+  String get advisorVoiceChildLeanTitle;
+
+  /// SCR-FAT-083 child lean msg
+  ///
+  /// In ar, this message translates to:
+  /// **'الوضع الصوتي للوالدين. صوت معلّمك في تعلّمي.'**
+  String get advisorVoiceChildLeanMessage;
+
+  /// SCR-FAT-084 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'مشروع بمراحل'**
+  String get stagedProjectTitle;
+
+  /// SCR-FAT-084 project
+  ///
+  /// In ar, this message translates to:
+  /// **'حديقتنا المنزلية'**
+  String get stagedProjectHomeGarden;
+
+  /// SCR-FAT-084 Rule 23
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن أ'**
+  String get stagedProjectChildOne;
+
+  /// SCR-FAT-084 hero
+  ///
+  /// In ar, this message translates to:
+  /// **'مشروع {child}: {name}'**
+  String stagedProjectHeroTitle(String child, String name);
+
+  /// SCR-FAT-084 hero sub
+  ///
+  /// In ar, this message translates to:
+  /// **'{stages} مراحل · {weeks} أسابيع · المرحلة {current} الآن'**
+  String stagedProjectHeroSub(int stages, int weeks, int current);
+
+  /// SCR-FAT-084 stage
+  ///
+  /// In ar, this message translates to:
+  /// **'م١: البحث والتخطيط'**
+  String get stagedProjectStageResearch;
+
+  /// SCR-FAT-084 stage sub
+  ///
+  /// In ar, this message translates to:
+  /// **'اختار ٣ نباتات ورسم الحديقة'**
+  String get stagedProjectStageResearchSub;
+
+  /// SCR-FAT-084 stage
+  ///
+  /// In ar, this message translates to:
+  /// **'م٢: الزراعة'**
+  String get stagedProjectStagePlant;
+
+  /// SCR-FAT-084 stage sub
+  ///
+  /// In ar, this message translates to:
+  /// **'صوّر إثبات الزراعة — بانتظار تأكيدك'**
+  String get stagedProjectStagePlantSub;
+
+  /// SCR-FAT-084 stage
+  ///
+  /// In ar, this message translates to:
+  /// **'م٣: المتابعة والري'**
+  String get stagedProjectStageWater;
+
+  /// SCR-FAT-084 stage sub
+  ///
+  /// In ar, this message translates to:
+  /// **'تُفتح بإتمام م٢'**
+  String get stagedProjectStageWaterSub;
+
+  /// SCR-FAT-084 stage
+  ///
+  /// In ar, this message translates to:
+  /// **'م٤: الحصاد والعرض'**
+  String get stagedProjectStageHarvest;
+
+  /// SCR-FAT-084 stage sub
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض تقديمي للعائلة!'**
+  String get stagedProjectStageHarvestSub;
+
+  /// SCR-FAT-084 confirm
+  ///
+  /// In ar, this message translates to:
+  /// **'أكّد'**
+  String get stagedProjectConfirmCta;
+
+  /// SCR-FAT-084 toast
+  ///
+  /// In ar, this message translates to:
+  /// **'اعتمدت المرحلة! +{minutes} د أُودعت'**
+  String stagedProjectConfirmToast(int minutes);
+
+  /// SCR-FAT-084 minutes tag
+  ///
+  /// In ar, this message translates to:
+  /// **'+{minutes} د'**
+  String stagedProjectMinutesTag(int minutes);
+
+  /// SCR-FAT-084 template
+  ///
+  /// In ar, this message translates to:
+  /// **'+ مشروع جديد من قالب'**
+  String get stagedProjectTemplateCta;
+
+  /// SCR-FAT-084 template toast
+  ///
+  /// In ar, this message translates to:
+  /// **'قوالب جاهزة: مجسم علمي، بحث عائلي، تطبيق أول، مشروع خيري…'**
+  String get stagedProjectTemplateToast;
+
+  /// SCR-FAT-084 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا مشروع بمراحل بعد'**
+  String get stagedProjectEmptyTitle;
+
+  /// SCR-FAT-084 empty msg
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف ابنًا وأنشئ مشروعًا متعدد الأسابيع من الاستوديو.'**
+  String get stagedProjectEmptyMessage;
+
+  /// SCR-FAT-084 →003
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف ابنًا'**
+  String get stagedProjectEmptyCta;
+
+  /// SCR-FAT-084 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل المشروع بمراحل'**
+  String get stagedProjectLoadingSemantics;
+
+  /// SCR-FAT-084 child lean
+  ///
+  /// In ar, this message translates to:
+  /// **'مشروع بمراحل'**
+  String get stagedProjectChildLeanTitle;
+
+  /// SCR-FAT-084 child lean msg
+  ///
+  /// In ar, this message translates to:
+  /// **'الوالدان يؤكدان المراحل. مرحلتك النشطة في تعلّمي / مهامي.'**
+  String get stagedProjectChildLeanMessage;
+
+  /// SCR-FAT-086 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'لحظات عائلتنا'**
+  String get familyMomentsTitle;
+
+  /// SCR-FAT-086 week
+  ///
+  /// In ar, this message translates to:
+  /// **'جمعة · أسبوع عائلتكم'**
+  String get familyMomentsWeekLabel;
+
+  /// SCR-FAT-086 hero
+  ///
+  /// In ar, this message translates to:
+  /// **'أسبوع يستحق الفخر!'**
+  String get familyMomentsHeroTitle;
+
+  /// SCR-FAT-086 stat
+  ///
+  /// In ar, this message translates to:
+  /// **'ساعة تعلّم'**
+  String get familyMomentsStatLearn;
+
+  /// SCR-FAT-086 stat
+  ///
+  /// In ar, this message translates to:
+  /// **'آية حُفظت'**
+  String get familyMomentsStatVerses;
+
+  /// SCR-FAT-086 stat
+  ///
+  /// In ar, this message translates to:
+  /// **'مهمة أُنجزت'**
+  String get familyMomentsStatTasks;
+
+  /// SCR-FAT-086 stat
+  ///
+  /// In ar, this message translates to:
+  /// **'تنبيه مقلق'**
+  String get familyMomentsStatAlerts;
+
+  /// SCR-FAT-086 stars
+  ///
+  /// In ar, this message translates to:
+  /// **'نجم الأسبوع'**
+  String get familyMomentsStarsTitle;
+
+  /// SCR-FAT-086 Rule 23
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن أ'**
+  String get familyMomentsChildOne;
+
+  /// SCR-FAT-086 Rule 23
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن ب'**
+  String get familyMomentsChildTwo;
+
+  /// SCR-FAT-086 star
+  ///
+  /// In ar, this message translates to:
+  /// **'{child} — أنهى جزء عمّ كاملًا!'**
+  String familyMomentsStarQuran(String child);
+
+  /// SCR-FAT-086 star sub
+  ///
+  /// In ar, this message translates to:
+  /// **'٦ أشهر من المثابرة · لحظة تاريخية'**
+  String get familyMomentsStarQuranSub;
+
+  /// SCR-FAT-086 star
+  ///
+  /// In ar, this message translates to:
+  /// **'{child} — قفز ١٧٪ في الرياضيات'**
+  String familyMomentsStarMath(String child);
+
+  /// SCR-FAT-086 star sub
+  ///
+  /// In ar, this message translates to:
+  /// **'خطة «المفهوم المفقود» أثمرت'**
+  String get familyMomentsStarMathSub;
+
+  /// SCR-FAT-086 star
+  ///
+  /// In ar, this message translates to:
+  /// **'{child} — أسبوع كامل نوم منتظم'**
+  String familyMomentsStarSleep(String child);
+
+  /// SCR-FAT-086 star sub
+  ///
+  /// In ar, this message translates to:
+  /// **'أول مرة منذ شهرين'**
+  String get familyMomentsStarSleepSub;
+
+  /// SCR-FAT-086 share
+  ///
+  /// In ar, this message translates to:
+  /// **'شارك بطاقة الفخر مع العائلة'**
+  String get familyMomentsShareCta;
+
+  /// SCR-FAT-086 pride toast
+  ///
+  /// In ar, this message translates to:
+  /// **'وصلت بطاقة الفخر لمحادثة العائلة — شافوا تصفيقكم!'**
+  String get familyMomentsPrideToast;
+
+  /// SCR-FAT-086 touch
+  ///
+  /// In ar, this message translates to:
+  /// **'لمسة الأسبوع القادم'**
+  String get familyMomentsTouchTitle;
+
+  /// SCR-FAT-086 touch body
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن ب اقترب من إنهاء سورة الملك — لو أنهاها، ما رأيك بمفاجأة «مشوار يختاره هو»؟ الأثر أعمق من أي دقائق.'**
+  String get familyMomentsTouchBody;
+
+  /// SCR-FAT-086 touch CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'أُحب الفكرة — ذكّرني'**
+  String get familyMomentsTouchCta;
+
+  /// SCR-FAT-086 touch toast
+  ///
+  /// In ar, this message translates to:
+  /// **'وُعدت المفاجأة — سيصلك تذكير عند إتمام السورة'**
+  String get familyMomentsTouchToast;
+
+  /// SCR-FAT-086 album
+  ///
+  /// In ar, this message translates to:
+  /// **'ألبوم اللحظات'**
+  String get familyMomentsAlbumTitle;
+
+  /// SCR-FAT-086 cap
+  ///
+  /// In ar, this message translates to:
+  /// **'يوم الحديقة'**
+  String get familyMomentsCapGarden;
+
+  /// SCR-FAT-086 cap
+  ///
+  /// In ar, this message translates to:
+  /// **'فجر معًا'**
+  String get familyMomentsCapPrayer;
+
+  /// SCR-FAT-086 cap
+  ///
+  /// In ar, this message translates to:
+  /// **'ساعد في الطبخ'**
+  String get familyMomentsCapCook;
+
+  /// SCR-FAT-086 cap
+  ///
+  /// In ar, this message translates to:
+  /// **'ليلة قصة'**
+  String get familyMomentsCapRead;
+
+  /// SCR-FAT-086 cap
+  ///
+  /// In ar, this message translates to:
+  /// **'مشية مسائية'**
+  String get familyMomentsCapWalk;
+
+  /// SCR-FAT-086 cap
+  ///
+  /// In ar, this message translates to:
+  /// **'ضحكة عائلية'**
+  String get familyMomentsCapLaugh;
+
+  /// SCR-FAT-086 cap
+  ///
+  /// In ar, this message translates to:
+  /// **'لحظة جديدة'**
+  String get familyMomentsCapNew;
+
+  /// SCR-FAT-086 by
+  ///
+  /// In ar, this message translates to:
+  /// **'الأم'**
+  String get familyMomentsByMother;
+
+  /// SCR-FAT-086 by
+  ///
+  /// In ar, this message translates to:
+  /// **'الأب'**
+  String get familyMomentsByFather;
+
+  /// SCR-FAT-086 when
+  ///
+  /// In ar, this message translates to:
+  /// **'أمس'**
+  String get familyMomentsWhenYesterday;
+
+  /// SCR-FAT-086 when
+  ///
+  /// In ar, this message translates to:
+  /// **'ثلاثاء'**
+  String get familyMomentsWhenTue;
+
+  /// SCR-FAT-086 when
+  ///
+  /// In ar, this message translates to:
+  /// **'اثنين'**
+  String get familyMomentsWhenMon;
+
+  /// SCR-FAT-086 when
+  ///
+  /// In ar, this message translates to:
+  /// **'أحد'**
+  String get familyMomentsWhenSun;
+
+  /// SCR-FAT-086 when
+  ///
+  /// In ar, this message translates to:
+  /// **'سبت'**
+  String get familyMomentsWhenSat;
+
+  /// SCR-FAT-086 when
+  ///
+  /// In ar, this message translates to:
+  /// **'جمعة'**
+  String get familyMomentsWhenFri;
+
+  /// SCR-FAT-086 when
+  ///
+  /// In ar, this message translates to:
+  /// **'الآن'**
+  String get familyMomentsWhenNow;
+
+  /// SCR-FAT-086 add
+  ///
+  /// In ar, this message translates to:
+  /// **'+ أضف لحظة'**
+  String get familyMomentsAddCta;
+
+  /// SCR-FAT-086 add toast
+  ///
+  /// In ar, this message translates to:
+  /// **'أُضيفت للحظات — وأُخطرت العائلة'**
+  String get familyMomentsAddToast;
+
+  /// SCR-FAT-086 banner
+  ///
+  /// In ar, this message translates to:
+  /// **'يصلك كل جمعة صباحًا — افتح، افرح، شارك. ثم أغلق مطمئنًا.'**
+  String get familyMomentsFridayBanner;
+
+  /// SCR-FAT-086 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا لحظات عائلية بعد'**
+  String get familyMomentsEmptyTitle;
+
+  /// SCR-FAT-086 empty msg
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف ابنًا ليضيء ملخص الفخر الأسبوعي ونجوم الأسبوع وألبوم اللحظات.'**
+  String get familyMomentsEmptyMessage;
+
+  /// SCR-FAT-086 →003
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف ابنًا'**
+  String get familyMomentsEmptyCta;
+
+  /// SCR-FAT-086 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل لحظات العائلة'**
+  String get familyMomentsLoadingSemantics;
+
+  /// SCR-FAT-086 child lean
+  ///
+  /// In ar, this message translates to:
+  /// **'لحظات العائلة'**
+  String get familyMomentsChildLeanTitle;
+
+  /// SCR-FAT-086 child lean msg
+  ///
+  /// In ar, this message translates to:
+  /// **'الوالدان يفتحان ملخص الفخر الأسبوعي. نجومك تظهر في تعلّمي.'**
+  String get familyMomentsChildLeanMessage;
+
+  /// SCR-CHD-032 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'تلاوتي الذكية'**
+  String get childSmartTilawahTitle;
+
+  /// SCR-CHD-032 surah
+  ///
+  /// In ar, this message translates to:
+  /// **'سورة الملك'**
+  String get childSmartTilawahSurahMulk;
+
+  /// SCR-CHD-032 ayah meta
+  ///
+  /// In ar, this message translates to:
+  /// **'{surah} · الآية {ayah}'**
+  String childSmartTilawahAyahMeta(String surah, int ayah);
+
+  /// SCR-CHD-032 licensed ayah excerpt Mulk 16
+  ///
+  /// In ar, this message translates to:
+  /// **'ءَأَمِنتُم مَّن فِى ٱلسَّمَآءِ…'**
+  String get childSmartTilawahAyahMulk16;
+
+  /// SCR-CHD-032 listen
+  ///
+  /// In ar, this message translates to:
+  /// **'اقرأ وأنا أستمع'**
+  String get childSmartTilawahListenCta;
+
+  /// SCR-CHD-032 listen toast
+  ///
+  /// In ar, this message translates to:
+  /// **'يستمع لتلاوتك… ما شاء الله! ملاحظة لطيفة واحدة أدناه'**
+  String get childSmartTilawahListenToast;
+
+  /// SCR-CHD-032 tip
+  ///
+  /// In ar, this message translates to:
+  /// **'ملاحظة اليوم — واحدة فقط'**
+  String get childSmartTilawahTipTitle;
+
+  /// SCR-CHD-032 tip title
+  ///
+  /// In ar, this message translates to:
+  /// **'مدّ «السَّمَآء» ست حركات'**
+  String get childSmartTilawahTipMadd;
+
+  /// SCR-CHD-032 tip body
+  ///
+  /// In ar, this message translates to:
+  /// **'مدّ متصل بالهمزة — استمع للشيخ ثم أعد'**
+  String get childSmartTilawahTipMaddBody;
+
+  /// SCR-CHD-032 sheikh
+  ///
+  /// In ar, this message translates to:
+  /// **'استمع'**
+  String get childSmartTilawahSheikhCta;
+
+  /// SCR-CHD-032 sheikh toast
+  ///
+  /// In ar, this message translates to:
+  /// **'مقطع الشيخ للآية ١٦ — من مصحف مرخّص'**
+  String get childSmartTilawahSheikhToast;
+
+  /// SCR-CHD-032 praise
+  ///
+  /// In ar, this message translates to:
+  /// **'أحسنت في: مخارج الحروف ✓ · الغنّة ✓ · وقفك سليم ✓'**
+  String get childSmartTilawahPraise;
+
+  /// SCR-CHD-032 banner
+  ///
+  /// In ar, this message translates to:
+  /// **'مرجع التصحيح تلاوات مشايخ معتمدين من مصاحف مرخّصة — ومستشار العائلة يلاحظ بلطف، ملاحظة واحدة كل مرة حتى لا تثقل عليك.'**
+  String get childSmartTilawahBanner;
+
+  /// SCR-CHD-032 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا جلسة تلاوة بعد'**
+  String get childSmartTilawahEmptyTitle;
+
+  /// SCR-CHD-032 empty msg
+  ///
+  /// In ar, this message translates to:
+  /// **'افتح وردك القرآني لتبدأ جلسة تلاوة ذكية لطيفة.'**
+  String get childSmartTilawahEmptyMessage;
+
+  /// SCR-CHD-032 →014/025
+  ///
+  /// In ar, this message translates to:
+  /// **'وردي القرآني'**
+  String get childSmartTilawahEmptyCta;
+
+  /// SCR-CHD-032 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل التلاوة الذكية'**
+  String get childSmartTilawahLoadingSemantics;
+
+  /// SCR-CHD-032 parent lean
+  ///
+  /// In ar, this message translates to:
+  /// **'التلاوة الذكية'**
+  String get childSmartTilawahParentLeanTitle;
+
+  /// SCR-CHD-032 parent lean msg
+  ///
+  /// In ar, this message translates to:
+  /// **'مدرب التلاوة اللطيف على جهاز الابن. التقدّم يظهر في تقدّم القرآن للوالدين.'**
+  String get childSmartTilawahParentLeanMessage;
+
+  /// SCR-CHD-033 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'قصصي'**
+  String get childInteractiveStoriesTitle;
+
+  /// SCR-CHD-033 chapter
+  ///
+  /// In ar, this message translates to:
+  /// **'كنز الصحراء — الفصل ٣'**
+  String get childInteractiveStoriesChapterTitle;
+
+  /// SCR-CHD-033 body
+  ///
+  /// In ar, this message translates to:
+  /// **'وصلتَ أنت ورفيقك عند بئر قديمة. وجدتما كيسًا فيه دنانير ذهبية منقوش عليها اسم «تاجر القافلة»… ورفيقك يهمس: «لن يعرف أحد!»'**
+  String get childInteractiveStoriesChapterBody;
+
+  /// SCR-CHD-033 prompt
+  ///
+  /// In ar, this message translates to:
+  /// **'ماذا تفعل؟'**
+  String get childInteractiveStoriesPrompt;
+
+  /// SCR-CHD-033 choice
+  ///
+  /// In ar, this message translates to:
+  /// **'نبحث عن التاجر ونعيد الكيس'**
+  String get childInteractiveStoriesChoiceReturn;
+
+  /// SCR-CHD-033 choice
+  ///
+  /// In ar, this message translates to:
+  /// **'نأخذها — لن يعرف أحد'**
+  String get childInteractiveStoriesChoiceTake;
+
+  /// SCR-CHD-033 choice
+  ///
+  /// In ar, this message translates to:
+  /// **'نسأل والدي أولًا'**
+  String get childInteractiveStoriesChoiceAsk;
+
+  /// SCR-CHD-033 toast
+  ///
+  /// In ar, this message translates to:
+  /// **'اخترت الأمانة! التاجر سيكافئك بما لم تتخيل… وخاتمة الفصل: «من ترك شيئًا لله عوّضه الله خيرًا منه»'**
+  String get childInteractiveStoriesToastReturn;
+
+  /// SCR-CHD-033 toast
+  ///
+  /// In ar, this message translates to:
+  /// **'مسار آخر… وستكتشف بنفسك في الخاتمة: راحة القلب لا تُشترى بذهب الدنيا كله'**
+  String get childInteractiveStoriesToastTake;
+
+  /// SCR-CHD-033 toast
+  ///
+  /// In ar, this message translates to:
+  /// **'حكمة! سؤال الكبار طريق الحكماء — والدك في القصة سيدهشك'**
+  String get childInteractiveStoriesToastAsk;
+
+  /// SCR-CHD-033 footer
+  ///
+  /// In ar, this message translates to:
+  /// **'قراراتك تكتب الحكاية — لا توجد نهاية واحدة'**
+  String get childInteractiveStoriesFooter;
+
+  /// SCR-CHD-033 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا فصل قصة بعد'**
+  String get childInteractiveStoriesEmptyTitle;
+
+  /// SCR-CHD-033 empty msg
+  ///
+  /// In ar, this message translates to:
+  /// **'افتح تعلّمي لفتح فصل قصتك التفاعلي التالي.'**
+  String get childInteractiveStoriesEmptyMessage;
+
+  /// SCR-CHD-033 →014
+  ///
+  /// In ar, this message translates to:
+  /// **'تعلّمي'**
+  String get childInteractiveStoriesEmptyCta;
+
+  /// SCR-CHD-033 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل القصة التفاعلية'**
+  String get childInteractiveStoriesLoadingSemantics;
+
+  /// SCR-CHD-033 parent lean
+  ///
+  /// In ar, this message translates to:
+  /// **'القصص التفاعلية'**
+  String get childInteractiveStoriesParentLeanTitle;
+
+  /// SCR-CHD-033 parent lean msg
+  ///
+  /// In ar, this message translates to:
+  /// **'قصص اختيارات القيم على جهاز الابن. الوالدان يريان الموضوعات في مستشار العائلة دون حرق للنهاية.'**
+  String get childInteractiveStoriesParentLeanMessage;
+
+  /// SCR-CHD-034 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'تحديات العائلة'**
+  String get childFamilyChallengesTitle;
+
+  /// SCR-CHD-034 active
+  ///
+  /// In ar, this message translates to:
+  /// **'تحدي الأسبوع: ماراثون المراجعة'**
+  String get childFamilyChallengesActiveTitle;
+
+  /// SCR-CHD-034 active sub
+  ///
+  /// In ar, this message translates to:
+  /// **'من يكمل بطاقات مراجعته كل يوم؟ الجائزة: يختار وجهة مشوار الجمعة!'**
+  String get childFamilyChallengesActiveSub;
+
+  /// SCR-CHD-034 you
+  ///
+  /// In ar, this message translates to:
+  /// **'أنت'**
+  String get childFamilyChallengesYou;
+
+  /// SCR-CHD-034 Rule 23 sibling
+  ///
+  /// In ar, this message translates to:
+  /// **'أخ/أخت'**
+  String get childFamilyChallengesSibling;
+
+  /// SCR-CHD-034 tie
+  ///
+  /// In ar, this message translates to:
+  /// **'تعادل مثير! — وأبوكما يراقب مبتسمًا'**
+  String get childFamilyChallengesTieNote;
+
+  /// SCR-CHD-034 done
+  ///
+  /// In ar, this message translates to:
+  /// **'تحدياتنا المنجزة'**
+  String get childFamilyChallengesDoneTitle;
+
+  /// SCR-CHD-034 done item
+  ///
+  /// In ar, this message translates to:
+  /// **'أسبوع الفجر جماعة'**
+  String get childFamilyChallengesDoneFajr;
+
+  /// SCR-CHD-034 done sub
+  ///
+  /// In ar, this message translates to:
+  /// **'فزتم كلكم — مثلجات الجمعة'**
+  String get childFamilyChallengesDoneFajrSub;
+
+  /// SCR-CHD-034 done item
+  ///
+  /// In ar, this message translates to:
+  /// **'ختمة عمّ العائلية'**
+  String get childFamilyChallengesDoneAmma;
+
+  /// SCR-CHD-034 done sub
+  ///
+  /// In ar, this message translates to:
+  /// **'الأخ/الأخت أنهى أولًا'**
+  String get childFamilyChallengesDoneAmmaSub;
+
+  /// SCR-CHD-034 tag
+  ///
+  /// In ar, this message translates to:
+  /// **'تم'**
+  String get childFamilyChallengesDoneTag;
+
+  /// SCR-CHD-034 banner
+  ///
+  /// In ar, this message translates to:
+  /// **'هنا نتنافس لنكبر معًا — لا ترتيب يُحرج أحدًا، والخاسر الوحيد هو الكسل.'**
+  String get childFamilyChallengesBanner;
+
+  /// SCR-CHD-034 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا تحديات عائلية بعد'**
+  String get childFamilyChallengesEmptyTitle;
+
+  /// SCR-CHD-034 empty msg
+  ///
+  /// In ar, this message translates to:
+  /// **'عندما يبدأ الأب تحديًا عائليًا، يضيء شريط أسبوعك هنا.'**
+  String get childFamilyChallengesEmptyMessage;
+
+  /// SCR-CHD-034 →001
+  ///
+  /// In ar, this message translates to:
+  /// **'الرئيسية'**
+  String get childFamilyChallengesEmptyCta;
+
+  /// SCR-CHD-034 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل التحديات العائلية'**
+  String get childFamilyChallengesLoadingSemantics;
+
+  /// SCR-CHD-034 parent lean
+  ///
+  /// In ar, this message translates to:
+  /// **'التحديات العائلية'**
+  String get childFamilyChallengesParentLeanTitle;
+
+  /// SCR-CHD-034 parent lean msg
+  ///
+  /// In ar, this message translates to:
+  /// **'سباقات الإخوة الودية على جهاز الابن. الوالدان يضعان الجوائز من المهام / الاستوديو.'**
+  String get childFamilyChallengesParentLeanMessage;
+
+  /// SCR-CHD-035 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'أصوات التركيز'**
+  String get childFocusSoundsTitle;
+
+  /// SCR-CHD-035 sound
+  ///
+  /// In ar, this message translates to:
+  /// **'مطر هادئ'**
+  String get childFocusSoundsRain;
+
+  /// SCR-CHD-035 sound
+  ///
+  /// In ar, this message translates to:
+  /// **'أمواج'**
+  String get childFocusSoundsWaves;
+
+  /// SCR-CHD-035 sound
+  ///
+  /// In ar, this message translates to:
+  /// **'غابة'**
+  String get childFocusSoundsForest;
+
+  /// SCR-CHD-035 sound
+  ///
+  /// In ar, this message translates to:
+  /// **'موقد'**
+  String get childFocusSoundsFire;
+
+  /// SCR-CHD-035 toast
+  ///
+  /// In ar, this message translates to:
+  /// **'صوت المطر يعمل بهدوء…'**
+  String get childFocusSoundsToastRain;
+
+  /// SCR-CHD-035 toast
+  ///
+  /// In ar, this message translates to:
+  /// **'أمواج البحر…'**
+  String get childFocusSoundsToastWaves;
+
+  /// SCR-CHD-035 toast
+  ///
+  /// In ar, this message translates to:
+  /// **'حفيف الأشجار…'**
+  String get childFocusSoundsToastForest;
+
+  /// SCR-CHD-035 toast
+  ///
+  /// In ar, this message translates to:
+  /// **'دفء الموقد…'**
+  String get childFocusSoundsToastFire;
+
+  /// SCR-CHD-035 settings
+  ///
+  /// In ar, this message translates to:
+  /// **'مع وضع التركيز'**
+  String get childFocusSoundsWithFocusTitle;
+
+  /// SCR-CHD-035 auto
+  ///
+  /// In ar, this message translates to:
+  /// **'تشغيل تلقائي مع جلسة التركيز'**
+  String get childFocusSoundsAutoTitle;
+
+  /// SCR-CHD-035 auto sub
+  ///
+  /// In ar, this message translates to:
+  /// **'يبدأ الصوت ويتوقف معها'**
+  String get childFocusSoundsAutoSub;
+
+  /// SCR-CHD-035 fade
+  ///
+  /// In ar, this message translates to:
+  /// **'خفوت تدريجي آخر دقيقتين'**
+  String get childFocusSoundsFadeTitle;
+
+  /// SCR-CHD-035 fade sub
+  ///
+  /// In ar, this message translates to:
+  /// **'ينبهك بلطف أن الجلسة تنتهي'**
+  String get childFocusSoundsFadeSub;
+
+  /// SCR-CHD-035 →018
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ جلسة تركيز الآن — والصوت معك'**
+  String get childFocusSoundsStartCta;
+
+  /// SCR-CHD-035 banner
+  ///
+  /// In ar, this message translates to:
+  /// **'أصوات طبيعية ثابتة بلا كلمات ولا إيقاع — هذا ما يساعد الدماغ على التركيز.'**
+  String get childFocusSoundsBanner;
+
+  /// SCR-CHD-035 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا أصوات تركيز بعد'**
+  String get childFocusSoundsEmptyTitle;
+
+  /// SCR-CHD-035 empty msg
+  ///
+  /// In ar, this message translates to:
+  /// **'افتح وضع التركيز لفتح حلقات الطبيعة الهادئة لجلساتك.'**
+  String get childFocusSoundsEmptyMessage;
+
+  /// SCR-CHD-035 empty CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'وضع التركيز'**
+  String get childFocusSoundsEmptyCta;
+
+  /// SCR-CHD-035 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل أصوات التركيز'**
+  String get childFocusSoundsLoadingSemantics;
+
+  /// SCR-CHD-035 parent lean
+  ///
+  /// In ar, this message translates to:
+  /// **'أصوات التركيز'**
+  String get childFocusSoundsParentLeanTitle;
+
+  /// SCR-CHD-035 parent lean msg
+  ///
+  /// In ar, this message translates to:
+  /// **'حلقات الطبيعة على جهاز الابن بجانب وضع التركيز. الوالدان يريان إحصاءات الجلسة لا قائمة الأصوات.'**
+  String get childFocusSoundsParentLeanMessage;
+
+  /// SCR-CHD-036 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'مرح المكالمة'**
+  String get childCallPlayTitle;
+
+  /// SCR-CHD-036 Rule 23 peer
+  ///
+  /// In ar, this message translates to:
+  /// **'جدّو'**
+  String get childCallPlayPeerGrandpa;
+
+  /// SCR-CHD-036 you
+  ///
+  /// In ar, this message translates to:
+  /// **'أنت'**
+  String get childCallPlayYou;
+
+  /// SCR-CHD-036 hero
+  ///
+  /// In ar, this message translates to:
+  /// **'مكالمة مع {peer}'**
+  String childCallPlayHeroTitle(String peer);
+
+  /// SCR-CHD-036 hero sub
+  ///
+  /// In ar, this message translates to:
+  /// **'الآن — وتلعبان معًا!'**
+  String get childCallPlayHeroSub;
+
+  /// SCR-CHD-036 games
+  ///
+  /// In ar, this message translates to:
+  /// **'العبا وأنتما تتكلمان'**
+  String get childCallPlayGamesTitle;
+
+  /// SCR-CHD-036 game
+  ///
+  /// In ar, this message translates to:
+  /// **'لوحة رسم مشتركة'**
+  String get childCallPlayGameDraw;
+
+  /// SCR-CHD-036 game sub
+  ///
+  /// In ar, this message translates to:
+  /// **'ترسمان معًا في نفس اللحظة'**
+  String get childCallPlayGameDrawSub;
+
+  /// SCR-CHD-036 game
+  ///
+  /// In ar, this message translates to:
+  /// **'إكس-أو'**
+  String get childCallPlayGameXo;
+
+  /// SCR-CHD-036 game sub
+  ///
+  /// In ar, this message translates to:
+  /// **'جدّو بطل فيها — انتبه!'**
+  String get childCallPlayGameXoSub;
+
+  /// SCR-CHD-036 game
+  ///
+  /// In ar, this message translates to:
+  /// **'سباق الأسئلة'**
+  String get childCallPlayGameQuiz;
+
+  /// SCR-CHD-036 game sub
+  ///
+  /// In ar, this message translates to:
+  /// **'من يجيب أسرع؟'**
+  String get childCallPlayGameQuizSub;
+
+  /// SCR-CHD-036 CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'افتح'**
+  String get childCallPlayCtaOpen;
+
+  /// SCR-CHD-036 CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'العب'**
+  String get childCallPlayCtaPlay;
+
+  /// SCR-CHD-036 CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'تحدَّ'**
+  String get childCallPlayCtaChallenge;
+
+  /// SCR-CHD-036 toast
+  ///
+  /// In ar, this message translates to:
+  /// **'فُتحت اللوحة — جدّو يرسم نخلة! أكمل أنت البيت'**
+  String get childCallPlayToastDraw;
+
+  /// SCR-CHD-036 toast
+  ///
+  /// In ar, this message translates to:
+  /// **'جدّو بدأ بالوسط — خطتك؟'**
+  String get childCallPlayToastXo;
+
+  /// SCR-CHD-036 toast
+  ///
+  /// In ar, this message translates to:
+  /// **'سؤال ١: عاصمة اليمن؟ — جدّو ضغط قبلك!'**
+  String get childCallPlayToastQuiz;
+
+  /// SCR-CHD-036 banner
+  ///
+  /// In ar, this message translates to:
+  /// **'الألعاب داخل مكالمات دائرتك الآمنة فقط — تقرّبك ممن تحب.'**
+  String get childCallPlayBanner;
+
+  /// SCR-CHD-036 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا مكالمة حية للعب'**
+  String get childCallPlayEmptyTitle;
+
+  /// SCR-CHD-036 empty msg
+  ///
+  /// In ar, this message translates to:
+  /// **'عندما تكون في مكالمة دائرة آمنة، تظهر هنا الرسم وإكس-أو وسباق الأسئلة.'**
+  String get childCallPlayEmptyMessage;
+
+  /// SCR-CHD-036 →007
+  ///
+  /// In ar, this message translates to:
+  /// **'محادثاتي'**
+  String get childCallPlayEmptyCta;
+
+  /// SCR-CHD-036 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل مرح المكالمة'**
+  String get childCallPlayLoadingSemantics;
+
+  /// SCR-CHD-036 parent lean
+  ///
+  /// In ar, this message translates to:
+  /// **'مرح المكالمة'**
+  String get childCallPlayParentLeanTitle;
+
+  /// SCR-CHD-036 parent lean msg
+  ///
+  /// In ar, this message translates to:
+  /// **'ألعاب المكالمة على جهاز الابن أثناء مكالمات الدائرة الآمنة. الوالدان يريان سجل المكالمات لا اللوحة.'**
+  String get childCallPlayParentLeanMessage;
+
+  /// SCR-CHD-037 AppBar
+  ///
+  /// In ar, this message translates to:
+  /// **'ملصقاتي'**
+  String get childStickersBackgroundsTitle;
+
+  /// SCR-CHD-037 stickers
+  ///
+  /// In ar, this message translates to:
+  /// **'ملصقاتك'**
+  String get childStickersBackgroundsStickersTitle;
+
+  /// SCR-CHD-037 hint
+  ///
+  /// In ar, this message translates to:
+  /// **'حزمة «الفضاء» تُفتح بإنجاز وردين — أنت قريب!'**
+  String get childStickersBackgroundsSpaceHint;
+
+  /// SCR-CHD-037 unlock CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'تُفتح بإنجاز وردين'**
+  String get childStickersBackgroundsUnlockCta;
+
+  /// SCR-CHD-037 unlock toast
+  ///
+  /// In ar, this message translates to:
+  /// **'حزمة الفضاء تُفتح تلقائيًا فور إتمام وردين — أنت على بعد {wards} ورد!'**
+  String childStickersBackgroundsUnlockToast(int wards);
+
+  /// SCR-CHD-037 bg
+  ///
+  /// In ar, this message translates to:
+  /// **'خلفية محادثة العائلة'**
+  String get childStickersBackgroundsBgTitle;
+
+  /// SCR-CHD-037 bg semantics
+  ///
+  /// In ar, this message translates to:
+  /// **'خلفية محادثة {id}'**
+  String childStickersBackgroundsBgSemantics(String id);
+
+  /// SCR-CHD-037 bg toast
+  ///
+  /// In ar, this message translates to:
+  /// **'تغيرت خلفيتك — شكلها رهيب!'**
+  String get childStickersBackgroundsBgToast;
+
+  /// SCR-CHD-037 banner
+  ///
+  /// In ar, this message translates to:
+  /// **'كل الملصقات مرسومة بعناية ومهذبة — عبّر عن نفسك بشخصيتك الحلوة.'**
+  String get childStickersBackgroundsBanner;
+
+  /// SCR-CHD-037 empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا حزمة ملصقات بعد'**
+  String get childStickersBackgroundsEmptyTitle;
+
+  /// SCR-CHD-037 empty msg
+  ///
+  /// In ar, this message translates to:
+  /// **'افتح محادثة العائلة لاختيار ملصقات وخلفية لمحادثاتك.'**
+  String get childStickersBackgroundsEmptyMessage;
+
+  /// SCR-CHD-037 →007
+  ///
+  /// In ar, this message translates to:
+  /// **'محادثاتي'**
+  String get childStickersBackgroundsEmptyCta;
+
+  /// SCR-CHD-037 loading
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تحميل الملصقات والخلفيات'**
+  String get childStickersBackgroundsLoadingSemantics;
+
+  /// SCR-CHD-037 parent lean
+  ///
+  /// In ar, this message translates to:
+  /// **'الملصقات والخلفيات'**
+  String get childStickersBackgroundsParentLeanTitle;
+
+  /// SCR-CHD-037 parent lean msg
+  ///
+  /// In ar, this message translates to:
+  /// **'حزم الملصقات المهذبة على جهاز الابن. الوالدان يعتمدون الحزم من الاستوديو لا من المنتقي.'**
+  String get childStickersBackgroundsParentLeanMessage;
+
+  /// SCR-CHD-012 live assignment challenge
+  ///
+  /// In ar, this message translates to:
+  /// **'درس خصّصه ولي أمرك'**
+  String get childLearnHomeChallengeAssigned;
+
+  /// SCR-CHD-012 homework assignment
+  ///
+  /// In ar, this message translates to:
+  /// **'واجب من ولي أمرك'**
+  String get childLearnHomeChallengeAssignedHomework;
+
+  /// SCR-CHD-012 skill-gap assignment
+  ///
+  /// In ar, this message translates to:
+  /// **'تدريب مهارة من ولي أمرك'**
+  String get childLearnHomeChallengeAssignedSkill;
+
+  /// SCR-CHD-012 family assignment
+  ///
+  /// In ar, this message translates to:
+  /// **'تحدّي عائلي من ولي أمرك'**
+  String get childLearnHomeChallengeAssignedFamily;
+
+  /// SCR-CHD-012 material subtitle for live assign
+  ///
+  /// In ar, this message translates to:
+  /// **'خُصّص للتو من ولي أمرك'**
+  String get childLearnHomeAssignedFromFather;
+
+  /// SCR-FAT-041 attached SourceRef strip
+  ///
+  /// In ar, this message translates to:
+  /// **'مصادر مُرفقة ({count})'**
+  String addFromSourceAttachedTitle(int count);
+
+  /// SCR-FAT-041 attached strip semantics
+  ///
+  /// In ar, this message translates to:
+  /// **'مصادر تعلّم مُرفقة، {count} عناصر'**
+  String addFromSourceAttachedSemantics(int count);
+
+  /// SCR-FAT-041 SourceRef label
+  ///
+  /// In ar, this message translates to:
+  /// **'ملف PDF لكتاب الرياضيات'**
+  String get addFromSourceLabelPdfMath;
+
+  /// SCR-FAT-041 SourceRef label
+  ///
+  /// In ar, this message translates to:
+  /// **'ملف PDF لوحدة العلوم'**
+  String get addFromSourceLabelPdfScience;
+
+  /// SCR-FAT-041 SourceRef label
+  ///
+  /// In ar, this message translates to:
+  /// **'ملف PDF من هذا الجهاز'**
+  String get addFromSourceLabelPdfDevice;
+
+  /// SCR-FAT-041 SourceRef label
+  ///
+  /// In ar, this message translates to:
+  /// **'رابط فيديو تعليمي'**
+  String get addFromSourceLabelLink;
+
+  /// SCR-FAT-041 SourceRef label
+  ///
+  /// In ar, this message translates to:
+  /// **'بذرة موضوع للمستشار'**
+  String get addFromSourceLabelTopic;
+
+  /// SCR-FAT-041 SourceRef label
+  ///
+  /// In ar, this message translates to:
+  /// **'ملاحظة صوتية للمستشار'**
+  String get addFromSourceLabelVoice;
+
+  /// SCR-FAT-044 approve persisted pack toast
+  ///
+  /// In ar, this message translates to:
+  /// **'تم الاعتماد — جاهز لتعيين المكافآت لابنك'**
+  String get previewApproveApprovedToast;
+
+  /// SCR-CHD-015 skill from FAT-044 pack
+  ///
+  /// In ar, this message translates to:
+  /// **'درس اعتمده ولي أمرك'**
+  String get childQuizSkillApprovedPack;
+
+  /// SCR-CHD-015 approved pack explain
+  ///
+  /// In ar, this message translates to:
+  /// **'ولي أمرك اعتمد هذا السؤال لك — أحسنت!'**
+  String get childQuizExplainApproved;
+
+  /// SCR-FAT-018 acknowledge CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'إقرار — رأيت هذا البلاغ'**
+  String get sosAlertAcknowledgeCta;
+
+  /// SCR-FAT-018 acknowledge Semantics
+  ///
+  /// In ar, this message translates to:
+  /// **'إقرار بلاغ الاستغاثة دون إغلاقه'**
+  String get sosAlertAcknowledgeSemantics;
+
+  /// SCR-FAT-018 ack toast
+  ///
+  /// In ar, this message translates to:
+  /// **'تم الإقرار — البلاغ يبقى مفتوحًا حتى يُغلق'**
+  String get sosAlertAcknowledgedToast;
+
+  /// SCR-FAT-018 honest call unavailable
+  ///
+  /// In ar, this message translates to:
+  /// **'الاتصال غير مُعدّ على هذا الجهاز بعد — البلاغ يبقى نشطًا'**
+  String get sosAlertCallUnavailableToast;
+
+  /// SOS incident status
+  ///
+  /// In ar, this message translates to:
+  /// **'الحادثة: نشطة'**
+  String get sosAlertStatusActive;
+
+  /// SOS incident status
+  ///
+  /// In ar, this message translates to:
+  /// **'الحادثة: مُقرّ بها'**
+  String get sosAlertStatusAcknowledged;
+
+  /// SOS incident status
+  ///
+  /// In ar, this message translates to:
+  /// **'الحادثة: تصعيد'**
+  String get sosAlertStatusEscalating;
+
+  /// SOS location class
+  ///
+  /// In ar, this message translates to:
+  /// **'الموقع: جاري التحديد'**
+  String get sosAlertLocationAcquiring;
+
+  /// SOS location class
+  ///
+  /// In ar, this message translates to:
+  /// **'الموقع: جاهز'**
+  String get sosAlertLocationReady;
+
+  /// SOS location class
+  ///
+  /// In ar, this message translates to:
+  /// **'الموقع: قديم'**
+  String get sosAlertLocationStale;
+
+  /// SOS location class
+  ///
+  /// In ar, this message translates to:
+  /// **'الموقع: غير متاح'**
+  String get sosAlertLocationUnavailable;
+
+  /// SOS delivery row
+  ///
+  /// In ar, this message translates to:
+  /// **'{channel} → {recipient}: قيد الانتظار'**
+  String sosAlertDeliveryPending(String channel, String recipient);
+
+  /// SOS delivery row
+  ///
+  /// In ar, this message translates to:
+  /// **'{channel} → {recipient}: فشل'**
+  String sosAlertDeliveryFailed(String channel, String recipient);
+
+  /// SOS delivery row
+  ///
+  /// In ar, this message translates to:
+  /// **'{channel} → {recipient}: غير متاح'**
+  String sosAlertDeliveryUnavailable(String channel, String recipient);
+
+  /// SOS delivery row
+  ///
+  /// In ar, this message translates to:
+  /// **'{channel} → {recipient}: غير مُعدّ'**
+  String sosAlertDeliveryNotConfigured(String channel, String recipient);
+
+  /// SOS delivery row
+  ///
+  /// In ar, this message translates to:
+  /// **'{channel} → {recipient}: وصل'**
+  String sosAlertDeliveryDelivered(String channel, String recipient);
+
+  /// SCR-FAT-018 break-glass CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'تجاوز مؤقت (كسر الزجاج)…'**
+  String get sosAlertBreakGlassCta;
+
+  /// SCR-FAT-018 break-glass Semantics
+  ///
+  /// In ar, this message translates to:
+  /// **'فتح ورقة التجاوز المؤقت'**
+  String get sosAlertBreakGlassSemantics;
+
+  /// Break-glass sheet title
+  ///
+  /// In ar, this message translates to:
+  /// **'تجاوز مؤقت'**
+  String get sosBreakGlassTitle;
+
+  /// Break-glass body
+  ///
+  /// In ar, this message translates to:
+  /// **'يفتح مؤقتًا أدوات الاستجابة لمدة {minutes} دقيقة. لا يغيّر سياسة الاستغاثة الدائمة ويُسجَّل في السجل.'**
+  String sosBreakGlassBody(int minutes);
+
+  /// Break-glass reason field
+  ///
+  /// In ar, this message translates to:
+  /// **'السبب / السياق'**
+  String get sosBreakGlassReasonLabel;
+
+  /// Break-glass continue
+  ///
+  /// In ar, this message translates to:
+  /// **'متابعة'**
+  String get sosBreakGlassContinueCta;
+
+  /// Break-glass confirm
+  ///
+  /// In ar, this message translates to:
+  /// **'تأكيد التجاوز المؤقت'**
+  String get sosBreakGlassConfirmCta;
+
+  /// Break-glass cancel
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء'**
+  String get sosBreakGlassCancelCta;
+
+  /// FAT-018 observer note
+  ///
+  /// In ar, this message translates to:
+  /// **'مراقبة: عرض وإقرار فقط — الإغلاق والتصعيد والإعداد غير متاحة'**
+  String get sosAlertObserverViewOnlyNote;
+
+  /// FAT-018 honesty banner
+  ///
+  /// In ar, this message translates to:
+  /// **'الاستغاثة متاحة دائمًا — تظهر حالات التسليم بصدق فقط'**
+  String get sosAlertHonestyBanner;
+
+  /// FAT-018 incident note
+  ///
+  /// In ar, this message translates to:
+  /// **'حادثة طوارئ مفتوحة — حالة الموقع والتسليم أدناه صادقة'**
+  String get sosAlertIncidentNote;
+
+  /// CHD-006 location honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'حالة الموقع صادقة — مزوّد GPS غير نشط في هذا البناء'**
+  String get childSosInProgressLocationPending;
+
+  /// CHD-006 delivery honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'حالة إبلاغ الوالدين لكل قناة — بلا نجاح صامت'**
+  String get childSosInProgressDeliveryHonesty;
+
+  /// CHD-006 call honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'الاتصال غير متاح في هذا البناء — الاستغاثة تبقى نشطة'**
+  String get childSosInProgressCallUnavailableToast;
+
+  /// FAT-028 max backups
+  ///
+  /// In ar, this message translates to:
+  /// **'الحد الأقصى ٥ جهات احتياط'**
+  String get sosLadderMaxBackupsError;
+
+  /// FAT-028 verification
+  ///
+  /// In ar, this message translates to:
+  /// **'غير موثّق'**
+  String get sosLadderVerificationUnverified;
+
+  /// FAT-028 verification
+  ///
+  /// In ar, this message translates to:
+  /// **'قيد التحقق'**
+  String get sosLadderVerificationPending;
+
+  /// FAT-028 verification
+  ///
+  /// In ar, this message translates to:
+  /// **'موثّق'**
+  String get sosLadderVerificationVerified;
+
+  /// FAT-028 verification
+  ///
+  /// In ar, this message translates to:
+  /// **'ملغى'**
+  String get sosLadderVerificationRevoked;
+
+  /// FAT-028 verification
+  ///
+  /// In ar, this message translates to:
+  /// **'فشل'**
+  String get sosLadderVerificationFailed;
+
+  /// FAT-028 priority
+  ///
+  /// In ar, this message translates to:
+  /// **'أ{priority}'**
+  String sosLadderPriorityLabel(int priority);
+
+  /// FAT-028 read-only title
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض فقط'**
+  String get sosLadderReadOnlyTitle;
+
+  /// FAT-028 read-only message
+  ///
+  /// In ar, this message translates to:
+  /// **'ولي الأمر الأساسي أو الأم بصلاحية كاملة فقط يعدّلون جهات الطوارئ'**
+  String get sosLadderReadOnlyMessage;
+
+  /// FAT-028 panic quiet
+  ///
+  /// In ar, this message translates to:
+  /// **'وضع الهدوء أثناء الاستغاثة (طفل)'**
+  String get sosPanicQuietTitle;
+
+  /// FAT-028 panic quiet subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'عند التفعيل، شاشة الاستغاثة النشطة للطفل تعرض الحالة الحرجة فقط'**
+  String get sosPanicQuietSubtitle;
+
+  /// FAT-028 readiness
+  ///
+  /// In ar, this message translates to:
+  /// **'جاهزية القدرات'**
+  String get sosReadinessTitle;
+
+  /// FAT-028 readiness body
+  ///
+  /// In ar, this message translates to:
+  /// **'الدفع والرسائل والاتصال غير مُعدّة في هذه الشريحة. الاستغاثة تعمل داخل التطبيق.'**
+  String get sosReadinessBody;
+
+  /// SOS connection
+  ///
+  /// In ar, this message translates to:
+  /// **'الاتصال: متصل'**
+  String get sosAlertConnectionOnline;
+
+  /// SOS connection
+  ///
+  /// In ar, this message translates to:
+  /// **'الاتصال: متدهور'**
+  String get sosAlertConnectionDegraded;
+
+  /// SOS connection
+  ///
+  /// In ar, this message translates to:
+  /// **'الاتصال: غير متصل'**
+  String get sosAlertConnectionOffline;
+
+  /// Default break-glass capability label
+  ///
+  /// In ar, this message translates to:
+  /// **'أدوات الاستجابة للاستغاثة'**
+  String get sosBreakGlassCapabilityDefault;
+
+  /// SCR-FAT-050 activity from CHD-015 quiz submit (P15-EDU-006)
+  ///
+  /// In ar, this message translates to:
+  /// **'اختبار الابن مُرسل'**
+  String get resultsFollowupActivityQuizSubmittedTitle;
+
+  /// SCR-FAT-050 live submit subtitle without minutes
+  ///
+  /// In ar, this message translates to:
+  /// **'أُرسل للتو — بانتظار مراجعتك'**
+  String get resultsFollowupActivityJustSubmitted;
+
+  /// SCR-FAT-048 user-added subject title (P15-EDU-007)
+  ///
+  /// In ar, this message translates to:
+  /// **'مادة جديدة'**
+  String get materialsLessonsSubjectCustom;
+
+  /// SCR-FAT-048 new subject subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'أُضيفت للتو — جاهزة للدروس'**
+  String get materialsLessonsMetaJustAdded;
+
+  /// SCR-FAT-048 lesson count subtitle for custom subject
+  ///
+  /// In ar, this message translates to:
+  /// **'{count} دروس'**
+  String materialsLessonsMetaLessonCount(int count);
+
+  /// SCR-FAT-048 add subject persisted toast
+  ///
+  /// In ar, this message translates to:
+  /// **'أُضيفت المادة إلى موادك'**
+  String get materialsLessonsAddSubjectPersistedToast;
+
+  /// SCR-FAT-048 add lesson persisted toast
+  ///
+  /// In ar, this message translates to:
+  /// **'أُضيف درس — اختر المصدر التالي'**
+  String get materialsLessonsAddLessonPersistedToast;
+
+  /// SCR-FAT-010 priority from CHD-015 LearningResult (P15-EDU-008)
+  ///
+  /// In ar, this message translates to:
+  /// **'اختبار الابن مُرسل'**
+  String get dayBoardPendingQuizSubmittedTitle;
+
+  /// SCR-FAT-010 learning pending subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'أُرسل للتو — افتح متابعة النتائج'**
+  String get dayBoardPendingJustSubmitted;
+
+  /// SCR-FAT-010 learning pending with minutes
+  ///
+  /// In ar, this message translates to:
+  /// **'حصل على +{minutes} دقيقة — راجع في النتائج'**
+  String dayBoardPendingEarnedMinutes(int minutes);
+
+  /// SCR-FAT-072 surah Al-Mulk (P15-QUR-002)
+  ///
+  /// In ar, this message translates to:
+  /// **'الملك'**
+  String get quranProgressSurahMulk;
+
+  /// SCR-FAT-072 edit plan surah CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'تبديل سورة الورد'**
+  String get quranProgressCycleSurahCta;
+
+  /// SCR-FAT-072 cycle surah toast
+  ///
+  /// In ar, this message translates to:
+  /// **'سورة الورد أصبحت {surah} — احفظ لإرسالها لابنك'**
+  String quranProgressCycleSurahToast(String surah);
+
+  /// SCR-FAT-072 publish ward plan CTA (P15-QUR-002)
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظ الخطة للابن'**
+  String get quranProgressPublishPlanCta;
+
+  /// SCR-FAT-072 publish plan toast
+  ///
+  /// In ar, this message translates to:
+  /// **'أُرسلت خطة الورد — {surah} · مكافأة +{minutes} دقيقة'**
+  String quranProgressPublishPlanToast(String surah, int minutes);
+
+  /// SCR-CHD-025 licensed An-Naba 1 (never AI-generated)
+  ///
+  /// In ar, this message translates to:
+  /// **'عَمَّ يَتَسَاءَلُونَ ﴿١﴾'**
+  String get childQuranWardAyahNaba1;
+
+  /// No description provided for @sys3MockHonesty.
+  ///
+  /// In ar, this message translates to:
+  /// **'يحدّث هذا النموذج المحلي بيانات الهوية في الذاكرة. مزامنة الخادم غير متصلة بعد.'**
+  String get sys3MockHonesty;
+
+  /// No description provided for @sys3SessionRestoreTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'استعادة الجلسة'**
+  String get sys3SessionRestoreTitle;
+
+  /// No description provided for @sys3SessionRestoreBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'استعد هذه الجلسة المنتهية على هذا الجهاز.'**
+  String get sys3SessionRestoreBody;
+
+  /// No description provided for @sys3SessionRestoreAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'استعادة الجلسة'**
+  String get sys3SessionRestoreAction;
+
+  /// No description provided for @sys3SessionExpiredTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'انتهت الجلسة'**
+  String get sys3SessionExpiredTitle;
+
+  /// No description provided for @sys3SessionExpiredBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'انتهت جلسة تسجيل الدخول. استعدها أو سجل الدخول مجددًا.'**
+  String get sys3SessionExpiredBody;
+
+  /// No description provided for @sys3SignInAgain.
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل الدخول مجددًا'**
+  String get sys3SignInAgain;
+
+  /// No description provided for @sys3LogoutTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل الخروج'**
+  String get sys3LogoutTitle;
+
+  /// No description provided for @sys3LogoutBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'هل تريد إنهاء جلسة البالغ الحالية على هذا الجهاز؟'**
+  String get sys3LogoutBody;
+
+  /// No description provided for @sys3LogoutAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل الخروج الآن'**
+  String get sys3LogoutAction;
+
+  /// No description provided for @sys3RecoveryTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'استعادة الحساب'**
+  String get sys3RecoveryTitle;
+
+  /// No description provided for @sys3RecoveryBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل بريدك. يؤكد النموذج الطلب محليًا دون الادعاء بإرسال بريد.'**
+  String get sys3RecoveryBody;
+
+  /// No description provided for @sys3RecoveryAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'طلب الاستعادة'**
+  String get sys3RecoveryAction;
+
+  /// No description provided for @sys3RecoverySuccess.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم تسجيل طلب الاستعادة محليًا.'**
+  String get sys3RecoverySuccess;
+
+  /// No description provided for @sys3DeactivateTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعطيل الحساب'**
+  String get sys3DeactivateTitle;
+
+  /// No description provided for @sys3DeactivateBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعطيل هذا الحساب وإلغاء جميع جلساته؟'**
+  String get sys3DeactivateBody;
+
+  /// No description provided for @sys3DeactivateAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعطيل الحساب'**
+  String get sys3DeactivateAction;
+
+  /// No description provided for @sys3DeactivateSuccess.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم تعطيل الحساب وإلغاء الجلسات.'**
+  String get sys3DeactivateSuccess;
+
+  /// No description provided for @sys3FamilySelectTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختيار العائلة'**
+  String get sys3FamilySelectTitle;
+
+  /// No description provided for @sys3FamilySelectBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر سياق العائلة الذي تريد فتحه.'**
+  String get sys3FamilySelectBody;
+
+  /// No description provided for @sys3FamilySingle.
+  ///
+  /// In ar, this message translates to:
+  /// **'توجد عائلة واحدة فقط. جارٍ فتحها.'**
+  String get sys3FamilySingle;
+
+  /// No description provided for @sys3RemoveAdultTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'إزالة بالغ'**
+  String get sys3RemoveAdultTitle;
+
+  /// No description provided for @sys3RemoveAdultBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'هل تريد إزالة ولي الأمر المشارك من العائلة الحالية؟'**
+  String get sys3RemoveAdultBody;
+
+  /// No description provided for @sys3RemoveAdultAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'إزالة العضو'**
+  String get sys3RemoveAdultAction;
+
+  /// No description provided for @sys3TransferTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'نقل الملكية'**
+  String get sys3TransferTitle;
+
+  /// No description provided for @sys3TransferBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر بالغًا مؤهلًا ليصبح المالك الأساسي.'**
+  String get sys3TransferBody;
+
+  /// No description provided for @sys3TransferAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'نقل الملكية'**
+  String get sys3TransferAction;
+
+  /// No description provided for @sys3LeaveTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'مغادرة العائلة'**
+  String get sys3LeaveTitle;
+
+  /// No description provided for @sys3LeaveBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'مغادرة العائلة الحالية؟ يجب على المالك الأساسي نقل الملكية أولًا.'**
+  String get sys3LeaveBody;
+
+  /// No description provided for @sys3LeaveAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'مغادرة العائلة'**
+  String get sys3LeaveAction;
+
+  /// No description provided for @sys3InviteStatusTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'حالة الدعوة'**
+  String get sys3InviteStatusTitle;
+
+  /// No description provided for @sys3InviteStatusBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل رمز الدعوة لمعرفة حالتها الحالية.'**
+  String get sys3InviteStatusBody;
+
+  /// No description provided for @sys3InviteTokenLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'رمز الدعوة'**
+  String get sys3InviteTokenLabel;
+
+  /// No description provided for @sys3InviteLookupAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'فحص الحالة'**
+  String get sys3InviteLookupAction;
+
+  /// No description provided for @sys3InviteUnknown.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد دعوة مطابقة لهذا الرمز.'**
+  String get sys3InviteUnknown;
+
+  /// No description provided for @sys3AdultSessionsTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'جلسات البالغين'**
+  String get sys3AdultSessionsTitle;
+
+  /// No description provided for @sys3ChildSessionsTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'جلسات الأطفال'**
+  String get sys3ChildSessionsTitle;
+
+  /// No description provided for @sys3SessionsEmpty.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد جلسات متاحة.'**
+  String get sys3SessionsEmpty;
+
+  /// No description provided for @sys3RevokeAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء'**
+  String get sys3RevokeAction;
+
+  /// No description provided for @sys3RemoteEndTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'إنهاء جلسة الطفل'**
+  String get sys3RemoteEndTitle;
+
+  /// No description provided for @sys3RemoteEndBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'إنهاء جلسة الطفل عن بُعد؟ لن يؤدي ذلك إلى إزالة ربط الجهاز.'**
+  String get sys3RemoteEndBody;
+
+  /// No description provided for @sys3RemoteEndAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'إنهاء الجلسة'**
+  String get sys3RemoteEndAction;
+
+  /// No description provided for @sys3RevokeTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تأكيد الإلغاء'**
+  String get sys3RevokeTitle;
+
+  /// No description provided for @sys3RevokeBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'هل تريد إلغاء الجلسة أو الربط المحدد؟'**
+  String get sys3RevokeBody;
+
+  /// No description provided for @sys3DeniedTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'مطلوب المالك الأساسي'**
+  String get sys3DeniedTitle;
+
+  /// No description provided for @sys3DeniedBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'يمكن للمالك الأساسي فقط تنفيذ هذا الإجراء.'**
+  String get sys3DeniedBody;
+
+  /// No description provided for @sys3SuccessTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتمل'**
+  String get sys3SuccessTitle;
+
+  /// No description provided for @sys3SuccessBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم تطبيق تغيير الهوية محليًا.'**
+  String get sys3SuccessBody;
+
+  /// No description provided for @sys3ErrorTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر الإكمال'**
+  String get sys3ErrorTitle;
+
+  /// No description provided for @sys3ErrorBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر تطبيق تغيير الهوية المطلوب.'**
+  String get sys3ErrorBody;
+
+  /// No description provided for @sys3MemberLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'العضو {id}'**
+  String sys3MemberLabel(String id);
+
+  /// No description provided for @sys3SessionLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'الجلسة {id}'**
+  String sys3SessionLabel(String id);
+
+  /// No description provided for @sys3EnrollmentLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'الربط {id}'**
+  String sys3EnrollmentLabel(String id);
+
+  /// No description provided for @sys3SettingsLogout.
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل الخروج'**
+  String get sys3SettingsLogout;
+
+  /// No description provided for @sys3SettingsAdultSessions.
+  ///
+  /// In ar, this message translates to:
+  /// **'جلسات البالغين'**
+  String get sys3SettingsAdultSessions;
+
+  /// No description provided for @sys3SettingsChildSessions.
+  ///
+  /// In ar, this message translates to:
+  /// **'جلسات الأطفال'**
+  String get sys3SettingsChildSessions;
+
+  /// No description provided for @sys3SettingsRecovery.
+  ///
+  /// In ar, this message translates to:
+  /// **'استعادة الحساب'**
+  String get sys3SettingsRecovery;
+
+  /// No description provided for @sys3SettingsDeactivate.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعطيل الحساب'**
+  String get sys3SettingsDeactivate;
+
+  /// No description provided for @sys3SettingsFamilySelector.
+  ///
+  /// In ar, this message translates to:
+  /// **'تبديل العائلة'**
+  String get sys3SettingsFamilySelector;
+
+  /// No description provided for @sys3FamilyTransferCta.
+  ///
+  /// In ar, this message translates to:
+  /// **'نقل ملكية العائلة'**
+  String get sys3FamilyTransferCta;
+
+  /// No description provided for @sys3FamilySelectorCta.
+  ///
+  /// In ar, this message translates to:
+  /// **'فتح اختيار العائلة'**
+  String get sys3FamilySelectorCta;
+
+  /// No description provided for @sys3FamilyLeaveCta.
+  ///
+  /// In ar, this message translates to:
+  /// **'مغادرة هذه العائلة'**
+  String get sys3FamilyLeaveCta;
+
+  /// No description provided for @sys3FamilyRemoveCta.
+  ///
+  /// In ar, this message translates to:
+  /// **'إزالة بالغ'**
+  String get sys3FamilyRemoveCta;
+
+  /// No description provided for @sys3InviteStatusCta.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض حالة الدعوة'**
+  String get sys3InviteStatusCta;
+
+  /// FS honesty badge — local capability real
+  ///
+  /// In ar, this message translates to:
+  /// **'IMPLEMENTED'**
+  String get capabilityStatusImplemented;
+
+  /// FS honesty badge — remote edge mocked
+  ///
+  /// In ar, this message translates to:
+  /// **'MOCK-REMOTE'**
+  String get capabilityStatusMockRemote;
+
+  /// FS honesty badge — partial / last-acked
+  ///
+  /// In ar, this message translates to:
+  /// **'DEGRADED'**
+  String get capabilityStatusDegraded;
+
+  /// FS honesty badge — platform cannot support
+  ///
+  /// In ar, this message translates to:
+  /// **'UNSUPPORTED'**
+  String get capabilityStatusUnsupported;
+
+  /// FS honesty badge — not built yet
+  ///
+  /// In ar, this message translates to:
+  /// **'NOT IMPLEMENTED'**
+  String get capabilityStatusNotImplemented;
+
+  /// FS-001-UX label beside GPS honesty badge
+  ///
+  /// In ar, this message translates to:
+  /// **'GPS الجهاز'**
+  String get locationGpsCapabilityLabel;
+
+  /// FS-001-UX honesty on FAT-014/015/016/017
+  ///
+  /// In ar, this message translates to:
+  /// **'GPS الجهاز غير مُنفَّذ (NOT IMPLEMENTED) في هذا البناء — الخرائط للعرض فقط؛ لا تُعامل هذه الشاشة كتتبع حي.'**
+  String get locationGpsNotImplementedBanner;
+
+  /// FAT-017 Q-LOC-12 multi-select heading
+  ///
+  /// In ar, this message translates to:
+  /// **'تعيين للأبناء'**
+  String get createSafeZoneAssignHeading;
+
+  /// FAT-017 assignment hint
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر ابناً واحداً على الأقل قبل الحفظ (إلزامي).'**
+  String get createSafeZoneAssignHint;
+
+  /// FAT-017 save blocked without assignment
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر ابناً واحداً على الأقل لهذه المنطقة.'**
+  String get createSafeZoneNeedAssignment;
+
+  /// FAT-017 child chip semantics
+  ///
+  /// In ar, this message translates to:
+  /// **'تعيين المنطقة لـ {name}'**
+  String createSafeZoneChildChipSemantics(String name);
+
+  /// LOC-P-SLR sheet title
+  ///
+  /// In ar, this message translates to:
+  /// **'طلب موقع صامت'**
+  String get silentLocateTitle;
+
+  /// LOC-P-SLR body
+  ///
+  /// In ar, this message translates to:
+  /// **'طلب تحديد موقع بهدوء لـ {name}. لن يرى الابن واجهة تفاعلية.'**
+  String silentLocateBody(String name);
+
+  /// LOC-P-SLR confirm
+  ///
+  /// In ar, this message translates to:
+  /// **'طلب التحديد'**
+  String get silentLocateConfirmCta;
+
+  /// LOC-P-SLR dismiss after result
+  ///
+  /// In ar, this message translates to:
+  /// **'تم'**
+  String get silentLocateDismissCta;
+
+  /// LOC-P-SLR result
+  ///
+  /// In ar, this message translates to:
+  /// **'قيد الانتظار — جاري الاكتساب'**
+  String get silentLocateResultPending;
+
+  /// LOC-P-SLR result
+  ///
+  /// In ar, this message translates to:
+  /// **'تم التحديد — آخر تثبيت صادق متاح'**
+  String get silentLocateResultLocated;
+
+  /// LOC-P-SLR result
+  ///
+  /// In ar, this message translates to:
+  /// **'آخر معروف قديم — ليس تثبيتاً جديداً'**
+  String get silentLocateResultStale;
+
+  /// LOC-P-SLR result
+  ///
+  /// In ar, this message translates to:
+  /// **'غير متاح — لا تثبيت صالح'**
+  String get silentLocateResultUnavailable;
+
+  /// LOC-P-SLR honesty when GPS missing
+  ///
+  /// In ar, this message translates to:
+  /// **'GPS الجهاز NOT IMPLEMENTED — لا يمكن ادعاء تحديد صامت حي.'**
+  String get silentLocateResultGpsNotImplemented;
+
+  /// FAT-014 silent locate CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'تحديد صامت'**
+  String get locationMapSilentLocateCta;
+
+  /// CHD-024 FS-001 silent location law
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل وصول فقط — أماكن مسماة. لا خريطة حية ولا إحداثيات في جانب الابن.'**
+  String get childArrivalSilentBanner;
+
+  /// FS-004-UX parent panel on FAT-065
+  ///
+  /// In ar, this message translates to:
+  /// **'الشاشة والكاميرا (FS-004)'**
+  String get fs004ParentPanelTitle;
+
+  /// FS-004-UX honesty hint beside MOCK-REMOTE badges
+  ///
+  /// In ar, this message translates to:
+  /// **'مستويات كاميرا النظام والالتقاط — غير مفعّلة على الجهاز بعد'**
+  String get fs004PlanesHonestyHint;
+
+  /// FS-004 prevent OS camera intent
+  ///
+  /// In ar, this message translates to:
+  /// **'تقييد كاميرا الجهاز'**
+  String get fs004PreventCameraOs;
+
+  /// FS-004 prevent OS camera subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'نية على مستوى النظام — ليست حظر تطبيق الكاميرا'**
+  String get fs004PreventCameraOsSub;
+
+  /// FS-004 capture prevent intent
+  ///
+  /// In ar, this message translates to:
+  /// **'منع الالتقاط'**
+  String get fs004PreventCapture;
+
+  /// FS-004 capture prevent subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'حيث يدعم النظام — ليس حظراً شاملاً لصور الشاشة'**
+  String get fs004PreventCaptureSub;
+
+  /// FS-004 P-7 monitoring toggle
+  ///
+  /// In ar, this message translates to:
+  /// **'مراقبة لقطات الشاشة'**
+  String get fs004MonitorScreenshots;
+
+  /// FS-004 monitoring subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن يرى إشعاراً واضحاً — السياسة هنا وليست مخزناً ثانياً في التنبيهات الذكية'**
+  String get fs004MonitorScreenshotsSub;
+
+  /// FS-004 protect sensitive surfaces
+  ///
+  /// In ar, this message translates to:
+  /// **'حماية أسطح نظام العائلة'**
+  String get fs004ProtectSurfaces;
+
+  /// FS-004 protect subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'يحمي شاشات نظام العائلة حيث يمكن الدعم'**
+  String get fs004ProtectSurfacesSub;
+
+  /// FS-004 five-way separation note
+  ///
+  /// In ar, this message translates to:
+  /// **'حظر تطبيق الكاميرا في التحكم بالتطبيقات (FS-003). تقييد كاميرا الجهاز أمر مختلف.'**
+  String get fs004PackageVsOsNote;
+
+  /// FS-004 mic out of scope
+  ///
+  /// In ar, this message translates to:
+  /// **'الميكروفون وصوت الطوارئ لا يُداران هنا.'**
+  String get fs004MicOutOfScope;
+
+  /// FS-004 parent preview of child transparency
+  ///
+  /// In ar, this message translates to:
+  /// **'ما يراه ابنك'**
+  String get fs004ChildPreviewHeading;
+
+  /// FS-004 child W-C02 title
+  ///
+  /// In ar, this message translates to:
+  /// **'حالة الكاميرا والالتقاط'**
+  String get fs004ChildTransparencyTitle;
+
+  /// FS-004 child W-C01 monitoring notice
+  ///
+  /// In ar, this message translates to:
+  /// **'مراقبة لقطات الشاشة / الالتقاط مفعّلة للتطبيقات المختارة. يمكن إشعار العائلة عند رصد التقاط (عند الدعم).'**
+  String get fs004ChildMonitorNotice;
+
+  /// FS-004 child transparency trust line
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا ليس سراً.'**
+  String get fs004ChildNotSecret;
+
+  /// FS-004 child status line
+  ///
+  /// In ar, this message translates to:
+  /// **'كاميرا الجهاز'**
+  String get fs004StatusCameraLabel;
+
+  /// FS-004 child status line
+  ///
+  /// In ar, this message translates to:
+  /// **'منع الالتقاط'**
+  String get fs004StatusCaptureLabel;
+
+  /// FS-004 child status line
+  ///
+  /// In ar, this message translates to:
+  /// **'المراقبة'**
+  String get fs004StatusMonitorLabel;
+
+  /// FS-004 status value
+  ///
+  /// In ar, this message translates to:
+  /// **'مقيّدة'**
+  String get fs004StatusRestricted;
+
+  /// FS-004 status value
+  ///
+  /// In ar, this message translates to:
+  /// **'متوقفة'**
+  String get fs004StatusOff;
+
+  /// FS-004 status value
+  ///
+  /// In ar, this message translates to:
+  /// **'مفعّلة (محدودة)'**
+  String get fs004StatusOnLimited;
+
+  /// FS-004 status value
+  ///
+  /// In ar, this message translates to:
+  /// **'مفعّلة — انظر الإشعار'**
+  String get fs004StatusOnSeeNotice;
+
+  /// FS-004-UX honesty on FAT-065
+  ///
+  /// In ar, this message translates to:
+  /// **'سياسة مراقبة لقطات الشاشة مملوكة للشاشة والكاميرا (FS-004). هذه الشاشة للدخول/الإشعار فقط.'**
+  String get fs004SmartAlertsPolicyOwned;
+
+  /// FS-005-UX FAT-085 ownership honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'جدولة أنماط الحياة مملوكة للأوضاع (FS-005). دقائق وقت الشاشة منفصلة. ScheduleWindow ليس سلطة وضع ثانية.'**
+  String get fs005ModesOwnershipBanner;
+
+  /// FS-005-UX label beside os_wake badge
+  ///
+  /// In ar, this message translates to:
+  /// **'إيقاظ الجهاز / جدولة Focus'**
+  String get fs005OsWakeHonestyHint;
+
+  /// FS-005-UX MODE-OD-03 exams→study
+  ///
+  /// In ar, this message translates to:
+  /// **'الامتحانات تستخدم وضع الدراسة (وليست إدخالاً منفصلاً في الكتالوج).'**
+  String get fs005ExamsMapsToStudyHint;
+
+  /// FS-005 child disclosure idle
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد وضع مفعّل الآن.'**
+  String get fs005ChildModeIdle;
+
+  /// FS-005 child W-C01
+  ///
+  /// In ar, this message translates to:
+  /// **'وضع {modeName} مفعّل'**
+  String fs005ChildModeOn(String modeName);
+
+  /// FS-005 child W-C02
+  ///
+  /// In ar, this message translates to:
+  /// **'الأوضاع المفعّلة: {modeNames}'**
+  String fs005ChildModesOn(String modeNames);
+
+  /// FS-005 child single-mode body
+  ///
+  /// In ar, this message translates to:
+  /// **'بعض التطبيقات والمواقع محدودة الآن.'**
+  String get fs005ChildModeLimited;
+
+  /// FS-005 child multi-mode body
+  ///
+  /// In ar, this message translates to:
+  /// **'تُطبَّق قواعد أشد بينما أكثر من وضع مفعّل.'**
+  String get fs005ChildModesStricter;
+
+  /// FS-005 child MODE-OD-14 line
+  ///
+  /// In ar, this message translates to:
+  /// **'الطوارئ · دردشة العائلة · القرآن تبقى متاحة.'**
+  String get fs005ChildReachability;
+
+  /// FS-007-UX parent ticket panel title
+  ///
+  /// In ar, this message translates to:
+  /// **'تذاكر مراجعة السلامة'**
+  String get fs007TicketPanelTitle;
+
+  /// FS-007-UX suggest-only honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'تصنيف الذكاء إشارة سلامة فقط. الاقتراحات تحتاج موافقتك — القوائم والتطبيقات والأوضاع لا تُغيَّر تلقائيًا.'**
+  String get fs007SuggestOnlyBanner;
+
+  /// FS-007-UX never show AI as policy engine
+  ///
+  /// In ar, this message translates to:
+  /// **'الذكاء الاصطناعي ليس منفّذ سياسة في هذه الشاشة.'**
+  String get fs007NotPolicyExecutor;
+
+  /// FS-007-UX empty ticket list
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد تذاكر مراجعة مفتوحة.'**
+  String get fs007TicketEmpty;
+
+  /// FS-007-UX ticket detail heading
+  ///
+  /// In ar, this message translates to:
+  /// **'تفاصيل التذكرة'**
+  String get fs007TicketDetailHeading;
+
+  /// FS-007-UX missing signal meta
+  ///
+  /// In ar, this message translates to:
+  /// **'البيانات الوصفية غير متاحة'**
+  String get fs007TicketMetaMissing;
+
+  /// FS-007-UX honest empty preview
+  ///
+  /// In ar, this message translates to:
+  /// **'المعاينة غير متاحة — بيانات وصفية فقط.'**
+  String get fs007PreviewUnavailable;
+
+  /// FS-007-UX resolve ticket
+  ///
+  /// In ar, this message translates to:
+  /// **'إغلاق'**
+  String get fs007ActionResolve;
+
+  /// FS-007-UX dismiss FP
+  ///
+  /// In ar, this message translates to:
+  /// **'رفض كإيجابي كاذب'**
+  String get fs007ActionDismissFp;
+
+  /// FS-007-UX suggest-only WF CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'اقتراح مراجعة فلتر الويب (موافقة بشرية)'**
+  String get fs007ActionSuggestWf;
+
+  /// FS-007 category label
+  ///
+  /// In ar, this message translates to:
+  /// **'محتوى جنسي'**
+  String get fs007CategorySexual;
+
+  /// FS-007 category label
+  ///
+  /// In ar, this message translates to:
+  /// **'مرئي حسّاس'**
+  String get fs007CategorySensitiveVisual;
+
+  /// FS-007 category label
+  ///
+  /// In ar, this message translates to:
+  /// **'عنف أو تهديد'**
+  String get fs007CategoryViolence;
+
+  /// FS-007 category label
+  ///
+  /// In ar, this message translates to:
+  /// **'إشارة إيذاء ذاتي'**
+  String get fs007CategorySelfHarm;
+
+  /// FS-007 category label
+  ///
+  /// In ar, this message translates to:
+  /// **'إشارة استغلال أو استدراج'**
+  String get fs007CategoryPredatory;
+
+  /// FS-007 category label
+  ///
+  /// In ar, this message translates to:
+  /// **'مواد أو قمار'**
+  String get fs007CategorySubstance;
+
+  /// FS-007 category label
+  ///
+  /// In ar, this message translates to:
+  /// **'لغة مريبة'**
+  String get fs007CategorySuspicious;
+
+  /// FS-007 category label
+  ///
+  /// In ar, this message translates to:
+  /// **'قلق غير مصنّف'**
+  String get fs007CategoryUncategorized;
+
+  /// FS-007 certainty (non-numeric)
+  ///
+  /// In ar, this message translates to:
+  /// **'غير معروف'**
+  String get fs007CertaintyUnknown;
+
+  /// FS-007 certainty
+  ///
+  /// In ar, this message translates to:
+  /// **'أولي'**
+  String get fs007CertaintyPreliminary;
+
+  /// FS-007 certainty
+  ///
+  /// In ar, this message translates to:
+  /// **'تحليل'**
+  String get fs007CertaintyAnalysis;
+
+  /// FS-007 certainty
+  ///
+  /// In ar, this message translates to:
+  /// **'مؤكّد'**
+  String get fs007CertaintyConfirmed;
+
+  /// FS-007 severity (non-numeric)
+  ///
+  /// In ar, this message translates to:
+  /// **'منخفض'**
+  String get fs007SeverityLow;
+
+  /// FS-007 severity
+  ///
+  /// In ar, this message translates to:
+  /// **'مرتفع'**
+  String get fs007SeverityElevated;
+
+  /// FS-007 severity
+  ///
+  /// In ar, this message translates to:
+  /// **'عالٍ'**
+  String get fs007SeverityHigh;
+
+  /// FS-007 child transparency title
+  ///
+  /// In ar, this message translates to:
+  /// **'أدوات السلامة على الجهاز'**
+  String get fs007ChildTransparencyTitle;
+
+  /// FS-007 child on-device/offline honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'عندما يكون التحليل مفعّلاً فإنه يعمل دون اتصال على هذا الجهاز — وليس ادعاء مراقبة سرية دائمة.'**
+  String get fs007ChildOnDeviceNote;
+
+  /// FS-007 child tool row
+  ///
+  /// In ar, this message translates to:
+  /// **'تحليل البحث'**
+  String get fs007ToolSearch;
+
+  /// FS-007 child tool row
+  ///
+  /// In ar, this message translates to:
+  /// **'تصنيف الصور'**
+  String get fs007ToolImage;
+
+  /// FS-007 child tool row (FS-004 policy)
+  ///
+  /// In ar, this message translates to:
+  /// **'مراقبة لقطات الشاشة'**
+  String get fs007ToolScreenshot;
+
+  /// FS-007 tool state
+  ///
+  /// In ar, this message translates to:
+  /// **'إيقاف'**
+  String get fs007ToolStateOff;
+
+  /// FS-007 tool state
+  ///
+  /// In ar, this message translates to:
+  /// **'تشغيل (على الجهاز)'**
+  String get fs007ToolStateOnDevice;
+
+  /// FS-007 tool state
+  ///
+  /// In ar, this message translates to:
+  /// **'متدهور'**
+  String get fs007ToolStateDegraded;
+
+  /// FS-007 tool state
+  ///
+  /// In ar, this message translates to:
+  /// **'غير مدعوم'**
+  String get fs007ToolStateUnsupported;
+
+  /// FS-007-UX honesty on FAT-065
+  ///
+  /// In ar, this message translates to:
+  /// **'تذاكر سلامة الذكاء دون اتصال (FS-007) — إشارات فقط؛ بلا حظر تلقائي.'**
+  String get fs007SmartAlertsEntry;
 }
 
 class _AppLocalizationsDelegate

@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 enum WebFilterLevel { strict, balanced, open }
 
 /// Known category keys (WFP.categories). Enabled = block matching URLs.
+///
+/// Stage-1 six keys are fixtures only — taxonomy remains TBD (Q-WF-05 / T-WF-02).
 abstract final class WebFilterCategories {
   static const adults = 'adults';
   static const gambling = 'gambling';
@@ -21,27 +23,37 @@ abstract final class WebFilterCategories {
     streaming,
   ];
 
+  /// Honesty: Stage-1 six are non-final (Q-WF-05).
+  static const bool taxonomyIsTbd = true;
+
   static bool isKnown(String key) => known.contains(key);
 }
 
-/// Child web-filter policy snapshot (Rule 25 / SET-004).
+/// Child web-filter policy snapshot (Rule 25 / SET-004 + FS-002-OWN lists).
 @immutable
 final class WebFilterPolicy {
   factory WebFilterPolicy({
     WebFilterLevel level = WebFilterLevel.balanced,
     Map<String, bool>? categories,
     Set<String>? allowList,
+    Set<String>? blockList,
+    Set<String>? dictionaryKeywords,
     int policyVersion = 1,
     DateTime? updatedAt,
   }) {
     final normalized = _normalizeCategories(level, categories);
     final allows = _normalizeHosts(allowList ?? const {});
+    final blocks = _normalizeHosts(blockList ?? const {});
+    final dict = _normalizeKeywords(dictionaryKeywords ?? const {});
     return WebFilterPolicy._(
       level: level,
       categories: Map<String, bool>.unmodifiable(normalized),
       allowList: Set<String>.unmodifiable(allows),
+      blockList: Set<String>.unmodifiable(blocks),
+      dictionaryKeywords: Set<String>.unmodifiable(dict),
       policyVersion: policyVersion < 1 ? 1 : policyVersion,
-      updatedAt: updatedAt ?? DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+      updatedAt:
+          updatedAt ?? DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
     );
   }
 
@@ -49,6 +61,8 @@ final class WebFilterPolicy {
     required this.level,
     required this.categories,
     required this.allowList,
+    required this.blockList,
+    required this.dictionaryKeywords,
     required this.policyVersion,
     required this.updatedAt,
   });
@@ -62,19 +76,19 @@ final class WebFilterPolicy {
   static Map<String, bool> categoriesForLevel(WebFilterLevel level) {
     return switch (level) {
       WebFilterLevel.strict => {
-          for (final k in WebFilterCategories.known) k: true,
-        },
+        for (final k in WebFilterCategories.known) k: true,
+      },
       WebFilterLevel.balanced => {
-          WebFilterCategories.adults: true,
-          WebFilterCategories.gambling: true,
-          WebFilterCategories.violence: true,
-          WebFilterCategories.social: false,
-          WebFilterCategories.games: false,
-          WebFilterCategories.streaming: false,
-        },
+        WebFilterCategories.adults: true,
+        WebFilterCategories.gambling: true,
+        WebFilterCategories.violence: true,
+        WebFilterCategories.social: false,
+        WebFilterCategories.games: false,
+        WebFilterCategories.streaming: false,
+      },
       WebFilterLevel.open => {
-          for (final k in WebFilterCategories.known) k: false,
-        },
+        for (final k in WebFilterCategories.known) k: false,
+      },
     };
   }
 
@@ -83,8 +97,14 @@ final class WebFilterPolicy {
   /// Known keys only; `true` means block that category.
   final Map<String, bool> categories;
 
-  /// Host exceptions — allow wins over category deny.
+  /// Host exceptions — allow wins over category deny (after blocklist/temp).
   final Set<String> allowList;
+
+  /// Explicit deny hosts — highest precedence (WF-OD-08).
+  final Set<String> blockList;
+
+  /// Keyword dictionary — deny when host/path/query contains keyword.
+  final Set<String> dictionaryKeywords;
 
   /// Bumped on save for SET-005 snapshot identity.
   final int policyVersion;
@@ -97,6 +117,8 @@ final class WebFilterPolicy {
     WebFilterLevel? level,
     Map<String, bool>? categories,
     Set<String>? allowList,
+    Set<String>? blockList,
+    Set<String>? dictionaryKeywords,
     int? policyVersion,
     DateTime? updatedAt,
     bool applyLevelPreset = false,
@@ -109,6 +131,8 @@ final class WebFilterPolicy {
       level: nextLevel,
       categories: nextCategories,
       allowList: allowList ?? this.allowList,
+      blockList: blockList ?? this.blockList,
+      dictionaryKeywords: dictionaryKeywords ?? this.dictionaryKeywords,
       policyVersion: policyVersion ?? this.policyVersion,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -122,12 +146,14 @@ final class WebFilterPolicy {
   }
 
   Map<String, Object?> toJson() => {
-        'level': level.name,
-        'categories': categories,
-        'allowList': allowList.toList()..sort(),
-        'policyVersion': policyVersion,
-        'updatedAt': updatedAt.toUtc().toIso8601String(),
-      };
+    'level': level.name,
+    'categories': categories,
+    'allowList': allowList.toList()..sort(),
+    'blockList': blockList.toList()..sort(),
+    'dictionaryKeywords': dictionaryKeywords.toList()..sort(),
+    'policyVersion': policyVersion,
+    'updatedAt': updatedAt.toUtc().toIso8601String(),
+  };
 
   factory WebFilterPolicy.fromJson(Map<String, Object?> json) {
     final levelName = json['level'] as String? ?? WebFilterLevel.balanced.name;
@@ -154,6 +180,24 @@ final class WebFilterPolicy {
       };
     }
 
+    Set<String>? blocks;
+    final rawBlocks = json['blockList'];
+    if (rawBlocks is List) {
+      blocks = {
+        for (final item in rawBlocks)
+          if (item is String) item,
+      };
+    }
+
+    Set<String>? dict;
+    final rawDict = json['dictionaryKeywords'];
+    if (rawDict is List) {
+      dict = {
+        for (final item in rawDict)
+          if (item is String) item,
+      };
+    }
+
     final version = json['policyVersion'];
     DateTime? updated;
     final rawUpdated = json['updatedAt'];
@@ -165,6 +209,8 @@ final class WebFilterPolicy {
       level: level,
       categories: cats ?? categoriesForLevel(level),
       allowList: allows,
+      blockList: blocks,
+      dictionaryKeywords: dict,
       policyVersion: version is int ? version : 1,
       updatedAt: updated,
     );
@@ -193,6 +239,15 @@ final class WebFilterPolicy {
     return out;
   }
 
+  static Set<String> _normalizeKeywords(Set<String> words) {
+    final out = <String>{};
+    for (final w in words) {
+      final n = w.trim().toLowerCase();
+      if (n.isNotEmpty) out.add(n);
+    }
+    return out;
+  }
+
   /// Lowercase host without leading `www.`.
   static String normalizeHost(String host) {
     var h = host.trim().toLowerCase();
@@ -207,17 +262,19 @@ final class WebFilterPolicy {
           level == other.level &&
           mapEquals(categories, other.categories) &&
           setEquals(allowList, other.allowList) &&
+          setEquals(blockList, other.blockList) &&
+          setEquals(dictionaryKeywords, other.dictionaryKeywords) &&
           policyVersion == other.policyVersion &&
           updatedAt == other.updatedAt;
 
   @override
   int get hashCode => Object.hash(
-        level,
-        Object.hashAll(
-          categories.entries.map((e) => Object.hash(e.key, e.value)),
-        ),
-        Object.hashAll(allowList.toList()..sort()),
-        policyVersion,
-        updatedAt,
-      );
+    level,
+    Object.hashAll(categories.entries.map((e) => Object.hash(e.key, e.value))),
+    Object.hashAll(allowList.toList()..sort()),
+    Object.hashAll(blockList.toList()..sort()),
+    Object.hashAll(dictionaryKeywords.toList()..sort()),
+    policyVersion,
+    updatedAt,
+  );
 }

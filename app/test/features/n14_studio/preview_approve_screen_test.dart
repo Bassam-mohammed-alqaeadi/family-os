@@ -36,6 +36,8 @@ void main() {
     await tester.ensureVisible(find.byKey(PreviewApproveKeys.approveCta));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(PreviewApproveKeys.approveCta));
+    await tester.pump();
+    AppToast.dismiss();
     await tester.pumpAndSettle();
     expect(nav, contains('SCR-FAT-045'));
   });
@@ -165,6 +167,8 @@ void main() {
     await tester.ensureVisible(find.byKey(PreviewApproveKeys.approveCta));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(PreviewApproveKeys.approveCta));
+    await tester.pump();
+    AppToast.dismiss();
     await tester.pumpAndSettle();
     expect(nav, contains('SCR-FAT-045'));
   });

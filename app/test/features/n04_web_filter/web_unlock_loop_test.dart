@@ -42,7 +42,6 @@ void main() {
     });
     final service = WebUnlockService(
       requestRepository: InMemoryWebUnlockRequestRepository(),
-      policyRepository: policyRepo,
       idFactory: () => 'ui-req-1',
     );
     return (service: service, policyRepo: policyRepo);
@@ -98,9 +97,15 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
 
       final policy = await h.policyRepo.load(child);
-      expect(policy.allowList, contains('adult.example'));
+      expect(policy.allowList, isEmpty);
+      final temps = await h.service.activeTemporaryHosts(child);
+      expect(temps, contains('adult.example'));
       expect(
-        WebFilterEvaluator.decide(adultsUrl, policy).isDenied,
+        WebFilterEvaluator.decide(
+          adultsUrl,
+          policy,
+          activeTemporaryAllows: temps,
+        ).isDenied,
         isFalse,
       );
       expect(find.byKey(const Key('web_unlock_inbox_empty')), findsOneWidget);

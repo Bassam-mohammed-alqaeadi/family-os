@@ -1,19 +1,26 @@
 import 'package:flutter/foundation.dart';
 
+import 'package:family_os/features/education/learning_result_models.dart';
+import 'package:family_os/features/education/learning_result_repository.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
+import 'package:family_os/mock/register_mock_family.dart';
 
 /// Load phase for SCR-FAT-010 dashboard projections (UI-004).
 enum DayBoardPhase { loading, ready, error }
 
 /// Pending inbox row projected onto the morning board (requests repo).
 ///
-/// Titles/subtitles come from the repository — never planted in widgets.
+/// Prefer [titleKey]/[subtitleKey] (Rule 23). Legacy [title]/[subtitle] kept for
+/// Register §10 mock fixture until those rows also use keys.
 @immutable
 final class DayBoardPendingRequest {
   const DayBoardPendingRequest({
     required this.id,
-    required this.title,
-    required this.subtitle,
+    this.title = '',
+    this.subtitle = '',
+    this.titleKey,
+    this.subtitleKey,
+    this.minutes,
     this.inboxPath = '/scr-fat-033',
   });
 
@@ -21,7 +28,12 @@ final class DayBoardPendingRequest {
   final String title;
   final String subtitle;
 
-  /// Real inbox route (FAT-033 time-request inbox by default).
+  /// ARB discriminator when set (P15-EDU-008 learning results).
+  final String? titleKey;
+  final String? subtitleKey;
+  final int? minutes;
+
+  /// Real inbox route (FAT-033 time-request · FAT-050 learning results).
   final String inboxPath;
 }
 
@@ -83,22 +95,61 @@ abstract class DayBoardProjectionRepository {
 }
 
 /// In-memory mock — default empty family (never plants Khaled / sample numerals).
+///
+/// P15-EDU-008: merges live [LearningResultRepository] submissions into
+/// [pendingRequests] so father day-board shows child quiz submit (P12).
 final class InMemoryDayBoardProjectionRepository
     implements DayBoardProjectionRepository {
   InMemoryDayBoardProjectionRepository([
     DayBoardProjection projection = DayBoardProjection.empty,
-  ]) : _projection = projection;
+    LearningResultRepository? results,
+  ]) : _projection = projection,
+       _results = results;
 
   DayBoardProjection _projection;
+  final LearningResultRepository? _results;
 
   DayBoardProjection get current => _projection;
 
   void seed(DayBoardProjection projection) => _projection = projection;
 
   @override
-  Future<DayBoardProjection> load() async => _projection;
+  Future<DayBoardProjection> load() async {
+    final results = _results;
+    final live = results == null
+        ? const <LearningResultSubmission>[]
+        : await results.listRecent();
+    if (live.isEmpty) return _projection;
+    final learningPending = live
+        .map(
+          (s) => DayBoardPendingRequest(
+            id: s.id,
+            titleKey: 'quizSubmitted',
+            subtitleKey: s.rewardMinutes.inMinutes > 0
+                ? 'earnedMinutes'
+                : 'justSubmitted',
+            minutes: s.rewardMinutes.inMinutes > 0
+                ? s.rewardMinutes.inMinutes
+                : null,
+            inboxPath: '/scr-fat-050',
+          ),
+        )
+        .toList(growable: false);
+    final seen = <String>{};
+    final merged = <DayBoardPendingRequest>[];
+    for (final p in [...learningPending, ..._projection.pendingRequests]) {
+      if (seen.add(p.id)) merged.add(p);
+    }
+    return _projection.copyWith(pendingRequests: merged);
+  }
 }
 
-/// Stage-1 singleton — empty until tests/repos seed events (Rule 23).
-final stage1DayBoardProjectionRepository =
-    InMemoryDayBoardProjectionRepository();
+/// Stage-1 singleton — seeded with Register §10 mock family for phone demos.
+///
+/// Empty branch remains testable via [InMemoryDayBoardProjectionRepository]
+/// or [DayBoardScreen.projection]. Deleting `mock/` requires swapping this seed.
+/// Live LearningResult submissions merge into pending (P15-EDU-008 · P12).
+final stage1DayBoardProjectionRepository = InMemoryDayBoardProjectionRepository(
+  RegisterMockFamily.dayBoardProjection,
+  stage1LearningResultRepository,
+);

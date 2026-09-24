@@ -130,10 +130,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.byKey(const Key('daily_cap_field')));
+    await _scrollTo(tester, find.byKey(const Key('daily_cap_field')));
     await tester.enterText(find.byKey(const Key('daily_cap_field')), '90');
     await tester.pump();
-    await tester.ensureVisible(find.byKey(const Key('child_screen_time_save')));
+    await _scrollTo(tester, find.byKey(const Key('child_screen_time_save')));
     await tester.tap(find.byKey(const Key('child_screen_time_save')));
     await tester.pumpAndSettle();
 
@@ -162,10 +162,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.byKey(const Key('daily_cap_field')));
+    await _scrollTo(tester, find.byKey(const Key('daily_cap_field')));
     await tester.enterText(find.byKey(const Key('daily_cap_field')), '90');
     await tester.pump();
-    await tester.ensureVisible(find.byKey(const Key('child_screen_time_save')));
+    await _scrollTo(tester, find.byKey(const Key('child_screen_time_save')));
     await tester.tap(find.byKey(const Key('child_screen_time_save')));
     await tester.pumpAndSettle();
 
@@ -192,4 +192,14 @@ Widget _app(Widget home) {
       home: home,
     ),
   );
+}
+
+Future<void> _scrollTo(WidgetTester tester, Finder finder) async {
+  await tester.scrollUntilVisible(
+    finder,
+    220,
+    scrollable: find.byType(Scrollable).first,
+  );
+  await tester.ensureVisible(finder);
+  await tester.pumpAndSettle();
 }

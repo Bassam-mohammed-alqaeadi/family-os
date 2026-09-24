@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
 
@@ -62,7 +63,7 @@ final class ChildProfile {
 /// Rule 25 seam — per-child profile for SCR-FAT-013 (Drift later).
 abstract class ChildProfileRepository {
   /// Returns null when [childId] is unknown / not linked.
-  Future<ChildProfile?> loadById(String childId);
+  Future<ChildProfile?> loadById(String childId, {FamilyId? familyId});
 }
 
 /// In-memory mock — empty until tests/repos seed (Rule 23).
@@ -86,7 +87,7 @@ final class InMemoryChildProfileRepository implements ChildProfileRepository {
   void seed(List<ChildProfile> profiles) => _profiles = List.of(profiles);
 
   @override
-  Future<ChildProfile?> loadById(String childId) async {
+  Future<ChildProfile?> loadById(String childId, {FamilyId? familyId}) async {
     if (failLoad) {
       throw StateError('mock child profile load failure');
     }
@@ -98,7 +99,7 @@ final class InMemoryChildProfileRepository implements ChildProfileRepository {
     }
 
     final listRepo = _childrenList ?? stage1ChildrenListRepository;
-    final kids = await listRepo.listChildren();
+    final kids = await listRepo.listChildren(familyId: familyId);
     for (final k in kids) {
       if (k.id == trimmed) return ChildProfile.fromListEntry(k);
     }

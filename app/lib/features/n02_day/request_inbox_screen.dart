@@ -6,6 +6,7 @@ import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/time_request.dart';
 import 'package:family_os/core/policy/time_request_repository.dart';
@@ -34,14 +35,14 @@ class RequestInboxScreen extends StatefulWidget {
   const RequestInboxScreen({
     super.key,
     this.service,
-    this.role = AppRole.father,
+    this.role,
     this.motherLevel = MotherLevel.partner,
     this.onBack,
   });
 
   /// Injectable repo-backed service; null → stage-1 prefs singleton.
   final TimeRequestService? service;
-  final AppRole role;
+  final AppRole? role;
   final MotherLevel motherLevel;
   final VoidCallback? onBack;
 
@@ -57,10 +58,18 @@ class _RequestInboxScreenState extends State<RequestInboxScreen> {
   final Map<String, int> _selectedGrant = {};
   final Map<String, TextEditingController> _reasonControllers = {};
 
+  AppRole get _effectiveRole =>
+      widget.role ??
+      resolveAuthorizationContext(
+        context,
+        fallbackRole: AppRole.father,
+        fallbackMotherLevel: widget.motherLevel,
+      ).role;
+
   TimeRequestActor get _actor => TimeRequestService.actorFor(
-        role: widget.role,
-        motherLevel: widget.motherLevel,
-      );
+    role: _effectiveRole,
+    motherLevel: widget.motherLevel,
+  );
 
   bool get _canDecide => _actor.canDecide;
 
@@ -68,7 +77,7 @@ class _RequestInboxScreenState extends State<RequestInboxScreen> {
 
   List<int> get _visibleGrantOptions {
     if (!_canDecide) return const [];
-    if (widget.role == AppRole.father) {
+    if (_effectiveRole == AppRole.father) {
       return kTimeGrantOptionMinutes;
     }
     // Mother: hide over-ceiling controls (ADR-039 / UI-006 edge).
@@ -127,7 +136,18 @@ class _RequestInboxScreenState extends State<RequestInboxScreen> {
   void _onService() => _reload();
 
   Future<void> _reload() async {
-    final pending = await _service.listPending();
+    final familyId = CurrentIdentity.maybeOf(context)?.activeFamilyId.value;
+    final allPending = await _service.listPending();
+    final pending = familyId == null
+        ? allPending
+        : allPending
+              .where((r) {
+                final value = r.childId.value;
+                if (value.startsWith('$familyId::')) return true;
+                // Backward-compat for stage-1 data not yet family-scoped.
+                return !value.contains('::');
+              })
+              .toList(growable: false);
     if (!mounted) return;
     setState(() {
       _pending = pending;
@@ -153,14 +173,11 @@ class _RequestInboxScreenState extends State<RequestInboxScreen> {
 
   Future<void> _approve(TimeRequest request) async {
     if (!_canDecide) return;
-    final minutes = _selectedGrant[request.id] ??
+    final minutes =
+        _selectedGrant[request.id] ??
         _defaultGrantFor(request.requestedMinutes);
     try {
-      await _service.approve(
-        request.id,
-        _actor,
-        grantMinutes: minutes,
-      );
+      await _service.approve(request.id, _actor, grantMinutes: minutes);
     } on TimeRequestNotAllowedException {
       // Ceiling / role — button absent or disabled.
     }
@@ -175,7 +192,9 @@ class _RequestInboxScreenState extends State<RequestInboxScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context).requestInboxReasonRequired),
+          content: Text(
+            AppLocalizations.of(context).requestInboxReasonRequired,
+          ),
         ),
       );
     } on TimeRequestNotAllowedException {
@@ -240,10 +259,10 @@ class _RequestInboxScreenState extends State<RequestInboxScreen> {
                               request: request,
                               canDecide: _canDecide,
                               grantOptions: _visibleGrantOptions,
-                              selectedGrant: _selectedGrant[request.id] ??
+                              selectedGrant:
+                                  _selectedGrant[request.id] ??
                                   _defaultGrantFor(request.requestedMinutes),
-                              reasonController:
-                                  _reasonControllers[request.id]!,
+                              reasonController: _reasonControllers[request.id]!,
                               onSelectGrant: (m) {
                                 setState(() => _selectedGrant[request.id] = m);
                               },

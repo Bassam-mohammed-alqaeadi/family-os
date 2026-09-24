@@ -8,10 +8,12 @@ import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/row_tile.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n02_day/location_history_repository.dart';
+import 'package:family_os/features/n02_day/location_ux_bridge.dart';
 
 /// Widget keys for SCR-FAT-015 acceptance.
 abstract final class LocationHistoryKeys {
@@ -23,6 +25,7 @@ abstract final class LocationHistoryKeys {
   static const error = Key('location_history_error');
   static const body = Key('location_history_body');
   static const honestyBanner = Key('location_history_honesty');
+  static const gpsBanner = Key('location_history_gps_banner');
   static const threadSection = Key('location_history_thread');
   static const frequentSection = Key('location_history_frequent');
   static const retentionNote = Key('location_history_retention');
@@ -53,7 +56,8 @@ class LocationHistoryScreen extends StatefulWidget {
   /// From route `?childId=`; null/empty → missing-id empty state.
   final String? childId;
 
-  /// Null → [stage1LocationHistoryRepository].
+  /// Null → FS-001 Domain trail via [Stage1LocationRuntime] (Slice 01).
+  /// Inject [repository] in tests to keep Stage-1 InMemory.
   final LocationHistoryRepository? repository;
 
   /// Test seam — when set, ignores [CurrentRole].
@@ -73,7 +77,7 @@ class LocationHistoryScreen extends StatefulWidget {
 }
 
 class LocationHistoryScreenState extends State<LocationHistoryScreen> {
-  late final LocationHistoryRepository _repo;
+  LocationHistoryRepository? _repo;
   var _loading = true;
   var _loadFailed = false;
   var _sosBusy = false;
@@ -95,10 +99,9 @@ class LocationHistoryScreenState extends State<LocationHistoryScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1LocationHistoryRepository;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      _load();
+      _bootstrapAndLoad();
     });
   }
 
@@ -107,7 +110,33 @@ class LocationHistoryScreenState extends State<LocationHistoryScreen> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.childId != widget.childId ||
         oldWidget.repository != widget.repository) {
-      _load();
+      _bootstrapAndLoad();
+    }
+  }
+
+  Future<void> _bootstrapAndLoad() async {
+    setState(() {
+      _loading = true;
+      _loadFailed = false;
+    });
+    try {
+      if (widget.repository != null) {
+        _repo = widget.repository;
+      } else {
+        await Stage1LocationRuntime.ensureOpen();
+        if (!mounted) return;
+        _repo = DomainLocationHistoryRepository(
+          domain: Stage1LocationRuntime.store,
+          familyId: FamilyId('fam_stage1'),
+        );
+      }
+      await _load();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadFailed = true;
+      });
     }
   }
 
@@ -122,12 +151,15 @@ class LocationHistoryScreenState extends State<LocationHistoryScreen> {
       return;
     }
 
+    final repo = _repo;
+    if (repo == null) return;
+
     setState(() {
       _loading = true;
       _loadFailed = false;
     });
     try {
-      final snap = await _repo.load(id);
+      final snap = await repo.load(id);
       if (!mounted) return;
       setState(() {
         _snapshot = snap;
@@ -282,6 +314,12 @@ class LocationHistoryScreenState extends State<LocationHistoryScreen> {
             key: LocationHistoryKeys.honestyBanner,
             variant: BannerVariant.t,
             message: l10n.locationHistoryHonestyBanner,
+          ),
+          const SizedBox(height: 8),
+          BannerNote(
+            key: LocationHistoryKeys.gpsBanner,
+            variant: BannerVariant.a,
+            message: l10n.locationGpsNotImplementedBanner,
           ),
           const SizedBox(height: 12),
           _ThreadSection(days: snap.days),

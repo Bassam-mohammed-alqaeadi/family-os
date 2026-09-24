@@ -247,11 +247,29 @@ const Map<String, String> screenBuilders = {
   'SCR-FAT-061': 'LanguageHelpScreen()',
   'SCR-FAT-062': 'FamilyPatternsScreen()',
   'SCR-FAT-063': 'IndividualTimelineScreen()',
+  'SCR-FAT-064': 'KnowledgeMapsScreen()',
   'SCR-FAT-029': 'BrainControlScreen()',
+  'SCR-FAT-065': 'SmartAlertsScreen()',
+  'SCR-FAT-066': 'SmartAlertDetailScreen()',
   'SCR-FAT-067': 'SmartSupervisionScreen()',
   'SCR-FAT-068': 'PlatformMonitoringScreen()',
+  'SCR-FAT-069': 'ChildUsageReportScreen()',
+  'SCR-FAT-070': 'OuterCircleScreen()',
+  'SCR-FAT-071': 'FriendApprovalScreen()',
+  'SCR-FAT-072': 'QuranProgressScreen()',
+  'SCR-FAT-073': 'WeeklyReportScreen()',
+  'SCR-FAT-074': 'FamilyAdvisorHubScreen()',
+  'SCR-FAT-076': 'MotherAiFeedScreen()',
+  'SCR-FAT-077': 'RoadSafetyScreen()',
+  'SCR-FAT-078': 'HomeRouterFilterScreen()',
   'SCR-FAT-079': 'MyAdvisorScreen()',
+  'SCR-FAT-080': 'AgentActionLogScreen()',
+  'SCR-FAT-081': 'PeerCompareScreen()',
+  'SCR-FAT-082': 'SmartChoreDistributorScreen()',
+  'SCR-FAT-083': 'AdvisorVoiceScreen()',
+  'SCR-FAT-084': 'StagedProjectScreen()',
   'SCR-FAT-085': 'SmartModesScreen()',
+  'SCR-FAT-086': 'FamilyMomentsScreen()',
   'SCR-FAT-028': 'EmergencySetupScreen()',
   'SCR-FAT-056': 'PlansScreen()',
   'SCR-FAT-057': 'ManageSubscriptionScreen()',
@@ -268,7 +286,32 @@ const Map<String, String> screenBuilders = {
   'SCR-CHD-009':
       "ChildActiveCallScreen(callId: state.uri.queryParameters['callId'])",
   'SCR-CHD-010': 'WhatIsCollectedScreen()',
+  'SCR-CHD-012': 'ChildLearnHomeScreen()',
+  'SCR-CHD-013': 'ChildLessonScreen()',
+  'SCR-CHD-014': 'ChildFlashcardsScreen()',
+  'SCR-CHD-015': 'ChildQuizScreen()',
+  'SCR-CHD-016': 'ChildResultScreen()',
+  'SCR-CHD-017': 'ChildTutorScreen()',
+  'SCR-CHD-018': 'ChildFocusScreen()',
+  'SCR-CHD-019': 'ChildWalletScreen()',
+  'SCR-CHD-020': 'ChildTimeRequestScreen()',
   'SCR-CHD-021': 'TimeExpiryScreen()',
+  'SCR-CHD-022': 'ChildTasksScreen()',
+  'SCR-CHD-023': 'ChildMediaShareScreen()',
+  'SCR-CHD-024': 'ChildArrivalScreen()',
+  'SCR-CHD-025': 'ChildQuranWardScreen()',
+  'SCR-CHD-026': 'ChildMemorizationScreen()',
+  'SCR-CHD-027': 'ChildAthkarScreen()',
+  'SCR-CHD-028': 'ChildSmartPlanScreen()',
+  'SCR-CHD-029': 'ChildDailyReviewScreen()',
+  'SCR-CHD-030': 'ChildFriendsScreen()',
+  'SCR-CHD-031': 'ChildComingGiftsScreen()',
+  'SCR-CHD-032': 'ChildSmartTilawahScreen()',
+  'SCR-CHD-033': 'ChildInteractiveStoriesScreen()',
+  'SCR-CHD-034': 'ChildFamilyChallengesScreen()',
+  'SCR-CHD-035': 'ChildFocusSoundsScreen()',
+  'SCR-CHD-036': 'ChildCallPlayScreen()',
+  'SCR-CHD-037': 'ChildStickersBackgroundsScreen()',
   'SCR-FAT-025': 'SettingsHubScreen()',
   'SCR-FAT-026':
       "DeviceHealthDetailScreen(deviceId: state.uri.queryParameters['deviceId'])",
@@ -353,8 +396,18 @@ const List<String> screenBuilderImports = [
   "import 'package:family_os/features/n07_advisor/my_advisor_screen.dart';",
   "import 'package:family_os/features/n07_advisor/family_patterns_screen.dart';",
   "import 'package:family_os/features/n07_advisor/individual_timeline_screen.dart';",
+  "import 'package:family_os/features/n07_advisor/knowledge_maps_screen.dart';",
+  "import 'package:family_os/features/n07_advisor/weekly_report_screen.dart';",
+  "import 'package:family_os/features/n07_advisor/family_advisor_hub_screen.dart';",
+  "import 'package:family_os/features/n07_advisor/mother_ai_feed_screen.dart';",
+  "import 'package:family_os/features/n07_advisor/agent_action_log_screen.dart';",
+  "import 'package:family_os/features/n07_advisor/peer_compare_screen.dart';",
+  "import 'package:family_os/features/n07_advisor/advisor_voice_screen.dart';",
+  "import 'package:family_os/features/n07_advisor/family_moments_screen.dart';",
   "import 'package:family_os/features/n08_platform/smart_supervision_screen.dart';",
   "import 'package:family_os/features/n08_platform/platform_monitoring_screen.dart';",
+  "import 'package:family_os/features/n08_platform/smart_alerts_screen.dart';",
+  "import 'package:family_os/features/n08_platform/smart_alert_detail_screen.dart';",
   "import 'package:family_os/features/n09_smart_modes/smart_modes_screen.dart';",
   "import 'package:family_os/features/n10_emergency/emergency_setup_screen.dart';",
   "import 'package:family_os/features/n10_emergency/sos_alert_screen.dart';",
@@ -364,6 +417,39 @@ const List<String> screenBuilderImports = [
   "import 'package:family_os/features/n11_billing/manage_subscription_screen.dart';",
   "import 'package:family_os/features/n07_privacy/what_is_collected_screen.dart';",
   "import 'package:family_os/features/n13_coming_soon/coming_soon_screen.dart';",
+  "import 'package:family_os/features/n02_day/child_arrival_screen.dart';",
+  "import 'package:family_os/features/n02_day/child_media_share_screen.dart';",
+  "import 'package:family_os/features/n02_day/outer_circle_screen.dart';",
+  "import 'package:family_os/features/n02_day/friend_approval_screen.dart';",
+  "import 'package:family_os/features/n02_day/road_safety_screen.dart';",
+  "import 'package:family_os/features/n02_day/child_friends_screen.dart';",
+  "import 'package:family_os/features/n02_day/child_call_play_screen.dart';",
+  "import 'package:family_os/features/n02_day/child_stickers_backgrounds_screen.dart';",
+  "import 'package:family_os/features/n03_screen_time/child_time_request_screen.dart';",
+  "import 'package:family_os/features/n03_screen_time/child_usage_report_screen.dart';",
+  "import 'package:family_os/features/n04_web_filter/home_router_filter_screen.dart';",
+  "import 'package:family_os/features/n14_studio/quran_progress_screen.dart';",
+  "import 'package:family_os/features/n14_studio/staged_project_screen.dart';",
+  "import 'package:family_os/features/n16_tasks/child_tasks_screen.dart';",
+  "import 'package:family_os/features/n16_tasks/smart_chore_distributor_screen.dart';",
+  "import 'package:family_os/features/n17_child_learn/child_learn_home_screen.dart';",
+  "import 'package:family_os/features/n17_child_learn/child_lesson_screen.dart';",
+  "import 'package:family_os/features/n17_child_learn/child_flashcards_screen.dart';",
+  "import 'package:family_os/features/n17_child_learn/child_quiz_screen.dart';",
+  "import 'package:family_os/features/n17_child_learn/child_result_screen.dart';",
+  "import 'package:family_os/features/n17_child_learn/child_tutor_screen.dart';",
+  "import 'package:family_os/features/n17_child_learn/child_focus_screen.dart';",
+  "import 'package:family_os/features/n17_child_learn/child_wallet_screen.dart';",
+  "import 'package:family_os/features/n17_child_learn/child_quran_ward_screen.dart';",
+  "import 'package:family_os/features/n17_child_learn/child_memorization_screen.dart';",
+  "import 'package:family_os/features/n17_child_learn/child_athkar_screen.dart';",
+  "import 'package:family_os/features/n17_child_learn/child_smart_plan_screen.dart';",
+  "import 'package:family_os/features/n17_child_learn/child_daily_review_screen.dart';",
+  "import 'package:family_os/features/n17_child_learn/child_coming_gifts_screen.dart';",
+  "import 'package:family_os/features/n17_child_learn/child_smart_tilawah_screen.dart';",
+  "import 'package:family_os/features/n17_child_learn/child_interactive_stories_screen.dart';",
+  "import 'package:family_os/features/n17_child_learn/child_family_challenges_screen.dart';",
+  "import 'package:family_os/features/n17_child_learn/child_focus_sounds_screen.dart';",
 ];
 
 String _builderExpression(_ScreenRow r) {
@@ -402,6 +488,13 @@ String _generateRouterDart(List<_ScreenRow> rows) {
     ),''');
   }
 
+  final needsPlaceholder = active.any(
+    (r) => !screenBuilders.containsKey(r.screenId),
+  );
+  final placeholderImport = needsPlaceholder
+      ? "import 'package:family_os/app/placeholder_screen.dart';\n"
+      : '';
+
   return '''
 // GENERATED — do not edit by hand. Run: dart run tool/gen_routes.dart
 
@@ -410,8 +503,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:family_os/app/gallery_screen.dart';
-import 'package:family_os/app/placeholder_screen.dart';
-import 'package:family_os/app/role_guard.dart';
+${placeholderImport}import 'package:family_os/app/role_guard.dart';
+import 'package:family_os/app/sys3_routes.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 $extraImports
@@ -439,6 +532,7 @@ const String tombstoneSchoolRedirectTarget = '/scr-fat-085';
 ///
 /// Product entry is welcome (`/scr-shr-001`); gallery remains at `/gallery`.
 /// Tombstone deep links (e.g. `/scr-fat-039`) redirect to [tombstoneSchoolRedirectTarget].
+/// System #3 identity routes (sys3_*) are appended via [sys3IdentityRoutes].
 GoRouter createAppRouter({
   required ValueListenable<AppRole> roleListenable,
   String initialLocation = '/scr-shr-001',
@@ -459,6 +553,7 @@ GoRouter createAppRouter({
         name: 'gallery',
         builder: (context, state) => const GalleryScreen(),
       ),
+      ...sys3IdentityRoutes,
 ${routeBlocks.toString()}    ],
   );
 }

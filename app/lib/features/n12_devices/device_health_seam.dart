@@ -34,19 +34,13 @@ enum DeviceHealthLevel {
 
 /// One permission row on the detail screen.
 class DevicePermissionRow {
-  const DevicePermissionRow({
-    required this.kind,
-    required this.status,
-  });
+  const DevicePermissionRow({required this.kind, required this.status});
 
   final DevicePermissionKind kind;
   final DevicePermissionStatus status;
 
   DevicePermissionRow copyWith({DevicePermissionStatus? status}) {
-    return DevicePermissionRow(
-      kind: kind,
-      status: status ?? this.status,
-    );
+    return DevicePermissionRow(kind: kind, status: status ?? this.status);
   }
 }
 
@@ -54,7 +48,9 @@ class DevicePermissionRow {
 class DeviceHealthSnapshot {
   const DeviceHealthSnapshot({
     required this.deviceId,
+    this.familyId = 'fam_stage1',
     required this.childId,
+    this.enrollmentId = 'enr_unknown',
     required this.displayLabel,
     required this.modelLabel,
     required this.level,
@@ -66,9 +62,11 @@ class DeviceHealthSnapshot {
   });
 
   final String deviceId;
+  final String familyId;
 
   /// Parametric child key — never a planted person name (Rule 23 / G8).
   final String childId;
+  final String enrollmentId;
 
   /// Generic label (e.g. ابن ١) — injected, not hardcoded in widgets.
   final String displayLabel;
@@ -86,10 +84,10 @@ class DeviceHealthSnapshot {
   final String? oemFamily;
 
   bool get hasRepairableDeny => permissions.any(
-        (p) =>
-            p.status == DevicePermissionStatus.denied ||
-            p.status == DevicePermissionStatus.permanentlyDenied,
-      );
+    (p) =>
+        p.status == DevicePermissionStatus.denied ||
+        p.status == DevicePermissionStatus.permanentlyDenied,
+  );
 
   DevicePermissionKind? get firstRepairableKind {
     for (final p in permissions) {
@@ -108,10 +106,14 @@ class DeviceHealthSnapshot {
     String? lastHeartbeatAgoLabel,
     int? batteryPercent,
     String? oemFamily,
+    String? familyId,
+    String? enrollmentId,
   }) {
     return DeviceHealthSnapshot(
       deviceId: deviceId,
+      familyId: familyId ?? this.familyId,
       childId: childId,
+      enrollmentId: enrollmentId ?? this.enrollmentId,
       displayLabel: displayLabel,
       modelLabel: modelLabel,
       level: level ?? this.level,
@@ -131,10 +133,13 @@ class DeviceHealthSnapshot {
 /// simulated OS settings round-trip.
 abstract class DeviceHealthSeam {
   /// Live list for SCR-FAT-025 settings-hub device cards.
-  Stream<List<DeviceHealthSnapshot>> watchDevices();
+  Stream<List<DeviceHealthSnapshot>> watchDevices({String? familyId});
 
   /// Live detail for SCR-FAT-026.
-  Stream<DeviceHealthSnapshot?> watchDevice(String deviceId);
+  Stream<DeviceHealthSnapshot?> watchDevice(
+    String deviceId, {
+    String? familyId,
+  });
 
   /// Simulate deep-link to OS settings for [kind] on [deviceId].
   Future<bool> openSettings({
@@ -155,8 +160,8 @@ class FakeDeviceHealthSeam implements DeviceHealthSeam {
     List<DeviceHealthSnapshot>? initial,
     this.grantOnOpenSettings = false,
   }) : _devices = List<DeviceHealthSnapshot>.from(
-          initial ?? const <DeviceHealthSnapshot>[],
-        );
+         initial ?? const <DeviceHealthSnapshot>[],
+       );
 
   /// Default demo: one at-risk device (battery denied) + one healthy.
   factory FakeDeviceHealthSeam.demo() {
@@ -164,7 +169,9 @@ class FakeDeviceHealthSeam implements DeviceHealthSeam {
       initial: [
         DeviceHealthSnapshot(
           deviceId: 'dev_a',
+          familyId: 'fam_stage1',
           childId: 'child_a',
+          enrollmentId: 'enr_stage1_a',
           displayLabel: 'ابن ١',
           modelLabel: 'Redmi Note 13',
           level: DeviceHealthLevel.atRisk,
@@ -192,7 +199,9 @@ class FakeDeviceHealthSeam implements DeviceHealthSeam {
         ),
         DeviceHealthSnapshot(
           deviceId: 'dev_b',
+          familyId: 'fam_stage1',
           childId: 'child_b',
+          enrollmentId: 'enr_stage1_b',
           displayLabel: 'ابن ٢',
           modelLabel: 'Android device',
           level: DeviceHealthLevel.healthy,
@@ -230,7 +239,9 @@ class FakeDeviceHealthSeam implements DeviceHealthSeam {
       initial: [
         DeviceHealthSnapshot(
           deviceId: 'dev_ac',
+          familyId: 'fam_stage1',
           childId: 'child_ac',
+          enrollmentId: 'enr_ac',
           displayLabel: 'ابن ١',
           modelLabel: 'Test device',
           level: DeviceHealthLevel.atRisk,
@@ -261,8 +272,7 @@ class FakeDeviceHealthSeam implements DeviceHealthSeam {
   }
 
   List<DeviceHealthSnapshot> _devices;
-  final _controller =
-      StreamController<List<DeviceHealthSnapshot>>.broadcast();
+  final _controller = StreamController<List<DeviceHealthSnapshot>>.broadcast();
 
   /// When true, [openSettings] flips that permission to granted + re-levels.
   bool grantOnOpenSettings;
@@ -306,14 +316,27 @@ class FakeDeviceHealthSeam implements DeviceHealthSeam {
   }
 
   @override
-  Stream<List<DeviceHealthSnapshot>> watchDevices() async* {
-    yield List<DeviceHealthSnapshot>.from(_devices);
-    yield* _controller.stream;
+  Stream<List<DeviceHealthSnapshot>> watchDevices({String? familyId}) async* {
+    List<DeviceHealthSnapshot> scoped(List<DeviceHealthSnapshot> source) {
+      if (familyId == null || familyId.trim().isEmpty) {
+        // Fail closed — unscoped watch would leak across families.
+        return const <DeviceHealthSnapshot>[];
+      }
+      return source
+          .where((device) => device.familyId == familyId)
+          .toList(growable: false);
+    }
+
+    yield scoped(_devices);
+    yield* _controller.stream.map(scoped);
   }
 
   @override
-  Stream<DeviceHealthSnapshot?> watchDevice(String deviceId) {
-    return watchDevices().map((list) {
+  Stream<DeviceHealthSnapshot?> watchDevice(
+    String deviceId, {
+    String? familyId,
+  }) {
+    return watchDevices(familyId: familyId).map((list) {
       for (final d in list) {
         if (d.deviceId == deviceId) return d;
       }

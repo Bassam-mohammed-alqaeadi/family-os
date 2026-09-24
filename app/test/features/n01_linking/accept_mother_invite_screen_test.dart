@@ -8,11 +8,15 @@ import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/identity/adult_invite_repository.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n01_linking/accept_mother_invite_screen.dart';
 
 void main() {
-  tearDown(AppToast.dismiss);
+  tearDown(() {
+    AppToast.dismiss();
+    stage1AdultInviteRepository.resetForTests();
+  });
 
   testWidgets('shows injected inviter + family names', (tester) async {
     await _pumpScreen(tester, inviterName: 'سامي', familyName: 'عائلة سامي');

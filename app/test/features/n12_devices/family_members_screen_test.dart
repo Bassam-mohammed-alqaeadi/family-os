@@ -6,8 +6,14 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/domain/child_id.dart';
+import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/identity/identity_models.dart';
+import 'package:family_os/core/identity/identity_runtime.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/features/n02_day/day_child_mock.dart';
 import 'package:family_os/features/n12_devices/family_members_mock.dart';
 import 'package:family_os/features/n12_devices/family_members_repository.dart';
 import 'package:family_os/features/n12_devices/family_members_screen.dart';
@@ -65,8 +71,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(FamilyMembersKeys.list), findsOneWidget);
-    expect(find.byKey(FamilyMembersKeys.memberRow('member_owner')), findsOneWidget);
-    expect(find.byKey(FamilyMembersKeys.memberRow('member_mother')), findsOneWidget);
+    expect(
+      find.byKey(FamilyMembersKeys.memberRow('member_owner')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(FamilyMembersKeys.memberRow('member_mother')),
+      findsOneWidget,
+    );
     expect(
       find.byKey(FamilyMembersKeys.memberRow('member_guardian')),
       findsOneWidget,
@@ -87,41 +99,42 @@ void main() {
     expect(motherOpened, 'member_mother');
   });
 
-  testWidgets('SCR-FAT-027 mother — view OK · invite disabled · no level edit', (
-    tester,
-  ) async {
-    var invited = false;
-    String? motherOpened;
-    var sos = false;
-    final repo = InMemoryFamilyMembersRepository(
-      members: FamilyMembersMock.fullFixture,
-    );
+  testWidgets(
+    'SCR-FAT-027 mother — view OK · invite disabled · no level edit',
+    (tester) async {
+      var invited = false;
+      String? motherOpened;
+      var sos = false;
+      final repo = InMemoryFamilyMembersRepository(
+        members: FamilyMembersMock.fullFixture,
+      );
 
-    await tester.pumpWidget(
-      _app(
-        child: FamilyMembersScreen(
-          repository: repo,
-          roleOverride: AppRole.mother,
-          onInvite: () => invited = true,
-          onSos: () => sos = true,
-          onOpenMotherLevel: (id) => motherOpened = id,
+      await tester.pumpWidget(
+        _app(
+          child: FamilyMembersScreen(
+            repository: repo,
+            roleOverride: AppRole.mother,
+            onInvite: () => invited = true,
+            onSos: () => sos = true,
+            onOpenMotherLevel: (id) => motherOpened = id,
+          ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.byKey(FamilyMembersKeys.list), findsOneWidget);
-    expect(find.byKey(FamilyMembersKeys.childLean), findsNothing);
-    expect(find.byKey(FamilyMembersKeys.inviteCta), findsNothing);
-    expect(find.byKey(FamilyMembersKeys.inviteDisabled), findsOneWidget);
-    expect(find.textContaining('تغيير'), findsNothing);
-    expect(motherOpened, isNull);
-    expect(invited, isFalse);
+      expect(find.byKey(FamilyMembersKeys.list), findsOneWidget);
+      expect(find.byKey(FamilyMembersKeys.childLean), findsNothing);
+      expect(find.byKey(FamilyMembersKeys.inviteCta), findsNothing);
+      expect(find.byKey(FamilyMembersKeys.inviteDisabled), findsOneWidget);
+      expect(find.textContaining('تغيير'), findsNothing);
+      expect(motherOpened, isNull);
+      expect(invited, isFalse);
 
-    await tester.tap(find.byKey(FamilyMembersKeys.sosCta));
-    await tester.pumpAndSettle();
-    expect(sos, isTrue);
-  });
+      await tester.tap(find.byKey(FamilyMembersKeys.sosCta));
+      await tester.pumpAndSettle();
+      expect(sos, isTrue);
+    },
+  );
 
   testWidgets('SCR-FAT-027 child lean — SOS still ungated', (tester) async {
     var sos = false;
@@ -173,7 +186,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(FamilyMembersKeys.list), findsOneWidget);
-    expect(find.byKey(FamilyMembersKeys.memberRow('member_owner')), findsOneWidget);
+    expect(
+      find.byKey(FamilyMembersKeys.memberRow('member_owner')),
+      findsOneWidget,
+    );
   });
 
   test('Rule 23 — no planted person names in FAT-027 sources/ARB', () {
@@ -203,6 +219,120 @@ void main() {
       expect(value.contains('نوال'), isFalse, reason: value);
     }
   });
+
+  testWidgets(
+    'family selector switches context and prevents cross-family leak',
+    (tester) async {
+      final runtime = IdentityRuntime(
+        account: Account(id: AccountId('acc_owner')),
+        session: Session(
+          id: SessionId('sess_owner'),
+          accountId: AccountId('acc_owner'),
+          startedAt: DateTime.utc(2026, 1, 1),
+        ),
+        families: [
+          Family(
+            id: FamilyId('fam_a'),
+            name: 'Family A',
+            ownerMemberId: MemberId('mem_owner_a'),
+          ),
+          Family(
+            id: FamilyId('fam_b'),
+            name: 'Family B',
+            ownerMemberId: MemberId('mem_owner_b'),
+          ),
+        ],
+        memberships: [
+          FamilyMembership(
+            id: MemberId('mem_owner_a'),
+            accountId: AccountId('acc_owner'),
+            familyId: FamilyId('fam_a'),
+            role: AppRole.father,
+            tier: MembershipTier.primary,
+            isPrimaryOwner: true,
+          ),
+          FamilyMembership(
+            id: MemberId('mem_owner_b'),
+            accountId: AccountId('acc_owner'),
+            familyId: FamilyId('fam_b'),
+            role: AppRole.father,
+            tier: MembershipTier.primary,
+            isPrimaryOwner: true,
+          ),
+        ],
+        activeFamilyId: FamilyId('fam_a'),
+        activeChildScope: ChildScope(
+          familyId: FamilyId('fam_a'),
+          childId: ChildId('child_a'),
+        ),
+        children: [
+          ChildIdentity(id: ChildId('child_a'), familyId: FamilyId('fam_a')),
+          ChildIdentity(id: ChildId('child_b'), familyId: FamilyId('fam_b')),
+        ],
+      );
+
+      final repo = InMemoryFamilyMembersRepository(
+        byFamily: {
+          'fam_a': [
+            const FamilyMemberEntry(
+              id: 'member_owner_a',
+              familyId: 'fam_a',
+              displayName: 'وليّ الأمر أ',
+              kind: FamilyMemberKind.owner,
+              monogram: 'أ',
+              swatch: DayChildSwatch.purple,
+            ),
+          ],
+          'fam_b': [
+            const FamilyMemberEntry(
+              id: 'member_owner_b',
+              familyId: 'fam_b',
+              displayName: 'وليّ الأمر ب',
+              kind: FamilyMemberKind.owner,
+              monogram: 'ب',
+              swatch: DayChildSwatch.sky,
+            ),
+          ],
+        },
+      );
+
+      await tester.pumpWidget(
+        CurrentIdentity(
+          runtime: runtime,
+          child: _app(
+            child: const FamilyMembersScreen(roleOverride: AppRole.father),
+          ),
+        ),
+      );
+      // Rebuild with repository injected.
+      await tester.pumpWidget(
+        CurrentIdentity(
+          runtime: runtime,
+          child: _app(
+            child: FamilyMembersScreen(
+              repository: repo,
+              roleOverride: AppRole.father,
+              onSos: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Family A'), findsOneWidget);
+      expect(find.text('وليّ الأمر أ'), findsOneWidget);
+      expect(find.text('وليّ الأمر ب'), findsNothing);
+
+      await tester.tap(find.byType(DropdownButton<String>).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Family B').last);
+      await tester.pumpAndSettle();
+
+      expect(runtime.activeFamilyId, FamilyId('fam_b'));
+      expect(find.text('وليّ الأمر ب'), findsOneWidget);
+      expect(find.text('وليّ الأمر أ'), findsNothing);
+    },
+  );
 }
 
 Widget _app({required Widget child}) {

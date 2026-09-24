@@ -8,6 +8,8 @@ Incomplete settings, dead-ends, and unclosed loops discovered during conversion 
 | Screen ID | Gap found | Closure | Status |
 |---|---|---|---|
 | SCR-FAT-032 | SET-001: Sleep/prayer/study toggles are VISUAL-only in prototype | Closed 2026-09-20: ControlFit time-range schedules (switch+start/end) via ScheduleWindowRepository → ScheduleWindowQuery/TimeEngine; host SCR-FAT-032 MVP. See 08-gap-closure-specs.md SET-001 | **CLOSED** (2026-09-20) |
+| (Phase 1.5 Education) | Education GapClose **002–008 CLOSED** · domain Usable · NEXT Quran score | Closed — Lane 5.5 Education | **CLOSED** (2026-09-23) |
+| (Phase 1.5 Quran) | Quran/Athkar Shell→lifting · **002–003 CLOSED** · 004–007 remain | Open — Lane 5.5 | **OPEN** (2026-09-23; 002–003 closed) |
 | SCR-FAT-032 | SET-002: No DB tables yet for daily policy / per-app wallets | Closed 2026-09-20: PrefsScreenTimePolicyRepository + WalletLedger Rule 25; caps/wallets persist → ScreenTimePolicyQuery/TimeEngine (Qustodio-style); host SCR-FAT-032. See 08-gap-closure-specs.md SET-002 | **CLOSED** (2026-09-20) |
 | SCR-FAT-032 | SET-003: Child side may lag parent schedule/cap edits | Closed 2026-09-20: PolicySyncBus mock sync (pending/delivered/offlineQueued); ChildScreenTimeMirror remaining live; P12 same-session. See 08-gap-closure-specs.md SET-003 | **CLOSED** (2026-09-20) |
 | SCR-FAT-036 | SET-004: Category filter rows toggle CSS only | Closed 2026-09-20: PrefsWebFilterPolicyRepository + WebFilterEvaluator Rule 25; category toggles persist + block fixtures (Qustodio/Net Nanny); host SCR-FAT-036 MVP. See 08-gap-closure-specs.md SET-004 | **CLOSED** (2026-09-20) |

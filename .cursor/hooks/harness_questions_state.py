@@ -280,7 +280,8 @@ def build_stop_followup(root: Path, hook_input: dict) -> dict:
         return {"followup_message": (
             "HARNESS SHIP GATE: card " + str(gate.get("card_id"))
             + " is not verified — " + gate["reason"] + ". "
-            "Run `python .cursor/hooks/verify_ship.py verify` (flutter analyze + test in app/). "
+            "Run `python .cursor/hooks/verify_ship.py verify` (Q-VERIFY-TIERED: analyze + scoped|full tests). "
+            "Use `--full` every 3rd ship / end-of-wake / Phase 1.5 / merge / Stage 3. "
             "If it fails, fix and re-run; do not start the next card until it passes."
         )}
 

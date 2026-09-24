@@ -44,10 +44,7 @@ final class PreviewQuizQuestion {
 
 @immutable
 final class PreviewLessonBlock {
-  const PreviewLessonBlock({
-    required this.id,
-    required this.summaryKey,
-  });
+  const PreviewLessonBlock({required this.id, required this.summaryKey});
 
   final String id;
   final String summaryKey;
@@ -64,6 +61,7 @@ final class PreviewApproveSnapshot {
     this.elapsedSeconds = 70,
     this.ruleSeconds = 90,
     this.rejected = false,
+    this.approved = false,
   });
 
   final String quizTitleKey;
@@ -75,12 +73,14 @@ final class PreviewApproveSnapshot {
   final int ruleSeconds;
   final bool rejected;
 
-  bool get isEmpty =>
-      rejected || (questions.isEmpty && lesson == null);
+  /// True after father Approve publishes pack (P15-EDU-004).
+  final bool approved;
+
+  bool get isEmpty => rejected || (questions.isEmpty && lesson == null);
 
   bool get withinNinetySeconds => elapsedSeconds <= ruleSeconds;
 
-  bool get canApprove => !rejected && questions.isNotEmpty;
+  bool get canApprove => !rejected && !approved && questions.isNotEmpty;
 
   PreviewApproveSnapshot withQuestions(List<PreviewQuizQuestion> next) {
     return PreviewApproveSnapshot(
@@ -92,6 +92,7 @@ final class PreviewApproveSnapshot {
       elapsedSeconds: elapsedSeconds,
       ruleSeconds: ruleSeconds,
       rejected: rejected,
+      approved: approved,
     );
   }
 
@@ -105,6 +106,21 @@ final class PreviewApproveSnapshot {
       elapsedSeconds: elapsedSeconds,
       ruleSeconds: ruleSeconds,
       rejected: rejected,
+      approved: approved,
+    );
+  }
+
+  PreviewApproveSnapshot withApproved() {
+    return PreviewApproveSnapshot(
+      quizTitleKey: quizTitleKey,
+      lessonTitleKey: lessonTitleKey,
+      questions: questions,
+      lesson: lesson,
+      difficulty: difficulty,
+      elapsedSeconds: elapsedSeconds,
+      ruleSeconds: ruleSeconds,
+      rejected: false,
+      approved: true,
     );
   }
 
@@ -118,6 +134,7 @@ final class PreviewApproveSnapshot {
       elapsedSeconds: elapsedSeconds,
       ruleSeconds: ruleSeconds,
       rejected: true,
+      approved: false,
     );
   }
 

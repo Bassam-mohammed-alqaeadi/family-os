@@ -104,6 +104,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.byKey(LocationMapKeys.pinRow('child_b')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(LocationMapKeys.pinRow('child_b')));
     await tester.pumpAndSettle();
     expect(historyId, 'child_b');

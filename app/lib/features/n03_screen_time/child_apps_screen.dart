@@ -1,20 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:family_os/app/role_controller.dart';
+import 'package:family_os/core/app_control/app_control.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/banner.dart';
+import 'package:family_os/core/design/components/capability_honesty_badge.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/fs_foundation/capability_status.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
+import 'package:family_os/features/n03_screen_time/app_control_ux_bridge.dart';
+import 'package:family_os/features/n03_screen_time/app_deny_page.dart';
 import 'package:family_os/features/n03_screen_time/child_apps_models.dart';
 import 'package:family_os/features/n03_screen_time/child_apps_repository.dart';
+import 'package:family_os/features/n03_screen_time/stage1_child_scope.dart';
 
 /// Widget keys for SCR-FAT-034 acceptance.
 abstract final class ChildAppsKeys {
@@ -22,7 +28,11 @@ abstract final class ChildAppsKeys {
   static const empty = Key('child_apps_empty');
   static const list = Key('child_apps_list');
   static const tipBanner = Key('child_apps_tip');
+  static const honestyBanner = Key('child_apps_honesty');
+  static const partnerHint = Key('child_apps_partner_hint');
   static const pendingCta = Key('child_apps_pending_cta');
+  static Key protectedBadge(String id) => Key('child_apps_protected_$id');
+  static Key previewDeny(String id) => Key('child_apps_preview_deny_$id');
   static const sharedNote = Key('child_apps_shared_note');
   static const observerHint = Key('child_apps_observer_hint');
   static const childLean = Key('child_apps_child_lean');
@@ -31,11 +41,13 @@ abstract final class ChildAppsKeys {
   static const sosIconCta = Key('child_apps_sos_icon');
   static const backButton = Key('child_apps_back');
 
-  static Key category(ChildAppCategory cat) => Key('child_apps_cat_${cat.name}');
+  static Key category(ChildAppCategory cat) =>
+      Key('child_apps_cat_${cat.name}');
   static Key appTile(String id) => Key('child_apps_tile_$id');
   static Key allow(String id) => Key('child_apps_allow_$id');
   static Key block(String id) => Key('child_apps_block_$id');
   static Key statusToggle(String id) => Key('child_apps_toggle_$id');
+  static Key unlimitedToggle(String id) => Key('child_apps_unlimited_$id');
 }
 
 /// SCR-FAT-034 — تطبيقات الابن (child apps list).
@@ -48,6 +60,7 @@ class ChildAppsScreen extends StatefulWidget {
     super.key,
     this.childId,
     this.repository,
+    this.appControl,
     this.sosFire,
     this.roleOverride,
     this.motherLevel = MotherLevel.partner,
@@ -62,6 +75,9 @@ class ChildAppsScreen extends StatefulWidget {
   /// Rule 25 seam — null → [stage1ChildAppsRepository].
   final ChildAppsRepository? repository;
 
+  /// FS-003 domain seam — null skips AC writes (Stage-1 inventory only).
+  final AppControlService? appControl;
+
   /// P-4 SOS seam — null → [stage1SosFireService].
   final SosFireService? sosFire;
 
@@ -75,7 +91,8 @@ class ChildAppsScreen extends StatefulWidget {
   final VoidCallback? onSos;
 
   /// Test seam — when null, navigates to /scr-fat-035?childId=&appId=.
-  final void Function(String childId, String? pendingAppId)? onOpenNewAppApprove;
+  final void Function(String childId, String? pendingAppId)?
+  onOpenNewAppApprove;
 
   @override
   State<ChildAppsScreen> createState() => _ChildAppsScreenState();
@@ -85,36 +102,86 @@ class _ChildAppsScreenState extends State<ChildAppsScreen> {
   late ChildId _childId;
   late ChildAppsRepository _repo;
   late final SosFireService _sos;
+  AppControlService? _appControl;
   var _sosBusy = false;
+  late bool _bootstrapping;
   Listenable? _listenable;
 
   AppRole get _role {
     final override = widget.roleOverride;
     if (override != null) return override;
-    return CurrentRole.maybeNotifierOf(context)?.value ?? AppRole.father;
+    return resolveAuthorizationContext(
+      context,
+      fallbackRole: AppRole.father,
+      fallbackMotherLevel: widget.motherLevel,
+    ).role;
   }
 
   bool get _isChild => _role == AppRole.child;
 
-  bool get _canControl {
-    if (_role == AppRole.father) return true;
-    if (_role == AppRole.mother) {
-      return widget.motherLevel == MotherLevel.partner ||
-          widget.motherLevel == MotherLevel.full;
-    }
-    return false;
-  }
+  bool get _canConfigureAccess => AppControlUxBridge.canConfigureAccess(
+    role: _role,
+    motherLevel: widget.motherLevel,
+  );
+
+  bool get _canDecideTickets => AppControlUxBridge.canDecideTickets(
+    role: _role,
+    motherLevel: widget.motherLevel,
+  );
+
+  bool get _isPartnerMother =>
+      _role == AppRole.mother && widget.motherLevel == MotherLevel.partner;
 
   bool get _isObserverMother =>
       _role == AppRole.mother && widget.motherLevel == MotherLevel.observer;
 
+  AppControlService? get _resolvedAppControl =>
+      widget.appControl ?? _appControl;
+
   @override
   void initState() {
     super.initState();
-    _childId = _resolveChildId(widget.childId);
+    _childId = ChildId(
+      widget.childId?.trim().isNotEmpty == true
+          ? widget.childId!.trim()
+          : kStage1CanonicalChildId.value,
+    );
     _repo = widget.repository ?? stage1ChildAppsRepository;
     _sos = widget.sosFire ?? stage1SosFireService;
+    _bootstrapping =
+        !(widget.repository != null && widget.appControl != null);
     _bindRepo(_repo);
+    if (_bootstrapping) {
+      _bootstrapDomain();
+    }
+  }
+
+  Future<void> _bootstrapDomain() async {
+    try {
+      await Stage1AppControlRuntime.ensureOpen();
+      if (!mounted) return;
+      setState(() {
+        if (widget.repository == null) {
+          _unbindRepo();
+          _repo = InMemoryChildAppsRepository(
+            accessRules: Stage1AppControlRuntime.accessRules,
+          );
+          _bindRepo(_repo);
+        }
+        if (widget.appControl == null) {
+          _appControl = Stage1AppControlRuntime.service;
+        }
+        _bootstrapping = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _bootstrapping = false);
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _childId = _resolveChildId(widget.childId);
   }
 
   @override
@@ -139,7 +206,14 @@ class _ChildAppsScreenState extends State<ChildAppsScreen> {
   ChildId _resolveChildId(String? raw) {
     final trimmed = raw?.trim();
     if (trimmed == null || trimmed.isEmpty) {
-      return ChildId('demo-child');
+      final runtime = CurrentIdentity.maybeOf(context);
+      if (runtime != null) {
+        return familyScopedChildId(
+          familyId: runtime.activeFamilyId,
+          childId: runtime.activeChildId,
+        );
+      }
+      return kStage1CanonicalChildId;
     }
     return ChildId(trimmed);
   }
@@ -195,63 +269,158 @@ class _ChildAppsScreenState extends State<ChildAppsScreen> {
     if (appId != null && appId.isNotEmpty) {
       params['appId'] = appId;
     }
-    context.push(
-      Uri(path: '/scr-fat-035', queryParameters: params).toString(),
-    );
+    context.push(Uri(path: '/scr-fat-035', queryParameters: params).toString());
   }
 
   Future<void> _onAppTap(ChildAppEntry app) async {
     if (app.status == ChildAppStatus.pending) {
-      _openPendingApprove(appId: app.id);
+      if (_canDecideTickets || _canConfigureAccess) {
+        _openPendingApprove(appId: app.id);
+      }
       return;
     }
-    if (!_canControl) return;
+    if (!_canConfigureAccess) return;
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       builder: (ctx) => _AppControlSheet(
         app: app,
-        canControl: _canControl,
-        onAllow: () {
-          _repo.setStatus(_childId, app.id, ChildAppStatus.allowed);
-          Navigator.of(ctx).pop();
+        canControl: _canConfigureAccess,
+        onAllow: () async {
+          await _applyAllow(app);
+          if (ctx.mounted) Navigator.of(ctx).pop();
+        },
+        onBlock: () async {
+          await _applyBlock(app);
+          if (ctx.mounted) Navigator.of(ctx).pop();
+        },
+        onUnlimited: (value) {
+          _repo.setUnlimited(_childId, app.id, value);
           AppToast.show(
             context,
-            message: AppLocalizations.of(context).childAppsStatusUpdated(app.name),
+            message: AppLocalizations.of(
+              context,
+            ).childAppsStatusUpdated(app.name),
           );
         },
-        onBlock: () {
-          _repo.setStatus(_childId, app.id, ChildAppStatus.blocked);
+        onPreviewDeny: () {
           Navigator.of(ctx).pop();
-          AppToast.show(
-            context,
-            message: AppLocalizations.of(context).childAppsStatusUpdated(app.name),
-          );
+          _previewDeny(app);
         },
       ),
     );
   }
 
-  void _onToggle(ChildAppEntry app, bool allowed) {
-    if (!_canControl || app.status == ChildAppStatus.pending) return;
-    if (app.status == ChildAppStatus.free) return;
-    _repo.setStatus(
-      _childId,
-      app.id,
-      allowed ? ChildAppStatus.allowed : ChildAppStatus.blocked,
-    );
+  AppControlActor get _actor =>
+      AppControlUxBridge.actorFor(role: _role, motherLevel: widget.motherLevel);
+
+  Future<void> _applyAllow(ChildAppEntry app) async {
+    final ac = _resolvedAppControl;
+    if (ac != null) {
+      if (app.status == ChildAppStatus.blocked) {
+        if (!_actor.canReopenBlock) {
+          AppToast.show(
+            context,
+            message: AppLocalizations.of(context).childAppsPartnerTicketsHint,
+          );
+          return;
+        }
+        await ac.reopenPermanentBlock(
+          childId: _childId,
+          packageId: app.id,
+          actor: _actor,
+        );
+      } else {
+        await ac.setDisposition(
+          childId: _childId,
+          packageId: app.id,
+          disposition: AppPackageDisposition.allow,
+          actor: _actor,
+        );
+      }
+    }
+    _repo.setStatus(_childId, app.id, ChildAppStatus.allowed);
+    if (!mounted) return;
     AppToast.show(
       context,
       message: AppLocalizations.of(context).childAppsStatusUpdated(app.name),
     );
   }
 
+  Future<void> _applyBlock(ChildAppEntry app) async {
+    if (AppControlUxBridge.isProtectedApp(app)) {
+      AppToast.show(
+        context,
+        message: AppLocalizations.of(context).childAppsProtectedCannotBlock,
+      );
+      return;
+    }
+    final ac = _resolvedAppControl;
+    if (ac != null) {
+      await ac.setPermanentBlock(
+        childId: _childId,
+        packageId: app.id,
+        actor: _actor,
+      );
+    }
+    _repo.setStatus(_childId, app.id, ChildAppStatus.blocked);
+    if (!mounted) return;
+    AppToast.show(
+      context,
+      message: AppLocalizations.of(context).childAppsStatusUpdated(app.name),
+    );
+  }
+
+  void _previewDeny(ChildAppEntry app) {
+    final verdict = AppControlVerdict.deny(
+      policyVersion: 1,
+      denySource: app.status == ChildAppStatus.pending
+          ? AppControlDenySource.pendingUnknown
+          : AppControlDenySource.permanentBlock,
+    );
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => SizedBox(
+        height: MediaQuery.sizeOf(ctx).height * 0.85,
+        child: AppDenyPage(
+          packageId: app.id,
+          packageLabel: app.name,
+          verdict: verdict,
+          childId: _childId,
+          appControl: _resolvedAppControl,
+          isPreview: true,
+          onSos: widget.onSos,
+        ),
+      ),
+    );
+  }
+
+  void _onToggle(ChildAppEntry app, bool allowed) {
+    if (!_canConfigureAccess || app.status == ChildAppStatus.pending) return;
+    if (app.status == ChildAppStatus.free) return;
+    if (allowed) {
+      _applyAllow(app);
+    } else {
+      _applyBlock(app);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).extension<FamilyColors>()!;
+    if (_bootstrapping) {
+      return Scaffold(
+        key: ChildAppsKeys.screen,
+        backgroundColor: colors.bg,
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
     final apps = _repo.appsFor(_childId);
-    final pending = apps.where((a) => a.status == ChildAppStatus.pending).toList();
+    final pending = apps
+        .where((a) => a.status == ChildAppStatus.pending)
+        .toList();
 
     return Scaffold(
       key: ChildAppsKeys.screen,
@@ -300,6 +469,7 @@ class _ChildAppsScreenState extends State<ChildAppsScreen> {
     List<ChildAppEntry> apps,
     List<ChildAppEntry> pending,
   ) {
+    final radii = Theme.of(context).extension<FamilyRadii>()!;
     if (apps.isEmpty) {
       return AppEmptyState(
         key: ChildAppsKeys.empty,
@@ -318,16 +488,63 @@ class _ChildAppsScreenState extends State<ChildAppsScreen> {
           leading: Icon(Icons.touch_app_outlined, size: 18, color: colors.p700),
           message: l10n.childAppsTipBanner,
         ),
+        const SizedBox(height: 10),
+        DecoratedBox(
+          key: ChildAppsKeys.honestyBanner,
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(radii.card),
+            border: Border.all(color: colors.border),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const CapabilityHonestyBadge(
+                  status: CapabilityStatus.mockRemote,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.childAppsOsInterceptHonesty,
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.35,
+                    color: colors.ink2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
         if (_isObserverMother) ...[
           const SizedBox(height: 10),
           BannerNote(
             key: ChildAppsKeys.observerHint,
             variant: BannerVariant.a,
-            leading: Icon(Icons.visibility_outlined, size: 18, color: colors.amberDeep),
+            leading: Icon(
+              Icons.visibility_outlined,
+              size: 18,
+              color: colors.amberDeep,
+            ),
             message: l10n.childAppsObserverHint,
           ),
         ],
-        if (pending.isNotEmpty) ...[
+        if (_isPartnerMother) ...[
+          const SizedBox(height: 10),
+          BannerNote(
+            key: ChildAppsKeys.partnerHint,
+            variant: BannerVariant.a,
+            leading: Icon(
+              Icons.info_outline,
+              size: 18,
+              color: colors.amberDeep,
+            ),
+            message: l10n.childAppsPartnerTicketsHint,
+          ),
+        ],
+        if (pending.isNotEmpty &&
+            (_canDecideTickets || _canConfigureAccess)) ...[
           const SizedBox(height: 10),
           PrimaryBtn(
             key: ChildAppsKeys.pendingCta,
@@ -341,7 +558,7 @@ class _ChildAppsScreenState extends State<ChildAppsScreen> {
           _CategorySection(
             category: cat,
             apps: apps.where((a) => a.category == cat).toList(),
-            canControl: _canControl,
+            canControl: _canConfigureAccess,
             l10n: l10n,
             colors: colors,
             onTap: _onAppTap,
@@ -385,25 +602,25 @@ class _CategorySection extends StatelessWidget {
   final void Function(ChildAppEntry, bool) onToggle;
 
   String _title() => switch (category) {
-        ChildAppCategory.games => l10n.childAppsCatGames,
-        ChildAppCategory.social => l10n.childAppsCatSocial,
-        ChildAppCategory.edu => l10n.childAppsCatEdu,
-        ChildAppCategory.tools => l10n.childAppsCatTools,
-      };
+    ChildAppCategory.games => l10n.childAppsCatGames,
+    ChildAppCategory.social => l10n.childAppsCatSocial,
+    ChildAppCategory.edu => l10n.childAppsCatEdu,
+    ChildAppCategory.tools => l10n.childAppsCatTools,
+  };
 
   String _rule() => switch (category) {
-        ChildAppCategory.games => l10n.childAppsCatGamesRule,
-        ChildAppCategory.social => l10n.childAppsCatSocialRule,
-        ChildAppCategory.edu => l10n.childAppsCatEduRule,
-        ChildAppCategory.tools => l10n.childAppsCatToolsRule,
-      };
+    ChildAppCategory.games => l10n.childAppsCatGamesRule,
+    ChildAppCategory.social => l10n.childAppsCatSocialRule,
+    ChildAppCategory.edu => l10n.childAppsCatEduRule,
+    ChildAppCategory.tools => l10n.childAppsCatToolsRule,
+  };
 
   IconData _icon() => switch (category) {
-        ChildAppCategory.games => Icons.sports_esports_outlined,
-        ChildAppCategory.social => Icons.chat_bubble_outline,
-        ChildAppCategory.edu => Icons.school_outlined,
-        ChildAppCategory.tools => Icons.build_outlined,
-      };
+    ChildAppCategory.games => Icons.sports_esports_outlined,
+    ChildAppCategory.social => Icons.chat_bubble_outline,
+    ChildAppCategory.edu => Icons.school_outlined,
+    ChildAppCategory.tools => Icons.build_outlined,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -445,10 +662,7 @@ class _CategorySection extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 4),
-              Text(
-                _rule(),
-                style: TextStyle(fontSize: 11, color: colors.ink2),
-              ),
+              Text(_rule(), style: TextStyle(fontSize: 11, color: colors.ink2)),
               const SizedBox(height: 8),
               for (final app in apps)
                 _AppRow(
@@ -485,19 +699,21 @@ class _AppRow extends StatelessWidget {
   final ValueChanged<bool> onToggle;
 
   String _statusLabel() => switch (app.status) {
-        ChildAppStatus.allowed =>
-          l10n.childAppsRemaining(app.remainingMins, app.limitMins),
-        ChildAppStatus.free => l10n.childAppsStatusFree,
-        ChildAppStatus.blocked => l10n.childAppsStatusBlocked,
-        ChildAppStatus.pending => l10n.childAppsStatusPending,
-      };
+    ChildAppStatus.allowed =>
+      app.unlimited
+          ? l10n.childAppsStatusUnlimited
+          : l10n.childAppsRemaining(app.remainingMins, app.limitMins),
+    ChildAppStatus.free => l10n.childAppsStatusFree,
+    ChildAppStatus.blocked => l10n.childAppsStatusBlocked,
+    ChildAppStatus.pending => l10n.childAppsStatusPending,
+  };
 
   Color _statusColor() => switch (app.status) {
-        ChildAppStatus.allowed => colors.mintInk,
-        ChildAppStatus.free => const Color(0xFF0277BD),
-        ChildAppStatus.blocked => colors.coral,
-        ChildAppStatus.pending => colors.amberDeep,
-      };
+    ChildAppStatus.allowed => colors.mintInk,
+    ChildAppStatus.free => const Color(0xFF0277BD),
+    ChildAppStatus.blocked => colors.coral,
+    ChildAppStatus.pending => colors.amberDeep,
+  };
 
   bool get _showToggle =>
       canControl &&
@@ -524,15 +740,29 @@ class _AppRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    app.name,
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w700,
-                      color: colors.ink,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          app.name,
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            color: colors.ink,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (AppControlUxBridge.isProtectedApp(app)) ...[
+                        const SizedBox(width: 6),
+                        Tag(
+                          key: ChildAppsKeys.protectedBadge(app.id),
+                          label: l10n.childAppsProtectedBadge,
+                          variant: TagVariant.g,
+                        ),
+                      ],
+                    ],
                   ),
                   Text(
                     _statusLabel(),
@@ -580,18 +810,44 @@ class _AppRow extends StatelessWidget {
   }
 }
 
-class _AppControlSheet extends StatelessWidget {
+class _AppControlSheet extends StatefulWidget {
   const _AppControlSheet({
     required this.app,
     required this.canControl,
     required this.onAllow,
     required this.onBlock,
+    required this.onUnlimited,
+    this.onPreviewDeny,
   });
 
   final ChildAppEntry app;
   final bool canControl;
   final VoidCallback onAllow;
   final VoidCallback onBlock;
+  final ValueChanged<bool> onUnlimited;
+  final VoidCallback? onPreviewDeny;
+
+  @override
+  State<_AppControlSheet> createState() => _AppControlSheetState();
+}
+
+class _AppControlSheetState extends State<_AppControlSheet> {
+  late bool _unlimited;
+
+  @override
+  void initState() {
+    super.initState();
+    _unlimited = widget.app.unlimited;
+  }
+
+  bool get _showUnlimited =>
+      widget.canControl &&
+      widget.app.category == ChildAppCategory.games &&
+      widget.app.status != ChildAppStatus.blocked &&
+      widget.app.status != ChildAppStatus.pending &&
+      !widget.app.isFreeOrEdu;
+
+  bool get _protected => AppControlUxBridge.isProtectedApp(widget.app);
 
   @override
   Widget build(BuildContext context) {
@@ -600,19 +856,23 @@ class _AppControlSheet extends StatelessWidget {
 
     return SafeArea(
       key: ChildAppsKeys.controlSheet,
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              app.name,
+              widget.app.name,
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w800,
                 color: colors.ink,
               ),
             ),
+            if (_protected) ...[
+              const SizedBox(height: 6),
+              Tag(label: l10n.childAppsProtectedBadge, variant: TagVariant.g),
+            ],
             const SizedBox(height: 6),
             Text(
               l10n.childAppsSheetHint,
@@ -620,19 +880,52 @@ class _AppControlSheet extends StatelessWidget {
               style: TextStyle(fontSize: 12, color: colors.ink2),
             ),
             const SizedBox(height: 14),
-            if (canControl) ...[
+            if (widget.canControl) ...[
               PrimaryBtn(
-                key: ChildAppsKeys.allow(app.id),
+                key: ChildAppsKeys.allow(widget.app.id),
                 label: l10n.childAppsAllow,
                 variant: PrimaryBtnVariant.mint,
-                onPressed: onAllow,
+                onPressed: widget.onAllow,
               ),
               const SizedBox(height: 8),
               PrimaryBtn(
-                key: ChildAppsKeys.block(app.id),
+                key: ChildAppsKeys.block(widget.app.id),
                 label: l10n.childAppsBlock,
                 variant: PrimaryBtnVariant.coral,
-                onPressed: onBlock,
+                onPressed: _protected ? null : widget.onBlock,
+              ),
+              if (_showUnlimited) ...[
+                const SizedBox(height: 12),
+                SwitchListTile.adaptive(
+                  key: ChildAppsKeys.unlimitedToggle(widget.app.id),
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    l10n.childAppsUnlimitedToggle,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: colors.ink,
+                    ),
+                  ),
+                  subtitle: Text(
+                    l10n.childAppsUnlimitedHint,
+                    style: TextStyle(fontSize: 11.5, color: colors.ink2),
+                  ),
+                  value: _unlimited,
+                  onChanged: (v) {
+                    setState(() => _unlimited = v);
+                    widget.onUnlimited(v);
+                  },
+                ),
+              ],
+            ],
+            if (widget.onPreviewDeny != null) ...[
+              const SizedBox(height: 12),
+              PrimaryBtn(
+                key: ChildAppsKeys.previewDeny(widget.app.id),
+                label: l10n.childAppsPreviewDenyCta,
+                variant: PrimaryBtnVariant.ghost,
+                onPressed: widget.onPreviewDeny,
               ),
             ],
           ],

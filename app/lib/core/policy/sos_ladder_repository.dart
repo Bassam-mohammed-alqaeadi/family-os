@@ -184,11 +184,28 @@ final class PrefsSosLadderRepository implements SosLadderRepository {
     if (SosLadder.isFixedParentId(contact.id)) {
       _rejectRemove(contact.id);
     }
+    _validateBackupContact(contact);
     final ladder = await load(familyId);
     final others = ladder.backups.where((b) => b.id != contact.id).toList();
+    final isNew = others.length == ladder.backups.length;
+    if (isNew && others.length >= kSosMaxBackupContacts) {
+      throw SosLadderValidationException(
+        SosLadderValidationCode.backupLimitExceeded,
+        memberId: contact.id,
+      );
+    }
     final next = ladder.copyWith(backups: [...others, contact]);
     await save(next);
     return next;
+  }
+}
+
+void _validateBackupContact(SosBackupContact contact) {
+  if (contact.priority < 1 || contact.priority > kSosMaxBackupContacts) {
+    throw SosLadderValidationException(
+      SosLadderValidationCode.priorityOutOfRange,
+      memberId: contact.id,
+    );
   }
 }
 
@@ -287,8 +304,16 @@ final class InMemorySosLadderRepository implements SosLadderRepository {
     if (SosLadder.isFixedParentId(contact.id)) {
       _rejectRemove(contact.id);
     }
+    _validateBackupContact(contact);
     final ladder = await load(familyId);
     final others = ladder.backups.where((b) => b.id != contact.id).toList();
+    final isNew = others.length == ladder.backups.length;
+    if (isNew && others.length >= kSosMaxBackupContacts) {
+      throw SosLadderValidationException(
+        SosLadderValidationCode.backupLimitExceeded,
+        memberId: contact.id,
+      );
+    }
     final next = ladder.copyWith(backups: [...others, contact]);
     await save(next);
     return next;

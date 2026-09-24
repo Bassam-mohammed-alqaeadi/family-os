@@ -116,6 +116,30 @@ void main() {
     },
   );
 
+  testWidgets('observer is blocked from request decisions', (tester) async {
+    final pending = TimeRequest(
+      id: 'tr-ob1',
+      childId: child,
+      requestedMinutes: 15,
+    );
+    final service = buildService(seed: [pending], ceiling: 30);
+    addTearDown(service.dispose);
+
+    await tester.pumpWidget(
+      wrap(
+        RequestInboxScreen(
+          service: service,
+          role: AppRole.mother,
+          motherLevel: MotherLevel.observer,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(RequestInboxKeys.observerHint), findsOneWidget);
+    expect(find.byKey(RequestInboxKeys.approve('tr-ob1')), findsNothing);
+  });
+
   testWidgets(
     'UI-006 AC3: child sees reject reason via decision seam',
     (tester) async {

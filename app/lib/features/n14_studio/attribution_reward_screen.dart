@@ -176,15 +176,14 @@ class _AttributionRewardScreenState extends State<AttributionRewardScreen> {
     };
   }
 
-  String _rewardTitle(
-    AppLocalizations l10n,
-    AttributionRewardToggle reward,
-  ) {
+  String _rewardTitle(AppLocalizations l10n, AttributionRewardToggle reward) {
     return switch (reward.kind) {
-      AttributionRewardKind.wallet =>
-        l10n.attributionRewardWalletMinutes(reward.minutes),
-      AttributionRewardKind.play =>
-        l10n.attributionRewardPlayMinutes(reward.minutes),
+      AttributionRewardKind.wallet => l10n.attributionRewardWalletMinutes(
+        reward.minutes,
+      ),
+      AttributionRewardKind.play => l10n.attributionRewardPlayMinutes(
+        reward.minutes,
+      ),
     };
   }
 
@@ -215,7 +214,7 @@ class _AttributionRewardScreenState extends State<AttributionRewardScreen> {
     setState(() => _snap = _snap.withRewardEnabled(rewardId, enabled));
   }
 
-  void _onAssign() {
+  void _onAssign() async {
     final l10n = AppLocalizations.of(context);
     if (!_canEdit) {
       _blockedToast(l10n);
@@ -228,7 +227,9 @@ class _AttributionRewardScreenState extends State<AttributionRewardScreen> {
     final child = _snap.selectedChild!;
     final name = _childName(l10n, child);
     final minutes = _snap.totalEnabledMinutes;
-    setState(() => _snap = _snap.withAssigned());
+    final snap = await _repo.assign();
+    if (!mounted) return;
+    setState(() => _snap = snap);
     AppToast.show(
       context,
       message: l10n.attributionRewardAssignedToast(name, minutes),
@@ -339,8 +340,11 @@ class _AttributionRewardScreenState extends State<AttributionRewardScreen> {
           BannerNote(
             key: AttributionRewardKeys.masteryBanner,
             variant: BannerVariant.t,
-            leading: Icon(Icons.emoji_events_outlined,
-                color: colors.tealDeep, size: 20),
+            leading: Icon(
+              Icons.emoji_events_outlined,
+              color: colors.tealDeep,
+              size: 20,
+            ),
             message: l10n.attributionRewardMasteryBanner(_snap.masteryPercent),
           ),
           const SizedBox(height: 12),

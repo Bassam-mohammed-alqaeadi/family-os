@@ -18,7 +18,7 @@ Keep shipping backlog cards in a **continuous loop**. Hard-stop **only** on unan
 
 ## Hard rules
 - **Continuous loop** — after Ship, immediately next card or arm `/loop` with `04_LOOP_PROMPT.md`. Never idle without a QUESTION.
-- **Verify-before-ship (P9 gate)** — a card may be marked `done` in `BACKLOG.md`/`CONVERSION_LOG.md` ONLY after `python .cursor/hooks/verify_ship.py verify` exits 0 (flutter analyze + flutter test in `app/` on the post-ship tree). Record the `status: passed` evidence line in the card's Ship section. If verify fails → fix → re-verify; never skip, never mark done on a failing gate.
+- **Verify-before-ship (P9 gate · Q-VERIFY-TIERED)** — a card may be marked `done` ONLY after `python .cursor/hooks/verify_ship.py verify` exits 0. Default **auto tier**: analyze + **scoped** feature/shared tests; **full** suite every 3rd ship (and end-of-wake / `--full`). Hard **`--full`** before Phase 1.5, merge to main, Stage 3. Spec: `harness/12_VERIFY_TIER.md`. Record `status: passed` (+ tier) in evidence. If verify fails → fix → re-verify; never mark done on a failing gate; do not use `--skip-test` as a normal path.
 - **One card only** per tick — never batch screens/systems.
 - **Pillars P1–P12** — Ship forbidden on fail; fail → retry (not owner halt).
 - **P11 / P12** — control fitness + father↔child loop closure when applicable.
@@ -28,7 +28,7 @@ Keep shipping backlog cards in a **continuous loop**. Hard-stop **only** on unan
 - **Linked gaps:** ScreenBuild cannot Ship while linked SET/UI remain open unless owner deferred in QUESTIONS.
 
 ## On Ship
-1. Run `python .cursor/hooks/verify_ship.py verify` — must exit 0 (analyze + test green). On fail: fix in-loop, re-run.
+1. Run `python .cursor/hooks/verify_ship.py verify` — must exit 0 (auto tier: scoped or full). On fail: fix in-loop, re-run. End-of-wake / milestone: `verify --full`.
 2. One line in `CONVERSION_LOG.md`
 3. Update `harness/BACKLOG.md` + `harness/LOOP_STATE.md`
 4. If closing SET/UI → update `GAP_LOG.md` to CLOSED with date

@@ -132,13 +132,13 @@ final Map<String, List<ChildAppEntry>> kDefaultChildAppsByChild = {
 
 /// Single-app fixture for widget tests.
 List<ChildAppEntry> childAppsOneFixture() => [
-      const ChildAppEntry(
-        id: 'minecraft',
-        name: 'Minecraft',
-        category: ChildAppCategory.games,
-        status: ChildAppStatus.allowed,
-        usedMins: 10,
-        limitMins: 60,
-        ageRating: '7+',
-      ),
-    ];
+  const ChildAppEntry(
+    id: 'minecraft',
+    name: 'Minecraft',
+    category: ChildAppCategory.games,
+    status: ChildAppStatus.allowed,
+    usedMins: 10,
+    limitMins: 60,
+    ageRating: '7+',
+  ),
+];

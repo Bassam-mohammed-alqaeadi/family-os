@@ -1,5 +1,9 @@
 import 'package:flutter/foundation.dart';
 
+import 'package:family_os/core/policy/app_access_rules.dart';
+import 'package:family_os/core/policy/app_access_rules_repository.dart';
+import 'package:family_os/core/policy/screen_time_policy.dart';
+
 /// App category buckets (prototype FAT-034 · S-SEC-009).
 enum ChildAppCategory { games, social, edu, tools }
 
@@ -19,6 +23,7 @@ final class ChildAppEntry {
     this.walletMins = 0,
     this.instantLocked = false,
     this.ageRating = '',
+    this.unlimited = false,
   });
 
   final String id;
@@ -31,11 +36,47 @@ final class ChildAppEntry {
   final bool instantLocked;
   final String ageRating;
 
+  /// ST-OD-010: may bypass daily entertainment cap (games toggle) — not block.
+  final bool unlimited;
+
   /// Remaining minutes under daily cap (allowed only).
   int get remainingMins {
     if (status != ChildAppStatus.allowed || limitMins <= 0) return 0;
     final left = limitMins - usedMins;
     return left < 0 ? 0 : left;
+  }
+
+  bool get isFreeOrEdu =>
+      status == ChildAppStatus.free ||
+      category == ChildAppCategory.edu ||
+      EducationAppIds.isEducation(id);
+
+  AppAccessRule toAccessRule() {
+    return AppAccessRuleMapper.fromEntry(
+      appId: id,
+      blocked: status == ChildAppStatus.blocked,
+      freeOrEdu: isFreeOrEdu,
+      limitMinutes: limitMins > 0 ? limitMins : null,
+      unlimited: unlimited,
+    );
+  }
+
+  ChildAppEntry applyAccessRule(AppAccessRule rule) {
+    var nextStatus = status;
+    if (rule.blocked) {
+      nextStatus = ChildAppStatus.blocked;
+    } else if (!rule.countable && status != ChildAppStatus.pending) {
+      nextStatus = ChildAppStatus.free;
+    } else if (status == ChildAppStatus.blocked && !rule.blocked) {
+      nextStatus = ChildAppStatus.allowed;
+    }
+    return copyWith(
+      status: nextStatus,
+      limitMins:
+          rule.limitMinutes ??
+          (nextStatus == ChildAppStatus.free ? -1 : limitMins),
+      unlimited: rule.unlimited,
+    );
   }
 
   ChildAppEntry copyWith({
@@ -44,6 +85,7 @@ final class ChildAppEntry {
     int? limitMins,
     int? walletMins,
     bool? instantLocked,
+    bool? unlimited,
   }) {
     return ChildAppEntry(
       id: id,
@@ -55,6 +97,7 @@ final class ChildAppEntry {
       walletMins: walletMins ?? this.walletMins,
       instantLocked: instantLocked ?? this.instantLocked,
       ageRating: ageRating,
+      unlimited: unlimited ?? this.unlimited,
     );
   }
 }

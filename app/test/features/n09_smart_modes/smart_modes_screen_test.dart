@@ -56,7 +56,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('14:00'), findsOneWidget);
 
-    await tester.tap(find.byKey(SmartModesKeys.modeSwitch(BuiltInModeId.school)));
+    await tester.tap(
+      find.byKey(SmartModesKeys.modeSwitch(BuiltInModeId.school)),
+    );
     await tester.pumpAndSettle();
 
     final sw = tester.widget<Switch>(
@@ -71,25 +73,28 @@ void main() {
     expect(school.scheduleEnd, const TimeOfDay(hour: 14, minute: 0));
   });
 
-  test('SET-018 PrefsSmartModePrefsRepository round-trips school row', () async {
-    final store = MemorySmartModePrefsStore();
-    final repo = PrefsSmartModePrefsRepository(store);
-    final prefs = SmartModePrefs.defaults().withRow(
-      const SmartModeRow(
-        modeId: BuiltInModeId.school,
-        active: true,
-        scheduleStart: TimeOfDay(hour: 7, minute: 15),
-        scheduleEnd: TimeOfDay(hour: 13, minute: 0),
-      ),
-    );
-    await repo.save(prefs);
-    final loaded = await repo.load(SmartModePrefs.defaultChildId);
-    expect(loaded.row(BuiltInModeId.school).active, isTrue);
-    expect(
-      loaded.row(BuiltInModeId.school).scheduleStart,
-      const TimeOfDay(hour: 7, minute: 15),
-    );
-  });
+  test(
+    'SET-018 PrefsSmartModePrefsRepository round-trips school row',
+    () async {
+      final store = MemorySmartModePrefsStore();
+      final repo = PrefsSmartModePrefsRepository(store);
+      final prefs = SmartModePrefs.defaults().withRow(
+        const SmartModeRow(
+          modeId: BuiltInModeId.school,
+          active: true,
+          scheduleStart: TimeOfDay(hour: 7, minute: 15),
+          scheduleEnd: TimeOfDay(hour: 13, minute: 0),
+        ),
+      );
+      await repo.save(prefs);
+      final loaded = await repo.load(SmartModePrefs.defaultChildId);
+      expect(loaded.row(BuiltInModeId.school).active, isTrue);
+      expect(
+        loaded.row(BuiltInModeId.school).scheduleStart,
+        const TimeOfDay(hour: 7, minute: 15),
+      );
+    },
+  );
 }
 
 Future<void> _pump(
@@ -108,10 +113,7 @@ Future<void> _pump(
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: SmartModesScreen(
-        repository: repository,
-        pickTime: pickTime,
-      ),
+      home: SmartModesScreen(repository: repository, pickTime: pickTime),
     ),
   );
   await tester.pumpAndSettle();

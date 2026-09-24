@@ -1,3 +1,7 @@
+import 'package:family_os/core/domain/child_id.dart';
+import 'package:family_os/core/domain/minutes.dart';
+import 'package:family_os/features/education/learning_assignment_models.dart';
+import 'package:family_os/features/education/learning_assignment_repository.dart';
 import 'package:family_os/features/n14_studio/create_assignment_models.dart';
 
 /// Rule 25 seam — Stage-1 mock create assignment/quiz (no backend).
@@ -14,10 +18,14 @@ abstract class CreateAssignmentRepository {
 /// In-memory mock — prototype FAT-049 shape by default.
 final class InMemoryCreateAssignmentRepository
     implements CreateAssignmentRepository {
-  InMemoryCreateAssignmentRepository({CreateAssignmentSnapshot? seed})
-    : _snap = seed ?? createAssignmentPrototypeFixture();
+  InMemoryCreateAssignmentRepository({
+    CreateAssignmentSnapshot? seed,
+    LearningAssignmentRepository? assignments,
+  }) : _snap = seed ?? createAssignmentPrototypeFixture(),
+       _assignments = assignments ?? stage1LearningAssignmentRepository;
 
   CreateAssignmentSnapshot _snap;
+  final LearningAssignmentRepository _assignments;
 
   /// Optional gate for loading-state widget tests.
   Future<void> Function()? loadGate;
@@ -32,18 +40,37 @@ final class InMemoryCreateAssignmentRepository
   @override
   Future<CreateAssignmentSnapshot> assignHomework(String title) async {
     final trimmed = title.trim();
-    if (_snap.child == null || trimmed.isEmpty) return _copy(_snap);
+    final child = _snap.child;
+    if (child == null || trimmed.isEmpty) return _copy(_snap);
     _snap = _snap.copyWith(
       homeworkTitle: trimmed,
       lastAssignedPath: CreateAssignmentPath.homework,
+    );
+    await _assignments.publish(
+      LearningAssignmentPublishRequest(
+        childId: ChildId(child.id),
+        titleKey: 'assignedHomework',
+        rewardMinutes: Minutes(_snap.homeworkRewardMinutes),
+        source: LearningAssignmentSource.homework,
+      ),
     );
     return _copy(_snap);
   }
 
   @override
   Future<CreateAssignmentSnapshot> assignSkillGap() async {
-    if (_snap.child == null || _snap.skillGap == null) return _copy(_snap);
+    final child = _snap.child;
+    final gap = _snap.skillGap;
+    if (child == null || gap == null) return _copy(_snap);
     _snap = _snap.copyWith(lastAssignedPath: CreateAssignmentPath.skillGap);
+    await _assignments.publish(
+      LearningAssignmentPublishRequest(
+        childId: ChildId(child.id),
+        titleKey: 'assignedSkillGap',
+        rewardMinutes: Minutes(gap.rewardMinutes),
+        source: LearningAssignmentSource.skillGap,
+      ),
+    );
     return _copy(_snap);
   }
 
@@ -52,10 +79,19 @@ final class InMemoryCreateAssignmentRepository
     String question,
   ) async {
     final trimmed = question.trim();
-    if (_snap.child == null || trimmed.isEmpty) return _copy(_snap);
+    final child = _snap.child;
+    if (child == null || trimmed.isEmpty) return _copy(_snap);
     _snap = _snap.copyWith(
       familyQuestion: trimmed,
       lastAssignedPath: CreateAssignmentPath.familyChallenge,
+    );
+    await _assignments.publish(
+      LearningAssignmentPublishRequest(
+        childId: ChildId(child.id),
+        titleKey: 'assignedFamily',
+        rewardMinutes: Minutes(_snap.familyRewardMinutes),
+        source: LearningAssignmentSource.familyChallenge,
+      ),
     );
     return _copy(_snap);
   }

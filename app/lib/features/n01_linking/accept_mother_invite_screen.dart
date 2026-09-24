@@ -2,12 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/role_controller.dart';
+import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/components/app_card.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/components/row_tile.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/identity/adult_invite_repository.dart';
+import 'package:family_os/core/identity/identity_models.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n01_linking/invite_mother_screen.dart';
 
@@ -24,6 +29,8 @@ class AcceptMotherInviteScreen extends StatelessWidget {
     this.familyName = '',
     this.inviteeFirstName = '',
     this.grantedLevel = MotherInviteLevel.partner,
+    this.inviteTokenId,
+    this.repository,
     this.roleController,
     this.onAccept,
     this.onDecline,
@@ -37,6 +44,8 @@ class AcceptMotherInviteScreen extends StatelessWidget {
 
   /// Optional invitee first name for welcome toast only.
   final String inviteeFirstName;
+  final String? inviteTokenId;
+  final AdultInviteRepository? repository;
 
   /// Level granted by father — display only; mother cannot change.
   final MotherInviteLevel grantedLevel;
@@ -84,6 +93,27 @@ class AcceptMotherInviteScreen extends StatelessWidget {
 
     final l10n = AppLocalizations.of(context);
     final levelName = _levelName(l10n);
+    final runtime = CurrentIdentity.maybeOf(context);
+    final repo = repository ?? stage1AdultInviteRepository;
+    final token = inviteTokenId?.trim();
+    if (runtime != null && token != null && token.isNotEmpty) {
+      final invite = repo.findByToken(InviteTokenId(token));
+      if (invite == null ||
+          invite.stateAt(DateTime.now().toUtc()) !=
+              InviteLifecycleState.active) {
+        AppToast.show(
+          context,
+          message: l10n.acceptMotherInviteDeclineToast(_resolveInviter(l10n)),
+        );
+        return;
+      }
+      repo.acceptInvite(
+        tokenId: invite.tokenId,
+        acceptedByAccountId: runtime.account.id,
+        actorMemberId: runtime.activeMembership.id,
+      );
+      runtime.setLegacyRoleFallback(AppRole.mother);
+    }
     final notifier = roleController ?? CurrentRole.maybeNotifierOf(context);
     if (notifier != null) {
       notifier.value = AppRole.mother;
@@ -112,6 +142,28 @@ class AcceptMotherInviteScreen extends StatelessWidget {
     context.go('/scr-shr-001');
   }
 
+  InviteLifecycleState? _inviteLifecycleState() {
+    final token = inviteTokenId?.trim();
+    if (token == null || token.isEmpty) return null;
+    final invite = (repository ?? stage1AdultInviteRepository).findByToken(
+      InviteTokenId(token),
+    );
+    if (invite == null) return InviteLifecycleState.expired;
+    return invite.stateAt(DateTime.now().toUtc());
+  }
+
+  String? _inviteStateLabel(AppLocalizations l10n) {
+    final state = _inviteLifecycleState();
+    if (state == null) return null;
+    return switch (state) {
+      InviteLifecycleState.created => l10n.inviteLifecyclePending,
+      InviteLifecycleState.active => l10n.inviteLifecycleActive,
+      InviteLifecycleState.accepted => l10n.inviteLifecycleAccepted,
+      InviteLifecycleState.expired => l10n.inviteLifecycleExpired,
+      InviteLifecycleState.revoked => l10n.inviteLifecycleRevoked,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -119,6 +171,10 @@ class AcceptMotherInviteScreen extends StatelessWidget {
     final inviter = _resolveInviter(l10n);
     final family = _resolveFamily(l10n);
     final levelName = _levelName(l10n);
+    final inviteStatus = _inviteStateLabel(l10n);
+    final lifecycle = _inviteLifecycleState();
+    final canAccept =
+        lifecycle == null || lifecycle == InviteLifecycleState.active;
 
     return Scaffold(
       backgroundColor: colors.bg,
@@ -179,6 +235,20 @@ class AcceptMotherInviteScreen extends StatelessWidget {
               key: const Key('accept_mother_invite_card'),
               child: Column(
                 children: [
+                  if (inviteStatus != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Tag(
+                          key: Key(
+                            'accept_mother_invite_state_${lifecycle?.name ?? 'none'}',
+                          ),
+                          label: inviteStatus,
+                          variant: TagVariant.a,
+                        ),
+                      ),
+                    ),
                   RowTile(
                     key: const Key('accept_mother_invite_level_row'),
                     leading: Text(
@@ -201,11 +271,21 @@ class AcceptMotherInviteScreen extends StatelessWidget {
                 ],
               ),
             ),
+            if (inviteTokenId?.trim().isNotEmpty ?? false) ...[
+              const SizedBox(height: 8),
+              TextButton(
+                key: const Key('accept_mother_invite_status'),
+                onPressed: () => context.push(
+                  '/sys3-invite-status?inviteTokenId=${Uri.encodeComponent(inviteTokenId!.trim())}',
+                ),
+                child: Text(l10n.sys3InviteStatusCta),
+              ),
+            ],
             const SizedBox(height: 16),
             PrimaryBtn(
               key: const Key('accept_mother_invite_accept'),
               label: l10n.acceptMotherInviteAccept,
-              onPressed: () => _accept(context),
+              onPressed: canAccept ? () => _accept(context) : null,
             ),
             const SizedBox(height: 8),
             PrimaryBtn(

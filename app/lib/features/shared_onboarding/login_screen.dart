@@ -1,21 +1,65 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+
+// #region agent log
+void _agentDebugLog({
+  required String hypothesisId,
+  required String location,
+  required String message,
+  Map<String, Object?> data = const {},
+}) {
+  final payload = <String, Object?>{
+    'sessionId': '296a8e',
+    'hypothesisId': hypothesisId,
+    'location': location,
+    'message': message,
+    'data': data,
+    'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'runId': 'post-fix',
+      };
+      final line = jsonEncode(payload);
+      debugPrint('AGENT_DEBUG $line');
+      try {
+        File(
+          r'D:\special projects\family\debug-296a8e.log',
+        ).writeAsStringSync('$line\n', mode: FileMode.append);
+      } catch (_) {}
+      // Best-effort ingest when running on host (Windows/Chrome); ignore on device.
+      try {
+        HttpClient()
+            .postUrl(
+              Uri.parse(
+                'http://127.0.0.1:7833/ingest/4add46c7-41e9-4203-afa0-61f38d854be0',
+              ),
+            )
+            .then((req) {
+              req.headers.set('Content-Type', 'application/json');
+              req.headers.set('X-Debug-Session-Id', '296a8e');
+              req.write(line);
+              return req.close();
+            })
+            .then((resp) => resp.drain<void>())
+            .catchError((_) {});
+      } catch (_) {}
+    }
+// #endregion
 
 /// SCR-SHR-003 — تسجيل الدخول (bare shared onboarding, mock-first).
 ///
 /// No real auth / biometrics. Login → `/scr-fat-010` (placeholder OK).
-/// Forgot password always shows the same anti-enumeration toast.
+/// Forgot password opens local recovery with honest (no email-sent) copy.
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({
-    super.key,
-    this.onLoginSuccess,
-    this.onInvite,
-  });
+  const LoginScreen({super.key, this.onLoginSuccess, this.onInvite});
 
   /// Test seam — when null, navigates to `/scr-fat-010`.
   final VoidCallback? onLoginSuccess;
@@ -39,16 +83,76 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _login() {
+    final runtime = CurrentIdentity.maybeOf(context);
+    // #region agent log
+    _agentDebugLog(
+      hypothesisId: 'A',
+      location: 'login_screen.dart:_login',
+      message: 'login_pressed',
+      data: {
+        'hasRuntime': runtime != null,
+        'sessionExpired': runtime?.session.isExpiredAt(DateTime.now().toUtc()),
+        'needsFamilySelector': runtime?.needsFamilySelector,
+        'hasOnLoginSuccess': widget.onLoginSuccess != null,
+      },
+    );
+    // #endregion
+    if (runtime != null &&
+        runtime.session.isExpiredAt(DateTime.now().toUtc())) {
+      // #region agent log
+      _agentDebugLog(
+        hypothesisId: 'B',
+        location: 'login_screen.dart:_login',
+        message: 'nav_target',
+        data: {'target': '/sys3-session-expired'},
+      );
+      // #endregion
+      context.go('/sys3-session-expired');
+      return;
+    }
     if (widget.onLoginSuccess != null) {
       widget.onLoginSuccess!();
       return;
     }
+    if (runtime?.needsFamilySelector ?? false) {
+      // #region agent log
+      _agentDebugLog(
+        hypothesisId: 'A',
+        location: 'login_screen.dart:_login',
+        message: 'nav_target',
+        data: {'target': '/sys3-family-select'},
+      );
+      // #endregion
+      context.go('/sys3-family-select');
+      return;
+    }
+    // #region agent log
+    _agentDebugLog(
+      hypothesisId: 'E',
+      location: 'login_screen.dart:_login',
+      message: 'nav_target',
+      data: {'target': '/scr-fat-010'},
+    );
+    // #endregion
     context.go('/scr-fat-010');
   }
 
   void _forgotPassword() {
     final l10n = AppLocalizations.of(context);
     AppToast.show(context, message: l10n.loginForgotToast);
+    try {
+      // #region agent log
+      _agentDebugLog(
+        hypothesisId: 'C',
+        location: 'login_screen.dart:_forgotPassword',
+        message: 'nav_target',
+        data: {'target': '/sys3-account-recovery'},
+      );
+      // #endregion
+      context.push('/sys3-account-recovery');
+    } on Object {
+      // Gallery/widget hosts without GoRouter keep the existing honest toast.
+    }
   }
 
   void _biometric() {
@@ -69,6 +173,17 @@ class _LoginScreenState extends State<LoginScreen> {
     final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final radii = Theme.of(context).extension<FamilyRadii>()!;
+
+    final runtime = CurrentIdentity.maybeOf(context);
+    final now = DateTime.now().toUtc();
+    final sessionExpired = runtime?.session.isExpiredAt(now) ?? false;
+    final sessionTag = runtime == null
+        ? null
+        : runtime.session.isRevoked
+        ? l10n.requestInboxReject
+        : sessionExpired
+        ? l10n.linkQrExpired
+        : l10n.dayBoardActiveTag;
 
     return Scaffold(
       backgroundColor: colors.bg,
@@ -100,6 +215,16 @@ class _LoginScreenState extends State<LoginScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 6, 16, 20),
           children: [
+            if (sessionTag != null) ...[
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Tag(
+                  label: sessionTag,
+                  variant: sessionExpired ? TagVariant.a : TagVariant.g,
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
             _LabeledField(
               label: l10n.loginEmailLabel,
               child: Semantics(

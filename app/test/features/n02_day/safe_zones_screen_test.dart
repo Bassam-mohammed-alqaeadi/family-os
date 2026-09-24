@@ -155,6 +155,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.byKey(SafeZonesKeys.drawCta));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(SafeZonesKeys.drawCta));
     await tester.pumpAndSettle();
     expect(created, isTrue);

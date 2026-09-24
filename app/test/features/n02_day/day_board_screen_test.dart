@@ -13,16 +13,14 @@ import 'package:family_os/features/n02_day/day_board_projection.dart';
 import 'package:family_os/features/n02_day/day_board_screen.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
 import 'package:family_os/features/n02_day/request_inbox_screen.dart';
+import 'package:family_os/mock/register_mock_family.dart';
 
 void main() {
   // —— UI-004 AC1: empty family → empty cards, never fake Khaled ——
   testWidgets('UI-004 AC1: empty family → empty cards, no Khaled/numerals', (
     tester,
   ) async {
-    await _pumpScreen(
-      tester,
-      projection: DayBoardProjection.empty,
-    );
+    await _pumpScreen(tester, projection: DayBoardProjection.empty);
 
     expect(find.byKey(DayBoardKeys.emptyChildren), findsOneWidget);
     expect(find.byKey(DayBoardKeys.emptyPending), findsOneWidget);
@@ -46,9 +44,7 @@ void main() {
     await _pumpScreen(
       tester,
       guardianDisplayName: 'سامي',
-      projection: DayBoardProjection(
-        children: DayChildMock.manyFixture,
-      ),
+      projection: DayBoardProjection(children: DayChildMock.manyFixture),
     );
 
     expect(find.byKey(DayBoardKeys.greeting), findsOneWidget);
@@ -64,9 +60,7 @@ void main() {
   testWidgets('empty guardian → ARB fallback (Rule 23)', (tester) async {
     await _pumpScreen(
       tester,
-      projection: DayBoardProjection(
-        children: DayChildMock.manyFixture,
-      ),
+      projection: DayBoardProjection(children: DayChildMock.manyFixture),
     );
 
     expect(find.textContaining('صباح الخير ولي الأمر'), findsOneWidget);
@@ -173,30 +167,31 @@ void main() {
   });
 
   // —— UI-004 AC3: advisor suggest-only — never silent apply ——
-  testWidgets('UI-004 AC3: advisor tap navigates suggest-only; no rule mutate', (
-    tester,
-  ) async {
-    final rules = InMemoryRulesEngineRuleRepository();
-    final hits = <String>[];
-    expect(await rules.listEnabled(), isEmpty);
+  testWidgets(
+    'UI-004 AC3: advisor tap navigates suggest-only; no rule mutate',
+    (tester) async {
+      final rules = InMemoryRulesEngineRuleRepository();
+      final hits = <String>[];
+      expect(await rules.listEnabled(), isEmpty);
 
-    await _pumpRouted(
-      tester,
-      DayBoardScreen(
-        projection: DayBoardProjection.empty,
-        onAdvisor: () => hits.add('011'),
-      ),
-    );
+      await _pumpRouted(
+        tester,
+        DayBoardScreen(
+          projection: DayBoardProjection.empty,
+          onAdvisor: () => hits.add('011'),
+        ),
+      );
 
-    await tester.ensureVisible(find.byKey(DayBoardKeys.advisorCta));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(DayBoardKeys.advisorCta));
-    await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(DayBoardKeys.advisorCta));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(DayBoardKeys.advisorCta));
+      await tester.pumpAndSettle();
 
-    expect(hits, ['011']);
-    // No approve / silent apply path on the board CTA.
-    expect(await rules.listEnabled(), isEmpty);
-  });
+      expect(hits, ['011']);
+      // No approve / silent apply path on the board CTA.
+      expect(await rules.listEnabled(), isEmpty);
+    },
+  );
 
   testWidgets('active child card → /scr-fat-013', (tester) async {
     final hits = <String>[];
@@ -264,9 +259,8 @@ void main() {
       routes: [
         GoRoute(
           path: '/scr-fat-010',
-          builder: (context, state) => const DayBoardScreen(
-            projection: DayBoardProjection.empty,
-          ),
+          builder: (context, state) =>
+              const DayBoardScreen(projection: DayBoardProjection.empty),
         ),
         GoRoute(
           path: '/scr-fat-013',
@@ -306,6 +300,47 @@ void main() {
     expect(p.children, isEmpty);
     expect(p.pendingRequests, isEmpty);
     expect(p.offline, isFalse);
+  });
+
+  test('stage1DayBoardProjectionRepository seeds Register §10', () async {
+    final p = await stage1DayBoardProjectionRepository.load();
+    expect(
+      p.children.map((c) => c.displayName).toList(),
+      RegisterMockFamily.children.map((c) => c.displayName).toList(),
+    );
+    expect(p.children.map((c) => c.displayName), ['خالد', 'نورة', 'سعد']);
+    expect(p.hasPending, isTrue);
+    expect(p.phase, DayBoardPhase.ready);
+  });
+
+  testWidgets('default DayBoardScreen shows Register §10 children', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildFamilyTheme(),
+        locale: const Locale('ar'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: const DayBoardScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(DayBoardKeys.emptyChildren), findsNothing);
+    expect(find.byKey(DayBoardKeys.pulse(0)), findsOneWidget);
+    expect(find.byKey(DayBoardKeys.pulse(1)), findsOneWidget);
+    expect(find.byKey(DayBoardKeys.pulse(2)), findsOneWidget);
+    // Active card shows first child name; pulse strip uses emoji for others.
+    expect(find.textContaining('خالد'), findsWidgets);
+    expect(find.text('🦁'), findsWidgets);
+    expect(find.text('🐱'), findsWidgets);
+    expect(find.text('🐼'), findsWidgets);
   });
 }
 

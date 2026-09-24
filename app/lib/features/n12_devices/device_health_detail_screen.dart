@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/banner.dart';
@@ -11,6 +10,7 @@ import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n12_devices/device_health_seam.dart';
@@ -26,6 +26,7 @@ abstract final class DeviceHealthDetailKeys {
   static const oemGuide = Key('device_health_oem_guide');
   static const openSettingsNowCta = Key('device_health_open_settings_now');
   static const repairCta = Key('device_health_repair_cta');
+  static const manageEnrollment = Key('device_health_detail_manage_enrollment');
   static const permanentBanner = Key('device_health_permanent_banner');
   static const offlineBanner = Key('device_health_offline_banner');
   static const sosCta = Key('device_health_detail_sos');
@@ -72,10 +73,7 @@ class DeviceHealthDetailScreen extends StatefulWidget {
     String? deviceId, {
     DeviceHealthSeam? healthSeam,
   }) {
-    return DeviceHealthDetailScreen(
-      deviceId: deviceId,
-      healthSeam: healthSeam,
-    );
+    return DeviceHealthDetailScreen(deviceId: deviceId, healthSeam: healthSeam);
   }
 
   @override
@@ -90,11 +88,12 @@ class _DeviceHealthDetailScreenState extends State<DeviceHealthDetailScreen> {
   var _loading = true;
   var _sosBusy = false;
   String? _resolvedId;
+  String? _familyId;
+  var _bootstrapped = false;
 
   AppRole get _role =>
       widget.roleOverride ??
-      CurrentRole.maybeNotifierOf(context)?.value ??
-      AppRole.father;
+      resolveAuthorizationContext(context, fallbackRole: AppRole.father).role;
 
   bool get _isParent => _role == AppRole.father || _role == AppRole.mother;
 
@@ -102,6 +101,15 @@ class _DeviceHealthDetailScreenState extends State<DeviceHealthDetailScreen> {
   void initState() {
     super.initState();
     _seam = widget.healthSeam ?? stage1DeviceHealthSeam;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _familyId =
+        CurrentIdentity.maybeOf(context)?.activeFamilyId.value ?? 'fam_stage1';
+    if (_bootstrapped) return;
+    _bootstrapped = true;
     _bootstrap();
   }
 
@@ -112,7 +120,7 @@ class _DeviceHealthDetailScreenState extends State<DeviceHealthDetailScreen> {
       _listen(id);
       return;
     }
-    final first = await _seam.watchDevices().first;
+    final first = await _seam.watchDevices(familyId: _familyId).first;
     if (!mounted) return;
     _resolvedId = first.isEmpty ? null : first.first.deviceId;
     final resolved = _resolvedId;
@@ -125,7 +133,7 @@ class _DeviceHealthDetailScreenState extends State<DeviceHealthDetailScreen> {
 
   void _listen(String deviceId) {
     _sub?.cancel();
-    _sub = _seam.watchDevice(deviceId).listen((snap) {
+    _sub = _seam.watchDevice(deviceId, familyId: _familyId).listen((snap) {
       if (!mounted) return;
       setState(() {
         _snap = snap;
@@ -148,7 +156,8 @@ class _DeviceHealthDetailScreenState extends State<DeviceHealthDetailScreen> {
     }
     setState(() => _sosBusy = true);
     final fire = widget.sosFire ?? stage1SosFireService;
-    await fire.fire(childId: 'family');
+    final childTarget = _snap?.childId ?? 'family';
+    await fire.fire(childId: childTarget);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push('/scr-fat-018');
@@ -169,17 +178,17 @@ class _DeviceHealthDetailScreenState extends State<DeviceHealthDetailScreen> {
   ) {
     return switch (status) {
       DevicePermissionStatus.granted => (
-          l10n.deviceHealthPermGranted,
-          TagVariant.g,
-        ),
+        l10n.deviceHealthPermGranted,
+        TagVariant.g,
+      ),
       DevicePermissionStatus.denied => (
-          l10n.deviceHealthPermDenied,
-          TagVariant.a,
-        ),
+        l10n.deviceHealthPermDenied,
+        TagVariant.a,
+      ),
       DevicePermissionStatus.permanentlyDenied => (
-          l10n.deviceHealthPermOsBlocked,
-          TagVariant.a,
-        ),
+        l10n.deviceHealthPermOsBlocked,
+        TagVariant.a,
+      ),
     };
   }
 
@@ -263,10 +272,7 @@ class _DeviceHealthDetailScreenState extends State<DeviceHealthDetailScreen> {
       return Center(
         child: Text(
           l10n.deviceHealthDeviceMissing,
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            color: colors.ink2,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w700, color: colors.ink2),
         ),
       );
     }
@@ -373,8 +379,8 @@ class _DeviceHealthDetailScreenState extends State<DeviceHealthDetailScreen> {
                       statusLabel: _statusTag(l10n, row.status).$1,
                       statusVariant: _statusTag(l10n, row.status).$2,
                       kind: row.kind,
-                      osBlockedHint: row.status ==
-                              DevicePermissionStatus.permanentlyDenied
+                      osBlockedHint:
+                          row.status == DevicePermissionStatus.permanentlyDenied
                           ? l10n.deviceHealthOsBlockedHint
                           : null,
                     ),
@@ -386,6 +392,19 @@ class _DeviceHealthDetailScreenState extends State<DeviceHealthDetailScreen> {
                       label: l10n.deviceHealthRepairCta,
                       variant: PrimaryBtnVariant.sec,
                       onPressed: () => _openOsSettings(fromGuide: false),
+                    ),
+                  ],
+                  if (snap.childId.trim().isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    PrimaryBtn(
+                      key: DeviceHealthDetailKeys.manageEnrollment,
+                      label: l10n.deviceHealthManageEnrollment,
+                      variant: PrimaryBtnVariant.ghost,
+                      onPressed: () {
+                        context.push(
+                          '/scr-fat-013?childId=${Uri.encodeComponent(snap.childId)}',
+                        );
+                      },
                     ),
                   ],
                 ],
@@ -451,17 +470,14 @@ class _HealthHeader extends StatelessWidget {
 
     final (tagLabel, tagVariant) = switch (snapshot.level) {
       DeviceHealthLevel.healthy => (
-          l10n.deviceHealthStatusHealthy,
-          TagVariant.g,
-        ),
-      DeviceHealthLevel.atRisk => (
-          l10n.deviceHealthStatusAtRisk,
-          TagVariant.a,
-        ),
+        l10n.deviceHealthStatusHealthy,
+        TagVariant.g,
+      ),
+      DeviceHealthLevel.atRisk => (l10n.deviceHealthStatusAtRisk, TagVariant.a),
       DeviceHealthLevel.offline => (
-          l10n.deviceHealthStatusOffline,
-          TagVariant.t,
-        ),
+        l10n.deviceHealthStatusOffline,
+        TagVariant.t,
+      ),
     };
 
     final meta = <String>[

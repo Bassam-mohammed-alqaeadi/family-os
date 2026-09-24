@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 
@@ -13,6 +14,7 @@ final class DeviceUserProfile {
     required this.displayName,
     required this.role,
     required this.monogram,
+    this.accountId,
     this.motherLevel,
     this.avatarColorHex,
   });
@@ -20,6 +22,7 @@ final class DeviceUserProfile {
   final String id;
   final String displayName;
   final AppRole role;
+  final AccountId? accountId;
 
   /// Single-letter avatar glyph from the repo.
   final String monogram;

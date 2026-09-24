@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:family_os/app/gallery_screen.dart';
-import 'package:family_os/app/placeholder_screen.dart';
 import 'package:family_os/app/role_guard.dart';
+import 'package:family_os/app/sys3_routes.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/shared_onboarding/welcome_screen.dart';
@@ -84,8 +84,18 @@ import 'package:family_os/features/n07_advisor/advisor_suggestions_screen.dart';
 import 'package:family_os/features/n07_advisor/my_advisor_screen.dart';
 import 'package:family_os/features/n07_advisor/family_patterns_screen.dart';
 import 'package:family_os/features/n07_advisor/individual_timeline_screen.dart';
+import 'package:family_os/features/n07_advisor/knowledge_maps_screen.dart';
+import 'package:family_os/features/n07_advisor/weekly_report_screen.dart';
+import 'package:family_os/features/n07_advisor/family_advisor_hub_screen.dart';
+import 'package:family_os/features/n07_advisor/mother_ai_feed_screen.dart';
+import 'package:family_os/features/n07_advisor/agent_action_log_screen.dart';
+import 'package:family_os/features/n07_advisor/peer_compare_screen.dart';
+import 'package:family_os/features/n07_advisor/advisor_voice_screen.dart';
+import 'package:family_os/features/n07_advisor/family_moments_screen.dart';
 import 'package:family_os/features/n08_platform/smart_supervision_screen.dart';
 import 'package:family_os/features/n08_platform/platform_monitoring_screen.dart';
+import 'package:family_os/features/n08_platform/smart_alerts_screen.dart';
+import 'package:family_os/features/n08_platform/smart_alert_detail_screen.dart';
 import 'package:family_os/features/n09_smart_modes/smart_modes_screen.dart';
 import 'package:family_os/features/n10_emergency/emergency_setup_screen.dart';
 import 'package:family_os/features/n10_emergency/sos_alert_screen.dart';
@@ -95,6 +105,39 @@ import 'package:family_os/features/n11_billing/plans_screen.dart';
 import 'package:family_os/features/n11_billing/manage_subscription_screen.dart';
 import 'package:family_os/features/n07_privacy/what_is_collected_screen.dart';
 import 'package:family_os/features/n13_coming_soon/coming_soon_screen.dart';
+import 'package:family_os/features/n02_day/child_arrival_screen.dart';
+import 'package:family_os/features/n02_day/child_media_share_screen.dart';
+import 'package:family_os/features/n02_day/outer_circle_screen.dart';
+import 'package:family_os/features/n02_day/friend_approval_screen.dart';
+import 'package:family_os/features/n02_day/road_safety_screen.dart';
+import 'package:family_os/features/n02_day/child_friends_screen.dart';
+import 'package:family_os/features/n02_day/child_call_play_screen.dart';
+import 'package:family_os/features/n02_day/child_stickers_backgrounds_screen.dart';
+import 'package:family_os/features/n03_screen_time/child_time_request_screen.dart';
+import 'package:family_os/features/n03_screen_time/child_usage_report_screen.dart';
+import 'package:family_os/features/n04_web_filter/home_router_filter_screen.dart';
+import 'package:family_os/features/n14_studio/quran_progress_screen.dart';
+import 'package:family_os/features/n14_studio/staged_project_screen.dart';
+import 'package:family_os/features/n16_tasks/child_tasks_screen.dart';
+import 'package:family_os/features/n16_tasks/smart_chore_distributor_screen.dart';
+import 'package:family_os/features/n17_child_learn/child_learn_home_screen.dart';
+import 'package:family_os/features/n17_child_learn/child_lesson_screen.dart';
+import 'package:family_os/features/n17_child_learn/child_flashcards_screen.dart';
+import 'package:family_os/features/n17_child_learn/child_quiz_screen.dart';
+import 'package:family_os/features/n17_child_learn/child_result_screen.dart';
+import 'package:family_os/features/n17_child_learn/child_tutor_screen.dart';
+import 'package:family_os/features/n17_child_learn/child_focus_screen.dart';
+import 'package:family_os/features/n17_child_learn/child_wallet_screen.dart';
+import 'package:family_os/features/n17_child_learn/child_quran_ward_screen.dart';
+import 'package:family_os/features/n17_child_learn/child_memorization_screen.dart';
+import 'package:family_os/features/n17_child_learn/child_athkar_screen.dart';
+import 'package:family_os/features/n17_child_learn/child_smart_plan_screen.dart';
+import 'package:family_os/features/n17_child_learn/child_daily_review_screen.dart';
+import 'package:family_os/features/n17_child_learn/child_coming_gifts_screen.dart';
+import 'package:family_os/features/n17_child_learn/child_smart_tilawah_screen.dart';
+import 'package:family_os/features/n17_child_learn/child_interactive_stories_screen.dart';
+import 'package:family_os/features/n17_child_learn/child_family_challenges_screen.dart';
+import 'package:family_os/features/n17_child_learn/child_focus_sounds_screen.dart';
 
 /// Active registry screen_ids mirrored as routes (129 rows).
 /// Tombstones (ADR-034) are excluded — see [tombstoneScreenIds].
@@ -247,6 +290,7 @@ const String tombstoneSchoolRedirectTarget = '/scr-fat-085';
 ///
 /// Product entry is welcome (`/scr-shr-001`); gallery remains at `/gallery`.
 /// Tombstone deep links (e.g. `/scr-fat-039`) redirect to [tombstoneSchoolRedirectTarget].
+/// System #3 identity routes (sys3_*) are appended via [sys3IdentityRoutes].
 GoRouter createAppRouter({
   required ValueListenable<AppRole> roleListenable,
   String initialLocation = '/scr-shr-001',
@@ -267,6 +311,7 @@ GoRouter createAppRouter({
         name: 'gallery',
         builder: (context, state) => const GalleryScreen(),
       ),
+      ...sys3IdentityRoutes,
     GoRoute(
       path: '/scr-shr-001',
       name: 'SCR-SHR-001',
@@ -670,82 +715,52 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-fat-064',
       name: 'SCR-FAT-064',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-FAT-064',
-        title: 'خرائط المعرفة',
-      ),
+      builder: (context, state) => KnowledgeMapsScreen(),
     ),
     GoRoute(
       path: '/scr-chd-012',
       name: 'SCR-CHD-012',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-CHD-012',
-        title: 'تعلّمي — الرئيسة',
-      ),
+      builder: (context, state) => ChildLearnHomeScreen(),
     ),
     GoRoute(
       path: '/scr-chd-013',
       name: 'SCR-CHD-013',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-CHD-013',
-        title: 'الدرس',
-      ),
+      builder: (context, state) => ChildLessonScreen(),
     ),
     GoRoute(
       path: '/scr-chd-014',
       name: 'SCR-CHD-014',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-CHD-014',
-        title: 'واجبي',
-      ),
+      builder: (context, state) => ChildFlashcardsScreen(),
     ),
     GoRoute(
       path: '/scr-chd-015',
       name: 'SCR-CHD-015',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-CHD-015',
-        title: 'الاختبار',
-      ),
+      builder: (context, state) => ChildQuizScreen(),
     ),
     GoRoute(
       path: '/scr-chd-016',
       name: 'SCR-CHD-016',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-CHD-016',
-        title: 'نتيجتي',
-      ),
+      builder: (context, state) => ChildResultScreen(),
     ),
     GoRoute(
       path: '/scr-chd-017',
       name: 'SCR-CHD-017',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-CHD-017',
-        title: 'معلمي الذكي',
-      ),
+      builder: (context, state) => ChildTutorScreen(),
     ),
     GoRoute(
       path: '/scr-chd-018',
       name: 'SCR-CHD-018',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-CHD-018',
-        title: 'وضع التركيز',
-      ),
+      builder: (context, state) => ChildFocusScreen(),
     ),
     GoRoute(
       path: '/scr-chd-019',
       name: 'SCR-CHD-019',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-CHD-019',
-        title: 'نقاطي وشاراتي',
-      ),
+      builder: (context, state) => ChildWalletScreen(),
     ),
     GoRoute(
       path: '/scr-chd-020',
       name: 'SCR-CHD-020',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-CHD-020',
-        title: 'طلب وقت إضافي',
-      ),
+      builder: (context, state) => ChildTimeRequestScreen(),
     ),
     GoRoute(
       path: '/scr-chd-021',
@@ -755,42 +770,27 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-chd-022',
       name: 'SCR-CHD-022',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-CHD-022',
-        title: 'مهامي',
-      ),
+      builder: (context, state) => ChildTasksScreen(),
     ),
     GoRoute(
       path: '/scr-chd-023',
       name: 'SCR-CHD-023',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-CHD-023',
-        title: 'مشاركة وسائط',
-      ),
+      builder: (context, state) => ChildMediaShareScreen(),
     ),
     GoRoute(
       path: '/scr-chd-024',
       name: 'SCR-CHD-024',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-CHD-024',
-        title: 'أنا وصلت + موقعي',
-      ),
+      builder: (context, state) => ChildArrivalScreen(),
     ),
     GoRoute(
       path: '/scr-fat-065',
       name: 'SCR-FAT-065',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-FAT-065',
-        title: 'التنبيهات الذكية',
-      ),
+      builder: (context, state) => SmartAlertsScreen(),
     ),
     GoRoute(
       path: '/scr-fat-066',
       name: 'SCR-FAT-066',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-FAT-066',
-        title: 'تفصيل التنبيه وخطوة الحوار',
-      ),
+      builder: (context, state) => SmartAlertDetailScreen(),
     ),
     GoRoute(
       path: '/scr-fat-067',
@@ -805,58 +805,37 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-fat-069',
       name: 'SCR-FAT-069',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-FAT-069',
-        title: 'تقرير استخدام الابن',
-      ),
+      builder: (context, state) => ChildUsageReportScreen(),
     ),
     GoRoute(
       path: '/scr-fat-070',
       name: 'SCR-FAT-070',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-FAT-070',
-        title: 'الدائرة الخارجية',
-      ),
+      builder: (context, state) => OuterCircleScreen(),
     ),
     GoRoute(
       path: '/scr-fat-071',
       name: 'SCR-FAT-071',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-FAT-071',
-        title: 'موافقة طلب صديق',
-      ),
+      builder: (context, state) => FriendApprovalScreen(),
     ),
     GoRoute(
       path: '/scr-fat-072',
       name: 'SCR-FAT-072',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-FAT-072',
-        title: 'متابعة حفظ القرآن',
-      ),
+      builder: (context, state) => QuranProgressScreen(),
     ),
     GoRoute(
       path: '/scr-fat-073',
       name: 'SCR-FAT-073',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-FAT-073',
-        title: 'التقرير الأسبوعي بتوصية',
-      ),
+      builder: (context, state) => WeeklyReportScreen(),
     ),
     GoRoute(
       path: '/scr-fat-074',
       name: 'SCR-FAT-074',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-FAT-074',
-        title: 'عقل عائلتي (المساعد الذكي)',
-      ),
+      builder: (context, state) => FamilyAdvisorHubScreen(),
     ),
     GoRoute(
       path: '/scr-fat-076',
       name: 'SCR-FAT-076',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-FAT-076',
-        title: 'إخطارات الذكاء للأم',
-      ),
+      builder: (context, state) => MotherAiFeedScreen(),
     ),
     GoRoute(
       path: '/scr-fat-075',
@@ -866,74 +845,47 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-chd-025',
       name: 'SCR-CHD-025',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-CHD-025',
-        title: 'وردي — حفظ وتلاوة',
-      ),
+      builder: (context, state) => ChildQuranWardScreen(),
     ),
     GoRoute(
       path: '/scr-chd-026',
       name: 'SCR-CHD-026',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-CHD-026',
-        title: 'حفظي وتقدمي',
-      ),
+      builder: (context, state) => ChildMemorizationScreen(),
     ),
     GoRoute(
       path: '/scr-chd-027',
       name: 'SCR-CHD-027',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-CHD-027',
-        title: 'أذكاري اليومية',
-      ),
+      builder: (context, state) => ChildAthkarScreen(),
     ),
     GoRoute(
       path: '/scr-chd-028',
       name: 'SCR-CHD-028',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-CHD-028',
-        title: 'خطتي الذكية',
-      ),
+      builder: (context, state) => ChildSmartPlanScreen(),
     ),
     GoRoute(
       path: '/scr-chd-029',
       name: 'SCR-CHD-029',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-CHD-029',
-        title: 'مراجعة اليوم',
-      ),
+      builder: (context, state) => ChildDailyReviewScreen(),
     ),
     GoRoute(
       path: '/scr-chd-030',
       name: 'SCR-CHD-030',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-CHD-030',
-        title: 'أصدقائي',
-      ),
+      builder: (context, state) => ChildFriendsScreen(),
     ),
     GoRoute(
       path: '/scr-chd-031',
       name: 'SCR-CHD-031',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-CHD-031',
-        title: 'قادم لك 🎁',
-      ),
+      builder: (context, state) => ChildComingGiftsScreen(),
     ),
     GoRoute(
       path: '/scr-fat-077',
       name: 'SCR-FAT-077',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-FAT-077',
-        title: 'السلامة على الطريق',
-      ),
+      builder: (context, state) => RoadSafetyScreen(),
     ),
     GoRoute(
       path: '/scr-fat-078',
       name: 'SCR-FAT-078',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-FAT-078',
-        title: 'فلترة الراوتر المنزلي',
-      ),
+      builder: (context, state) => HomeRouterFilterScreen(),
     ),
     GoRoute(
       path: '/scr-fat-079',
@@ -943,90 +895,57 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-fat-080',
       name: 'SCR-FAT-080',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-FAT-080',
-        title: 'ماذا فعل المساعد',
-      ),
+      builder: (context, state) => AgentActionLogScreen(),
     ),
     GoRoute(
       path: '/scr-fat-081',
       name: 'SCR-FAT-081',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-FAT-081',
-        title: 'مقارنة الأقران',
-      ),
+      builder: (context, state) => PeerCompareScreen(),
     ),
     GoRoute(
       path: '/scr-fat-082',
       name: 'SCR-FAT-082',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-FAT-082',
-        title: 'موزع المهام الذكي',
-      ),
+      builder: (context, state) => SmartChoreDistributorScreen(),
     ),
     GoRoute(
       path: '/scr-fat-083',
       name: 'SCR-FAT-083',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-FAT-083',
-        title: 'المحادثة الصوتية مع العقل',
-      ),
+      builder: (context, state) => AdvisorVoiceScreen(),
     ),
     GoRoute(
       path: '/scr-fat-084',
       name: 'SCR-FAT-084',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-FAT-084',
-        title: 'مشروع بمراحل',
-      ),
+      builder: (context, state) => StagedProjectScreen(),
     ),
     GoRoute(
       path: '/scr-chd-032',
       name: 'SCR-CHD-032',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-CHD-032',
-        title: 'تلاوتي الذكية',
-      ),
+      builder: (context, state) => ChildSmartTilawahScreen(),
     ),
     GoRoute(
       path: '/scr-chd-033',
       name: 'SCR-CHD-033',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-CHD-033',
-        title: 'قصصي التفاعلية',
-      ),
+      builder: (context, state) => ChildInteractiveStoriesScreen(),
     ),
     GoRoute(
       path: '/scr-chd-034',
       name: 'SCR-CHD-034',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-CHD-034',
-        title: 'التحديات العائلية',
-      ),
+      builder: (context, state) => ChildFamilyChallengesScreen(),
     ),
     GoRoute(
       path: '/scr-chd-035',
       name: 'SCR-CHD-035',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-CHD-035',
-        title: 'أصوات التركيز',
-      ),
+      builder: (context, state) => ChildFocusSoundsScreen(),
     ),
     GoRoute(
       path: '/scr-chd-036',
       name: 'SCR-CHD-036',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-CHD-036',
-        title: 'مرح المكالمة',
-      ),
+      builder: (context, state) => ChildCallPlayScreen(),
     ),
     GoRoute(
       path: '/scr-chd-037',
       name: 'SCR-CHD-037',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-CHD-037',
-        title: 'ملصقاتي وخلفياتي',
-      ),
+      builder: (context, state) => ChildStickersBackgroundsScreen(),
     ),
     GoRoute(
       path: '/scr-fat-085',
@@ -1036,10 +955,7 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-fat-086',
       name: 'SCR-FAT-086',
-      builder: (context, state) => const PlaceholderScreen(
-        screenId: 'SCR-FAT-086',
-        title: 'لحظات عائلتنا',
-      ),
+      builder: (context, state) => FamilyMomentsScreen(),
     ),
     ],
   );
