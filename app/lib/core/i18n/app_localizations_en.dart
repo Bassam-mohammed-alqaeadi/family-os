@@ -5028,7 +5028,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get conversationsListHonestyBanner =>
-      'Fixed right: family chat is never limited by any plan tier — encrypted and always available';
+      'Fixed right: family chat is never limited by any plan tier — always available';
 
   @override
   String get conversationsListSectionTitle => 'Conversations';
@@ -5550,7 +5550,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get childChatsHonestyBanner =>
-      '🔒 All your chats are end-to-end encrypted — and never lock even when your time runs out';
+      '🛡 Your chats stay inside your safe circle — and never lock even when your time runs out';
 
   @override
   String get childChatsSafeCircleBanner =>
@@ -5572,7 +5572,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get childChatsEmptyMessage =>
-      'When you start chatting with your family it appears here — encrypted and never locked when time runs out.';
+      'When you start chatting with your family it appears here — inside your safe circle and never locked when time runs out.';
 
   @override
   String get childChatsLoadingSemantics => 'Loading your chats';
@@ -11729,4 +11729,185 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get fs007SmartAlertsEntry =>
       'Offline AI Safety tickets (FS-007) — signals only; never auto-blocks.';
+
+  @override
+  String get conversationMediaVoice => '🎤 Voice message';
+
+  @override
+  String get conversationMediaImage => '🖼️ Photo';
+
+  @override
+  String get conversationMediaVideo => '🎬 Video';
+
+  @override
+  String get conversationMediaFile => '📎 File';
+
+  @override
+  String get conversationPinnedBarLabel => '📌 Pinned message';
+
+  @override
+  String get conversationDeletedMessage => 'This message was deleted';
+
+  @override
+  String get conversationEditedTag => '(edited)';
+
+  @override
+  String get conversationReplyPrefix => 'Replying to';
+
+  @override
+  String get conversationReplyCancel => 'Cancel reply';
+
+  @override
+  String get conversationMenuReply => 'Reply';
+
+  @override
+  String get conversationMenuPin => 'Pin';
+
+  @override
+  String get conversationMenuUnpin => 'Unpin';
+
+  @override
+  String get conversationMenuEdit => 'Edit';
+
+  @override
+  String get conversationMenuDelete => 'Delete';
+
+  @override
+  String get conversationEditTitle => 'Edit message';
+
+  @override
+  String get conversationEditHint => 'New text';
+
+  @override
+  String get conversationEditSave => 'Save';
+
+  @override
+  String get conversationEditCancel => 'Cancel';
+
+  @override
+  String get conversationEditExpired => 'Edit window closed (15 minutes)';
+
+  @override
+  String get conversationEditRefused =>
+      'Only the author may edit within 15 minutes';
+
+  @override
+  String get conversationDeleteToast => 'Message deleted for everyone';
+
+  @override
+  String get conversationEditToast => 'Message edited';
+
+  @override
+  String get conversationPinToast => 'Message pinned to the top';
+
+  @override
+  String get conversationUnpinToast => 'Message unpinned';
+
+  @override
+  String get conversationMutedIndicator => '🔕 Muted';
+
+  @override
+  String get conversationArchivedIndicator => '📥 Archived';
+
+  @override
+  String get conversationPinnedIndicator => '📌 Pinned';
+
+  @override
+  String get conversationLockIndicator => '🔒 Locked';
+
+  @override
+  String get conversationQuickActionsSemantics => 'Conversation actions';
+
+  @override
+  String get conversationRowMenuMute => 'Mute';
+
+  @override
+  String get conversationRowMenuArchive => 'Archive';
+
+  @override
+  String get conversationRowMenuUnarchive => 'Unarchive';
+
+  @override
+  String get conversationRowMenuPin => 'Pin to top';
+
+  @override
+  String get conversationRowMenuUnpin => 'Unpin from top';
+
+  @override
+  String get conversationMuteEightHours => '8 hours';
+
+  @override
+  String get conversationMuteOneWeek => 'One week';
+
+  @override
+  String get conversationMuteForever => 'Always';
+
+  @override
+  String get conversationUnmute => 'Unmute';
+
+  @override
+  String get conversationFamilyAlwaysPinned =>
+      'The family chat is always pinned';
+
+  @override
+  String get chatSettingsTitle => '⚙️ This chat\'s settings';
+
+  @override
+  String get chatSettingsScopeNote => 'Applies to this conversation only';
+
+  @override
+  String get chatSettingsMute => 'Mute';
+
+  @override
+  String get chatSettingsArchive => 'Archive';
+
+  @override
+  String get chatSettingsPin => 'Pin to top';
+
+  @override
+  String get chatSettingsWallpaper => 'Wallpaper';
+
+  @override
+  String get chatSettingsBubbleTheme => 'Bubble theme';
+
+  @override
+  String get chatSettingsReceipts => 'Read receipts';
+
+  @override
+  String get chatSettingsReceiptsMandatory =>
+      'Mandatory in a chat with a parent — cannot be turned off';
+
+  @override
+  String get chatSettingsReceiptsOptional => 'Available between peers';
+
+  @override
+  String get chatSettingsLock => 'Chat lock';
+
+  @override
+  String get chatSettingsLockParentNote =>
+      'A lock never hides your child\'s chat from you';
+
+  @override
+  String get chatWallpaperLight => 'Light';
+
+  @override
+  String get chatWallpaperRose => 'Rose';
+
+  @override
+  String get chatWallpaperMint => 'Mint';
+
+  @override
+  String get chatWallpaperViolet => 'Violet';
+
+  @override
+  String get chatThemeP => 'Purple';
+
+  @override
+  String get chatThemeRose => 'Rose';
+
+  @override
+  String get chatThemeTeal => 'Teal';
+
+  @override
+  String get chatSettingsDone => 'Done';
 }

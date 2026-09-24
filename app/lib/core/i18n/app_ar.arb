@@ -6380,7 +6380,7 @@
   "@conversationsListTitle": {
     "description": "SCR-FAT-021 app bar title (family tab)"
   },
-  "conversationsListHonestyBanner": "حق ثابت: المحادثة العائلية لا تُقيَّد بأي مستوى اشتراك — مشفّرة ومتاحة دائمًا",
+  "conversationsListHonestyBanner": "حق ثابت: المحادثة العائلية لا تُقيَّد بأي مستوى اشتراك — متاحة دائمًا",
   "@conversationsListHonestyBanner": {
     "description": "SCR-FAT-021 UI-007 chat never paywalled honesty"
   },
@@ -7029,7 +7029,7 @@
   "@childChatsTitle": {
     "description": "SCR-CHD-007 app bar title (family tab)"
   },
-  "childChatsHonestyBanner": "🔒 كل محادثاتكم مشفّرة طرفيًا — ولا تُقفل أبدًا حتى بانتهاء وقتك",
+  "childChatsHonestyBanner": "🛡 محادثاتكم داخل دائرتك الآمنة — ولا تُقفل أبدًا حتى بانتهاء وقتك",
   "@childChatsHonestyBanner": {
     "description": "SCR-CHD-007 UI-007 encryption + never-lock honesty"
   },
@@ -7053,7 +7053,7 @@
   "@childChatsEmptyTitle": {
     "description": "SCR-CHD-007 empty state title"
   },
-  "childChatsEmptyMessage": "عند بدء محادثة مع عائلتك تظهر هنا — مشفّرة ولا تُقفل أبدًا حتى بانتهاء وقتك.",
+  "childChatsEmptyMessage": "عند بدء محادثة مع عائلتك تظهر هنا — داخل دائرتك الآمنة ولا تُقفل أبدًا حتى بانتهاء وقتك.",
   "@childChatsEmptyMessage": {
     "description": "SCR-CHD-007 empty state message"
   },
@@ -14896,5 +14896,241 @@
   "fs007SmartAlertsEntry": "تذاكر سلامة الذكاء دون اتصال (FS-007) — إشارات فقط؛ بلا حظر تلقائي.",
   "@fs007SmartAlertsEntry": {
     "description": "FS-007-UX honesty on FAT-065"
+  },
+  "conversationMediaVoice": "🎤 رسالة صوتية",
+  "@conversationMediaVoice": {
+    "description": "ADR-053 media: voice label"
+  },
+  "conversationMediaImage": "🖼️ صورة",
+  "@conversationMediaImage": {
+    "description": "ADR-053 media: image label"
+  },
+  "conversationMediaVideo": "🎬 فيديو",
+  "@conversationMediaVideo": {
+    "description": "ADR-053 media: video label"
+  },
+  "conversationMediaFile": "📎 ملف",
+  "@conversationMediaFile": {
+    "description": "ADR-053 media: file label"
+  },
+  "conversationPinnedBarLabel": "📌 رسالة مثبّتة",
+  "@conversationPinnedBarLabel": {
+    "description": "ADR-053 pinned message bar"
+  },
+  "conversationDeletedMessage": "حُذفت هذه الرسالة",
+  "@conversationDeletedMessage": {
+    "description": "S-COM-007 tombstone in place"
+  },
+  "conversationEditedTag": "(مُعدَّلة)",
+  "@conversationEditedTag": {
+    "description": "S-COM-006 edited marker"
+  },
+  "conversationReplyPrefix": "ردًّا على",
+  "@conversationReplyPrefix": {
+    "description": "S-COM-004 reply quote prefix"
+  },
+  "conversationReplyCancel": "إلغاء الرد",
+  "@conversationReplyCancel": {
+    "description": "cancel a pending reply"
+  },
+  "conversationMenuReply": "رد",
+  "@conversationMenuReply": {
+    "description": "bubble action"
+  },
+  "conversationMenuPin": "تثبيت",
+  "@conversationMenuPin": {
+    "description": "S-COM-008 pin"
+  },
+  "conversationMenuUnpin": "إلغاء التثبيت",
+  "@conversationMenuUnpin": {
+    "description": "S-COM-008 unpin"
+  },
+  "conversationMenuEdit": "تعديل",
+  "@conversationMenuEdit": {
+    "description": "S-COM-006 edit"
+  },
+  "conversationMenuDelete": "حذف",
+  "@conversationMenuDelete": {
+    "description": "S-COM-007 delete"
+  },
+  "conversationEditTitle": "تعديل الرسالة",
+  "@conversationEditTitle": {
+    "description": "edit dialog title"
+  },
+  "conversationEditHint": "النص الجديد",
+  "@conversationEditHint": {
+    "description": "edit dialog hint"
+  },
+  "conversationEditSave": "حفظ",
+  "@conversationEditSave": {
+    "description": "edit dialog save"
+  },
+  "conversationEditCancel": "إلغاء",
+  "@conversationEditCancel": {
+    "description": "edit dialog cancel"
+  },
+  "conversationEditExpired": "انتهت نافذة التعديل (١٥ دقيقة)",
+  "@conversationEditExpired": {
+    "description": "S-COM-006 window closed"
+  },
+  "conversationEditRefused": "التعديل للكاتب وحده خلال ١٥ دقيقة",
+  "@conversationEditRefused": {
+    "description": "edit refusal"
+  },
+  "conversationDeleteToast": "حُذفت الرسالة للجميع",
+  "@conversationDeleteToast": {
+    "description": "tombstone confirmation"
+  },
+  "conversationEditToast": "عُدِّلت الرسالة",
+  "@conversationEditToast": {
+    "description": "edit confirmation"
+  },
+  "conversationPinToast": "ثُبّتت الرسالة أعلى المحادثة",
+  "@conversationPinToast": {
+    "description": "pin confirmation"
+  },
+  "conversationUnpinToast": "أُلغي تثبيت الرسالة",
+  "@conversationUnpinToast": {
+    "description": "unpin confirmation"
+  },
+  "conversationMutedIndicator": "🔕 مكتومة",
+  "@conversationMutedIndicator": {
+    "description": "ADR-053 muted row badge"
+  },
+  "conversationArchivedIndicator": "📥 مؤرشفة",
+  "@conversationArchivedIndicator": {
+    "description": "ADR-053 archived row badge"
+  },
+  "conversationPinnedIndicator": "📌 مثبّتة",
+  "@conversationPinnedIndicator": {
+    "description": "ADR-053 pinned row badge"
+  },
+  "conversationLockIndicator": "🔒 مقفلة",
+  "@conversationLockIndicator": {
+    "description": "S-COM-009 lock badge"
+  },
+  "conversationQuickActionsSemantics": "إجراءات المحادثة",
+  "@conversationQuickActionsSemantics": {
+    "description": "row quick-actions semantics"
+  },
+  "conversationRowMenuMute": "كتم",
+  "@conversationRowMenuMute": {
+    "description": "row menu mute"
+  },
+  "conversationRowMenuArchive": "أرشفة",
+  "@conversationRowMenuArchive": {
+    "description": "row menu archive"
+  },
+  "conversationRowMenuUnarchive": "إلغاء الأرشفة",
+  "@conversationRowMenuUnarchive": {
+    "description": "row menu unarchive"
+  },
+  "conversationRowMenuPin": "تثبيت في القائمة",
+  "@conversationRowMenuPin": {
+    "description": "row menu pin"
+  },
+  "conversationRowMenuUnpin": "إلغاء التثبيت من القائمة",
+  "@conversationRowMenuUnpin": {
+    "description": "row menu unpin"
+  },
+  "conversationMuteEightHours": "٨ ساعات",
+  "@conversationMuteEightHours": {
+    "description": "ADR-053 mute preset"
+  },
+  "conversationMuteOneWeek": "أسبوع",
+  "@conversationMuteOneWeek": {
+    "description": "ADR-053 mute preset"
+  },
+  "conversationMuteForever": "دائمًا",
+  "@conversationMuteForever": {
+    "description": "ADR-053 mute preset"
+  },
+  "conversationUnmute": "إلغاء الكتم",
+  "@conversationUnmute": {
+    "description": "ADR-053 unmute"
+  },
+  "conversationFamilyAlwaysPinned": "المحادثة العائلية مثبتة دائمًا",
+  "@conversationFamilyAlwaysPinned": {
+    "description": "ADR-053 fixed family pin"
+  },
+  "chatSettingsTitle": "⚙️ إعدادات هذه المحادثة",
+  "@chatSettingsTitle": {
+    "description": "ADR-053 settings sheet title"
+  },
+  "chatSettingsScopeNote": "تُطبَّق على هذه المحادثة فقط",
+  "@chatSettingsScopeNote": {
+    "description": "ADR-053 settings scope"
+  },
+  "chatSettingsMute": "الكتم",
+  "@chatSettingsMute": {
+    "description": "settings mute section"
+  },
+  "chatSettingsArchive": "الأرشفة",
+  "@chatSettingsArchive": {
+    "description": "settings archive section"
+  },
+  "chatSettingsPin": "التثبيت في القائمة",
+  "@chatSettingsPin": {
+    "description": "settings pin section"
+  },
+  "chatSettingsWallpaper": "الخلفية",
+  "@chatSettingsWallpaper": {
+    "description": "settings wallpaper section"
+  },
+  "chatSettingsBubbleTheme": "ثيم الفقاعات",
+  "@chatSettingsBubbleTheme": {
+    "description": "settings bubble theme section"
+  },
+  "chatSettingsReceipts": "تأكيد القراءة",
+  "@chatSettingsReceipts": {
+    "description": "S-COM-005 receipts section"
+  },
+  "chatSettingsReceiptsMandatory": "إلزامي في محادثة فيها والد — لا يمكن إطفاؤه",
+  "@chatSettingsReceiptsMandatory": {
+    "description": "ADR-053 mandatory receipts"
+  },
+  "chatSettingsReceiptsOptional": "متاح بين الأقران",
+  "@chatSettingsReceiptsOptional": {
+    "description": "ADR-053 optional between peers"
+  },
+  "chatSettingsLock": "قفل المحادثة",
+  "@chatSettingsLock": {
+    "description": "S-COM-009 lock section"
+  },
+  "chatSettingsLockParentNote": "القفل لا يخفي محادثة ابنك عنك",
+  "@chatSettingsLockParentNote": {
+    "description": "ADR-053 lock never hides from parent"
+  },
+  "chatWallpaperLight": "فاتحة",
+  "@chatWallpaperLight": {
+    "description": "wallpaper option"
+  },
+  "chatWallpaperRose": "وردية",
+  "@chatWallpaperRose": {
+    "description": "wallpaper option"
+  },
+  "chatWallpaperMint": "نعناعية",
+  "@chatWallpaperMint": {
+    "description": "wallpaper option"
+  },
+  "chatWallpaperViolet": "بنفسجية",
+  "@chatWallpaperViolet": {
+    "description": "wallpaper option"
+  },
+  "chatThemeP": "بنفسجي",
+  "@chatThemeP": {
+    "description": "bubble theme option"
+  },
+  "chatThemeRose": "وردي",
+  "@chatThemeRose": {
+    "description": "bubble theme option"
+  },
+  "chatThemeTeal": "فيروزي",
+  "@chatThemeTeal": {
+    "description": "bubble theme option"
+  },
+  "chatSettingsDone": "تم",
+  "@chatSettingsDone": {
+    "description": "settings sheet done"
   }
 }

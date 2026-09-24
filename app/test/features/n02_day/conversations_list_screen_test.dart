@@ -204,6 +204,148 @@ void main() {
     expect(stage1ChatAvailability.isUsable, isTrue);
   });
 
+  testWidgets('SCR-FAT-021 family stays pinned — never a toggle', (tester) async {
+    final repo = InMemoryConversationsListRepository(
+      initial: ConversationsListMock.many,
+    );
+    // A user attempt to unpin the family is a no-op: it is a fixed right.
+    await repo.setPinned('c_family', false);
+    await tester.pumpWidget(
+      _app(
+        child: ConversationsListScreen(
+          repository: repo,
+          roleOverride: AppRole.father,
+          onSos: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final snap = await repo.load();
+    expect(snap.threads.firstWhere((t) => t.id == 'c_family').pinned, isTrue);
+    expect(snap.ordered.first.id, 'c_family');
+
+    // The row menu offers no pin toggle for the family thread.
+    await tester.tap(find.byKey(ConversationsListKeys.rowMenu('c_family')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('conversations_list_action_pin')),
+      findsNothing,
+    );
+    expect(find.text('المحادثة العائلية مثبتة دائمًا'), findsOneWidget);
+  });
+
+  testWidgets('SCR-FAT-021 row mute quick action persists', (tester) async {
+    final repo = InMemoryConversationsListRepository(
+      initial: ConversationsListMock.many,
+    );
+    await tester.pumpWidget(
+      _app(
+        child: ConversationsListScreen(
+          repository: repo,
+          roleOverride: AppRole.father,
+          onSos: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(ConversationsListKeys.rowMenu('c_child_a')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('conversations_list_action_muteEightHours')),
+    );
+    await tester.pumpAndSettle();
+
+    final snap = await repo.load();
+    expect(snap.threads.firstWhere((t) => t.id == 'c_child_a').muted, isTrue);
+  });
+
+  testWidgets('SCR-FAT-021 voice preview is described in words', (tester) async {
+    await tester.pumpWidget(
+      _app(
+        child: ConversationsListScreen(
+          repository: InMemoryConversationsListRepository(
+            initial: ConversationsListMock.many,
+          ),
+          roleOverride: AppRole.father,
+          onSos: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('🎤 رسالة صوتية'), findsOneWidget);
+  });
+
+  testWidgets('SCR-FAT-021 no presence or e2e badge', (tester) async {
+    await tester.pumpWidget(
+      _app(
+        child: ConversationsListScreen(
+          repository: InMemoryConversationsListRepository(
+            initial: ConversationsListMock.many,
+          ),
+          roleOverride: AppRole.father,
+          onSos: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('متصل'), findsNothing);
+    expect(find.textContaining('آخر ظهور'), findsNothing);
+    expect(find.textContaining('مشفّرة'), findsNothing);
+  });
+
+  testWidgets('SCR-FAT-021 a locked child thread still shows for the parent',
+      (tester) async {
+    final repo = InMemoryConversationsListRepository(
+      initial: ConversationsListSnapshot(
+        threads: const [
+          ConversationThread(
+            id: 'c_family',
+            chatWith: 'family',
+            title: 'عائلة ١',
+            preview: '',
+            timeLabel: '',
+            emoji: '👨‍👩‍👧‍👦',
+            swatch: ConversationSwatch.family,
+            isFamily: true,
+            pinned: true,
+          ),
+          ConversationThread(
+            id: 'c_child_a',
+            chatWith: 'child_a',
+            title: 'ابن ١',
+            preview: '',
+            timeLabel: '',
+            emoji: '🦁',
+            swatch: ConversationSwatch.purple,
+            locked: true,
+          ),
+        ],
+      ),
+    );
+    await tester.pumpWidget(
+      _app(
+        child: ConversationsListScreen(
+          repository: repo,
+          roleOverride: AppRole.father,
+          onSos: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // S-COM-009 — a lock never hides the child's thread from the parent.
+    expect(find.byKey(ConversationsListKeys.row('c_child_a')), findsOneWidget);
+    final snap = await repo.load();
+    expect(
+      snap.threads.firstWhere((t) => t.id == 'c_child_a').visibleToParent,
+      isTrue,
+    );
+  });
+
   test('SCR-FAT-021 stage1 repo defaults empty (Rule 23)', () async {
     final snap = await InMemoryConversationsListRepository().load();
     expect(snap.isEmpty, isTrue);

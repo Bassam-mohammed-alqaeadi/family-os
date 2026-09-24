@@ -1,3 +1,4 @@
+import 'package:family_os/core/data/communication_rules.dart';
 import 'package:family_os/features/n02_day/conversation_repository.dart';
 
 /// Test / demo fixtures for SCR-CHD-008 — Rule 12 allowlisted (`*mock*.dart`).
@@ -11,7 +12,7 @@ abstract final class ChildConversationMock {
   static const ConversationDetail father = ConversationDetail(
     chatWith: 'father',
     title: 'أب ١ 👨',
-    subtitle: 'متصل',
+    subtitle: 'دائرة العائلة',
     emoji: '👨',
     messages: [
       ConversationMessage(
@@ -25,7 +26,7 @@ abstract final class ChildConversationMock {
         body: 'توّي واصل النادي',
         timeLabel: '٤:١٠ م',
         isMine: true,
-        status: ConversationDeliveryStatus.read,
+        tick: MessageTick.read,
       ),
       ConversationMessage(
         id: 'cf3',
@@ -40,7 +41,7 @@ abstract final class ChildConversationMock {
   static const ConversationDetail mother = ConversationDetail(
     chatWith: 'mother',
     title: 'أم ١ 👩',
-    subtitle: 'متصلة',
+    subtitle: 'دائرة العائلة',
     emoji: '👩',
     messages: [
       ConversationMessage(
@@ -54,7 +55,7 @@ abstract final class ChildConversationMock {
         body: 'وصلتني — أحبك',
         timeLabel: 'أمس',
         isMine: true,
-        status: ConversationDeliveryStatus.read,
+        tick: MessageTick.read,
       ),
     ],
   );
@@ -66,6 +67,14 @@ abstract final class ChildConversationMock {
     subtitle: 'دائرتك الآمنة',
     emoji: '👨‍👩‍👧‍👦',
     familyPinnedNote: true,
+    pinnedMessage: ConversationMessage(
+      id: 'cg1',
+      body: 'العشاء جاهز',
+      timeLabel: '٨:١٢ م',
+      isMine: false,
+      senderLabel: 'أم ١',
+      pinned: true,
+    ),
     messages: [
       ConversationMessage(
         id: 'cg1',
@@ -73,13 +82,14 @@ abstract final class ChildConversationMock {
         timeLabel: '٨:١٢ م',
         isMine: false,
         senderLabel: 'أم ١',
+        pinned: true,
       ),
       ConversationMessage(
         id: 'cg2',
         body: 'جاي!',
         timeLabel: '٨:١٣ م',
         isMine: true,
-        status: ConversationDeliveryStatus.read,
+        tick: MessageTick.read,
       ),
     ],
   );

@@ -201,6 +201,54 @@ void main() {
     expect(stage1ChatAvailability.isUsable, isTrue);
   });
 
+  testWidgets('SCR-CHD-007 family stays pinned + voice preview + no e2e',
+      (tester) async {
+    final repo = InMemoryChildChatsRepository(initial: ChildChatsMock.many);
+    await repo.setPinned('c_family', false);
+    await tester.pumpWidget(
+      _app(
+        child: ChildChatsScreen(
+          repository: repo,
+          roleOverride: AppRole.child,
+          onSos: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final snap = await repo.load();
+    expect(snap.ordered.first.id, 'c_family');
+    expect(
+      snap.threads.firstWhere((t) => t.id == 'c_family').pinned,
+      isTrue,
+    );
+    expect(find.text('🎤 رسالة صوتية'), findsOneWidget);
+    expect(find.textContaining('مشفّرة'), findsNothing);
+    expect(find.textContaining('متصل'), findsNothing);
+  });
+
+  testWidgets('SCR-CHD-007 row mute quick action persists', (tester) async {
+    final repo = InMemoryChildChatsRepository(initial: ChildChatsMock.many);
+    await tester.pumpWidget(
+      _app(
+        child: ChildChatsScreen(
+          repository: repo,
+          roleOverride: AppRole.child,
+          onSos: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(ChildChatsKeys.rowMenu('c_mother')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('child_chats_action_muteOneWeek')));
+    await tester.pumpAndSettle();
+
+    final snap = await repo.load();
+    expect(snap.threads.firstWhere((t) => t.id == 'c_mother').muted, isTrue);
+  });
+
   test('SCR-CHD-007 stage1 repo defaults empty (Rule 23)', () async {
     final snap = await InMemoryChildChatsRepository().load();
     expect(snap.isEmpty, isTrue);

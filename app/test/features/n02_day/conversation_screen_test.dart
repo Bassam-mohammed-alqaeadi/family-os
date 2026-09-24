@@ -31,9 +31,13 @@ void main() {
     expect(find.byKey(ConversationKeys.body), findsOneWidget);
     expect(find.byKey(ConversationKeys.bubble('a1')), findsOneWidget);
     expect(find.byKey(ConversationKeys.composer), findsOneWidget);
-    expect(find.byKey(ConversationKeys.encryptedTag), findsOneWidget);
+    // ADR-053 «نترك» — no false "🔒 مشفّرة طرفيًا" badge without key management.
+    expect(find.byKey(ConversationKeys.encryptedTag), findsNothing);
     expect(find.byKey(ConversationKeys.toneBridge), findsOneWidget);
     expect(find.textContaining('ابن ١'), findsWidgets);
+    // No presence or typing theatre.
+    expect(find.textContaining('متصل'), findsNothing);
+    expect(find.textContaining('يكتب'), findsNothing);
   });
 
   testWidgets('SCR-FAT-022 family branch + pin note + mother OK',
@@ -313,6 +317,205 @@ void main() {
     expect(sent, 'ok');
     expect(stage1ChatAvailability.isUsable, isTrue);
     expect(stage1ChatAvailability.canSend, isTrue);
+  });
+
+  testWidgets('SCR-FAT-022 pinned bar + unpin clears it', (tester) async {
+    final repo = InMemoryConversationRepository(initial: ConversationMock.all);
+    await tester.pumpWidget(
+      _app(
+        child: ConversationScreen(
+          chatWith: 'family',
+          repository: repo,
+          roleOverride: AppRole.father,
+          onSos: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(ConversationKeys.pinnedBar), findsOneWidget);
+    await tester.tap(find.byKey(ConversationKeys.pinnedBarUnpin));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(ConversationKeys.pinnedBar), findsNothing);
+    final loaded = await repo.load('family');
+    expect(loaded!.pinnedMessage, isNull);
+  });
+
+  testWidgets('SCR-FAT-022 ✓ sent then ✓✓ read — never a delivered tick',
+      (tester) async {
+    final repo = InMemoryConversationRepository(initial: ConversationMock.all);
+    await tester.pumpWidget(
+      _app(
+        child: ConversationScreen(
+          chatWith: 'family',
+          repository: repo,
+          roleOverride: AppRole.father,
+          onSos: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // f3 is read in the fixture → ✓✓.
+    expect(find.text('✓✓'), findsWidgets);
+
+    await tester.enterText(find.byKey(ConversationKeys.input), 'رسالة جديدة');
+    await tester.tap(find.byKey(ConversationKeys.send));
+    await tester.pumpAndSettle();
+
+    // A freshly sent message carries the single ✓.
+    expect(find.text('✓'), findsWidgets);
+  });
+
+  testWidgets('SCR-FAT-022 tombstone in place + reply quote inside the bubble',
+      (tester) async {
+    await tester.pumpWidget(
+      _app(
+        child: ConversationScreen(
+          chatWith: 'peer_a',
+          repository: InMemoryConversationRepository(initial: ConversationMock.all),
+          roleOverride: AppRole.father,
+          onSos: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // The deleted message keeps its place as a tombstone, not a hole.
+    expect(find.byKey(ConversationKeys.bubble('p3')), findsOneWidget);
+    expect(find.text('حُذفت هذه الرسالة'), findsWidgets);
+    // The reply is quoted inside its bubble.
+    expect(find.byKey(ConversationKeys.bubble('p2')), findsOneWidget);
+    expect(find.textContaining('شفت الصورة؟'), findsWidgets);
+  });
+
+  testWidgets('SCR-FAT-022 long-press edits, author-only', (tester) async {
+    final repo = InMemoryConversationRepository(initial: ConversationMock.all);
+    await tester.pumpWidget(
+      _app(
+        child: ConversationScreen(
+          chatWith: 'family',
+          repository: repo,
+          roleOverride: AppRole.father,
+          onSos: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.longPress(find.byKey(ConversationKeys.bubble('f3')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('chat_action_edit')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('chat_action_edit')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('conversation_edit_field')),
+      'نص معدّل',
+    );
+    await tester.tap(find.text('حفظ'));
+    await tester.pumpAndSettle();
+
+    final loaded = await repo.load('family');
+    final edited = loaded!.messages.firstWhere((m) => m.id == 'f3');
+    expect(edited.body, 'نص معدّل');
+    expect(edited.edited, isTrue);
+  });
+
+  testWidgets('SCR-FAT-022 long-press deletes → tombstone in place',
+      (tester) async {
+    final repo = InMemoryConversationRepository(initial: ConversationMock.all);
+    await tester.pumpWidget(
+      _app(
+        child: ConversationScreen(
+          chatWith: 'family',
+          repository: repo,
+          roleOverride: AppRole.father,
+          onSos: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.longPress(find.byKey(ConversationKeys.bubble('f3')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('chat_action_delete')));
+    await tester.pumpAndSettle();
+
+    final loaded = await repo.load('family');
+    expect(loaded!.messages.firstWhere((m) => m.id == 'f3').deleted, isTrue);
+    expect(find.text('حُذفت هذه الرسالة'), findsWidgets);
+  });
+
+  testWidgets('SCR-FAT-022 settings sheet applies wallpaper + theme to this chat',
+      (tester) async {
+    final repo = InMemoryConversationRepository(initial: ConversationMock.all);
+    await tester.pumpWidget(
+      _app(
+        child: ConversationScreen(
+          chatWith: 'child_a',
+          repository: repo,
+          roleOverride: AppRole.father,
+          onSos: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(ConversationKeys.settingsTag));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('chat_wallpaper_rose')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('chat_theme_teal')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('chat_settings_done')));
+    await tester.pumpAndSettle();
+
+    final loaded = await repo.load('child_a');
+    expect(loaded!.wallpaper, 'rose');
+    expect(loaded.bubbleTheme, 'teal');
+  });
+
+  testWidgets('SCR-FAT-022 receipts mandatory with a parent, toggle between peers',
+      (tester) async {
+    final repo = InMemoryConversationRepository(initial: ConversationMock.all);
+    await tester.pumpWidget(
+      _app(
+        child: ConversationScreen(
+          chatWith: 'child_a',
+          repository: repo,
+          roleOverride: AppRole.father,
+          onSos: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(ConversationKeys.settingsTag));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('chat_receipts_mandatory')));
+    expect(find.byKey(const Key('chat_receipts_mandatory')), findsOneWidget);
+    expect(find.byKey(const Key('chat_receipts_switch')), findsNothing);
+    await tester.tap(find.byKey(const Key('chat_settings_done')));
+    await tester.pumpAndSettle();
+
+    // Peer thread (no parent member) → the optional toggle is offered.
+    await tester.pumpWidget(
+      _app(
+        child: ConversationScreen(
+          chatWith: 'peer_a',
+          repository: repo,
+          roleOverride: AppRole.father,
+          onSos: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(ConversationKeys.settingsTag));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('chat_receipts_switch')));
+    expect(find.byKey(const Key('chat_receipts_switch')), findsOneWidget);
+    expect(find.byKey(const Key('chat_receipts_mandatory')), findsNothing);
   });
 
   test('SCR-FAT-022 stage1 repo defaults empty (Rule 23)', () async {

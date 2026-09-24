@@ -1,3 +1,4 @@
+import 'package:family_os/core/data/communication_rules.dart';
 import 'package:family_os/features/n02_day/conversation_repository.dart';
 
 /// Test / demo fixtures for SCR-FAT-022 — Rule 12 allowlisted (`*mock*.dart`).
@@ -14,6 +15,14 @@ abstract final class ConversationMock {
     subtitle: '٥ أعضاء',
     emoji: '👨‍👩‍👧‍👦',
     familyPinnedNote: true,
+    pinnedMessage: ConversationMessage(
+      id: 'f1',
+      body: 'العشاء جاهز يا أحباب',
+      timeLabel: '٨:١٢ م',
+      isMine: false,
+      senderLabel: 'شريكة ١',
+      pinned: true,
+    ),
     messages: [
       ConversationMessage(
         id: 'f1',
@@ -21,6 +30,7 @@ abstract final class ConversationMock {
         timeLabel: '٨:١٢ م',
         isMine: false,
         senderLabel: 'شريكة ١',
+        pinned: true,
       ),
       ConversationMessage(
         id: 'f2',
@@ -34,7 +44,7 @@ abstract final class ConversationMock {
         body: 'أجمل لمّة — قادم يا أحباب',
         timeLabel: '٨:١٣ م',
         isMine: true,
-        status: ConversationDeliveryStatus.read,
+        tick: MessageTick.read,
       ),
     ],
   );
@@ -57,7 +67,7 @@ abstract final class ConversationMock {
         body: 'الحمد لله — تعبنا عليه أثمر',
         timeLabel: '٩:٤٢ م',
         isMine: true,
-        status: ConversationDeliveryStatus.read,
+        tick: MessageTick.read,
       ),
       ConversationMessage(
         id: 'm3',
@@ -72,7 +82,7 @@ abstract final class ConversationMock {
   static const ConversationDetail childA = ConversationDetail(
     chatWith: 'child_a',
     title: 'ابن ١ 🦁',
-    subtitle: 'متصل الآن',
+    subtitle: 'دائرة العائلة',
     emoji: '🦁',
     toneChips: [
       'أحسنت يا بطل',
@@ -92,7 +102,7 @@ abstract final class ConversationMock {
         body: 'بطل! يومك موفق',
         timeLabel: '٧:١٥ ص',
         isMine: true,
-        status: ConversationDeliveryStatus.read,
+        tick: MessageTick.read,
       ),
       ConversationMessage(
         id: 'a3',
@@ -105,7 +115,7 @@ abstract final class ConversationMock {
         body: 'اتفقنا — وارجع قبل المغرب',
         timeLabel: '١:٥٢ م',
         isMine: true,
-        status: ConversationDeliveryStatus.read,
+        tick: MessageTick.read,
       ),
     ],
   );
@@ -128,12 +138,12 @@ abstract final class ConversationMock {
         body: 'شاطرة! فخور فيك',
         timeLabel: 'أمس ٦:٤٢ م',
         isMine: true,
-        status: ConversationDeliveryStatus.read,
+        tick: MessageTick.read,
       ),
     ],
   );
 
-  /// Child C DM (voice preview as text).
+  /// Child C DM (voice thread).
   static const ConversationDetail childC = ConversationDetail(
     chatWith: 'child_c',
     title: 'ابن ٣ 🐼',
@@ -142,16 +152,55 @@ abstract final class ConversationMock {
     messages: [
       ConversationMessage(
         id: 'c1',
-        body: '🎤 رسالة صوتية · ٠:١٢',
+        body: '',
         timeLabel: 'أمس ٥:٠٥ م',
         isMine: false,
+        kind: ConversationMediaKind.voice,
       ),
       ConversationMessage(
         id: 'c2',
         body: 'وصلتني يا بطل — استمتع عند جدك',
         timeLabel: 'أمس ٥:١١ م',
         isMine: true,
-        status: ConversationDeliveryStatus.read,
+        tick: MessageTick.read,
+      ),
+    ],
+  );
+
+  /// Peer thread (child↔child) — no parent member, so read receipts may be
+  /// switched off here and only here (ADR-053 family adaptation). Shows a reply
+  /// and a tombstone so both render in place.
+  static const ConversationDetail peer = ConversationDetail(
+    chatWith: 'peer_a',
+    title: 'ابن ٤ 🐢',
+    subtitle: 'دائرة الأقران',
+    emoji: '🐢',
+    hasParentMember: false,
+    messages: [
+      ConversationMessage(
+        id: 'p1',
+        body: 'شفت الصورة؟',
+        timeLabel: '٤:٠٠ م',
+        isMine: false,
+      ),
+      ConversationMessage(
+        id: 'p2',
+        body: 'أي صورة؟',
+        timeLabel: '٤:٠١ م',
+        isMine: true,
+        tick: MessageTick.read,
+        replyTo: ConversationReply(
+          id: 'p1',
+          preview: 'شفت الصورة؟',
+          fromMe: false,
+        ),
+      ),
+      ConversationMessage(
+        id: 'p3',
+        body: '',
+        timeLabel: '٤:٠٢ م',
+        isMine: false,
+        deleted: true,
       ),
     ],
   );
@@ -163,5 +212,6 @@ abstract final class ConversationMock {
     childA,
     childB,
     childC,
+    peer,
   ];
 }

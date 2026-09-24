@@ -257,3 +257,20 @@ void requireWallpaper(String wallpaper) {
     throw ArgumentError.value(wallpaper, 'wallpaper', 'allowed: $kWallpapers');
   }
 }
+
+/// ADR-053 (٣) — the family conversation is pinned "دائمًا", and that is a fixed
+/// right, not a user preference: a member cannot unpin it and a member cannot
+/// forget to pin it. `isFamily` wins over whatever the stored toggle says.
+bool chatStaysPinned({required bool isFamily, required bool pinned}) =>
+    isFamily || pinned;
+
+/// ADR-053 (٣) — "قفل المحادثة لا يخفيها عن الوالد": the earned right of a
+/// parent to see their child's thread is not something a software lock can
+/// revoke. A locked thread stays visible to the parent, always.
+bool parentSeesThread({required bool locked}) => true;
+
+/// Whether the receipt toggle may even be offered in this thread — the ADR's
+/// family adaptation, read from [receiptsMayBeDisabled] so the widget never
+/// re-derives the rule itself.
+bool receiptsToggleOffered({required bool hasParentMember}) =>
+    receiptsMayBeDisabled(hasParentMember: hasParentMember);
