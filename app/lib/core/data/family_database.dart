@@ -746,6 +746,614 @@ class AuditLogs extends Table {
   DateTimeColumn get occurredAt => dateTime().withDefault(currentDateAndTime)();
 }
 
+/// ADR-054 §3 — `learn_assignment`: what a parent assigned to one child.
+class LearnAssignments extends Table {
+  @override
+  String get tableName => 'learn_assignment';
+
+  TextColumn get id => text()();
+  TextColumn get familyId => text()();
+  TextColumn get childId => text()();
+  TextColumn get kind => text()();
+  TextColumn get contentRef => text()();
+  IntColumn get rewardMinutes => integer().withDefault(const Constant(0))();
+  TextColumn get status => text()();
+  TextColumn get assignedByAccount => text()();
+  TextColumn get dueDay => text().nullable()();
+  TextColumn get requestId => text()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §3 — `learn_progress`: progress in a subject or lesson.
+class LearnProgress extends Table {
+  @override
+  String get tableName => 'learn_progress';
+
+  TextColumn get id => text()();
+  TextColumn get childId => text()();
+  TextColumn get contentRef => text()();
+  IntColumn get progressPercent => integer().withDefault(const Constant(0))();
+  IntColumn get completedUnits => integer().withDefault(const Constant(0))();
+  IntColumn get totalUnits => integer().withDefault(const Constant(0))();
+  DateTimeColumn get lastSeenAt => dateTime().nullable()();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §3 — `learn_session`: a real sitting (lesson · quiz · memorisation ·
+/// recitation · focus · adhkar · story). `kind` is the discriminator.
+class LearnSessions extends Table {
+  @override
+  String get tableName => 'learn_session';
+
+  TextColumn get id => text()();
+  TextColumn get familyId => text()();
+  TextColumn get childId => text()();
+  TextColumn get kind => text()();
+  TextColumn get contentRef => text().nullable()();
+  DateTimeColumn get startedAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get endedAt => dateTime().nullable()();
+  IntColumn get minutes => integer().withDefault(const Constant(0))();
+  TextColumn get status => text()();
+  TextColumn get requestId => text()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §3 — `learn_result`: one measurement, kept at the moment it happened.
+class LearnResults extends Table {
+  @override
+  String get tableName => 'learn_result';
+
+  TextColumn get id => text()();
+  TextColumn get sessionId => text()();
+  TextColumn get childId => text()();
+  TextColumn get skillRef => text()();
+  IntColumn get correct => integer().withDefault(const Constant(0))();
+  IntColumn get total => integer().withDefault(const Constant(0))();
+  IntColumn get masteryPercent => integer().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §3 — `learn_skill_gap`: an outstanding gap, not a derived badge.
+class LearnSkillGaps extends Table {
+  @override
+  String get tableName => 'learn_skill_gap';
+
+  TextColumn get id => text()();
+  TextColumn get childId => text()();
+  TextColumn get skillRef => text()();
+  IntColumn get missed => integer().withDefault(const Constant(0))();
+  IntColumn get total => integer().withDefault(const Constant(0))();
+  IntColumn get masteryPercent => integer().nullable()();
+  TextColumn get status => text()();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §3 — `learn_streak`: the day chain per kind.
+class LearnStreaks extends Table {
+  @override
+  String get tableName => 'learn_streak';
+
+  TextColumn get id => text()();
+  TextColumn get childId => text()();
+  TextColumn get kind => text()();
+  IntColumn get currentDays => integer().withDefault(const Constant(0))();
+  IntColumn get recordDays => integer().withDefault(const Constant(0))();
+  TextColumn get lastDay => text().nullable()();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §3 — `learn_achievement`: "المكتسب صفٌّ لا راية" — one row per badge,
+/// `earnedAt` is the fact. There is no boolean to swallow the date.
+class LearnAchievements extends Table {
+  @override
+  String get tableName => 'learn_achievement';
+
+  TextColumn get id => text()();
+  TextColumn get familyId => text()();
+  TextColumn get childId => text()();
+  TextColumn get badgeRef => text()();
+  TextColumn get kind => text()();
+  DateTimeColumn get earnedAt => dateTime().withDefault(currentDateAndTime)();
+  TextColumn get sourceRef => text().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §3 — `quran_plan`: the wird plan for one child.
+class QuranPlans extends Table {
+  @override
+  String get tableName => 'quran_plan';
+
+  TextColumn get id => text()();
+  TextColumn get familyId => text()();
+  TextColumn get childId => text()();
+  TextColumn get surahRef => text()();
+  IntColumn get fromAyah => integer()();
+  IntColumn get toAyah => integer()();
+  TextColumn get reciterRef => text()();
+  IntColumn get rewardMinutes => integer().withDefault(const Constant(0))();
+  BoolColumn get offlineReady =>
+      boolean().withDefault(const Constant(false))();
+  BoolColumn get active => boolean().withDefault(const Constant(true))();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §3 — `quran_recitation`: one day's recitation or review.
+class QuranRecitations extends Table {
+  @override
+  String get tableName => 'quran_recitation';
+
+  TextColumn get id => text()();
+  TextColumn get planId => text()();
+  TextColumn get childId => text()();
+  TextColumn get day => text()();
+  TextColumn get kind => text()();
+  TextColumn get status => text()();
+  IntColumn get completedAyahs => integer().withDefault(const Constant(0))();
+  TextColumn get dueDay => text().nullable()();
+  TextColumn get audioRef => text().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §3 — `quran_memorization`: memorisation progress per surah.
+class QuranMemorizations extends Table {
+  @override
+  String get tableName => 'quran_memorization';
+
+  TextColumn get id => text()();
+  TextColumn get childId => text()();
+  TextColumn get surahRef => text()();
+  IntColumn get progress => integer().withDefault(const Constant(0))();
+  IntColumn get extraAyahs => integer().withDefault(const Constant(0))();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §3 — `wallet_ledger`: earned minutes as entries, never a total that
+/// can drift away from its reasons.
+class WalletLedgerEntries extends Table {
+  @override
+  String get tableName => 'wallet_ledger';
+
+  TextColumn get id => text()();
+  TextColumn get familyId => text()();
+  TextColumn get childId => text()();
+  IntColumn get deltaMinutes => integer()();
+  TextColumn get reason => text()();
+  TextColumn get sourceRef => text().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §3 — `family_challenge`: a running family challenge.
+class FamilyChallenges extends Table {
+  @override
+  String get tableName => 'family_challenge';
+
+  TextColumn get id => text()();
+  TextColumn get familyId => text()();
+  TextColumn get titleRef => text()();
+  TextColumn get kind => text()();
+  TextColumn get startsDay => text()();
+  TextColumn get endsDay => text()();
+  BoolColumn get active => boolean().withDefault(const Constant(true))();
+  TextColumn get createdByAccount => text()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §3 — `family_challenge_day`: the composite key is the point —
+/// a child's day inside a challenge is one row, so a tick cannot double.
+@DataClassName('FamilyChallengeDayRow')
+class FamilyChallengeDays extends Table {
+  @override
+  String get tableName => 'family_challenge_day';
+
+  TextColumn get id => text()();
+  TextColumn get challengeId => text()();
+  TextColumn get childId => text()();
+  IntColumn get dayIndex => integer()();
+  TextColumn get day => text()();
+  BoolColumn get done => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {challengeId, childId, dayIndex};
+}
+
+/// ADR-054 §3 — `tutor_thread`: an advisor session with one child.
+class TutorThreads extends Table {
+  @override
+  String get tableName => 'tutor_thread';
+
+  TextColumn get id => text()();
+  TextColumn get childId => text()();
+  TextColumn get topicRef => text()();
+  DateTimeColumn get startedAt => dateTime().withDefault(currentDateAndTime)();
+  TextColumn get status => text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §3 — `tutor_turn`: one turn inside a thread.
+class TutorTurns extends Table {
+  @override
+  String get tableName => 'tutor_turn';
+
+  TextColumn get id => text()();
+  TextColumn get threadId => text()();
+  TextColumn get role => text()();
+  TextColumn get contentRef => text()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §4 — `content_pack`: a generated pack and where it stands in the
+/// approval ladder (`status` carries DRAFT … APPROVED, never a UI key).
+class ContentPacks extends Table {
+  @override
+  String get tableName => 'content_pack';
+
+  TextColumn get id => text()();
+  TextColumn get familyId => text()();
+  TextColumn get kind => text()();
+  TextColumn get sourceRef => text()();
+  TextColumn get status => text()();
+  TextColumn get difficulty => text().nullable()();
+  IntColumn get version => integer().withDefault(const Constant(1))();
+  TextColumn get createdByAccount => text()();
+  TextColumn get approvedByAccount => text().nullable()();
+  DateTimeColumn get approvedAt => dateTime().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §4 — `content_item`: one piece inside a pack. The text itself lives
+/// in the signed bundle; the row keeps the reference and the order.
+class ContentItems extends Table {
+  @override
+  String get tableName => 'content_item';
+
+  TextColumn get id => text()();
+  TextColumn get packId => text()();
+  TextColumn get kind => text()();
+  TextColumn get titleRef => text()();
+  TextColumn get bodyRef => text().nullable()();
+  IntColumn get ruleSeconds => integer().nullable()();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+  BoolColumn get phaseLocked =>
+      boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §4 — `learning_path`: a path for one child in one subject.
+class LearningPaths extends Table {
+  @override
+  String get tableName => 'learning_path';
+
+  TextColumn get id => text()();
+  TextColumn get familyId => text()();
+  TextColumn get childId => text()();
+  TextColumn get subjectRef => text()();
+  IntColumn get progressPercent => integer().withDefault(const Constant(0))();
+  IntColumn get completedLessons => integer().withDefault(const Constant(0))();
+  IntColumn get totalLessons => integer().withDefault(const Constant(0))();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §4 — `learning_path_stop`: a station on the path.
+@DataClassName('LearningPathStopRow')
+class LearningPathStops extends Table {
+  @override
+  String get tableName => 'learning_path_stop';
+
+  TextColumn get id => text()();
+  TextColumn get pathId => text()();
+  TextColumn get titleRef => text()();
+  TextColumn get status => text()();
+  TextColumn get kind => text()();
+  IntColumn get masteryPercent => integer().nullable()();
+  IntColumn get rewardMinutes => integer().withDefault(const Constant(0))();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §4 — `attribution_rule`: how a piece of content pays out minutes.
+class AttributionRules extends Table {
+  @override
+  String get tableName => 'attribution_rule';
+
+  TextColumn get id => text()();
+  TextColumn get familyId => text()();
+  TextColumn get contentRef => text()();
+  TextColumn get childId => text().nullable()();
+  TextColumn get kind => text()();
+  IntColumn get minutes => integer().withDefault(const Constant(0))();
+  BoolColumn get enabled => boolean().withDefault(const Constant(true))();
+  BoolColumn get autoAdded => boolean().withDefault(const Constant(false))();
+  IntColumn get scheduleDayMask => integer().withDefault(const Constant(0))();
+  BoolColumn get assigned => boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §4 — `focus_schedule`: a focus window for one child.
+class FocusSchedules extends Table {
+  @override
+  String get tableName => 'focus_schedule';
+
+  TextColumn get id => text()();
+  TextColumn get familyId => text()();
+  TextColumn get nameRef => text()();
+  TextColumn get childId => text()();
+  IntColumn get startMinute => integer()();
+  IntColumn get endMinute => integer()();
+  IntColumn get daysMask => integer().withDefault(const Constant(0))();
+  BoolColumn get enabled => boolean().withDefault(const Constant(true))();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §4 — `focus_schedule_app`: the apps a window covers.
+class FocusScheduleApps extends Table {
+  @override
+  String get tableName => 'focus_schedule_app';
+
+  TextColumn get id => text()();
+  TextColumn get scheduleId => text()();
+  TextColumn get appRef => text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §4 — `focus_advisor_note`: the weekly note and whether its praise
+/// and reward were actually sent (two stamps, not one boolean).
+class FocusAdvisorNotes extends Table {
+  @override
+  String get tableName => 'focus_advisor_note';
+
+  TextColumn get id => text()();
+  TextColumn get familyId => text()();
+  TextColumn get childId => text()();
+  TextColumn get weekStart => text()();
+  TextColumn get titleRef => text()();
+  TextColumn get bodyRef => text()();
+  DateTimeColumn get praiseSentAt => dateTime().nullable()();
+  DateTimeColumn get rewardSentAt => dateTime().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §4 — `community_cache`: the local mirror of a remote catalogue.
+class CommunityCacheEntries extends Table {
+  @override
+  String get tableName => 'community_cache';
+
+  TextColumn get id => text()();
+  TextColumn get kind => text()();
+  TextColumn get titleRef => text()();
+  TextColumn get authorRef => text()();
+  RealColumn get rating => real().withDefault(const Constant(0))();
+  IntColumn get ratingCount => integer().withDefault(const Constant(0))();
+  BoolColumn get trusted => boolean().withDefault(const Constant(false))();
+  IntColumn get lessons => integer().withDefault(const Constant(0))();
+  IntColumn get quizzes => integer().withDefault(const Constant(0))();
+  DateTimeColumn get fetchedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §5 — `task`: a family chore, homework or help task.
+@DataClassName('FamilyTaskRow')
+class Tasks extends Table {
+  @override
+  String get tableName => 'task';
+
+  TextColumn get id => text()();
+  TextColumn get familyId => text()();
+  TextColumn get titleRef => text()();
+  TextColumn get assigneeChildId => text().nullable()();
+  TextColumn get kind => text()();
+  IntColumn get rewardMinutes => integer().withDefault(const Constant(0))();
+  IntColumn get courageMinutes => integer().nullable()();
+  IntColumn get playtimeMinutes => integer().nullable()();
+  TextColumn get status => text()();
+  DateTimeColumn get dueAt => dateTime().nullable()();
+  TextColumn get createdByAccount => text()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §5 — `task_submission`: the proof and its review.
+class TaskSubmissions extends Table {
+  @override
+  String get tableName => 'task_submission';
+
+  TextColumn get id => text()();
+  TextColumn get taskId => text()();
+  TextColumn get childId => text()();
+  TextColumn get mediaRef => text()();
+  DateTimeColumn get submittedAt => dateTime().withDefault(currentDateAndTime)();
+  TextColumn get status => text()();
+  TextColumn get reviewedByAccount => text().nullable()();
+  DateTimeColumn get reviewedAt => dateTime().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §5 — `chore_distribution`: how the house chores were split.
+class ChoreDistributions extends Table {
+  @override
+  String get tableName => 'chore_distribution';
+
+  TextColumn get id => text()();
+  TextColumn get familyId => text()();
+  TextColumn get childId => text()();
+  TextColumn get choresRef => text()();
+  TextColumn get noteRef => text().nullable()();
+  BoolColumn get approved => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §6 — `calendar_event`: the month grid is computed from `starts_at`
+/// and `calendar_type`, so neither is a column here.
+class CalendarEvents extends Table {
+  @override
+  String get tableName => 'calendar_event';
+
+  TextColumn get id => text()();
+  TextColumn get familyId => text()();
+  TextColumn get titleRef => text()();
+  TextColumn get category => text()();
+  TextColumn get calendarType => text()();
+  DateTimeColumn get startsAt => dateTime()();
+  TextColumn get placeRef => text().nullable()();
+  IntColumn get reminderMinutes => integer().nullable()();
+  TextColumn get whoRef => text().nullable()();
+  BoolColumn get weeklyRepeat =>
+      boolean().withDefault(const Constant(false))();
+  TextColumn get createdByAccount => text()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §7 — `subscription_state`: state only. No card, no receipt, no
+/// buyer id ever lands on the device; the store then the server own that.
+class SubscriptionStates extends Table {
+  @override
+  String get tableName => 'subscription_state';
+
+  TextColumn get id => text()();
+  TextColumn get familyId => text()();
+  TextColumn get planRef => text()();
+  TextColumn get status => text()();
+  DateTimeColumn get startedAt => dateTime().nullable()();
+  DateTimeColumn get renewsAt => dateTime().nullable()();
+  DateTimeColumn get periodEnd => dateTime().nullable()();
+  TextColumn get source => text()();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §7 — `billing_event`: an audit trail of billing facts, digest only.
+class BillingEvents extends Table {
+  @override
+  String get tableName => 'billing_event';
+
+  TextColumn get id => text()();
+  TextColumn get familyId => text()();
+  TextColumn get kind => text()();
+  DateTimeColumn get occurredAt => dateTime().withDefault(currentDateAndTime)();
+  TextColumn get storeRef => text().nullable()();
+  TextColumn get payloadDigest => text().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §8 — `invite`: the two tables that had a Postgres contract with no
+/// local counterpart (`_CONTRACTS/schema.sql`), so the local store is complete.
+class Invites extends Table {
+  @override
+  String get tableName => 'invite';
+
+  TextColumn get id => text()();
+  TextColumn get familyId => text()();
+  TextColumn get invitedByAccount => text()();
+  TextColumn get inviteeEmail => text().nullable()();
+  TextColumn get role => text()();
+  TextColumn get permissionLevel => text()();
+  TextColumn get code => text()();
+  TextColumn get status => text()();
+  DateTimeColumn get expiresAt => dateTime().nullable()();
+  DateTimeColumn get acceptedAt => dateTime().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// ADR-054 §8 — `pairing_token`: the child-device link handshake.
+class PairingTokens extends Table {
+  @override
+  String get tableName => 'pairing_token';
+
+  TextColumn get id => text()();
+  TextColumn get familyId => text()();
+  TextColumn get childId => text().nullable()();
+  TextColumn get token => text()();
+  DateTimeColumn get expiresAt => dateTime()();
+  DateTimeColumn get usedAt => dateTime().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [
     Accounts,
@@ -770,6 +1378,40 @@ class AuditLogs extends Table {
     AuditLogs,
     MessageReads,
     ChatPreferences,
+    // ADR-054 — the beyond-wave-1 contract (v6): learning, studio, tasks,
+    // calendar, billing, and the two Postgres-only tables.
+    LearnAssignments,
+    LearnProgress,
+    LearnSessions,
+    LearnResults,
+    LearnSkillGaps,
+    LearnStreaks,
+    LearnAchievements,
+    QuranPlans,
+    QuranRecitations,
+    QuranMemorizations,
+    WalletLedgerEntries,
+    FamilyChallenges,
+    FamilyChallengeDays,
+    TutorThreads,
+    TutorTurns,
+    ContentPacks,
+    ContentItems,
+    LearningPaths,
+    LearningPathStops,
+    AttributionRules,
+    FocusSchedules,
+    FocusScheduleApps,
+    FocusAdvisorNotes,
+    CommunityCacheEntries,
+    Tasks,
+    TaskSubmissions,
+    ChoreDistributions,
+    CalendarEvents,
+    SubscriptionStates,
+    BillingEvents,
+    Invites,
+    PairingTokens,
   ],
 )
 class FamilyDatabase extends _$FamilyDatabase {
@@ -778,9 +1420,10 @@ class FamilyDatabase extends _$FamilyDatabase {
   /// v1 = identity core (PERS-2a) · v2 = devices + permissions (PERS-2b)
   /// · v3 = location + geofence + emergency (PERS-2c, ADR-051)
   /// · v4 = communication + AI + audit (PERS-2d, ADR-052)
-  /// · v5 = read receipts, message pin and per-chat settings (ADR-053).
+  /// · v5 = read receipts, message pin and per-chat settings (ADR-053)
+  /// · v6 = the beyond-wave-1 contract, 32 tables (ADR-054).
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -816,6 +1459,43 @@ class FamilyDatabase extends _$FamilyDatabase {
             await m.addColumn(messages, messages.pinnedByChild);
             await m.createTable(messageReads);
             await m.createTable(chatPreferences);
+          }
+          if (from < 6) {
+            // ADR-054 — every screen gets its tables. Learning (15), studio
+            // (9), tasks (3), calendar (1), billing (2), and the two tables
+            // that had a server contract but no local one.
+            await m.createTable(learnAssignments);
+            await m.createTable(learnProgress);
+            await m.createTable(learnSessions);
+            await m.createTable(learnResults);
+            await m.createTable(learnSkillGaps);
+            await m.createTable(learnStreaks);
+            await m.createTable(learnAchievements);
+            await m.createTable(quranPlans);
+            await m.createTable(quranRecitations);
+            await m.createTable(quranMemorizations);
+            await m.createTable(walletLedgerEntries);
+            await m.createTable(familyChallenges);
+            await m.createTable(familyChallengeDays);
+            await m.createTable(tutorThreads);
+            await m.createTable(tutorTurns);
+            await m.createTable(contentPacks);
+            await m.createTable(contentItems);
+            await m.createTable(learningPaths);
+            await m.createTable(learningPathStops);
+            await m.createTable(attributionRules);
+            await m.createTable(focusSchedules);
+            await m.createTable(focusScheduleApps);
+            await m.createTable(focusAdvisorNotes);
+            await m.createTable(communityCacheEntries);
+            await m.createTable(tasks);
+            await m.createTable(taskSubmissions);
+            await m.createTable(choreDistributions);
+            await m.createTable(calendarEvents);
+            await m.createTable(subscriptionStates);
+            await m.createTable(billingEvents);
+            await m.createTable(invites);
+            await m.createTable(pairingTokens);
           }
         },
       );

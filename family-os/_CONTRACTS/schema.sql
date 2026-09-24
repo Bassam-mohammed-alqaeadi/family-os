@@ -406,3 +406,389 @@ BEGIN
     RAISE EXCEPTION 'انتهاك سياسة العائلات: وُجد % عمود معرّف محظور', bad;
   END IF;
 END $$;
+
+-- ============================================================
+--  ملحق v6 — عقد الموجة ٢ (ADR-054 · 2026-09-24)
+--  مرآة 1:1 لمخطط التخزين المحلي (Drift v6): ٣٠ جدولًا جديدًا،
+--  فتصل الأسطح الثلاثة — المحلّي · العقد · الشاشة — إلى ٥٤ جدولًا.
+--  المعرّفات هنا نصية شفّافة (تُشتق من request_id للتزامن) لا uuid
+--  من الخادم، لأن هذه المرآة للعقد المحلّي. الفهارس و RLS في موجة
+--  الخادم. و`invite` و`pairing_token` معرّفان أعلاه فلا يُعادان.
+-- ============================================================
+
+CREATE TABLE learn_assignment (
+  id                  text PRIMARY KEY,
+  family_id           text NOT NULL,
+  child_id            text NOT NULL,
+  kind                text NOT NULL,
+  content_ref         text NOT NULL,        -- مفتاح ARB في الحزمة الموقّعة
+  reward_minutes      integer NOT NULL DEFAULT 0,
+  status              text NOT NULL,
+  assigned_by_account text NOT NULL,
+  due_day             text,
+  request_id          text NOT NULL,
+  created_at          timestamptz NOT NULL DEFAULT now(),
+  updated_at          timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE learn_progress (
+  id               text PRIMARY KEY,
+  child_id         text NOT NULL,
+  content_ref      text NOT NULL,
+  progress_percent integer NOT NULL DEFAULT 0,
+  completed_units  integer NOT NULL DEFAULT 0,
+  total_units      integer NOT NULL DEFAULT 0,
+  last_seen_at     timestamptz,
+  updated_at       timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE learn_session (
+  id          text PRIMARY KEY,
+  family_id   text NOT NULL,
+  child_id    text NOT NULL,
+  kind        text NOT NULL,                -- lesson · quiz · memorisation · recitation · focus · adhkar · story
+  content_ref text,
+  started_at  timestamptz NOT NULL DEFAULT now(),
+  ended_at    timestamptz,
+  minutes     integer NOT NULL DEFAULT 0,
+  status      text NOT NULL,
+  request_id  text NOT NULL,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE learn_result (
+  id              text PRIMARY KEY,
+  session_id      text NOT NULL,
+  child_id        text NOT NULL,
+  skill_ref       text NOT NULL,
+  correct         integer NOT NULL DEFAULT 0,
+  total           integer NOT NULL DEFAULT 0,
+  mastery_percent integer,
+  created_at      timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE learn_skill_gap (
+  id              text PRIMARY KEY,
+  child_id        text NOT NULL,
+  skill_ref       text NOT NULL,
+  missed          integer NOT NULL DEFAULT 0,
+  total           integer NOT NULL DEFAULT 0,
+  mastery_percent integer,
+  status          text NOT NULL,
+  updated_at      timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE learn_streak (
+  id           text PRIMARY KEY,
+  child_id     text NOT NULL,
+  kind         text NOT NULL,
+  current_days integer NOT NULL DEFAULT 0,
+  record_days  integer NOT NULL DEFAULT 0,
+  last_day     text,
+  updated_at   timestamptz NOT NULL DEFAULT now()
+);
+
+-- المكتسب صفٌّ لا راية: earned_at هو الحقيقة، لا عمود boolean يبتلع التاريخ
+CREATE TABLE learn_achievement (
+  id         text PRIMARY KEY,
+  family_id  text NOT NULL,
+  child_id   text NOT NULL,
+  badge_ref  text NOT NULL,
+  kind       text NOT NULL,
+  earned_at  timestamptz NOT NULL DEFAULT now(),
+  source_ref text
+);
+
+CREATE TABLE quran_plan (
+  id             text PRIMARY KEY,
+  family_id      text NOT NULL,
+  child_id       text NOT NULL,
+  surah_ref      text NOT NULL,
+  from_ayah      integer NOT NULL,
+  to_ayah        integer NOT NULL,
+  reciter_ref    text NOT NULL,
+  reward_minutes integer NOT NULL DEFAULT 0,
+  offline_ready  boolean NOT NULL DEFAULT false,
+  active         boolean NOT NULL DEFAULT true,
+  created_at     timestamptz NOT NULL DEFAULT now(),
+  updated_at     timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE quran_recitation (
+  id              text PRIMARY KEY,
+  plan_id         text NOT NULL,
+  child_id        text NOT NULL,
+  day             text NOT NULL,
+  kind            text NOT NULL,
+  status          text NOT NULL,
+  completed_ayahs integer NOT NULL DEFAULT 0,
+  due_day         text,
+  audio_ref       text,
+  created_at      timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE quran_memorization (
+  id          text PRIMARY KEY,
+  child_id    text NOT NULL,
+  surah_ref   text NOT NULL,
+  progress    integer NOT NULL DEFAULT 0,
+  extra_ayahs integer NOT NULL DEFAULT 0,
+  updated_at  timestamptz NOT NULL DEFAULT now()
+);
+
+-- دقائق مكتسبة كقيود، لا مجموعًا ينفصل عن أسبابه
+CREATE TABLE wallet_ledger (
+  id            text PRIMARY KEY,
+  family_id     text NOT NULL,
+  child_id      text NOT NULL,
+  delta_minutes integer NOT NULL,
+  reason        text NOT NULL,
+  source_ref    text,
+  created_at    timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE family_challenge (
+  id                text PRIMARY KEY,
+  family_id         text NOT NULL,
+  title_ref         text NOT NULL,
+  kind              text NOT NULL,
+  starts_day        text NOT NULL,
+  ends_day          text NOT NULL,
+  active            boolean NOT NULL DEFAULT true,
+  created_by_account text NOT NULL,
+  created_at        timestamptz NOT NULL DEFAULT now()
+);
+
+-- المفتاح المركّب هو المقصود: يوم الطفل داخل التحدّي صفٌّ واحد، فلا تتكرّر العلامة
+CREATE TABLE family_challenge_day (
+  id           text PRIMARY KEY,
+  challenge_id text NOT NULL,
+  child_id     text NOT NULL,
+  day_index    integer NOT NULL,
+  day          text NOT NULL,
+  done         boolean NOT NULL DEFAULT false,
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (challenge_id, child_id, day_index)
+);
+
+CREATE TABLE tutor_thread (
+  id         text PRIMARY KEY,
+  child_id   text NOT NULL,
+  topic_ref  text NOT NULL,
+  started_at timestamptz NOT NULL DEFAULT now(),
+  status     text NOT NULL
+);
+
+CREATE TABLE tutor_turn (
+  id          text PRIMARY KEY,
+  thread_id   text NOT NULL,
+  role        text NOT NULL,
+  content_ref text NOT NULL,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+
+-- سلّم الموافقة في status (DRAFT … APPROVED)، لا حرف واجهة محفور
+CREATE TABLE content_pack (
+  id                 text PRIMARY KEY,
+  family_id          text NOT NULL,
+  kind               text NOT NULL,
+  source_ref         text NOT NULL,
+  status             text NOT NULL,
+  difficulty         text,
+  version            integer NOT NULL DEFAULT 1,
+  created_by_account text NOT NULL,
+  approved_by_account text,
+  approved_at        timestamptz,
+  created_at         timestamptz NOT NULL DEFAULT now(),
+  updated_at         timestamptz NOT NULL DEFAULT now()
+);
+
+-- النصّ نفسه في الحزمة الموقّعة؛ الصفّ يحفظ المرجع والترتيب
+CREATE TABLE content_item (
+  id           text PRIMARY KEY,
+  pack_id      text NOT NULL,
+  kind         text NOT NULL,
+  title_ref    text NOT NULL,
+  body_ref     text,
+  rule_seconds integer,
+  sort_order   integer NOT NULL DEFAULT 0,
+  phase_locked boolean NOT NULL DEFAULT false
+);
+
+CREATE TABLE learning_path (
+  id                text PRIMARY KEY,
+  family_id         text NOT NULL,
+  child_id          text NOT NULL,
+  subject_ref       text NOT NULL,
+  progress_percent  integer NOT NULL DEFAULT 0,
+  completed_lessons integer NOT NULL DEFAULT 0,
+  total_lessons     integer NOT NULL DEFAULT 0,
+  created_at        timestamptz NOT NULL DEFAULT now(),
+  updated_at        timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE learning_path_stop (
+  id              text PRIMARY KEY,
+  path_id         text NOT NULL,
+  title_ref       text NOT NULL,
+  status          text NOT NULL,
+  kind            text NOT NULL,
+  mastery_percent integer,
+  reward_minutes  integer NOT NULL DEFAULT 0,
+  sort_order      integer NOT NULL DEFAULT 0
+);
+
+CREATE TABLE attribution_rule (
+  id               text PRIMARY KEY,
+  family_id        text NOT NULL,
+  content_ref      text NOT NULL,
+  child_id         text,
+  kind             text NOT NULL,
+  minutes          integer NOT NULL DEFAULT 0,
+  enabled          boolean NOT NULL DEFAULT true,
+  auto_added       boolean NOT NULL DEFAULT false,
+  schedule_day_mask integer NOT NULL DEFAULT 0,
+  assigned         boolean NOT NULL DEFAULT false
+);
+
+CREATE TABLE focus_schedule (
+  id           text PRIMARY KEY,
+  family_id    text NOT NULL,
+  name_ref     text NOT NULL,
+  child_id     text NOT NULL,
+  start_minute integer NOT NULL,
+  end_minute   integer NOT NULL,
+  days_mask    integer NOT NULL DEFAULT 0,
+  enabled      boolean NOT NULL DEFAULT true
+);
+
+CREATE TABLE focus_schedule_app (
+  id          text PRIMARY KEY,
+  schedule_id text NOT NULL,
+  app_ref     text NOT NULL
+);
+
+-- ختمَان لا boolean واحد: الإشادة والإرسال حقيقتان مختلفتان
+CREATE TABLE focus_advisor_note (
+  id             text PRIMARY KEY,
+  family_id      text NOT NULL,
+  child_id       text NOT NULL,
+  week_start     text NOT NULL,
+  title_ref      text NOT NULL,
+  body_ref       text NOT NULL,
+  praise_sent_at timestamptz,
+  reward_sent_at timestamptz
+);
+
+CREATE TABLE community_cache (
+  id           text PRIMARY KEY,
+  kind         text NOT NULL,
+  title_ref    text NOT NULL,
+  author_ref   text NOT NULL,
+  rating       real NOT NULL DEFAULT 0,
+  rating_count integer NOT NULL DEFAULT 0,
+  trusted      boolean NOT NULL DEFAULT false,
+  lessons      integer NOT NULL DEFAULT 0,
+  quizzes      integer NOT NULL DEFAULT 0,
+  fetched_at   timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE task (
+  id                text PRIMARY KEY,
+  family_id         text NOT NULL,
+  title_ref         text NOT NULL,
+  assignee_child_id text,
+  kind              text NOT NULL,
+  reward_minutes    integer NOT NULL DEFAULT 0,
+  courage_minutes   integer,
+  playtime_minutes  integer,
+  status            text NOT NULL,
+  due_at            timestamptz,
+  created_by_account text NOT NULL,
+  created_at        timestamptz NOT NULL DEFAULT now(),
+  updated_at        timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE task_submission (
+  id                  text PRIMARY KEY,
+  task_id             text NOT NULL,
+  child_id            text NOT NULL,
+  media_ref           text NOT NULL,
+  submitted_at        timestamptz NOT NULL DEFAULT now(),
+  status              text NOT NULL,
+  reviewed_by_account text,
+  reviewed_at         timestamptz
+);
+
+CREATE TABLE chore_distribution (
+  id         text PRIMARY KEY,
+  family_id  text NOT NULL,
+  child_id   text NOT NULL,
+  chores_ref text NOT NULL,
+  note_ref   text,
+  approved   boolean NOT NULL DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- شبكة الشهر تُحسب من starts_at و calendar_type، فليسا عمودين
+CREATE TABLE calendar_event (
+  id                text PRIMARY KEY,
+  family_id         text NOT NULL,
+  title_ref         text NOT NULL,
+  category          text NOT NULL,
+  calendar_type     text NOT NULL,
+  starts_at         timestamptz NOT NULL,
+  place_ref         text,
+  reminder_minutes  integer,
+  who_ref           text,
+  weekly_repeat     boolean NOT NULL DEFAULT false,
+  created_by_account text NOT NULL,
+  created_at        timestamptz NOT NULL DEFAULT now(),
+  updated_at        timestamptz NOT NULL DEFAULT now()
+);
+
+-- حالة فقط: لا بطاقة ولا إيصال ولا معرّف مشترٍ ينزل على الجهاز أبدًا
+CREATE TABLE subscription_state (
+  id         text PRIMARY KEY,
+  family_id  text NOT NULL,
+  plan_ref   text NOT NULL,
+  status     text NOT NULL,
+  started_at timestamptz,
+  renews_at  timestamptz,
+  period_end timestamptz,
+  source     text NOT NULL,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE billing_event (
+  id             text PRIMARY KEY,
+  family_id      text NOT NULL,
+  kind           text NOT NULL,
+  occurred_at    timestamptz NOT NULL DEFAULT now(),
+  store_ref      text,
+  payload_digest text
+);
+
+-- ============================================================
+--  ✅ تحقّق v6: عقد الموجة ٢ لا يحمل مفتاح ARB في أي عمود
+-- ============================================================
+DO $$
+DECLARE bad int;
+BEGIN
+  SELECT count(*) INTO bad FROM information_schema.columns
+   WHERE table_schema='public'
+     AND table_name IN (
+       'learn_assignment','learn_progress','learn_session','learn_result',
+       'learn_skill_gap','learn_streak','learn_achievement','quran_plan',
+       'quran_recitation','quran_memorization','wallet_ledger',
+       'family_challenge','family_challenge_day','tutor_thread','tutor_turn',
+       'content_pack','content_item','learning_path','learning_path_stop',
+       'attribution_rule','focus_schedule','focus_schedule_app',
+       'focus_advisor_note','community_cache','task','task_submission',
+       'chore_distribution','calendar_event','subscription_state','billing_event')
+     AND (lower(column_name) LIKE '%\_key' ESCAPE '\'
+          OR lower(column_name) IN ('text_ar','text_en','label'));
+  IF bad > 0 THEN
+    RAISE EXCEPTION 'انتهاك ADR-054: وُجد % عمود يحمل نصًّا أو مفتاحًا في العقد', bad;
+  END IF;
+END $$;
