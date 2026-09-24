@@ -52,8 +52,7 @@ final class WebUnlockDecisionBus extends ChangeNotifier {
 }
 
 /// Stage-1 shared prefs store for unlock requests.
-final MemoryWebUnlockPrefsStore stage1WebUnlockPrefsStore =
-    MemoryWebUnlockPrefsStore();
+WebUnlockPrefsStore stage1WebUnlockPrefsStore = MemoryWebUnlockPrefsStore();
 
 /// Stage-1 shared decision bus (same-process child notify).
 final WebUnlockDecisionBus stage1WebUnlockDecisionBus = WebUnlockDecisionBus();

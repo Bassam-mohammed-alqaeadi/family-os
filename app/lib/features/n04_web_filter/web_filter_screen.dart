@@ -18,8 +18,7 @@ import 'package:family_os/features/n04_web_filter/web_block_page.dart';
 import 'package:family_os/features/n04_web_filter/web_unlock_inbox.dart';
 
 /// Shared Stage-1 prefs store (survives within process; Rule 25 seam).
-final MemoryWebFilterPrefsStore stage1WebFilterPrefsStore =
-    MemoryWebFilterPrefsStore();
+WebFilterPrefsStore stage1WebFilterPrefsStore = MemoryWebFilterPrefsStore();
 
 /// Default father-preview fixture (Net Nanny / Qustodio “what child sees”).
 const String kWebFilterPreviewFixtureUrl = 'https://adult.example/page';

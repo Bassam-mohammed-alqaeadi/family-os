@@ -35,8 +35,7 @@ final class MemorySmartModePrefsStore implements SmartModePrefsStore {
 }
 
 /// Stage-1 shared mock prefs (process lifetime).
-final MemorySmartModePrefsStore stage1SmartModePrefsStore =
-    MemorySmartModePrefsStore();
+SmartModePrefsStore stage1SmartModePrefsStore = MemorySmartModePrefsStore();
 
 /// Prefs/JSON-backed repository (SharedPreferences adapter-ready).
 final class PrefsSmartModePrefsRepository implements SmartModePrefsRepository {

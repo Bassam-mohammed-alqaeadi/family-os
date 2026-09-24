@@ -79,7 +79,7 @@ final class MemoryPrivacyCollectionPrefsStore
 }
 
 /// Stage-1 shared prefs store (survives within process).
-final MemoryPrivacyCollectionPrefsStore stage1PrivacyCollectionPrefsStore =
+PrivacyCollectionPrefsStore stage1PrivacyCollectionPrefsStore =
     MemoryPrivacyCollectionPrefsStore();
 
 final AuditAppend stage1PrivacyCollectionAudit = AuditAppend();

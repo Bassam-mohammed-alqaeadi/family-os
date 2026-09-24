@@ -2,10 +2,10 @@
 
 ```
 status: RUNNING
-current_card: PRT-2
+current_card: PERS-2
 blocked_by: (none)
-last_tick: 2026-09-22
-resume_hint: PRT-1 shipped (shell_config.dart generator groundwork). NEXT=PRT-2 shell/TabsBar wiring. Parity track before Phase 1.5 shell UX. /loop 5m.
+last_tick: 2026-09-24
+resume_hint: PERS-1 shipped (durable storage over 13 store seams; settings survive restart; suite 902/902). NEXT=PERS-2: keep every remaining screen on the durable seams + start Drift for the 20-table _CONTRACTS schema. Then Phase 3 screens — child dashboard first (25 placeholders). /loop 5m.
 ```
 
 ## Field meanings

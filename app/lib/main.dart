@@ -3,11 +3,14 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/app/router.dart';
+import 'package:family_os/core/data/durable_persistence.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await installDurablePersistence();
   runApp(const FamilyOsApp());
 }
 

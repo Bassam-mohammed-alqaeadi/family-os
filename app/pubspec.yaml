@@ -16,11 +16,19 @@ dependencies:
   cupertino_icons: ^1.0.8
   intl: any
   go_router: ^17.2.3
+  # Rule 25 — real local persistence behind the Stage-1 store seams.
+  shared_preferences: ^2.3.0
+  # Relational store for the 20-table _CONTRACTS/schema.sql (PERS-2).
+  drift: ^2.28.0
+  drift_flutter: ^0.2.4
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  # Codegen for the Drift database (build_runner build).
+  build_runner: ^2.4.13
+  drift_dev: ^2.28.0
 
 flutter:
   generate: true

@@ -40,7 +40,7 @@ final class MemoryNotificationPrefsStore implements NotificationPrefsStore {
 }
 
 /// Shared Stage-1 store (survives within process).
-final MemoryNotificationPrefsStore stage1NotificationPrefsStore =
+NotificationPrefsStore stage1NotificationPrefsStore =
     MemoryNotificationPrefsStore();
 
 Never _rejectSosMute([String field = 'setSosMuted']) =>

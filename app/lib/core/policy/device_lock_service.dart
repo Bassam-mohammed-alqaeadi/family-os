@@ -126,8 +126,7 @@ final class MemoryDeviceLockPrefsStore implements DeviceLockPrefsStore {
 }
 
 /// Stage-1 shared prefs / audit / notify (Rule 25 seam).
-final MemoryDeviceLockPrefsStore stage1DeviceLockPrefsStore =
-    MemoryDeviceLockPrefsStore();
+DeviceLockPrefsStore stage1DeviceLockPrefsStore = MemoryDeviceLockPrefsStore();
 final AuditAppend stage1DeviceLockAudit = AuditAppend();
 final DeviceLockNotifyBus stage1DeviceLockNotifyBus = DeviceLockNotifyBus();
 

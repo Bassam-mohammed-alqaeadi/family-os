@@ -34,7 +34,7 @@ final class MemoryOnboardingProgressStore implements OnboardingProgressStore {
 }
 
 /// Shared Stage-1 store (survives within process — offline shows last cache).
-final MemoryOnboardingProgressStore stage1OnboardingProgressStore =
+OnboardingProgressStore stage1OnboardingProgressStore =
     MemoryOnboardingProgressStore();
 
 /// Prefs/JSON-backed repository (SharedPreferences adapter-ready).

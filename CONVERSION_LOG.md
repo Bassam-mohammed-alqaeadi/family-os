@@ -256,4 +256,5 @@ Format: `YYYY-MM-DD | <task-id> | <summary> | evidence`
 2026-09-22 | P15-EDU-003 | FAT-041 SourceRef library: PDF/device/link/topic/voice attach persist (P11); attached strip; mock URI seam | status: passed — analyze OK; flutter test green FULL (verify_ship .verify/P15-EDU-003.json)
 
 2026-09-22 | PRT-1 | generator groundwork: shell_config.dart (5/4 branches, 17/5 tabless, hubIndex 9 tabs) from screens.csv; router behaviour unchanged | evidence: analyze clean; shell_config_test green; verify_ship .verify/PRT-1.json
+2026-09-24 | PERS-1 | Rule 25 storage: shared_preferences + DurablePrefsStore satisfying 13 stage1 store seams; installed from main() before runApp; father/child settings now survive an app restart | analyze clean; durable_persistence_test 6/6 green; FULL suite 902/902 (was 896)
 
