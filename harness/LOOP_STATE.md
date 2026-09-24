@@ -2,10 +2,10 @@
 
 ```
 status: RUNNING
-current_card: PERS-2b
+current_card: PERS-2d
 blocked_by: (none)
 last_tick: 2026-09-24
-resume_hint: PERS-1 + PERS-2a shipped (durable KV over 13 seams; Drift identity core account/family/member/child; suite 908/908; pushed 25b519a). NEXT=PERS-2b: devices + permissions tables (device, device_permission, device_health, mode_unlock_attempt). Then PERS-2c location/SOS, PERS-2d communication/AI/audit — then Phase 3 screens, child dashboard first (25 placeholders). /loop 5m.
+resume_hint: PERS-1 + PERS-2a + PERS-2b + PERS-2c shipped. PERS-2c = location/emergency as real rows per ADR-051: location_ping (+90-day prune), geofence with shape CIRCLE|POLYGON, geofence_vertex, geofence_schedule (weekly windows + expect_by => NO_SHOW), geofence_event (+accuracy evidence), sos_alert (+acknowledged_by/at, request_id dedup, delete refused). geofence_engine.dart is pure Dart: haversine, ray-casting point-in-polygon (concave-safe), bounding circle for OS registration, accuracy gate + hysteresis band, schedule windows incl. midnight-crossing, noShowDueAt. Suite 984/984 (was 934); analyze clean; commit local (ADR-043..051 + PERS-2b/2c all unpushed). NEXT=PERS-2d communication/AI/audit — then Phase 3 screens, child dashboard first (25 placeholders). OPEN: CI must run `dart run build_runner build` before `flutter test` — *.g.dart is gitignored by policy. Push needs the GitHub token. /loop 5m.
 ```
 
 ## Field meanings

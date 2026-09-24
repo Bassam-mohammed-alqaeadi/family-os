@@ -10,6 +10,10 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE TYPE member_role      AS ENUM ('OWNER','PARENT','GUARDIAN');
 CREATE TYPE perm_level       AS ENUM ('OBSERVER','PARTNER','FULL');
 CREATE TYPE device_mode      AS ENUM ('PARENT','CHILD_LOCKED','CHILD_PREVIEW');
+-- ADR-051 (2026-09-24): السياج شكلان لا شكل واحد. نظام التشغيل لا يمنحنا إلا
+-- دائرة (Android Geofence.Builder · iOS CLCircularRegion)، والاحتواء الحقيقي
+-- يُحسب في محرّكنا من نقاط الموقع — فيقبل أي شكل مرسوم.
+CREATE TYPE geofence_shape   AS ENUM ('CIRCLE','POLYGON');
 CREATE TYPE perm_key         AS ENUM ('LOCATION_FG','LOCATION_BG','ACCESSIBILITY',
                                       'BATTERY_UNRESTRICTED','AUTOSTART','NOTIFICATIONS',
                                       'USAGE_STATS','SCREEN_TIME_IOS');
@@ -173,26 +177,68 @@ CREATE TABLE location_ping (
 CREATE INDEX ON location_ping (child_id, recorded_at DESC);
 COMMENT ON TABLE location_ping IS 'تُقلَّم تلقائيًا بعد ٩٠ يومًا';
 
+-- ADR-051: الشكل حرّ. lat/lon = مركز الدائرة (CIRCLE) أو **مركز الصندوق المحيط**
+-- (POLYGON) — وهو ما يُسجَّل عند النظام كدائرة محيطة. radius_m للدائرة فقط.
+-- الحدّ الأدنى ١٠ م (كان ٥٠): المحرّك يحسب الاحتواء بنفسه، فحدّ النظام الأدنى
+-- (١٠٠–١٥٠ م) ليس حدًّا لنا — يُطبَّق عند التسجيل عند النظام لا في التخزين.
 CREATE TABLE geofence (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   family_id   uuid NOT NULL REFERENCES family(id) ON DELETE CASCADE,
   child_id    uuid REFERENCES child(id),        -- NULL = كل الأبناء
   name        text NOT NULL,
+  shape       geofence_shape NOT NULL DEFAULT 'CIRCLE',
   lat         double precision NOT NULL,
   lon         double precision NOT NULL,
-  radius_m    int NOT NULL CHECK (radius_m BETWEEN 50 AND 5000),
+  radius_m    int,
   icon        text NOT NULL DEFAULT 'home',
+  -- ⛔ ADR-051: الارتفاع وسمٌ للعرض والتنظيم — لا يدخل في الاحتواء إطلاقًا
+  altitude_m  real,
+  floor_label text,
   created_by  uuid NOT NULL REFERENCES account(id),
-  created_at  timestamptz NOT NULL DEFAULT now()
+  created_at  timestamptz NOT NULL DEFAULT now(),
+
+  CONSTRAINT geofence_radius_by_shape CHECK (
+    (shape = 'CIRCLE'  AND radius_m IS NOT NULL AND radius_m BETWEEN 10 AND 5000) OR
+    (shape = 'POLYGON' AND radius_m IS NULL)
+  )
 );
+
+-- ADR-051: رؤوس المضلّع. المضلّع مُغلق ضمنًا (لا تُكرَّر النقطة الأولى)، والترتيب
+-- بـseq. الحدّ الأدنى ٣ رؤوس يفرضه التطبيق — شرط «عبر الصفوف» لا يُكتب في SQL.
+CREATE TABLE geofence_vertex (
+  geofence_id  uuid NOT NULL REFERENCES geofence(id) ON DELETE CASCADE,
+  seq          smallint NOT NULL CHECK (seq >= 0),
+  lat          double precision NOT NULL,
+  lon          double precision NOT NULL,
+  PRIMARY KEY (geofence_id, seq)
+);
+
+-- ADR-051: الجدولة هي ما يجعل النطاق «ديناميكيًا» زمانيًّا، وهي مصدر NO_SHOW.
+-- غياب الصفوف = نشِط دائمًا (٢٤/٧). الدقائق من منتصف الليل (time لا يُعادل ١:١ في Drift).
+-- end_minute < start_minute يعني نافذة تعبر منتصف الليل (مثل ٢٢:٠٠ → ٠٦:٠٠).
+CREATE TABLE geofence_schedule (
+  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  geofence_id  uuid NOT NULL REFERENCES geofence(id) ON DELETE CASCADE,
+  weekday      smallint NOT NULL CHECK (weekday BETWEEN 1 AND 7),  -- ١ = الإثنين (ISO-8601)
+  start_minute smallint NOT NULL CHECK (start_minute BETWEEN 0 AND 1439),
+  end_minute   smallint NOT NULL CHECK (end_minute   BETWEEN 0 AND 1439),
+  expect_by    smallint CHECK (expect_by BETWEEN 0 AND 1439),      -- وقت «عدم الوصول»
+  CONSTRAINT window_not_empty CHECK (end_minute <> start_minute)
+);
+CREATE UNIQUE INDEX ON geofence_schedule (geofence_id, weekday, start_minute);
+COMMENT ON TABLE geofence_schedule IS 'غياب الصفوف = ٢٤/٧ · expect_by يُنتج NO_SHOW';
 
 CREATE TABLE geofence_event (
   id           bigserial PRIMARY KEY,
   geofence_id  uuid NOT NULL REFERENCES geofence(id) ON DELETE CASCADE,
   child_id     uuid NOT NULL REFERENCES child(id) ON DELETE CASCADE,
   kind         text NOT NULL CHECK (kind IN ('ENTER','EXIT','NO_SHOW')),
-  occurred_at  timestamptz NOT NULL
+  occurred_at  timestamptz NOT NULL,
+  -- ADR-051: القرار يُخزَّن مع دليله — دقّة النقطة التي بُني عليها، فلا تُتّهم
+  -- المنظومة بالخطأ حين يكون الخطأ في دقّة الموقع نفسها.
+  accuracy_m   real
 );
+CREATE INDEX ON geofence_event (geofence_id, child_id, occurred_at DESC);
 
 -- 🚨 لا يُحذف أبدًا · لا يعتمد على اشتراك ولا صلاحية
 CREATE TABLE sos_alert (
@@ -203,10 +249,14 @@ CREATE TABLE sos_alert (
   received_at   timestamptz NOT NULL DEFAULT now(),
   lat           double precision,
   lon           double precision,
-  status        sos_status NOT NULL DEFAULT 'ACTIVE',
-  resolved_by   uuid REFERENCES account(id),    -- إغلاق يدوي فقط
-  resolved_at   timestamptz,
-  request_id    uuid UNIQUE NOT NULL            -- منع الازدواج عند إعادة الإرسال
+  status          sos_status NOT NULL DEFAULT 'ACTIVE',
+  -- ADR-051: الإقرار والإنهاء حدثان مختلفان — الإقرار يقول «رأيتُ الاستغاثة»،
+  -- والإنهاء يقول «انتهت». كان العقد يحفظ الثاني فقط.
+  acknowledged_by uuid REFERENCES account(id),
+  acknowledged_at timestamptz,
+  resolved_by     uuid REFERENCES account(id),  -- إغلاق يدوي فقط
+  resolved_at     timestamptz,
+  request_id      uuid UNIQUE NOT NULL          -- منع الازدواج عند إعادة الإرسال
 );
 CREATE INDEX ON sos_alert (family_id, status) WHERE status = 'ACTIVE';
 
