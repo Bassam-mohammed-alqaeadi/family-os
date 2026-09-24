@@ -2,10 +2,10 @@
 
 ```
 status: RUNNING
-current_card: PERS-2
+current_card: PERS-2b
 blocked_by: (none)
 last_tick: 2026-09-24
-resume_hint: PERS-1 shipped (durable storage over 13 store seams; settings survive restart; suite 902/902). NEXT=PERS-2: keep every remaining screen on the durable seams + start Drift for the 20-table _CONTRACTS schema. Then Phase 3 screens — child dashboard first (25 placeholders). /loop 5m.
+resume_hint: PERS-1 + PERS-2a shipped (durable KV over 13 seams; Drift identity core account/family/member/child; suite 908/908; pushed 25b519a). NEXT=PERS-2b: devices + permissions tables (device, device_permission, device_health, mode_unlock_attempt). Then PERS-2c location/SOS, PERS-2d communication/AI/audit — then Phase 3 screens, child dashboard first (25 placeholders). /loop 5m.
 ```
 
 ## Field meanings

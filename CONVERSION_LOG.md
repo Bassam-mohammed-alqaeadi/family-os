@@ -257,4 +257,5 @@ Format: `YYYY-MM-DD | <task-id> | <summary> | evidence`
 
 2026-09-22 | PRT-1 | generator groundwork: shell_config.dart (5/4 branches, 17/5 tabless, hubIndex 9 tabs) from screens.csv; router behaviour unchanged | evidence: analyze clean; shell_config_test green; verify_ship .verify/PRT-1.json
 2026-09-24 | PERS-1 | Rule 25 storage: shared_preferences + DurablePrefsStore satisfying 13 stage1 store seams; installed from main() before runApp; father/child settings now survive an app restart | analyze clean; durable_persistence_test 6/6 green; FULL suite 902/902 (was 896)
+2026-09-24 | PERS-2a | local relational store: Drift database shaped after _CONTRACTS/schema.sql (table names 1:1); identity core account/family/member/child + enum converters storing contract labels; DriftChildRepository (Rule 25); acceptance: a child row survives close+reopen | analyze clean; family_database_test 6/6 green; FULL suite 908/908 (was 902); pushed 25b519a
 
