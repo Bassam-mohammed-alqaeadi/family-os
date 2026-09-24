@@ -169,4 +169,118 @@ void main() {
       );
     });
   });
+
+  group('the chat rules of ADR-053', () {
+    final now = DateTime(2026, 9, 24, 20);
+
+    test('a mute is a window, so it ends by itself', () {
+      expect(
+        chatIsMuted(mutedUntil: now.add(const Duration(minutes: 1)), now: now),
+        isTrue,
+      );
+      expect(
+        chatIsMuted(mutedUntil: now.subtract(const Duration(minutes: 1)), now: now),
+        isFalse,
+      );
+      expect(chatIsMuted(mutedUntil: null, now: now), isFalse);
+    });
+
+    test('"دائمًا" is a real instant, never a null that reads as "not muted"', () {
+      final forever = muteUntilFor(preset: null, now: now);
+      expect(forever, kMuteForeverUntil);
+      expect(chatIsMuted(mutedUntil: forever, now: now), isTrue);
+
+      expect(
+        muteUntilFor(preset: kMuteEightHours, now: now),
+        now.add(const Duration(hours: 8)),
+      );
+      expect(
+        muteUntilFor(preset: kMuteOneWeek, now: now),
+        now.add(const Duration(days: 7)),
+      );
+    });
+
+    test('receipts cannot be switched off in a parent thread', () {
+      expect(receiptsMayBeDisabled(hasParentMember: false), isTrue);
+      expect(receiptsMayBeDisabled(hasParentMember: true), isFalse);
+    });
+
+    test('each tick is earned by a read row — there is no "delivered"', () {
+      expect(tickFor(readerCount: 0), MessageTick.sent);
+      expect(tickFor(readerCount: 1), MessageTick.read);
+      expect(MessageTick.values, hasLength(2));
+    });
+
+    test('the blue tick in a group waits for everyone except the sender', () {
+      expect(readByAll(otherMemberCount: 3, readerCount: 2), isFalse);
+      expect(readByAll(otherMemberCount: 3, readerCount: 3), isTrue);
+      expect(readByAll(otherMemberCount: 0, readerCount: 0), isFalse);
+    });
+
+    test('a tombstone cannot be pinned', () {
+      expect(mayPin(deleted: false), isTrue);
+      expect(mayPin(deleted: true), isFalse);
+    });
+
+    test('the pin is one fact: an instant and one pinner, or nothing', () {
+      expect(
+        () => requirePinState(
+          pinnedAt: now,
+          byAccount: 'acc-1',
+          byChild: null,
+        ),
+        returnsNormally,
+      );
+      expect(
+        () => requirePinState(pinnedAt: null, byAccount: null, byChild: null),
+        returnsNormally,
+      );
+      // an instant with nobody who pinned it
+      expect(
+        () => requirePinState(pinnedAt: now, byAccount: null, byChild: null),
+        throwsA(isA<ArgumentError>()),
+      );
+      // a pinner with no instant
+      expect(
+        () => requirePinState(pinnedAt: null, byAccount: 'acc-1', byChild: null),
+        throwsA(isA<ArgumentError>()),
+      );
+      // both at once
+      expect(
+        () => requirePinState(
+          pinnedAt: now,
+          byAccount: 'acc-1',
+          byChild: 'child-1',
+        ),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
+    test('themes, wallpapers and reader kinds stay inside their sets', () {
+      for (final theme in kBubbleThemes) {
+        expect(() => requireBubbleTheme(theme), returnsNormally);
+        expect(() => requireOwnerKind('ACCOUNT'), returnsNormally);
+      }
+      expect(
+        () => requireBubbleTheme('rainbow'),
+        throwsA(isA<ArgumentError>()),
+      );
+
+      for (final wallpaper in kWallpapers) {
+        expect(() => requireWallpaper(wallpaper), returnsNormally);
+      }
+      expect(
+        () => requireWallpaper('marble'),
+        throwsA(isA<ArgumentError>()),
+      );
+
+      for (final kind in kReaderKinds) {
+        expect(() => requireReaderKind(kind), returnsNormally);
+      }
+      expect(
+        () => requireReaderKind('ROBOT'),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+  });
 }

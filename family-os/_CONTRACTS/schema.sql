@@ -284,9 +284,44 @@ CREATE TABLE message (
   edited_at        timestamptz,                 -- S-COM-006: ١٥ دقيقة
   deleted_at       timestamptz,
   request_id       uuid UNIQUE NOT NULL,
-  CONSTRAINT one_sender CHECK (num_nonnulls(sender_account, sender_child) = 1)
+  -- S-COM-008: تثبيت رسالة داخل المحادثة (≠ تثبيت المحادثة في القائمة)
+  pinned_at        timestamptz,
+  pinned_by_account uuid REFERENCES account(id),
+  pinned_by_child   uuid REFERENCES child(id),
+  CONSTRAINT one_sender CHECK (num_nonnulls(sender_account, sender_child) = 1),
+  -- التثبيت حقيقة واحدة: وقتٌ ومُثبِّت واحد، أو لا شيء
+  CONSTRAINT pin_has_pinner CHECK (
+    (pinned_at IS NULL) = (num_nonnulls(pinned_by_account, pinned_by_child) = 0)
+  )
 );
 CREATE INDEX ON message (conversation_id, sent_at DESC);
+CREATE INDEX ON message (conversation_id) WHERE pinned_at IS NOT NULL;
+
+-- S-COM-005: تأكيد القراءة — القارئ هوية واحدة في عمودين.
+-- (مفتاح أساسي على أعمدة قابلة للفراغ لا يمنع التكرار: نفس القارئ يمرّ مرّتين)
+CREATE TABLE message_read (
+  message_id  uuid NOT NULL REFERENCES message(id) ON DELETE CASCADE,
+  reader_kind text NOT NULL CHECK (reader_kind IN ('ACCOUNT','CHILD')),
+  reader_key  uuid NOT NULL,
+  read_at     timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (message_id, reader_key)
+);
+CREATE INDEX ON message_read (reader_key, read_at DESC);
+
+-- ADR-053: إعدادات كل محادثة — ملك القارئ لا ملك المحادثة
+-- (كتم الأب للمحادثة لا يجوز أن يكتمها عند الابن)
+CREATE TABLE chat_preference (
+  conversation_id uuid NOT NULL REFERENCES conversation(id) ON DELETE CASCADE,
+  owner_kind      text NOT NULL CHECK (owner_kind IN ('ACCOUNT','CHILD')),
+  owner_key       uuid NOT NULL,
+  muted_until     timestamptz,    -- NULL = بلا كتم · «دائمًا» = لحظة بعيدة حقيقية
+  archived_at     timestamptz,
+  pinned_at       timestamptz,
+  wallpaper       text,           -- light | rose | mint | violet
+  bubble_theme    text,           -- p | rose | teal
+  updated_at      timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (conversation_id, owner_key)
+);
 
 CREATE TABLE call_log (
   id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),

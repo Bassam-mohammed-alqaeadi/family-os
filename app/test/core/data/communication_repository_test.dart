@@ -275,6 +275,201 @@ void main() {
     });
   });
 
+  // The two ticks are `MessageTick.sent` / `.read`; the rule itself is tested in
+  // `communication_rules_test.dart`, and what is measured here is the ROWS the
+  // ticks are earned by.
+  group('pins (S-COM-008)', () {
+    test('a pin is an instant plus one pinner, and the newest pin shows', () async {
+      await openFamilyRoom();
+      await send(id: 'msg-1', requestId: 'req-1');
+      await send(
+        id: 'msg-2',
+        requestId: 'req-2',
+        at: _base.add(const Duration(minutes: 5)),
+      );
+
+      final pinned = await repo.pinMessage(
+        id: 'msg-1',
+        actorKey: 'acc-parent',
+        actorKind: 'ACCOUNT',
+        at: _base,
+      );
+
+      expect(pinned.pinnedAt, _base);
+      expect(pinned.pinnedByAccount, 'acc-parent');
+      expect(pinned.pinnedByChild, isNull);
+      expect((await repo.pinnedMessageIn('conv-1'))!.id, 'msg-1');
+
+      // Pinning a second message moves the pin — the reader takes the newest.
+      final second = await repo.pinMessage(
+        id: 'msg-2',
+        actorKey: 'child-1',
+        actorKind: 'CHILD',
+        at: _base.add(const Duration(minutes: 6)),
+      );
+
+      expect(second.pinnedByChild, 'child-1');
+      expect(second.pinnedByAccount, isNull);
+      expect((await repo.pinnedMessageIn('conv-1'))!.id, 'msg-2');
+      // The first message keeps its own pinned_at: a pin is per message, and it
+      // is the reader that picks the most recent one.
+      expect((await repo.messageById('msg-1'))!.pinnedAt, _base);
+    });
+
+    test('unpinning clears all three columns', () async {
+      await openFamilyRoom();
+      await send(id: 'msg-1', requestId: 'req-1');
+      await repo.pinMessage(
+        id: 'msg-1',
+        actorKey: 'acc-parent',
+        actorKind: 'ACCOUNT',
+        at: _base,
+      );
+
+      final cleared = await repo.unpinMessage('msg-1');
+
+      expect(cleared.pinnedAt, isNull);
+      expect(cleared.pinnedByAccount, isNull);
+      expect(cleared.pinnedByChild, isNull);
+      expect(await repo.pinnedMessageIn('conv-1'), isNull);
+    });
+
+    test('a deleted message cannot be pinned', () async {
+      await openFamilyRoom();
+      await send(id: 'msg-1', requestId: 'req-1');
+      await repo.tombstoneMessage('msg-1', at: _base);
+
+      await expectLater(
+        repo.pinMessage(
+          id: 'msg-1',
+          actorKey: 'acc-parent',
+          actorKind: 'ACCOUNT',
+          at: _base,
+        ),
+        throwsA(isA<MessagePinRefused>()),
+      );
+
+      expect(await repo.pinnedMessageIn('conv-1'), isNull);
+    });
+
+    test('an unknown actor kind is refused before the write', () async {
+      await openFamilyRoom();
+      await send(id: 'msg-1', requestId: 'req-1');
+
+      await expectLater(
+        repo.pinMessage(
+          id: 'msg-1',
+          actorKey: 'acc-parent',
+          actorKind: 'ROBOT',
+          at: _base,
+        ),
+        throwsA(isA<ArgumentError>()),
+      );
+
+      expect(await repo.pinnedMessageIn('conv-1'), isNull);
+    });
+  });
+
+  group('read receipts (S-COM-005)', () {
+    test('reading twice is one row, and two readers are two', () async {
+      await openFamilyRoom();
+      await send(id: 'msg-1', requestId: 'req-1', senderChildId: 'child-1');
+
+      expect(await repo.readCount('msg-1'), 0);
+      expect((await repo.tickOf('msg-1')).name, 'sent');
+
+      await repo.markRead(
+        messageId: 'msg-1',
+        readerKey: 'acc-parent',
+        readerKind: 'ACCOUNT',
+        at: _base,
+      );
+
+      expect(await repo.readCount('msg-1'), 1);
+      expect((await repo.tickOf('msg-1')).name, 'read');
+
+      // The same reader again: still one row, moved instant.
+      await repo.markRead(
+        messageId: 'msg-1',
+        readerKey: 'acc-parent',
+        readerKind: 'ACCOUNT',
+        at: _base.add(const Duration(minutes: 2)),
+      );
+
+      final readers = await repo.readersOf('msg-1');
+      expect(readers, hasLength(1));
+      expect(readers.single.readAt, _base.add(const Duration(minutes: 2)));
+      expect(readers.single.readerKind, 'ACCOUNT');
+
+      await repo.markRead(
+        messageId: 'msg-1',
+        readerKey: 'child-2',
+        readerKind: 'CHILD',
+      );
+
+      expect(await repo.readCount('msg-1'), 2);
+    });
+
+    test('an unknown reader kind or an unknown message is refused', () async {
+      await openFamilyRoom();
+      await send(id: 'msg-1', requestId: 'req-1');
+
+      await expectLater(
+        repo.markRead(messageId: 'msg-1', readerKey: 'x', readerKind: 'ROBOT'),
+        throwsA(isA<ArgumentError>()),
+      );
+      await expectLater(
+        repo.markRead(
+          messageId: 'nope',
+          readerKey: 'x',
+          readerKind: 'ACCOUNT',
+        ),
+        throwsA(isA<ArgumentError>()),
+      );
+
+      expect(await repo.readCount('msg-1'), 0);
+    });
+
+    test('opening a thread marks the others read, and only once', () async {
+      await openFamilyRoom();
+      await send(id: 'msg-1', requestId: 'req-1', senderChildId: 'child-1');
+      await send(
+        id: 'msg-2',
+        requestId: 'req-2',
+        senderChildId: null,
+        senderAccountId: 'acc-parent',
+      );
+      await send(id: 'msg-3', requestId: 'req-3', senderChildId: 'child-2');
+      await send(id: 'msg-4', requestId: 'req-4', senderChildId: 'child-1');
+      await repo.tombstoneMessage('msg-4', at: _base);
+
+      final marked = await repo.markThreadRead(
+        conversationId: 'conv-1',
+        readerKey: 'acc-parent',
+        readerKind: 'ACCOUNT',
+        at: _base,
+      );
+
+      // msg-1 and msg-3: not my own (msg-2), and a tombstone has nothing to read
+      // (msg-4).
+      expect(marked, 2);
+      expect(await repo.readCount('msg-1'), 1);
+      expect(await repo.readCount('msg-2'), 0);
+      expect(await repo.readCount('msg-4'), 0);
+
+      // The badge is already empty: a second open finds nothing new.
+      expect(
+        await repo.markThreadRead(
+          conversationId: 'conv-1',
+          readerKey: 'acc-parent',
+          readerKind: 'ACCOUNT',
+          at: _base,
+        ),
+        0,
+      );
+    });
+  });
+
   group('acceptance — the conversation survives a database reopen', () {
     test('open a room, send, close, reopen, read the same bytes', () async {
       final dir = Directory.systemTemp.createTempSync('family_os_pers2d_comm');

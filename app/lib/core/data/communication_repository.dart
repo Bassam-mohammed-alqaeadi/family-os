@@ -30,6 +30,17 @@ class MessageEditRefused implements Exception {
   String toString() => 'message edit refused: $reason';
 }
 
+/// Raised when a pin is attempted on a tombstone — a pin is a promise at the top
+/// of the thread, and a deleted message is no longer there to keep it.
+class MessagePinRefused implements Exception {
+  const MessagePinRefused(this.reason);
+
+  final String reason;
+
+  @override
+  String toString() => 'message pin refused: $reason';
+}
+
 /// Rule 25 seam — conversations, messages and calls as real rows.
 ///
 /// The store never sees a message body: it takes ciphertext bytes and gives them
@@ -80,6 +91,46 @@ abstract class CommunicationRepository {
 
   /// "حذف للجميع" — the row survives, the body goes.
   Future<Message> tombstoneMessage(String id, {DateTime? at});
+
+  /// S-COM-008 — pins a message inside its thread. A tombstone cannot be pinned.
+  Future<Message> pinMessage({
+    required String id,
+    required String actorKey,
+    required String actorKind,
+    DateTime? at,
+  });
+
+  Future<Message> unpinMessage(String id);
+
+  /// The thread's pinned message, if any — the most recent pin wins.
+  Future<Message?> pinnedMessageIn(String conversationId);
+
+  /// S-COM-005 — records that [readerKey] read this message. Reading twice is
+  /// the same read: the row is keyed by (message, reader).
+  Future<MessageRead> markRead({
+    required String messageId,
+    required String readerKey,
+    required String readerKind,
+    DateTime? at,
+  });
+
+  Future<List<MessageRead>> readersOf(String messageId);
+
+  Future<int> readCount(String messageId);
+
+  /// The tick this message has earned: ✓ while nobody has read it, ✓✓ once a
+  /// read row exists. Derived from the rows, never stored as a flag.
+  Future<MessageTick> tickOf(String messageId);
+
+  /// Opens a thread: every message that is not this reader's gets a read row.
+  /// The unread badge emptying is one operation, so a half-read thread cannot
+  /// be left behind.
+  Future<int> markThreadRead({
+    required String conversationId,
+    required String readerKey,
+    required String readerKind,
+    DateTime? at,
+  });
 
   Future<CallLog> recordCall({
     required String id,
@@ -257,6 +308,147 @@ final class DriftCommunicationRepository implements CommunicationRepository {
       ),
     );
     return _requireMessage(id);
+  }
+
+  @override
+  Future<Message> pinMessage({
+    required String id,
+    required String actorKey,
+    required String actorKind,
+    DateTime? at,
+  }) async {
+    requireReaderKind(actorKind);
+    final now = at ?? DateTime.now();
+    final message = await _requireMessage(id);
+
+    if (!mayPin(deleted: message.deletedAt != null)) {
+      throw const MessagePinRefused('لا تُثبَّت رسالة محذوفة');
+    }
+
+    // ONE pinner, from the same two kinds a sender comes from: `actorKind` says
+    // which column it belongs to, and `requirePinState` checks the pair before
+    // the write.
+    final byAccount = actorKind == 'ACCOUNT' ? actorKey : null;
+    final byChild = actorKind == 'CHILD' ? actorKey : null;
+    requirePinState(pinnedAt: now, byAccount: byAccount, byChild: byChild);
+
+    // Pinning a second message moves the pin: this writes a new pin, and the
+    // reader is the one that shows "the most recent". No flag to clear first.
+    await (_db.update(_db.messages)..where((t) => t.id.equals(id))).write(
+      MessagesCompanion(
+        pinnedAt: Value(now),
+        pinnedByAccount: Value(byAccount),
+        pinnedByChild: Value(byChild),
+      ),
+    );
+    return _requireMessage(id);
+  }
+
+  @override
+  Future<Message> unpinMessage(String id) async {
+    await _requireMessage(id);
+    await (_db.update(_db.messages)..where((t) => t.id.equals(id))).write(
+      MessagesCompanion(
+        pinnedAt: const Value<DateTime?>(null),
+        pinnedByAccount: const Value<String?>(null),
+        pinnedByChild: const Value<String?>(null),
+      ),
+    );
+    return _requireMessage(id);
+  }
+
+  @override
+  Future<Message?> pinnedMessageIn(String conversationId) {
+    return (_db.select(_db.messages)
+          ..where(
+            (t) =>
+                t.conversationId.equals(conversationId) &
+                t.pinnedAt.isNotNull(),
+          )
+          ..orderBy([(t) => OrderingTerm.desc(t.pinnedAt)])
+          ..limit(1))
+        .getSingleOrNull();
+  }
+
+  @override
+  Future<MessageRead> markRead({
+    required String messageId,
+    required String readerKey,
+    required String readerKind,
+    DateTime? at,
+  }) async {
+    requireReaderKind(readerKind);
+    await _requireMessage(messageId);
+
+    // Reading twice is the same read: the key is (message, reader), so a second
+    // open of the thread moves the instant instead of adding a row.
+    await _db.into(_db.messageReads).insertOnConflictUpdate(
+          MessageReadsCompanion.insert(
+            messageId: messageId,
+            readerKind: readerKind,
+            readerKey: readerKey,
+            readAt: Value(at ?? DateTime.now()),
+          ),
+        );
+
+    final stored = await (_db.select(_db.messageReads)
+          ..where(
+            (t) =>
+                t.messageId.equals(messageId) & t.readerKey.equals(readerKey),
+          ))
+        .getSingleOrNull();
+    if (stored == null) {
+      throw StateError('message_read $messageId/$readerKey لم تُكتب');
+    }
+    return stored;
+  }
+
+  @override
+  Future<List<MessageRead>> readersOf(String messageId) {
+    return (_db.select(_db.messageReads)
+          ..where((t) => t.messageId.equals(messageId))
+          ..orderBy([(t) => OrderingTerm.asc(t.readAt)]))
+        .get();
+  }
+
+  @override
+  Future<int> readCount(String messageId) async {
+    final readers = await readersOf(messageId);
+    return readers.length;
+  }
+
+  @override
+  Future<MessageTick> tickOf(String messageId) async =>
+      tickFor(readerCount: await readCount(messageId));
+
+  @override
+  Future<int> markThreadRead({
+    required String conversationId,
+    required String readerKey,
+    required String readerKind,
+    DateTime? at,
+  }) async {
+    requireReaderKind(readerKind);
+    final now = at ?? DateTime.now();
+
+    var marked = 0;
+    for (final message in await messagesIn(conversationId, limit: 1000)) {
+      // My own message is not unread to me, and a tombstone has nothing to read.
+      if ((message.senderAccount ?? message.senderChild) == readerKey) continue;
+      if (message.deletedAt != null) continue;
+      if (await readCount(message.id) > 0) {
+        final readers = await readersOf(message.id);
+        if (readers.any((r) => r.readerKey == readerKey)) continue;
+      }
+      await markRead(
+        messageId: message.id,
+        readerKey: readerKey,
+        readerKind: readerKind,
+        at: now,
+      );
+      marked++;
+    }
+    return marked;
   }
 
   Future<Message> _requireMessage(String id) async {

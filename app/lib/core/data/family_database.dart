@@ -589,6 +589,10 @@ class Conversations extends Table {
 ///
 /// There is no hard delete: "حذف للجميع" (S-COM-007) writes `deletedAt` and
 /// leaves the row, so a reply that points at it still resolves.
+///
+/// S-COM-008 adds a pin: `pinnedAt` and the one who pinned it. A pin is one
+/// fact, so `requirePinState` keeps the three columns coherent — "مثبّتة بلا
+/// مُثبِّت" is a row nobody can read.
 class Messages extends Table {
   @override
   String get tableName => 'message';
@@ -606,8 +610,59 @@ class Messages extends Table {
   DateTimeColumn get deletedAt => dateTime().nullable()();
   TextColumn get requestId => text().unique()();
 
+  /// S-COM-008 — the pin inside the thread. Not the pin of the thread in the
+  /// list: that one is per reader and lives in `chat_preference`.
+  DateTimeColumn get pinnedAt => dateTime().nullable()();
+  TextColumn get pinnedByAccount => text().nullable()();
+  TextColumn get pinnedByChild => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Contract `message_read` — S-COM-005 "تأكيد القراءة". The second tick is not a
+/// feeling: it is this row existing.
+///
+/// The reader is ONE identity in two columns (`readerKind` + `readerKey`) rather
+/// than the sender's two nullable columns, because a primary key over nullable
+/// columns enforces nothing — a `(message_id, reader_account, reader_child)` key
+/// would let the same reader count twice.
+class MessageReads extends Table {
+  @override
+  String get tableName => 'message_read';
+
+  TextColumn get messageId => text()();
+  TextColumn get readerKind => text()();
+  TextColumn get readerKey => text()();
+  DateTimeColumn get readAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {messageId, readerKey};
+}
+
+/// Contract `chat_preference` — ADR-053: what WhatsApp puts behind "إعدادات هذه
+/// المحادثة". They belong to the READER, not to the conversation, so muting a
+/// room for the father cannot mute it for the child.
+class ChatPreferences extends Table {
+  @override
+  String get tableName => 'chat_preference';
+
+  TextColumn get conversationId => text()();
+  TextColumn get ownerKind => text()();
+  TextColumn get ownerKey => text()();
+
+  /// Null = not muted; a future instant = muted until then. "دائمًا" is a real
+  /// far instant ([kMuteForeverUntil]), never a null that would read as "not
+  /// muted" — the two must not be the same stored value.
+  DateTimeColumn get mutedUntil => dateTime().nullable()();
+  DateTimeColumn get archivedAt => dateTime().nullable()();
+  DateTimeColumn get pinnedAt => dateTime().nullable()();
+  TextColumn get wallpaper => text().nullable()();
+  TextColumn get bubbleTheme => text().nullable()();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {conversationId, ownerKey};
 }
 
 /// Contract `call_log` — "⛔ عمدًا: لا تسجيل صوت ولا فيديو". There is no column
@@ -713,6 +768,8 @@ class AuditLogs extends Table {
     AiEvents,
     AiSuggestions,
     AuditLogs,
+    MessageReads,
+    ChatPreferences,
   ],
 )
 class FamilyDatabase extends _$FamilyDatabase {
@@ -720,9 +777,10 @@ class FamilyDatabase extends _$FamilyDatabase {
 
   /// v1 = identity core (PERS-2a) · v2 = devices + permissions (PERS-2b)
   /// · v3 = location + geofence + emergency (PERS-2c, ADR-051)
-  /// · v4 = communication + AI + audit (PERS-2d, ADR-052).
+  /// · v4 = communication + AI + audit (PERS-2d, ADR-052)
+  /// · v5 = read receipts, message pin and per-chat settings (ADR-053).
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -749,6 +807,15 @@ class FamilyDatabase extends _$FamilyDatabase {
             await m.createTable(aiEvents);
             await m.createTable(aiSuggestions);
             await m.createTable(auditLogs);
+          }
+          if (from < 5) {
+            // ADR-053: the pin is columns on `message`; the receipts and the
+            // per-chat settings are tables of their own.
+            await m.addColumn(messages, messages.pinnedAt);
+            await m.addColumn(messages, messages.pinnedByAccount);
+            await m.addColumn(messages, messages.pinnedByChild);
+            await m.createTable(messageReads);
+            await m.createTable(chatPreferences);
           }
         },
       );

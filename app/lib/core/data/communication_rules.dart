@@ -160,3 +160,100 @@ void requireCallOutcome(String outcome) {
     throw ArgumentError.value(outcome, 'outcome', 'allowed: $kCallOutcomes');
   }
 }
+
+// ==== chat rules (ADR-053 — «خطّ واتساب المعتدل») ====
+/// The reader of a message is one identity held in two columns; these are the
+/// kinds the contract allows, exactly as `reader_kind`'s CHECK says.
+const Set<String> kReaderKinds = {'ACCOUNT', 'CHILD'};
+
+/// `chat_preference.bubble_theme` — the three themes the visual reference
+/// offers. A family chat does not need a theme store.
+const Set<String> kBubbleThemes = {'p', 'rose', 'teal'};
+
+/// `chat_preference.wallpaper` — the four backgrounds the reference offers.
+const Set<String> kWallpapers = {'light', 'rose', 'mint', 'violet'};
+
+/// WhatsApp's two mute presets; "دائمًا" is [kMuteForeverUntil].
+const Duration kMuteEightHours = Duration(hours: 8);
+const Duration kMuteOneWeek = Duration(days: 7);
+
+/// "دائمًا" is a real instant far outside any window, never `null`: a null mute
+/// and "بلا كتم" would be the same stored value, and the two must not be
+/// confused. Expiry is a property of the value, not of a cleanup job.
+///
+/// Local, not UTC, on purpose: every other instant in this schema is a local
+/// `DateTime` (a drift `int` of epoch seconds), so a UTC sentinel would come
+/// back out of the database shifted by the offset and stop being itself.
+final DateTime kMuteForeverUntil = DateTime(9999, 12, 31);
+
+/// A mute is a window, so it ends by itself instead of needing to be switched
+/// back — which is what "٨ ساعات / أسبوع / دائمًا" actually promises.
+bool chatIsMuted({required DateTime? mutedUntil, required DateTime now}) =>
+    mutedUntil != null && mutedUntil.isAfter(now);
+
+DateTime muteUntilFor({required Duration? preset, required DateTime now}) =>
+    preset == null ? kMuteForeverUntil : now.add(preset);
+
+/// ADR-053 — read receipts can be switched off between peers, but not in a
+/// thread that has a parent in it: "قرأتُ رسالتك" is what a parent's peace of
+/// mind is made of, and S-COM-005 is a P0 promise rather than a preference.
+bool receiptsMayBeDisabled({required bool hasParentMember}) => !hasParentMember;
+
+/// The two ticks, each earned by a row rather than assumed.
+///
+/// There is deliberately no third state: WhatsApp's grey ✓✓ means "delivered",
+/// which is a transport fact this device cannot observe. A tick we cannot back
+/// is exactly the promise ADR-044 forbids — so it is not drawn.
+enum MessageTick { sent, read }
+
+MessageTick tickFor({required int readerCount}) =>
+    readerCount > 0 ? MessageTick.read : MessageTick.sent;
+
+/// In a group the blue double tick means "everyone has read it", the sender
+/// excluded — so [otherMemberCount] counts the others, not the room.
+bool readByAll({required int otherMemberCount, required int readerCount}) =>
+    otherMemberCount > 0 && readerCount >= otherMemberCount;
+
+/// S-COM-008 — a tombstone cannot be pinned: a pin is a promise at the top of
+/// the thread, and a deleted message is no longer there to keep it.
+bool mayPin({required bool deleted}) => !deleted;
+
+/// The pin's three columns are one fact: "مثبّتة، وهذه من ثبّتها" or "ليست
+/// مثبّتة". A timestamp with no pinner, or a pinner with no timestamp, is a row
+/// nobody can read — the contract says it with a CHECK, and so does this.
+void requirePinState({
+  required DateTime? pinnedAt,
+  required String? byAccount,
+  required String? byChild,
+}) {
+  final pinners = (byAccount != null ? 1 : 0) + (byChild != null ? 1 : 0);
+  if (pinnedAt == null ? pinners != 0 : pinners != 1) {
+    throw ArgumentError.value(
+      pinnedAt,
+      'pinnedAt',
+      'التثبيت حقيقة واحدة: وقتٌ ومُثبِّت واحد، أو لا شيء',
+    );
+  }
+}
+
+void requireReaderKind(String kind) {
+  if (!kReaderKinds.contains(kind)) {
+    throw ArgumentError.value(kind, 'readerKind', 'allowed: $kReaderKinds');
+  }
+}
+
+/// `chat_preference.owner_kind` carries the same two kinds as a reader: the
+/// person who opens a thread is the same person who reads in it.
+void requireOwnerKind(String kind) => requireReaderKind(kind);
+
+void requireBubbleTheme(String theme) {
+  if (!kBubbleThemes.contains(theme)) {
+    throw ArgumentError.value(theme, 'bubbleTheme', 'allowed: $kBubbleThemes');
+  }
+}
+
+void requireWallpaper(String wallpaper) {
+  if (!kWallpapers.contains(wallpaper)) {
+    throw ArgumentError.value(wallpaper, 'wallpaper', 'allowed: $kWallpapers');
+  }
+}
