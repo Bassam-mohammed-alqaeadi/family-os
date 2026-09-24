@@ -162,6 +162,84 @@ class PermStatusConverter extends TypeConverter<PermStatus, String> {
   String toSql(PermStatus value) => _toDb[value]!;
 }
 
+/// Contract `sos_status`. ACKNOWLEDGED and RESOLVED are different facts —
+/// "I saw it" and "it is over" — and only the second closes an alarm.
+enum SosStatus { active, acknowledged, resolved }
+
+class SosStatusConverter extends TypeConverter<SosStatus, String> {
+  const SosStatusConverter();
+
+  static const Map<SosStatus, String> _toDb = {
+    SosStatus.active: 'ACTIVE',
+    SosStatus.acknowledged: 'ACKNOWLEDGED',
+    SosStatus.resolved: 'RESOLVED',
+  };
+
+  @override
+  SosStatus fromSql(String fromDb) => _toDb.entries
+      .firstWhere(
+        (e) => e.value == fromDb,
+        orElse: () => const MapEntry(SosStatus.active, 'ACTIVE'),
+      )
+      .key;
+
+  @override
+  String toSql(SosStatus value) => _toDb[value]!;
+}
+
+/// Contract `geofence_shape` — ADR-051. The OS only accepts a circle, so the
+/// circle case is the one it can register; the polygon is ours to evaluate.
+enum GeofenceShape { circle, polygon }
+
+class GeofenceShapeConverter extends TypeConverter<GeofenceShape, String> {
+  const GeofenceShapeConverter();
+
+  static const Map<GeofenceShape, String> _toDb = {
+    GeofenceShape.circle: 'CIRCLE',
+    GeofenceShape.polygon: 'POLYGON',
+  };
+
+  @override
+  GeofenceShape fromSql(String fromDb) => _toDb.entries
+      .firstWhere(
+        (e) => e.value == fromDb,
+        orElse: () => const MapEntry(GeofenceShape.circle, 'CIRCLE'),
+      )
+      .key;
+
+  @override
+  String toSql(GeofenceShape value) => _toDb[value]!;
+}
+
+/// Contract `geofence_event.kind` — `text` with a CHECK, not a `CREATE TYPE`,
+/// so the value set lives here and is enforced by `DriftLocationRepository`.
+enum GeofenceEventKind { enter, exit, noShow }
+
+class GeofenceEventKindConverter
+    extends TypeConverter<GeofenceEventKind, String> {
+  const GeofenceEventKindConverter();
+
+  static const Map<GeofenceEventKind, String> _toDb = {
+    GeofenceEventKind.enter: 'ENTER',
+    GeofenceEventKind.exit: 'EXIT',
+    GeofenceEventKind.noShow: 'NO_SHOW',
+  };
+
+  @override
+  GeofenceEventKind fromSql(String fromDb) => _toDb.entries
+      .firstWhere(
+        (e) => e.value == fromDb,
+        orElse: () => const MapEntry(GeofenceEventKind.enter, 'ENTER'),
+      )
+      .key;
+
+  @override
+  String toSql(GeofenceEventKind value) => _toDb[value]!;
+}
+
+/// `prune_locations()` — "تُقلَّم تلقائيًا بعد ٩٠ يومًا".
+const int kLocationRetentionDays = 90;
+
 /// `device_health.score` — the contract keeps these as `text` with a documented
 /// value set (they are not `CREATE TYPE`s, so they are not typed here either).
 const String kHealthGood = 'GOOD';
@@ -322,6 +400,121 @@ class ModeUnlockAttempts extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// Contract `location_ping` — the raw trail every decision is built on.
+/// Pruned after [kLocationRetentionDays]; the device copy calls the prune
+/// explicitly, the server has `prune_locations()` on a schedule.
+class LocationPings extends Table {
+  @override
+  String get tableName => 'location_ping';
+
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get childId => text()();
+  RealColumn get lat => real()();
+  RealColumn get lon => real()();
+  RealColumn get accuracyM => real().nullable()();
+  IntColumn get battery => integer().nullable()();
+  DateTimeColumn get recordedAt => dateTime()();
+  DateTimeColumn get receivedAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+/// Contract `geofence` — ADR-051: a shape, not a radius.
+///
+/// `lat`/`lon` is the circle's centre, or a polygon's bounding-box centre —
+/// which is also what gets registered with the OS as its coarse circle.
+/// `altitudeM`/`floorLabel` are **display only**: the contract forbids using
+/// altitude in containment, because GPS vertical accuracy cannot carry it.
+class Geofences extends Table {
+  @override
+  String get tableName => 'geofence';
+
+  TextColumn get id => text()();
+  TextColumn get familyId => text()();
+  TextColumn get childId => text().nullable()();
+  TextColumn get name => text()();
+  TextColumn get shape => text().map(const GeofenceShapeConverter())();
+  RealColumn get lat => real()();
+  RealColumn get lon => real()();
+  IntColumn get radiusM => integer().nullable()();
+  TextColumn get icon => text().withDefault(const Constant('home'))();
+  RealColumn get altitudeM => real().nullable()();
+  TextColumn get floorLabel => text().nullable()();
+  TextColumn get createdBy => text()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Contract `geofence_vertex` — the drawn boundary. The polygon is closed
+/// implicitly (the first vertex is never repeated) and ordered by `seq`.
+class GeofenceVertices extends Table {
+  @override
+  String get tableName => 'geofence_vertex';
+
+  TextColumn get geofenceId => text()();
+  IntColumn get seq => integer()();
+  RealColumn get lat => real()();
+  RealColumn get lon => real()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {geofenceId, seq};
+}
+
+/// Contract `geofence_schedule` — what makes a fence dynamic in time, and the
+/// only source of a NO_SHOW. No rows = always active (٢٤/٧).
+class GeofenceSchedules extends Table {
+  @override
+  String get tableName => 'geofence_schedule';
+
+  TextColumn get id => text()();
+  TextColumn get geofenceId => text()();
+  IntColumn get weekday => integer()();
+  IntColumn get startMinute => integer()();
+  IntColumn get endMinute => integer()();
+  IntColumn get expectBy => integer().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Contract `geofence_event` — the decision log. `accuracyM` keeps the evidence
+/// next to the verdict, so a bad GPS fix is never blamed on the family.
+class GeofenceEvents extends Table {
+  @override
+  String get tableName => 'geofence_event';
+
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get geofenceId => text()();
+  TextColumn get childId => text()();
+  TextColumn get kind => text().map(const GeofenceEventKindConverter())();
+  DateTimeColumn get occurredAt => dateTime()();
+  RealColumn get accuracyM => real().nullable()();
+}
+
+/// Contract `sos_alert` — "🚨 لا يُحذف أبدًا · لا يعتمد على اشتراك ولا صلاحية".
+/// `requestId` is UNIQUE in the contract: a re-sent alert is the same alert.
+class SosAlerts extends Table {
+  @override
+  String get tableName => 'sos_alert';
+
+  TextColumn get id => text()();
+  TextColumn get familyId => text()();
+  TextColumn get childId => text()();
+  DateTimeColumn get triggeredAt => dateTime()();
+  DateTimeColumn get receivedAt => dateTime().withDefault(currentDateAndTime)();
+  RealColumn get lat => real().nullable()();
+  RealColumn get lon => real().nullable()();
+  TextColumn get status => text().map(const SosStatusConverter())();
+  TextColumn get acknowledgedBy => text().nullable()();
+  DateTimeColumn get acknowledgedAt => dateTime().nullable()();
+  TextColumn get resolvedBy => text().nullable()();
+  DateTimeColumn get resolvedAt => dateTime().nullable()();
+  TextColumn get requestId => text().unique()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [
     Accounts,
@@ -332,14 +525,21 @@ class ModeUnlockAttempts extends Table {
     DevicePermissions,
     DeviceHealths,
     ModeUnlockAttempts,
+    LocationPings,
+    Geofences,
+    GeofenceVertices,
+    GeofenceSchedules,
+    GeofenceEvents,
+    SosAlerts,
   ],
 )
 class FamilyDatabase extends _$FamilyDatabase {
   FamilyDatabase(super.e);
 
-  /// v1 = identity core (PERS-2a) · v2 = devices + permissions (PERS-2b).
+  /// v1 = identity core (PERS-2a) · v2 = devices + permissions (PERS-2b)
+  /// · v3 = location + geofence + emergency (PERS-2c, ADR-051).
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -350,6 +550,14 @@ class FamilyDatabase extends _$FamilyDatabase {
             await m.createTable(devicePermissions);
             await m.createTable(deviceHealths);
             await m.createTable(modeUnlockAttempts);
+          }
+          if (from < 3) {
+            await m.createTable(locationPings);
+            await m.createTable(geofences);
+            await m.createTable(geofenceVertices);
+            await m.createTable(geofenceSchedules);
+            await m.createTable(geofenceEvents);
+            await m.createTable(sosAlerts);
           }
         },
       );
