@@ -2,10 +2,10 @@
 
 ```
 status: RUNNING
-current_card: PERS-2d
+current_card: PHASE-3 screens (child dashboard first)
 blocked_by: (none)
 last_tick: 2026-09-24
-resume_hint: PERS-1 + PERS-2a + PERS-2b + PERS-2c shipped. PERS-2c = location/emergency as real rows per ADR-051: location_ping (+90-day prune), geofence with shape CIRCLE|POLYGON, geofence_vertex, geofence_schedule (weekly windows + expect_by => NO_SHOW), geofence_event (+accuracy evidence), sos_alert (+acknowledged_by/at, request_id dedup, delete refused). geofence_engine.dart is pure Dart: haversine, ray-casting point-in-polygon (concave-safe), bounding circle for OS registration, accuracy gate + hysteresis band, schedule windows incl. midnight-crossing, noShowDueAt. Suite 984/984 (was 934); analyze clean; commit local (ADR-043..051 + PERS-2b/2c all unpushed). NEXT=PERS-2d communication/AI/audit — then Phase 3 screens, child dashboard first (25 placeholders). OPEN: CI must run `dart run build_runner build` before `flutter test` — *.g.dart is gitignored by policy. Push needs the GitHub token. /loop 5m.
+resume_hint: PERS-1 + PERS-2a..2d shipped — the whole 20-table contract now has real local rows. PERS-2d = communication/AI/audit per ADR-052: conversation, message (ciphertext bytes only; one_sender; request_id dedup; 15-min edit by the author; "delete for everyone" blanks the body and keeps the row), call_log (no recording column by design), ai_event (alias only, domain/severity sets, excerpt-not-archive limit, must be JSON), ai_suggestion (one action, confidence, real 10-min undo window), audit_log (append-only, update/delete refuse). communication_rules.dart is pure Dart and tested. Suite 1033/1033 (was 984); analyze clean. OPEN: S-COM-005 read receipt + S-COM-008 pin are deferred to the messaging screen card (need message_read + a pin column) — recorded in ADR-052, not silently dropped. NEXT=Phase 3 screens: child dashboard first (25 placeholders), then geofence editor SCR-FAT-017 (Wave 3, transfer from the visual reference). CI note: run `dart run build_runner build` before `flutter test` — *.g.dart is gitignored. Push needs the GitHub token.
 ```
 
 ## Field meanings
