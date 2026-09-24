@@ -1,15 +1,15 @@
-import 'package:family\_os/features/n02\_day/active\_call\_repository.dart';
+import 'package:family_os/features/n02_day/active_call_repository.dart';
 
 /// Test / demo fixtures for SCR-FAT-023 — Rule 12 allowlisted (`*mock*.dart`).
 ///
 /// Generic labels only (ابن ١ / ابن ٢…). Never screen default (Rule 23).
 /// Mirrors frozen prototype FAT-023 without planted person names.
 abstract final class ActiveCallMock {
-  const ActiveCallMock.\_();
+  const ActiveCallMock._();
 
   /// Child A voice call (prototype default shape — lion avatar).
   static const ActiveCallDetail childA = ActiveCallDetail(
-    callId: 'call\_child\_a',
+    callId: 'call_child_a',
     peerLabel: 'ابن ١',
     emoji: '🦁',
     avatarColor: 0xFF7C5CE6,
@@ -19,7 +19,7 @@ abstract final class ActiveCallMock {
 
   /// Child B voice call.
   static const ActiveCallDetail childB = ActiveCallDetail(
-    callId: 'call\_child\_b',
+    callId: 'call_child_b',
     peerLabel: 'ابن ٢',
     emoji: '🐱',
     avatarColor: 0xFF4FC3F7,
@@ -29,7 +29,7 @@ abstract final class ActiveCallMock {
 
   /// Child C video call.
   static const ActiveCallDetail childCVideo = ActiveCallDetail(
-    callId: 'call\_child\_c\_video',
+    callId: 'call_child_c_video',
     peerLabel: 'ابن ٣',
     emoji: '🐼',
     avatarColor: 0xFFFFB547,
@@ -39,7 +39,7 @@ abstract final class ActiveCallMock {
 
   /// Co-parent voice call.
   static const ActiveCallDetail mother = ActiveCallDetail(
-    callId: 'call\_mother',
+    callId: 'call_mother',
     peerLabel: 'شريكة ١',
     emoji: '🌸',
     avatarColor: 0xFFFF8FA3,
@@ -48,10 +48,10 @@ abstract final class ActiveCallMock {
   );
 
   /// All prototype branches for parametric coverage.
-  static const List&lt;ActiveCallDetail&gt; all = \[
+  static const List<ActiveCallDetail> all = [
     childA,
     childB,
     childCVideo,
     mother,
-  \];
+  ];
 }
