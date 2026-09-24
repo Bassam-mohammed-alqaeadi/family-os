@@ -10,9 +10,11 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n16_tasks/smart_chore_distributor_models.dart';
 import 'package:family_os/features/n16_tasks/smart_chore_distributor_repository.dart';
+import 'package:family_os/features/n16_tasks/tasks_ux_bridge.dart';
 
 abstract final class SmartChoreDistributorKeys {
   static const screen = Key('smart_chore_distributor_screen');
@@ -88,8 +90,21 @@ class _SmartChoreDistributorScreenState
     });
   }
 
+  /// The real chore split, unless a test injects a repository.
+  Future<SmartChoreDistributorRepository> _resolveRepo() async {
+    final injected = widget.repository;
+    if (injected != null) return injected;
+    final familyId =
+        CurrentIdentity.maybeOf(context)?.activeFamilyId.value ?? '';
+    await Stage1TasksRuntime.ensureOpen();
+    return Stage1TasksRuntime.choreDistributor(familyId: familyId);
+  }
+
   Future<void> _load() async {
     setState(() => _loading = true);
+    final resolved = await _resolveRepo();
+    if (!mounted) return;
+    _repo = resolved;
     final snap = await _repo.load();
     if (!mounted) return;
     setState(() {

@@ -10,9 +10,11 @@ import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n16_tasks/child_tasks_models.dart';
 import 'package:family_os/features/n16_tasks/child_tasks_repository.dart';
+import 'package:family_os/features/n16_tasks/tasks_ux_bridge.dart';
 
 /// Widget keys for SCR-CHD-022 acceptance.
 abstract final class ChildTasksKeys {
@@ -80,8 +82,25 @@ class _ChildTasksScreenState extends State<ChildTasksScreen> {
     });
   }
 
+  /// The child's own list, unless a test injects a repository.
+  Future<ChildTasksRepository> _resolveRepo() async {
+    final injected = widget.repository;
+    if (injected != null) return injected;
+    final identity = CurrentIdentity.maybeOf(context);
+    final familyId = identity?.activeFamilyId.value ?? '';
+    final childId = identity?.activeChildId.value;
+    await Stage1TasksRuntime.ensureOpen();
+    return Stage1TasksRuntime.childTasks(
+      familyId: familyId,
+      childId: childId,
+    );
+  }
+
   Future<void> _load() async {
     setState(() => _loading = true);
+    final resolved = await _resolveRepo();
+    if (!mounted) return;
+    _repo = resolved;
     final snap = await _repo.load();
     if (!mounted) return;
     setState(() {
@@ -116,7 +135,8 @@ class _ChildTasksScreenState extends State<ChildTasksScreen> {
       'tidyRoom' => l10n.childTasksTitleTidyRoom,
       'mathReview' => l10n.childTasksTitleMathReview,
       'wirdDone' => l10n.childTasksTitleWirdDone,
-      _ => l10n.childTasksTitleTidyRoom,
+      // A real task keeps the title it was stored with.
+      _ => key.isEmpty ? l10n.childTasksTitleTidyRoom : key,
     };
   }
 

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/app/role_guard.dart';
+import 'package:family_os/core/data/stage1_row_vocabulary.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/banner.dart';
@@ -11,9 +12,11 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n16_tasks/create_task_models.dart';
 import 'package:family_os/features/n16_tasks/create_task_repository.dart';
+import 'package:family_os/features/n16_tasks/tasks_ux_bridge.dart';
 
 /// Widget keys for SCR-FAT-055 acceptance.
 abstract final class CreateTaskKeys {
@@ -132,8 +135,25 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     }
   }
 
+  /// The real create-task flow, unless a test injects a repository.
+  Future<CreateTaskRepository> _resolveRepo() async {
+    final injected = widget.repository;
+    if (injected != null) return injected;
+    final identity = CurrentIdentity.maybeOf(context);
+    final familyId = identity?.activeFamilyId.value ?? '';
+    final accountId = identity?.account.id.value;
+    await Stage1TasksRuntime.ensureOpen();
+    return Stage1TasksRuntime.createTask(
+      familyId: familyId,
+      createdByAccount: accountId,
+    );
+  }
+
   Future<void> _load() async {
     setState(() => _loading = true);
+    final resolved = await _resolveRepo();
+    if (!mounted) return;
+    _repo = resolved;
     final snap = await _repo.load();
     if (!mounted) return;
     _titleCtrl.text = snap.draft.title;
@@ -175,7 +195,8 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       'childTwo' => l10n.createTaskAssigneeChildTwo,
       'childThree' => l10n.createTaskAssigneeChildThree,
       'mother' => l10n.createTaskAssigneeMother,
-      _ => l10n.createTaskAssigneeChildOne,
+      // A fourth child (childFour …) keeps its ordinal label.
+      _ => nameKey.isEmpty ? l10n.createTaskAssigneeChildOne : nameKey,
     };
   }
 
@@ -365,10 +386,11 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                 vertical: 4,
               ),
             ),
+            // The family's real children, by ordinal — five children give five
+            // rows, and Rule 23 still holds (ordinals, never names).
             items: [
-              'childOne',
-              'childTwo',
-              'childThree',
+              for (var i = 0; i < _snap.children.length; i++)
+                Stage1RowVocabulary.childKeyFor(i),
               'mother',
             ].map((key) {
               return DropdownMenuItem(
