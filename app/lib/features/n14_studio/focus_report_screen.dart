@@ -15,6 +15,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n14_studio/focus_report_models.dart';
 import 'package:family_os/features/n14_studio/focus_report_repository.dart';
+import 'package:family_os/features/n07_advisor/reports_ux_bridge.dart';
 
 /// Widget keys for SCR-FAT-051 acceptance.
 abstract final class FocusReportKeys {
@@ -108,7 +109,7 @@ class _FocusReportScreenState extends State<FocusReportScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1FocusReportRepository;
+    _repo = widget.repository ?? Stage1ReportsRuntime.focusReport;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -120,7 +121,7 @@ class _FocusReportScreenState extends State<FocusReportScreen> {
   void didUpdateWidget(covariant FocusReportScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.repository != widget.repository) {
-      _repo = widget.repository ?? stage1FocusReportRepository;
+      _repo = widget.repository ?? Stage1ReportsRuntime.focusReport;
       _load();
     }
   }

@@ -202,6 +202,12 @@ abstract final class Stage1RowVocabulary {
   static const sourceStore = 'STORE';
   static const sourceSeed = 'SEED';
 
+  /// `learn_session.kind` — a focus sitting is a real session too.
+  static const learnKindFocus = 'FOCUS';
+
+  /// The ledger lane a focus reward lands in (minutes only · ع-١).
+  static const walletSourceFocus = 'focus';
+
   static String _isoDay(DateTime when) =>
       '${when.year}-${_two(when.month)}-${_two(when.day)}';
 
