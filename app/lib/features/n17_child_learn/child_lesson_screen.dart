@@ -13,6 +13,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n17_child_learn/child_lesson_models.dart';
 import 'package:family_os/features/n17_child_learn/child_lesson_repository.dart';
+import 'package:family_os/features/n17_child_learn/learn_ux_bridge.dart';
 
 /// Widget keys for SCR-CHD-013 acceptance.
 abstract final class ChildLessonKeys {
@@ -70,7 +71,7 @@ class _ChildLessonScreenState extends State<ChildLessonScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1ChildLessonRepository;
+    _repo = widget.repository ?? Stage1LearnRuntime.lesson;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;

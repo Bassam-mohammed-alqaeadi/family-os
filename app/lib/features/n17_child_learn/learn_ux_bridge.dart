@@ -14,12 +14,19 @@ import 'package:family_os/features/education/learning_result_models.dart';
 import 'package:family_os/features/education/learning_result_repository.dart';
 import 'package:family_os/features/n17_child_learn/child_daily_review_models.dart';
 import 'package:family_os/features/n17_child_learn/child_daily_review_repository.dart';
+import 'package:family_os/features/n17_child_learn/child_flashcards_repository.dart';
 import 'package:family_os/features/n17_child_learn/child_learn_home_models.dart';
 import 'package:family_os/features/n17_child_learn/child_learn_home_repository.dart';
+import 'package:family_os/features/n17_child_learn/child_lesson_repository.dart';
+import 'package:family_os/features/n17_child_learn/child_memorization_repository.dart';
+import 'package:family_os/features/n17_child_learn/child_quran_ward_repository.dart';
 import 'package:family_os/features/n17_child_learn/child_result_models.dart';
 import 'package:family_os/features/n17_child_learn/child_result_repository.dart';
+import 'package:family_os/features/n17_child_learn/child_smart_plan_repository.dart';
+import 'package:family_os/features/n17_child_learn/child_smart_tilawah_repository.dart';
 import 'package:family_os/features/n17_child_learn/child_wallet_models.dart';
 import 'package:family_os/features/n17_child_learn/child_wallet_repository.dart';
+import 'package:family_os/features/n17_child_learn/learn_followup_bridge.dart';
 
 /// Stage-2 composition root for the learning domain (ADR-054 §3 · §11.2).
 ///
@@ -87,6 +94,30 @@ final class Stage1LearnRuntime {
   /// The acting child, for screens that need the raw id (never a planted one).
   static ChildId activeChildId() =>
       ChildId(stage1IdentityRuntime.activeChildId.value);
+
+  /// SCR-CHD-013 — the lesson the child stands on, from the path's active stop.
+  static ChildLessonRepository get lesson =>
+      DriftChildLessonRepository(ensureOpenSync());
+
+  /// SCR-CHD-014 — the flashcards of the child's own pack.
+  static ChildFlashcardsRepository get flashcards =>
+      DriftChildFlashcardsRepository(ensureOpenSync());
+
+  /// SCR-CHD-020 — the smart plan over the gap, the path and the ledger.
+  static ChildSmartPlanRepository get smartPlan =>
+      DriftChildSmartPlanRepository(ensureOpenSync());
+
+  /// SCR-CHD-026 — memorisation over `quran_memorization` + achievements.
+  static ChildMemorizationRepository get memorization =>
+      DriftChildMemorizationRepository(ensureOpenSync());
+
+  /// SCR-CHD-028 — smart tilawah over the child's ward plan.
+  static ChildSmartTilawahRepository get smartTilawah =>
+      DriftChildSmartTilawahRepository(ensureOpenSync());
+
+  /// SCR-CHD-025 — the child's ward over `quran_plan` + `quran_recitation`.
+  static ChildQuranWardRepository get quranWard =>
+      DriftChildQuranWardRepository(ensureOpenSync());
 
   /// Clears this runtime only. An injected database is closed by its owner.
   static void resetForTest() => _db = null;

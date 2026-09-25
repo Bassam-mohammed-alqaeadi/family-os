@@ -13,6 +13,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n17_child_learn/child_flashcards_models.dart';
 import 'package:family_os/features/n17_child_learn/child_flashcards_repository.dart';
+import 'package:family_os/features/n17_child_learn/learn_ux_bridge.dart';
 
 /// Widget keys for SCR-CHD-014 acceptance.
 abstract final class ChildFlashcardsKeys {
@@ -73,7 +74,7 @@ class _ChildFlashcardsScreenState extends State<ChildFlashcardsScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1ChildFlashcardsRepository;
+    _repo = widget.repository ?? Stage1LearnRuntime.flashcards;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;

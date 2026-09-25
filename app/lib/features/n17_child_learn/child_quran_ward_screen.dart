@@ -14,6 +14,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n17_child_learn/child_quran_ward_models.dart';
 import 'package:family_os/features/n17_child_learn/child_quran_ward_repository.dart';
+import 'package:family_os/features/n17_child_learn/learn_ux_bridge.dart';
 
 abstract final class ChildQuranWardKeys {
   static const screen = Key('child_quran_ward_screen');
@@ -69,7 +70,7 @@ class _ChildQuranWardScreenState extends State<ChildQuranWardScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1ChildQuranWardRepository;
+    _repo = widget.repository ?? Stage1LearnRuntime.quranWard;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
