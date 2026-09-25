@@ -313,7 +313,8 @@ void main() {
     expect(p.phase, DayBoardPhase.ready);
   });
 
-  testWidgets('default DayBoardScreen shows Register §10 children', (
+  // —— WIR-03b: the default screen reads the family's own rows ——
+  testWidgets('default DayBoardScreen is empty until the family has rows', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -332,16 +333,16 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(DayBoardKeys.emptyChildren), findsNothing);
-    expect(find.byKey(DayBoardKeys.pulse(0)), findsOneWidget);
-    expect(find.byKey(DayBoardKeys.pulse(1)), findsOneWidget);
-    expect(find.byKey(DayBoardKeys.pulse(2)), findsOneWidget);
-    // Active card shows first child name; pulse strip uses emoji for others.
-    expect(find.textContaining('خالد'), findsWidgets);
-    expect(find.text('🦁'), findsWidgets);
-    expect(find.text('🐱'), findsWidgets);
-    expect(find.text('🐼'), findsWidgets);
+    // The Register §10 mock family no longer feeds the default: an empty
+    // database shows the honest empty cards, never planted names.
+    expect(find.byKey(DayBoardKeys.emptyChildren), findsOneWidget);
+    expect(find.byKey(DayBoardKeys.pulse(0)), findsNothing);
+    expect(find.textContaining('خالد'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
   });
+
 }
 
 Future<void> _pumpScreen(

@@ -7,7 +7,11 @@ import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/identity/identity_runtime.dart';
 import 'package:family_os/features/n01_linking/add_child_screen.dart'
     show toEasternDigits;
+import 'package:family_os/features/n02_day/alert_detail_repository.dart';
+import 'package:family_os/features/n02_day/alerts_hub_repository.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
+import 'package:family_os/features/n02_day/day_board_bridge.dart';
+import 'package:family_os/features/n02_day/day_board_projection.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
 
 /// DEV-9 — the day domain's father-facing roster on the ADR-054 v6 rows:
@@ -15,8 +19,8 @@ import 'package:family_os/features/n02_day/day_child_mock.dart';
 /// battery, last heartbeat) · `geofence` + `geofence_event` (where the child
 /// is). Every value comes from a row; anything the contract has no column for
 /// stays empty and is declared, never planted (Rule 23).
-abstract base class _DayFollowupScope {
-  _DayFollowupScope({
+abstract base class DayFollowupScope {
+  DayFollowupScope({
     String? familyId,
     String? childId,
     String? accountId,
@@ -43,6 +47,36 @@ abstract base class _DayFollowupScope {
     if (arg != null && arg.isNotEmpty) return arg;
     final live = stage1IdentityRuntime.account.id.value.trim();
     return live.isEmpty ? Stage1RowVocabulary.unattributedAccount : live;
+  }
+
+  /// The `family` row that gates every day surface; an empty or unowned scope
+  /// owns no family and reads (and writes) nothing.
+  Future<bool> familyExists(FamilyDatabase db) async {
+    if (familyId.isEmpty) return false;
+    final row =
+        await (db.select(db.families)
+              ..where((f) => f.id.equals(familyId))
+              ..limit(1))
+            .getSingleOrNull();
+    return row != null;
+  }
+
+  /// The family's children, oldest first (Rule 23 — labelled by order).
+  Future<List<ChildrenData>> childrenInOrder(FamilyDatabase db) {
+    if (familyId.isEmpty) return Future.value(const []);
+    return (db.select(db.children)
+          ..where((c) => c.familyId.equals(familyId))
+          ..orderBy([(c) => OrderingTerm.asc(c.createdAt)]))
+        .get();
+  }
+
+  /// The acting child's index in the roster, else 0 (the roster's first).
+  Future<int> ordinalOf(FamilyDatabase db, String childId) async {
+    final children = await childrenInOrder(db);
+    for (var i = 0; i < children.length; i++) {
+      if (children[i].id == childId) return i;
+    }
+    return 0;
   }
 }
 
@@ -71,6 +105,19 @@ final class Stage1DayRuntime {
   static ChildrenListRepository get childrenList =>
       DriftChildrenListRepository(ensureOpenSync());
 
+  /// WIR-03b — SCR-FAT-010: the morning board over the family's own rows.
+  static DayBoardProjectionRepository get dayBoard =>
+      DriftDayBoardProjectionRepository(ensureOpenSync());
+
+  /// WIR-03b — SCR-FAT-019: the alerts hub over `sos_alert` · `device_health`
+  /// · `geofence_event`.
+  static AlertsHubRepository get alertsHub =>
+      DriftAlertsHubRepository(ensureOpenSync());
+
+  /// WIR-03b — SCR-FAT-020: one alert's detail from those same rows.
+  static AlertDetailRepository get alertDetail =>
+      DriftAlertDetailRepository(ensureOpenSync());
+
   /// Clears this runtime only. An injected database is closed by its owner.
   static void resetForTest() => _db = null;
 }
@@ -84,7 +131,7 @@ final class Stage1DayRuntime {
 /// the geofence's own stored name. The shared-policies sheet has no row in the
 /// contract, so its load returns an honest empty policy and its save is a
 /// declared gap (nothing is written where nothing exists).
-final class DriftChildrenListRepository extends _DayFollowupScope
+final class DriftChildrenListRepository extends DayFollowupScope
     implements ChildrenListRepository {
   DriftChildrenListRepository(
     this._db, {

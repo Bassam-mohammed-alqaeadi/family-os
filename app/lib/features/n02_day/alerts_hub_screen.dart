@@ -12,6 +12,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n02_day/alerts_hub_repository.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
+import 'package:family_os/features/n02_day/day_followup_bridge.dart';
 
 Color _swatchColor(DayChildSwatch swatch, FamilyColors colors) =>
     switch (swatch) {
@@ -101,7 +102,7 @@ class AlertsHubScreenState extends State<AlertsHubScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1AlertsHubRepository;
+    _repo = widget.repository ?? Stage1DayRuntime.alertsHub;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _load();
