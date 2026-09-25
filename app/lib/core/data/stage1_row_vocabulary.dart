@@ -185,6 +185,23 @@ abstract final class Stage1RowVocabulary {
   static const ruleKindWallet = 'WALLET';
   static const ruleKindPlay = 'PLAY';
 
+  // ── subscription_state · billing_event (ADR-054 §11.5) ───────────────────
+
+  /// `subscription_state.status` — the plan lifecycle as stored.
+  static const subStatusActive = 'ACTIVE';
+  static const subStatusTrial = 'TRIAL';
+  static const subStatusExpired = 'EXPIRED';
+
+  /// `billing_event.kind` — one row per change, never an overwritten flag.
+  static const billingSubscribe = 'SUBSCRIBE';
+  static const billingChangePlan = 'CHANGE_PLAN';
+  static const billingStatusChange = 'STATUS_CHANGE';
+  static const billingCancelRenewal = 'CANCEL_RENEWAL';
+
+  /// `subscription_state.source` — where the state came from.
+  static const sourceStore = 'STORE';
+  static const sourceSeed = 'SEED';
+
   static String _isoDay(DateTime when) =>
       '${when.year}-${_two(when.month)}-${_two(when.day)}';
 
