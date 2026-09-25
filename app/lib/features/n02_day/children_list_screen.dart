@@ -15,6 +15,7 @@ import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n01_linking/add_child_screen.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
+import 'package:family_os/features/n02_day/day_followup_bridge.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
 
 /// Widget keys for SCR-FAT-012 acceptance.
@@ -101,7 +102,7 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1ChildrenListRepository;
+    _repo = widget.repository ?? Stage1DayRuntime.childrenList;
     _managementRepo =
         widget.managementRepository ?? stage1ChildDeviceManagementRepository;
     WidgetsBinding.instance.addPostFrameCallback((_) {
