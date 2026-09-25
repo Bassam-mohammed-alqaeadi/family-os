@@ -127,6 +127,42 @@ abstract final class Stage1RowVocabulary {
   static String monthKeyFor(DateTime month) =>
       '${month.year}-${_two(month.month)}-01';
 
+  // ── learn_* rows (ADR-054 §11.2) ─────────────────────────────────────────
+
+  /// `learn_assignment.status` / `learn_progress` states.
+  static const learnAssigned = 'ASSIGNED';
+  static const learnDone = 'DONE';
+  static const learnOpen = 'OPEN';
+  static const learnClosed = 'CLOSED';
+  static const learnMastered = 'MASTERED';
+
+  /// `learn_session.kind` — a sitting's discriminator.
+  static const learnKindLesson = 'LESSON';
+  static const learnKindQuiz = 'QUIZ';
+  static const learnKindHomework = 'HOMEWORK';
+  static const learnKindReview = 'REVIEW';
+  static const learnKindChallenge = 'CHALLENGE';
+
+  /// `learn_streak.kind` — stage 1 keeps one aggregate row per child.
+  static const learnStreakAll = 'ANY';
+
+  /// `wallet_ledger.reason` — earned by learning, never by a tap (ع-١).
+  static const walletEarned = 'EARNED';
+
+  /// `learn_achievement.kind`.
+  static const achievementBadge = 'BADGE';
+
+  /// `learn_assignment` has no source column, so the publishing host travels
+  /// inside `request_id` as `<source>:<token>` — and survives the round trip.
+  static String learnRequestIdFor(String sourceName, DateTime at) =>
+      '$sourceName:${stage1RowId('req', at)}';
+
+  static String? learnSourceOf(String requestId) {
+    final at = requestId.indexOf(':');
+    if (at <= 0) return null;
+    return requestId.substring(0, at);
+  }
+
   static String _isoDay(DateTime when) =>
       '${when.year}-${_two(when.month)}-${_two(when.day)}';
 

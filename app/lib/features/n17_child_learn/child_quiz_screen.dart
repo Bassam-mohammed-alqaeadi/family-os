@@ -16,6 +16,7 @@ import 'package:family_os/features/education/learning_result_models.dart';
 import 'package:family_os/features/education/learning_result_repository.dart';
 import 'package:family_os/features/n17_child_learn/child_quiz_models.dart';
 import 'package:family_os/features/n17_child_learn/child_quiz_repository.dart';
+import 'package:family_os/features/n17_child_learn/learn_ux_bridge.dart';
 
 /// Widget keys for SCR-CHD-015 acceptance.
 abstract final class ChildQuizKeys {
@@ -85,8 +86,8 @@ class _ChildQuizScreenState extends State<ChildQuizScreen> {
   void initState() {
     super.initState();
     _repo = widget.repository ?? stage1ChildQuizRepository;
-    _results = widget.results ?? stage1LearningResultRepository;
-    _childId = widget.childId ?? ChildId('child_a');
+    _results = widget.results ?? Stage1LearnRuntime.results;
+    _childId = widget.childId ?? Stage1LearnRuntime.activeChildId();
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
