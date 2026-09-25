@@ -6,9 +6,11 @@ as manager**: it briefs the worker agent, verifies every gate itself, fixes or r
 failure, and ships (commit + push + mirror + logs) only green.
 
 Measured 2026-09-25 (`rg -l 'Stage1[A-Za-z]*Runtime' -g '*_screen.dart' lib/features | wc -l`):
-**70 bound of 131 → 61 unbound.**
+**73 bound of 131 → 58 unbound.** The dual metric (`dart run tool/check_screen_wiring.dart`) after WIR-03b:
+**drift 58 · other 5 · legacy 0 · unbound 68** — it counts only bindings whose default resolves to a Drift
+adapter, which is the number that matters.
 
-Card status — done: the prep metric · WIR-01 (n07_advisor A, `d3257cb`) · WIR-02 (n07_advisor B, `3063773`) ·
+Card status — done: **WIR-00** (the dual metric tool, `2dd8def`) · **WIR-03b** (day board · alerts hub · alert detail, `2dd8def`) · WIR-01 (n07_advisor A, `d3257cb`) · WIR-02 (n07_advisor B, `3063773`) ·
 WIR-03a (SCR-FAT-012 only, `f9ecd94`). Next: **WIR-03b** (day_board · alerts_hub · alert_detail) then
 WIR-03c · WIR-04 → WIR-13 in order.
 
