@@ -163,6 +163,28 @@ abstract final class Stage1RowVocabulary {
     return requestId.substring(0, at);
   }
 
+  // ── content_pack · content_item · attribution_rule (ADR-054 §4) ──────────
+
+  /// The pack's own ladder — the chip on the board reads this column.
+  static const packStatusDraft = 'DRAFT';
+  static const packStatusStaged = 'STAGED';
+  static const packStatusPending = 'PENDING_APPROVAL';
+  static const packStatusApproved = 'APPROVED';
+  static const packStatusRejected = 'REJECTED';
+
+  static const packKindQuiz = 'QUIZ';
+  static const packKindLesson = 'LESSON';
+  static const packKindFlashcards = 'FLASHCARDS';
+  static const packKindQuranWird = 'QURAN_WIRD';
+
+  /// `content_item.kind` — the item inside a pack.
+  static const itemKindQuiz = 'QUIZ';
+  static const itemKindLesson = 'LESSON';
+
+  /// `attribution_rule.kind` — which wallet the minutes land in (ع-١).
+  static const ruleKindWallet = 'WALLET';
+  static const ruleKindPlay = 'PLAY';
+
   static String _isoDay(DateTime when) =>
       '${when.year}-${_two(when.month)}-${_two(when.day)}';
 
