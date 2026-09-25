@@ -13,9 +13,15 @@ import 'package:family_os/core/policy/rules_engine_rule_repository.dart';
 import 'package:family_os/features/n03_screen_time/child_usage_report_models.dart';
 import 'package:family_os/features/n03_screen_time/child_usage_report_repository.dart';
 import 'package:family_os/features/n07_advisor/advisor_followup_bridge.dart';
+import 'package:family_os/features/n07_advisor/agent_action_log_repository.dart';
 import 'package:family_os/features/n07_advisor/advisor_voice_repository.dart';
 import 'package:family_os/features/n07_advisor/family_advisor_hub_repository.dart';
+import 'package:family_os/features/n07_advisor/family_moments_repository.dart';
+import 'package:family_os/features/n07_advisor/family_patterns_repository.dart';
+import 'package:family_os/features/n07_advisor/individual_timeline_repository.dart';
+import 'package:family_os/features/n07_advisor/knowledge_maps_repository.dart';
 import 'package:family_os/features/n07_advisor/mother_ai_feed_repository.dart';
+import 'package:family_os/features/n07_advisor/peer_compare_repository.dart';
 import 'package:family_os/features/n07_advisor/weekly_report_models.dart';
 import 'package:family_os/features/n07_advisor/weekly_report_repository.dart';
 import 'package:family_os/features/n14_studio/focus_report_models.dart';
@@ -93,6 +99,33 @@ final class Stage1ReportsRuntime {
   /// WIR-01 — SCR-FAT-029: the brain control gateway over `ai_suggestion`.
   static AdvisorRepository get brainControl =>
       DriftAdvisorGateway(ensureOpenSync());
+
+  /// WIR-02 — SCR-FAT-052: the child's day thread over `learn_session` +
+  /// `geofence_event`.
+  static IndividualTimelineRepository get individualTimeline =>
+      DriftIndividualTimelineRepository(ensureOpenSync());
+
+  /// WIR-02 — SCR-FAT-053: the family patterns over the open `learn_skill_gap`
+  /// rows and each child's path.
+  static FamilyPatternsRepository get familyPatterns =>
+      DriftFamilyPatternsRepository(ensureOpenSync());
+
+  /// WIR-02 — SCR-FAT-054: knowledge maps over `quran_plan` / `quran_memorization`
+  /// and `learning_path`.
+  static KnowledgeMapsRepository get knowledgeMaps =>
+      DriftKnowledgeMapsRepository(ensureOpenSync());
+
+  /// WIR-02 — SCR-FAT-055: the peer comparison header over `family` + `child`.
+  static PeerCompareRepository get peerCompare =>
+      DriftPeerCompareRepository(ensureOpenSync());
+
+  /// WIR-02 — SCR-FAT-056: the agent action log over `ai_suggestion` stamps.
+  static AgentActionLogRepository get agentActionLog =>
+      DriftAgentActionLogRepository(ensureOpenSync());
+
+  /// WIR-02 — SCR-FAT-057: family moments summed from the week's own rows.
+  static FamilyMomentsRepository get familyMoments =>
+      DriftFamilyMomentsRepository(ensureOpenSync());
 
   /// Clears this runtime only. An injected database is closed by its owner.
   static void resetForTest() => _db = null;

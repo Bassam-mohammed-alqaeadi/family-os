@@ -15,6 +15,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n07_advisor/individual_timeline_models.dart';
 import 'package:family_os/features/n07_advisor/individual_timeline_repository.dart';
+import 'package:family_os/features/n07_advisor/reports_ux_bridge.dart';
 
 /// Widget keys for SCR-FAT-063 acceptance.
 abstract final class IndividualTimelineKeys {
@@ -103,7 +104,7 @@ class _IndividualTimelineScreenState extends State<IndividualTimelineScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1IndividualTimelineRepository;
+    _repo = widget.repository ?? Stage1ReportsRuntime.individualTimeline;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -115,7 +116,7 @@ class _IndividualTimelineScreenState extends State<IndividualTimelineScreen> {
   void didUpdateWidget(covariant IndividualTimelineScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.repository != widget.repository) {
-      _repo = widget.repository ?? stage1IndividualTimelineRepository;
+      _repo = widget.repository ?? Stage1ReportsRuntime.individualTimeline;
       _load();
     }
   }

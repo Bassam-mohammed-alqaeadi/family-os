@@ -16,6 +16,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n07_advisor/knowledge_maps_models.dart';
 import 'package:family_os/features/n07_advisor/knowledge_maps_repository.dart';
+import 'package:family_os/features/n07_advisor/reports_ux_bridge.dart';
 
 /// Widget keys for SCR-FAT-064 acceptance.
 abstract final class KnowledgeMapsKeys {
@@ -109,7 +110,7 @@ class _KnowledgeMapsScreenState extends State<KnowledgeMapsScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1KnowledgeMapsRepository;
+    _repo = widget.repository ?? Stage1ReportsRuntime.knowledgeMaps;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -121,7 +122,7 @@ class _KnowledgeMapsScreenState extends State<KnowledgeMapsScreen> {
   void didUpdateWidget(covariant KnowledgeMapsScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.repository != widget.repository) {
-      _repo = widget.repository ?? stage1KnowledgeMapsRepository;
+      _repo = widget.repository ?? Stage1ReportsRuntime.knowledgeMaps;
       _load();
     }
   }

@@ -14,6 +14,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n07_advisor/agent_action_log_models.dart';
 import 'package:family_os/features/n07_advisor/agent_action_log_repository.dart';
+import 'package:family_os/features/n07_advisor/reports_ux_bridge.dart';
 
 abstract final class AgentActionLogKeys {
   static const screen = Key('agent_action_log_screen');
@@ -76,7 +77,7 @@ class _AgentActionLogScreenState extends State<AgentActionLogScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1AgentActionLogRepository;
+    _repo = widget.repository ?? Stage1ReportsRuntime.agentActionLog;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
