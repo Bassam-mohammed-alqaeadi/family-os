@@ -15,6 +15,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n14_studio/generation_outputs_models.dart';
 import 'package:family_os/features/n14_studio/generation_outputs_repository.dart';
+import 'package:family_os/features/n14_studio/studio_ux_bridge.dart';
 
 /// Widget keys for SCR-FAT-043 acceptance.
 abstract final class GenerationOutputsKeys {
@@ -51,7 +52,7 @@ class GenerationOutputsScreen extends StatefulWidget {
     this.onNavigate,
   });
 
-  /// Rule 25 seam — null → [stage1GenerationOutputsRepository].
+  /// Rule 25 seam — null → [Stage1StudioRuntime.generationOutputs].
   final GenerationOutputsRepository? repository;
 
   /// P-4 SOS seam — null → [stage1SosFireService].
@@ -107,7 +108,7 @@ class _GenerationOutputsScreenState extends State<GenerationOutputsScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1GenerationOutputsRepository;
+    _repo = widget.repository ?? Stage1StudioRuntime.generationOutputs;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -119,7 +120,7 @@ class _GenerationOutputsScreenState extends State<GenerationOutputsScreen> {
   void didUpdateWidget(covariant GenerationOutputsScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.repository != widget.repository) {
-      _repo = widget.repository ?? stage1GenerationOutputsRepository;
+      _repo = widget.repository ?? Stage1StudioRuntime.generationOutputs;
       _load();
     }
   }
@@ -289,7 +290,7 @@ class _GenerationOutputsScreenState extends State<GenerationOutputsScreen> {
             key: GenerationOutputsKeys.sourceBanner,
             variant: BannerVariant.g,
             leading: Icon(Icons.menu_book_outlined, color: colors.mintInk, size: 20),
-            message: _sourceLabel(l10n, _snap.source),
+            message: _sourceLabel(l10n, _snap.sourceKey),
           ),
           const SizedBox(height: 12),
           DecoratedBox(
@@ -354,10 +355,19 @@ class _GenerationOutputsScreenState extends State<GenerationOutputsScreen> {
     );
   }
 
-  String _sourceLabel(AppLocalizations l10n, GenerationSourceLabel source) {
-    return switch (source) {
-      GenerationSourceLabel.fractionsPage47 =>
-        l10n.generationOutputsSourceFractions,
+  /// The stored ref is the source; the banner names the door it came through
+  /// (the staged pack's own `source_ref`, never a claim about its content).
+  String _sourceLabel(AppLocalizations l10n, String sourceKey) {
+    return switch (sourceKey) {
+      kGenerationSourceFractionsKey => l10n.generationOutputsSourceFractions,
+      'addFromSourcePdfTitle' => l10n.addFromSourcePdfTitle,
+      'addFromSourceAssignmentTitle' => l10n.addFromSourceAssignmentTitle,
+      'addFromSourceCameraTitle' => l10n.addFromSourceCameraTitle,
+      'addFromSourceLinkTitle' => l10n.addFromSourceLinkTitle,
+      'addFromSourceTopicTitle' => l10n.addFromSourceTopicTitle,
+      'addFromSourceVoiceTitle' => l10n.addFromSourceVoiceTitle,
+      'addFromSourceLibraryTitle' => l10n.addFromSourceLibraryTitle,
+      _ => '',
     };
   }
 

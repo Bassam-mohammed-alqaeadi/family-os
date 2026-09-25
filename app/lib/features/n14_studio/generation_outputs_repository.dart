@@ -21,7 +21,7 @@ final class InMemoryGenerationOutputsRepository
     final gate = loadGate;
     if (gate != null) await gate();
     return GenerationOutputsSnapshot(
-      source: _snap.source,
+      sourceKey: _snap.sourceKey,
       outputs: List<GenerationOutputItem>.from(_snap.outputs),
     );
   }
@@ -43,7 +43,7 @@ GenerationOutputsSnapshot generationOutputsEmptyFixture() {
 /// Prototype FAT-043 — five on + review game P1 locked off.
 GenerationOutputsSnapshot generationOutputsPrototypeFixture() {
   return const GenerationOutputsSnapshot(
-    source: GenerationSourceLabel.fractionsPage47,
+    sourceKey: kGenerationSourceFractionsKey,
     outputs: [
       GenerationOutputItem(id: 'out-lesson', kind: GenerationOutputKind.lesson),
       GenerationOutputItem(

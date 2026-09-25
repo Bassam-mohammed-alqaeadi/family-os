@@ -10,8 +10,10 @@ enum GenerationOutputKind {
   reviewGame,
 }
 
-/// Mock source label (Rule 23 — discrete; copy lives in ARB).
-enum GenerationSourceLabel { fractionsPage47 }
+/// The source's ARB key, not its copy: rows carry the mechanical ref in
+/// `content_pack.source_ref` and the screen maps this key to its own line
+/// (Rule 23 — copy lives in ARB, never in lib/features).
+const kGenerationSourceFractionsKey = 'generationOutputsSourceFractions';
 
 @immutable
 final class GenerationOutputItem {
@@ -44,11 +46,11 @@ final class GenerationOutputItem {
 @immutable
 final class GenerationOutputsSnapshot {
   const GenerationOutputsSnapshot({
-    this.source = GenerationSourceLabel.fractionsPage47,
+    this.sourceKey = kGenerationSourceFractionsKey,
     this.outputs = const [],
   });
 
-  final GenerationSourceLabel source;
+  final String sourceKey;
   final List<GenerationOutputItem> outputs;
 
   bool get isEmpty => outputs.isEmpty;
@@ -58,7 +60,7 @@ final class GenerationOutputsSnapshot {
 
   GenerationOutputsSnapshot withToggled(String id, bool selected) {
     return GenerationOutputsSnapshot(
-      source: source,
+      sourceKey: sourceKey,
       outputs: [
         for (final o in outputs)
           if (o.id == id && !o.phaseLocked)

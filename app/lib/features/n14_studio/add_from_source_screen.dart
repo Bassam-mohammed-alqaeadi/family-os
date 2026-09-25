@@ -13,6 +13,8 @@ import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
+import 'package:family_os/features/n14_studio/add_from_source_repository.dart';
+import 'package:family_os/features/n14_studio/studio_ux_bridge.dart';
 
 /// Widget keys for SCR-FAT-041 acceptance.
 abstract final class AddFromSourceKeys {
@@ -47,6 +49,7 @@ class AddFromSourceScreen extends StatefulWidget {
   const AddFromSourceScreen({
     super.key,
     this.sosFire,
+    this.repository,
     this.roleOverride,
     this.motherLevel = MotherLevel.partner,
     this.onSos,
@@ -55,6 +58,10 @@ class AddFromSourceScreen extends StatefulWidget {
 
   /// P-4 SOS seam — null → [stage1SosFireService].
   final SosFireService? sosFire;
+
+  /// Rule 25 seam — null → [Stage1StudioRuntime.addFromSource]. Staging a source
+  /// writes the pack the studio generates from (P15-EDU-048…053).
+  final AddFromSourceRepository? repository;
 
   /// Test seam — when set, ignores [CurrentRole].
   final AppRole? roleOverride;
@@ -73,6 +80,7 @@ class AddFromSourceScreen extends StatefulWidget {
 
 class _AddFromSourceScreenState extends State<AddFromSourceScreen> {
   late final SosFireService _sos;
+  late final AddFromSourceRepository _repo;
   var _sosBusy = false;
 
   AppRole get _role {
@@ -102,6 +110,15 @@ class _AddFromSourceScreenState extends State<AddFromSourceScreen> {
   void initState() {
     super.initState();
     _sos = widget.sosFire ?? stage1SosFireService;
+    _repo = widget.repository ?? Stage1StudioRuntime.addFromSource;
+  }
+
+  /// Staging a source writes its pack row first, then the flow moves on — the
+  /// row is the fact, navigation is the screen's own business.
+  Future<void> _stageSource(AddSourceKind kind, VoidCallback next) async {
+    await _repo.addSource(kind);
+    if (!mounted) return;
+    next();
   }
 
   Future<void> _openSos() async {
@@ -229,7 +246,7 @@ class _AddFromSourceScreenState extends State<AddFromSourceScreen> {
                       context,
                       message: l10n.addFromSourcePdfProcessingToast,
                     );
-                    _go('SCR-FAT-043');
+                    _stageSource(AddSourceKind.pdf, () => _go('SCR-FAT-043'));
                   },
                 ),
               ],
@@ -361,7 +378,12 @@ class _AddFromSourceScreenState extends State<AddFromSourceScreen> {
                     subtitle: l10n.addFromSourceAssignmentSub,
                     enabled: _canCreate,
                     colors: colors,
-                    onTap: () => _onCreateTap(() => _go('SCR-FAT-049')),
+                    onTap: () => _onCreateTap(
+                      () => _stageSource(
+                        AddSourceKind.assignment,
+                        () => _go('SCR-FAT-049'),
+                      ),
+                    ),
                   ),
                   _SourceRow(
                     rowKey: AddFromSourceKeys.rowCamera,
@@ -370,7 +392,12 @@ class _AddFromSourceScreenState extends State<AddFromSourceScreen> {
                     subtitle: l10n.addFromSourceCameraSub,
                     enabled: _canCreate,
                     colors: colors,
-                    onTap: () => _onCreateTap(() => _go('SCR-FAT-042')),
+                    onTap: () => _onCreateTap(
+                      () => _stageSource(
+                        AddSourceKind.camera,
+                        () => _go('SCR-FAT-042'),
+                      ),
+                    ),
                   ),
                   _SourceRow(
                     rowKey: AddFromSourceKeys.rowLink,
@@ -379,12 +406,14 @@ class _AddFromSourceScreenState extends State<AddFromSourceScreen> {
                     subtitle: l10n.addFromSourceLinkSub,
                     enabled: _canCreate,
                     colors: colors,
-                    onTap: () => _onCreateTap(() {
-                      AppToast.show(
-                        context,
-                        message: l10n.addFromSourceLinkToast,
-                      );
-                    }),
+                    onTap: () => _onCreateTap(
+                      () => _stageSource(AddSourceKind.link, () {
+                        AppToast.show(
+                          context,
+                          message: l10n.addFromSourceLinkToast,
+                        );
+                      }),
+                    ),
                   ),
                   _SourceRow(
                     rowKey: AddFromSourceKeys.rowTopic,
@@ -393,12 +422,14 @@ class _AddFromSourceScreenState extends State<AddFromSourceScreen> {
                     subtitle: l10n.addFromSourceTopicSub,
                     enabled: _canCreate,
                     colors: colors,
-                    onTap: () => _onCreateTap(() {
-                      AppToast.show(
-                        context,
-                        message: l10n.addFromSourceTopicToast,
-                      );
-                    }),
+                    onTap: () => _onCreateTap(
+                      () => _stageSource(AddSourceKind.topic, () {
+                        AppToast.show(
+                          context,
+                          message: l10n.addFromSourceTopicToast,
+                        );
+                      }),
+                    ),
                   ),
                   _SourceRow(
                     rowKey: AddFromSourceKeys.rowVoice,
@@ -407,12 +438,14 @@ class _AddFromSourceScreenState extends State<AddFromSourceScreen> {
                     subtitle: l10n.addFromSourceVoiceSub,
                     enabled: _canCreate,
                     colors: colors,
-                    onTap: () => _onCreateTap(() {
-                      AppToast.show(
-                        context,
-                        message: l10n.addFromSourceVoiceToast,
-                      );
-                    }),
+                    onTap: () => _onCreateTap(
+                      () => _stageSource(AddSourceKind.voice, () {
+                        AppToast.show(
+                          context,
+                          message: l10n.addFromSourceVoiceToast,
+                        );
+                      }),
+                    ),
                   ),
                   _SourceRow(
                     rowKey: AddFromSourceKeys.rowLibrary,
@@ -421,7 +454,12 @@ class _AddFromSourceScreenState extends State<AddFromSourceScreen> {
                     subtitle: l10n.addFromSourceLibrarySub,
                     enabled: _canCreate,
                     colors: colors,
-                    onTap: () => _onCreateTap(() => _go('SCR-FAT-046')),
+                    onTap: () => _onCreateTap(
+                      () => _stageSource(
+                        AddSourceKind.library,
+                        () => _go('SCR-FAT-046'),
+                      ),
+                    ),
                   ),
                 ],
               ),

@@ -7,12 +7,18 @@ import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/minutes.dart';
 import 'package:family_os/core/identity/identity_runtime.dart';
 import 'package:family_os/features/education/learning_assignment_models.dart';
+import 'package:family_os/features/n14_studio/add_from_source_repository.dart';
 import 'package:family_os/features/n14_studio/attribution_reward_models.dart';
 import 'package:family_os/features/n14_studio/attribution_reward_repository.dart';
 import 'package:family_os/features/n14_studio/create_assignment_models.dart';
 import 'package:family_os/features/n14_studio/create_assignment_repository.dart';
+import 'package:family_os/features/n14_studio/generation_outputs_repository.dart';
+import 'package:family_os/features/n14_studio/materials_lessons_repository.dart';
+import 'package:family_os/features/n14_studio/preview_approve_repository.dart';
+import 'package:family_os/features/n14_studio/staged_project_repository.dart';
 import 'package:family_os/features/n14_studio/studio_board_models.dart';
 import 'package:family_os/features/n14_studio/studio_board_repository.dart';
+import 'package:family_os/features/n14_studio/studio_content_bridge.dart';
 import 'package:family_os/features/n17_child_learn/learn_ux_bridge.dart';
 
 /// Stage-2 composition root for the studio domain (ADR-054 §4 · §11.3).
@@ -53,6 +59,26 @@ final class Stage1StudioRuntime {
   /// SCR-FAT-045 — attributing minutes to a child's wallets.
   static AttributionRewardRepository get attribution =>
       DriftAttributionRewardRepository(ensureOpenSync());
+
+  /// SCR-FAT-044 — the pack awaiting approval over `content_pack`.
+  static PreviewApproveRepository get previewApprove =>
+      DriftPreviewApproveRepository(ensureOpenSync());
+
+  /// SCR-FAT-048 — the subject rows with their own real counts.
+  static MaterialsLessonsRepository get materialsLessons =>
+      DriftMaterialsLessonsRepository(ensureOpenSync());
+
+  /// SCR-FAT-043 — the staged pack's generated outputs.
+  static GenerationOutputsRepository get generationOutputs =>
+      DriftGenerationOutputsRepository(ensureOpenSync());
+
+  /// SCR-FAT-047 — the project's stages over `learning_path` + `_stop`.
+  static StagedProjectRepository get stagedProject =>
+      DriftStagedProjectRepository(ensureOpenSync());
+
+  /// SCR-FAT-041 — staging a source writes the pack the studio works on.
+  static AddFromSourceRepository get addFromSource =>
+      DriftAddFromSourceRepository(ensureOpenSync());
 
   /// Clears this runtime only. An injected database is closed by its owner.
   static void resetForTest() => _db = null;

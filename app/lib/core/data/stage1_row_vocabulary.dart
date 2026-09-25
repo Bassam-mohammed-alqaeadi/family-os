@@ -185,6 +185,45 @@ abstract final class Stage1RowVocabulary {
   static const ruleKindWallet = 'WALLET';
   static const ruleKindPlay = 'PLAY';
 
+  /// `content_item.kind` — the rest of the generated forms on SCR-FAT-043.
+  static const itemKindHomework = 'HOMEWORK';
+  static const itemKindFlashcards = 'FLASHCARDS';
+  static const itemKindChallenge = 'CHALLENGE';
+  static const itemKindReviewGame = 'REVIEW_GAME';
+
+  /// `content_pack.kind` — the pack the studio staged from a source, and the
+  /// subject rows SCR-FAT-048 lists.
+  static const packKindGenerated = 'GENERATED';
+  static const subjectKindMath = 'MATH';
+  static const subjectKindQuran = 'QURAN';
+  static const subjectKindEnglish = 'ENGLISH';
+  static const subjectKindScience = 'SCIENCE';
+  static const subjectKindCustom = 'CUSTOM';
+
+  /// `content_pack.difficulty` — the parent's light edit on the preview.
+  static const difficultyEasier = 'EASIER';
+  static const difficultyNormal = 'NORMAL';
+  static const difficultyHarder = 'HARDER';
+
+  /// `content_pack.source_ref` — the door SCR-FAT-041's gates name.
+  static const sourceKindPdf = 'PDF';
+  static const sourceKindAssignment = 'ASSIGNMENT';
+  static const sourceKindCamera = 'CAMERA';
+  static const sourceKindLink = 'LINK';
+  static const sourceKindTopic = 'TOPIC';
+  static const sourceKindVoice = 'VOICE';
+  static const sourceKindLibrary = 'LIBRARY';
+
+  /// A pack the family built itself — no outside door brought it in.
+  static const sourceKindFamily = 'FAMILY';
+
+  /// `learning_path_stop.status` — the project's own stage ladder.
+  static const stopStatusActive = 'ACTIVE';
+  static const stopStatusLocked = 'LOCKED';
+
+  /// A pack's account when the writer is unknown — never a planted id.
+  static const unattributedAccount = 'unattributed';
+
   // ── subscription_state · billing_event (ADR-054 §11.5) ───────────────────
 
   /// `subscription_state.status` — the plan lifecycle as stored.
