@@ -4953,7 +4953,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get conversationsListHonestyBanner =>
-      'حق ثابت: المحادثة العائلية لا تُقيَّد بأي مستوى اشتراك — مشفّرة ومتاحة دائمًا';
+      'حق ثابت: المحادثة العائلية لا تُقيَّد بأي مستوى اشتراك — متاحة دائمًا';
 
   @override
   String get conversationsListSectionTitle => 'المحادثات';
@@ -5470,7 +5470,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childChatsHonestyBanner =>
-      '🔒 كل محادثاتكم مشفّرة طرفيًا — ولا تُقفل أبدًا حتى بانتهاء وقتك';
+      '🛡 محادثاتكم داخل دائرتك الآمنة — ولا تُقفل أبدًا حتى بانتهاء وقتك';
 
   @override
   String get childChatsSafeCircleBanner =>
@@ -5492,7 +5492,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childChatsEmptyMessage =>
-      'عند بدء محادثة مع عائلتك تظهر هنا — مشفّرة ولا تُقفل أبدًا حتى بانتهاء وقتك.';
+      'عند بدء محادثة مع عائلتك تظهر هنا — داخل دائرتك الآمنة ولا تُقفل أبدًا حتى بانتهاء وقتك.';
 
   @override
   String get childChatsLoadingSemantics => 'جارٍ تحميل محادثاتك';
@@ -11555,4 +11555,182 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get fs007SmartAlertsEntry =>
       'تذاكر سلامة الذكاء دون اتصال (FS-007) — إشارات فقط؛ بلا حظر تلقائي.';
+
+  @override
+  String get conversationMediaVoice => '🎤 رسالة صوتية';
+
+  @override
+  String get conversationMediaImage => '🖼️ صورة';
+
+  @override
+  String get conversationMediaVideo => '🎬 فيديو';
+
+  @override
+  String get conversationMediaFile => '📎 ملف';
+
+  @override
+  String get conversationPinnedBarLabel => '📌 رسالة مثبّتة';
+
+  @override
+  String get conversationDeletedMessage => 'حُذفت هذه الرسالة';
+
+  @override
+  String get conversationEditedTag => '(مُعدَّلة)';
+
+  @override
+  String get conversationReplyPrefix => 'ردًّا على';
+
+  @override
+  String get conversationReplyCancel => 'إلغاء الرد';
+
+  @override
+  String get conversationMenuReply => 'رد';
+
+  @override
+  String get conversationMenuPin => 'تثبيت';
+
+  @override
+  String get conversationMenuUnpin => 'إلغاء التثبيت';
+
+  @override
+  String get conversationMenuEdit => 'تعديل';
+
+  @override
+  String get conversationMenuDelete => 'حذف';
+
+  @override
+  String get conversationEditTitle => 'تعديل الرسالة';
+
+  @override
+  String get conversationEditHint => 'النص الجديد';
+
+  @override
+  String get conversationEditSave => 'حفظ';
+
+  @override
+  String get conversationEditCancel => 'إلغاء';
+
+  @override
+  String get conversationEditExpired => 'انتهت نافذة التعديل (١٥ دقيقة)';
+
+  @override
+  String get conversationEditRefused => 'التعديل للكاتب وحده خلال ١٥ دقيقة';
+
+  @override
+  String get conversationDeleteToast => 'حُذفت الرسالة للجميع';
+
+  @override
+  String get conversationEditToast => 'عُدِّلت الرسالة';
+
+  @override
+  String get conversationPinToast => 'ثُبّتت الرسالة أعلى المحادثة';
+
+  @override
+  String get conversationUnpinToast => 'أُلغي تثبيت الرسالة';
+
+  @override
+  String get conversationMutedIndicator => '🔕 مكتومة';
+
+  @override
+  String get conversationArchivedIndicator => '📥 مؤرشفة';
+
+  @override
+  String get conversationPinnedIndicator => '📌 مثبّتة';
+
+  @override
+  String get conversationLockIndicator => '🔒 مقفلة';
+
+  @override
+  String get conversationQuickActionsSemantics => 'إجراءات المحادثة';
+
+  @override
+  String get conversationRowMenuMute => 'كتم';
+
+  @override
+  String get conversationRowMenuArchive => 'أرشفة';
+
+  @override
+  String get conversationRowMenuUnarchive => 'إلغاء الأرشفة';
+
+  @override
+  String get conversationRowMenuPin => 'تثبيت في القائمة';
+
+  @override
+  String get conversationRowMenuUnpin => 'إلغاء التثبيت من القائمة';
+
+  @override
+  String get conversationMuteEightHours => '٨ ساعات';
+
+  @override
+  String get conversationMuteOneWeek => 'أسبوع';
+
+  @override
+  String get conversationMuteForever => 'دائمًا';
+
+  @override
+  String get conversationUnmute => 'إلغاء الكتم';
+
+  @override
+  String get conversationFamilyAlwaysPinned => 'المحادثة العائلية مثبتة دائمًا';
+
+  @override
+  String get chatSettingsTitle => '⚙️ إعدادات هذه المحادثة';
+
+  @override
+  String get chatSettingsScopeNote => 'تُطبَّق على هذه المحادثة فقط';
+
+  @override
+  String get chatSettingsMute => 'الكتم';
+
+  @override
+  String get chatSettingsArchive => 'الأرشفة';
+
+  @override
+  String get chatSettingsPin => 'التثبيت في القائمة';
+
+  @override
+  String get chatSettingsWallpaper => 'الخلفية';
+
+  @override
+  String get chatSettingsBubbleTheme => 'ثيم الفقاعات';
+
+  @override
+  String get chatSettingsReceipts => 'تأكيد القراءة';
+
+  @override
+  String get chatSettingsReceiptsMandatory =>
+      'إلزامي في محادثة فيها والد — لا يمكن إطفاؤه';
+
+  @override
+  String get chatSettingsReceiptsOptional => 'متاح بين الأقران';
+
+  @override
+  String get chatSettingsLock => 'قفل المحادثة';
+
+  @override
+  String get chatSettingsLockParentNote => 'القفل لا يخفي محادثة ابنك عنك';
+
+  @override
+  String get chatWallpaperLight => 'فاتحة';
+
+  @override
+  String get chatWallpaperRose => 'وردية';
+
+  @override
+  String get chatWallpaperMint => 'نعناعية';
+
+  @override
+  String get chatWallpaperViolet => 'بنفسجية';
+
+  @override
+  String get chatThemeP => 'بنفسجي';
+
+  @override
+  String get chatThemeRose => 'وردي';
+
+  @override
+  String get chatThemeTeal => 'فيروزي';
+
+  @override
+  String get chatSettingsDone => 'تم';
 }

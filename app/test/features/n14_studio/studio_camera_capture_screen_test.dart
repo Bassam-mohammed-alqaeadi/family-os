@@ -9,6 +9,7 @@ import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n01_linking/camera_permission_seam.dart';
+import 'package:family_os/features/n14_studio/add_from_source_repository.dart';
 import 'package:family_os/features/n14_studio/studio_camera_capture_screen.dart';
 
 void main() {
@@ -129,6 +130,36 @@ void main() {
     await tester.pumpAndSettle();
     expect(sos, isTrue);
   });
+
+  testWidgets('capture stages a camera source pack before FAT-043', (
+    tester,
+  ) async {
+    final nav = <String>[];
+    final sources = _RecordingAddSource();
+    await _pump(tester, onNavigate: nav.add, addSourceRepository: sources);
+
+    await tester.tap(find.byKey(StudioCameraCaptureKeys.captureCta));
+    await tester.pump();
+    AppToast.dismiss();
+    await tester.pumpAndSettle();
+
+    // The shot opens the pack the studio generates from — the row the next
+    // screen reads.
+    expect(sources.kinds, [AddSourceKind.camera]);
+    expect(nav, contains('SCR-FAT-043'));
+  });
+}
+
+/// Records the door a capture opened, so the screen's staging is testable
+/// without a database.
+final class _RecordingAddSource implements AddFromSourceRepository {
+  final kinds = <AddSourceKind>[];
+
+  @override
+  Future<AddFromSourceResult> addSource(AddSourceKind kind) async {
+    kinds.add(kind);
+    return AddFromSourceResult(kind: kind, packId: 'staged-camera');
+  }
 }
 
 Future<void> _pump(
@@ -139,6 +170,7 @@ Future<void> _pump(
   CameraPermissionStatus? initialStatus,
   VoidCallback? onSos,
   void Function(String screenId)? onNavigate,
+  AddFromSourceRepository? addSourceRepository,
 }) async {
   final roleCtrl = RoleController(role);
   addTearDown(roleCtrl.dispose);
@@ -162,6 +194,7 @@ Future<void> _pump(
           initialStatus: initialStatus,
           onSos: onSos,
           onNavigate: onNavigate,
+          addSourceRepository: addSourceRepository,
         ),
       ),
     ),

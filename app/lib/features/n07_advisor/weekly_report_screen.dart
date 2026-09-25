@@ -15,6 +15,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n07_advisor/weekly_report_models.dart';
 import 'package:family_os/features/n07_advisor/weekly_report_repository.dart';
+import 'package:family_os/features/n07_advisor/reports_ux_bridge.dart';
 
 abstract final class WeeklyReportKeys {
   static const screen = Key('weekly_report_screen');
@@ -90,7 +91,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1WeeklyReportRepository;
+    _repo = widget.repository ?? Stage1ReportsRuntime.weeklyReport;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;

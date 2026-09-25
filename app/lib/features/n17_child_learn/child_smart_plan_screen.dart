@@ -12,6 +12,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n17_child_learn/child_smart_plan_models.dart';
 import 'package:family_os/features/n17_child_learn/child_smart_plan_repository.dart';
+import 'package:family_os/features/n17_child_learn/learn_ux_bridge.dart';
 
 abstract final class ChildSmartPlanKeys {
   static const screen = Key('child_smart_plan_screen');
@@ -66,7 +67,7 @@ class _ChildSmartPlanScreenState extends State<ChildSmartPlanScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1ChildSmartPlanRepository;
+    _repo = widget.repository ?? Stage1LearnRuntime.smartPlan;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;

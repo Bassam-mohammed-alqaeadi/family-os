@@ -197,7 +197,7 @@ class _ChildSosButtonScreenState extends State<ChildSosButtonScreen>
           stage1SosSettingsStore.settings.panicQuietPreferred;
       final incident = await Stage1SosFinalRuntime.crossSystem.fireChildHold(
         childId: ChildId(widget.childId),
-        deviceId: const DeviceId('dev_stage1'),
+        deviceId: DeviceId('dev_stage1'),
         panicQuietAtTrigger: panicQuiet,
       );
       // Keep fire service audit path for P-4 parity (no entitlement).

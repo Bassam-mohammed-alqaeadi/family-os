@@ -14,6 +14,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n07_advisor/family_patterns_models.dart';
 import 'package:family_os/features/n07_advisor/family_patterns_repository.dart';
+import 'package:family_os/features/n07_advisor/reports_ux_bridge.dart';
 
 /// Widget keys for SCR-FAT-062 acceptance.
 abstract final class FamilyPatternsKeys {
@@ -105,7 +106,7 @@ class _FamilyPatternsScreenState extends State<FamilyPatternsScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1FamilyPatternsRepository;
+    _repo = widget.repository ?? Stage1ReportsRuntime.familyPatterns;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -117,7 +118,7 @@ class _FamilyPatternsScreenState extends State<FamilyPatternsScreen> {
   void didUpdateWidget(covariant FamilyPatternsScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.repository != widget.repository) {
-      _repo = widget.repository ?? stage1FamilyPatternsRepository;
+      _repo = widget.repository ?? Stage1ReportsRuntime.familyPatterns;
       _load();
     }
   }

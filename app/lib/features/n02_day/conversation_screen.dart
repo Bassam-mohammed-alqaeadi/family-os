@@ -2,14 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/role_controller.dart';
+import 'package:family_os/core/data/communication_repository.dart';
+import 'package:family_os/core/data/communication_rules.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/app_error_state.dart';
-import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/chat_availability.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
+import 'package:family_os/features/n02_day/chat_thread_widgets.dart';
 import 'package:family_os/features/n02_day/conversation_repository.dart';
 
 /// Widget keys for SCR-FAT-022 acceptance.
@@ -21,7 +23,6 @@ abstract final class ConversationKeys {
   static const notFound = Key('conversation_not_found');
   static const error = Key('conversation_error');
   static const body = Key('conversation_body');
-  static const encryptedTag = Key('conversation_encrypted');
   static const settingsTag = Key('conversation_settings');
   static const familyPinNote = Key('conversation_family_pin');
   static const toneBridge = Key('conversation_tone_bridge');
@@ -32,16 +33,26 @@ abstract final class ConversationKeys {
   static const sosCta = Key('conversation_sos');
   static const childLean = Key('conversation_child_lean');
   static const title = Key('conversation_title');
+  static const pinnedBar = Key('conversation_pinned_bar');
+  static const pinnedBarUnpin = Key('conversation_pinned_unpin');
+  static const replyBanner = Key('conversation_reply_banner');
+  static const replyCancel = Key('conversation_reply_cancel');
+  static const wallpaper = Key('conversation_wallpaper');
+
+  /// Residual: the false "🔒 مشفّرة طرفيًا" badge lives in the ARB but is no
+  /// longer rendered (ADR-053 «نترك» — no key management exists). Kept so a
+  /// legacy lookup compiles.
+  static const encryptedTag = Key('conversation_encrypted');
 
   static Key bubble(String id) => Key('conversation_bubble_$id');
   static Key toneChip(int i) => Key('conversation_tone_$i');
 }
 
-/// SCR-FAT-022 — المحادثة (parent conversation thread).
+/// SCR-FAT-022 — المحادثة (parent conversation thread), ADR-053 line.
 ///
 /// Opened from FAT-021 with `?chatWith=`. UI-007 / ChatAvailability — never
-/// gated by billing. Send mock seam via [ConversationRepository.send].
-/// P-4 SOS ungated. Mother OK; child lean. Mock-first — Rule 23 empty default.
+/// gated by billing. Send mock seam via [ConversationRepository.send]. P-4 SOS
+/// ungated. Mother OK; child lean. Mock-first — Rule 23 empty default.
 class ConversationScreen extends StatefulWidget {
   const ConversationScreen({
     super.key,
@@ -90,7 +101,9 @@ class ConversationScreenState extends State<ConversationScreen> {
   var _loadFailed = false;
   var _sosBusy = false;
   var _sending = false;
+  var _markedRead = false;
   ConversationDetail? _detail;
+  ConversationMessage? _replyTo;
 
   AppRole get _role =>
       widget.roleOverride ??
@@ -131,11 +144,12 @@ class ConversationScreenState extends State<ConversationScreen> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.chatWith != widget.chatWith ||
         oldWidget.repository != widget.repository) {
+      _markedRead = false;
       _load();
     }
   }
 
-  Future<void> _load() async {
+  Future<void> _load({bool markRead = true}) async {
     if (!_hasPeer) {
       setState(() {
         _detail = null;
@@ -149,7 +163,13 @@ class ConversationScreenState extends State<ConversationScreen> {
       _loadFailed = false;
     });
     try {
-      final detail = await _repo.load(_resolvedPeer!);
+      final peer = _resolvedPeer!;
+      final detail = await _repo.load(peer);
+      if (markRead && !_markedRead && detail != null) {
+        // S-COM-005 — opening a thread marks the other side's messages read.
+        await _repo.markThreadRead(peer);
+        _markedRead = true;
+      }
       if (!mounted) return;
       setState(() {
         _detail = detail;
@@ -190,14 +210,20 @@ class ConversationScreenState extends State<ConversationScreen> {
     setState(() => _sending = true);
     try {
       final l10n = AppLocalizations.of(context);
-      await _repo.send(peer, text, timeLabel: l10n.conversationSentNow);
-      final refreshed = await _repo.load(peer);
+      await _repo.send(
+        peer,
+        text,
+        timeLabel: l10n.conversationSentNow,
+        replyToId: _replyTo?.id,
+      );
       if (!mounted) return;
       setState(() {
-        _detail = refreshed;
-        _sending = false;
+        _replyTo = null;
         if (preset == null) _inputCtrl.clear();
       });
+      await _load(markRead: false);
+      if (!mounted) return;
+      setState(() => _sending = false);
       widget.onSend?.call(text);
     } on Object {
       if (!mounted) return;
@@ -217,15 +243,137 @@ class ConversationScreenState extends State<ConversationScreen> {
     );
   }
 
-  void _onSettings() {
-    if (widget.onOpenSettings != null) {
-      widget.onOpenSettings!();
+  Future<void> _openMessageSheet(ConversationMessage message) async {
+    final peer = _resolvedPeer;
+    final l10n = AppLocalizations.of(context);
+    if (peer == null) return;
+    final editable = senderMayEdit(
+      senderKey: message.isMine ? 'me' : 'them',
+      actorKey: 'me',
+      sentAt: message.sentAt ?? DateTime.now(),
+      now: DateTime.now(),
+      deleted: message.deleted,
+    );
+    final action = await showChatMessageSheet(
+      context,
+      message: message,
+      editable: editable,
+      l10n: l10n,
+    );
+    if (action == null || !mounted) return;
+    switch (action) {
+      case ChatMessageAction.reply:
+        setState(() => _replyTo = message);
+      case ChatMessageAction.pin:
+        await _pin(peer, message.id);
+      case ChatMessageAction.unpin:
+        await _unpin(peer, message.id);
+      case ChatMessageAction.edit:
+        await _edit(peer, message);
+      case ChatMessageAction.delete:
+        await _delete(peer, message);
+    }
+  }
+
+  Future<void> _pin(String peer, String messageId) async {
+    final l10n = AppLocalizations.of(context);
+    try {
+      await _repo.pinMessage(peer, messageId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.conversationPinToast)),
+      );
+      await _load(markRead: false);
+    } on MessagePinRefused {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.conversationEditRefused)),
+      );
+    }
+  }
+
+  Future<void> _unpin(String peer, String messageId) async {
+    final l10n = AppLocalizations.of(context);
+    await _repo.unpinMessage(peer, messageId);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.conversationUnpinToast)),
+    );
+    await _load(markRead: false);
+  }
+
+  Future<void> _edit(String peer, ConversationMessage message) async {
+    final l10n = AppLocalizations.of(context);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => EditMessageDialog(
+        title: l10n.conversationEditTitle,
+        hint: l10n.conversationEditHint,
+        initialText: message.body,
+        saveLabel: l10n.conversationEditSave,
+        cancelLabel: l10n.conversationEditCancel,
+        fieldKey: const Key('conversation_edit_field'),
+      ),
+    );
+    if (result == null || !mounted) return;
+    try {
+      await _repo.editMessage(peer, message.id, result);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.conversationEditToast)),
+      );
+      await _load(markRead: false);
+    } on MessageEditRefused {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.conversationEditRefused)),
+      );
+    }
+  }
+
+  Future<void> _delete(String peer, ConversationMessage message) async {
+    final l10n = AppLocalizations.of(context);
+    try {
+      await _repo.deleteMessage(peer, message.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.conversationDeleteToast)),
+      );
+      await _load(markRead: false);
+    } on MessageEditRefused {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.conversationEditRefused)),
+      );
+    }
+  }
+
+  Future<void> _openSettings() async {
+    final detail = _detail;
+    final peer = _resolvedPeer;
+    if (detail == null || peer == null) {
+      widget.onOpenSettings?.call();
       return;
     }
     final l10n = AppLocalizations.of(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.conversationSettingsToast)),
+    await showChatSettingsSheet(
+      context,
+      detail: detail,
+      l10n: l10n,
+      handlers: ChatSettingsHandlers(
+        onMute: (preset) => _repo.setMuted(peer, preset),
+        onUnmute: () => _repo.unmute(peer),
+        onArchive: (archived) => _repo.setArchived(peer, archived),
+        onPin: (pinned) => _repo.setPinned(peer, pinned),
+        onLook: (wallpaper, theme) => _repo.setLook(
+          peer,
+          wallpaper: wallpaper,
+          bubbleTheme: theme,
+        ),
+      ),
     );
+    if (!mounted) return;
+    await _load(markRead: false);
   }
 
   @override
@@ -314,6 +462,7 @@ class ConversationScreenState extends State<ConversationScreen> {
     }
 
     final detail = _detail!;
+    final wallpaper = chatWallpaperColor(colors, detail.wallpaper);
     return Column(
       key: ConversationKeys.body,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -330,24 +479,43 @@ class ConversationScreenState extends State<ConversationScreen> {
               ),
             ),
           ),
-        Expanded(
-          child: detail.isEmpty
-              ? AppEmptyState(
-                  key: ConversationKeys.empty,
-                  title: l10n.conversationEmptyTitle,
-                  message: l10n.conversationEmptyMessage,
-                )
-              : _ThreadScroll(
-                  detail: detail,
-                  l10n: l10n,
-                  onSettings: _onSettings,
-                ),
-        ),
-        if (detail.toneChips.isNotEmpty)
-          _ToneChips(
-            chips: detail.toneChips,
-            onTap: (text) => _send(text),
+        if (detail.pinnedMessage != null)
+          ChatPinnedBar(
+            key: ConversationKeys.pinnedBar,
+            unpinKey: ConversationKeys.pinnedBarUnpin,
+            label: l10n.conversationPinnedBarLabel,
+            unpinLabel: l10n.conversationMenuUnpin,
+            preview: detail.pinnedMessage!.body,
+            mediaLabel: chatMediaLabel(l10n, detail.pinnedMessage!.kind),
+            onUnpin: () => _unpin(_resolvedPeer!, detail.pinnedMessage!.id),
           ),
+        Expanded(
+          child: ColoredBox(
+            key: ConversationKeys.wallpaper,
+            color: wallpaper ?? Colors.transparent,
+            child: detail.isEmpty
+                ? AppEmptyState(
+                    key: ConversationKeys.empty,
+                    title: l10n.conversationEmptyTitle,
+                    message: l10n.conversationEmptyMessage,
+                  )
+                : _ThreadScroll(
+                    detail: detail,
+                    l10n: l10n,
+                    onSettings: _openSettings,
+                    onLongPress: _openMessageSheet,
+                  ),
+          ),
+        ),
+        if (_replyTo != null)
+          _ReplyBanner(
+            message: _replyTo!,
+            l10n: l10n,
+            colors: colors,
+            onCancel: () => setState(() => _replyTo = null),
+          ),
+        if (detail.toneChips.isNotEmpty)
+          _ToneChips(chips: detail.toneChips, onTap: (text) => _send(text)),
         _Composer(
           controller: _inputCtrl,
           enabled: _chat.canSend && !_sending,
@@ -366,11 +534,13 @@ class _ThreadScroll extends StatelessWidget {
     required this.detail,
     required this.l10n,
     required this.onSettings,
+    required this.onLongPress,
   });
 
   final ConversationDetail detail;
   final AppLocalizations l10n;
   final VoidCallback onSettings;
+  final void Function(ConversationMessage message) onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -381,11 +551,6 @@ class _ThreadScroll extends StatelessWidget {
       children: [
         Row(
           children: [
-            Tag(
-              key: ConversationKeys.encryptedTag,
-              label: l10n.conversationEncryptedTag,
-              variant: TagVariant.p,
-            ),
             const Spacer(),
             TextButton(
               key: ConversationKeys.settingsTag,
@@ -408,7 +573,17 @@ class _ThreadScroll extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         for (final m in detail.messages) ...[
-          _Bubble(message: m, colors: colors),
+          ChatBubble(
+            bubbleKey: ConversationKeys.bubble(m.id),
+            message: m,
+            tone: ChatTone.parent,
+            theme: detail.bubbleTheme,
+            replyPrefix: l10n.conversationReplyPrefix,
+            deletedLabel: l10n.conversationDeletedMessage,
+            editedTag: l10n.conversationEditedTag,
+            mediaLabel: chatMediaLabel(l10n, m.kind),
+            onLongPress: () => onLongPress(m),
+          ),
           const SizedBox(height: 8),
         ],
         if (detail.familyPinnedNote)
@@ -429,95 +604,50 @@ class _ThreadScroll extends StatelessWidget {
   }
 }
 
-class _Bubble extends StatelessWidget {
-  const _Bubble({required this.message, required this.colors});
+class _ReplyBanner extends StatelessWidget {
+  const _ReplyBanner({
+    required this.message,
+    required this.l10n,
+    required this.colors,
+    required this.onCancel,
+  });
 
   final ConversationMessage message;
+  final AppLocalizations l10n;
   final FamilyColors colors;
+  final VoidCallback onCancel;
 
   @override
   Widget build(BuildContext context) {
-    final isMine = message.isMine;
-    final bg = isMine ? colors.p500 : colors.surface;
-    final fg = isMine ? Colors.white : colors.ink;
-    final align =
-        isMine ? AlignmentDirectional.centerEnd : AlignmentDirectional.centerStart;
-    final radii = const BorderRadius.only(
-      topLeft: Radius.circular(18),
-      topRight: Radius.circular(18),
-      bottomLeft: Radius.circular(18),
-      bottomRight: Radius.circular(18),
-    );
-
-    final statusSuffix = isMine ? _statusTicks(message.status) : '';
-
-    return Align(
-      alignment: align,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.sizeOf(context).width * 0.78,
-        ),
-        child: DecoratedBox(
-          key: ConversationKeys.bubble(message.id),
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: radii,
-            border: isMine
-                ? null
-                : Border.all(color: colors.border.withValues(alpha: 0.85)),
-            boxShadow: [
-              if (!isMine)
-                Theme.of(context).extension<FamilyShadows>()!.shCard,
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (message.senderLabel != null) ...[
-                  Text(
-                    message.senderLabel!,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: isMine ? Colors.white70 : colors.p600,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                ],
-                Text(
-                  message.body,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: fg,
-                    height: 1.35,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${message.timeLabel}$statusSuffix',
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w600,
-                    color: isMine ? Colors.white70 : colors.ink2,
-                  ),
-                ),
-              ],
+    return Padding(
+      key: ConversationKeys.replyBanner,
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              '${l10n.conversationReplyPrefix}: '
+              '${message.deleted ? l10n.conversationDeletedMessage : message.body}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: colors.ink2,
+              ),
             ),
           ),
-        ),
+          IconButton(
+            key: ConversationKeys.replyCancel,
+            tooltip: l10n.conversationReplyCancel,
+            onPressed: onCancel,
+            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+            icon: Icon(Icons.close, size: 18, color: colors.ink2),
+          ),
+        ],
       ),
     );
   }
-
-  String _statusTicks(ConversationDeliveryStatus status) => switch (status) {
-        ConversationDeliveryStatus.sending => ' · …',
-        ConversationDeliveryStatus.sent => ' ✓',
-        ConversationDeliveryStatus.delivered => ' ✓✓',
-        ConversationDeliveryStatus.read => ' ✓✓',
-      };
 }
 
 class _ToneChips extends StatelessWidget {

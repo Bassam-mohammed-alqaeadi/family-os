@@ -76,6 +76,65 @@ void main() {
     expect(find.byKey(ChildConversationKeys.missingPeer), findsOneWidget);
   });
 
+  testWidgets('SCR-CHD-008 no presence, no typing, no e2e badge',
+      (tester) async {
+    await _pump(
+      tester,
+      chatWith: 'father',
+      repo: InMemoryConversationRepository(initial: ChildConversationMock.all),
+    );
+    await tester.pump();
+
+    expect(find.textContaining('متصل'), findsNothing);
+    expect(find.textContaining('يكتب'), findsNothing);
+    expect(find.textContaining('مشفّرة'), findsNothing);
+  });
+
+  testWidgets('SCR-CHD-008 own read message shows ✓✓', (tester) async {
+    await _pump(
+      tester,
+      chatWith: 'father',
+      repo: InMemoryConversationRepository(initial: ChildConversationMock.all),
+    );
+    await tester.pump();
+
+    expect(find.text('✓✓'), findsWidgets);
+  });
+
+  testWidgets('SCR-CHD-008 settings sheet mutes this chat (mandatory receipts)',
+      (tester) async {
+    final repo = InMemoryConversationRepository(initial: ChildConversationMock.all);
+    await _pump(tester, chatWith: 'father', repo: repo);
+    await tester.pump();
+
+    await tester.tap(find.byKey(ChildConversationKeys.settingsTag));
+    await tester.pumpAndSettle();
+    // A parent thread → receipts mandatory, no toggle.
+    await tester.ensureVisible(find.byKey(const Key('chat_receipts_mandatory')));
+    expect(find.byKey(const Key('chat_receipts_mandatory')), findsOneWidget);
+    expect(find.byKey(const Key('chat_receipts_switch')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('chat_mute_8h')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('chat_settings_done')));
+    await tester.pumpAndSettle();
+
+    final loaded = await repo.load('father');
+    expect(loaded!.muted, isTrue);
+    expect(loaded.mutedUntil, isNotNull);
+  });
+
+  testWidgets('SCR-CHD-008 family pinned bar renders', (tester) async {
+    await _pump(
+      tester,
+      chatWith: 'family',
+      repo: InMemoryConversationRepository(initial: ChildConversationMock.all),
+    );
+    await tester.pump();
+
+    expect(find.byKey(ChildConversationKeys.pinnedBar), findsOneWidget);
+  });
+
   test('SCR-CHD-008 mock has no planted names', () {
     for (final t in ChildConversationMock.all) {
       expect(t.title.toLowerCase().contains('عبدالله'), isFalse);

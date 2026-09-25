@@ -14,6 +14,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n14_studio/staged_project_models.dart';
 import 'package:family_os/features/n14_studio/staged_project_repository.dart';
+import 'package:family_os/features/n14_studio/studio_ux_bridge.dart';
 
 abstract final class StagedProjectKeys {
   static const screen = Key('staged_project_screen');
@@ -76,7 +77,7 @@ class _StagedProjectScreenState extends State<StagedProjectScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1StagedProjectRepository;
+    _repo = widget.repository ?? Stage1StudioRuntime.stagedProject;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;

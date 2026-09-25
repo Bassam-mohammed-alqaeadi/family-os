@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/app/role_guard.dart';
@@ -12,7 +13,9 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
+import 'package:family_os/features/n15_calendar/calendar_ux_bridge.dart';
 import 'package:family_os/features/n15_calendar/family_calendar_models.dart';
 import 'package:family_os/features/n15_calendar/family_calendar_repository.dart';
 
@@ -132,8 +135,21 @@ class _FamilyCalendarScreenState extends State<FamilyCalendarScreen> {
     }
   }
 
+  /// The real month and its events, unless a test injects a repository.
+  Future<FamilyCalendarRepository> _resolveRepo() async {
+    final injected = widget.repository;
+    if (injected != null) return injected;
+    final familyId =
+        CurrentIdentity.maybeOf(context)?.activeFamilyId.value ?? '';
+    await Stage1CalendarRuntime.ensureOpen();
+    return Stage1CalendarRuntime.familyCalendar(familyId: familyId);
+  }
+
   Future<void> _load() async {
     setState(() => _loading = true);
+    final resolved = await _resolveRepo();
+    if (!mounted) return;
+    _repo = resolved;
     final snap = await _repo.load();
     if (!mounted) return;
     setState(() {
@@ -198,7 +214,9 @@ class _FamilyCalendarScreenState extends State<FamilyCalendarScreen> {
       'three' => l10n.familyCalendarWhoThree,
       'parents' => l10n.familyCalendarWhoParents,
       'everyone' => l10n.familyCalendarWhoEveryone,
-      _ => l10n.familyCalendarWhoEveryone,
+      // A stored reference we cannot resolve is shown as stored, never as
+      // someone else in the family.
+      _ => nameKey.isEmpty ? l10n.familyCalendarWhoEveryone : nameKey,
     };
   }
 
@@ -210,7 +228,10 @@ class _FamilyCalendarScreenState extends State<FamilyCalendarScreen> {
       'quranTest' => l10n.familyCalendarEventQuranTest,
       'anniversary' => l10n.familyCalendarEventAnniversary,
       'dentalAppointment' => l10n.familyCalendarEventDentalAppointment,
-      _ => l10n.familyCalendarEventMemorizationReview,
+      // A real event keeps the title it was stored with.
+      _ => titleKey.isEmpty
+          ? l10n.familyCalendarEventMemorizationReview
+          : titleKey,
     };
   }
 
@@ -222,7 +243,8 @@ class _FamilyCalendarScreenState extends State<FamilyCalendarScreen> {
       'tuesday' => l10n.familyCalendarWhenTuesday,
       'thursday26' => l10n.familyCalendarWhenThursday26,
       'thursday10am' => l10n.familyCalendarWhenThursday10am,
-      _ => l10n.familyCalendarWhenTuesday,
+      // Real rows carry their own clock time (and the date when not today).
+      _ => whenKey.isEmpty ? l10n.familyCalendarWhenTuesday : whenKey,
     };
   }
 
@@ -255,11 +277,22 @@ class _FamilyCalendarScreenState extends State<FamilyCalendarScreen> {
     };
   }
 
+  /// The frozen prototype key still resolves; a real month arrives as its
+  /// first-of-month date and is formatted in the reader's locale — so the card
+  /// can never claim a month the clock is not in.
   String _monthTitle(AppLocalizations l10n, String monthTitleKey) {
-    return switch (monthTitleKey) {
-      'sep2026' => l10n.familyCalendarMonthSep2026,
-      _ => l10n.familyCalendarMonthSep2026,
-    };
+    if (monthTitleKey == 'sep2026') return l10n.familyCalendarMonthSep2026;
+    final parsed = DateTime.tryParse(monthTitleKey);
+    if (parsed == null) return monthTitleKey;
+    try {
+      return DateFormat.yMMMM(
+        Localizations.localeOf(context).toLanguageTag(),
+      ).format(parsed);
+    } on Object {
+      // No date symbols for this locale in this build — show the real key
+      // rather than a different month's name.
+      return monthTitleKey;
+    }
   }
 
   Color _colorForKey(FamilyColors colors, String colorKey) {

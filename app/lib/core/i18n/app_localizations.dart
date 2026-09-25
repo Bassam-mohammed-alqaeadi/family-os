@@ -8822,7 +8822,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-021 UI-007 chat never paywalled honesty
   ///
   /// In ar, this message translates to:
-  /// **'حق ثابت: المحادثة العائلية لا تُقيَّد بأي مستوى اشتراك — مشفّرة ومتاحة دائمًا'**
+  /// **'حق ثابت: المحادثة العائلية لا تُقيَّد بأي مستوى اشتراك — متاحة دائمًا'**
   String get conversationsListHonestyBanner;
 
   /// SCR-FAT-021 conversations section header
@@ -9758,7 +9758,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-007 UI-007 encryption + never-lock honesty
   ///
   /// In ar, this message translates to:
-  /// **'🔒 كل محادثاتكم مشفّرة طرفيًا — ولا تُقفل أبدًا حتى بانتهاء وقتك'**
+  /// **'🛡 محادثاتكم داخل دائرتك الآمنة — ولا تُقفل أبدًا حتى بانتهاء وقتك'**
   String get childChatsHonestyBanner;
 
   /// SCR-CHD-007 closed-circle honesty
@@ -9794,7 +9794,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-007 empty state message
   ///
   /// In ar, this message translates to:
-  /// **'عند بدء محادثة مع عائلتك تظهر هنا — مشفّرة ولا تُقفل أبدًا حتى بانتهاء وقتك.'**
+  /// **'عند بدء محادثة مع عائلتك تظهر هنا — داخل دائرتك الآمنة ولا تُقفل أبدًا حتى بانتهاء وقتك.'**
   String get childChatsEmptyMessage;
 
   /// SCR-CHD-007 loading Semantics
@@ -20548,6 +20548,360 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'تذاكر سلامة الذكاء دون اتصال (FS-007) — إشارات فقط؛ بلا حظر تلقائي.'**
   String get fs007SmartAlertsEntry;
+
+  /// ADR-053 media: voice label
+  ///
+  /// In ar, this message translates to:
+  /// **'🎤 رسالة صوتية'**
+  String get conversationMediaVoice;
+
+  /// ADR-053 media: image label
+  ///
+  /// In ar, this message translates to:
+  /// **'🖼️ صورة'**
+  String get conversationMediaImage;
+
+  /// ADR-053 media: video label
+  ///
+  /// In ar, this message translates to:
+  /// **'🎬 فيديو'**
+  String get conversationMediaVideo;
+
+  /// ADR-053 media: file label
+  ///
+  /// In ar, this message translates to:
+  /// **'📎 ملف'**
+  String get conversationMediaFile;
+
+  /// ADR-053 pinned message bar
+  ///
+  /// In ar, this message translates to:
+  /// **'📌 رسالة مثبّتة'**
+  String get conversationPinnedBarLabel;
+
+  /// S-COM-007 tombstone in place
+  ///
+  /// In ar, this message translates to:
+  /// **'حُذفت هذه الرسالة'**
+  String get conversationDeletedMessage;
+
+  /// S-COM-006 edited marker
+  ///
+  /// In ar, this message translates to:
+  /// **'(مُعدَّلة)'**
+  String get conversationEditedTag;
+
+  /// S-COM-004 reply quote prefix
+  ///
+  /// In ar, this message translates to:
+  /// **'ردًّا على'**
+  String get conversationReplyPrefix;
+
+  /// cancel a pending reply
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء الرد'**
+  String get conversationReplyCancel;
+
+  /// bubble action
+  ///
+  /// In ar, this message translates to:
+  /// **'رد'**
+  String get conversationMenuReply;
+
+  /// S-COM-008 pin
+  ///
+  /// In ar, this message translates to:
+  /// **'تثبيت'**
+  String get conversationMenuPin;
+
+  /// S-COM-008 unpin
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء التثبيت'**
+  String get conversationMenuUnpin;
+
+  /// S-COM-006 edit
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل'**
+  String get conversationMenuEdit;
+
+  /// S-COM-007 delete
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف'**
+  String get conversationMenuDelete;
+
+  /// edit dialog title
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل الرسالة'**
+  String get conversationEditTitle;
+
+  /// edit dialog hint
+  ///
+  /// In ar, this message translates to:
+  /// **'النص الجديد'**
+  String get conversationEditHint;
+
+  /// edit dialog save
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظ'**
+  String get conversationEditSave;
+
+  /// edit dialog cancel
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء'**
+  String get conversationEditCancel;
+
+  /// S-COM-006 window closed
+  ///
+  /// In ar, this message translates to:
+  /// **'انتهت نافذة التعديل (١٥ دقيقة)'**
+  String get conversationEditExpired;
+
+  /// edit refusal
+  ///
+  /// In ar, this message translates to:
+  /// **'التعديل للكاتب وحده خلال ١٥ دقيقة'**
+  String get conversationEditRefused;
+
+  /// tombstone confirmation
+  ///
+  /// In ar, this message translates to:
+  /// **'حُذفت الرسالة للجميع'**
+  String get conversationDeleteToast;
+
+  /// edit confirmation
+  ///
+  /// In ar, this message translates to:
+  /// **'عُدِّلت الرسالة'**
+  String get conversationEditToast;
+
+  /// pin confirmation
+  ///
+  /// In ar, this message translates to:
+  /// **'ثُبّتت الرسالة أعلى المحادثة'**
+  String get conversationPinToast;
+
+  /// unpin confirmation
+  ///
+  /// In ar, this message translates to:
+  /// **'أُلغي تثبيت الرسالة'**
+  String get conversationUnpinToast;
+
+  /// ADR-053 muted row badge
+  ///
+  /// In ar, this message translates to:
+  /// **'🔕 مكتومة'**
+  String get conversationMutedIndicator;
+
+  /// ADR-053 archived row badge
+  ///
+  /// In ar, this message translates to:
+  /// **'📥 مؤرشفة'**
+  String get conversationArchivedIndicator;
+
+  /// ADR-053 pinned row badge
+  ///
+  /// In ar, this message translates to:
+  /// **'📌 مثبّتة'**
+  String get conversationPinnedIndicator;
+
+  /// S-COM-009 lock badge
+  ///
+  /// In ar, this message translates to:
+  /// **'🔒 مقفلة'**
+  String get conversationLockIndicator;
+
+  /// row quick-actions semantics
+  ///
+  /// In ar, this message translates to:
+  /// **'إجراءات المحادثة'**
+  String get conversationQuickActionsSemantics;
+
+  /// row menu mute
+  ///
+  /// In ar, this message translates to:
+  /// **'كتم'**
+  String get conversationRowMenuMute;
+
+  /// row menu archive
+  ///
+  /// In ar, this message translates to:
+  /// **'أرشفة'**
+  String get conversationRowMenuArchive;
+
+  /// row menu unarchive
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء الأرشفة'**
+  String get conversationRowMenuUnarchive;
+
+  /// row menu pin
+  ///
+  /// In ar, this message translates to:
+  /// **'تثبيت في القائمة'**
+  String get conversationRowMenuPin;
+
+  /// row menu unpin
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء التثبيت من القائمة'**
+  String get conversationRowMenuUnpin;
+
+  /// ADR-053 mute preset
+  ///
+  /// In ar, this message translates to:
+  /// **'٨ ساعات'**
+  String get conversationMuteEightHours;
+
+  /// ADR-053 mute preset
+  ///
+  /// In ar, this message translates to:
+  /// **'أسبوع'**
+  String get conversationMuteOneWeek;
+
+  /// ADR-053 mute preset
+  ///
+  /// In ar, this message translates to:
+  /// **'دائمًا'**
+  String get conversationMuteForever;
+
+  /// ADR-053 unmute
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء الكتم'**
+  String get conversationUnmute;
+
+  /// ADR-053 fixed family pin
+  ///
+  /// In ar, this message translates to:
+  /// **'المحادثة العائلية مثبتة دائمًا'**
+  String get conversationFamilyAlwaysPinned;
+
+  /// ADR-053 settings sheet title
+  ///
+  /// In ar, this message translates to:
+  /// **'⚙️ إعدادات هذه المحادثة'**
+  String get chatSettingsTitle;
+
+  /// ADR-053 settings scope
+  ///
+  /// In ar, this message translates to:
+  /// **'تُطبَّق على هذه المحادثة فقط'**
+  String get chatSettingsScopeNote;
+
+  /// settings mute section
+  ///
+  /// In ar, this message translates to:
+  /// **'الكتم'**
+  String get chatSettingsMute;
+
+  /// settings archive section
+  ///
+  /// In ar, this message translates to:
+  /// **'الأرشفة'**
+  String get chatSettingsArchive;
+
+  /// settings pin section
+  ///
+  /// In ar, this message translates to:
+  /// **'التثبيت في القائمة'**
+  String get chatSettingsPin;
+
+  /// settings wallpaper section
+  ///
+  /// In ar, this message translates to:
+  /// **'الخلفية'**
+  String get chatSettingsWallpaper;
+
+  /// settings bubble theme section
+  ///
+  /// In ar, this message translates to:
+  /// **'ثيم الفقاعات'**
+  String get chatSettingsBubbleTheme;
+
+  /// S-COM-005 receipts section
+  ///
+  /// In ar, this message translates to:
+  /// **'تأكيد القراءة'**
+  String get chatSettingsReceipts;
+
+  /// ADR-053 mandatory receipts
+  ///
+  /// In ar, this message translates to:
+  /// **'إلزامي في محادثة فيها والد — لا يمكن إطفاؤه'**
+  String get chatSettingsReceiptsMandatory;
+
+  /// ADR-053 optional between peers
+  ///
+  /// In ar, this message translates to:
+  /// **'متاح بين الأقران'**
+  String get chatSettingsReceiptsOptional;
+
+  /// S-COM-009 lock section
+  ///
+  /// In ar, this message translates to:
+  /// **'قفل المحادثة'**
+  String get chatSettingsLock;
+
+  /// ADR-053 lock never hides from parent
+  ///
+  /// In ar, this message translates to:
+  /// **'القفل لا يخفي محادثة ابنك عنك'**
+  String get chatSettingsLockParentNote;
+
+  /// wallpaper option
+  ///
+  /// In ar, this message translates to:
+  /// **'فاتحة'**
+  String get chatWallpaperLight;
+
+  /// wallpaper option
+  ///
+  /// In ar, this message translates to:
+  /// **'وردية'**
+  String get chatWallpaperRose;
+
+  /// wallpaper option
+  ///
+  /// In ar, this message translates to:
+  /// **'نعناعية'**
+  String get chatWallpaperMint;
+
+  /// wallpaper option
+  ///
+  /// In ar, this message translates to:
+  /// **'بنفسجية'**
+  String get chatWallpaperViolet;
+
+  /// bubble theme option
+  ///
+  /// In ar, this message translates to:
+  /// **'بنفسجي'**
+  String get chatThemeP;
+
+  /// bubble theme option
+  ///
+  /// In ar, this message translates to:
+  /// **'وردي'**
+  String get chatThemeRose;
+
+  /// bubble theme option
+  ///
+  /// In ar, this message translates to:
+  /// **'فيروزي'**
+  String get chatThemeTeal;
+
+  /// settings sheet done
+  ///
+  /// In ar, this message translates to:
+  /// **'تم'**
+  String get chatSettingsDone;
 }
 
 class _AppLocalizationsDelegate

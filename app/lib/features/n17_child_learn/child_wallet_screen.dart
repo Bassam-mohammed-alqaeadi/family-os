@@ -10,9 +10,9 @@ import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
-import 'package:family_os/features/n03_screen_time/stage1_child_scope.dart';
 import 'package:family_os/features/n17_child_learn/child_wallet_models.dart';
 import 'package:family_os/features/n17_child_learn/child_wallet_repository.dart';
+import 'package:family_os/features/n17_child_learn/learn_ux_bridge.dart';
 
 /// Widget keys for SCR-CHD-019 acceptance.
 abstract final class ChildWalletKeys {
@@ -76,7 +76,7 @@ class _ChildWalletScreenState extends State<ChildWalletScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1ChildWalletRepository;
+    _repo = widget.repository ?? Stage1LearnRuntime.wallet;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -88,14 +88,9 @@ class _ChildWalletScreenState extends State<ChildWalletScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (widget.repository != null || _scopedRepoBound) return;
-    final runtime = CurrentIdentity.maybeOf(context);
-    final childId = runtime == null
-        ? kStage1CanonicalChildId
-        : familyScopedChildId(
-            familyId: runtime.activeFamilyId,
-            childId: runtime.activeChildId,
-          );
-    _repo = PolicyChildWalletRepository(childId: childId);
+    // The Drift wallet resolves the acting child at load time, so a scope
+    // change is followed by the next load instead of rebuilding the repo here.
+    _repo = Stage1LearnRuntime.wallet;
     _scopedRepoBound = true;
     _load();
   }

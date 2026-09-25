@@ -1,12 +1,12 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:family_os/app/family_shell.dart';
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/app/router.dart';
+import 'package:family_os/core/data/durable_persistence.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/fs_foundation/fs_session_kernel.dart';
@@ -16,6 +16,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await installDurablePersistence();
   // Phase 1.5 — shared FS SQLite session (Memory fallback is honest DEGRADED).
   await FsSessionKernel.ensureOpen(preferSqlite: true);
   // #region agent log

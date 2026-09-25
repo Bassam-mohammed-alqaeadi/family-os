@@ -35,7 +35,7 @@ final class MemoryDesiredMonitoringPrefsStore
 }
 
 /// Shared Stage-1 store (survives within process).
-final MemoryDesiredMonitoringPrefsStore stage1DesiredMonitoringPrefsStore =
+DesiredMonitoringPrefsStore stage1DesiredMonitoringPrefsStore =
     MemoryDesiredMonitoringPrefsStore();
 
 /// Prefs/JSON-backed repository (SharedPreferences adapter-ready).

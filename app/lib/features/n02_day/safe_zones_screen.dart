@@ -146,7 +146,7 @@ class SafeZonesScreenState extends State<SafeZonesScreen> {
         if (!mounted) return;
         _repo = DomainSafeZonesRepository(
           domain: Stage1LocationRuntime.store,
-          familyId: const FamilyId('fam_stage1'),
+          familyId: FamilyId('fam_stage1'),
         );
       }
       await _load();

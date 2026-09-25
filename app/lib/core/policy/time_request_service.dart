@@ -69,8 +69,7 @@ final class QueuedTimeDecision {
 enum QueuedTimeDecisionKind { approve, reject }
 
 /// Stage-1 shared prefs store for time requests.
-final MemoryTimeRequestPrefsStore stage1TimeRequestPrefsStore =
-    MemoryTimeRequestPrefsStore();
+TimeRequestPrefsStore stage1TimeRequestPrefsStore = MemoryTimeRequestPrefsStore();
 
 /// Stage-1 shared decision bus (same-process child notify).
 final TimeRequestDecisionBus stage1TimeRequestDecisionBus =

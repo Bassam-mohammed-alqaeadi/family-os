@@ -11,6 +11,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n17_child_learn/child_coming_gifts_models.dart';
 import 'package:family_os/features/n17_child_learn/child_coming_gifts_repository.dart';
+import 'package:family_os/features/n17_child_learn/learn_ux_bridge.dart';
 
 abstract final class ChildComingGiftsKeys {
   static const screen = Key('child_coming_gifts_screen');
@@ -64,7 +65,7 @@ class _ChildComingGiftsScreenState extends State<ChildComingGiftsScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1ChildComingGiftsRepository;
+    _repo = widget.repository ?? Stage1LearnRuntime.comingGifts;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;

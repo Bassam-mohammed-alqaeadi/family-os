@@ -11,6 +11,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n02_day/day_board_motion.dart';
 import 'package:family_os/features/n02_day/day_board_projection.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
+import 'package:family_os/features/n02_day/day_followup_bridge.dart';
 
 /// Widget keys for SCR-FAT-010 / UI-004 / UI-017 acceptance.
 abstract final class DayBoardKeys {
@@ -86,7 +87,7 @@ class DayBoardScreenState extends State<DayBoardScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.projectionRepository ?? stage1DayBoardProjectionRepository;
+    _repo = widget.projectionRepository ?? Stage1DayRuntime.dayBoard;
     if (widget.projection != null) {
       _projection = widget.projection!;
       _loaded = true;

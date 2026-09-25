@@ -13,6 +13,8 @@ import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n01_linking/camera_permission_seam.dart';
+import 'package:family_os/features/n14_studio/add_from_source_repository.dart';
+import 'package:family_os/features/n14_studio/studio_ux_bridge.dart';
 
 /// Widget keys for SCR-FAT-042 acceptance.
 abstract final class StudioCameraCaptureKeys {
@@ -45,6 +47,7 @@ class StudioCameraCaptureScreen extends StatefulWidget {
     this.motherLevel = MotherLevel.partner,
     this.onSos,
     this.onNavigate,
+    this.addSourceRepository,
     this.onOpenSettingsToast = true,
   });
 
@@ -67,6 +70,10 @@ class StudioCameraCaptureScreen extends StatefulWidget {
 
   /// Test seam — intercepts navigation by screen id.
   final void Function(String screenId)? onNavigate;
+
+  /// Rule 25 seam — null → [Stage1StudioRuntime.addFromSource]. A captured
+  /// page opens a staged source pack (SCR-FAT-043 reads that row).
+  final AddFromSourceRepository? addSourceRepository;
 
   /// Show toast when settings deep-link is invoked (demo honesty).
   final bool onOpenSettingsToast;
@@ -167,7 +174,7 @@ class _StudioCameraCaptureScreenState extends State<StudioCameraCaptureScreen> {
     context.push(screenPath(screenId));
   }
 
-  void _onCapture() {
+  Future<void> _onCapture() async {
     if (_capturing) return;
     final l10n = AppLocalizations.of(context);
     if (!_canCapture) {
@@ -175,11 +182,15 @@ class _StudioCameraCaptureScreenState extends State<StudioCameraCaptureScreen> {
       return;
     }
     setState(() => _capturing = true);
+    // The shot opens the staged pack the studio generates from — the image
+    // bytes are the camera's own work and have no row in the contract.
+    final repo =
+        widget.addSourceRepository ?? Stage1StudioRuntime.addFromSource;
+    await repo.addSource(AddSourceKind.camera);
+    if (!mounted) return;
     AppToast.show(context, message: l10n.studioCameraAnalyzedToast);
+    setState(() => _capturing = false);
     _go('SCR-FAT-043');
-    if (mounted) {
-      setState(() => _capturing = false);
-    }
   }
 
   @override

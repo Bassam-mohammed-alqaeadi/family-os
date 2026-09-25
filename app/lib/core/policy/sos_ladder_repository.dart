@@ -57,7 +57,7 @@ final class MemorySosLadderStore implements SosLadderStore {
 }
 
 /// Stage-1 shared mock prefs (process lifetime).
-final MemorySosLadderStore stage1SosLadderStore = MemorySosLadderStore();
+SosLadderStore stage1SosLadderStore = MemorySosLadderStore();
 
 Never _rejectRemove(String memberId) => throw SosLadderValidationException(
       SosLadderValidationCode.rung1ParentImmovable,

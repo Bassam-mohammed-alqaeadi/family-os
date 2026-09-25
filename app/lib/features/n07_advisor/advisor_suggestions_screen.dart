@@ -13,6 +13,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/ai_suggestion_repository.dart';
 import 'package:family_os/core/policy/rule_consequent.dart';
 import 'package:family_os/core/policy/rules_engine_rule_repository.dart';
+import 'package:family_os/features/n07_advisor/reports_ux_bridge.dart';
 
 /// Widget keys for SCR-FAT-011 acceptance.
 abstract final class AdvisorSuggestionsKeys {
@@ -52,7 +53,7 @@ class AdvisorSuggestionsScreen extends StatefulWidget {
     this.roleOverride,
   });
 
-  /// Null → [MockAiSuggestionRepository] wired to [rules].
+  /// Null → [Stage1ReportsRuntime.advisorSuggestions] over `ai_suggestion`.
   final AiSuggestionRepository? suggestions;
 
   /// Null → [stage1RulesEngineRuleRepository].
@@ -86,7 +87,8 @@ class AdvisorSuggestionsScreenState extends State<AdvisorSuggestionsScreen> {
     super.initState();
     _rules = widget.rules ?? stage1RulesEngineRuleRepository;
     _suggestions =
-        widget.suggestions ?? MockAiSuggestionRepository(rules: _rules);
+        widget.suggestions ??
+        Stage1ReportsRuntime.advisorSuggestions(rules: _rules);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _load();

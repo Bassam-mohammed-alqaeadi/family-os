@@ -127,7 +127,7 @@ class LocationHistoryScreenState extends State<LocationHistoryScreen> {
         if (!mounted) return;
         _repo = DomainLocationHistoryRepository(
           domain: Stage1LocationRuntime.store,
-          familyId: const FamilyId('fam_stage1'),
+          familyId: FamilyId('fam_stage1'),
         );
       }
       await _load();

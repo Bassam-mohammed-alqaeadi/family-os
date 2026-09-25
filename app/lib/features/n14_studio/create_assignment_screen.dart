@@ -15,6 +15,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n14_studio/create_assignment_models.dart';
 import 'package:family_os/features/n14_studio/create_assignment_repository.dart';
+import 'package:family_os/features/n14_studio/studio_ux_bridge.dart';
 
 /// Widget keys for SCR-FAT-049 acceptance.
 abstract final class CreateAssignmentKeys {
@@ -111,7 +112,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1CreateAssignmentRepository;
+    _repo = widget.repository ?? Stage1StudioRuntime.createAssignment;
     _sos = widget.sosFire ?? stage1SosFireService;
     _homeworkCtrl = TextEditingController();
     _familyCtrl = TextEditingController();
@@ -132,7 +133,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
   void didUpdateWidget(covariant CreateAssignmentScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.repository != widget.repository) {
-      _repo = widget.repository ?? stage1CreateAssignmentRepository;
+      _repo = widget.repository ?? Stage1StudioRuntime.createAssignment;
       _load();
     }
   }

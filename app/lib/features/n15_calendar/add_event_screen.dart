@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/app/role_guard.dart';
+import 'package:family_os/core/data/stage1_row_vocabulary.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/banner.dart';
@@ -11,9 +12,11 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n15_calendar/add_event_models.dart';
 import 'package:family_os/features/n15_calendar/add_event_repository.dart';
+import 'package:family_os/features/n15_calendar/calendar_ux_bridge.dart';
 
 /// Widget keys for SCR-FAT-053 acceptance.
 abstract final class AddEventKeys {
@@ -144,8 +147,25 @@ class _AddEventScreenState extends State<AddEventScreen> {
     }
   }
 
+  /// The real save path, unless a test injects a repository.
+  Future<AddEventRepository> _resolveRepo() async {
+    final injected = widget.repository;
+    if (injected != null) return injected;
+    final identity = CurrentIdentity.maybeOf(context);
+    final familyId = identity?.activeFamilyId.value ?? '';
+    final accountId = identity?.account.id.value;
+    await Stage1CalendarRuntime.ensureOpen();
+    return Stage1CalendarRuntime.addEvent(
+      familyId: familyId,
+      createdByAccount: accountId,
+    );
+  }
+
   Future<void> _load() async {
     setState(() => _loading = true);
+    final resolved = await _resolveRepo();
+    if (!mounted) return;
+    _repo = resolved;
     final snap = await _repo.load();
     if (!mounted) return;
     final l10n = AppLocalizations.of(context);
@@ -193,7 +213,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
       'childThree' => l10n.addEventWhoChildThree,
       'mother' => l10n.addEventWhoMother,
       'everyone' => l10n.addEventWhoEveryone,
-      _ => l10n.addEventWhoChildOne,
+      // A real event may name a fourth child or the parents: show the stored
+      // value instead of a different person.
+      _ => nameKey.isEmpty ? l10n.addEventWhoChildOne : nameKey,
     };
   }
 
@@ -680,10 +702,10 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 vertical: 4,
               ),
             ),
+            // The family's real children, by ordinal, then the shared lanes.
             items: [
-              'childOne',
-              'childTwo',
-              'childThree',
+              for (var i = 0; i < _snap.children.length; i++)
+                Stage1RowVocabulary.childKeyFor(i),
               'mother',
               'everyone',
             ].map((key) {

@@ -13,6 +13,7 @@ import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
+import 'package:family_os/features/n12_devices/devices_ux_bridge.dart';
 import 'package:family_os/features/n12_devices/family_members_repository.dart';
 
 /// Widget keys for SCR-FAT-027 acceptance.
@@ -74,7 +75,7 @@ class FamilyMembersScreen extends StatefulWidget {
 }
 
 class FamilyMembersScreenState extends State<FamilyMembersScreen> {
-  late FamilyMembersRepository _repo;
+  FamilyMembersRepository? _repo;
   var _loading = true;
   var _loadFailed = false;
   var _sosBusy = false;
@@ -106,10 +107,10 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1FamilyMembersRepository;
+    _repo = widget.repository;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      _load();
+      _bind();
     });
   }
 
@@ -117,9 +118,21 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
   void didUpdateWidget(covariant FamilyMembersScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.repository != widget.repository) {
-      _repo = widget.repository ?? stage1FamilyMembersRepository;
-      _load();
+      _repo = widget.repository;
+      _bind();
     }
+  }
+
+  /// DEV-2 — the real roster seam unless a test injects one.
+  Future<void> _bind() async {
+    var repo = widget.repository;
+    if (repo == null) {
+      await Stage1DevicesRuntime.ensureOpen();
+      if (!mounted) return;
+      repo = Stage1DevicesRuntime.members();
+    }
+    _repo = repo;
+    await _load();
   }
 
   Future<void> _load() async {
@@ -129,7 +142,7 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
     });
     try {
       final familyId = CurrentIdentity.maybeOf(context)?.activeFamilyId.value;
-      final members = await _repo.listMembers(familyId: familyId);
+      final members = await _repo!.listMembers(familyId: familyId);
       if (!mounted) return;
       setState(() {
         _members = members;

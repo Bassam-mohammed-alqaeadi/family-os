@@ -11,6 +11,7 @@ import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/entitlement.dart';
 import 'package:family_os/core/policy/entitlement_service.dart';
+import 'package:family_os/features/n11_billing/billing_ux_bridge.dart';
 import 'package:go_router/go_router.dart';
 
 /// Widget keys for SCR-FAT-057 / UI-007 acceptance.
@@ -56,7 +57,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
   @override
   void initState() {
     super.initState();
-    _entitlement = widget.entitlement ?? stage1EntitlementService;
+    _entitlement = widget.entitlement ?? Stage1BillingRuntime.service;
     final e = _entitlement;
     if (e is Listenable) {
       final listenable = e as Listenable;

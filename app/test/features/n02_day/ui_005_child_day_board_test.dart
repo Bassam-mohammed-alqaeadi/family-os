@@ -192,7 +192,7 @@ void main() {
   testWidgets('S-3 warning appears at <=5 minutes with protected actions', (
     tester,
   ) async {
-    stage1TimeRequestPrefsStore.data.clear();
+    (stage1TimeRequestPrefsStore as MemoryTimeRequestPrefsStore).data.clear();
     addTearDown(stage1TimeRequestDecisionBus.clear);
     final syncBus = PolicySyncBus();
     addTearDown(syncBus.dispose);
@@ -222,7 +222,7 @@ void main() {
   testWidgets('approved request grant increases child remaining display', (
     tester,
   ) async {
-    stage1TimeRequestPrefsStore.data.clear();
+    (stage1TimeRequestPrefsStore as MemoryTimeRequestPrefsStore).data.clear();
     final service = TimeRequestService(
       repository: PrefsTimeRequestRepository(stage1TimeRequestPrefsStore),
       decisionBus: stage1TimeRequestDecisionBus,

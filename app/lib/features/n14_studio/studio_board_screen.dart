@@ -14,6 +14,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n14_studio/studio_board_models.dart';
 import 'package:family_os/features/n14_studio/studio_board_repository.dart';
+import 'package:family_os/features/n14_studio/studio_ux_bridge.dart';
 
 /// Widget keys for SCR-FAT-040 acceptance.
 abstract final class StudioBoardKeys {
@@ -107,7 +108,7 @@ class _StudioBoardScreenState extends State<StudioBoardScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1StudioBoardRepository;
+    _repo = widget.repository ?? Stage1StudioRuntime.board;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -119,7 +120,7 @@ class _StudioBoardScreenState extends State<StudioBoardScreen> {
   void didUpdateWidget(covariant StudioBoardScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.repository != widget.repository) {
-      _repo = widget.repository ?? stage1StudioBoardRepository;
+      _repo = widget.repository ?? Stage1StudioRuntime.board;
       _load();
     }
   }

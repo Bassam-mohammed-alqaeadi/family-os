@@ -15,6 +15,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n02_day/alert_detail_repository.dart';
 import 'package:family_os/features/n02_day/alerts_hub_repository.dart';
+import 'package:family_os/features/n02_day/day_followup_bridge.dart';
 
 /// Widget keys for SCR-FAT-020 acceptance.
 abstract final class AlertDetailKeys {
@@ -133,7 +134,7 @@ class AlertDetailScreenState extends State<AlertDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1AlertDetailRepository;
+    _repo = widget.repository ?? Stage1DayRuntime.alertDetail;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _load();

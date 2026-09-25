@@ -86,8 +86,7 @@ final class MemoryAntiTamperPrefsStore implements AntiTamperPrefsStore {
 }
 
 /// Stage-1 shared prefs store (survives within process; Rule 25 seam).
-final MemoryAntiTamperPrefsStore stage1AntiTamperPrefsStore =
-    MemoryAntiTamperPrefsStore();
+AntiTamperPrefsStore stage1AntiTamperPrefsStore = MemoryAntiTamperPrefsStore();
 
 /// Stage-1 shared audit for AT write denials.
 final AuditAppend stage1AntiTamperAudit = AuditAppend();

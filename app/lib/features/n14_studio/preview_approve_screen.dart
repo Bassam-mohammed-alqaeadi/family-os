@@ -15,6 +15,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n14_studio/preview_approve_models.dart';
 import 'package:family_os/features/n14_studio/preview_approve_repository.dart';
+import 'package:family_os/features/n14_studio/studio_ux_bridge.dart';
 
 /// Widget keys for SCR-FAT-044 acceptance.
 abstract final class PreviewApproveKeys {
@@ -56,7 +57,7 @@ class PreviewApproveScreen extends StatefulWidget {
     this.onNavigate,
   });
 
-  /// Rule 25 seam — null → [stage1PreviewApproveRepository].
+  /// Rule 25 seam — null → [Stage1StudioRuntime.previewApprove].
   final PreviewApproveRepository? repository;
 
   /// P-4 SOS seam — null → [stage1SosFireService].
@@ -110,7 +111,7 @@ class _PreviewApproveScreenState extends State<PreviewApproveScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1PreviewApproveRepository;
+    _repo = widget.repository ?? Stage1StudioRuntime.previewApprove;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -122,7 +123,7 @@ class _PreviewApproveScreenState extends State<PreviewApproveScreen> {
   void didUpdateWidget(covariant PreviewApproveScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.repository != widget.repository) {
-      _repo = widget.repository ?? stage1PreviewApproveRepository;
+      _repo = widget.repository ?? Stage1StudioRuntime.previewApprove;
       _load();
     }
   }

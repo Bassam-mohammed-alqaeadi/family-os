@@ -31,11 +31,10 @@ typedef ScheduleTimePicker =
     Future<TimeOfDay?> Function(BuildContext context, TimeOfDay initial);
 
 /// Shared Stage-1 prefs store (survives within process; Rule 25 seam).
-final MemorySchedulePrefsStore stage1SchedulePrefsStore =
-    MemorySchedulePrefsStore();
+SchedulePrefsStore stage1SchedulePrefsStore = MemorySchedulePrefsStore();
 
 /// Shared Stage-1 policy prefs (SET-002).
-final MemoryScreenTimePolicyPrefsStore stage1PolicyPrefsStore =
+ScreenTimePolicyPrefsStore stage1PolicyPrefsStore =
     MemoryScreenTimePolicyPrefsStore();
 
 /// SCR-FAT-032 — وقت الشاشة لابن (SET-001 schedules + SET-002 caps/wallets + SET-024 overflow).

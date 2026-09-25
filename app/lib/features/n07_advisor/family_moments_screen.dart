@@ -14,6 +14,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n07_advisor/family_moments_models.dart';
 import 'package:family_os/features/n07_advisor/family_moments_repository.dart';
+import 'package:family_os/features/n07_advisor/reports_ux_bridge.dart';
 
 abstract final class FamilyMomentsKeys {
   static const screen = Key('family_moments_screen');
@@ -78,7 +79,7 @@ class _FamilyMomentsScreenState extends State<FamilyMomentsScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1FamilyMomentsRepository;
+    _repo = widget.repository ?? Stage1ReportsRuntime.familyMoments;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;

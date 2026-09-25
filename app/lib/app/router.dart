@@ -290,6 +290,7 @@ const String tombstoneSchoolRedirectTarget = '/scr-fat-085';
 ///
 /// Product entry is welcome (`/scr-shr-001`); gallery remains at `/gallery`.
 /// Tombstone deep links (e.g. `/scr-fat-039`) redirect to [tombstoneSchoolRedirectTarget].
+/// System #3 identity routes (sys3_*) are appended via [sys3IdentityRoutes].
 GoRouter createAppRouter({
   required ValueListenable<AppRole> roleListenable,
   String initialLocation = '/scr-shr-001',

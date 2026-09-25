@@ -6380,7 +6380,7 @@
   "@conversationsListTitle": {
     "description": "SCR-FAT-021 app bar title (family tab)"
   },
-  "conversationsListHonestyBanner": "Fixed right: family chat is never limited by any plan tier — encrypted and always available",
+  "conversationsListHonestyBanner": "Fixed right: family chat is never limited by any plan tier — always available",
   "@conversationsListHonestyBanner": {
     "description": "SCR-FAT-021 UI-007 chat never paywalled honesty"
   },
@@ -7029,7 +7029,7 @@
   "@childChatsTitle": {
     "description": "SCR-CHD-007 app bar title (family tab)"
   },
-  "childChatsHonestyBanner": "🔒 All your chats are end-to-end encrypted — and never lock even when your time runs out",
+  "childChatsHonestyBanner": "🛡 Your chats stay inside your safe circle — and never lock even when your time runs out",
   "@childChatsHonestyBanner": {
     "description": "SCR-CHD-007 UI-007 encryption + never-lock honesty"
   },
@@ -7053,7 +7053,7 @@
   "@childChatsEmptyTitle": {
     "description": "SCR-CHD-007 empty state title"
   },
-  "childChatsEmptyMessage": "When you start chatting with your family it appears here — encrypted and never locked when time runs out.",
+  "childChatsEmptyMessage": "When you start chatting with your family it appears here — inside your safe circle and never locked when time runs out.",
   "@childChatsEmptyMessage": {
     "description": "SCR-CHD-007 empty state message"
   },
@@ -14896,5 +14896,241 @@
   "fs007SmartAlertsEntry": "Offline AI Safety tickets (FS-007) — signals only; never auto-blocks.",
   "@fs007SmartAlertsEntry": {
     "description": "FS-007-UX honesty on FAT-065"
+  },
+  "conversationMediaVoice": "🎤 Voice message",
+  "@conversationMediaVoice": {
+    "description": "ADR-053 media: voice label"
+  },
+  "conversationMediaImage": "🖼️ Photo",
+  "@conversationMediaImage": {
+    "description": "ADR-053 media: image label"
+  },
+  "conversationMediaVideo": "🎬 Video",
+  "@conversationMediaVideo": {
+    "description": "ADR-053 media: video label"
+  },
+  "conversationMediaFile": "📎 File",
+  "@conversationMediaFile": {
+    "description": "ADR-053 media: file label"
+  },
+  "conversationPinnedBarLabel": "📌 Pinned message",
+  "@conversationPinnedBarLabel": {
+    "description": "ADR-053 pinned message bar"
+  },
+  "conversationDeletedMessage": "This message was deleted",
+  "@conversationDeletedMessage": {
+    "description": "S-COM-007 tombstone in place"
+  },
+  "conversationEditedTag": "(edited)",
+  "@conversationEditedTag": {
+    "description": "S-COM-006 edited marker"
+  },
+  "conversationReplyPrefix": "Replying to",
+  "@conversationReplyPrefix": {
+    "description": "S-COM-004 reply quote prefix"
+  },
+  "conversationReplyCancel": "Cancel reply",
+  "@conversationReplyCancel": {
+    "description": "cancel a pending reply"
+  },
+  "conversationMenuReply": "Reply",
+  "@conversationMenuReply": {
+    "description": "bubble action"
+  },
+  "conversationMenuPin": "Pin",
+  "@conversationMenuPin": {
+    "description": "S-COM-008 pin"
+  },
+  "conversationMenuUnpin": "Unpin",
+  "@conversationMenuUnpin": {
+    "description": "S-COM-008 unpin"
+  },
+  "conversationMenuEdit": "Edit",
+  "@conversationMenuEdit": {
+    "description": "S-COM-006 edit"
+  },
+  "conversationMenuDelete": "Delete",
+  "@conversationMenuDelete": {
+    "description": "S-COM-007 delete"
+  },
+  "conversationEditTitle": "Edit message",
+  "@conversationEditTitle": {
+    "description": "edit dialog title"
+  },
+  "conversationEditHint": "New text",
+  "@conversationEditHint": {
+    "description": "edit dialog hint"
+  },
+  "conversationEditSave": "Save",
+  "@conversationEditSave": {
+    "description": "edit dialog save"
+  },
+  "conversationEditCancel": "Cancel",
+  "@conversationEditCancel": {
+    "description": "edit dialog cancel"
+  },
+  "conversationEditExpired": "Edit window closed (15 minutes)",
+  "@conversationEditExpired": {
+    "description": "S-COM-006 window closed"
+  },
+  "conversationEditRefused": "Only the author may edit within 15 minutes",
+  "@conversationEditRefused": {
+    "description": "edit refusal"
+  },
+  "conversationDeleteToast": "Message deleted for everyone",
+  "@conversationDeleteToast": {
+    "description": "tombstone confirmation"
+  },
+  "conversationEditToast": "Message edited",
+  "@conversationEditToast": {
+    "description": "edit confirmation"
+  },
+  "conversationPinToast": "Message pinned to the top",
+  "@conversationPinToast": {
+    "description": "pin confirmation"
+  },
+  "conversationUnpinToast": "Message unpinned",
+  "@conversationUnpinToast": {
+    "description": "unpin confirmation"
+  },
+  "conversationMutedIndicator": "🔕 Muted",
+  "@conversationMutedIndicator": {
+    "description": "ADR-053 muted row badge"
+  },
+  "conversationArchivedIndicator": "📥 Archived",
+  "@conversationArchivedIndicator": {
+    "description": "ADR-053 archived row badge"
+  },
+  "conversationPinnedIndicator": "📌 Pinned",
+  "@conversationPinnedIndicator": {
+    "description": "ADR-053 pinned row badge"
+  },
+  "conversationLockIndicator": "🔒 Locked",
+  "@conversationLockIndicator": {
+    "description": "S-COM-009 lock badge"
+  },
+  "conversationQuickActionsSemantics": "Conversation actions",
+  "@conversationQuickActionsSemantics": {
+    "description": "row quick-actions semantics"
+  },
+  "conversationRowMenuMute": "Mute",
+  "@conversationRowMenuMute": {
+    "description": "row menu mute"
+  },
+  "conversationRowMenuArchive": "Archive",
+  "@conversationRowMenuArchive": {
+    "description": "row menu archive"
+  },
+  "conversationRowMenuUnarchive": "Unarchive",
+  "@conversationRowMenuUnarchive": {
+    "description": "row menu unarchive"
+  },
+  "conversationRowMenuPin": "Pin to top",
+  "@conversationRowMenuPin": {
+    "description": "row menu pin"
+  },
+  "conversationRowMenuUnpin": "Unpin from top",
+  "@conversationRowMenuUnpin": {
+    "description": "row menu unpin"
+  },
+  "conversationMuteEightHours": "8 hours",
+  "@conversationMuteEightHours": {
+    "description": "ADR-053 mute preset"
+  },
+  "conversationMuteOneWeek": "One week",
+  "@conversationMuteOneWeek": {
+    "description": "ADR-053 mute preset"
+  },
+  "conversationMuteForever": "Always",
+  "@conversationMuteForever": {
+    "description": "ADR-053 mute preset"
+  },
+  "conversationUnmute": "Unmute",
+  "@conversationUnmute": {
+    "description": "ADR-053 unmute"
+  },
+  "conversationFamilyAlwaysPinned": "The family chat is always pinned",
+  "@conversationFamilyAlwaysPinned": {
+    "description": "ADR-053 fixed family pin"
+  },
+  "chatSettingsTitle": "⚙️ This chat's settings",
+  "@chatSettingsTitle": {
+    "description": "ADR-053 settings sheet title"
+  },
+  "chatSettingsScopeNote": "Applies to this conversation only",
+  "@chatSettingsScopeNote": {
+    "description": "ADR-053 settings scope"
+  },
+  "chatSettingsMute": "Mute",
+  "@chatSettingsMute": {
+    "description": "settings mute section"
+  },
+  "chatSettingsArchive": "Archive",
+  "@chatSettingsArchive": {
+    "description": "settings archive section"
+  },
+  "chatSettingsPin": "Pin to top",
+  "@chatSettingsPin": {
+    "description": "settings pin section"
+  },
+  "chatSettingsWallpaper": "Wallpaper",
+  "@chatSettingsWallpaper": {
+    "description": "settings wallpaper section"
+  },
+  "chatSettingsBubbleTheme": "Bubble theme",
+  "@chatSettingsBubbleTheme": {
+    "description": "settings bubble theme section"
+  },
+  "chatSettingsReceipts": "Read receipts",
+  "@chatSettingsReceipts": {
+    "description": "S-COM-005 receipts section"
+  },
+  "chatSettingsReceiptsMandatory": "Mandatory in a chat with a parent — cannot be turned off",
+  "@chatSettingsReceiptsMandatory": {
+    "description": "ADR-053 mandatory receipts"
+  },
+  "chatSettingsReceiptsOptional": "Available between peers",
+  "@chatSettingsReceiptsOptional": {
+    "description": "ADR-053 optional between peers"
+  },
+  "chatSettingsLock": "Chat lock",
+  "@chatSettingsLock": {
+    "description": "S-COM-009 lock section"
+  },
+  "chatSettingsLockParentNote": "A lock never hides your child's chat from you",
+  "@chatSettingsLockParentNote": {
+    "description": "ADR-053 lock never hides from parent"
+  },
+  "chatWallpaperLight": "Light",
+  "@chatWallpaperLight": {
+    "description": "wallpaper option"
+  },
+  "chatWallpaperRose": "Rose",
+  "@chatWallpaperRose": {
+    "description": "wallpaper option"
+  },
+  "chatWallpaperMint": "Mint",
+  "@chatWallpaperMint": {
+    "description": "wallpaper option"
+  },
+  "chatWallpaperViolet": "Violet",
+  "@chatWallpaperViolet": {
+    "description": "wallpaper option"
+  },
+  "chatThemeP": "Purple",
+  "@chatThemeP": {
+    "description": "bubble theme option"
+  },
+  "chatThemeRose": "Rose",
+  "@chatThemeRose": {
+    "description": "bubble theme option"
+  },
+  "chatThemeTeal": "Teal",
+  "@chatThemeTeal": {
+    "description": "bubble theme option"
+  },
+  "chatSettingsDone": "Done",
+  "@chatSettingsDone": {
+    "description": "settings sheet done"
   }
 }

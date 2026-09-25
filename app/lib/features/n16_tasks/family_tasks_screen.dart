@@ -12,9 +12,11 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n16_tasks/family_tasks_models.dart';
 import 'package:family_os/features/n16_tasks/family_tasks_repository.dart';
+import 'package:family_os/features/n16_tasks/tasks_ux_bridge.dart';
 
 /// Widget keys for SCR-FAT-054 acceptance.
 abstract final class FamilyTasksKeys {
@@ -125,8 +127,21 @@ class _FamilyTasksScreenState extends State<FamilyTasksScreen> {
     }
   }
 
+  /// The real task board, unless a test injects a repository (Rule 25 seam).
+  Future<FamilyTasksRepository> _resolveRepo() async {
+    final injected = widget.repository;
+    if (injected != null) return injected;
+    final familyId =
+        CurrentIdentity.maybeOf(context)?.activeFamilyId.value ?? '';
+    await Stage1TasksRuntime.ensureOpen();
+    return Stage1TasksRuntime.familyTasks(familyId: familyId);
+  }
+
   Future<void> _load() async {
     setState(() => _loading = true);
+    final resolved = await _resolveRepo();
+    if (!mounted) return;
+    _repo = resolved;
     final snap = await _repo.load();
     if (!mounted) return;
     setState(() {
@@ -165,7 +180,9 @@ class _FamilyTasksScreenState extends State<FamilyTasksScreen> {
       'childOne' => l10n.familyTasksChildOne,
       'childTwo' => l10n.familyTasksChildTwo,
       'childThree' => l10n.familyTasksChildThree,
-      _ => l10n.familyTasksChildOne,
+      // A real row may name a fourth child or carry a stored value: show it
+      // rather than a different child's label.
+      _ => nameKey.isEmpty ? l10n.familyTasksChildOne : nameKey,
     };
   }
 
@@ -175,7 +192,8 @@ class _FamilyTasksScreenState extends State<FamilyTasksScreen> {
       'washDishes' => l10n.familyTasksTaskWashDishes,
       'mathStudy' => l10n.familyTasksTaskMathStudy,
       'schoolReturnList' => l10n.familyTasksTaskSchoolReturnList,
-      _ => l10n.familyTasksTaskTidyRoom,
+      // A father's own task title is stored verbatim; show it as written.
+      _ => titleKey.isEmpty ? l10n.familyTasksTaskTidyRoom : titleKey,
     };
   }
 
@@ -184,7 +202,8 @@ class _FamilyTasksScreenState extends State<FamilyTasksScreen> {
       'tenMinAgo' => l10n.familyTasksTimeTenMinAgo,
       'today' => l10n.familyTasksTimeToday,
       'yesterday' => l10n.familyTasksTimeYesterday,
-      _ => l10n.familyTasksTimeToday,
+      // Older rows carry their real date — never a false «اليوم».
+      _ => timeKey.isEmpty ? l10n.familyTasksTimeToday : timeKey,
     };
   }
 
@@ -192,7 +211,8 @@ class _FamilyTasksScreenState extends State<FamilyTasksScreen> {
     if (proofKey == null) return '';
     return switch (proofKey) {
       'photoAttached' => l10n.familyTasksProofPhotoAttached,
-      _ => '',
+      // A real attachment reference shows as stored.
+      _ => proofKey,
     };
   }
 

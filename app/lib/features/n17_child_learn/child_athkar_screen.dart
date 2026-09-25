@@ -13,6 +13,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n17_child_learn/child_athkar_models.dart';
 import 'package:family_os/features/n17_child_learn/child_athkar_repository.dart';
+import 'package:family_os/features/n17_child_learn/learn_ux_bridge.dart';
 
 abstract final class ChildAthkarKeys {
   static const screen = Key('child_athkar_screen');
@@ -66,7 +67,7 @@ class _ChildAthkarScreenState extends State<ChildAthkarScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1ChildAthkarRepository;
+    _repo = widget.repository ?? Stage1LearnRuntime.athkar;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;

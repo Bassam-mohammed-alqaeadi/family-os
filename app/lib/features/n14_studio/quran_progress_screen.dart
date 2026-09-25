@@ -15,6 +15,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n14_studio/quran_progress_models.dart';
 import 'package:family_os/features/n14_studio/quran_progress_repository.dart';
+import 'package:family_os/features/n14_studio/studio_ux_bridge.dart';
 
 /// Widget keys for SCR-FAT-072 acceptance.
 abstract final class QuranProgressKeys {
@@ -97,7 +98,7 @@ class _QuranProgressScreenState extends State<QuranProgressScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1QuranProgressRepository;
+    _repo = widget.repository ?? Stage1StudioRuntime.quranProgress;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;

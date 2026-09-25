@@ -186,7 +186,7 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
       setState(() {
         _domainRepo = DomainSafeZonesRepository(
           domain: Stage1LocationRuntime.store,
-          familyId: widget.familyId ?? const FamilyId('fam_stage1'),
+          familyId: widget.familyId ?? FamilyId('fam_stage1'),
         );
         _bootstrapping = false;
       });

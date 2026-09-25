@@ -5,14 +5,17 @@ import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/app_error_state.dart';
 import 'package:family_os/core/design/components/banner.dart';
+import 'package:family_os/core/design/components/bottom_sheet_host.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/components/row_tile.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/data/communication_rules.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/chat_availability.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
+import 'package:family_os/features/n02_day/chat_thread_widgets.dart';
 import 'package:family_os/features/n02_day/child_chats_repository.dart';
 import 'package:family_os/features/n02_day/conversations_list_repository.dart';
 
@@ -39,6 +42,22 @@ abstract final class ChildChatsKeys {
   static const callContactsCta = Key('child_chats_call_contacts');
 
   static Key row(String id) => Key('child_chats_row_$id');
+  static Key rowMenu(String id) => Key('child_chats_menu_$id');
+  static Key pinnedIndicator(String id) => Key('child_chats_pinned_$id');
+  static Key mutedIndicator(String id) => Key('child_chats_muted_$id');
+  static Key archivedIndicator(String id) => Key('child_chats_archived_$id');
+}
+
+/// One quick action offered on a child's conversation row (ADR-053).
+enum _RowAction {
+  muteEightHours,
+  muteOneWeek,
+  muteForever,
+  unmute,
+  archive,
+  unarchive,
+  pin,
+  unpin,
 }
 
 /// SCR-CHD-007 — محادثاتي (child family-tab chats list).
@@ -182,6 +201,32 @@ class ChildChatsScreenState extends State<ChildChatsScreen> {
     );
   }
 
+  Future<void> _openRowMenu(ConversationThread thread) async {
+    final l10n = AppLocalizations.of(context);
+    final action = await _showRowActions(context, thread, l10n);
+    if (action == null || !mounted) return;
+    switch (action) {
+      case _RowAction.muteEightHours:
+        await _repo.setMuted(thread.id, kMuteEightHours);
+      case _RowAction.muteOneWeek:
+        await _repo.setMuted(thread.id, kMuteOneWeek);
+      case _RowAction.muteForever:
+        await _repo.setMuted(thread.id, null);
+      case _RowAction.unmute:
+        await _repo.unmute(thread.id);
+      case _RowAction.archive:
+        await _repo.setArchived(thread.id, true);
+      case _RowAction.unarchive:
+        await _repo.setArchived(thread.id, false);
+      case _RowAction.pin:
+        await _repo.setPinned(thread.id, true);
+      case _RowAction.unpin:
+        await _repo.setPinned(thread.id, false);
+    }
+    if (!mounted) return;
+    await _load();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -302,8 +347,10 @@ class ChildChatsScreenState extends State<ChildChatsScreen> {
                   for (var i = 0; i < ordered.length; i++)
                     _ChildChatRow(
                       thread: ordered[i],
+                      l10n: l10n,
                       showDivider: i < ordered.length - 1,
                       onTap: () => _onRowTap(ordered[i]),
+                      onMenu: () => _openRowMenu(ordered[i]),
                     ),
                 ],
               ),
@@ -332,18 +379,23 @@ class ChildChatsScreenState extends State<ChildChatsScreen> {
 class _ChildChatRow extends StatelessWidget {
   const _ChildChatRow({
     required this.thread,
+    required this.l10n,
     required this.showDivider,
     required this.onTap,
+    required this.onMenu,
   });
 
   final ConversationThread thread;
+  final AppLocalizations l10n;
   final bool showDivider;
   final VoidCallback onTap;
+  final VoidCallback onMenu;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final avatarColor = _swatchColor(thread.swatch, colors);
+    final isVoice = thread.previewKind == ConversationPreviewKind.voice;
 
     return RowTile(
       key: ChildChatsKeys.row(thread.id),
@@ -353,29 +405,112 @@ class _ChildChatRow extends StatelessWidget {
         child: Text(thread.emoji, style: const TextStyle(fontSize: 18)),
       ),
       title: thread.title,
-      subtitle: thread.preview,
-      trailing: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
+      subtitle: chatPreviewText(l10n, thread.preview, isVoice: isVoice),
+      trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (thread.hasUnread)
-            Tag(
-              label: '${thread.unreadCount}',
-              variant: TagVariant.t,
-            )
-          else
-            Text(
-              thread.timeLabel,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: colors.ink2,
-              ),
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (thread.pinned)
+                Text(
+                  key: ChildChatsKeys.pinnedIndicator(thread.id),
+                  l10n.conversationPinnedIndicator,
+                  style: TextStyle(fontSize: 10, color: colors.ink2),
+                ),
+              if (thread.muted)
+                Text(
+                  key: ChildChatsKeys.mutedIndicator(thread.id),
+                  l10n.conversationMutedIndicator,
+                  style: TextStyle(fontSize: 10, color: colors.ink2),
+                ),
+              if (thread.archived)
+                Text(
+                  key: ChildChatsKeys.archivedIndicator(thread.id),
+                  l10n.conversationArchivedIndicator,
+                  style: TextStyle(fontSize: 10, color: colors.ink2),
+                ),
+              if (thread.hasUnread)
+                Tag(label: '${thread.unreadCount}', variant: TagVariant.t)
+              else
+                Text(
+                  thread.timeLabel,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: colors.ink2,
+                  ),
+                ),
+            ],
+          ),
+          IconButton(
+            key: ChildChatsKeys.rowMenu(thread.id),
+            tooltip: l10n.conversationQuickActionsSemantics,
+            onPressed: onMenu,
+            constraints: const BoxConstraints(minWidth: 40, minHeight: 48),
+            icon: Icon(Icons.more_vert, size: 20, color: colors.ink2),
+          ),
         ],
       ),
       onTap: onTap,
       showDivider: showDivider,
     );
   }
+}
+
+Future<_RowAction?> _showRowActions(
+  BuildContext context,
+  ConversationThread thread,
+  AppLocalizations l10n,
+) {
+  final options = <(_RowAction, String)>[
+    if (!thread.muted) ...[
+      (_RowAction.muteEightHours, l10n.conversationMuteEightHours),
+      (_RowAction.muteOneWeek, l10n.conversationMuteOneWeek),
+      (_RowAction.muteForever, l10n.conversationMuteForever),
+    ] else
+      (_RowAction.unmute, l10n.conversationUnmute),
+    if (thread.archived)
+      (_RowAction.unarchive, l10n.conversationRowMenuUnarchive)
+    else
+      (_RowAction.archive, l10n.conversationRowMenuArchive),
+    // The family chat is pinned دائمًا — a fixed right, not a toggle.
+    if (!thread.isFamily)
+      thread.pinned
+          ? (_RowAction.unpin, l10n.conversationRowMenuUnpin)
+          : (_RowAction.pin, l10n.conversationRowMenuPin),
+  ];
+
+  return BottomSheetHost.show<_RowAction>(
+    context,
+    semanticLabel: l10n.conversationQuickActionsSemantics,
+    builder: (sheetContext) => Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Text(
+            thread.title,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+          ),
+        ),
+        for (final (action, label) in options)
+          ListTile(
+            key: Key('child_chats_action_${action.name}'),
+            title: Text(label),
+            onTap: () => Navigator.of(sheetContext).pop(action),
+          ),
+        if (thread.isFamily)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              l10n.conversationFamilyAlwaysPinned,
+              style: const TextStyle(fontSize: 11.5),
+            ),
+          ),
+      ],
+    ),
+  );
 }

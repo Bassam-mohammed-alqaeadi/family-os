@@ -16,6 +16,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n14_studio/results_followup_models.dart';
 import 'package:family_os/features/n14_studio/results_followup_repository.dart';
+import 'package:family_os/features/n14_studio/studio_ux_bridge.dart';
 
 /// Widget keys for SCR-FAT-050 acceptance.
 abstract final class ResultsFollowupKeys {
@@ -55,7 +56,7 @@ class ResultsFollowupScreen extends StatefulWidget {
     this.onNavigate,
   });
 
-  /// Rule 25 seam — null → [stage1ResultsFollowupRepository].
+  /// Rule 25 seam — null → [Stage1StudioRuntime.resultsFollowup].
   final ResultsFollowupRepository? repository;
 
   /// P-4 SOS seam — null → [stage1SosFireService].
@@ -109,7 +110,7 @@ class _ResultsFollowupScreenState extends State<ResultsFollowupScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1ResultsFollowupRepository;
+    _repo = widget.repository ?? Stage1StudioRuntime.resultsFollowup;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -121,7 +122,7 @@ class _ResultsFollowupScreenState extends State<ResultsFollowupScreen> {
   void didUpdateWidget(covariant ResultsFollowupScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.repository != widget.repository) {
-      _repo = widget.repository ?? stage1ResultsFollowupRepository;
+      _repo = widget.repository ?? Stage1StudioRuntime.resultsFollowup;
       _load();
     }
   }

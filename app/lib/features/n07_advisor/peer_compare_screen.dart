@@ -13,6 +13,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n07_advisor/peer_compare_models.dart';
 import 'package:family_os/features/n07_advisor/peer_compare_repository.dart';
+import 'package:family_os/features/n07_advisor/reports_ux_bridge.dart';
 
 abstract final class PeerCompareKeys {
   static const screen = Key('peer_compare_screen');
@@ -67,7 +68,7 @@ class _PeerCompareScreenState extends State<PeerCompareScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1PeerCompareRepository;
+    _repo = widget.repository ?? Stage1ReportsRuntime.peerCompare;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;

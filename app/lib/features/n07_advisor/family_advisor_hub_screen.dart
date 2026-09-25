@@ -12,6 +12,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n07_advisor/family_advisor_hub_models.dart';
 import 'package:family_os/features/n07_advisor/family_advisor_hub_repository.dart';
+import 'package:family_os/features/n07_advisor/reports_ux_bridge.dart';
 
 abstract final class FamilyAdvisorHubKeys {
   static const screen = Key('family_advisor_hub_screen');
@@ -74,7 +75,7 @@ class _FamilyAdvisorHubScreenState extends State<FamilyAdvisorHubScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1FamilyAdvisorHubRepository;
+    _repo = widget.repository ?? Stage1ReportsRuntime.familyAdvisorHub;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;

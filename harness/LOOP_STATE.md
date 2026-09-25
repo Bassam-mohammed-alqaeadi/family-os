@@ -1,11 +1,11 @@
 # LOOP_STATE
 
 ```
-status: STOPPED
-current_card: (Phase 1.5 COMPLETE — no next feature armed)
+status: RUNNING
+current_card: WIR-03c (request_inbox · friend_approval · outer_circle) ثم WIR-04 (المحادثات — المحوّلات جاهزة) ← WIR-05 ← WIR-06/07 ← WIR-08 ← WIR-09 ← WIR-10 ← WIR-11a/b ← WIR-12 ← WIR-13
 blocked_by: (none)
-last_tick: 2026-09-24
-resume_hint: PHASE-1.5-HARDEN shipped. FS lane CLOSED. P15-QUR-004…007 still deferred_campaign. Stage 3 NOT STARTED. Do NOT auto-start P15-QUR or Stage 3 — Owner must explicitly re-arm.
+last_tick: 2026-09-25 (WIR-00 + WIR-03b مدفوعتان عند 2dd8def · أداة العدّ `tool/check_screen_wiring.dart`: drift 58 · other 5 · legacy 0 · unbound 68 من 131 · السويت 1669/1669 · البوابة 339)
+resume_hint: Zero-Mocks loop — القائمة الكاملة في `harness/13_SCREEN_WIRING_QUEUE.md`. عقد الإدارة: العامل يكتب الكود ويشغّل البوابات، والـOrchestrator يُعيدها بنفسه ثم يدفع (لا دفع أحمر). **درس تشغيل مهم:** `/tmp` ممتلئ (3.9G) فتشغيل السويت بلا ضبط `TMPDIR` يفشل بـ`Creation of temporary directory failed … No space left on device` — شغّل دائمًا `TMPDIR=/var/tmp/flutter-tmp flutter test`. المنجَز: WIR-01 (٦ شاشات مرشد A) وWIR-03a (SCR-FAT-012) وWIR-02 (٦ شاشات مرشد B عبر إلحاق `advisor_followup_bridge.dart`: الخطّ الزمني من `learn_session`+`geofence_event`، أنماط العائلة من `learn_skill_gap` المفتوحة، خرائط المعرفة من `quran_plan`/`quran_memorization`+`learning_path`، مقارنة الأقران من `child`، سجلّ الأفعال من أختام `ai_suggestion` مع `bless`/`gentleUndo` حقيقيين (ADR-042)، لحظات العائلة مجمّعة من صفوف الأسبوع؛ الفراغات المعلنة: شرائح المشاركة/أسئلة العشاء/الألبوم/المقاييس/الدقائق والأهداف). القياس: analyze صفر · البوابة 338 · السويت 1666/1666 · 70/131 بالمقياس (+٥ = ٧٥ مؤكَّدة).
 ```
 
 ## Field meanings
