@@ -2,10 +2,10 @@
 
 ```
 status: RUNNING
-current_card: WIR-01 (n07_advisor A — 6 شاشات) قيد التنفيذ عبر worker؛ المدير = Orchestrator (Second Brain). القائمة الكاملة في harness/13_SCREEN_WIRING_QUEUE.md
+current_card: WIR-03 (n02_day A) — SCR-FAT-012 أُنجزت؛ المتبقّي في البطاقة: day_board · alerts_hub · alert_detail · request_inbox · friend_approval · outer_circle (٦ شاشات). ثم WIR-02 (المرشد B، ٦ شاشات)
 blocked_by: (none)
-last_tick: 2026-09-25 (Zero-Mocks loop opened · 57/131 مربوطة · 74 باقية)
-resume_hint: Zero-Mocks loop 2026-09-25 — المالك طلب لووب ربط كل الشاشات بلا أخطاء وبلا تدخّل، والمدير هو الـOrchestrator: يكتب brief للـworker، ثم يُعيد تشغيل البوابات بنفسه (analyze --fatal-infos · check_hardcoded_strings · flutter test الكامل · عدّ الشاشات المربوطة)، ويصلح أو يُعيد الإرسال عند أي فشل، ولا يدفع إلا أخضر. القائمة والبطاقات في `harness/13_SCREEN_WIRING_QUEUE.md` (WIR-01…WIR-13، 74 شاشة: n02_day 21 · n01_linking 12 · n07_advisor 12 · n03_screen_time 5 · shared_onboarding 5 · n05_lock 4 · n08_platform 3 · n12_devices 3 · n07_privacy 2 · shared_templates 2 · والمفردات 1+1+1+1+1). الأصوات (SCR-CHD-035) فراغ عقدي معلن. القاعدة: نقلة واحدة = بطاقة واحدة، السويت الكامل كل بطاقة، والدفع في نهاية كل بطاقة خضراء. آخر شحنات: DEV-6d دفعة ٢ عند 740424a/8800645 (57/131 · سويت 1648/1648). NOTE `*.g.dart` يبقى متجاهَلًا — CI يجب أن يشغّل `dart run build_runner build` قبل `flutter test`.
+last_tick: 2026-09-25 (WIR-01 + WIR-03a مدفوعتان عند f9ecd94 · 64/131 مربوطة بالمقياس · ٦٩ مؤكَّدة حقيقية مع ٥ شاشات n01_linking المخدومة عبر globals)
+resume_hint: Zero-Mocks loop — القائمة الكاملة في `harness/13_SCREEN_WIRING_QUEUE.md`. عقد الإدارة: العامل يكتب الكود ويشغّل البوابات، والـOrchestrator يُعيدها بنفسه ثم يدفع (لا دفع أحمر). **درس تشغيلي مهم:** `/tmp` ممتلئ (3.9G · ٢١٥M حرة) فتشغيل السويت بدون ضبط `TMPDIR` يفشل بـ`Creation of temporary directory failed … No space left on device` — شغّل دائمًا `TMPDIR=/var/tmp/flutter-tmp flutter test` (الجذر فيه 16G). المنجَز: WIR-01 (٦ شاشات مرشد عبر `advisor_followup_bridge.dart` + ستّة getters في `Stage1ReportsRuntime`؛ `ai_suggestion` للاقتراحات مع `applied_at`/`dismissed_at`، و`ai_event` لتغذية الأم مع همسة idempotent، والمحتوى/المرحلة/الشرائح فراغات معلنة) وWIR-03a (SCR-FAT-012 عبر `day_followup_bridge.dart` + `Stage1DayRuntime`: `child` + `device`/`device_health` + `geofence_event`/`geofence`؛ وورقة السياسات المشتركة فراغ معلن). القياس: analyze صفر · البوابة 338 · السويت 1660/1660 · 64/131 بالمقياس (+٥ شاشات n01_linking Drift عبر globals = ٦٩ مؤكَّدة) · المرآة تحتاج تحديثًا بعد الدفع (`f9ecd94`).
 ```
 
 ## Field meanings
