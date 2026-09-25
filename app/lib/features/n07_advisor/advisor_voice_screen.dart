@@ -14,6 +14,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n07_advisor/advisor_voice_models.dart';
 import 'package:family_os/features/n07_advisor/advisor_voice_repository.dart';
+import 'package:family_os/features/n07_advisor/reports_ux_bridge.dart';
 
 abstract final class AdvisorVoiceKeys {
   static const screen = Key('advisor_voice_screen');
@@ -69,7 +70,7 @@ class _AdvisorVoiceScreenState extends State<AdvisorVoiceScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1AdvisorVoiceRepository;
+    _repo = widget.repository ?? Stage1ReportsRuntime.advisorVoice;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;

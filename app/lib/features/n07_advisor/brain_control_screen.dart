@@ -12,6 +12,7 @@ import 'package:family_os/core/policy/advisor_repository.dart';
 import 'package:family_os/core/policy/ai_stage_flags.dart';
 import 'package:family_os/core/policy/ai_stage_flags_repository.dart';
 import 'package:family_os/core/policy/ai_stage_id.dart';
+import 'package:family_os/features/n07_advisor/reports_ux_bridge.dart';
 
 /// Widget keys for SCR-FAT-029 / SET-014 + SET-015 acceptance.
 abstract final class BrainControlKeys {
@@ -72,7 +73,7 @@ class BrainControlScreenState extends State<BrainControlScreen> {
   void initState() {
     super.initState();
     _flagsRepo = widget.flagsRepository ?? stage1AiStageFlags;
-    _advisor = widget.advisor ?? stage1AdvisorRepository;
+    _advisor = widget.advisor ?? Stage1ReportsRuntime.brainControl;
     // Defer load until first frame so roleOverride / CurrentRole is readable.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;

@@ -7,8 +7,15 @@ import 'package:family_os/core/data/ai_repository.dart';
 import 'package:family_os/core/data/family_database.dart' hide FocusAdvisorNote;
 import 'package:family_os/core/data/stage1_row_vocabulary.dart';
 import 'package:family_os/core/identity/identity_runtime.dart';
+import 'package:family_os/core/policy/advisor_repository.dart';
+import 'package:family_os/core/policy/ai_suggestion_repository.dart';
+import 'package:family_os/core/policy/rules_engine_rule_repository.dart';
 import 'package:family_os/features/n03_screen_time/child_usage_report_models.dart';
 import 'package:family_os/features/n03_screen_time/child_usage_report_repository.dart';
+import 'package:family_os/features/n07_advisor/advisor_followup_bridge.dart';
+import 'package:family_os/features/n07_advisor/advisor_voice_repository.dart';
+import 'package:family_os/features/n07_advisor/family_advisor_hub_repository.dart';
+import 'package:family_os/features/n07_advisor/mother_ai_feed_repository.dart';
 import 'package:family_os/features/n07_advisor/weekly_report_models.dart';
 import 'package:family_os/features/n07_advisor/weekly_report_repository.dart';
 import 'package:family_os/features/n14_studio/focus_report_models.dart';
@@ -53,6 +60,39 @@ final class Stage1ReportsRuntime {
   /// SCR-FAT-051 — the focus week, the advisor note and the schedules.
   static FocusReportRepository get focusReport =>
       DriftFocusReportRepository(ensureOpenSync());
+
+  /// WIR-01 — SCR-FAT-079: the father's advisor inbox over `ai_suggestion`.
+  /// The screen's own rules store receives the rule an approval produces (no
+  /// `rules_engine_rule` table exists in v6 — declared gap).
+  static AiSuggestionRepository myAdvisor({RulesEngineRuleRepository? rules}) =>
+      DriftAiSuggestionRepository(
+        ensureOpenSync(),
+        rules: rules ?? stage1RulesEngineRuleRepository,
+      );
+
+  /// WIR-01 — SCR-FAT-011: the same stored suggestions, on their own surface.
+  static AiSuggestionRepository advisorSuggestions({
+    RulesEngineRuleRepository? rules,
+  }) => DriftAiSuggestionRepository(
+    ensureOpenSync(),
+    rules: rules ?? stage1RulesEngineRuleRepository,
+  );
+
+  /// WIR-01 — SCR-FAT-083: the voice screen, gated by the `family` row.
+  static AdvisorVoiceRepository get advisorVoice =>
+      DriftAdvisorVoiceRepository(ensureOpenSync());
+
+  /// WIR-01 — SCR-FAT-074: the advisor hub over the `family` row.
+  static FamilyAdvisorHubRepository get familyAdvisorHub =>
+      DriftFamilyAdvisorHubRepository(ensureOpenSync());
+
+  /// WIR-01 — SCR-FAT-076: the mother's feed over `ai_event`.
+  static MotherAiFeedRepository get motherAiFeed =>
+      DriftMotherAiFeedRepository(ensureOpenSync());
+
+  /// WIR-01 — SCR-FAT-029: the brain control gateway over `ai_suggestion`.
+  static AdvisorRepository get brainControl =>
+      DriftAdvisorGateway(ensureOpenSync());
 
   /// Clears this runtime only. An injected database is closed by its owner.
   static void resetForTest() => _db = null;

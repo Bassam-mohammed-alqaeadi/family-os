@@ -15,6 +15,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n07_advisor/mother_ai_feed_models.dart';
 import 'package:family_os/features/n07_advisor/mother_ai_feed_repository.dart';
+import 'package:family_os/features/n07_advisor/reports_ux_bridge.dart';
 
 abstract final class MotherAiFeedKeys {
   static const screen = Key('mother_ai_feed_screen');
@@ -86,7 +87,7 @@ class _MotherAiFeedScreenState extends State<MotherAiFeedScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1MotherAiFeedRepository;
+    _repo = widget.repository ?? Stage1ReportsRuntime.motherAiFeed;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;

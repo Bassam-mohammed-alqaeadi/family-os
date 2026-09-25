@@ -266,6 +266,15 @@ abstract final class Stage1RowVocabulary {
   /// The ledger lane a focus reward lands in (minutes only · ع-١).
   static const walletSourceFocus = 'focus';
 
+  // ── ai_event (ADR-054 §11) ───────────────────────────────────────────────
+
+  /// `ai_event.domain` — the communication lane a co-parent whisper travels in.
+  static const aiDomainCommunication = 'COM';
+
+  /// `ai_event.kind` — a mother's whisper to the father is its own event, and
+  /// the mother's feed never counts it among its own summaries.
+  static const aiKindMothersWhisper = 'MOTHERS_WHISPER';
+
   static String _isoDay(DateTime when) =>
       '${when.year}-${_two(when.month)}-${_two(when.day)}';
 
