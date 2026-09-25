@@ -146,6 +146,11 @@ abstract final class Stage1RowVocabulary {
   /// `learn_streak.kind` — stage 1 keeps one aggregate row per child.
   static const learnStreakAll = 'ANY';
 
+  /// `quran_recitation.status` — the child's submit ladder (child writes
+  /// `PENDING`, the father's approval moves it to `APPROVED`).
+  static const recitationPending = 'PENDING';
+  static const recitationApproved = 'APPROVED';
+
   /// `wallet_ledger.reason` — earned by learning, never by a tap (ع-١).
   static const walletEarned = 'EARNED';
 

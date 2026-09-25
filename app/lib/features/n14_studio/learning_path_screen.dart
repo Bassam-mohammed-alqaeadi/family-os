@@ -15,6 +15,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n14_studio/learning_path_models.dart';
 import 'package:family_os/features/n14_studio/learning_path_repository.dart';
+import 'package:family_os/features/n14_studio/studio_ux_bridge.dart';
 
 /// Widget keys for SCR-FAT-047 acceptance.
 abstract final class LearningPathKeys {
@@ -49,7 +50,7 @@ class LearningPathScreen extends StatefulWidget {
     this.onNavigate,
   });
 
-  /// Rule 25 seam — null → [stage1LearningPathRepository].
+  /// Rule 25 seam — null → [Stage1StudioRuntime.learningPath].
   final LearningPathRepository? repository;
 
   /// P-4 SOS seam — null → [stage1SosFireService].
@@ -103,7 +104,7 @@ class _LearningPathScreenState extends State<LearningPathScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1LearningPathRepository;
+    _repo = widget.repository ?? Stage1StudioRuntime.learningPath;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -115,7 +116,7 @@ class _LearningPathScreenState extends State<LearningPathScreen> {
   void didUpdateWidget(covariant LearningPathScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.repository != widget.repository) {
-      _repo = widget.repository ?? stage1LearningPathRepository;
+      _repo = widget.repository ?? Stage1StudioRuntime.learningPath;
       _load();
     }
   }

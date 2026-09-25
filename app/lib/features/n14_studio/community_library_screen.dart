@@ -15,6 +15,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n14_studio/community_library_models.dart';
 import 'package:family_os/features/n14_studio/community_library_repository.dart';
+import 'package:family_os/features/n14_studio/studio_ux_bridge.dart';
 
 /// Widget keys for SCR-FAT-046 acceptance.
 abstract final class CommunityLibraryKeys {
@@ -53,7 +54,7 @@ class CommunityLibraryScreen extends StatefulWidget {
     this.onNavigate,
   });
 
-  /// Rule 25 seam — null → [stage1CommunityLibraryRepository].
+  /// Rule 25 seam — null → [Stage1StudioRuntime.communityLibrary].
   final CommunityLibraryRepository? repository;
 
   /// P-4 SOS seam — null → [stage1SosFireService].
@@ -123,7 +124,7 @@ class _CommunityLibraryScreenState extends State<CommunityLibraryScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1CommunityLibraryRepository;
+    _repo = widget.repository ?? Stage1StudioRuntime.communityLibrary;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -135,7 +136,7 @@ class _CommunityLibraryScreenState extends State<CommunityLibraryScreen> {
   void didUpdateWidget(covariant CommunityLibraryScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.repository != widget.repository) {
-      _repo = widget.repository ?? stage1CommunityLibraryRepository;
+      _repo = widget.repository ?? Stage1StudioRuntime.communityLibrary;
       _load();
     }
   }

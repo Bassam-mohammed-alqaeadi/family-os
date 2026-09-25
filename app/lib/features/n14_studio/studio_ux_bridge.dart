@@ -10,6 +10,11 @@ import 'package:family_os/features/education/learning_assignment_models.dart';
 import 'package:family_os/features/n14_studio/add_from_source_repository.dart';
 import 'package:family_os/features/n14_studio/attribution_reward_models.dart';
 import 'package:family_os/features/n14_studio/attribution_reward_repository.dart';
+import 'package:family_os/features/n14_studio/community_library_repository.dart';
+import 'package:family_os/features/n14_studio/learning_path_repository.dart';
+import 'package:family_os/features/n14_studio/quran_progress_repository.dart';
+import 'package:family_os/features/n14_studio/results_followup_repository.dart';
+import 'package:family_os/features/n14_studio/studio_followup_bridge.dart';
 import 'package:family_os/features/n14_studio/create_assignment_models.dart';
 import 'package:family_os/features/n14_studio/create_assignment_repository.dart';
 import 'package:family_os/features/n14_studio/generation_outputs_repository.dart';
@@ -79,6 +84,22 @@ final class Stage1StudioRuntime {
   /// SCR-FAT-041 — staging a source writes the pack the studio works on.
   static AddFromSourceRepository get addFromSource =>
       DriftAddFromSourceRepository(ensureOpenSync());
+
+  /// SCR-FAT-046 — the community shelf over `community_cache`.
+  static CommunityLibraryRepository get communityLibrary =>
+      DriftCommunityLibraryRepository(ensureOpenSync());
+
+  /// SCR-FAT-047 — the child's ladder over `learning_path` + `_stop`.
+  static LearningPathRepository get learningPath =>
+      DriftLearningPathRepository(ensureOpenSync());
+
+  /// SCR-FAT-050 — the father's follow-up over `learn_result` + gaps + ledger.
+  static ResultsFollowupRepository get resultsFollowup =>
+      DriftResultsFollowupRepository(ensureOpenSync());
+
+  /// SCR-FAT-051 — the ward plan over `quran_plan` + `quran_recitation`.
+  static QuranProgressRepository get quranProgress =>
+      DriftQuranProgressRepository(ensureOpenSync());
 
   /// Clears this runtime only. An injected database is closed by its owner.
   static void resetForTest() => _db = null;

@@ -461,6 +461,9 @@ final class DriftChildDailyReviewRepository
             kind: Stage1RowVocabulary.learnKindReview,
             status: Stage1RowVocabulary.learnDone,
             requestId: Stage1RowVocabulary.learnRequestIdFor('child', now),
+            // The injected clock is what `_doneToday()` reads back, so the row
+            // it writes has to carry that same day — not the machine's default.
+            startedAt: Value(now),
           ),
         );
     return load();
