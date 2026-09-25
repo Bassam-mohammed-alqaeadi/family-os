@@ -12,6 +12,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n17_child_learn/child_family_challenges_models.dart';
 import 'package:family_os/features/n17_child_learn/child_family_challenges_repository.dart';
+import 'package:family_os/features/n17_child_learn/learn_ux_bridge.dart';
 
 abstract final class ChildFamilyChallengesKeys {
   static const screen = Key('child_family_challenges_screen');
@@ -65,7 +66,7 @@ class _ChildFamilyChallengesScreenState
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1ChildFamilyChallengesRepository;
+    _repo = widget.repository ?? Stage1LearnRuntime.familyChallenges;
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;

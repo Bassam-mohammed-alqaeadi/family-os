@@ -151,6 +151,20 @@ abstract final class Stage1RowVocabulary {
   static const recitationPending = 'PENDING';
   static const recitationApproved = 'APPROVED';
 
+  /// `learn_session.kind` — the contract's own list of sittings (lesson · quiz ·
+  /// memorisation · recitation · focus · adhkar · story).
+  static const learnKindAthkar = 'ATHKAR';
+  static const learnKindStory = 'STORY';
+
+  /// `content_pack.kind` / `content_item.kind` — the story pack the child reads
+  /// (declared in the DEV-6d card: the ladder gains one kind).
+  static const packKindStory = 'STORY';
+  static const itemKindStory = 'STORY';
+
+  /// `learn_progress.content_ref` — the two athkar tracks the child's day has.
+  static const athkarRefEvening = 'athkarEvening';
+  static const athkarRefMorning = 'athkarMorning';
+
   /// `wallet_ledger.reason` — earned by learning, never by a tap (ع-١).
   static const walletEarned = 'EARNED';
 

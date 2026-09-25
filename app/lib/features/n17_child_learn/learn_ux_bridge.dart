@@ -12,9 +12,14 @@ import 'package:family_os/features/education/learning_assignment_models.dart';
 import 'package:family_os/features/education/learning_assignment_repository.dart';
 import 'package:family_os/features/education/learning_result_models.dart';
 import 'package:family_os/features/education/learning_result_repository.dart';
+import 'package:family_os/features/n17_child_learn/child_athkar_repository.dart';
+import 'package:family_os/features/n17_child_learn/child_coming_gifts_repository.dart';
 import 'package:family_os/features/n17_child_learn/child_daily_review_models.dart';
 import 'package:family_os/features/n17_child_learn/child_daily_review_repository.dart';
+import 'package:family_os/features/n17_child_learn/child_family_challenges_repository.dart';
 import 'package:family_os/features/n17_child_learn/child_flashcards_repository.dart';
+import 'package:family_os/features/n17_child_learn/child_focus_repository.dart';
+import 'package:family_os/features/n17_child_learn/child_interactive_stories_repository.dart';
 import 'package:family_os/features/n17_child_learn/child_learn_home_models.dart';
 import 'package:family_os/features/n17_child_learn/child_learn_home_repository.dart';
 import 'package:family_os/features/n17_child_learn/child_lesson_repository.dart';
@@ -24,6 +29,7 @@ import 'package:family_os/features/n17_child_learn/child_result_models.dart';
 import 'package:family_os/features/n17_child_learn/child_result_repository.dart';
 import 'package:family_os/features/n17_child_learn/child_smart_plan_repository.dart';
 import 'package:family_os/features/n17_child_learn/child_smart_tilawah_repository.dart';
+import 'package:family_os/features/n17_child_learn/child_tutor_repository.dart';
 import 'package:family_os/features/n17_child_learn/child_wallet_models.dart';
 import 'package:family_os/features/n17_child_learn/child_wallet_repository.dart';
 import 'package:family_os/features/n17_child_learn/learn_followup_bridge.dart';
@@ -118,6 +124,30 @@ final class Stage1LearnRuntime {
   /// SCR-CHD-025 — the child's ward over `quran_plan` + `quran_recitation`.
   static ChildQuranWardRepository get quranWard =>
       DriftChildQuranWardRepository(ensureOpenSync());
+
+  /// SCR-CHD-030 — the athkar tracks over `learn_progress` + `learn_session`.
+  static ChildAthkarRepository get athkar =>
+      DriftChildAthkarRepository(ensureOpenSync());
+
+  /// SCR-CHD-017 — the tutor thread over `tutor_thread` + `tutor_turn`.
+  static ChildTutorRepository get tutor =>
+      DriftChildTutorRepository(ensureOpenSync());
+
+  /// SCR-CHD-031 — the family challenge over `family_challenge*`.
+  static ChildFamilyChallengesRepository get familyChallenges =>
+      DriftChildFamilyChallengesRepository(ensureOpenSync());
+
+  /// SCR-CHD-033 — the focus sitting over `focus_schedule` + `learn_session`.
+  static ChildFocusRepository get focus =>
+      DriftChildFocusRepository(ensureOpenSync());
+
+  /// SCR-CHD-034 — the interactive story over the family's own story pack.
+  static ChildInteractiveStoriesRepository get stories =>
+      DriftChildInteractiveStoriesRepository(ensureOpenSync());
+
+  /// SCR-CHD-032 — the coming gifts over positive `wallet_ledger` entries.
+  static ChildComingGiftsRepository get comingGifts =>
+      DriftChildComingGiftsRepository(ensureOpenSync());
 
   /// Clears this runtime only. An injected database is closed by its owner.
   static void resetForTest() => _db = null;
