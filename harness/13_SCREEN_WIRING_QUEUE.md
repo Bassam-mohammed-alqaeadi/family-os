@@ -6,7 +6,11 @@ as manager**: it briefs the worker agent, verifies every gate itself, fixes or r
 failure, and ships (commit + push + mirror + logs) only green.
 
 Measured 2026-09-25 (`rg -l 'Stage1[A-Za-z]*Runtime' -g '*_screen.dart' lib/features | wc -l`):
-**57 bound of 131 → 74 unbound.** Reconciliation with `find` agreed (131 / 57 / 74).
+**70 bound of 131 → 61 unbound.**
+
+Card status — done: WIR-01 (n07_advisor A, `d3257cb`) · WIR-02 (n07_advisor B, `3063773`) ·
+WIR-03a (SCR-FAT-012 only, `f9ecd94`). Next: the rest of WIR-03 (day_board · alerts_hub ·
+alert_detail · request_inbox · friend_approval · outer_circle), then WIR-04 → WIR-13 in order.
 
 ## Cards — one card = one worker run, verified by the Orchestrator
 
