@@ -55,7 +55,13 @@ jobs:
 
           report = Path("build/ci/flutter-test.json")
           names = {}
+          errors = {}
           failures = []
+
+          def describe(value):
+              if isinstance(value, dict):
+                  return value.get("message") or value.get("error") or json.dumps(value, ensure_ascii=False)
+              return str(value or "")
 
           if report.exists():
               for raw in report.read_text(encoding="utf-8").splitlines():
@@ -66,14 +72,20 @@ jobs:
                   if event.get("type") == "testStart":
                       test = event.get("test", {})
                       names[str(test.get("id", ""))] = test.get("name", "unnamed test")
+                  if event.get("type") == "error":
+                      test_id = str(event.get("testID", ""))
+                      errors.setdefault(test_id, []).append(describe(event.get("error") or event.get("message")))
                   if event.get("type") == "testDone" and event.get("result") not in ("success", "skipped"):
                       test = event.get("test", {})
                       test_id = str(event.get("testID", test.get("id", "")))
                       name = test.get("name") or names.get(test_id, "unnamed test")
-                      detail = event.get("reason") or event.get("message") or event.get("error") or ""
-                      if isinstance(detail, dict):
-                          detail = detail.get("message", json.dumps(detail, ensure_ascii=False))
-                      failures.append((name, str(detail).replace("\n", " ")[:500]))
+                      detail = (
+                          event.get("reason")
+                          or event.get("message")
+                          or event.get("error")
+                          or " ".join(errors.get(test_id, []))
+                      )
+                      failures.append((name, describe(detail).replace("\n", " ")[:500]))
 
           def markdown_cell(value):
               return value.replace("|", "\\|")
