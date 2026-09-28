@@ -35,8 +35,11 @@ completed:
   - Family Connection G2 Hub, relationship trust model, settings/state model, and screen map accepted under standing Owner trust
   - Runtime truth policy and Render/Firebase service boundary
   - Family Connection technical capability, data/event, reliability, implementation sequence, and Product Ready review
+  - Family Intelligence phase initiation
+  - Family Intelligence evidence map
+  - Family Intelligence G1 direction accepted under standing Owner trust
 next_outputs:
-  - Start Family Intelligence product-refinement loop
+  - Family Intelligence Hub UX lock, role journeys, settings/state model, and screen map
   - Preserve Security, Learning and Connection packs for later Backend/Native authorization
 blocked_by: none
 requires_owner_now: no
