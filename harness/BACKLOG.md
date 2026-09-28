@@ -5,14 +5,14 @@ Statuses: `ready` | `blocked_until_stage1` | `blocked` | `done` | `deferred`
 
 Priority lanes (top → bottom): Foundation → GapClose-SET → GapClose-UI → GlobalGap → Screen waves → Later.
 
-**Owner directive (2026-09-21) — sequence lock:**
+**Current authority (2026-09-28) — supersedes 2026-09-21 ScreenBuild sequence lock:**
 
-1. **Now:** ScreenBuild every remaining SCR (mock-first). One card per logical tick. No Stage 3 backend.
-2. **Cadence (same day):** ≥**3 Ships per wake**; chain next card immediately; arm `/loop` **15m** only when leaving. Quality bar unchanged.
-3. **Then Phase 1.5:** Service UX completeness — father/child user lens ([`docs/project-plan/10-service-ux-completeness-rubric.md`](../docs/project-plan/10-service-ux-completeness-rubric.md)); Education first vertical. Gate: [`11_PHASE_15_UX_COMPLETENESS_GATE.md`](11_PHASE_15_UX_COMPLETENESS_GATE.md).
-4. **Only after 1.5:** Stage 3 real APIs (Lane 6).
+1. **Phase markers:** 1.5 · 1.75 · 2 · 3 · 4 · Frontend Closure · CE · VX · LDR — **COMPLETE** (see `AGENTS.md` / `PROJECT_EXECUTION_PLAN.md`).
+2. **Now:** Local Cover / Visual Polish when Owner orients — Location 1/1B · Emergency · Notifications shipped (`e2eb4a4`). Native/Backend **NOT AUTHORIZED**.
+3. **Screen catalog:** Full Frontend Closure **128/130** — ScreenBuild wave statuses below reconciled to matrix (no more `blocked_until_stage1` for completed SCRs). Authority: [`docs/experience_discovery/FRONTEND_COMPLETION_MATRIX.md`](../docs/experience_discovery/FRONTEND_COMPLETION_MATRIX.md).
+4. **Still closed:** SET-001…024 + UI-001…018 (safety spine). P15-QUR-004…007 remain `deferred_campaign`. Lane 6 Stage3 deferred.
 
-SET-001…024 + UI-001…018 stay **CLOSED** (safety spine). Do not reopen unless Phase 1.5 finds a real UX hole. Competitive lens: [`10_COMPETITIVE_LENS.md`](10_COMPETITIVE_LENS.md). Prior SET pivot (2026-09-20) completed.
+Competitive lens: [`10_COMPETITIVE_LENS.md`](10_COMPETITIVE_LENS.md).
 
 Template: [`05_TASK_CARD_TEMPLATE.md`](05_TASK_CARD_TEMPLATE.md)
 
@@ -28,7 +28,7 @@ Template: [`05_TASK_CARD_TEMPLATE.md`](05_TASK_CARD_TEMPLATE.md)
 | F1-A | ScreenBuild | **done** | gen_routes from screens.csv + RoleGuard (go_router) | shipped 2026-09-20 |
 | F2-POLICY | ScreenBuild | **done** | PolicyEngine §1–§3 + unit tests per clause | shipped 2026-09-20 |
 
-> SET lane CLOSED 2026-09-21. UI lane CLOSED 2026-09-21. **Lane 5 ScreenBuild CLOSED 2026-09-22**. **PRT-2 + PRT-2.1 done**. **Phase 1.5 Service UX** Education done · Quran parked (`deferred_campaign`). **Owner commission 2026-09-24:** FS-001…FS-007 — **Lane FS CLOSED**. **Phase 1.5 Platform Hardening (PHASE-1.5-HARDEN) COMPLETE 2026-09-24**. Stage 3 NOT STARTED. Do not arm next feature wave without Owner.
+> SET/UI CLOSED. Lane 5 ScreenBuild catalog **FRONTEND COMPLETE** (2026-09-25; 128/130; OOS=2). PRT-2/2.1 done. Phase 1.5 Education done · Quran `deferred_campaign`. FS-001…007 + PHASE-1.5-HARDEN done. Post-harden Local Cover (Notifications · Emergency · Location 1/1B) shipped 2026-09-27…28. **NEXT:** Visual Polish when Owner orients. Native/Backend NOT AUTHORIZED.
 
 ---
 
@@ -92,16 +92,18 @@ Template: [`05_TASK_CARD_TEMPLATE.md`](05_TASK_CARD_TEMPLATE.md)
 
 ## Lane 4 — Global gaps G1–G8
 
+`blocked_until_stage1` retired — Stage 1 unlocked. Statuses reconciled 2026-09-28.
+
 | id | workflow | status | summary | phase hint |
 |---|---|---|---|---|
-| G1 | ScreenBuild | blocked_until_stage1 | iOS reality honesty badges | F4 · core/platform/ios_reality.dart |
-| G2 | ScreenBuild | blocked_until_stage1 | ARB i18n from day one | F0 · ARB skeleton |
-| G3 | ScreenBuild | blocked_until_stage1 | guardianship table reserved | schema · owner session later |
-| G4 | ScreenBuild | blocked_until_stage1 | SovereigntyRepository contract | contract · owner session later |
-| G5 | ScreenBuild | blocked_until_stage1 | Consent/age/region columns | F2 · Drift schema |
-| G6 | ScreenBuild | blocked_until_stage1 | Semantics + a11y pass | F0+F7 · Rule 16 |
-| G7 | ScreenBuild | blocked_until_stage1 | Store-driven currency abstraction | F6 · plans screen |
-| G8 | ScreenBuild | blocked_until_stage1 | Parametric ChildId contract | F1+ · CI ban names outside mock/ |
+| G1 | ScreenBuild | **done** | Capability honesty badges / iOS reality vocabulary | FS-A-FOUND · CapabilityHonestyBadge |
+| G2 | ScreenBuild | **done** | ARB i18n from day one | F0 · ARB skeleton |
+| G3 | ScreenBuild | **deferred** | guardianship table reserved | schema · owner session later |
+| G4 | ScreenBuild | **deferred** | SovereigntyRepository contract | contract · owner session later |
+| G5 | ScreenBuild | **deferred** | Consent/age/region columns | Drift/schema deepen later |
+| G6 | ScreenBuild | **done** | Semantics + a11y pass (Rule 16 baseline) | ongoing polish allowed under Visual Polish |
+| G7 | ScreenBuild | **deferred** | Store-driven currency abstraction | billing / Stage3 |
+| G8 | ScreenBuild | **done** | Parametric ChildId contract | F1+ · no child names outside mock/ |
 
 ---
 
@@ -113,19 +115,19 @@ Each card imports linked SET ids when screen matches. Cannot Ship while linked S
 
 | id | app | name | workflow | status | linked_gaps |
 |---|---|---|---|---|---|
-| SCR-SHR-001 | مشترك | شاشة الترحيب | ScreenBuild | **done** | — |
-| SCR-SHR-002 | مشترك | إنشاء حساب | ScreenBuild | **done** | — |
-| SCR-SHR-003 | مشترك | تسجيل الدخول | ScreenBuild | **done** | — |
-| SCR-FAT-001 | الوالدان | إنشاء العائلة | ScreenBuild | **done** | — |
-| SCR-FAT-002 | الوالدان | معالج الإعداد | ScreenBuild | **done** | — |
-| SCR-FAT-003 | الوالدان | إضافة ابن | ScreenBuild | **done** | — |
-| SCR-FAT-004 | الوالدان | رمز الربط QR | ScreenBuild | **done** | — |
-| SCR-FAT-005 | الوالدان | شرح الصلاحيات | ScreenBuild | **done** | — |
-| SCR-FAT-006 | الوالدان | نجاح الربط | ScreenBuild | **done** | — |
-| SCR-FAT-007 | الوالدان | وضع التجربة | ScreenBuild | **done** | — |
-| SCR-FAT-008 | الوالدان | دعوة الأم (من لوحة الأب) | ScreenBuild | **done** | — |
-| SCR-FAT-009 | الوالدان | قبول دعوة الأم | ScreenBuild | **done** | — |
-| SCR-FAT-010 | الوالدان | لوحة اليوم | ScreenBuild | **done** | — |
+| SCR-SHR-001 | مشترك | شاشة الترحيب | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-SHR-002 | مشترك | إنشاء حساب | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-SHR-003 | مشترك | تسجيل الدخول | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-FAT-001 | الوالدان | إنشاء العائلة | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-FAT-002 | الوالدان | معالج الإعداد | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-FAT-003 | الوالدان | إضافة ابن | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-FAT-004 | الوالدان | رمز الربط QR | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-FAT-005 | الوالدان | شرح الصلاحيات | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-FAT-006 | الوالدان | نجاح الربط | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-FAT-007 | الوالدان | وضع التجربة | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-FAT-008 | الوالدان | دعوة الأم (من لوحة الأب) | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-FAT-009 | الوالدان | قبول دعوة الأم | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-FAT-010 | الوالدان | لوحة اليوم | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
 | SCR-FAT-011 | الوالدان | اقتراحات العقل | ScreenBuild | **done** | ADR-038 suggest-only · Bark · approve→confirm→My rules |
 | SCR-FAT-012 | الوالدان | قائمة الأبناء | ScreenBuild | **done** | ChildrenListScreen · Rule 23 empty default · shared policies Family Link/Qustodio override honesty |
 | SCR-FAT-013 | الوالدان | ملف الابن | ScreenBuild | **done** | ChildProfileScreen · parametric childId · tools→032/033/036/037/067/026 · Rule 23 missing/not-found |
@@ -157,13 +159,13 @@ Each card imports linked SET ids when screen matches. Cannot Ship while linked S
 | SCR-CHD-010 | الابن | ماذا يُجمع عني | ScreenBuild | **done** | SET-012 shipped 2026-09-20 |
 | SCR-SHR-005 | مشترك | خطأ الشبكة | ScreenBuild | **done** | UI-001 AppErrorState |
 | SCR-SHR-006 | مشترك | حالة فارغة | ScreenBuild | **done** | UI-005 AppEmptyState |
-| SCR-SHR-007 | مشترك | اختيار الوضع (شاشة عمر محايدة) | ScreenBuild | **done** | — |
+| SCR-SHR-007 | مشترك | اختيار الوضع (شاشة عمر محايدة) | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
 | SCR-SHR-008 | مشترك | تبديل المستخدم على الجهاز | ScreenBuild | **done** | DeviceUserSwitchScreen · mock local profiles · password confirm · Rule 12/23 |
 | SCR-CHD-011 | الابن | قفل وضع الابن + المدخل السري | ScreenBuild | **done** | ChildModeLockScreen · ADR-017 triple-lock · P-4 SOS · entertainment locked · Rule 12/23 |
 | SCR-FAT-030 | الوالدان | طلب فتح وضع الوالد (المفتاح الثاني) | ScreenBuild | **done** | ParentSecondKeyScreen · CHD-011 second key allow/deny · attempt log · father decide · mother view · P-4 · Rule 12/23 |
 | SCR-FAT-031 | الوالدان | مستوى صلاحية الأم | ScreenBuild | **done** | MotherPermissionLevelScreen · observer/partner/full · owner-only · downgrade confirm · P-4 fixed rights · Rule 12/23 |
 | SCR-FAT-085 | الوالدان | الأوضاع الذكية | ScreenBuild | **done** | SET-018 shipped 2026-09-21 |
-| SCR-FAT-086 | الوالدان | لحظات عائلتنا | ScreenBuild | blocked_until_stage1 | — |
+| SCR-FAT-086 | الوالدان | لحظات عائلتنا | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
 
 ### Wave 2
 
@@ -199,60 +201,60 @@ Each card imports linked SET ids when screen matches. Cannot Ship while linked S
 | SCR-FAT-059 | الوالدان | الخصوصية والبيانات | ScreenBuild | **done** | SET-012/013 closed 2026-09-21 |
 | SCR-FAT-060 | الوالدان | سجل التدقيق | ScreenBuild | **done** | AuditLogScreen · append-only R10 · mother view · P-4 · Rule 12/23 |
 | SCR-FAT-061 | الوالدان | اللغة والمساعدة | ScreenBuild | **done** | LanguageHelpScreen · AR/EN+help→026/030 · mother levels · P-4 · Rule 12/23 |
-| **NEXT → SCR-FAT-062** | الوالدان | أنماط العائلة | ScreenBuild | **ready** | Flipped after SCR-FAT-061 |
-| SCR-FAT-063 | الوالدان | الخط الزمني للفرد | ScreenBuild | blocked_until_stage1 | — |
-| SCR-FAT-064 | الوالدان | خرائط المعرفة | ScreenBuild | blocked_until_stage1 | — |
-| SCR-CHD-012 | الابن | تعلّمي — الرئيسة | ScreenBuild | blocked_until_stage1 | — |
-| SCR-CHD-013 | الابن | الدرس | ScreenBuild | blocked_until_stage1 | — |
-| SCR-CHD-014 | الابن | واجبي | ScreenBuild | blocked_until_stage1 | — |
-| SCR-CHD-015 | الابن | الاختبار | ScreenBuild | blocked_until_stage1 | — |
-| SCR-CHD-016 | الابن | نتيجتي | ScreenBuild | blocked_until_stage1 | — |
-| SCR-CHD-017 | الابن | معلمي الذكي | ScreenBuild | blocked_until_stage1 | — |
-| SCR-CHD-018 | الابن | وضع التركيز | ScreenBuild | blocked_until_stage1 | — |
-| SCR-CHD-019 | الابن | نقاطي وشاراتي | ScreenBuild | blocked_until_stage1 | — |
-| SCR-CHD-020 | الابن | طلب وقت إضافي | ScreenBuild | blocked_until_stage1 | — |
-| SCR-CHD-021 | الابن | انتهى الوقت — بلطف | ScreenBuild | **done** (UI-011) | — |
-| SCR-CHD-022 | الابن | مهامي | ScreenBuild | blocked_until_stage1 | — |
-| SCR-CHD-023 | الابن | مشاركة وسائط | ScreenBuild | blocked_until_stage1 | — |
-| SCR-CHD-024 | الابن | أنا وصلت + موقعي | ScreenBuild | blocked_until_stage1 | — |
+| SCR-FAT-062 | الوالدان | أنماط العائلة | ScreenBuild | **done** | FRONTEND COMPLETE · FE-W2-FAT-062 · 2026-09-25 |
+| SCR-FAT-063 | الوالدان | الخط الزمني للفرد | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-FAT-064 | الوالدان | خرائط المعرفة | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-CHD-012 | الابن | تعلّمي — الرئيسة | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-CHD-013 | الابن | الدرس | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-CHD-014 | الابن | واجبي | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-CHD-015 | الابن | الاختبار | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-CHD-016 | الابن | نتيجتي | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-CHD-017 | الابن | معلمي الذكي | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-CHD-018 | الابن | وضع التركيز | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-CHD-019 | الابن | نقاطي وشاراتي | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-CHD-020 | الابن | طلب وقت إضافي | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-CHD-021 | الابن | انتهى الوقت — بلطف | ScreenBuild | **done** (UI-011) | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-CHD-022 | الابن | مهامي | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-CHD-023 | الابن | مشاركة وسائط | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-CHD-024 | الابن | أنا وصلت + موقعي | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
 
 ### Wave 3
 
 | id | app | name | workflow | status | linked_gaps |
 |---|---|---|---|---|---|
-| SCR-FAT-065 | الوالدان | التنبيهات الذكية | ScreenBuild | blocked_until_stage1 | — |
-| SCR-FAT-066 | الوالدان | تفصيل التنبيه وخطوة الحوار | ScreenBuild | blocked_until_stage1 | — |
+| SCR-FAT-065 | الوالدان | التنبيهات الذكية | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-FAT-066 | الوالدان | تفصيل التنبيه وخطوة الحوار | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
 | SCR-FAT-067 | الوالدان | إعدادات الرقابة الذكية | ScreenBuild | **done** | SET-016 |
 | SCR-FAT-068 | الوالدان | مراقبة المنصات | ScreenBuild | **done** | SET-017 |
-| SCR-FAT-069 | الوالدان | تقرير استخدام الابن | ScreenBuild | blocked_until_stage1 | — |
-| SCR-FAT-070 | الوالدان | الدائرة الخارجية | ScreenBuild | blocked_until_stage1 | — |
-| SCR-FAT-071 | الوالدان | موافقة طلب صديق | ScreenBuild | blocked_until_stage1 | — |
-| SCR-FAT-072 | الوالدان | متابعة حفظ القرآن | ScreenBuild | blocked_until_stage1 | — |
-| SCR-FAT-073 | الوالدان | التقرير الأسبوعي بتوصية | ScreenBuild | blocked_until_stage1 | — |
-| SCR-FAT-074 | الوالدان | عقل عائلتي (المساعد الذكي) | ScreenBuild | blocked_until_stage1 | — |
-| SCR-FAT-076 | الوالدان | إخطارات الذكاء للأم | ScreenBuild | blocked_until_stage1 | — |
-| SCR-FAT-075 | الوالدان | ميزات قادمة ✨ | ScreenBuild | **done** (UI-013) | — |
-| SCR-CHD-025 | الابن | وردي — حفظ وتلاوة | ScreenBuild | blocked_until_stage1 | — |
-| SCR-CHD-026 | الابن | حفظي وتقدمي | ScreenBuild | blocked_until_stage1 | — |
-| SCR-CHD-027 | الابن | أذكاري اليومية | ScreenBuild | blocked_until_stage1 | — |
-| SCR-CHD-028 | الابن | خطتي الذكية | ScreenBuild | blocked_until_stage1 | — |
-| SCR-CHD-029 | الابن | مراجعة اليوم | ScreenBuild | blocked_until_stage1 | — |
-| SCR-CHD-030 | الابن | أصدقائي | ScreenBuild | blocked_until_stage1 | — |
-| SCR-CHD-031 | الابن | قادم لك 🎁 | ScreenBuild | blocked_until_stage1 | — |
-| SCR-FAT-077 | الوالدان | السلامة على الطريق | ScreenBuild | blocked_until_stage1 | — |
-| SCR-FAT-078 | الوالدان | فلترة الراوتر المنزلي | ScreenBuild | blocked_until_stage1 | — |
+| SCR-FAT-069 | الوالدان | تقرير استخدام الابن | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-FAT-070 | الوالدان | الدائرة الخارجية | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-FAT-071 | الوالدان | موافقة طلب صديق | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-FAT-072 | الوالدان | متابعة حفظ القرآن | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-FAT-073 | الوالدان | التقرير الأسبوعي بتوصية | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-FAT-074 | الوالدان | عقل عائلتي (المساعد الذكي) | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-FAT-076 | الوالدان | إخطارات الذكاء للأم | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-FAT-075 | الوالدان | ميزات قادمة ✨ | ScreenBuild | **done** (UI-013) | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-CHD-025 | الابن | وردي — حفظ وتلاوة | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-CHD-026 | الابن | حفظي وتقدمي | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-CHD-027 | الابن | أذكاري اليومية | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-CHD-028 | الابن | خطتي الذكية | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-CHD-029 | الابن | مراجعة اليوم | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-CHD-030 | الابن | أصدقائي | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-CHD-031 | الابن | قادم لك 🎁 | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-FAT-077 | الوالدان | السلامة على الطريق | ScreenBuild | **deferred** | OUT OF SCOPE (matrix) |
+| SCR-FAT-078 | الوالدان | فلترة الراوتر المنزلي | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
 | SCR-FAT-079 | الوالدان | مساعدي الذكي — ماذا يفعل عني | ScreenBuild | **done** | SET-022+023 shipped 2026-09-21 |
-| SCR-FAT-080 | الوالدان | ماذا فعل المساعد | ScreenBuild | blocked_until_stage1 | — |
-| SCR-FAT-081 | الوالدان | مقارنة الأقران | ScreenBuild | blocked_until_stage1 | — |
-| SCR-FAT-082 | الوالدان | موزع المهام الذكي | ScreenBuild | blocked_until_stage1 | — |
-| SCR-FAT-083 | الوالدان | المحادثة الصوتية مع العقل | ScreenBuild | blocked_until_stage1 | — |
-| SCR-FAT-084 | الوالدان | مشروع بمراحل | ScreenBuild | blocked_until_stage1 | — |
-| SCR-CHD-032 | الابن | تلاوتي الذكية | ScreenBuild | blocked_until_stage1 | — |
-| SCR-CHD-033 | الابن | قصصي التفاعلية | ScreenBuild | blocked_until_stage1 | — |
-| SCR-CHD-034 | الابن | التحديات العائلية | ScreenBuild | blocked_until_stage1 | — |
-| SCR-CHD-035 | الابن | أصوات التركيز | ScreenBuild | blocked_until_stage1 | — |
-| SCR-CHD-036 | الابن | مرح المكالمة | ScreenBuild | blocked_until_stage1 | — |
-| SCR-CHD-037 | الابن | ملصقاتي وخلفياتي | ScreenBuild | blocked_until_stage1 | — |
+| SCR-FAT-080 | الوالدان | ماذا فعل المساعد | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-FAT-081 | الوالدان | مقارنة الأقران | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-FAT-082 | الوالدان | موزع المهام الذكي | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-FAT-083 | الوالدان | المحادثة الصوتية مع العقل | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-FAT-084 | الوالدان | مشروع بمراحل | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-CHD-032 | الابن | تلاوتي الذكية | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-CHD-033 | الابن | قصصي التفاعلية | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-CHD-034 | الابن | التحديات العائلية | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-CHD-035 | الابن | أصوات التركيز | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-CHD-036 | الابن | مرح المكالمة | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
+| SCR-CHD-037 | الابن | ملصقاتي وخلفياتي | ScreenBuild | **done** | FRONTEND COMPLETE (matrix 2026-09-25) |
 
 ---
 
@@ -307,10 +309,28 @@ Each card imports linked SET ids when screen matches. Cannot Ship while linked S
 
 | id | workflow | status | note |
 |---|---|---|---|
-| **PHASE-1.5-HARDEN** | GapClose | **done** | Shared FsSessionKernel + honesty/RBAC/FAT-034/migration proof · 2026-09-24 · STOP — no next wave |
+| **PHASE-1.5-HARDEN** | GapClose | **done** | Shared FsSessionKernel + honesty/RBAC/FAT-034/migration proof · 2026-09-24 · superseded by Local Cover / Frontend Closure waves |
 
 ---
 
+
+## Lane Local Cover — System Polish (2026-09-27…28)
+
+Authority: Owner Father-control Cover · platform cohesion · UI-complete now / Backend wire later.
+
+| id | workflow | status | note |
+|---|---|---|---|
+| SYS-SEC-NOTIF-CORE | GapClose | **done** | Notifications core CLOSED · Owner EXIT:0 · 2026-09-27 |
+| SYS-SEC-EMERGENCY-0 | GapClose | **done** | Emergency inventory · FAT-028 · 2026-09-27 |
+| SYS-SEC-EMERGENCY-1 | GapClose | **done** | FAT-028 Father-control cover · 2026-09-27 |
+| SYS-SEC-LOCATION-0 | GapClose | **done** | Location inventory · 2026-09-27 |
+| SYS-SEC-LOCATION-1B | GapClose | **done** | No-show deadline + FAT-013 desk · 2026-09-28 |
+| UX-LOCAL-SEED | GapClose | **done** | Debug projecting producers seed · 2026-09-27 |
+| UX-SHELL-TABS-FIX | GapClose | **done** | TabsBar restored · 2026-09-27 |
+| HUB-FAT-010-STRUCTURE | GapClose | **done** | Hub chrome + importance ladder · 2026-09-27 |
+| **NEXT → VISUAL-POLISH** | GapClose | **ready** | Awaits Owner orientation · Native/Backend closed |
+
+---
 ## Lane 6 — Later (not active)
 
 | id | status | note |
@@ -334,4 +354,4 @@ Each card imports linked SET ids when screen matches. Cannot Ship while linked S
 
 ## Orchestrator tip
 
-Until Stage 1 unlock, the only productive ticks are: improve harness docs, answer QUESTIONS, or prepare evidence templates. Do **not** invent Flutter code.
+Flutter Stage 1 is long unlocked. Prefer Owner orientation for Visual Polish / next Cover packs. Native/Backend stay gated. Hard stop = unanswered QUESTIONS only.

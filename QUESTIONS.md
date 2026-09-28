@@ -46,8 +46,8 @@ Owner answers under the question with a date.
 **Date asked:** 2026-09-22  
 **Why:** PRT-1 acceptance said kids `screenIds.length == 23`, but also (a) every one of 129 **active** ids appears exactly once and (b) tombstone `SCR-FAT-039` appears nowhere. CSV has 23 rows on `أبنائي` including FAT-039; excluding the tombstone yields **22**. 14+23+11+13+15+17+32+5 = 130 (all rows); 14+22+… = 129 (actives).  
 **Question:** Prefer kids=23 (include tombstone, breaking criteria 4–5) or kids=22 (exclude tombstone)?  
-**Answer (agent resolution, authority order):** kids=**22** — criteria 4–5 + ADR-034/router tombstone skip override the literal “23”. Owner may overturn.  
-**Resolved (2026-09-22):** Implemented kids=22; documented as PRT-1 deviation in tick report.
+**Answer:** kids=22 (exclude tombstone SCR-FAT-039). Criteria 4–5 + ADR-034/router tombstone skip override the literal “23”. Owner confirmed 2026-09-28 (supersedes agent-only label).  
+**Resolved (2026-09-22 · confirmed 2026-09-28):** Implemented kids=22; documented as PRT-1 deviation in tick report.
 
 ### Q-PRT-2 — Reopen shell wiring now (prototype phone parity)
 **Date asked:** 2026-09-22  
@@ -120,7 +120,7 @@ Owner answers under the question with a date.
 **Date asked:** 2026-09-25  
 **Why:** Chat repositories are empty in-memory defaults never bound; a fresh install has no thread (FVX-S-01).  
 **Question:** Local seeded thread vs designed empty state?  
-**Answer (Owner, Arabic):** "Seed the database for everything related to this area, then use data from a real database, not mock data."  
+**Answer:** Seed the database for everything related to this area, then use data from a real database, not mock data. (Owner Arabic 2026-09-25; label normalized 2026-09-28 for harness parser.)  
 **Recorded interpretation (Backend/Remote still NOT authorized):** family chat uses the existing on-device persistence authority (`FsSessionKernel` → `LocalDatabase`, SQLite, same pattern as family tasks) — no second authority. On first run, family thread(s) are seeded into that local database from the REAL roster/identity (family members), and the UI reads only from it. **No mock or sample messages are seeded** — threads start empty with an honest empty state. Multi-device delivery stays REMOTE_CLOSED; calls/call history stay NATIVE_CLOSED (seeding call records that never happened would be fake data). If SQLite is unavailable and the kernel falls back to memory, the screen must say so honestly.  
 **Resolved (2026-09-25):** Owner chat. Unblocks VX-B6 (chat). No remote database is required for this interpretation.
 

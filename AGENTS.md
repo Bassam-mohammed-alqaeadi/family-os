@@ -42,6 +42,8 @@ WILL MODIFY PRODUCTION CODE: YES/NO
 * CONTROL & EXPERIENCE LOCAL CAMPAIGN (CE-B0→B5) — **COMPLETE** (2026-09-25; Final Re-Audit + Final Frontend Gate PASSED; STOP) 
 * FINAL VISUAL · UX · JOURNEY VERIFICATION — **AUTHORIZED** (2026-09-25; VX-B0→B7 PASSED) — UX verification pack **UNLOCKED** after LDR-EXIT; next: execute `user_experience_verification/` → **D-FINAL**
 * LOCAL DATA REALITY (LDR) — **COMPLETE** (2026-09-26; Owner EXIT; B0…B8; `test/ldr/` +27; verify --full +80) — see `docs/experience_discovery/final_product_experience/local_data_reality/`
+* LOCAL COVER (Notifications · Emergency · Location 1/1B · UX seed) — **SHIPPED** (2026-09-27…28; commit `e2eb4a4`)
+* **NEXT** — Visual Polish when Owner orients (harness `NEXT → VISUAL-POLISH`)
 * PHASE 5 NATIVE — NOT STARTED / NOT AUTHORIZED 
 * BACKEND — NOT YET AUTHORIZED 
 * NATIVE WAVES — NOT YET AUTHORIZED
