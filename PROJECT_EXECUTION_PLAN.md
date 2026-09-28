@@ -2,7 +2,7 @@
 
 **Authority:** Authoritative human-readable execution roadmap for Guardian Eye Pro / Family OS.  
 **Owner changes:** Require explicit `CHANGE PHASE` before treating the roadmap as changed.  
-**Last governance install:** 2026-09-24
+**Last governance install:** 2026-09-28
 
 ---
 
@@ -46,6 +46,7 @@ The approved strategy is:
 | `CONTROL & EXPERIENCE LOCAL CAMPAIGN (CE-B0→B5)` | **COMPLETE** (2026-09-25) — Final Re-Audit + Final Frontend Gate PASSED; STOP (recorded here retroactively; see `docs/experience_discovery/final_product_experience/FINAL_RE_AUDIT.md`) |
 | `FINAL VISUAL · UX · JOURNEY VERIFICATION` | **AUTHORIZED** (Owner D12, 2026-09-25) — VX-B0…B7 **PASSED**. UX verification pack **UNLOCKED** after LDR-EXIT → execute → **D-FINAL** |
 | `LOCAL DATA REALITY (LDR)` | **COMPLETE** (Owner EXIT, 2026-09-26; B0…B8; `test/ldr/` +27; verify --full +80). Docs: `docs/experience_discovery/final_product_experience/local_data_reality/` |
+| `LOCAL COVER (NOTIF · EMERGENCY · LOCATION 1/1B)` | **SHIPPED** (2026-09-27…28; `e2eb4a4`) — Visual Polish next when Owner orients; Native/Backend still closed |
 | `GLOBAL IMPLEMENTATION PLAN NOT YET AUTHORIZED` | **No** — Phase 4 Master Plan complete; Frontend Completion Gate authorizes Local/UI deepen only |
 | `FULL CODEGEN NOT YET AUTHORIZED` | **Partial** — Frontend + Local experience codegen authorized; Native/Backend codegen still closed |
 | `BACKEND INTEGRATION NOT YET AUTHORIZED` | Yes |
