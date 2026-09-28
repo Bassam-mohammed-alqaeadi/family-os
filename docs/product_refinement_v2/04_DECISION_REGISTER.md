@@ -20,6 +20,7 @@
 | PRV2-013 | 2026-09-29 | Start the Learning & Growth refinement loop. | Accepted | Security is Product Ready. The next connected pillar is the 9-system Learning & Growth domain; all external Future Developments remain out of scope. |
 | PRV2-014 | 2026-09-29 | Adopt the Learning G1 direction under standing Owner trust. | Accepted | Learning is outcome-led: core learning/assignment/assessment/focus loops come first; AI is guided and capability-gated; Quran remains an elective registered learning path; rewards are non-financial; advanced source ingestion, generation, community publishing, and competition await capability/readiness. |
 | PRV2-015 | 2026-09-29 | Adopt the Learning G2 UX direction under standing Owner trust. | Accepted | Learning uses one connected Learning Hub, a distinct child learning rhythm, reviewed content lifecycle, supportive guardian actions, cross-pillar focus/time coordination, and a calm global visual model. |
+| PRV2-016 | 2026-09-29 | Complete Learning G3 technical readiness and declare Learning Product Ready. | Accepted | The Owner’s standing trust accepts the documented capability boundaries, data/event contracts, reliability plan, parity boundaries, and implementation sequence. This does not authorize production Backend, Native, AI, content-ingestion, or release work. |
 
 ## Pending decision format
 

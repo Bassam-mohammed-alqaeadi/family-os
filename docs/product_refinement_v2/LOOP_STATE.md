@@ -5,9 +5,9 @@
 ```yaml
 program_status: RUNNING
 last_updated: 2026-09-29
-current_pillar: LEARNING_AND_GROWTH
-current_card: LEARN-G3-TECHNICAL_READINESS
-current_stage: LEARNING_G3_TECHNICAL_READINESS
+current_pillar: FAMILY_CONNECTION
+CONNECTION-G1-DISCOVERY
+LEARNING_PRODUCT_READY
 completed:
   - Harness bootstrap
   - New product charter
@@ -28,9 +28,10 @@ completed:
   - Learning code/registry evidence map
   - Learning G1 direction accepted under standing Owner trust
   - Learning G2 Hub, role journeys, settings/state model, and screen map accepted under standing Owner trust
+  - Learning technical capability, data/event, reliability, implementation sequence, parity, and Product Ready review
 next_outputs:
-  - Learning technical capability, data/event, reliability, and implementation-readiness pack
-  - Preserve Security pack for later Backend/Native authorization
+  - Start Family Connection product-refinement loop
+  - Preserve Security and Learning packs for later Backend/Native authorization
 blocked_by: none
 requires_owner_now: no
 backend_native_status: NOT_AUTHORIZED
