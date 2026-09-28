@@ -1,10 +1,10 @@
 # Family OS — Product Refinement V2
 
-> **Status:** PRODUCT REFINEMENT COMPLETE — AWAITING EXECUTION AUTHORIZATION
+> **Status:** FOUNDATION WAVE AUTHORIZED
 > **Activated:** 2026-09-29
 > **Product Ready:** Security & Digital Safety, Learning & Growth, Family Connection, Family Intelligence, Administration, Trust & Operations
-> **Current gate:** Explicit Owner authorization before Backend or Native production implementation
-> **Current delivery mode:** Product refinement is complete; no Backend or Native implementation is authorized yet.
+> **Current scope:** Render account/session/recovery, family/membership/role/child authorization, durable data/event/outbox/audit, tests and operations baseline.
+> **Current delivery boundary:** Native/device, Firebase/FCM, billing, providers, realtime and release implementation remain unauthorized.
 
 ## Why this workspace exists
 
@@ -33,7 +33,7 @@ The current service, journey, and screen registries remain valuable discovery in
 
 - **In current refinement:** the 42 systems and 240 registered services already present in the platform inventory.
 - **Future developments:** new candidate systems outside that inventory, including expanded home organization, financial responsibility, expanded values/religion, and one-way audio. They are recorded for future consideration only and are not part of the current build, navigation, data model, or release promise.
-- **Current focus:** all five active pillars are Product Ready. Read `92_EXECUTION_AUTHORIZATION_GATE.md` for the explicit decision required before a Render/Backend or Native production wave may begin.
+- **Current focus:** Option A Foundation Wave is authorized. Follow `92_EXECUTION_AUTHORIZATION_GATE.md` exactly: establish the Render account/family/membership/role/audit foundation first, while keeping Native/device, Firebase/FCM, billing, providers, realtime and release work out of scope.
 
 ## Runtime truth and backend placement
 

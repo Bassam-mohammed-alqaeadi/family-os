@@ -3,10 +3,10 @@
 > This file is a live work pointer only. Product authority remains in the Charter and Decision Register.
 
 ```yaml
-program_status: PRODUCT_REFINEMENT_COMPLETE_AWAITING_EXECUTION_AUTHORIZATION
+program_status: FOUNDATION_WAVE_AUTHORIZED
 last_updated: 2026-09-29
-current_pillar: PLATFORM_PORTFOLIO
-current_card: EXECUTION_AUTHORIZATION_GATE
+current_pillar: PLATFORM_FOUNDATION
+current_card: FOUNDATION-WAVE-0-PRECONDITIONS
 completed:
   - Harness bootstrap
   - New product charter
@@ -45,11 +45,12 @@ completed:
   - Administration, Trust & Operations G2 Today/Trust Hub, role journeys, settings/state model, and screen map accepted under standing Owner trust
   - Administration, Trust & Operations technical capability, data/event, reliability, implementation sequence, parity, and Product Ready review
   - Product Refinement V2 coverage for all 42 registered systems / 240 registered services
+  - Option A Foundation Wave execution authorization
 next_outputs:
-  - Explicit Owner execution authorization at `92_EXECUTION_AUTHORIZATION_GATE.md`
-  - Preserve all Product Ready packs until that authorization
-blocked_by: explicit Owner authorization before Backend/Native/production implementation
-requires_owner_now: yes
-backend_native_status: NOT_AUTHORIZED
+  - Confirm Foundation Wave architecture/cost/security/operations preconditions
+  - Begin only the authorized Render account/family/membership/role/audit foundation after those preconditions
+blocked_by: Foundation Wave preconditions in `92_EXECUTION_AUTHORIZATION_GATE.md`
+requires_owner_now: no
+backend_native_status: BACKEND_FOUNDATION_AUTHORIZED_NATIVE_NOT_AUTHORIZED
 future_candidates_status: EXCLUDED_FROM_CURRENT_DEVELOPMENT
 ```

@@ -1,8 +1,8 @@
 # Execution Authorization Gate — Product Refinement V2
 
-> **Status:** Pending explicit Owner authorization
-> **Date:** 2026-09-29
-> **Purpose:** Close Product Refinement V2 and define the exact decision required before any Backend, Render, Native/device, payment, notification, provider/model, remote-sync or production implementation begins.
+> **Status:** Authorized — Option A, Foundation Wave only
+> **Authorized:** 2026-09-29 under Owner direction to select the appropriate option
+> **Purpose:** Record the exact, deliberately narrow authorization that closes Product Refinement V2 and permits the first Render-backed production engineering wave.
 
 ## 1. Decision question
 
@@ -28,9 +28,13 @@ Starting any of those creates durable security, privacy, cost, compliance, opera
 
 It creates the authoritative family/role/audit base without prematurely committing to a device agent, billing provider, notification transport, AI provider, support vendor or public capability promise. It lets subsequent vertical slices reuse one truthful authorization/data/event model.
 
-## 5. Exact proposed authorization boundary for Option A
+## 5. Decision outcome
 
-### Authorized only if Option A is explicitly approved
+**Option A is selected and explicitly authorized.** This authorizes only the Foundation Wave defined below. It does not authorize any excluded integration, Native/device work, public product claim, beta, or release. No production implementation was started by recording this decision; work begins only inside the stated boundary and after its preconditions are satisfied.
+
+## 6. Exact authorization boundary for Option A
+
+### Authorized scope
 
 - Render account/session/recovery service evaluation and implementation.
 - Render family, membership, role, child scope and primary-guardian continuity foundation.
@@ -49,7 +53,7 @@ It creates the authoritative family/role/audit base without prematurely committi
 - Remote data export/delete execution beyond foundation contract design.
 - Public launch, beta distribution, pricing, marketing or release claims.
 
-## 6. Preconditions before code starts
+## 7. Preconditions before code starts
 
 1. Confirm preferred Render service/datastore/region and cost owner.
 2. Confirm the account identity/recovery approach and threat model; no credentials/secrets are stored in Flutter or source control.
@@ -58,18 +62,20 @@ It creates the authoritative family/role/audit base without prematurely committi
 5. Confirm test environment strategy that keeps Flutter SDK/build caches outside this Arena repository workspace.
 6. Record any approved Firebase auxiliary service separately with pricing/quota/privacy/kill-switch evidence; none is assumed by this gate.
 
-## 7. Acceptance criteria for the Foundation Wave
+## 8. Acceptance criteria for the Foundation Wave
 
 The Foundation Wave is complete only when a verified account/family/membership role is Render-authorized; a family-bound mutation/event/audit record is durable and idempotent; cross-family and role-boundary tests pass; recovery/revocation works safely; setup/UI presents real pending/failed/recovery states; and operations can reconstruct minimal authorized diagnostics without raw family-data overexposure.
 
 It does not authorize the first child-device or Safety feature claim. A subsequent slice decision is still required before those capabilities are built or marketed.
 
-## 8. Required explicit Owner response
-
-Choose one:
+## 9. Authorization record
 
 ```text
-A — Authorize Foundation Wave only
-B — Authorize a broader initial vertical release (specify the slice)
-C — Hold execution; continue non-production refinement only
+Selected option: A — Authorize Foundation Wave only
+Backend status: Foundation Wave authorized within the exact Section 6 boundary
+Native status: Not authorized
+Firebase/FCM status: Not authorized
+Billing, providers, realtime and release status: Not authorized
 ```
+
+A broader vertical release, any Native/device capability, Firebase auxiliary integration, billing, provider/model integration, or public/beta/release activity remains a new approval gate.

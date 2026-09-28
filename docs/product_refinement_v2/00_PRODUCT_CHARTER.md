@@ -1,8 +1,8 @@
 # Product Charter — Family OS Product Refinement V2
 
-> **Status:** Product Refinement V2 complete; execution authorization pending
+> **Status:** Product Refinement V2 complete; Foundation Wave authorized
 > **Owner direction recorded:** 2026-09-29
-> **Program position:** All active pillars are Product Ready. Backend or Native development remains unauthorized until the explicit decision in `92_EXECUTION_AUTHORIZATION_GATE.md`.
+> **Program position:** All active pillars are Product Ready. Option A in `92_EXECUTION_AUTHORIZATION_GATE.md` authorizes a narrow Render account/family/membership/audit foundation only. Native/device, Firebase/FCM, billing, providers, realtime and release work remain unauthorized.
 
 ## 1. Product outcome
 
