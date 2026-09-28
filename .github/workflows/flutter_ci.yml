@@ -111,6 +111,14 @@ jobs:
               )
           summary_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
           PY
+      - name: Upload Flutter test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-test-report-${{ github.run_id }}
+          path: app/build/ci/flutter-test.json
+          if-no-files-found: warn
+          retention-days: 7
       - name: Verify generated source is committed
         id: generated
         if: always()
