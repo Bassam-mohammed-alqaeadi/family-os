@@ -1,7 +1,7 @@
 # Security & Digital Safety — Phase Initiation
 
 > **Loop card:** SEC-DISCOVERY-01
-> **Status:** In discovery
+> **Status:** G1 direction accepted; G2 UX lock ready for approval
 > **Goal:** Make the first pillar product-ready as a connected, globally credible Family OS capability.
 > **Not yet authorized:** Backend implementation, Native implementation, or release claims.
 

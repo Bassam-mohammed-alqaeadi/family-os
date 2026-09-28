@@ -14,7 +14,8 @@
 | PRV2-007 | 2026-09-29 | Do not start Backend or Native implementation during current product refinement. | Accepted | Product/UX/capability readiness must be approved first; this prevents technical work from locking an unapproved experience. |
 | PRV2-008 | 2026-09-29 | Treat the 18 registered services without a registered journey as explicit reconciliation work. | Accepted | Each will gain a journey, merge, defer as an existing system, or be explicitly removed; none silently disappears. |
 | PRV2-009 | 2026-09-29 | Start the first active loop with Security & Digital Safety. | Accepted | Security establishes trust, device truth, notification behaviour, and control patterns reused by the platform. |
-| PRV2-010 | 2026-09-29 | Approve the four Security direction choices in `06_SECURITY_G1_DIRECTION.md`. | Pending Owner | Gate G1 requires the Owner to confirm the safety promise, advanced-monitoring posture, advanced-system sequencing, and default authority model before UX lock work begins. |
+| PRV2-010 | 2026-09-29 | Approve the four Security direction choices in `06_SECURITY_G1_DIRECTION.md`. | Accepted | Owner accepted: location/SOS are capability-gated core commitments; monitoring is signal/alert-led only; advanced systems stay outside the first sequence; primary guardian is full-control while co-guardian is configurable and the child is informed/request-capable. |
+| PRV2-011 | 2026-09-29 | Approve the G2 Security UX Lock pack. | Pending Owner | Gate G2 asks the Owner to approve the Safety Hub information architecture, role experiences, settings desk, visual direction, and complete key screen/state model before technical build readiness begins. |
 
 ## Pending decision format
 
