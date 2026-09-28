@@ -15,6 +15,21 @@ function parsePort(value) {
   return parsed;
 }
 
+function optionalBoundedInteger(value, variable, { minimum, maximum }) {
+  const normalized = optionalText(value);
+  if (!normalized) {
+    return undefined;
+  }
+  if (!/^[0-9]+$/.test(normalized)) {
+    throw new HttpError(500, 'invalid_configuration', `${variable} must be an integer.`);
+  }
+  const parsed = Number.parseInt(normalized, 10);
+  if (parsed < minimum || parsed > maximum) {
+    throw new HttpError(500, 'invalid_configuration', `${variable} must be between ${minimum} and ${maximum}.`);
+  }
+  return parsed;
+}
+
 export function loadConfig(environment = process.env) {
   const oidcValues = Object.fromEntries(
     REQUIRED_OIDC_KEYS.map((key) => [key, optionalText(environment[key])]),
@@ -33,6 +48,10 @@ export function loadConfig(environment = process.env) {
     environment: optionalText(environment.NODE_ENV) ?? 'development',
     port: parsePort(environment.PORT),
     databaseUrl: optionalText(environment.DATABASE_URL),
+    guardianTransferTtlHours: optionalBoundedInteger(environment.GUARDIAN_TRANSFER_TTL_HOURS, 'GUARDIAN_TRANSFER_TTL_HOURS', {
+      minimum: 1,
+      maximum: 168,
+    }),
     oidc:
       configuredOidcKeys === REQUIRED_OIDC_KEYS.length
         ? {
@@ -51,6 +70,9 @@ export function configurationReadiness(config) {
   }
   if (!config.oidc) {
     missing.push(...REQUIRED_OIDC_KEYS);
+  }
+  if (!config.guardianTransferTtlHours) {
+    missing.push('GUARDIAN_TRANSFER_TTL_HOURS');
   }
   return { ready: missing.length === 0, missing };
 }

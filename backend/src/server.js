@@ -6,7 +6,10 @@ import { UnconfiguredFoundationStore } from './store/unconfigured-foundation-sto
 
 const config = loadConfig();
 const store = config.databaseUrl
-  ? new PostgresFoundationStore({ connectionString: config.databaseUrl })
+  ? new PostgresFoundationStore({
+      connectionString: config.databaseUrl,
+      guardianTransferTtlHours: config.guardianTransferTtlHours,
+    })
   : new UnconfiguredFoundationStore();
 const authVerifier = config.oidc ? new OidcAuthVerifier(config.oidc) : new DisabledAuthVerifier();
 const app = createApp({

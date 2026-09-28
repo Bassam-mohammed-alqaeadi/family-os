@@ -35,6 +35,7 @@ test('PostgreSQL readiness is available only with the complete expected migratio
       rows: [
         { name: '001_foundation.sql' },
         { name: '002_membership_lifecycle.sql' },
+        { name: '003_guardian_continuity.sql' },
       ],
     };
   });

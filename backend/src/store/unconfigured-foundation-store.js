@@ -37,6 +37,18 @@ export class UnconfiguredFoundationStore {
     this.unavailable();
   }
 
+  async createGuardianTransfer() {
+    this.unavailable();
+  }
+
+  async acceptGuardianTransfer() {
+    this.unavailable();
+  }
+
+  async cancelGuardianTransfer() {
+    this.unavailable();
+  }
+
   async listAuditEvents() {
     this.unavailable();
   }

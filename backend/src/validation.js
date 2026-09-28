@@ -44,6 +44,11 @@ export function createMembershipInput(value) {
   };
 }
 
+export function createGuardianTransferInput(value) {
+  const body = bodyObject(value);
+  return { candidateMembershipId: requirePathId(body.candidateMembershipId, 'candidateMembershipId') };
+}
+
 export function revokeMembershipInput(value) {
   const body = bodyObject(value);
   const reasonCode = requiredText(body.reasonCode, 'reasonCode', { maxLength: 64 });

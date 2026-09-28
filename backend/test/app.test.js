@@ -259,3 +259,95 @@ test('guardian continuity and revocation authority cannot be bypassed', async ()
     assert.equal((await primaryRevoke.json()).error.code, 'primary_guardian_continuity_required');
   });
 });
+
+test('primary-guardian handover is a two-party continuity case, not an ordinary role edit', async () => {
+  await withServer(foundationApp(), async (baseUrl) => {
+    const family = await createFamily(baseUrl, 'Transfer family');
+    const coGuardian = await invite(baseUrl, family.id, {
+      role: 'co_guardian',
+      targetSubject: 'test-parent-b',
+      idempotencyKey: 'transfer-create-co-guardian',
+    });
+    const accepted = await request(baseUrl, `/v1/families/${family.id}/memberships/${coGuardian.id}/accept`, {
+      method: 'POST',
+      token: 'test-parent-b',
+      idempotencyKey: 'transfer-accept-co-guardian',
+      body: {},
+    });
+    assert.equal(accepted.status, 200);
+
+    const requestTransfer = async (idempotencyKey) => request(baseUrl, `/v1/families/${family.id}/guardian-transfers`, {
+      method: 'POST',
+      token: 'test-parent-a',
+      idempotencyKey,
+      body: { candidateMembershipId: coGuardian.id },
+    });
+
+    const pending = await requestTransfer('guardian-transfer-request-001');
+    assert.equal(pending.status, 201);
+    const cancelledTransferId = (await pending.json()).transfer.id;
+
+    const cancelled = await request(baseUrl, `/v1/families/${family.id}/guardian-transfers/${cancelledTransferId}/cancel`, {
+      method: 'POST',
+      token: 'test-parent-a',
+      idempotencyKey: 'guardian-transfer-cancel-001',
+      body: {},
+    });
+    assert.equal(cancelled.status, 200);
+    assert.equal((await cancelled.json()).transfer.status, 'cancelled');
+
+    const secondPending = await requestTransfer('guardian-transfer-request-002');
+    assert.equal(secondPending.status, 201);
+    const transfer = (await secondPending.json()).transfer;
+    assert.equal(transfer.status, 'pending_acceptance');
+
+    const strangerAccept = await request(baseUrl, `/v1/families/${family.id}/guardian-transfers/${transfer.id}/accept`, {
+      method: 'POST',
+      token: 'test-stranger',
+      idempotencyKey: 'guardian-transfer-stranger-accept',
+      body: {},
+    });
+    assert.equal(strangerAccept.status, 403);
+
+    const completed = await request(baseUrl, `/v1/families/${family.id}/guardian-transfers/${transfer.id}/accept`, {
+      method: 'POST',
+      token: 'test-parent-b',
+      idempotencyKey: 'guardian-transfer-accept-001',
+      body: {},
+    });
+    assert.equal(completed.status, 200);
+    assert.equal((await completed.json()).transfer.status, 'completed');
+
+    const familyAfterTransfer = await request(baseUrl, `/v1/families/${family.id}`, { token: 'test-parent-b' });
+    assert.equal(familyAfterTransfer.status, 200);
+    const roles = (await familyAfterTransfer.json()).family.members.map((member) => member.role).sort();
+    assert.deepEqual(roles, ['co_guardian', 'primary_guardian']);
+
+    const formerPrimaryRemoval = await request(baseUrl, `/v1/families/${family.id}/memberships/${coGuardian.id}/revoke`, {
+      method: 'POST',
+      token: 'test-parent-a',
+      idempotencyKey: 'former-primary-remove-new-primary',
+      body: { reasonCode: 'family_membership_removed' },
+    });
+    assert.equal(formerPrimaryRemoval.status, 403);
+  });
+});
+
+test('protected operations fail closed when runtime readiness is unavailable', async () => {
+  const app = createApp({
+    store: new UnconfiguredFoundationStore(),
+    authVerifier: new TestAuthVerifier(),
+    readiness: () => ({ ready: false, missing: ['DATABASE_URL'] }),
+  });
+
+  await withServer(app, async (baseUrl) => {
+    const response = await request(baseUrl, '/v1/families', {
+      method: 'POST',
+      token: 'test-parent-a',
+      idempotencyKey: 'runtime-not-ready-family',
+      body: { displayName: 'Blocked family' },
+    });
+    assert.equal(response.status, 503);
+    assert.equal((await response.json()).error.code, 'service_not_ready');
+  });
+});

@@ -6,6 +6,7 @@ const { Pool } = pg;
 const REQUIRED_SCHEMA_MIGRATIONS = [
   '001_foundation.sql',
   '002_membership_lifecycle.sql',
+  '003_guardian_continuity.sql',
 ];
 
 function memberView(row) {
@@ -31,6 +32,19 @@ function familyView(row, members) {
   };
 }
 
+function guardianTransferView(row) {
+  return {
+    id: row.id,
+    status: row.status,
+    candidateMembershipId: row.candidate_membership_id,
+    expiresAt: row.expires_at,
+    completedAt: row.completed_at,
+    cancelledAt: row.cancelled_at,
+    version: row.version,
+    createdAt: row.created_at,
+  };
+}
+
 function auditView(row) {
   return {
     id: row.id,
@@ -45,8 +59,9 @@ function auditView(row) {
 export class PostgresFoundationStore {
   configured = true;
 
-  constructor({ connectionString, pool = undefined }) {
+  constructor({ connectionString, guardianTransferTtlHours, pool = undefined }) {
     this.pool = pool ?? new Pool({ connectionString, max: 10, idleTimeoutMillis: 10_000 });
+    this.guardianTransferTtlHours = guardianTransferTtlHours;
   }
 
   async close() {
@@ -174,6 +189,33 @@ export class PostgresFoundationStore {
       throw new HttpError(403, 'family_access_denied', 'The authenticated account has no permitted family membership.');
     }
     return rows[0];
+  }
+
+  async lockedFamilyPrimary(client, familyId) {
+    const { rows } = await client.query(
+      `SELECT family.id AS family_id,
+              family.primary_membership_id,
+              membership.id AS membership_id,
+              membership.role,
+              membership.status
+       FROM families AS family
+       INNER JOIN family_memberships AS membership ON membership.id = family.primary_membership_id
+       WHERE family.id = $1
+       FOR UPDATE OF family, membership`,
+      [familyId],
+    );
+    if (rows.length === 0) {
+      throw new HttpError(404, 'family_not_found', 'Family was not found.');
+    }
+    const family = rows[0];
+    if (family.role !== 'primary_guardian' || family.status !== 'active') {
+      throw new HttpError(
+        409,
+        'guardian_continuity_required',
+        'This family has no active primary guardian for the requested continuity action.',
+      );
+    }
+    return family;
   }
 
   async createFamily({ principal, displayName, idempotencyKey, requestHash }) {
@@ -398,6 +440,231 @@ export class PostgresFoundationStore {
       });
       const result = { membership: memberView(revoked.rows[0]) };
       await this.completeIdempotencySlot(client, `membership:revoke:${membershipId}`, idempotencyKey, result);
+      return result;
+    });
+  }
+
+  async createGuardianTransfer({ principal, familyId, candidateMembershipId, idempotencyKey, requestHash }) {
+    try {
+      return await this.withTransaction(async (client) => {
+        const response = await this.acquireIdempotencySlot(
+          client,
+          `guardian-transfer:create:${familyId}`,
+          idempotencyKey,
+          requestHash,
+        );
+        if (response) {
+          return response;
+        }
+
+      const actor = await this.activeActorMembership(client, familyId, principal.subject, { primaryGuardianOnly: true });
+      const primary = await this.lockedFamilyPrimary(client, familyId);
+      if (primary.membership_id !== actor.id) {
+        throw new HttpError(409, 'guardian_continuity_required', 'The active primary guardian has changed.');
+      }
+      const candidate = await client.query(
+        `SELECT id, role, status
+         FROM family_memberships
+         WHERE id = $1 AND family_id = $2
+         FOR UPDATE`,
+        [candidateMembershipId, familyId],
+      );
+      if (candidate.rowCount === 0) {
+        throw new HttpError(404, 'membership_not_found', 'Candidate membership was not found.');
+      }
+      if (candidate.rows[0].role !== 'co_guardian' || candidate.rows[0].status !== 'active') {
+        throw new HttpError(
+          409,
+          'guardian_transfer_candidate_invalid',
+          'Guardian transfer requires an active co-guardian membership.',
+        );
+      }
+
+      const transfer = await client.query(
+        `INSERT INTO guardian_continuity_cases
+         (id, family_id, initiator_membership_id, candidate_membership_id, status, expires_at)
+         VALUES ($1, $2, $3, $4, 'pending_acceptance', NOW() + ($5 * INTERVAL '1 hour'))
+         RETURNING id, status, candidate_membership_id, expires_at, completed_at, cancelled_at, version, created_at`,
+        [randomUUID(), familyId, actor.id, candidateMembershipId, this.guardianTransferTtlHours],
+      );
+      await this.appendAuditAndOutbox(client, {
+        familyId,
+        actorMembershipId: actor.id,
+        eventType: 'guardian_transfer.requested',
+        subjectType: 'guardian_continuity_case',
+        subjectId: transfer.rows[0].id,
+      });
+      const result = { transfer: guardianTransferView(transfer.rows[0]) };
+      await this.completeIdempotencySlot(client, `guardian-transfer:create:${familyId}`, idempotencyKey, result);
+      return result;
+      });
+    } catch (error) {
+      if (error?.code === '23505') {
+        throw new HttpError(409, 'guardian_transfer_already_pending', 'A guardian transfer is already awaiting acceptance.');
+      }
+      throw error;
+    }
+  }
+
+  async acceptGuardianTransfer({ principal, familyId, transferId, idempotencyKey, requestHash }) {
+    return this.withTransaction(async (client) => {
+      const response = await this.acquireIdempotencySlot(
+        client,
+        `guardian-transfer:accept:${transferId}`,
+        idempotencyKey,
+        requestHash,
+      );
+      if (response) {
+        return response;
+      }
+
+      const transfer = await client.query(
+        `SELECT id, family_id, initiator_membership_id, candidate_membership_id, status, expires_at,
+                completed_at, cancelled_at, version, created_at
+         FROM guardian_continuity_cases
+         WHERE id = $1 AND family_id = $2
+         FOR UPDATE`,
+        [transferId, familyId],
+      );
+      if (transfer.rowCount === 0) {
+        throw new HttpError(404, 'guardian_transfer_not_found', 'Guardian transfer was not found.');
+      }
+      const current = transfer.rows[0];
+      if (current.status !== 'pending_acceptance') {
+        throw new HttpError(409, 'guardian_transfer_not_actionable', 'Guardian transfer is no longer awaiting acceptance.');
+      }
+      // Lock family/primary before candidate to match create-transfer lock ordering and avoid a role-swap deadlock.
+      const primary = await this.lockedFamilyPrimary(client, familyId);
+      if (primary.membership_id !== current.initiator_membership_id) {
+        throw new HttpError(409, 'guardian_continuity_required', 'The family primary guardian has changed.');
+      }
+
+      const candidate = await client.query(
+        `SELECT membership.id, membership.role, membership.status
+         FROM family_memberships AS membership
+         INNER JOIN accounts AS account ON account.id = membership.account_id
+         WHERE membership.id = $1
+           AND membership.family_id = $2
+           AND account.oidc_subject = $3
+         FOR UPDATE OF membership, account`,
+        [current.candidate_membership_id, familyId, principal.subject],
+      );
+      if (candidate.rowCount === 0) {
+        throw new HttpError(
+          403,
+          'guardian_transfer_acceptance_denied',
+          'Only the active nominated co-guardian can accept this transfer.',
+        );
+      }
+      if (current.expires_at <= new Date()) {
+        const expired = await client.query(
+          `UPDATE guardian_continuity_cases
+           SET status = 'expired', version = version + 1
+           WHERE id = $1
+           RETURNING id, status, candidate_membership_id, expires_at, completed_at, cancelled_at, version, created_at`,
+          [transferId],
+        );
+        await this.appendAuditAndOutbox(client, {
+          familyId,
+          actorMembershipId: candidate.rows[0].id,
+          eventType: 'guardian_transfer.expired',
+          subjectType: 'guardian_continuity_case',
+          subjectId: transferId,
+        });
+        const result = { transfer: guardianTransferView(expired.rows[0]), expired: true };
+        await this.completeIdempotencySlot(client, `guardian-transfer:accept:${transferId}`, idempotencyKey, result);
+        return result;
+      }
+      if (candidate.rows[0].role !== 'co_guardian' || candidate.rows[0].status !== 'active') {
+        throw new HttpError(
+          409,
+          'guardian_transfer_candidate_invalid',
+          'The nominated guardian is no longer eligible to become primary guardian.',
+        );
+      }
+
+      await client.query(
+        `UPDATE family_memberships
+         SET role = 'co_guardian', version = version + 1
+         WHERE id = $1 AND family_id = $2`,
+        [current.initiator_membership_id, familyId],
+      );
+      await client.query(
+        `UPDATE family_memberships
+         SET role = 'primary_guardian', version = version + 1
+         WHERE id = $1 AND family_id = $2`,
+        [current.candidate_membership_id, familyId],
+      );
+      await client.query(
+        'UPDATE families SET primary_membership_id = $2 WHERE id = $1',
+        [familyId, current.candidate_membership_id],
+      );
+      const completed = await client.query(
+        `UPDATE guardian_continuity_cases
+         SET status = 'completed', completed_at = NOW(), version = version + 1
+         WHERE id = $1
+         RETURNING id, status, candidate_membership_id, expires_at, completed_at, cancelled_at, version, created_at`,
+        [transferId],
+      );
+      await this.appendAuditAndOutbox(client, {
+        familyId,
+        actorMembershipId: current.candidate_membership_id,
+        eventType: 'guardian_transfer.completed',
+        subjectType: 'guardian_continuity_case',
+        subjectId: transferId,
+      });
+      const result = { transfer: guardianTransferView(completed.rows[0]) };
+      await this.completeIdempotencySlot(client, `guardian-transfer:accept:${transferId}`, idempotencyKey, result);
+      return result;
+    });
+  }
+
+  async cancelGuardianTransfer({ principal, familyId, transferId, idempotencyKey, requestHash }) {
+    return this.withTransaction(async (client) => {
+      const response = await this.acquireIdempotencySlot(
+        client,
+        `guardian-transfer:cancel:${transferId}`,
+        idempotencyKey,
+        requestHash,
+      );
+      if (response) {
+        return response;
+      }
+
+      const actor = await this.activeActorMembership(client, familyId, principal.subject, { primaryGuardianOnly: true });
+      const transfer = await client.query(
+        `SELECT id, initiator_membership_id, status, expires_at
+         FROM guardian_continuity_cases
+         WHERE id = $1 AND family_id = $2
+         FOR UPDATE`,
+        [transferId, familyId],
+      );
+      if (transfer.rowCount === 0) {
+        throw new HttpError(404, 'guardian_transfer_not_found', 'Guardian transfer was not found.');
+      }
+      if (transfer.rows[0].initiator_membership_id !== actor.id) {
+        throw new HttpError(403, 'guardian_transfer_cancellation_denied', 'Only the initiating primary guardian can cancel this transfer.');
+      }
+      if (transfer.rows[0].status !== 'pending_acceptance') {
+        throw new HttpError(409, 'guardian_transfer_not_actionable', 'Guardian transfer is no longer awaiting acceptance.');
+      }
+
+      const cancelled = await client.query(
+        `UPDATE guardian_continuity_cases
+         SET status = 'cancelled', cancelled_at = NOW(), version = version + 1
+         WHERE id = $1
+         RETURNING id, status, candidate_membership_id, expires_at, completed_at, cancelled_at, version, created_at`,
+        [transferId],
+      );
+      await this.appendAuditAndOutbox(client, {
+        familyId,
+        actorMembershipId: actor.id,
+        eventType: 'guardian_transfer.cancelled',
+        subjectType: 'guardian_continuity_case',
+        subjectId: transferId,
+      });
+      const result = { transfer: guardianTransferView(cancelled.rows[0]) };
+      await this.completeIdempotencySlot(client, `guardian-transfer:cancel:${transferId}`, idempotencyKey, result);
       return result;
     });
   }

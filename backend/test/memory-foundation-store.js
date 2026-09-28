@@ -9,11 +9,14 @@ function clone(value) {
 export class MemoryFoundationStore {
   configured = true;
 
-  constructor() {
+  constructor({ guardianTransferTtlHours = 72, now = () => new Date() } = {}) {
     this.families = new Map();
     this.memberships = new Map();
+    this.guardianTransfers = new Map();
     this.audit = [];
     this.idempotency = new Map();
+    this.guardianTransferTtlHours = guardianTransferTtlHours;
+    this.now = now;
   }
 
   async health() {
@@ -61,6 +64,19 @@ export class MemoryFoundationStore {
     };
   }
 
+  guardianTransferView(transfer) {
+    return {
+      id: transfer.id,
+      status: transfer.status,
+      candidateMembershipId: transfer.candidateMembershipId,
+      expiresAt: transfer.expiresAt,
+      completedAt: transfer.completedAt,
+      cancelledAt: transfer.cancelledAt,
+      version: transfer.version,
+      createdAt: transfer.createdAt,
+    };
+  }
+
   recordAudit(familyId, actorMembershipId, eventType, subjectType, subjectId) {
     this.audit.push({
       id: randomUUID(),
@@ -89,6 +105,7 @@ export class MemoryFoundationStore {
         statusChangedAt: now,
         createdAt: now,
       };
+      family.primaryMembershipId = membership.id;
       this.families.set(family.id, family);
       this.memberships.set(membership.id, membership);
       this.recordAudit(family.id, membership.id, 'family.created', 'family', family.id);
@@ -199,6 +216,118 @@ export class MemoryFoundationStore {
         membershipId,
       );
       return { membership: this.memberView(membership) };
+    });
+  }
+
+  async createGuardianTransfer({ principal, familyId, candidateMembershipId, idempotencyKey, requestHash }) {
+    return this.idempotent(`guardian-transfer:create:${familyId}`, idempotencyKey, requestHash, () => {
+      const actor = this.activeMembership(familyId, principal.subject, true);
+      const family = this.families.get(familyId);
+      if (!family || family.primaryMembershipId !== actor.id) {
+        throw new HttpError(409, 'guardian_continuity_required', 'The active primary guardian has changed.');
+      }
+      const candidate = this.memberships.get(candidateMembershipId);
+      if (!candidate || candidate.familyId !== familyId) {
+        throw new HttpError(404, 'membership_not_found', 'Candidate membership was not found.');
+      }
+      if (candidate.role !== 'co_guardian' || candidate.status !== 'active') {
+        throw new HttpError(
+          409,
+          'guardian_transfer_candidate_invalid',
+          'Guardian transfer requires an active co-guardian membership.',
+        );
+      }
+      if ([...this.guardianTransfers.values()].some(
+        (transfer) => transfer.familyId === familyId && transfer.status === 'pending_acceptance',
+      )) {
+        throw new HttpError(409, 'guardian_transfer_already_pending', 'A guardian transfer is already awaiting acceptance.');
+      }
+      const now = this.now();
+      const transfer = {
+        id: randomUUID(),
+        familyId,
+        initiatorMembershipId: actor.id,
+        candidateMembershipId,
+        status: 'pending_acceptance',
+        expiresAt: new Date(now.getTime() + this.guardianTransferTtlHours * 60 * 60 * 1000).toISOString(),
+        completedAt: null,
+        cancelledAt: null,
+        version: 1,
+        createdAt: now.toISOString(),
+      };
+      this.guardianTransfers.set(transfer.id, transfer);
+      this.recordAudit(familyId, actor.id, 'guardian_transfer.requested', 'guardian_continuity_case', transfer.id);
+      return { transfer: this.guardianTransferView(transfer) };
+    });
+  }
+
+  async acceptGuardianTransfer({ principal, familyId, transferId, idempotencyKey, requestHash }) {
+    return this.idempotent(`guardian-transfer:accept:${transferId}`, idempotencyKey, requestHash, () => {
+      const transfer = this.guardianTransfers.get(transferId);
+      if (!transfer || transfer.familyId !== familyId) {
+        throw new HttpError(404, 'guardian_transfer_not_found', 'Guardian transfer was not found.');
+      }
+      if (transfer.status !== 'pending_acceptance') {
+        throw new HttpError(409, 'guardian_transfer_not_actionable', 'Guardian transfer is no longer awaiting acceptance.');
+      }
+      const candidate = this.memberships.get(transfer.candidateMembershipId);
+      if (!candidate || candidate.targetSubject !== principal.subject) {
+        throw new HttpError(
+          403,
+          'guardian_transfer_acceptance_denied',
+          'Only the active nominated co-guardian can accept this transfer.',
+        );
+      }
+      const now = this.now();
+      if (new Date(transfer.expiresAt) <= now) {
+        transfer.status = 'expired';
+        transfer.version += 1;
+        this.recordAudit(familyId, candidate.id, 'guardian_transfer.expired', 'guardian_continuity_case', transfer.id);
+        return { transfer: this.guardianTransferView(transfer), expired: true };
+      }
+      if (candidate.status !== 'active' || candidate.role !== 'co_guardian') {
+        throw new HttpError(
+          409,
+          'guardian_transfer_candidate_invalid',
+          'The nominated guardian is no longer eligible to become primary guardian.',
+        );
+      }
+      const family = this.families.get(familyId);
+      const primary = this.memberships.get(family?.primaryMembershipId);
+      if (!primary || primary.id !== transfer.initiatorMembershipId || primary.role !== 'primary_guardian' || primary.status !== 'active') {
+        throw new HttpError(409, 'guardian_continuity_required', 'The family primary guardian has changed.');
+      }
+      primary.role = 'co_guardian';
+      primary.version += 1;
+      candidate.role = 'primary_guardian';
+      candidate.version += 1;
+      family.primaryMembershipId = candidate.id;
+      transfer.status = 'completed';
+      transfer.completedAt = now.toISOString();
+      transfer.version += 1;
+      this.recordAudit(familyId, candidate.id, 'guardian_transfer.completed', 'guardian_continuity_case', transfer.id);
+      return { transfer: this.guardianTransferView(transfer) };
+    });
+  }
+
+  async cancelGuardianTransfer({ principal, familyId, transferId, idempotencyKey, requestHash }) {
+    return this.idempotent(`guardian-transfer:cancel:${transferId}`, idempotencyKey, requestHash, () => {
+      const actor = this.activeMembership(familyId, principal.subject, true);
+      const transfer = this.guardianTransfers.get(transferId);
+      if (!transfer || transfer.familyId !== familyId) {
+        throw new HttpError(404, 'guardian_transfer_not_found', 'Guardian transfer was not found.');
+      }
+      if (transfer.initiatorMembershipId !== actor.id) {
+        throw new HttpError(403, 'guardian_transfer_cancellation_denied', 'Only the initiating primary guardian can cancel this transfer.');
+      }
+      if (transfer.status !== 'pending_acceptance') {
+        throw new HttpError(409, 'guardian_transfer_not_actionable', 'Guardian transfer is no longer awaiting acceptance.');
+      }
+      transfer.status = 'cancelled';
+      transfer.cancelledAt = this.now().toISOString();
+      transfer.version += 1;
+      this.recordAudit(familyId, actor.id, 'guardian_transfer.cancelled', 'guardian_continuity_case', transfer.id);
+      return { transfer: this.guardianTransferView(transfer) };
     });
   }
 

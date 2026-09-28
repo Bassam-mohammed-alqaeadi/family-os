@@ -52,11 +52,12 @@ completed:
   - Firebase Admin service-account credential intake rejected from source/runtime; repository guard added
   - Membership invitation revocation and active-member removal lifecycle with durable reason/version/audit/outbox evidence
   - Render/PostgreSQL controlled-release, verification, incident and rollback runbook
+  - Two-party, expiry-bound primary-guardian transfer foundation with atomic role/reference change and audited evidence
 next_outputs:
   - Record accountable Render region/cost/operations and approved OIDC recovery decisions before connected deployment
   - Complete controlled PostgreSQL migration and real OIDC integration only after those preconditions
   - Plan minimal Flutter unavailable/ready/error-state integration without claiming account, device or notification capabilities
-  - Design the separate guardian-continuity/recovery process before any primary-guardian transfer or role change
+  - Design the separate lost-account, dispute and support-mediated guardian recovery process before any recovery claim or broad role/scope change
 blocked_by: Connected Render deployment and Flutter production integration remain blocked by Foundation Wave preconditions in `92_EXECUTION_AUTHORIZATION_GATE.md`
 requires_owner_now: no
 backend_native_status: BACKEND_FOUNDATION_AUTHORIZED_NATIVE_NOT_AUTHORIZED

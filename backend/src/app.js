@@ -3,6 +3,7 @@ import express from 'express';
 import { asHttpError, HttpError } from './http-error.js';
 import {
   createFamilyInput,
+  createGuardianTransferInput,
   createMembershipInput,
   revokeMembershipInput,
   requireIdempotencyKey,
@@ -39,7 +40,16 @@ export function createApp({ store, authVerifier, readiness }) {
   });
 
   const requirePrincipal = asyncRoute(async (request, _response, next) => {
-    request.principal = await authVerifier.verify(request.get('Authorization'));
+    request.principal ??= await authVerifier.verify(request.get('Authorization'));
+    next();
+  });
+
+  const requireRuntimeReady = asyncRoute(async (_request, _response, next) => {
+    const configStatus = readiness();
+    const databaseStatus = await store.health();
+    if (!configStatus.ready || !databaseStatus.available) {
+      throw new HttpError(503, 'service_not_ready', 'The service is not ready for protected operations.');
+    }
     next();
   });
 
@@ -65,6 +75,8 @@ export function createApp({ store, authVerifier, readiness }) {
       response.status(200).json({ status: 'ready' });
     }),
   );
+
+  app.use('/v1', requirePrincipal, requireRuntimeReady);
 
   app.post(
     '/v1/families',
@@ -159,6 +171,75 @@ export function createApp({ store, authVerifier, readiness }) {
     }),
   );
 
+  app.post(
+    '/v1/families/:familyId/guardian-transfers',
+    requirePrincipal,
+    asyncRoute(async (request, response) => {
+      const familyId = requirePathId(request.params.familyId, 'familyId');
+      const { candidateMembershipId } = createGuardianTransferInput(request.body);
+      const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+      const result = await store.createGuardianTransfer({
+        principal: request.principal,
+        familyId,
+        candidateMembershipId,
+        idempotencyKey,
+        requestHash: requestFingerprint({
+          action: 'guardian_transfer.create',
+          principal: request.principal,
+          input: { familyId, candidateMembershipId },
+        }),
+      });
+      response.status(201).json(result);
+    }),
+  );
+
+  app.post(
+    '/v1/families/:familyId/guardian-transfers/:transferId/accept',
+    requirePrincipal,
+    asyncRoute(async (request, response) => {
+      const familyId = requirePathId(request.params.familyId, 'familyId');
+      const transferId = requirePathId(request.params.transferId, 'transferId');
+      const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+      const result = await store.acceptGuardianTransfer({
+        principal: request.principal,
+        familyId,
+        transferId,
+        idempotencyKey,
+        requestHash: requestFingerprint({
+          action: 'guardian_transfer.accept',
+          principal: request.principal,
+          input: { familyId, transferId },
+        }),
+      });
+      if (result.expired) {
+        throw new HttpError(409, 'guardian_transfer_expired', 'Guardian transfer expired before acceptance.');
+      }
+      response.status(200).json(result);
+    }),
+  );
+
+  app.post(
+    '/v1/families/:familyId/guardian-transfers/:transferId/cancel',
+    requirePrincipal,
+    asyncRoute(async (request, response) => {
+      const familyId = requirePathId(request.params.familyId, 'familyId');
+      const transferId = requirePathId(request.params.transferId, 'transferId');
+      const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+      const result = await store.cancelGuardianTransfer({
+        principal: request.principal,
+        familyId,
+        transferId,
+        idempotencyKey,
+        requestHash: requestFingerprint({
+          action: 'guardian_transfer.cancel',
+          principal: request.principal,
+          input: { familyId, transferId },
+        }),
+      });
+      response.status(200).json(result);
+    }),
+  );
+
   app.get(
     '/v1/families/:familyId/audit-events',
     requirePrincipal,
@@ -179,6 +260,7 @@ export function createApp({ store, authVerifier, readiness }) {
     const expectedUnavailableState = new Set([
       'identity_provider_not_configured',
       'database_not_configured',
+      'service_not_ready',
     ]).has(normalized.code);
     if (normalized.status >= 500 && !expectedUnavailableState) {
       // Do not log request bodies, tokens, subjects, locations, or event payloads.

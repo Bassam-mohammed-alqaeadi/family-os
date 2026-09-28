@@ -43,6 +43,7 @@ Populate these values through Render’s secret environment configuration only; 
 | `OIDC_ISSUER` | Exact issuer for the approved identity provider. |
 | `OIDC_AUDIENCE` | Exact audience accepted by the Family OS API. |
 | `OIDC_JWKS_URL` | HTTPS JWKS endpoint for server-side signature verification. |
+| `GUARDIAN_TRANSFER_TTL_HOURS` | Deployment-owned transfer acceptance window, from 1 to 168 hours. |
 
 The OIDC variables must be set together. The API verifies issuer, audience, signature and subject server-side; it never accepts a role, family id or subject supplied as authority by the client.
 
@@ -71,9 +72,12 @@ All protected routes require `Authorization: Bearer <OIDC access token>`. All mu
 | `POST` | `/v1/families/:familyId/memberships` | Primary guardian creates a pending `co_guardian` or `child` membership for a known OIDC subject. There is no email/push invitation transport in this wave. |
 | `POST` | `/v1/families/:familyId/memberships/:membershipId/accept` | Only the exact invited OIDC subject can accept. |
 | `POST` | `/v1/families/:familyId/memberships/:membershipId/revoke` | Only the primary guardian can revoke a pending invitation or remove an active non-primary member. Requires an idempotency key and a non-sensitive machine `reasonCode`. The record and audit evidence remain durable. |
+| `POST` | `/v1/families/:familyId/guardian-transfers` | Current primary guardian proposes handover to an active co-guardian. One transfer may await acceptance per family. |
+| `POST` | `/v1/families/:familyId/guardian-transfers/:transferId/accept` | Only the nominated active co-guardian can complete an unexpired transfer. The primary pointer and both roles change atomically with audit/outbox evidence. |
+| `POST` | `/v1/families/:familyId/guardian-transfers/:transferId/cancel` | Only the initiating current primary guardian can cancel a pending transfer. |
 | `GET` | `/v1/families/:familyId/audit-events` | Guardian-only audit view; child membership is denied. |
 
-The current known-subject invitation contract is a service boundary/testable safety slice, not a finished consumer invitation experience. A consent, discovery and delivery design is required before it is exposed in Flutter. Primary-guardian handover, alternate guardian recovery and broad role/scope editing are deliberately excluded: they need the separately designed guardian-continuity/recovery record and must never be modelled as an ordinary role update.
+The current known-subject invitation contract is a service boundary/testable safety slice, not a finished consumer invitation experience. A consent, discovery and delivery design is required before it is exposed in Flutter. Primary-guardian handover is available only through the two-party, expiry-bound guardian-transfer case; direct role editing is not exposed. Alternate guardian recovery after account loss, support-mediated disputes, and broad role/scope editing remain deliberately excluded until their own recovery/continuity evidence and operational process are designed.
 
 ## Render deployment preconditions still owned outside code
 

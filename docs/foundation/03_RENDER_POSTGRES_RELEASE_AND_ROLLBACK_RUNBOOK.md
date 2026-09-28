@@ -58,7 +58,8 @@ npm run migrate
 The migration runner records every applied filename in `schema_migrations`. Verify the recorded migration set and inspect the resulting schema through an authorized database session. The Foundation API requires both:
 
 - `001_foundation.sql` — account/family/membership/audit/outbox/idempotency tables; and
-- `002_membership_lifecycle.sql` — membership version/status-change/reason evidence.
+- `002_membership_lifecycle.sql` — membership version/status-change/reason evidence; and
+- `003_guardian_continuity.sql` — expiry-bound, two-party primary-guardian transfer cases.
 
 No operator should manually edit a previously applied migration. Corrections are a new, reviewed forward migration.
 
@@ -81,6 +82,7 @@ DATABASE_URL
 OIDC_ISSUER
 OIDC_AUDIENCE
 OIDC_JWKS_URL
+GUARDIAN_TRANSFER_TTL_HOURS
 NODE_ENV=production
 ```
 
