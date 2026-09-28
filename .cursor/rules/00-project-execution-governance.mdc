@@ -16,10 +16,11 @@ Before significant work:
 7. Preserve KEEP + REFINE.
 8. Never confuse UI/mock/local/native/remote completion.
 9. Never create duplicate authorities when an approved owner already exists.
-10. If the Owner explicitly changes the phase, update `PROJECT_EXECUTION_PLAN.md` first.
+10. If the Owner explicitly changes the phase, update `PROJECT_EXECUTION_PLAN.md` first — then mirror campaign markers in `AGENTS.md` (never leave them disagreeing).
 11. Significant work must begin with:
    CURRENT PHASE
    TASK PHASE
    STATUS
    REQUIRED GATE
    PRODUCTION CODE CHANGE: YES/NO
+12. Anti-conflict: Policy Register → PROJECT_EXECUTION_PLAN → AGENTS markers → LOOP_STATE (tick only). Cursor rules enforce workflow; they do not invent phase.

@@ -9,17 +9,32 @@ alwaysApply: true
 The **Owner** runs Flutter analyze, scoped/full tests, and `verify_ship` on his machine.
 The **agent** does **not** run the test suite or `verify_ship` as the normal path.
 
+## Card pick (anti-conflict)
+- `verify_ship` uses the **newest** line in `CONVERSION_LOG.md` as the card.
+- Env vars like `VERIFY_CARD` are **ignored** — do not tell the Owner they select the card.
+- Before asking Owner to verify: append the CONVERSION_LOG line + ensure `.verify/scope_map.json` has that card’s paths; pass `--scoped` explicitly when scoped is intended.
+- Wrong newest log line → wrong card → often escalates to **full** suite and unrelated fails.
+
 ## Agent must
-1. Finish code + prepare exact copy-paste commands (cwd + one block).
+1. Finish code + prepare exact copy-paste commands (cwd = repo root + one block).
 2. Stop and wait for Owner to paste stdout / exit code.
 3. From that paste only: decide pass / fail / fix / re-ask — then act.
-4. Mark cards `done` / write `status: passed` in evidence **only after** Owner paste shows exit 0.
+4. Mark cards `done` / treat evidence `status: passed` **only after** Owner paste shows exit 0.
 5. Prefer scoped commands for the card; ask Owner for `--full` only at milestones he names.
+6. When a campaign exits (e.g. LOCATION-1B), mirror the marker into `AGENTS.md` + `PROJECT_EXECUTION_PLAN.md` so phase docs stay aligned.
 
 ## Agent must not
 - Run `flutter test`, `flutter analyze` (whole project), or `python .cursor/hooks/verify_ship.py` unless Owner explicitly says **agent may run verify this once**.
 - Mark Ship / `done` on agent-local green while waiting for Owner results.
 - Ask Owner to “confirm” without giving the exact commands.
+- Leave AGENTS / plan / inventory status saying “verify pending” after Owner EXIT:0.
 
 ## Exception
 Quick one-file `dart analyze` / compile smoke **only** when Owner authorized agent-run for that turn, or when diagnosing a paste the Owner already sent.
+
+## Canonical Owner block (scoped)
+```powershell
+cd "D:\special projects\family"
+python .cursor/hooks/verify_ship.py verify --scoped
+echo EXIT:$LASTEXITCODE
+```

@@ -2,7 +2,7 @@
 
 **Authority:** Authoritative human-readable execution roadmap for Guardian Eye Pro / Family OS.  
 **Owner changes:** Require explicit `CHANGE PHASE` before treating the roadmap as changed.  
-**Last governance install:** 2026-09-24
+**Last governance install:** 2026-09-28 (LOCATION Cover exit + Cursor/AGENTS anti-conflict sync)
 
 ---
 
@@ -46,6 +46,9 @@ The approved strategy is:
 | `CONTROL & EXPERIENCE LOCAL CAMPAIGN (CE-B0→B5)` | **COMPLETE** (2026-09-25) — Final Re-Audit + Final Frontend Gate PASSED; STOP (recorded here retroactively; see `docs/experience_discovery/final_product_experience/FINAL_RE_AUDIT.md`) |
 | `FINAL VISUAL · UX · JOURNEY VERIFICATION` | **AUTHORIZED** (Owner D12, 2026-09-25) — VX-B0…B7 **PASSED**. UX verification pack **UNLOCKED** after LDR-EXIT → execute → **D-FINAL** |
 | `LOCAL DATA REALITY (LDR)` | **COMPLETE** (Owner EXIT, 2026-09-26; B0…B8; `test/ldr/` +27; verify --full +80). Docs: `docs/experience_discovery/final_product_experience/local_data_reality/` |
+| `SYS-SEC NOTIFICATIONS CORE` | **COMPLETE** (2026-09-27; Owner scoped verify) |
+| `SYS-SEC LOCATION COVER (LOCATION-1 + 1B)` | **COMPLETE** (2026-09-28; Owner scoped verify EXIT:0 for LOCATION-1B). Inventory: `docs/experience_discovery/location/SYS_SEC_LOCATION_0_INVENTORY.md`. Native GPS still closed. |
+| `SYS-SEC EMERGENCY` | Cover/Compete **code ready**; Owner verify for EMERGENCY-COMPETE still owed when convenient |
 | `GLOBAL IMPLEMENTATION PLAN NOT YET AUTHORIZED` | **No** — Phase 4 Master Plan complete; Frontend Completion Gate authorizes Local/UI deepen only |
 | `FULL CODEGEN NOT YET AUTHORIZED` | **Partial** — Frontend + Local experience codegen authorized; Native/Backend codegen still closed |
 | `BACKEND INTEGRATION NOT YET AUTHORIZED` | Yes |
@@ -269,6 +272,14 @@ Await Owner `CHANGE PHASE` before Phase 5 Native or Backend.
 **Program:** `docs/experience_discovery/final_product_experience/local_data_reality/LOCAL_DATA_REALITY_*.md`.  
 **Batches:** LDR-B0…B8 + EXIT **done** → resume UX verification → D-FINAL.  
 **Out of bounds:** Phase 5 Native, Backend, AI Gateway, FCM, redesign.
+
+### SYS-SEC LOCAL COVER PACKS (POST LDR · PRE-NATIVE)
+
+**STATUS:** Notifications Core + Location Cover (LOCATION-1 + LOCATION-1B) **COMPLETE** (2026-09-27…28). Emergency Cover/Compete code ready — Owner verify when convenient.  
+**Law:** Compare → Cover → Compete → Polish · Father control completeness · UI-complete now / Native wire later (Rule 25).  
+**LOCATION-1B (Owner EXIT:0, 2026-09-28):** `noShowDeadlineMinutes` on FAT-017→Domain→FAT-016; FAT-013 location desk (map + history + network chip + assigned zones). Docs: `docs/experience_discovery/location/SYS_SEC_LOCATION_0_INVENTORY.md`.  
+**Forbidden still:** real GPS / OS geofence workers · FCM · SMS send · Backend.  
+**Next (Owner orients):** Location Visual Polish when named · or next system Cover · or UX verification → D-FINAL. Do **not** auto-enter Phase 5 Native.
 
 ### PHASE 5
 

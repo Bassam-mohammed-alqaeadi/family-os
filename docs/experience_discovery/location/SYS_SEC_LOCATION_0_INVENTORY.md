@@ -4,8 +4,10 @@
 **Screens:** SCR-FAT-014 (map) · SCR-FAT-015 (history) · SCR-FAT-016 (zones) · SCR-FAT-017 (create)  
 **Routes:** `/scr-fat-014`…`017` · `n02_day` feature screens  
 **Method:** Compare → Cover → Compete → Polish · Super-App bar vs Life360 / Find My (Local only)  
-**Status:** **INVENTORY COMPLETE** · **LOCATION-1 Cover implemented** — Owner verify pending (2026-09-27)  
+**Status:** **INVENTORY COMPLETE** · **LOCATION-1 Cover COMPLETE** · **LOCATION-1B COMPLETE** (Owner scoped verify EXIT:0, 2026-09-28)  
 **Native / Backend:** NOT AUTHORIZED (GPS honesty only · UI-complete now / wire later)
+
+**LOCATION-1B shipped:** no-show deadline time on FAT-017 → Domain `noShowDeadlineMinutes` → FAT-016 display; FAT-013 deepened (network chip · live map · location history · assigned zones count). Evidence: `.verify/SYS-SEC-LOCATION-1B.json` (local).
 
 **Prior card parked:** `SYS-SEC-EMERGENCY-COMPETE` code-ready; Owner verify still owed when convenient.
 
@@ -132,31 +134,30 @@ Local geofence samples ──► mailbox kinds arrive / leaveZone (today: hook o
 
 ---
 
-## 5. Recommended LOCATION-1 Cover order (do not start until Owner approves)
+## 5. LOCATION Cover order — CLOSED
 
-1. **FAT-016** — three distinct toggles (Arrive / Leave / No-Show) persist to Domain; drop false “one switch = all armed” psychology  
-2. **FAT-017** — inject active-family roster into `assignableChildren` from Identity; keep radius slider  
-3. **FAT-014** — network status honesty chip (Local/Domain class or unavailable — never fake online); keep Silent Locate CTA  
-4. **FAT-015** — Primary-only export/archive stubs + audit; keep 90-day note  
-5. **Mailbox** — flip `arrive` / `leaveZone` hook→live from Local geofence path (Critical leave never muted)  
-6. MotherLevel live bind on 016/017 + Silent Locate initiate gate per L2  
+| Card | Scope | Status |
+|------|--------|--------|
+| LOCATION-1 | FAT-016 three toggles · FAT-017 roster · FAT-014 network · FAT-015 export stubs · mailbox arrive/leave · MotherLevel | Cover shipped |
+| LOCATION-1B | No-show deadline time · FAT-013 map+history desk · zones count | **Owner EXIT:0 2026-09-28** |
 
-Compete/Polish (Standard/Elevated mood, edit/archive zone library, event detail) after Cover green.
+Compete/Polish (Standard/Elevated mood, edit/archive zone library polish) only when Owner orients — not auto-started.
 
 ---
 
 ## 6. Evidence sources
 
-- Screens: `app/lib/features/n02_day/location_map_screen.dart` · `location_history_screen.dart` · `safe_zones_screen.dart` · `create_safe_zone_screen.dart`  
-- Models: `location_map_repository.dart` · `safe_zones_repository.dart`  
+- Screens: `app/lib/features/n02_day/location_map_screen.dart` · `location_history_screen.dart` · `safe_zones_screen.dart` · `create_safe_zone_screen.dart` · `child_profile_screen.dart`  
+- Models: `location_map_repository.dart` · `safe_zones_repository.dart` · `safe_zone_definition.dart`  
 - Router: `app/lib/app/router.dart` (`/scr-fat-014`…`017`)  
-- Domain: `app/lib/core/location/`  
+- Domain: `app/lib/core/location/` (schema v12 `no_show_deadline_minutes`)  
 - Law packs: `docs/experience_discovery/location_final/` · `location_l3/`  
-- Mailbox: `docs/experience_discovery/notifications/SYS_SEC_NOTIF_0_INVENTORY.md`
+- Mailbox: `docs/experience_discovery/notifications/SYS_SEC_NOTIF_0_INVENTORY.md`  
+- Scope: `.verify/scope_map.json` → `SYS-SEC-LOCATION-1` · `SYS-SEC-LOCATION-1B`
 
 ---
 
 ## 7. Gate
 
-**Owner decision required:** approve this inventory (and Cover order) before any LOCATION-1 production edits.  
-No Cover code in this card.
+**LOCATION Cover CLOSED** for Local UI (1 + 1B). Native GPS / schedule worker remain closed until Phase 5.  
+Visual Polish / Compete only on Owner orientation — no silent phase advance.

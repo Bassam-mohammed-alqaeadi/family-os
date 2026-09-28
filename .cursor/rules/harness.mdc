@@ -13,12 +13,14 @@ Keep shipping backlog cards in a **continuous loop**. Hard-stop **only** on unan
 ## Before any task
 1. Read `harness/LOOP_STATE.md` + `QUESTIONS.md` (halt if BLOCKED / unanswered).
 2. Read `harness/00_NORTH_STAR.md` and `harness/01_OPERATING_MODEL.md`.
-3. Pick **one** card from `harness/BACKLOG.md` (NEXT or first `ready`).
-4. Follow `harness/03_WORKFLOWS.md` + `harness/02_AGENT_ROSTER.md`; load skills per `harness/08_SKILLS_MAP.md`.
+3. Align with `PROJECT_EXECUTION_PLAN.md` + `AGENTS.md` markers (phase authority — never invent a second roadmap).
+4. Pick **one** card from `harness/BACKLOG.md` (NEXT or first `ready`) — or Owner-oriented Cover card when named.
+5. Follow `harness/03_WORKFLOWS.md` + `harness/02_AGENT_ROSTER.md`; load skills per `harness/08_SKILLS_MAP.md`.
 
 ## Hard rules
 - **Continuous loop** — after Ship, immediately next card or arm `/loop` with `04_LOOP_PROMPT.md`. Never idle without a QUESTION.
 - **Verify-before-ship (P9 gate · Q-VERIFY-TIERED)** — a card may be marked `done` ONLY after Owner-pasted `python .cursor/hooks/verify_ship.py verify` exits 0 (**Owner runs verify** — see `owner-runs-verify.mdc`). Agent prepares commands; does not run the suite unless Owner authorizes that turn. Default **auto tier**: analyze + **scoped** feature/shared tests; **full** suite every 3rd ship (and end-of-wake / `--full`). Hard **`--full`** before Phase 1.5, merge to main, Stage 3. Spec: `harness/12_VERIFY_TIER.md`. Record `status: passed` (+ tier) in evidence. If verify fails → fix → Owner re-runs; never mark done on a failing gate; do not use `--skip-test` as a normal path.
+- **Card selection for verify** — `verify_ship` reads the **newest** `CONVERSION_LOG.md` line. Env `VERIFY_CARD` is **ignored**. Always append the card’s CONVERSION_LOG line **before** Owner runs verify, and put paths in `.verify/scope_map.json`, or scoped mode escalates to full / wrong card.
 - **One card only** per tick — never batch screens/systems.
 - **Pillars P1–P12** — Ship forbidden on fail; fail → retry (not owner halt).
 - **P11 / P12** — control fitness + father↔child loop closure when applicable.
@@ -27,14 +29,15 @@ Keep shipping backlog cards in a **continuous loop**. Hard-stop **only** on unan
 - **Phase gates** — log `GATE_READY` only; do not stop the loop.
 - **Linked gaps:** ScreenBuild cannot Ship while linked SET/UI remain open unless owner deferred in QUESTIONS.
 
-## On Ship
-1. Prepare Owner commands for `python .cursor/hooks/verify_ship.py verify` (auto tier: scoped or full). **Owner runs**; agent waits for paste EXIT 0. On fail: fix in-loop, Owner re-runs. End-of-wake / milestone: `verify --full` (Owner).
-2. One line in `CONVERSION_LOG.md` (only after Owner paste passes)
-3. Update `harness/BACKLOG.md` + `harness/LOOP_STATE.md`
-4. If closing SET/UI → update `GAP_LOG.md` to CLOSED with date
-5. Continue to next card (continuous law) — or arm `/loop` after Owner green
+## On Ship (order — prevents card/verify mismatch)
+1. Append **one** `CONVERSION_LOG.md` line for this card (required so verify picks the right card).
+2. Ensure `.verify/scope_map.json` lists the card’s test paths.
+3. Prepare Owner commands: `python .cursor/hooks/verify_ship.py verify --scoped` (repo root). **Owner runs**; agent waits for paste EXIT 0.
+4. On fail: fix in-loop → Owner re-runs. Never mark `done` on agent-local green alone.
+5. On EXIT 0: evidence `status: passed` · update `harness/BACKLOG.md` + `harness/LOOP_STATE.md` · if closing SET/UI → `GAP_LOG.md` CLOSED · mirror campaign exits into `AGENTS.md` + `PROJECT_EXECUTION_PLAN.md` when applicable.
+6. Continue to next card (continuous law) — or arm `/loop` after Owner green. End-of-wake / milestone: `verify --full` (Owner).
 
-The stop hook re-checks the gate: if the newest log card lacks passing evidence, chaining halts with a `HARNESS SHIP GATE` message instead of continuing.
+The stop hook re-checks the gate: if the newest log card lacks passing evidence, the hook stops further chaining and prints a `HARNESS SHIP GATE` message instead of continuing.
 
 ## Tick prompt
 Use `harness/04_LOOP_PROMPT.md` for every harness tick / `/loop` wake.

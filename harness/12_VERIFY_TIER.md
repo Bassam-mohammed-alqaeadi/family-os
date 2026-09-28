@@ -20,6 +20,8 @@ python .cursor/hooks/verify_ship.py verify --full       # force full
 python .cursor/hooks/verify_ship.py check               # predicate + tier counter
 ```
 
+**Card pick:** newest `CONVERSION_LOG.md` line only. `VERIFY_CARD` env is **ignored**. Append the log line + `scope_map.json` entry **before** Owner runs verify.
+
 Env:
 
 - `FOS_VERIFY_MODE=scoped|full` — override auto
@@ -28,11 +30,10 @@ Env:
 
 ## Scope resolution
 
-1. Optional map: `.verify/scope_map.json` → `{ "SCR-CHD-023": ["test/features/..."] }`
+1. Optional map: `.verify/scope_map.json` → `{ "SYS-SEC-LOCATION-1B": ["test/features/..."] }`
 2. Parse `*Screen` names from the newest `CONVERSION_LOG` summary → `*_test.dart`
 3. Always add shared seams when present
-4. If no feature test found → **safe escalate to full**
-
+4. If no feature test found → **safe escalate to full** (symptoms: wrong card name + 30+ unrelated fails)
 ## Counter
 
 `.verify/_tier_state.json` tracks `ships_since_full`. Full verify resets to `0`.
