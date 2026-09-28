@@ -1,8 +1,8 @@
 # Product Charter — Family OS Product Refinement V2
 
-> **Status:** Active
+> **Status:** Product Refinement V2 complete; execution authorization pending
 > **Owner direction recorded:** 2026-09-29
-> **Program position:** Product refinement before Backend or Native development
+> **Program position:** All active pillars are Product Ready. Backend or Native development remains unauthorized until the explicit decision in `92_EXECUTION_AUTHORIZATION_GATE.md`.
 
 ## 1. Product outcome
 

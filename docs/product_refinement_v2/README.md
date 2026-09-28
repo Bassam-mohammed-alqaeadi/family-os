@@ -1,10 +1,10 @@
 # Family OS — Product Refinement V2
 
-> **Status:** ACTIVE
+> **Status:** PRODUCT REFINEMENT COMPLETE — AWAITING EXECUTION AUTHORIZATION
 > **Activated:** 2026-09-29
-> **Product Ready:** Security & Digital Safety, Learning & Growth, Family Connection, Family Intelligence
-> **Current pillar:** Administration, Trust & Operations
-> **Current delivery mode:** Product refinement only — no Backend or Native implementation is authorized by this program yet.
+> **Product Ready:** Security & Digital Safety, Learning & Growth, Family Connection, Family Intelligence, Administration, Trust & Operations
+> **Current gate:** Explicit Owner authorization before Backend or Native production implementation
+> **Current delivery mode:** Product refinement is complete; no Backend or Native implementation is authorized yet.
 
 ## Why this workspace exists
 
@@ -33,7 +33,7 @@ The current service, journey, and screen registries remain valuable discovery in
 
 - **In current refinement:** the 42 systems and 240 registered services already present in the platform inventory.
 - **Future developments:** new candidate systems outside that inventory, including expanded home organization, financial responsibility, expanded values/religion, and one-way audio. They are recorded for future consideration only and are not part of the current build, navigation, data model, or release promise.
-- **Current focus:** refine the Administration, Trust & Operations pillar—the shared setup, identity, device, notification, privacy, Today and support spine—before any production execution authorization.
+- **Current focus:** all five active pillars are Product Ready. Read `92_EXECUTION_AUTHORIZATION_GATE.md` for the explicit decision required before a Render/Backend or Native production wave may begin.
 
 ## Runtime truth and backend placement
 
