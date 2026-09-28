@@ -29,8 +29,12 @@ completed:
   - Learning G1 direction accepted under standing Owner trust
   - Learning G2 Hub, role journeys, settings/state model, and screen map accepted under standing Owner trust
   - Learning technical capability, data/event, reliability, implementation sequence, parity, and Product Ready review
+  - Family Connection phase initiation
+  - Family Connection evidence map
+  - Family Connection G1 direction accepted under standing Owner trust
+  - Family Connection G2 Hub, relationship trust model, settings/state model, and screen map accepted under standing Owner trust
 next_outputs:
-  - Start Family Connection product-refinement loop
+  - Family Connection technical capability, data/event, reliability, and implementation-readiness pack
   - Preserve Security and Learning packs for later Backend/Native authorization
 blocked_by: none
 requires_owner_now: no
