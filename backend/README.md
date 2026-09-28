@@ -13,7 +13,7 @@ This directory is the **Render-first Foundation Wave backend**, not a replacemen
 
 This slice intentionally does not implement account registration/recovery UX, an identity provider, Firebase/Firebase Admin/Firestore/Cloud Functions/FCM, device pairing, Native enforcement, location, app usage, SOS, chat, calls, media, billing, AI, export/delete execution, realtime transport, Flutter production integration, or release deployment.
 
-There is no demo identity fallback. When OIDC or PostgreSQL configuration is absent, `/health/ready` returns `503` and every protected endpoint fails closed. Test-only identities and in-memory state live only under `backend/test/`; the runtime server cannot load them.
+There is no demo identity fallback. When OIDC or PostgreSQL configuration is absent—or the required PostgreSQL migrations are not applied—`/health/ready` returns `503` and every protected endpoint fails closed. Test-only identities and in-memory state live only under `backend/test/`; the runtime server cannot load them.
 
 ## Local quality commands
 
@@ -70,9 +70,10 @@ All protected routes require `Authorization: Bearer <OIDC access token>`. All mu
 | `GET` | `/v1/families/:familyId` | Returns only to an active family member. |
 | `POST` | `/v1/families/:familyId/memberships` | Primary guardian creates a pending `co_guardian` or `child` membership for a known OIDC subject. There is no email/push invitation transport in this wave. |
 | `POST` | `/v1/families/:familyId/memberships/:membershipId/accept` | Only the exact invited OIDC subject can accept. |
+| `POST` | `/v1/families/:familyId/memberships/:membershipId/revoke` | Only the primary guardian can revoke a pending invitation or remove an active non-primary member. Requires an idempotency key and a non-sensitive machine `reasonCode`. The record and audit evidence remain durable. |
 | `GET` | `/v1/families/:familyId/audit-events` | Guardian-only audit view; child membership is denied. |
 
-The current known-subject invitation contract is a service boundary/testable safety slice, not a finished consumer invitation experience. A consent, discovery and delivery design is required before it is exposed in Flutter.
+The current known-subject invitation contract is a service boundary/testable safety slice, not a finished consumer invitation experience. A consent, discovery and delivery design is required before it is exposed in Flutter. Primary-guardian handover, alternate guardian recovery and broad role/scope editing are deliberately excluded: they need the separately designed guardian-continuity/recovery record and must never be modelled as an ordinary role update.
 
 ## Render deployment preconditions still owned outside code
 

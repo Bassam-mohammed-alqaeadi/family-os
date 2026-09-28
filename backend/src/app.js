@@ -4,6 +4,7 @@ import { asHttpError, HttpError } from './http-error.js';
 import {
   createFamilyInput,
   createMembershipInput,
+  revokeMembershipInput,
   requireIdempotencyKey,
   requirePathId,
 } from './validation.js';
@@ -128,6 +129,30 @@ export function createApp({ store, authVerifier, readiness }) {
           action: 'membership.accept',
           principal: request.principal,
           input: { familyId, membershipId },
+        }),
+      });
+      response.status(200).json(result);
+    }),
+  );
+
+  app.post(
+    '/v1/families/:familyId/memberships/:membershipId/revoke',
+    requirePrincipal,
+    asyncRoute(async (request, response) => {
+      const familyId = requirePathId(request.params.familyId, 'familyId');
+      const membershipId = requirePathId(request.params.membershipId, 'membershipId');
+      const { reasonCode } = revokeMembershipInput(request.body);
+      const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+      const result = await store.revokeMembership({
+        principal: request.principal,
+        familyId,
+        membershipId,
+        reasonCode,
+        idempotencyKey,
+        requestHash: requestFingerprint({
+          action: 'membership.revoke',
+          principal: request.principal,
+          input: { familyId, membershipId, reasonCode },
         }),
       });
       response.status(200).json(result);

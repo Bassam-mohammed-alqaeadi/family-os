@@ -3,13 +3,20 @@ import pg from 'pg';
 import { HttpError } from '../http-error.js';
 
 const { Pool } = pg;
+const REQUIRED_SCHEMA_MIGRATIONS = [
+  '001_foundation.sql',
+  '002_membership_lifecycle.sql',
+];
 
 function memberView(row) {
   return {
     id: row.id,
     role: row.role,
     status: row.status,
+    statusReasonCode: row.status_reason_code,
+    version: row.version,
     joinedAt: row.joined_at,
+    statusChangedAt: row.status_changed_at,
     createdAt: row.created_at,
   };
 }
@@ -38,8 +45,8 @@ function auditView(row) {
 export class PostgresFoundationStore {
   configured = true;
 
-  constructor({ connectionString }) {
-    this.pool = new Pool({ connectionString, max: 10, idleTimeoutMillis: 10_000 });
+  constructor({ connectionString, pool = undefined }) {
+    this.pool = pool ?? new Pool({ connectionString, max: 10, idleTimeoutMillis: 10_000 });
   }
 
   async close() {
@@ -49,9 +56,21 @@ export class PostgresFoundationStore {
   async health() {
     try {
       await this.pool.query('SELECT 1');
+      const applied = await this.pool.query(
+        'SELECT name FROM schema_migrations WHERE name = ANY($1::text[])',
+        [REQUIRED_SCHEMA_MIGRATIONS],
+      );
+      const appliedNames = new Set(applied.rows.map((row) => row.name));
+      const missingMigrations = REQUIRED_SCHEMA_MIGRATIONS.filter((name) => !appliedNames.has(name));
+      if (missingMigrations.length > 0) {
+        return { available: false, reason: 'database_schema_not_ready' };
+      }
       return { available: true };
-    } catch {
-      return { available: false, reason: 'database_unavailable' };
+    } catch (error) {
+      return {
+        available: false,
+        reason: error?.code === '42P01' ? 'database_schema_not_ready' : 'database_unavailable',
+      };
     }
   }
 
@@ -182,7 +201,7 @@ export class PostgresFoundationStore {
         `INSERT INTO family_memberships
          (id, family_id, account_id, target_subject, role, status, joined_at)
          VALUES ($1, $2, $3, $4, 'primary_guardian', 'active', NOW())
-         RETURNING id, role, status, joined_at, created_at`,
+         RETURNING id, role, status, status_reason_code, version, joined_at, status_changed_at, created_at`,
         [membershipId, familyId, account.id, principal.subject],
       );
       await client.query('UPDATE families SET primary_membership_id = $2 WHERE id = $1', [familyId, membershipId]);
@@ -211,7 +230,7 @@ export class PostgresFoundationStore {
         throw new HttpError(404, 'family_not_found', 'Family was not found.');
       }
       const memberships = await client.query(
-        `SELECT id, role, status, joined_at, created_at
+        `SELECT id, role, status, status_reason_code, version, joined_at, status_changed_at, created_at
          FROM family_memberships
          WHERE family_id = $1
          ORDER BY created_at ASC`,
@@ -251,7 +270,7 @@ export class PostgresFoundationStore {
         `INSERT INTO family_memberships
          (id, family_id, target_subject, role, status, invited_by_membership_id)
          VALUES ($1, $2, $3, $4, 'invited', $5)
-         RETURNING id, role, status, joined_at, created_at`,
+         RETURNING id, role, status, status_reason_code, version, joined_at, status_changed_at, created_at`,
         [membershipId, familyId, targetSubject, role, actor.id],
       );
       await this.appendAuditAndOutbox(client, {
@@ -299,9 +318,14 @@ export class PostgresFoundationStore {
       const account = await this.ensureAccount(client, principal.subject);
       const accepted = await client.query(
         `UPDATE family_memberships
-         SET account_id = $3, status = 'active', joined_at = NOW()
+         SET account_id = $3,
+             status = 'active',
+             status_reason_code = NULL,
+             status_changed_at = NOW(),
+             version = version + 1,
+             joined_at = NOW()
          WHERE id = $1 AND family_id = $2
-         RETURNING id, role, status, joined_at, created_at`,
+         RETURNING id, role, status, status_reason_code, version, joined_at, status_changed_at, created_at`,
         [membershipId, familyId, account.id],
       );
       await this.appendAuditAndOutbox(client, {
@@ -313,6 +337,67 @@ export class PostgresFoundationStore {
       });
       const result = { membership: memberView(accepted.rows[0]) };
       await this.completeIdempotencySlot(client, `membership:accept:${membershipId}`, idempotencyKey, result);
+      return result;
+    });
+  }
+
+  async revokeMembership({ principal, familyId, membershipId, reasonCode, idempotencyKey, requestHash }) {
+    return this.withTransaction(async (client) => {
+      const response = await this.acquireIdempotencySlot(
+        client,
+        `membership:revoke:${membershipId}`,
+        idempotencyKey,
+        requestHash,
+      );
+      if (response) {
+        return response;
+      }
+
+      const actor = await this.activeActorMembership(client, familyId, principal.subject, { primaryGuardianOnly: true });
+      const membership = await client.query(
+        `SELECT id, role, status
+         FROM family_memberships
+         WHERE id = $1 AND family_id = $2
+         FOR UPDATE`,
+        [membershipId, familyId],
+      );
+      if (membership.rowCount === 0) {
+        throw new HttpError(404, 'membership_not_found', 'Membership was not found.');
+      }
+      if (membership.rows[0].role === 'primary_guardian') {
+        throw new HttpError(
+          409,
+          'primary_guardian_continuity_required',
+          'Primary guardian removal requires the separate guardian continuity process.',
+        );
+      }
+      if (!['invited', 'active'].includes(membership.rows[0].status)) {
+        throw new HttpError(409, 'membership_not_revocable', 'This membership is not pending or active.');
+      }
+
+      const nextStatus = membership.rows[0].status === 'invited' ? 'revoked' : 'removed';
+      const eventType = nextStatus === 'revoked'
+        ? 'family.membership_invitation_revoked'
+        : 'family.membership_removed';
+      const revoked = await client.query(
+        `UPDATE family_memberships
+         SET status = $3,
+             status_reason_code = $4,
+             status_changed_at = NOW(),
+             version = version + 1
+         WHERE id = $1 AND family_id = $2
+         RETURNING id, role, status, status_reason_code, version, joined_at, status_changed_at, created_at`,
+        [membershipId, familyId, nextStatus, reasonCode],
+      );
+      await this.appendAuditAndOutbox(client, {
+        familyId,
+        actorMembershipId: actor.id,
+        eventType,
+        subjectType: 'membership',
+        subjectId: membershipId,
+      });
+      const result = { membership: memberView(revoked.rows[0]) };
+      await this.completeIdempotencySlot(client, `membership:revoke:${membershipId}`, idempotencyKey, result);
       return result;
     });
   }

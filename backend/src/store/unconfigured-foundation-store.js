@@ -33,6 +33,10 @@ export class UnconfiguredFoundationStore {
     this.unavailable();
   }
 
+  async revokeMembership() {
+    this.unavailable();
+  }
+
   async listAuditEvents() {
     this.unavailable();
   }

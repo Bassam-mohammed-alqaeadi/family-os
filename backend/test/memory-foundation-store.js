@@ -53,7 +53,10 @@ export class MemoryFoundationStore {
       id: membership.id,
       role: membership.role,
       status: membership.status,
+      statusReasonCode: membership.statusReasonCode,
+      version: membership.version,
       joinedAt: membership.joinedAt,
+      statusChangedAt: membership.statusChangedAt,
       createdAt: membership.createdAt,
     };
   }
@@ -80,7 +83,10 @@ export class MemoryFoundationStore {
         targetSubject: principal.subject,
         role: 'primary_guardian',
         status: 'active',
+        statusReasonCode: null,
+        version: 1,
         joinedAt: now,
+        statusChangedAt: now,
         createdAt: now,
       };
       this.families.set(family.id, family);
@@ -128,7 +134,10 @@ export class MemoryFoundationStore {
         targetSubject,
         role,
         status: 'invited',
+        statusReasonCode: null,
+        version: 1,
         joinedAt: null,
+        statusChangedAt: now,
         createdAt: now,
       };
       this.memberships.set(membership.id, membership);
@@ -150,8 +159,45 @@ export class MemoryFoundationStore {
         throw new HttpError(409, 'membership_not_invitable', 'This membership is not awaiting acceptance.');
       }
       membership.status = 'active';
-      membership.joinedAt = new Date().toISOString();
+      membership.statusReasonCode = null;
+      membership.statusChangedAt = new Date().toISOString();
+      membership.version += 1;
+      membership.joinedAt = membership.statusChangedAt;
       this.recordAudit(familyId, membership.id, 'family.membership_accepted', 'membership', membership.id);
+      return { membership: this.memberView(membership) };
+    });
+  }
+
+  async revokeMembership({ principal, familyId, membershipId, reasonCode, idempotencyKey, requestHash }) {
+    return this.idempotent(`membership:revoke:${membershipId}`, idempotencyKey, requestHash, () => {
+      const actor = this.activeMembership(familyId, principal.subject, true);
+      const membership = this.memberships.get(membershipId);
+      if (!membership || membership.familyId !== familyId) {
+        throw new HttpError(404, 'membership_not_found', 'Membership was not found.');
+      }
+      if (membership.role === 'primary_guardian') {
+        throw new HttpError(
+          409,
+          'primary_guardian_continuity_required',
+          'Primary guardian removal requires the separate guardian continuity process.',
+        );
+      }
+      if (!['invited', 'active'].includes(membership.status)) {
+        throw new HttpError(409, 'membership_not_revocable', 'This membership is not pending or active.');
+      }
+
+      const nextStatus = membership.status === 'invited' ? 'revoked' : 'removed';
+      membership.status = nextStatus;
+      membership.statusReasonCode = reasonCode;
+      membership.statusChangedAt = new Date().toISOString();
+      membership.version += 1;
+      this.recordAudit(
+        familyId,
+        actor.id,
+        nextStatus === 'revoked' ? 'family.membership_invitation_revoked' : 'family.membership_removed',
+        'membership',
+        membershipId,
+      );
       return { membership: this.memberView(membership) };
     });
   }

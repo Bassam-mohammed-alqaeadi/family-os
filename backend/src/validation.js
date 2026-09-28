@@ -44,6 +44,15 @@ export function createMembershipInput(value) {
   };
 }
 
+export function revokeMembershipInput(value) {
+  const body = bodyObject(value);
+  const reasonCode = requiredText(body.reasonCode, 'reasonCode', { maxLength: 64 });
+  if (!/^[a-z][a-z0-9_]{2,63}$/.test(reasonCode)) {
+    throw new HttpError(400, 'invalid_request', 'reasonCode must be a stable, non-sensitive machine code.');
+  }
+  return { reasonCode };
+}
+
 export function requireIdempotencyKey(value) {
   return requiredText(value, 'Idempotency-Key', { maxLength: 128 });
 }

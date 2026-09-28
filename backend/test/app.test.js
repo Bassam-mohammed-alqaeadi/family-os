@@ -32,6 +32,28 @@ function foundationApp() {
   });
 }
 
+async function createFamily(baseUrl, displayName = 'Horizon family') {
+  const response = await request(baseUrl, '/v1/families', {
+    method: 'POST',
+    token: 'test-parent-a',
+    idempotencyKey: `family-${displayName.replace(/\s+/g, '-').toLowerCase()}`,
+    body: { displayName },
+  });
+  assert.equal(response.status, 201);
+  return (await response.json()).family;
+}
+
+async function invite(baseUrl, familyId, { role, targetSubject, idempotencyKey }) {
+  const response = await request(baseUrl, `/v1/families/${familyId}/memberships`, {
+    method: 'POST',
+    token: 'test-parent-a',
+    idempotencyKey,
+    body: { role, targetSubject },
+  });
+  assert.equal(response.status, 201);
+  return (await response.json()).membership;
+}
+
 test('unconfigured runtime is live but never claims readiness or identity capability', async () => {
   const app = createApp({
     store: new UnconfiguredFoundationStore(),
@@ -106,24 +128,14 @@ test('family creation is server-authenticated, tenant-scoped and idempotent', as
 
 test('only a primary guardian can create a pending membership and only its subject can accept it', async () => {
   await withServer(foundationApp(), async (baseUrl) => {
-    const createFamily = await request(baseUrl, '/v1/families', {
-      method: 'POST',
-      token: 'test-parent-a',
-      idempotencyKey: 'family-create-002',
-      body: { displayName: 'North star' },
-    });
-    const familyId = (await createFamily.json()).family.id;
-
-    const invitation = await request(baseUrl, `/v1/families/${familyId}/memberships`, {
-      method: 'POST',
-      token: 'test-parent-a',
+    const family = await createFamily(baseUrl, 'North star');
+    const membership = await invite(baseUrl, family.id, {
+      role: 'child',
+      targetSubject: 'test-child-a',
       idempotencyKey: 'membership-create-001',
-      body: { role: 'child', targetSubject: 'test-child-a' },
     });
-    assert.equal(invitation.status, 201);
-    const membershipId = (await invitation.json()).membership.id;
 
-    const strangerAccept = await request(baseUrl, `/v1/families/${familyId}/memberships/${membershipId}/accept`, {
+    const strangerAccept = await request(baseUrl, `/v1/families/${family.id}/memberships/${membership.id}/accept`, {
       method: 'POST',
       token: 'test-stranger',
       idempotencyKey: 'membership-accept-001',
@@ -131,7 +143,7 @@ test('only a primary guardian can create a pending membership and only its subje
     });
     assert.equal(strangerAccept.status, 403);
 
-    const accepted = await request(baseUrl, `/v1/families/${familyId}/memberships/${membershipId}/accept`, {
+    const accepted = await request(baseUrl, `/v1/families/${family.id}/memberships/${membership.id}/accept`, {
       method: 'POST',
       token: 'test-child-a',
       idempotencyKey: 'membership-accept-001',
@@ -140,8 +152,110 @@ test('only a primary guardian can create a pending membership and only its subje
     assert.equal(accepted.status, 200);
     assert.equal((await accepted.json()).membership.status, 'active');
 
-    const childAudit = await request(baseUrl, `/v1/families/${familyId}/audit-events`, { token: 'test-child-a' });
+    const childAudit = await request(baseUrl, `/v1/families/${family.id}/audit-events`, { token: 'test-child-a' });
     assert.equal(childAudit.status, 403);
     assert.equal((await childAudit.json()).error.code, 'audit_access_denied');
+  });
+});
+
+test('primary guardian can revoke a pending invite or remove an active member without deleting evidence', async () => {
+  await withServer(foundationApp(), async (baseUrl) => {
+    const family = await createFamily(baseUrl, 'Continuity family');
+    const pending = await invite(baseUrl, family.id, {
+      role: 'child',
+      targetSubject: 'test-child-a',
+      idempotencyKey: 'membership-create-pending',
+    });
+
+    const revokePending = await request(baseUrl, `/v1/families/${family.id}/memberships/${pending.id}/revoke`, {
+      method: 'POST',
+      token: 'test-parent-a',
+      idempotencyKey: 'membership-revoke-pending',
+      body: { reasonCode: 'guardian_withdrew_invitation' },
+    });
+    assert.equal(revokePending.status, 200);
+    const revokedPending = (await revokePending.json()).membership;
+    assert.equal(revokedPending.status, 'revoked');
+    assert.equal(revokedPending.statusReasonCode, 'guardian_withdrew_invitation');
+    assert.equal(revokedPending.version, 2);
+
+    const revokedAccept = await request(baseUrl, `/v1/families/${family.id}/memberships/${pending.id}/accept`, {
+      method: 'POST',
+      token: 'test-child-a',
+      idempotencyKey: 'membership-accept-revoked',
+      body: {},
+    });
+    assert.equal(revokedAccept.status, 409);
+    assert.equal((await revokedAccept.json()).error.code, 'membership_not_invitable');
+
+    const activeCandidate = await invite(baseUrl, family.id, {
+      role: 'child',
+      targetSubject: 'test-child-a',
+      idempotencyKey: 'membership-create-active',
+    });
+    const accepted = await request(baseUrl, `/v1/families/${family.id}/memberships/${activeCandidate.id}/accept`, {
+      method: 'POST',
+      token: 'test-child-a',
+      idempotencyKey: 'membership-accept-active',
+      body: {},
+    });
+    assert.equal(accepted.status, 200);
+
+    const removeActive = await request(baseUrl, `/v1/families/${family.id}/memberships/${activeCandidate.id}/revoke`, {
+      method: 'POST',
+      token: 'test-parent-a',
+      idempotencyKey: 'membership-remove-active',
+      body: { reasonCode: 'family_membership_removed' },
+    });
+    assert.equal(removeActive.status, 200);
+    const removed = (await removeActive.json()).membership;
+    assert.equal(removed.status, 'removed');
+    assert.equal(removed.version, 3);
+
+    const deniedRead = await request(baseUrl, `/v1/families/${family.id}`, { token: 'test-child-a' });
+    assert.equal(deniedRead.status, 403);
+    assert.equal((await deniedRead.json()).error.code, 'family_access_denied');
+  });
+});
+
+test('guardian continuity and revocation authority cannot be bypassed', async () => {
+  await withServer(foundationApp(), async (baseUrl) => {
+    const family = await createFamily(baseUrl, 'Authority family');
+    const coGuardian = await invite(baseUrl, family.id, {
+      role: 'co_guardian',
+      targetSubject: 'test-parent-b',
+      idempotencyKey: 'membership-create-co-guardian',
+    });
+    const child = await invite(baseUrl, family.id, {
+      role: 'child',
+      targetSubject: 'test-child-a',
+      idempotencyKey: 'membership-create-child',
+    });
+
+    const coGuardianAccept = await request(baseUrl, `/v1/families/${family.id}/memberships/${coGuardian.id}/accept`, {
+      method: 'POST',
+      token: 'test-parent-b',
+      idempotencyKey: 'membership-accept-co-guardian',
+      body: {},
+    });
+    assert.equal(coGuardianAccept.status, 200);
+
+    const coGuardianRevoke = await request(baseUrl, `/v1/families/${family.id}/memberships/${child.id}/revoke`, {
+      method: 'POST',
+      token: 'test-parent-b',
+      idempotencyKey: 'membership-revoke-by-co-guardian',
+      body: { reasonCode: 'family_membership_removed' },
+    });
+    assert.equal(coGuardianRevoke.status, 403);
+
+    const primaryMembershipId = family.members[0].id;
+    const primaryRevoke = await request(baseUrl, `/v1/families/${family.id}/memberships/${primaryMembershipId}/revoke`, {
+      method: 'POST',
+      token: 'test-parent-a',
+      idempotencyKey: 'membership-revoke-primary',
+      body: { reasonCode: 'family_membership_removed' },
+    });
+    assert.equal(primaryRevoke.status, 409);
+    assert.equal((await primaryRevoke.json()).error.code, 'primary_guardian_continuity_required');
   });
 });
