@@ -5,8 +5,8 @@
 ```yaml
 program_status: RUNNING
 last_updated: 2026-09-29
-current_pillar: FAMILY_INTELLIGENCE
-current_card: INTELLIGENCE-G3-TECHNICAL_READY
+current_pillar: ADMINISTRATION_TRUST_OPERATIONS
+current_card: ADMIN-G1-DISCOVERY
 completed:
   - Harness bootstrap
   - New product charter
@@ -38,9 +38,11 @@ completed:
   - Family Intelligence evidence map
   - Family Intelligence G1 direction accepted under standing Owner trust
   - Family Intelligence G2 Hub, explainability, role journeys, settings/state model, and screen map accepted under standing Owner trust
-next_outputs:
   - Family Intelligence technical capability, data/event, reliability, implementation sequence, parity, and Product Ready review
-  - Preserve Security, Learning and Connection packs for later Backend/Native authorization
+  - Administration, Trust & Operations phase initiation
+next_outputs:
+  - Administration, Trust & Operations evidence map and G1 direction
+  - Preserve Security, Learning, Connection and Intelligence packs for later Backend/Native authorization
 blocked_by: none
 requires_owner_now: no
 backend_native_status: NOT_AUTHORIZED
