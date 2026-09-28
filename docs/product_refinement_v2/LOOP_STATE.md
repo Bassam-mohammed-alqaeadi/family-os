@@ -6,7 +6,7 @@
 program_status: FOUNDATION_WAVE_AUTHORIZED
 last_updated: 2026-09-29
 current_pillar: PLATFORM_FOUNDATION
-current_card: FOUNDATION-WAVE-2-RECOVERY-SUPPORT-DESIGN
+current_card: FOUNDATION-WAVE-2A-RECOVERY-SUPPORT-ADMISSION
 completed:
   - Harness bootstrap
   - New product charter
@@ -55,8 +55,9 @@ completed:
   - Two-party, expiry-bound primary-guardian transfer foundation with atomic role/reference change and audited evidence
   - Family OS System Operating Prompt adopted for Zero-Trust, distributed-systems and runtime-truth execution
   - Recovery & Support Case architecture discovery, scope split, state machine and implementation admission gate
+  - Recovery & Support admission packet: OIDC, continuity, privacy, support, incident, Render and abuse-control evidence register
 next_outputs:
-  - Produce the owned identity/recovery, data-retention, support-operations and incident-policy evidence required by the Recovery/Support admission gate
+  - Produce the owned, dated acceptance evidence for RS-ADM-01 through RS-ADM-09; do not substitute templates or code comments for ownership
   - Record accountable Render region/cost/operations and approved OIDC recovery decisions before connected deployment
   - Complete controlled PostgreSQL migration and real OIDC integration only after those preconditions
   - Plan minimal Flutter unavailable/ready/error-state integration without claiming account, device or notification capabilities
