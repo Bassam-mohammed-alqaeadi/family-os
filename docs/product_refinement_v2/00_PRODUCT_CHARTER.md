@@ -75,6 +75,10 @@ They are retained only as post-launch discovery candidates in the system univers
 
 This program creates an approved product, UX, capability, quality, and implementation-readiness foundation. It does **not** authorize production Backend or Native implementation. The current Flutter application remains a source of technical and UI evidence; it must not be presented as a remote, native-enforced product where it is not one.
 
+### Runtime and backend truth
+
+Family OS forbids production hard-coded family/product outcomes and fake success states. Dynamic state must come from an authoritative runtime service or an honestly labeled local/offline cache. The approved infrastructure boundary is Render as the system of record and paid/usage-dependent backend platform; Firebase is limited to individually reviewed no-cost auxiliary services. See `16_RUNTIME_TRUTH_POLICY.md` and `17_RENDER_FIREBASE_SERVICE_BOUNDARY.md`. This records architecture direction only and does not authorize Backend or Native implementation.
+
 ## 6. Quality bar
 
 A system is not product-ready merely because its happy-path screen is attractive. It is ready only when it has:

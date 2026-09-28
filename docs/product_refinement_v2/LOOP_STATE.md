@@ -5,7 +5,7 @@
 ```yaml
 program_status: RUNNING
 last_updated: 2026-09-29
-current_pillar: FAMILY_CONNECTION
+current_pillar: FAMILY_INTELLIGENCE
 CONNECTION-G1-DISCOVERY
 LEARNING_PRODUCT_READY
 completed:
@@ -33,9 +33,11 @@ completed:
   - Family Connection evidence map
   - Family Connection G1 direction accepted under standing Owner trust
   - Family Connection G2 Hub, relationship trust model, settings/state model, and screen map accepted under standing Owner trust
+  - Runtime truth policy and Render/Firebase service boundary
+  - Family Connection technical capability, data/event, reliability, implementation sequence, and Product Ready review
 next_outputs:
-  - Family Connection technical capability, data/event, reliability, and implementation-readiness pack
-  - Preserve Security and Learning packs for later Backend/Native authorization
+  - Start Family Intelligence product-refinement loop
+  - Preserve Security, Learning and Connection packs for later Backend/Native authorization
 blocked_by: none
 requires_owner_now: no
 backend_native_status: NOT_AUTHORIZED

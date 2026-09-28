@@ -34,6 +34,10 @@ The current service, journey, and screen registries remain valuable discovery in
 - **Future developments:** new candidate systems outside that inventory, including expanded home organization, financial responsibility, expanded values/religion, and one-way audio. They are recorded for future consideration only and are not part of the current build, navigation, data model, or release promise.
 - **Current focus:** make the Security & Digital Safety pillar product-ready before moving to the next pillar.
 
+## Runtime truth and backend placement
+
+Production-facing outcomes must be real runtime behaviour, never hidden fixtures or hard-coded family data. Render is the system-of-record backend and hosts paid/usage-dependent workloads; Firebase is limited to individual no-cost auxiliary services after pricing/privacy review. Read `16_RUNTIME_TRUTH_POLICY.md` and `17_RENDER_FIREBASE_SERVICE_BOUNDARY.md` before backend/integration work.
+
 ## Non-negotiable platform principle
 
 No system is allowed to become an isolated mini-app. Each system must prove an appropriate connection to the shared family identity, roles and permissions, child/device context, notification center, activity timeline, Today dashboard, privacy/support controls, and—where useful—family intelligence.
