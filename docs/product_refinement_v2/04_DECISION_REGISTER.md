@@ -15,7 +15,8 @@
 | PRV2-008 | 2026-09-29 | Treat the 18 registered services without a registered journey as explicit reconciliation work. | Accepted | Each will gain a journey, merge, defer as an existing system, or be explicitly removed; none silently disappears. |
 | PRV2-009 | 2026-09-29 | Start the first active loop with Security & Digital Safety. | Accepted | Security establishes trust, device truth, notification behaviour, and control patterns reused by the platform. |
 | PRV2-010 | 2026-09-29 | Approve the four Security direction choices in `06_SECURITY_G1_DIRECTION.md`. | Accepted | Owner accepted: location/SOS are capability-gated core commitments; monitoring is signal/alert-led only; advanced systems stay outside the first sequence; primary guardian is full-control while co-guardian is configurable and the child is informed/request-capable. |
-| PRV2-011 | 2026-09-29 | Approve the G2 Security UX Lock pack. | Pending Owner | Gate G2 asks the Owner to approve the Safety Hub information architecture, role experiences, settings desk, visual direction, and complete key screen/state model before technical build readiness begins. |
+| PRV2-011 | 2026-09-29 | Approve the G2 Security UX Lock pack. | Accepted | Owner accepted the Safety Hub, role experience, settings desk, visual direction, and screen/state model. The next work is technical readiness; no Backend/Native work is authorized yet. |
+| PRV2-012 | 2026-09-29 | Operate the Product Refinement V2 loop with standing Owner trust. | Accepted | The delivery partner proceeds through analysis, design, self-review, technical readiness, and documented recommendations without waiting at every internal gate. It reports decisions and pauses only before a new scope change, an irreversible commercial/trust commitment, or actual Backend/Native production implementation. |
 
 ## Pending decision format
 
