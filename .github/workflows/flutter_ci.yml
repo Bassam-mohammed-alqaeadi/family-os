@@ -103,7 +103,11 @@ jobs:
               ])
               for name, detail in failures:
                   lines.append(f"| `{markdown_cell(name)}` | {markdown_cell(detail)} |")
-                  print(f"::error title=Flutter test failure::{name}: {detail}")
+              annotation = " | ".join(
+                  f"{index}. {name}: {detail}"
+                  for index, (name, detail) in enumerate(failures, 1)
+              )
+              print(f"::error title=Flutter test failures::{annotation[:60000]}")
           else:
               lines.append(
                   "❌ `flutter test` failed, but no structured failure report was produced. "
