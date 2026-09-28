@@ -33,6 +33,10 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# The project currently uses the pinned owner SDK directly (not FVM).
+# If FVM is used locally in the future, never commit its downloaded SDK.
+.fvm/flutter_sdk/
+
 # Symbolication related
 app.*.symbols
 

@@ -1,6 +1,7 @@
 name: Flutter CI
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - "app/**"
@@ -9,6 +10,13 @@ on:
     paths:
       - "app/**"
       - ".github/workflows/flutter_ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: flutter-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   analyze-test:
@@ -23,7 +31,82 @@ jobs:
           flutter-version: "3.35.7"
           channel: stable
           cache: true
-      - run: flutter pub get
-      - run: flutter gen-l10n
-      - run: flutter analyze --fatal-infos
-      - run: flutter test
+      - name: Resolve packages
+        run: flutter pub get
+      - name: Generate localization source
+        run: flutter gen-l10n
+      - name: Analyze
+        run: flutter analyze --fatal-infos
+      - name: Run tests
+        id: tests
+        continue-on-error: true
+        run: |
+          mkdir -p build/ci
+          flutter test --file-reporter=json:build/ci/flutter-test.json
+      - name: Summarize test result
+        if: always()
+        env:
+          TEST_OUTCOME: ${{ steps.tests.outcome }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          report = Path("build/ci/flutter-test.json")
+          names = {}
+          failures = []
+
+          if report.exists():
+              for raw in report.read_text(encoding="utf-8").splitlines():
+                  try:
+                      event = json.loads(raw)
+                  except json.JSONDecodeError:
+                      continue
+                  if event.get("type") == "testStart":
+                      test = event.get("test", {})
+                      names[str(test.get("id", ""))] = test.get("name", "unnamed test")
+                  if event.get("type") == "testDone" and event.get("result") not in ("success", "skipped"):
+                      test = event.get("test", {})
+                      test_id = str(event.get("testID", test.get("id", "")))
+                      name = test.get("name") or names.get(test_id, "unnamed test")
+                      detail = event.get("reason") or event.get("message") or event.get("error") or ""
+                      if isinstance(detail, dict):
+                          detail = detail.get("message", json.dumps(detail, ensure_ascii=False))
+                      failures.append((name, str(detail).replace("\n", " ")[:500]))
+
+          def markdown_cell(value):
+              return value.replace("|", "\\|")
+
+          summary_path = Path(os.environ["GITHUB_STEP_SUMMARY"])
+          lines = ["## Flutter test result", ""]
+          if os.environ["TEST_OUTCOME"] == "success":
+              lines.append("✅ `flutter test` passed.")
+          elif failures:
+              lines.extend([
+                  f"❌ `flutter test` failed: **{len(failures)}** failing test(s).",
+                  "",
+                  "| Test | Failure summary |",
+                  "| --- | --- |",
+              ])
+              for name, detail in failures:
+                  lines.append(f"| `{markdown_cell(name)}` | {markdown_cell(detail)} |")
+                  print(f"::error title=Flutter test failure::{name}: {detail}")
+          else:
+              lines.append(
+                  "❌ `flutter test` failed, but no structured failure report was produced. "
+                  "Inspect the Run tests log."
+              )
+          summary_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+          PY
+      - name: Verify generated source is committed
+        id: generated
+        if: always()
+        run: |
+          git diff --exit-code -- \
+            lib/app/router.dart \
+            lib/app/shell_config.dart \
+            lib/core/i18n
+      - name: Enforce test and generated-source gates
+        if: always() && (steps.tests.outcome == 'failure' || steps.generated.outcome == 'failure')
+        run: exit 1
