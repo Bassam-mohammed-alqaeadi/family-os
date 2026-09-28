@@ -6,7 +6,7 @@
 program_status: RUNNING
 last_updated: 2026-09-29
 current_pillar: ADMINISTRATION_TRUST_OPERATIONS
-current_card: ADMIN-G1-DISCOVERY
+current_card: ADMIN-G2-UX_LOCK
 completed:
   - Harness bootstrap
   - New product charter
@@ -40,8 +40,10 @@ completed:
   - Family Intelligence G2 Hub, explainability, role journeys, settings/state model, and screen map accepted under standing Owner trust
   - Family Intelligence technical capability, data/event, reliability, implementation sequence, parity, and Product Ready review
   - Administration, Trust & Operations phase initiation
+  - Administration, Trust & Operations evidence map
+  - Administration, Trust & Operations G1 direction accepted under standing Owner trust
 next_outputs:
-  - Administration, Trust & Operations evidence map and G1 direction
+  - Administration, Trust & Operations UX lock, role journeys, settings/state model, and screen map
   - Preserve Security, Learning, Connection and Intelligence packs for later Backend/Native authorization
 blocked_by: none
 requires_owner_now: no
