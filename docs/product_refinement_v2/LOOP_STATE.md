@@ -6,7 +6,7 @@
 program_status: FOUNDATION_WAVE_AUTHORIZED
 last_updated: 2026-09-29
 current_pillar: PLATFORM_FOUNDATION
-current_card: FOUNDATION-WAVE-1-FAIL-CLOSED-LOCAL-FOUNDATION
+current_card: FOUNDATION-WAVE-2-RECOVERY-SUPPORT-DESIGN
 completed:
   - Harness bootstrap
   - New product charter
@@ -53,11 +53,14 @@ completed:
   - Membership invitation revocation and active-member removal lifecycle with durable reason/version/audit/outbox evidence
   - Render/PostgreSQL controlled-release, verification, incident and rollback runbook
   - Two-party, expiry-bound primary-guardian transfer foundation with atomic role/reference change and audited evidence
+  - Family OS System Operating Prompt adopted for Zero-Trust, distributed-systems and runtime-truth execution
+  - Recovery & Support Case architecture discovery, scope split, state machine and implementation admission gate
 next_outputs:
+  - Produce the owned identity/recovery, data-retention, support-operations and incident-policy evidence required by the Recovery/Support admission gate
   - Record accountable Render region/cost/operations and approved OIDC recovery decisions before connected deployment
   - Complete controlled PostgreSQL migration and real OIDC integration only after those preconditions
   - Plan minimal Flutter unavailable/ready/error-state integration without claiming account, device or notification capabilities
-  - Design the separate lost-account, dispute and support-mediated guardian recovery process before any recovery claim or broad role/scope change
+  - Do not implement lost-account, dispute or support-mediated recovery until the Recovery/Support admission gate is accepted
 blocked_by: Connected Render deployment and Flutter production integration remain blocked by Foundation Wave preconditions in `92_EXECUTION_AUTHORIZATION_GATE.md`
 requires_owner_now: no
 backend_native_status: BACKEND_FOUNDATION_AUTHORIZED_NATIVE_NOT_AUTHORIZED
