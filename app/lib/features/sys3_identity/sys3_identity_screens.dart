@@ -367,7 +367,7 @@ class _FamilySelectorScreenState extends State<FamilySelectorScreen> {
                     .firstWhere((family) => family.id == membership.familyId)
                     .name,
               ),
-              trailing: const Icon(Icons.chevron_left),
+              trailing: const Icon(Icons.chevron_right),
               onTap: () => _complete(membership.familyId),
             ),
       ],
@@ -718,7 +718,7 @@ class ChildSessionsScreen extends StatelessWidget {
               key: Sys3Keys.enrollment(enrollment.id.value),
               minTileHeight: 48,
               title: Text(l10n.sys3EnrollmentLabel(enrollment.id.value)),
-              trailing: const Icon(Icons.chevron_left),
+              trailing: const Icon(Icons.chevron_right),
               onTap: () => context.push(
                 '/sys3-remote-end?enrollmentId=${Uri.encodeComponent(enrollment.id.value)}&childId=${Uri.encodeComponent(enrollment.childId.value)}',
               ),

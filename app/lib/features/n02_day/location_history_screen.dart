@@ -4,13 +4,17 @@ import 'package:go_router/go_router.dart';
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/app_error_state.dart';
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/banner.dart';
+import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/components/row_tile.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
-import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n02_day/location_history_repository.dart';
 import 'package:family_os/features/n02_day/location_ux_bridge.dart';
@@ -29,6 +33,8 @@ abstract final class LocationHistoryKeys {
   static const threadSection = Key('location_history_thread');
   static const frequentSection = Key('location_history_frequent');
   static const retentionNote = Key('location_history_retention');
+  static const exportCta = Key('location_history_export');
+  static const archiveCta = Key('location_history_archive');
   static const sosCta = Key('location_history_sos');
   static const childLean = Key('location_history_child_lean');
 
@@ -90,6 +96,11 @@ class LocationHistoryScreenState extends State<LocationHistoryScreen> {
 
   bool get _isParent => _role == AppRole.father || _role == AppRole.mother;
 
+  /// Primary-only export/archive stubs (L2).
+  bool get _isPrimary =>
+      resolveAuthorizationContext(context, fallbackRole: _role).isPrimaryOwner ||
+      _role == AppRole.father;
+
   String? get _resolvedChildId {
     final raw = widget.childId?.trim();
     if (raw == null || raw.isEmpty) return null;
@@ -127,7 +138,7 @@ class LocationHistoryScreenState extends State<LocationHistoryScreen> {
         if (!mounted) return;
         _repo = DomainLocationHistoryRepository(
           domain: Stage1LocationRuntime.store,
-          familyId: const FamilyId('fam_stage1'),
+          familyId: resolveActiveFamilyId(),
         );
       }
       await _load();
@@ -196,8 +207,12 @@ class LocationHistoryScreenState extends State<LocationHistoryScreen> {
     }
     setState(() => _sosBusy = true);
     final fire = widget.sosFire ?? stage1SosFireService;
-    final id = _resolvedChildId ?? _snapshot?.childId ?? 'family';
-    await fire.fire(childId: id);
+    final sender = sosSenderForRole(
+      context,
+      _role,
+      viewedChild: childIdFromParam(_resolvedChildId ?? _snapshot?.childId),
+    );
+    await sender.fireThrough(fire);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push('/scr-fat-018');
@@ -343,6 +358,34 @@ class LocationHistoryScreenState extends State<LocationHistoryScreen> {
               height: 1.4,
             ),
           ),
+          if (_isPrimary) ...[
+            const SizedBox(height: 16),
+            PrimaryBtn(
+              key: LocationHistoryKeys.exportCta,
+              label: l10n.locationHistoryExportCta,
+              variant: PrimaryBtnVariant.sec,
+              onPressed: () {
+                AppToast.show(
+                  context,
+                  message: l10n.locationHistoryExportStubToast,
+                );
+              },
+              semanticsLabel: l10n.locationHistoryExportCta,
+            ),
+            const SizedBox(height: 8),
+            PrimaryBtn(
+              key: LocationHistoryKeys.archiveCta,
+              label: l10n.locationHistoryArchiveCta,
+              variant: PrimaryBtnVariant.sec,
+              onPressed: () {
+                AppToast.show(
+                  context,
+                  message: l10n.locationHistoryArchiveStubToast,
+                );
+              },
+              semanticsLabel: l10n.locationHistoryArchiveCta,
+            ),
+          ],
         ],
       ),
     );

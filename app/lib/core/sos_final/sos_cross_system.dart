@@ -123,4 +123,73 @@ final class SosCrossSystemCoordinator {
     );
     return incident;
   }
+
+  /// Parent-raised SOS → durable incident (OD-13 / D7). Location attach is
+  /// best-effort when a device is known for the subject child.
+  Future<SosIncident> fireParentAlert({
+    required String actorId,
+    required ChildId childId,
+    DeviceId? deviceId,
+    bool subscriptionExpired = false,
+    bool quietHoursActive = false,
+    bool screenTimeExpired = false,
+    bool entertainmentLocked = false,
+    bool deviceLocked = false,
+    bool modesActive = false,
+    bool webFilterStrict = false,
+    bool appControlLockedDown = false,
+    int batteryPercent = 0,
+    bool panicQuietAtTrigger = false,
+    String deliveriesJson = '[]',
+    String childDisplayName = '',
+    String childEmoji = '',
+  }) async {
+    SosPermanentExemptions.assertConsistent();
+    if (!SosPermanentExemptions.mayFireSos(
+      subscriptionExpired: subscriptionExpired,
+      quietHoursActive: quietHoursActive,
+      screenTimeExpired: screenTimeExpired,
+      entertainmentLocked: entertainmentLocked,
+      deviceLocked: deviceLocked,
+      modesActive: modesActive,
+      webFilterStrict: webFilterStrict,
+      appControlLockedDown: appControlLockedDown,
+    )) {
+      throw StateError('OD-14 violated: gate blocked SOS');
+    }
+
+    var incident = await _lifecycle.fireParentAlert(
+      childId: childId,
+      actorId: actorId,
+      locationClass: SosLocationClass.acquiring,
+      batteryPercent: batteryPercent,
+      panicQuietAtTrigger: panicQuietAtTrigger,
+      deliveriesJson: deliveriesJson,
+      childDisplayName: childDisplayName,
+      childEmoji: childEmoji,
+    );
+
+    final handoff = _handoff;
+    final device = deviceId;
+    if (handoff == null || device == null) {
+      return incident;
+    }
+
+    final attach = await SosLocationHonestyBridge.attachAfterFire(
+      handoff: handoff,
+      incidentId: incident.id,
+      familyId: _lifecycle.familyId,
+      childId: childId,
+      deviceId: device,
+      capabilities: _capabilities,
+    );
+
+    final klass = SosLocationHonestyBridge.toIncidentClass(attach.honesty);
+    incident = incident.copyWith(
+      locationClass: klass,
+      locationLabel: attach.childStatusWord,
+    );
+    await _store.saveIncident(incident);
+    return incident;
+  }
 }

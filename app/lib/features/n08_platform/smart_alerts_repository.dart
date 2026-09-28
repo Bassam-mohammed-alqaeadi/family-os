@@ -7,7 +7,7 @@ abstract class SmartAlertsRepository {
 
 final class InMemorySmartAlertsRepository implements SmartAlertsRepository {
   InMemorySmartAlertsRepository({SmartAlertsSnapshot? seed})
-    : _snap = seed ?? smartAlertsPrototypeFixture();
+      : _snap = seed ?? smartAlertsEmptyFixture();
 
   SmartAlertsSnapshot _snap;
   Future<void> Function()? loadGate;
@@ -39,8 +39,13 @@ final class InMemorySmartAlertsRepository implements SmartAlertsRepository {
   void seed(SmartAlertsSnapshot snap) => _snap = snap;
 }
 
-final InMemorySmartAlertsRepository stage1SmartAlertsRepository =
-    InMemorySmartAlertsRepository();
+/// Shared Stage-1 — empty until Local FS-007 / Advisor events (CE-B5 / CE-G011).
+SmartAlertsRepository stage1SmartAlertsRepository =
+    InMemorySmartAlertsRepository(seed: smartAlertsEmptyFixture());
+
+void rebindStage1SmartAlertsRepository(SmartAlertsRepository repository) {
+  stage1SmartAlertsRepository = repository;
+}
 
 SmartAlertsSnapshot smartAlertsEmptyFixture() => const SmartAlertsSnapshot();
 
@@ -66,6 +71,7 @@ SmartAlertsSnapshot smartAlertsOneFixture() {
   );
 }
 
+/// LOCAL_DEMO / tests only — not production stage1 default (CE-B5).
 SmartAlertsSnapshot smartAlertsPrototypeFixture() {
   return const SmartAlertsSnapshot(
     alerts: [

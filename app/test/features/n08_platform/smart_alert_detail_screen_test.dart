@@ -40,6 +40,7 @@ void main() {
     expect(find.byKey(SmartAlertDetailKeys.body), findsOneWidget);
     expect(find.byKey(SmartAlertDetailKeys.behaviorBanner), findsOneWidget);
     expect(find.textContaining('not a judgment'), findsOneWidget);
+    expect(find.textContaining('upcoming update'), findsOneWidget);
 
     await tester.ensureVisible(find.byKey(SmartAlertDetailKeys.scheduleCta));
     await tester.pumpAndSettle();

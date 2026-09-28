@@ -7,8 +7,12 @@ import 'package:family_os/app/placeholder_screen.dart';
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/identity/adult_invite_repository.dart';
+import 'package:family_os/core/identity/identity_models.dart';
+import 'package:family_os/core/identity/identity_runtime.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n01_linking/accept_mother_invite_screen.dart';
 
@@ -16,6 +20,7 @@ void main() {
   tearDown(() {
     AppToast.dismiss();
     stage1AdultInviteRepository.resetForTests();
+    resetStage1IdentityRuntimeForTest();
   });
 
   testWidgets('shows injected inviter + family names', (tester) async {
@@ -166,6 +171,154 @@ void main() {
     await tester.pumpAndSettle();
     expect(router.state.uri.path, '/scr-shr-001');
     expect(find.byType(PlaceholderScreen), findsOneWidget);
+
+    await _settleTimers(tester);
+  });
+
+  testWidgets('LOCAL honesty banner present', (tester) async {
+    await _pumpScreen(tester);
+    expect(
+      find.byKey(const Key('accept_mother_invite_local_honesty')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('محلياً'), findsOneWidget);
+    expect(find.textContaining('تحديث قادم'), findsOneWidget);
+  });
+
+  testWidgets('token without Identity — fail-closed', (tester) async {
+    resetStage1IdentityRuntimeForTest();
+    stage1AdultInviteRepository.resetForTests();
+    final runtime = stage1IdentityRuntime;
+    final invite = stage1AdultInviteRepository.createInvite(
+      familyId: runtime.activeFamilyId,
+      target: 'join@example.com',
+      level: MotherLevel.full,
+      actorMemberId: runtime.activeMembership.id,
+    );
+
+    final router = GoRouter(
+      initialLocation: '/scr-fat-009',
+      routes: [
+        GoRoute(
+          path: '/scr-fat-009',
+          builder: (context, state) => AcceptMotherInviteScreen(
+            inviteTokenId: invite.tokenId.value,
+          ),
+        ),
+        GoRoute(
+          path: '/scr-fat-028',
+          builder: (context, state) => const PlaceholderScreen(
+            screenId: 'SCR-FAT-028',
+            title: 'إعداد الطوارئ',
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp.router(
+        theme: buildFamilyTheme(),
+        locale: const Locale('ar'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        routerConfig: router,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('accept_mother_invite_accept')));
+    await tester.pump();
+
+    expect(router.state.uri.path, '/scr-fat-009');
+    expect(
+      invite.stateAt(DateTime.now().toUtc()),
+      isNot(InviteLifecycleState.accepted),
+    );
+
+    await _settleTimers(tester);
+  });
+
+  testWidgets('Identity + token accept → invite accepted + /scr-fat-028', (
+    tester,
+  ) async {
+    resetStage1IdentityRuntimeForTest();
+    stage1AdultInviteRepository.resetForTests();
+    final runtime = stage1IdentityRuntime;
+    final repo = stage1AdultInviteRepository;
+    final invite = repo.createInvite(
+      familyId: runtime.activeFamilyId,
+      target: 'join@example.com',
+      level: MotherLevel.full,
+      actorMemberId: runtime.activeMembership.id,
+    );
+    final role = RoleController(AppRole.father);
+    final router = GoRouter(
+      initialLocation: '/scr-fat-009',
+      routes: [
+        GoRoute(
+          path: '/scr-fat-009',
+          builder: (context, state) => AcceptMotherInviteScreen(
+            inviteTokenId: invite.tokenId.value,
+            repository: repo,
+            roleController: role,
+          ),
+        ),
+        GoRoute(
+          path: '/scr-fat-028',
+          builder: (context, state) => const PlaceholderScreen(
+            screenId: 'SCR-FAT-028',
+            title: 'إعداد الطوارئ',
+          ),
+        ),
+      ],
+    );
+    addTearDown(() {
+      router.dispose();
+      role.dispose();
+    });
+
+    await tester.pumpWidget(
+      CurrentIdentity(
+        runtime: runtime,
+        child: CurrentRole(
+          notifier: role,
+          child: MaterialApp.router(
+            theme: buildFamilyTheme(),
+            locale: const Locale('ar'),
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            routerConfig: router,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('مستواك: كاملة'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('accept_mother_invite_accept')));
+    await tester.pump();
+
+    final accepted = repo.findByToken(invite.tokenId)!;
+    expect(
+      accepted.stateAt(DateTime.now().toUtc()),
+      InviteLifecycleState.accepted,
+    );
+    expect(role.value, AppRole.mother);
+
+    await tester.pumpAndSettle();
+    expect(router.state.uri.path, '/scr-fat-028');
 
     await _settleTimers(tester);
   });

@@ -8,6 +8,7 @@ import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/features/n02_day/outer_circle_models.dart';
 import 'package:family_os/features/n02_day/outer_circle_repository.dart';
 import 'package:family_os/features/n02_day/outer_circle_screen.dart';
 
@@ -32,6 +33,7 @@ void main() {
 
     expect(find.byKey(OuterCircleKeys.body), findsOneWidget);
     expect(find.byKey(OuterCircleKeys.strangersBanner), findsOneWidget);
+    expect(find.byKey(OuterCircleKeys.localHonesty), findsOneWidget);
     expect(find.byKey(OuterCircleKeys.member('r1')), findsOneWidget);
     expect(find.byKey(OuterCircleKeys.member('f1')), findsOneWidget);
     expect(find.byKey(OuterCircleKeys.pending('p1')), findsOneWidget);
@@ -55,6 +57,16 @@ void main() {
     expect(find.byKey(OuterCircleKeys.body), findsOneWidget);
   });
 
+  testWidgets('load error → retry', (tester) async {
+    final repo = InMemoryOuterCircleRepository(seed: outerCircleOneFixture())
+      ..loadError = Exception('offline');
+    await _pump(tester, repository: repo);
+    expect(find.byKey(OuterCircleKeys.error), findsOneWidget);
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(OuterCircleKeys.body), findsOneWidget);
+  });
+
   testWidgets('child RoleGuard lean + SOS', (tester) async {
     var sos = false;
     await _pump(tester, role: AppRole.child, onSos: () => sos = true);
@@ -63,6 +75,20 @@ void main() {
     await tester.tap(find.byKey(OuterCircleKeys.sosIconCta));
     await tester.pumpAndSettle();
     expect(sos, isTrue);
+  });
+
+  test('approvePending moves friend into shared circle', () async {
+    final repo = InMemoryOuterCircleRepository(
+      seed: outerCirclePrototypeFixture(),
+    );
+    await repo.approvePending('p1', allowText: true, allowCalls: false);
+    final snap = await repo.load();
+    expect(snap.pending, isEmpty);
+    expect(snap.friends.any((m) => m.id == 'p1'), isTrue);
+    expect(
+      snap.friends.firstWhere((m) => m.id == 'p1').kind,
+      OuterCircleMemberKind.friend,
+    );
   });
 }
 

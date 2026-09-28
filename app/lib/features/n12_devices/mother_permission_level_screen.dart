@@ -8,10 +8,13 @@ import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
+import 'package:family_os/features/n12_devices/mother_permission_level_identity_repository.dart';
 import 'package:family_os/features/n12_devices/mother_permission_level_repository.dart';
 
 /// Widget keys for SCR-FAT-031 acceptance.
@@ -50,14 +53,18 @@ class MotherPermissionLevelScreen extends StatefulWidget {
   const MotherPermissionLevelScreen({
     super.key,
     this.repository,
+    this.membershipId,
     this.sosFire,
     this.roleOverride,
     this.onBack,
     this.onSos,
   });
 
-  /// Rule 25 seam — null → [stage1MotherPermissionLevelRepository].
+  /// Rule 25 seam — null → Identity-backed stage1 or [membershipId] projection.
   final MotherPermissionLevelRepository? repository;
+
+  /// From route `?memberId=` (FAT-027 mother row).
+  final String? membershipId;
 
   /// P-4 SOS seam — null → [stage1SosFireService].
   final SosFireService? sosFire;
@@ -91,17 +98,28 @@ class _MotherPermissionLevelScreenState
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1MotherPermissionLevelRepository;
+    _repo = widget.repository ?? _defaultRepo();
     _sos = widget.sosFire ?? stage1SosFireService;
     _repo.addListener(_onRepo);
+  }
+
+  MotherPermissionLevelRepository _defaultRepo() {
+    final raw = widget.membershipId?.trim();
+    if (raw != null && raw.isNotEmpty) {
+      return IdentityMotherPermissionLevelRepository(
+        membershipId: MemberId(raw),
+      );
+    }
+    return stage1MotherPermissionLevelRepository;
   }
 
   @override
   void didUpdateWidget(covariant MotherPermissionLevelScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.repository != widget.repository) {
+    if (oldWidget.repository != widget.repository ||
+        oldWidget.membershipId != widget.membershipId) {
       _repo.removeListener(_onRepo);
-      _repo = widget.repository ?? stage1MotherPermissionLevelRepository;
+      _repo = widget.repository ?? _defaultRepo();
       _repo.addListener(_onRepo);
     }
   }
@@ -134,9 +152,9 @@ class _MotherPermissionLevelScreenState
         widget.onSos!();
         return;
       }
-      await _sos.fire(childId: 'parent_local');
+      await parentSosSenderOf(context).fireThrough(_sos);
       if (!mounted) return;
-      context.go('/scr-fat-018');
+      context.push('/scr-fat-018');
     } finally {
       if (mounted) setState(() => _sosBusy = false);
     }

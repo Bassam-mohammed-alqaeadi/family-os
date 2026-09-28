@@ -98,7 +98,7 @@ final InMemoryQuranRecitationRepository stage1QuranRecitationRepository =
     InMemoryQuranRecitationRepository();
 
 QuranRecitationSubmission quranRecitationFixture({
-  String childKey = 'child_a',
+  String childKey = 'demo-child',
   String surahKey = 'naba',
   int reward = 30,
   QuranRecitationSubmitStatus status = QuranRecitationSubmitStatus.pending,

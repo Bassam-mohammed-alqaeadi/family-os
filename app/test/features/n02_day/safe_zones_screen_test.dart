@@ -63,7 +63,8 @@ void main() {
     expect(find.byKey(SafeZonesKeys.readOnlyBanner), findsNothing);
   });
 
-  testWidgets('SCR-FAT-016 father toggles alert switch', (tester) async {
+  testWidgets('SCR-FAT-016 father toggles Arrive / Leave / No-show',
+      (tester) async {
     final repo = InMemorySafeZonesRepository(zones: SafeZonesMock.seeded);
     await tester.pumpWidget(
       _app(
@@ -77,15 +78,28 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final switchFinder = find.byKey(SafeZonesKeys.zoneSwitch('z1'));
-    expect(tester.widget<Switch>(switchFinder).value, isTrue);
+    final arrive = find.byKey(SafeZonesKeys.zoneArrive('z1'));
+    final leave = find.byKey(SafeZonesKeys.zoneLeave('z1'));
+    final noShow = find.byKey(SafeZonesKeys.zoneNoShow('z1'));
+    expect(tester.widget<Switch>(arrive).value, isTrue);
+    expect(tester.widget<Switch>(leave).value, isTrue);
+    expect(tester.widget<Switch>(noShow).value, isFalse);
 
-    await tester.tap(switchFinder);
+    await tester.ensureVisible(arrive);
+    await tester.tap(arrive);
     await tester.pumpAndSettle();
+    expect(tester.widget<Switch>(arrive).value, isFalse);
 
-    expect(tester.widget<Switch>(switchFinder).value, isFalse);
+    await tester.ensureVisible(noShow);
+    await tester.tap(noShow);
+    await tester.pumpAndSettle();
+    expect(tester.widget<Switch>(noShow).value, isTrue);
+
     final snap = await repo.load();
-    expect(snap.zones.firstWhere((z) => z.id == 'z1').alertsEnabled, isFalse);
+    final z1 = snap.zones.firstWhere((z) => z.id == 'z1');
+    expect(z1.alertEnter, isFalse);
+    expect(z1.alertExit, isTrue);
+    expect(z1.alertNoShow, isTrue);
   });
 
   testWidgets('SCR-FAT-016 mother partner → read-only banner', (tester) async {
@@ -109,7 +123,7 @@ void main() {
     expect(find.byKey(SafeZonesKeys.addHeaderCta), findsNothing);
 
     final sw = tester.widget<Switch>(
-      find.byKey(SafeZonesKeys.zoneSwitch('z1')),
+      find.byKey(SafeZonesKeys.zoneArrive('z1')),
     );
     expect(sw.onChanged, isNull);
   });
@@ -133,7 +147,7 @@ void main() {
     expect(find.byKey(SafeZonesKeys.readOnlyBanner), findsNothing);
     expect(find.byKey(SafeZonesKeys.addHeaderCta), findsOneWidget);
     final sw = tester.widget<Switch>(
-      find.byKey(SafeZonesKeys.zoneSwitch('z1')),
+      find.byKey(SafeZonesKeys.zoneArrive('z1')),
     );
     expect(sw.onChanged, isNotNull);
   });

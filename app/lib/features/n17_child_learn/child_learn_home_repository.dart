@@ -1,4 +1,5 @@
 import 'package:family_os/core/domain/child_id.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
 import 'package:family_os/features/education/learning_assignment_models.dart';
 import 'package:family_os/features/education/learning_assignment_repository.dart';
 import 'package:family_os/features/n17_child_learn/child_learn_home_models.dart';
@@ -9,19 +10,24 @@ abstract class ChildLearnHomeRepository {
 }
 
 /// In-memory mock — merges live father assignments (P15-EDU-002 · P12).
+///
+/// OD-14: assignments are keyed to the active / explicit child — never a
+/// planted `child_a` fixture.
 final class InMemoryChildLearnHomeRepository
     implements ChildLearnHomeRepository {
   InMemoryChildLearnHomeRepository({
     ChildLearnHomeSnapshot? seed,
     LearningAssignmentRepository? assignments,
     ChildId? childId,
-  }) : _base = seed ?? childLearnHomePrototypeFixture(),
+  }) : _base = seed ?? childLearnHomeEmptyFixture(),
        _assignments = assignments ?? stage1LearningAssignmentRepository,
-       _childId = childId ?? ChildId('child_a');
+       _explicitChildId = childId;
 
   ChildLearnHomeSnapshot _base;
   final LearningAssignmentRepository _assignments;
-  final ChildId _childId;
+  final ChildId? _explicitChildId;
+
+  ChildId get _childId => resolveActiveChildId(explicit: _explicitChildId);
 
   Future<void> Function()? loadGate;
 

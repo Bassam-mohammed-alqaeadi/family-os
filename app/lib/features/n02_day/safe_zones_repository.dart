@@ -8,7 +8,10 @@ final class SafeZone {
     required this.emoji,
     required this.name,
     required this.description,
-    this.alertsEnabled = true,
+    this.alertEnter = true,
+    this.alertExit = true,
+    this.alertNoShow = false,
+    this.noShowDeadlineMinutes,
     this.assignedChildIds = const [],
   });
 
@@ -16,17 +19,35 @@ final class SafeZone {
   final String emoji;
   final String name;
   final String description;
-  final bool alertsEnabled;
+
+  /// Arrive / enter alert (Super-App desk — FAT-016).
+  final bool alertEnter;
+
+  /// Leave / exit alert.
+  final bool alertExit;
+
+  /// Missed deadline / no-show alert.
+  final bool alertNoShow;
+
+  /// Minutes from local midnight when [alertNoShow] is armed (nullable).
+  final int? noShowDeadlineMinutes;
 
   /// Explicit assignment list (Q-LOC-12=B) — empty on legacy Stage-1 rows.
   final List<String> assignedChildIds;
+
+  /// Any alert armed (compat for older call sites).
+  bool get alertsEnabled => alertEnter || alertExit || alertNoShow;
 
   SafeZone copyWith({
     String? id,
     String? emoji,
     String? name,
     String? description,
-    bool? alertsEnabled,
+    bool? alertEnter,
+    bool? alertExit,
+    bool? alertNoShow,
+    int? noShowDeadlineMinutes,
+    bool clearNoShowDeadline = false,
     List<String>? assignedChildIds,
   }) {
     return SafeZone(
@@ -34,7 +55,12 @@ final class SafeZone {
       emoji: emoji ?? this.emoji,
       name: name ?? this.name,
       description: description ?? this.description,
-      alertsEnabled: alertsEnabled ?? this.alertsEnabled,
+      alertEnter: alertEnter ?? this.alertEnter,
+      alertExit: alertExit ?? this.alertExit,
+      alertNoShow: alertNoShow ?? this.alertNoShow,
+      noShowDeadlineMinutes: clearNoShowDeadline
+          ? null
+          : (noShowDeadlineMinutes ?? this.noShowDeadlineMinutes),
       assignedChildIds: assignedChildIds ?? this.assignedChildIds,
     );
   }
@@ -54,7 +80,15 @@ final class SafeZonesSnapshot {
 abstract class SafeZonesRepository {
   Future<SafeZonesSnapshot> load();
 
-  /// Persist arrival/departure alert toggle for [zoneId]. No-op if unknown.
+  /// Persist one alert flag for [zoneId]. No-op if unknown.
+  Future<void> setAlertFlag(
+    String zoneId, {
+    bool? alertEnter,
+    bool? alertExit,
+    bool? alertNoShow,
+  });
+
+  /// Legacy master toggle — sets enter+exit together; clears no-show when off.
   Future<void> setAlertsEnabled(String zoneId, bool enabled);
 
   /// Append a newly drawn zone (SCR-FAT-017 → FAT-016 list).
@@ -86,10 +120,31 @@ final class InMemorySafeZonesRepository implements SafeZonesRepository {
   }
 
   @override
-  Future<void> setAlertsEnabled(String zoneId, bool enabled) async {
+  Future<void> setAlertFlag(
+    String zoneId, {
+    bool? alertEnter,
+    bool? alertExit,
+    bool? alertNoShow,
+  }) async {
     final i = _zones.indexWhere((z) => z.id == zoneId);
     if (i < 0) return;
-    _zones[i] = _zones[i].copyWith(alertsEnabled: enabled);
+    final clearDeadline = alertNoShow == false;
+    _zones[i] = _zones[i].copyWith(
+      alertEnter: alertEnter,
+      alertExit: alertExit,
+      alertNoShow: alertNoShow,
+      clearNoShowDeadline: clearDeadline,
+    );
+  }
+
+  @override
+  Future<void> setAlertsEnabled(String zoneId, bool enabled) async {
+    await setAlertFlag(
+      zoneId,
+      alertEnter: enabled,
+      alertExit: enabled,
+      alertNoShow: enabled ? null : false,
+    );
   }
 
   @override
@@ -98,5 +153,9 @@ final class InMemorySafeZonesRepository implements SafeZonesRepository {
   }
 }
 
-/// Stage-1 singleton — empty until tests/repos seed (Rule 23).
-final stage1SafeZonesRepository = InMemorySafeZonesRepository();
+/// Stage-1 singleton — rebound to Domain at boot (LDR-B2) when SQLite honest.
+SafeZonesRepository stage1SafeZonesRepository = InMemorySafeZonesRepository();
+
+void rebindStage1SafeZonesRepository(SafeZonesRepository repository) {
+  stage1SafeZonesRepository = repository;
+}

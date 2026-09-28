@@ -4,11 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/app/role_guard.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
+import 'package:family_os/core/design/components/app_error_state.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n02_day/child_arrival_models.dart';
 import 'package:family_os/features/n02_day/child_arrival_repository.dart';
@@ -18,10 +20,12 @@ abstract final class ChildArrivalKeys {
   static const screen = Key('child_arrival_screen');
   static const loading = Key('child_arrival_loading');
   static const empty = Key('child_arrival_empty');
+  static const error = Key('child_arrival_error');
   static const body = Key('child_arrival_body');
   static const headline = Key('child_arrival_headline');
   static const zonesGrid = Key('child_arrival_zones');
   static const liveCard = Key('child_arrival_live');
+  static const localHonesty = Key('child_arrival_local_honesty');
   static const parentLean = Key('child_arrival_parent_lean');
   static const sosIconCta = Key('child_arrival_sos_icon');
 
@@ -30,8 +34,7 @@ abstract final class ChildArrivalKeys {
 
 /// SCR-CHD-024 — أنا وصلت + موقعي (child arrival check-in).
 ///
-/// Prototype CHD-024 · RoleGuard child · safe-zone one-tap reassure ·
-/// live location status · check-in→004 · P-4 SOS · Rule 12/23.
+/// GPS live NAT CLOSED · FCM parent notify REM CLOSED · local journal only.
 class ChildArrivalScreen extends StatefulWidget {
   const ChildArrivalScreen({
     super.key,
@@ -58,6 +61,7 @@ class _ChildArrivalScreenState extends State<ChildArrivalScreen> {
   var _sosBusy = false;
   var _loading = true;
   var _busy = false;
+  var _loadFailed = false;
   ChildArrivalSnapshot _snap = const ChildArrivalSnapshot();
 
   AppRole get _role {
@@ -80,13 +84,24 @@ class _ChildArrivalScreenState extends State<ChildArrivalScreen> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
-    final snap = await _repo.load();
-    if (!mounted) return;
     setState(() {
-      _snap = snap;
-      _loading = false;
+      _loading = true;
+      _loadFailed = false;
     });
+    try {
+      final snap = await _repo.load();
+      if (!mounted) return;
+      setState(() {
+        _snap = snap;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadFailed = true;
+      });
+    }
   }
 
   Future<void> _openSos() async {
@@ -96,7 +111,7 @@ class _ChildArrivalScreenState extends State<ChildArrivalScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'self');
+    await childSosSenderOf(context).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-CHD-005'));
@@ -202,6 +217,13 @@ class _ChildArrivalScreenState extends State<ChildArrivalScreen> {
         ),
       );
     }
+    if (_loadFailed) {
+      return AppErrorState(
+        key: ChildArrivalKeys.error,
+        kind: AppErrorKind.network,
+        onRetry: _load,
+      );
+    }
     if (_snap.isEmpty) {
       return AppEmptyState(
         key: ChildArrivalKeys.empty,
@@ -220,6 +242,12 @@ class _ChildArrivalScreenState extends State<ChildArrivalScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          BannerNote(
+            key: ChildArrivalKeys.localHonesty,
+            variant: BannerVariant.p,
+            message: l10n.honestyChildGentleLine,
+          ),
+          const SizedBox(height: 12),
           Icon(Icons.volunteer_activism, size: 42, color: colors.teal600),
           const SizedBox(height: 8),
           Text(

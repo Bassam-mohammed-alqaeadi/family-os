@@ -38,6 +38,7 @@ void main() {
     expect(find.byKey(PeerCompareKeys.privacy), findsOneWidget);
     expect(find.byKey(PeerCompareKeys.metrics), findsOneWidget);
     expect(find.textContaining('anonymous'), findsOneWidget);
+    expect(find.textContaining('comes later'), findsOneWidget);
     expect(find.byKey(PeerCompareKeys.compass), findsOneWidget);
   });
 

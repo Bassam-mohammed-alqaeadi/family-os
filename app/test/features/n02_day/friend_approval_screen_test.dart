@@ -12,6 +12,8 @@ import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n02_day/friend_approval_repository.dart';
 import 'package:family_os/features/n02_day/friend_approval_screen.dart';
+import 'package:family_os/features/n02_day/outer_circle_models.dart';
+import 'package:family_os/features/n02_day/outer_circle_repository.dart';
 
 void main() {
   tearDown(AppToast.dismiss);
@@ -37,6 +39,7 @@ void main() {
     await _pump(tester, repository: repo, onNavigate: nav.add);
 
     expect(find.byKey(FriendApprovalKeys.body), findsOneWidget);
+    expect(find.byKey(FriendApprovalKeys.localHonesty), findsOneWidget);
     await tester.ensureVisible(find.byKey(FriendApprovalKeys.approveCta));
     await tester.tap(find.byKey(FriendApprovalKeys.approveCta));
     await tester.pump();
@@ -94,6 +97,17 @@ void main() {
     expect(find.byKey(FriendApprovalKeys.body), findsOneWidget);
   });
 
+  testWidgets('load error → retry', (tester) async {
+    final repo = InMemoryFriendApprovalRepository(
+      seed: friendApprovalOneFixture(),
+    )..loadError = Exception('offline');
+    await _pump(tester, repository: repo);
+    expect(find.byKey(FriendApprovalKeys.error), findsOneWidget);
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(FriendApprovalKeys.body), findsOneWidget);
+  });
+
   testWidgets('child RoleGuard lean + SOS', (tester) async {
     var sos = false;
     await _pump(tester, role: AppRole.child, onSos: () => sos = true);
@@ -102,6 +116,27 @@ void main() {
     await tester.tap(find.byKey(FriendApprovalKeys.sosIconCta));
     await tester.pumpAndSettle();
     expect(sos, isTrue);
+  });
+
+  test('approve updates shared outer circle', () async {
+    final circle = InMemoryOuterCircleRepository(
+      seed: outerCirclePrototypeFixture(),
+    );
+    final approval = OuterCircleBoundFriendApprovalRepository(circle: circle);
+    final before = await approval.load();
+    expect(before.requestId, 'p1');
+
+    await approval.setAllowCalls(false);
+    await approval.approve();
+
+    final snap = await circle.load();
+    expect(snap.pending, isEmpty);
+    expect(snap.friends.any((m) => m.id == 'p1'), isTrue);
+    expect(
+      snap.friends.firstWhere((m) => m.id == 'p1').kind,
+      OuterCircleMemberKind.friend,
+    );
+    expect(approval.lastDecision, 'approved');
   });
 }
 

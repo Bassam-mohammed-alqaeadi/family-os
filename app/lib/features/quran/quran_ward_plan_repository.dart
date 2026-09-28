@@ -66,7 +66,7 @@ final InMemoryQuranWardPlanRepository stage1QuranWardPlanRepository =
     InMemoryQuranWardPlanRepository();
 
 QuranWardPlan quranWardPlanFixture({
-  String childKey = 'child_a',
+  String childKey = 'demo-child',
   String surahKey = 'naba',
   int reward = 30,
 }) {

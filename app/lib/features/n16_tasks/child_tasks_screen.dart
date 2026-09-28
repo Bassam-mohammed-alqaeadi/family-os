@@ -4,12 +4,15 @@ import 'package:go_router/go_router.dart';
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/app/role_guard.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
+import 'package:family_os/core/design/components/app_error_state.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
+import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n16_tasks/child_tasks_models.dart';
 import 'package:family_os/features/n16_tasks/child_tasks_repository.dart';
@@ -19,10 +22,12 @@ abstract final class ChildTasksKeys {
   static const screen = Key('child_tasks_screen');
   static const loading = Key('child_tasks_loading');
   static const empty = Key('child_tasks_empty');
+  static const error = Key('child_tasks_error');
   static const body = Key('child_tasks_body');
   static const hero = Key('child_tasks_hero');
   static const list = Key('child_tasks_list');
   static const parentLean = Key('child_tasks_parent_lean');
+  static const localHonesty = Key('child_tasks_local_honesty');
   static const sosIconCta = Key('child_tasks_sos_icon');
 
   static Key row(String id) => Key('child_tasks_row_$id');
@@ -31,8 +36,8 @@ abstract final class ChildTasksKeys {
 
 /// SCR-CHD-022 — مهامي (child tasks + minutes rewards).
 ///
-/// Prototype CHD-022 · RoleGuard child · minutes-only · submit proof mock ·
-/// P-4 SOS · Rule 12/23.
+/// Prototype CHD-022 · RoleGuard child · minutes-only · submitProof binds
+/// FAT-054 family authority · P-4 SOS · Rule 12/23/24.
 class ChildTasksScreen extends StatefulWidget {
   const ChildTasksScreen({
     super.key,
@@ -59,6 +64,7 @@ class _ChildTasksScreenState extends State<ChildTasksScreen> {
   var _sosBusy = false;
   var _loading = true;
   var _busy = false;
+  var _loadFailed = false;
   ChildTasksSnapshot _snap = const ChildTasksSnapshot();
 
   AppRole get _role {
@@ -81,13 +87,24 @@ class _ChildTasksScreenState extends State<ChildTasksScreen> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
-    final snap = await _repo.load();
-    if (!mounted) return;
     setState(() {
-      _snap = snap;
-      _loading = false;
+      _loading = true;
+      _loadFailed = false;
     });
+    try {
+      final snap = await _repo.load();
+      if (!mounted) return;
+      setState(() {
+        _snap = snap;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadFailed = true;
+      });
+    }
   }
 
   Future<void> _openSos() async {
@@ -97,7 +114,7 @@ class _ChildTasksScreenState extends State<ChildTasksScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'self');
+    await childSosSenderOf(context).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-CHD-005'));
@@ -112,10 +129,18 @@ class _ChildTasksScreenState extends State<ChildTasksScreen> {
   }
 
   String _title(AppLocalizations l10n, String key) {
+    if (key.startsWith('custom:')) {
+      return key.substring('custom:'.length);
+    }
     return switch (key) {
       'tidyRoom' => l10n.childTasksTitleTidyRoom,
       'mathReview' => l10n.childTasksTitleMathReview,
       'wirdDone' => l10n.childTasksTitleWirdDone,
+      'washDishes' => l10n.familyTasksTaskWashDishes,
+      'mathStudy' => l10n.familyTasksTaskMathStudy,
+      'dishesPlants' => l10n.smartChoreDishesPlants,
+      'livingLaundry' => l10n.smartChoreLivingLaundry,
+      'trashWater' => l10n.smartChoreTrashWater,
       _ => l10n.childTasksTitleTidyRoom,
     };
   }
@@ -188,6 +213,13 @@ class _ChildTasksScreenState extends State<ChildTasksScreen> {
         ),
       );
     }
+    if (_loadFailed) {
+      return AppErrorState(
+        key: ChildTasksKeys.error,
+        kind: AppErrorKind.network,
+        onRetry: _load,
+      );
+    }
     if (_snap.isEmpty) {
       return AppEmptyState(
         key: ChildTasksKeys.empty,
@@ -206,6 +238,12 @@ class _ChildTasksScreenState extends State<ChildTasksScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          BannerNote(
+            key: ChildTasksKeys.localHonesty,
+            variant: BannerVariant.t,
+            message: l10n.honestyChildGentleLine,
+          ),
+          const SizedBox(height: 12),
           DecoratedBox(
             key: ChildTasksKeys.hero,
             decoration: BoxDecoration(

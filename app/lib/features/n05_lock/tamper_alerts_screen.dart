@@ -11,6 +11,8 @@ import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/anti_tamper_permission.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n05_lock/tamper_alerts_models.dart';
@@ -131,7 +133,7 @@ class _TamperAlertsScreenState extends State<TamperAlertsScreen> {
   ChildId _resolveChildId(String? raw) {
     final trimmed = raw?.trim();
     if (trimmed == null || trimmed.isEmpty) {
-      return ChildId(kDefaultTamperAlertsChildKey);
+      return resolveActiveChildId();
     }
     return ChildId(trimmed);
   }
@@ -161,7 +163,7 @@ class _TamperAlertsScreenState extends State<TamperAlertsScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: _childId.value);
+    await parentSosSenderOf(context, viewedChild: _childId).fireThrough(_sos);
     if (mounted) setState(() => _sosBusy = false);
   }
 

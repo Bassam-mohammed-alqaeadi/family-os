@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:family_os/app/role_controller.dart';
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
@@ -11,6 +12,8 @@ import 'package:family_os/features/n02_day/child_active_call_mock.dart';
 import 'package:family_os/features/n02_day/child_active_call_screen.dart';
 
 void main() {
+  tearDown(AppToast.dismiss);
+
   testWidgets('SCR-CHD-009 body + mute/speaker/end', (tester) async {
     var ended = false;
     await _pump(
@@ -23,12 +26,13 @@ void main() {
 
     expect(find.byKey(ChildActiveCallKeys.body), findsOneWidget);
     expect(find.byKey(ChildActiveCallKeys.peerLabel), findsOneWidget);
-    expect(find.text('أب ١'), findsOneWidget);
+    expect(find.text('أب 1'), findsOneWidget);
 
     await tester.tap(find.byKey(ChildActiveCallKeys.mute));
     await tester.pump();
     await tester.tap(find.byKey(ChildActiveCallKeys.speaker));
     await tester.pump();
+    AppToast.dismiss();
     await tester.tap(find.byKey(ChildActiveCallKeys.end));
     await tester.pump();
     expect(ended, isTrue);

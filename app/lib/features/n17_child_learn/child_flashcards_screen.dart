@@ -5,11 +5,13 @@ import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/app/role_guard.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
+import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n17_child_learn/child_flashcards_models.dart';
 import 'package:family_os/features/n17_child_learn/child_flashcards_repository.dart';
@@ -26,6 +28,7 @@ abstract final class ChildFlashcardsKeys {
   static const knownCta = Key('child_flashcards_known');
   static const reviewCta = Key('child_flashcards_review');
   static const quizCta = Key('child_flashcards_quiz');
+  static const honestyBanner = Key('child_flashcards_honesty');
   static const parentLean = Key('child_flashcards_parent_lean');
   static const sosIconCta = Key('child_flashcards_sos_icon');
 }
@@ -111,7 +114,7 @@ class _ChildFlashcardsScreenState extends State<ChildFlashcardsScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'self');
+    await childSosSenderOf(context).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-CHD-005'));
@@ -267,6 +270,12 @@ class _ChildFlashcardsScreenState extends State<ChildFlashcardsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          BannerNote(
+            key: ChildFlashcardsKeys.honestyBanner,
+            variant: BannerVariant.t,
+            message: l10n.honestyChildGentleLine,
+          ),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -314,10 +323,10 @@ class _ChildFlashcardsScreenState extends State<ChildFlashcardsScreen> {
                 constraints: const BoxConstraints(minHeight: 190),
                 padding: const EdgeInsets.fromLTRB(18, 26, 18, 26),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
+                  gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Color(0xFFFFFDF9), Color(0xFFF7F4EB)],
+                    colors: [colors.surface, colors.bg],
                   ),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(

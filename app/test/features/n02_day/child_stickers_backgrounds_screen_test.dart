@@ -36,11 +36,12 @@ void main() {
     );
     await _pump(tester, repository: repo);
     expect(find.byKey(ChildStickersBackgroundsKeys.stickers), findsOneWidget);
+    expect(find.byKey(ChildStickersBackgroundsKeys.localHonesty), findsOneWidget);
     await tester.tap(
       find.byKey(ChildStickersBackgroundsKeys.background('indigo')),
     );
     await tester.pump();
-    expect(find.textContaining('Background changed'), findsOneWidget);
+    expect(find.textContaining('Background saved'), findsOneWidget);
     expect(repo.selectedBackgroundId, 'indigo');
     AppToast.dismiss();
     await tester.pumpAndSettle();
@@ -67,6 +68,17 @@ void main() {
     await tester.pump();
     expect(find.byKey(ChildStickersBackgroundsKeys.loading), findsOneWidget);
     gate.complete();
+    await tester.pumpAndSettle();
+    expect(find.byKey(ChildStickersBackgroundsKeys.body), findsOneWidget);
+  });
+
+  testWidgets('load error → retry', (tester) async {
+    final repo = InMemoryChildStickersBackgroundsRepository(
+      seed: childStickersBackgroundsOneFixture(),
+    )..loadError = Exception('offline');
+    await _pump(tester, repository: repo);
+    expect(find.byKey(ChildStickersBackgroundsKeys.error), findsOneWidget);
+    await tester.tap(find.text('Retry'));
     await tester.pumpAndSettle();
     expect(find.byKey(ChildStickersBackgroundsKeys.body), findsOneWidget);
   });

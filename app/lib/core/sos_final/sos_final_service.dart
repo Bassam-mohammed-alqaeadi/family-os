@@ -1,5 +1,6 @@
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/identity_ids.dart';
+import 'package:family_os/core/events/local_event_emitter.dart';
 import 'package:family_os/core/policy/sos_alert.dart';
 import 'package:family_os/core/policy/sos_role_actions.dart';
 
@@ -17,14 +18,17 @@ final class SosFinalService {
     required this.familyId,
     DateTime Function()? clock,
     String Function()? idFactory,
+    LocalEventEmitter? localEvents,
   })  : _store = store,
         _clock = clock ?? DateTime.now,
-        _idFactory = idFactory ?? _defaultId;
+        _idFactory = idFactory ?? _defaultId,
+        _localEvents = localEvents;
 
   final SosFinalRepository _store;
   final FamilyId familyId;
   final DateTime Function() _clock;
   final String Function() _idFactory;
+  final LocalEventEmitter? _localEvents;
 
   static var _seq = 0;
   static String _defaultId() {
@@ -47,6 +51,7 @@ final class SosFinalService {
   /// Child HOLD complete → durable ACTIVE + audit + ops snapshot.
   Future<SosIncident> fireHold({
     required ChildId childId,
+    String? raisedByActorId,
     SosLocationClass locationClass = SosLocationClass.acquiring,
     SosConnectionClass connectionClass = SosConnectionClass.online,
     int batteryPercent = 0,
@@ -61,11 +66,13 @@ final class SosFinalService {
     SosLifecycleEngine.assertCanFire(alreadyOpen: open != null);
     final now = _clock().toUtc();
     final id = _idFactory();
+    final actor = raisedByActorId ?? childId.value;
     final incident = SosIncident.fire(
       id: id,
       familyId: familyId,
       childId: childId,
       triggeredAt: now,
+      raisedByActorId: actor,
       locationClass: locationClass,
       connectionClass: connectionClass,
       batteryPercent: batteryPercent,
@@ -83,7 +90,7 @@ final class SosFinalService {
         familyId: familyId,
         eventType: SosAuditEventType.fired,
         at: now,
-        actorId: childId.value,
+        actorId: actor,
         payloadJson: '{"trigger":"hold"}',
       ),
     );
@@ -111,6 +118,75 @@ final class SosFinalService {
         ),
       );
     }
+    // EVT-01-A: journal + outbox enqueue (soft; never blocks SOS fire).
+    await _localEvents?.emit(
+      channel: 'sos.lifecycle.fired',
+      payload: {
+        'incidentId': id,
+        'familyId': familyId.value,
+        'childId': childId.value,
+        'actorId': actor,
+        'trigger': 'hold',
+      },
+    );
+    return incident;
+  }
+
+  /// Parent-raised SOS → durable ACTIVE with parent actor + subject child (OD-13).
+  Future<SosIncident> fireParentAlert({
+    required ChildId childId,
+    required String actorId,
+    SosLocationClass locationClass = SosLocationClass.acquiring,
+    SosConnectionClass connectionClass = SosConnectionClass.online,
+    int batteryPercent = 0,
+    bool panicQuietAtTrigger = false,
+    String deliveriesJson = '[]',
+    String childDisplayName = '',
+    String childEmoji = '',
+    String locationLabel = '',
+  }) async {
+    final open = await _store.loadOpen(familyId: familyId, childId: childId);
+    SosLifecycleEngine.assertCanFire(alreadyOpen: open != null);
+    final now = _clock().toUtc();
+    final id = _idFactory();
+    final incident = SosIncident.fire(
+      id: id,
+      familyId: familyId,
+      childId: childId,
+      triggeredAt: now,
+      triggerSource: SosTriggerSource.parentAlert,
+      raisedByActorId: actorId,
+      locationClass: locationClass,
+      connectionClass: connectionClass,
+      batteryPercent: batteryPercent,
+      panicQuietAtTrigger: panicQuietAtTrigger,
+      deliveriesJson: deliveriesJson,
+      childDisplayName: childDisplayName,
+      childEmoji: childEmoji,
+      locationLabel: locationLabel,
+    );
+    await _store.saveIncident(incident);
+    await _store.appendAudit(
+      SosLifecycleAuditEntry(
+        id: '${id}_fired',
+        incidentId: id,
+        familyId: familyId,
+        eventType: SosAuditEventType.fired,
+        at: now,
+        actorId: actorId,
+        payloadJson: '{"trigger":"parentAlert"}',
+      ),
+    );
+    await _localEvents?.emit(
+      channel: 'sos.lifecycle.fired',
+      payload: {
+        'incidentId': id,
+        'familyId': familyId.value,
+        'childId': childId.value,
+        'actorId': actorId,
+        'trigger': 'parentAlert',
+      },
+    );
     return incident;
   }
 

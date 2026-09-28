@@ -34,6 +34,13 @@ abstract class SosLadderRepository {
     SosBackupContact contact, {
     String familyId = SosLadder.defaultFamilyId,
   });
+
+  /// Moves a backup up (−1) or down (+1) in priority order; no-op at edges.
+  Future<SosLadder> moveBackupPriority(
+    String backupId,
+    int delta, {
+    String familyId = SosLadder.defaultFamilyId,
+  });
 }
 
 /// String KV used by [PrefsSosLadderRepository].
@@ -57,6 +64,9 @@ final class MemorySosLadderStore implements SosLadderStore {
 }
 
 /// Stage-1 shared mock prefs (process lifetime).
+///
+/// LEGACY / RETAINED — production prefers
+/// [SosPrefsRuntime.ladder] Local KV (DOM-SOS-LADDER).
 final MemorySosLadderStore stage1SosLadderStore = MemorySosLadderStore();
 
 Never _rejectRemove(String memberId) => throw SosLadderValidationException(
@@ -198,6 +208,22 @@ final class PrefsSosLadderRepository implements SosLadderRepository {
     await save(next);
     return next;
   }
+
+  @override
+  Future<SosLadder> moveBackupPriority(
+    String backupId,
+    int delta, {
+    String familyId = SosLadder.defaultFamilyId,
+  }) async {
+    if (SosLadder.isFixedParentId(backupId)) {
+      _rejectRemove(backupId);
+    }
+    final ladder = await load(familyId);
+    final moved = ladder.movedBackup(backupId, delta);
+    if (moved == null) return ladder;
+    await save(moved);
+    return moved;
+  }
 }
 
 void _validateBackupContact(SosBackupContact contact) {
@@ -317,6 +343,22 @@ final class InMemorySosLadderRepository implements SosLadderRepository {
     final next = ladder.copyWith(backups: [...others, contact]);
     await save(next);
     return next;
+  }
+
+  @override
+  Future<SosLadder> moveBackupPriority(
+    String backupId,
+    int delta, {
+    String familyId = SosLadder.defaultFamilyId,
+  }) async {
+    if (SosLadder.isFixedParentId(backupId)) {
+      _rejectRemove(backupId);
+    }
+    final ladder = await load(familyId);
+    final moved = ladder.movedBackup(backupId, delta);
+    if (moved == null) return ladder;
+    await save(moved);
+    return moved;
   }
 
   Map<String, SosLadder> get debugSnapshot => Map.unmodifiable(_byFamily);

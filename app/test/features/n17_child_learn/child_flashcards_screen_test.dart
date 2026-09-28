@@ -35,6 +35,8 @@ void main() {
     await _pump(tester, repository: repo, onNavigate: nav.add);
 
     expect(find.byKey(ChildFlashcardsKeys.body), findsOneWidget);
+    expect(find.byKey(ChildFlashcardsKeys.honestyBanner), findsOneWidget);
+    expect(find.textContaining('this device only'), findsOneWidget);
     expect(find.textContaining('ordinary fraction'), findsOneWidget);
 
     await tester.tap(find.byKey(ChildFlashcardsKeys.flipCard));

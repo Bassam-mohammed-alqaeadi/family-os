@@ -9,7 +9,7 @@ abstract class ChildSmartTilawahRepository {
 final class InMemoryChildSmartTilawahRepository
     implements ChildSmartTilawahRepository {
   InMemoryChildSmartTilawahRepository({ChildSmartTilawahSnapshot? seed})
-    : _snap = seed ?? childSmartTilawahPrototypeFixture();
+    : _snap = seed ?? childSmartTilawahEmptyFixture();
 
   ChildSmartTilawahSnapshot _snap;
   Future<void> Function()? loadGate;

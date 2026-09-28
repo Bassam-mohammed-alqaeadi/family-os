@@ -28,5 +28,7 @@ final class MemoryFamilyContextStore implements FamilyContextStore {
   }
 }
 
+/// LEGACY / RETAINED — Memory family context. Production boot prefers Local KV
+/// via [IdentityLocalPersistence.tryBindStage1FamilyContext] (DOM-IDENTITY-A).
 final MemoryFamilyContextStore stage1FamilyContextStore =
     MemoryFamilyContextStore();

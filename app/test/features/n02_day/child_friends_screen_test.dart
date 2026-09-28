@@ -11,6 +11,7 @@ import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n02_day/child_friends_repository.dart';
 import 'package:family_os/features/n02_day/child_friends_screen.dart';
+import 'package:family_os/features/n02_day/outer_circle_repository.dart';
 
 void main() {
   tearDown(AppToast.dismiss);
@@ -37,10 +38,11 @@ void main() {
       ),
     );
     expect(find.byKey(ChildFriendsKeys.body), findsOneWidget);
+    expect(find.byKey(ChildFriendsKeys.localHonesty), findsOneWidget);
 
     await tester.tap(find.byKey(ChildFriendsKeys.chat('f1')));
     await tester.pump();
-    expect(find.textContaining('Opened a safe chat'), findsOneWidget);
+    expect(find.textContaining('delivery to other devices'), findsOneWidget);
     AppToast.dismiss();
     await tester.pumpAndSettle();
 
@@ -64,6 +66,16 @@ void main() {
     expect(find.byKey(ChildFriendsKeys.body), findsOneWidget);
   });
 
+  testWidgets('load error → retry', (tester) async {
+    final repo = InMemoryChildFriendsRepository(seed: childFriendsOneFixture())
+      ..loadError = Exception('offline');
+    await _pump(tester, repository: repo);
+    expect(find.byKey(ChildFriendsKeys.error), findsOneWidget);
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(ChildFriendsKeys.body), findsOneWidget);
+  });
+
   testWidgets('parent lean', (tester) async {
     await _pump(tester, role: AppRole.father);
     expect(find.byKey(ChildFriendsKeys.parentLean), findsOneWidget);
@@ -81,6 +93,21 @@ void main() {
     await tester.tap(find.byKey(ChildFriendsKeys.sosIconCta));
     await tester.pumpAndSettle();
     expect(sos, 1);
+  });
+
+  test('projects friends from shared outer circle + requestFriend', () async {
+    final circle = InMemoryOuterCircleRepository(
+      seed: outerCirclePrototypeFixture(),
+    );
+    final child = OuterCircleBoundChildFriendsRepository(circle: circle);
+    final snap = await child.load();
+    expect(snap.friends.map((f) => f.id), contains('f1'));
+    expect(snap.pending.map((f) => f.id), contains('p1'));
+
+    await child.requestAddFriend(nameKey: 'newFriend', placeKey: 'club');
+    final after = await circle.load();
+    expect(after.pending.length, greaterThan(1));
+    expect(child.addRequestCount, 1);
   });
 }
 

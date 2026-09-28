@@ -24,9 +24,9 @@ void main() {
     expect(find.byKey(const Key('link_qr_visual')), findsOneWidget);
     expect(find.bySemanticsLabel('رمز الربط QR'), findsOneWidget);
     expect(find.text('اربط جهازه'), findsOneWidget);
-    expect(find.text('٢ من ٣'), findsOneWidget);
+    expect(find.text('2 من 3'), findsOneWidget);
     expect(find.byKey(const Key('link_qr_timer')), findsOneWidget);
-    expect(find.textContaining('٤:٥٩'), findsOneWidget);
+    expect(find.textContaining('4:59'), findsOneWidget);
 
     await _settleTimers(tester);
   });
@@ -90,7 +90,7 @@ void main() {
     expect(find.textContaining('وُلّد رمز جديد'), findsOneWidget);
     expect(find.byKey(const Key('link_qr_expired')), findsNothing);
     expect(find.byKey(const Key('link_qr_timer')), findsOneWidget);
-    expect(find.textContaining('٤:٥٩'), findsOneWidget);
+    expect(find.textContaining('4:59'), findsOneWidget);
 
     final after = tester.widget<Text>(find.byKey(const Key('link_qr_token')));
     expect(after.data, isNot('pair_oldtoken'));
@@ -189,10 +189,9 @@ void main() {
     await _settleTimers(tester);
   });
 
-  testWidgets('formatLinkQrCountdown eastern + western', (tester) async {
-    expect(formatLinkQrCountdown(299, eastern: true), '٤:٥٩');
-    expect(formatLinkQrCountdown(299, eastern: false), '4:59');
-    expect(formatLinkQrCountdown(59, eastern: true), '٠:٥٩');
+  testWidgets('formatLinkQrCountdown Western digits (D5)', (tester) async {
+    expect(formatLinkQrCountdown(299), '4:59');
+    expect(formatLinkQrCountdown(59), '0:59');
   });
 }
 

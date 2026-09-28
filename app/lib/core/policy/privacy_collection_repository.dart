@@ -79,6 +79,9 @@ final class MemoryPrivacyCollectionPrefsStore
 }
 
 /// Stage-1 shared prefs store (survives within process).
+///
+/// LEGACY / RETAINED — production prefers Local KV
+/// ([PrefsMiscLocalPersistence.openPrivacyRepository]).
 final MemoryPrivacyCollectionPrefsStore stage1PrivacyCollectionPrefsStore =
     MemoryPrivacyCollectionPrefsStore();
 

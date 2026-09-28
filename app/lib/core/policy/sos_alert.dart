@@ -84,10 +84,14 @@ final class SosAlert {
     this.pinFracX = 0.62,
     this.pinFracY = 0.42,
     this.panicQuietAtTrigger = false,
+    this.raisedByActorId,
   });
 
   final String id;
   final String childId;
+
+  /// Who pressed SOS (parent membership or child id). OD-13 / D7.
+  final String? raisedByActorId;
   final String childDisplayName;
   final String childEmoji;
   final DateTime pressedAt;
@@ -137,6 +141,7 @@ final class SosAlert {
     double? pinFracX,
     double? pinFracY,
     bool? panicQuietAtTrigger,
+    String? raisedByActorId,
   }) {
     return SosAlert(
       id: id ?? this.id,
@@ -161,6 +166,7 @@ final class SosAlert {
       pinFracX: pinFracX ?? this.pinFracX,
       pinFracY: pinFracY ?? this.pinFracY,
       panicQuietAtTrigger: panicQuietAtTrigger ?? this.panicQuietAtTrigger,
+      raisedByActorId: raisedByActorId ?? this.raisedByActorId,
     );
   }
 }

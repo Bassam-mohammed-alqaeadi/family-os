@@ -142,7 +142,7 @@ void main() {
   });
 
   test('schema createStatements include FS tables through v10', () {
-    expect(FamilyLocalSchema.currentVersion, 10);
+    expect(FamilyLocalSchema.currentVersion, 12);
     final sql = FamilyLocalSchema.createStatements.join('\n');
     for (final table in [
       'loc_zone',
@@ -158,7 +158,7 @@ void main() {
     }
   });
 
-  test('SQLite onUpgrade migrates empty v1 file to v10', () async {
+  test('SQLite onUpgrade migrates empty v1 file to current', () async {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
 

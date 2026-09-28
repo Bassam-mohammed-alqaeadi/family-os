@@ -14,7 +14,7 @@ import 'package:family_os/features/n12_devices/mother_permission_level_screen.da
 void main() {
   tearDown(() {
     AppToast.dismiss();
-    stage1MotherPermissionLevelRepository.resetForTests();
+    resetStage1MotherPermissionLevelRepositoryForTest();
   });
 
   testWidgets('father sees three levels + fixed rights + empty audit',

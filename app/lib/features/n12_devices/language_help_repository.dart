@@ -3,12 +3,15 @@ import 'package:family_os/features/n12_devices/language_help_models.dart';
 /// Rule 25 seam — Stage-1 mock language & help (no backend).
 abstract class LanguageHelpRepository {
   Future<LanguageHelpSnapshot> load();
+
+  /// VX-B3 · D1 — persist + reflect the selected interface language.
+  Future<LanguageHelpSnapshot> setLocale(LanguageHelpLocale locale);
 }
 
 /// In-memory mock — prototype FAT-061 shape by default.
 final class InMemoryLanguageHelpRepository implements LanguageHelpRepository {
   InMemoryLanguageHelpRepository({LanguageHelpSnapshot? seed})
-    : _snap = seed ?? languageHelpPrototypeFixture();
+    : _snap = seed ?? languageHelpEmptyFixture();
 
   LanguageHelpSnapshot _snap;
 
@@ -23,6 +26,15 @@ final class InMemoryLanguageHelpRepository implements LanguageHelpRepository {
       currentLocale: _snap.currentLocale,
       helpLinks: List<LanguageHelpLink>.from(_snap.helpLinks),
     );
+  }
+
+  @override
+  Future<LanguageHelpSnapshot> setLocale(LanguageHelpLocale locale) async {
+    _snap = LanguageHelpSnapshot(
+      currentLocale: locale,
+      helpLinks: List<LanguageHelpLink>.from(_snap.helpLinks),
+    );
+    return load();
   }
 
   void seed(LanguageHelpSnapshot snap) {

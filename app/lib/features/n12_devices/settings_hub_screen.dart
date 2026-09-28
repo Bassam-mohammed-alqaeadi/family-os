@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/role_guard.dart';
+import 'package:family_os/app/shell_tab_more_tools.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n12_devices/device_health_list_screen.dart';
 import 'package:family_os/features/n12_devices/device_health_seam.dart';
@@ -90,7 +92,7 @@ class SettingsHubScreenState extends State<SettingsHubScreen> {
     }
     setState(() => _sosBusy = true);
     final fire = widget.sosFire ?? stage1SosFireService;
-    await fire.fire(childId: 'family');
+    await parentSosSenderOf(context).fireThrough(fire);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push('/scr-fat-018');
@@ -340,6 +342,7 @@ class SettingsHubScreenState extends State<SettingsHubScreen> {
               ),
             ],
           ),
+          const ShellTabMoreTools(tabId: 'settings'),
         ],
       ),
     );
@@ -478,7 +481,7 @@ class _HubNavRow extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(Icons.chevron_left, color: colors.ink2, size: 20),
+              Icon(Icons.chevron_right, color: colors.ink2, size: 20),
             ],
           ),
         ),

@@ -9,7 +9,7 @@ abstract class AgentActionLogRepository {
 final class InMemoryAgentActionLogRepository
     implements AgentActionLogRepository {
   InMemoryAgentActionLogRepository({AgentActionLogSnapshot? seed})
-    : _snap = seed ?? agentActionLogPrototypeFixture();
+    : _snap = seed ?? agentActionLogEmptyFixture();
 
   AgentActionLogSnapshot _snap;
   Future<void> Function()? loadGate;

@@ -109,36 +109,39 @@ class _InviteMotherScreenState extends State<InviteMotherScreen> {
     }
 
     final runtime = CurrentIdentity.maybeOf(context);
-    if (runtime != null) {
-      if (!runtime.authorizationContext.canInviteAdults) {
-        AppToast.show(context, message: l10n.settingsPersistError);
-        return;
+    // Fail closed without Identity — no fake “sent” toast / navigation.
+    if (runtime == null) {
+      AppToast.show(context, message: l10n.settingsPersistError);
+      return;
+    }
+    if (!runtime.authorizationContext.canInviteAdults) {
+      AppToast.show(context, message: l10n.settingsPersistError);
+      return;
+    }
+    final email = _emailController.text.trim().toLowerCase();
+    final mapped = switch (_level) {
+      MotherInviteLevel.observer => MotherLevel.observer,
+      MotherInviteLevel.partner => MotherLevel.partner,
+      MotherInviteLevel.full => MotherLevel.full,
+    };
+    try {
+      final latest = _repo.latestForTarget(runtime.activeFamilyId, email);
+      if (latest != null && latest.isActiveAt(DateTime.now().toUtc())) {
+        _latest = _repo.resendInvite(
+          inviteId: latest.id,
+          actorMemberId: runtime.activeMembership.id,
+        );
+      } else {
+        _latest = _repo.createInvite(
+          familyId: runtime.activeFamilyId,
+          target: email,
+          level: mapped,
+          actorMemberId: runtime.activeMembership.id,
+        );
       }
-      final email = _emailController.text.trim().toLowerCase();
-      final mapped = switch (_level) {
-        MotherInviteLevel.observer => MotherLevel.observer,
-        MotherInviteLevel.partner => MotherLevel.partner,
-        MotherInviteLevel.full => MotherLevel.full,
-      };
-      try {
-        final latest = _repo.latestForTarget(runtime.activeFamilyId, email);
-        if (latest != null && latest.isActiveAt(DateTime.now().toUtc())) {
-          _latest = _repo.resendInvite(
-            inviteId: latest.id,
-            actorMemberId: runtime.activeMembership.id,
-          );
-        } else {
-          _latest = _repo.createInvite(
-            familyId: runtime.activeFamilyId,
-            target: email,
-            level: mapped,
-            actorMemberId: runtime.activeMembership.id,
-          );
-        }
-      } on InviteMutationDenied {
-        AppToast.show(context, message: l10n.settingsPersistError);
-        return;
-      }
+    } on InviteMutationDenied {
+      AppToast.show(context, message: l10n.settingsPersistError);
+      return;
     }
 
     AppToast.show(
@@ -254,6 +257,12 @@ class _InviteMotherScreenState extends State<InviteMotherScreen> {
                 style: TextStyle(fontSize: 14, color: colors.p700),
               ),
               message: l10n.inviteMotherBanner,
+            ),
+            const SizedBox(height: 10),
+            BannerNote(
+              key: const Key('invite_mother_local_honesty'),
+              variant: BannerVariant.t,
+              message: l10n.inviteMotherLocalHonestyBanner,
             ),
             const SizedBox(height: 16),
             PrimaryBtn(

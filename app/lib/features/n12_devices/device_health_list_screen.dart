@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:family_os/core/design/components/app_empty_state.dart';
+import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
@@ -14,6 +16,8 @@ abstract final class DeviceHealthListKeys {
   static const screen = Key('device_health_list_screen');
   static const devicesSection = Key('device_health_devices_section');
   static const manageEnrollment = Key('device_health_manage_enrollment');
+  static const empty = Key('device_health_list_empty');
+  static const localDemoBanner = Key('device_health_list_local_demo_banner');
   static Key deviceCard(String deviceId) => Key('device_health_card_$deviceId');
   static Key healthTag(String deviceId) => Key('device_health_tag_$deviceId');
   static Key manageEnrollmentFor(String childId) =>
@@ -64,11 +68,25 @@ class _DeviceHealthDevicesSectionState
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final familyId =
-        CurrentIdentity.maybeOf(context)?.activeFamilyId.value ?? 'fam_stage1';
+    // Fail closed without Identity — never leak fam_stage1 demo across families.
+    final familyId = CurrentIdentity.maybeOf(context)?.activeFamilyId.value;
+    if (familyId == null || familyId.trim().isEmpty) {
+      if (_subscribedFamilyId == null && !_loading && _devices.isEmpty) {
+        return;
+      }
+      _sub?.cancel();
+      _sub = null;
+      _subscribedFamilyId = null;
+      setState(() {
+        _devices = const [];
+        _loading = false;
+      });
+      return;
+    }
     if (_subscribedFamilyId == familyId && _sub != null) return;
     _subscribedFamilyId = familyId;
     _sub?.cancel();
+    setState(() => _loading = true);
     _sub = _seam.watchDevices(familyId: familyId).listen((list) {
       if (!mounted) return;
       setState(() {
@@ -159,13 +177,32 @@ class _DeviceHealthDevicesSectionState
                 height: 1.45,
               ),
             ),
-            const SizedBox(height: 8),
-            for (final d in _devices) ...[
-              _DeviceHealthCard(
-                snapshot: d,
-                onTap: () => _openDetail(d.deviceId),
+            if (widget.healthSeam == null && _devices.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              BannerNote(
+                key: DeviceHealthListKeys.localDemoBanner,
+                message: l10n.childrenListLocalDemoBanner,
+                variant: BannerVariant.a,
+                leading: Text(
+                  'ℹ',
+                  style: TextStyle(fontSize: 18, color: colors.ink),
+                ),
               ),
             ],
+            const SizedBox(height: 8),
+            if (_devices.isEmpty)
+              AppEmptyState(
+                key: DeviceHealthListKeys.empty,
+                title: l10n.deviceHealthDevicesEmptyTitle,
+                message: l10n.deviceHealthDevicesEmptyMessage,
+              )
+            else
+              for (final d in _devices) ...[
+                _DeviceHealthCard(
+                  snapshot: d,
+                  onTap: () => _openDetail(d.deviceId),
+                ),
+              ],
             if (childIds.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(
@@ -290,7 +327,7 @@ class _DeviceHealthCard extends StatelessWidget {
                 variant: tagVariant,
               ),
               const SizedBox(width: 6),
-              Icon(Icons.chevron_left, color: colors.ink2, size: 20),
+              Icon(Icons.chevron_right, color: colors.ink2, size: 20),
             ],
           ),
         ),

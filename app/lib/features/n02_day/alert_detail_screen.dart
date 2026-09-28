@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/app_error_state.dart';
 import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
@@ -12,9 +13,12 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n02_day/alert_detail_repository.dart';
 import 'package:family_os/features/n02_day/alerts_hub_repository.dart';
+import 'package:family_os/features/n12_devices/mother_permission_level_repository.dart';
 
 /// Widget keys for SCR-FAT-020 acceptance.
 abstract final class AlertDetailKeys {
@@ -55,7 +59,7 @@ class AlertDetailScreen extends StatefulWidget {
     this.alertKind,
     this.repository,
     this.roleOverride,
-    this.motherLevel = MotherLevel.partner,
+    this.motherLevel,
     this.sosFire,
     this.onSos,
     this.onOpenChat,
@@ -77,7 +81,9 @@ class AlertDetailScreen extends StatefulWidget {
   final AppRole? roleOverride;
 
   /// Mother authority — block needs [MotherLevel.full] (prototype `rules`).
-  final MotherLevel motherLevel;
+  /// Null → [stage1MotherPermissionLevelRepository.level] (Identity-bound).
+  final MotherLevel? motherLevel;
+
 
   /// P-4 SOS seam — null → [stage1SosFireService].
   final SosFireService? sosFire;
@@ -107,10 +113,13 @@ class AlertDetailScreenState extends State<AlertDetailScreen> {
   bool get _isParent => _role == AppRole.father || _role == AppRole.mother;
 
   /// Father always; mother only at full (prototype `can('rules')`).
+  MotherLevel get _motherLevel =>
+      widget.motherLevel ?? stage1MotherPermissionLevelRepository.level;
+
   bool get _canEditRules {
     if (_role == AppRole.father) return true;
     if (_role == AppRole.mother) {
-      return widget.motherLevel == MotherLevel.full;
+      return _motherLevel == MotherLevel.full;
     }
     return false;
   }
@@ -170,7 +179,7 @@ class AlertDetailScreenState extends State<AlertDetailScreen> {
       );
       if (!mounted) return;
       setState(() {
-        _detail = detail;
+        _detail = detail == null ? null : _localizeProjected(detail);
         _loading = false;
         _loadFailed = false;
       });
@@ -184,6 +193,35 @@ class AlertDetailScreenState extends State<AlertDetailScreen> {
     }
   }
 
+  /// Fill ARB copy for locally projected SOS/tamper kinds (empty title/body).
+  AlertDetail _localizeProjected(AlertDetail detail) {
+    final l10n = AppLocalizations.of(context);
+    switch (detail.kind) {
+      case AlertDetailKind.sos:
+        return detail.copyWith(
+          title: detail.title.isEmpty ? l10n.alertDetailSosTitle : detail.title,
+          body: detail.body.isEmpty ? l10n.alertDetailSosBody : detail.body,
+          advice: (detail.advice == null || detail.advice!.isEmpty)
+              ? l10n.alertDetailSosAdvice
+              : detail.advice,
+        );
+      case AlertDetailKind.tamper:
+        return detail.copyWith(
+          title:
+              detail.title.isEmpty ? l10n.alertDetailTamperTitle : detail.title,
+          body: detail.body.isEmpty ? l10n.alertDetailTamperBody : detail.body,
+          advice: (detail.advice == null || detail.advice!.isEmpty)
+              ? l10n.alertDetailTamperAdvice
+              : detail.advice,
+        );
+      case AlertDetailKind.stranger:
+      case AlertDetailKind.battery:
+      case AlertDetailKind.games:
+      case AlertDetailKind.arrive:
+        return detail;
+    }
+  }
+
   Future<void> _openSos() async {
     if (_busy) return;
     if (widget.onSos != null) {
@@ -192,7 +230,12 @@ class AlertDetailScreenState extends State<AlertDetailScreen> {
     }
     setState(() => _busy = true);
     final fire = widget.sosFire ?? stage1SosFireService;
-    await fire.fire(childId: _detail?.childId ?? 'family');
+    final sender = sosSenderForRole(
+      context,
+      _role,
+      viewedChild: childIdFromParam(_detail?.childId),
+    );
+    await sender.fireThrough(fire);
     if (!mounted) return;
     setState(() => _busy = false);
     context.push('/scr-fat-018');
@@ -206,7 +249,7 @@ class AlertDetailScreenState extends State<AlertDetailScreen> {
       final updated = await _repo.markPrimaryDone(detail.id);
       if (!mounted) return;
       setState(() {
-        _detail = updated;
+        _detail = _localizeProjected(updated);
         _busy = false;
       });
     } on Object {
@@ -403,11 +446,7 @@ class AlertDetailScreenState extends State<AlertDetailScreen> {
               onPressed: _busy
                   ? null
                   : () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(l10n.alertDetailRequestBlockToast),
-                        ),
-                      );
+                      AppToast.show(context, message: l10n.alertDetailRequestBlockToast);
                     },
             ),
           const SizedBox(height: 10),
@@ -485,6 +524,33 @@ class AlertDetailScreenState extends State<AlertDetailScreen> {
             variant: PrimaryBtnVariant.sec,
             onPressed: _openMap,
           ),
+        ];
+      case AlertDetailKind.sos:
+        return [
+          PrimaryBtn(
+            key: AlertDetailKeys.primaryAction,
+            label: l10n.alertDetailSosOpenBoardCta,
+            onPressed: _busy
+                ? null
+                : () {
+                    context.push('/scr-fat-018');
+                  },
+          ),
+        ];
+      case AlertDetailKind.tamper:
+        return [
+          if (detail.primaryDone)
+            BannerNote(
+              key: AlertDetailKeys.primaryDone,
+              variant: BannerVariant.t,
+              message: l10n.alertDetailAcknowledgeDoneBanner,
+            )
+          else
+            PrimaryBtn(
+              key: AlertDetailKeys.primaryAction,
+              label: l10n.alertDetailAcknowledgeCta,
+              onPressed: _busy ? null : _markPrimaryDone,
+            ),
         ];
     }
   }
@@ -594,6 +660,8 @@ class _DetailCard extends StatelessWidget {
       AlertDetailKind.battery => l10n.alertDetailCategoryDevice,
       AlertDetailKind.games => l10n.alertDetailCategoryScreenTime,
       AlertDetailKind.arrive => l10n.alertDetailCategorySafeArrival,
+      AlertDetailKind.sos => l10n.alertDetailCategorySos,
+      AlertDetailKind.tamper => l10n.alertDetailCategoryTamper,
     };
   }
 }

@@ -11,6 +11,7 @@ import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n17_child_learn/child_memorization_models.dart';
 import 'package:family_os/features/n17_child_learn/child_memorization_repository.dart';
@@ -94,7 +95,7 @@ class _ChildMemorizationScreenState extends State<ChildMemorizationScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'self');
+    await childSosSenderOf(context).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-CHD-005'));

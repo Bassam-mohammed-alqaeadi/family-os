@@ -78,9 +78,16 @@ final class SharedChildrenPolicies {
 abstract class ChildrenListRepository {
   Future<List<ChildrenListEntry>> listChildren({FamilyId? familyId});
 
+  /// Persist display fields for a child (VX-B6 / FVX-S-04). Idempotent upsert.
+  Future<void> upsertChild(ChildrenListEntry entry, {FamilyId? familyId});
+
   Future<SharedChildrenPolicies> loadSharedPolicies();
 
   Future<void> saveSharedPolicies(SharedChildrenPolicies policies);
+
+  /// Envelope provenance (`LOCAL_DEMO_SEEDED`) when roster is demo seed.
+  /// Null → no honesty banner (live/unmarked).
+  Future<String?> loadProvenance({FamilyId? familyId});
 }
 
 /// In-memory mock — default empty family (Rule 23 · never plants person names).
@@ -90,6 +97,7 @@ final class InMemoryChildrenListRepository implements ChildrenListRepository {
     Map<String, List<ChildrenListEntry>> byFamily = const {},
     SharedChildrenPolicies policies = const SharedChildrenPolicies(),
     this.failLoad = false,
+    this.provenance,
   }) : _children = List.of(children),
        _byFamily = {
          for (final entry in byFamily.entries) entry.key: List.of(entry.value),
@@ -102,6 +110,9 @@ final class InMemoryChildrenListRepository implements ChildrenListRepository {
 
   /// Test seam — next [listChildren] throws.
   bool failLoad;
+
+  /// Test seam — when [kChildrenListLocalDemoProvenance], FAT-012 shows honesty.
+  final String? provenance;
 
   void seed(List<ChildrenListEntry> children) => _children = List.of(children);
   void seedFamily(FamilyId familyId, List<ChildrenListEntry> children) {
@@ -128,13 +139,57 @@ final class InMemoryChildrenListRepository implements ChildrenListRepository {
   }
 
   @override
+  Future<void> upsertChild(ChildrenListEntry entry, {FamilyId? familyId}) async {
+    if (familyId != null) {
+      final key = familyId.value;
+      final list = List<ChildrenListEntry>.of(_byFamily[key] ?? const []);
+      final idx = list.indexWhere((c) => c.id == entry.id);
+      if (idx >= 0) {
+        list[idx] = entry;
+      } else {
+        list.add(entry);
+      }
+      _byFamily[key] = list;
+      return;
+    }
+    final idx = _children.indexWhere((c) => c.id == entry.id);
+    if (idx >= 0) {
+      _children[idx] = entry;
+    } else {
+      _children.add(entry);
+    }
+  }
+
+  @override
   Future<SharedChildrenPolicies> loadSharedPolicies() async => _policies;
 
   @override
   Future<void> saveSharedPolicies(SharedChildrenPolicies policies) async {
     _policies = policies;
   }
+
+  @override
+  Future<String?> loadProvenance({FamilyId? familyId}) async => provenance;
 }
 
-/// Stage-1 singleton — empty until tests/repos seed (Rule 23).
-final stage1ChildrenListRepository = InMemoryChildrenListRepository();
+/// LEGACY / RETAINED — InMemory empty roster. Production prefers Local KV via
+/// [rebindStage1ChildrenListRepository] (DOM-IDENTITY-B).
+final InMemoryChildrenListRepository _stage1ChildrenListMemory =
+    InMemoryChildrenListRepository();
+
+ChildrenListRepository? _stage1ChildrenListBound;
+
+/// Stage-1 children list accessor — Local when bound, else InMemory.
+ChildrenListRepository get stage1ChildrenListRepository =>
+    _stage1ChildrenListBound ?? _stage1ChildrenListMemory;
+
+void rebindStage1ChildrenListRepository(ChildrenListRepository repository) {
+  _stage1ChildrenListBound = repository;
+}
+
+@visibleForTesting
+void resetStage1ChildrenListRepositoryForTest() {
+  _stage1ChildrenListBound = null;
+  _stage1ChildrenListMemory.seed(const []);
+  _stage1ChildrenListMemory.failLoad = false;
+}

@@ -7,6 +7,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/identity/identity_runtime.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n12_devices/device_health_detail_screen.dart';
 import 'package:family_os/features/n12_devices/device_health_seam.dart';
@@ -139,7 +141,7 @@ void main() {
         DeviceHealthSnapshot(
           deviceId: 'dev_edge',
           childId: 'child_e',
-          displayLabel: 'ابن ١',
+          displayLabel: 'ابن 1',
           modelLabel: 'OEM device',
           level: DeviceHealthLevel.atRisk,
           oemFamily: 'Xiaomi',
@@ -198,6 +200,24 @@ void main() {
       expect(value.contains('عبدالله'), isFalse, reason: value);
     }
   });
+
+  testWidgets('SCR-FAT-026 without Identity → missing (no fam_stage1 leak)', (
+    tester,
+  ) async {
+    final seam = FakeDeviceHealthSeam.atRiskBattery();
+    addTearDown(seam.dispose);
+
+    await _pumpDetail(
+      tester,
+      seam: seam,
+      deviceId: 'dev_ac',
+      role: AppRole.father,
+      withIdentity: false,
+    );
+
+    expect(find.byKey(DeviceHealthDetailKeys.missing), findsOneWidget);
+    expect(find.byKey(DeviceHealthDetailKeys.body), findsNothing);
+  });
 }
 
 Future<void> _pumpDetail(
@@ -206,26 +226,31 @@ Future<void> _pumpDetail(
   required String deviceId,
   required AppRole role,
   VoidCallback? onSos,
+  bool withIdentity = true,
 }) async {
+  final home = DeviceHealthDetailScreen(
+    deviceId: deviceId,
+    healthSeam: seam,
+    roleOverride: role,
+    onSos: onSos ?? () {},
+    onOpenSettingsToast: false,
+  );
+  final app = MaterialApp(
+    theme: buildFamilyTheme(),
+    locale: const Locale('ar'),
+    supportedLocales: AppLocalizations.supportedLocales,
+    localizationsDelegates: const [
+      AppLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    home: home,
+  );
   await tester.pumpWidget(
-    MaterialApp(
-      theme: buildFamilyTheme(),
-      locale: const Locale('ar'),
-      supportedLocales: AppLocalizations.supportedLocales,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      home: DeviceHealthDetailScreen(
-        deviceId: deviceId,
-        healthSeam: seam,
-        roleOverride: role,
-        onSos: onSos ?? () {},
-        onOpenSettingsToast: false,
-      ),
-    ),
+    withIdentity
+        ? CurrentIdentity(runtime: createStage1IdentityRuntime(), child: app)
+        : app,
   );
   await tester.pumpAndSettle();
 }

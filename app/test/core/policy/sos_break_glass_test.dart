@@ -8,10 +8,10 @@ import 'package:family_os/core/policy/sos_role_actions.dart';
 
 void main() {
   group('SosBreakGlass', () {
-    test('Primary can start; Partner denied', () {
+    test('Primary can start; Partner denied', () async {
       final store = InMemorySosBreakGlassStore();
       final now = DateTime.now().toUtc();
-      final session = store.start(
+      final session = await store.start(
         actor: SosActor.primary(),
         capabilityKey: 'sos_response_override',
         reason: 'device offline test',
@@ -21,8 +21,8 @@ void main() {
       expect(session.phase, SosBreakGlassPhase.overrideActive);
       expect(store.active, isNotNull);
 
-      expect(
-        () => store.start(
+      await expectLater(
+        store.start(
           actor: SosActor.mother(MotherLevel.partner),
           capabilityKey: 'sos_response_override',
           reason: 'nope',
@@ -33,19 +33,19 @@ void main() {
       );
     });
 
-    test('Mother Full allowed; Observer denied', () {
+    test('Mother Full allowed; Observer denied', () async {
       final store = InMemorySosBreakGlassStore();
-      expect(
-        () => store.start(
+      await expectLater(
+        store.start(
           actor: SosActor.mother(MotherLevel.full),
           capabilityKey: 'sos_response_override',
           reason: 'ok',
           duration: const Duration(minutes: 10),
         ),
-        returnsNormally,
+        completes,
       );
-      expect(
-        () => InMemorySosBreakGlassStore().start(
+      await expectLater(
+        InMemorySosBreakGlassStore().start(
           actor: SosActor.mother(MotherLevel.observer),
           capabilityKey: 'x',
           reason: 'no',
@@ -61,7 +61,7 @@ void main() {
       final before = await ladderRepo.load();
 
       final now = DateTime.now().toUtc();
-      store.start(
+      await store.start(
         actor: SosActor.primary(),
         capabilityKey: 'sos_response_override',
         reason: 'temp',
@@ -73,7 +73,7 @@ void main() {
       final expiredCheck = store.active;
       // Manually age: start with past expiry
       store.clear();
-      store.start(
+      await store.start(
         actor: SosActor.primary(),
         capabilityKey: 'sos_response_override',
         reason: 'temp',
@@ -88,15 +88,15 @@ void main() {
       expect(before.backups, isEmpty);
     });
 
-    test('revoke ends override; audit retained', () {
+    test('revoke ends override; audit retained', () async {
       final store = InMemorySosBreakGlassStore();
-      store.start(
+      await store.start(
         actor: SosActor.primary(),
         capabilityKey: 'sos_response_override',
         reason: 'temp',
         duration: const Duration(minutes: 5),
       );
-      store.revoke(note: 'manual');
+      await store.revoke(note: 'manual');
       expect(store.active, isNull);
       expect(store.auditLog, isNotEmpty);
       expect(

@@ -18,7 +18,7 @@ final class InMemoryPreviewApproveRepository
   InMemoryPreviewApproveRepository({
     PreviewApproveSnapshot? seed,
     ApprovedPackRepository? packs,
-  }) : _snap = seed ?? previewApprovePrototypeFixture(),
+  }) : _snap = seed ?? previewApproveEmptyFixture(),
        _packs = packs ?? stage1ApprovedPackRepository;
 
   PreviewApproveSnapshot _snap;

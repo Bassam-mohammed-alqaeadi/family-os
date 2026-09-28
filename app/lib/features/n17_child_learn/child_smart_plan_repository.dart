@@ -9,7 +9,7 @@ abstract class ChildSmartPlanRepository {
 final class InMemoryChildSmartPlanRepository
     implements ChildSmartPlanRepository {
   InMemoryChildSmartPlanRepository({ChildSmartPlanSnapshot? seed})
-    : _snap = seed ?? childSmartPlanPrototypeFixture();
+    : _snap = seed ?? childSmartPlanEmptyFixture();
 
   ChildSmartPlanSnapshot _snap;
   Future<void> Function()? loadGate;

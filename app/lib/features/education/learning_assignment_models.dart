@@ -40,6 +40,35 @@ final class LearningAssignment {
 
   /// Maps to child material subject kind key (`math` / `quran` / `english`).
   final String materialKindKey;
+
+  Map<String, Object?> toJson() => {
+        'id': id,
+        'childId': childId.value,
+        'titleKey': titleKey,
+        'rewardMinutes': rewardMinutes.inMinutes,
+        'source': source.name,
+        'assignedAt': assignedAt.toUtc().toIso8601String(),
+        'ctaScreenId': ctaScreenId,
+        'materialKindKey': materialKindKey,
+      };
+
+  factory LearningAssignment.fromJson(Map<String, Object?> json) {
+    final sourceName = json['source'] as String? ?? 'homework';
+    final source = LearningAssignmentSource.values.firstWhere(
+      (s) => s.name == sourceName,
+      orElse: () => LearningAssignmentSource.homework,
+    );
+    return LearningAssignment(
+      id: json['id']! as String,
+      childId: ChildId(json['childId']! as String),
+      titleKey: json['titleKey']! as String,
+      rewardMinutes: Minutes((json['rewardMinutes'] as num?)?.toInt() ?? 0),
+      source: source,
+      assignedAt: DateTime.parse(json['assignedAt']! as String).toUtc(),
+      ctaScreenId: json['ctaScreenId'] as String? ?? 'SCR-CHD-015',
+      materialKindKey: json['materialKindKey'] as String? ?? 'math',
+    );
+  }
 }
 
 @immutable

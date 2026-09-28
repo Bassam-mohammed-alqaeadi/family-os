@@ -65,4 +65,24 @@ final class InMemoryDeviceUserSwitchRepository
 }
 
 /// Stage-1 singleton — empty until tests/repos seed (Rule 23).
-final stage1DeviceUserSwitchRepository = InMemoryDeviceUserSwitchRepository();
+final InMemoryDeviceUserSwitchRepository _stage1DeviceUserSwitchMemory =
+    InMemoryDeviceUserSwitchRepository();
+
+DeviceUserSwitchRepository? _stage1DeviceUserSwitchBound;
+
+/// Stage-1 device user switch — Identity when bound, else InMemory.
+DeviceUserSwitchRepository get stage1DeviceUserSwitchRepository =>
+    _stage1DeviceUserSwitchBound ?? _stage1DeviceUserSwitchMemory;
+
+void rebindStage1DeviceUserSwitchRepository(
+  DeviceUserSwitchRepository repository,
+) {
+  _stage1DeviceUserSwitchBound = repository;
+}
+
+@visibleForTesting
+void resetStage1DeviceUserSwitchRepositoryForTest() {
+  _stage1DeviceUserSwitchBound = null;
+  _stage1DeviceUserSwitchMemory.seed(const []);
+  _stage1DeviceUserSwitchMemory.failLoad = false;
+}

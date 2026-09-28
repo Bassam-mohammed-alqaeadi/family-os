@@ -24,11 +24,11 @@ void main() {
     expect(find.textContaining('تجريبي'), findsWidgets);
     expect(find.textContaining('ابن افتراضي'), findsOneWidget);
     expect(find.byKey(const Key('trial_mode_preview_card')), findsOneWidget);
-    expect(find.text('تجريبي — ١٢ سنة'), findsOneWidget);
+    expect(find.text('تجريبي — 12 سنة'), findsOneWidget);
     expect(find.textContaining('المدرسة الافتراضية'), findsOneWidget);
-    expect(find.textContaining('٧٧٪'), findsOneWidget);
-    expect(find.textContaining('٢ س ١٥ د'), findsOneWidget);
-    expect(find.textContaining('١٨٠ دقيقة'), findsOneWidget);
+    expect(find.textContaining('77٪'), findsOneWidget);
+    expect(find.textContaining('2 س 15 د'), findsOneWidget);
+    expect(find.textContaining('180 دقيقة'), findsOneWidget);
   });
 
   testWidgets('map row → /scr-fat-014', (tester) async {

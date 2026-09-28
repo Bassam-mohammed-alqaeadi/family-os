@@ -3,7 +3,8 @@ import 'package:family_os/features/n03_screen_time/child_apps_models.dart';
 /// Stage-1 demo child key (Rule 23 — opaque id, not a planted name).
 const String kDefaultChildAppsChildKey = 'demo-child';
 
-/// Prototype-shaped inventory (product names only — no child display names).
+/// Prototype-shaped inventory for LOCAL_DEMO / tests only (CE-B3 empty-first).
+/// Not the Stage-1 production default.
 final Map<String, List<ChildAppEntry>> kDefaultChildAppsByChild = {
   kDefaultChildAppsChildKey: List<ChildAppEntry>.unmodifiable([
     const ChildAppEntry(

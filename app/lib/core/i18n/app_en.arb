@@ -12,6 +12,35 @@
   "@galleryHint": {
     "description": "Gallery intro under the app title"
   },
+  "devScreenGalleryTitle": "DEV · Screen catalog",
+  "@devScreenGalleryTitle": {
+    "description": "Debug SCR-ID gallery AppBar title for UX agent"
+  },
+  "devScreenGalleryHint": "Tap an SCR-ID to open that screen (bypasses product nav; RoleGuard still applies).",
+  "@devScreenGalleryHint": {
+    "description": "Dev screen gallery intro"
+  },
+  "devScreenGallerySearchHint": "Filter SCR-ID…",
+  "@devScreenGallerySearchHint": {
+    "description": "Dev screen gallery search field hint"
+  },
+  "devScreenGallerySearchSemantics": "Filter screens by SCR-ID",
+  "@devScreenGallerySearchSemantics": {
+    "description": "Semantics for dev gallery search field"
+  },
+  "devScreenGalleryEmpty": "No screens match this filter.",
+  "@devScreenGalleryEmpty": {
+    "description": "Dev gallery empty filter state"
+  },
+  "devScreenGalleryCount": "{count} screens",
+  "@devScreenGalleryCount": {
+    "description": "Dev gallery visible screen count",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "galleryColors": "Colors",
   "@galleryColors": {
     "description": "Gallery section: color swatches"
@@ -157,6 +186,18 @@
   "shellSosFabSemantics": "Open SOS",
   "@shellSosFabSemantics": {
     "description": "PRT-2 child SOS FAB"
+  },
+  "devRoleSwitchChild": "Child",
+  "@devRoleSwitchChild": {
+    "description": "Debug/dev role switch → child My Day (SCR-CHD-004)"
+  },
+  "devRoleSwitchMother": "Mother",
+  "@devRoleSwitchMother": {
+    "description": "Debug/dev role switch → mother on Today (SCR-FAT-010)"
+  },
+  "devRoleSwitchFather": "Father",
+  "@devRoleSwitchFather": {
+    "description": "Debug/dev role switch → father Today (SCR-FAT-010)"
   },
   "galleryHubItem1": "Tasks",
   "galleryHubItem2": "Wallet",
@@ -332,9 +373,9 @@
   "@loginBiometric": {
     "description": "SCR-SHR-003 biometric mock CTA — no Face ID APIs"
   },
-  "loginBiometricToast": "Signed in with fingerprint",
-  "@loginBiometricToast": {
-    "description": "SCR-SHR-003 biometric mock success toast"
+  "loginBiometricUnavailable": "Fingerprint sign-in needs a device permission — coming later. Sign in with your email for now.",
+  "@loginBiometricUnavailable": {
+    "description": "SCR-SHR-003 fingerprint is NATIVE_CLOSED — honest unavailable toast (glossary D2); never signs in"
   },
   "loginInvitePrompt": "Got a family invite?",
   "@loginInvitePrompt": {
@@ -343,6 +384,26 @@
   "loginInviteLink": "Join via invite link ‹",
   "@loginInviteLink": {
     "description": "SCR-SHR-003 invite footer link → FAT-009"
+  },
+  "loginLocalAccountHonesty": "Account is saved on this device",
+  "@loginLocalAccountHonesty": {
+    "description": "SCR-SHR-003 VX-B6 local-mode honesty (OD-02 glossary)"
+  },
+  "loginFieldsRequired": "Enter email and password to continue",
+  "@loginFieldsRequired": {
+    "description": "SCR-SHR-003 VX-B6 required-field validation"
+  },
+  "loginSessionActive": "Session active",
+  "@loginSessionActive": {
+    "description": "SCR-SHR-003 session tag when active"
+  },
+  "loginSessionRevoked": "Session revoked",
+  "@loginSessionRevoked": {
+    "description": "SCR-SHR-003 session tag when revoked"
+  },
+  "loginSessionExpired": "Session expired",
+  "@loginSessionExpired": {
+    "description": "SCR-SHR-003 session tag when expired"
   },
   "deviceModeTitle": "Who will use this device?",
   "@deviceModeTitle": {
@@ -451,6 +512,18 @@
   "errorNetworkMessage": "We couldn't reach the server. Your saved data is still here — retry when you're back online.",
   "@errorNetworkMessage": {
     "description": "SCR-SHR-005 network body — prototype amber template"
+  },
+  "errorLocalSaveMessage": "Couldn't save on this device — please try again.",
+  "@errorLocalSaveMessage": {
+    "description": "VX-B1 / FVX-G-09 local save or local store unavailable — never blames a server"
+  },
+  "roleGuardBlockedChild": "This page is for your parents — we brought you back to My Day 🌱",
+  "@roleGuardBlockedChild": {
+    "description": "VX-B1 / D4 child blocked from a parent-only screen; lands on My Day (SCR-CHD-004)"
+  },
+  "roleGuardBlockedParent": "This page is only for the account owner — we brought you back to Today.",
+  "@roleGuardBlockedParent": {
+    "description": "VX-B1 / D4 parent blocked from an owner-only screen; lands on Today (SCR-FAT-010)"
   },
   "errorTimeoutTitle": "Connection timed out",
   "@errorTimeoutTitle": {
@@ -685,7 +758,7 @@
   "@permissionsExplainerVideoSemantics": {
     "description": "SCR-FAT-005 video card semantics button label"
   },
-  "permissionsExplainerVideoToast": "Video coming soon — mock preview",
+  "permissionsExplainerVideoToast": "Video comes later — preview only for now",
   "@permissionsExplainerVideoToast": {
     "description": "SCR-FAT-005 mock video tap toast"
   },
@@ -914,7 +987,7 @@
   "@inviteMotherSubmit": {
     "description": "SCR-FAT-008 PrimaryBtn send invite"
   },
-  "inviteMotherToast": "Invite sent to {localPart} at «{level}» level ✓",
+  "inviteMotherToast": "Local invite created for {localPart} at «{level}» — email/push delivery closed",
   "@inviteMotherToast": {
     "description": "SCR-FAT-008 success toast — email local-part only (Rule 23)",
     "placeholders": {
@@ -1178,6 +1251,10 @@
   "@dayBoardPriorityTag": {
     "description": "SCR-FAT-010 Tag.a on priority card"
   },
+  "dayBoardTimeLeftProgressSemantics": "Remaining screen time",
+  "@dayBoardTimeLeftProgressSemantics": {
+    "description": "SCR-FAT-010 MintProgressBar semantics when timeLeftRatio is bound"
+  },
   "dayBoardAdvisorBanner": "Family advisor suggests — you decide. Nothing applies on its own.",
   "@dayBoardAdvisorBanner": {
     "description": "SCR-FAT-010 advisor BannerNote.p (AI Serves, Not Decides)"
@@ -1193,6 +1270,14 @@
   "childScreenTimeSubtitle": "Time-range windows for sleep, prayer, and study — not decorative toggles",
   "@childScreenTimeSubtitle": {
     "description": "SCR-FAT-032 ControlFit subtitle"
+  },
+  "childScreenTimeLocalHonestyBanner": "Limits save on this device only. OS screen-time enforcement is not active — status shows SIMULATED.",
+  "@childScreenTimeLocalHonestyBanner": {
+    "description": "SCR-FAT-032 BannerNote — Local persist; OS enforce CLOSED"
+  },
+  "childScreenTimePolicyUnavailable": "Screen time settings unavailable — local storage could not open. Saving is disabled.",
+  "@childScreenTimePolicyUnavailable": {
+    "description": "SCR-FAT-032 fail-closed when Local KV refused"
   },
   "childScreenTimeSleep": "Sleep",
   "@childScreenTimeSleep": {
@@ -1275,7 +1360,7 @@
   "@childScreenTimeSyncPending": {
     "description": "SET-003 parent sync status — child offline or awaiting ack"
   },
-  "childScreenTimeSyncDelivered": "Delivered to child",
+  "childScreenTimeSyncDelivered": "Saved on this device (local session)",
   "@childScreenTimeSyncDelivered": {
     "description": "SET-003 parent sync status — child applied snapshot"
   },
@@ -1312,7 +1397,7 @@
   "@childAppsTipBanner": {
     "description": "SCR-FAT-034 tip banner (Family Link / Qustodio honesty)"
   },
-  "childAppsOsInterceptHonesty": "Package access policy is stored locally. Device intercept remains mock-remote — we never claim OS blocking here.",
+  "childAppsOsInterceptHonesty": "Allow/block is a local policy on this device. OS app intercept is arrives in an upcoming update — we never claim the device blocked the app.",
   "@childAppsOsInterceptHonesty": {
     "description": "FS-003-OWN honesty: dispositions real, os_intercept MOCK-REMOTE"
   },
@@ -1968,7 +2053,7 @@
   "@addFromSourceTopicSub": {
     "description": "SCR-FAT-041 topic subtitle"
   },
-  "addFromSourceTopicToast": "Topic-only create is ready in mock — type a concept next",
+  "addFromSourceTopicToast": "Topic-only create is ready — type a concept next",
   "@addFromSourceTopicToast": {
     "description": "SCR-FAT-041 topic mock toast"
   },
@@ -1980,7 +2065,7 @@
   "@addFromSourceVoiceSub": {
     "description": "SCR-FAT-041 voice subtitle"
   },
-  "addFromSourceVoiceToast": "Voice explanation capture is coming (P1) — mock acknowledged",
+  "addFromSourceVoiceToast": "Voice explanation capture is coming — noted for now",
   "@addFromSourceVoiceToast": {
     "description": "SCR-FAT-041 voice mock toast"
   },
@@ -2024,7 +2109,7 @@
   "@addFromSourcePdfDeviceToast": {
     "description": "SCR-FAT-041 device picker mock toast"
   },
-  "addFromSourcePdfSelectedToast": "Science notes selected (mock)",
+  "addFromSourcePdfSelectedToast": "Science notes selected",
   "@addFromSourcePdfSelectedToast": {
     "description": "SCR-FAT-041 alternate PDF select toast"
   },
@@ -2072,7 +2157,7 @@
   "@studioCameraFrameMeta": {
     "description": "SCR-FAT-042 mock viewfinder subject/grade"
   },
-  "studioCameraFrameSemantics": "Mock camera viewfinder aimed at a textbook page",
+  "studioCameraFrameSemantics": "Camera viewfinder aimed at a textbook page",
   "@studioCameraFrameSemantics": {
     "description": "SCR-FAT-042 viewfinder Semantics label"
   },
@@ -2217,9 +2302,9 @@
       }
     }
   },
-  "generationOutputsGeneratingToast": "Family Advisor is generating now…",
+  "generationOutputsGeneratingToast": "Local queue — The family assistant arrives in an upcoming update. Preview opens after generate.",
   "@generationOutputsGeneratingToast": {
-    "description": "SCR-FAT-043 mock generate toast before FAT-044"
+    "description": "SCR-FAT-043 mock generate toast; Gateway REM CLOSED"
   },
   "generationOutputsNoneSelectedToast": "Select at least one output to generate",
   "@generationOutputsNoneSelectedToast": {
@@ -2261,9 +2346,9 @@
   "@previewApproveTitle": {
     "description": "SCR-FAT-044 app bar title"
   },
-  "previewApproveRuleBanner": "90-second rule — parents approve, they do not author · light edits only",
+  "previewApproveRuleBanner": "90-second rule — parents approve, they do not author. Local preview — The family assistant arrives in an upcoming update.",
   "@previewApproveRuleBanner": {
-    "description": "SCR-FAT-044 90-second rule banner"
+    "description": "SCR-FAT-044 90s rule + Gateway REM honesty"
   },
   "previewApproveQuizTitle": "Quiz",
   "@previewApproveQuizTitle": {
@@ -3497,7 +3582,7 @@
   "@webFilterTaxonomyTbdHonesty": {
     "description": "Q-WF-05 taxonomy honesty"
   },
-  "webFilterNativeBlockHonesty": "Device block plane is mock-remote — policy is real; VPN/DNS not claimed",
+  "webFilterNativeBlockHonesty": "Categories and prefs are saved locally. VPN/DNS enforcement is arrives in an upcoming update — we never claim the device blocked a site.",
   "@webFilterNativeBlockHonesty": {
     "description": "WF-SF-10 native plane honesty"
   },
@@ -3561,7 +3646,9 @@
   "@webBlockSourceOfDeny": {
     "description": "Q-WF-12 source-of-deny label",
     "placeholders": {
-      "source": { "type": "String" }
+      "source": {
+        "type": "String"
+      }
     }
   },
   "webBlockFeedbackPending": "Unlock request sent — waiting for a parent",
@@ -3580,7 +3667,7 @@
   "@webBlockFeedbackExpired": {
     "description": "Q-WF-15 transient expired on interstitial"
   },
-  "webFilterDeliveryHonesty": "Policy delivery is tracked locally (Configured→Verified). Device block remains mock-remote.",
+  "webFilterDeliveryHonesty": "Policy delivery is tracked locally (Configured→Verified). Device block arrives in an upcoming update.",
   "@webFilterDeliveryHonesty": {
     "description": "FS-002-ENF delivery plane honesty"
   },
@@ -3628,43 +3715,43 @@
   "@instantLockTitle": {
     "description": "SCR-FAT-037 screen title"
   },
-  "instantLockToggle": "Lock device now",
+  "instantLockToggle": "Save local lock preference",
   "@instantLockToggle": {
     "description": "SCR-FAT-037 instant lock MVP switch"
   },
-  "instantLockSubtitle": "Locks the child device immediately; SOS, chat, and Quran stay reachable",
+  "instantLockSubtitle": "Saves a local lock preference on this device. OS device lock is arrives in an upcoming update. SOS, chat, and Quran stay reachable.",
   "@instantLockSubtitle": {
     "description": "SCR-FAT-037 instant lock helper"
   },
-  "instantLockStatusLocked": "Device locked",
+  "instantLockStatusLocked": "Local lock request saved",
   "@instantLockStatusLocked": {
     "description": "SET-009 locked status label"
   },
-  "instantLockStatusUnlocked": "Device unlocked",
+  "instantLockStatusUnlocked": "Local unlock preference saved",
   "@instantLockStatusUnlocked": {
     "description": "SET-009 unlocked status label"
   },
-  "instantLockLockedByFather": "Locked by father",
+  "instantLockLockedByFather": "Lock preference set by father (OS lock arrives in an upcoming update)",
   "@instantLockLockedByFather": {
     "description": "SET-009 lockedBy father"
   },
-  "instantLockLockedByMother": "Locked by mother",
+  "instantLockLockedByMother": "Lock preference set by mother (OS lock arrives in an upcoming update)",
   "@instantLockLockedByMother": {
     "description": "SET-009 lockedBy mother"
   },
-  "instantLockAction": "Lock",
+  "instantLockAction": "Save lock request",
   "@instantLockAction": {
     "description": "SET-009 Lock button"
   },
-  "instantLockUnlockAction": "Unlock",
+  "instantLockUnlockAction": "Save unlock preference",
   "@instantLockUnlockAction": {
     "description": "SET-009 Unlock button"
   },
-  "instantLockDeniedToast": "Not allowed to change device lock",
+  "instantLockDeniedToast": "Not allowed to change device lock preference",
   "@instantLockDeniedToast": {
     "description": "SET-009 lock/unlock denied toast"
   },
-  "instantLockSupersessionBanner": "Father unlocked the device (your lock was superseded)",
+  "instantLockSupersessionBanner": "Father saved unlock preference (your lock preference was superseded)",
   "@instantLockSupersessionBanner": {
     "description": "SET-009 mother supersession banner"
   },
@@ -3744,9 +3831,9 @@
   "@notificationPrefsTitle": {
     "description": "SCR-FAT-058 screen title"
   },
-  "notificationPrefsSubtitle": "Quiet hours mute non-critical alerts only",
+  "notificationPrefsSubtitle": "Organize alerts by importance so noise stays low — SOS always pierces silent mode",
   "@notificationPrefsSubtitle": {
-    "description": "SCR-FAT-058 ControlFit subtitle"
+    "description": "SCR-FAT-058 ControlFit subtitle (prototype note)"
   },
   "notificationPrefsQuietHours": "Quiet hours",
   "@notificationPrefsQuietHours": {
@@ -3797,13 +3884,97 @@
   "@notificationPrefsMemberChild": {
     "description": "SET-011 child member label"
   },
-  "notificationPrefsAnalysisNotices": "Analysis notices",
+  "notificationPrefsAnalysisNotices": "Family Advisor alerts",
   "@notificationPrefsAnalysisNotices": {
-    "description": "SET-011 R-3 / S-AIC-029 mother analysis notices"
+    "description": "SCR-FAT-058 important lane — Advisor / analysis notices"
   },
-  "notificationPrefsAnalysisNoticesHint": "Optional non-critical updates when Advisor analyses run",
+  "notificationPrefsAnalysisNoticesHint": "Optional non-critical Advisor updates",
   "@notificationPrefsAnalysisNoticesHint": {
-    "description": "SET-011 analysis notices helper"
+    "description": "SCR-FAT-058 analysis notices helper"
+  },
+  "notificationPrefsCardCriticalTitle": "Critical — never muted",
+  "@notificationPrefsCardCriticalTitle": {
+    "description": "SCR-FAT-058 critical tier card title"
+  },
+  "notificationPrefsCardCriticalBody": "SOS · leave safe zone · device cut-off — always pierce silent mode. Your peace of mind has no off switch.",
+  "@notificationPrefsCardCriticalBody": {
+    "description": "SCR-FAT-058 critical tier card body (no toggle)"
+  },
+  "notificationPrefsCardImportantTitle": "Important",
+  "@notificationPrefsCardImportantTitle": {
+    "description": "SCR-FAT-058 important tier card title"
+  },
+  "notificationPrefsCardReassuranceTitle": "Reassurance",
+  "@notificationPrefsCardReassuranceTitle": {
+    "description": "SCR-FAT-058 reassurance tier card title"
+  },
+  "notificationPrefsChildRequests": "Children's requests",
+  "@notificationPrefsChildRequests": {
+    "description": "SCR-FAT-058 important — time/app/friend requests"
+  },
+  "notificationPrefsQuietHoursHint": "Quiet window: non-critical alerts wait until morning",
+  "@notificationPrefsQuietHoursHint": {
+    "description": "SCR-FAT-058 quiet hours row subtitle"
+  },
+  "notificationPrefsSummaryDigest": "One summary instead of repeats",
+  "@notificationPrefsSummaryDigest": {
+    "description": "SCR-FAT-058 reassurance — batch soft alerts"
+  },
+  "notificationPrefsSummaryDigestHint": "e.g. “3 children arrived safely” — one message",
+  "@notificationPrefsSummaryDigestHint": {
+    "description": "SCR-FAT-058 summary digest helper"
+  },
+  "notificationPrefsEveningDigest": "Evening digest",
+  "@notificationPrefsEveningDigest": {
+    "description": "SCR-FAT-058 reassurance — evening digest toggle"
+  },
+  "notificationPrefsEveningDigestTime": "Digest time",
+  "@notificationPrefsEveningDigestTime": {
+    "description": "SCR-FAT-058 evening digest time chip label"
+  },
+  "alertDetailCategorySos": "Category: emergency SOS",
+  "@alertDetailCategorySos": {
+    "description": "SCR-FAT-020 SOS category tag"
+  },
+  "alertDetailCategoryTamper": "Category: device protection",
+  "@alertDetailCategoryTamper": {
+    "description": "SCR-FAT-020 tamper category tag"
+  },
+  "alertDetailSosTitle": "Active SOS needs you",
+  "@alertDetailSosTitle": {
+    "description": "SCR-FAT-020 projected SOS title"
+  },
+  "alertDetailSosBody": "A family SOS is active. Open the SOS board — never muted by quiet hours.",
+  "@alertDetailSosBody": {
+    "description": "SCR-FAT-020 projected SOS body"
+  },
+  "alertDetailSosAdvice": "Stay calm, open the board, and confirm the child is safe.",
+  "@alertDetailSosAdvice": {
+    "description": "SCR-FAT-020 projected SOS advice"
+  },
+  "alertDetailSosOpenBoardCta": "Open SOS board",
+  "@alertDetailSosOpenBoardCta": {
+    "description": "SCR-FAT-020 SOS primary CTA"
+  },
+  "alertDetailTamperTitle": "Protection alert on a child device",
+  "@alertDetailTamperTitle": {
+    "description": "SCR-FAT-020 projected tamper title"
+  },
+  "alertDetailTamperBody": "Anti-tamper protection reported activity. Review soon — critical lane.",
+  "@alertDetailTamperBody": {
+    "description": "SCR-FAT-020 projected tamper body"
+  },
+  "alertDetailTamperAdvice": "Check the device status and talk with the child if needed.",
+  "@alertDetailTamperAdvice": {
+    "description": "SCR-FAT-020 projected tamper advice"
+  },
+  "alertDetailAcknowledgeCta": "Acknowledge",
+  "@alertDetailAcknowledgeCta": {
+    "description": "SCR-FAT-020 tamper acknowledge CTA"
+  },
+  "alertDetailAcknowledgeDoneBanner": "Acknowledged",
+  "@alertDetailAcknowledgeDoneBanner": {
+    "description": "SCR-FAT-020 tamper acknowledged banner"
   },
   "privacyDataTitle": "Privacy & data",
   "@privacyDataTitle": {
@@ -3996,7 +4167,7 @@
   "@brainStageAnalyzeTitle": {
     "description": "SET-014 AiStageId.analyze"
   },
-  "brainStageAnalyzeSubtitle": "Patterns and anomalies — server gateway when enabled",
+  "brainStageAnalyzeSubtitle": "Patterns and anomalies — server assistance when enabled",
   "@brainStageAnalyzeSubtitle": {
     "description": "SET-014 analyze subtitle"
   },
@@ -4224,7 +4395,7 @@
       }
     }
   },
-  "childDayBoardLastSynced": "Last synced: {time}",
+  "childDayBoardLastSynced": "Last local policy update: {time}",
   "@childDayBoardLastSynced": {
     "description": "UI-005 last-synced honesty line on CHD-004",
     "placeholders": {
@@ -4233,7 +4404,7 @@
       }
     }
   },
-  "childDayBoardOfflineBanner": "Offline — showing last synced board ({time}). Updates when you reconnect.",
+  "childDayBoardOfflineBanner": "Showing last local board ({time}). Multi-device sync is closed — updates apply on this device only.",
   "@childDayBoardOfflineBanner": {
     "description": "UI-005 offline + last-synced banner on CHD-004",
     "placeholders": {
@@ -4312,6 +4483,14 @@
   "requestInboxOfflineQueued": "Decision queued",
   "@requestInboxOfflineQueued": {
     "description": "UI-006 offline queue ack"
+  },
+  "requestInboxLocalHonestyBanner": "Approvals save locally on this device. Push to the child device reaches other devices in an upcoming update — not delivered to other devices yet.",
+  "@requestInboxLocalHonestyBanner": {
+    "description": "SCR-FAT-033 BannerNote — local decide; no FCM"
+  },
+  "requestInboxUnavailable": "Time requests unavailable — local storage could not open. Decisions are disabled.",
+  "@requestInboxUnavailable": {
+    "description": "SCR-FAT-033 fail-closed when Local KV refused"
   },
   "requestInboxChildRejectedReason": "Your request was declined: {reason}",
   "@requestInboxChildRejectedReason": {
@@ -4484,6 +4663,10 @@
   "ruleConsequentSoftLock": "Soft lock",
   "@ruleConsequentSoftLock": {
     "description": "SET-023 allowed consequent label"
+  },
+  "myAdvisorOwnRuleTitle": "A rule you set",
+  "@myAdvisorOwnRuleTitle": {
+    "description": "VX-B1 / FVX-C-04 SCR-FAT-079 title for a father-authored rule (body = consequent labels)"
   },
   "childWelcomeTitle": "Child welcome",
   "@childWelcomeTitle": {
@@ -4884,6 +5067,14 @@
   "@deviceHealthDevicesSubtitle": {
     "description": "UI-012 devices section subtitle"
   },
+  "deviceHealthDevicesEmptyTitle": "No devices yet",
+  "@deviceHealthDevicesEmptyTitle": {
+    "description": "SCR-FAT-025 empty devices list title"
+  },
+  "deviceHealthDevicesEmptyMessage": "Link a child device to see health, heartbeat, and permissions here.",
+  "@deviceHealthDevicesEmptyMessage": {
+    "description": "SCR-FAT-025 empty devices list message"
+  },
   "deviceHealthSectionAtRiskHint": "A device may drop",
   "@deviceHealthSectionAtRiskHint": {
     "description": "UI-012 amber hint when any device at risk"
@@ -5245,6 +5436,22 @@
   "@childrenListSharedHonesty": {
     "description": "SCR-FAT-012 Family Link/Qustodio shared-rules honesty"
   },
+  "childrenListLocalDemoBanner": "Location, last seen, battery, and time left on this list are local demo presentation strings — not live GPS or device battery.",
+  "@childrenListLocalDemoBanner": {
+    "description": "SCR-FAT-012 BannerNote — LOCAL_DEMO_SEEDED honesty (Identity-B; not GPS/OS)"
+  },
+  "inviteMotherLocalHonestyBanner": "Invite is saved locally on this device. Email delivery and mother account join require an upcoming update — nothing was emailed yet.",
+  "@inviteMotherLocalHonestyBanner": {
+    "description": "SCR-FAT-008 BannerNote — local invite record honesty (no email/FCM/Backend)"
+  },
+  "acceptMotherInviteLocalHonestyBanner": "Joining is recorded locally on this device. other devices account sync and email confirmation require an upcoming update — not completed yet.",
+  "@acceptMotherInviteLocalHonestyBanner": {
+    "description": "SCR-FAT-009 BannerNote — local accept honesty (no Backend sync)"
+  },
+  "childrenListSharedEnforceHonesty": "Saved locally on the kids list only — not yet enforced by PolicyEngine, Screen Time, or Web Filter.",
+  "@childrenListSharedEnforceHonesty": {
+    "description": "SCR-FAT-012 shared Apply — prefs persist only; not PolicyEngine/ST/WF enforcement yet"
+  },
   "childrenListSharedScopeLabel": "Applies to:",
   "@childrenListSharedScopeLabel": {
     "description": "SCR-FAT-012 shared scope label"
@@ -5313,6 +5520,14 @@
   "childrenListLoadingSemantics": "Loading children list",
   "@childrenListLoadingSemantics": {
     "description": "SCR-FAT-012 loading Semantics"
+  },
+  "childrenListDeviceNotLinked": "Device not linked yet",
+  "@childrenListDeviceNotLinked": {
+    "description": "SCR-FAT-012 VX-B6 empty location/battery honesty"
+  },
+  "childrenListAddBlocked": "Only the family owner or a full-access mother can manage children here",
+  "@childrenListAddBlocked": {
+    "description": "SCR-FAT-012 VX-B6 blocked add/delete toast (dedicated key)"
   },
   "childrenListListSemantics": "Children list",
   "@childrenListListSemantics": {
@@ -5411,6 +5626,10 @@
   "@childProfileToolTimeRequests": {
     "description": "SCR-FAT-013 tool → FAT-033"
   },
+  "childProfileToolApps": "Apps",
+  "@childProfileToolApps": {
+    "description": "SCR-FAT-013 tool → FAT-034"
+  },
   "childProfileToolWebFilter": "Web filter",
   "@childProfileToolWebFilter": {
     "description": "SCR-FAT-013 tool → FAT-036"
@@ -5419,9 +5638,29 @@
   "@childProfileToolInstantLock": {
     "description": "SCR-FAT-013 tool → FAT-037"
   },
+  "childProfileToolTamperAlerts": "Tamper alerts",
+  "@childProfileToolTamperAlerts": {
+    "description": "SCR-FAT-013 tool → FAT-038"
+  },
+  "childProfileToolSmartAlerts": "Smart alerts",
+  "@childProfileToolSmartAlerts": {
+    "description": "SCR-FAT-013 tool → FAT-065"
+  },
   "childProfileToolSmartSupervision": "Supervision",
   "@childProfileToolSmartSupervision": {
     "description": "SCR-FAT-013 tool → FAT-067"
+  },
+  "childProfileToolUsageReport": "Usage report",
+  "@childProfileToolUsageReport": {
+    "description": "SCR-FAT-013 tool → FAT-069"
+  },
+  "childProfileToolFocusReport": "Focus report",
+  "@childProfileToolFocusReport": {
+    "description": "SCR-FAT-013 tool → FAT-051"
+  },
+  "childProfileToolQuranProgress": "Quran progress",
+  "@childProfileToolQuranProgress": {
+    "description": "SCR-FAT-013 tool → FAT-072"
   },
   "childProfileToolDeviceHealth": "Device health",
   "@childProfileToolDeviceHealth": {
@@ -5449,6 +5688,31 @@
   "childProfileDetailsLink": "Details ‹",
   "@childProfileDetailsLink": {
     "description": "SCR-FAT-013 details link → FAT-014"
+  },
+  "childProfileLocationMapCta": "Live map",
+  "@childProfileLocationMapCta": {
+    "description": "LOCATION-1B FAT-013 → FAT-014 map CTA"
+  },
+  "childProfileLocationHistoryCta": "Location history",
+  "@childProfileLocationHistoryCta": {
+    "description": "LOCATION-1B FAT-013 → FAT-015 history CTA"
+  },
+  "childProfileLocationGpsHonesty": "Device GPS is Coming soon — place labels are Local sample rendering, not live tracking.",
+  "@childProfileLocationGpsHonesty": {
+    "description": "LOCATION-1B FAT-013 GPS honesty one-liner"
+  },
+  "childProfileAssignedZonesCount": "Assigned zones: {count}",
+  "@childProfileAssignedZonesCount": {
+    "description": "LOCATION-1B FAT-013 zones count → FAT-016",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "childProfileAssignedZonesSemantics": "Open safe zones for this child",
+  "@childProfileAssignedZonesSemantics": {
+    "description": "LOCATION-1B FAT-013 assigned zones link Semantics"
   },
   "childProfileConnectionTitle": "Connection health",
   "@childProfileConnectionTitle": {
@@ -5852,6 +6116,38 @@
   "@locationHistoryRetentionNote": {
     "description": "SCR-FAT-015 90-day retention honesty"
   },
+  "locationHistoryExportCta": "Export history (Primary)",
+  "@locationHistoryExportCta": {
+    "description": "SCR-FAT-015 Primary export stub CTA"
+  },
+  "locationHistoryArchiveCta": "Archive history (Primary)",
+  "@locationHistoryArchiveCta": {
+    "description": "SCR-FAT-015 Primary archive stub CTA"
+  },
+  "locationHistoryExportStubToast": "Export is prepared for later sync — Local Stage-1 keeps the trail on-device only.",
+  "@locationHistoryExportStubToast": {
+    "description": "SCR-FAT-015 export stub honesty toast"
+  },
+  "locationHistoryArchiveStubToast": "Archive is a Primary desk control — Local Stage-1 records intent only (no cloud wipe).",
+  "@locationHistoryArchiveStubToast": {
+    "description": "SCR-FAT-015 archive stub honesty toast"
+  },
+  "locationMapNetworkOnline": "Network · online",
+  "@locationMapNetworkOnline": {
+    "description": "FAT-014 network chip online"
+  },
+  "locationMapNetworkOffline": "Network · offline",
+  "@locationMapNetworkOffline": {
+    "description": "FAT-014 network chip offline"
+  },
+  "locationMapNetworkUnknown": "Network · unknown",
+  "@locationMapNetworkUnknown": {
+    "description": "FAT-014 network chip unknown"
+  },
+  "locationMapNetworkUnavailable": "Network · not available (Stage-1)",
+  "@locationMapNetworkUnavailable": {
+    "description": "FAT-014 network chip Native-closed honesty"
+  },
   "safeZonesTitle": "Safe zones",
   "@safeZonesTitle": {
     "description": "SCR-FAT-016 app bar title"
@@ -5979,6 +6275,10 @@
   "@createSafeZoneNameHint": {
     "description": "SCR-FAT-017 default name hint (prototype zname)"
   },
+  "createSafeZoneNameRequired": "Enter a zone name before saving",
+  "@createSafeZoneNameRequired": {
+    "description": "SCR-FAT-017 VX-B6 empty name validation (hint is not a value)"
+  },
   "createSafeZoneAlertsHeading": "Alert me on",
   "@createSafeZoneAlertsHeading": {
     "description": "SCR-FAT-017 alert toggles card heading"
@@ -5998,6 +6298,40 @@
   "createSafeZoneAlertNoShowHint": "Example: did not reach school by 7:30 AM",
   "@createSafeZoneAlertNoShowHint": {
     "description": "SCR-FAT-017 no-show alert subtitle"
+  },
+  "createSafeZoneNoShowDeadlineLabel": "Must arrive by",
+  "@createSafeZoneNoShowDeadlineLabel": {
+    "description": "LOCATION-1B FAT-017 no-show deadline label"
+  },
+  "createSafeZoneNoShowDeadlineRequired": "Choose a must-arrive time before saving No-show",
+  "@createSafeZoneNoShowDeadlineRequired": {
+    "description": "LOCATION-1B FAT-017 block save without deadline"
+  },
+  "createSafeZoneNoShowDeadlineCustom": "Custom time…",
+  "@createSafeZoneNoShowDeadlineCustom": {
+    "description": "LOCATION-1B FAT-017 open time picker"
+  },
+  "createSafeZoneNoShowDeadlineHonesty": "Saved as Local intent only — a schedule worker is not live in this build (same honesty as SMS intent).",
+  "@createSafeZoneNoShowDeadlineHonesty": {
+    "description": "LOCATION-1B FAT-017 no-show schedule honesty"
+  },
+  "createSafeZoneNoShowDeadlineSemantics": "Must arrive by {time}",
+  "@createSafeZoneNoShowDeadlineSemantics": {
+    "description": "LOCATION-1B FAT-017 deadline chip Semantics",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "safeZonesNoShowDeadline": "Must arrive by {time}",
+  "@safeZonesNoShowDeadline": {
+    "description": "LOCATION-1B FAT-016 no-show deadline under flag",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
   },
   "createSafeZoneSaveCta": "Save safe zone →",
   "@createSafeZoneSaveCta": {
@@ -6178,6 +6512,14 @@
   "sosAlertSetupCta": "Emergency ladder setup →",
   "@sosAlertSetupCta": {
     "description": "SCR-FAT-018 empty → FAT-028 CTA"
+  },
+  "sosAlertSetupIncompleteCta": "Finish emergency readiness →",
+  "@sosAlertSetupIncompleteCta": {
+    "description": "SCR-FAT-018 empty CTA when ladder/readiness incomplete"
+  },
+  "sosAlertEmptyIncompleteMessage": "No active SOS — and the emergency desk still needs trusted contacts or readiness. Open setup to finish before the next alert.",
+  "@sosAlertEmptyIncompleteMessage": {
+    "description": "SCR-FAT-018 empty when setup incomplete"
   },
   "sosAlertSetupSemantics": "Open emergency setup",
   "@sosAlertSetupSemantics": {
@@ -6380,9 +6722,17 @@
   "@conversationsListTitle": {
     "description": "SCR-FAT-021 app bar title (family tab)"
   },
-  "conversationsListHonestyBanner": "Fixed right: family chat is never limited by any plan tier — encrypted and always available",
+  "conversationsListHonestyBanner": "Saved on this device only. Family chat is never plan-gated — multi-device delivery reaches other phones in an upcoming update.",
   "@conversationsListHonestyBanner": {
-    "description": "SCR-FAT-021 UI-007 chat never paywalled honesty"
+    "description": "SCR-FAT-021 VX-B6 OD-02/OD-09 local-only honesty"
+  },
+  "conversationsListFamilyThreadTitle": "Family",
+  "@conversationsListFamilyThreadTitle": {
+    "description": "SCR-FAT-021/CHD-007 VX-B6 seeded family thread title"
+  },
+  "conversationsListFamilyThreadPreview": "No messages yet",
+  "@conversationsListFamilyThreadPreview": {
+    "description": "SCR-FAT-021/CHD-007 VX-B6 empty family thread preview"
   },
   "conversationsListSectionTitle": "Conversations",
   "@conversationsListSectionTitle": {
@@ -6432,9 +6782,13 @@
   "@conversationSettingsToast": {
     "description": "SCR-FAT-022 Stage-1 settings snackbar"
   },
-  "conversationFamilyPinNote": "📌 Family chat stays pinned — a fixed right never limited by any plan",
+  "conversationFamilyPinNote": "📌 Family chat stays pinned and never plan-gated. Thread is local on this device — multi-device delivery Will reach other devices in an upcoming update.",
   "@conversationFamilyPinNote": {
-    "description": "SCR-FAT-022 family thread pin + UI-007 honesty"
+    "description": "SCR-FAT-022 family pin + LOCAL + REM honesty"
+  },
+  "conversationLocalHonestyBanner": "Thread is local on this device — never plan-gated. Multi-device delivery Will reach other devices in an upcoming update.",
+  "@conversationLocalHonestyBanner": {
+    "description": "SCR-FAT-022 LOCAL + REM honesty for non-family threads"
   },
   "conversationToneBridgeNote": "💜 Tone bridge — warm replies are always ready",
   "@conversationToneBridgeNote": {
@@ -6558,7 +6912,7 @@
   "@activeCallCameraOffToast": {
     "description": "SCR-FAT-023 camera-off snackbar"
   },
-  "activeCallHonestyNote": "Audio & video via LiveKit — metadata only, never recorded · 🔔 Check-in calls ring on the child's device even when silent",
+  "activeCallHonestyNote": "Audio & video audio and video — metadata only, never recorded · 🔔 Check-in calls ring on the child's device even when silent",
   "@activeCallHonestyNote": {
     "description": "SCR-FAT-023 LiveKit + silent-breakthrough honesty"
   },
@@ -7029,9 +7383,9 @@
   "@childChatsTitle": {
     "description": "SCR-CHD-007 app bar title (family tab)"
   },
-  "childChatsHonestyBanner": "🔒 All your chats are end-to-end encrypted — and never lock even when your time runs out",
+  "childChatsHonestyBanner": "Chat never locks when time runs out. List is local on this device — multi-device delivery Will reach other devices in an upcoming update.",
   "@childChatsHonestyBanner": {
-    "description": "SCR-CHD-007 UI-007 encryption + never-lock honesty"
+    "description": "SCR-CHD-007 LOCAL + REM honesty; never time-locks"
   },
   "childChatsSafeCircleBanner": "🛡 Your safe circle: you only reach people your parent approved — no strangers can reach you.",
   "@childChatsSafeCircleBanner": {
@@ -7093,9 +7447,9 @@
   "@childConversationAnswerToast": {
     "description": "SCR-CHD-008 answer toast"
   },
-  "childConversationNeverLockBanner": "💬 This chat never locks — even when play time ends. Your family is always here.",
+  "childConversationNeverLockBanner": "Chat never locks when play time ends. Thread is local on this device — multi-device delivery Will reach other devices in an upcoming update.",
   "@childConversationNeverLockBanner": {
-    "description": "SCR-CHD-008 never-lock UI-007"
+    "description": "SCR-CHD-008 never-lock + LOCAL + REM honesty"
   },
   "childConversationInputHint": "Write a message…",
   "@childConversationInputHint": {
@@ -7325,7 +7679,7 @@
   "@childModeLockLogoHoldSemantics": {
     "description": "SCR-CHD-011 logo hold semantics"
   },
-  "childModeLockSecretOpened": "✓ Secret entry opened (mock)",
+  "childModeLockSecretOpened": "Secret entry opened",
   "@childModeLockSecretOpened": {
     "description": "SCR-CHD-011 secret entry opened"
   },
@@ -7716,11 +8070,11 @@
   "@focusReportPraiseNewTag": {
     "description": "SCR-FAT-051 praise status new"
   },
-  "focusReportPraiseSentTag": "Praise sent ✓",
+  "focusReportPraiseSentTag": "Praise saved locally ✓",
   "@focusReportPraiseSentTag": {
     "description": "SCR-FAT-051 praise status sent"
   },
-  "focusReportPraiseCta": "Send praise",
+  "focusReportPraiseCta": "Save praise",
   "@focusReportPraiseCta": {
     "description": "SCR-FAT-051 send praise CTA"
   },
@@ -7733,7 +8087,7 @@
       }
     }
   },
-  "focusReportPraiseDeliveredLabel": "Your encouragement was sent to {name}'s screen:",
+  "focusReportPraiseDeliveredLabel": "Your encouragement was saved locally for {name}:",
   "@focusReportPraiseDeliveredLabel": {
     "description": "SCR-FAT-051 praise delivered label",
     "placeholders": {
@@ -7746,7 +8100,7 @@
   "@focusReportPraiseQuoteResistDistraction": {
     "description": "SCR-FAT-051 sent praise quote"
   },
-  "focusReportPraiseSentToast": "Encouragement sent to {name}'s screen",
+  "focusReportPraiseSentToast": "Encouragement saved locally for {name} — not delivered to another device",
   "@focusReportPraiseSentToast": {
     "description": "SCR-FAT-051 praise toast",
     "placeholders": {
@@ -8143,11 +8497,11 @@
   "@addEventCalendarGregorian": {
     "description": "SCR-FAT-053 gregorian toggle"
   },
-  "addEventCalendarHijriToast": "Hijri calendar selected (Stage 1 mock)",
+  "addEventCalendarHijriToast": "Hijri calendar selected",
   "@addEventCalendarHijriToast": {
     "description": "SCR-FAT-053 hijri toast"
   },
-  "addEventCalendarGregorianToast": "Gregorian calendar selected (Stage 1 mock)",
+  "addEventCalendarGregorianToast": "Gregorian calendar selected",
   "@addEventCalendarGregorianToast": {
     "description": "SCR-FAT-053 gregorian toast"
   },
@@ -8819,7 +9173,7 @@
   "@individualTimelineDiscussCta": {
     "description": "SCR-FAT-063 insight CTA"
   },
-  "individualTimelineDiscussToast": "Suggestion queued for your family advisor (Stage 1 mock).",
+  "individualTimelineDiscussToast": "Suggestion queued for your family advisor.",
   "@individualTimelineDiscussToast": {
     "description": "SCR-FAT-063 discuss toast"
   },
@@ -9009,7 +9363,7 @@
   "@languageHelpChooseAction": {
     "description": "SCR-FAT-061 English choose action"
   },
-  "languageHelpLocaleToast": "English interface — coming in a later update",
+  "languageHelpLocaleToast": "Interface language updated",
   "@languageHelpLocaleToast": {
     "description": "SCR-FAT-061 Stage-1 locale switch toast"
   },
@@ -9219,7 +9573,7 @@
   "@knowledgeMapsDinnerSendCta": {
     "description": "SCR-FAT-064 send dinner CTA"
   },
-  "knowledgeMapsDinnerSendToast": "Sent to family chat — tonight's discussion is ready (Stage 1 mock)",
+  "knowledgeMapsDinnerSendToast": "Sent to family chat — tonight's discussion is ready",
   "@knowledgeMapsDinnerSendToast": {
     "description": "SCR-FAT-064 send toast"
   },
@@ -9338,7 +9692,7 @@
       }
     }
   },
-  "childLearnHomeMaterialSoonToast": "Coming soon on this path (Stage 1 mock)",
+  "childLearnHomeMaterialSoonToast": "Coming soon on this path",
   "@childLearnHomeMaterialSoonToast": {
     "description": "SCR-CHD-012 non-linked material toast"
   },
@@ -9549,9 +9903,13 @@
   "@childFlashcardsEmptyTitle": {
     "description": "SCR-CHD-014 empty"
   },
-  "childFlashcardsEmptyMessage": "When a parent extracts cards from a lesson, they appear here.",
+  "childFlashcardsEmptyMessage": "When a parent extracts cards from a lesson, they appear here. Local cards only — Advisor generate Will reach other devices in an upcoming update.",
   "@childFlashcardsEmptyMessage": {
-    "description": "SCR-CHD-014 empty message"
+    "description": "SCR-CHD-014 empty + Advisor Gateway REM honesty"
+  },
+  "childFlashcardsLocalHonestyBanner": "Flashcards are local from parent assignment — Advisor generate Will reach other devices in an upcoming update.",
+  "@childFlashcardsLocalHonestyBanner": {
+    "description": "SCR-CHD-014 LOCAL + Advisor Gateway REM honesty"
   },
   "childFlashcardsEmptyCta": "Back to My learning",
   "@childFlashcardsEmptyCta": {
@@ -9687,9 +10045,15 @@
       }
     }
   },
-  "childResultPraiseMasteredAdd": "You mastered adding fractions! Your parent got the news.",
+  "childResultPraiseMasteredAdd": "You mastered {topic}!",
   "@childResultPraiseMasteredAdd": {
-    "description": "SCR-CHD-016 praise"
+    "description": "VX-B3 · CHD-016 praise with dynamic topic (Rule 23)",
+    "placeholders": {
+      "topic": {
+        "type": "String",
+        "example": "fractions"
+      }
+    }
   },
   "childResultRewardsHeading": "Your rewards",
   "@childResultRewardsHeading": {
@@ -9775,9 +10139,9 @@
   "@childTutorSubtitle": {
     "description": "SCR-CHD-017 subtitle"
   },
-  "childTutorPolicyBanner": "I help you understand — I never give the ready-made answer. That's how you become the hero.",
+  "childTutorPolicyBanner": "I help you understand — I never give the ready-made answer. Local Socratic UI — The tutor arrives in an upcoming update.",
   "@childTutorPolicyBanner": {
-    "description": "SCR-CHD-017 Socratic policy"
+    "description": "SCR-CHD-017 Socratic + Tutor Gateway REM honesty"
   },
   "childTutorTransparencyNote": "Your parent can see our chats — our home is transparent and safe",
   "@childTutorTransparencyNote": {
@@ -9815,7 +10179,7 @@
   "@childTutorPhotoCta": {
     "description": "SCR-CHD-017 photo CTA"
   },
-  "childTutorPhotoToast": "Photo a problem — I'll explain step by step (Stage 1 mock)",
+  "childTutorPhotoToast": "Photo a problem — I'll explain step by step",
   "@childTutorPhotoToast": {
     "description": "SCR-CHD-017 photo toast"
   },
@@ -10119,6 +10483,10 @@
   "@childTimeRequestTitle": {
     "description": "SCR-CHD-020 title"
   },
+  "childTimeRequestLocalHonestyBanner": "Request is saved locally on this device. Push notification to parents reaches other devices in an upcoming update — not sent yet.",
+  "@childTimeRequestLocalHonestyBanner": {
+    "description": "SCR-CHD-020 BannerNote — local request; no FCM"
+  },
   "childTimeRequestHowMuch": "How much time do you need?",
   "@childTimeRequestHowMuch": {
     "description": "SCR-CHD-020 how much"
@@ -10348,9 +10716,13 @@
   "@childTasksSubmitCta": {
     "description": "SCR-CHD-022 submit CTA"
   },
-  "childTasksSubmitToast": "Proof sent — waiting for parent confirmation (Stage 1 mock)",
+  "childTasksSubmitToast": "Proof sent — waiting for parent confirmation. Saved on this device.",
   "@childTasksSubmitToast": {
     "description": "SCR-CHD-022 submit toast"
+  },
+  "childTasksLocalHonestyBanner": "Tasks sync with the family board on this device. Minutes deposit on parent approve. No cloud task sync yet.",
+  "@childTasksLocalHonestyBanner": {
+    "description": "SCR-CHD-022 LOCAL honesty — FAT-054 loop, no remote"
   },
   "childTasksTagPending": "Awaiting confirmation",
   "@childTasksTagPending": {
@@ -10404,17 +10776,21 @@
   "@childMediaShareQuickFile": {
     "description": "SCR-CHD-023 qact file"
   },
-  "childMediaSharePhotoToast": "Capture and share with your family",
+  "childMediaSharePhotoToast": "Photo share queued locally — camera Needs a device permission — coming later",
   "@childMediaSharePhotoToast": {
-    "description": "SCR-CHD-023 photo toast (Stage 1 mock)"
+    "description": "SCR-CHD-023 photo toast honesty"
   },
-  "childMediaShareVoiceToast": "Hold to record — it arrives transcribed too (P1)",
+  "childMediaShareVoiceToast": "Voice share queued locally — mic Needs a device permission — coming later",
   "@childMediaShareVoiceToast": {
-    "description": "SCR-CHD-023 voice toast (Stage 1 mock)"
+    "description": "SCR-CHD-023 voice toast honesty"
   },
-  "childMediaShareFileToast": "Share a homework file",
+  "childMediaShareFileToast": "File share queued locally — picker Needs a device permission — coming later",
   "@childMediaShareFileToast": {
-    "description": "SCR-CHD-023 file toast (Stage 1 mock)"
+    "description": "SCR-CHD-023 file toast honesty"
+  },
+  "childMediaShareLocalHonestyBanner": "Recent shares are a local catalog. Capture/mic Needs a device permission — coming later. Family chat delivery Will reach other devices in an upcoming update.",
+  "@childMediaShareLocalHonestyBanner": {
+    "description": "SCR-CHD-023 LOCAL + NAT/REM honesty"
   },
   "childMediaShareRecentHeading": "My recent shares",
   "@childMediaShareRecentHeading": {
@@ -10513,7 +10889,7 @@
       }
     }
   },
-  "childArrivalCheckInToast": "Reassurance sent to your parents: «Arrived at {place}»",
+  "childArrivalCheckInToast": "Check-in saved locally: «Arrived at {place}». Parent notify will notify other devices later.",
   "@childArrivalCheckInToast": {
     "description": "SCR-CHD-024 check-in toast",
     "placeholders": {
@@ -10521,6 +10897,10 @@
         "type": "String"
       }
     }
+  },
+  "childArrivalLocalHonestyBanner": "Named-place check-in only on this device. GPS live locate and parent push are CLOSED.",
+  "@childArrivalLocalHonestyBanner": {
+    "description": "SCR-CHD-024 LOCAL + NAT/REM honesty"
   },
   "childArrivalLiveHeading": "Your live location",
   "@childArrivalLiveHeading": {
@@ -10562,9 +10942,9 @@
   "@smartAlertsTitle": {
     "description": "SCR-FAT-065 AppBar"
   },
-  "smartAlertsHonestyBanner": "Watching here is transparent — your child knows Family Advisor protects their chats. No spying in our home.",
+  "smartAlertsHonestyBanner": "Watching here is transparent — no spying. Capture/device permission Needs a device permission — coming later. The family assistant arrives in an upcoming update.",
   "@smartAlertsHonestyBanner": {
-    "description": "SCR-FAT-065 honesty — no planted names"
+    "description": "SCR-FAT-065 honesty + NAT/REM CLOSED"
   },
   "smartAlertsAlertWithdrawal": "Withdrawal pattern in chats",
   "@smartAlertsAlertWithdrawal": {
@@ -10662,9 +11042,9 @@
   "@smartAlertsDetectHeading": {
     "description": "SCR-FAT-065 detect heading"
   },
-  "smartAlertsDetectBody": "1. Instant block on the child's device\n2. Encrypted snapshot saved on your device\n3. A report reaches you: app, time, reason — you choose the next step",
+  "smartAlertsDetectBody": "1. Block / snapshot / report planes are designed here\n2. Capture & device permission: Needs a device permission — coming later\n3. You decide the next step when device delivery ships",
   "@smartAlertsDetectBody": {
-    "description": "SCR-FAT-065 detect body"
+    "description": "SCR-FAT-065 detect body — NAT CLOSED honesty"
   },
   "smartAlertsSettingsCta": "Advanced settings",
   "@smartAlertsSettingsCta": {
@@ -10698,9 +11078,9 @@
   "@smartAlertDetailTitle": {
     "description": "SCR-FAT-066 AppBar"
   },
-  "smartAlertDetailBehaviorBanner": "This alert describes a behavior Family Advisor noticed — not a judgment on your child.",
+  "smartAlertDetailBehaviorBanner": "This alert describes a behavior Family Advisor noticed — not a judgment. Local alert UI — The family assistant arrives in an upcoming update.",
   "@smartAlertDetailBehaviorBanner": {
-    "description": "SCR-FAT-066 amber behavior banner"
+    "description": "SCR-FAT-066 behavior + Gateway REM honesty"
   },
   "smartAlertDetailChangesHeading": "What changed?",
   "@smartAlertDetailChangesHeading": {
@@ -10871,9 +11251,9 @@
   "@childUsageReportGiftNote": {
     "description": "SCR-FAT-069 gift note"
   },
-  "childUsageReportRetentionBanner": "Data is kept for {days} days only, then erased — and the Forget button (Settings) erases it immediately. Privacy is a promise, not a slogan.",
+  "childUsageReportRetentionBanner": "Data is kept for {days} days only, then erased — Forget (Settings) erases immediately. Local report UI only — Email/PDF export Will reach other devices in an upcoming update.",
   "@childUsageReportRetentionBanner": {
-    "description": "SCR-FAT-069 retention honesty",
+    "description": "SCR-FAT-069 retention + Email/PDF REM honesty",
     "placeholders": {
       "days": {
         "type": "int"
@@ -10927,6 +11307,10 @@
   "outerCircleStrangersBanner": "Strangers are always blocked: this protects your children automatically. Every external contact needs parent approval.",
   "@outerCircleStrangersBanner": {
     "description": "SCR-FAT-070 strangers banner"
+  },
+  "outerCircleLocalHonestyBanner": "Circle lives on this device. Approve/decline updates the shared list. No cloud contact sync yet.",
+  "@outerCircleLocalHonestyBanner": {
+    "description": "SCR-FAT-070 LOCAL honesty"
   },
   "outerCircleRelativesHeading": "Trusted relatives",
   "@outerCircleRelativesHeading": {
@@ -11134,6 +11518,10 @@
   "@friendApprovalObserverHint": {
     "description": "SCR-FAT-071 observer"
   },
+  "friendApprovalLocalHonestyBanner": "Decision updates the shared outer circle on this device. No cloud friend sync yet.",
+  "@friendApprovalLocalHonestyBanner": {
+    "description": "SCR-FAT-071 LOCAL honesty"
+  },
   "friendApprovalObserverBlocked": "Approving friends needs Partner level or above",
   "@friendApprovalObserverBlocked": {
     "description": "SCR-FAT-071 blocked toast"
@@ -11269,7 +11657,7 @@
       }
     }
   },
-  "quranProgressDownloadToast": "Download queued for {name}'s device",
+  "quranProgressDownloadToast": "Offline-ready saved locally for {name} — licensed audio pack Will reach other devices in an upcoming update",
   "@quranProgressDownloadToast": {
     "description": "SCR-FAT-072 download toast",
     "placeholders": {
@@ -11347,7 +11735,7 @@
       }
     }
   },
-  "quranProgressWhisperToast": "Encouraging whisper sent to {name}",
+  "quranProgressWhisperToast": "Encouragement saved locally for {name} — child notify Will reach other devices in an upcoming update",
   "@quranProgressWhisperToast": {
     "description": "SCR-FAT-072 whisper toast",
     "placeholders": {
@@ -11544,9 +11932,9 @@
   "@weeklyReportDeferCta": {
     "description": "SCR-FAT-073 defer"
   },
-  "weeklyReportApplyToast": "Sleep schedule adjusted — gentle steps over two weeks",
+  "weeklyReportApplyToast": "Suggestion accepted locally with your approval — schedule enforcement Will reach other devices in an upcoming update.",
   "@weeklyReportApplyToast": {
-    "description": "SCR-FAT-073 apply toast"
+    "description": "SCR-FAT-073 apply toast local + REM honesty"
   },
   "weeklyReportDeferToast": "Alright — Family Advisor will reassess next Friday",
   "@weeklyReportDeferToast": {
@@ -11637,9 +12025,9 @@
   "@weeklyReportSecWatchBody": {
     "description": "SCR-FAT-073 section body"
   },
-  "weeklyReportEmailBanner": "An email copy reached you — and a level-matched summary for the mother partner.",
+  "weeklyReportEmailBanner": "Email/PDF delivery Will reach other devices in an upcoming update — report settings and tip are local UI only (parent approval still required).",
   "@weeklyReportEmailBanner": {
-    "description": "SCR-FAT-073 email"
+    "description": "SCR-FAT-073 Email/PDF REM honesty"
   },
   "weeklyReportChildOne": "Child One",
   "@weeklyReportChildOne": {
@@ -12665,13 +13053,17 @@
   "@childFriendsCallCta": {
     "description": "SCR-CHD-030 call"
   },
-  "childFriendsChatToast": "Opened a safe chat",
+  "childFriendsChatToast": "Safe chat opens locally — delivery to other devices arrives later",
   "@childFriendsChatToast": {
     "description": "SCR-CHD-030 chat toast"
   },
-  "childFriendsCallToast": "Calling…",
+  "childFriendsCallToast": "Call UI ready — Calls arrive in an upcoming update",
   "@childFriendsCallToast": {
     "description": "SCR-CHD-030 call toast"
+  },
+  "childFriendsLocalHonestyBanner": "Friends list comes from the parent outer circle on this device. Chat/call delivery needs an upcoming update later.",
+  "@childFriendsLocalHonestyBanner": {
+    "description": "SCR-CHD-030 LOCAL honesty"
   },
   "childFriendsPendingTag": "Under review",
   "@childFriendsPendingTag": {
@@ -12817,15 +13209,15 @@
   "@homeRouterFilterTitle": {
     "description": "SCR-FAT-078 AppBar"
   },
-  "homeRouterFilterHeroProtected": "Home router is protected",
+  "homeRouterFilterHeroProtected": "Home router guide ready (DNS not enforced yet)",
   "@homeRouterFilterHeroProtected": {
-    "description": "SCR-FAT-078 hero"
+    "description": "SCR-FAT-078 hero — Native DNS CLOSED"
   },
   "homeRouterFilterHeroUnprotected": "Home router needs setup",
   "@homeRouterFilterHeroUnprotected": {
     "description": "SCR-FAT-078 hero off"
   },
-  "homeRouterFilterHeroSub": "{count} devices behind the filter — including guests and the living-room TV",
+  "homeRouterFilterHeroSub": "{count} household devices listed locally — device DNS filtering is closed",
   "@homeRouterFilterHeroSub": {
     "description": "SCR-FAT-078 hero sub",
     "placeholders": {
@@ -12866,9 +13258,9 @@
   "@homeRouterFilterTagActive": {
     "description": "SCR-FAT-078 tag"
   },
-  "homeRouterFilterTagSynced": "Synced",
+  "homeRouterFilterTagSynced": "Local categories",
   "@homeRouterFilterTagSynced": {
-    "description": "SCR-FAT-078 tag"
+    "description": "SCR-FAT-078 tag — local policy only, not remote Synced"
   },
   "homeRouterFilterTagAuto": "Automatic",
   "@homeRouterFilterTagAuto": {
@@ -12882,7 +13274,7 @@
   "@homeRouterFilterGuideCta": {
     "description": "SCR-FAT-078 guide"
   },
-  "homeRouterFilterCheckCta": "Test protection now",
+  "homeRouterFilterCheckCta": "Check device readiness",
   "@homeRouterFilterCheckCta": {
     "description": "SCR-FAT-078 check"
   },
@@ -12890,13 +13282,13 @@
   "@homeRouterFilterGuideToast": {
     "description": "SCR-FAT-078 guide toast"
   },
-  "homeRouterFilterCheckToast": "Check complete — your router is protected and every device is behind the filter",
+  "homeRouterFilterCheckToast": "Router DNS protection check is arrives in an upcoming update — local guide only",
   "@homeRouterFilterCheckToast": {
-    "description": "SCR-FAT-078 check toast"
+    "description": "SCR-FAT-078 check toast — NATIVE CLOSED honesty"
   },
-  "homeRouterFilterGuestBanner": "A guest slipped onto your Wi-Fi? They are filtered automatically — you control exceptions.",
+  "homeRouterFilterGuestBanner": "Home-router DNS filtering arrives in an upcoming update. Device web filter still protects the child away from home when configured.",
   "@homeRouterFilterGuestBanner": {
-    "description": "SCR-FAT-078 guest"
+    "description": "SCR-FAT-078 guest / Native honesty"
   },
   "homeRouterFilterObserverHint": "Changing router DNS needs Partner level or above — you can review status.",
   "@homeRouterFilterObserverHint": {
@@ -13084,9 +13476,9 @@
   "@peerCompareTitle": {
     "description": "SCR-FAT-081 AppBar"
   },
-  "peerComparePrivacyBanner": "Fully anonymous comparison with general age averages — no names, no families, no shaming. Your data never leaves for others.",
+  "peerComparePrivacyBanner": "Fully anonymous comparison with general age averages — no names, no families, no shaming. Local cohort only — Email/PDF sharing comes later.",
   "@peerComparePrivacyBanner": {
-    "description": "SCR-FAT-081 privacy"
+    "description": "SCR-FAT-081 anonymous + Email/PDF REM honesty"
   },
   "peerCompareChildOne": "Child A",
   "@peerCompareChildOne": {
@@ -13223,6 +13615,10 @@
   "smartChoreApproveToast": "Approved — each child got their tasks with set minutes",
   "@smartChoreApproveToast": {
     "description": "SCR-FAT-082 toast"
+  },
+  "smartChoreLocalHonestyBanner": "Suggestion only — nothing applies until you approve. Local family board update. Cloud ChoreAI is CLOSED.",
+  "@smartChoreLocalHonestyBanner": {
+    "description": "SCR-FAT-082 suggest-only + REM CLOSED honesty"
   },
   "smartChoreShuffleToast": "Alternate distribution ready — same fairness",
   "@smartChoreShuffleToast": {
@@ -13528,9 +13924,9 @@
   "@familyMomentsShareCta": {
     "description": "SCR-FAT-086 share"
   },
-  "familyMomentsPrideToast": "Pride card reached family chat — they saw your applause!",
+  "familyMomentsPrideToast": "Pride card saved locally — family chat share Will reach other devices in an upcoming update.",
   "@familyMomentsPrideToast": {
-    "description": "SCR-FAT-086 pride toast"
+    "description": "SCR-FAT-086 pride toast LOCAL + REM honesty"
   },
   "familyMomentsTouchTitle": "Next week's touch",
   "@familyMomentsTouchTitle": {
@@ -13620,13 +14016,13 @@
   "@familyMomentsAddCta": {
     "description": "SCR-FAT-086 add"
   },
-  "familyMomentsAddToast": "Added to moments — family notified",
+  "familyMomentsAddToast": "Added to moments locally — family notify Will reach other devices in an upcoming update.",
   "@familyMomentsAddToast": {
-    "description": "SCR-FAT-086 add toast"
+    "description": "SCR-FAT-086 add toast LOCAL + REM honesty"
   },
-  "familyMomentsFridayBanner": "Arrives every Friday morning — open, celebrate, share. Then rest easy.",
+  "familyMomentsFridayBanner": "Weekly moments are local presentation — Sharing and the family assistant arrive in an upcoming update.",
   "@familyMomentsFridayBanner": {
-    "description": "SCR-FAT-086 banner"
+    "description": "SCR-FAT-086 Friday banner LOCAL + REM honesty"
   },
   "familyMomentsEmptyTitle": "No family moments yet",
   "@familyMomentsEmptyTitle": {
@@ -13708,9 +14104,9 @@
   "@childSmartTilawahPraise": {
     "description": "SCR-CHD-032 praise"
   },
-  "childSmartTilawahBanner": "Correction uses licensed mushaf sheikh audio — Family Advisor gives one gentle note at a time so it never overwhelms you.",
+  "childSmartTilawahBanner": "Correction uses licensed mushaf sheikh audio — Family Advisor gives one gentle note. Licensed audio + The family assistant arrives in an upcoming update.",
   "@childSmartTilawahBanner": {
-    "description": "SCR-CHD-032 banner"
+    "description": "SCR-CHD-032 licensed + Advisor Gateway REM honesty"
   },
   "childSmartTilawahEmptyTitle": "No tilawah session yet",
   "@childSmartTilawahEmptyTitle": {
@@ -14111,9 +14507,13 @@
       }
     }
   },
-  "childStickersBackgroundsBgToast": "Background changed — looking great!",
+  "childStickersBackgroundsBgToast": "Background saved on this device — chat thread apply is local catalog only",
   "@childStickersBackgroundsBgToast": {
-    "description": "SCR-CHD-037 bg toast"
+    "description": "SCR-CHD-037 bg toast honesty"
+  },
+  "childStickersBackgroundsLocalHonestyBanner": "Sticker pack and wallpaper preference are local. Live chat thread styling needs chat Local contract — delivery Will reach other devices in an upcoming update.",
+  "@childStickersBackgroundsLocalHonestyBanner": {
+    "description": "SCR-CHD-037 LOCAL honesty"
   },
   "childStickersBackgroundsBanner": "Every sticker is drawn with care and stays modest — express yourself in your sweet way.",
   "@childStickersBackgroundsBanner": {
@@ -14309,9 +14709,9 @@
       }
     }
   },
-  "sosAlertDeliveryDelivered": "{channel} → {recipient}: DELIVERED",
+  "sosAlertDeliveryDelivered": "{channel} → {recipient}: LOCAL only (other-device delivery closed)",
   "@sosAlertDeliveryDelivered": {
-    "description": "SOS delivery row",
+    "description": "SOS delivery row — never claim FCM/SMS success while REMOTE CLOSED",
     "placeholders": {
       "channel": {
         "type": "String"
@@ -14427,23 +14827,218 @@
   "@sosPanicQuietTitle": {
     "description": "FAT-028 panic quiet"
   },
-  "sosPanicQuietSubtitle": "When preferred, the child SOS active screen shows critical status only",
+  "sosPanicQuietSubtitle": "Shapes the child's SOS screen only — never mutes parent SOS receipt or the mailbox",
   "@sosPanicQuietSubtitle": {
-    "description": "FAT-028 panic quiet subtitle"
+    "description": "FAT-028 panic quiet subtitle — not mute (Policy sanctity)"
+  },
+  "sosDashboardReadinessTitle": "System readiness board",
+  "@sosDashboardReadinessTitle": {
+    "description": "FAT-028 dashboard readiness section header"
+  },
+  "sosLadderRung1SectionTitle": "Fortified base (rung 1)",
+  "@sosLadderRung1SectionTitle": {
+    "description": "FAT-028 locked parents section chip"
+  },
+  "sosLadderNeedsVerify": "Needs verification",
+  "@sosLadderNeedsVerify": {
+    "description": "FAT-028 backup verify CTA when unverified"
+  },
+  "sosEscalationSecondsShort": "{seconds}s",
+  "@sosEscalationSecondsShort": {
+    "description": "Short seconds label for escalation delays",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "sosChildEscalationEmptyTitle": "No children",
+  "@sosChildEscalationEmptyTitle": {
+    "description": "FAT-028 empty children title"
+  },
+  "sosLadderPriorityUp": "Move contact earlier in escalation",
+  "@sosLadderPriorityUp": {
+    "description": "FAT-028 backup priority up tooltip"
+  },
+  "sosLadderPriorityDown": "Move contact later in escalation",
+  "@sosLadderPriorityDown": {
+    "description": "FAT-028 backup priority down tooltip"
+  },
+  "sosLadderPartnerSummaryTitle": "Current emergency ladder (view only)",
+  "@sosLadderPartnerSummaryTitle": {
+    "description": "FAT-028 Mother Partner read summary title"
+  },
+  "sosLadderPartnerSummaryBody": "{parents} parents locked on rung 1 · {verified} verified outside contacts of {total}",
+  "@sosLadderPartnerSummaryBody": {
+    "description": "FAT-028 Mother Partner read summary body",
+    "placeholders": {
+      "parents": {"type": "int"},
+      "verified": {"type": "int"},
+      "total": {"type": "int"}
+    }
   },
   "sosReadinessTitle": "Capability readiness",
   "@sosReadinessTitle": {
     "description": "FAT-028 readiness"
   },
-  "sosReadinessBody": "Push, SMS, and calling are NOT_CONFIGURED in this UI slice. SOS still fires in-app.",
+  "sosReadinessBody": "Honest Stage-1 view — push/SMS/call/GPS stay Native-closed or degraded until those waves open. SOS still fires in-app.",
   "@sosReadinessBody": {
     "description": "FAT-028 readiness body"
+  },
+  "sosReadinessRowChild": "Child trigger linked",
+  "@sosReadinessRowChild": {
+    "description": "FAT-028 readiness row child_trigger"
+  },
+  "sosReadinessRowPersistence": "Local emergency store",
+  "@sosReadinessRowPersistence": {
+    "description": "FAT-028 readiness row local_persistence"
+  },
+  "sosReadinessRowPush": "Push alerts",
+  "@sosReadinessRowPush": {
+    "description": "FAT-028 readiness row push_alerts"
+  },
+  "sosReadinessRowSms": "SMS fallback",
+  "@sosReadinessRowSms": {
+    "description": "FAT-028 readiness row sms_fallback"
+  },
+  "sosReadinessRowCall": "Call fallback",
+  "@sosReadinessRowCall": {
+    "description": "FAT-028 readiness row call_fallback"
+  },
+  "sosReadinessRowLocation": "Location for SOS",
+  "@sosReadinessRowLocation": {
+    "description": "FAT-028 readiness row location"
+  },
+  "sosReadinessRowLadder": "Trusted escalation ladder",
+  "@sosReadinessRowLadder": {
+    "description": "FAT-028 readiness row trusted_ladder"
+  },
+  "sosReadinessRowPanicQuiet": "Panic Quiet preference",
+  "@sosReadinessRowPanicQuiet": {
+    "description": "FAT-028 readiness row panic_quiet"
+  },
+  "sosReadinessRowBreakGlass": "Break-glass authority",
+  "@sosReadinessRowBreakGlass": {
+    "description": "FAT-028 readiness row break_glass"
+  },
+  "sosReadinessClassAvailable": "Ready",
+  "@sosReadinessClassAvailable": {
+    "description": "SosReadinessClass.available label"
+  },
+  "sosReadinessClassDegraded": "Degraded / local-only",
+  "@sosReadinessClassDegraded": {
+    "description": "SosReadinessClass.degraded label"
+  },
+  "sosReadinessClassUnavailable": "Unavailable",
+  "@sosReadinessClassUnavailable": {
+    "description": "SosReadinessClass.unavailable label"
+  },
+  "sosReadinessClassNotConfigured": "Not configured",
+  "@sosReadinessClassNotConfigured": {
+    "description": "SosReadinessClass.notConfigured label"
+  },
+  "sosLadderUnverifiedEscalationNote": "Unverified backups are not used in escalation — verify them so they can help.",
+  "@sosLadderUnverifiedEscalationNote": {
+    "description": "FAT-028 honesty — unverified ≠ armed"
+  },
+  "sosLadderBackupSheetTitleAdd": "Add trusted contact",
+  "@sosLadderBackupSheetTitleAdd": {
+    "description": "FAT-028 backup editor title add"
+  },
+  "sosLadderBackupSheetTitleEdit": "Edit trusted contact",
+  "@sosLadderBackupSheetTitleEdit": {
+    "description": "FAT-028 backup editor title edit"
+  },
+  "sosLadderBackupFieldName": "Name",
+  "@sosLadderBackupFieldName": {
+    "description": "FAT-028 backup field name"
+  },
+  "sosLadderBackupFieldRelation": "Relation",
+  "@sosLadderBackupFieldRelation": {
+    "description": "FAT-028 backup field relation"
+  },
+  "sosLadderBackupFieldPhone": "Phone (E.164 preferred)",
+  "@sosLadderBackupFieldPhone": {
+    "description": "FAT-028 backup field phone"
+  },
+  "sosLadderBackupFieldDelay": "Escalate after (seconds)",
+  "@sosLadderBackupFieldDelay": {
+    "description": "FAT-028 backup field delay"
+  },
+  "sosLadderBackupSave": "Save contact",
+  "@sosLadderBackupSave": {
+    "description": "FAT-028 backup sheet save"
+  },
+  "sosLadderVerifyStart": "Start verification",
+  "@sosLadderVerifyStart": {
+    "description": "FAT-028 start verify CTA"
+  },
+  "sosLadderVerifyConfirmLocal": "Confirm verified (local)",
+  "@sosLadderVerifyConfirmLocal": {
+    "description": "FAT-028 local Stage-1 confirm verify"
+  },
+  "sosLadderVerifyRevoke": "Revoke verification",
+  "@sosLadderVerifyRevoke": {
+    "description": "FAT-028 revoke verify"
+  },
+  "sosLadderVerifyLocalHonesty": "Local Stage-1 verification — not SMS or carrier proof. Native verify comes later.",
+  "@sosLadderVerifyLocalHonesty": {
+    "description": "FAT-028 local verify honesty"
+  },
+  "sosLadderEditBackupSemantics": "Edit trusted backup contact",
+  "@sosLadderEditBackupSemantics": {
+    "description": "Semantics for edit backup"
+  },
+  "sosLadderSkippedEscalation": "Skipped in escalation until verified",
+  "@sosLadderSkippedEscalation": {
+    "description": "Per-row hint when backup cannot escalate"
+  },
+  "sosChildEscalationSectionTitle": "Per-child outside escalation",
+  "@sosChildEscalationSectionTitle": {
+    "description": "FAT-028 per-child escalation section title"
+  },
+  "sosChildEscalationSectionHint": "If you do not answer a child’s SOS, notify the trusted numbers you prepared above — each child can be on or off.",
+  "@sosChildEscalationSectionHint": {
+    "description": "FAT-028 per-child escalation intro"
+  },
+  "sosChildEscalationEnable": "Escalate if parents do not answer",
+  "@sosChildEscalationEnable": {
+    "description": "FAT-028 per-child master toggle"
+  },
+  "sosChildEscalationDelay": "Wait before escalating (seconds)",
+  "@sosChildEscalationDelay": {
+    "description": "FAT-028 per-child delay"
+  },
+  "sosChildEscalationUseBackups": "Notify trusted outside contacts",
+  "@sosChildEscalationUseBackups": {
+    "description": "FAT-028 use ladder backups for this child"
+  },
+  "sosChildEscalationPrepareSms": "Prepare SMS to those numbers",
+  "@sosChildEscalationPrepareSms": {
+    "description": "FAT-028 SMS channel preference (wire later)"
+  },
+  "sosChildEscalationSmsHonesty": "SMS send stays Native/Backend-closed — this switch only saves your intent so we can activate it later without redesigning the screen.",
+  "@sosChildEscalationSmsHonesty": {
+    "description": "FAT-028 SMS honesty for per-child"
+  },
+  "sosChildEscalationChildLabel": "Child {id}",
+  "@sosChildEscalationChildLabel": {
+    "description": "Opaque child label on FAT-028 (no planted names)",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "sosChildEscalationEmptyChildren": "No children in the family roster yet — add a child first, then tune escalation per child.",
+  "@sosChildEscalationEmptyChildren": {
+    "description": "FAT-028 empty children for escalation"
   },
   "sosAlertConnectionOnline": "Connection: ONLINE",
   "@sosAlertConnectionOnline": {
     "description": "SOS connection"
   },
-  "sosAlertConnectionDegraded": "Connection: DEGRADED",
+  "sosAlertConnectionDegraded": "Connection: Partly working",
   "@sosAlertConnectionDegraded": {
     "description": "SOS connection"
   },
@@ -14456,52 +15051,189 @@
     "description": "Default break-glass capability label"
   },
   "resultsFollowupActivityQuizSubmittedTitle": "Child quiz submitted",
-  "@resultsFollowupActivityQuizSubmittedTitle": { "description": "SCR-FAT-050 activity from CHD-015 quiz submit (P15-EDU-006)" },
+  "@resultsFollowupActivityQuizSubmittedTitle": {
+    "description": "SCR-FAT-050 activity from CHD-015 quiz submit (P15-EDU-006)"
+  },
   "resultsFollowupActivityJustSubmitted": "Just submitted — awaiting your review",
-  "@resultsFollowupActivityJustSubmitted": { "description": "SCR-FAT-050 live submit subtitle without minutes" },
+  "@resultsFollowupActivityJustSubmitted": {
+    "description": "SCR-FAT-050 live submit subtitle without minutes"
+  },
   "materialsLessonsSubjectCustom": "New subject",
-  "@materialsLessonsSubjectCustom": { "description": "SCR-FAT-048 user-added subject title (P15-EDU-007)" },
+  "@materialsLessonsSubjectCustom": {
+    "description": "SCR-FAT-048 user-added subject title (P15-EDU-007)"
+  },
   "materialsLessonsMetaJustAdded": "Just added — ready for lessons",
-  "@materialsLessonsMetaJustAdded": { "description": "SCR-FAT-048 new subject subtitle" },
+  "@materialsLessonsMetaJustAdded": {
+    "description": "SCR-FAT-048 new subject subtitle"
+  },
   "materialsLessonsMetaLessonCount": "{count} lessons",
   "@materialsLessonsMetaLessonCount": {
     "description": "SCR-FAT-048 lesson count subtitle for custom subject",
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "materialsLessonsAddSubjectPersistedToast": "Subject added to your materials",
-  "@materialsLessonsAddSubjectPersistedToast": { "description": "SCR-FAT-048 add subject persisted toast" },
+  "@materialsLessonsAddSubjectPersistedToast": {
+    "description": "SCR-FAT-048 add subject persisted toast"
+  },
   "materialsLessonsAddLessonPersistedToast": "Lesson slot added — pick a source next",
-  "@materialsLessonsAddLessonPersistedToast": { "description": "SCR-FAT-048 add lesson persisted toast" },
+  "@materialsLessonsAddLessonPersistedToast": {
+    "description": "SCR-FAT-048 add lesson persisted toast"
+  },
   "dayBoardPendingQuizSubmittedTitle": "Child quiz submitted",
-  "@dayBoardPendingQuizSubmittedTitle": { "description": "SCR-FAT-010 priority from CHD-015 LearningResult (P15-EDU-008)" },
+  "@dayBoardPendingQuizSubmittedTitle": {
+    "description": "SCR-FAT-010 priority from CHD-015 LearningResult (P15-EDU-008)"
+  },
+  "dayBoardPendingAthkarBlessingTitle": "Child finished athkar",
+  "@dayBoardPendingAthkarBlessingTitle": {
+    "description": "SCR-FAT-010 blessing from CHD-027 (P15-QUR-005)"
+  },
+  "dayBoardPendingAthkarBlessingSubtitle": "Local blessing — send a whisper when you can",
+  "@dayBoardPendingAthkarBlessingSubtitle": {
+    "description": "SCR-FAT-010 athkar blessing subtitle"
+  },
   "dayBoardPendingJustSubmitted": "Just submitted — open results follow-up",
-  "@dayBoardPendingJustSubmitted": { "description": "SCR-FAT-010 learning pending subtitle" },
+  "@dayBoardPendingJustSubmitted": {
+    "description": "SCR-FAT-010 learning pending subtitle"
+  },
   "dayBoardPendingEarnedMinutes": "Earned +{minutes} minutes — review on Results",
   "@dayBoardPendingEarnedMinutes": {
     "description": "SCR-FAT-010 learning pending with minutes",
-    "placeholders": { "minutes": { "type": "int" } }
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "dayBoardLocalSaveLine": "Saved on this device — works offline",
+  "@dayBoardLocalSaveLine": {
+    "description": "SCR-FAT-010 honest local-save line (FVX-S-03 / OD-02)"
+  },
+  "dayBoardPendingTimeRequestTitle": "Extra time request waiting",
+  "@dayBoardPendingTimeRequestTitle": {
+    "description": "SCR-FAT-010 pending from FAT-033"
+  },
+  "dayBoardPendingTimeRequestSubtitle": "{minutes} minutes — open the inbox to decide",
+  "@dayBoardPendingTimeRequestSubtitle": {
+    "description": "SCR-FAT-010 time-request pending subtitle",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "dayBoardPendingAppApprovalTitle": "New app needs your decision",
+  "@dayBoardPendingAppApprovalTitle": {
+    "description": "SCR-FAT-010 pending from FAT-035"
+  },
+  "dayBoardPendingAppApprovalSubtitle": "Allow or block on the approval screen",
+  "@dayBoardPendingAppApprovalSubtitle": {
+    "description": "SCR-FAT-010 app-approval pending subtitle"
+  },
+  "dayBoardPendingFriendRequestTitle": "Friend request waiting",
+  "@dayBoardPendingFriendRequestTitle": {
+    "description": "SCR-FAT-010 pending from FAT-071"
+  },
+  "dayBoardPendingFriendRequestSubtitle": "Review safely — no strangers without you",
+  "@dayBoardPendingFriendRequestSubtitle": {
+    "description": "SCR-FAT-010 friend-request pending subtitle"
+  },
+  "alertsHubRowSosTitle": "Active SOS needs attention",
+  "@alertsHubRowSosTitle": {
+    "description": "SCR-FAT-019 projected SOS row title"
+  },
+  "alertsHubRowSosSubtitle": "Open the SOS board — never muted",
+  "@alertsHubRowSosSubtitle": {
+    "description": "SCR-FAT-019 projected SOS row subtitle"
+  },
+  "alertsHubRowTamperTitle": "Tamper alert on a child device",
+  "@alertsHubRowTamperTitle": {
+    "description": "SCR-FAT-019 projected tamper row title"
+  },
+  "alertsHubRowTamperSubtitle": "Recorded on this device — review anti-tamper settings",
+  "@alertsHubRowTamperSubtitle": {
+    "description": "SCR-FAT-019 projected tamper row subtitle"
+  },
+  "alertsHubRowTimeTitle": "Extra time request waiting",
+  "@alertsHubRowTimeTitle": {
+    "description": "SCR-FAT-019 projected time-request row"
+  },
+  "alertsHubRowTimeSubtitle": "Open the time-request inbox",
+  "@alertsHubRowTimeSubtitle": {
+    "description": "SCR-FAT-019 projected time-request subtitle"
+  },
+  "alertsHubRowAppTitle": "New app needs approval",
+  "@alertsHubRowAppTitle": {
+    "description": "SCR-FAT-019 projected app-install row"
+  },
+  "alertsHubRowAppSubtitle": "Open new-app approval",
+  "@alertsHubRowAppSubtitle": {
+    "description": "SCR-FAT-019 projected app-install subtitle"
+  },
+  "alertsHubRowFriendTitle": "Friend request waiting",
+  "@alertsHubRowFriendTitle": {
+    "description": "SCR-FAT-019 projected friend-request row"
+  },
+  "alertsHubRowFriendSubtitle": "Open friend approval",
+  "@alertsHubRowFriendSubtitle": {
+    "description": "SCR-FAT-019 projected friend-request subtitle"
+  },
+  "alertsHubRowArriveTitle": "Arrived at a safe zone",
+  "@alertsHubRowArriveTitle": {
+    "description": "SCR-FAT-019 projected arriveSafe row"
+  },
+  "alertsHubRowArriveSubtitle": "Open arrival detail",
+  "@alertsHubRowArriveSubtitle": {
+    "description": "SCR-FAT-019 projected arriveSafe subtitle"
+  },
+  "alertsHubRowLeaveZoneTitle": "Left a safe zone",
+  "@alertsHubRowLeaveZoneTitle": {
+    "description": "SCR-FAT-019 projected leaveZone row"
+  },
+  "alertsHubRowLeaveZoneSubtitle": "Open leave detail — Critical never muted",
+  "@alertsHubRowLeaveZoneSubtitle": {
+    "description": "SCR-FAT-019 projected leaveZone subtitle"
   },
   "quranProgressSurahMulk": "Al-Mulk",
-  "@quranProgressSurahMulk": { "description": "SCR-FAT-072 surah Al-Mulk (P15-QUR-002)" },
+  "@quranProgressSurahMulk": {
+    "description": "SCR-FAT-072 surah Al-Mulk (P15-QUR-002)"
+  },
   "quranProgressCycleSurahCta": "Switch ward surah",
-  "@quranProgressCycleSurahCta": { "description": "SCR-FAT-072 edit plan surah CTA" },
+  "@quranProgressCycleSurahCta": {
+    "description": "SCR-FAT-072 edit plan surah CTA"
+  },
   "quranProgressCycleSurahToast": "Ward surah set to {surah} — save to send to your child",
   "@quranProgressCycleSurahToast": {
     "description": "SCR-FAT-072 cycle surah toast",
-    "placeholders": { "surah": { "type": "String" } }
+    "placeholders": {
+      "surah": {
+        "type": "String"
+      }
+    }
   },
   "quranProgressPublishPlanCta": "Save plan to child",
-  "@quranProgressPublishPlanCta": { "description": "SCR-FAT-072 publish ward plan CTA (P15-QUR-002)" },
+  "@quranProgressPublishPlanCta": {
+    "description": "SCR-FAT-072 publish ward plan CTA (P15-QUR-002)"
+  },
   "quranProgressPublishPlanToast": "Ward plan sent — {surah} · +{minutes} minutes reward",
   "@quranProgressPublishPlanToast": {
     "description": "SCR-FAT-072 publish plan toast",
     "placeholders": {
-      "surah": { "type": "String" },
-      "minutes": { "type": "int" }
+      "surah": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "int"
+      }
     }
   },
   "childQuranWardAyahNaba1": "عَمَّ يَتَسَاءَلُونَ ﴿١﴾",
-  "@childQuranWardAyahNaba1": { "description": "SCR-CHD-025 licensed An-Naba 1 (never AI-generated)" },
+  "@childQuranWardAyahNaba1": {
+    "description": "SCR-CHD-025 licensed An-Naba 1 (never AI-generated)"
+  },
   "sys3MockHonesty": "This local prototype updates in-memory identity data. Server sync is not connected yet.",
   "sys3SessionRestoreTitle": "Restore session",
   "sys3SessionRestoreBody": "Restore this expired session on this device.",
@@ -14542,7 +15274,7 @@
   "sys3SessionsEmpty": "No sessions are available.",
   "sys3RevokeAction": "Revoke",
   "sys3RemoteEndTitle": "End child session",
-  "sys3RemoteEndBody": "End this child session remotely? This does not remove the device enrollment.",
+  "sys3RemoteEndBody": "End this child session from here? This does not remove the device enrollment.",
   "sys3RemoteEndAction": "End session",
   "sys3RevokeTitle": "Confirm revocation",
   "sys3RevokeBody": "Revoke the selected session or enrollment?",
@@ -14553,11 +15285,29 @@
   "sys3ErrorTitle": "Unable to complete",
   "sys3ErrorBody": "The requested identity change could not be applied.",
   "sys3MemberLabel": "Member {id}",
-  "@sys3MemberLabel": { "placeholders": { "id": { "type": "String" } } },
+  "@sys3MemberLabel": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
   "sys3SessionLabel": "Session {id}",
-  "@sys3SessionLabel": { "placeholders": { "id": { "type": "String" } } },
+  "@sys3SessionLabel": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
   "sys3EnrollmentLabel": "Enrollment {id}",
-  "@sys3EnrollmentLabel": { "placeholders": { "id": { "type": "String" } } },
+  "@sys3EnrollmentLabel": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
   "sys3SettingsLogout": "Log out",
   "sys3SettingsAdultSessions": "Adult sessions",
   "sys3SettingsChildSessions": "Child sessions",
@@ -14569,23 +15319,23 @@
   "sys3FamilyLeaveCta": "Leave this family",
   "sys3FamilyRemoveCta": "Remove adult",
   "sys3InviteStatusCta": "View invite status",
-  "capabilityStatusImplemented": "IMPLEMENTED",
+  "capabilityStatusImplemented": "Works",
   "@capabilityStatusImplemented": {
     "description": "FS honesty badge — local capability real"
   },
-  "capabilityStatusMockRemote": "MOCK-REMOTE",
+  "capabilityStatusMockRemote": "On this device",
   "@capabilityStatusMockRemote": {
     "description": "FS honesty badge — remote edge mocked"
   },
-  "capabilityStatusDegraded": "DEGRADED",
+  "capabilityStatusDegraded": "Partly working",
   "@capabilityStatusDegraded": {
     "description": "FS honesty badge — partial / last-acked"
   },
-  "capabilityStatusUnsupported": "UNSUPPORTED",
+  "capabilityStatusUnsupported": "Not supported",
   "@capabilityStatusUnsupported": {
     "description": "FS honesty badge — platform cannot support"
   },
-  "capabilityStatusNotImplemented": "NOT IMPLEMENTED",
+  "capabilityStatusNotImplemented": "Coming soon",
   "@capabilityStatusNotImplemented": {
     "description": "FS honesty badge — not built yet"
   },
@@ -14593,7 +15343,7 @@
   "@locationGpsCapabilityLabel": {
     "description": "FS-001-UX label beside GPS honesty badge"
   },
-  "locationGpsNotImplementedBanner": "Device GPS is NOT IMPLEMENTED in this build — maps are decorative; fixes must be injected honestly. Never treat this screen as live tracking.",
+  "locationGpsNotImplementedBanner": "Device GPS is Coming soon in this build — maps are decorative; fixes must be injected honestly. Never treat this screen as live tracking.",
   "@locationGpsNotImplementedBanner": {
     "description": "FS-001-UX honesty on FAT-014/015/016/017"
   },
@@ -14613,7 +15363,9 @@
   "@createSafeZoneChildChipSemantics": {
     "description": "FAT-017 child chip semantics",
     "placeholders": {
-      "name": { "type": "String" }
+      "name": {
+        "type": "String"
+      }
     }
   },
   "silentLocateTitle": "Silent location request",
@@ -14624,7 +15376,9 @@
   "@silentLocateBody": {
     "description": "LOC-P-SLR body",
     "placeholders": {
-      "name": { "type": "String" }
+      "name": {
+        "type": "String"
+      }
     }
   },
   "silentLocateConfirmCta": "Request locate",
@@ -14651,13 +15405,17 @@
   "@silentLocateResultUnavailable": {
     "description": "LOC-P-SLR result"
   },
-  "silentLocateResultGpsNotImplemented": "Device GPS is NOT IMPLEMENTED — cannot claim a live silent locate.",
+  "silentLocateResultGpsNotImplemented": "Device GPS is Coming soon — cannot claim a live silent locate.",
   "@silentLocateResultGpsNotImplemented": {
     "description": "LOC-P-SLR honesty when GPS missing"
   },
   "locationMapSilentLocateCta": "Silent locate",
   "@locationMapSilentLocateCta": {
     "description": "FAT-014 silent locate CTA"
+  },
+  "locationMapSilentLocateDenied": "Silent locate needs a parent authority above Observer.",
+  "@locationMapSilentLocateDenied": {
+    "description": "FAT-014 Silent Locate Observer deny toast"
   },
   "childArrivalSilentBanner": "Check-in only — named places. No live map or coordinates on the child side.",
   "@childArrivalSilentBanner": {
@@ -14779,14 +15537,18 @@
   "@fs005ChildModeOn": {
     "description": "FS-005 child W-C01",
     "placeholders": {
-      "modeName": { "type": "String" }
+      "modeName": {
+        "type": "String"
+      }
     }
   },
   "fs005ChildModesOn": "Modes on: {modeNames}",
   "@fs005ChildModesOn": {
     "description": "FS-005 child W-C02",
     "placeholders": {
-      "modeNames": { "type": "String" }
+      "modeNames": {
+        "type": "String"
+      }
     }
   },
   "fs005ChildModeLimited": "Some apps and sites are limited now.",
@@ -14842,35 +15604,65 @@
     "description": "FS-007-UX suggest-only WF CTA"
   },
   "fs007CategorySexual": "Sexual content",
-  "@fs007CategorySexual": { "description": "FS-007 category label" },
+  "@fs007CategorySexual": {
+    "description": "FS-007 category label"
+  },
   "fs007CategorySensitiveVisual": "Sensitive visual",
-  "@fs007CategorySensitiveVisual": { "description": "FS-007 category label" },
+  "@fs007CategorySensitiveVisual": {
+    "description": "FS-007 category label"
+  },
   "fs007CategoryViolence": "Violence or threat",
-  "@fs007CategoryViolence": { "description": "FS-007 category label" },
+  "@fs007CategoryViolence": {
+    "description": "FS-007 category label"
+  },
   "fs007CategorySelfHarm": "Self-harm signal",
-  "@fs007CategorySelfHarm": { "description": "FS-007 category label" },
+  "@fs007CategorySelfHarm": {
+    "description": "FS-007 category label"
+  },
   "fs007CategoryPredatory": "Predatory or grooming signal",
-  "@fs007CategoryPredatory": { "description": "FS-007 category label" },
+  "@fs007CategoryPredatory": {
+    "description": "FS-007 category label"
+  },
   "fs007CategorySubstance": "Substance or gambling",
-  "@fs007CategorySubstance": { "description": "FS-007 category label" },
+  "@fs007CategorySubstance": {
+    "description": "FS-007 category label"
+  },
   "fs007CategorySuspicious": "Suspicious language",
-  "@fs007CategorySuspicious": { "description": "FS-007 category label" },
+  "@fs007CategorySuspicious": {
+    "description": "FS-007 category label"
+  },
   "fs007CategoryUncategorized": "Uncategorized concern",
-  "@fs007CategoryUncategorized": { "description": "FS-007 category label" },
+  "@fs007CategoryUncategorized": {
+    "description": "FS-007 category label"
+  },
   "fs007CertaintyUnknown": "Unknown",
-  "@fs007CertaintyUnknown": { "description": "FS-007 certainty (non-numeric)" },
+  "@fs007CertaintyUnknown": {
+    "description": "FS-007 certainty (non-numeric)"
+  },
   "fs007CertaintyPreliminary": "Preliminary",
-  "@fs007CertaintyPreliminary": { "description": "FS-007 certainty" },
+  "@fs007CertaintyPreliminary": {
+    "description": "FS-007 certainty"
+  },
   "fs007CertaintyAnalysis": "Analysis",
-  "@fs007CertaintyAnalysis": { "description": "FS-007 certainty" },
+  "@fs007CertaintyAnalysis": {
+    "description": "FS-007 certainty"
+  },
   "fs007CertaintyConfirmed": "Confirmed",
-  "@fs007CertaintyConfirmed": { "description": "FS-007 certainty" },
+  "@fs007CertaintyConfirmed": {
+    "description": "FS-007 certainty"
+  },
   "fs007SeverityLow": "Low",
-  "@fs007SeverityLow": { "description": "FS-007 severity (non-numeric)" },
+  "@fs007SeverityLow": {
+    "description": "FS-007 severity (non-numeric)"
+  },
   "fs007SeverityElevated": "Elevated",
-  "@fs007SeverityElevated": { "description": "FS-007 severity" },
+  "@fs007SeverityElevated": {
+    "description": "FS-007 severity"
+  },
   "fs007SeverityHigh": "High",
-  "@fs007SeverityHigh": { "description": "FS-007 severity" },
+  "@fs007SeverityHigh": {
+    "description": "FS-007 severity"
+  },
   "fs007ChildTransparencyTitle": "On-device safety tools",
   "@fs007ChildTransparencyTitle": {
     "description": "FS-007 child transparency title"
@@ -14880,21 +15672,47 @@
     "description": "FS-007 child on-device/offline honesty"
   },
   "fs007ToolSearch": "Search analysis",
-  "@fs007ToolSearch": { "description": "FS-007 child tool row" },
+  "@fs007ToolSearch": {
+    "description": "FS-007 child tool row"
+  },
   "fs007ToolImage": "Image classification",
-  "@fs007ToolImage": { "description": "FS-007 child tool row" },
+  "@fs007ToolImage": {
+    "description": "FS-007 child tool row"
+  },
   "fs007ToolScreenshot": "Screenshot monitoring",
-  "@fs007ToolScreenshot": { "description": "FS-007 child tool row (FS-004 policy)" },
+  "@fs007ToolScreenshot": {
+    "description": "FS-007 child tool row (FS-004 policy)"
+  },
   "fs007ToolStateOff": "Off",
-  "@fs007ToolStateOff": { "description": "FS-007 tool state" },
+  "@fs007ToolStateOff": {
+    "description": "FS-007 tool state"
+  },
   "fs007ToolStateOnDevice": "On (on-device)",
-  "@fs007ToolStateOnDevice": { "description": "FS-007 tool state" },
+  "@fs007ToolStateOnDevice": {
+    "description": "FS-007 tool state"
+  },
   "fs007ToolStateDegraded": "Degraded",
-  "@fs007ToolStateDegraded": { "description": "FS-007 tool state" },
+  "@fs007ToolStateDegraded": {
+    "description": "FS-007 tool state"
+  },
   "fs007ToolStateUnsupported": "Unsupported",
-  "@fs007ToolStateUnsupported": { "description": "FS-007 tool state" },
+  "@fs007ToolStateUnsupported": {
+    "description": "FS-007 tool state"
+  },
   "fs007SmartAlertsEntry": "Offline AI Safety tickets (FS-007) — signals only; never auto-blocks.",
   "@fs007SmartAlertsEntry": {
     "description": "FS-007-UX honesty on FAT-065"
+  },
+  "honestyChildGentleLine": "Some things here work on this device only for now 🌱",
+  "@honestyChildGentleLine": {
+    "description": "VX-B3 glossary v1 · child screens one gentle line (D2)"
+  },
+  "childResultPraiseTopicFractions": "adding fractions",
+  "@childResultPraiseTopicFractions": {
+    "description": "VX-B3 · CHD-016 praise topic label (Rule 23)"
+  },
+  "appLoadingSemantics": "Loading",
+  "@appLoadingSemantics": {
+    "description": "VX-B4 · AppLoadingState semantics label"
   }
 }

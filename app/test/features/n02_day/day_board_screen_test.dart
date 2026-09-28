@@ -5,15 +5,17 @@ import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/placeholder_screen.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/design/components/status_pulse_avatar.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/rules_engine_rule_repository.dart';
 import 'package:family_os/core/policy/time_request_repository.dart';
 import 'package:family_os/core/policy/time_request_service.dart';
+import 'package:family_os/features/n02_day/children_list_local_repository.dart';
+import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/day_board_projection.dart';
 import 'package:family_os/features/n02_day/day_board_screen.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
 import 'package:family_os/features/n02_day/request_inbox_screen.dart';
-import 'package:family_os/mock/register_mock_family.dart';
 
 void main() {
   // —— UI-004 AC1: empty family → empty cards, never fake Khaled ——
@@ -33,9 +35,9 @@ void main() {
     expect(find.textContaining('سناب'), findsNothing);
     expect(find.textContaining('Snapchat'), findsNothing);
     // No planted sample numerals from manyFixture.
-    expect(find.textContaining('٨٤٪'), findsNothing);
-    expect(find.textContaining('٥٠٪'), findsNothing);
-    expect(find.textContaining('٤٥ د'), findsNothing);
+    expect(find.textContaining('84٪'), findsNothing);
+    expect(find.textContaining('50٪'), findsNothing);
+    expect(find.textContaining('45 د'), findsNothing);
   });
 
   testWidgets('UI-004: many children bind projection numerals only', (
@@ -53,7 +55,7 @@ void main() {
     expect(find.byKey(DayBoardKeys.pulse(1)), findsOneWidget);
     expect(find.byKey(DayBoardKeys.pulse(2)), findsOneWidget);
     expect(find.byKey(DayBoardKeys.activeChild), findsOneWidget);
-    expect(find.textContaining('ابن ١'), findsWidgets);
+    expect(find.textContaining('ابن 1'), findsWidgets);
     expect(find.textContaining('خالد'), findsNothing);
   });
 
@@ -72,12 +74,12 @@ void main() {
       tester,
       projection: const DayBoardProjection(
         offline: true,
-        lastSyncLabel: 'منذ ١٠ دقائق',
+        lastSyncLabel: 'منذ 10 دقائق',
       ),
     );
 
     expect(find.byKey(DayBoardKeys.offlineBanner), findsOneWidget);
-    expect(find.textContaining('منذ ١٠ دقائق'), findsOneWidget);
+    expect(find.textContaining('منذ 10 دقائق'), findsOneWidget);
     expect(find.textContaining('دون اتصال'), findsOneWidget);
   });
 
@@ -94,7 +96,7 @@ void main() {
             DayBoardPendingRequest(
               id: 'tr1',
               title: 'طلب وقت إضافي',
-              subtitle: '+٣٠ دقيقة · بانتظار قرارك',
+              subtitle: '+30 دقيقة · بانتظار قرارك',
               inboxPath: '/scr-fat-033',
             ),
           ],
@@ -193,34 +195,34 @@ void main() {
     },
   );
 
-  testWidgets('active child card → /scr-fat-013', (tester) async {
+  testWidgets('active child card → /scr-fat-013 with childId', (tester) async {
     final hits = <String>[];
     await _pumpRouted(
       tester,
       DayBoardScreen(
         projection: DayBoardProjection(children: DayChildMock.manyFixture),
-        onChildProfile: () => hits.add('013'),
+        onChildProfile: (id) => hits.add(id),
       ),
     );
 
     await tester.tap(find.byKey(DayBoardKeys.activeChild));
     await tester.pumpAndSettle();
-    expect(hits, ['013']);
+    expect(hits, ['child_a']);
   });
 
-  testWidgets('pulse avatar → /scr-fat-013', (tester) async {
+  testWidgets('pulse avatar → profile with that childId', (tester) async {
     final hits = <String>[];
     await _pumpRouted(
       tester,
       DayBoardScreen(
         projection: DayBoardProjection(children: DayChildMock.manyFixture),
-        onChildProfile: () => hits.add('013'),
+        onChildProfile: (id) => hits.add(id),
       ),
     );
 
-    await tester.tap(find.byKey(DayBoardKeys.pulse(0)));
+    await tester.tap(find.byKey(DayBoardKeys.pulse(1)));
     await tester.pumpAndSettle();
-    expect(hits, ['013']);
+    expect(hits, ['child_b']);
   });
 
   testWidgets('quick grid targets + all children', (tester) async {
@@ -302,20 +304,46 @@ void main() {
     expect(p.offline, isFalse);
   });
 
-  test('stage1DayBoardProjectionRepository seeds Register §10', () async {
-    final p = await stage1DayBoardProjectionRepository.load();
-    expect(
-      p.children.map((c) => c.displayName).toList(),
-      RegisterMockFamily.children.map((c) => c.displayName).toList(),
-    );
-    expect(p.children.map((c) => c.displayName), ['خالد', 'نورة', 'سعد']);
-    expect(p.hasPending, isTrue);
-    expect(p.phase, DayBoardPhase.ready);
-  });
+  test(
+    'stage1DayBoardProjectionRepository binds Identity roster (no Register §10)',
+    () async {
+      resetStage1ChildrenListRepositoryForTest();
+      final memory = InMemoryChildrenListRepository(
+        byFamily: {
+          ChildrenListLocalSeed.famStage1.value:
+              ChildrenListLocalSeed.famStage1Children,
+        },
+        provenance: kChildrenListLocalDemoProvenance,
+      );
+      rebindStage1ChildrenListRepository(memory);
 
-  testWidgets('default DayBoardScreen shows Register §10 children', (
+      final p = await stage1DayBoardProjectionRepository.load();
+      expect(p.children.map((c) => c.id).toList(), ['demo-child', 'child_b']);
+      expect(p.children.map((c) => c.displayName).toList(), ['ابن 1', 'ابن 2']);
+      expect(p.children.any((c) => c.displayName.contains('خالد')), isFalse);
+      expect(p.hasPending, isFalse);
+      expect(p.lastSyncLabel, isNull);
+      expect(p.localDemoSeeded, isTrue);
+      expect(p.phase, DayBoardPhase.ready);
+
+      resetStage1ChildrenListRepositoryForTest();
+    },
+  );
+
+  testWidgets('LOCAL_DEMO roster → day board honesty BannerNote', (
     tester,
   ) async {
+    resetStage1ChildrenListRepositoryForTest();
+    rebindStage1ChildrenListRepository(
+      InMemoryChildrenListRepository(
+        byFamily: {
+          ChildrenListLocalSeed.famStage1.value:
+              ChildrenListLocalSeed.famStage1Children,
+        },
+        provenance: kChildrenListLocalDemoProvenance,
+      ),
+    );
+
     await tester.pumpWidget(
       MaterialApp(
         theme: buildFamilyTheme(),
@@ -332,15 +360,144 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(DayBoardKeys.emptyChildren), findsNothing);
-    expect(find.byKey(DayBoardKeys.pulse(0)), findsOneWidget);
-    expect(find.byKey(DayBoardKeys.pulse(1)), findsOneWidget);
-    expect(find.byKey(DayBoardKeys.pulse(2)), findsOneWidget);
-    // Active card shows first child name; pulse strip uses emoji for others.
-    expect(find.textContaining('خالد'), findsWidgets);
-    expect(find.text('🦁'), findsWidgets);
-    expect(find.text('🐱'), findsWidgets);
-    expect(find.text('🐼'), findsWidgets);
+    expect(find.byKey(DayBoardKeys.localDemoBanner), findsOneWidget);
+    expect(find.textContaining('تجريبي'), findsOneWidget);
+    expect(find.textContaining('خالد'), findsNothing);
+
+    resetStage1ChildrenListRepositoryForTest();
+  });
+
+  testWidgets(
+    'default DayBoardScreen shows Identity roster ids, never Khaled',
+    (tester) async {
+      resetStage1ChildrenListRepositoryForTest();
+      rebindStage1ChildrenListRepository(
+        InMemoryChildrenListRepository(
+          byFamily: {
+            ChildrenListLocalSeed.famStage1.value:
+                ChildrenListLocalSeed.famStage1Children,
+          },
+          provenance: kChildrenListLocalDemoProvenance,
+        ),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildFamilyTheme(),
+          locale: const Locale('ar'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: const DayBoardScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(DayBoardKeys.emptyChildren), findsNothing);
+      expect(find.byKey(DayBoardKeys.pulse(0)), findsOneWidget);
+      expect(find.byKey(DayBoardKeys.pulse(1)), findsOneWidget);
+      expect(find.byKey(DayBoardKeys.pulse(2)), findsNothing);
+      expect(find.textContaining('ابن 1'), findsWidgets);
+      expect(find.textContaining('خالد'), findsNothing);
+      expect(find.textContaining('نورة'), findsNothing);
+      expect(find.textContaining('سعد'), findsNothing);
+      expect(find.text('🦁'), findsWidgets);
+      expect(find.text('🐱'), findsWidgets);
+
+      resetStage1ChildrenListRepositoryForTest();
+    },
+  );
+
+  testWidgets('FAT-010: importance ladder shows multiple live pending rows', (
+    tester,
+  ) async {
+    await _pumpScreen(
+      tester,
+      projection: const DayBoardProjection(
+        children: DayChildMock.manyFixture,
+        pendingRequests: [
+          DayBoardPendingRequest(
+            id: 'athkar-0',
+            titleKey: 'athkarBlessing',
+            subtitleKey: 'athkarDone',
+            kind: DayBoardPendingKind.athkar,
+            inboxPath: '/scr-fat-072',
+          ),
+          DayBoardPendingRequest(
+            id: 'tr-1',
+            titleKey: 'timeRequest',
+            subtitleKey: 'timeRequestWaiting',
+            minutes: 30,
+            kind: DayBoardPendingKind.time,
+          ),
+          DayBoardPendingRequest(
+            id: 'friend-1',
+            titleKey: 'friendRequest',
+            subtitleKey: 'friendRequestWaiting',
+            kind: DayBoardPendingKind.friend,
+            inboxPath: '/scr-fat-071',
+          ),
+        ],
+      ),
+    );
+
+    expect(find.byKey(DayBoardKeys.priorityLadder), findsOneWidget);
+    expect(find.byKey(DayBoardKeys.priority), findsOneWidget);
+    expect(find.byKey(DayBoardKeys.priorityAt(1)), findsOneWidget);
+    expect(find.byKey(DayBoardKeys.priorityAt(2)), findsOneWidget);
+    // Friend ranks above time above athkar.
+    expect(find.textContaining('صداقة'), findsOneWidget);
+  });
+
+  testWidgets('FAT-010: mint bar only when timeLeftRatio is bound', (
+    tester,
+  ) async {
+    final withRatio = DayChildMock(
+      id: 'child_a',
+      displayName: 'ابن 1',
+      emoji: '🦁',
+      swatch: DayChildSwatch.purple,
+      ageYears: 14,
+      locationLabel: 'المدرسة',
+      batteryLabel: '84٪',
+      timeLeftLabel: '1 س 20 د',
+      quranLabel: '50٪',
+      walletLabel: '45 د',
+      timeLeftRatio: 0.55,
+      pulseStatus: DayChildPulseStatus.attention,
+    );
+
+    await _pumpScreen(
+      tester,
+      projection: DayBoardProjection(children: [withRatio]),
+    );
+    expect(find.byKey(DayBoardKeys.mintProgress), findsOneWidget);
+    expect(find.byType(StatusPulseAvatar), findsOneWidget);
+
+    await _pumpScreen(
+      tester,
+      projection: DayBoardProjection(children: DayChildMock.manyFixture),
+    );
+    expect(find.byKey(DayBoardKeys.mintProgress), findsNothing);
+  });
+
+  testWidgets('FAT-010: More tools hub scrolls inside the board', (
+    tester,
+  ) async {
+    await _pumpScreen(
+      tester,
+      projection: DayBoardProjection(children: DayChildMock.manyFixture),
+    );
+
+    expect(find.byKey(DayBoardKeys.moreTools), findsOneWidget);
+    expect(find.textContaining('المزيد'), findsOneWidget);
+    await tester.drag(find.byType(SingleChildScrollView).first, const Offset(0, -400));
+    await tester.pumpAndSettle();
+    expect(find.byKey(DayBoardKeys.moreTools), findsOneWidget);
   });
 }
 

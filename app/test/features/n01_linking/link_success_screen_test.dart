@@ -18,7 +18,7 @@ void main() {
     await _pumpScreen(tester);
 
     expect(find.text('تمّ الربط!'), findsOneWidget);
-    expect(find.text('١ من ٣ أبناء'), findsOneWidget);
+    expect(find.text('1 من 3 أبناء'), findsOneWidget);
     expect(find.text('🎉'), findsOneWidget);
     // Legacy path (no IdentityRuntime enrollment): honest prototype, not managed success.
     expect(
@@ -31,7 +31,7 @@ void main() {
     expect(find.byKey(const Key('link_success_mini_map')), findsOneWidget);
     expect(find.bySemanticsLabel('معاينة الموقع الحالي'), findsOneWidget);
     expect(find.textContaining('ثانوية النور'), findsOneWidget);
-    expect(find.textContaining('البطارية ٨٤٪'), findsOneWidget);
+    expect(find.textContaining('البطارية 84٪'), findsOneWidget);
   });
 
   testWidgets('apply template → banner; undo clears', (tester) async {

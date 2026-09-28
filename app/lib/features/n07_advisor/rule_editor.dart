@@ -118,7 +118,7 @@ class RuleEditorState extends State<RuleEditor> {
                   selected: _selected == c,
                   selectedTileColor: colors.teal100,
                   title: Text(
-                    _labelFor(l10n, c),
+                    ruleConsequentLabel(l10n, c),
                     style: TextStyle(
                       color: colors.ink,
                       fontSize: 14,
@@ -164,12 +164,13 @@ class RuleEditorState extends State<RuleEditor> {
       ],
     );
   }
+}
 
-  String _labelFor(AppLocalizations l10n, RuleConsequent c) {
-    return switch (c) {
-      RuleConsequent.notifyFather => l10n.ruleConsequentNotifyFather,
-      RuleConsequent.grantMinutes => l10n.ruleConsequentGrantMinutes,
-      RuleConsequent.softLock => l10n.ruleConsequentSoftLock,
-    };
-  }
+/// Localized label for an allow-listed consequent (picker + saved rule cards).
+String ruleConsequentLabel(AppLocalizations l10n, RuleConsequent c) {
+  return switch (c) {
+    RuleConsequent.notifyFather => l10n.ruleConsequentNotifyFather,
+    RuleConsequent.grantMinutes => l10n.ruleConsequentGrantMinutes,
+    RuleConsequent.softLock => l10n.ruleConsequentSoftLock,
+  };
 }

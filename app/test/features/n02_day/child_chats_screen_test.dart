@@ -77,6 +77,8 @@ void main() {
 
     expect(find.byKey(ChildChatsKeys.body), findsOneWidget);
     expect(find.byKey(ChildChatsKeys.honestyBanner), findsOneWidget);
+    // VX-B3 · D2 — child screens use one gentle honesty line.
+    expect(find.textContaining('هذا الجهاز'), findsOneWidget);
     expect(find.byKey(ChildChatsKeys.safeCircleBanner), findsOneWidget);
     expect(find.byKey(ChildChatsKeys.row('c_family')), findsOneWidget);
     expect(find.byKey(ChildChatsKeys.row('c_father')), findsOneWidget);

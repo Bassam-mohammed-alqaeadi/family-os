@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/capability_honesty_badge.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
@@ -14,11 +15,14 @@ import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/fs_foundation/capability_status.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/location/safe_zone_definition.dart';
 import 'package:family_os/core/location/zone_geometry.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
-import 'package:family_os/features/n01_linking/add_child_screen.dart'
-    show toEasternDigits;
+import 'package:family_os/core/i18n/numeral_format.dart' show formatAppInt;
+import 'package:family_os/features/n02_day/location_route_bind.dart';
 import 'package:family_os/features/n02_day/location_ux_bridge.dart';
 import 'package:family_os/features/n02_day/safe_zones_repository.dart';
 
@@ -40,6 +44,12 @@ abstract final class CreateSafeZoneKeys {
   static const alertArrival = Key('create_safe_zone_alert_arrival');
   static const alertDeparture = Key('create_safe_zone_alert_departure');
   static const alertNoShow = Key('create_safe_zone_alert_noshow');
+  static const noShowDeadlineSection = Key('create_safe_zone_noshow_deadline');
+  static const noShowDeadlineChip700 = Key('create_safe_zone_deadline_0700');
+  static const noShowDeadlineChip730 = Key('create_safe_zone_deadline_0730');
+  static const noShowDeadlineChip800 = Key('create_safe_zone_deadline_0800');
+  static const noShowDeadlineCustom = Key('create_safe_zone_deadline_custom');
+  static const noShowDeadlineHonesty = Key('create_safe_zone_deadline_honesty');
   static const assignSection = Key('create_safe_zone_assign');
   static const gpsBadge = Key('create_safe_zone_gps_badge');
   static const saveCta = Key('create_safe_zone_save');
@@ -66,7 +76,7 @@ class CreateSafeZoneScreen extends StatefulWidget {
     this.familyId,
     this.assignableChildren = const [],
     this.roleOverride,
-    this.motherLevel = MotherLevel.partner,
+    this.motherLevel,
     this.canEditOverride,
     this.sosFire,
     this.onSos,
@@ -92,8 +102,8 @@ class CreateSafeZoneScreen extends StatefulWidget {
   /// Test seam — when set, ignores [CurrentRole].
   final AppRole? roleOverride;
 
-  /// Mother permission level (ADR-035). Father ignores.
-  final MotherLevel motherLevel;
+  /// Mother permission level (ADR-035). Null → Identity context.
+  final MotherLevel? motherLevel;
 
   /// Test seam — when set, overrides role/level edit gate.
   final bool? canEditOverride;
@@ -120,9 +130,10 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
   static const int _radiusStep = 25;
   static const int _defaultRadius = 200;
 
-  late final SafeZonesRepository _repo;
+  late final SafeZonesRepository? _injectedListRepo;
   DomainSafeZonesRepository? _domainRepo;
   var _bootstrapping = false;
+  var _domainUnavailable = false;
   late final TextEditingController _nameController;
   late final Set<String> _selectedChildIds;
 
@@ -131,9 +142,12 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
   var _alertArrival = true;
   var _alertDeparture = true;
   var _alertNoShow = false;
+  /// Minutes from local midnight when No-show is armed (LOCATION-1B).
+  int? _noShowDeadlineMinutes;
   var _sosBusy = false;
   var _saving = false;
-  var _nameSeeded = false;
+
+  static const _presetDeadlines = <int>[7 * 60, 7 * 60 + 30, 8 * 60];
 
   AppRole get _role =>
       widget.roleOverride ??
@@ -142,12 +156,23 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
 
   bool get _isParent => _role == AppRole.father || _role == AppRole.mother;
 
+  MotherLevel get _motherLevel =>
+      widget.motherLevel ??
+      resolveAuthorizationContext(context, fallbackRole: _role).motherLevel;
+
+  List<AssignableChild> get _assignable {
+    if (widget.assignableChildren.isNotEmpty) {
+      return widget.assignableChildren;
+    }
+    return LocationRouteBind.rosterAssignable();
+  }
+
   /// Father always; mother only at [MotherLevel.full] (prototype zones≥full).
   bool get _canEdit {
     if (widget.canEditOverride != null) return widget.canEditOverride!;
     if (_role == AppRole.father) return true;
     if (_role == AppRole.mother) {
-      return widget.motherLevel == MotherLevel.full;
+      return _motherLevel == MotherLevel.full;
     }
     return false;
   }
@@ -161,14 +186,17 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1SafeZonesRepository;
+    // Explicit inject = test / DI seam. Production must NOT default to Stage-1.
+    _injectedListRepo = widget.repository;
     _domainRepo = widget.domainRepository;
     _nameController = TextEditingController();
+    final assignable = widget.assignableChildren.isNotEmpty
+        ? widget.assignableChildren
+        : LocationRouteBind.rosterAssignable();
     _selectedChildIds = {
       if (_resolvedChildId != null) _resolvedChildId!,
       // Single-option list → preselect (still explicit assignment).
-      if (widget.assignableChildren.length == 1)
-        widget.assignableChildren.first.id,
+      if (assignable.length == 1) assignable.first.id,
     };
     if (widget.repository == null && widget.domainRepository == null) {
       _bootstrapping = true;
@@ -180,29 +208,33 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
   }
 
   Future<void> _bootstrapDomain() async {
+    setState(() {
+      _bootstrapping = true;
+      _domainUnavailable = false;
+    });
     try {
       await Stage1LocationRuntime.ensureOpen();
       if (!mounted) return;
       setState(() {
         _domainRepo = DomainSafeZonesRepository(
           domain: Stage1LocationRuntime.store,
-          familyId: widget.familyId ?? const FamilyId('fam_stage1'),
+          familyId: widget.familyId ?? resolveActiveFamilyId(),
         );
         _bootstrapping = false;
+        _domainUnavailable = false;
       });
-    } catch (_) {
-      if (mounted) setState(() => _bootstrapping = false);
-    }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_nameSeeded) {
-      _nameSeeded = true;
-      _nameController.text = AppLocalizations.of(
-        context,
-      ).createSafeZoneNameHint;
+    } catch (e, st) {
+      debugPrint(
+        'AUTH-FS001 Slice 01.1: Domain bootstrap failed — '
+        'refusing Stage-1 save authority: $e\n$st',
+      );
+      if (mounted) {
+        setState(() {
+          _bootstrapping = false;
+          _domainUnavailable = true;
+          _domainRepo = null;
+        });
+      }
     }
   }
 
@@ -212,12 +244,9 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
     super.dispose();
   }
 
-  String _metersLabel(AppLocalizations l10n) {
-    final raw = '$_radiusMeters';
-    final digits = l10n.localeName.startsWith('ar')
-        ? toEasternDigits(_radiusMeters)
-        : raw;
-    return digits;
+  String _metersLabel(AppLocalizations _) {
+    // VX-B3 · D5 — Western digits on Arabic screens too.
+    return formatAppInt(_radiusMeters);
   }
 
   void _placeOrMove(Offset local, Size size) {
@@ -235,17 +264,36 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
     }
     setState(() => _sosBusy = true);
     final fire = widget.sosFire ?? stage1SosFireService;
-    final id = _resolvedChildId ?? 'family';
-    await fire.fire(childId: id);
+    final sender = sosSenderForRole(
+      context,
+      _role,
+      viewedChild: childIdFromParam(_resolvedChildId),
+    );
+    await sender.fireThrough(fire);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push('/scr-fat-018');
   }
 
   void _showNeedCenter(AppLocalizations l10n) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.createSafeZoneNeedCenter)));
+    AppToast.show(context, message: l10n.createSafeZoneNeedCenter);
+  }
+
+  Future<void> _pickNoShowDeadline() async {
+    final initial = _noShowDeadlineMinutes != null
+        ? TimeOfDay(
+            hour: _noShowDeadlineMinutes! ~/ 60,
+            minute: _noShowDeadlineMinutes! % 60,
+          )
+        : const TimeOfDay(hour: 7, minute: 30);
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initial,
+    );
+    if (!mounted || picked == null) return;
+    setState(() {
+      _noShowDeadlineMinutes = picked.hour * 60 + picked.minute;
+    });
   }
 
   Future<void> _save(AppLocalizations l10n) async {
@@ -257,32 +305,33 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
 
     // Q-LOC-12=B — explicit assignment required.
     final assigned = <String>{..._selectedChildIds};
-    if (assigned.isEmpty && widget.assignableChildren.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.createSafeZoneNeedAssignment)),
-      );
+    if (assigned.isEmpty && _assignable.isNotEmpty) {
+      AppToast.show(context, message: l10n.createSafeZoneNeedAssignment);
       return;
     }
     if (assigned.isEmpty) {
       final fallback = _resolvedChildId;
       if (fallback == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.createSafeZoneNeedAssignment)),
-        );
+        AppToast.show(context, message: l10n.createSafeZoneNeedAssignment);
         return;
       }
       assigned.add(fallback);
     }
     final assignedList = assigned.toList();
 
-    final name = _nameController.text.trim().isEmpty
-        ? l10n.createSafeZoneNameHint
-        : _nameController.text.trim();
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      AppToast.show(context, message: l10n.createSafeZoneNameRequired);
+      return;
+    }
+    if (_alertNoShow && _noShowDeadlineMinutes == null) {
+      AppToast.show(context, message: l10n.createSafeZoneNoShowDeadlineRequired);
+      return;
+    }
     final meters = _metersLabel(l10n);
     final id =
         widget.idFactory?.call() ??
         'z_${DateTime.now().millisecondsSinceEpoch}';
-    final alertsOn = _alertArrival || _alertDeparture || _alertNoShow;
     final now = DateTime.now().toUtc();
     final center = DecorativeMapProjection.fromFraction(
       _centerFrac!.dx,
@@ -292,43 +341,78 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
     setState(() => _saving = true);
 
     final domainRepo = _domainRepo ?? widget.domainRepository;
+    final injectedList = _injectedListRepo ?? widget.repository;
     if (domainRepo != null) {
-      await domainRepo.saveDefinition(
-        SafeZoneDefinition(
-          id: id,
-          familyId: widget.familyId ?? FamilyId('fam_stage1'),
-          name: name,
-          emoji: '🥋',
-          geometry: CircleGeometry(
-            center: center,
-            radiusMeters: _radiusMeters.toDouble(),
+      try {
+        await domainRepo.saveDefinition(
+          SafeZoneDefinition(
+            id: id,
+            familyId: widget.familyId ?? resolveActiveFamilyId(),
+            name: name,
+            emoji: '📍',
+            geometry: CircleGeometry(
+              center: center,
+              radiusMeters: _radiusMeters.toDouble(),
+            ),
+            assignedChildIds: [for (final c in assignedList) ChildId(c)],
+            alertEnter: _alertArrival,
+            alertExit: _alertDeparture,
+            alertNoShow: _alertNoShow,
+            noShowDeadlineMinutes: _alertNoShow ? _noShowDeadlineMinutes : null,
+            createdAt: now,
+            updatedAt: now,
           ),
-          assignedChildIds: [for (final c in assignedList) ChildId(c)],
+        );
+      } catch (e, st) {
+        debugPrint('AUTH-FS001: Domain save failed: $e\n$st');
+        if (!mounted) return;
+        setState(() => _saving = false);
+        AppToast.show(
+          context,
+          message: l10n.errorLocalSaveMessage,
+          actionLabel: l10n.errorRetryCta,
+          onAction: _bootstrapDomain,
+        );
+        return;
+      }
+    } else if (injectedList != null) {
+      // Explicit test/DI inject only — never production Stage-1 singleton.
+      await injectedList.add(
+        SafeZone(
+          id: id,
+          emoji: '📍',
+          name: name,
+          description: l10n.createSafeZoneRadiusDesc(meters),
           alertEnter: _alertArrival,
           alertExit: _alertDeparture,
           alertNoShow: _alertNoShow,
-          createdAt: now,
-          updatedAt: now,
-        ),
-      );
-    } else {
-      await _repo.add(
-        SafeZone(
-          id: id,
-          emoji: '🥋',
-          name: name,
-          description: l10n.createSafeZoneRadiusDesc(meters),
-          alertsEnabled: alertsOn,
+          noShowDeadlineMinutes: _alertNoShow ? _noShowDeadlineMinutes : null,
           assignedChildIds: assignedList,
         ),
       );
+    } else {
+      // Production Domain unavailable — safe failure (Slice 01.1).
+      // Do NOT write stage1SafeZonesRepository.
+      debugPrint(
+        'AUTH-FS001 Slice 01.1: save blocked — Domain authority unavailable',
+      );
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _domainUnavailable = true;
+      });
+      AppToast.show(
+        context,
+        message: l10n.errorLocalSaveMessage,
+        actionLabel: l10n.errorRetryCta,
+        onAction: _bootstrapDomain,
+      );
+      return;
     }
     if (!mounted) return;
     setState(() => _saving = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.createSafeZoneSavedToast(name))),
-    );
+    AppToast.show(context, message: l10n.createSafeZoneSavedToast(name));
 
     if (widget.onSaved != null) {
       widget.onSaved!();
@@ -440,6 +524,13 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
             variant: BannerVariant.t,
             message: l10n.createSafeZoneDrawBanner,
           ),
+          if (_domainUnavailable) ...[
+            const SizedBox(height: 10),
+            BannerNote(
+              variant: BannerVariant.a,
+              message: l10n.errorLocalSaveMessage,
+            ),
+          ],
           if (!_canEdit) ...[
             const SizedBox(height: 10),
             BannerNote(
@@ -513,11 +604,18 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
             arrival: _alertArrival,
             departure: _alertDeparture,
             noShow: _alertNoShow,
+            noShowDeadlineMinutes: _noShowDeadlineMinutes,
             onArrival: (v) => setState(() => _alertArrival = v),
             onDeparture: (v) => setState(() => _alertDeparture = v),
-            onNoShow: (v) => setState(() => _alertNoShow = v),
+            onNoShow: (v) => setState(() {
+              _alertNoShow = v;
+              if (!v) _noShowDeadlineMinutes = null;
+            }),
+            onDeadlineSelected: (minutes) =>
+                setState(() => _noShowDeadlineMinutes = minutes),
+            onPickCustomDeadline: _canEdit ? _pickNoShowDeadline : null,
           ),
-          if (widget.assignableChildren.isNotEmpty) ...[
+          if (_assignable.isNotEmpty) ...[
             const SizedBox(height: 14),
             Text(
               key: CreateSafeZoneKeys.assignSection,
@@ -542,7 +640,7 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
               spacing: 8,
               runSpacing: 8,
               children: [
-                for (final c in widget.assignableChildren)
+                for (final c in _assignable)
                   FilterChip(
                     key: CreateSafeZoneKeys.childChip(c.id),
                     label: Text(c.label),
@@ -566,7 +664,9 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
           PrimaryBtn(
             key: CreateSafeZoneKeys.saveCta,
             label: l10n.createSafeZoneSaveCta,
-            onPressed: _canEdit && !_saving ? () => _save(l10n) : null,
+            onPressed: _canEdit && !_saving && !_bootstrapping
+                ? () => _save(l10n)
+                : null,
             semanticsLabel: l10n.createSafeZoneSaveSemantics,
           ),
           const SizedBox(height: 12),
@@ -730,106 +830,119 @@ class _MapScapeBackground extends StatelessWidget {
 
     return ColoredBox(
       color: Color.lerp(colors.bg, colors.mint100, 0.35)!,
-      child: Stack(
-        children: [
-          Positioned(
-            left: 14,
-            top: 12,
-            child: _LandmarkBlock(
-              width: 122,
-              height: 66,
-              label: l10n.locationMapLandmarkHome,
-              emoji: '🏠',
-              fill: Color.lerp(colors.border, colors.amber100, 0.4)!,
-            ),
-          ),
-          Positioned(
-            left: 182,
-            top: 10,
-            child: _LandmarkBlock(
-              width: 104,
-              height: 68,
-              label: '',
-              emoji: '',
-              fill: Color.lerp(colors.border, colors.amber100, 0.4)!,
-            ),
-          ),
-          Positioned(
-            left: 322,
-            top: 8,
-            child: _LandmarkBlock(
-              width: 60,
-              height: 72,
-              label: l10n.locationMapLandmarkSchool,
-              emoji: '🏫',
-              fill: Color.lerp(colors.sky, colors.surface, 0.55)!,
-            ),
-          ),
-          Positioned(
-            left: 18,
-            top: 128,
-            child: _LandmarkBlock(
-              width: 94,
-              height: 76,
-              label: l10n.locationMapLandmarkPark,
-              emoji: '🌳',
-              fill: Color.lerp(colors.mint100, colors.mint, 0.15)!,
-              radius: 10,
-            ),
-          ),
-          Positioned(
-            left: 182,
-            top: 126,
-            child: _LandmarkBlock(
-              width: 100,
-              height: 80,
-              label: l10n.locationMapLandmarkClub,
-              emoji: '⚽',
-              fill: Color.lerp(colors.mint100, colors.border, 0.3)!,
-            ),
-          ),
-          Positioned(
-            left: 308,
-            top: 128,
-            child: _LandmarkBlock(
-              width: 74,
-              height: 76,
-              label: l10n.locationMapLandmarkMosque,
-              emoji: '🕌',
-              fill: Color.lerp(colors.amber100, colors.border, 0.35)!,
-            ),
-          ),
-          Positioned(
-            left: 0,
-            top: 90,
-            right: 0,
-            child: ColoredBox(
-              color: colors.surface,
-              child: SizedBox(
-                height: 24,
-                child: Center(
-                  child: Text(
-                    l10n.locationMapLandmarkStreet,
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      color: colors.ink2,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final w = constraints.maxWidth;
+          final h = constraints.maxHeight;
+          const designW = 400.0;
+          const designH = 220.0;
+          double lx(double d) => d / designW * w;
+          double ty(double d) => d / designH * h;
+          double dw(double d) => d / designW * w;
+          double dh(double d) => d / designH * h;
+
+          return Stack(
+            children: [
+              Positioned(
+                left: lx(14),
+                top: ty(12),
+                child: _LandmarkBlock(
+                  width: dw(122),
+                  height: dh(66),
+                  label: l10n.locationMapLandmarkHome,
+                  emoji: '🏠',
+                  fill: Color.lerp(colors.border, colors.amber100, 0.4)!,
+                ),
+              ),
+              Positioned(
+                left: lx(182),
+                top: ty(10),
+                child: _LandmarkBlock(
+                  width: dw(104),
+                  height: dh(68),
+                  label: '',
+                  emoji: '',
+                  fill: Color.lerp(colors.border, colors.amber100, 0.4)!,
+                ),
+              ),
+              Positioned(
+                left: lx(322),
+                top: ty(8),
+                child: _LandmarkBlock(
+                  width: dw(60),
+                  height: dh(72),
+                  label: l10n.locationMapLandmarkSchool,
+                  emoji: '🏫',
+                  fill: Color.lerp(colors.sky, colors.surface, 0.55)!,
+                ),
+              ),
+              Positioned(
+                left: lx(18),
+                top: ty(128),
+                child: _LandmarkBlock(
+                  width: dw(94),
+                  height: dh(76),
+                  label: l10n.locationMapLandmarkPark,
+                  emoji: '🌳',
+                  fill: Color.lerp(colors.mint100, colors.mint, 0.15)!,
+                  radius: 10,
+                ),
+              ),
+              Positioned(
+                left: lx(182),
+                top: ty(126),
+                child: _LandmarkBlock(
+                  width: dw(100),
+                  height: dh(80),
+                  label: l10n.locationMapLandmarkClub,
+                  emoji: '⚽',
+                  fill: Color.lerp(colors.mint100, colors.border, 0.3)!,
+                ),
+              ),
+              Positioned(
+                left: lx(308),
+                top: ty(128),
+                child: _LandmarkBlock(
+                  width: dw(74),
+                  height: dh(76),
+                  label: l10n.locationMapLandmarkMosque,
+                  emoji: '🕌',
+                  fill: Color.lerp(colors.amber100, colors.border, 0.35)!,
+                ),
+              ),
+              Positioned(
+                left: 0,
+                top: ty(90),
+                right: 0,
+                child: ColoredBox(
+                  color: colors.surface,
+                  child: SizedBox(
+                    height: dh(24).clamp(16, 32),
+                    child: Center(
+                      child: Text(
+                        l10n.locationMapLandmarkStreet,
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: colors.ink2,
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ),
-          Positioned(
-            left: 0,
-            top: 101,
-            right: 0,
-            child: CustomPaint(
-              size: const Size(double.infinity, 2),
-              painter: _DashedLinePainter(color: colors.amber),
-            ),
-          ),
-        ],
+              Positioned(
+                left: 0,
+                top: ty(101),
+                right: 0,
+                child: CustomPaint(
+                  size: const Size(double.infinity, 2),
+                  painter: _DashedLinePainter(color: colors.amber),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -916,9 +1029,12 @@ class _AlertsCard extends StatelessWidget {
     required this.arrival,
     required this.departure,
     required this.noShow,
+    required this.noShowDeadlineMinutes,
     required this.onArrival,
     required this.onDeparture,
     required this.onNoShow,
+    required this.onDeadlineSelected,
+    required this.onPickCustomDeadline,
   });
 
   final bool canEdit;
@@ -926,9 +1042,19 @@ class _AlertsCard extends StatelessWidget {
   final bool arrival;
   final bool departure;
   final bool noShow;
+  final int? noShowDeadlineMinutes;
   final ValueChanged<bool> onArrival;
   final ValueChanged<bool> onDeparture;
   final ValueChanged<bool> onNoShow;
+  final ValueChanged<int> onDeadlineSelected;
+  final VoidCallback? onPickCustomDeadline;
+
+  /// HH:mm for chips / deadline (Western digits — VX-B3).
+  static String formatDeadlineClock(int minutes) {
+    final h = (minutes ~/ 60).clamp(0, 23);
+    final m = (minutes % 60).clamp(0, 59);
+    return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -988,14 +1114,145 @@ class _AlertsCard extends StatelessWidget {
                 leading: Icon(Icons.schedule, color: colors.amber, size: 22),
                 title: l10n.createSafeZoneAlertNoShow,
                 subtitle: l10n.createSafeZoneAlertNoShowHint,
-                showDivider: false,
+                showDivider: noShow,
                 trailing: Switch.adaptive(
                   value: noShow,
                   onChanged: canEdit ? onNoShow : null,
                   activeThumbColor: colors.mint,
                 ),
               ),
+              if (noShow) ...[
+                Padding(
+                  key: CreateSafeZoneKeys.noShowDeadlineSection,
+                  padding: const EdgeInsets.fromLTRB(0, 4, 0, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        l10n.createSafeZoneNoShowDeadlineLabel,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: colors.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final minutes
+                              in CreateSafeZoneScreenState._presetDeadlines)
+                            _DeadlineChip(
+                              chipKey: minutes == 420
+                                  ? CreateSafeZoneKeys.noShowDeadlineChip700
+                                  : minutes == 450
+                                  ? CreateSafeZoneKeys.noShowDeadlineChip730
+                                  : CreateSafeZoneKeys.noShowDeadlineChip800,
+                              label: formatDeadlineClock(minutes),
+                              selected: noShowDeadlineMinutes == minutes,
+                              enabled: canEdit,
+                              semanticsLabel: l10n
+                                  .createSafeZoneNoShowDeadlineSemantics(
+                                    formatDeadlineClock(minutes),
+                                  ),
+                              onTap: () => onDeadlineSelected(minutes),
+                              colors: colors,
+                              radii: radii,
+                            ),
+                          _DeadlineChip(
+                            chipKey: CreateSafeZoneKeys.noShowDeadlineCustom,
+                            label: noShowDeadlineMinutes != null &&
+                                    !CreateSafeZoneScreenState._presetDeadlines
+                                        .contains(noShowDeadlineMinutes)
+                                ? formatDeadlineClock(noShowDeadlineMinutes!)
+                                : l10n.createSafeZoneNoShowDeadlineCustom,
+                            selected:
+                                noShowDeadlineMinutes != null &&
+                                !CreateSafeZoneScreenState._presetDeadlines
+                                    .contains(noShowDeadlineMinutes),
+                            enabled: canEdit && onPickCustomDeadline != null,
+                            semanticsLabel:
+                                l10n.createSafeZoneNoShowDeadlineCustom,
+                            onTap: onPickCustomDeadline ?? () {},
+                            colors: colors,
+                            radii: radii,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        key: CreateSafeZoneKeys.noShowDeadlineHonesty,
+                        l10n.createSafeZoneNoShowDeadlineHonesty,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: colors.ink2,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DeadlineChip extends StatelessWidget {
+  const _DeadlineChip({
+    required this.chipKey,
+    required this.label,
+    required this.selected,
+    required this.enabled,
+    required this.semanticsLabel,
+    required this.onTap,
+    required this.colors,
+    required this.radii,
+  });
+
+  final Key chipKey;
+  final String label;
+  final bool selected;
+  final bool enabled;
+  final String semanticsLabel;
+  final VoidCallback onTap;
+  final FamilyColors colors;
+  final FamilyRadii radii;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: selected,
+      enabled: enabled,
+      label: semanticsLabel,
+      child: Material(
+        color: selected ? colors.mint100 : colors.bg,
+        borderRadius: BorderRadius.circular(radii.pill),
+        child: InkWell(
+          key: chipKey,
+          onTap: enabled ? onTap : null,
+          borderRadius: BorderRadius.circular(radii.pill),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Center(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: selected ? colors.mintInk : colors.ink,
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),

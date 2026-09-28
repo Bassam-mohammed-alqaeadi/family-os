@@ -11,6 +11,7 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n07_advisor/family_moments_models.dart';
 import 'package:family_os/features/n07_advisor/family_moments_repository.dart';
@@ -26,6 +27,7 @@ abstract final class FamilyMomentsKeys {
   static const touchCta = Key('family_moments_touch');
   static const album = Key('family_moments_album');
   static const addMomentCta = Key('family_moments_add');
+  static const fridayBanner = Key('family_moments_friday');
   static const childLean = Key('family_moments_child_lean');
   static const sosIconCta = Key('family_moments_sos_icon');
 }
@@ -103,7 +105,7 @@ class _FamilyMomentsScreenState extends State<FamilyMomentsScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'self');
+    await sosSenderForRole(context, _role).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-CHD-005'));
@@ -283,6 +285,7 @@ class _FamilyMomentsScreenState extends State<FamilyMomentsScreen> {
           _albumCard(l10n, colors, radii),
           const SizedBox(height: 12),
           BannerNote(
+            key: FamilyMomentsKeys.fridayBanner,
             message: l10n.familyMomentsFridayBanner,
             variant: BannerVariant.t,
           ),

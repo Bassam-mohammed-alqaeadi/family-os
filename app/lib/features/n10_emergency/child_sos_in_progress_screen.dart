@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/app_error_state.dart';
 import 'package:family_os/core/design/components/family_ui_mode.dart';
 import 'package:family_os/core/design/components/sos_cancel_confirmation.dart';
@@ -203,9 +204,7 @@ class _ChildSosInProgressScreenState extends State<ChildSosInProgressScreen>
 
   void _callFather(AppLocalizations l10n, {required bool panicQuiet}) {
     if (panicQuiet) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.childSosInProgressCallUnavailableToast)),
-      );
+      AppToast.show(context, message: l10n.childSosInProgressCallUnavailableToast);
       return;
     }
     if (widget.onCallFather != null) {
@@ -242,12 +241,9 @@ class _ChildSosInProgressScreenState extends State<ChildSosInProgressScreen>
       );
       if (!mounted) return;
       _stopPulse();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            AppLocalizations.of(context).childSosInProgressResolvedToast,
-          ),
-        ),
+      AppToast.show(
+        context,
+        message: AppLocalizations.of(context).childSosInProgressResolvedToast,
       );
       if (widget.onResolved != null) {
         widget.onResolved!();

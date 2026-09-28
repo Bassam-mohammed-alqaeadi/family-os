@@ -98,7 +98,41 @@ void main() {
     );
     expect(find.byKey(NotificationPrefsKeys.memberLabel), findsOneWidget);
     expect(find.textContaining('الأب'), findsWidgets);
+    expect(find.byKey(NotificationPrefsKeys.cardCritical), findsOneWidget);
+    expect(find.byKey(NotificationPrefsKeys.cardImportant), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(NotificationPrefsKeys.cardReassurance),
+      300,
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(NotificationPrefsKeys.cardReassurance), findsOneWidget);
+    expect(
+      find.byKey(NotificationPrefsKeys.childRequestsSwitch),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(NotificationPrefsKeys.analysisNoticesSwitch),
+      findsOneWidget,
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(NotificationPrefsKeys.summaryDigestSwitch),
+      200,
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(NotificationPrefsKeys.summaryDigestSwitch),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(NotificationPrefsKeys.eveningDigestSwitch),
+      findsOneWidget,
+    );
 
+    await tester.scrollUntilVisible(
+      find.byKey(NotificationPrefsKeys.quietHoursSwitch),
+      -300,
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(NotificationPrefsKeys.quietHoursSwitch));
     await tester.pumpAndSettle();
     expect(find.byKey(NotificationPrefsKeys.quietStart), findsOneWidget);
@@ -113,6 +147,38 @@ void main() {
     expect(loaded.quietHoursEnabled, isTrue);
     expect(loaded.quietStart, NotificationPrefs.defaultQuietStart);
     expect(loaded.quietEnd, NotificationPrefs.defaultQuietEnd);
+  });
+
+  testWidgets('three-tier toggles persist for father', (tester) async {
+    final repo = InMemoryNotificationPrefsRepository();
+    await _pump(
+      tester,
+      repository: repo,
+      role: AppRole.father,
+      memberId: 'father',
+    );
+
+    await tester.scrollUntilVisible(
+      find.byKey(NotificationPrefsKeys.childRequestsSwitch),
+      200,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(NotificationPrefsKeys.childRequestsSwitch));
+    await tester.pumpAndSettle();
+    await _settleToast(tester);
+
+    await tester.scrollUntilVisible(
+      find.byKey(NotificationPrefsKeys.summaryDigestSwitch),
+      300,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(NotificationPrefsKeys.summaryDigestSwitch));
+    await tester.pumpAndSettle();
+    await _settleToast(tester);
+
+    final loaded = await repo.load('father');
+    expect(loaded.childRequestsEnabled, isFalse);
+    expect(loaded.summaryDigestEnabled, isFalse);
   });
 
   group('SET-011 mother identity', () {

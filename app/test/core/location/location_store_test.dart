@@ -65,7 +65,7 @@ void main() {
       'updated_at': 1,
     });
     expect((await db.query('loc_zone')).length, 1);
-    expect(FamilyLocalSchema.currentVersion, 10);
+    expect(FamilyLocalSchema.currentVersion, 12);
   });
 
   test('saveZone rejects empty assignment (Q-LOC-12=B)', () async {
@@ -83,6 +83,35 @@ void main() {
     expect(loaded!.name, 'Home');
     expect(loaded.geometry, isA<CircleGeometry>());
     expect(loaded.assignedChildIds, [child]);
+  });
+
+  test('saveZone round-trips noShowDeadlineMinutes (LOCATION-1B)', () async {
+    final zone = SafeZoneDefinition(
+      id: 'zone_school_deadline',
+      familyId: family,
+      name: 'School',
+      geometry: const CircleGeometry(
+        center: GeoPoint(latitude: 24.7136, longitude: 46.6753),
+        radiusMeters: 200,
+      ),
+      assignedChildIds: [child],
+      alertNoShow: true,
+      noShowDeadlineMinutes: 7 * 60 + 30,
+      createdAt: now,
+      updatedAt: now,
+    );
+    await store.saveZone(zone);
+    final loaded = await store.getZone('zone_school_deadline');
+    expect(loaded, isNotNull);
+    expect(loaded!.alertNoShow, isTrue);
+    expect(loaded.noShowDeadlineMinutes, 450);
+
+    await store.saveZone(
+      loaded.copyWith(alertNoShow: false, clearNoShowDeadline: true),
+    );
+    final cleared = await store.getZone('zone_school_deadline');
+    expect(cleared!.alertNoShow, isFalse);
+    expect(cleared.noShowDeadlineMinutes, isNull);
   });
 
   test('saveZone persists polygon geometry', () async {

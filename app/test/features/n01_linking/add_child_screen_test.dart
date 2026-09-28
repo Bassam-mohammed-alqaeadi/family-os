@@ -118,7 +118,7 @@ void main() {
     await _pumpAddChild(tester, mockAlias: 'child_a7f3');
 
     expect(find.text('إضافة ابن'), findsOneWidget);
-    expect(find.text('١ من ٣'), findsOneWidget);
+    expect(find.text('1 من 3'), findsOneWidget);
     expect(find.text('متابعة — رمز الربط'), findsOneWidget);
     expect(find.textContaining('اسمه لا يغادر العائلة'), findsOneWidget);
     expect(find.text('child_a7f3'), findsOneWidget);
@@ -127,7 +127,7 @@ void main() {
     expect(find.text('🐰'), findsOneWidget);
     expect(find.byKey(const Key('add_child_color_0')), findsOneWidget);
     expect(find.byKey(const Key('add_child_color_5')), findsOneWidget);
-    expect(find.text('١٤ سنة'), findsWidgets);
+    expect(find.text('14 سنة'), findsWidgets);
   });
 
   testWidgets('creates child through management repository', (tester) async {

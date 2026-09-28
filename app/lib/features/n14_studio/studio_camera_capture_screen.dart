@@ -11,6 +11,7 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n01_linking/camera_permission_seam.dart';
 
@@ -153,7 +154,7 @@ class _StudioCameraCaptureScreenState extends State<StudioCameraCaptureScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'family');
+    await parentSosSenderOf(context).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-FAT-018'));
@@ -317,7 +318,7 @@ class _CaptureBody extends StatelessWidget {
               width: 250,
               height: 320,
               decoration: BoxDecoration(
-                color: const Color(0xFF1A1D2E),
+                color: colors.ink,
                 borderRadius: BorderRadius.circular(radii.card),
               ),
               child: Stack(

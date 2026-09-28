@@ -329,6 +329,35 @@ class IdentityRuntime extends ChangeNotifier {
     return true;
   }
 
+  /// Owner-only mother permission level change (SCR-FAT-031 · ADR-035).
+  bool setMotherPermissionLevel({
+    required MemberId membershipId,
+    required MotherLevel level,
+  }) {
+    if (!activeMembership.isPrimaryOwner) {
+      throw IdentityInvariantViolation(
+        'only primary owner can change mother permission level',
+      );
+    }
+    final idx = _memberships.indexWhere((m) => m.id == membershipId);
+    if (idx < 0) return false;
+    final membership = _memberships[idx];
+    if (membership.role != AppRole.mother) return false;
+    if (membership.motherLevel == level) return false;
+    _memberships[idx] = membership.copyWith(motherLevel: level);
+    notifyListeners();
+    return true;
+  }
+
+  MotherLevel? motherPermissionLevel(MemberId membershipId) {
+    for (final membership in _memberships) {
+      if (membership.id == membershipId && membership.role == AppRole.mother) {
+        return membership.motherLevel ?? MotherLevel.observer;
+      }
+    }
+    return null;
+  }
+
   bool leaveFamily({required AccountId accountId, required FamilyId familyId}) {
     final idx = _memberships.indexWhere(
       (m) => m.accountId == accountId && m.familyId == familyId,
@@ -827,7 +856,9 @@ class IdentityRuntime extends ChangeNotifier {
 
 DateTime _defaultNow() => DateTime.now().toUtc();
 
-IdentityRuntime createStage1IdentityRuntime() {
+IdentityRuntime createStage1IdentityRuntime({
+  FamilyContextStore? familyContextStore,
+}) {
   final accountId = AccountId('acc_stage1_father');
   final motherAccountId = AccountId('acc_stage1_mother');
   final familyId = FamilyId('fam_stage1');
@@ -949,8 +980,25 @@ IdentityRuntime createStage1IdentityRuntime() {
         createdAt: DateTime.utc(2026, 1, 1, 0, 0, 2),
       ),
     ],
-    familyContextStore: stage1FamilyContextStore,
+    familyContextStore: familyContextStore ?? stage1FamilyContextStore,
   );
 }
 
-final IdentityRuntime stage1IdentityRuntime = createStage1IdentityRuntime();
+IdentityRuntime? _stage1IdentityRuntime;
+
+/// Stage-1 identity singleton. Prefer [rebindStage1IdentityRuntime] after Local
+/// KV hydrate (DOM-IDENTITY-A) before first UI use.
+IdentityRuntime get stage1IdentityRuntime =>
+    _stage1IdentityRuntime ??= createStage1IdentityRuntime();
+
+/// Replaces the Stage-1 singleton (e.g. Local family context store).
+void rebindStage1IdentityRuntime({FamilyContextStore? familyContextStore}) {
+  _stage1IdentityRuntime = createStage1IdentityRuntime(
+    familyContextStore: familyContextStore,
+  );
+}
+
+@visibleForTesting
+void resetStage1IdentityRuntimeForTest() {
+  _stage1IdentityRuntime = null;
+}

@@ -108,5 +108,12 @@ final class InMemoryLocationHistoryRepository
   }
 }
 
-/// Stage-1 singleton — empty until tests/repos seed (Rule 23).
-final stage1LocationHistoryRepository = InMemoryLocationHistoryRepository();
+/// Stage-1 singleton — rebound to domain at boot (LDR-B1) when SQLite honest.
+LocationHistoryRepository stage1LocationHistoryRepository =
+    InMemoryLocationHistoryRepository();
+
+void rebindStage1LocationHistoryRepository(
+  LocationHistoryRepository repository,
+) {
+  stage1LocationHistoryRepository = repository;
+}

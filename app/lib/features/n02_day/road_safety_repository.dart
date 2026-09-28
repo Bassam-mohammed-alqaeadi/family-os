@@ -8,7 +8,7 @@ abstract class RoadSafetyRepository {
 
 final class InMemoryRoadSafetyRepository implements RoadSafetyRepository {
   InMemoryRoadSafetyRepository({RoadSafetySnapshot? seed})
-    : _snap = seed ?? roadSafetyPrototypeFixture();
+    : _snap = seed ?? roadSafetyEmptyFixture();
 
   RoadSafetySnapshot _snap;
   Future<void> Function()? loadGate;

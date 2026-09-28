@@ -36,7 +36,7 @@ void main() {
   });
 
   test('schema v7 exposes sc_document', () async {
-    expect(FamilyLocalSchema.currentVersion, 10);
+    expect(FamilyLocalSchema.currentVersion, 12);
     await db.insert('sc_document', {
       'scope_key': 'family',
       'family_id': family.value,

@@ -19,6 +19,27 @@ class AppLocalizationsAr extends AppLocalizations {
       'رموز التصميم والمكوّنات الأساسية — وضع الأب / وضع الابن';
 
   @override
+  String get devScreenGalleryTitle => 'DEV · كتالوج الشاشات';
+
+  @override
+  String get devScreenGalleryHint =>
+      'اضغط SCR-ID لفتح الشاشة (يتجاوز تنقّل المنتج؛ RoleGuard ما زال سارياً).';
+
+  @override
+  String get devScreenGallerySearchHint => 'تصفية SCR-ID…';
+
+  @override
+  String get devScreenGallerySearchSemantics => 'تصفية الشاشات حسب SCR-ID';
+
+  @override
+  String get devScreenGalleryEmpty => 'لا توجد شاشات مطابقة لهذا الفلتر.';
+
+  @override
+  String devScreenGalleryCount(int count) {
+    return '$count شاشة';
+  }
+
+  @override
   String get galleryColors => 'الألوان';
 
   @override
@@ -107,7 +128,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get galleryRowTitle1 => 'تفقّد الصباح';
 
   @override
-  String get galleryRowSub1 => 'اكتمل الساعة ٧:٣٠';
+  String get galleryRowSub1 => 'اكتمل الساعة 7:30';
 
   @override
   String get galleryRowTitle2 => 'دردشة العائلة';
@@ -119,7 +140,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get galleryRowTitle3 => 'وقت الدراسة';
 
   @override
-  String get galleryRowSub3 => 'بقي ٤٥ دقيقة';
+  String get galleryRowSub3 => 'بقي 45 دقيقة';
 
   @override
   String get galleryTagG => 'تم';
@@ -216,6 +237,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get shellSosFabSemantics => 'فتح الاستغاثة';
 
   @override
+  String get devRoleSwitchChild => 'الابن';
+
+  @override
+  String get devRoleSwitchMother => 'الأم';
+
+  @override
+  String get devRoleSwitchFather => 'الأب';
+
+  @override
   String get galleryHubItem1 => 'المهام';
 
   @override
@@ -251,7 +281,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get welcomeSlide1Body =>
-      'أين أبناؤك الآن؟ وصلوا بسلام؟ كل الطمأنينة في ٨ ثوانٍ صباحًا';
+      'أين أبناؤك الآن؟ وصلوا بسلام؟ كل الطمأنينة في 8 ثوانٍ صباحًا';
 
   @override
   String get welcomeSlide2Emoji => '📚';
@@ -290,7 +320,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get createAccountTitle => 'إنشاء حساب';
 
   @override
-  String get createAccountStep => 'خطوة ١ من ٢';
+  String get createAccountStep => 'خطوة 1 من 2';
 
   @override
   String get createAccountEmailLabel => 'البريد الإلكتروني';
@@ -302,7 +332,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get createAccountPasswordLabel => 'كلمة المرور';
 
   @override
-  String get createAccountPasswordHint => '٨ أحرف على الأقل';
+  String get createAccountPasswordHint => '8 أحرف على الأقل';
 
   @override
   String get createAccountConfirmLabel => 'تأكيد كلمة المرور';
@@ -362,13 +392,29 @@ class AppLocalizationsAr extends AppLocalizations {
   String get loginBiometric => '🔒 الدخول بالبصمة';
 
   @override
-  String get loginBiometricToast => 'تم الدخول بالبصمة';
+  String get loginBiometricUnavailable =>
+      'الدخول بالبصمة يحتاج صلاحية من الجهاز — يتوفر لاحقًا. سجّل الدخول بالبريد الآن.';
 
   @override
   String get loginInvitePrompt => 'وصلتك دعوة من عائلتك؟';
 
   @override
   String get loginInviteLink => 'ادخلي من رابط الدعوة ‹';
+
+  @override
+  String get loginLocalAccountHonesty => 'الحساب محفوظ على هذا الجهاز';
+
+  @override
+  String get loginFieldsRequired => 'أدخلي البريد وكلمة المرور للمتابعة';
+
+  @override
+  String get loginSessionActive => 'الجلسة نشطة';
+
+  @override
+  String get loginSessionRevoked => 'الجلسة ملغاة';
+
+  @override
+  String get loginSessionExpired => 'انتهت الجلسة';
 
   @override
   String get deviceModeTitle => 'من سيستخدم هذا الجهاز؟';
@@ -435,10 +481,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get createFamilyChildCountTwo => 'ابنان';
 
   @override
-  String get createFamilyChildCountThree => '٣ أبناء';
+  String get createFamilyChildCountThree => '3 أبناء';
 
   @override
-  String get createFamilyChildCountFourPlus => '٤ فأكثر';
+  String get createFamilyChildCountFourPlus => '4 فأكثر';
 
   @override
   String get createFamilyBannerLeading => '🎁';
@@ -456,6 +502,17 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get errorNetworkMessage =>
       'لم نستطع الوصول للخادم. بياناتك المحفوظة ما زالت أمامك — أعد المحاولة عندما يكون الاتصال جاهزًا.';
+
+  @override
+  String get errorLocalSaveMessage =>
+      'تعذّر الحفظ على هذا الجهاز — حاول مرة أخرى.';
+
+  @override
+  String get roleGuardBlockedChild => 'هذه الصفحة لوالديك — رجعناك إلى يومي 🌱';
+
+  @override
+  String get roleGuardBlockedParent =>
+      'هذه الصفحة لمالك الحساب فقط — رجعناك إلى لوحة اليوم.';
 
   @override
   String get errorTimeoutTitle => 'انتهت مهلة الاتصال';
@@ -485,7 +542,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get setupWizardTitle => 'إعداد عائلتك';
 
   @override
-  String get setupWizardSubtitle => '٤ دقائق';
+  String get setupWizardSubtitle => '4 دقائق';
 
   @override
   String setupWizardProgressHero(int percent) {
@@ -537,7 +594,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get addChildTitle => 'إضافة ابن';
 
   @override
-  String get addChildStep => '١ من ٣';
+  String get addChildStep => '1 من 3';
 
   @override
   String get addChildNameLabel => 'الاسم';
@@ -582,7 +639,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get linkQrTitle => 'اربط جهازه';
 
   @override
-  String get linkQrStep => '٢ من ٣';
+  String get linkQrStep => '2 من 3';
 
   @override
   String get linkQrInstructionPrefix => 'على جهازه: ';
@@ -620,11 +677,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get permissionsExplainerTitle => 'لماذا هذه الأذونات؟';
 
   @override
-  String get permissionsExplainerStep => '٣ من ٣';
+  String get permissionsExplainerStep => '3 من 3';
 
   @override
   String get permissionsExplainerVideoTitle =>
-      'فيديو: ماذا سيطلب جهازه؟ (٩٠ ثانية)';
+      'فيديو: ماذا سيطلب جهازه؟ (90 ثانية)';
 
   @override
   String get permissionsExplainerVideoSemantics => 'تشغيل فيديو شرح الأذونات';
@@ -656,7 +713,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get permissionsExplainerBanner =>
-      '✋ إن رُفض أي إذن لن تُقفل أي شاشة — سيعمل البديل ونعرض بطاقة استعادة. (القاعدة ٣)';
+      '✋ إن رُفض أي إذن لن تُقفل أي شاشة — سيعمل البديل ونعرض بطاقة استعادة. (القاعدة 3)';
 
   @override
   String get permissionsExplainerContinue => 'فهمت — أكمل الربط';
@@ -665,7 +722,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get linkSuccessTitle => 'تمّ الربط!';
 
   @override
-  String get linkSuccessStep => '١ من ٣ أبناء';
+  String get linkSuccessStep => '1 من 3 أبناء';
 
   @override
   String get linkSuccessHeroTitle => 'جهاز ابنك متصل الآن';
@@ -685,14 +742,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get linkSuccessLocationTitle => '📍 ثانوية النور — حي النرجس';
 
   @override
-  String get linkSuccessLocationMeta => 'آخر تحديث: الآن · البطارية ٨٤٪';
+  String get linkSuccessLocationMeta => 'آخر تحديث: الآن · البطارية 84٪';
 
   @override
   String get linkSuccessTemplateTitle => '⚡ اختصر الطريق — قالب عمره جاهز';
 
   @override
   String get linkSuccessTemplateBody =>
-      'قالب «١٤–١٧» يضبط: ٤ ساعات، فلترة مناسبة، نوم ١٠:٣٠. وتصقله متى شئت.';
+      'قالب «14–17» يضبط: 4 ساعات، فلترة مناسبة، نوم 10:30. وتصقله متى شئت.';
 
   @override
   String get linkSuccessApplyTemplate => 'طبّق القالب (موصى به)';
@@ -701,14 +758,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get linkSuccessManual => 'أضبط كل شيء يدويًا';
 
   @override
-  String get linkSuccessApplyToast => '✓ ضُبط على قالب ١٤–١٧';
+  String get linkSuccessApplyToast => '✓ ضُبط على قالب 14–17';
 
   @override
   String get linkSuccessManualToast => 'تمام — تضبط كل أداة بنفسك من ملفه';
 
   @override
   String get linkSuccessTemplateApplied =>
-      '✓ قالب «١٤–١٧» مطبق: ٤ ساعات · فلترة متوازنة · نوم ١٠:٣٠';
+      '✓ قالب «14–17» مطبق: 4 ساعات · فلترة متوازنة · نوم 10:30';
 
   @override
   String get linkSuccessTemplateUndo => 'تراجع';
@@ -718,10 +775,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get linkSuccessNextChildBody =>
-      'قلتَ إنك ستتابع ٣ أبناء — أضف التالي وجهازه أمامك، أو أجّل من دون قلق.';
+      'قلتَ إنك ستتابع 3 أبناء — أضف التالي وجهازه أمامك، أو أجّل من دون قلق.';
 
   @override
-  String get linkSuccessAddNext => '+ أضف الابن التالي (٢ من ٣)';
+  String get linkSuccessAddNext => '+ أضف الابن التالي (2 من 3)';
 
   @override
   String get linkSuccessAddNextToast => 'نبدأ بابنك التالي 👦';
@@ -743,16 +800,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get trialModeAvatarLetter => 'ت';
 
   @override
-  String get trialModeChildTitle => 'تجريبي — ١٢ سنة';
+  String get trialModeChildTitle => 'تجريبي — 12 سنة';
 
   @override
-  String get trialModeChildMeta => '📍 المدرسة الافتراضية · 🔋 ٧٧٪';
+  String get trialModeChildMeta => '📍 المدرسة الافتراضية · 🔋 77٪';
 
   @override
-  String get trialModeRemaining => '⏱ المتبقي: ٢ س ١٥ د';
+  String get trialModeRemaining => '⏱ المتبقي: 2 س 15 د';
 
   @override
-  String get trialModeMinutes => '⏱ ١٨٠ دقيقة';
+  String get trialModeMinutes => '⏱ 180 دقيقة';
 
   @override
   String get trialModeTryTitle => 'ماذا تستطيع أن تجرّب؟';
@@ -813,7 +870,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String inviteMotherToast(String localPart, String level) {
-    return 'أُرسلت الدعوة إلى $localPart بمستوى «$level» ✓';
+    return 'أُنشئت دعوة محلية لـ $localPart بمستوى «$level» — إرسال البريد/الإشعار مغلق';
   }
 
   @override
@@ -897,7 +954,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get dayBoardTitle => 'لوحة اليوم';
 
   @override
-  String get dayBoardShellNote => 'هيكل بدون تبويبات — مرحلة ١';
+  String get dayBoardShellNote => 'هيكل بدون تبويبات — مرحلة 1';
 
   @override
   String dayBoardSyncLine(String time) {
@@ -980,6 +1037,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get dayBoardPriorityTag => 'قرار الوالد ←';
 
   @override
+  String get dayBoardTimeLeftProgressSemantics => 'الوقت المتبقي للشاشة';
+
+  @override
   String get dayBoardAdvisorBanner =>
       'مستشار العائلة يقترح — وأنت تقرر. لا شيء يُطبَّق من تلقاء نفسه.';
 
@@ -992,6 +1052,14 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get childScreenTimeSubtitle =>
       'نوافذ زمنية للنوم والصلاة والمذاكرة — ليست مفاتيح شكلية فقط';
+
+  @override
+  String get childScreenTimeLocalHonestyBanner =>
+      'تُحفظ الحدود على هذا الجهاز فقط. فرض نظام التشغيل لوقت الشاشة غير مفعّل — الحالة SIMULATED.';
+
+  @override
+  String get childScreenTimePolicyUnavailable =>
+      'إعدادات وقت الشاشة غير متاحة — تعذّر فتح التخزين المحلي. الحفظ معطّل.';
 
   @override
   String get childScreenTimeSleep => 'نوم';
@@ -1055,7 +1123,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get childScreenTimeSyncPending => 'بانتظار مزامنة الجهاز';
 
   @override
-  String get childScreenTimeSyncDelivered => 'وُصل للابن';
+  String get childScreenTimeSyncDelivered => 'حُفظ على هذا الجهاز (جلسة محلية)';
 
   @override
   String get childTimeMirrorTitle => 'وقت الشاشة لي';
@@ -1084,7 +1152,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childAppsOsInterceptHonesty =>
-      'سياسة وصول الحزم محفوظة محليًا. اعتراض الجهاز يبقى محاكاة عن بُعد — لا ندّعي حظر نظام التشغيل هنا.';
+      'السماح/الحظر سياسة محلية على هذا الجهاز. اعتراض التطبيقات يتوفر في تحديث قادم — لا ندّعي أن الجهاز حظر التطبيق.';
 
   @override
   String get childAppsObserverHint =>
@@ -1452,7 +1520,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get studioBoardCreateSubtitle =>
-      'صوّر صفحة كتاب — ومستشار العائلة يجهز درسًا واختبارًا في ٩٠ ثانية';
+      'صوّر صفحة كتاب — ومستشار العائلة يجهز درسًا واختبارًا في 90 ثانية';
 
   @override
   String get studioBoardSuggestionsHeading => 'اقتراحات مستشار العائلة اليوم';
@@ -1485,19 +1553,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get studioBoardContentCardsTitle => 'بطاقات الإنجليزية';
 
   @override
-  String get studioBoardContentCardsSub => 'أُتقن ١٨ من ٢٤';
+  String get studioBoardContentCardsSub => 'أُتقن 18 من 24';
 
   @override
-  String get studioBoardContentWirdTitle => 'ورد سورة الملك ١–١٠';
+  String get studioBoardContentWirdTitle => 'ورد سورة الملك 1–10';
 
   @override
-  String get studioBoardContentWirdSub => '٣ أيام متتالية';
+  String get studioBoardContentWirdSub => '3 أيام متتالية';
 
   @override
   String get studioBoardStatusActive => 'نشط';
 
   @override
-  String get studioBoardStatusProgress => '٧٥٪';
+  String get studioBoardStatusProgress => '75٪';
 
   @override
   String get studioBoardStatusExcellent => 'ممتاز';
@@ -1617,7 +1685,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'كتاب الرياضيات — الفصل الثاني (الكسور والعمليات)';
 
   @override
-  String get addFromSourcePdfMathSub => 'PDF رسمي · ١٤.٢ ميجابايت · متوسط';
+  String get addFromSourcePdfMathSub => 'PDF رسمي · 14.2 ميجابايت · متوسط';
 
   @override
   String get addFromSourcePdfScienceTitle =>
@@ -1625,7 +1693,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get addFromSourcePdfScienceSub =>
-      'PDF مدرسي · ٨.٥ ميجابايت · ملخص وأسئلة';
+      'PDF مدرسي · 8.5 ميجابايت · ملخص وأسئلة';
 
   @override
   String get addFromSourcePdfDeviceTitle => '+ اختيار ملف PDF آخر من جهازك…';
@@ -1670,7 +1738,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'وجّه الكاميرا لصفحة الكتاب — درس الكسور مثلًا';
 
   @override
-  String get studioCameraFrameLabel => 'صفحة ٤٧ — الكسور';
+  String get studioCameraFrameLabel => 'صفحة 47 — الكسور';
 
   @override
   String get studioCameraFrameMeta => 'رياضيات · ثالث متوسط';
@@ -1684,7 +1752,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get studioCameraAnalyzedToast =>
-      'حُللت الصفحة: «جمع الكسور المتشابهة» — ٣ أمثلة و٦ تمارين';
+      'حُللت الصفحة: «جمع الكسور المتشابهة» — 3 أمثلة و6 تمارين';
 
   @override
   String get studioCameraRepairTitle => 'يلزم إذن الكاميرا';
@@ -1739,7 +1807,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get generationOutputsSourceFractions =>
-      'المصدر: «جمع الكسور المتشابهة» — ص٤٧ رياضيات';
+      'المصدر: «جمع الكسور المتشابهة» — ص47 رياضيات';
 
   @override
   String get generationOutputsLessonTitle => 'درس مبسط';
@@ -1751,13 +1819,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get generationOutputsHomeworkTitle => 'واجب';
 
   @override
-  String get generationOutputsHomeworkSub => '٦ تمارين متدرجة';
+  String get generationOutputsHomeworkSub => '6 تمارين متدرجة';
 
   @override
   String get generationOutputsQuizTitle => 'اختبار قصير';
 
   @override
-  String get generationOutputsQuizSub => '١٠ أسئلة مصححة آليًا';
+  String get generationOutputsQuizSub => '10 أسئلة مصححة آليًا';
 
   @override
   String get generationOutputsFlashcardsTitle => 'بطاقات حفظ';
@@ -1769,7 +1837,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get generationOutputsChallengeTitle => 'تحدٍّ بمكافأة';
 
   @override
-  String get generationOutputsChallengeSub => 'حل ٥ بلا خطأ = ٢٠ دقيقة';
+  String get generationOutputsChallengeSub => 'حل 5 بلا خطأ = 20 دقيقة';
 
   @override
   String get generationOutputsReviewGameTitle => 'لعبة مراجعة';
@@ -1795,7 +1863,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get generationOutputsGeneratingToast =>
-      '🧠 يولّد مستشار العائلة الآن…';
+      'طابور محلي وهمي — بوابة المستشار سيصل إلى الأجهزة الأخرى في تحديث قادم. المعاينة تفتح بعد التوليد.';
 
   @override
   String get generationOutputsNoneSelectedToast =>
@@ -1834,7 +1902,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get previewApproveRuleBanner =>
-      '⚡ قاعدة ٩٠ ثانية — الأب يعتمد ولا يؤلّف · تحرير خفيف فقط';
+      '⚡ قاعدة 90 ثانية — الأب يعتمد ولا يؤلّف. معاينة محلية — بوابة المستشار سيصل إلى الأجهزة الأخرى في تحديث قادم.';
 
   @override
   String get previewApproveQuizTitle => 'الاختبار';
@@ -1846,44 +1914,44 @@ class AppLocalizationsAr extends AppLocalizations {
   String get previewApproveReadyTag => 'جاهز';
 
   @override
-  String get previewApproveQ1Prompt => 'س١: ٢/٧ + ٣/٧ = ؟';
+  String get previewApproveQ1Prompt => 'س1: 2/7 + 3/7 = ؟';
 
   @override
-  String get previewApproveQ1OptA => 'أ) ٥/٧ ✓';
+  String get previewApproveQ1OptA => 'أ) 5/7 ✓';
 
   @override
-  String get previewApproveQ1OptB => 'ب) ٥/١٤';
+  String get previewApproveQ1OptB => 'ب) 5/14';
 
   @override
-  String get previewApproveQ1OptC => 'ج) ٦/٧';
+  String get previewApproveQ1OptC => 'ج) 6/7';
 
   @override
-  String get previewApproveQ2Prompt => 'س٢: ١/٥ + ٢/٥ = ؟';
+  String get previewApproveQ2Prompt => 'س2: 1/5 + 2/5 = ؟';
 
   @override
-  String get previewApproveQ2OptA => 'أ) ٣/٥ ✓';
+  String get previewApproveQ2OptA => 'أ) 3/5 ✓';
 
   @override
-  String get previewApproveQ2OptB => 'ب) ٣/١٠';
+  String get previewApproveQ2OptB => 'ب) 3/10';
 
   @override
-  String get previewApproveQ2OptC => 'ج) ٢/٥';
+  String get previewApproveQ2OptC => 'ج) 2/5';
 
   @override
-  String get previewApproveQ3Prompt => 'س٣: ٤/٩ + ٢/٩ = ؟';
+  String get previewApproveQ3Prompt => 'س3: 4/9 + 2/9 = ؟';
 
   @override
-  String get previewApproveQ3OptA => 'أ) ٦/٩ ✓';
+  String get previewApproveQ3OptA => 'أ) 6/9 ✓';
 
   @override
-  String get previewApproveQ3OptB => 'ب) ٦/١٨';
+  String get previewApproveQ3OptB => 'ب) 6/18';
 
   @override
-  String get previewApproveQ3OptC => 'ج) ٨/٩';
+  String get previewApproveQ3OptC => 'ج) 8/9';
 
   @override
   String get previewApproveLessonSummary =>
-      '«تخيل بيتزا مقسومة ٧ قطع…» — شرح بالأمثلة البصرية';
+      '«تخيل بيتزا مقسومة 7 قطع…» — شرح بالأمثلة البصرية';
 
   @override
   String get previewApproveSwapCta => 'بدّل سؤالًا';
@@ -1898,7 +1966,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get previewApproveDifficultyCta => 'أسهل/أصعب';
 
   @override
-  String get previewApproveSwapToast => 'س٣ استُبدل بسؤال أسهل';
+  String get previewApproveSwapToast => 'س3 استُبدل بسؤال أسهل';
 
   @override
   String get previewApproveEditToast =>
@@ -1925,7 +1993,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String previewApproveTimingNote(int seconds) {
-    return 'من الالتقاط لهنا: ~$seconds ثانية — ضمن قاعدة الـ٩٠ ✓';
+    return 'من الالتقاط لهنا: ~$seconds ثانية — ضمن قاعدة الـ90 ✓';
   }
 
   @override
@@ -1968,13 +2036,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get attributionRewardWhoHeading => 'لمن؟';
 
   @override
-  String get attributionRewardChildOne => 'ابن ١';
+  String get attributionRewardChildOne => 'ابن 1';
 
   @override
-  String get attributionRewardChildTwo => 'ابن ٢';
+  String get attributionRewardChildTwo => 'ابن 2';
 
   @override
-  String get attributionRewardChildThree => 'ابن ٣';
+  String get attributionRewardChildThree => 'ابن 3';
 
   @override
   String get attributionRewardScheduleLabel => 'الموعد';
@@ -2169,13 +2237,13 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get learningPathChildOne => 'ابن ١';
+  String get learningPathChildOne => 'ابن 1';
 
   @override
-  String get learningPathChildTwo => 'ابن ٢';
+  String get learningPathChildTwo => 'ابن 2';
 
   @override
-  String get learningPathChildThree => 'ابن ٣';
+  String get learningPathChildThree => 'ابن 3';
 
   @override
   String get learningPathSubjectFractions => 'الكسور';
@@ -2361,14 +2429,14 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get createAssignmentHomeworkTitle =>
-      '١. واجب المدرسة البيتي (دفتر / منصة)';
+      '1. واجب المدرسة البيتي (دفتر / منصة)';
 
   @override
   String get createAssignmentHomeworkSubtitle =>
       'يحل في الدفتر المدرسي ويرفع صورة الحل';
 
   @override
-  String get createAssignmentHomeworkHint => 'مثال: حل صفحة ٤٥ في الرياضيات';
+  String get createAssignmentHomeworkHint => 'مثال: حل صفحة 45 في الرياضيات';
 
   @override
   String createAssignmentHomeworkReward(int minutes) {
@@ -2390,7 +2458,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get createAssignmentSkillTitle => '٢. تثبيت فجوة مهارة (علاج التعثر)';
+  String get createAssignmentSkillTitle => '2. تثبيت فجوة مهارة (علاج التعثر)';
 
   @override
   String get createAssignmentSkillSubtitle => 'مستخرجة مباشرة من تقرير النتائج';
@@ -2435,7 +2503,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get createAssignmentFamilyTitle => '٣. سؤال تحدي عائلي خاص من الأب';
+  String get createAssignmentFamilyTitle => '3. سؤال تحدي عائلي خاص من الأب';
 
   @override
   String get createAssignmentFamilySubtitle =>
@@ -2720,7 +2788,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get webFilterNativeBlockHonesty =>
-      'مستوى الحظر على الجهاز محاكاة عن بُعد — السياسة حقيقية؛ لا ندّعي VPN/DNS';
+      'التصنيفات والتفضيلات تُحفظ محليًا. فرض VPN/DNS يتوفر في تحديث قادم — لا ندّعي أن الجهاز حظر موقعًا.';
 
   @override
   String get webFilterPreviewSheetTitle => 'كيف يراه الابن';
@@ -2831,35 +2899,38 @@ class AppLocalizationsAr extends AppLocalizations {
   String get instantLockTitle => 'القفل الفوري';
 
   @override
-  String get instantLockToggle => 'قفل الجهاز الآن';
+  String get instantLockToggle => 'حفظ تفضيل القفل محليًا';
 
   @override
   String get instantLockSubtitle =>
-      'يقفل جهاز الابن فورًا مع بقاء الطوارئ والدردشة والقرآن متاحة';
+      'يحفظ تفضيل قفل محلي على هذا الجهاز. قفل نظام التشغيل غير متاح حتى القدرة الأصلية. الطوارئ والدردشة والقرآن تبقى متاحة.';
 
   @override
-  String get instantLockStatusLocked => 'الجهاز مقفل';
+  String get instantLockStatusLocked => 'تم حفظ طلب القفل محليًا';
 
   @override
-  String get instantLockStatusUnlocked => 'الجهاز غير مقفل';
+  String get instantLockStatusUnlocked => 'تم حفظ تفضيل فك القفل محليًا';
 
   @override
-  String get instantLockLockedByFather => 'مقفل بواسطة الأب';
+  String get instantLockLockedByFather =>
+      'تفضيل القفل من الأب (قفل النظام يتوفر في تحديث قادم)';
 
   @override
-  String get instantLockLockedByMother => 'مقفل بواسطة الأم';
+  String get instantLockLockedByMother =>
+      'تفضيل القفل من الأم (قفل النظام يتوفر في تحديث قادم)';
 
   @override
-  String get instantLockAction => 'قفل';
+  String get instantLockAction => 'حفظ طلب القفل';
 
   @override
-  String get instantLockUnlockAction => 'فتح القفل';
+  String get instantLockUnlockAction => 'حفظ تفضيل فك القفل';
 
   @override
-  String get instantLockDeniedToast => 'غير مسموح بتغيير قفل الجهاز';
+  String get instantLockDeniedToast => 'غير مسموح بتغيير تفضيل قفل الجهاز';
 
   @override
-  String get instantLockSupersessionBanner => 'الأب فتح القفل (تم تجاوز قفلك)';
+  String get instantLockSupersessionBanner =>
+      'الأب حفظ تفضيل فك القفل (تم تجاوز تفضيل قفلك)';
 
   @override
   String get antiTamperSectionTitle => 'الحماية من التلاعب';
@@ -2925,7 +2996,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get notificationPrefsSubtitle =>
-      'ساعات الهدوء لكتم التنبيهات غير الحرجة فقط';
+      'نظّم الإشعارات بحسب درجة أهميتها لمنع الإزعاج — نداءات الاستغاثة تخترق أي وضع صامت دائماً';
 
   @override
   String get notificationPrefsQuietHours => 'ساعات الهدوء';
@@ -2964,11 +3035,80 @@ class AppLocalizationsAr extends AppLocalizations {
   String get notificationPrefsMemberChild => 'الابن';
 
   @override
-  String get notificationPrefsAnalysisNotices => 'إشعارات التحليلات';
+  String get notificationPrefsAnalysisNotices => 'تنبيهات مستشار العائلة';
 
   @override
   String get notificationPrefsAnalysisNoticesHint =>
-      'تحديثات اختيارية غير حرجة عند تحليلات المستشار';
+      'تحديثات اختيارية غير حرجة من المستشار';
+
+  @override
+  String get notificationPrefsCardCriticalTitle => 'الحرجة — لا تُكتم';
+
+  @override
+  String get notificationPrefsCardCriticalBody =>
+      'استغاثة · خروج من منطقة آمنة · انقطاع جهاز — تخترق الصامت دائمًا. هذه طمأنينتك ولا مفتاح لها.';
+
+  @override
+  String get notificationPrefsCardImportantTitle => 'المهمة';
+
+  @override
+  String get notificationPrefsCardReassuranceTitle => 'الاطمئنان';
+
+  @override
+  String get notificationPrefsChildRequests => 'طلبات الأبناء';
+
+  @override
+  String get notificationPrefsQuietHoursHint =>
+      'نافذة الهدوء: تُجمَّع التنبيهات غير الحرجة للصباح';
+
+  @override
+  String get notificationPrefsSummaryDigest => 'ملخص واحد بدل التكرار';
+
+  @override
+  String get notificationPrefsSummaryDigestHint =>
+      '«وصل ٣ أبناء بسلام» — رسالة واحدة';
+
+  @override
+  String get notificationPrefsEveningDigest => 'الملخص المسائي';
+
+  @override
+  String get notificationPrefsEveningDigestTime => 'وقت الملخص';
+
+  @override
+  String get alertDetailCategorySos => 'فئة: استغاثة طارئة';
+
+  @override
+  String get alertDetailCategoryTamper => 'فئة: حماية الجهاز';
+
+  @override
+  String get alertDetailSosTitle => 'نداء استغاثة نشط يحتاجك';
+
+  @override
+  String get alertDetailSosBody =>
+      'استغاثة عائلية نشطة. افتح لوحة الاستغاثة — لا تُكتم بساعات الهدوء.';
+
+  @override
+  String get alertDetailSosAdvice => 'اهدأ، افتح اللوحة، وتأكد أن الابن بأمان.';
+
+  @override
+  String get alertDetailSosOpenBoardCta => 'افتح لوحة الاستغاثة';
+
+  @override
+  String get alertDetailTamperTitle => 'تنبيه حماية على جهاز ابن';
+
+  @override
+  String get alertDetailTamperBody =>
+      'حماية مكافحة العبث أبلغت عن نشاط. راجع قريبًا — مسار حرج.';
+
+  @override
+  String get alertDetailTamperAdvice =>
+      'راجع حالة الجهاز وتحدث مع الابن إن لزم.';
+
+  @override
+  String get alertDetailAcknowledgeCta => 'تم الاطلاع';
+
+  @override
+  String get alertDetailAcknowledgeDoneBanner => 'تم الاطلاع';
 
   @override
   String get privacyDataTitle => 'الخصوصية والبيانات';
@@ -3055,7 +3195,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get privacyWipeStep1Body =>
-      'هذا يجدول مسحاً دائماً لبيانات العائلة. إدخالات سجل التدقيق لا تُحذف أبداً. لديك مهلة ندم ٧ أيام للإلغاء.';
+      'هذا يجدول مسحاً دائماً لبيانات العائلة. إدخالات سجل التدقيق لا تُحذف أبداً. لديك مهلة ندم 7 أيام للإلغاء.';
 
   @override
   String get privacyWipeStep1Continue => 'متابعة';
@@ -3065,7 +3205,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String privacyWipeStep2Body(String phrase) {
-    return 'اكتب $phrase لجدولة المسح. التنفيذ ينتظر ٧ أيام — يمكنك الإلغاء في أي وقت خلال هذه المهلة.';
+    return 'اكتب $phrase لجدولة المسح. التنفيذ ينتظر 7 أيام — يمكنك الإلغاء في أي وقت خلال هذه المهلة.';
   }
 
   @override
@@ -3076,11 +3216,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get privacyWipeScheduledToast =>
-      'تمت جدولة المسح — بدأت مهلة الندم ٧ أيام';
+      'تمت جدولة المسح — بدأت مهلة الندم 7 أيام';
 
   @override
   String privacyWipePendingBanner(String when) {
-    return 'مسح معلّق حتى $when — ألغِ خلال ٧ أيام';
+    return 'مسح معلّق حتى $when — ألغِ خلال 7 أيام';
   }
 
   @override
@@ -3299,12 +3439,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String childDayBoardLastSynced(String time) {
-    return 'آخر مزامنة: $time';
+    return 'آخر تحديث سياسة محلي: $time';
   }
 
   @override
   String childDayBoardOfflineBanner(String time) {
-    return 'دون اتصال — تُعرض آخر لوحة مزامَنة ($time). تُحدَّث عند عودة الشبكة.';
+    return 'تُعرض آخر لوحة محلية ($time). مزامنة الأجهزة المتعددة مغلقة — التحديثات على هذا الجهاز فقط.';
   }
 
   @override
@@ -3358,6 +3498,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get requestInboxOfflineQueued => 'القرار في قائمة الانتظار';
 
   @override
+  String get requestInboxLocalHonestyBanner =>
+      'تُحفظ الموافقات محلياً على هذا الجهاز. إشعار جهاز الابن يتطلّب تحديث قادم للأجهزة الأخرى — لم يُسلَّم عن بُعد بعد.';
+
+  @override
+  String get requestInboxUnavailable =>
+      'طلبات الوقت غير متاحة — تعذّر فتح التخزين المحلي. القرارات معطّلة.';
+
+  @override
   String requestInboxChildRejectedReason(String reason) {
     return 'رُفض طلبك: $reason';
   }
@@ -3394,7 +3542,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get sosLadderSubtitle =>
-      'الوالدان مثبتان في الدرجة ١ — لا يمكن إزالتهما أو إيقاف تنبيه الطوارئ عنهما';
+      'الوالدان مثبتان في الدرجة 1 — لا يمكن إزالتهما أو إيقاف تنبيه الطوارئ عنهما';
 
   @override
   String get sosLadderHeading => 'سلّم التصعيد المعتمد';
@@ -3491,6 +3639,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get ruleConsequentSoftLock => 'قفل مرن';
 
   @override
+  String get myAdvisorOwnRuleTitle => 'قاعدة وضعتها بنفسك';
+
+  @override
   String get childWelcomeTitle => 'ترحيب الابن';
 
   @override
@@ -3572,7 +3723,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childQrPermanentBody =>
-      'على بعض الأجهزة يُرفض الإذن نهائيًا. افتح إعدادات النظام يدويًا وفعّل الكاميرا، أو اكتب الرمز المكوّن من ٨ أحرف الظاهر أسفل شاشة والدك.';
+      'على بعض الأجهزة يُرفض الإذن نهائيًا. افتح إعدادات النظام يدويًا وفعّل الكاميرا، أو اكتب الرمز المكوّن من 8 أحرف الظاهر أسفل شاشة والدك.';
 
   @override
   String get childQrManualPlaceholder => 'A1B2-C3D4';
@@ -3582,7 +3733,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childQrTokenInvalid =>
-      'الرمز غير صالح — ٨ أحرف كما يظهر عند والدك (UF-01).';
+      'الرمز غير صالح — 8 أحرف كما يظهر عند والدك (UF-01).';
 
   @override
   String get transparencyConsentTitle => 'بصراحة معك';
@@ -3717,7 +3868,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'ذكاء العائلة الاصطناعي الكامل + الاستوديو التعليمي غير المحدود + ورد القرآن الصوتي بدون إنترنت لكافة الأبناء.';
 
   @override
-  String get plansFamilySmartPrice => '٢٩ ر.س / شهريًا لكل العائلة';
+  String get plansFamilySmartPrice => '29 ر.س / شهريًا لكل العائلة';
 
   @override
   String get plansBasicSafetyTitle => 'باقة الأمان الأساسي المستمر';
@@ -3812,6 +3963,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get deviceHealthDevicesSubtitle => 'الصحة والنبض والأذونات';
+
+  @override
+  String get deviceHealthDevicesEmptyTitle => 'لا أجهزة بعد';
+
+  @override
+  String get deviceHealthDevicesEmptyMessage =>
+      'اربط جهاز ابن لترى الصحة والنبض والأذونات هنا.';
 
   @override
   String get deviceHealthSectionAtRiskHint => 'جهاز قد ينقطع';
@@ -4061,7 +4219,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get advisorSuggestionsPrivacyFooter =>
-      'المرحلتان ١–٢ تعملان على الجهاز — خصوصية كاملة ومجانية';
+      'المرحلتان 1–2 تعملان على الجهاز — خصوصية كاملة ومجانية';
 
   @override
   String get advisorSuggestionsListSemantics => 'قائمة اقتراحات مستشار العائلة';
@@ -4096,6 +4254,22 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get childrenListSharedHonesty =>
       'تُطبق على من تختار — وأي إعداد فردي لاحق يغلبها ويظهر كاستثناء.';
+
+  @override
+  String get childrenListLocalDemoBanner =>
+      'الموقع وآخر ظهور والبطارية والوقت المتبقي في هذه القائمة نصوص عرض تجريبي محلي — وليست GPS حيّاً ولا بطارية الجهاز.';
+
+  @override
+  String get inviteMotherLocalHonestyBanner =>
+      'تُحفظ الدعوة محلياً على هذا الجهاز. إرسال البريد وانضمام حساب الأم يتوفران في تحديث قادم — لم يُرسل بريد بعد.';
+
+  @override
+  String get acceptMotherInviteLocalHonestyBanner =>
+      'يُسجَّل الانضمام محلياً على هذا الجهاز. مزامنة الحساب عن بُعد وتأكيد البريد يتوفران في تحديث قادم — لم يكتمل بعد.';
+
+  @override
+  String get childrenListSharedEnforceHonesty =>
+      'يُحفظ محليًا في قائمة الأبناء فقط — لا يُنفَّذ بعد عبر محرك السياسة أو وقت الشاشة أو فلتر الويب.';
 
   @override
   String get childrenListSharedScopeLabel => 'تشمل:';
@@ -4150,6 +4324,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childrenListLoadingSemantics => 'جاري تحميل قائمة الأبناء';
+
+  @override
+  String get childrenListDeviceNotLinked => 'لم يُربط الجهاز بعد';
+
+  @override
+  String get childrenListAddBlocked =>
+      'فقط مالك العائلة أو الأم بصلاحية كاملة يمكنهما إدارة الأبناء هنا';
 
   @override
   String get childrenListListSemantics => 'قائمة الأبناء';
@@ -4213,13 +4394,31 @@ class AppLocalizationsAr extends AppLocalizations {
   String get childProfileToolTimeRequests => 'طلبات الوقت';
 
   @override
+  String get childProfileToolApps => 'التطبيقات';
+
+  @override
   String get childProfileToolWebFilter => 'فلترة الإنترنت';
 
   @override
   String get childProfileToolInstantLock => 'القفل الفوري';
 
   @override
+  String get childProfileToolTamperAlerts => 'تنبيهات التحايل';
+
+  @override
+  String get childProfileToolSmartAlerts => 'التنبيهات الذكية';
+
+  @override
   String get childProfileToolSmartSupervision => 'ضبط الرقابة';
+
+  @override
+  String get childProfileToolUsageReport => 'تقرير الاستخدام';
+
+  @override
+  String get childProfileToolFocusReport => 'تقرير التركيز';
+
+  @override
+  String get childProfileToolQuranProgress => 'حفظ القرآن';
 
   @override
   String get childProfileToolDeviceHealth => 'صحة الجهاز';
@@ -4238,6 +4437,25 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childProfileDetailsLink => 'التفاصيل ‹';
+
+  @override
+  String get childProfileLocationMapCta => 'الخريطة المباشرة';
+
+  @override
+  String get childProfileLocationHistoryCta => 'سجل الموقع';
+
+  @override
+  String get childProfileLocationGpsHonesty =>
+      'GPS الجهاز قريبًا — تسميات المكان عرض عيّنة محلي وليست تتبّعًا حيًا.';
+
+  @override
+  String childProfileAssignedZonesCount(String count) {
+    return 'المناطق المعيّنة: $count';
+  }
+
+  @override
+  String get childProfileAssignedZonesSemantics =>
+      'فتح المناطق الآمنة لهذا الابن';
 
   @override
   String get childProfileConnectionTitle => 'صحة الاتصال';
@@ -4276,7 +4494,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childProfileMaxDevicesBlock =>
-      'لهذا الابن ٣ أجهزة مسجّلة بالفعل — ألغِ تسجيل جهاز قبل ربط جهاز جديد.';
+      'لهذا الابن 3 أجهزة مسجّلة بالفعل — ألغِ تسجيل جهاز قبل ربط جهاز جديد.';
 
   @override
   String get enrollmentStatePairingPending => 'بانتظار الربط';
@@ -4301,7 +4519,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get enrollmentFailureMaxDevices =>
-      'تعذّر التسجيل — الحد الأقصى ٣ أجهزة نشطة لهذا الابن.';
+      'تعذّر التسجيل — الحد الأقصى 3 أجهزة نشطة لهذا الابن.';
 
   @override
   String get enrollmentFailureInvalidToken =>
@@ -4540,7 +4758,33 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get locationHistoryRetentionNote =>
-      'يُحتفظ بالسجل ٩٠ يومًا ثم يُحذف تلقائيًا — سياسة تقليم ملزمة.';
+      'يُحتفظ بالسجل 90 يومًا ثم يُحذف تلقائيًا — سياسة تقليم ملزمة.';
+
+  @override
+  String get locationHistoryExportCta => 'تصدير السجل (الأب)';
+
+  @override
+  String get locationHistoryArchiveCta => 'أرشفة السجل (الأب)';
+
+  @override
+  String get locationHistoryExportStubToast =>
+      'التصدير جاهز للمزامنة لاحقًا — المرحلة ١ تبقي المسار على الجهاز فقط.';
+
+  @override
+  String get locationHistoryArchiveStubToast =>
+      'الأرشفة صلاحية الأب — المرحلة ١ تسجّل النية فقط (بدون مسح سحابي).';
+
+  @override
+  String get locationMapNetworkOnline => 'الشبكة · متصل';
+
+  @override
+  String get locationMapNetworkOffline => 'الشبكة · غير متصل';
+
+  @override
+  String get locationMapNetworkUnknown => 'الشبكة · غير معروفة';
+
+  @override
+  String get locationMapNetworkUnavailable => 'الشبكة · غير متاحة (المرحلة ١)';
 
   @override
   String get safeZonesTitle => 'المناطق الآمنة';
@@ -4643,6 +4887,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get createSafeZoneNameHint => 'نادي الحي';
 
   @override
+  String get createSafeZoneNameRequired => 'أدخلي اسم المنطقة قبل الحفظ';
+
+  @override
   String get createSafeZoneAlertsHeading => 'نبّهني عند';
 
   @override
@@ -4655,7 +4902,31 @@ class AppLocalizationsAr extends AppLocalizations {
   String get createSafeZoneAlertNoShow => 'عدم الوصول في الموعد';
 
   @override
-  String get createSafeZoneAlertNoShowHint => 'مثال: لم يصل المدرسة ٧:٣٠ ص';
+  String get createSafeZoneAlertNoShowHint => 'مثال: لم يصل المدرسة 7:30 ص';
+
+  @override
+  String get createSafeZoneNoShowDeadlineLabel => 'يجب الوصول قبل';
+
+  @override
+  String get createSafeZoneNoShowDeadlineRequired =>
+      'اختر وقت الوصول الإلزامي قبل حفظ تنبيه عدم الوصول';
+
+  @override
+  String get createSafeZoneNoShowDeadlineCustom => 'وقت مخصص…';
+
+  @override
+  String get createSafeZoneNoShowDeadlineHonesty =>
+      'يُحفظ كنية محلية فقط — عامل الجدولة غير مفعّل في هذا البناء (نفس صدق نية الرسائل).';
+
+  @override
+  String createSafeZoneNoShowDeadlineSemantics(String time) {
+    return 'يجب الوصول قبل $time';
+  }
+
+  @override
+  String safeZonesNoShowDeadline(String time) {
+    return 'يجب الوصول قبل $time';
+  }
 
   @override
   String get createSafeZoneSaveCta => 'حفظ المنطقة الآمنة ←';
@@ -4787,6 +5058,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get sosAlertSetupCta => 'إعداد سلسلة الطوارئ ←';
+
+  @override
+  String get sosAlertSetupIncompleteCta => 'أكمل جاهزية الطوارئ ←';
+
+  @override
+  String get sosAlertEmptyIncompleteMessage =>
+      'لا بلاغ نشط — ومكتب الطوارئ ما زال يحتاج جهات موثوقة أو جاهزية. افتح الإعداد قبل البلاغ القادم.';
 
   @override
   String get sosAlertSetupSemantics => 'فتح إعداد الطوارئ';
@@ -4953,7 +5231,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get conversationsListHonestyBanner =>
-      'حق ثابت: المحادثة العائلية لا تُقيَّد بأي مستوى اشتراك — مشفّرة ومتاحة دائمًا';
+      'محفوظ على هذا الجهاز فقط. المحادثة العائلية لا تُقيَّد بالاشتراك — التسليم متعدد الأجهزة يصل إلى الهواتف الأخرى في تحديث قادم.';
+
+  @override
+  String get conversationsListFamilyThreadTitle => 'العائلة';
+
+  @override
+  String get conversationsListFamilyThreadPreview => 'لا رسائل بعد';
 
   @override
   String get conversationsListSectionTitle => 'المحادثات';
@@ -4962,7 +5246,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get conversationsListNewChatCta => '+ محادثة جديدة';
 
   @override
-  String get conversationsListNewChatToast => 'محادثة جديدة — قريبًا (مرحلة ١)';
+  String get conversationsListNewChatToast => 'محادثة جديدة — قريبًا (مرحلة 1)';
 
   @override
   String get conversationsListEmptyTitle => 'لا محادثات بعد';
@@ -4991,11 +5275,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get conversationSettingsTag => '⚙️ إعدادات المحادثة';
 
   @override
-  String get conversationSettingsToast => 'إعدادات المحادثة — قريبًا (مرحلة ١)';
+  String get conversationSettingsToast => 'إعدادات المحادثة — قريبًا (مرحلة 1)';
 
   @override
   String get conversationFamilyPinNote =>
-      '📌 المحادثة العائلية مثبتة دائمًا — وحق ثابت لا يُقيَّد بأي مستوى';
+      '📌 المحادثة العائلية مثبتة ولا تُقيَّد بالاشتراك. الخيط محلي على هذا الجهاز — التسليم متعدد الأجهزة سيصل إلى الأجهزة الأخرى في تحديث قادم.';
+
+  @override
+  String get conversationLocalHonestyBanner =>
+      'الخيط محلي على هذا الجهاز — لا يُقيَّد بالاشتراك. التسليم متعدد الأجهزة سيصل إلى الأجهزة الأخرى في تحديث قادم.';
 
   @override
   String get conversationToneBridgeNote =>
@@ -5094,7 +5382,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get activeCallHonestyNote =>
-      'صوت وفيديو عبر LiveKit — بيانات وصفية فقط، لا تسجيل · 🔔 مكالمات الاطمئنان ترنّ عند الابن حتى لو كان جهازه صامتًا';
+      'صوت وفيديو صوت وفيديو — بيانات وصفية فقط، لا تسجيل · 🔔 مكالمات الاطمئنان ترنّ عند الابن حتى لو كان جهازه صامتًا';
 
   @override
   String get activeCallPlayTogetherTitle => '🎮 العبا معًا أثناء المكالمة';
@@ -5171,7 +5459,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get callHistoryRedialSemantics => 'إعادة الاتصال';
 
   @override
-  String get callHistoryDialToast => 'اتصال جديد — قريبًا (مرحلة ١)';
+  String get callHistoryDialToast => 'اتصال جديد — قريبًا (مرحلة 1)';
 
   @override
   String get callHistoryEmptyTitle => 'لا مكالمات بعد';
@@ -5343,7 +5631,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get childSosSubtitle => 'زر الاستغاثة';
 
   @override
-  String get childSosHint => 'إذا حسّيت بخطر — اضغط مطوّلًا ٣ ثوانٍ';
+  String get childSosHint => 'إذا حسّيت بخطر — اضغط مطوّلًا 3 ثوانٍ';
 
   @override
   String get childSosHoldLabel => 'نجدة\n🚨';
@@ -5362,7 +5650,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childSosStatusCancelled =>
-      'توقفت قبل ٣ ثوانٍ — لم ينطلق البلاغ (حماية من اللمس غير المقصود)';
+      'توقفت قبل 3 ثوانٍ — لم ينطلق البلاغ (حماية من اللمس غير المقصود)';
 
   @override
   String get childSosStatusFiring => 'جاري إرسال البلاغ…';
@@ -5470,7 +5758,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childChatsHonestyBanner =>
-      '🔒 كل محادثاتكم مشفّرة طرفيًا — ولا تُقفل أبدًا حتى بانتهاء وقتك';
+      'المحادثة لا تُقفل بانتهاء الوقت. القائمة محلية على هذا الجهاز — التسليم متعدد الأجهزة سيصل إلى الأجهزة الأخرى في تحديث قادم.';
 
   @override
   String get childChatsSafeCircleBanner =>
@@ -5485,7 +5773,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childChatsCallContactsToast =>
-      'جهات اتصال الهاتف — قريبًا (مرحلة ١)';
+      'جهات اتصال الهاتف — قريبًا (مرحلة 1)';
 
   @override
   String get childChatsEmptyTitle => 'لا محادثات بعد';
@@ -5525,7 +5813,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childConversationNeverLockBanner =>
-      '💬 هذي المحادثة ما تقفل أبدًا — حتى لو خلص وقت اللعب. أهلك دايمًا موجودين.';
+      'المحادثة لا تُقفل بانتهاء وقت اللعب. الخيط محلي على هذا الجهاز — التسليم متعدد الأجهزة سيصل إلى الأجهزة الأخرى في تحديث قادم.';
 
   @override
   String get childConversationInputHint => 'اكتب رسالة…';
@@ -5693,10 +5981,10 @@ class AppLocalizationsAr extends AppLocalizations {
       '🔒 هذا الجهاز في وضع الابن المقفول. الفتح يحتاج مفتاحين: كلمة مرور وليّ الأمر + موافقة من جهازه.';
 
   @override
-  String get childModeLockSecretStepTitle => 'الخطوة ١ — المدخل السري';
+  String get childModeLockSecretStepTitle => 'الخطوة 1 — المدخل السري';
 
   @override
-  String get childModeLockSecretStepHint => 'اضغط مطوّلًا ١٠ ثوانٍ على الشعار:';
+  String get childModeLockSecretStepHint => 'اضغط مطوّلًا 10 ثوانٍ على الشعار:';
 
   @override
   String get childModeLockLogoHoldSemantics =>
@@ -5706,7 +5994,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get childModeLockSecretOpened => '✓ فُتح المدخل (محاكاة)';
 
   @override
-  String get childModeLockPasswordStepTitle => 'الخطوة ٢ — كلمة مرور الحساب';
+  String get childModeLockPasswordStepTitle => 'الخطوة 2 — كلمة مرور الحساب';
 
   @override
   String get childModeLockPasswordStepHint =>
@@ -5739,7 +6027,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childModeLockAwaitingBanner =>
-      '⏳ الخطوة ٣ — بانتظار المفتاح الثاني من جهاز والدك. كلمة المرور وحدها لا تكفي.';
+      '⏳ الخطوة 3 — بانتظار المفتاح الثاني من جهاز والدك. كلمة المرور وحدها لا تكفي.';
 
   @override
   String get childModeLockViewFatherCta => 'شاهد ما يصل الأب ←';
@@ -5750,11 +6038,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childModeLockAttemptsWarning =>
-      '⚠️ كل محاولة خاطئة تصل والدك فورًا. وبعد ٣ محاولات: قفل ٢٤ ساعة + إخطار والدتك.';
+      '⚠️ كل محاولة خاطئة تصل والدك فورًا. وبعد 3 محاولات: قفل 24 ساعة + إخطار والدتك.';
 
   @override
   String get childModeLockLockoutBanner =>
-      '🔒 قُفل المدخل ٢٤ ساعة بعد ثلاث محاولات فاشلة — وأُخطرت والدتك.';
+      '🔒 قُفل المدخل 24 ساعة بعد ثلاث محاولات فاشلة — وأُخطرت والدتك.';
 
   @override
   String get childModeLockEntertainmentLocked =>
@@ -5791,7 +6079,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'أُدخلت كلمة المرور الصحيحة · بانتظار موافقتك';
 
   @override
-  String get parentSecondKeyApprove => 'سماح ١٠ دقائق';
+  String get parentSecondKeyApprove => 'سماح 10 دقائق';
 
   @override
   String get parentSecondKeyDeny => 'رفض';
@@ -5805,7 +6093,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get parentSecondKeyApprovedToast =>
-      'سُمح بفتح وضع الوالد ١٠ دقائق على جهاز الابن';
+      'سُمح بفتح وضع الوالد 10 دقائق على جهاز الابن';
 
   @override
   String get parentSecondKeyDeniedToast =>
@@ -5832,7 +6120,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get parentSecondKeyLockoutHint =>
-      '💡 بعد ٣ محاولات فاشلة: قفل ٢٤ ساعة + إخطار الأم. الثغرة صارت جرس إنذار مبكرًا للتحايل.';
+      '💡 بعد 3 محاولات فاشلة: قفل 24 ساعة + إخطار الأم. الثغرة صارت جرس إنذار مبكرًا للتحايل.';
 
   @override
   String get parentSecondKeyMotherHint =>
@@ -5861,7 +6149,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get motherPermissionLevelPartnerDesc =>
-      '+ توافق على الطلبات وتمنح وقتًا (≤٣٠ د) وتدير المهام';
+      '+ توافق على الطلبات وتمنح وقتًا (≤30 د) وتدير المهام';
 
   @override
   String get motherPermissionLevelFullDesc =>
@@ -5955,7 +6243,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get focusReportWeeklyLabel => 'هذا الأسبوع';
 
   @override
-  String get focusReportGoalComplete => '🎯 الهدف الأسبوعي: مكتمل ١٠٠٪';
+  String get focusReportGoalComplete => '🎯 الهدف الأسبوعي: مكتمل 100٪';
 
   @override
   String get focusReportGoalInProgress => '🎯 الهدف الأسبوعي: قيد التقدم';
@@ -5981,10 +6269,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get focusReportPraiseNewTag => 'جديد';
 
   @override
-  String get focusReportPraiseSentTag => 'تم الثناء ✓';
+  String get focusReportPraiseSentTag => 'حُفظ الثناء محليًا ✓';
 
   @override
-  String get focusReportPraiseCta => 'أرسل ثناءً وتشجيعاً';
+  String get focusReportPraiseCta => 'حفظ الثناء';
 
   @override
   String focusReportRewardCta(int minutes) {
@@ -5993,7 +6281,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String focusReportPraiseDeliveredLabel(String name) {
-    return 'تم إرسال تشجيعك لشاشة $name:';
+    return 'حُفظ تشجيعك محليًا لـ $name:';
   }
 
   @override
@@ -6002,7 +6290,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String focusReportPraiseSentToast(String name) {
-    return 'تم إرسال التشجيع إلى شاشة $name';
+    return 'حُفظ التشجيع محليًا لـ $name — لم يُسلَّم لجهاز آخر';
   }
 
   @override
@@ -6020,7 +6308,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get focusReportScheduleAfternoonStudy => 'مذاكرة العصر';
 
   @override
-  String get focusReportScheduleAfternoonSlot => '٤:٣٠ – ٥:٣٠ م';
+  String get focusReportScheduleAfternoonSlot => '4:30 – 5:30 م';
 
   @override
   String get focusReportScheduleSchoolDays => 'أيام الدراسة';
@@ -6095,28 +6383,28 @@ class AppLocalizationsAr extends AppLocalizations {
   String get familyCalendarTitle => 'تقويم العائلة';
 
   @override
-  String get familyCalendarHijriDate => 'الأحد ٢٢ ربيع الأول ١٤٤٨';
+  String get familyCalendarHijriDate => 'الأحد 22 ربيع الأول 1448';
 
   @override
-  String get familyCalendarGregorianDate => '١٤ سبتمبر ٢٠٢٦';
+  String get familyCalendarGregorianDate => '14 سبتمبر 2026';
 
   @override
-  String get familyCalendarPrayerFajr => '🕌 فجر ٤:٣٨';
+  String get familyCalendarPrayerFajr => '🕌 فجر 4:38';
 
   @override
-  String get familyCalendarPrayerDhuhr => '🕌 ظهر ١١:٥٤';
+  String get familyCalendarPrayerDhuhr => '🕌 ظهر 11:54';
 
   @override
-  String get familyCalendarPrayerAsr => '🕌 عصر ٣:١٨';
+  String get familyCalendarPrayerAsr => '🕌 عصر 3:18';
 
   @override
-  String get familyCalendarPrayerMaghrib => '🕌 مغرب ٥:٥٦';
+  String get familyCalendarPrayerMaghrib => '🕌 مغرب 5:56';
 
   @override
-  String get familyCalendarPrayerIsha => '🕌 عشاء ٧:٢٦';
+  String get familyCalendarPrayerIsha => '🕌 عشاء 7:26';
 
   @override
-  String get familyCalendarMonthSep2026 => 'سبتمبر ٢٠٢٦ · ربيع الأول';
+  String get familyCalendarMonthSep2026 => 'سبتمبر 2026 · ربيع الأول';
 
   @override
   String get familyCalendarWeekdaySun => 'أحد';
@@ -6197,19 +6485,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get familyCalendarWhenTodayAfterMaghrib => 'اليوم · بعد المغرب';
 
   @override
-  String get familyCalendarWhenToday430pm => 'اليوم · ٤:٣٠ م';
+  String get familyCalendarWhenToday430pm => 'اليوم · 4:30 م';
 
   @override
-  String get familyCalendarWhenToday730pm => 'اليوم · ٧:٣٠ م';
+  String get familyCalendarWhenToday730pm => 'اليوم · 7:30 م';
 
   @override
   String get familyCalendarWhenTuesday => 'الثلاثاء';
 
   @override
-  String get familyCalendarWhenThursday26 => 'الخميس ٢٦ ربيع الأول';
+  String get familyCalendarWhenThursday26 => 'الخميس 26 ربيع الأول';
 
   @override
-  String get familyCalendarWhenThursday10am => 'الخميس · ١٠ ص';
+  String get familyCalendarWhenThursday10am => 'الخميس · 10 ص';
 
   @override
   String get familyCalendarWhoOne => 'الابن الأول';
@@ -6294,21 +6582,21 @@ class AppLocalizationsAr extends AppLocalizations {
   String get addEventCalendarGregorian => 'ميلادي';
 
   @override
-  String get addEventCalendarHijriToast => '🌙 التقويم الهجري معتمد (مرحلة ١)';
+  String get addEventCalendarHijriToast => '🌙 التقويم الهجري معتمد (مرحلة 1)';
 
   @override
   String get addEventCalendarGregorianToast =>
-      '📅 التقويم الميلادي معتمد (مرحلة ١)';
+      '📅 التقويم الميلادي معتمد (مرحلة 1)';
 
   @override
-  String get addEventDateHijriSample => '٢٣ ربيع الأول ١٤٤٨';
+  String get addEventDateHijriSample => '23 ربيع الأول 1448';
 
   @override
-  String get addEventDateGregorianSample => 'الاثنين ١٥ سبتمبر ٢٠٢٦';
+  String get addEventDateGregorianSample => 'الاثنين 15 سبتمبر 2026';
 
   @override
   String get addEventDateConversionSample =>
-      '= الاثنين ١٥ سبتمبر — التحويل تلقائي';
+      '= الاثنين 15 سبتمبر — التحويل تلقائي';
 
   @override
   String get addEventTimeLabel => 'الوقت';
@@ -6335,7 +6623,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get addEventReminderAtTime => 'وقته';
 
   @override
-  String get addEventReminderFifteenMin => '١٥ دقيقة';
+  String get addEventReminderFifteenMin => '15 دقيقة';
 
   @override
   String get addEventReminderOneHour => 'ساعة';
@@ -6497,7 +6785,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get familyTasksProofPhotoAttached => '📸 تم إرفاق صورة للغرفة مرتبة';
 
   @override
-  String get familyTasksTimeTenMinAgo => 'قبل ١٠ دقائق';
+  String get familyTasksTimeTenMinAgo => 'قبل 10 دقائق';
 
   @override
   String get familyTasksTimeToday => 'اليوم';
@@ -6691,7 +6979,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get auditLogEntryMotherLevelTitle => 'ترقية الأم: مطلعة ← مشاركة';
 
   @override
-  String get auditLogEntryUnlockTitle => 'محاولة فتح وضع الوالد ×٢';
+  String get auditLogEntryUnlockTitle => 'محاولة فتح وضع الوالد ×2';
 
   @override
   String get auditLogEntryForgetTitle => 'استخدام زر النسيان';
@@ -6702,7 +6990,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get auditLogDetailClosedAfter6m => 'أُغلق يدويًا بعد ٦ د';
+  String get auditLogDetailClosedAfter6m => 'أُغلق يدويًا بعد 6 د';
 
   @override
   String get auditLogDetailObserverToPartner => 'أُخطرت';
@@ -6741,7 +7029,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get languageHelpChooseAction => 'اختيار';
 
   @override
-  String get languageHelpLocaleToast => 'واجهة English — قريبًا في تحديث لاحق';
+  String get languageHelpLocaleToast => 'تم تغيير لغة الواجهة';
 
   @override
   String get languageHelpHelpCenterSection => 'مركز المساعدة';
@@ -6846,7 +7134,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get individualTimelinePatternFootballSleepStudy =>
-      'أيام تمرين كرة القدم ← ينام أبكر ~٢٥ د ← نتائجه التعليمية صباح اليوم التالي أعلى ~١٥٪.';
+      'أيام تمرين كرة القدم ← ينام أبكر ~25 د ← نتائجه التعليمية صباح اليوم التالي أعلى ~15٪.';
 
   @override
   String get individualTimelineSuggestionLabel => 'اقتراح: ';
@@ -6864,7 +7152,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get individualTimelineDiscussToast =>
-      'تمت إضافة الاقتراح لمساعد العائلة (محاكاة المرحلة ١).';
+      'تمت إضافة الاقتراح لمساعد العائلة (محاكاة المرحلة 1).';
 
   @override
   String get individualTimelineTodayHeading => 'اليوم';
@@ -6880,25 +7168,25 @@ class AppLocalizationsAr extends AppLocalizations {
   String get individualTimelineStopArrivedSchoolMessage => '«أبي وصلت المدرسة»';
 
   @override
-  String get individualTimelineStopLateSleep => 'نام ١١:١٠ م أمس';
+  String get individualTimelineStopLateSleep => 'نام 11:10 م أمس';
 
   @override
-  String get individualTimelineTimeSince7am => 'منذ ٧:٠٠ ص';
+  String get individualTimelineTimeSince7am => 'منذ 7:00 ص';
 
   @override
-  String get individualTimelineTimeAt840am => '٨:٤٠ ص';
+  String get individualTimelineTimeAt840am => '8:40 ص';
 
   @override
-  String get individualTimelineTimeAt714am => '٧:١٤ ص';
+  String get individualTimelineTimeAt714am => '7:14 ص';
 
   @override
-  String get individualTimelineTimeAt1110pmYesterday => '١١:١٠ م أمس';
+  String get individualTimelineTimeAt1110pmYesterday => '11:10 م أمس';
 
   @override
-  String get individualTimelineDetailScore90 => '٩٠٪';
+  String get individualTimelineDetailScore90 => '90٪';
 
   @override
-  String get individualTimelineDetailLate40minBaseline => 'متأخر ٤٠ د عن أساسه';
+  String get individualTimelineDetailLate40minBaseline => 'متأخر 40 د عن أساسه';
 
   @override
   String get familyPatternsTitle => 'أنماط العائلة';
@@ -6920,20 +7208,20 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get familyPatternsSleepDelayTitle => 'النوم تأخر ٤٠ د هذا الأسبوع';
+  String get familyPatternsSleepDelayTitle => 'النوم تأخر 40 د هذا الأسبوع';
 
   @override
-  String get familyPatternsSleepBaselineSubtitle => 'عن خط أساسه ١٠:٣٠ م';
+  String get familyPatternsSleepBaselineSubtitle => 'عن خط أساسه 10:30 م';
 
   @override
   String get familyPatternsCommunicationStableTitle => 'التواصل طبيعي ومستقر';
 
   @override
-  String get familyPatternsEducationImproveTitle => 'تحسن تعليمي +١٢٪';
+  String get familyPatternsEducationImproveTitle => 'تحسن تعليمي +12٪';
 
   @override
   String get familyPatternsMorningActivityDropTitle =>
-      'نشاطها الصباحي انخفض ٣ أيام';
+      'نشاطها الصباحي انخفض 3 أيام';
 
   @override
   String get familyPatternsMorningActivityHint => 'مبدئي — قد يكون إرهاقًا';
@@ -6955,7 +7243,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get familyPatternsFooterNote =>
-      'خط الأساس يُبنى من ١٤ يومًا — ومستشار العائلة يقترح ولا يحكم';
+      'خط الأساس يُبنى من 14 يومًا — ومستشار العائلة يقترح ولا يحكم';
 
   @override
   String get familyPatternsEmptyTitle => 'لا أنماط عائلية بعد';
@@ -7046,7 +7334,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get knowledgeMapsPathQuranSubtitle =>
-      'أنجز ١٥ من ٣٠ آية · 🔥 ٥ أيام متواصلة';
+      'أنجز 15 من 30 آية · 🔥 5 أيام متواصلة';
 
   @override
   String get knowledgeMapsPathQuranCta => 'متابعة الورد ←';
@@ -7068,16 +7356,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get knowledgeMapsSocialSafeTag => 'بيئة آمنة';
 
   @override
-  String get knowledgeMapsSocialFamilyTitle => 'العائلة المباشرة (٨٠٪)';
+  String get knowledgeMapsSocialFamilyTitle => 'العائلة المباشرة (80٪)';
 
   @override
   String get knowledgeMapsSocialFamilySubtitle => 'محادثات دافئة يومية';
 
   @override
-  String get knowledgeMapsSocialFriendsTitle => 'الأصدقاء المعتمدون (١٥٪)';
+  String get knowledgeMapsSocialFriendsTitle => 'الأصدقاء المعتمدون (15٪)';
 
   @override
-  String get knowledgeMapsSocialNewTitle => 'تفاعل جديد (٥٪)';
+  String get knowledgeMapsSocialNewTitle => 'تفاعل جديد (5٪)';
 
   @override
   String get knowledgeMapsSocialFoundationTag => 'الأساس';
@@ -7105,7 +7393,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get knowledgeMapsDinnerSendToast =>
-      'أُرسل لمحادثة العائلة — نقاش الليلة جاهز (محاكاة المرحلة ١)';
+      'أُرسل لمحادثة العائلة — نقاش الليلة جاهز (محاكاة المرحلة 1)';
 
   @override
   String get knowledgeMapsDinnerFooter =>
@@ -7168,10 +7456,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get childLearnHomeMathNewLesson => 'درس جديد من والدك';
 
   @override
-  String get childLearnHomeQuranWird => 'وردي: الملك ١١–١٥';
+  String get childLearnHomeQuranWird => 'وردي: الملك 11–15';
 
   @override
-  String get childLearnHomeEnglishCardsLeft => '٦ بطاقات باقية';
+  String get childLearnHomeEnglishCardsLeft => '6 بطاقات باقية';
 
   @override
   String get childLearnHomeTagNew => 'جديد';
@@ -7183,7 +7471,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childLearnHomeMaterialSoonToast =>
-      'قريبًا على هذا المسار (محاكاة المرحلة ١)';
+      'قريبًا على هذا المسار (محاكاة المرحلة 1)';
 
   @override
   String get childLearnHomeQuickTutor => 'معلمي';
@@ -7225,7 +7513,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childLessonBodyPizzaFractions =>
-      'قسمنا بيتزا إلى ٧ قطع. أكلت أنت قطعتين (٢/٧) وأخوك ٣ قطع (٣/٧). نجمع الأعلى فقط: ٢+٣=٥ — يعني ٥/٧!';
+      'قسمنا بيتزا إلى 7 قطع. أكلت أنت قطعتين (2/7) وأخوك 3 قطع (3/7). نجمع الأعلى فقط: 2+3=5 — يعني 5/7!';
 
   @override
   String childLessonRewardToast(int minutes) {
@@ -7281,7 +7569,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childFlashcardsAOrdinaryFraction =>
-      'عدد يمثل جزءاً أو أكثر من أجزاء متساوية من الكل، ويتكون من بسط ومقام (مثال: ٣/٤).';
+      'عدد يمثل جزءاً أو أكثر من أجزاء متساوية من الكل، ويتكون من بسط ومقام (مثال: 3/4).';
 
   @override
   String get childFlashcardsHPizza => 'تذكر البيتزا المقسمة بالتساوي';
@@ -7291,7 +7579,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childFlashcardsAAddNumerators =>
-      'عندما يكون المقامان متساويين تماماً! نجمع البسطين ونبقي المقام نفسه (مثال: ١/٥ + ٢/٥ = ٣/٥).';
+      'عندما يكون المقامان متساويين تماماً! نجمع البسطين ونبقي المقام نفسه (مثال: 1/5 + 2/5 = 3/5).';
 
   @override
   String get childFlashcardsHSameDenom => 'المقام المتطابق يبقى كما هو';
@@ -7340,7 +7628,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childFlashcardsEmptyMessage =>
-      'عندما يستخرج الوالد بطاقات من درس تظهر هنا.';
+      'عندما يستخرج الوالد بطاقات من درس تظهر هنا. بطاقات محلية فقط — توليد المستشار سيصل إلى الأجهزة الأخرى في تحديث قادم.';
+
+  @override
+  String get childFlashcardsLocalHonestyBanner =>
+      'البطاقات محلية من تكليف الوالد — توليد المستشار سيصل إلى الأجهزة الأخرى في تحديث قادم.';
 
   @override
   String get childFlashcardsEmptyCta => 'عودة لتعلّمي';
@@ -7367,7 +7659,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get childQuizPromptHalfDivQuarter => '١/٢ ÷ ١/٤ = ؟';
+  String get childQuizPromptHalfDivQuarter => '1/2 ÷ 1/4 = ؟';
 
   @override
   String childQuizEarnHint(int minutes) {
@@ -7375,20 +7667,20 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get childQuizOpt2 => '٢';
+  String get childQuizOpt2 => '2';
 
   @override
-  String get childQuizOpt1over8 => '١/٨';
+  String get childQuizOpt1over8 => '1/8';
 
   @override
-  String get childQuizOpt1over2 => '١/٢';
+  String get childQuizOpt1over2 => '1/2';
 
   @override
-  String get childQuizOpt4 => '٤';
+  String get childQuizOpt4 => '4';
 
   @override
   String get childQuizExplainHalfDivQuarter =>
-      'نضرب في مقلوب الكسر الثاني: ١/٢ × ٤/١ = ٢.';
+      'نضرب في مقلوب الكسر الثاني: 1/2 × 4/1 = 2.';
 
   @override
   String childQuizCorrectToast(String explanation, int minutes) {
@@ -7401,10 +7693,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childQuizHintFlip =>
-      'ليست صحيحة — اقلب الكسر الثاني: ١/٤ يصبح ٤/١';
+      'ليست صحيحة — اقلب الكسر الثاني: 1/4 يصبح 4/1';
 
   @override
-  String get childQuizHintMultiply => 'حاول ثانية — اضرب ١/٢ في ٤';
+  String get childQuizHintMultiply => 'حاول ثانية — اضرب 1/2 في 4';
 
   @override
   String get childQuizStudyGiftNote =>
@@ -7438,23 +7730,24 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get childResultPraiseMasteredAdd =>
-      'أتقنت جمع الكسور! والدك وصله الخبر.';
+  String childResultPraiseMasteredAdd(String topic) {
+    return 'أتقنت $topic!';
+  }
 
   @override
   String get childResultRewardsHeading => 'مكافآتك';
 
   @override
-  String get childResultRewardWallet20 => '+٢٠ دقيقة لمحفظتك';
+  String get childResultRewardWallet20 => '+20 دقيقة لمحفظتك';
 
   @override
-  String get childResultRewardPlay15 => '+١٥ دقيقة لعب';
+  String get childResultRewardPlay15 => '+15 دقيقة لعب';
 
   @override
-  String get childResultRewardBonus30 => '+٣٠ دقيقة';
+  String get childResultRewardBonus30 => '+30 دقيقة';
 
   @override
-  String get childResultRewardNearLevel4 => 'اقتربت من المستوى ٤!';
+  String get childResultRewardNearLevel4 => 'اقتربت من المستوى 4!';
 
   @override
   String get childResultTagArrived => 'وصلت';
@@ -7463,13 +7756,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get childResultTagAdded => 'أُضيفت';
 
   @override
-  String get childResultTagProgress370 => '٣٧٠/٥٠٠';
+  String get childResultTagProgress370 => '370/500';
 
   @override
   String get childResultMissedHeading => 'السؤال الوحيد الذي فاتك';
 
   @override
-  String get childResultMissedQ7 => 'س٧ — قسمة الكسور.';
+  String get childResultMissedQ7 => 'س7 — قسمة الكسور.';
 
   @override
   String get childResultMissedDivisionOk =>
@@ -7509,7 +7802,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childTutorPolicyBanner =>
-      'أنا أساعدك تفهم — ما أعطيك الجواب الجاهز أبدًا. كذا تصير أنت البطل.';
+      'أنا أساعدك تفهم — ما أعطيك الجواب الجاهز أبدًا. واجهة سقراطية محلية — بوابة المعلّم سيصل إلى الأجهزة الأخرى في تحديث قادم.';
 
   @override
   String get childTutorTransparencyNote =>
@@ -7517,7 +7810,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childTutorBubbleGreetStuck =>
-      'مرحبا! شفت إنك واقف عند ٣/٥ + ١/٢ … من وين نبدأ؟';
+      'مرحبا! شفت إنك واقف عند 3/5 + 1/2 … من وين نبدأ؟';
 
   @override
   String get childTutorBubbleChildDifferentDenom =>
@@ -7525,26 +7818,26 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childTutorBubbleLcmPrompt =>
-      'ملاحظة ممتازة! هنا السر: نحتاج نخلي الأسفل نفس الرقم. سؤالي لك: ما هو أصغر رقم يقبل القسمة على ٥ وعلى ٢ معًا؟';
+      'ملاحظة ممتازة! هنا السر: نحتاج نخلي الأسفل نفس الرقم. سؤالي لك: ما هو أصغر رقم يقبل القسمة على 5 وعلى 2 معًا؟';
 
   @override
-  String get childTutorChoiceTen => '١٠؟';
+  String get childTutorChoiceTen => '10؟';
 
   @override
-  String get childTutorChoiceSeven => '٧؟';
+  String get childTutorChoiceSeven => '7؟';
 
   @override
-  String get childTutorReplyTen => 'بالضبط! ١٠ ✓ — الآن حوّل ٣/٥ إلى أعشار…';
+  String get childTutorReplyTen => 'بالضبط! 10 ✓ — الآن حوّل 3/5 إلى أعشار…';
 
   @override
-  String get childTutorReplySeven => 'قريب! جرب: ٥×٢ كم؟';
+  String get childTutorReplySeven => 'قريب! جرب: 5×2 كم؟';
 
   @override
   String get childTutorPhotoCta => 'صوّر مسألة من الكتاب';
 
   @override
   String get childTutorPhotoToast =>
-      'صوّر المسألة — وسأشرحها خطوة بخطوة (محاكاة المرحلة ١)';
+      'صوّر المسألة — وسأشرحها خطوة بخطوة (محاكاة المرحلة 1)';
 
   @override
   String get childTutorEmptyTitle => 'المعلم جاهز عندما تكون جاهزًا';
@@ -7664,7 +7957,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get childWalletBadgeAdhkarWeek => 'أسبوع أذكار';
 
   @override
-  String get childWalletBadgeFocusFive => '٥ جلسات تركيز';
+  String get childWalletBadgeFocusFive => '5 جلسات تركيز';
 
   @override
   String get childWalletBadgeMonthStreak => 'شهر التزام';
@@ -7716,7 +8009,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get childWalletZeroTag => '٠';
+  String get childWalletZeroTag => '0';
 
   @override
   String get childWalletEarnHeading => 'كيف أكسب دقائق؟';
@@ -7763,13 +8056,17 @@ class AppLocalizationsAr extends AppLocalizations {
   String get childTimeRequestTitle => 'طلب وقت إضافي';
 
   @override
+  String get childTimeRequestLocalHonestyBanner =>
+      'يُحفظ الطلب محلياً على هذا الجهاز. إشعار الوالدين يتطلّب تحديث قادم للأجهزة الأخرى — لم يُرسل بعد.';
+
+  @override
   String get childTimeRequestHowMuch => 'كم تحتاج من الوقت؟';
 
   @override
-  String get childTimeRequestMins15 => '١٥ دقيقة';
+  String get childTimeRequestMins15 => '15 دقيقة';
 
   @override
-  String get childTimeRequestMins30 => '٣٠ دقيقة';
+  String get childTimeRequestMins30 => '30 دقيقة';
 
   @override
   String get childTimeRequestMins60 => 'ساعة كاملة';
@@ -7933,7 +8230,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childTasksSubmitToast =>
-      'أُرسل الإثبات — بانتظار تأكيد الوالد (محاكاة المرحلة ١)';
+      'أُرسل الإثبات — بانتظار تأكيد الوالد. محفوظ على هذا الجهاز.';
+
+  @override
+  String get childTasksLocalHonestyBanner =>
+      'المهام تتزامن مع لوحة العائلة على هذا الجهاز. إيداع الدقائق عند موافقة الوالد. لا مزامنة سحابية للمهام بعد.';
 
   @override
   String get childTasksTagPending => 'بانتظار التأكيد';
@@ -7977,13 +8278,20 @@ class AppLocalizationsAr extends AppLocalizations {
   String get childMediaShareQuickFile => 'ملف';
 
   @override
-  String get childMediaSharePhotoToast => 'التقط وشارك مع عائلتك';
+  String get childMediaSharePhotoToast =>
+      'مشاركة صورة محلية — الكاميرا تتوفر في تحديث قادم';
 
   @override
-  String get childMediaShareVoiceToast => 'اضغط وسجل — يوصل مكتوبًا أيضًا (P1)';
+  String get childMediaShareVoiceToast =>
+      'مشاركة صوت محلية — الميكروفون يتوفر في تحديث قادم';
 
   @override
-  String get childMediaShareFileToast => 'شارك ملف الواجب';
+  String get childMediaShareFileToast =>
+      'مشاركة ملف محلية — منتقي الملفات يتوفر في تحديث قادم';
+
+  @override
+  String get childMediaShareLocalHonestyBanner =>
+      'المشاركات الأخيرة كتالوج محلي. التقاط/ميكروفون يتوفر في تحديث قادم. تسليم محادثة العائلة الأجهزة الأخرى مغلق.';
 
   @override
   String get childMediaShareRecentHeading => 'آخر مشاركاتي';
@@ -8062,8 +8370,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String childArrivalCheckInToast(String place) {
-    return 'تم إرسال إشعار الاطمئنان لوالديك: «وصلت $place»';
+    return 'تسجيل الوصول محفوظ محلياً: «وصلت $place». إشعار الوالد سيصل للأجهزة الأخرى لاحقاً لاحقاً.';
   }
+
+  @override
+  String get childArrivalLocalHonestyBanner =>
+      'تسجيل وصول بأسماء الأماكن فقط على هذا الجهاز. الموقع الحي وإشعار الوالد مغلقان.';
 
   @override
   String get childArrivalLiveHeading => 'موقعك الجغرافي المباشر';
@@ -8099,13 +8411,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get smartAlertsHonestyBanner =>
-      'الرقابة هنا مصارحة — ابنك يعلم أن مستشار العائلة يحمي محادثاته. لا تجسس في عائلتنا.';
+      'الرقابة هنا مصارحة — لا تجسس. التقاط/صلاحية الجهاز يتوفر في تحديث قادم. بوابة المستشار سيصل إلى الأجهزة الأخرى في تحديث قادم.';
 
   @override
   String get smartAlertsAlertWithdrawal => 'نمط انسحاب في المحادثات';
 
   @override
-  String get smartAlertsAlertWithdrawalSub => 'تحليل المشاعر · آخر ٥ أيام';
+  String get smartAlertsAlertWithdrawalSub => 'تحليل المشاعر · آخر 5 أيام';
 
   @override
   String get smartAlertsAlertArabizi => 'عبارة عربيزي مريبة رُصدت';
@@ -8178,7 +8490,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get smartAlertsDetectBody =>
-      '١. حجب فوري على جهاز الابن\n٢. حفظ اللقطة مشفرة في جهازك أنت\n٣. تقرير يصلك: التطبيق والوقت والسبب — لتقرر أنت الخطوة';
+      '1. مستويات الحجب/اللقطة/التقرير مصمّمة هنا\n2. التقاط وصلاحية الجهاز: يتوفر في تحديث قادم اليوم\n3. أنت تقرر الخطوة عند وصول التسليم الأصلي';
 
   @override
   String get smartAlertsSettingsCta => 'إعدادات متقدمة';
@@ -8208,13 +8520,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get smartAlertDetailBehaviorBanner =>
-      'التنبيه يصف سلوكًا رصده مستشار العائلة — لا حكمًا على ابنك.';
+      'التنبيه يصف سلوكًا رصده مستشار العائلة — لا حكمًا. واجهة تنبيه محلية — بوابة المستشار سيصل إلى الأجهزة الأخرى في تحديث قادم.';
 
   @override
   String get smartAlertDetailChangesHeading => 'ما الذي تغيّر؟';
 
   @override
-  String get smartAlertDetailChangeShorter => 'ردوده أقصر بنحو ٦٠٪';
+  String get smartAlertDetailChangeShorter => 'ردوده أقصر بنحو 60٪';
 
   @override
   String get smartAlertDetailChangeShorterSub => 'مقارنة بأسبوعه المعتاد';
@@ -8223,7 +8535,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get smartAlertDetailChangeLateNights => 'نشاط ليلي متأخر';
 
   @override
-  String get smartAlertDetailChangeLateNightsSub => '٣ ليالٍ بعد ١١ م';
+  String get smartAlertDetailChangeLateNightsSub => '3 ليالٍ بعد 11 م';
 
   @override
   String get smartAlertDetailChangeSadWords => 'مفردات حزينة تكررت';
@@ -8335,7 +8647,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String childUsageReportRetentionBanner(int days) {
-    return 'البيانات تُحفظ $days يومًا فقط ثم تُمحى — وزر النسيان (الإعدادات) يمحوها فورًا. الخصوصية وعدٌ لا شعار.';
+    return 'البيانات تُحفظ $days يومًا فقط ثم تُمحى — زر النسيان يمحوها فورًا. تقرير محلي فقط — تصدير Email/PDF سيصل إلى الأجهزة الأخرى في تحديث قادم.';
   }
 
   @override
@@ -8352,7 +8664,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childUsageReportEmptyMessage =>
-      'أضف ابناً لترى استخدام الأسبوع وتصنيف الوقت ووعد الاحتفاظ ٣٠ يومًا.';
+      'أضف ابناً لترى استخدام الأسبوع وتصنيف الوقت ووعد الاحتفاظ 30 يومًا.';
 
   @override
   String get childUsageReportEmptyCta => 'إضافة ابن';
@@ -8378,6 +8690,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'المجهولون محظورون دائمًا: هذا الإجراء يحمي أبناءك تلقائياً. كل تواصل خارجي يمر بموافقة الوالدين.';
 
   @override
+  String get outerCircleLocalHonestyBanner =>
+      'الدائرة على هذا الجهاز. الموافقة/الرفض يحدّث القائمة المشتركة. لا مزامنة سحابية للجهات بعد.';
+
+  @override
   String get outerCircleRelativesHeading => 'دائرة الأقارب الموثوقة';
 
   @override
@@ -8388,7 +8704,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get outerCircleScheduleFriendsEvening =>
-      'الأصدقاء: بعد المدرسة حتى أذان المغرب (٤–٧ م) · الأقارب: مفتوح دائمًا';
+      'الأصدقاء: بعد المدرسة حتى أذان المغرب (4–7 م) · الأقارب: مفتوح دائمًا';
 
   @override
   String get outerCircleNameGrandpa => 'الجد';
@@ -8409,7 +8725,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get outerCircleMetaMessagesCalls => 'رسائل ومكالمات';
 
   @override
-  String get outerCircleMetaClassmateSlot => 'زميل معتمد · جدول التواصل ٤–٧ م';
+  String get outerCircleMetaClassmateSlot => 'زميل معتمد · جدول التواصل 4–7 م';
 
   @override
   String get outerCircleMetaClassmatePending => 'زميل دراسة · ينتظر قرارك الآن';
@@ -8495,7 +8811,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get friendApprovalChannelSchedule => 'ضمن جدول التواصل';
 
   @override
-  String get friendApprovalChannelScheduleSub => '٤–٧ مساءً فقط';
+  String get friendApprovalChannelScheduleSub => '4–7 مساءً فقط';
 
   @override
   String get friendApprovalScheduleAutoTag => 'تلقائي';
@@ -8519,6 +8835,10 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get friendApprovalObserverHint =>
       'الاعتماد لمستوى «مشاركة» فما فوق — يمكنك الاطلاع';
+
+  @override
+  String get friendApprovalLocalHonestyBanner =>
+      'القرار يحدّث الدائرة الخارجية المشتركة على هذا الجهاز. لا مزامنة سحابية للأصدقاء بعد.';
 
   @override
   String get friendApprovalObserverBlocked =>
@@ -8601,7 +8921,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String quranProgressDownloadToast(String name) {
-    return 'أُضيف التنزيل لطابور جهاز $name';
+    return 'حُفظت جاهزية دون اتصال محليًا لـ $name — حزمة الصوت المرخّصة سيصل إلى الأجهزة الأخرى في تحديث قادم';
   }
 
   @override
@@ -8615,7 +8935,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String quranProgressRecitationSub(String name, String surah) {
-    return 'سجّل $name تلاوته لسورة $surah (الآيات ١٦–٢٠):';
+    return 'سجّل $name تلاوته لسورة $surah (الآيات 16–20):';
   }
 
   @override
@@ -8624,7 +8944,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get quranProgressClipDuration => '١:٢٤ د';
+  String get quranProgressClipDuration => '1:24 د';
 
   @override
   String get quranProgressPlaySemantics => 'تشغيل أو إيقاف التلاوة';
@@ -8644,7 +8964,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String quranProgressWhisperToast(String name) {
-    return 'أُرسلت همسة تشجيعية لـ $name';
+    return 'حُفظ التشجيع محليًا لـ $name — إشعار الابن سيصل إلى الأجهزة الأخرى في تحديث قادم';
   }
 
   @override
@@ -8676,7 +8996,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get quranProgressReciterDefault => 'المقرئ الافتراضي';
 
   @override
-  String get quranProgressAudioSize184 => '١٨.٤ م.ب';
+  String get quranProgressAudioSize184 => '18.4 م.ب';
 
   @override
   String get quranProgressChildOne => 'الابن الأول';
@@ -8776,7 +9096,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String weeklyReportRecommendBody(String name) {
-    return 'رياضيات $name تتحسن بثبات، لكن نومه يتأخر الخميس والجمعة ويهبط تركيزه السبت. جرّب تقديم «وضع النوم» ٣٠ دقيقة في العطلة.';
+    return 'رياضيات $name تتحسن بثبات، لكن نومه يتأخر الخميس والجمعة ويهبط تركيزه السبت. جرّب تقديم «وضع النوم» 30 دقيقة في العطلة.';
   }
 
   @override
@@ -8787,7 +9107,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get weeklyReportApplyToast =>
-      'عُدّل جدول النوم — بتدرج لطيف على أسبوعين';
+      'قُبل الاقتراح محليًا بموافقتك — إنفاذ الجدول سيصل إلى الأجهزة الأخرى في تحديث قادم.';
 
   @override
   String get weeklyReportDeferToast =>
@@ -8820,7 +9140,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get weeklyReportSecScreenBody =>
-      'المعدل ٢ س ١٢ د يوميًا — ضمن الحد. الخميس الأعلى (٣ س).';
+      'المعدل 2 س 12 د يوميًا — ضمن الحد. الخميس الأعلى (3 س).';
 
   @override
   String get weeklyReportSecPlacesTitle => 'المواقع';
@@ -8834,7 +9154,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String weeklyReportSecWinsBody(String one, String two, String three) {
-    return '$one: ورد كامل + ٥ جلسات تركيز · $two: تحدي العلوم · $three: أذكار ٧/٧.';
+    return '$one: ورد كامل + 5 جلسات تركيز · $two: تحدي العلوم · $three: أذكار 7/7.';
   }
 
   @override
@@ -8842,7 +9162,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get weeklyReportSecQuranBody =>
-      'سورة النبأ: ٢٧/٤٠ آية — تسميع الثلاثاء معتمد.';
+      'سورة النبأ: 27/40 آية — تسميع الثلاثاء معتمد.';
 
   @override
   String get weeklyReportSecWatchTitle => 'الرقابة الذكية';
@@ -8853,7 +9173,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get weeklyReportEmailBanner =>
-      'وصلتك نسخة بريدية — وللأم ملخصها حسب مستواها.';
+      'تسليم Email/PDF سيصل إلى الأجهزة الأخرى في تحديث قادم — إعدادات التقرير والنصيحة واجهة محلية فقط (موافقة الوالد مطلوبة).';
 
   @override
   String get weeklyReportChildOne => 'الابن الأول';
@@ -9030,7 +9350,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String motherAiFeedWhisperBody(String name) {
-    return '«$name يبدو متعباً بعد تمرين النادي اليوم، ما رأيك أن نقدم موعد نومه ٣٠ دقيقة ونعوضه بوقت لعب إضافي غداً؟»';
+    return '«$name يبدو متعباً بعد تمرين النادي اليوم، ما رأيك أن نقدم موعد نومه 30 دقيقة ونعوضه بوقت لعب إضافي غداً؟»';
   }
 
   @override
@@ -9052,7 +9372,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String motherAiFeedItemMathBody(String name) {
-    return '$name تحسن في الرياضيات بنسبة +١٥٪';
+    return '$name تحسن في الرياضيات بنسبة +15٪';
   }
 
   @override
@@ -9209,7 +9529,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childQuranWardAyahMulk16 =>
-      'ءَأَمِنتُم مَّن فِى ٱلسَّمَآءِ أَن يَخْسِفَ بِكُمُ ٱلْأَرْضَ فَإِذَا هِىَ تَمُورُ ﴿١٦﴾';
+      'ءَأَمِنتُم مَّن فِى ٱلسَّمَآءِ أَن يَخْسِفَ بِكُمُ ٱلْأَرْضَ فَإِذَا هِىَ تَمُورُ ﴿16﴾';
 
   @override
   String childQuranWardGiftBanner(int count) {
@@ -9337,7 +9657,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get childMemBadgeFirst => '⭐ أول سورة';
 
   @override
-  String get childMemBadgeThree => '📖 ٣ سور';
+  String get childMemBadgeThree => '📖 3 سور';
 
   @override
   String get childMemBadgeHalfAmma => '🌙 نصف جزء عمّ';
@@ -9352,13 +9672,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get childMemReviewsHeading => '🔄 مراجعاتي المستحقة';
 
   @override
-  String get childMemReviewTabarak => 'تبارك ١–١٠';
+  String get childMemReviewTabarak => 'تبارك 1–10';
 
   @override
   String get childMemReviewNaba => 'النبأ كاملة';
 
   @override
-  String get childMemReviewFourDays => 'آخر مراجعة قبل ٤ أيام';
+  String get childMemReviewFourDays => 'آخر مراجعة قبل 4 أيام';
 
   @override
   String get childMemReviewTomorrow => 'مستحقة غدًا';
@@ -9471,7 +9791,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childSmartPlanGapTimes7 =>
-      'أخطاؤك في القسمة الطويلة سببها مفهوم واحد صغير: جدول ضرب الـ٧. نقوّيه ٣ أيام — وستنطلق 🚀';
+      'أخطاؤك في القسمة الطويلة سببها مفهوم واحد صغير: جدول ضرب الـ7. نقوّيه 3 أيام — وستنطلق 🚀';
 
   @override
   String get childSmartPlanStartCta => 'ابدأ خطة الإصلاح';
@@ -9481,7 +9801,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childSmartPlanStartToast =>
-      '🎯 خطة الأيام الثلاثة بدأت — ١٠ دقائق يوميًا فقط';
+      '🎯 خطة الأيام الثلاثة بدأت — 10 دقائق يوميًا فقط';
 
   @override
   String get childSmartPlanProjectGarden => 'حديقة المنزل';
@@ -9492,7 +9812,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get childSmartPlanStage2 => 'المرحلة ٢ — زراعة الشتلات';
+  String get childSmartPlanStage2 => 'المرحلة 2 — زراعة الشتلات';
 
   @override
   String childSmartPlanProjectStage(String stage) {
@@ -9544,7 +9864,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get childDailyReviewTitle => 'مراجعة اليوم';
 
   @override
-  String get childDailyReviewHeroTitle => '٥ دقائق تحمي أسبوع تعب 🛡';
+  String get childDailyReviewHeroTitle => '5 دقائق تحمي أسبوع تعب 🛡';
 
   @override
   String get childDailyReviewHeroSub =>
@@ -9559,14 +9879,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get childDailyReviewCardFractions => 'الكسور المتشابهة';
 
   @override
-  String get childDailyReviewCardUnit4 => 'كلمات الوحدة ٤';
+  String get childDailyReviewCardUnit4 => 'كلمات الوحدة 4';
 
   @override
   String get childDailyReviewCardWaterCycle => 'دورة الماء';
 
   @override
   String get childDailyReviewMetaThreeDays =>
-      'تعلمتها قبل ٣ أيام — وقت التثبيت';
+      'تعلمتها قبل 3 أيام — وقت التثبيت';
 
   @override
   String get childDailyReviewMetaOneWeek => 'قبل أسبوع';
@@ -9581,14 +9901,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get childDailyReviewTagStrong => 'قوية';
 
   @override
-  String get childDailyReviewStartCta => 'ابدأ الـ٥ دقائق';
+  String get childDailyReviewStartCta => 'ابدأ الـ5 دقائق';
 
   @override
   String get childDailyReviewDoneCta => 'اكتملت المراجعة';
 
   @override
   String childDailyReviewDoneToast(int minutes) {
-    return '🎉 ٦/٦ — ذاكرتك تبنى مثل العضلات! ⏱ +$minutes د';
+    return '🎉 6/6 — ذاكرتك تبنى مثل العضلات! ⏱ +$minutes د';
   }
 
   @override
@@ -9621,7 +9941,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get childFriendsNamePending => 'صديق قيد الانتظار';
 
   @override
-  String get childFriendsMetaSlot47 => 'متاح الآن · جدول التواصل: ٤–٧ م';
+  String get childFriendsMetaSlot47 => 'متاح الآن · جدول التواصل: 4–7 م';
 
   @override
   String get childFriendsMetaAwaiting => 'طلبك عند والدك للموافقة 🤞';
@@ -9633,10 +9953,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get childFriendsCallCta => 'اتصال';
 
   @override
-  String get childFriendsChatToast => '💬 فتحت المحادثة الآمنة';
+  String get childFriendsChatToast =>
+      'المحادثة الآمنة محلية — التسليم السحابي مغلق';
 
   @override
-  String get childFriendsCallToast => '📞 جاري الاتصال…';
+  String get childFriendsCallToast =>
+      'واجهة الاتصال جاهزة — الاتصال الصوتي يتوفر في تحديث قادم';
+
+  @override
+  String get childFriendsLocalHonestyBanner =>
+      'قائمة الأصدقاء من الدائرة الخارجية على هذا الجهاز. تسليم المحادثة/الاتصال يحتاج تحديث قادم لاحقاً.';
 
   @override
   String get childFriendsPendingTag => 'قيد المراجعة';
@@ -9753,14 +10079,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeRouterFilterTitle => 'فلترة الراوتر المنزلي';
 
   @override
-  String get homeRouterFilterHeroProtected => 'راوتر المنزل محمي';
+  String get homeRouterFilterHeroProtected =>
+      'دليل الراوتر جاهز (DNS غير مُنفَّذ بعد)';
 
   @override
   String get homeRouterFilterHeroUnprotected => 'راوتر المنزل يحتاج ضبطًا';
 
   @override
   String homeRouterFilterHeroSub(int count) {
-    return '$count جهازًا خلف الفلترة — حتى تلفاز الصالة وأجهزة الضيوف';
+    return '$count جهازًا مدرجًا محليًا — فلترة DNS الأصلية مغلقة';
   }
 
   @override
@@ -9773,7 +10100,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeRouterFilterHowDnsSub => 'إعداد مرة واحدة — ندلّك خطوة بخطوة';
 
   @override
-  String get homeRouterFilterHowCatsTitle => 'نفس فئات الفلترة الـ٢٩';
+  String get homeRouterFilterHowCatsTitle => 'نفس فئات الفلترة الـ29';
 
   @override
   String get homeRouterFilterHowCatsSub => 'سياسة موحدة: الجهاز والمنزل';
@@ -9789,7 +10116,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeRouterFilterTagActive => 'مفعّل';
 
   @override
-  String get homeRouterFilterTagSynced => 'متزامن';
+  String get homeRouterFilterTagSynced => 'فئات محلية';
 
   @override
   String get homeRouterFilterTagAuto => 'تلقائي';
@@ -9801,18 +10128,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeRouterFilterGuideCta => 'دليل الضبط خطوة بخطوة';
 
   @override
-  String get homeRouterFilterCheckCta => 'اختبر الحماية الآن';
+  String get homeRouterFilterCheckCta => 'تحقق من جاهزية الجهاز';
 
   @override
   String get homeRouterFilterGuideToast => 'فُتح دليل ضبط الراوتر خطوة بخطوة';
 
   @override
   String get homeRouterFilterCheckToast =>
-      'تم الفحص — راوترك محمي وكل الأجهزة خلف الفلترة';
+      'فحص حماية DNS للراوتر يتوفر في تحديث قادم — الدليل المحلي فقط';
 
   @override
   String get homeRouterFilterGuestBanner =>
-      'ضيف تسلل بجهازه لشبكتك؟ محمي تلقائيًا — وأنت المتحكم بالاستثناءات.';
+      'فلترة DNS للراوتر المنزلي تتطلب الجهاز. فلترة جهاز الابن تبقى تحميه خارج المنزل عند ضبطها.';
 
   @override
   String get homeRouterFilterObserverHint =>
@@ -9909,22 +10236,22 @@ class AppLocalizationsAr extends AppLocalizations {
   String get agentActionLogWeeklyHeading => 'تصرفات الوكيل هذا الأسبوع';
 
   @override
-  String get agentActionLogWeeklySleep => 'وضع النوم تفعّل ×٧ مرات';
+  String get agentActionLogWeeklySleep => 'وضع النوم تفعّل ×7 مرات';
 
   @override
   String get agentActionLogWeeklySleepMeta => 'حسب الجدول المعتمد';
 
   @override
-  String get agentActionLogWeeklyReview => 'تذكير المراجعة والقرآن ×٥';
+  String get agentActionLogWeeklyReview => 'تذكير المراجعة والقرآن ×5';
 
   @override
-  String get agentActionLogWeeklyReviewMeta => 'استجاب الابن ٤ مرات';
+  String get agentActionLogWeeklyReviewMeta => 'استجاب الابن 4 مرات';
 
   @override
-  String get agentActionLogRule2 => 'القاعدة ٢';
+  String get agentActionLogRule2 => 'القاعدة 2';
 
   @override
-  String get agentActionLogRule3 => 'القاعدة ٣';
+  String get agentActionLogRule3 => 'القاعدة 3';
 
   @override
   String get agentActionLogEmptyTitle => 'لا سجل وكيل بعد';
@@ -9951,7 +10278,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get peerComparePrivacyBanner =>
-      'مقارنة مجهولة بالكامل مع متوسطات عمرية عامة — لا أسماء، لا عائلات، لا تشهير. بياناتكم لا تغادر لأحد.';
+      'مقارنة مجهولة بالكامل مع متوسطات عمرية عامة — لا أسماء ولا تشهير. محاكاة محلية فقط — مشاركة Email/PDF مغلقة الأجهزة الأخرى.';
 
   @override
   String get peerCompareChildOne => 'الابن أ';
@@ -9965,19 +10292,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get peerCompareMetricScreen => 'وقت الشاشة';
 
   @override
-  String get peerCompareDetailScreen => 'الابن: ٢:٤٠ س/يوم · المتوسط: ٣:١٥';
+  String get peerCompareDetailScreen => 'الابن: 2:40 س/يوم · المتوسط: 3:15';
 
   @override
   String get peerCompareMetricLearn => 'وقت التعليم';
 
   @override
-  String get peerCompareDetailLearn => 'الابن: ٥١ د/يوم · المتوسط: ٢٥ د';
+  String get peerCompareDetailLearn => 'الابن: 51 د/يوم · المتوسط: 25 د';
 
   @override
   String get peerCompareMetricSleep => 'النوم';
 
   @override
-  String get peerCompareDetailSleep => 'متأخر ٢٠ د عن الموصى به لعمره';
+  String get peerCompareDetailSleep => 'متأخر 20 د عن الموصى به لعمره';
 
   @override
   String get peerCompareTagBetter => 'أفضل ✓';
@@ -10025,7 +10352,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get smartChoreChildThree => 'الابن ج';
 
   @override
-  String get smartChoreDishesPlants => 'الصحون (٣ أيام) + النباتات';
+  String get smartChoreDishesPlants => 'الصحون (3 أيام) + النباتات';
 
   @override
   String get smartChoreLivingLaundry => 'ترتيب الصالة + الغسيل';
@@ -10040,7 +10367,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get smartChoreNoteRotated => 'بدّلنا مهامها — ملّت من الصحون';
 
   @override
-  String get smartChoreNoteAge8 => 'مهام خفيفة تناسب ٨ سنوات';
+  String get smartChoreNoteAge8 => 'مهام خفيفة تناسب 8 سنوات';
 
   @override
   String get smartChoreApproveCta => 'اعتمد التوزيع';
@@ -10054,6 +10381,10 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get smartChoreApproveToast =>
       'اعتُمد التوزيع — وصلت كل ابن مهامه بدقائقها المحددة';
+
+  @override
+  String get smartChoreLocalHonestyBanner =>
+      'اقتراح فقط — لا يُطبَّق شيء حتى تعتمد. تحديث محلي للوحة العائلة. ChoreAI السحابي مغلق.';
 
   @override
   String get smartChoreShuffleToast => 'توزيع بديل جاهز — بنفس العدالة';
@@ -10157,26 +10488,26 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get stagedProjectStageResearch => 'م١: البحث والتخطيط';
+  String get stagedProjectStageResearch => 'م1: البحث والتخطيط';
 
   @override
-  String get stagedProjectStageResearchSub => 'اختار ٣ نباتات ورسم الحديقة';
+  String get stagedProjectStageResearchSub => 'اختار 3 نباتات ورسم الحديقة';
 
   @override
-  String get stagedProjectStagePlant => 'م٢: الزراعة';
+  String get stagedProjectStagePlant => 'م2: الزراعة';
 
   @override
   String get stagedProjectStagePlantSub =>
       'صوّر إثبات الزراعة — بانتظار تأكيدك';
 
   @override
-  String get stagedProjectStageWater => 'م٣: المتابعة والري';
+  String get stagedProjectStageWater => 'م3: المتابعة والري';
 
   @override
-  String get stagedProjectStageWaterSub => 'تُفتح بإتمام م٢';
+  String get stagedProjectStageWaterSub => 'تُفتح بإتمام م2';
 
   @override
-  String get stagedProjectStageHarvest => 'م٤: الحصاد والعرض';
+  String get stagedProjectStageHarvest => 'م4: الحصاد والعرض';
 
   @override
   String get stagedProjectStageHarvestSub => 'عرض تقديمي للعائلة!';
@@ -10257,11 +10588,11 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get familyMomentsStarQuranSub => '٦ أشهر من المثابرة · لحظة تاريخية';
+  String get familyMomentsStarQuranSub => '6 أشهر من المثابرة · لحظة تاريخية';
 
   @override
   String familyMomentsStarMath(String child) {
-    return '$child — قفز ١٧٪ في الرياضيات';
+    return '$child — قفز 17٪ في الرياضيات';
   }
 
   @override
@@ -10280,7 +10611,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get familyMomentsPrideToast =>
-      'وصلت بطاقة الفخر لمحادثة العائلة — شافوا تصفيقكم!';
+      'بطاقة الفخر محفوظة محليًا — مشاركة محادثة العائلة سيصل إلى الأجهزة الأخرى في تحديث قادم.';
 
   @override
   String get familyMomentsTouchTitle => 'لمسة الأسبوع القادم';
@@ -10351,11 +10682,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get familyMomentsAddCta => '+ أضف لحظة';
 
   @override
-  String get familyMomentsAddToast => 'أُضيفت للحظات — وأُخطرت العائلة';
+  String get familyMomentsAddToast =>
+      'أُضيفت للحظات محليًا — إشعار العائلة سيصل إلى الأجهزة الأخرى في تحديث قادم.';
 
   @override
   String get familyMomentsFridayBanner =>
-      'يصلك كل جمعة صباحًا — افتح، افرح، شارك. ثم أغلق مطمئنًا.';
+      'لحظات الأسبوع عرض محلي — بوابة المستشار ومشاركة المحادثة ستصلان إلى الأجهزة الأخرى في تحديث قادم.';
 
   @override
   String get familyMomentsEmptyTitle => 'لا لحظات عائلية بعد';
@@ -10413,7 +10745,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childSmartTilawahSheikhToast =>
-      'مقطع الشيخ للآية ١٦ — من مصحف مرخّص';
+      'مقطع الشيخ للآية 16 — من مصحف مرخّص';
 
   @override
   String get childSmartTilawahPraise =>
@@ -10421,7 +10753,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childSmartTilawahBanner =>
-      'مرجع التصحيح تلاوات مشايخ معتمدين من مصاحف مرخّصة — ومستشار العائلة يلاحظ بلطف، ملاحظة واحدة كل مرة حتى لا تثقل عليك.';
+      'مرجع التصحيح تلاوات مشايخ من مصاحف مرخّصة — ومستشار العائلة يلاحظ بلطف. الصوت المرخّص وبوابة المستشار سيصلان إلى الأجهزة الأخرى في تحديث قادم.';
 
   @override
   String get childSmartTilawahEmptyTitle => 'لا جلسة تلاوة بعد';
@@ -10447,7 +10779,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get childInteractiveStoriesTitle => 'قصصي';
 
   @override
-  String get childInteractiveStoriesChapterTitle => 'كنز الصحراء — الفصل ٣';
+  String get childInteractiveStoriesChapterTitle => 'كنز الصحراء — الفصل 3';
 
   @override
   String get childInteractiveStoriesChapterBody =>
@@ -10691,7 +11023,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get childCallPlayToastXo => 'جدّو بدأ بالوسط — خطتك؟';
 
   @override
-  String get childCallPlayToastQuiz => 'سؤال ١: عاصمة اليمن؟ — جدّو ضغط قبلك!';
+  String get childCallPlayToastQuiz => 'سؤال 1: عاصمة اليمن؟ — جدّو ضغط قبلك!';
 
   @override
   String get childCallPlayBanner =>
@@ -10744,7 +11076,12 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get childStickersBackgroundsBgToast => 'تغيرت خلفيتك — شكلها رهيب!';
+  String get childStickersBackgroundsBgToast =>
+      'الخلفية محفوظة على هذا الجهاز — تطبيق المحادثة كتالوج محلي فقط';
+
+  @override
+  String get childStickersBackgroundsLocalHonestyBanner =>
+      'حزمة الملصقات وتفضيل الخلفية محليان. تنسيق خيط المحادثة يحتاج عقد الدردشة المحلي — التسليم السحابي مغلق.';
 
   @override
   String get childStickersBackgroundsBanner =>
@@ -10882,7 +11219,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String sosAlertDeliveryDelivered(String channel, String recipient) {
-    return '$channel → $recipient: وصل';
+    return '$channel → $recipient: محلي فقط (التسليم عن بُعد مغلق)';
   }
 
   @override
@@ -10936,7 +11273,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'الاتصال غير متاح في هذا البناء — الاستغاثة تبقى نشطة';
 
   @override
-  String get sosLadderMaxBackupsError => 'الحد الأقصى ٥ جهات احتياط';
+  String get sosLadderMaxBackupsError => 'الحد الأقصى 5 جهات احتياط';
 
   @override
   String get sosLadderVerificationUnverified => 'غير موثّق';
@@ -10970,14 +11307,160 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get sosPanicQuietSubtitle =>
-      'عند التفعيل، شاشة الاستغاثة النشطة للطفل تعرض الحالة الحرجة فقط';
+      'يؤثر على شاشة الطفل فقط — لا يكتم استلام ولي الأمر ولا صندوق التنبيهات';
+
+  @override
+  String get sosDashboardReadinessTitle => 'لوحة جاهزية النظام';
+
+  @override
+  String get sosLadderRung1SectionTitle => 'الأساس المحصن (الدرجة 1)';
+
+  @override
+  String get sosLadderNeedsVerify => 'يحتاج توثيق';
+
+  @override
+  String sosEscalationSecondsShort(int seconds) {
+    return '$seconds ثانية';
+  }
+
+  @override
+  String get sosChildEscalationEmptyTitle => 'لا يوجد أبناء';
+
+  @override
+  String get sosLadderPriorityUp => 'تقديم الجهة في سلّم التصعيد';
+
+  @override
+  String get sosLadderPriorityDown => 'تأخير الجهة في سلّم التصعيد';
+
+  @override
+  String get sosLadderPartnerSummaryTitle => 'سلّم الطوارئ الحالي (عرض فقط)';
+
+  @override
+  String sosLadderPartnerSummaryBody(int parents, int verified, int total) {
+    return '$parents والدان مثبتان في الدرجة 1 · $verified جهة خارجية موثّقة من أصل $total';
+  }
 
   @override
   String get sosReadinessTitle => 'جاهزية القدرات';
 
   @override
   String get sosReadinessBody =>
-      'الدفع والرسائل والاتصال غير مُعدّة في هذه الشريحة. الاستغاثة تعمل داخل التطبيق.';
+      'عرض صادق للمرحلة ١ — الدفع/الرسائل/الاتصال/الموقع تبقى مغلقة أصلياً أو متدهورة حتى تفتح موجاتها. الاستغاثة تعمل داخل التطبيق.';
+
+  @override
+  String get sosReadinessRowChild => 'ربط زر استغاثة الابن';
+
+  @override
+  String get sosReadinessRowPersistence => 'مخزن الطوارئ المحلي';
+
+  @override
+  String get sosReadinessRowPush => 'تنبيهات الدفع';
+
+  @override
+  String get sosReadinessRowSms => 'احتياطي الرسائل';
+
+  @override
+  String get sosReadinessRowCall => 'احتياطي الاتصال';
+
+  @override
+  String get sosReadinessRowLocation => 'الموقع مع الاستغاثة';
+
+  @override
+  String get sosReadinessRowLadder => 'سلّم التصعيد الموثوق';
+
+  @override
+  String get sosReadinessRowPanicQuiet => 'تفضيل هدوء الاستغاثة';
+
+  @override
+  String get sosReadinessRowBreakGlass => 'صلاحية كسر الزجاج';
+
+  @override
+  String get sosReadinessClassAvailable => 'جاهز';
+
+  @override
+  String get sosReadinessClassDegraded => 'متدهور / محلي فقط';
+
+  @override
+  String get sosReadinessClassUnavailable => 'غير متاح';
+
+  @override
+  String get sosReadinessClassNotConfigured => 'غير مُعدّ';
+
+  @override
+  String get sosLadderUnverifiedEscalationNote =>
+      'الجهات غير الموثّقة لا تدخل التصعيد — وثّقها حتى تستطيع المساعدة.';
+
+  @override
+  String get sosLadderBackupSheetTitleAdd => 'إضافة جهة موثوقة';
+
+  @override
+  String get sosLadderBackupSheetTitleEdit => 'تعديل جهة موثوقة';
+
+  @override
+  String get sosLadderBackupFieldName => 'الاسم';
+
+  @override
+  String get sosLadderBackupFieldRelation => 'صلة القرابة';
+
+  @override
+  String get sosLadderBackupFieldPhone => 'الهاتف (يفضّل E.164)';
+
+  @override
+  String get sosLadderBackupFieldDelay => 'التصعيد بعد (ثوانٍ)';
+
+  @override
+  String get sosLadderBackupSave => 'حفظ الجهة';
+
+  @override
+  String get sosLadderVerifyStart => 'بدء التوثيق';
+
+  @override
+  String get sosLadderVerifyConfirmLocal => 'تأكيد التوثيق (محلي)';
+
+  @override
+  String get sosLadderVerifyRevoke => 'إلغاء التوثيق';
+
+  @override
+  String get sosLadderVerifyLocalHonesty =>
+      'توثيق محلي للمرحلة ١ — ليس إثبات SMS أو مشغّل. التوثيق الأصلي لاحقاً.';
+
+  @override
+  String get sosLadderEditBackupSemantics => 'تعديل جهة طوارئ موثوقة';
+
+  @override
+  String get sosLadderSkippedEscalation => 'مستبعدة من التصعيد حتى التوثيق';
+
+  @override
+  String get sosChildEscalationSectionTitle => 'تصعيد خارجي لكل ابن';
+
+  @override
+  String get sosChildEscalationSectionHint =>
+      'إن لم تجب على استغاثة ابن، يُخطر الأرقام الموثوقة التي جهّزتها أعلاه — ويمكن تفعيل ذلك لكل ابن على حدة.';
+
+  @override
+  String get sosChildEscalationEnable => 'تصعيد إن لم يجب الوالدان';
+
+  @override
+  String get sosChildEscalationDelay => 'الانتظار قبل التصعيد (ثوانٍ)';
+
+  @override
+  String get sosChildEscalationUseBackups => 'إشعار الجهات الموثوقة الخارجية';
+
+  @override
+  String get sosChildEscalationPrepareSms => 'تجهيز رسائل SMS لتلك الأرقام';
+
+  @override
+  String get sosChildEscalationSmsHonesty =>
+      'إرسال SMS ما زال مغلقاً أصلياً/خلفياً — هذا المفتاح يحفظ نيتك فقط لنفعّله لاحقاً بلا إعادة تصميم الشاشة.';
+
+  @override
+  String sosChildEscalationChildLabel(String id) {
+    return 'ابن $id';
+  }
+
+  @override
+  String get sosChildEscalationEmptyChildren =>
+      'لا يوجد أبناء في سجل العائلة بعد — أضف ابناً أولاً ثم اضبط التصعيد لكل ابن.';
 
   @override
   String get sosAlertConnectionOnline => 'الاتصال: متصل';
@@ -11021,12 +11504,88 @@ class AppLocalizationsAr extends AppLocalizations {
   String get dayBoardPendingQuizSubmittedTitle => 'اختبار الابن مُرسل';
 
   @override
+  String get dayBoardPendingAthkarBlessingTitle => 'الابن أتم الأذكار';
+
+  @override
+  String get dayBoardPendingAthkarBlessingSubtitle =>
+      'بركة محلية — أرسل همسة متى شئت';
+
+  @override
   String get dayBoardPendingJustSubmitted => 'أُرسل للتو — افتح متابعة النتائج';
 
   @override
   String dayBoardPendingEarnedMinutes(int minutes) {
     return 'حصل على +$minutes دقيقة — راجع في النتائج';
   }
+
+  @override
+  String get dayBoardLocalSaveLine => 'محفوظ على هذا الجهاز — يعمل دون اتصال';
+
+  @override
+  String get dayBoardPendingTimeRequestTitle => 'طلب وقت إضافي بانتظارك';
+
+  @override
+  String dayBoardPendingTimeRequestSubtitle(int minutes) {
+    return '$minutes دقيقة — افتح صندوق الطلبات للرد';
+  }
+
+  @override
+  String get dayBoardPendingAppApprovalTitle => 'تطبيق جديد ينتظر قرارك';
+
+  @override
+  String get dayBoardPendingAppApprovalSubtitle =>
+      'اسمح أو امنع من شاشة الموافقة';
+
+  @override
+  String get dayBoardPendingFriendRequestTitle => 'طلب صداقة بانتظارك';
+
+  @override
+  String get dayBoardPendingFriendRequestSubtitle =>
+      'راجع بأمان — لا غرباء بدونك';
+
+  @override
+  String get alertsHubRowSosTitle => 'نداء استغاثة نشط يحتاج انتباهك';
+
+  @override
+  String get alertsHubRowSosSubtitle => 'افتح لوحة الاستغاثة — لا تُكتم أبدًا';
+
+  @override
+  String get alertsHubRowTamperTitle => 'تنبيه عبث على جهاز ابن';
+
+  @override
+  String get alertsHubRowTamperSubtitle =>
+      'سُجّل على هذا الجهاز — راجع إعدادات مكافحة العبث';
+
+  @override
+  String get alertsHubRowTimeTitle => 'طلب وقت إضافي بانتظارك';
+
+  @override
+  String get alertsHubRowTimeSubtitle => 'افتح صندوق طلبات الوقت';
+
+  @override
+  String get alertsHubRowAppTitle => 'تطبيق جديد يحتاج موافقة';
+
+  @override
+  String get alertsHubRowAppSubtitle => 'افتح موافقة التطبيقات الجديدة';
+
+  @override
+  String get alertsHubRowFriendTitle => 'طلب صداقة بانتظارك';
+
+  @override
+  String get alertsHubRowFriendSubtitle => 'افتح موافقة الأصدقاء';
+
+  @override
+  String get alertsHubRowArriveTitle => 'وصل إلى منطقة آمنة';
+
+  @override
+  String get alertsHubRowArriveSubtitle => 'افتح تفصيل الوصول';
+
+  @override
+  String get alertsHubRowLeaveZoneTitle => 'غادر منطقة آمنة';
+
+  @override
+  String get alertsHubRowLeaveZoneSubtitle =>
+      'افتح تفصيل المغادرة — الحرج لا يُكتم';
 
   @override
   String get quranProgressSurahMulk => 'الملك';
@@ -11048,7 +11607,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get childQuranWardAyahNaba1 => 'عَمَّ يَتَسَاءَلُونَ ﴿١﴾';
+  String get childQuranWardAyahNaba1 => 'عَمَّ يَتَسَاءَلُونَ ﴿1﴾';
 
   @override
   String get sys3MockHonesty =>
@@ -11257,26 +11816,26 @@ class AppLocalizationsAr extends AppLocalizations {
   String get sys3InviteStatusCta => 'عرض حالة الدعوة';
 
   @override
-  String get capabilityStatusImplemented => 'IMPLEMENTED';
+  String get capabilityStatusImplemented => 'يعمل';
 
   @override
-  String get capabilityStatusMockRemote => 'MOCK-REMOTE';
+  String get capabilityStatusMockRemote => 'على هذا الجهاز';
 
   @override
-  String get capabilityStatusDegraded => 'DEGRADED';
+  String get capabilityStatusDegraded => 'يعمل جزئيًا';
 
   @override
-  String get capabilityStatusUnsupported => 'UNSUPPORTED';
+  String get capabilityStatusUnsupported => 'غير مدعوم';
 
   @override
-  String get capabilityStatusNotImplemented => 'NOT IMPLEMENTED';
+  String get capabilityStatusNotImplemented => 'قريبًا';
 
   @override
   String get locationGpsCapabilityLabel => 'GPS الجهاز';
 
   @override
   String get locationGpsNotImplementedBanner =>
-      'GPS الجهاز غير مُنفَّذ (NOT IMPLEMENTED) في هذا البناء — الخرائط للعرض فقط؛ لا تُعامل هذه الشاشة كتتبع حي.';
+      'GPS الجهاز غير مُنفَّذ (قريبًا) في هذا البناء — الخرائط للعرض فقط؛ لا تُعامل هذه الشاشة كتتبع حي.';
 
   @override
   String get createSafeZoneAssignHeading => 'تعيين للأبناء';
@@ -11322,10 +11881,14 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get silentLocateResultGpsNotImplemented =>
-      'GPS الجهاز NOT IMPLEMENTED — لا يمكن ادعاء تحديد صامت حي.';
+      'GPS الجهاز قريبًا — لا يمكن ادعاء تحديد صامت حي.';
 
   @override
   String get locationMapSilentLocateCta => 'تحديد صامت';
+
+  @override
+  String get locationMapSilentLocateDenied =>
+      'التحديد الصامت يحتاج صلاحية أب/أم أعلى من المطّلعة.';
 
   @override
   String get childArrivalSilentBanner =>
@@ -11555,4 +12118,14 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get fs007SmartAlertsEntry =>
       'تذاكر سلامة الذكاء دون اتصال (FS-007) — إشارات فقط؛ بلا حظر تلقائي.';
+
+  @override
+  String get honestyChildGentleLine =>
+      'بعض الأشياء هنا تعمل على هذا الجهاز فقط الآن 🌱';
+
+  @override
+  String get childResultPraiseTopicFractions => 'جمع الكسور';
+
+  @override
+  String get appLoadingSemantics => 'جارٍ التحميل';
 }

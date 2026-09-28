@@ -54,7 +54,7 @@ void main() {
     );
     await tester.tap(find.byKey(InstantLockKeys.lockButton));
     await tester.pumpAndSettle();
-    expect(find.text('الجهاز مقفل'), findsOneWidget);
+    expect(find.text('تم حفظ طلب القفل محليًا'), findsOneWidget);
 
     await _pump(
       tester,
@@ -65,7 +65,7 @@ void main() {
     );
     await tester.tap(find.byKey(InstantLockKeys.unlockButton));
     await tester.pumpAndSettle();
-    expect(find.text('الجهاز غير مقفل'), findsOneWidget);
+    expect(find.text('تم حفظ تفضيل فك القفل محليًا'), findsOneWidget);
 
     await _pump(
       tester,
@@ -85,7 +85,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(InstantLockKeys.supersessionBanner), findsOneWidget);
-    expect(find.text('الأب فتح القفل (تم تجاوز قفلك)'), findsOneWidget);
+    expect(find.text('الأب حفظ تفضيل فك القفل (تم تجاوز تفضيل قفلك)'), findsOneWidget);
   });
 
   testWidgets('mother observer: lock button disabled, stays unlocked',
@@ -103,7 +103,7 @@ void main() {
     expect(btn.onPressed, isNull);
     await tester.tap(find.byKey(InstantLockKeys.lockButton));
     await tester.pumpAndSettle();
-    expect(find.text('الجهاز غير مقفل'), findsOneWidget);
+    expect(find.text('تم حفظ تفضيل فك القفل محليًا'), findsOneWidget);
   });
 
   testWidgets('father: six anti-tamper switches visible', (tester) async {

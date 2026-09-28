@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:family_os/app/shell_tab_more_tools.dart';
 import 'package:family_os/core/design/components/ai_safety_child_transparency_card.dart';
 import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/screen_camera_transparency_card.dart';
@@ -7,6 +8,7 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/fs_foundation/capability_status.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
 import 'package:family_os/core/offline_ai_safety/offline_ai_safety.dart';
 import 'package:family_os/core/policy/collection_scope.dart';
 import 'package:family_os/core/policy/desired_monitoring_prefs.dart';
@@ -15,6 +17,7 @@ import 'package:family_os/core/policy/platform_id.dart';
 import 'package:family_os/core/policy/privacy_collection_policy.dart';
 import 'package:family_os/core/policy/privacy_collection_repository.dart';
 import 'package:family_os/core/policy/privacy_collection_sync_bus.dart';
+import 'package:family_os/core/prefs_misc/prefs_misc_runtime.dart';
 import 'package:family_os/core/screen_camera/screen_camera.dart';
 import 'package:family_os/features/n08_platform/effective_monitoring_transparency.dart';
 
@@ -50,7 +53,7 @@ class WhatIsCollectedScreen extends StatefulWidget {
   /// Stage-1 demo child when null.
   final ChildId? childId;
 
-  /// Rule 25 seam — null → prefs-backed Stage-1 store.
+  /// Rule 25 seam — null → Local KV (DOM-PREFS-MISC-PRIVACY).
   final PrivacyCollectionRepository? repository;
 
   /// P12 sync — null → [stage1PrivacyCollectionSyncBus].
@@ -74,7 +77,7 @@ class WhatIsCollectedScreen extends StatefulWidget {
 
 class _WhatIsCollectedScreenState extends State<WhatIsCollectedScreen> {
   late final ChildId _childId;
-  late final PrivacyCollectionRepository _repository;
+  PrivacyCollectionRepository? _repository;
   late final PrivacyCollectionSyncBus _syncBus;
   late PrivacyCollectionPolicy _policy;
   var _loading = true;
@@ -84,17 +87,40 @@ class _WhatIsCollectedScreenState extends State<WhatIsCollectedScreen> {
   @override
   void initState() {
     super.initState();
-    _childId = widget.childId ?? ChildId('demo-child');
-    _repository =
-        widget.repository ??
-        PrefsPrivacyCollectionRepository(
-          stage1PrivacyCollectionPrefsStore,
-          audit: stage1PrivacyCollectionAudit,
-        );
+    _childId = resolveActiveChildIdOf(context, explicit: widget.childId);
+    if (widget.repository != null) {
+      _repository = widget.repository;
+    } else {
+      _bootstrapLocal();
+    }
     _syncBus = widget.syncBus ?? stage1PrivacyCollectionSyncBus;
     _policy = PrivacyCollectionPolicy.defaults(childId: _childId.value);
     _syncBus.addListener(_onBus);
-    _load();
+    if (widget.repository != null) {
+      _load();
+    }
+  }
+
+  Future<void> _bootstrapLocal() async {
+    try {
+      await PrefsMiscRuntime.ensureOpen();
+      if (PrefsMiscRuntime.unavailable || PrefsMiscRuntime.privacy == null) {
+        throw StateError('PrefsMiscRuntime unavailable');
+      }
+      _repository = PrefsMiscRuntime.privacy;
+    } catch (e, st) {
+      debugPrint(
+        'DOM-PREFS-MISC-PRIVACY: CHD-010 Local KV bootstrap failed — '
+        'no Memory Prefs fallback: $e\n$st',
+      );
+      if (!mounted) return;
+      setState(() {
+        _repository = null;
+        _loading = false;
+      });
+      return;
+    }
+    await _load();
   }
 
   @override
@@ -111,7 +137,12 @@ class _WhatIsCollectedScreenState extends State<WhatIsCollectedScreen> {
   }
 
   Future<void> _load() async {
-    final loaded = await _repository.load(_childId.value);
+    final repo = _repository;
+    if (repo == null) {
+      if (mounted) setState(() => _loading = false);
+      return;
+    }
+    final loaded = await repo.load(_childId.value);
     ScreenCameraDocument? scDoc;
     var sc = widget.screenCamera;
     if (sc == null) {
@@ -286,6 +317,7 @@ class _WhatIsCollectedScreenState extends State<WhatIsCollectedScreen> {
                       ],
                     ),
                   ],
+                  const ShellTabMoreTools(tabId: 'me'),
                 ],
               ),
             ),

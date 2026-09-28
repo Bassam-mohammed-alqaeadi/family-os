@@ -9,7 +9,7 @@ final class InMemoryChildInteractiveStoriesRepository
     implements ChildInteractiveStoriesRepository {
   InMemoryChildInteractiveStoriesRepository({
     ChildInteractiveStoriesSnapshot? seed,
-  }) : _snap = seed ?? childInteractiveStoriesPrototypeFixture();
+  }) : _snap = seed ?? childInteractiveStoriesEmptyFixture();
 
   ChildInteractiveStoriesSnapshot _snap;
   Future<void> Function()? loadGate;

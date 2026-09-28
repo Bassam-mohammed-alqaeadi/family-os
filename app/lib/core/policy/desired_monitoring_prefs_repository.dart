@@ -35,6 +35,9 @@ final class MemoryDesiredMonitoringPrefsStore
 }
 
 /// Shared Stage-1 store (survives within process).
+///
+/// LEGACY / RETAINED — production prefers Local KV
+/// ([PrefsMiscLocalPersistence.openMonitoringRepository]).
 final MemoryDesiredMonitoringPrefsStore stage1DesiredMonitoringPrefsStore =
     MemoryDesiredMonitoringPrefsStore();
 

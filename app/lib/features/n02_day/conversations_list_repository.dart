@@ -129,4 +129,24 @@ final class InMemoryConversationsListRepository
 }
 
 /// Stage-1 singleton — empty until tests/repos seed (Rule 23).
-final stage1ConversationsListRepository = InMemoryConversationsListRepository();
+final InMemoryConversationsListRepository _stage1ConversationsListMemory =
+    InMemoryConversationsListRepository();
+
+ConversationsListRepository? _stage1ConversationsListBound;
+
+/// Stage-1 conversations list — Local when bound, else InMemory.
+ConversationsListRepository get stage1ConversationsListRepository =>
+    _stage1ConversationsListBound ?? _stage1ConversationsListMemory;
+
+void rebindStage1ConversationsListRepository(
+  ConversationsListRepository repository,
+) {
+  _stage1ConversationsListBound = repository;
+}
+
+@visibleForTesting
+void resetStage1ConversationsListRepositoryForTest() {
+  _stage1ConversationsListBound = null;
+  _stage1ConversationsListMemory.seed(const ConversationsListSnapshot());
+  _stage1ConversationsListMemory.failLoad = false;
+}

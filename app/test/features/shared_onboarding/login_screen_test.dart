@@ -74,6 +74,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.enterText(find.byKey(const Key('login_email')), 'a@b.c');
+    await tester.enterText(find.byKey(const Key('login_password')), 'secret');
     await tester.tap(find.byKey(const Key('login_submit')));
     await tester.pumpAndSettle();
 

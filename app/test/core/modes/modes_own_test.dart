@@ -42,7 +42,7 @@ void main() {
   });
 
   test('schema exposes mode tables', () async {
-    expect(FamilyLocalSchema.currentVersion, 10);
+    expect(FamilyLocalSchema.currentVersion, 12);
     await db.insert('mode_document', {
       'id': 'sleep',
       'family_id': family.value,

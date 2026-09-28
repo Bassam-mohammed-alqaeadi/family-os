@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
+import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/enforcement_status_badge.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/components/remaining_minutes_card.dart';
@@ -12,6 +13,8 @@ import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/minutes.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/fs_foundation/fs_session_kernel.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/design/components/tag.dart';
@@ -23,6 +26,8 @@ import 'package:family_os/core/policy/screen_time_policy_repository.dart';
 import 'package:family_os/core/policy/temporary_grant_query.dart';
 import 'package:family_os/core/policy/time_request_repository.dart';
 import 'package:family_os/core/policy/time_request_service.dart';
+import 'package:family_os/core/screen_time/screen_time_runtime.dart';
+import 'package:family_os/core/screen_time/stage1_time_request_runtime.dart';
 import 'package:family_os/features/n12_devices/mother_permission_level_repository.dart';
 import 'package:family_os/features/n03_screen_time/stage1_child_scope.dart';
 
@@ -30,18 +35,32 @@ import 'package:family_os/features/n03_screen_time/stage1_child_scope.dart';
 typedef ScheduleTimePicker =
     Future<TimeOfDay?> Function(BuildContext context, TimeOfDay initial);
 
-/// Shared Stage-1 prefs store (survives within process; Rule 25 seam).
+/// LEGACY / RETAINED — Memory Prefs for Screen Time **ScheduleWindow** is no
+/// longer the FAT-032 production authority (DOM-ST-02B → Local KV / SQLite).
+/// Kept for explicit tests; do not use as production fallback.
 final MemorySchedulePrefsStore stage1SchedulePrefsStore =
     MemorySchedulePrefsStore();
 
-/// Shared Stage-1 policy prefs (SET-002).
+/// LEGACY / RETAINED — Memory Prefs for Screen Time **policy** is no longer the
+/// FAT-032 production authority (DOM-ST-02A → Local KV / SQLite). Kept for
+/// explicit tests and unrelated seams that still import the symbol.
 final MemoryScreenTimePolicyPrefsStore stage1PolicyPrefsStore =
     MemoryScreenTimePolicyPrefsStore();
+
+/// Widget keys for SCR-FAT-032 acceptance (FE-W2-FAT-032).
+abstract final class ChildScreenTimeKeys {
+  static const screen = Key('child_screen_time_screen');
+  static const loading = Key('child_screen_time_loading');
+  static const policyUnavailable = Key('child_screen_time_policy_unavailable');
+  static const localHonesty = Key('child_screen_time_local_honesty');
+  static const save = Key('child_screen_time_save');
+}
 
 /// SCR-FAT-032 — وقت الشاشة لابن (SET-001 schedules + SET-002 caps/wallets + SET-024 overflow).
 ///
 /// ControlFit: schedule windows + daily cap / overflow / wallets that feed
 /// TimeEngine (Qustodio-style), not decorative numbers.
+/// Frontend honesty: Local KV persist only — OS enforcement CLOSED (SIMULATED).
 class ChildScreenTimeScreen extends StatefulWidget {
   const ChildScreenTimeScreen({
     super.key,
@@ -52,15 +71,17 @@ class ChildScreenTimeScreen extends StatefulWidget {
     this.pickTime,
     this.canEditOverride,
     this.motherLevel = MotherLevel.partner,
+    this.timeRequestService,
+    this.policyUnavailableOverride,
   });
 
-  /// Stage-1 demo child when null; real selection arrives with SET-003.
+  /// Explicit child; null → Identity active child → stage1 canonical.
   final ChildId? childId;
 
-  /// Rule 25 seam — null → prefs-backed memory store.
+  /// Rule 25 seam — null → durable Local KV via [FsSessionKernel] (DOM-ST-02B).
   final ScheduleWindowRepository? repository;
 
-  /// Rule 25 seam — null → prefs-backed policy store (SET-002).
+  /// Rule 25 seam — null → durable Local KV via [FsSessionKernel] (DOM-ST-02A).
   final ScreenTimePolicyRepository? policyRepository;
 
   /// SET-003 mock sync bus — null → [stage1PolicySyncBus].
@@ -73,40 +94,52 @@ class ChildScreenTimeScreen extends StatefulWidget {
   final bool? canEditOverride;
   final MotherLevel motherLevel;
 
+  /// Test seam — inject TimeRequestService (grant remaining / CHD-020 loop).
+  final TimeRequestService? timeRequestService;
+
+  /// Test seam — force Local KV unavailable banner without bootstrap.
+  final bool? policyUnavailableOverride;
+
   @override
   State<ChildScreenTimeScreen> createState() => _ChildScreenTimeScreenState();
 }
 
 class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
   late ChildId _childId;
-  late final ScheduleWindowRepository _repository;
-  late final ScreenTimePolicyRepository _policyRepository;
+  ScheduleWindowRepository? _repository;
+  ScreenTimePolicyRepository? _policyRepository;
   late final PolicySyncBus _syncBus;
   late List<ScheduleWindow> _windows;
   late ScreenTimePolicy _policy;
   late final TextEditingController _capController;
   var _loading = true;
   var _saving = false;
+  var _policyUnavailable = false;
   PolicySyncStatus? _syncStatus;
   int _temporaryGrantRemaining = 0;
-  late final TimeRequestService _timeRequestService;
+  late TimeRequestService _timeRequestService;
   var _resolvedScopedChild = false;
 
   @override
   void initState() {
     super.initState();
-    _childId = widget.childId ?? kStage1CanonicalChildId;
-    _repository =
-        widget.repository ??
-        PrefsScheduleWindowRepository(stage1SchedulePrefsStore);
-    _policyRepository =
-        widget.policyRepository ??
-        PrefsScreenTimePolicyRepository(stage1PolicyPrefsStore);
+    _childId = widget.childId ?? resolveActiveChildId();
+    if (widget.repository != null) {
+      _repository = widget.repository;
+    }
+    if (widget.policyRepository != null) {
+      _policyRepository = widget.policyRepository;
+    }
     _syncBus = widget.syncBus ?? stage1PolicySyncBus;
-    _timeRequestService = TimeRequestService(
-      repository: PrefsTimeRequestRepository(stage1TimeRequestPrefsStore),
-      decisionBus: stage1TimeRequestDecisionBus,
-    );
+    if (widget.timeRequestService != null) {
+      _timeRequestService = widget.timeRequestService!;
+    } else {
+      // Placeholder until Local KV bootstrap (DOM-ST-02C); never production Memory.
+      _timeRequestService = TimeRequestService(
+        repository: InMemoryTimeRequestRepository(),
+        decisionBus: stage1TimeRequestDecisionBus,
+      );
+    }
     stage1TimeRequestDecisionBus.addListener(_onGrantDecision);
     _windows = [
       for (final kind in ScheduleKind.values)
@@ -114,21 +147,101 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
     ];
     _policy = ScreenTimePolicy.defaults();
     _capController = TextEditingController(text: '${_policy.dailyCapMinutes}');
-    _load();
+    if (widget.policyUnavailableOverride == true) {
+      _policyUnavailable = true;
+      _loading = false;
+    } else {
+      _bootstrapLocalPersistence();
+    }
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_resolvedScopedChild || widget.childId != null) return;
+    if (widget.childId != null) {
+      _resolvedScopedChild = true;
+      return;
+    }
+    if (_resolvedScopedChild) return;
     final runtime = CurrentIdentity.maybeOf(context);
     if (runtime == null) return;
-    _childId = familyScopedChildId(
+    final next = familyScopedChildId(
       familyId: runtime.activeFamilyId,
       childId: runtime.activeChildId,
     );
     _resolvedScopedChild = true;
-    _load();
+    if (next != _childId) {
+      _childId = next;
+      _load();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant ChildScreenTimeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.childId != widget.childId && widget.childId != null) {
+      _childId = widget.childId!;
+      _load();
+    }
+  }
+
+  /// HOST-ROUTER-B — policy + ScheduleWindow + TimeRequest via ScreenTimeRuntime.
+  Future<void> _bootstrapLocalPersistence() async {
+    final needPolicy = widget.policyRepository == null;
+    final needSchedule = widget.repository == null;
+    if (!needPolicy && !needSchedule) {
+      await _bootstrapTimeRequest();
+      await _load();
+      return;
+    }
+    try {
+      await ScreenTimeRuntime.ensureOpen();
+      if (!mounted) return;
+      if (ScreenTimeRuntime.unavailable) {
+        throw StateError(
+          'HOST-ROUTER-B: ScreenTimeRuntime unavailable — refusing Memory',
+        );
+      }
+      if (needPolicy) {
+        _policyRepository = ScreenTimeRuntime.policy;
+      }
+      if (needSchedule) {
+        _repository = ScreenTimeRuntime.schedule;
+      }
+      _policyUnavailable = false;
+    } catch (e, st) {
+      debugPrint(
+        'DOM-ST-02C: Screen Time Local KV bootstrap failed — '
+        'no Memory Prefs / no silent Memory-session persistence: $e\n$st',
+      );
+      if (!mounted) return;
+      if (needPolicy) {
+        _policyRepository = null;
+      }
+      if (needSchedule) {
+        // Fail closed — never fall back to stage1SchedulePrefsStore.
+        _repository = null;
+      }
+      _policyUnavailable = true;
+    }
+    await _bootstrapTimeRequest();
+    await _load();
+  }
+
+  Future<void> _bootstrapTimeRequest() async {
+    if (widget.timeRequestService != null) return;
+    try {
+      await ScreenTimeRuntime.ensureOpen();
+      if (!mounted) return;
+      _timeRequestService =
+          ScreenTimeRuntime.timeRequest ??
+          await Stage1TimeRequestRuntime.ensureOpen();
+    } catch (e, st) {
+      debugPrint(
+        'DOM-ST-02C: TimeRequest Local KV bootstrap failed — '
+        'no Memory Prefs fallback: $e\n$st',
+      );
+    }
   }
 
   @override
@@ -148,8 +261,18 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
   }
 
   Future<void> _load() async {
-    final loaded = await _repository.load(_childId);
-    final policy = await _policyRepository.load(_childId);
+    final scheduleRepo = _repository;
+    final loaded = scheduleRepo != null
+        ? await scheduleRepo.load(_childId)
+        : [
+            for (final kind in ScheduleKind.values)
+              ScheduleWindow(kind: kind, enabled: false),
+          ];
+    final policyRepo = _policyRepository;
+    ScreenTimePolicy policy = _policy;
+    if (policyRepo != null) {
+      policy = await policyRepo.load(_childId);
+    }
     final grantRemaining = await _timeRequestService.activeGrantRemaining(
       _childId,
     );
@@ -190,8 +313,20 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
     return parsed != null && parsed >= 0;
   }
 
+  bool get _canSavePolicy =>
+      _policyRepository != null && !_policyUnavailable;
+
+  bool get _canSaveSchedule =>
+      _repository != null && !_policyUnavailable;
+
   bool get _canSave =>
-      _canEdit && _allValid && _capValid && !_saving && !_loading;
+      _canEdit &&
+      _allValid &&
+      _capValid &&
+      _canSavePolicy &&
+      _canSaveSchedule &&
+      !_saving &&
+      !_loading;
 
   ScheduleWindow _window(ScheduleKind kind) =>
       _windows.firstWhere((w) => w.kind == kind);
@@ -239,8 +374,12 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
   /// UI-008 — wallet overflow persist-on-toggle (Rule 24 / Ruling B).
   Future<void> _persistOverflow(bool value) async {
     if (!_canEdit) throw StateError('overflow read-only');
+    final policyRepo = _policyRepository;
+    if (policyRepo == null) {
+      throw StateError('DOM-ST-02A: policy repository unavailable');
+    }
     final next = _policy.copyWith(allowWalletOverflow: value);
-    await _policyRepository.save(_childId, next);
+    await policyRepo.save(_childId, next);
     final stamp = DateTime.now().toUtc();
     final status = _syncBus.publish(
       PolicySyncEvent(
@@ -263,11 +402,14 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
 
   Future<void> _save() async {
     if (!_canSave) return;
+    final scheduleRepo = _repository;
+    final policyRepo = _policyRepository;
+    if (scheduleRepo == null || policyRepo == null) return;
     final cap = int.parse(_capController.text.trim());
     setState(() => _saving = true);
     final toSave = _policy.copyWith(dailyCapMinutes: cap);
-    await _repository.save(_childId, _windows);
-    await _policyRepository.save(_childId, toSave);
+    await scheduleRepo.save(_childId, _windows);
+    await policyRepo.save(_childId, toSave);
     final stamp = DateTime.now().toUtc();
     _syncBus.publish(
       PolicySyncEvent(
@@ -348,6 +490,7 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
     );
 
     return Scaffold(
+      key: ChildScreenTimeKeys.screen,
       backgroundColor: colors.bg,
       appBar: AppBar(
         backgroundColor: colors.surface,
@@ -362,7 +505,10 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
       ),
       body: SafeArea(
         child: _loading
-            ? const Center(child: CircularProgressIndicator())
+            ? const Center(
+                key: ChildScreenTimeKeys.loading,
+                child: CircularProgressIndicator(),
+              )
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -377,6 +523,20 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
                             height: 1.45,
                             color: colors.ink2,
                           ),
+                        ),
+                        if (_policyUnavailable) ...[
+                          const SizedBox(height: 12),
+                          BannerNote(
+                            key: ChildScreenTimeKeys.policyUnavailable,
+                            variant: BannerVariant.a,
+                            message: l10n.childScreenTimePolicyUnavailable,
+                          ),
+                        ],
+                        const SizedBox(height: 12),
+                        BannerNote(
+                          key: ChildScreenTimeKeys.localHonesty,
+                          variant: BannerVariant.t,
+                          message: l10n.childScreenTimeLocalHonestyBanner,
                         ),
                         const SizedBox(height: 16),
                         Align(
@@ -435,7 +595,7 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
                           l10n: l10n,
                           policy: _policy,
                           capController: _capController,
-                          canEdit: canEdit,
+                          canEdit: canEdit && _canSavePolicy,
                           colors: colors,
                           radii: radii,
                           walletLabel: (id) => _walletLabel(l10n, id),
@@ -474,7 +634,7 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
                             ),
                           ),
                         PrimaryBtn(
-                          key: const Key('child_screen_time_save'),
+                          key: ChildScreenTimeKeys.save,
                           label: l10n.childScreenTimeSave,
                           onPressed: _canSave ? _save : null,
                         ),

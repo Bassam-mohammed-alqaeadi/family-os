@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/app/role_guard.dart';
+import 'package:family_os/app/shell_tab_more_tools.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
@@ -10,6 +11,7 @@ import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n17_child_learn/child_learn_home_models.dart';
 import 'package:family_os/features/n17_child_learn/child_learn_home_repository.dart';
@@ -109,7 +111,7 @@ class _ChildLearnHomeScreenState extends State<ChildLearnHomeScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'self');
+    await childSosSenderOf(context).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-CHD-005'));
@@ -331,6 +333,7 @@ class _ChildLearnHomeScreenState extends State<ChildLearnHomeScreen> {
             onFocus: () => _go('SCR-CHD-018'),
             onHomework: () => _go('SCR-CHD-014'),
           ),
+          const ShellTabMoreTools(tabId: 'learn'),
         ],
       ),
     );
@@ -378,6 +381,8 @@ class _LevelHeroCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     levelLabel,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
@@ -385,12 +390,18 @@ class _LevelHeroCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                Text(
-                  minutesLabel,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white.withValues(alpha: 0.92),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    minutesLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white.withValues(alpha: 0.92),
+                    ),
                   ),
                 ),
               ],
@@ -632,7 +643,7 @@ class _MaterialTrailing extends StatelessWidget {
         variant: TagVariant.g,
       ),
       ChildLearnMaterialTag.chevron => Icon(
-        Icons.chevron_left,
+        Icons.chevron_right,
         color: colors.ink2,
       ),
     };

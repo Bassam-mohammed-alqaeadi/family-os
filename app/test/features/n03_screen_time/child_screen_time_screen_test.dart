@@ -14,6 +14,9 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/schedule_window_repository.dart';
 import 'package:family_os/core/policy/screen_time_policy.dart';
 import 'package:family_os/core/policy/screen_time_policy_repository.dart';
+import 'package:family_os/core/policy/time_request.dart';
+import 'package:family_os/core/policy/time_request_repository.dart';
+import 'package:family_os/core/policy/time_request_service.dart';
 import 'package:family_os/features/n12_devices/mother_permission_level_repository.dart';
 import 'package:family_os/features/n03_screen_time/child_screen_time_screen.dart';
 
@@ -121,8 +124,12 @@ void main() {
   });
 
   testWidgets('mother full can edit caps/schedules/overflow', (tester) async {
-    stage1MotherPermissionLevelRepository.seed(level: MotherLevel.full);
-    addTearDown(stage1MotherPermissionLevelRepository.resetForTests);
+    resetStage1MotherPermissionLevelRepositoryForTest();
+    final motherRepo = InMemoryMotherPermissionLevelRepository(
+      initial: MotherLevel.full,
+    );
+    rebindStage1MotherPermissionLevelRepository(motherRepo);
+    addTearDown(resetStage1MotherPermissionLevelRepositoryForTest);
     await _pump(
       tester,
       repository: InMemoryScheduleWindowRepository(),
@@ -156,18 +163,21 @@ void main() {
         role: AppRole.father,
       );
 
+      await _scrollTo(tester, find.byKey(const Key('schedule_switch_sleep')));
       expect(
         tester
             .getSemantics(find.byKey(const Key('schedule_switch_sleep')))
             .label,
         contains('نوم'),
       );
+      await _scrollTo(tester, find.byKey(const Key('schedule_switch_prayer')));
       expect(
         tester
             .getSemantics(find.byKey(const Key('schedule_switch_prayer')))
             .label,
         contains('صلاة'),
       );
+      await _scrollTo(tester, find.byKey(const Key('schedule_switch_study')));
       expect(
         tester
             .getSemantics(find.byKey(const Key('schedule_switch_study')))
@@ -286,6 +296,92 @@ void main() {
       );
     },
   );
+
+  testWidgets('LOCAL honesty banner + SIMULATED enforcement', (tester) async {
+    final repo = PrefsScheduleWindowRepository(MemorySchedulePrefsStore());
+    await _pump(
+      tester,
+      repository: repo,
+      childId: child,
+      role: AppRole.father,
+    );
+    expect(find.byKey(ChildScreenTimeKeys.localHonesty), findsOneWidget);
+    expect(find.textContaining('SIMULATED'), findsWidgets);
+    expect(find.textContaining('هذا الجهاز فقط'), findsOneWidget);
+  });
+
+  testWidgets('policy unavailable → banner + save disabled', (tester) async {
+    final roleCtrl = RoleController(AppRole.father);
+    addTearDown(roleCtrl.dispose);
+    await tester.pumpWidget(
+      CurrentRole(
+        notifier: roleCtrl,
+        child: MaterialApp(
+          theme: buildFamilyTheme(),
+          locale: const Locale('ar'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: ChildScreenTimeScreen(
+            childId: child,
+            repository: PrefsScheduleWindowRepository(
+              MemorySchedulePrefsStore(),
+            ),
+            policyRepository: PrefsScreenTimePolicyRepository(
+              MemoryScreenTimePolicyPrefsStore(),
+            ),
+            policyUnavailableOverride: true,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(ChildScreenTimeKeys.policyUnavailable), findsOneWidget);
+    expect(find.textContaining('التخزين المحلي'), findsOneWidget);
+    final btn = tester.widget<PrimaryBtn>(
+      find.byKey(ChildScreenTimeKeys.save),
+    );
+    expect(btn.onPressed, isNull);
+  });
+
+  testWidgets('grant remaining shows on RemainingMinutesCard', (tester) async {
+    final childId = ChildId('grant-child');
+    final trRepo = InMemoryTimeRequestRepository();
+    final service = TimeRequestService(
+      repository: trRepo,
+      clock: () => DateTime.utc(2026, 9, 25, 10, 0),
+      decisionBus: stage1TimeRequestDecisionBus,
+    );
+    addTearDown(service.dispose);
+
+    final req = await service.createRequest(
+      childId: childId,
+      requestedMinutes: 20,
+    );
+    await service.approve(
+      req.id,
+      const TimeRequestActor.father(),
+      grantMinutes: 15,
+    );
+
+    await _pump(
+      tester,
+      repository: PrefsScheduleWindowRepository(MemorySchedulePrefsStore()),
+      policyRepository: PrefsScreenTimePolicyRepository(
+        MemoryScreenTimePolicyPrefsStore(),
+      ),
+      childId: childId,
+      role: AppRole.father,
+      timeRequestService: service,
+    );
+
+    expect(find.textContaining('15'), findsWidgets);
+  });
 }
 
 Future<void> _scrollTo(WidgetTester tester, Finder finder) async {
@@ -305,6 +401,7 @@ Future<void> _pump(
   required AppRole role,
   ScreenTimePolicyRepository? policyRepository,
   ScheduleTimePicker? pickTime,
+  TimeRequestService? timeRequestService,
 }) async {
   final roleCtrl = RoleController(role);
   await tester.pumpWidget(
@@ -325,6 +422,7 @@ Future<void> _pump(
           repository: repository,
           policyRepository: policyRepository,
           pickTime: pickTime,
+          timeRequestService: timeRequestService,
         ),
       ),
     ),

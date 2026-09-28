@@ -15,7 +15,7 @@ abstract class MaterialsLessonsRepository {
 final class InMemoryMaterialsLessonsRepository
     implements MaterialsLessonsRepository {
   InMemoryMaterialsLessonsRepository({MaterialsLessonsSnapshot? seed})
-    : _snap = seed ?? materialsLessonsPrototypeFixture();
+    : _snap = seed ?? materialsLessonsEmptyFixture();
 
   MaterialsLessonsSnapshot _snap;
   var _seq = 0;

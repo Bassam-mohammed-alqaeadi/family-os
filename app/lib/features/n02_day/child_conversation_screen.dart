@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/app_error_state.dart';
 import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/family_ui_mode.dart';
@@ -11,8 +12,10 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/chat_availability.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n02_day/conversation_repository.dart';
+import 'package:family_os/features/n02_day/family_chat_labels.dart';
 
 /// Widget keys for SCR-CHD-008 acceptance.
 abstract final class ChildConversationKeys {
@@ -148,7 +151,7 @@ class _ChildConversationScreenState extends State<ChildConversationScreen> {
     }
     setState(() => _sosBusy = true);
     final fire = widget.sosFire ?? stage1SosFireService;
-    await fire.fire(childId: 'child_local');
+    await childSosSenderOf(context).fireThrough(fire);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.go('/scr-chd-005');
@@ -189,16 +192,20 @@ class _ChildConversationScreenState extends State<ChildConversationScreen> {
       return;
     }
     final l10n = AppLocalizations.of(context);
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.childConversationAnswerToast)));
+    AppToast.show(context, message: l10n.childConversationAnswerToast);
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).extension<FamilyColors>()!;
-    final titleText = _detail?.title ?? l10n.childConversationTitle;
+    final titleText = _detail == null
+        ? l10n.childConversationTitle
+        : localizedConversationThreadTitle(
+            l10n,
+            _detail!.chatWith,
+            _detail!.title,
+          );
 
     return FamilyUiModeScope(
       mode: FamilyUiMode.child,

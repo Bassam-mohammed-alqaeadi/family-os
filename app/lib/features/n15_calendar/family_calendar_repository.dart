@@ -1,19 +1,20 @@
 import 'package:family_os/features/n15_calendar/family_calendar_models.dart';
 
-/// Rule 25 seam — Stage-1 mock family calendar (no backend).
+/// Rule 25 seam — Stage-1 local family calendar (CE-B1).
 abstract class FamilyCalendarRepository {
   Future<FamilyCalendarSnapshot> load();
+
+  /// FAT-053 save → shared calendar authority.
+  Future<void> addEvent(FamilyCalendarEvent event);
 }
 
-/// In-memory mock — prototype FAT-052 shape by default.
+/// In-memory — empty-first (Rule 23). Tests seed explicitly.
 final class InMemoryFamilyCalendarRepository
     implements FamilyCalendarRepository {
   InMemoryFamilyCalendarRepository({FamilyCalendarSnapshot? seed})
-    : _snap = seed ?? familyCalendarPrototypeFixture();
+    : _snap = seed ?? familyCalendarEmptyFixture();
 
   FamilyCalendarSnapshot _snap;
-
-  /// Optional gate for loading-state widget tests.
   Future<void> Function()? loadGate;
 
   @override
@@ -26,29 +27,28 @@ final class InMemoryFamilyCalendarRepository
     );
   }
 
+  @override
+  Future<void> addEvent(FamilyCalendarEvent event) async {
+    _snap = _snap.withEvents([..._snap.events, event]);
+  }
+
   void seed(FamilyCalendarSnapshot snap) {
     _snap = snap;
   }
 }
 
-/// Shared Stage-1 singleton (prototype fixture until a screen/test seeds).
-final InMemoryFamilyCalendarRepository stage1FamilyCalendarRepository =
-    InMemoryFamilyCalendarRepository();
+/// Shared Stage-1 singleton — empty until Local bind / test seed.
+FamilyCalendarRepository stage1FamilyCalendarRepository =
+    InMemoryFamilyCalendarRepository(seed: familyCalendarEmptyFixture());
 
-/// Empty — Rule 23 empty-state coverage → SCR-FAT-003.
-FamilyCalendarSnapshot familyCalendarEmptyFixture() {
-  return const FamilyCalendarSnapshot(
-    month: FamilyCalendarMonthGrid(
-      monthTitleKey: 'sep2026',
-      firstDayOffset: 6,
-      daysInMonth: 30,
-      todayDay: 14,
-      eventDays: {},
-    ),
-  );
+void rebindStage1FamilyCalendarRepository(FamilyCalendarRepository repository) {
+  stage1FamilyCalendarRepository = repository;
 }
 
-/// One event — Rule 23 one-item coverage.
+FamilyCalendarSnapshot familyCalendarEmptyFixture() {
+  return const FamilyCalendarSnapshot();
+}
+
 FamilyCalendarSnapshot familyCalendarOneFixture() {
   return const FamilyCalendarSnapshot(
     events: [
@@ -72,9 +72,7 @@ FamilyCalendarSnapshot familyCalendarOneFixture() {
   );
 }
 
-/// Prototype FAT-052 — six events across four categories.
-///
-/// Rule 23: titleKey / whenKey / whoNameKey only (no planted person names).
+/// LOCAL_DEMO / tests only — not production stage1 default.
 FamilyCalendarSnapshot familyCalendarPrototypeFixture() {
   return const FamilyCalendarSnapshot(
     events: [

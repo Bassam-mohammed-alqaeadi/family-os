@@ -13,7 +13,10 @@ import 'package:family_os/core/identity/identity_models.dart';
 import 'package:family_os/core/identity/identity_runtime.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/features/n02_day/children_list_local_repository.dart';
+import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
+import 'package:family_os/features/n12_devices/family_members_identity_repository.dart';
 import 'package:family_os/features/n12_devices/family_members_mock.dart';
 import 'package:family_os/features/n12_devices/family_members_repository.dart';
 import 'package:family_os/features/n12_devices/family_members_screen.dart';
@@ -87,7 +90,6 @@ void main() {
     expect(find.byKey(FamilyMembersKeys.memberRow('child_b')), findsOneWidget);
     expect(find.textContaining('أنت'), findsOneWidget);
     expect(find.textContaining('مشاركة'), findsOneWidget);
-    expect(find.byKey(FamilyMembersKeys.inviteCta), findsOneWidget);
     expect(find.byKey(FamilyMembersKeys.sosCta), findsOneWidget);
 
     await tester.tap(find.byKey(FamilyMembersKeys.sosCta));
@@ -97,6 +99,17 @@ void main() {
     await tester.tap(find.byKey(FamilyMembersKeys.memberRow('member_mother')));
     await tester.pumpAndSettle();
     expect(motherOpened, 'member_mother');
+
+    // Invite CTA is below the fold — scroll the ListView into range.
+    await tester.scrollUntilVisible(
+      find.byKey(FamilyMembersKeys.inviteCta),
+      200,
+      scrollable: find.descendant(
+        of: find.byKey(FamilyMembersKeys.list),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(find.byKey(FamilyMembersKeys.inviteCta), findsOneWidget);
   });
 
   testWidgets(
@@ -299,17 +312,17 @@ void main() {
       await tester.pumpWidget(
         CurrentIdentity(
           runtime: runtime,
-          child: _app(
-            child: const FamilyMembersScreen(roleOverride: AppRole.father),
-          ),
-        ),
-      );
-      // Rebuild with repository injected.
-      await tester.pumpWidget(
-        CurrentIdentity(
-          runtime: runtime,
-          child: _app(
-            child: FamilyMembersScreen(
+          child: MaterialApp(
+            theme: buildFamilyTheme(),
+            locale: const Locale('ar'),
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            home: FamilyMembersScreen(
               repository: repo,
               roleOverride: AppRole.father,
               onSos: () {},
@@ -333,19 +346,101 @@ void main() {
       expect(find.text('وليّ الأمر أ'), findsNothing);
     },
   );
+
+  testWidgets('SCR-FAT-027 without Identity → empty (fail-closed)', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildFamilyTheme(),
+        locale: const Locale('ar'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: FamilyMembersScreen(
+          repository: InMemoryFamilyMembersRepository(
+            members: FamilyMembersMock.fullFixture,
+          ),
+          roleOverride: AppRole.father,
+          onSos: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(FamilyMembersKeys.empty), findsOneWidget);
+    expect(
+      find.byKey(FamilyMembersKeys.memberRow('member_owner')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('SCR-FAT-027 Identity projection + LOCAL_DEMO banner', (
+    tester,
+  ) async {
+    resetStage1ChildrenListRepositoryForTest();
+    resetStage1FamilyMembersRepositoryForTest();
+    rebindStage1ChildrenListRepository(
+      InMemoryChildrenListRepository(
+        byFamily: {
+          ChildrenListLocalSeed.famStage1.value:
+              ChildrenListLocalSeed.famStage1Children,
+        },
+        provenance: kChildrenListLocalDemoProvenance,
+      ),
+    );
+    rebindStage1FamilyMembersRepository(IdentityFamilyMembersRepository());
+
+    await tester.pumpWidget(
+      _app(
+        child: FamilyMembersScreen(
+          roleOverride: AppRole.father,
+          onInvite: () {},
+          onSos: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(FamilyMembersKeys.list), findsOneWidget);
+    expect(
+      find.byKey(FamilyMembersKeys.memberRow('mem_stage1_owner')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(FamilyMembersKeys.memberRow('mem_stage1_mother')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(FamilyMembersKeys.memberRow('demo-child')),
+      findsOneWidget,
+    );
+    expect(find.byKey(FamilyMembersKeys.localDemoBanner), findsOneWidget);
+    expect(find.textContaining('خالد'), findsNothing);
+
+    resetStage1ChildrenListRepositoryForTest();
+    resetStage1FamilyMembersRepositoryForTest();
+  });
 }
 
 Widget _app({required Widget child}) {
-  return MaterialApp(
-    theme: buildFamilyTheme(),
-    locale: const Locale('ar'),
-    supportedLocales: AppLocalizations.supportedLocales,
-    localizationsDelegates: const [
-      AppLocalizations.delegate,
-      GlobalMaterialLocalizations.delegate,
-      GlobalWidgetsLocalizations.delegate,
-      GlobalCupertinoLocalizations.delegate,
-    ],
-    home: child,
+  return CurrentIdentity(
+    runtime: createStage1IdentityRuntime(),
+    child: MaterialApp(
+      theme: buildFamilyTheme(),
+      locale: const Locale('ar'),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      home: child,
+    ),
   );
 }

@@ -7,7 +7,7 @@ abstract class ChildFocusRepository {
 
 final class InMemoryChildFocusRepository implements ChildFocusRepository {
   InMemoryChildFocusRepository({ChildFocusSnapshot? seed})
-    : _snap = seed ?? childFocusPrototypeFixture();
+    : _snap = seed ?? childFocusEmptyFixture();
 
   ChildFocusSnapshot _snap;
   Future<void> Function()? loadGate;

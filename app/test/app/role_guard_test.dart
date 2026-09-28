@@ -5,6 +5,7 @@ import 'package:family_os/app/placeholder_screen.dart';
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/app/role_guard.dart';
 import 'package:family_os/app/router.dart';
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
@@ -35,12 +36,12 @@ void main() {
       }
     });
 
-    test('child redirected from owner-only paths to /gallery', () {
+    test('child redirected from owner-only paths to My Day (D4)', () {
       for (final id in ownerOnlyScreenIds) {
         final path = screenPath(id);
         expect(
           roleGuardRedirectForPath(path, AppRole.child),
-          roleGuardSafeLocation,
+          roleGuardLandingFor(AppRole.child),
           reason: path,
         );
       }
@@ -82,11 +83,11 @@ void main() {
     test('SET-015 mother FULL redirected from brain control', () {
       expect(
         roleGuardRedirectForPath(screenPath('SCR-FAT-029'), AppRole.mother),
-        roleGuardSafeLocation,
+        roleGuardLandingFor(AppRole.mother),
       );
       expect(
         fatherOnlyRedirect(screenPath('SCR-FAT-029'), AppRole.mother),
-        roleGuardSafeLocation,
+        roleGuardLandingFor(AppRole.mother),
       );
       expect(canOpenBrainControl(AppRole.mother), isFalse);
     });
@@ -94,7 +95,7 @@ void main() {
     test('SET-015 child redirected from brain control', () {
       expect(
         roleGuardRedirectForPath(screenPath('SCR-FAT-029'), AppRole.child),
-        roleGuardSafeLocation,
+        roleGuardLandingFor(AppRole.child),
       );
       expect(canOpenBrainControl(AppRole.child), isFalse);
     });
@@ -117,11 +118,11 @@ void main() {
     test('UI-007 mother redirected from billing paths', () {
       expect(
         roleGuardRedirectForPath(screenPath('SCR-FAT-056'), AppRole.mother),
-        roleGuardSafeLocation,
+        roleGuardLandingFor(AppRole.mother),
       );
       expect(
         roleGuardRedirectForPath(screenPath('SCR-FAT-057'), AppRole.mother),
-        roleGuardSafeLocation,
+        roleGuardLandingFor(AppRole.mother),
       );
       expect(canOpenBilling(AppRole.mother), isFalse);
       expect(canOpenBilling(AppRole.father), isTrue);
@@ -140,7 +141,7 @@ void main() {
     });
   });
 
-  testWidgets('child navigating to subscription lands on gallery', (
+  testWidgets('child navigating to subscription lands on My Day', (
     tester,
   ) async {
     final role = RoleController(AppRole.child);
@@ -172,10 +173,12 @@ void main() {
     router.go(screenPath('SCR-FAT-056'));
     await tester.pumpAndSettle();
 
-    expect(router.state.uri.path, '/gallery');
+    expect(router.state.uri.path, roleGuardChildHomePath);
+    AppToast.dismiss();
+    await tester.pump();
   });
 
-  testWidgets('UI-007 mother navigating to subscription lands on gallery', (
+  testWidgets('UI-007 mother navigating to subscription lands on Today', (
     tester,
   ) async {
     final role = RoleController(AppRole.mother);
@@ -207,7 +210,9 @@ void main() {
     router.go(screenPath('SCR-FAT-057'));
     await tester.pumpAndSettle();
 
-    expect(router.state.uri.path, '/gallery');
+    expect(router.state.uri.path, roleGuardParentHomePath);
+    AppToast.dismiss();
+    await tester.pump();
   });
 
   testWidgets('father can open audit route', (tester) async {
@@ -245,7 +250,7 @@ void main() {
     expect(find.byType(PlaceholderScreen), findsNothing);
   });
 
-  testWidgets('SET-015 mother navigating to brain lands on gallery', (
+  testWidgets('SET-015 mother navigating to brain lands on Today', (
     tester,
   ) async {
     final role = RoleController(AppRole.mother);
@@ -277,11 +282,13 @@ void main() {
     router.go(screenPath('SCR-FAT-029'));
     await tester.pumpAndSettle();
 
-    expect(router.state.uri.path, '/gallery');
+    expect(router.state.uri.path, roleGuardParentHomePath);
     expect(find.byType(BrainControlScreen), findsNothing);
+    AppToast.dismiss();
+    await tester.pump();
   });
 
-  testWidgets('SET-015 child navigating to brain lands on gallery', (
+  testWidgets('SET-015 child navigating to brain lands on My Day', (
     tester,
   ) async {
     final role = RoleController(AppRole.child);
@@ -313,8 +320,10 @@ void main() {
     router.go(screenPath('SCR-FAT-029'));
     await tester.pumpAndSettle();
 
-    expect(router.state.uri.path, '/gallery');
+    expect(router.state.uri.path, roleGuardChildHomePath);
     expect(find.byType(BrainControlScreen), findsNothing);
+    AppToast.dismiss();
+    await tester.pump();
   });
 
   testWidgets('SET-015 father can open brain control route', (tester) async {

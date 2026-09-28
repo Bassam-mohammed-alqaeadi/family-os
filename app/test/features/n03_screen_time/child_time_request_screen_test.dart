@@ -44,6 +44,8 @@ void main() {
       onNavigate: nav.add,
     );
     expect(find.byKey(ChildTimeRequestKeys.body), findsOneWidget);
+    expect(find.byKey(ChildTimeRequestKeys.localHonesty), findsOneWidget);
+    expect(find.textContaining('this device only'), findsOneWidget);
 
     await tester.ensureVisible(find.byKey(ChildTimeRequestKeys.submitCta));
     await tester.pumpAndSettle();

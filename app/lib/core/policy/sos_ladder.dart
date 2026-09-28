@@ -191,8 +191,34 @@ final class SosLadder {
   }
 
   /// Verified + enabled backups only (escalation eligibility).
+  ///
+  /// Hard-skip law: unverified / disabled never escalate even if UI-enabled.
   List<SosBackupContact> get verifiedEscalationBackups =>
       backupsByPriority.where((b) => b.isEscalationEligible).toList();
+
+  /// Reassigns priorities 1..n from [ordered] (must be the full backup set).
+  SosLadder withReprioritizedBackups(List<SosBackupContact> ordered) {
+    final next = <SosBackupContact>[];
+    for (var i = 0; i < ordered.length; i++) {
+      next.add(ordered[i].copyWith(priority: i + 1));
+    }
+    return copyWith(backups: next);
+  }
+
+  /// Moves [backupId] up (−1) or down (+1) in escalation order.
+  SosLadder? movedBackup(String backupId, int delta) {
+    if (delta == 0) return null;
+    final ordered = backupsByPriority;
+    final idx = ordered.indexWhere((b) => b.id == backupId);
+    if (idx < 0) return null;
+    final target = idx + delta;
+    if (target < 0 || target >= ordered.length) return null;
+    final swapped = List<SosBackupContact>.from(ordered);
+    final tmp = swapped[idx];
+    swapped[idx] = swapped[target];
+    swapped[target] = tmp;
+    return withReprioritizedBackups(swapped);
+  }
 
   /// Ordered rung-1 member ids (father, mother when present).
   List<String> get rung1MemberIds {

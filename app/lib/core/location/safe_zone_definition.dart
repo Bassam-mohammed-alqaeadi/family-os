@@ -20,6 +20,7 @@ final class SafeZoneDefinition {
     this.alertEnter = true,
     this.alertExit = true,
     this.alertNoShow = false,
+    this.noShowDeadlineMinutes,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -38,6 +39,11 @@ final class SafeZoneDefinition {
   final bool alertEnter;
   final bool alertExit;
   final bool alertNoShow;
+
+  /// Minutes from local midnight for “must arrive by” when [alertNoShow] is
+  /// armed. Null = not set (Local intent only — no schedule worker yet).
+  final int? noShowDeadlineMinutes;
+
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -53,6 +59,8 @@ final class SafeZoneDefinition {
     bool? alertEnter,
     bool? alertExit,
     bool? alertNoShow,
+    int? noShowDeadlineMinutes,
+    bool clearNoShowDeadline = false,
     DateTime? updatedAt,
   }) {
     return SafeZoneDefinition(
@@ -67,6 +75,9 @@ final class SafeZoneDefinition {
       alertEnter: alertEnter ?? this.alertEnter,
       alertExit: alertExit ?? this.alertExit,
       alertNoShow: alertNoShow ?? this.alertNoShow,
+      noShowDeadlineMinutes: clearNoShowDeadline
+          ? null
+          : (noShowDeadlineMinutes ?? this.noShowDeadlineMinutes),
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

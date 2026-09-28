@@ -38,6 +38,7 @@ void main() {
     expect(find.byKey(ChildTutorKeys.body), findsOneWidget);
     expect(find.byKey(ChildTutorKeys.policyBanner), findsOneWidget);
     expect(find.textContaining('never give the ready-made'), findsOneWidget);
+    expect(find.textContaining('upcoming update'), findsOneWidget);
 
     await tester.ensureVisible(find.byKey(ChildTutorKeys.choice('c10')));
     await tester.pumpAndSettle();

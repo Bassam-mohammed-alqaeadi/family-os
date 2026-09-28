@@ -250,6 +250,7 @@ void main() {
         ChildDayBoardScreen(
           childId: child,
           syncBus: syncBus,
+          timeRequestService: service,
           showModeNotices: false,
         ),
       ),

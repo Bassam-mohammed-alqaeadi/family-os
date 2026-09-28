@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'capability_registry.dart';
 import 'local_database.dart';
 import 'memory_local_database.dart';
+import 'mock_remote_adapter.dart';
 import 'sqlite_local_database.dart';
 
 /// Single shared [FamilyLocalDatabase] for all Stage-1 FS runtimes.
@@ -20,6 +21,7 @@ final class FsSessionKernel {
   static var _opened = false;
   static var _usingSqlite = false;
   static var _sqliteFallback = false;
+  static RemoteSyncPort? _remoteSync;
 
   /// True when the live session DB is SQLite (restart-capable).
   static bool get usingSqlite => _usingSqlite;
@@ -33,6 +35,18 @@ final class FsSessionKernel {
     // Lazy Memory placeholder; [ensureOpen] may replace with SQLite.
     final created = MemoryLocalDatabase();
     _db = created;
+    return created;
+  }
+
+  /// MOCK-REMOTE outbox port bound to the session DB (EVT-01-A).
+  ///
+  /// Enqueue ≠ deliver. Prefer [LocalEventPersistence.openOutbox] when
+  /// restart-safe path is required.
+  static RemoteSyncPort get remoteSyncPort {
+    final existing = _remoteSync;
+    if (existing != null) return existing;
+    final created = MockRemoteAdapter(db);
+    _remoteSync = created;
     return created;
   }
 
@@ -57,6 +71,7 @@ final class FsSessionKernel {
 
     await _db!.open();
     await CapabilityRegistry(_db!).applyAllCampaignCapabilities();
+    _remoteSync = MockRemoteAdapter(_db!);
     _opened = true;
   }
 
@@ -98,6 +113,7 @@ final class FsSessionKernel {
     _opened = false;
     _usingSqlite = false;
     _sqliteFallback = false;
+    _remoteSync = null;
     final existing = _db;
     _db = null;
     if (existing != null) {

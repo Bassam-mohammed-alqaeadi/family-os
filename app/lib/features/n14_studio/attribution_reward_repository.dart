@@ -1,12 +1,11 @@
 import 'package:family_os/core/domain/child_id.dart';
+import 'package:family_os/core/identity/roster_children.dart';
 import 'package:family_os/core/domain/minutes.dart';
 import 'package:family_os/core/domain/role.dart';
-import 'package:family_os/core/policy/screen_time_policy_repository.dart';
 import 'package:family_os/core/policy/wallet_ledger.dart';
+import 'package:family_os/core/screen_time/screen_time_local_persistence.dart';
 import 'package:family_os/features/education/learning_assignment_models.dart';
 import 'package:family_os/features/education/learning_assignment_repository.dart';
-import 'package:family_os/features/n03_screen_time/child_screen_time_screen.dart'
-    show stage1PolicyPrefsStore;
 import 'package:family_os/features/n14_studio/attribution_reward_models.dart';
 
 /// App wallet ids for Studio attribution rewards (minutes-only · ع-١).
@@ -31,33 +30,41 @@ final class InMemoryAttributionRewardRepository
     AttributionRewardSnapshot? seed,
     LearningAssignmentRepository? assignments,
     WalletLedger? wallet,
-  }) : _snap = seed ?? attributionRewardPrototypeFixture(),
+  }) : _snap = seed ?? attributionRewardEmptyFixture(),
        _assignments = assignments ?? stage1LearningAssignmentRepository,
-       _wallet =
-           wallet ??
-           WalletLedger(
-             PrefsScreenTimePolicyRepository(stage1PolicyPrefsStore),
-           );
+       _injectedWallet = wallet;
 
   AttributionRewardSnapshot _snap;
   final LearningAssignmentRepository _assignments;
-  final WalletLedger _wallet;
+  final WalletLedger? _injectedWallet;
+  WalletLedger? _resolvedWallet;
 
   /// Optional gate for loading-state widget tests.
   Future<void> Function()? loadGate;
+
+  Future<WalletLedger> _wallet() async {
+    final injected = _injectedWallet;
+    if (injected != null) return injected;
+    return _resolvedWallet ??= WalletLedger(
+      await ScreenTimeLocalPersistence.openPolicyRepository(),
+    );
+  }
 
   @override
   Future<AttributionRewardSnapshot> load() async {
     final gate = loadGate;
     if (gate != null) await gate();
+    _snap = bindAttributionToRoster(_snap);
     return _copy();
   }
 
   @override
   Future<AttributionRewardSnapshot> assign() async {
+    _snap = bindAttributionToRoster(_snap);
     if (!_snap.canAssign) return _copy();
     final child = _snap.selectedChild!;
     final childId = ChildId(child.id);
+    final wallet = await _wallet();
 
     for (final reward in _snap.rewards) {
       if (!reward.enabled || reward.minutes <= 0) continue;
@@ -65,7 +72,7 @@ final class InMemoryAttributionRewardRepository
         AttributionRewardKind.wallet => AttributionWalletApps.education,
         AttributionRewardKind.play => AttributionWalletApps.play,
       };
-      await _wallet.earn(
+      await wallet.earn(
         childId: childId,
         appId: appId,
         assignee: AppRole.child,
@@ -116,28 +123,9 @@ AttributionRewardSnapshot attributionRewardEmptyFixture() {
 ///
 /// Rule 23: generic nameKeys only (no planted person names).
 AttributionRewardSnapshot attributionRewardPrototypeFixture() {
-  return const AttributionRewardSnapshot(
-    children: [
-      AttributionChild(
-        id: 'child_a',
-        nameKey: 'one',
-        emoji: '🦁',
-        swatch: AttributionChildSwatch.purple,
-      ),
-      AttributionChild(
-        id: 'child_b',
-        nameKey: 'two',
-        emoji: '🐱',
-        swatch: AttributionChildSwatch.sky,
-      ),
-      AttributionChild(
-        id: 'child_c',
-        nameKey: 'three',
-        emoji: '🐼',
-        swatch: AttributionChildSwatch.amber,
-      ),
-    ],
-    selectedChildId: 'child_a',
+  return AttributionRewardSnapshot(
+    children: _rosterAttributionChildren(),
+    selectedChildId: activeRosterChild()?.id.value,
     schedule: AttributionSchedule.tomorrowAfterSchool,
     rewards: [
       AttributionRewardToggle(
@@ -157,3 +145,52 @@ AttributionRewardSnapshot attributionRewardPrototypeFixture() {
     masteryPercent: 80,
   );
 }
+
+List<AttributionChild> _rosterAttributionChildren() {
+  const swatches = [
+    AttributionChildSwatch.purple,
+    AttributionChildSwatch.sky,
+    AttributionChildSwatch.amber,
+  ];
+  const emojis = ['🦁', '🐱', '🐼', '🦊', '🐰'];
+  final roster = activeFamilyRosterChildren();
+  return [
+    for (var i = 0; i < roster.length; i++)
+      AttributionChild(
+        id: roster[i].id.value,
+        nameKey: roster[i].nameKey,
+        emoji: emojis[i % emojis.length],
+        swatch: swatches[i % swatches.length],
+      ),
+  ];
+}
+
+/// OD-14 — picker children = active family roster.
+AttributionRewardSnapshot bindAttributionToRoster(
+  AttributionRewardSnapshot snap,
+) {
+  final children = _rosterAttributionChildren();
+  if (children.isEmpty) {
+    return const AttributionRewardSnapshot();
+  }
+  if (snap.children.isEmpty &&
+      snap.selectedChildId == null &&
+      !snap.assigned &&
+      snap.rewards.isEmpty) {
+    return snap;
+  }
+  final activeId = activeRosterChild()!.id.value;
+  final selected = snap.selectedChildId;
+  final keep = selected != null && children.any((c) => c.id == selected)
+      ? selected
+      : activeId;
+  return AttributionRewardSnapshot(
+    children: children,
+    selectedChildId: keep,
+    schedule: snap.schedule,
+    rewards: List<AttributionRewardToggle>.from(snap.rewards),
+    masteryPercent: snap.masteryPercent,
+    assigned: snap.assigned,
+  );
+}
+

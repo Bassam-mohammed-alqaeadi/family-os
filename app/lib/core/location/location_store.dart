@@ -49,6 +49,9 @@ final class LocalLocationStore implements LocationDomainRepository {
       'alert_enter': zone.alertEnter ? 1 : 0,
       'alert_exit': zone.alertExit ? 1 : 0,
       'alert_no_show': zone.alertNoShow ? 1 : 0,
+      'no_show_deadline_minutes': zone.alertNoShow
+          ? zone.noShowDeadlineMinutes
+          : null,
       'created_at': zone.createdAt.toUtc().millisecondsSinceEpoch,
       'updated_at': now.millisecondsSinceEpoch,
     }, conflictAlgorithm: LocalConflictAlgorithm.replace);
@@ -150,6 +153,7 @@ final class LocalLocationStore implements LocationDomainRepository {
       alertEnter: (row['alert_enter'] as int? ?? 1) == 1,
       alertExit: (row['alert_exit'] as int? ?? 1) == 1,
       alertNoShow: (row['alert_no_show'] as int? ?? 0) == 1,
+      noShowDeadlineMinutes: row['no_show_deadline_minutes'] as int?,
       createdAt: DateTime.fromMillisecondsSinceEpoch(
         row['created_at']! as int,
         isUtc: true,

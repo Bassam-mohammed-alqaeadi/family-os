@@ -12,6 +12,7 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 
 /// Widget keys for SCR-FAT-041 acceptance.
@@ -71,9 +72,12 @@ class AddFromSourceScreen extends StatefulWidget {
   State<AddFromSourceScreen> createState() => _AddFromSourceScreenState();
 }
 
+enum _PdfSource { math, science }
+
 class _AddFromSourceScreenState extends State<AddFromSourceScreen> {
   late final SosFireService _sos;
   var _sosBusy = false;
+  var _pdfSource = _PdfSource.math;
 
   AppRole get _role {
     final override = widget.roleOverride;
@@ -111,7 +115,7 @@ class _AddFromSourceScreenState extends State<AddFromSourceScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'family');
+    await parentSosSenderOf(context).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-FAT-018'));
@@ -148,95 +152,96 @@ class _AddFromSourceScreenState extends State<AddFromSourceScreen> {
           top: Radius.circular(radii.card),
         ),
       ),
-      builder: (sheetContext) {
-        return SafeArea(
-          key: AddFromSourceKeys.pdfSheet,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  l10n.addFromSourcePdfSheetTitle,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: colors.ink,
+      builder: (_) => StatefulBuilder(
+        builder: (sheetContext, setSheetState) {
+          void select(_PdfSource source) {
+            setSheetState(() => _pdfSource = source);
+          }
+
+          return SafeArea(
+            key: AddFromSourceKeys.pdfSheet,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    l10n.addFromSourcePdfSheetTitle,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: colors.ink,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  l10n.addFromSourcePdfSheetBody,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: colors.ink2,
-                    height: 1.5,
+                  const SizedBox(height: 6),
+                  Text(
+                    l10n.addFromSourcePdfSheetBody,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: colors.ink2,
+                      height: 1.5,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _PdfOptionTile(
-                  tileKey: AddFromSourceKeys.pdfOptionMath,
-                  icon: Icons.menu_book_outlined,
-                  title: l10n.addFromSourcePdfMathTitle,
-                  subtitle: l10n.addFromSourcePdfMathSub,
-                  selected: true,
-                  colors: colors,
-                  radii: radii,
-                  onTap: () {},
-                ),
-                const SizedBox(height: 8),
-                _PdfOptionTile(
-                  tileKey: AddFromSourceKeys.pdfOptionScience,
-                  icon: Icons.science_outlined,
-                  title: l10n.addFromSourcePdfScienceTitle,
-                  subtitle: l10n.addFromSourcePdfScienceSub,
-                  selected: false,
-                  colors: colors,
-                  radii: radii,
-                  onTap: () {
-                    AppToast.show(
-                      context,
-                      message: l10n.addFromSourcePdfSelectedToast,
-                    );
-                  },
-                ),
-                const SizedBox(height: 8),
-                _PdfOptionTile(
-                  tileKey: AddFromSourceKeys.pdfPickDevice,
-                  icon: Icons.folder_open_outlined,
-                  title: l10n.addFromSourcePdfDeviceTitle,
-                  subtitle: null,
-                  selected: false,
-                  dashed: true,
-                  colors: colors,
-                  radii: radii,
-                  onTap: () {
-                    AppToast.show(
-                      context,
-                      message: l10n.addFromSourcePdfDeviceToast,
-                    );
-                  },
-                ),
-                const SizedBox(height: 14),
-                PrimaryBtn(
-                  key: AddFromSourceKeys.pdfGenerate,
-                  label: l10n.addFromSourcePdfGenerateCta,
-                  onPressed: () {
-                    Navigator.of(sheetContext).pop();
-                    AppToast.show(
-                      context,
-                      message: l10n.addFromSourcePdfProcessingToast,
-                    );
-                    _go('SCR-FAT-043');
-                  },
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  _PdfOptionTile(
+                    tileKey: AddFromSourceKeys.pdfOptionMath,
+                    icon: Icons.menu_book_outlined,
+                    title: l10n.addFromSourcePdfMathTitle,
+                    subtitle: l10n.addFromSourcePdfMathSub,
+                    selected: _pdfSource == _PdfSource.math,
+                    colors: colors,
+                    radii: radii,
+                    onTap: () => select(_PdfSource.math),
+                  ),
+                  const SizedBox(height: 8),
+                  _PdfOptionTile(
+                    tileKey: AddFromSourceKeys.pdfOptionScience,
+                    icon: Icons.science_outlined,
+                    title: l10n.addFromSourcePdfScienceTitle,
+                    subtitle: l10n.addFromSourcePdfScienceSub,
+                    selected: _pdfSource == _PdfSource.science,
+                    colors: colors,
+                    radii: radii,
+                    onTap: () => select(_PdfSource.science),
+                  ),
+                  const SizedBox(height: 8),
+                  _PdfOptionTile(
+                    tileKey: AddFromSourceKeys.pdfPickDevice,
+                    icon: Icons.folder_open_outlined,
+                    title: l10n.addFromSourcePdfDeviceTitle,
+                    subtitle: null,
+                    selected: false,
+                    dashed: true,
+                    colors: colors,
+                    radii: radii,
+                    onTap: () {
+                      AppToast.show(
+                        context,
+                        message: l10n.addFromSourcePdfDeviceToast,
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 14),
+                  PrimaryBtn(
+                    key: AddFromSourceKeys.pdfGenerate,
+                    label: l10n.addFromSourcePdfGenerateCta,
+                    onPressed: () {
+                      Navigator.of(sheetContext).pop();
+                      AppToast.show(
+                        context,
+                        message: l10n.addFromSourcePdfProcessingToast,
+                      );
+                      _go('SCR-FAT-043');
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
@@ -524,7 +529,7 @@ class _PdfHeroCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Icon(Icons.chevron_left, color: colors.p600, size: 22),
+                  Icon(Icons.chevron_right, color: colors.p600, size: 22),
                 ],
               ),
             ),
@@ -595,7 +600,7 @@ class _SourceRow extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(Icons.chevron_left, color: colors.ink2, size: 20),
+              Icon(Icons.chevron_right, color: colors.ink2, size: 20),
             ],
           ),
         ),
@@ -629,54 +634,66 @@ class _PdfOptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
+    return Semantics(
       key: tileKey,
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(radii.card),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(radii.card),
-            border: Border.all(
-              color: selected ? colors.p500 : colors.border,
-              width: selected ? 1.5 : 1,
+      container: true,
+      button: true,
+      selected: selected,
+      label: title,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(radii.card),
+          child: Ink(
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(radii.card),
+              border: Border.all(
+                color: selected ? colors.p500 : colors.border,
+                width: selected ? 1.5 : 1,
+              ),
             ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Row(
-              children: [
-                Icon(icon, size: 22, color: colors.p700),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w800,
-                          color: dashed ? colors.p700 : colors.ink,
-                        ),
-                      ),
-                      if (subtitle != null) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          subtitle!,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: colors.ink2,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 48),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
                 ),
-              ],
+                child: Row(
+                  children: [
+                    Icon(icon, size: 22, color: colors.p700),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w800,
+                              color: dashed ? colors.p700 : colors.ink,
+                            ),
+                          ),
+                          if (subtitle != null) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              subtitle!,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: colors.ink2,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),

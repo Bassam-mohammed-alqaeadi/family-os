@@ -11,6 +11,11 @@ import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/i18n/numeral_format.dart';
+import 'package:family_os/features/n02_day/children_list_repository.dart';
+import 'package:family_os/features/n02_day/day_child_mock.dart';
+
+export 'package:family_os/core/i18n/numeral_format.dart' show toEasternDigits, formatAppInt;
 
 /// Character emoji options (prototype FAT-003 picker).
 const List<String> kAddChildCharacters = ['🦁', '🐱', '🐼', '🦊', '🐰'];
@@ -25,16 +30,6 @@ String generateMockChildAlias([Random? random]) {
   return 'child_$hex';
 }
 
-/// Eastern Arabic digits for AR labels (prototype numerals).
-String toEasternDigits(int value) {
-  const western = '0123456789';
-  const eastern = '٠١٢٣٤٥٦٧٨٩';
-  return value.toString().split('').map((ch) {
-    final i = western.indexOf(ch);
-    return i < 0 ? ch : eastern[i];
-  }).join();
-}
-
 /// SCR-FAT-003 — إضافة ابن (bare parent onboarding, mock-first).
 ///
 /// Parametric / Rule 23: name field starts empty — no default person name.
@@ -45,6 +40,7 @@ class AddChildScreen extends StatefulWidget {
     this.onContinue,
     this.mockAlias,
     this.managementRepository,
+    this.childrenListRepository,
   });
 
   /// Test seam — when null, navigates to `/scr-fat-004`.
@@ -53,6 +49,9 @@ class AddChildScreen extends StatefulWidget {
   /// Optional stable alias for tests; otherwise a local mock is generated.
   final String? mockAlias;
   final ChildDeviceManagementRepository? managementRepository;
+
+  /// VX-B6 — display roster write (name/age/emoji/colour). Null → stage1.
+  final ChildrenListRepository? childrenListRepository;
 
   @override
   State<AddChildScreen> createState() => _AddChildScreenState();
@@ -85,7 +84,13 @@ class _AddChildScreenState extends State<AddChildScreen> {
 
   bool get _canContinue => _nameController.text.trim().isNotEmpty;
 
-  void _continue() {
+  DayChildSwatch get _swatch => switch (_colorIndex % 3) {
+        0 => DayChildSwatch.purple,
+        1 => DayChildSwatch.sky,
+        _ => DayChildSwatch.amber,
+      };
+
+  Future<void> _continue() async {
     if (!_canContinue) return;
     final repo =
         widget.managementRepository ?? stage1ChildDeviceManagementRepository;
@@ -106,7 +111,26 @@ class _AddChildScreenState extends State<AddChildScreen> {
         AppToast.show(context, message: l10n.settingsPersistError);
         return;
       }
+      final name = _nameController.text.trim();
+      final roster =
+          widget.childrenListRepository ?? stage1ChildrenListRepository;
+      await roster.upsertChild(
+        ChildrenListEntry(
+          id: _alias,
+          displayName: name,
+          emoji: kAddChildCharacters[_characterIndex],
+          swatch: _swatch,
+          ageYears: _age,
+          locationLabel: '',
+          lastSeenLabel: '',
+          batteryLabel: '',
+          timeLeftLabel: '',
+          health: ChildListHealth.excellent,
+        ),
+        familyId: runtime.activeFamilyId,
+      );
     }
+    if (!mounted) return;
     if (widget.onContinue != null) {
       widget.onContinue!();
       return;
@@ -124,10 +148,8 @@ class _AddChildScreenState extends State<AddChildScreen> {
   ];
 
   String _ageLabel(AppLocalizations l10n, int age) {
-    final years = l10n.localeName.startsWith('ar')
-        ? toEasternDigits(age)
-        : '$age';
-    return l10n.addChildAgeYears(years);
+    // VX-B3 · D5 — Western digits on Arabic screens too.
+    return l10n.addChildAgeYears(formatAppInt(age));
   }
 
   @override

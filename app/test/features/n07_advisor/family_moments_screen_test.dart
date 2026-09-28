@@ -40,6 +40,7 @@ void main() {
     await tester.tap(find.byKey(FamilyMomentsKeys.shareCta));
     await tester.pump();
     expect(find.textContaining('Pride card'), findsOneWidget);
+    expect(find.textContaining('upcoming update'), findsWidgets);
     expect(repo.prideShared, isTrue);
     AppToast.dismiss();
     await tester.pumpAndSettle();

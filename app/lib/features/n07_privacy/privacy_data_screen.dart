@@ -8,11 +8,13 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
 import 'package:family_os/core/policy/collection_scope.dart';
 import 'package:family_os/core/policy/family_data_lifecycle.dart';
 import 'package:family_os/core/policy/privacy_collection_policy.dart';
 import 'package:family_os/core/policy/privacy_collection_repository.dart';
 import 'package:family_os/core/policy/privacy_collection_sync_bus.dart';
+import 'package:family_os/core/prefs_misc/prefs_misc_runtime.dart';
 import 'package:family_os/features/n07_privacy/audit_log_panel.dart';
 
 /// Widget keys for SCR-FAT-059 / SET-012 + SET-013 acceptance.
@@ -55,7 +57,7 @@ class PrivacyDataScreen extends StatefulWidget {
   /// Stage-1 demo child when null.
   final ChildId? childId;
 
-  /// Rule 25 seam — null → prefs-backed Stage-1 store.
+  /// Rule 25 seam — null → Local KV (DOM-PREFS-MISC-PRIVACY).
   final PrivacyCollectionRepository? repository;
 
   /// P12 sync — null → [stage1PrivacyCollectionSyncBus].
@@ -76,27 +78,54 @@ class PrivacyDataScreen extends StatefulWidget {
 
 class _PrivacyDataScreenState extends State<PrivacyDataScreen> {
   late final ChildId _childId;
-  late final PrivacyCollectionRepository _repository;
+  PrivacyCollectionRepository? _repository;
   late final PrivacyCollectionSyncBus _syncBus;
   late final FamilyDataLifecycleService _lifecycle;
   late PrivacyCollectionPolicy _policy;
   var _loading = true;
   var _saving = false;
+  var _unavailable = false;
 
   @override
   void initState() {
     super.initState();
-    _childId = widget.childId ?? ChildId('demo-child');
-    _repository = widget.repository ??
-        PrefsPrivacyCollectionRepository(
-          stage1PrivacyCollectionPrefsStore,
-          audit: stage1PrivacyCollectionAudit,
-        );
+    _childId = resolveActiveChildIdOf(context, explicit: widget.childId);
+    if (widget.repository != null) {
+      _repository = widget.repository;
+    } else {
+      _bootstrapLocal();
+    }
     _syncBus = widget.syncBus ?? stage1PrivacyCollectionSyncBus;
     _lifecycle = widget.lifecycle ?? stage1FamilyDataLifecycle;
     _lifecycle.addListener(_onLifecycle);
     _policy = PrivacyCollectionPolicy.defaults(childId: _childId.value);
-    _load();
+    if (widget.repository != null) {
+      _load();
+    }
+  }
+
+  Future<void> _bootstrapLocal() async {
+    try {
+      await PrefsMiscRuntime.ensureOpen();
+      if (PrefsMiscRuntime.unavailable || PrefsMiscRuntime.privacy == null) {
+        throw StateError('PrefsMiscRuntime unavailable');
+      }
+      _repository = PrefsMiscRuntime.privacy;
+      _unavailable = false;
+    } catch (e, st) {
+      debugPrint(
+        'DOM-PREFS-MISC-PRIVACY: Local KV bootstrap failed — '
+        'no Memory Prefs fallback: $e\n$st',
+      );
+      if (!mounted) return;
+      setState(() {
+        _repository = null;
+        _unavailable = true;
+        _loading = false;
+      });
+      return;
+    }
+    await _load();
   }
 
   @override
@@ -110,7 +139,9 @@ class _PrivacyDataScreenState extends State<PrivacyDataScreen> {
   }
 
   Future<void> _load() async {
-    final loaded = await _repository.load(_childId.value);
+    final repo = _repository;
+    if (repo == null) return;
+    final loaded = await repo.load(_childId.value);
     if (!mounted) return;
     _syncBus.hydrate(loaded);
     setState(() {
@@ -134,7 +165,8 @@ class _PrivacyDataScreenState extends State<PrivacyDataScreen> {
     return canRunFamilyDataLifecycle(_role);
   }
 
-  bool get _canSave => _canEdit && !_saving && !_loading;
+  bool get _canSave =>
+      _canEdit && !_saving && !_loading && _repository != null && !_unavailable;
 
   void _onToggle(CollectionScope scope, bool enabled) {
     if (!_canEdit) return;
@@ -143,8 +175,10 @@ class _PrivacyDataScreenState extends State<PrivacyDataScreen> {
 
   Future<void> _save() async {
     if (!_canSave) return;
+    final repo = _repository;
+    if (repo == null) return;
     setState(() => _saving = true);
-    final result = await _repository.save(
+    final result = await repo.save(
       _policy.copyWith(updatedAt: DateTime.now().toUtc()),
       actor: _role,
     );

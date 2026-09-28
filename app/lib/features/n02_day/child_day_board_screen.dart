@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/role_guard.dart';
+import 'package:family_os/app/shell_tab_more_tools.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/banner.dart';
@@ -14,15 +15,15 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/modes/modes.dart';
-import 'package:family_os/core/modes/modes_runtime.dart';
 import 'package:family_os/core/policy/policy_sync_bus.dart';
 import 'package:family_os/core/policy/screen_time_policy.dart';
 import 'package:family_os/core/policy/smart_mode_activation.dart';
 import 'package:family_os/core/policy/smart_mode_activation_bus.dart';
 import 'package:family_os/core/policy/smart_mode_prefs.dart';
 import 'package:family_os/core/policy/smart_modes.dart';
-import 'package:family_os/core/policy/time_request_repository.dart';
 import 'package:family_os/core/policy/time_request_service.dart';
+import 'package:family_os/core/screen_time/screen_time_runtime.dart';
+import 'package:family_os/core/screen_time/stage1_time_request_runtime.dart';
 import 'package:family_os/features/n02_day/day_board_motion.dart';
 import 'package:family_os/features/n09_smart_modes/modes_ux_bridge.dart';
 
@@ -56,9 +57,11 @@ class ChildDayBoardScreen extends StatefulWidget {
   ChildDayBoardScreen({
     super.key,
     ChildId? childId,
+    this.screenTimeChildId,
     this.activationBus,
     this.syncBus,
     this.modes,
+    this.timeRequestService,
     this.initialPolicy,
     this.emptyDay = false,
     this.showModeNotices = true,
@@ -68,6 +71,10 @@ class ChildDayBoardScreen extends StatefulWidget {
   /// Parametric child key (Rule 13 / G8) — never a display name.
   final ChildId childId;
 
+  /// Same child in the Screen Time family-scoped key (policy mirror + time
+  /// grants); null → [childId].
+  final ChildId? screenTimeChildId;
+
   /// P12 smart-mode sync — null → [stage1SmartModeActivationBus].
   final SmartModeActivationBus? activationBus;
 
@@ -76,6 +83,9 @@ class ChildDayBoardScreen extends StatefulWidget {
 
   /// FS-005 domain seam — when set, shows multi-mode disclosure (W-C01/02).
   final ModesService? modes;
+
+  /// Optional inject — null → [ScreenTimeRuntime] / [Stage1TimeRequestRuntime].
+  final TimeRequestService? timeRequestService;
 
   /// Optional seed before first bus event (tests / hydrate from repo).
   final ScreenTimePolicy? initialPolicy;
@@ -99,7 +109,7 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
   StreamSubscription<ChildPolicyMirror>? _policySub;
   late SmartModeActivation _activation;
   late ChildPolicyMirror _mirror;
-  late final TimeRequestService _requestService;
+  TimeRequestService? _requestService;
   ModesEvaluation? _modesEval;
   ModesService? _bootstrappedModes;
   int _temporaryGrantRemaining = 0;
@@ -115,15 +125,13 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
 
   String get _childKey => widget.childId.value;
 
+  ChildId get _screenTimeChild => widget.screenTimeChildId ?? widget.childId;
+
   @override
   void initState() {
     super.initState();
     _activationBus = widget.activationBus ?? stage1SmartModeActivationBus;
     _syncBus = widget.syncBus ?? stage1PolicySyncBus;
-    _requestService = TimeRequestService(
-      repository: PrefsTimeRequestRepository(stage1TimeRequestPrefsStore),
-      decisionBus: stage1TimeRequestDecisionBus,
-    );
     _activation = _activationBus.activationOf(_childKey);
     _prevModeId = _activation.active ? _activation.modeId : null;
     _prevActive = _activation.active;
@@ -138,14 +146,14 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
     }
 
     if (widget.initialPolicy != null) {
-      _syncBus.hydrate(widget.childId, policy: widget.initialPolicy);
+      _syncBus.hydrate(_screenTimeChild, policy: widget.initialPolicy);
       _hasExplicitPolicy = true;
     }
-    _mirror = _syncBus.mirrorOf(widget.childId);
+    _mirror = _syncBus.mirrorOf(_screenTimeChild);
     if (_isExplicitMirror(_mirror)) {
       _hasExplicitPolicy = true;
     }
-    _policySub = _syncBus.watch(widget.childId).listen((next) {
+    _policySub = _syncBus.watch(_screenTimeChild).listen((next) {
       if (!mounted) return;
       setState(() {
         _mirror = next;
@@ -155,7 +163,30 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
       });
     });
     stage1TimeRequestDecisionBus.addListener(_onDecision);
-    _refreshGrantRemaining();
+    _bootstrapTimeRequests();
+  }
+
+  Future<void> _bootstrapTimeRequests() async {
+    if (widget.timeRequestService != null) {
+      _requestService = widget.timeRequestService;
+      await _refreshGrantRemaining();
+      return;
+    }
+    try {
+      // HOST-ROUTER-B — TimeRequest/Grant via ScreenTimeRuntime.
+      await ScreenTimeRuntime.ensureOpen();
+      _requestService =
+          ScreenTimeRuntime.timeRequest ??
+          await Stage1TimeRequestRuntime.ensureOpen();
+      await _refreshGrantRemaining();
+    } catch (e, st) {
+      debugPrint(
+        'DOM-ST-02C: TimeRequest Local KV bootstrap failed — '
+        'no Memory Prefs fallback: $e\n$st',
+      );
+      if (!mounted) return;
+      _requestService = null;
+    }
   }
 
   @override
@@ -171,9 +202,9 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
   }
 
   Future<void> _refreshGrantRemaining() async {
-    final remaining = await _requestService.activeGrantRemaining(
-      widget.childId,
-    );
+    final service = _requestService;
+    if (service == null) return;
+    final remaining = await service.activeGrantRemaining(_screenTimeChild);
     if (!mounted) return;
     setState(() => _temporaryGrantRemaining = remaining);
   }
@@ -290,7 +321,7 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
 
   bool get _showRemaining => _hasExplicitPolicy && !widget.emptyDay;
 
-  bool get _childOffline => !_syncBus.isChildOnline(widget.childId);
+  bool get _childOffline => !_syncBus.isChildOnline(_screenTimeChild);
 
   int get _effectiveRemaining =>
       _mirror.dailyRemaining + _temporaryGrantRemaining;
@@ -319,10 +350,16 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
       ),
       body: SafeArea(
         child: widget.emptyDay
-            ? AppEmptyState(
-                key: ChildDayBoardKeys.emptyState,
-                contextName: l10n.childDayBoardTitle,
-                onAction: widget.onEmptyAction,
+            ? ListView(
+                padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 32),
+                children: [
+                  AppEmptyState(
+                    key: ChildDayBoardKeys.emptyState,
+                    contextName: l10n.childDayBoardTitle,
+                    onAction: widget.onEmptyAction,
+                  ),
+                  const ShellTabMoreTools(tabId: 'myday'),
+                ],
               )
             : ListView(
                 padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 32),
@@ -511,6 +548,7 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
                             ),
                     ),
                   ),
+                  const ShellTabMoreTools(tabId: 'myday'),
                 ],
               ),
       ),

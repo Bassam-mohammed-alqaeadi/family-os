@@ -80,7 +80,7 @@ void main() {
     expect(find.byKey(LocationMapKeys.safeZonesCta), findsOneWidget);
     expect(find.byKey(LocationMapKeys.pin('child_a')), findsOneWidget);
     expect(find.byKey(LocationMapKeys.pinRow('child_b')), findsOneWidget);
-    expect(find.textContaining('ابن ١'), findsWidgets);
+    expect(find.textContaining('ابن 1'), findsWidgets);
   });
 
   testWidgets('SCR-FAT-014 history + safe-zones seams', (tester) async {

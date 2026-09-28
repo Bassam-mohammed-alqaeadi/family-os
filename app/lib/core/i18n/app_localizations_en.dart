@@ -19,6 +19,27 @@ class AppLocalizationsEn extends AppLocalizations {
       'Design tokens and core components — parent / child UI modes';
 
   @override
+  String get devScreenGalleryTitle => 'DEV · Screen catalog';
+
+  @override
+  String get devScreenGalleryHint =>
+      'Tap an SCR-ID to open that screen (bypasses product nav; RoleGuard still applies).';
+
+  @override
+  String get devScreenGallerySearchHint => 'Filter SCR-ID…';
+
+  @override
+  String get devScreenGallerySearchSemantics => 'Filter screens by SCR-ID';
+
+  @override
+  String get devScreenGalleryEmpty => 'No screens match this filter.';
+
+  @override
+  String devScreenGalleryCount(int count) {
+    return '$count screens';
+  }
+
+  @override
   String get galleryColors => 'Colors';
 
   @override
@@ -216,6 +237,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shellSosFabSemantics => 'Open SOS';
 
   @override
+  String get devRoleSwitchChild => 'Child';
+
+  @override
+  String get devRoleSwitchMother => 'Mother';
+
+  @override
+  String get devRoleSwitchFather => 'Father';
+
+  @override
   String get galleryHubItem1 => 'Tasks';
 
   @override
@@ -363,13 +393,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loginBiometric => '🔒 Sign in with fingerprint';
 
   @override
-  String get loginBiometricToast => 'Signed in with fingerprint';
+  String get loginBiometricUnavailable =>
+      'Fingerprint sign-in needs a device permission — coming later. Sign in with your email for now.';
 
   @override
   String get loginInvitePrompt => 'Got a family invite?';
 
   @override
   String get loginInviteLink => 'Join via invite link ‹';
+
+  @override
+  String get loginLocalAccountHonesty => 'Account is saved on this device';
+
+  @override
+  String get loginFieldsRequired => 'Enter email and password to continue';
+
+  @override
+  String get loginSessionActive => 'Session active';
+
+  @override
+  String get loginSessionRevoked => 'Session revoked';
+
+  @override
+  String get loginSessionExpired => 'Session expired';
 
   @override
   String get deviceModeTitle => 'Who will use this device?';
@@ -460,6 +506,18 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorNetworkMessage =>
       'We couldn\'t reach the server. Your saved data is still here — retry when you\'re back online.';
+
+  @override
+  String get errorLocalSaveMessage =>
+      'Couldn\'t save on this device — please try again.';
+
+  @override
+  String get roleGuardBlockedChild =>
+      'This page is for your parents — we brought you back to My Day 🌱';
+
+  @override
+  String get roleGuardBlockedParent =>
+      'This page is only for the account owner — we brought you back to Today.';
 
   @override
   String get errorTimeoutTitle => 'Connection timed out';
@@ -638,7 +696,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get permissionsExplainerVideoToast =>
-      'Video coming soon — mock preview';
+      'Video comes later — preview only for now';
 
   @override
   String get permissionsExplainerLocationTitle => 'Location «Always»';
@@ -825,7 +883,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String inviteMotherToast(String localPart, String level) {
-    return 'Invite sent to $localPart at «$level» level ✓';
+    return 'Local invite created for $localPart at «$level» — email/push delivery closed';
   }
 
   @override
@@ -992,6 +1050,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dayBoardPriorityTag => 'Your decision ←';
 
   @override
+  String get dayBoardTimeLeftProgressSemantics => 'Remaining screen time';
+
+  @override
   String get dayBoardAdvisorBanner =>
       'Family advisor suggests — you decide. Nothing applies on its own.';
 
@@ -1004,6 +1065,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get childScreenTimeSubtitle =>
       'Time-range windows for sleep, prayer, and study — not decorative toggles';
+
+  @override
+  String get childScreenTimeLocalHonestyBanner =>
+      'Limits save on this device only. OS screen-time enforcement is not active — status shows SIMULATED.';
+
+  @override
+  String get childScreenTimePolicyUnavailable =>
+      'Screen time settings unavailable — local storage could not open. Saving is disabled.';
 
   @override
   String get childScreenTimeSleep => 'Sleep';
@@ -1067,7 +1136,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get childScreenTimeSyncPending => 'Pending device sync';
 
   @override
-  String get childScreenTimeSyncDelivered => 'Delivered to child';
+  String get childScreenTimeSyncDelivered =>
+      'Saved on this device (local session)';
 
   @override
   String get childTimeMirrorTitle => 'My screen time';
@@ -1096,7 +1166,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get childAppsOsInterceptHonesty =>
-      'Package access policy is stored locally. Device intercept remains mock-remote — we never claim OS blocking here.';
+      'Allow/block is a local policy on this device. OS app intercept is arrives in an upcoming update — we never claim the device blocked the app.';
 
   @override
   String get childAppsObserverHint =>
@@ -1608,7 +1678,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addFromSourceTopicToast =>
-      'Topic-only create is ready in mock — type a concept next';
+      'Topic-only create is ready — type a concept next';
 
   @override
   String get addFromSourceVoiceTitle => 'Voice explanation';
@@ -1618,7 +1688,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addFromSourceVoiceToast =>
-      'Voice explanation capture is coming (P1) — mock acknowledged';
+      'Voice explanation capture is coming — noted for now';
 
   @override
   String get addFromSourceLibraryTitle => 'Import from community library';
@@ -1660,7 +1730,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'You can pick any PDF from phone or computer';
 
   @override
-  String get addFromSourcePdfSelectedToast => 'Science notes selected (mock)';
+  String get addFromSourcePdfSelectedToast => 'Science notes selected';
 
   @override
   String get addFromSourcePdfGenerateCta => 'Analyze and generate';
@@ -1702,7 +1772,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get studioCameraFrameSemantics =>
-      'Mock camera viewfinder aimed at a textbook page';
+      'Camera viewfinder aimed at a textbook page';
 
   @override
   String get studioCameraCaptureCta => 'Capture and analyze';
@@ -1822,7 +1892,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get generationOutputsGeneratingToast =>
-      'Family Advisor is generating now…';
+      'Local queue — The family assistant arrives in an upcoming update. Preview opens after generate.';
 
   @override
   String get generationOutputsNoneSelectedToast =>
@@ -1862,7 +1932,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get previewApproveRuleBanner =>
-      '90-second rule — parents approve, they do not author · light edits only';
+      '90-second rule — parents approve, they do not author. Local preview — The family assistant arrives in an upcoming update.';
 
   @override
   String get previewApproveQuizTitle => 'Quiz';
@@ -2766,7 +2836,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get webFilterNativeBlockHonesty =>
-      'Device block plane is mock-remote — policy is real; VPN/DNS not claimed';
+      'Categories and prefs are saved locally. VPN/DNS enforcement is arrives in an upcoming update — we never claim the device blocked a site.';
 
   @override
   String get webFilterPreviewSheetTitle => 'How the child sees it';
@@ -2841,7 +2911,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get webFilterDeliveryHonesty =>
-      'Policy delivery is tracked locally (Configured→Verified). Device block remains mock-remote.';
+      'Policy delivery is tracked locally (Configured→Verified). Device block arrives in an upcoming update.';
 
   @override
   String get webUnlockInboxTitle => 'Unlock requests';
@@ -2879,36 +2949,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get instantLockTitle => 'Instant lock';
 
   @override
-  String get instantLockToggle => 'Lock device now';
+  String get instantLockToggle => 'Save local lock preference';
 
   @override
   String get instantLockSubtitle =>
-      'Locks the child device immediately; SOS, chat, and Quran stay reachable';
+      'Saves a local lock preference on this device. OS device lock is arrives in an upcoming update. SOS, chat, and Quran stay reachable.';
 
   @override
-  String get instantLockStatusLocked => 'Device locked';
+  String get instantLockStatusLocked => 'Local lock request saved';
 
   @override
-  String get instantLockStatusUnlocked => 'Device unlocked';
+  String get instantLockStatusUnlocked => 'Local unlock preference saved';
 
   @override
-  String get instantLockLockedByFather => 'Locked by father';
+  String get instantLockLockedByFather =>
+      'Lock preference set by father (OS lock arrives in an upcoming update)';
 
   @override
-  String get instantLockLockedByMother => 'Locked by mother';
+  String get instantLockLockedByMother =>
+      'Lock preference set by mother (OS lock arrives in an upcoming update)';
 
   @override
-  String get instantLockAction => 'Lock';
+  String get instantLockAction => 'Save lock request';
 
   @override
-  String get instantLockUnlockAction => 'Unlock';
+  String get instantLockUnlockAction => 'Save unlock preference';
 
   @override
-  String get instantLockDeniedToast => 'Not allowed to change device lock';
+  String get instantLockDeniedToast =>
+      'Not allowed to change device lock preference';
 
   @override
   String get instantLockSupersessionBanner =>
-      'Father unlocked the device (your lock was superseded)';
+      'Father saved unlock preference (your lock preference was superseded)';
 
   @override
   String get antiTamperSectionTitle => 'Anti-tamper defenses';
@@ -2976,7 +3049,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationPrefsSubtitle =>
-      'Quiet hours mute non-critical alerts only';
+      'Organize alerts by importance so noise stays low — SOS always pierces silent mode';
 
   @override
   String get notificationPrefsQuietHours => 'Quiet hours';
@@ -3016,11 +3089,81 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationPrefsMemberChild => 'Child';
 
   @override
-  String get notificationPrefsAnalysisNotices => 'Analysis notices';
+  String get notificationPrefsAnalysisNotices => 'Family Advisor alerts';
 
   @override
   String get notificationPrefsAnalysisNoticesHint =>
-      'Optional non-critical updates when Advisor analyses run';
+      'Optional non-critical Advisor updates';
+
+  @override
+  String get notificationPrefsCardCriticalTitle => 'Critical — never muted';
+
+  @override
+  String get notificationPrefsCardCriticalBody =>
+      'SOS · leave safe zone · device cut-off — always pierce silent mode. Your peace of mind has no off switch.';
+
+  @override
+  String get notificationPrefsCardImportantTitle => 'Important';
+
+  @override
+  String get notificationPrefsCardReassuranceTitle => 'Reassurance';
+
+  @override
+  String get notificationPrefsChildRequests => 'Children\'s requests';
+
+  @override
+  String get notificationPrefsQuietHoursHint =>
+      'Quiet window: non-critical alerts wait until morning';
+
+  @override
+  String get notificationPrefsSummaryDigest => 'One summary instead of repeats';
+
+  @override
+  String get notificationPrefsSummaryDigestHint =>
+      'e.g. “3 children arrived safely” — one message';
+
+  @override
+  String get notificationPrefsEveningDigest => 'Evening digest';
+
+  @override
+  String get notificationPrefsEveningDigestTime => 'Digest time';
+
+  @override
+  String get alertDetailCategorySos => 'Category: emergency SOS';
+
+  @override
+  String get alertDetailCategoryTamper => 'Category: device protection';
+
+  @override
+  String get alertDetailSosTitle => 'Active SOS needs you';
+
+  @override
+  String get alertDetailSosBody =>
+      'A family SOS is active. Open the SOS board — never muted by quiet hours.';
+
+  @override
+  String get alertDetailSosAdvice =>
+      'Stay calm, open the board, and confirm the child is safe.';
+
+  @override
+  String get alertDetailSosOpenBoardCta => 'Open SOS board';
+
+  @override
+  String get alertDetailTamperTitle => 'Protection alert on a child device';
+
+  @override
+  String get alertDetailTamperBody =>
+      'Anti-tamper protection reported activity. Review soon — critical lane.';
+
+  @override
+  String get alertDetailTamperAdvice =>
+      'Check the device status and talk with the child if needed.';
+
+  @override
+  String get alertDetailAcknowledgeCta => 'Acknowledge';
+
+  @override
+  String get alertDetailAcknowledgeDoneBanner => 'Acknowledged';
 
   @override
   String get privacyDataTitle => 'Privacy & data';
@@ -3174,7 +3317,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get brainStageAnalyzeSubtitle =>
-      'Patterns and anomalies — server gateway when enabled';
+      'Patterns and anomalies — server assistance when enabled';
 
   @override
   String get brainStageSuggestTitle => 'Suggest';
@@ -3353,12 +3496,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String childDayBoardLastSynced(String time) {
-    return 'Last synced: $time';
+    return 'Last local policy update: $time';
   }
 
   @override
   String childDayBoardOfflineBanner(String time) {
-    return 'Offline — showing last synced board ($time). Updates when you reconnect.';
+    return 'Showing last local board ($time). Multi-device sync is closed — updates apply on this device only.';
   }
 
   @override
@@ -3411,6 +3554,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get requestInboxOfflineQueued => 'Decision queued';
+
+  @override
+  String get requestInboxLocalHonestyBanner =>
+      'Approvals save locally on this device. Push to the child device reaches other devices in an upcoming update — not delivered to other devices yet.';
+
+  @override
+  String get requestInboxUnavailable =>
+      'Time requests unavailable — local storage could not open. Decisions are disabled.';
 
   @override
   String requestInboxChildRejectedReason(String reason) {
@@ -3543,6 +3694,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ruleConsequentSoftLock => 'Soft lock';
+
+  @override
+  String get myAdvisorOwnRuleTitle => 'A rule you set';
 
   @override
   String get childWelcomeTitle => 'Child welcome';
@@ -3875,6 +4029,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Health, heartbeat, and permissions';
 
   @override
+  String get deviceHealthDevicesEmptyTitle => 'No devices yet';
+
+  @override
+  String get deviceHealthDevicesEmptyMessage =>
+      'Link a child device to see health, heartbeat, and permissions here.';
+
+  @override
   String get deviceHealthSectionAtRiskHint => 'A device may drop';
 
   @override
@@ -4165,6 +4326,22 @@ class AppLocalizationsEn extends AppLocalizations {
       'Applies to whom you choose — any later individual setting overrides and shows as an exception.';
 
   @override
+  String get childrenListLocalDemoBanner =>
+      'Location, last seen, battery, and time left on this list are local demo presentation strings — not live GPS or device battery.';
+
+  @override
+  String get inviteMotherLocalHonestyBanner =>
+      'Invite is saved locally on this device. Email delivery and mother account join require an upcoming update — nothing was emailed yet.';
+
+  @override
+  String get acceptMotherInviteLocalHonestyBanner =>
+      'Joining is recorded locally on this device. other devices account sync and email confirmation require an upcoming update — not completed yet.';
+
+  @override
+  String get childrenListSharedEnforceHonesty =>
+      'Saved locally on the kids list only — not yet enforced by PolicyEngine, Screen Time, or Web Filter.';
+
+  @override
   String get childrenListSharedScopeLabel => 'Applies to:';
 
   @override
@@ -4217,6 +4394,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get childrenListLoadingSemantics => 'Loading children list';
+
+  @override
+  String get childrenListDeviceNotLinked => 'Device not linked yet';
+
+  @override
+  String get childrenListAddBlocked =>
+      'Only the family owner or a full-access mother can manage children here';
 
   @override
   String get childrenListListSemantics => 'Children list';
@@ -4280,13 +4464,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get childProfileToolTimeRequests => 'Time requests';
 
   @override
+  String get childProfileToolApps => 'Apps';
+
+  @override
   String get childProfileToolWebFilter => 'Web filter';
 
   @override
   String get childProfileToolInstantLock => 'Instant lock';
 
   @override
+  String get childProfileToolTamperAlerts => 'Tamper alerts';
+
+  @override
+  String get childProfileToolSmartAlerts => 'Smart alerts';
+
+  @override
   String get childProfileToolSmartSupervision => 'Supervision';
+
+  @override
+  String get childProfileToolUsageReport => 'Usage report';
+
+  @override
+  String get childProfileToolFocusReport => 'Focus report';
+
+  @override
+  String get childProfileToolQuranProgress => 'Quran progress';
 
   @override
   String get childProfileToolDeviceHealth => 'Device health';
@@ -4305,6 +4507,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get childProfileDetailsLink => 'Details ‹';
+
+  @override
+  String get childProfileLocationMapCta => 'Live map';
+
+  @override
+  String get childProfileLocationHistoryCta => 'Location history';
+
+  @override
+  String get childProfileLocationGpsHonesty =>
+      'Device GPS is Coming soon — place labels are Local sample rendering, not live tracking.';
+
+  @override
+  String childProfileAssignedZonesCount(String count) {
+    return 'Assigned zones: $count';
+  }
+
+  @override
+  String get childProfileAssignedZonesSemantics =>
+      'Open safe zones for this child';
 
   @override
   String get childProfileConnectionTitle => 'Connection health';
@@ -4610,6 +4831,33 @@ class AppLocalizationsEn extends AppLocalizations {
       'History is kept for 90 days, then deleted automatically — mandatory prune policy.';
 
   @override
+  String get locationHistoryExportCta => 'Export history (Primary)';
+
+  @override
+  String get locationHistoryArchiveCta => 'Archive history (Primary)';
+
+  @override
+  String get locationHistoryExportStubToast =>
+      'Export is prepared for later sync — Local Stage-1 keeps the trail on-device only.';
+
+  @override
+  String get locationHistoryArchiveStubToast =>
+      'Archive is a Primary desk control — Local Stage-1 records intent only (no cloud wipe).';
+
+  @override
+  String get locationMapNetworkOnline => 'Network · online';
+
+  @override
+  String get locationMapNetworkOffline => 'Network · offline';
+
+  @override
+  String get locationMapNetworkUnknown => 'Network · unknown';
+
+  @override
+  String get locationMapNetworkUnavailable =>
+      'Network · not available (Stage-1)';
+
+  @override
   String get safeZonesTitle => 'Safe zones';
 
   @override
@@ -4710,6 +4958,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createSafeZoneNameHint => 'Neighborhood club';
 
   @override
+  String get createSafeZoneNameRequired => 'Enter a zone name before saving';
+
+  @override
   String get createSafeZoneAlertsHeading => 'Alert me on';
 
   @override
@@ -4724,6 +4975,30 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get createSafeZoneAlertNoShowHint =>
       'Example: did not reach school by 7:30 AM';
+
+  @override
+  String get createSafeZoneNoShowDeadlineLabel => 'Must arrive by';
+
+  @override
+  String get createSafeZoneNoShowDeadlineRequired =>
+      'Choose a must-arrive time before saving No-show';
+
+  @override
+  String get createSafeZoneNoShowDeadlineCustom => 'Custom time…';
+
+  @override
+  String get createSafeZoneNoShowDeadlineHonesty =>
+      'Saved as Local intent only — a schedule worker is not live in this build (same honesty as SMS intent).';
+
+  @override
+  String createSafeZoneNoShowDeadlineSemantics(String time) {
+    return 'Must arrive by $time';
+  }
+
+  @override
+  String safeZonesNoShowDeadline(String time) {
+    return 'Must arrive by $time';
+  }
 
   @override
   String get createSafeZoneSaveCta => 'Save safe zone →';
@@ -4859,6 +5134,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sosAlertSetupCta => 'Emergency ladder setup →';
+
+  @override
+  String get sosAlertSetupIncompleteCta => 'Finish emergency readiness →';
+
+  @override
+  String get sosAlertEmptyIncompleteMessage =>
+      'No active SOS — and the emergency desk still needs trusted contacts or readiness. Open setup to finish before the next alert.';
 
   @override
   String get sosAlertSetupSemantics => 'Open emergency setup';
@@ -5028,7 +5310,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get conversationsListHonestyBanner =>
-      'Fixed right: family chat is never limited by any plan tier — encrypted and always available';
+      'Saved on this device only. Family chat is never plan-gated — multi-device delivery reaches other phones in an upcoming update.';
+
+  @override
+  String get conversationsListFamilyThreadTitle => 'Family';
+
+  @override
+  String get conversationsListFamilyThreadPreview => 'No messages yet';
 
   @override
   String get conversationsListSectionTitle => 'Conversations';
@@ -5072,7 +5360,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get conversationFamilyPinNote =>
-      '📌 Family chat stays pinned — a fixed right never limited by any plan';
+      '📌 Family chat stays pinned and never plan-gated. Thread is local on this device — multi-device delivery Will reach other devices in an upcoming update.';
+
+  @override
+  String get conversationLocalHonestyBanner =>
+      'Thread is local on this device — never plan-gated. Multi-device delivery Will reach other devices in an upcoming update.';
 
   @override
   String get conversationToneBridgeNote =>
@@ -5170,7 +5462,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get activeCallHonestyNote =>
-      'Audio & video via LiveKit — metadata only, never recorded · 🔔 Check-in calls ring on the child\'s device even when silent';
+      'Audio & video audio and video — metadata only, never recorded · 🔔 Check-in calls ring on the child\'s device even when silent';
 
   @override
   String get activeCallPlayTogetherTitle => '🎮 Play together during the call';
@@ -5550,7 +5842,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get childChatsHonestyBanner =>
-      '🔒 All your chats are end-to-end encrypted — and never lock even when your time runs out';
+      'Chat never locks when time runs out. List is local on this device — multi-device delivery Will reach other devices in an upcoming update.';
 
   @override
   String get childChatsSafeCircleBanner =>
@@ -5606,7 +5898,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get childConversationNeverLockBanner =>
-      '💬 This chat never locks — even when play time ends. Your family is always here.';
+      'Chat never locks when play time ends. Thread is local on this device — multi-device delivery Will reach other devices in an upcoming update.';
 
   @override
   String get childConversationInputHint => 'Write a message…';
@@ -5786,7 +6078,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Press and hold the family logo for ten seconds to open the secret entry';
 
   @override
-  String get childModeLockSecretOpened => '✓ Secret entry opened (mock)';
+  String get childModeLockSecretOpened => 'Secret entry opened';
 
   @override
   String get childModeLockPasswordStepTitle => 'Step 2 — account password';
@@ -6067,10 +6359,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get focusReportPraiseNewTag => 'New';
 
   @override
-  String get focusReportPraiseSentTag => 'Praise sent ✓';
+  String get focusReportPraiseSentTag => 'Praise saved locally ✓';
 
   @override
-  String get focusReportPraiseCta => 'Send praise';
+  String get focusReportPraiseCta => 'Save praise';
 
   @override
   String focusReportRewardCta(int minutes) {
@@ -6079,7 +6371,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String focusReportPraiseDeliveredLabel(String name) {
-    return 'Your encouragement was sent to $name\'s screen:';
+    return 'Your encouragement was saved locally for $name:';
   }
 
   @override
@@ -6088,7 +6380,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String focusReportPraiseSentToast(String name) {
-    return 'Encouragement sent to $name\'s screen';
+    return 'Encouragement saved locally for $name — not delivered to another device';
   }
 
   @override
@@ -6381,12 +6673,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addEventCalendarGregorian => 'Gregorian';
 
   @override
-  String get addEventCalendarHijriToast =>
-      'Hijri calendar selected (Stage 1 mock)';
+  String get addEventCalendarHijriToast => 'Hijri calendar selected';
 
   @override
-  String get addEventCalendarGregorianToast =>
-      'Gregorian calendar selected (Stage 1 mock)';
+  String get addEventCalendarGregorianToast => 'Gregorian calendar selected';
 
   @override
   String get addEventDateHijriSample => '23 Rabi al-Awwal 1448';
@@ -6833,8 +7123,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageHelpChooseAction => 'Choose';
 
   @override
-  String get languageHelpLocaleToast =>
-      'English interface — coming in a later update';
+  String get languageHelpLocaleToast => 'Interface language updated';
 
   @override
   String get languageHelpHelpCenterSection => 'Help center';
@@ -6960,7 +7249,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get individualTimelineDiscussToast =>
-      'Suggestion queued for your family advisor (Stage 1 mock).';
+      'Suggestion queued for your family advisor.';
 
   @override
   String get individualTimelineTodayHeading => 'Today';
@@ -7207,7 +7496,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeMapsDinnerSendToast =>
-      'Sent to family chat — tonight\'s discussion is ready (Stage 1 mock)';
+      'Sent to family chat — tonight\'s discussion is ready';
 
   @override
   String get knowledgeMapsDinnerFooter =>
@@ -7284,8 +7573,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get childLearnHomeMaterialSoonToast =>
-      'Coming soon on this path (Stage 1 mock)';
+  String get childLearnHomeMaterialSoonToast => 'Coming soon on this path';
 
   @override
   String get childLearnHomeQuickTutor => 'My tutor';
@@ -7450,7 +7738,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get childFlashcardsEmptyMessage =>
-      'When a parent extracts cards from a lesson, they appear here.';
+      'When a parent extracts cards from a lesson, they appear here. Local cards only — Advisor generate Will reach other devices in an upcoming update.';
+
+  @override
+  String get childFlashcardsLocalHonestyBanner =>
+      'Flashcards are local from parent assignment — Advisor generate Will reach other devices in an upcoming update.';
 
   @override
   String get childFlashcardsEmptyCta => 'Back to My learning';
@@ -7548,8 +7840,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get childResultPraiseMasteredAdd =>
-      'You mastered adding fractions! Your parent got the news.';
+  String childResultPraiseMasteredAdd(String topic) {
+    return 'You mastered $topic!';
+  }
 
   @override
   String get childResultRewardsHeading => 'Your rewards';
@@ -7619,7 +7912,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get childTutorPolicyBanner =>
-      'I help you understand — I never give the ready-made answer. That\'s how you become the hero.';
+      'I help you understand — I never give the ready-made answer. Local Socratic UI — The tutor arrives in an upcoming update.';
 
   @override
   String get childTutorTransparencyNote =>
@@ -7655,7 +7948,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get childTutorPhotoToast =>
-      'Photo a problem — I\'ll explain step by step (Stage 1 mock)';
+      'Photo a problem — I\'ll explain step by step';
 
   @override
   String get childTutorEmptyTitle => 'Tutor is ready when you are';
@@ -7877,6 +8170,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get childTimeRequestTitle => 'Extra time request';
 
   @override
+  String get childTimeRequestLocalHonestyBanner =>
+      'Request is saved locally on this device. Push notification to parents reaches other devices in an upcoming update — not sent yet.';
+
+  @override
   String get childTimeRequestHowMuch => 'How much time do you need?';
 
   @override
@@ -8051,7 +8348,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get childTasksSubmitToast =>
-      'Proof sent — waiting for parent confirmation (Stage 1 mock)';
+      'Proof sent — waiting for parent confirmation. Saved on this device.';
+
+  @override
+  String get childTasksLocalHonestyBanner =>
+      'Tasks sync with the family board on this device. Minutes deposit on parent approve. No cloud task sync yet.';
 
   @override
   String get childTasksTagPending => 'Awaiting confirmation';
@@ -8095,14 +8396,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get childMediaShareQuickFile => 'File';
 
   @override
-  String get childMediaSharePhotoToast => 'Capture and share with your family';
+  String get childMediaSharePhotoToast =>
+      'Photo share queued locally — camera Needs a device permission — coming later';
 
   @override
   String get childMediaShareVoiceToast =>
-      'Hold to record — it arrives transcribed too (P1)';
+      'Voice share queued locally — mic Needs a device permission — coming later';
 
   @override
-  String get childMediaShareFileToast => 'Share a homework file';
+  String get childMediaShareFileToast =>
+      'File share queued locally — picker Needs a device permission — coming later';
+
+  @override
+  String get childMediaShareLocalHonestyBanner =>
+      'Recent shares are a local catalog. Capture/mic Needs a device permission — coming later. Family chat delivery Will reach other devices in an upcoming update.';
 
   @override
   String get childMediaShareRecentHeading => 'My recent shares';
@@ -8182,8 +8489,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String childArrivalCheckInToast(String place) {
-    return 'Reassurance sent to your parents: «Arrived at $place»';
+    return 'Check-in saved locally: «Arrived at $place». Parent notify will notify other devices later.';
   }
+
+  @override
+  String get childArrivalLocalHonestyBanner =>
+      'Named-place check-in only on this device. GPS live locate and parent push are CLOSED.';
 
   @override
   String get childArrivalLiveHeading => 'Your live location';
@@ -8219,7 +8530,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get smartAlertsHonestyBanner =>
-      'Watching here is transparent — your child knows Family Advisor protects their chats. No spying in our home.';
+      'Watching here is transparent — no spying. Capture/device permission Needs a device permission — coming later. The family assistant arrives in an upcoming update.';
 
   @override
   String get smartAlertsAlertWithdrawal => 'Withdrawal pattern in chats';
@@ -8301,7 +8612,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get smartAlertsDetectBody =>
-      '1. Instant block on the child\'s device\n2. Encrypted snapshot saved on your device\n3. A report reaches you: app, time, reason — you choose the next step';
+      '1. Block / snapshot / report planes are designed here\n2. Capture & device permission: Needs a device permission — coming later\n3. You decide the next step when device delivery ships';
 
   @override
   String get smartAlertsSettingsCta => 'Advanced settings';
@@ -8331,7 +8642,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get smartAlertDetailBehaviorBanner =>
-      'This alert describes a behavior Family Advisor noticed — not a judgment on your child.';
+      'This alert describes a behavior Family Advisor noticed — not a judgment. Local alert UI — The family assistant arrives in an upcoming update.';
 
   @override
   String get smartAlertDetailChangesHeading => 'What changed?';
@@ -8460,7 +8771,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String childUsageReportRetentionBanner(int days) {
-    return 'Data is kept for $days days only, then erased — and the Forget button (Settings) erases it immediately. Privacy is a promise, not a slogan.';
+    return 'Data is kept for $days days only, then erased — Forget (Settings) erases immediately. Local report UI only — Email/PDF export Will reach other devices in an upcoming update.';
   }
 
   @override
@@ -8501,6 +8812,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get outerCircleStrangersBanner =>
       'Strangers are always blocked: this protects your children automatically. Every external contact needs parent approval.';
+
+  @override
+  String get outerCircleLocalHonestyBanner =>
+      'Circle lives on this device. Approve/decline updates the shared list. No cloud contact sync yet.';
 
   @override
   String get outerCircleRelativesHeading => 'Trusted relatives';
@@ -8648,6 +8963,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Approving friends needs Partner level or above — you can review this request.';
 
   @override
+  String get friendApprovalLocalHonestyBanner =>
+      'Decision updates the shared outer circle on this device. No cloud friend sync yet.';
+
+  @override
   String get friendApprovalObserverBlocked =>
       'Approving friends needs Partner level or above';
 
@@ -8728,7 +9047,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String quranProgressDownloadToast(String name) {
-    return 'Download queued for $name\'s device';
+    return 'Offline-ready saved locally for $name — licensed audio pack Will reach other devices in an upcoming update';
   }
 
   @override
@@ -8771,7 +9090,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String quranProgressWhisperToast(String name) {
-    return 'Encouraging whisper sent to $name';
+    return 'Encouragement saved locally for $name — child notify Will reach other devices in an upcoming update';
   }
 
   @override
@@ -8914,7 +9233,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get weeklyReportApplyToast =>
-      'Sleep schedule adjusted — gentle steps over two weeks';
+      'Suggestion accepted locally with your approval — schedule enforcement Will reach other devices in an upcoming update.';
 
   @override
   String get weeklyReportDeferToast =>
@@ -8982,7 +9301,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get weeklyReportEmailBanner =>
-      'An email copy reached you — and a level-matched summary for the mother partner.';
+      'Email/PDF delivery Will reach other devices in an upcoming update — report settings and tip are local UI only (parent approval still required).';
 
   @override
   String get weeklyReportChildOne => 'Child One';
@@ -9772,10 +10091,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get childFriendsCallCta => 'Call';
 
   @override
-  String get childFriendsChatToast => 'Opened a safe chat';
+  String get childFriendsChatToast =>
+      'Safe chat opens locally — delivery to other devices arrives later';
 
   @override
-  String get childFriendsCallToast => 'Calling…';
+  String get childFriendsCallToast =>
+      'Call UI ready — Calls arrive in an upcoming update';
+
+  @override
+  String get childFriendsLocalHonestyBanner =>
+      'Friends list comes from the parent outer circle on this device. Chat/call delivery needs an upcoming update later.';
 
   @override
   String get childFriendsPendingTag => 'Under review';
@@ -9893,14 +10218,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeRouterFilterTitle => 'Home router filter';
 
   @override
-  String get homeRouterFilterHeroProtected => 'Home router is protected';
+  String get homeRouterFilterHeroProtected =>
+      'Home router guide ready (DNS not enforced yet)';
 
   @override
   String get homeRouterFilterHeroUnprotected => 'Home router needs setup';
 
   @override
   String homeRouterFilterHeroSub(int count) {
-    return '$count devices behind the filter — including guests and the living-room TV';
+    return '$count household devices listed locally — device DNS filtering is closed';
   }
 
   @override
@@ -9930,7 +10256,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeRouterFilterTagActive => 'On';
 
   @override
-  String get homeRouterFilterTagSynced => 'Synced';
+  String get homeRouterFilterTagSynced => 'Local categories';
 
   @override
   String get homeRouterFilterTagAuto => 'Automatic';
@@ -9942,7 +10268,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeRouterFilterGuideCta => 'Step-by-step setup guide';
 
   @override
-  String get homeRouterFilterCheckCta => 'Test protection now';
+  String get homeRouterFilterCheckCta => 'Check device readiness';
 
   @override
   String get homeRouterFilterGuideToast =>
@@ -9950,11 +10276,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeRouterFilterCheckToast =>
-      'Check complete — your router is protected and every device is behind the filter';
+      'Router DNS protection check is arrives in an upcoming update — local guide only';
 
   @override
   String get homeRouterFilterGuestBanner =>
-      'A guest slipped onto your Wi-Fi? They are filtered automatically — you control exceptions.';
+      'Home-router DNS filtering arrives in an upcoming update. Device web filter still protects the child away from home when configured.';
 
   @override
   String get homeRouterFilterObserverHint =>
@@ -10095,7 +10421,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get peerComparePrivacyBanner =>
-      'Fully anonymous comparison with general age averages — no names, no families, no shaming. Your data never leaves for others.';
+      'Fully anonymous comparison with general age averages — no names, no families, no shaming. Local cohort only — Email/PDF sharing comes later.';
 
   @override
   String get peerCompareChildOne => 'Child A';
@@ -10200,6 +10526,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get smartChoreApproveToast =>
       'Approved — each child got their tasks with set minutes';
+
+  @override
+  String get smartChoreLocalHonestyBanner =>
+      'Suggestion only — nothing applies until you approve. Local family board update. Cloud ChoreAI is CLOSED.';
 
   @override
   String get smartChoreShuffleToast =>
@@ -10429,7 +10759,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get familyMomentsPrideToast =>
-      'Pride card reached family chat — they saw your applause!';
+      'Pride card saved locally — family chat share Will reach other devices in an upcoming update.';
 
   @override
   String get familyMomentsTouchTitle => 'Next week\'s touch';
@@ -10500,11 +10830,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get familyMomentsAddCta => '+ Add a moment';
 
   @override
-  String get familyMomentsAddToast => 'Added to moments — family notified';
+  String get familyMomentsAddToast =>
+      'Added to moments locally — family notify Will reach other devices in an upcoming update.';
 
   @override
   String get familyMomentsFridayBanner =>
-      'Arrives every Friday morning — open, celebrate, share. Then rest easy.';
+      'Weekly moments are local presentation — Sharing and the family assistant arrive in an upcoming update.';
 
   @override
   String get familyMomentsEmptyTitle => 'No family moments yet';
@@ -10570,7 +10901,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get childSmartTilawahBanner =>
-      'Correction uses licensed mushaf sheikh audio — Family Advisor gives one gentle note at a time so it never overwhelms you.';
+      'Correction uses licensed mushaf sheikh audio — Family Advisor gives one gentle note. Licensed audio + The family assistant arrives in an upcoming update.';
 
   @override
   String get childSmartTilawahEmptyTitle => 'No tilawah session yet';
@@ -10901,7 +11232,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get childStickersBackgroundsBgToast =>
-      'Background changed — looking great!';
+      'Background saved on this device — chat thread apply is local catalog only';
+
+  @override
+  String get childStickersBackgroundsLocalHonestyBanner =>
+      'Sticker pack and wallpaper preference are local. Live chat thread styling needs chat Local contract — delivery Will reach other devices in an upcoming update.';
 
   @override
   String get childStickersBackgroundsBanner =>
@@ -11045,7 +11380,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String sosAlertDeliveryDelivered(String channel, String recipient) {
-    return '$channel → $recipient: DELIVERED';
+    return '$channel → $recipient: LOCAL only (other-device delivery closed)';
   }
 
   @override
@@ -11134,20 +11469,168 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sosPanicQuietSubtitle =>
-      'When preferred, the child SOS active screen shows critical status only';
+      'Shapes the child\'s SOS screen only — never mutes parent SOS receipt or the mailbox';
+
+  @override
+  String get sosDashboardReadinessTitle => 'System readiness board';
+
+  @override
+  String get sosLadderRung1SectionTitle => 'Fortified base (rung 1)';
+
+  @override
+  String get sosLadderNeedsVerify => 'Needs verification';
+
+  @override
+  String sosEscalationSecondsShort(int seconds) {
+    return '${seconds}s';
+  }
+
+  @override
+  String get sosChildEscalationEmptyTitle => 'No children';
+
+  @override
+  String get sosLadderPriorityUp => 'Move contact earlier in escalation';
+
+  @override
+  String get sosLadderPriorityDown => 'Move contact later in escalation';
+
+  @override
+  String get sosLadderPartnerSummaryTitle =>
+      'Current emergency ladder (view only)';
+
+  @override
+  String sosLadderPartnerSummaryBody(int parents, int verified, int total) {
+    return '$parents parents locked on rung 1 · $verified verified outside contacts of $total';
+  }
 
   @override
   String get sosReadinessTitle => 'Capability readiness';
 
   @override
   String get sosReadinessBody =>
-      'Push, SMS, and calling are NOT_CONFIGURED in this UI slice. SOS still fires in-app.';
+      'Honest Stage-1 view — push/SMS/call/GPS stay Native-closed or degraded until those waves open. SOS still fires in-app.';
+
+  @override
+  String get sosReadinessRowChild => 'Child trigger linked';
+
+  @override
+  String get sosReadinessRowPersistence => 'Local emergency store';
+
+  @override
+  String get sosReadinessRowPush => 'Push alerts';
+
+  @override
+  String get sosReadinessRowSms => 'SMS fallback';
+
+  @override
+  String get sosReadinessRowCall => 'Call fallback';
+
+  @override
+  String get sosReadinessRowLocation => 'Location for SOS';
+
+  @override
+  String get sosReadinessRowLadder => 'Trusted escalation ladder';
+
+  @override
+  String get sosReadinessRowPanicQuiet => 'Panic Quiet preference';
+
+  @override
+  String get sosReadinessRowBreakGlass => 'Break-glass authority';
+
+  @override
+  String get sosReadinessClassAvailable => 'Ready';
+
+  @override
+  String get sosReadinessClassDegraded => 'Degraded / local-only';
+
+  @override
+  String get sosReadinessClassUnavailable => 'Unavailable';
+
+  @override
+  String get sosReadinessClassNotConfigured => 'Not configured';
+
+  @override
+  String get sosLadderUnverifiedEscalationNote =>
+      'Unverified backups are not used in escalation — verify them so they can help.';
+
+  @override
+  String get sosLadderBackupSheetTitleAdd => 'Add trusted contact';
+
+  @override
+  String get sosLadderBackupSheetTitleEdit => 'Edit trusted contact';
+
+  @override
+  String get sosLadderBackupFieldName => 'Name';
+
+  @override
+  String get sosLadderBackupFieldRelation => 'Relation';
+
+  @override
+  String get sosLadderBackupFieldPhone => 'Phone (E.164 preferred)';
+
+  @override
+  String get sosLadderBackupFieldDelay => 'Escalate after (seconds)';
+
+  @override
+  String get sosLadderBackupSave => 'Save contact';
+
+  @override
+  String get sosLadderVerifyStart => 'Start verification';
+
+  @override
+  String get sosLadderVerifyConfirmLocal => 'Confirm verified (local)';
+
+  @override
+  String get sosLadderVerifyRevoke => 'Revoke verification';
+
+  @override
+  String get sosLadderVerifyLocalHonesty =>
+      'Local Stage-1 verification — not SMS or carrier proof. Native verify comes later.';
+
+  @override
+  String get sosLadderEditBackupSemantics => 'Edit trusted backup contact';
+
+  @override
+  String get sosLadderSkippedEscalation =>
+      'Skipped in escalation until verified';
+
+  @override
+  String get sosChildEscalationSectionTitle => 'Per-child outside escalation';
+
+  @override
+  String get sosChildEscalationSectionHint =>
+      'If you do not answer a child’s SOS, notify the trusted numbers you prepared above — each child can be on or off.';
+
+  @override
+  String get sosChildEscalationEnable => 'Escalate if parents do not answer';
+
+  @override
+  String get sosChildEscalationDelay => 'Wait before escalating (seconds)';
+
+  @override
+  String get sosChildEscalationUseBackups => 'Notify trusted outside contacts';
+
+  @override
+  String get sosChildEscalationPrepareSms => 'Prepare SMS to those numbers';
+
+  @override
+  String get sosChildEscalationSmsHonesty =>
+      'SMS send stays Native/Backend-closed — this switch only saves your intent so we can activate it later without redesigning the screen.';
+
+  @override
+  String sosChildEscalationChildLabel(String id) {
+    return 'Child $id';
+  }
+
+  @override
+  String get sosChildEscalationEmptyChildren =>
+      'No children in the family roster yet — add a child first, then tune escalation per child.';
 
   @override
   String get sosAlertConnectionOnline => 'Connection: ONLINE';
 
   @override
-  String get sosAlertConnectionDegraded => 'Connection: DEGRADED';
+  String get sosAlertConnectionDegraded => 'Connection: Partly working';
 
   @override
   String get sosAlertConnectionOffline => 'Connection: OFFLINE';
@@ -11186,6 +11669,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dayBoardPendingQuizSubmittedTitle => 'Child quiz submitted';
 
   @override
+  String get dayBoardPendingAthkarBlessingTitle => 'Child finished athkar';
+
+  @override
+  String get dayBoardPendingAthkarBlessingSubtitle =>
+      'Local blessing — send a whisper when you can';
+
+  @override
   String get dayBoardPendingJustSubmitted =>
       'Just submitted — open results follow-up';
 
@@ -11193,6 +11683,75 @@ class AppLocalizationsEn extends AppLocalizations {
   String dayBoardPendingEarnedMinutes(int minutes) {
     return 'Earned +$minutes minutes — review on Results';
   }
+
+  @override
+  String get dayBoardLocalSaveLine => 'Saved on this device — works offline';
+
+  @override
+  String get dayBoardPendingTimeRequestTitle => 'Extra time request waiting';
+
+  @override
+  String dayBoardPendingTimeRequestSubtitle(int minutes) {
+    return '$minutes minutes — open the inbox to decide';
+  }
+
+  @override
+  String get dayBoardPendingAppApprovalTitle => 'New app needs your decision';
+
+  @override
+  String get dayBoardPendingAppApprovalSubtitle =>
+      'Allow or block on the approval screen';
+
+  @override
+  String get dayBoardPendingFriendRequestTitle => 'Friend request waiting';
+
+  @override
+  String get dayBoardPendingFriendRequestSubtitle =>
+      'Review safely — no strangers without you';
+
+  @override
+  String get alertsHubRowSosTitle => 'Active SOS needs attention';
+
+  @override
+  String get alertsHubRowSosSubtitle => 'Open the SOS board — never muted';
+
+  @override
+  String get alertsHubRowTamperTitle => 'Tamper alert on a child device';
+
+  @override
+  String get alertsHubRowTamperSubtitle =>
+      'Recorded on this device — review anti-tamper settings';
+
+  @override
+  String get alertsHubRowTimeTitle => 'Extra time request waiting';
+
+  @override
+  String get alertsHubRowTimeSubtitle => 'Open the time-request inbox';
+
+  @override
+  String get alertsHubRowAppTitle => 'New app needs approval';
+
+  @override
+  String get alertsHubRowAppSubtitle => 'Open new-app approval';
+
+  @override
+  String get alertsHubRowFriendTitle => 'Friend request waiting';
+
+  @override
+  String get alertsHubRowFriendSubtitle => 'Open friend approval';
+
+  @override
+  String get alertsHubRowArriveTitle => 'Arrived at a safe zone';
+
+  @override
+  String get alertsHubRowArriveSubtitle => 'Open arrival detail';
+
+  @override
+  String get alertsHubRowLeaveZoneTitle => 'Left a safe zone';
+
+  @override
+  String get alertsHubRowLeaveZoneSubtitle =>
+      'Open leave detail — Critical never muted';
 
   @override
   String get quranProgressSurahMulk => 'Al-Mulk';
@@ -11350,7 +11909,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sys3RemoteEndBody =>
-      'End this child session remotely? This does not remove the device enrollment.';
+      'End this child session from here? This does not remove the device enrollment.';
 
   @override
   String get sys3RemoteEndAction => 'End session';
@@ -11430,26 +11989,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sys3InviteStatusCta => 'View invite status';
 
   @override
-  String get capabilityStatusImplemented => 'IMPLEMENTED';
+  String get capabilityStatusImplemented => 'Works';
 
   @override
-  String get capabilityStatusMockRemote => 'MOCK-REMOTE';
+  String get capabilityStatusMockRemote => 'On this device';
 
   @override
-  String get capabilityStatusDegraded => 'DEGRADED';
+  String get capabilityStatusDegraded => 'Partly working';
 
   @override
-  String get capabilityStatusUnsupported => 'UNSUPPORTED';
+  String get capabilityStatusUnsupported => 'Not supported';
 
   @override
-  String get capabilityStatusNotImplemented => 'NOT IMPLEMENTED';
+  String get capabilityStatusNotImplemented => 'Coming soon';
 
   @override
   String get locationGpsCapabilityLabel => 'Device GPS';
 
   @override
   String get locationGpsNotImplementedBanner =>
-      'Device GPS is NOT IMPLEMENTED in this build — maps are decorative; fixes must be injected honestly. Never treat this screen as live tracking.';
+      'Device GPS is Coming soon in this build — maps are decorative; fixes must be injected honestly. Never treat this screen as live tracking.';
 
   @override
   String get createSafeZoneAssignHeading => 'Assign to children';
@@ -11495,10 +12054,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get silentLocateResultGpsNotImplemented =>
-      'Device GPS is NOT IMPLEMENTED — cannot claim a live silent locate.';
+      'Device GPS is Coming soon — cannot claim a live silent locate.';
 
   @override
   String get locationMapSilentLocateCta => 'Silent locate';
+
+  @override
+  String get locationMapSilentLocateDenied =>
+      'Silent locate needs a parent authority above Observer.';
 
   @override
   String get childArrivalSilentBanner =>
@@ -11729,4 +12292,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get fs007SmartAlertsEntry =>
       'Offline AI Safety tickets (FS-007) — signals only; never auto-blocks.';
+
+  @override
+  String get honestyChildGentleLine =>
+      'Some things here work on this device only for now 🌱';
+
+  @override
+  String get childResultPraiseTopicFractions => 'adding fractions';
+
+  @override
+  String get appLoadingSemantics => 'Loading';
 }

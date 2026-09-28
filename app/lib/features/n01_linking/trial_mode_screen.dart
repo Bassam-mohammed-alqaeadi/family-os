@@ -192,7 +192,7 @@ class TrialModeScreen extends StatelessWidget {
                     leading: const Text('🗺️', style: TextStyle(fontSize: 18)),
                     title: l10n.trialModeMapRow,
                     trailing: Icon(
-                      Icons.chevron_left,
+                      Icons.chevron_right,
                       color: colors.ink2,
                       size: 22,
                     ),
@@ -203,7 +203,7 @@ class TrialModeScreen extends StatelessWidget {
                     leading: const Text('🧠', style: TextStyle(fontSize: 18)),
                     title: l10n.trialModeAdvisorRow,
                     trailing: Icon(
-                      Icons.chevron_left,
+                      Icons.chevron_right,
                       color: colors.ink2,
                       size: 22,
                     ),

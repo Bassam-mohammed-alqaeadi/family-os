@@ -4,10 +4,14 @@ import 'package:go_router/go_router.dart';
 import 'package:family_os/app/role_guard.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
+import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/core/policy/time_request_service.dart';
@@ -33,6 +37,7 @@ abstract final class ChildTimeRequestKeys {
   static const tasksCta = Key('child_time_request_tasks');
   static const parentLean = Key('child_time_request_parent_lean');
   static const sosIconCta = Key('child_time_request_sos_icon');
+  static const localHonesty = Key('child_time_request_local_honesty');
 }
 
 /// SCR-CHD-020 — طلب وقت إضافي (polite minutes request + trade).
@@ -42,12 +47,16 @@ abstract final class ChildTimeRequestKeys {
 class ChildTimeRequestScreen extends StatefulWidget {
   const ChildTimeRequestScreen({
     super.key,
+    this.childId,
     this.repository,
     this.sosFire,
     this.roleOverride,
     this.onSos,
     this.onNavigate,
   });
+
+  /// Explicit child from `?childId=`; null → Identity / stage1.
+  final String? childId;
 
   final ChildTimeRequestRepository? repository;
   final SosFireService? sosFire;
@@ -95,27 +104,54 @@ class _ChildTimeRequestScreenState extends State<ChildTimeRequestScreen> {
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      _load();
+      _bootstrapAndLoad();
     });
+  }
+
+  ChildId _resolveChildId() {
+    final raw = widget.childId?.trim();
+    if (raw != null && raw.isNotEmpty) return ChildId(raw);
+    final runtime = CurrentIdentity.maybeOf(context);
+    if (runtime == null) return resolveActiveChildId();
+    return familyScopedChildId(
+      familyId: runtime.activeFamilyId,
+      childId: runtime.activeChildId,
+    );
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (widget.repository != null || _scopedRepoBound) return;
-    final runtime = CurrentIdentity.maybeOf(context);
-    final childId = runtime == null
-        ? kStage1CanonicalChildId
-        : familyScopedChildId(
-            familyId: runtime.activeFamilyId,
-            childId: runtime.activeChildId,
-          );
-    _repo = ServiceChildTimeRequestRepository(
-      service: stage1TimeRequestService,
-      childId: childId,
-    );
-    _scopedRepoBound = true;
-    _load();
+    _bindProductionRepo(_resolveChildId());
+  }
+
+  Future<void> _bindProductionRepo(ChildId childId) async {
+    if (_scopedRepoBound) return;
+    try {
+      _repo = await openProductionChildTimeRequestRepository(childId: childId);
+      _scopedRepoBound = true;
+      await _load();
+    } catch (e, st) {
+      debugPrint(
+        'DOM-ST-02C: CHD-020 TimeRequest Local KV bootstrap failed — '
+        'no Memory Prefs fallback: $e\n$st',
+      );
+      if (!mounted) return;
+      setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _bootstrapAndLoad() async {
+    if (widget.repository != null) {
+      await _load();
+      return;
+    }
+    if (!_scopedRepoBound) {
+      await _bindProductionRepo(_resolveChildId());
+      return;
+    }
+    await _load();
   }
 
   @override
@@ -146,9 +182,7 @@ class _ChildTimeRequestScreenState extends State<ChildTimeRequestScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    final childId =
-        CurrentIdentity.maybeOf(context)?.activeChildId.value ?? 'self';
-    await _sos.fire(childId: childId);
+    await childSosSenderOf(context).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-CHD-005'));
@@ -286,6 +320,12 @@ class _ChildTimeRequestScreenState extends State<ChildTimeRequestScreen> {
             _statusCard(l10n, colors, radii),
             const SizedBox(height: 12),
           ],
+          BannerNote(
+            key: ChildTimeRequestKeys.localHonesty,
+            variant: BannerVariant.t,
+            message: l10n.honestyChildGentleLine,
+          ),
+          const SizedBox(height: 12),
           DecoratedBox(
             decoration: BoxDecoration(
               color: colors.surface,

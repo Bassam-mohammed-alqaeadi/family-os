@@ -72,11 +72,20 @@ final class InMemoryLearningAssignmentRepository
 }
 
 /// Shared Stage-1 singleton — DI swap later (Rule 25).
-final InMemoryLearningAssignmentRepository stage1LearningAssignmentRepository =
+///
+/// Production boot may rebind to [LocalLearningAssignmentRepository]
+/// via [rebindStage1LearningAssignmentRepository] (DOM-EDU-LOCAL-A).
+LearningAssignmentRepository stage1LearningAssignmentRepository =
     InMemoryLearningAssignmentRepository();
 
+void rebindStage1LearningAssignmentRepository(
+  LearningAssignmentRepository repository,
+) {
+  stage1LearningAssignmentRepository = repository;
+}
+
 LearningAssignment learningAssignmentFixture({
-  String childKey = 'child_a',
+  String childKey = 'demo-child',
   int reward = 35,
 }) {
   return LearningAssignment(

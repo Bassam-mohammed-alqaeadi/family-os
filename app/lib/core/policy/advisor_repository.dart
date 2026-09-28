@@ -77,5 +77,20 @@ final class MockAdvisorRepository implements AdvisorRepository {
   }
 }
 
-/// Stage-1 shared mock advisor.
-const MockAdvisorRepository stage1AdvisorRepository = MockAdvisorRepository();
+/// Production-empty Advisor (LDR-B1 / Owner 1C) — no planted AI as live.
+final class EmptyAdvisorRepository implements AdvisorRepository {
+  const EmptyAdvisorRepository();
+
+  @override
+  Future<List<AiSuggestion>> suggestions({
+    AiStageId stage = AiStageId.suggest,
+  }) =>
+      SynchronousFuture(const []);
+}
+
+/// Stage-1 Advisor — empty at boot; [MockAdvisorRepository] for explicit tests.
+AdvisorRepository stage1AdvisorRepository = const EmptyAdvisorRepository();
+
+void rebindStage1AdvisorRepository(AdvisorRepository repository) {
+  stage1AdvisorRepository = repository;
+}

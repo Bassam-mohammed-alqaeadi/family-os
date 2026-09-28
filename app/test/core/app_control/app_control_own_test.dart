@@ -46,7 +46,7 @@ void main() {
   });
 
   test('schema v6 exposes ac_document + overlays', () async {
-    expect(FamilyLocalSchema.currentVersion, 10);
+    expect(FamilyLocalSchema.currentVersion, 12);
     await db.insert('ac_document', {
       'scope_key': 'family',
       'family_id': family.value,

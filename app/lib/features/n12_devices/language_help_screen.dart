@@ -12,6 +12,8 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/i18n/locale_controller.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n12_devices/language_help_models.dart';
 import 'package:family_os/features/n12_devices/language_help_repository.dart';
@@ -122,7 +124,16 @@ class _LanguageHelpScreenState extends State<LanguageHelpScreen> {
 
   Future<void> _load() async {
     setState(() => _loading = true);
-    final snap = await _repo.load();
+    final localeCtrl = CurrentLocale.maybeOf(context);
+    var snap = await _repo.load();
+    if (localeCtrl != null) {
+      final desired = localeCtrl.isEnglish
+          ? LanguageHelpLocale.english
+          : LanguageHelpLocale.arabic;
+      if (snap.currentLocale != desired) {
+        snap = await _repo.setLocale(desired);
+      }
+    }
     if (!mounted) return;
     setState(() {
       _snap = snap;
@@ -137,7 +148,7 @@ class _LanguageHelpScreenState extends State<LanguageHelpScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'family');
+    await parentSosSenderOf(context).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-FAT-018'));
@@ -155,12 +166,35 @@ class _LanguageHelpScreenState extends State<LanguageHelpScreen> {
     AppToast.show(context, message: l10n.languageHelpObserverBlocked);
   }
 
-  void _onEnglishTap(AppLocalizations l10n) {
+  Future<void> _onArabicTap(AppLocalizations l10n) async {
+    if (!_canAct) {
+      _blockedToast(l10n);
+      return;
+    }
+    if (_snap.currentLocale == LanguageHelpLocale.arabic) return;
+    final localeCtrl = CurrentLocale.maybeOf(context);
+    final snap = await _repo.setLocale(LanguageHelpLocale.arabic);
+    if (localeCtrl != null) {
+      await localeCtrl.setLocale(const Locale('ar'));
+    }
+    if (!mounted) return;
+    setState(() => _snap = snap);
+    AppToast.show(context, message: l10n.languageHelpLocaleToast);
+  }
+
+  Future<void> _onEnglishTap(AppLocalizations l10n) async {
     if (!_canAct) {
       _blockedToast(l10n);
       return;
     }
     if (_snap.currentLocale == LanguageHelpLocale.english) return;
+    final localeCtrl = CurrentLocale.maybeOf(context);
+    final snap = await _repo.setLocale(LanguageHelpLocale.english);
+    if (localeCtrl != null) {
+      await localeCtrl.setLocale(const Locale('en'));
+    }
+    if (!mounted) return;
+    setState(() => _snap = snap);
     AppToast.show(context, message: l10n.languageHelpLocaleToast);
   }
 
@@ -313,12 +347,20 @@ class _LanguageHelpScreenState extends State<LanguageHelpScreen> {
                 title: l10n.languageHelpArabic,
                 subtitle: l10n.languageHelpArabicSubtitle,
                 colors: colors,
+                onTap: () => _onArabicTap(l10n),
                 trailing: _snap.currentLocale == LanguageHelpLocale.arabic
                     ? Tag(
                         label: l10n.languageHelpCurrentTag,
                         variant: TagVariant.p,
                       )
-                    : null,
+                    : Text(
+                        l10n.languageHelpChooseAction,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: colors.p700,
+                        ),
+                      ),
               ),
               Divider(height: 1, color: colors.border),
               _LanguageRow(
@@ -542,7 +584,7 @@ class _HelpRow extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(Icons.chevron_left, color: colors.ink2, size: 20),
+              Icon(Icons.chevron_right, color: colors.ink2, size: 20),
             ],
           ),
         ),

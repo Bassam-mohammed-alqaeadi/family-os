@@ -9,7 +9,7 @@ abstract class IndividualTimelineRepository {
 final class InMemoryIndividualTimelineRepository
     implements IndividualTimelineRepository {
   InMemoryIndividualTimelineRepository({IndividualTimelineSnapshot? seed})
-    : _snap = seed ?? individualTimelinePrototypeFixture();
+    : _snap = seed ?? individualTimelineEmptyFixture();
 
   IndividualTimelineSnapshot _snap;
 

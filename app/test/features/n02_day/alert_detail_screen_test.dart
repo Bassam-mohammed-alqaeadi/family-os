@@ -11,6 +11,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n02_day/alert_detail_mock.dart';
 import 'package:family_os/features/n02_day/alert_detail_repository.dart';
 import 'package:family_os/features/n02_day/alert_detail_screen.dart';
+import 'package:family_os/features/n12_devices/mother_permission_level_repository.dart';
 
 void main() {
   testWidgets('SCR-FAT-020 loads by alertId', (tester) async {
@@ -30,7 +31,7 @@ void main() {
 
     expect(find.byKey(AlertDetailKeys.body), findsOneWidget);
     expect(find.byKey(AlertDetailKeys.title), findsOneWidget);
-    expect(find.textContaining('ابن ٢'), findsWidgets);
+    expect(find.textContaining('ابن 2'), findsWidgets);
     expect(find.byKey(AlertDetailKeys.primaryAction), findsOneWidget);
     expect(find.byKey(AlertDetailKeys.honestyBanner), findsOneWidget);
     expect(find.byKey(AlertDetailKeys.p4Banner), findsOneWidget);
@@ -98,7 +99,7 @@ void main() {
     expect(find.textContaining('خالد'), findsNothing);
     expect(find.textContaining('نورة'), findsNothing);
     expect(find.textContaining('سعد'), findsNothing);
-    expect(find.textContaining('ابن ١'), findsWidgets);
+    expect(find.textContaining('ابن 1'), findsWidgets);
   });
 
   testWidgets('SCR-FAT-020 child lean + SOS ungated (P-4)', (tester) async {
@@ -211,6 +212,30 @@ void main() {
 
     expect(find.byKey(AlertDetailKeys.requestBlock), findsOneWidget);
     expect(find.byKey(AlertDetailKeys.primaryAction), findsNothing);
+  });
+
+  testWidgets('SCR-FAT-020 mother observer → request block (Identity level)',
+      (tester) async {
+    resetStage1MotherPermissionLevelRepositoryForTest();
+    stage1MotherPermissionLevelRepository.setLevel(MotherLevel.observer);
+    await tester.pumpWidget(
+      _app(
+        child: AlertDetailScreen(
+          alertId: 'a_stranger',
+          repository: InMemoryAlertDetailRepository(
+            initial: AlertDetailMock.seeded,
+          ),
+          roleOverride: AppRole.mother,
+          // null motherLevel → stage1 Identity/repo level
+          onSos: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(AlertDetailKeys.requestBlock), findsOneWidget);
+    expect(find.byKey(AlertDetailKeys.primaryAction), findsNothing);
+    resetStage1MotherPermissionLevelRepositoryForTest();
   });
 
   testWidgets('SCR-FAT-020 mother full → block CTA', (tester) async {

@@ -93,11 +93,27 @@ final class InMemoryFamilyMembersRepository implements FamilyMembersRepository {
         _members.where((m) => m.familyId == id).toList(growable: false),
       );
     }
-    // Stage-1 shim: unscoped seed for gallery/tests without CurrentIdentity.
-    // Production callers always pass activeFamilyId.
-    return List.unmodifiable(_members);
+    // Fail closed — unscoped list must not leak across families.
+    return const [];
   }
 }
 
-/// Stage-1 singleton — empty until tests/repos seed (Rule 23).
-final stage1FamilyMembersRepository = InMemoryFamilyMembersRepository();
+/// Stage-1 accessor — Identity projection when bound, else empty InMemory.
+FamilyMembersRepository? _stage1FamilyMembersBound;
+
+final InMemoryFamilyMembersRepository _stage1FamilyMembersMemory =
+    InMemoryFamilyMembersRepository();
+
+FamilyMembersRepository get stage1FamilyMembersRepository =>
+    _stage1FamilyMembersBound ?? _stage1FamilyMembersMemory;
+
+void rebindStage1FamilyMembersRepository(FamilyMembersRepository repository) {
+  _stage1FamilyMembersBound = repository;
+}
+
+@visibleForTesting
+void resetStage1FamilyMembersRepositoryForTest() {
+  _stage1FamilyMembersBound = null;
+  _stage1FamilyMembersMemory.seed(const []);
+  _stage1FamilyMembersMemory.failLoad = false;
+}

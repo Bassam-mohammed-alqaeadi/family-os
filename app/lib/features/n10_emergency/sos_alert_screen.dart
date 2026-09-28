@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/app_error_state.dart';
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/sos_action_bar.dart';
 import 'package:family_os/core/design/components/sos_break_glass_sheet.dart';
 import 'package:family_os/core/design/components/sos_delivery_status.dart';
@@ -15,12 +16,16 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/fs_foundation/capability_status.dart';
 import 'package:family_os/core/policy/sos_alert.dart';
 import 'package:family_os/core/policy/sos_alert_repository.dart';
 import 'package:family_os/core/policy/sos_break_glass.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
+import 'package:family_os/core/policy/sos_ladder.dart';
 import 'package:family_os/core/policy/sos_role_actions.dart';
+import 'package:family_os/core/policy/sos_settings.dart';
 import 'package:family_os/core/sos_final/sos_final.dart';
+import 'package:family_os/core/sos_final/sos_prefs_local_persistence.dart';
 
 /// Widget keys for SCR-FAT-018 acceptance.
 abstract final class SosAlertKeys {
@@ -76,6 +81,7 @@ class SosAlertScreen extends StatefulWidget {
     this.onEscalate,
     this.onAcknowledge,
     this.onOpenSetup,
+    this.setupIncompleteOverride,
   });
 
   /// Optional deep-link `?alertId=`.
@@ -98,7 +104,7 @@ class SosAlertScreen extends StatefulWidget {
   final SosFireService? sosFire;
 
   /// Null → [stage1SosBreakGlassStore].
-  final InMemorySosBreakGlassStore? breakGlassStore;
+  final SosBreakGlassStore? breakGlassStore;
 
   /// Auto-call delay seam for tests — fires [onCallNow] / honesty toast only.
   final Duration autoCallDelay;
@@ -110,17 +116,21 @@ class SosAlertScreen extends StatefulWidget {
   final VoidCallback? onAcknowledge;
   final VoidCallback? onOpenSetup;
 
+  /// Test seam — when set, skips live readiness probe for empty CTA copy.
+  final bool? setupIncompleteOverride;
+
   @override
   SosAlertScreenState createState() => SosAlertScreenState();
 }
 
 class SosAlertScreenState extends State<SosAlertScreen> {
   SosAlertRepository? _repo;
-  late final InMemorySosBreakGlassStore _breakGlass;
+  late final SosBreakGlassStore _breakGlass;
   var _loading = true;
   var _loadFailed = false;
   var _busy = false;
   var _autoCallFired = false;
+  var _setupIncomplete = false;
   SosAlert? _alert;
   Timer? _autoCallTimer;
 
@@ -208,9 +218,13 @@ class SosAlertScreenState extends State<SosAlertScreen> {
     });
     try {
       final alert = await repo.loadActive(alertId: _resolvedAlertId);
+      final incomplete = alert == null || !alert.isActive
+          ? (widget.setupIncompleteOverride ?? await _probeSetupIncomplete())
+          : false;
       if (!mounted) return;
       setState(() {
         _alert = alert;
+        _setupIncomplete = incomplete;
         _loading = false;
         _loadFailed = false;
       });
@@ -224,6 +238,37 @@ class SosAlertScreenState extends State<SosAlertScreen> {
         _loading = false;
         _loadFailed = true;
       });
+    }
+  }
+
+  /// FAT-018 empty → FAT-028 when ladder/readiness is incomplete.
+  Future<bool> _probeSetupIncomplete() async {
+    try {
+      await SosPrefsRuntime.ensureOpen();
+      final ladderRepo = SosPrefsRuntime.ladder;
+      final settings = SosPrefsRuntime.settings?.settings ??
+          stage1SosSettingsStore.settings;
+      final ladder = ladderRepo != null
+          ? await ladderRepo.load()
+          : SosLadder.defaults();
+      final hasPhone =
+          ladder.backups.any((b) => b.phoneE164.trim().isNotEmpty);
+      final snap = SosReadinessEvaluator.evaluate(
+        SosReadinessInputs(
+          ladder: ladder,
+          settings: settings,
+          childLinked: true,
+          localPersistenceOk: ladderRepo != null,
+          pushCapability: CapabilityStatus.mockRemote,
+          smsConfigured: hasPhone,
+          callConfigured: hasPhone,
+          locationClass: SosLocationClass.unavailable,
+          breakGlassApplicable: SosRoleActions.canBreakGlass(_actor),
+        ),
+      );
+      return !snap.claimsReady || ladder.verifiedEscalationBackups.isEmpty;
+    } catch (_) {
+      return true;
     }
   }
 
@@ -252,12 +297,9 @@ class SosAlertScreenState extends State<SosAlertScreen> {
     }
     // Honesty: telephony is NOT_CONFIGURED / UNAVAILABLE in Stage-1.
     if (!fromAuto && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            AppLocalizations.of(context).sosAlertCallUnavailableToast,
-          ),
-        ),
+      AppToast.show(
+        context,
+        message: AppLocalizations.of(context).sosAlertCallUnavailableToast,
       );
     }
   }
@@ -288,12 +330,9 @@ class SosAlertScreenState extends State<SosAlertScreen> {
         _alert = next;
         _busy = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            AppLocalizations.of(context).sosAlertAcknowledgedToast,
-          ),
-        ),
+      AppToast.show(
+        context,
+        message: AppLocalizations.of(context).sosAlertAcknowledgedToast,
       );
       widget.onAcknowledge?.call();
     } on Object {
@@ -315,10 +354,9 @@ class SosAlertScreenState extends State<SosAlertScreen> {
         reason: SosTerminalReason.helped,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context).sosAlertResolvedToast),
-        ),
+      AppToast.show(
+        context,
+        message: AppLocalizations.of(context).sosAlertResolvedToast,
       );
       if (widget.onResolved != null) {
         widget.onResolved!();
@@ -348,10 +386,9 @@ class SosAlertScreenState extends State<SosAlertScreen> {
         _alert = next;
         _busy = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context).sosAlertEscalatedToast),
-        ),
+      AppToast.show(
+        context,
+        message: AppLocalizations.of(context).sosAlertEscalatedToast,
       );
       widget.onEscalate?.call();
     } on Object {
@@ -366,6 +403,7 @@ class SosAlertScreenState extends State<SosAlertScreen> {
       context: context,
       actor: _actor,
       store: _breakGlass,
+      incidentId: _alert?.id,
     );
     if (mounted) setState(() {});
   }
@@ -470,17 +508,23 @@ class SosAlertScreenState extends State<SosAlertScreen> {
               child: AppEmptyState(
                 key: SosAlertKeys.empty,
                 title: l10n.sosAlertEmptyTitle,
-                message: l10n.sosAlertEmptyMessage,
+                message: _setupIncomplete
+                    ? l10n.sosAlertEmptyIncompleteMessage
+                    : l10n.sosAlertEmptyMessage,
               ),
             ),
             if (SosRoleActions.canConfigure(_actor))
               Semantics(
                 button: true,
                 label: l10n.sosAlertSetupSemantics,
-                child: TextButton(
+                child: FilledButton(
                   key: SosAlertKeys.setupCta,
                   onPressed: _openSetup,
-                  child: Text(l10n.sosAlertSetupCta),
+                  child: Text(
+                    _setupIncomplete
+                        ? l10n.sosAlertSetupIncompleteCta
+                        : l10n.sosAlertSetupCta,
+                  ),
                 ),
               ),
           ],
@@ -854,16 +898,16 @@ class _LiveMap extends StatelessWidget {
                       ),
                     ),
                     Positioned(
-                      left: 12,
-                      top: 10,
+                      left: constraints.maxWidth * (12 / 360),
+                      top: constraints.maxHeight * (10 / 180),
                       child: _Block(
                         label: l10n.locationMapLandmarkPark,
                         fill: Color.lerp(colors.mint100, colors.mint, 0.2)!,
                       ),
                     ),
                     Positioned(
-                      right: 16,
-                      top: 14,
+                      right: constraints.maxWidth * (16 / 360),
+                      top: constraints.maxHeight * (14 / 180),
                       child: _Block(
                         label: l10n.locationMapLandmarkHome,
                         fill:
@@ -873,11 +917,14 @@ class _LiveMap extends StatelessWidget {
                     Positioned(
                       left: 0,
                       right: 0,
-                      top: 78,
+                      top: constraints.maxHeight * (78 / 180),
                       child: ColoredBox(
                         color: colors.surface,
                         child: SizedBox(
-                          height: 22,
+                          height: (constraints.maxHeight * (22 / 180)).clamp(
+                            16,
+                            28,
+                          ),
                           child: Center(
                             child: Text(
                               l10n.locationMapLandmarkStreet,

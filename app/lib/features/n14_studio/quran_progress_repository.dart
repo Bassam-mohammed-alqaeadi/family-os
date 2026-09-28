@@ -1,11 +1,11 @@
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/minutes.dart';
 import 'package:family_os/core/domain/role.dart';
-import 'package:family_os/core/policy/screen_time_policy_repository.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
 import 'package:family_os/core/policy/wallet_ledger.dart';
-import 'package:family_os/features/n03_screen_time/child_screen_time_screen.dart'
-    show stage1PolicyPrefsStore;
+import 'package:family_os/core/screen_time/screen_time_local_persistence.dart';
 import 'package:family_os/features/n14_studio/quran_progress_models.dart';
+import 'package:family_os/features/quran/quran_local_bridge.dart';
 import 'package:family_os/features/quran/quran_recitation_models.dart';
 import 'package:family_os/features/quran/quran_recitation_repository.dart';
 import 'package:family_os/features/quran/quran_ward_plan_models.dart';
@@ -37,24 +37,38 @@ final class InMemoryQuranProgressRepository implements QuranProgressRepository {
     QuranRecitationRepository? recitations,
     WalletLedger? wallet,
     ChildId? childId,
-  }) : _snap = seed ?? quranProgressPrototypeFixture(),
+    QuranLocalBridge? bridge,
+  }) : _snap = seed ?? quranProgressEmptyFixture(),
        _plans = plans ?? stage1QuranWardPlanRepository,
        _recitations = recitations ?? stage1QuranRecitationRepository,
-       _wallet =
-           wallet ??
-           WalletLedger(
-             PrefsScreenTimePolicyRepository(stage1PolicyPrefsStore),
-           ),
-       _childId = childId ?? ChildId('child_a');
+       _injectedWallet = wallet,
+       _explicitChildId = childId,
+       _bridgeOverride = bridge;
 
   QuranProgressSnapshot _snap;
   final QuranWardPlanRepository _plans;
   final QuranRecitationRepository _recitations;
-  final WalletLedger _wallet;
-  final ChildId _childId;
+  final WalletLedger? _injectedWallet;
+  WalletLedger? _resolvedWallet;
+  final ChildId? _explicitChildId;
+
+  /// Null explicit id → family context's selected child at call time.
+  ChildId get _childId => resolveActiveChildId(explicit: _explicitChildId);
+  final QuranLocalBridge? _bridgeOverride;
   Future<void> Function()? loadGate;
   var whisperCount = 0;
   var downloadCount = 0;
+
+  QuranLocalBridge get _bridge =>
+      _bridgeOverride ?? stage1QuranLocalBridge;
+
+  Future<WalletLedger> _wallet() async {
+    final injected = _injectedWallet;
+    if (injected != null) return injected;
+    return _resolvedWallet ??= WalletLedger(
+      await ScreenTimeLocalPersistence.openPolicyRepository(),
+    );
+  }
 
   @override
   Future<QuranProgressSnapshot> load() async {
@@ -70,15 +84,17 @@ final class InMemoryQuranProgressRepository implements QuranProgressRepository {
         toAyah: pending.toAyah,
         rewardMinutes: pending.rewardMinutes.inMinutes,
         recitationStatus: QuranRecitationStatus.recorded,
+        offlineReady: _bridge.offlineReady,
       );
     }
     if (latest?.status == QuranRecitationSubmitStatus.approved) {
       return _snap.copyWith(
         surahKey: latest!.surahKey,
         recitationStatus: QuranRecitationStatus.approved,
+        offlineReady: _bridge.offlineReady,
       );
     }
-    return _snap.copyWith();
+    return _snap.copyWith(offlineReady: _bridge.offlineReady);
   }
 
   @override
@@ -96,7 +112,8 @@ final class InMemoryQuranProgressRepository implements QuranProgressRepository {
     }
     // Rule 5 — earn only through WalletLedger / PolicyEngine.
     if (reward.inMinutes > 0) {
-      await _wallet.earn(
+      final wallet = await _wallet();
+      await wallet.earn(
         childId: pending?.childId ?? _childId,
         appId: QuranWalletApps.play,
         assignee: AppRole.child,
@@ -116,11 +133,16 @@ final class InMemoryQuranProgressRepository implements QuranProgressRepository {
   @override
   Future<void> whisperEncourage() async {
     whisperCount++;
+    // P15-QUR-007 — Local encourage for child ward (not remote delivery).
+    _bridge.enqueueWhisper();
   }
 
   @override
   Future<void> requestDownload() async {
     downloadCount++;
+    // P15-QUR-004 — Local offline-ready flag only (licensed audio REMOTE CLOSED).
+    _bridge.markOfflineReady();
+    _snap = _snap.copyWith(offlineReady: true);
   }
 
   @override

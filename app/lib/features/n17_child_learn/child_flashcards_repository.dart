@@ -12,7 +12,7 @@ abstract class ChildFlashcardsRepository {
 final class InMemoryChildFlashcardsRepository
     implements ChildFlashcardsRepository {
   InMemoryChildFlashcardsRepository({ChildFlashcardsSnapshot? seed})
-    : _snap = seed ?? childFlashcardsPrototypeFixture();
+    : _snap = seed ?? childFlashcardsEmptyFixture();
 
   ChildFlashcardsSnapshot _snap;
   Future<void> Function()? loadGate;

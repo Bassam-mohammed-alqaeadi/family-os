@@ -11,7 +11,7 @@ abstract class KnowledgeMapsRepository {
 /// In-memory mock — prototype FAT-064 shape by default.
 final class InMemoryKnowledgeMapsRepository implements KnowledgeMapsRepository {
   InMemoryKnowledgeMapsRepository({KnowledgeMapsSnapshot? seed})
-    : _snap = seed ?? knowledgeMapsPrototypeFixture();
+    : _snap = seed ?? knowledgeMapsEmptyFixture();
 
   KnowledgeMapsSnapshot _snap;
 

@@ -12,6 +12,7 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n16_tasks/family_tasks_models.dart';
 import 'package:family_os/features/n16_tasks/family_tasks_repository.dart';
@@ -142,7 +143,7 @@ class _FamilyTasksScreenState extends State<FamilyTasksScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'family');
+    await parentSosSenderOf(context).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-FAT-018'));
@@ -170,11 +171,17 @@ class _FamilyTasksScreenState extends State<FamilyTasksScreen> {
   }
 
   String _taskTitle(AppLocalizations l10n, String titleKey) {
+    if (titleKey.startsWith('custom:')) {
+      return titleKey.substring('custom:'.length);
+    }
     return switch (titleKey) {
       'tidyRoom' => l10n.familyTasksTaskTidyRoom,
       'washDishes' => l10n.familyTasksTaskWashDishes,
       'mathStudy' => l10n.familyTasksTaskMathStudy,
       'schoolReturnList' => l10n.familyTasksTaskSchoolReturnList,
+      'dishesPlants' => l10n.smartChoreDishesPlants,
+      'livingLaundry' => l10n.smartChoreLivingLaundry,
+      'trashWater' => l10n.smartChoreTrashWater,
       _ => l10n.familyTasksTaskTidyRoom,
     };
   }
@@ -331,7 +338,9 @@ class _FamilyTasksScreenState extends State<FamilyTasksScreen> {
     }
 
     final radii = Theme.of(context).extension<FamilyRadii>()!;
-    final pending = _snap.pendingApproval;
+    final pending = _snap.childTasks
+        .where((t) => t.status == FamilyTaskStatus.pendingApproval)
+        .toList(growable: false);
 
     return SingleChildScrollView(
       key: FamilyTasksKeys.body,

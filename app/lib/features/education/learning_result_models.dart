@@ -29,6 +29,35 @@ final class LearningResultSubmission {
   final Minutes rewardMinutes;
   final int? scoreCorrect;
   final int? scoreTotal;
+
+  Map<String, Object?> toJson() => {
+        'id': id,
+        'childId': childId.value,
+        'kind': kind.name,
+        'titleKey': titleKey,
+        'submittedAt': submittedAt.toUtc().toIso8601String(),
+        'rewardMinutes': rewardMinutes.inMinutes,
+        'scoreCorrect': scoreCorrect,
+        'scoreTotal': scoreTotal,
+      };
+
+  factory LearningResultSubmission.fromJson(Map<String, Object?> json) {
+    final kindName = json['kind'] as String? ?? 'quiz';
+    final kind = LearningResultKind.values.firstWhere(
+      (k) => k.name == kindName,
+      orElse: () => LearningResultKind.quiz,
+    );
+    return LearningResultSubmission(
+      id: json['id']! as String,
+      childId: ChildId(json['childId']! as String),
+      kind: kind,
+      titleKey: json['titleKey']! as String,
+      submittedAt: DateTime.parse(json['submittedAt']! as String).toUtc(),
+      rewardMinutes: Minutes((json['rewardMinutes'] as num?)?.toInt() ?? 0),
+      scoreCorrect: (json['scoreCorrect'] as num?)?.toInt(),
+      scoreTotal: (json['scoreTotal'] as num?)?.toInt(),
+    );
+  }
 }
 
 @immutable

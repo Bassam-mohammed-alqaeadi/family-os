@@ -1,6 +1,7 @@
 import 'package:family_os/features/education/learning_result_models.dart';
 import 'package:family_os/features/education/learning_result_repository.dart';
 import 'package:family_os/features/n14_studio/results_followup_models.dart';
+import 'package:family_os/core/identity/roster_children.dart';
 
 /// Rule 25 seam — Stage-1 mock results follow-up (no backend).
 abstract class ResultsFollowupRepository {
@@ -16,7 +17,7 @@ final class InMemoryResultsFollowupRepository
   InMemoryResultsFollowupRepository({
     ResultsFollowupSnapshot? seed,
     LearningResultRepository? results,
-  }) : _snap = seed ?? resultsFollowupPrototypeFixture(),
+  }) : _snap = seed ?? resultsFollowupEmptyFixture(),
        _results = results ?? stage1LearningResultRepository;
 
   ResultsFollowupSnapshot _snap;
@@ -96,8 +97,8 @@ ResultsFollowupSnapshot resultsFollowupEmptyFixture() {
 
 /// One child · mastery only — no skill gap or activity log.
 ResultsFollowupSnapshot resultsFollowupOneFixture() {
-  return const ResultsFollowupSnapshot(
-    child: ResultsFollowupChild(id: 'child_a', nameKey: 'one'),
+  return ResultsFollowupSnapshot(
+    child: _rosterResultsChild(),
     mastery: ResultsFollowupMastery(subjectKey: 'math', percent: 75),
   );
 }
@@ -107,8 +108,8 @@ ResultsFollowupSnapshot resultsFollowupOneFixture() {
 /// Rule 23: nameKey / titleKey only (no planted person names).
 /// ع-١: minutes-only family reward (+30).
 ResultsFollowupSnapshot resultsFollowupPrototypeFixture() {
-  return const ResultsFollowupSnapshot(
-    child: ResultsFollowupChild(id: 'child_a', nameKey: 'one'),
+  return ResultsFollowupSnapshot(
+    child: _rosterResultsChild(),
     mastery: ResultsFollowupMastery(subjectKey: 'math', percent: 82),
     skillGap: ResultsFollowupSkillGap(
       id: 'gap-fractions',
@@ -136,3 +137,10 @@ ResultsFollowupSnapshot resultsFollowupPrototypeFixture() {
     ],
   );
 }
+
+ResultsFollowupChild? _rosterResultsChild() {
+  final c = activeRosterChild();
+  if (c == null) return null;
+  return ResultsFollowupChild(id: c.id.value, nameKey: c.nameKey);
+}
+

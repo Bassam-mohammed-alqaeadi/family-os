@@ -44,19 +44,12 @@ String generateMockPairToken([Random? random]) {
   return 'pair_$hex';
 }
 
-/// Formats remaining seconds as `m:ss` (Eastern digits when [eastern] is true).
-String formatLinkQrCountdown(int totalSeconds, {required bool eastern}) {
+/// Formats remaining seconds as `m:ss` with Western digits (VX-B3 · D5).
+String formatLinkQrCountdown(int totalSeconds) {
   final safe = totalSeconds < 0 ? 0 : totalSeconds;
   final minutes = safe ~/ 60;
   final seconds = safe % 60;
-  final raw = '$minutes:${seconds.toString().padLeft(2, '0')}';
-  if (!eastern) return raw;
-  return raw.split('').map((ch) {
-    const western = '0123456789';
-    const easternDigits = '٠١٢٣٤٥٦٧٨٩';
-    final i = western.indexOf(ch);
-    return i < 0 ? ch : easternDigits[i];
-  }).join();
+  return '$minutes:${seconds.toString().padLeft(2, '0')}';
 }
 
 /// SCR-FAT-004 — رمز الربط QR.
@@ -317,7 +310,6 @@ class _LinkQrScreenState extends State<LinkQrScreen> {
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final radii = Theme.of(context).extension<FamilyRadii>()!;
     final shadows = Theme.of(context).extension<FamilyShadows>()!;
-    final eastern = l10n.localeName.startsWith('ar');
     final warning = _secondsLeft < 60 && !_expired;
 
     if (!_managedMode &&
@@ -370,7 +362,7 @@ class _LinkQrScreenState extends State<LinkQrScreen> {
                       ListTile(
                         key: LinkQrKeys.childOption(child.childId.value),
                         title: Text(child.childId.value),
-                        trailing: const Icon(Icons.chevron_left),
+                        trailing: const Icon(Icons.chevron_right),
                         onTap: () => _selectChild(child),
                       ),
                   ],
@@ -529,10 +521,7 @@ class _LinkQrScreenState extends State<LinkQrScreen> {
                   children: [
                     TextSpan(text: l10n.linkQrTimerLead),
                     TextSpan(
-                      text: formatLinkQrCountdown(
-                        _secondsLeft,
-                        eastern: eastern,
-                      ),
+                      text: formatLinkQrCountdown(_secondsLeft),
                       style: const TextStyle(fontWeight: FontWeight.w800),
                     ),
                     TextSpan(text: l10n.linkQrTimerTrail),

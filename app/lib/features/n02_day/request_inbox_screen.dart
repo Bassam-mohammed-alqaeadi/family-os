@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:family_os/core/design/components/app_empty_state.dart';
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/tokens.dart';
@@ -9,8 +10,9 @@ import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/time_request.dart';
-import 'package:family_os/core/policy/time_request_repository.dart';
 import 'package:family_os/core/policy/time_request_service.dart';
+import 'package:family_os/core/screen_time/screen_time_runtime.dart';
+import 'package:family_os/core/screen_time/stage1_time_request_runtime.dart';
 
 /// Widget keys for SCR-FAT-033 / UI-006 acceptance.
 abstract final class RequestInboxKeys {
@@ -25,6 +27,8 @@ abstract final class RequestInboxKeys {
   static Key reject(String id) => Key('request_inbox_reject_$id');
   static Key rejectReason(String id) => Key('request_inbox_reject_reason_$id');
   static const observerHint = Key('request_inbox_observer_hint');
+  static const localHonesty = Key('request_inbox_local_honesty');
+  static const unavailable = Key('request_inbox_unavailable');
 }
 
 /// SCR-FAT-033 — طلبات الوقت الإضافي (UI-006 / UF-05 / ADR-039).
@@ -40,7 +44,7 @@ class RequestInboxScreen extends StatefulWidget {
     this.onBack,
   });
 
-  /// Injectable repo-backed service; null → stage-1 prefs singleton.
+  /// Injectable repo-backed service; null → Local KV via Stage1TimeRequestRuntime.
   final TimeRequestService? service;
   final AppRole? role;
   final MotherLevel motherLevel;
@@ -51,10 +55,11 @@ class RequestInboxScreen extends StatefulWidget {
 }
 
 class _RequestInboxScreenState extends State<RequestInboxScreen> {
-  late TimeRequestService _service;
+  TimeRequestService? _service;
   var _ownsService = false;
   List<TimeRequest> _pending = const [];
   var _loading = true;
+  var _unavailable = false;
   final Map<String, int> _selectedGrant = {};
   final Map<String, TextEditingController> _reasonControllers = {};
 
@@ -71,9 +76,10 @@ class _RequestInboxScreenState extends State<RequestInboxScreen> {
     motherLevel: widget.motherLevel,
   );
 
-  bool get _canDecide => _actor.canDecide;
+  bool get _canDecide => _actor.canDecide && _service != null && !_unavailable;
 
-  int get _ceiling => _service.activeCeilingMinutes;
+  int get _ceiling =>
+      _service?.activeCeilingMinutes ?? kDefaultMotherGrantCeilingMinutes;
 
   List<int> get _visibleGrantOptions {
     if (!_canDecide) return const [];
@@ -91,41 +97,64 @@ class _RequestInboxScreenState extends State<RequestInboxScreen> {
   void initState() {
     super.initState();
     _bindService(widget.service);
-    _reload();
   }
 
   void _bindService(TimeRequestService? injected) {
     if (injected != null) {
       _service = injected;
       _ownsService = false;
-    } else {
-      _service = TimeRequestService(
-        repository: PrefsTimeRequestRepository(stage1TimeRequestPrefsStore),
-        decisionBus: stage1TimeRequestDecisionBus,
-      );
-      _ownsService = true;
+      _unavailable = false;
+      _service!.addListener(_onService);
+      _reload();
+      return;
     }
-    _service.addListener(_onService);
+    // Runtime owns the service — never dispose / never Memory Prefs fallback.
+    _ownsService = false;
+    _bootstrapProduction();
+  }
+
+  Future<void> _bootstrapProduction() async {
+    try {
+      await ScreenTimeRuntime.ensureOpen();
+      final service = ScreenTimeRuntime.timeRequest ??
+          await Stage1TimeRequestRuntime.ensureOpen();
+      if (!mounted) return;
+      _service = service;
+      _unavailable = false;
+      _service!.addListener(_onService);
+      await _reload();
+    } catch (e, st) {
+      debugPrint(
+        'DOM-ST-02C: FAT-033 TimeRequest Local KV bootstrap failed — '
+        'no Memory Prefs fallback: $e\n$st',
+      );
+      if (!mounted) return;
+      setState(() {
+        _service = null;
+        _unavailable = true;
+        _loading = false;
+        _pending = const [];
+      });
+    }
   }
 
   @override
   void didUpdateWidget(covariant RequestInboxScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.service != widget.service) {
-      _service.removeListener(_onService);
+      _service?.removeListener(_onService);
       if (_ownsService) {
-        _service.dispose();
+        _service?.dispose();
       }
       _bindService(widget.service);
-      _reload();
     }
   }
 
   @override
   void dispose() {
-    _service.removeListener(_onService);
+    _service?.removeListener(_onService);
     if (_ownsService) {
-      _service.dispose();
+      _service?.dispose();
     }
     for (final c in _reasonControllers.values) {
       c.dispose();
@@ -136,8 +165,10 @@ class _RequestInboxScreenState extends State<RequestInboxScreen> {
   void _onService() => _reload();
 
   Future<void> _reload() async {
+    final service = _service;
+    if (service == null) return;
     final familyId = CurrentIdentity.maybeOf(context)?.activeFamilyId.value;
-    final allPending = await _service.listPending();
+    final allPending = await service.listPending();
     final pending = familyId == null
         ? allPending
         : allPending
@@ -173,11 +204,13 @@ class _RequestInboxScreenState extends State<RequestInboxScreen> {
 
   Future<void> _approve(TimeRequest request) async {
     if (!_canDecide) return;
+    final service = _service;
+    if (service == null) return;
     final minutes =
         _selectedGrant[request.id] ??
         _defaultGrantFor(request.requestedMinutes);
     try {
-      await _service.approve(request.id, _actor, grantMinutes: minutes);
+      await service.approve(request.id, _actor, grantMinutes: minutes);
     } on TimeRequestNotAllowedException {
       // Ceiling / role — button absent or disabled.
     }
@@ -185,17 +218,16 @@ class _RequestInboxScreenState extends State<RequestInboxScreen> {
 
   Future<void> _reject(TimeRequest request) async {
     if (!_canDecide) return;
+    final service = _service;
+    if (service == null) return;
     final reason = _reasonControllers[request.id]?.text ?? '';
     try {
-      await _service.reject(request.id, _actor, reason: reason);
+      await service.reject(request.id, _actor, reason: reason);
     } on TimeRequestReasonRequiredException {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            AppLocalizations.of(context).requestInboxReasonRequired,
-          ),
-        ),
+      AppToast.show(
+        context,
+        message: AppLocalizations.of(context).requestInboxReasonRequired,
       );
     } on TimeRequestNotAllowedException {
       // no-op
@@ -231,7 +263,24 @@ class _RequestInboxScreenState extends State<RequestInboxScreen> {
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (_service.offline)
+                if (_unavailable)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                    child: BannerNote(
+                      key: RequestInboxKeys.unavailable,
+                      variant: BannerVariant.a,
+                      message: l10n.requestInboxUnavailable,
+                    ),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: BannerNote(
+                    key: RequestInboxKeys.localHonesty,
+                    variant: BannerVariant.t,
+                    message: l10n.requestInboxLocalHonestyBanner,
+                  ),
+                ),
+                if (_service?.offline == true)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                     child: BannerNote(

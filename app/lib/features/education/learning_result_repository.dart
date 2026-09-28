@@ -65,11 +65,18 @@ final class InMemoryLearningResultRepository
 }
 
 /// Shared Stage-1 singleton — DI swap later (Rule 25).
-final InMemoryLearningResultRepository stage1LearningResultRepository =
+///
+/// Production boot may rebind to [LocalLearningResultRepository]
+/// via [rebindStage1LearningResultRepository] (DOM-EDU-LOCAL-B).
+LearningResultRepository stage1LearningResultRepository =
     InMemoryLearningResultRepository();
 
+void rebindStage1LearningResultRepository(LearningResultRepository repository) {
+  stage1LearningResultRepository = repository;
+}
+
 LearningResultSubmission learningResultFixture({
-  String childKey = 'child_a',
+  String childKey = 'demo-child',
   int reward = 20,
 }) {
   return LearningResultSubmission(

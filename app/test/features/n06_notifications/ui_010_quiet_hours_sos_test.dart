@@ -35,7 +35,9 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.text('ساعات الهدوء لكتم التنبيهات غير الحرجة فقط'),
+        find.text(
+          'نظّم الإشعارات بحسب درجة أهميتها لمنع الإزعاج — نداءات الاستغاثة تخترق أي وضع صامت دائماً',
+        ),
         findsOneWidget,
       );
     });
@@ -58,7 +60,9 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.text('Quiet hours mute non-critical alerts only'),
+        find.text(
+          'Organize alerts by importance so noise stays low — SOS always pierces silent mode',
+        ),
         findsOneWidget,
       );
     });
@@ -76,8 +80,8 @@ void main() {
       expect(canShowSosMuteControl(AppRole.father), isFalse);
       expect(canShowSosMuteControl(AppRole.mother), isFalse);
 
-      // Only quiet-hours Switch — never an SOS mute control.
-      expect(find.byType(Switch), findsOneWidget);
+      // Three-tier settings expose multiple switches — never an SOS mute control.
+      expect(find.byType(Switch), findsAtLeastNWidgets(1));
       expect(find.byKey(NotificationPrefsKeys.quietHoursSwitch), findsOneWidget);
 
       expect(find.textContaining('Mute SOS'), findsNothing);

@@ -8,7 +8,7 @@ abstract class FamilyPatternsRepository {
 /// In-memory mock — prototype FAT-062 shape by default.
 final class InMemoryFamilyPatternsRepository implements FamilyPatternsRepository {
   InMemoryFamilyPatternsRepository({FamilyPatternsSnapshot? seed})
-    : _snap = seed ?? familyPatternsPrototypeFixture();
+    : _snap = seed ?? familyPatternsEmptyFixture();
 
   FamilyPatternsSnapshot _snap;
 

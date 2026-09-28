@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:family_os/app/role_guard.dart';
+import 'package:family_os/app/shell_tab_more_tools.dart';
 import 'package:family_os/core/design/components/app_card.dart';
 import 'package:family_os/core/design/components/app_error_state.dart';
 import 'package:family_os/core/design/components/banner.dart';
+import 'package:family_os/core/design/components/elevated_gradient_card.dart';
+import 'package:family_os/core/design/components/mint_progress_bar.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
+import 'package:family_os/core/design/components/status_pulse_avatar.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/identity_runtime.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/features/n02_day/day_board_motion.dart';
 import 'package:family_os/features/n02_day/day_board_projection.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
@@ -23,11 +31,16 @@ abstract final class DayBoardKeys {
   static const advisorCta = Key('day_board_advisor_cta');
   static const loading = Key('day_board_loading');
   static const syncLine = Key('day_board_sync_line');
+  static const localDemoBanner = Key('day_board_local_demo_banner');
+  static const mintProgress = Key('day_board_mint_progress');
+  static const priorityLadder = Key('day_board_priority_ladder');
+  static const moreTools = Key('day_board_more_tools');
 
   /// UI-017 — decorative pulse motion host (reduce-motion gated).
   static const pulseMotion = Key('day_board_pulse_motion');
 
   static Key pulse(int i) => Key('day_board_pulse_$i');
+  static Key priorityAt(int i) => Key('day_board_priority_$i');
 }
 
 /// SCR-FAT-010 — لوحة اليوم (bare parent shell, mock-first MVP).
@@ -56,7 +69,7 @@ class DayBoardScreen extends StatefulWidget {
   final String guardianDisplayName;
 
   /// Rule 25 seam — null → [stage1DayBoardProjectionRepository]
-  /// (Register §10 mock seed for Stage-1 demos; tests pass explicit empty).
+  /// (Identity Local roster; tests pass explicit projection).
   final DayBoardProjectionRepository? projectionRepository;
 
   /// Sync override for tests — skips async load when non-null.
@@ -64,8 +77,8 @@ class DayBoardScreen extends StatefulWidget {
 
   final int activeChildIndex;
 
-  /// Test seams — when null, navigates via go_router.
-  final VoidCallback? onChildProfile;
+  /// Test seams — when null, navigates via go_router with [childId].
+  final void Function(String childId)? onChildProfile;
   final VoidCallback? onAllChildren;
   final VoidCallback? onQuran;
   final VoidCallback? onTasks;
@@ -82,11 +95,16 @@ class DayBoardScreenState extends State<DayBoardScreen> {
   late final DayBoardProjectionRepository _repo;
   DayBoardProjection _projection = DayBoardProjection.loading;
   var _loaded = false;
+  IdentityRuntime? _identity;
+  FamilyId? _familyId;
 
   @override
   void initState() {
     super.initState();
     _repo = widget.projectionRepository ?? stage1DayBoardProjectionRepository;
+    _identity = CurrentIdentity.maybeOf(context);
+    _familyId = _identity?.activeFamilyId;
+    _identity?.addListener(_onIdentityChanged);
     if (widget.projection != null) {
       _projection = widget.projection!;
       _loaded = true;
@@ -108,6 +126,21 @@ class DayBoardScreenState extends State<DayBoardScreen> {
         _loaded = true;
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _identity?.removeListener(_onIdentityChanged);
+    super.dispose();
+  }
+
+  /// Family switch → the board reloads for the newly active family.
+  void _onIdentityChanged() {
+    final next = _identity?.activeFamilyId;
+    if (next == _familyId) return;
+    _familyId = next;
+    if (!mounted || widget.projection != null) return;
+    _reload();
   }
 
   Future<void> _reload() async {
@@ -148,12 +181,13 @@ class DayBoardScreenState extends State<DayBoardScreen> {
     return children[i];
   }
 
-  void _goChild(BuildContext context) {
+  void _goChild(BuildContext context, {required String childId}) {
     if (widget.onChildProfile != null) {
-      widget.onChildProfile!();
+      widget.onChildProfile!(childId);
       return;
     }
-    context.go('/scr-fat-013');
+    // G-17: drill-down uses push so Back returns to Today.
+    context.push('/scr-fat-013?childId=${Uri.encodeQueryComponent(childId)}');
   }
 
   void _go(BuildContext context, VoidCallback? seam, String path) {
@@ -161,7 +195,23 @@ class DayBoardScreenState extends State<DayBoardScreen> {
       seam();
       return;
     }
-    context.go(path);
+    context.push(path);
+  }
+
+  void _goQuick(
+    BuildContext context,
+    VoidCallback? seam,
+    String path, {
+    String? childId,
+  }) {
+    if (seam != null) {
+      seam();
+      return;
+    }
+    final uri = childId == null || childId.isEmpty
+        ? path
+        : '$path?childId=${Uri.encodeQueryComponent(childId)}';
+    context.push(uri);
   }
 
   /// Suggest-only — navigate to FAT-011; never approve/apply policy (UI-004 AC3).
@@ -169,15 +219,32 @@ class DayBoardScreenState extends State<DayBoardScreen> {
     _go(context, widget.onAdvisor, '/scr-fat-011');
   }
 
-  void _openPending(BuildContext context) {
-    final pending = _projection.primaryPending;
+  void _openPending(BuildContext context, [DayBoardPendingRequest? row]) {
+    final pending = row ?? _projection.primaryPending;
     final path = pending?.inboxPath ?? '/scr-fat-033';
     _go(context, widget.onPendingRequest, path);
   }
 
+  String _pendingEmoji(DayBoardPendingRequest pending) =>
+      switch (pending.kind) {
+        DayBoardPendingKind.sos => '🆘',
+        DayBoardPendingKind.lockAsk => '🔓',
+        DayBoardPendingKind.arrival => '📍',
+        DayBoardPendingKind.friend => '🤝',
+        DayBoardPendingKind.time => '⏱️',
+        DayBoardPendingKind.app => '📱',
+        DayBoardPendingKind.learning => '📚',
+        DayBoardPendingKind.athkar => '🤲',
+        DayBoardPendingKind.other => '📬',
+      };
+
   String _pendingTitle(AppLocalizations l10n, DayBoardPendingRequest pending) {
     return switch (pending.titleKey) {
       'quizSubmitted' => l10n.dayBoardPendingQuizSubmittedTitle,
+      'athkarBlessing' => l10n.dayBoardPendingAthkarBlessingTitle,
+      'timeRequest' => l10n.dayBoardPendingTimeRequestTitle,
+      'appApproval' => l10n.dayBoardPendingAppApprovalTitle,
+      'friendRequest' => l10n.dayBoardPendingFriendRequestTitle,
       _ =>
         pending.title.isNotEmpty ? pending.title : l10n.dayBoardPriorityTitle,
     };
@@ -192,6 +259,12 @@ class DayBoardScreenState extends State<DayBoardScreen> {
         pending.minutes ?? 0,
       ),
       'justSubmitted' => l10n.dayBoardPendingJustSubmitted,
+      'athkarDone' => l10n.dayBoardPendingAthkarBlessingSubtitle,
+      'timeRequestWaiting' => l10n.dayBoardPendingTimeRequestSubtitle(
+        pending.minutes ?? 0,
+      ),
+      'appApprovalWaiting' => l10n.dayBoardPendingAppApprovalSubtitle,
+      'friendRequestWaiting' => l10n.dayBoardPendingFriendRequestSubtitle,
       _ =>
         pending.subtitle.isNotEmpty
             ? pending.subtitle
@@ -267,142 +340,199 @@ class DayBoardScreenState extends State<DayBoardScreen> {
 
     final active = _active;
     final pulse = _projection.children.take(3).toList();
-    final pending = _projection.primaryPending;
+    final ladder = _projection.importanceLadder.take(4).toList(growable: false);
     final syncLabel = _projection.lastSyncLabel;
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
-      children: [
-        if (_projection.offline) ...[
-          BannerNote(
-            key: DayBoardKeys.offlineBanner,
-            message: l10n.dayBoardOfflineBanner(
-              syncLabel ?? l10n.dayBoardSyncUnknown,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 88),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (_projection.offline) ...[
+            BannerNote(
+              key: DayBoardKeys.offlineBanner,
+              message: l10n.dayBoardOfflineBanner(
+                syncLabel ?? l10n.dayBoardSyncUnknown,
+              ),
+              variant: BannerVariant.a,
+              leading: Text(
+                '☁️',
+                style: TextStyle(fontSize: 18, color: colors.ink),
+              ),
             ),
-            variant: BannerVariant.a,
-            leading: Text(
-              '☁️',
-              style: TextStyle(fontSize: 18, color: colors.ink),
+            const SizedBox(height: 12),
+          ] else ...[
+            Text(
+              key: DayBoardKeys.syncLine,
+              l10n.dayBoardLocalSaveLine,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: colors.ink2,
+              ),
             ),
+            const SizedBox(height: 12),
+          ],
+          if (_projection.localDemoSeeded && _projection.hasChildren) ...[
+            BannerNote(
+              key: DayBoardKeys.localDemoBanner,
+              message: l10n.childrenListLocalDemoBanner,
+              variant: BannerVariant.a,
+              leading: Text(
+                'ℹ',
+                style: TextStyle(fontSize: 18, color: colors.ink),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          _GreetingRow(
+            greeting: l10n.dayBoardGreeting(_resolvedGuardian(l10n)),
+            subtitle: _projection.hasChildren
+                ? l10n.dayBoardGreetingSub
+                : l10n.dayBoardGreetingSubEmpty,
+            pulseLabel: l10n.dayBoardPulseLabel,
+            children: pulse,
+            colors: colors,
+            onAvatarTap: (child) => _goChild(context, childId: child.id),
           ),
           const SizedBox(height: 12),
-        ] else if (syncLabel != null) ...[
+          if (active == null)
+            _EmptyChildrenCard(
+              colors: colors,
+              radii: radii,
+              title: l10n.dayBoardEmptyChildrenTitle,
+              subtitle: l10n.dayBoardEmptyChildrenSubtitle,
+            )
+          else
+            _ActiveChildCard(
+              child: active,
+              colors: colors,
+              radii: radii,
+              gradients: gradients,
+              activeTag: l10n.dayBoardActiveTag,
+              timeLeft: l10n.dayBoardStatTimeLeft(active.timeLeftLabel),
+              quran: l10n.dayBoardStatQuran(active.quranLabel),
+              wallet: l10n.dayBoardStatWallet(active.walletLabel),
+              title: l10n.dayBoardChildTitle(
+                active.displayName,
+                active.ageYears,
+              ),
+              locationBattery: l10n.dayBoardLocationBattery(
+                active.locationLabel,
+                active.batteryLabel,
+              ),
+              progressSemantics: l10n.dayBoardTimeLeftProgressSemantics,
+              onTap: () => _goChild(context, childId: active.id),
+            ),
+          const SizedBox(height: 12),
+          AppCard(
+            title: l10n.dayBoardQuickTitle,
+            linkLabel: l10n.dayBoardAllChildren,
+            onLinkTap: () => _go(context, widget.onAllChildren, '/scr-fat-012'),
+            child: _QuickGrid(
+              colors: colors,
+              radii: radii,
+              quran: l10n.dayBoardQuickQuran,
+              tasks: l10n.dayBoardQuickTasks,
+              lock: l10n.dayBoardQuickLock,
+              lockSemantics: l10n.spineCtaLockSemantics,
+              map: l10n.dayBoardQuickMap,
+              onQuran: () => _goQuick(
+                context,
+                widget.onQuran,
+                '/scr-fat-072',
+                childId: active?.id,
+              ),
+              onTasks: () => _go(context, widget.onTasks, '/scr-fat-054'),
+              onLock: () => _goQuick(
+                context,
+                widget.onLock,
+                '/scr-fat-037',
+                childId: active?.id,
+              ),
+              onMap: () => _goQuick(
+                context,
+                widget.onMap,
+                '/scr-fat-014',
+                childId: active?.id,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
           Text(
-            key: DayBoardKeys.syncLine,
-            l10n.dayBoardSyncLine(syncLabel),
-            textAlign: TextAlign.center,
+            l10n.dayBoardPrioritySection,
             style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: colors.ink2,
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: colors.ink,
             ),
           ),
+          const SizedBox(height: 8),
+          if (ladder.isEmpty)
+            _EmptyPendingCard(
+              colors: colors,
+              radii: radii,
+              title: l10n.dayBoardEmptyPendingTitle,
+              subtitle: l10n.dayBoardEmptyPendingSubtitle,
+            )
+          else
+            Column(
+              key: DayBoardKeys.priorityLadder,
+              children: [
+                for (var i = 0; i < ladder.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 8),
+                  _PriorityCard(
+                    key: i == 0
+                        ? DayBoardKeys.priority
+                        : DayBoardKeys.priorityAt(i),
+                    colors: colors,
+                    radii: radii,
+                    emoji: _pendingEmoji(ladder[i]),
+                    title: _pendingTitle(l10n, ladder[i]),
+                    subtitle: _pendingSubtitle(l10n, ladder[i]),
+                    tagLabel: l10n.dayBoardPriorityTag,
+                    onTap: () => _openPending(context, ladder[i]),
+                  ),
+                ],
+              ],
+            ),
           const SizedBox(height: 12),
-        ],
-        _GreetingRow(
-          greeting: l10n.dayBoardGreeting(_resolvedGuardian(l10n)),
-          subtitle: _projection.hasChildren
-              ? l10n.dayBoardGreetingSub
-              : l10n.dayBoardGreetingSubEmpty,
-          pulseLabel: l10n.dayBoardPulseLabel,
-          children: pulse,
-          colors: colors,
-          onAvatarTap: () => _goChild(context),
-        ),
-        const SizedBox(height: 12),
-        if (active == null)
-          _EmptyChildrenCard(
-            colors: colors,
-            radii: radii,
-            title: l10n.dayBoardEmptyChildrenTitle,
-            subtitle: l10n.dayBoardEmptyChildrenSubtitle,
-          )
-        else
-          _ActiveChildCard(
-            child: active,
-            colors: colors,
-            radii: radii,
-            gradients: gradients,
-            activeTag: l10n.dayBoardActiveTag,
-            timeLeft: l10n.dayBoardStatTimeLeft(active.timeLeftLabel),
-            quran: l10n.dayBoardStatQuran(active.quranLabel),
-            wallet: l10n.dayBoardStatWallet(active.walletLabel),
-            title: l10n.dayBoardChildTitle(active.displayName, active.ageYears),
-            locationBattery: l10n.dayBoardLocationBattery(
-              active.locationLabel,
-              active.batteryLabel,
-            ),
-            onTap: () => _goChild(context),
-          ),
-        const SizedBox(height: 12),
-        AppCard(
-          title: l10n.dayBoardQuickTitle,
-          linkLabel: l10n.dayBoardAllChildren,
-          onLinkTap: () => _go(context, widget.onAllChildren, '/scr-fat-012'),
-          child: _QuickGrid(
-            colors: colors,
-            radii: radii,
-            quran: l10n.dayBoardQuickQuran,
-            tasks: l10n.dayBoardQuickTasks,
-            lock: l10n.dayBoardQuickLock,
-            lockSemantics: l10n.spineCtaLockSemantics,
-            map: l10n.dayBoardQuickMap,
-            onQuran: () => _go(context, widget.onQuran, '/scr-fat-072'),
-            onTasks: () => _go(context, widget.onTasks, '/scr-fat-054'),
-            onLock: () => _go(context, widget.onLock, '/scr-fat-037'),
-            onMap: () => _go(context, widget.onMap, '/scr-fat-014'),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          l10n.dayBoardPrioritySection,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
-            color: colors.ink,
-          ),
-        ),
-        const SizedBox(height: 8),
-        if (pending == null)
-          _EmptyPendingCard(
-            colors: colors,
-            radii: radii,
-            title: l10n.dayBoardEmptyPendingTitle,
-            subtitle: l10n.dayBoardEmptyPendingSubtitle,
-          )
-        else
-          _PriorityCard(
-            colors: colors,
-            radii: radii,
-            title: _pendingTitle(l10n, pending),
-            subtitle: _pendingSubtitle(l10n, pending),
-            tagLabel: l10n.dayBoardPriorityTag,
-            onTap: () => _openPending(context),
-          ),
-        const SizedBox(height: 12),
-        AppCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              BannerNote(
-                message: l10n.dayBoardAdvisorBanner,
-                variant: BannerVariant.p,
-                leading: Text(
-                  '🧠',
-                  style: TextStyle(fontSize: 18, color: colors.ink),
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                BannerNote(
+                  message: l10n.dayBoardAdvisorBanner,
+                  variant: BannerVariant.p,
+                  leading: Text(
+                    '🧠',
+                    style: TextStyle(fontSize: 18, color: colors.ink),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              PrimaryBtn(
-                key: DayBoardKeys.advisorCta,
-                label: l10n.dayBoardAdvisorCta,
-                variant: PrimaryBtnVariant.ghost,
-                onPressed: () => _openAdvisor(context),
-              ),
-            ],
+                const SizedBox(height: 12),
+                PrimaryBtn(
+                  key: DayBoardKeys.advisorCta,
+                  label: l10n.dayBoardAdvisorCta,
+                  variant: PrimaryBtnVariant.ghost,
+                  onPressed: () => _openAdvisor(context),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+          ShellTabMoreTools(
+            key: DayBoardKeys.moreTools,
+            tabId: 'today',
+            onOpen: (screenId) {
+              if (widget.onAdvisor != null && screenId == 'SCR-FAT-011') {
+                widget.onAdvisor!();
+                return;
+              }
+              context.push(screenPath(screenId));
+            },
+          ),
+        ],
+      ),
     );
   }
 }
@@ -422,7 +552,7 @@ class _GreetingRow extends StatelessWidget {
   final String pulseLabel;
   final List<DayChildMock> children;
   final FamilyColors colors;
-  final VoidCallback onAvatarTap;
+  final void Function(DayChildMock child) onAvatarTap;
 
   @override
   Widget build(BuildContext context) {
@@ -498,7 +628,7 @@ class _PulseAvatarRow extends StatelessWidget {
 
   final List<DayChildMock> children;
   final FamilyColors colors;
-  final VoidCallback onAvatarTap;
+  final void Function(DayChildMock child) onAvatarTap;
 
   @override
   Widget build(BuildContext context) {
@@ -514,7 +644,7 @@ class _PulseAvatarRow extends StatelessWidget {
               key: DayBoardKeys.pulse(i),
               child: children[i],
               colors: colors,
-              onTap: onAvatarTap,
+              onTap: () => onAvatarTap(children[i]),
             ),
         ],
       ),
@@ -534,29 +664,20 @@ class _PulseAvatar extends StatelessWidget {
   final FamilyColors colors;
   final VoidCallback onTap;
 
+  StatusPulseKind get _status => switch (child.pulseStatus) {
+    DayChildPulseStatus.calm => StatusPulseKind.calm,
+    DayChildPulseStatus.attention => StatusPulseKind.attention,
+    DayChildPulseStatus.alert => StatusPulseKind.alert,
+  };
+
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: child.displayName,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          customBorder: const CircleBorder(),
-          child: Ink(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: child.resolveColor(colors),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(child.emoji, style: const TextStyle(fontSize: 15)),
-            ),
-          ),
-        ),
-      ),
+    return StatusPulseAvatar(
+      emoji: child.emoji,
+      fillColor: child.resolveColor(colors),
+      semanticsLabel: child.displayName,
+      status: _status,
+      onTap: onTap,
     );
   }
 }
@@ -690,6 +811,7 @@ class _ActiveChildCard extends StatelessWidget {
     required this.wallet,
     required this.title,
     required this.locationBattery,
+    required this.progressSemantics,
     required this.onTap,
   });
 
@@ -703,153 +825,143 @@ class _ActiveChildCard extends StatelessWidget {
   final String wallet;
   final String title;
   final String locationBattery;
+  final String progressSemantics;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: title,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          key: DayBoardKeys.activeChild,
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(radii.card),
-          child: Ink(
+    final ratio = child.timeLeftRatio;
+
+    return ElevatedGradientCard(
+      key: DayBoardKeys.activeChild,
+      semanticsLabel: title,
+      onTap: onTap,
+      gradient: gradients.grad,
+      child: Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.25),
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Text(child.emoji, style: const TextStyle(fontSize: 20)),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      locationBattery,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(radii.pill),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 3,
+                    ),
+                    child: Text(
+                      activeTag,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: colors.mintInk,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (ratio != null) ...[
+            const SizedBox(height: 12),
+            MintProgressBar(
+              key: DayBoardKeys.mintProgress,
+              value: ratio,
+              semanticsLabel: progressSemantics,
+            ),
+          ],
+          const SizedBox(height: 14),
+          DecoratedBox(
             decoration: BoxDecoration(
-              gradient: gradients.grad,
-              borderRadius: BorderRadius.circular(radii.card),
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 46,
-                        height: 46,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.25),
-                          shape: BoxShape.circle,
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          child.emoji,
-                          style: const TextStyle(fontSize: 20),
-                        ),
+                  Expanded(
+                    child: Text(
+                      timeLeft,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              title,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              locationBattery,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white.withValues(alpha: 0.9),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(radii.pill),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 3,
-                            ),
-                            child: Text(
-                              activeTag,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                color: colors.mintInk,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
+                  ),
+                  Expanded(
+                    child: Text(
+                      quran,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
                       ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              timeLeft,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: Text(
-                              quran,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: Text(
-                              wallet,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      wallet,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -857,7 +969,7 @@ class _ActiveChildCard extends StatelessWidget {
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -1026,8 +1138,10 @@ class _QuickTile extends StatelessWidget {
 
 class _PriorityCard extends StatelessWidget {
   const _PriorityCard({
+    super.key,
     required this.colors,
     required this.radii,
+    required this.emoji,
     required this.title,
     required this.subtitle,
     required this.tagLabel,
@@ -1036,6 +1150,7 @@ class _PriorityCard extends StatelessWidget {
 
   final FamilyColors colors;
   final FamilyRadii radii;
+  final String emoji;
   final String title;
   final String subtitle;
   final String tagLabel;
@@ -1046,7 +1161,6 @@ class _PriorityCard extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        key: DayBoardKeys.priority,
         onTap: onTap,
         borderRadius: BorderRadius.circular(radii.card),
         child: Ink(
@@ -1059,7 +1173,7 @@ class _PriorityCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Row(
               children: [
-                Text('⏱️', style: TextStyle(fontSize: 22, color: colors.ink)),
+                Text(emoji, style: TextStyle(fontSize: 22, color: colors.ink)),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(

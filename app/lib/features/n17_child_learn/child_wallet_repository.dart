@@ -2,8 +2,7 @@ import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/policy/screen_time_policy.dart';
 import 'package:family_os/core/policy/screen_time_policy_repository.dart';
 import 'package:family_os/core/policy/wallet_ledger.dart';
-import 'package:family_os/features/n03_screen_time/child_screen_time_screen.dart'
-    show stage1PolicyPrefsStore;
+import 'package:family_os/core/screen_time/screen_time_local_persistence.dart';
 import 'package:family_os/features/n03_screen_time/stage1_child_scope.dart';
 import 'package:family_os/features/n17_child_learn/child_wallet_models.dart';
 
@@ -23,26 +22,34 @@ final class PolicyChildWalletRepository implements ChildWalletRepository {
     WalletLedger? walletLedger,
     ChildId? childId,
     List<ChildWalletBadge>? prestigeBadges,
-  })  : _policy = policyRepository ??
-            PrefsScreenTimePolicyRepository(stage1PolicyPrefsStore),
-        _ledger = walletLedger,
-        _childId = childId ?? activeScopedChildId(),
-        _badges = prestigeBadges ?? _defaultPrestigeBadges;
+  }) : _injectedPolicy = policyRepository,
+       _ledger = walletLedger,
+       _childId = childId ?? activeScopedChildId(),
+       _badges = prestigeBadges ?? _defaultPrestigeBadges;
 
-  final ScreenTimePolicyRepository _policy;
+  final ScreenTimePolicyRepository? _injectedPolicy;
+  ScreenTimePolicyRepository? _resolvedPolicy;
   final WalletLedger? _ledger;
   final ChildId _childId;
   final List<ChildWalletBadge> _badges;
 
   Future<void> Function()? loadGate;
 
+  Future<ScreenTimePolicyRepository> _policyRepo() async {
+    final injected = _injectedPolicy;
+    if (injected != null) return injected;
+    return _resolvedPolicy ??=
+        await ScreenTimeLocalPersistence.openPolicyRepository();
+  }
+
   @override
   Future<ChildWalletSnapshot> load() async {
     final gate = loadGate;
     if (gate != null) await gate();
 
-    final policy = await _policy.load(_childId);
-    final ledger = _ledger ?? WalletLedger(_policy);
+    final policyRepo = await _policyRepo();
+    final policy = await policyRepo.load(_childId);
+    final ledger = _ledger ?? WalletLedger(policyRepo);
 
     final apps = <ChildWalletApp>[];
     var total = 0;
@@ -82,7 +89,7 @@ final class PolicyChildWalletRepository implements ChildWalletRepository {
 
 final class InMemoryChildWalletRepository implements ChildWalletRepository {
   InMemoryChildWalletRepository({ChildWalletSnapshot? seed})
-    : _snap = seed ?? childWalletPrototypeFixture();
+    : _snap = seed ?? childWalletEmptyFixture();
 
   ChildWalletSnapshot _snap;
   Future<void> Function()? loadGate;

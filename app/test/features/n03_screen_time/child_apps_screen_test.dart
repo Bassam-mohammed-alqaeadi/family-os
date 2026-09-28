@@ -46,7 +46,7 @@ void main() {
   });
 
   testWidgets('many apps + pending CTA fires FAT-035 seam', (tester) async {
-    final repo = InMemoryChildAppsRepository();
+    final repo = InMemoryChildAppsRepository(seed: kDefaultChildAppsByChild);
     String? openedChild;
     String? openedApp;
     await _pump(
@@ -77,7 +77,7 @@ void main() {
   });
 
   testWidgets('pending tile tap opens FAT-035 seam', (tester) async {
-    final repo = InMemoryChildAppsRepository();
+    final repo = InMemoryChildAppsRepository(seed: kDefaultChildAppsByChild);
     String? openedApp;
     await _pump(
       tester,

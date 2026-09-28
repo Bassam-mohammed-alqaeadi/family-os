@@ -10,16 +10,22 @@ final class InMemoryChildStickersBackgroundsRepository
     implements ChildStickersBackgroundsRepository {
   InMemoryChildStickersBackgroundsRepository({
     ChildStickersBackgroundsSnapshot? seed,
-  }) : _snap = seed ?? childStickersBackgroundsPrototypeFixture();
+  }) : _snap = seed ?? childStickersBackgroundsEmptyFixture();
 
   ChildStickersBackgroundsSnapshot _snap;
   Future<void> Function()? loadGate;
+  Object? loadError;
   var remindTapped = false;
 
   @override
   Future<ChildStickersBackgroundsSnapshot> load() async {
     final gate = loadGate;
     if (gate != null) await gate();
+    final err = loadError;
+    if (err != null) {
+      loadError = null;
+      throw err;
+    }
     return _snap.copyWith();
   }
 

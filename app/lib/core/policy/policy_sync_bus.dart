@@ -102,6 +102,9 @@ final class ChildPolicyMirror {
 ///
 /// Parent [publish] → if child online, apply to [watch] stream same isolate;
 /// if offline, hold as [PolicySyncStatus.offlineQueued] until [markChildOnline].
+///
+/// EVT-01-B: optional [journalHook] soft-enqueues publish events locally
+/// (enqueue ≠ remote delivery).
 final class PolicySyncBus {
   PolicySyncBus();
 
@@ -114,6 +117,9 @@ final class PolicySyncBus {
       <String, StreamController<PolicySyncStatus>>{};
   final _mirrorControllers =
       <String, StreamController<ChildPolicyMirror>>{};
+
+  /// Soft journal bridge — never throws to callers.
+  void Function(PolicySyncEvent event, PolicySyncStatus status)? journalHook;
 
   /// Parent-visible status for [childId] (defaults to delivered = idle).
   PolicySyncStatus statusOf(ChildId childId) =>
@@ -166,15 +172,26 @@ final class PolicySyncBus {
   /// Parent publishes after successful repo save.
   PolicySyncStatus publish(PolicySyncEvent event) {
     final id = event.childId.value;
+    late final PolicySyncStatus status;
     if (_offline.contains(id)) {
       final q = _queue.putIfAbsent(id, () => <PolicySyncEvent>[]);
       q.add(event);
       _setStatus(event.childId, PolicySyncStatus.offlineQueued);
-      return PolicySyncStatus.offlineQueued;
+      status = PolicySyncStatus.offlineQueued;
+    } else {
+      _setStatus(event.childId, PolicySyncStatus.pending);
+      _deliver(event);
+      status = PolicySyncStatus.delivered;
     }
-    _setStatus(event.childId, PolicySyncStatus.pending);
-    _deliver(event);
-    return PolicySyncStatus.delivered;
+    final hook = journalHook;
+    if (hook != null) {
+      try {
+        hook(event, status);
+      } catch (_) {
+        // Soft-fail — in-process sync still applied.
+      }
+    }
+    return status;
   }
 
   /// Child-side stream of applied snapshots (same-session live reflect).

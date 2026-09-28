@@ -11,6 +11,7 @@ import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n17_child_learn/child_quran_ward_models.dart';
 import 'package:family_os/features/n17_child_learn/child_quran_ward_repository.dart';
@@ -94,7 +95,7 @@ class _ChildQuranWardScreenState extends State<ChildQuranWardScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'self');
+    await childSosSenderOf(context).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-CHD-005'));
@@ -232,10 +233,10 @@ class _ChildQuranWardScreenState extends State<ChildQuranWardScreen> {
           DecoratedBox(
             key: ChildQuranWardKeys.hero,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
+              gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFF1B3A31), Color(0xFF0E241E)],
+                colors: [colors.tealDeep, colors.ink],
               ),
               borderRadius: BorderRadius.circular(radii.card),
             ),

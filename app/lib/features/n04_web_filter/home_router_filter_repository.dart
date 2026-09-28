@@ -9,7 +9,7 @@ abstract class HomeRouterFilterRepository {
 final class InMemoryHomeRouterFilterRepository
     implements HomeRouterFilterRepository {
   InMemoryHomeRouterFilterRepository({HomeRouterFilterSnapshot? seed})
-    : _snap = seed ?? homeRouterFilterPrototypeFixture();
+    : _snap = seed ?? homeRouterFilterEmptyFixture();
 
   HomeRouterFilterSnapshot _snap;
   Future<void> Function()? loadGate;
@@ -30,6 +30,7 @@ final class InMemoryHomeRouterFilterRepository
 
   @override
   Future<HomeRouterFilterSnapshot> runProtectionCheck() async {
+    // CE-B0 / CE-G004 — VPN/DNS Native CLOSED; do not fake a successful check.
     checkCount++;
     return _snap.copyWith();
   }
@@ -38,27 +39,25 @@ final class InMemoryHomeRouterFilterRepository
 }
 
 final InMemoryHomeRouterFilterRepository stage1HomeRouterFilterRepository =
-    InMemoryHomeRouterFilterRepository();
+    InMemoryHomeRouterFilterRepository(
+      // CE-B0 — honest Local baseline (no Synced / DNS-on / deviceCount=12).
+      seed: homeRouterFilterOneFixture(),
+    );
 
 HomeRouterFilterSnapshot homeRouterFilterEmptyFixture() =>
     const HomeRouterFilterSnapshot();
 
+/// Honest Local UI sample — no live DNS / Synced / device-count claims (CE-B0).
 HomeRouterFilterSnapshot homeRouterFilterOneFixture() {
   return const HomeRouterFilterSnapshot(
     hasFamily: true,
-    protected: true,
-    deviceCount: 1,
-    dnsActive: true,
-    categoriesSynced: true,
+    protected: false,
+    deviceCount: 0,
+    dnsActive: false,
+    categoriesSynced: false,
   );
 }
 
-HomeRouterFilterSnapshot homeRouterFilterPrototypeFixture() {
-  return const HomeRouterFilterSnapshot(
-    hasFamily: true,
-    protected: true,
-    deviceCount: 12,
-    dnsActive: true,
-    categoriesSynced: true,
-  );
-}
+/// Former prototype numerals removed — same honest Local baseline as [homeRouterFilterOneFixture].
+HomeRouterFilterSnapshot homeRouterFilterPrototypeFixture() =>
+    homeRouterFilterOneFixture();

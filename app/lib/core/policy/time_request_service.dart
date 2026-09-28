@@ -69,6 +69,10 @@ final class QueuedTimeDecision {
 enum QueuedTimeDecisionKind { approve, reject }
 
 /// Stage-1 shared prefs store for time requests.
+///
+/// LEGACY / RETAINED — no longer the production TimeRequest/TimeGrant authority
+/// (DOM-ST-02C → Local KV / SQLite via [Stage1TimeRequestRuntime]). Kept for
+/// explicit Memory-Map tests; do not use as production fallback.
 final MemoryTimeRequestPrefsStore stage1TimeRequestPrefsStore =
     MemoryTimeRequestPrefsStore();
 

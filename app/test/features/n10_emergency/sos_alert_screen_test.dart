@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
@@ -12,6 +13,8 @@ import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n10_emergency/sos_alert_screen.dart';
 
 void main() {
+  tearDown(AppToast.dismiss);
+
   testWidgets('SCR-FAT-018 father sees active coral board + CTAs',
       (tester) async {
     final repo = InMemorySosAlertRepository(
@@ -50,7 +53,7 @@ void main() {
     expect(find.byKey(SosAlertKeys.breakGlass), findsOneWidget);
     expect(find.byKey(SosAlertKeys.recipients), findsOneWidget);
     expect(find.byKey(SosAlertKeys.autoCallNote), findsOneWidget);
-    expect(find.textContaining('ابن ١ يطلب النجدة'), findsOneWidget);
+    expect(find.textContaining('يطلب النجدة'), findsOneWidget);
   });
 
   testWidgets('SCR-FAT-018 Observer CANNOT ack, resolve, or escalate',
@@ -180,6 +183,7 @@ void main() {
         child: SosAlertScreen(
           repository: repo,
           roleOverride: AppRole.father,
+          setupIncompleteOverride: false,
           onOpenSetup: () => setup = true,
         ),
       ),
@@ -188,6 +192,31 @@ void main() {
 
     expect(find.byKey(SosAlertKeys.empty), findsOneWidget);
     expect(find.byKey(SosAlertKeys.body), findsNothing);
+    expect(find.textContaining('إعداد سلسلة الطوارئ'), findsOneWidget);
+    await tester.tap(find.byKey(SosAlertKeys.setupCta));
+    await tester.pumpAndSettle();
+    expect(setup, isTrue);
+  });
+
+  testWidgets('SCR-FAT-018 empty incomplete CTA deep-links setup',
+      (tester) async {
+    final repo = InMemorySosAlertRepository();
+    var setup = false;
+
+    await tester.pumpWidget(
+      _app(
+        child: SosAlertScreen(
+          repository: repo,
+          roleOverride: AppRole.father,
+          setupIncompleteOverride: true,
+          onOpenSetup: () => setup = true,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(SosAlertKeys.empty), findsOneWidget);
+    expect(find.textContaining('أكمل جاهزية الطوارئ'), findsOneWidget);
     await tester.tap(find.byKey(SosAlertKeys.setupCta));
     await tester.pumpAndSettle();
     expect(setup, isTrue);
@@ -252,7 +281,7 @@ void main() {
     expect(called, isTrue);
 
     await _tapVisible(tester, SosAlertKeys.liveMap);
-    expect(mapChild, 'child_a');
+    expect(mapChild, 'demo-child');
   });
 
   test('SCR-FAT-018 fireAndSeedSosAlert is entitlement-free + P-4', () async {
@@ -275,6 +304,8 @@ Future<void> _tapVisible(WidgetTester tester, Key key) async {
   await tester.ensureVisible(find.byKey(key));
   await tester.pumpAndSettle();
   await tester.tap(find.byKey(key));
+  await tester.pump();
+  AppToast.dismiss();
   await tester.pumpAndSettle();
 }
 

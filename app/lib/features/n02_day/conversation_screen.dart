@@ -3,14 +3,18 @@ import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/app_error_state.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/chat_availability.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n02_day/conversation_repository.dart';
+import 'package:family_os/features/n02_day/family_chat_labels.dart';
 
 /// Widget keys for SCR-FAT-022 acceptance.
 abstract final class ConversationKeys {
@@ -24,6 +28,7 @@ abstract final class ConversationKeys {
   static const encryptedTag = Key('conversation_encrypted');
   static const settingsTag = Key('conversation_settings');
   static const familyPinNote = Key('conversation_family_pin');
+  static const honestyBanner = Key('conversation_honesty');
   static const toneBridge = Key('conversation_tone_bridge');
   static const composer = Key('conversation_composer');
   static const input = Key('conversation_input');
@@ -174,7 +179,15 @@ class ConversationScreenState extends State<ConversationScreen> {
     }
     setState(() => _sosBusy = true);
     final fire = widget.sosFire ?? stage1SosFireService;
-    await fire.fire(childId: _resolvedPeer ?? 'family');
+    final sender = sosSenderForRole(
+      context,
+      _role,
+      viewedChild: familyChildOrNull(
+        _resolvedPeer,
+        runtime: identityOf(context),
+      ),
+    );
+    await sender.fireThrough(fire);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push('/scr-fat-018');
@@ -212,9 +225,7 @@ class ConversationScreenState extends State<ConversationScreen> {
       return;
     }
     final l10n = AppLocalizations.of(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.conversationAttachToast)),
-    );
+    AppToast.show(context, message: l10n.conversationAttachToast);
   }
 
   void _onSettings() {
@@ -223,16 +234,20 @@ class ConversationScreenState extends State<ConversationScreen> {
       return;
     }
     final l10n = AppLocalizations.of(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.conversationSettingsToast)),
-    );
+    AppToast.show(context, message: l10n.conversationSettingsToast);
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).extension<FamilyColors>()!;
-    final titleText = _detail?.title ?? l10n.conversationTitle;
+    final titleText = _detail == null
+        ? l10n.conversationTitle
+        : localizedConversationThreadTitle(
+            l10n,
+            _detail!.chatWith,
+            _detail!.title,
+          );
 
     return Scaffold(
       key: ConversationKeys.screen,
@@ -332,10 +347,32 @@ class ConversationScreenState extends State<ConversationScreen> {
           ),
         Expanded(
           child: detail.isEmpty
-              ? AppEmptyState(
-                  key: ConversationKeys.empty,
-                  title: l10n.conversationEmptyTitle,
-                  message: l10n.conversationEmptyMessage,
+              ? Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                      child: Text(
+                        key: detail.familyPinnedNote
+                            ? ConversationKeys.familyPinNote
+                            : ConversationKeys.honestyBanner,
+                        detail.familyPinnedNote
+                            ? l10n.conversationFamilyPinNote
+                            : l10n.conversationLocalHonestyBanner,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: colors.ink2,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: AppEmptyState(
+                        key: ConversationKeys.empty,
+                        title: l10n.conversationEmptyTitle,
+                        message: l10n.conversationEmptyMessage,
+                      ),
+                    ),
+                  ],
                 )
               : _ThreadScroll(
                   detail: detail,
@@ -411,19 +448,22 @@ class _ThreadScroll extends StatelessWidget {
           _Bubble(message: m, colors: colors),
           const SizedBox(height: 8),
         ],
-        if (detail.familyPinnedNote)
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text(
-              key: ConversationKeys.familyPinNote,
-              l10n.conversationFamilyPinNote,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: colors.ink2,
-              ),
+        Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(
+            key: detail.familyPinnedNote
+                ? ConversationKeys.familyPinNote
+                : ConversationKeys.honestyBanner,
+            detail.familyPinnedNote
+                ? l10n.conversationFamilyPinNote
+                : l10n.conversationLocalHonestyBanner,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: colors.ink2,
             ),
           ),
+        ),
       ],
     );
   }
@@ -512,11 +552,14 @@ class _Bubble extends StatelessWidget {
     );
   }
 
+  /// Q-CEX-001 — single ✓ = saved locally / sent on this device.
+  /// Never ✓✓ (would imply remote delivered/read while relay is CLOSED).
   String _statusTicks(ConversationDeliveryStatus status) => switch (status) {
         ConversationDeliveryStatus.sending => ' · …',
-        ConversationDeliveryStatus.sent => ' ✓',
-        ConversationDeliveryStatus.delivered => ' ✓✓',
-        ConversationDeliveryStatus.read => ' ✓✓',
+        ConversationDeliveryStatus.sent ||
+        ConversationDeliveryStatus.delivered ||
+        ConversationDeliveryStatus.read =>
+          ' ✓',
       };
 }
 

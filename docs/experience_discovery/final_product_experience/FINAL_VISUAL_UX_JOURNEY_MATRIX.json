@@ -1,0 +1,5021 @@
+{
+  "meta": {
+    "title": "FINAL VISUAL UX JOURNEY MATRIX",
+    "date": "2026-09-25",
+    "type": "DOCS-ONLY pre-audit baseline",
+    "companion_md": "FINAL_VISUAL_UX_JOURNEY_MATRIX.md",
+    "findings_doc": "FINAL_VISUAL_UX_JOURNEY_FINDINGS.md",
+    "counts": {
+      "systems": 42,
+      "services": 240,
+      "journeys": 73,
+      "catalog_screens": 130,
+      "live_catalog_screens": 128,
+      "oos_screens": [
+        "SCR-FAT-039",
+        "SCR-FAT-077"
+      ],
+      "non_catalog_surfaces": 15
+    },
+    "rule": "No cell is PASS in this baseline. PR = PENDING-RENDER, PD = PENDING-DEVICE, F:<id> = static FAIL."
+  },
+  "legend": {
+    "PR": "PENDING-RENDER",
+    "PD": "PENDING-DEVICE",
+    "NA": "NOT APPLICABLE",
+    "BN": "BLOCKED-NATIVE",
+    "BR": "BLOCKED-REMOTE",
+    "OD": "OWNER-DECISION",
+    "FC": "FRONTEND COMPLETE (FRONTEND_COMPLETION_MATRIX)",
+    "OOS": "OUT OF SCOPE",
+    "ctx_route": "router forwards query param",
+    "ctx_drop": "per-child screen, router drops childId (FVX-G-04)",
+    "unbound": "production default is an empty in-memory store never bound at boot",
+    "states": "L loading, E empty, 1 one, M many, Er error, Off offline, Stl stale, P pending, S success, U unavailable, NC native-closed, RC remote-closed"
+  },
+  "fields": [
+    "id",
+    "system",
+    "role",
+    "journeys",
+    "purpose",
+    "entry",
+    "exit",
+    "data_source",
+    "control_primary",
+    "control_secondary",
+    "states",
+    "context",
+    "rbac",
+    "native",
+    "remote",
+    "visual",
+    "ux",
+    "rtl",
+    "device",
+    "status",
+    "findings",
+    "batch",
+    "evidence",
+    "final"
+  ],
+  "screens": [
+    {
+      "id": "SCR-SHR-001",
+      "system": "ADM:أ",
+      "role": "Any",
+      "journeys": [
+        "JRN-FAT-01"
+      ],
+      "purpose": "Welcome slides + start",
+      "entry": "initial route",
+      "exit": "SHR-007/SHR-002/SHR-003",
+      "data_source": "ARB static",
+      "control_primary": "Start",
+      "control_secondary": "Login link",
+      "states": "S",
+      "context": "none",
+      "rbac": "Any",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": "PD cold start",
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "welcome screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-SHR-002",
+      "system": "ADM:أ",
+      "role": "Any",
+      "journeys": [
+        "JRN-FAT-01"
+      ],
+      "purpose": "Create account",
+      "entry": "SHR-001",
+      "exit": "FAT-001",
+      "data_source": "Identity runtime (local)",
+      "control_primary": "Create",
+      "control_secondary": "Login link",
+      "states": "Er,S",
+      "context": "none",
+      "rbac": "Any",
+      "native": null,
+      "remote": "Account backend",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": "PD keyboard",
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "create_account screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-SHR-003",
+      "system": "ADM:أ",
+      "role": "Any",
+      "journeys": [
+        "JRN-FAT-01",
+        "JRN-MOT-01"
+      ],
+      "purpose": "Login + recovery",
+      "entry": "SHR-001/SHR-007",
+      "exit": "FAT-010/FAT-009",
+      "data_source": "Identity/session kernel (credentials ignored)",
+      "control_primary": "Login",
+      "control_secondary": "Fingerprint, forgot, invite link",
+      "states": "Er,S",
+      "context": "none",
+      "rbac": "Any",
+      "native": "Biometric NC",
+      "remote": "Auth backend",
+      "visual": "F:C-02",
+      "ux": "F:C-01",
+      "rtl": "F:C-02",
+      "device": "PD keyboard, touch",
+      "status": "FC",
+      "findings": [
+        "FVX-G-01",
+        "FVX-C-01",
+        "FVX-C-02"
+      ],
+      "batch": "VX-B1,VX-B6",
+      "evidence": "app/test/features/shared_onboarding/login_screen_test.dart",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-SHR-007",
+      "system": "ADM:أ",
+      "role": "Any",
+      "journeys": [
+        "JRN-FAT-01"
+      ],
+      "purpose": "Neutral device mode",
+      "entry": "SHR-001",
+      "exit": "SHR-003/CHD-001",
+      "data_source": "RoleController/device mode prefs",
+      "control_primary": "Parent / Child",
+      "control_secondary": null,
+      "states": "S",
+      "context": "none",
+      "rbac": "Any",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "device_mode screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-SHR-008",
+      "system": "ADM:أ",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-01"
+      ],
+      "purpose": "Switch user on device",
+      "entry": "Settings other shortcut",
+      "exit": "role home",
+      "data_source": "stage1DeviceUserSwitchRepository EMPTY-HONEST (session switch; unbound persistence OK)",
+      "control_primary": "Switch",
+      "control_secondary": "Password",
+      "states": "E,S",
+      "context": "none",
+      "rbac": "Parent",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": "PD role switch",
+      "status": "FC",
+      "findings": [
+        "local-reality"
+      ],
+      "batch": "VX-B6",
+      "evidence": "device_user_switch screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-001",
+      "system": "ADM:أ",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-01"
+      ],
+      "purpose": "Create family",
+      "entry": "SHR-002",
+      "exit": "FAT-002",
+      "data_source": "FamilyContextStore (SQLite)",
+      "control_primary": "Create",
+      "control_secondary": null,
+      "states": "Er,S",
+      "context": "family",
+      "rbac": "Owner",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": "PD keyboard",
+      "status": "FC",
+      "findings": [
+        "FVX-G-05"
+      ],
+      "batch": "VX-B2",
+      "evidence": "create_family screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-002",
+      "system": "ADM:أ",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-02",
+        "JRN-FAT-03"
+      ],
+      "purpose": "Setup wizard",
+      "entry": "FAT-001",
+      "exit": "FAT-003/FAT-007/FAT-010",
+      "data_source": "local wizard + identity",
+      "control_primary": "Next",
+      "control_secondary": "Skip",
+      "states": "S",
+      "context": "family",
+      "rbac": "Owner",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "F:G-11",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-11"
+      ],
+      "batch": "VX-B4",
+      "evidence": "setup_wizard screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-003",
+      "system": "ADM:ب",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-02"
+      ],
+      "purpose": "Add child",
+      "entry": "FAT-002/FAT-012",
+      "exit": "FAT-004",
+      "data_source": "stage1ChildDeviceManagementRepository + roster",
+      "control_primary": "Continue",
+      "control_secondary": "Character, colour",
+      "states": "Er,S",
+      "context": "family",
+      "rbac": "Parent",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "F:S-04",
+      "rtl": "F:G-15",
+      "device": "PD keyboard",
+      "status": "FC",
+      "findings": [
+        "FVX-S-04"
+      ],
+      "batch": "VX-B6",
+      "evidence": "app/test/features/n01_linking/add_child_screen_test.dart",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-004",
+      "system": "ADM:ج",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-02"
+      ],
+      "purpose": "Link QR",
+      "entry": "FAT-003",
+      "exit": "FAT-005/FAT-006",
+      "data_source": "child device management",
+      "control_primary": "Show code",
+      "control_secondary": "Refresh",
+      "states": "P,S,Er",
+      "context": "childId",
+      "rbac": "Parent",
+      "native": "Camera on child NC",
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "F:G-11",
+      "device": "PD",
+      "status": "FC",
+      "findings": [
+        "FVX-G-11"
+      ],
+      "batch": "VX-B4",
+      "evidence": "link_qr screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-005",
+      "system": "ADM:أ",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-02"
+      ],
+      "purpose": "Permissions explainer",
+      "entry": "FAT-004",
+      "exit": "FAT-006",
+      "data_source": "ARB static",
+      "control_primary": "Continue",
+      "control_secondary": null,
+      "states": "NA",
+      "context": "none",
+      "rbac": "Parent",
+      "native": "OS permission NC",
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "permissions_explainer screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-006",
+      "system": "ADM:أ",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-02"
+      ],
+      "purpose": "Link success",
+      "entry": "FAT-005",
+      "exit": "FAT-010",
+      "data_source": "roster + decorative map",
+      "control_primary": "Go to Today",
+      "control_secondary": null,
+      "states": "S,NC",
+      "context": "childId",
+      "rbac": "Parent",
+      "native": "GPS NC",
+      "remote": null,
+      "visual": "F:G-12",
+      "ux": "PR",
+      "rtl": "F:G-12",
+      "device": "PD small screen",
+      "status": "FC",
+      "findings": [
+        "FVX-G-12"
+      ],
+      "batch": "VX-B4",
+      "evidence": "app/test/features/n01_linking/link_success_screen_test.dart",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-007",
+      "system": "ADM:أ",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-03"
+      ],
+      "purpose": "Trial mode (labelled demo)",
+      "entry": "FAT-002",
+      "exit": "FAT-010",
+      "data_source": "LOCAL_DEMO",
+      "control_primary": "Explore",
+      "control_secondary": "Exit",
+      "states": "S",
+      "context": "none",
+      "rbac": "Parent",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "F:G-11",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-11"
+      ],
+      "batch": "VX-B4",
+      "evidence": "trial_mode screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-030",
+      "system": "ADM:أ",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-01"
+      ],
+      "purpose": "Parent second key",
+      "entry": "CHD-011 request",
+      "exit": "Back",
+      "data_source": "stage1ChildModeLockService",
+      "control_primary": "Allow 10 min",
+      "control_secondary": "Deny",
+      "states": "P,S",
+      "context": "childId",
+      "rbac": "Father",
+      "native": null,
+      "remote": "Push RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": "PD",
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "parent_second_key screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-001",
+      "system": "ADM:أ",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-01"
+      ],
+      "purpose": "Child welcome",
+      "entry": "SHR-007",
+      "exit": "CHD-002",
+      "data_source": "ARB static",
+      "control_primary": "Start",
+      "control_secondary": null,
+      "states": "NA",
+      "context": "none",
+      "rbac": "Child",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "child_welcome screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-002",
+      "system": "ADM:ج",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-01"
+      ],
+      "purpose": "Scan link QR",
+      "entry": "CHD-001",
+      "exit": "CHD-003",
+      "data_source": "child device management",
+      "control_primary": "Scan",
+      "control_secondary": "Manual",
+      "states": "P,Er,NC",
+      "context": "none",
+      "rbac": "Child",
+      "native": "Camera NC",
+      "remote": null,
+      "visual": "F:G-13",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": "PD camera",
+      "status": "FC",
+      "findings": [
+        "FVX-G-13"
+      ],
+      "batch": "VX-B4",
+      "evidence": "child_qr_scan screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-003",
+      "system": "ADM:أ",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-01",
+        "JRN-CHD-05"
+      ],
+      "purpose": "Transparency consent",
+      "entry": "CHD-002",
+      "exit": "CHD-004",
+      "data_source": "local consent",
+      "control_primary": "Agree",
+      "control_secondary": null,
+      "states": "S",
+      "context": "resolver",
+      "rbac": "Child",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "transparency_consent screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-011",
+      "system": "ADM:أ",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-01"
+      ],
+      "purpose": "Child-mode lock + secret entry",
+      "entry": "Hub:me",
+      "exit": "FAT-030 request",
+      "data_source": "stage1ChildModeLockService",
+      "control_primary": "Long-press",
+      "control_secondary": "Password",
+      "states": "P,U",
+      "context": "resolver",
+      "rbac": "Child",
+      "native": null,
+      "remote": "Father approval RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": "PD long-press",
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "child_mode_lock screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-008",
+      "system": "ADM:ب",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-04"
+      ],
+      "purpose": "Invite mother + level",
+      "entry": "Hub:settings/FAT-027",
+      "exit": "FAT-027",
+      "data_source": "stage1AdultInviteRepository InMemory session (empty until create; delivery RC)",
+      "control_primary": "Send invite",
+      "control_secondary": "Level",
+      "states": "Er,S,RC",
+      "context": "family",
+      "rbac": "Father",
+      "native": null,
+      "remote": "Invite delivery RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-02"
+      ],
+      "batch": "VX-B3",
+      "evidence": "app/test/features/n01_linking/invite_mother_screen_test.dart",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-009",
+      "system": "ADM:ب",
+      "role": "Mother",
+      "journeys": [
+        "JRN-MOT-01"
+      ],
+      "purpose": "Accept mother invite",
+      "entry": "Login invite link; Settings shortcut (wrong)",
+      "exit": "FAT-010",
+      "data_source": "identity invite token",
+      "control_primary": "Accept",
+      "control_secondary": null,
+      "states": "Er,S",
+      "context": "inviteTokenId route",
+      "rbac": "Invitee",
+      "native": null,
+      "remote": "Backend join RC",
+      "visual": "PR",
+      "ux": "F:S-09",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-S-09"
+      ],
+      "batch": "VX-B5",
+      "evidence": "accept_mother_invite_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-027",
+      "system": "ADM:ب",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-04"
+      ],
+      "purpose": "Family members & roles",
+      "entry": "Hub:settings",
+      "exit": "FAT-008/FAT-031",
+      "data_source": "identity adults + local children",
+      "control_primary": "Invite",
+      "control_secondary": "Change level, remove",
+      "states": "E,M,Er",
+      "context": "family",
+      "rbac": "Owner (invite)",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "N-01"
+      ],
+      "batch": "VX-B7",
+      "evidence": "family_members_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-031",
+      "system": "ADM:ب",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-04"
+      ],
+      "purpose": "Mother permission level",
+      "entry": "FAT-027",
+      "exit": "FAT-027",
+      "data_source": "identity mother level",
+      "control_primary": "Choose level",
+      "control_secondary": null,
+      "states": "S",
+      "context": "memberId route",
+      "rbac": "Father",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "F:G-17",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-17"
+      ],
+      "batch": "VX-B4",
+      "evidence": "mother_permission_level_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-025",
+      "system": "ADM:ج",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-13",
+        "JRN-FAT-14"
+      ],
+      "purpose": "Settings home + device health",
+      "entry": "Tab settings",
+      "exit": "FAT-026, hubs, shortcuts",
+      "data_source": "device health seam EMPTY-HONEST (NC) + identity",
+      "control_primary": "Open item",
+      "control_secondary": "Shortcuts",
+      "states": "E,M,NC",
+      "context": "family",
+      "rbac": "Parent",
+      "native": "Heartbeat NC",
+      "remote": null,
+      "visual": "PR",
+      "ux": "F:S-09",
+      "rtl": "F:G-11",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-S-09",
+        "FVX-G-11"
+      ],
+      "batch": "VX-B5",
+      "evidence": "settings_hub_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-026",
+      "system": "ADM:ج",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-13",
+        "JRN-FAT-14"
+      ],
+      "purpose": "Device detail + fix permissions",
+      "entry": "FAT-025 list; FAT-013 (wrong id); Hub:settings (no id)",
+      "exit": "Back",
+      "data_source": "stage1DeviceHealthSeam empty-honest (NC; Fake.demo tests-only)",
+      "control_primary": "Fix permission",
+      "control_secondary": "SOS",
+      "states": "E,NC",
+      "context": "deviceId route",
+      "rbac": "Parent",
+      "native": "OS settings NC",
+      "remote": null,
+      "visual": "PR",
+      "ux": "F:S-06",
+      "rtl": "PR",
+      "device": "PD",
+      "status": "FC",
+      "findings": [
+        "FVX-S-06",
+        "FVX-G-08"
+      ],
+      "batch": "VX-B2,VX-B4",
+      "evidence": "device_health_detail_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-061",
+      "system": "ADM:ح",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-30"
+      ],
+      "purpose": "Language + help + support",
+      "entry": "Hub:settings",
+      "exit": "Back",
+      "data_source": "WeeklyReport EMPTY-HONEST (Advisor RC)",
+      "control_primary": "Language",
+      "control_secondary": "Help, support",
+      "states": "S",
+      "context": "none",
+      "rbac": "Parent",
+      "native": null,
+      "remote": "Support channel RC",
+      "visual": "PR",
+      "ux": "F:S-07",
+      "rtl": "OD",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-S-07"
+      ],
+      "batch": "VX-B3",
+      "evidence": "app/test/features/n12_devices/language_help_screen_test.dart",
+      "final": "OD"
+    },
+    {
+      "id": "SCR-FAT-010",
+      "system": "ADM:ز",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-05",
+        "JRN-MOT-02"
+      ],
+      "purpose": "Today board",
+      "entry": "Tab today",
+      "exit": "FAT-013, pending inbox, quick actions",
+      "data_source": "RosterDayBoardProjectionRepository (local pending + roster; telemetry NC empty)",
+      "control_primary": "Pending card",
+      "control_secondary": "Quick actions Quran/Tasks/Lock/Map",
+      "states": "E,1,M,P",
+      "context": "quick actions drop child; family pinned",
+      "rbac": "Parent",
+      "native": "GPS/battery NC (demo)",
+      "remote": null,
+      "visual": "PR",
+      "ux": "F:S-03",
+      "rtl": "F:G-15",
+      "device": "PD back",
+      "status": "FC",
+      "findings": [
+        "FVX-S-03",
+        "FVX-G-05",
+        "FVX-G-17"
+      ],
+      "batch": "VX-B5,VX-B2",
+      "evidence": "app/test/features/n02_day/day_board_screen_test.dart",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-011",
+      "system": "ADM:ز",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-05"
+      ],
+      "purpose": "Advisor suggestions",
+      "entry": "Hub:today",
+      "exit": "Approve → rule",
+      "data_source": "stage1RulesEngineRuleRepository + EmptyAdvisor (RC until Gateway)",
+      "control_primary": "Approve",
+      "control_secondary": "Reject",
+      "states": "E,M,RC",
+      "context": "resolver",
+      "rbac": "Parent",
+      "native": null,
+      "remote": "Advisor RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "advisor_suggestions screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-056",
+      "system": "ADM:د",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-26"
+      ],
+      "purpose": "Plans",
+      "entry": "Hub:settings",
+      "exit": "FAT-057",
+      "data_source": "stage1EntitlementService",
+      "control_primary": "Choose plan",
+      "control_secondary": null,
+      "states": "RC",
+      "context": "family",
+      "rbac": "Father-only",
+      "native": null,
+      "remote": "Billing RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "F:G-15",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "plans screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-057",
+      "system": "ADM:د",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-26"
+      ],
+      "purpose": "Manage subscription",
+      "entry": "FAT-056",
+      "exit": "Back",
+      "data_source": "entitlement (local)",
+      "control_primary": "Upgrade",
+      "control_secondary": "Restore",
+      "states": "RC",
+      "context": "family",
+      "rbac": "Father-only",
+      "native": null,
+      "remote": "Billing RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "manage_subscription screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-058",
+      "system": "ADM:هـ",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-27"
+      ],
+      "purpose": "Notification prefs",
+      "entry": "Hub:settings",
+      "exit": "Back",
+      "data_source": "PrefsMisc notification (local KV)",
+      "control_primary": "Toggles",
+      "control_secondary": "Schedule",
+      "states": "S,Er",
+      "context": "family",
+      "rbac": "Parent",
+      "native": null,
+      "remote": "FCM RC",
+      "visual": "PR",
+      "ux": "F:G-09",
+      "rtl": "PR",
+      "device": "PD persist",
+      "status": "FC",
+      "findings": [
+        "FVX-G-09"
+      ],
+      "batch": "VX-B1",
+      "evidence": "notification_prefs screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-059",
+      "system": "ADM:و",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-28"
+      ],
+      "purpose": "Privacy & data",
+      "entry": "Hub:settings",
+      "exit": "FAT-060",
+      "data_source": "stage1PrivacyCollectionSyncBus + lifecycle",
+      "control_primary": "Toggles",
+      "control_secondary": "Export, forget",
+      "states": "S,RC",
+      "context": "demo-child fallback",
+      "rbac": "Owner-only",
+      "native": null,
+      "remote": "AI Gateway RC",
+      "visual": "PR",
+      "ux": "F:G-03",
+      "rtl": "PR",
+      "device": "PD persist",
+      "status": "FC",
+      "findings": [
+        "FVX-G-03"
+      ],
+      "batch": "VX-B2",
+      "evidence": "privacy_data screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-060",
+      "system": "ADM:و",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-28"
+      ],
+      "purpose": "Audit log (append-only)",
+      "entry": "FAT-059/Hub:settings",
+      "exit": "Back",
+      "data_source": "FamilyAdvisorHub EMPTY-HONEST (Advisor RC)",
+      "control_primary": "Read",
+      "control_secondary": "Filter",
+      "states": "E,M",
+      "context": "family",
+      "rbac": "Owner-only",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "F:G-06",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-06"
+      ],
+      "batch": "VX-B2",
+      "evidence": "audit_log screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-012",
+      "system": "ADM:ب",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-06",
+        "JRN-MOT-03"
+      ],
+      "purpose": "Children list",
+      "entry": "Tab kids",
+      "exit": "FAT-013/FAT-003",
+      "data_source": "ChildrenListLocalRepository (SQLite, REAL_LOCAL identity seed)",
+      "control_primary": "Open child",
+      "control_secondary": "Add",
+      "states": "E,1,M",
+      "context": "family (identity)",
+      "rbac": "Parent",
+      "native": "Telemetry NC (demo)",
+      "remote": null,
+      "visual": "F:C-07",
+      "ux": "F:S-04",
+      "rtl": "F:G-11",
+      "device": "PD",
+      "status": "FC",
+      "findings": [
+        "FVX-S-04",
+        "FVX-C-07",
+        "FVX-S-08"
+      ],
+      "batch": "VX-B6",
+      "evidence": "app/test/features/n02_day/children_list_screen_test.dart",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-013",
+      "system": "ADM:ز",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-06",
+        "JRN-MOT-03"
+      ],
+      "purpose": "Child profile",
+      "entry": "FAT-010/FAT-012",
+      "exit": "per-child tools, FAT-026",
+      "data_source": "ChildProfile ← ChildrenList roster (REAL_LOCAL)",
+      "control_primary": "Tools grid",
+      "control_secondary": "Edit, remove device",
+      "states": "E,S,NC",
+      "context": "childId route",
+      "rbac": "Parent",
+      "native": "GPS NC",
+      "remote": null,
+      "visual": "PR",
+      "ux": "F:S-06",
+      "rtl": "F:G-11",
+      "device": "PD",
+      "status": "FC",
+      "findings": [
+        "FVX-G-04",
+        "FVX-S-06"
+      ],
+      "batch": "VX-B2",
+      "evidence": "app/test/features/n02_day/child_profile_screen_test.dart",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-014",
+      "system": "SEC:د",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-07",
+        "JRN-MOT-06"
+      ],
+      "purpose": "Location map",
+      "entry": "FAT-013; Hub:kids (no child); FAT-010 quick action (no child)",
+      "exit": "FAT-015/FAT-016",
+      "data_source": "DomainLocationMapRepository (roster pins; trails empty NC)",
+      "control_primary": "Locate",
+      "control_secondary": "History, SOS",
+      "states": "E,NC",
+      "context": "childId route (hub/dashboard lose it)",
+      "rbac": "Parent",
+      "native": "GPS NC",
+      "remote": null,
+      "visual": "F:G-12",
+      "ux": "PR",
+      "rtl": "F:G-12",
+      "device": "PD small screen",
+      "status": "FC",
+      "findings": [
+        "FVX-G-08",
+        "FVX-G-12",
+        "FVX-G-05"
+      ],
+      "batch": "VX-B4",
+      "evidence": "location_map_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-015",
+      "system": "SEC:د",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-07"
+      ],
+      "purpose": "Location history",
+      "entry": "FAT-014",
+      "exit": "Back",
+      "data_source": "DomainLocationHistoryRepository (empty trails until NC GPS)",
+      "control_primary": "Filter day",
+      "control_secondary": null,
+      "states": "E,NC",
+      "context": "childId route",
+      "rbac": "Parent",
+      "native": "GPS NC",
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-05"
+      ],
+      "batch": "VX-B2",
+      "evidence": "location_history screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-016",
+      "system": "SEC:د",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-08"
+      ],
+      "purpose": "Safe zones list",
+      "entry": "FAT-013/Hub:kids",
+      "exit": "FAT-017",
+      "data_source": "DomainSafeZonesRepository(fam_stage1)",
+      "control_primary": "Add zone",
+      "control_secondary": "Edit",
+      "states": "E,1,M",
+      "context": "childId route; family pinned",
+      "rbac": "Parent",
+      "native": "Geofence NC",
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-05",
+        "FVX-G-08"
+      ],
+      "batch": "VX-B2",
+      "evidence": "safe_zones_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-017",
+      "system": "SEC:د",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-08"
+      ],
+      "purpose": "Create safe zone",
+      "entry": "FAT-016/Hub:kids",
+      "exit": "FAT-016",
+      "data_source": "domain safe zones (fam_stage1)",
+      "control_primary": "Save",
+      "control_secondary": "Radius, alerts",
+      "states": "Er,S,NC",
+      "context": "childId route",
+      "rbac": "Parent",
+      "native": "Geofence NC",
+      "remote": null,
+      "visual": "F:G-12",
+      "ux": "F:S-05",
+      "rtl": "F:G-12",
+      "device": "PD keyboard",
+      "status": "FC",
+      "findings": [
+        "FVX-S-05",
+        "FVX-G-09",
+        "FVX-G-10",
+        "FVX-G-12"
+      ],
+      "batch": "VX-B6,VX-B1",
+      "evidence": "create_safe_zone_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-018",
+      "system": "SEC:هـ",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-09",
+        "JRN-MOT-05"
+      ],
+      "purpose": "SOS alert",
+      "entry": "SOS fire events; Settings shortcut (no alert)",
+      "exit": "FAT-023/resolve",
+      "data_source": "SOS final service (local)",
+      "control_primary": "Call",
+      "control_secondary": "Acknowledge",
+      "states": "P,S,RC,E",
+      "context": "alertId, childId route",
+      "rbac": "Parent",
+      "native": "Telephony NC",
+      "remote": "FCM/SMS RC",
+      "visual": "F:G-12",
+      "ux": "F:C-08",
+      "rtl": "F:G-12",
+      "device": "PD",
+      "status": "FC",
+      "findings": [
+        "FVX-G-06",
+        "FVX-S-09",
+        "FVX-C-08"
+      ],
+      "batch": "VX-B2,VX-B5",
+      "evidence": "sos_alert_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-028",
+      "system": "SEC:هـ",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-08",
+        "JRN-FAT-09"
+      ],
+      "purpose": "Emergency setup",
+      "entry": "Hub:settings",
+      "exit": "Back",
+      "data_source": "stage1SosSettingsStore (rebound)",
+      "control_primary": "Add contact",
+      "control_secondary": "Ladder",
+      "states": "E,M,S",
+      "context": "family",
+      "rbac": "Parent",
+      "native": "Telephony NC",
+      "remote": "SMS RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": "PD persist",
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "emergency_setup_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-005",
+      "system": "SEC:هـ",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-03"
+      ],
+      "purpose": "SOS button",
+      "entry": "Child SOS FAB",
+      "exit": "CHD-006",
+      "data_source": "SOS fire service",
+      "control_primary": "Hold to send",
+      "control_secondary": null,
+      "states": "P,S,RC",
+      "context": "actor 'self'",
+      "rbac": "Child",
+      "native": "Telephony NC",
+      "remote": "FCM/SMS RC",
+      "visual": "F:G-13",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": "PD hold",
+      "status": "FC",
+      "findings": [
+        "FVX-G-06",
+        "FVX-G-13"
+      ],
+      "batch": "VX-B2",
+      "evidence": "child_sos_button screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-006",
+      "system": "SEC:هـ",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-03"
+      ],
+      "purpose": "SOS in progress",
+      "entry": "CHD-005",
+      "exit": "CHD-004",
+      "data_source": "SOS final service",
+      "control_primary": "Cancel",
+      "control_secondary": "Call",
+      "states": "P,RC",
+      "context": "alertId, childId route",
+      "rbac": "Child",
+      "native": "Telephony/GPS NC",
+      "remote": "FCM RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": "PD",
+      "status": "FC",
+      "findings": [
+        "FVX-G-10"
+      ],
+      "batch": "VX-B4",
+      "evidence": "child_sos_in_progress_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-024",
+      "system": "COM:ز",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-11"
+      ],
+      "purpose": "I arrived + my location",
+      "entry": "Hub:cfam",
+      "exit": "Back",
+      "data_source": "child arrival local repository",
+      "control_primary": "I arrived",
+      "control_secondary": "Reply to locate",
+      "states": "S,NC,RC",
+      "context": "resolver",
+      "rbac": "Child",
+      "native": "GPS NC",
+      "remote": "FCM RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "F:G-02",
+      "device": "PD",
+      "status": "FC",
+      "findings": [
+        "FVX-G-02"
+      ],
+      "batch": "VX-B3",
+      "evidence": "child_arrival_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-077",
+      "system": "SEC:ك",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-39"
+      ],
+      "purpose": "Road safety (OOS)",
+      "entry": "deep link only",
+      "exit": "Back",
+      "data_source": "road safety screen",
+      "control_primary": null,
+      "control_secondary": null,
+      "states": "NA",
+      "context": null,
+      "rbac": "Parent",
+      "native": "Motion NC",
+      "remote": null,
+      "visual": "NA",
+      "ux": "NA",
+      "rtl": "NA",
+      "device": "NA",
+      "status": "OOS",
+      "findings": [
+        "FVX-C-05"
+      ],
+      "batch": "VX-B1 if OD-11=tombstone",
+      "evidence": "road_safety_screen_test",
+      "final": "OD"
+    },
+    {
+      "id": "SCR-FAT-032",
+      "system": "SEC:أ",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-15"
+      ],
+      "purpose": "Child screen time",
+      "entry": "FAT-013 tools",
+      "exit": "Back",
+      "data_source": "ScreenTime local KV + stage1PolicySyncBus",
+      "control_primary": "Save limits",
+      "control_secondary": "Grant remaining",
+      "states": "S,Er,NC",
+      "context": "childId route",
+      "rbac": "Parent",
+      "native": "OS enforce NC",
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "F:G-15",
+      "device": "PD persist, role switch",
+      "status": "FC",
+      "findings": [
+        "FVX-G-15"
+      ],
+      "batch": "VX-B3",
+      "evidence": "child_screen_time_screen_test; ce_b3_control_spine_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-033",
+      "system": "SEC:أ",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-15",
+        "JRN-MOT-07"
+      ],
+      "purpose": "Extra-time requests inbox",
+      "entry": "FAT-013 tools; FAT-010 pending fallback",
+      "exit": "Back",
+      "data_source": "stage1 time request runtime (local)",
+      "control_primary": "Approve",
+      "control_secondary": "Deny, reward",
+      "states": "E,M,S",
+      "context": "drop (inbox lists all)",
+      "rbac": "Parent (participant+)",
+      "native": null,
+      "remote": "Push RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "F:G-11",
+      "device": "PD loop",
+      "status": "FC",
+      "findings": [
+        "FVX-G-10",
+        "FVX-S-03"
+      ],
+      "batch": "VX-B5",
+      "evidence": "request_inbox screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-034",
+      "system": "SEC:ب",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-16"
+      ],
+      "purpose": "Child apps",
+      "entry": "FAT-013 tools",
+      "exit": "FAT-035",
+      "data_source": "ChildApps ← AC + st_app_axes REAL_LOCAL catalog (usedMins=0; OS NC)",
+      "control_primary": "Allow/block",
+      "control_secondary": "Categories",
+      "states": "E,M,NC",
+      "context": "childId route",
+      "rbac": "Parent",
+      "native": "OS intercept NC",
+      "remote": null,
+      "visual": "F:G-13",
+      "ux": "PR",
+      "rtl": "F:G-11",
+      "device": "PD",
+      "status": "FC",
+      "findings": [
+        "FVX-G-02",
+        "FVX-G-13",
+        "FVX-G-17"
+      ],
+      "batch": "VX-B3,VX-B4",
+      "evidence": "child_apps_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-035",
+      "system": "SEC:ب",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-16"
+      ],
+      "purpose": "New app approval",
+      "entry": "FAT-034",
+      "exit": "Back",
+      "data_source": "app control local",
+      "control_primary": "Approve",
+      "control_secondary": "Deny",
+      "states": "P,S",
+      "context": "childId, appId route",
+      "rbac": "Parent",
+      "native": "OS intercept NC",
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-02",
+        "FVX-G-03",
+        "FVX-G-17"
+      ],
+      "batch": "VX-B2",
+      "evidence": "new_app_approval_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-036",
+      "system": "SEC:ج",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-17"
+      ],
+      "purpose": "Web filter",
+      "entry": "FAT-013 tools",
+      "exit": "Back",
+      "data_source": "web filter local prefs",
+      "control_primary": "Toggle categories",
+      "control_secondary": "Exceptions",
+      "states": "S,Er,NC",
+      "context": "drop → demo-child",
+      "rbac": "Parent",
+      "native": "VPN/DNS NC",
+      "remote": null,
+      "visual": "PR",
+      "ux": "F:G-04",
+      "rtl": "F:G-02",
+      "device": "PD persist",
+      "status": "FC",
+      "findings": [
+        "FVX-G-03",
+        "FVX-G-04",
+        "FVX-G-09",
+        "FVX-G-10",
+        "FVX-G-02"
+      ],
+      "batch": "VX-B2,VX-B1",
+      "evidence": "app/test/features/n04_web_filter/web_filter_screen_test.dart",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-037",
+      "system": "SEC:ط",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-18"
+      ],
+      "purpose": "Instant lock",
+      "entry": "FAT-013 tools; FAT-010 quick action",
+      "exit": "Back",
+      "data_source": "device lock prefs + stage1AntiTamperAlertBus",
+      "control_primary": "Lock",
+      "control_secondary": "Unlock, timer",
+      "states": "S,NC",
+      "context": "drop → demo-child",
+      "rbac": "Parent",
+      "native": "Device Admin NC",
+      "remote": null,
+      "visual": "PR",
+      "ux": "F:G-04",
+      "rtl": "F:G-02",
+      "device": "PD persist, role switch",
+      "status": "FC",
+      "findings": [
+        "FVX-G-03",
+        "FVX-G-04",
+        "FVX-G-02"
+      ],
+      "batch": "VX-B2",
+      "evidence": "app/test/features/n05_lock/instant_lock_screen_test.dart",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-038",
+      "system": "SEC:ح",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-19"
+      ],
+      "purpose": "Tamper alerts",
+      "entry": "FAT-013 tools",
+      "exit": "Back",
+      "data_source": "stage1TamperAlertsRepository",
+      "control_primary": "Read",
+      "control_secondary": "Acknowledge",
+      "states": "E,M",
+      "context": "childId route",
+      "rbac": "Parent",
+      "native": "OS signals NC",
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "tamper_alerts screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-085",
+      "system": "SEC:أ",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-44"
+      ],
+      "purpose": "Smart modes",
+      "entry": "Hub:kids (no child)",
+      "exit": "Back",
+      "data_source": "modes runtime + stage1SmartModeActivationBus",
+      "control_primary": "Preview",
+      "control_secondary": "Apply",
+      "states": "S,NC",
+      "context": "drop",
+      "rbac": "Parent",
+      "native": "OS wake NC",
+      "remote": null,
+      "visual": "PR",
+      "ux": "F:G-04",
+      "rtl": "PR",
+      "device": "PD role switch",
+      "status": "FC",
+      "findings": [
+        "FVX-G-04",
+        "FVX-G-08",
+        "FVX-G-02"
+      ],
+      "batch": "VX-B2",
+      "evidence": "smart_modes_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-004",
+      "system": "ADM:ز",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-02"
+      ],
+      "purpose": "My day",
+      "entry": "Tab myday",
+      "exit": "CHD-020/CHD-022/CHD-027",
+      "data_source": "smart mode + policy sync bus (child_demo)",
+      "control_primary": "Request time",
+      "control_secondary": "Tasks",
+      "states": "S,NC",
+      "context": "child_demo fallback",
+      "rbac": "Child",
+      "native": "GPS NC",
+      "remote": null,
+      "visual": "PR",
+      "ux": "F:G-03",
+      "rtl": "F:G-15",
+      "device": "PD role switch",
+      "status": "FC",
+      "findings": [
+        "FVX-G-03"
+      ],
+      "batch": "VX-B2",
+      "evidence": "child_day_board screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-020",
+      "system": "SEC:أ",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-06"
+      ],
+      "purpose": "Request extra time",
+      "entry": "CHD-004/CHD-021",
+      "exit": "CHD-004",
+      "data_source": "stage1ChildTimeRequestRepository",
+      "control_primary": "Send request",
+      "control_secondary": null,
+      "states": "P,S,RC",
+      "context": "childId route",
+      "rbac": "Child",
+      "native": null,
+      "remote": "Push RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "F:G-02",
+      "device": "PD loop",
+      "status": "FC",
+      "findings": [
+        "FVX-G-02"
+      ],
+      "batch": "VX-B3",
+      "evidence": "child_time_request_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-021",
+      "system": "SEC:أ",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-06"
+      ],
+      "purpose": "Time is up — gently",
+      "entry": "ST expiry event",
+      "exit": "CHD-020/CHD-008/CHD-025",
+      "data_source": "ScreenTime local (demo-child)",
+      "control_primary": "Ask for more",
+      "control_secondary": "Open chat",
+      "states": "S",
+      "context": "demo-child fallback",
+      "rbac": "Child",
+      "native": "OS lock NC",
+      "remote": null,
+      "visual": "PR",
+      "ux": "F:G-03",
+      "rtl": "F:G-11",
+      "device": "PD",
+      "status": "FC",
+      "findings": [
+        "FVX-G-03",
+        "FVX-G-04",
+        "FVX-G-11"
+      ],
+      "batch": "VX-B2",
+      "evidence": "time_expiry screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-065",
+      "system": "SEC:و",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-31"
+      ],
+      "purpose": "Smart alerts",
+      "entry": "FAT-013 tools",
+      "exit": "FAT-066",
+      "data_source": "SmartAlerts EMPTY-HONEST default (Advisor RC)",
+      "control_primary": "Open alert",
+      "control_secondary": null,
+      "states": "E,M,NC,RC",
+      "context": "drop",
+      "rbac": "Parent",
+      "native": "MediaProjection NC",
+      "remote": "Advisor RC",
+      "visual": "PR",
+      "ux": "F:G-02",
+      "rtl": "F:G-02",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-02",
+        "FVX-G-03",
+        "FVX-G-04"
+      ],
+      "batch": "VX-B2,VX-B3",
+      "evidence": "smart_alerts_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-066",
+      "system": "SEC:و",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-31"
+      ],
+      "purpose": "Alert detail + dialogue step",
+      "entry": "FAT-065",
+      "exit": "Back",
+      "data_source": "SmartAlertDetail EMPTY-HONEST (Advisor RC)",
+      "control_primary": "Suggested dialogue",
+      "control_secondary": null,
+      "states": "S,RC",
+      "context": "drop",
+      "rbac": "Parent",
+      "native": "Capture NC",
+      "remote": "Advisor RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "F:G-02",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-02",
+        "FVX-G-04"
+      ],
+      "batch": "VX-B3",
+      "evidence": "smart_alert_detail_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-067",
+      "system": "SEC:و",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-32"
+      ],
+      "purpose": "Smart supervision settings",
+      "entry": "FAT-013 tools",
+      "exit": "Back",
+      "data_source": "MotherAiFeed EMPTY-HONEST (Advisor RC)",
+      "control_primary": "Toggles",
+      "control_secondary": null,
+      "states": "S,NC",
+      "context": "drop",
+      "rbac": "Parent",
+      "native": "Capture NC",
+      "remote": null,
+      "visual": "PR",
+      "ux": "F:G-04",
+      "rtl": "PR",
+      "device": "PD persist",
+      "status": "FC",
+      "findings": [
+        "FVX-G-03",
+        "FVX-G-04"
+      ],
+      "batch": "VX-B2",
+      "evidence": "smart_supervision screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-068",
+      "system": "SEC:ز",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-32"
+      ],
+      "purpose": "Platform monitoring",
+      "entry": "FAT-067/FAT-013 (noHub)",
+      "exit": "Back",
+      "data_source": "AdvisorVoice EMPTY-HONEST (Advisor RC)",
+      "control_primary": "Toggles",
+      "control_secondary": null,
+      "states": "S,NC",
+      "context": "resolver",
+      "rbac": "Parent",
+      "native": "Platform NC",
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "platform_monitoring screen test; ce_b5_mock_hardening_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-069",
+      "system": "SEC:ي",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-33"
+      ],
+      "purpose": "Child usage report",
+      "entry": "FAT-013 tools",
+      "exit": "FAT-081",
+      "data_source": "AgentActionLog EMPTY-HONEST (Advisor RC)",
+      "control_primary": "Forget",
+      "control_secondary": "Export",
+      "states": "E,1,RC",
+      "context": "drop",
+      "rbac": "Parent",
+      "native": null,
+      "remote": "Email/PDF RC",
+      "visual": "PR",
+      "ux": "F:G-04",
+      "rtl": "F:G-15",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-04",
+        "FVX-G-02"
+      ],
+      "batch": "VX-B2",
+      "evidence": "child_usage_report_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-081",
+      "system": "SEC:ي",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-33"
+      ],
+      "purpose": "Anonymous peer comparison",
+      "entry": "FAT-069 (noHub)",
+      "exit": "Back",
+      "data_source": "stage1PeerCompareRepository",
+      "control_primary": "Read",
+      "control_secondary": null,
+      "states": "S,RC",
+      "context": "resolver",
+      "rbac": "Parent",
+      "native": null,
+      "remote": "Email/PDF RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-02"
+      ],
+      "batch": "VX-B3",
+      "evidence": "peer_compare_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-073",
+      "system": "AIC:د",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-36"
+      ],
+      "purpose": "Weekly report + recommendation",
+      "entry": "Hub:today",
+      "exit": "Approve suggestion",
+      "data_source": "weekly report local (empty-first)",
+      "control_primary": "Apply suggestion",
+      "control_secondary": "Email",
+      "states": "E,S,RC",
+      "context": "resolver",
+      "rbac": "Parent",
+      "native": null,
+      "remote": "Email/PDF + Gateway RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "F:G-02",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-02"
+      ],
+      "batch": "VX-B3",
+      "evidence": "weekly_report_screen_test; ce_b2_reports_empty_first_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-021",
+      "system": "COM:أ",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-11",
+        "JRN-MOT-04"
+      ],
+      "purpose": "Conversations list",
+      "entry": "Tab family",
+      "exit": "FAT-022",
+      "data_source": "FamilyChatLocalStore conversations (device-local; multi-device RC)",
+      "control_primary": "Open thread (none)",
+      "control_secondary": null,
+      "states": "E",
+      "context": "family",
+      "rbac": "Parent (never plan-gated)",
+      "native": null,
+      "remote": "Multi-device RC",
+      "visual": "PR",
+      "ux": "F:S-01",
+      "rtl": "F:G-02",
+      "device": "PD",
+      "status": "FC",
+      "findings": [
+        "FVX-S-01",
+        "FVX-G-02"
+      ],
+      "batch": "VX-B6",
+      "evidence": "conversations_list_screen_test; ce_b0_chat_delivery_honesty_test",
+      "final": "OD"
+    },
+    {
+      "id": "SCR-FAT-022",
+      "system": "COM:أ",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-11",
+        "JRN-MOT-04"
+      ],
+      "purpose": "Conversation",
+      "entry": "FAT-021",
+      "exit": "FAT-023",
+      "data_source": "FamilyChatLocalStore conversation (device-local; relay RC)",
+      "control_primary": "Send",
+      "control_secondary": "Edit, delete",
+      "states": "E,Er",
+      "context": "chatWith route",
+      "rbac": "Parent",
+      "native": null,
+      "remote": "Relay RC",
+      "visual": "PR",
+      "ux": "F:S-01",
+      "rtl": "F:G-02",
+      "device": "PD keyboard",
+      "status": "FC",
+      "findings": [
+        "FVX-S-01",
+        "FVX-G-06",
+        "FVX-G-10"
+      ],
+      "batch": "VX-B6",
+      "evidence": "conversation_screen_test",
+      "final": "OD"
+    },
+    {
+      "id": "SCR-FAT-023",
+      "system": "COM:ب",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-12",
+        "JRN-MOT-04"
+      ],
+      "purpose": "Active call",
+      "entry": "FAT-022/FAT-018",
+      "exit": "Back",
+      "data_source": "ActiveCall EMPTY-HONEST (LiveKit NC)",
+      "control_primary": "End",
+      "control_secondary": "Mute",
+      "states": "E,NC",
+      "context": "callId route",
+      "rbac": "Parent",
+      "native": "LiveKit NC",
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": "PD",
+      "status": "FC",
+      "findings": [
+        "FVX-G-06",
+        "FVX-G-10"
+      ],
+      "batch": "VX-B2,VX-B4",
+      "evidence": "active_call screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-024",
+      "system": "COM:ب",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-12"
+      ],
+      "purpose": "Call history",
+      "entry": "Hub:family",
+      "exit": "FAT-023",
+      "data_source": "CallHistory EMPTY-HONEST (telephony NC)",
+      "control_primary": "Call back",
+      "control_secondary": null,
+      "states": "E,NC",
+      "context": "family",
+      "rbac": "Parent",
+      "native": "Telephony NC",
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-10"
+      ],
+      "batch": "VX-B4",
+      "evidence": "call_history screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-007",
+      "system": "COM:أ",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-04"
+      ],
+      "purpose": "My chats",
+      "entry": "Tab cfam",
+      "exit": "CHD-008",
+      "data_source": "FamilyChatLocalStore child chats (device-local; relay RC)",
+      "control_primary": "Open thread",
+      "control_secondary": null,
+      "states": "E",
+      "context": "resolver",
+      "rbac": "Child (never time-locked)",
+      "native": null,
+      "remote": "Relay RC",
+      "visual": "PR",
+      "ux": "F:S-01",
+      "rtl": "F:G-02",
+      "device": "PD",
+      "status": "FC",
+      "findings": [
+        "FVX-S-01",
+        "FVX-G-02",
+        "FVX-G-10"
+      ],
+      "batch": "VX-B6",
+      "evidence": "child_chats_screen_test",
+      "final": "OD"
+    },
+    {
+      "id": "SCR-CHD-008",
+      "system": "COM:أ",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-04"
+      ],
+      "purpose": "Conversation (never locks)",
+      "entry": "CHD-007/CHD-021",
+      "exit": "CHD-009",
+      "data_source": "child conversation (in-memory)",
+      "control_primary": "Send",
+      "control_secondary": null,
+      "states": "E,Er",
+      "context": "chatWith route",
+      "rbac": "Child",
+      "native": null,
+      "remote": "Relay RC",
+      "visual": "PR",
+      "ux": "F:S-01",
+      "rtl": "F:G-02",
+      "device": "PD keyboard",
+      "status": "FC",
+      "findings": [
+        "FVX-S-01",
+        "FVX-G-10"
+      ],
+      "batch": "VX-B6",
+      "evidence": "child_conversation_screen_test",
+      "final": "OD"
+    },
+    {
+      "id": "SCR-CHD-009",
+      "system": "COM:ب",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-04"
+      ],
+      "purpose": "Call parents",
+      "entry": "CHD-008",
+      "exit": "Back",
+      "data_source": "Child active call EMPTY-HONEST (LiveKit NC)",
+      "control_primary": "End",
+      "control_secondary": null,
+      "states": "NC",
+      "context": "callId route",
+      "rbac": "Child",
+      "native": "LiveKit NC",
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": "PD",
+      "status": "FC",
+      "findings": [
+        "FVX-G-10"
+      ],
+      "batch": "VX-B4",
+      "evidence": "child_active_call screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-036",
+      "system": "COM:ب",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-17"
+      ],
+      "purpose": "Call play",
+      "entry": "CHD-031/CHD-009",
+      "exit": "Back",
+      "data_source": "stage1ChildCallPlayRepository",
+      "control_primary": "Pick game",
+      "control_secondary": null,
+      "states": "NC",
+      "context": "resolver",
+      "rbac": "Child",
+      "native": "LiveKit NC",
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "child_call_play_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-023",
+      "system": "COM:ج",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-11"
+      ],
+      "purpose": "Share media",
+      "entry": "Hub:cfam",
+      "exit": "Back",
+      "data_source": "stage1ChildMediaShareRepository",
+      "control_primary": "Share",
+      "control_secondary": "Type",
+      "states": "S,NC,RC",
+      "context": "resolver",
+      "rbac": "Child",
+      "native": "Camera/mic/files NC",
+      "remote": "Chat RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "F:G-02",
+      "device": "PD",
+      "status": "FC",
+      "findings": [
+        "FVX-G-02"
+      ],
+      "batch": "VX-B3",
+      "evidence": "child_media_share_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-037",
+      "system": "COM:ج",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-17"
+      ],
+      "purpose": "Stickers & backgrounds",
+      "entry": "Hub:cfam",
+      "exit": "Back",
+      "data_source": "stage1ChildStickersBackgroundsRepository",
+      "control_primary": "Apply",
+      "control_secondary": null,
+      "states": "S,RC",
+      "context": "resolver",
+      "rbac": "Child",
+      "native": null,
+      "remote": "Chat apply RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "child_stickers_backgrounds_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-070",
+      "system": "COM:د",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-34"
+      ],
+      "purpose": "Outer circle",
+      "entry": "FAT-013/Hub:family (noHub)",
+      "exit": "FAT-071",
+      "data_source": "FamilyMoments EMPTY-HONEST / local",
+      "control_primary": "Add",
+      "control_secondary": "Block",
+      "states": "E,M",
+      "context": "family",
+      "rbac": "Parent",
+      "native": null,
+      "remote": null,
+      "visual": "F:G-13",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-13"
+      ],
+      "batch": "VX-B4",
+      "evidence": "outer_circle_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-071",
+      "system": "COM:د",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-34",
+        "JRN-CHD-13"
+      ],
+      "purpose": "Friend request approval",
+      "entry": "FAT-070/child request",
+      "exit": "Back",
+      "data_source": "PeerCompare EMPTY-HONEST (Insights RC)",
+      "control_primary": "Approve",
+      "control_secondary": "Decline",
+      "states": "P,S",
+      "context": "resolver",
+      "rbac": "Parent",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "F:S-03",
+      "rtl": "PR",
+      "device": "PD loop",
+      "status": "FC",
+      "findings": [
+        "FVX-S-03"
+      ],
+      "batch": "VX-B5",
+      "evidence": "friend_approval_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-030",
+      "system": "COM:د",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-13"
+      ],
+      "purpose": "My friends",
+      "entry": "CHD-007 (noHub)",
+      "exit": "Back",
+      "data_source": "stage1ChildFriendsRepository",
+      "control_primary": "Request friend",
+      "control_secondary": null,
+      "states": "E,M,P",
+      "context": "resolver",
+      "rbac": "Child",
+      "native": "Telephony NC",
+      "remote": "Chat RC",
+      "visual": "F:G-13",
+      "ux": "PR",
+      "rtl": "F:G-02",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-02",
+        "FVX-G-13"
+      ],
+      "batch": "VX-B3",
+      "evidence": "child_friends_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-052",
+      "system": "COM:هـ",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-24",
+        "JRN-MOT-08"
+      ],
+      "purpose": "Family calendar",
+      "entry": "Hub:family",
+      "exit": "FAT-053",
+      "data_source": "stage1FamilyCalendarRepository",
+      "control_primary": "Add event",
+      "control_secondary": "Filter",
+      "states": "E,M",
+      "context": "family",
+      "rbac": "Parent",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-15"
+      ],
+      "batch": "VX-B3",
+      "evidence": "family_calendar screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-053",
+      "system": "COM:هـ",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-24"
+      ],
+      "purpose": "Add event",
+      "entry": "FAT-052/Hub:family",
+      "exit": "FAT-052",
+      "data_source": "stage1AddEventRepository",
+      "control_primary": "Save",
+      "control_secondary": null,
+      "states": "Er,S",
+      "context": "family",
+      "rbac": "Parent",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": "PD keyboard",
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "add_event screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-054",
+      "system": "COM:و",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-25",
+        "JRN-MOT-08"
+      ],
+      "purpose": "Family tasks",
+      "entry": "Hub:family/FAT-010 quick action",
+      "exit": "FAT-055",
+      "data_source": "stage1FamilyTasksRepository (local persistence)",
+      "control_primary": "Confirm done",
+      "control_secondary": "Add",
+      "states": "E,M,P",
+      "context": "family",
+      "rbac": "Parent",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": "PD persist",
+      "status": "FC",
+      "findings": [
+        "FVX-G-17"
+      ],
+      "batch": "VX-B5",
+      "evidence": "family_tasks screen test; ce_b1_family_tasks_local_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-055",
+      "system": "COM:و",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-25"
+      ],
+      "purpose": "Create task with reward",
+      "entry": "FAT-054/Hub:family",
+      "exit": "FAT-054",
+      "data_source": "create task repository → family tasks",
+      "control_primary": "Save",
+      "control_secondary": "Assign, reward",
+      "states": "Er,S",
+      "context": "family",
+      "rbac": "Parent",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": "PD keyboard",
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "create_task screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-082",
+      "system": "COM:و",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-42"
+      ],
+      "purpose": "Smart chore distributor",
+      "entry": "Hub:family",
+      "exit": "FAT-054",
+      "data_source": "stage1SmartChoreDistributorRepository",
+      "control_primary": "Approve plan",
+      "control_secondary": null,
+      "states": "S,RC",
+      "context": "family",
+      "rbac": "Parent",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "smart_chore_distributor_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-022",
+      "system": "COM:و",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-12"
+      ],
+      "purpose": "My tasks",
+      "entry": "Hub:myday",
+      "exit": "Back",
+      "data_source": "stage1ChildTasksRepository (family-bound)",
+      "control_primary": "Mark done",
+      "control_secondary": null,
+      "states": "E,M,P",
+      "context": "resolver",
+      "rbac": "Child",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": "PD loop",
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "child_tasks_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-040",
+      "system": "EDU:ط",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-21"
+      ],
+      "purpose": "Studio board",
+      "entry": "Tab studio",
+      "exit": "FAT-041/FAT-043",
+      "data_source": "stage1StudioBoardRepository",
+      "control_primary": "Create",
+      "control_secondary": "Open",
+      "states": "E,M",
+      "context": "family",
+      "rbac": "Parent",
+      "native": null,
+      "remote": "Advisor RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "F:G-11",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-11"
+      ],
+      "batch": "VX-B4",
+      "evidence": "studio_board screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-041",
+      "system": "EDU:ط",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-21"
+      ],
+      "purpose": "Add from any source",
+      "entry": "FAT-040/Hub:studio",
+      "exit": "FAT-042/FAT-043",
+      "data_source": "screen-local sheet",
+      "control_primary": "Pick source",
+      "control_secondary": "Subject",
+      "states": "S,NC,RC",
+      "context": "family",
+      "rbac": "Parent",
+      "native": "Camera/voice NC",
+      "remote": "Generate RC",
+      "visual": "PR",
+      "ux": "F:C-03",
+      "rtl": "F:G-11",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-C-03",
+        "FVX-G-11"
+      ],
+      "batch": "VX-B1",
+      "evidence": "add_from_source screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-042",
+      "system": "EDU:ط",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-21"
+      ],
+      "purpose": "Camera capture",
+      "entry": "FAT-041/Hub:studio",
+      "exit": "FAT-043",
+      "data_source": "staged local",
+      "control_primary": "Capture",
+      "control_secondary": null,
+      "states": "NC",
+      "context": "none",
+      "rbac": "Parent",
+      "native": "Camera NC",
+      "remote": null,
+      "visual": "F:G-13",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": "PD camera",
+      "status": "FC",
+      "findings": [
+        "FVX-G-13",
+        "FVX-G-08"
+      ],
+      "batch": "VX-B4",
+      "evidence": "studio_camera_capture screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-043",
+      "system": "AIC:د",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-21"
+      ],
+      "purpose": "Generation outputs",
+      "entry": "FAT-041/FAT-042",
+      "exit": "FAT-044",
+      "data_source": "GenerationOutputs EMPTY-HONEST (Advisor RC)",
+      "control_primary": "Open output",
+      "control_secondary": null,
+      "states": "P,RC",
+      "context": "flow",
+      "rbac": "Parent",
+      "native": null,
+      "remote": "Advisor RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "F:G-02",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-02"
+      ],
+      "batch": "VX-B3",
+      "evidence": "generation_outputs_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-044",
+      "system": "AIC:د",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-21"
+      ],
+      "purpose": "Preview & approve",
+      "entry": "FAT-043",
+      "exit": "FAT-045",
+      "data_source": "stage1PreviewApproveRepository",
+      "control_primary": "Approve",
+      "control_secondary": "Edit",
+      "states": "S,RC",
+      "context": "flow",
+      "rbac": "Parent",
+      "native": null,
+      "remote": "Advisor RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "F:G-02",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-02"
+      ],
+      "batch": "VX-B3",
+      "evidence": "preview_approve_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-045",
+      "system": "EDU:ط",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-21"
+      ],
+      "purpose": "Assign + reward",
+      "entry": "FAT-044",
+      "exit": "FAT-040",
+      "data_source": "attribution reward repository",
+      "control_primary": "Assign",
+      "control_secondary": null,
+      "states": "S",
+      "context": "childId (in-form)",
+      "rbac": "Parent",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "attribution_reward screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-046",
+      "system": "EDU:ط",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-22"
+      ],
+      "purpose": "Community library",
+      "entry": "Hub:studio",
+      "exit": "Import",
+      "data_source": "community library (local)",
+      "control_primary": "Import",
+      "control_secondary": "Publish",
+      "states": "E,M",
+      "context": "family",
+      "rbac": "Parent",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-15"
+      ],
+      "batch": "VX-B7",
+      "evidence": "community_library screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-047",
+      "system": "EDU:ط",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-23"
+      ],
+      "purpose": "Learning path",
+      "entry": "Hub:studio",
+      "exit": "Back",
+      "data_source": "stage1LearningPathRepository",
+      "control_primary": "Order lessons",
+      "control_secondary": null,
+      "states": "E,M",
+      "context": "family",
+      "rbac": "Parent",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "learning_path screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-048",
+      "system": "EDU:أ",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-23"
+      ],
+      "purpose": "Materials & lessons",
+      "entry": "Hub:studio",
+      "exit": "FAT-049",
+      "data_source": "stage1MaterialsLessonsRepository",
+      "control_primary": "Add material",
+      "control_secondary": null,
+      "states": "E,M,RC",
+      "context": "family",
+      "rbac": "Parent",
+      "native": null,
+      "remote": "Licensed materials RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "F:G-11",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-11"
+      ],
+      "batch": "VX-B4",
+      "evidence": "materials_lessons_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-049",
+      "system": "EDU:ب",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-23"
+      ],
+      "purpose": "Create assignment / quiz",
+      "entry": "FAT-048/Hub:studio",
+      "exit": "FAT-050",
+      "data_source": "stage1CreateAssignmentRepository (EDU local)",
+      "control_primary": "Save",
+      "control_secondary": null,
+      "states": "Er,S",
+      "context": "childId (in-form)",
+      "rbac": "Parent",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": "PD keyboard",
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "create_assignment screen test; dom_edu_local_a_assignment_restart_proof_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-050",
+      "system": "EDU:ج",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-23"
+      ],
+      "purpose": "Results follow-up",
+      "entry": "Hub:studio/FAT-010 pending",
+      "exit": "Back",
+      "data_source": "learning results (EDU local)",
+      "control_primary": "Review",
+      "control_secondary": null,
+      "states": "E,M",
+      "context": "family",
+      "rbac": "Parent",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "results_followup screen test; dom_edu_local_b_result_restart_proof_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-051",
+      "system": "EDU:ح",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-23"
+      ],
+      "purpose": "Focus report",
+      "entry": "FAT-013 tools",
+      "exit": "Back",
+      "data_source": "stage1FocusReportRepository",
+      "control_primary": "Read",
+      "control_secondary": null,
+      "states": "E,1",
+      "context": "drop",
+      "rbac": "Parent",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "F:G-04",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-04"
+      ],
+      "batch": "VX-B2",
+      "evidence": "focus_report screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-084",
+      "system": "EDU:ط",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-43"
+      ],
+      "purpose": "Staged project",
+      "entry": "Hub:studio",
+      "exit": "Back",
+      "data_source": "staged project local",
+      "control_primary": "Add stage",
+      "control_secondary": "Reward",
+      "states": "E,M",
+      "context": "childId (in-form)",
+      "rbac": "Parent",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "staged_project_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-012",
+      "system": "EDU:أ",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-07"
+      ],
+      "purpose": "Learn home",
+      "entry": "Tab learn",
+      "exit": "CHD-013..019",
+      "data_source": "ChildLearnHome empty base + Local assignment seed",
+      "control_primary": "Open subject",
+      "control_secondary": null,
+      "states": "E,M,RC",
+      "context": "child_a fallback",
+      "rbac": "Child",
+      "native": null,
+      "remote": "Materials RC",
+      "visual": "PR",
+      "ux": "F:G-03",
+      "rtl": "F:G-11",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-03",
+        "FVX-G-11"
+      ],
+      "batch": "VX-B2",
+      "evidence": "child_learn_home_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-013",
+      "system": "EDU:أ",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-07"
+      ],
+      "purpose": "Lesson",
+      "entry": "CHD-012",
+      "exit": "Back",
+      "data_source": "stage1ChildLessonRepository",
+      "control_primary": "Next",
+      "control_secondary": null,
+      "states": "E,RC",
+      "context": "resolver",
+      "rbac": "Child",
+      "native": null,
+      "remote": "Materials RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "child_lesson_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-014",
+      "system": "EDU:ب",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-07"
+      ],
+      "purpose": "My assignment / flashcards",
+      "entry": "CHD-012",
+      "exit": "CHD-016",
+      "data_source": "stage1ChildFlashcardsRepository",
+      "control_primary": "Flip / submit",
+      "control_secondary": null,
+      "states": "E,M,RC",
+      "context": "resolver",
+      "rbac": "Child",
+      "native": null,
+      "remote": "Advisor RC",
+      "visual": "F:G-13",
+      "ux": "PR",
+      "rtl": "F:G-02",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-02",
+        "FVX-G-13"
+      ],
+      "batch": "VX-B3",
+      "evidence": "child_flashcards_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-015",
+      "system": "EDU:ج",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-07"
+      ],
+      "purpose": "Quiz",
+      "entry": "CHD-012",
+      "exit": "CHD-016",
+      "data_source": "stage1ChildQuizRepository + results (child_a)",
+      "control_primary": "Answer",
+      "control_secondary": "Submit",
+      "states": "S",
+      "context": "child_a fallback",
+      "rbac": "Child",
+      "native": null,
+      "remote": null,
+      "visual": "F:G-13",
+      "ux": "F:G-03",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-03",
+        "FVX-G-13"
+      ],
+      "batch": "VX-B2",
+      "evidence": "child_quiz_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-016",
+      "system": "EDU:ج",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-07"
+      ],
+      "purpose": "My result",
+      "entry": "CHD-015",
+      "exit": "CHD-012",
+      "data_source": "learning result (local)",
+      "control_primary": "Continue",
+      "control_secondary": null,
+      "states": "S,RC",
+      "context": "resolver",
+      "rbac": "Child",
+      "native": null,
+      "remote": "Parent notify RC",
+      "visual": "PR",
+      "ux": "F:C-06",
+      "rtl": "F:G-02",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-C-06",
+        "FVX-G-02"
+      ],
+      "batch": "VX-B3",
+      "evidence": "child_result_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-017",
+      "system": "EDU:د",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-08"
+      ],
+      "purpose": "Smart tutor (Socratic)",
+      "entry": "CHD-012",
+      "exit": "Back",
+      "data_source": "ChildTutor EMPTY-HONEST (Tutor RC)",
+      "control_primary": "Ask",
+      "control_secondary": null,
+      "states": "S,RC",
+      "context": "resolver",
+      "rbac": "Child",
+      "native": null,
+      "remote": "Tutor RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "F:G-02",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-02"
+      ],
+      "batch": "VX-B3",
+      "evidence": "child_tutor_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-018",
+      "system": "EDU:ح",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-09"
+      ],
+      "purpose": "Focus mode",
+      "entry": "Hub:learn",
+      "exit": "CHD-035",
+      "data_source": "stage1ChildFocusRepository",
+      "control_primary": "Start",
+      "control_secondary": "Stop",
+      "states": "S,NC",
+      "context": "resolver",
+      "rbac": "Child",
+      "native": "OS wake NC",
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": "PD timer",
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "child_focus_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-035",
+      "system": "EDU:ح",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-17"
+      ],
+      "purpose": "Focus sounds",
+      "entry": "Hub:learn/CHD-018",
+      "exit": "Back",
+      "data_source": "focus sounds local repository",
+      "control_primary": "Play sound",
+      "control_secondary": null,
+      "states": "S",
+      "context": "resolver",
+      "rbac": "Child",
+      "native": "Audio playback",
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": "PD audio",
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "child_focus_sounds_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-072",
+      "system": "EDU:ز",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-35"
+      ],
+      "purpose": "Quran follow-up",
+      "entry": "FAT-013 tools/FAT-010 quick action",
+      "exit": "Back",
+      "data_source": "QuranProgress EMPTY-HONEST / local bridge",
+      "control_primary": "Set ward",
+      "control_secondary": "Whisper",
+      "states": "E,1,RC",
+      "context": "drop → child_a",
+      "rbac": "Parent",
+      "native": null,
+      "remote": "Licensed audio RC",
+      "visual": "F:G-13",
+      "ux": "F:G-04",
+      "rtl": "F:G-02",
+      "device": "PD loop",
+      "status": "FC",
+      "findings": [
+        "FVX-G-03",
+        "FVX-G-04",
+        "FVX-G-02",
+        "FVX-G-13"
+      ],
+      "batch": "VX-B2,VX-B3",
+      "evidence": "quran_progress_screen_test; ce_b4_quran_local_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-025",
+      "system": "EDU:ز",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-14"
+      ],
+      "purpose": "My ward (licensed)",
+      "entry": "Hub:learn",
+      "exit": "CHD-026",
+      "data_source": "stage1ChildQuranWardRepository (child_a)",
+      "control_primary": "Mark recited",
+      "control_secondary": null,
+      "states": "S,RC",
+      "context": "child_a fallback",
+      "rbac": "Child (never time-locked)",
+      "native": null,
+      "remote": "Licensed RC",
+      "visual": "F:G-13",
+      "ux": "F:G-03",
+      "rtl": "PR",
+      "device": "PD loop",
+      "status": "FC",
+      "findings": [
+        "FVX-G-03",
+        "FVX-G-13"
+      ],
+      "batch": "VX-B2",
+      "evidence": "child_quran_ward_screen_test; ce_b4_quran_local_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-026",
+      "system": "EDU:ز",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-14"
+      ],
+      "purpose": "Memorization progress",
+      "entry": "CHD-025",
+      "exit": "Back",
+      "data_source": "stage1ChildMemorizationRepository",
+      "control_primary": "Review due",
+      "control_secondary": null,
+      "states": "E,M",
+      "context": "resolver",
+      "rbac": "Child",
+      "native": null,
+      "remote": "Licensed RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "child_memorization_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-027",
+      "system": "EDU:ز",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-14"
+      ],
+      "purpose": "Daily athkar",
+      "entry": "Hub:myday; father via FAT-010 pending (wrong)",
+      "exit": "Back",
+      "data_source": "child athkar repository",
+      "control_primary": "Mark read",
+      "control_secondary": null,
+      "states": "S",
+      "context": "resolver",
+      "rbac": "Child",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "F:S-03",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-S-03"
+      ],
+      "batch": "VX-B5",
+      "evidence": "child_athkar screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-032",
+      "system": "EDU:ز",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-18"
+      ],
+      "purpose": "Smart tilawah",
+      "entry": "Hub:learn",
+      "exit": "Back",
+      "data_source": "stage1ChildSmartTilawahRepository",
+      "control_primary": "Start recitation",
+      "control_secondary": null,
+      "states": "NC,RC",
+      "context": "resolver",
+      "rbac": "Child",
+      "native": "Mic NC",
+      "remote": "Licensed + Advisor RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "F:G-02",
+      "device": "PD mic",
+      "status": "FC",
+      "findings": [
+        "FVX-G-02"
+      ],
+      "batch": "VX-B3",
+      "evidence": "child_smart_tilawah_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-028",
+      "system": "EDU:هـ",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-15"
+      ],
+      "purpose": "My smart plan",
+      "entry": "Hub:learn",
+      "exit": "CHD-029",
+      "data_source": "smart plan local",
+      "control_primary": "Open step",
+      "control_secondary": null,
+      "states": "E,M",
+      "context": "resolver",
+      "rbac": "Child",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "child_smart_plan_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-029",
+      "system": "EDU:هـ",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-15"
+      ],
+      "purpose": "Daily review",
+      "entry": "CHD-028/Hub:learn",
+      "exit": "Back",
+      "data_source": "stage1ChildDailyReviewRepository",
+      "control_primary": "Start",
+      "control_secondary": null,
+      "states": "E,S",
+      "context": "resolver",
+      "rbac": "Child",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "child_daily_review_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-019",
+      "system": "EDU:و",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-10"
+      ],
+      "purpose": "My minutes & badges",
+      "entry": "Hub:me",
+      "exit": "Back",
+      "data_source": "stage1ChildWalletRepository (Minutes)",
+      "control_primary": "Redeem",
+      "control_secondary": null,
+      "states": "E,S",
+      "context": "resolver",
+      "rbac": "Child",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "F:G-11",
+      "device": "PD loop",
+      "status": "FC",
+      "findings": [
+        "FVX-G-11"
+      ],
+      "batch": "VX-B4",
+      "evidence": "child_wallet_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-033",
+      "system": "EDU:د",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-17"
+      ],
+      "purpose": "Interactive stories",
+      "entry": "Hub:learn",
+      "exit": "Back",
+      "data_source": "stage1ChildInteractiveStoriesRepository",
+      "control_primary": "Choose path",
+      "control_secondary": null,
+      "states": "S,RC",
+      "context": "resolver",
+      "rbac": "Child",
+      "native": null,
+      "remote": "Tutor RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "child_interactive_stories_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-034",
+      "system": "EDU:و",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-17"
+      ],
+      "purpose": "Family challenges",
+      "entry": "Hub:me",
+      "exit": "Back",
+      "data_source": "stage1ChildFamilyChallengesRepository",
+      "control_primary": "Join",
+      "control_secondary": null,
+      "states": "E,M",
+      "context": "resolver",
+      "rbac": "Child",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "F:G-12",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-12"
+      ],
+      "batch": "VX-B4",
+      "evidence": "child_family_challenges_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-031",
+      "system": "COM:ب",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-16"
+      ],
+      "purpose": "Coming for you (catalog)",
+      "entry": "Hub:me",
+      "exit": "live fun screens",
+      "data_source": "local catalog",
+      "control_primary": "Open",
+      "control_secondary": null,
+      "states": "S,RC",
+      "context": "resolver",
+      "rbac": "Child",
+      "native": "LiveKit NC",
+      "remote": "Tutor RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "child_coming_gifts_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-019",
+      "system": "AIC:أ",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-10"
+      ],
+      "purpose": "Alerts hub",
+      "entry": "Hub:today",
+      "exit": "FAT-020",
+      "data_source": "AlertsHubLocalProjection (time/friend local; no planted stranger stories)",
+      "control_primary": "Open alert",
+      "control_secondary": null,
+      "states": "E",
+      "context": "family",
+      "rbac": "Parent",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "F:S-02",
+      "rtl": "F:G-11",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-S-02",
+        "FVX-G-11"
+      ],
+      "batch": "VX-B5",
+      "evidence": "alerts_hub screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-020",
+      "system": "AIC:أ",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-10"
+      ],
+      "purpose": "Alert detail",
+      "entry": "FAT-019 (noHub)",
+      "exit": "Back",
+      "data_source": "Alert detail EMPTY-HONEST (no planted narrative)",
+      "control_primary": "Dialogue step",
+      "control_secondary": null,
+      "states": "E",
+      "context": "alertId, kind route",
+      "rbac": "Parent",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "F:S-02",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-S-02",
+        "FVX-G-10"
+      ],
+      "batch": "VX-B5",
+      "evidence": "alert_detail screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-029",
+      "system": "AIC:أ",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-10"
+      ],
+      "purpose": "Brain control",
+      "entry": "Hub:settings",
+      "exit": "Back",
+      "data_source": "local stage flags",
+      "control_primary": "Level",
+      "control_secondary": "Scope",
+      "states": "S,RC",
+      "context": "resolver",
+      "rbac": "Father-only",
+      "native": null,
+      "remote": "Gateway RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "brain_control screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-062",
+      "system": "AIC:ب",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-29"
+      ],
+      "purpose": "Family patterns",
+      "entry": "Hub:today",
+      "exit": "FAT-063",
+      "data_source": "FamilyPatterns EMPTY-HONEST (Insights RC)",
+      "control_primary": "Read",
+      "control_secondary": null,
+      "states": "E,RC",
+      "context": "family",
+      "rbac": "Parent",
+      "native": null,
+      "remote": "Insights RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "family_patterns screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-063",
+      "system": "AIC:ج",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-29"
+      ],
+      "purpose": "Individual timeline",
+      "entry": "FAT-062 (noHub)",
+      "exit": "Back",
+      "data_source": "IndividualTimeline EMPTY-HONEST (Insights RC)",
+      "control_primary": "Filter",
+      "control_secondary": null,
+      "states": "E,M,RC",
+      "context": "resolver",
+      "rbac": "Parent",
+      "native": null,
+      "remote": "Knowledge RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "individual_timeline screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-064",
+      "system": "AIC:ج",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-29"
+      ],
+      "purpose": "Knowledge maps",
+      "entry": "FAT-062 (noHub)",
+      "exit": "Back",
+      "data_source": "KnowledgeMaps EMPTY-HONEST (Insights RC)",
+      "control_primary": "Read",
+      "control_secondary": null,
+      "states": "E,RC",
+      "context": "resolver",
+      "rbac": "Parent",
+      "native": null,
+      "remote": "Knowledge RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "knowledge_maps screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-074",
+      "system": "AIC:هـ",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-37"
+      ],
+      "purpose": "Family advisor hub",
+      "entry": "AI FAB",
+      "exit": "FAT-083",
+      "data_source": "FamilyAdvisorHub EMPTY-HONEST (Advisor RC)",
+      "control_primary": "Ask",
+      "control_secondary": "Suggestions",
+      "states": "S,RC",
+      "context": "family",
+      "rbac": "Parent",
+      "native": null,
+      "remote": "Assistant RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "F:G-11",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-11"
+      ],
+      "batch": "VX-B4",
+      "evidence": "family_advisor_hub_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-083",
+      "system": "AIC:هـ",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-37"
+      ],
+      "purpose": "Advisor voice",
+      "entry": "FAT-074 (noHub)",
+      "exit": "Back",
+      "data_source": "AdvisorVoice EMPTY-HONEST (Advisor RC)",
+      "control_primary": "Talk",
+      "control_secondary": null,
+      "states": "NC,RC",
+      "context": "family",
+      "rbac": "Parent",
+      "native": "Mic NC",
+      "remote": "Assistant RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": "PD mic",
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "advisor_voice_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-076",
+      "system": "AIC:هـ",
+      "role": "Mother",
+      "journeys": [
+        "JRN-MOT-09"
+      ],
+      "purpose": "Mother AI feed",
+      "entry": "Hub:today",
+      "exit": "Back",
+      "data_source": "MotherAiFeed EMPTY-HONEST (Advisor RC)",
+      "control_primary": "Read",
+      "control_secondary": null,
+      "states": "E,M,RC",
+      "context": "family",
+      "rbac": "Mother level",
+      "native": null,
+      "remote": "Assistant RC",
+      "visual": "F:G-13",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-13"
+      ],
+      "batch": "VX-B4",
+      "evidence": "mother_ai_feed_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-079",
+      "system": "AIC:و",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-41"
+      ],
+      "purpose": "My advisor — delegation rules",
+      "entry": "Hub:today",
+      "exit": "FAT-080",
+      "data_source": "stage1RulesEngineRuleRepository (local rules memory; Agent RC)",
+      "control_primary": "Add rule",
+      "control_secondary": null,
+      "states": "E,M",
+      "context": "family",
+      "rbac": "Parent",
+      "native": null,
+      "remote": "Agent RC",
+      "visual": "PR",
+      "ux": "F:C-04",
+      "rtl": "F:C-04",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-C-04"
+      ],
+      "batch": "VX-B1",
+      "evidence": "my_advisor screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-080",
+      "system": "AIC:و",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-41"
+      ],
+      "purpose": "What the assistant did",
+      "entry": "FAT-079 (noHub)",
+      "exit": "Back",
+      "data_source": "stage1AgentActionLogRepository",
+      "control_primary": "Undo",
+      "control_secondary": null,
+      "states": "E,M,RC",
+      "context": "family",
+      "rbac": "Parent",
+      "native": null,
+      "remote": "Agent RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [],
+      "batch": "VX-B7",
+      "evidence": "agent_action_log_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-075",
+      "system": "AIC:د",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-38"
+      ],
+      "purpose": "Coming features catalog",
+      "entry": "Hub:settings",
+      "exit": "live screens",
+      "data_source": "local catalog",
+      "control_primary": "Open live screen",
+      "control_secondary": null,
+      "states": "S",
+      "context": "none",
+      "rbac": "Parent",
+      "native": "VPN/DNS NC",
+      "remote": "Gateways RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-08"
+      ],
+      "batch": "VX-B4",
+      "evidence": "coming_soon screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-078",
+      "system": "SEC:ج",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-40"
+      ],
+      "purpose": "Home router filter guide",
+      "entry": "Hub:settings",
+      "exit": "Back",
+      "data_source": "stage1HomeRouterFilterRepository",
+      "control_primary": "Check readiness",
+      "control_secondary": null,
+      "states": "S,NC",
+      "context": "family",
+      "rbac": "Parent (level >= partner)",
+      "native": "DNS NC",
+      "remote": null,
+      "visual": "PR",
+      "ux": "F:G-02",
+      "rtl": "F:G-02",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-02"
+      ],
+      "batch": "VX-B3",
+      "evidence": "home_router_filter_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-086",
+      "system": "AIC:د",
+      "role": "Parent",
+      "journeys": [
+        "JRN-FAT-45"
+      ],
+      "purpose": "Family moments",
+      "entry": "Hub:today",
+      "exit": "Back",
+      "data_source": "stage1FamilyMomentsRepository",
+      "control_primary": "Add",
+      "control_secondary": "Share",
+      "states": "E,M,RC",
+      "context": "family",
+      "rbac": "Parent",
+      "native": null,
+      "remote": "Chat share RC",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "F:G-02",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-02"
+      ],
+      "batch": "VX-B3",
+      "evidence": "family_moments_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-CHD-010",
+      "system": "ADM:و",
+      "role": "Child",
+      "journeys": [
+        "JRN-CHD-05"
+      ],
+      "purpose": "What is collected about me",
+      "entry": "Tab me",
+      "exit": "Back",
+      "data_source": "privacy collection (demo-child)",
+      "control_primary": "Read",
+      "control_secondary": null,
+      "states": "S",
+      "context": "demo-child fallback",
+      "rbac": "Child",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "F:G-03",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "FVX-G-03"
+      ],
+      "batch": "VX-B2",
+      "evidence": "what_is_collected screen test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-SHR-005",
+      "system": "ADM:ج",
+      "role": "Any",
+      "journeys": [
+        "JRN-SHR-01"
+      ],
+      "purpose": "Network error template",
+      "entry": "error event",
+      "exit": "Retry",
+      "data_source": "AppErrorState",
+      "control_primary": "Retry",
+      "control_secondary": null,
+      "states": "Er",
+      "context": "NA",
+      "rbac": "Any",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "N-16"
+      ],
+      "batch": "VX-B7",
+      "evidence": "network_error_template_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-SHR-006",
+      "system": "ADM:ج",
+      "role": "Any",
+      "journeys": [
+        "JRN-SHR-01"
+      ],
+      "purpose": "Empty state template",
+      "entry": "empty event",
+      "exit": "CTA",
+      "data_source": "AppEmptyState",
+      "control_primary": "CTA",
+      "control_secondary": null,
+      "states": "E",
+      "context": "NA",
+      "rbac": "Any",
+      "native": null,
+      "remote": null,
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "device": null,
+      "status": "FC",
+      "findings": [
+        "N-16"
+      ],
+      "batch": "VX-B7",
+      "evidence": "empty_state_template_screen_test",
+      "final": "PENDING"
+    },
+    {
+      "id": "SCR-FAT-039",
+      "system": "SEC:ل",
+      "role": null,
+      "journeys": [
+        "JRN-FAT-20"
+      ],
+      "purpose": "School mode — deleted (ADR-034)",
+      "entry": "tombstone redirect",
+      "exit": "FAT-085",
+      "data_source": null,
+      "control_primary": null,
+      "control_secondary": null,
+      "states": "NA",
+      "context": null,
+      "rbac": null,
+      "native": null,
+      "remote": null,
+      "visual": "NA",
+      "ux": "NA",
+      "rtl": "NA",
+      "device": "NA",
+      "status": "OOS",
+      "findings": [],
+      "batch": null,
+      "evidence": "router_routes_test",
+      "final": "NA"
+    }
+  ],
+  "non_catalog_surfaces": [
+    {
+      "id": "sys3:session-restore",
+      "purpose": "Restore session",
+      "rbac": "Any",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "findings": [],
+      "batch": "VX-B7",
+      "final": "PENDING"
+    },
+    {
+      "id": "sys3:session-expired",
+      "purpose": "Expired session",
+      "rbac": "Any",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "findings": [],
+      "batch": "VX-B7",
+      "final": "PENDING"
+    },
+    {
+      "id": "sys3:logout",
+      "purpose": "Sign out",
+      "rbac": "Any",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "findings": [
+        "destructive-confirm-check"
+      ],
+      "batch": "VX-B7",
+      "final": "PENDING"
+    },
+    {
+      "id": "sys3:recovery",
+      "purpose": "Account recovery",
+      "rbac": "Any",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "findings": [],
+      "batch": "VX-B7",
+      "final": "PENDING"
+    },
+    {
+      "id": "sys3:deactivate",
+      "purpose": "Deactivate account",
+      "rbac": "Owner",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "findings": [
+        "destructive-confirm-check"
+      ],
+      "batch": "VX-B7",
+      "final": "PENDING"
+    },
+    {
+      "id": "sys3:family-select",
+      "purpose": "Choose family",
+      "rbac": "Parent",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "findings": [
+        "FVX-G-05"
+      ],
+      "batch": "VX-B2",
+      "final": "PENDING"
+    },
+    {
+      "id": "sys3:remove-adult",
+      "purpose": "Remove adult member",
+      "rbac": "Owner",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "findings": [
+        "destructive-confirm-check"
+      ],
+      "batch": "VX-B7",
+      "final": "PENDING"
+    },
+    {
+      "id": "sys3:ownership-transfer",
+      "purpose": "Transfer ownership",
+      "rbac": "Owner",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "findings": [],
+      "batch": "VX-B7",
+      "final": "PENDING"
+    },
+    {
+      "id": "sys3:leave-family",
+      "purpose": "Leave family",
+      "rbac": "Non-owner adult",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "findings": [],
+      "batch": "VX-B7",
+      "final": "PENDING"
+    },
+    {
+      "id": "sys3:invite-status",
+      "purpose": "Invite status",
+      "rbac": "Father",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "findings": [],
+      "batch": "VX-B7",
+      "final": "PENDING"
+    },
+    {
+      "id": "sys3:adult-sessions",
+      "purpose": "Adult sessions",
+      "rbac": "Parent",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "F:G-11",
+      "findings": [
+        "FVX-G-11"
+      ],
+      "batch": "VX-B4",
+      "final": "PENDING"
+    },
+    {
+      "id": "sys3:child-sessions",
+      "purpose": "Child sessions",
+      "rbac": "Parent",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "F:G-11",
+      "findings": [
+        "FVX-G-11"
+      ],
+      "batch": "VX-B4",
+      "final": "PENDING"
+    },
+    {
+      "id": "sys3:remote-end",
+      "purpose": "End child session",
+      "rbac": "Parent",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "findings": [],
+      "batch": "VX-B7",
+      "final": "PENDING"
+    },
+    {
+      "id": "sys3:revoke-confirm",
+      "purpose": "Revoke device",
+      "rbac": "Parent",
+      "visual": "PR",
+      "ux": "PR",
+      "rtl": "PR",
+      "findings": [
+        "destructive-confirm-check"
+      ],
+      "batch": "VX-B7",
+      "final": "PENDING"
+    },
+    {
+      "id": "dev:/gallery",
+      "purpose": "Design token gallery (RoleGuard blocked landing)",
+      "rbac": "dev",
+      "visual": "NA",
+      "ux": "F:G-07",
+      "rtl": "NA",
+      "findings": [
+        "FVX-G-07"
+      ],
+      "batch": "VX-B1",
+      "final": "PENDING"
+    }
+  ],
+  "journeys": [
+    {
+      "id": "JRN-FAT-01",
+      "screens": [
+        "SCR-SHR-001",
+        "SCR-SHR-002",
+        "SCR-SHR-003",
+        "SCR-FAT-001",
+        "SCR-SHR-007",
+        "SCR-SHR-008",
+        "SCR-FAT-030"
+      ],
+      "findings": [
+        "FVX-G-01",
+        "FVX-C-01",
+        "FVX-C-02"
+      ],
+      "batch": "VX-B1,VX-B6",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-02",
+      "screens": [
+        "SCR-FAT-002",
+        "SCR-FAT-003",
+        "SCR-FAT-004",
+        "SCR-FAT-005",
+        "SCR-FAT-006"
+      ],
+      "findings": [
+        "FVX-S-04"
+      ],
+      "batch": "VX-B6",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-03",
+      "screens": [
+        "SCR-FAT-002",
+        "SCR-FAT-007"
+      ],
+      "findings": [
+        "FVX-G-11"
+      ],
+      "batch": "VX-B4",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-04",
+      "screens": [
+        "SCR-FAT-008",
+        "SCR-FAT-027",
+        "SCR-FAT-031"
+      ],
+      "findings": [
+        "FVX-G-02"
+      ],
+      "batch": "VX-B3",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-05",
+      "screens": [
+        "SCR-FAT-010",
+        "SCR-FAT-011"
+      ],
+      "findings": [
+        "FVX-S-03",
+        "FVX-G-05",
+        "FVX-G-17"
+      ],
+      "batch": "VX-B5,VX-B2",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-06",
+      "screens": [
+        "SCR-FAT-012",
+        "SCR-FAT-013"
+      ],
+      "findings": [
+        "FVX-S-04"
+      ],
+      "batch": "VX-B6",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-07",
+      "screens": [
+        "SCR-FAT-014",
+        "SCR-FAT-015"
+      ],
+      "findings": [
+        "FVX-G-08",
+        "FVX-G-12"
+      ],
+      "batch": "VX-B4",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-08",
+      "screens": [
+        "SCR-FAT-016",
+        "SCR-FAT-017",
+        "SCR-FAT-028"
+      ],
+      "findings": [
+        "FVX-S-05",
+        "FVX-G-09"
+      ],
+      "batch": "VX-B6,VX-B1",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-09",
+      "screens": [
+        "SCR-FAT-018",
+        "SCR-FAT-028"
+      ],
+      "findings": [
+        "FVX-G-06",
+        "FVX-S-09"
+      ],
+      "batch": "VX-B2,VX-B5",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-10",
+      "screens": [
+        "SCR-FAT-019",
+        "SCR-FAT-020",
+        "SCR-FAT-029"
+      ],
+      "findings": [
+        "FVX-S-02"
+      ],
+      "batch": "VX-B5",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-11",
+      "screens": [
+        "SCR-FAT-021",
+        "SCR-FAT-022"
+      ],
+      "findings": [
+        "FVX-S-01"
+      ],
+      "batch": "VX-B6",
+      "result": "OD"
+    },
+    {
+      "id": "JRN-FAT-12",
+      "screens": [
+        "SCR-FAT-023",
+        "SCR-FAT-024"
+      ],
+      "findings": [
+        "FVX-G-06",
+        "FVX-G-10"
+      ],
+      "batch": "VX-B2,VX-B4",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-13",
+      "screens": [
+        "SCR-FAT-025",
+        "SCR-FAT-026"
+      ],
+      "findings": [
+        "FVX-S-06",
+        "FVX-S-09"
+      ],
+      "batch": "VX-B2,VX-B5",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-14",
+      "screens": [
+        "SCR-FAT-025",
+        "SCR-FAT-026"
+      ],
+      "findings": [
+        "FVX-S-06"
+      ],
+      "batch": "VX-B2",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-15",
+      "screens": [
+        "SCR-FAT-032",
+        "SCR-FAT-033"
+      ],
+      "findings": [
+        "FVX-S-03"
+      ],
+      "batch": "VX-B5",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-16",
+      "screens": [
+        "SCR-FAT-034",
+        "SCR-FAT-035"
+      ],
+      "findings": [
+        "FVX-G-02",
+        "FVX-G-17"
+      ],
+      "batch": "VX-B3,VX-B4",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-17",
+      "screens": [
+        "SCR-FAT-036"
+      ],
+      "findings": [
+        "FVX-G-04",
+        "FVX-G-03"
+      ],
+      "batch": "VX-B2",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-18",
+      "screens": [
+        "SCR-FAT-037"
+      ],
+      "findings": [
+        "FVX-G-04",
+        "FVX-G-03"
+      ],
+      "batch": "VX-B2",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-19",
+      "screens": [
+        "SCR-FAT-038"
+      ],
+      "findings": [
+        "FVX-S-02"
+      ],
+      "batch": "VX-B5",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-20",
+      "screens": [
+        "SCR-FAT-039"
+      ],
+      "findings": [],
+      "batch": null,
+      "result": "NA"
+    },
+    {
+      "id": "JRN-FAT-21",
+      "screens": [
+        "SCR-FAT-040",
+        "SCR-FAT-041",
+        "SCR-FAT-042",
+        "SCR-FAT-043",
+        "SCR-FAT-044",
+        "SCR-FAT-045"
+      ],
+      "findings": [
+        "FVX-C-03",
+        "FVX-G-02"
+      ],
+      "batch": "VX-B1,VX-B3",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-22",
+      "screens": [
+        "SCR-FAT-046"
+      ],
+      "findings": [],
+      "batch": "VX-B7",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-23",
+      "screens": [
+        "SCR-FAT-047",
+        "SCR-FAT-048",
+        "SCR-FAT-049",
+        "SCR-FAT-050",
+        "SCR-FAT-051"
+      ],
+      "findings": [
+        "FVX-G-04"
+      ],
+      "batch": "VX-B2",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-24",
+      "screens": [
+        "SCR-FAT-052",
+        "SCR-FAT-053"
+      ],
+      "findings": [
+        "FVX-G-15"
+      ],
+      "batch": "VX-B3",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-25",
+      "screens": [
+        "SCR-FAT-054",
+        "SCR-FAT-055"
+      ],
+      "findings": [
+        "FVX-G-17"
+      ],
+      "batch": "VX-B5",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-26",
+      "screens": [
+        "SCR-FAT-056",
+        "SCR-FAT-057"
+      ],
+      "findings": [],
+      "batch": "VX-B7",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-27",
+      "screens": [
+        "SCR-FAT-058"
+      ],
+      "findings": [
+        "FVX-G-09"
+      ],
+      "batch": "VX-B1",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-28",
+      "screens": [
+        "SCR-FAT-059",
+        "SCR-FAT-060"
+      ],
+      "findings": [
+        "FVX-G-03",
+        "FVX-G-06"
+      ],
+      "batch": "VX-B2",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-29",
+      "screens": [
+        "SCR-FAT-062",
+        "SCR-FAT-063",
+        "SCR-FAT-064"
+      ],
+      "findings": [],
+      "batch": "VX-B7",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-30",
+      "screens": [
+        "SCR-FAT-061"
+      ],
+      "findings": [
+        "FVX-S-07"
+      ],
+      "batch": "VX-B3",
+      "result": "OD"
+    },
+    {
+      "id": "JRN-FAT-31",
+      "screens": [
+        "SCR-FAT-065",
+        "SCR-FAT-066"
+      ],
+      "findings": [
+        "FVX-G-04",
+        "FVX-G-02"
+      ],
+      "batch": "VX-B2,VX-B3",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-32",
+      "screens": [
+        "SCR-FAT-067",
+        "SCR-FAT-068"
+      ],
+      "findings": [
+        "FVX-G-04",
+        "FVX-G-03"
+      ],
+      "batch": "VX-B2",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-33",
+      "screens": [
+        "SCR-FAT-069",
+        "SCR-FAT-081"
+      ],
+      "findings": [
+        "FVX-G-04"
+      ],
+      "batch": "VX-B2",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-34",
+      "screens": [
+        "SCR-FAT-070",
+        "SCR-FAT-071"
+      ],
+      "findings": [
+        "FVX-S-03"
+      ],
+      "batch": "VX-B5",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-35",
+      "screens": [
+        "SCR-FAT-072"
+      ],
+      "findings": [
+        "FVX-G-03",
+        "FVX-G-04"
+      ],
+      "batch": "VX-B2",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-36",
+      "screens": [
+        "SCR-FAT-073"
+      ],
+      "findings": [
+        "FVX-G-02"
+      ],
+      "batch": "VX-B3",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-37",
+      "screens": [
+        "SCR-FAT-074",
+        "SCR-FAT-083"
+      ],
+      "findings": [],
+      "batch": "VX-B7",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-38",
+      "screens": [
+        "SCR-FAT-075"
+      ],
+      "findings": [
+        "FVX-G-08"
+      ],
+      "batch": "VX-B4",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-39",
+      "screens": [
+        "SCR-FAT-077"
+      ],
+      "findings": [
+        "FVX-C-05"
+      ],
+      "batch": "OD-11",
+      "result": "OD"
+    },
+    {
+      "id": "JRN-FAT-40",
+      "screens": [
+        "SCR-FAT-078"
+      ],
+      "findings": [
+        "FVX-G-02"
+      ],
+      "batch": "VX-B3",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-41",
+      "screens": [
+        "SCR-FAT-079",
+        "SCR-FAT-080"
+      ],
+      "findings": [
+        "FVX-C-04"
+      ],
+      "batch": "VX-B1",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-42",
+      "screens": [
+        "SCR-FAT-082"
+      ],
+      "findings": [],
+      "batch": "VX-B7",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-43",
+      "screens": [
+        "SCR-FAT-084"
+      ],
+      "findings": [],
+      "batch": "VX-B7",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-44",
+      "screens": [
+        "SCR-FAT-085"
+      ],
+      "findings": [
+        "FVX-G-04"
+      ],
+      "batch": "VX-B2",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-FAT-45",
+      "screens": [
+        "SCR-FAT-086"
+      ],
+      "findings": [
+        "FVX-G-02"
+      ],
+      "batch": "VX-B3",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-MOT-01",
+      "screens": [
+        "SCR-SHR-003",
+        "SCR-FAT-009"
+      ],
+      "findings": [
+        "FVX-S-09"
+      ],
+      "batch": "VX-B5",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-MOT-02",
+      "screens": [
+        "SCR-FAT-010"
+      ],
+      "findings": [
+        "FVX-S-03"
+      ],
+      "batch": "VX-B5",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-MOT-03",
+      "screens": [
+        "SCR-FAT-012",
+        "SCR-FAT-013"
+      ],
+      "findings": [
+        "FVX-S-04"
+      ],
+      "batch": "VX-B6",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-MOT-04",
+      "screens": [
+        "SCR-FAT-021",
+        "SCR-FAT-022",
+        "SCR-FAT-023"
+      ],
+      "findings": [
+        "FVX-S-01"
+      ],
+      "batch": "VX-B6",
+      "result": "OD"
+    },
+    {
+      "id": "JRN-MOT-05",
+      "screens": [
+        "SCR-FAT-018"
+      ],
+      "findings": [
+        "FVX-G-06"
+      ],
+      "batch": "VX-B2",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-MOT-06",
+      "screens": [
+        "SCR-FAT-014"
+      ],
+      "findings": [
+        "FVX-G-08"
+      ],
+      "batch": "VX-B4",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-MOT-07",
+      "screens": [
+        "SCR-FAT-033"
+      ],
+      "findings": [
+        "FVX-S-03"
+      ],
+      "batch": "VX-B5",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-MOT-08",
+      "screens": [
+        "SCR-FAT-052",
+        "SCR-FAT-054"
+      ],
+      "findings": [],
+      "batch": "VX-B7",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-MOT-09",
+      "screens": [
+        "SCR-FAT-076"
+      ],
+      "findings": [
+        "FVX-G-13"
+      ],
+      "batch": "VX-B4",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-CHD-01",
+      "screens": [
+        "SCR-CHD-001",
+        "SCR-CHD-002",
+        "SCR-CHD-003",
+        "SCR-CHD-011"
+      ],
+      "findings": [
+        "FVX-G-13"
+      ],
+      "batch": "VX-B4",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-CHD-02",
+      "screens": [
+        "SCR-CHD-004"
+      ],
+      "findings": [
+        "FVX-G-03"
+      ],
+      "batch": "VX-B2",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-CHD-03",
+      "screens": [
+        "SCR-CHD-005",
+        "SCR-CHD-006"
+      ],
+      "findings": [
+        "FVX-G-06"
+      ],
+      "batch": "VX-B2",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-CHD-04",
+      "screens": [
+        "SCR-CHD-007",
+        "SCR-CHD-008",
+        "SCR-CHD-009"
+      ],
+      "findings": [
+        "FVX-S-01"
+      ],
+      "batch": "VX-B6",
+      "result": "OD"
+    },
+    {
+      "id": "JRN-CHD-05",
+      "screens": [
+        "SCR-CHD-003",
+        "SCR-CHD-010"
+      ],
+      "findings": [
+        "FVX-G-03"
+      ],
+      "batch": "VX-B2",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-CHD-06",
+      "screens": [
+        "SCR-CHD-020",
+        "SCR-CHD-021"
+      ],
+      "findings": [
+        "FVX-G-03",
+        "FVX-G-02"
+      ],
+      "batch": "VX-B2,VX-B3",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-CHD-07",
+      "screens": [
+        "SCR-CHD-012",
+        "SCR-CHD-013",
+        "SCR-CHD-014",
+        "SCR-CHD-015",
+        "SCR-CHD-016"
+      ],
+      "findings": [
+        "FVX-G-03",
+        "FVX-C-06"
+      ],
+      "batch": "VX-B2,VX-B3",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-CHD-08",
+      "screens": [
+        "SCR-CHD-017"
+      ],
+      "findings": [
+        "FVX-G-02"
+      ],
+      "batch": "VX-B3",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-CHD-09",
+      "screens": [
+        "SCR-CHD-018"
+      ],
+      "findings": [],
+      "batch": "VX-B7",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-CHD-10",
+      "screens": [
+        "SCR-CHD-019"
+      ],
+      "findings": [
+        "FVX-G-11"
+      ],
+      "batch": "VX-B4",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-CHD-11",
+      "screens": [
+        "SCR-CHD-023",
+        "SCR-CHD-024"
+      ],
+      "findings": [
+        "FVX-G-02"
+      ],
+      "batch": "VX-B3",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-CHD-12",
+      "screens": [
+        "SCR-CHD-022"
+      ],
+      "findings": [],
+      "batch": "VX-B7",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-CHD-13",
+      "screens": [
+        "SCR-CHD-030"
+      ],
+      "findings": [
+        "FVX-G-02"
+      ],
+      "batch": "VX-B3",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-CHD-14",
+      "screens": [
+        "SCR-CHD-025",
+        "SCR-CHD-026",
+        "SCR-CHD-027"
+      ],
+      "findings": [
+        "FVX-G-03"
+      ],
+      "batch": "VX-B2",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-CHD-15",
+      "screens": [
+        "SCR-CHD-028",
+        "SCR-CHD-029"
+      ],
+      "findings": [],
+      "batch": "VX-B7",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-CHD-16",
+      "screens": [
+        "SCR-CHD-031"
+      ],
+      "findings": [],
+      "batch": "VX-B7",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-CHD-17",
+      "screens": [
+        "SCR-CHD-033",
+        "SCR-CHD-034",
+        "SCR-CHD-035",
+        "SCR-CHD-036",
+        "SCR-CHD-037"
+      ],
+      "findings": [
+        "FVX-G-12"
+      ],
+      "batch": "VX-B4",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-CHD-18",
+      "screens": [
+        "SCR-CHD-032"
+      ],
+      "findings": [
+        "FVX-G-02"
+      ],
+      "batch": "VX-B3",
+      "result": "PENDING"
+    },
+    {
+      "id": "JRN-SHR-01",
+      "screens": [
+        "SCR-SHR-005",
+        "SCR-SHR-006"
+      ],
+      "findings": [],
+      "batch": "VX-B7",
+      "result": "PENDING"
+    }
+  ],
+  "systems_control_completeness": "See FINAL_VISUAL_UX_JOURNEY_MATRIX.md §5 (42 rows; properties Cf/Op/Ad/Ex/Sc/Rb/St/Rv/Rc/Cq).",
+  "ldr_refresh": {
+    "date": "2026-09-26",
+    "batch": "LDR-B8",
+    "note": "data_source fields refreshed for Local Data Reality binds and EMPTY-HONEST NC/RC defaults"
+  }
+}

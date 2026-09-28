@@ -83,9 +83,26 @@ final class InMemoryMotherPermissionLevelRepository
   }
 }
 
-/// Stage-1 singleton — partner default · empty audit (Rule 23).
-final stage1MotherPermissionLevelRepository =
-    InMemoryMotherPermissionLevelRepository();
+/// Stage-1 accessor — Identity-backed when bound, else InMemory partner default.
+MotherPermissionLevelRepository? _stage1MotherPermissionBound;
+
+final InMemoryMotherPermissionLevelRepository
+_stage1MotherPermissionMemory = InMemoryMotherPermissionLevelRepository();
+
+MotherPermissionLevelRepository get stage1MotherPermissionLevelRepository =>
+    _stage1MotherPermissionBound ?? _stage1MotherPermissionMemory;
+
+void rebindStage1MotherPermissionLevelRepository(
+  MotherPermissionLevelRepository repository,
+) {
+  _stage1MotherPermissionBound = repository;
+}
+
+@visibleForTesting
+void resetStage1MotherPermissionLevelRepositoryForTest() {
+  _stage1MotherPermissionBound = null;
+  _stage1MotherPermissionMemory.resetForTests();
+}
 
 /// Ordinal for upgrade / downgrade detection (observer < partner < full).
 int motherLevelRank(MotherLevel level) => switch (level) {

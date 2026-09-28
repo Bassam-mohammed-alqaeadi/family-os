@@ -1,7 +1,3 @@
-import 'dart:convert';
-import 'dart:io';
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -12,52 +8,18 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 
-// #region agent log
-void _agentDebugLog({
-  required String hypothesisId,
-  required String location,
-  required String message,
-  Map<String, Object?> data = const {},
-}) {
-  final payload = <String, Object?>{
-    'sessionId': '296a8e',
-    'hypothesisId': hypothesisId,
-    'location': location,
-    'message': message,
-    'data': data,
-    'timestamp': DateTime.now().millisecondsSinceEpoch,
-        'runId': 'post-fix',
-      };
-      final line = jsonEncode(payload);
-      debugPrint('AGENT_DEBUG $line');
-      try {
-        File(
-          r'D:\special projects\family\debug-296a8e.log',
-        ).writeAsStringSync('$line\n', mode: FileMode.append);
-      } catch (_) {}
-      // Best-effort ingest when running on host (Windows/Chrome); ignore on device.
-      try {
-        HttpClient()
-            .postUrl(
-              Uri.parse(
-                'http://127.0.0.1:7833/ingest/4add46c7-41e9-4203-afa0-61f38d854be0',
-              ),
-            )
-            .then((req) {
-              req.headers.set('Content-Type', 'application/json');
-              req.headers.set('X-Debug-Session-Id', '296a8e');
-              req.write(line);
-              return req.close();
-            })
-            .then((resp) => resp.drain<void>())
-            .catchError((_) {});
-      } catch (_) {}
-    }
-// #endregion
+/// Widget keys for SCR-SHR-003.
+abstract final class LoginKeys {
+  static const honesty = Key('login_local_honesty');
+  static const emailError = Key('login_email_error');
+  static const passwordError = Key('login_password_error');
+}
 
 /// SCR-SHR-003 — تسجيل الدخول (bare shared onboarding, mock-first).
 ///
 /// No real auth / biometrics. Login → `/scr-fat-010` (placeholder OK).
+/// Fingerprint is NATIVE_CLOSED: the button explains it is not available yet
+/// and never signs in or navigates.
 /// Forgot password opens local recovery with honest (no email-sent) copy.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, this.onLoginSuccess, this.onInvite});
@@ -75,6 +37,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  var _emailError = false;
+  var _passwordError = false;
 
   @override
   void dispose() {
@@ -83,31 +47,25 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  bool _validate() {
+    final emailOk = _emailController.text.trim().isNotEmpty;
+    final passwordOk = _passwordController.text.isNotEmpty;
+    setState(() {
+      _emailError = !emailOk;
+      _passwordError = !passwordOk;
+    });
+    return emailOk && passwordOk;
+  }
+
   void _login() {
+    if (!_validate()) {
+      final l10n = AppLocalizations.of(context);
+      AppToast.show(context, message: l10n.loginFieldsRequired);
+      return;
+    }
     final runtime = CurrentIdentity.maybeOf(context);
-    // #region agent log
-    _agentDebugLog(
-      hypothesisId: 'A',
-      location: 'login_screen.dart:_login',
-      message: 'login_pressed',
-      data: {
-        'hasRuntime': runtime != null,
-        'sessionExpired': runtime?.session.isExpiredAt(DateTime.now().toUtc()),
-        'needsFamilySelector': runtime?.needsFamilySelector,
-        'hasOnLoginSuccess': widget.onLoginSuccess != null,
-      },
-    );
-    // #endregion
     if (runtime != null &&
         runtime.session.isExpiredAt(DateTime.now().toUtc())) {
-      // #region agent log
-      _agentDebugLog(
-        hypothesisId: 'B',
-        location: 'login_screen.dart:_login',
-        message: 'nav_target',
-        data: {'target': '/sys3-session-expired'},
-      );
-      // #endregion
       context.go('/sys3-session-expired');
       return;
     }
@@ -116,25 +74,9 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
     if (runtime?.needsFamilySelector ?? false) {
-      // #region agent log
-      _agentDebugLog(
-        hypothesisId: 'A',
-        location: 'login_screen.dart:_login',
-        message: 'nav_target',
-        data: {'target': '/sys3-family-select'},
-      );
-      // #endregion
       context.go('/sys3-family-select');
       return;
     }
-    // #region agent log
-    _agentDebugLog(
-      hypothesisId: 'E',
-      location: 'login_screen.dart:_login',
-      message: 'nav_target',
-      data: {'target': '/scr-fat-010'},
-    );
-    // #endregion
     context.go('/scr-fat-010');
   }
 
@@ -142,14 +84,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final l10n = AppLocalizations.of(context);
     AppToast.show(context, message: l10n.loginForgotToast);
     try {
-      // #region agent log
-      _agentDebugLog(
-        hypothesisId: 'C',
-        location: 'login_screen.dart:_forgotPassword',
-        message: 'nav_target',
-        data: {'target': '/sys3-account-recovery'},
-      );
-      // #endregion
       context.push('/sys3-account-recovery');
     } on Object {
       // Gallery/widget hosts without GoRouter keep the existing honest toast.
@@ -158,7 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _biometric() {
     final l10n = AppLocalizations.of(context);
-    AppToast.show(context, message: l10n.loginBiometricToast);
+    AppToast.show(context, message: l10n.loginBiometricUnavailable);
   }
 
   void _invite() {
@@ -181,10 +115,10 @@ class _LoginScreenState extends State<LoginScreen> {
     final sessionTag = runtime == null
         ? null
         : runtime.session.isRevoked
-        ? l10n.requestInboxReject
+        ? l10n.loginSessionRevoked
         : sessionExpired
-        ? l10n.linkQrExpired
-        : l10n.dayBoardActiveTag;
+        ? l10n.loginSessionExpired
+        : l10n.loginSessionActive;
 
     return Scaffold(
       backgroundColor: colors.bg,
@@ -226,6 +160,16 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 10),
             ],
+            Text(
+              key: LoginKeys.honesty,
+              l10n.loginLocalAccountHonesty,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: colors.ink2,
+              ),
+            ),
+            const SizedBox(height: 12),
             _LabeledField(
               label: l10n.loginEmailLabel,
               child: Semantics(
@@ -236,14 +180,31 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   autocorrect: false,
+                  onChanged: (_) {
+                    if (_emailError) setState(() => _emailError = false);
+                  },
                   decoration: _inputDecoration(
                     colors: colors,
                     radii: radii,
                     hint: l10n.loginEmailHint,
+                    errorText: _emailError ? l10n.loginFieldsRequired : null,
                   ),
                 ),
               ),
             ),
+            if (_emailError)
+              Padding(
+                key: LoginKeys.emailError,
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  l10n.loginFieldsRequired,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: colors.coral,
+                  ),
+                ),
+              ),
             _LabeledField(
               label: l10n.loginPasswordLabel,
               child: Semantics(
@@ -254,16 +215,34 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _passwordController,
                   obscureText: true,
                   autocorrect: false,
+                  onChanged: (_) {
+                    if (_passwordError) setState(() => _passwordError = false);
+                  },
                   decoration: _inputDecoration(
                     colors: colors,
                     radii: radii,
                     hint: l10n.loginPasswordHint,
+                    errorText:
+                        _passwordError ? l10n.loginFieldsRequired : null,
                   ),
                 ),
               ),
             ),
+            if (_passwordError)
+              Padding(
+                key: LoginKeys.passwordError,
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  l10n.loginFieldsRequired,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: colors.coral,
+                  ),
+                ),
+              ),
             Align(
-              alignment: Alignment.centerLeft,
+              alignment: AlignmentDirectional.centerStart,
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 14),
                 child: Semantics(
@@ -273,17 +252,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     key: const Key('login_forgot'),
                     onTap: _forgotPassword,
                     borderRadius: BorderRadius.circular(8),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 8,
-                      ),
-                      child: Text(
-                        l10n.loginForgotLink,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: colors.p600,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 48),
+                      child: Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Text(
+                            l10n.loginForgotLink,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: colors.p600,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -312,8 +294,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     TextSpan(text: '${l10n.loginInvitePrompt} '),
                     WidgetSpan(
-                      alignment: PlaceholderAlignment.baseline,
-                      baseline: TextBaseline.alphabetic,
+                      alignment: PlaceholderAlignment.middle,
                       child: Semantics(
                         button: true,
                         label: l10n.loginInviteLink,
@@ -321,12 +302,18 @@ class _LoginScreenState extends State<LoginScreen> {
                           key: const Key('login_invite_link'),
                           onTap: _invite,
                           borderRadius: BorderRadius.circular(4),
-                          child: Text(
-                            l10n.loginInviteLink,
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w800,
-                              color: colors.p600,
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(minHeight: 48),
+                            child: Align(
+                              alignment: Alignment.center,
+                              child: Text(
+                                l10n.loginInviteLink,
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: colors.p600,
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -347,6 +334,7 @@ class _LoginScreenState extends State<LoginScreen> {
     required FamilyColors colors,
     required FamilyRadii radii,
     required String hint,
+    String? errorText,
   }) {
     final border = OutlineInputBorder(
       borderRadius: BorderRadius.circular(radii.input),
@@ -364,6 +352,7 @@ class _LoginScreenState extends State<LoginScreen> {
         borderRadius: BorderRadius.circular(radii.input),
         borderSide: BorderSide(color: colors.p400, width: 1.5),
       ),
+      errorText: errorText,
     );
   }
 }

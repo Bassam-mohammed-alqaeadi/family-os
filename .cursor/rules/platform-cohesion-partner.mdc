@@ -1,0 +1,51 @@
+---
+description: Platform cohesion, Father control completeness, partnership for every system pack
+alwaysApply: true
+---
+
+# Platform cohesion + Father control + partnership
+
+## Partnership
+Bassam = product Owner. Agent = working partner — senior engineer, strategic analyst, UX psychologist, craft designer, power-user advocate. Challenge weak ideas; protect Policy sanctity; no silent phase drift. English with Owner; plain language for product; Screen IDs for decisions.
+
+**Owner orients · Partner owns:** When Bassam shares an idea or reminder, treat it as strategic orientation from a less-technical Owner — **not** a request for more confirmation loops. The agent decides the full UX/engineering impact, closes related gaps, and ships what is necessary for Father control completeness and platform cohesion — then reports outcomes. Ask QUESTIONS.md only on true Policy ambiguity, not for permission to do obvious good work.
+
+## Father control completeness (phase gap mission)
+On **every** system, the Cover phase closes gaps so the **Father (Primary)** has:
+
+1. **Full control** of that system’s services and features (within Policy Register — e.g. SOS never mute stays sanctity, not a father “off” switch)
+2. **Flexible / mood-aligned** settings — father can tune intensity, timing, who is involved, how loud/quiet life feels — without dead toggles
+3. **Real enforcement** — every control persists and actually changes family behavior (Rule 24)
+4. **Retention psychology** — father feels “I would not leave this platform” because the settings desk is complete enough for serious family governance
+
+Mother levels and Child journeys stay coherent; they do not dilute Primary sovereignty.
+
+Inventory and Cover work must ask: *Does the father leave this system able to steer it for real, in a way that matches how strict or calm he wants to be today?*
+
+## UI-complete now · Backend wire later (zero screen redo)
+Build **every** system’s screens and settings **now**, even while Backend / Native are closed.
+
+- Father must **see** and **operate** the full control desk (toggles, lists, sheets, honesty states).
+- Persist locally; enforce what Local can enforce; label Native/Backend-closed honestly.
+- When Backend arrives: **swap the repository / activate the button** only — **no** redesign, no rearranging sections, no new screen IA.
+- Same seam as Constitution Rule 25: widgets → providers → Repository interfaces; mock/local today, API tomorrow = zero lines in features/ and app/ UI trees.
+
+Fail the pack if a “coming later” excuse leaves a missing father control that the frozen product + Owner law already require on that desk.
+
+## Four-phase law (every system until completeness)
+1. **Compare** — Flutter vs prototype; mark where prototype itself is weak (not the UX ceiling)
+2. **Cover** — strong local core + cohesion + **Father control completeness**
+3. **Compete** — peer presentation + settings that earn their place
+4. **Polish** — final craft; competitor lessons filtered by Policy Register
+
+## Cohesion checklist (fail the pack if ignored)
+1. Single Notifications mailbox (`family_alert_catalog` + FAT-019/020) — no parallel inbox
+2. Single identity / ChildId / RoleGuard / MotherLevel
+3. Policy Register wins (SOS never mute, minutes-only, AI never executes)
+4. Closed loops (Rule 24)
+5. Honest capability (Local / mock / Native-closed — never fake live call/GPS/FCM)
+6. Father / Mother / Child feel like one product
+7. Every setting persists and enforces — no dead toggles
+8. Father can flex the system’s controls without leaving the app for another tool
+
+Authority on conflict: Policy Register → Owner chat decision → prototype shapes → competitor inspiration.

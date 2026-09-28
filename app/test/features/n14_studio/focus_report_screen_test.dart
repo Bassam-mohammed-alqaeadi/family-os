@@ -60,7 +60,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(FocusReportKeys.praiseCta));
     await tester.pump();
-    expect(find.textContaining('Encouragement sent'), findsOneWidget);
+    expect(find.textContaining('Encouragement saved locally'), findsOneWidget);
     AppToast.dismiss();
     await tester.pumpAndSettle();
 

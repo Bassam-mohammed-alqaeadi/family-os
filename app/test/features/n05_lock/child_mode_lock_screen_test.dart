@@ -9,6 +9,7 @@ import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/identity_runtime.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n05_lock/child_mode_lock_screen.dart';
 import 'package:family_os/features/n05_lock/child_mode_lock_service.dart';
@@ -201,7 +202,7 @@ void main() {
     await tester.tap(find.byKey(ChildModeLockKeys.sosCta));
     await tester.pumpAndSettle();
     expect(find.textContaining('SCR-CHD-005'), findsWidgets);
-    expect(fire.firedChildIds, ['child_local']);
+    expect(fire.firedChildIds, [stage1IdentityRuntime.activeChildId.value]);
   });
 }
 
@@ -261,19 +262,24 @@ Future<void> _pump(
 
 final class RecordingSosFire implements SosFireService {
   final List<String> firedChildIds = [];
+  final List<String> firedActorIds = [];
 
   @override
   Future<SosFireResult> fire({
     required String childId,
+    String? actorId,
     List<String> recipients = const ['father', 'mother'],
     DateTime? at,
     TimeOfDay? clock,
   }) async {
     firedChildIds.add(childId);
+    firedActorIds.add(actorId ?? childId);
     return SosFireResult(
       fired: true,
       at: at ?? DateTime.now().toUtc(),
       recipientDeliveries: const [],
+      childId: childId,
+      actorId: actorId ?? childId,
     );
   }
 }

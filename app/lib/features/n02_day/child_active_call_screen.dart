@@ -3,11 +3,13 @@ import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/app_error_state.dart';
 import 'package:family_os/core/design/components/family_ui_mode.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n02_day/active_call_repository.dart';
 
@@ -140,7 +142,7 @@ class _ChildActiveCallScreenState extends State<ChildActiveCallScreen>
     }
     setState(() => _sosBusy = true);
     final fire = widget.sosFire ?? stage1SosFireService;
-    await fire.fire(childId: 'child_local');
+    await childSosSenderOf(context).fireThrough(fire);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.go('/scr-chd-005');
@@ -160,15 +162,11 @@ class _ChildActiveCallScreenState extends State<ChildActiveCallScreen>
       });
       widget.onMute?.call(next);
       final l10n = AppLocalizations.of(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
+      AppToast.show(context, message: 
             next
                 ? l10n.childActiveCallMuteOnToast
                 : l10n.childActiveCallMuteOffToast,
-          ),
-        ),
-      );
+          );
     } on Object {
       if (!mounted) return;
       setState(() => _actionBusy = false);
@@ -189,15 +187,11 @@ class _ChildActiveCallScreenState extends State<ChildActiveCallScreen>
       });
       widget.onSpeaker?.call(next);
       final l10n = AppLocalizations.of(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
+      AppToast.show(context, message: 
             next
                 ? l10n.childActiveCallSpeakerOnToast
                 : l10n.childActiveCallSpeakerOffToast,
-          ),
-        ),
-      );
+          );
     } on Object {
       if (!mounted) return;
       setState(() => _actionBusy = false);

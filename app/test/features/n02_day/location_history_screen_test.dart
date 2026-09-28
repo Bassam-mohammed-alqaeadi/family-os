@@ -98,7 +98,31 @@ void main() {
     expect(find.byKey(LocationHistoryKeys.place('freq_school')), findsOneWidget);
     expect(find.byKey(LocationHistoryKeys.place('freq_cafe')), findsOneWidget);
     expect(find.byKey(LocationHistoryKeys.retentionNote), findsOneWidget);
-    expect(find.textContaining('ابن ١'), findsWidgets);
+    expect(find.byKey(LocationHistoryKeys.exportCta), findsOneWidget);
+    expect(find.byKey(LocationHistoryKeys.archiveCta), findsOneWidget);
+    expect(find.textContaining('ابن 1'), findsWidgets);
+  });
+
+  testWidgets('SCR-FAT-015 mother has no Primary export/archive stubs',
+      (tester) async {
+    await tester.pumpWidget(
+      _app(
+        child: LocationHistoryScreen(
+          childId: 'child_a',
+          repository: InMemoryLocationHistoryRepository(
+            byChildId: LocationHistoryMock.seeded,
+          ),
+          roleOverride: AppRole.mother,
+          onSos: () {},
+          onOpenMap: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(LocationHistoryKeys.body), findsOneWidget);
+    expect(find.byKey(LocationHistoryKeys.exportCta), findsNothing);
+    expect(find.byKey(LocationHistoryKeys.archiveCta), findsNothing);
   });
 
   testWidgets('SCR-FAT-015 open-map seam from missing id', (tester) async {

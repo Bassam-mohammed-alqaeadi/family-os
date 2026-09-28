@@ -248,7 +248,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                         ),
                         title: l10n.galleryRowTitle2,
                         subtitle: l10n.galleryRowSub2,
-                        trailing: Icon(Icons.chevron_left, color: colors.ink2),
+                        trailing: Icon(Icons.chevron_right, color: colors.ink2),
                         onTap: () => AppToast.show(
                           context,
                           message: l10n.galleryToastMessage,

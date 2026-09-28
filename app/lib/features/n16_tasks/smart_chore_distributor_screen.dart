@@ -4,12 +4,15 @@ import 'package:go_router/go_router.dart';
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/app/role_guard.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
+import 'package:family_os/core/design/components/app_error_state.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
+import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n16_tasks/smart_chore_distributor_models.dart';
 import 'package:family_os/features/n16_tasks/smart_chore_distributor_repository.dart';
@@ -18,6 +21,7 @@ abstract final class SmartChoreDistributorKeys {
   static const screen = Key('smart_chore_distributor_screen');
   static const loading = Key('smart_chore_distributor_loading');
   static const empty = Key('smart_chore_distributor_empty');
+  static const error = Key('smart_chore_distributor_error');
   static const body = Key('smart_chore_distributor_body');
   static const proposal = Key('smart_chore_distributor_proposal');
   static const approveCta = Key('smart_chore_distributor_approve');
@@ -25,10 +29,13 @@ abstract final class SmartChoreDistributorKeys {
   static const fairness = Key('smart_chore_distributor_fairness');
   static const observerHint = Key('smart_chore_distributor_observer');
   static const childLean = Key('smart_chore_distributor_child_lean');
+  static const localHonesty = Key('smart_chore_distributor_local_honesty');
   static const sosIconCta = Key('smart_chore_distributor_sos_icon');
 }
 
-/// SCR-FAT-082 — موزع المهام الذكي (ChoreAI · approve → FAT-054).
+/// SCR-FAT-082 — موزع المهام الذكي (ChoreAI · approve → FAT-054 authority).
+///
+/// Suggest-only (Rule 7). REMOTE Advisor CLOSED — local proposal fixture.
 class SmartChoreDistributorScreen extends StatefulWidget {
   const SmartChoreDistributorScreen({
     super.key,
@@ -58,6 +65,7 @@ class _SmartChoreDistributorScreenState
   late final SosFireService _sos;
   var _sosBusy = false;
   var _loading = true;
+  var _loadFailed = false;
   SmartChoreDistributorSnapshot _snap = const SmartChoreDistributorSnapshot();
 
   AppRole get _role {
@@ -89,13 +97,24 @@ class _SmartChoreDistributorScreenState
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
-    final snap = await _repo.load();
-    if (!mounted) return;
     setState(() {
-      _snap = snap;
-      _loading = false;
+      _loading = true;
+      _loadFailed = false;
     });
+    try {
+      final snap = await _repo.load();
+      if (!mounted) return;
+      setState(() {
+        _snap = snap;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadFailed = true;
+      });
+    }
   }
 
   Future<void> _openSos() async {
@@ -105,7 +124,7 @@ class _SmartChoreDistributorScreenState
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'self');
+    await sosSenderForRole(context, _role).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-CHD-005'));
@@ -217,6 +236,13 @@ class _SmartChoreDistributorScreenState
         ),
       );
     }
+    if (_loadFailed) {
+      return AppErrorState(
+        key: SmartChoreDistributorKeys.error,
+        kind: AppErrorKind.network,
+        onRetry: _load,
+      );
+    }
     if (_snap.isEmpty) {
       return AppEmptyState(
         key: SmartChoreDistributorKeys.empty,
@@ -235,6 +261,12 @@ class _SmartChoreDistributorScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          BannerNote(
+            key: SmartChoreDistributorKeys.localHonesty,
+            variant: BannerVariant.t,
+            message: l10n.smartChoreLocalHonestyBanner,
+          ),
+          const SizedBox(height: 10),
           if (_isObserverMother) ...[
             Text(
               key: SmartChoreDistributorKeys.observerHint,

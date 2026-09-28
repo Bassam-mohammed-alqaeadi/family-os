@@ -4,18 +4,23 @@ import 'package:go_router/go_router.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/app_error_state.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
+import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
 import 'package:family_os/core/identity/child_device_management_repository.dart';
 import 'package:family_os/core/identity/identity_models.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n01_linking/add_child_screen.dart';
+import 'package:family_os/core/i18n/numeral_format.dart' show formatAppInt;
 import 'package:family_os/features/n02_day/child_profile_repository.dart';
+import 'package:family_os/features/n02_day/children_list_local_repository.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
+import 'package:family_os/features/n02_day/safe_zones_repository.dart';
 
 /// Widget keys for SCR-FAT-013 acceptance.
 abstract final class ChildProfileKeys {
@@ -41,6 +46,13 @@ abstract final class ChildProfileKeys {
   static const primaryDeviceCard = Key('child_profile_primary_device_card');
   static const selectChild = Key('child_profile_select_child');
   static const selectChildEmpty = Key('child_profile_select_child_empty');
+  static const localDemoBanner = Key('child_profile_local_demo_banner');
+  static const locationCard = Key('child_profile_location_card');
+  static const locationNetworkChip = Key('child_profile_location_network');
+  static const locationMapCta = Key('child_profile_location_map');
+  static const locationHistoryCta = Key('child_profile_location_history');
+  static const locationGpsHonesty = Key('child_profile_location_gps_honesty');
+  static const assignedZonesLink = Key('child_profile_assigned_zones');
 
   static Key tool(String id) => Key('child_profile_tool_$id');
   static Key deviceCard(String id) => Key('child_profile_device_$id');
@@ -86,10 +98,14 @@ class ChildProfileScreen extends StatefulWidget {
     super.key,
     this.childId,
     this.repository,
+    this.childrenListRepository,
     this.managementRepository,
+    this.safeZonesRepository,
     this.roleOverride,
     this.onNavigateTool,
     this.onOpenLocation,
+    this.onOpenLocationHistory,
+    this.onOpenSafeZones,
     this.onOpenDeviceHealth,
     this.onDeletedChild,
     this.onOpenPairing,
@@ -101,7 +117,13 @@ class ChildProfileScreen extends StatefulWidget {
 
   /// Null → [stage1ChildProfileRepository].
   final ChildProfileRepository? repository;
+
+  /// Null → [stage1ChildrenListRepository] (LOCAL_DEMO provenance).
+  final ChildrenListRepository? childrenListRepository;
   final ChildDeviceManagementRepository? managementRepository;
+
+  /// Null → [stage1SafeZonesRepository] (LOCATION-1B assigned-zones count).
+  final SafeZonesRepository? safeZonesRepository;
 
   /// Test seam — when set, ignores [CurrentRole].
   final AppRole? roleOverride;
@@ -111,6 +133,12 @@ class ChildProfileScreen extends StatefulWidget {
 
   /// Test seam — location card → `/scr-fat-014`.
   final VoidCallback? onOpenLocation;
+
+  /// Test seam — location history → `/scr-fat-015`.
+  final VoidCallback? onOpenLocationHistory;
+
+  /// Test seam — assigned zones → `/scr-fat-016`.
+  final VoidCallback? onOpenSafeZones;
 
   /// Test seam — connection health → `/scr-fat-026`.
   final VoidCallback? onOpenDeviceHealth;
@@ -134,10 +162,14 @@ class ChildProfileScreen extends StatefulWidget {
 class ChildProfileScreenState extends State<ChildProfileScreen> {
   late final ChildProfileRepository _repo;
   late final ChildDeviceManagementRepository _managementRepo;
+  late final ChildrenListRepository _childrenListRepo;
+  late final SafeZonesRepository _safeZonesRepo;
   var _loading = true;
   var _loadFailed = false;
   ChildProfile? _profile;
   bool _maxDevicesBlocked = false;
+  String? _rosterProvenance;
+  int _assignedZonesCount = 0;
 
   AppRole get _role =>
       widget.roleOverride ??
@@ -157,6 +189,9 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
     _repo = widget.repository ?? stage1ChildProfileRepository;
     _managementRepo =
         widget.managementRepository ?? stage1ChildDeviceManagementRepository;
+    _childrenListRepo =
+        widget.childrenListRepository ?? stage1ChildrenListRepository;
+    _safeZonesRepo = widget.safeZonesRepository ?? stage1SafeZonesRepository;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _load();
@@ -208,6 +243,8 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
         _loading = false;
         _loadFailed = false;
         _profile = null;
+        _rosterProvenance = null;
+        _assignedZonesCount = 0;
       });
       return;
     }
@@ -219,9 +256,27 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
     try {
       final familyId = CurrentIdentity.maybeOf(context)?.activeFamilyId;
       final profile = await _repo.loadById(id, familyId: familyId);
+      final provenance = await _childrenListRepo.loadProvenance(
+        familyId: familyId,
+      );
+      var zonesCount = 0;
+      try {
+        final zones = await _safeZonesRepo.load();
+        zonesCount = zones.zones
+            .where((z) => z.assignedChildIds.contains(id))
+            .length;
+      } on Object {
+        zonesCount = 0;
+      }
       if (!mounted) return;
+      final identity = CurrentIdentity.maybeOf(context);
+      if (identity != null) {
+        selectActiveChild(ChildId(id), runtime: identity);
+      }
       setState(() {
         _profile = profile;
+        _rosterProvenance = provenance;
+        _assignedZonesCount = zonesCount;
         _loading = false;
         _loadFailed = false;
         _maxDevicesBlocked = false;
@@ -230,6 +285,8 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
       if (!mounted) return;
       setState(() {
         _profile = null;
+        _rosterProvenance = null;
+        _assignedZonesCount = 0;
         _loading = false;
         _loadFailed = true;
       });
@@ -325,6 +382,7 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
     return _managementRepo.listChildren(familyId);
   }
 
+  /// Prototype `KIDTOOLS` order (flat grid) + device health (FAT-026).
   List<ChildProfileTool> _tools(AppLocalizations l10n) {
     return [
       ChildProfileTool(
@@ -340,6 +398,12 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
         routePath: '/scr-fat-033',
       ),
       ChildProfileTool(
+        id: 'apps',
+        emoji: '📱',
+        label: l10n.childProfileToolApps,
+        routePath: '/scr-fat-034',
+      ),
+      ChildProfileTool(
         id: 'web_filter',
         emoji: '🌐',
         label: l10n.childProfileToolWebFilter,
@@ -352,10 +416,40 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
         routePath: '/scr-fat-037',
       ),
       ChildProfileTool(
+        id: 'tamper_alerts',
+        emoji: '🛡',
+        label: l10n.childProfileToolTamperAlerts,
+        routePath: '/scr-fat-038',
+      ),
+      ChildProfileTool(
+        id: 'smart_alerts',
+        emoji: '🧠',
+        label: l10n.childProfileToolSmartAlerts,
+        routePath: '/scr-fat-065',
+      ),
+      ChildProfileTool(
         id: 'smart_supervision',
         emoji: '⚙️',
         label: l10n.childProfileToolSmartSupervision,
         routePath: '/scr-fat-067',
+      ),
+      ChildProfileTool(
+        id: 'usage_report',
+        emoji: '📊',
+        label: l10n.childProfileToolUsageReport,
+        routePath: '/scr-fat-069',
+      ),
+      ChildProfileTool(
+        id: 'focus_report',
+        emoji: '🎯',
+        label: l10n.childProfileToolFocusReport,
+        routePath: '/scr-fat-051',
+      ),
+      ChildProfileTool(
+        id: 'quran_progress',
+        emoji: '📖',
+        label: l10n.childProfileToolQuranProgress,
+        routePath: '/scr-fat-072',
       ),
       ChildProfileTool(
         id: 'device_health',
@@ -371,11 +465,25 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
       widget.onNavigateTool!(tool);
       return;
     }
+    if (tool.routePath == '/scr-fat-026') {
+      _goDeviceHealth();
+      return;
+    }
     final id = _resolvedChildId;
     final uri = id == null
         ? tool.routePath
         : '${tool.routePath}?childId=${Uri.encodeComponent(id)}';
     context.push(uri);
+  }
+
+  /// Device linked to this child (identity first, then managed devices).
+  String? _linkedDeviceId() {
+    final id = _resolvedChildId;
+    if (id == null) return null;
+    final linked = deviceIdForChild(ChildId(id), runtime: identityOf(context));
+    if (linked != null) return linked.value;
+    final managed = _devicesForCurrentChild();
+    return managed.isEmpty ? null : managed.first.deviceId.value;
   }
 
   void _goLocation() {
@@ -390,15 +498,39 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
     context.push(path);
   }
 
+  void _goLocationHistory() {
+    if (widget.onOpenLocationHistory != null) {
+      widget.onOpenLocationHistory!();
+      return;
+    }
+    final id = _resolvedChildId;
+    final path = id == null
+        ? '/scr-fat-015'
+        : '/scr-fat-015?childId=${Uri.encodeComponent(id)}';
+    context.push(path);
+  }
+
+  void _goSafeZones() {
+    if (widget.onOpenSafeZones != null) {
+      widget.onOpenSafeZones!();
+      return;
+    }
+    final id = _resolvedChildId;
+    final path = id == null
+        ? '/scr-fat-016'
+        : '/scr-fat-016?childId=${Uri.encodeComponent(id)}';
+    context.push(path);
+  }
+
   void _goDeviceHealth() {
     if (widget.onOpenDeviceHealth != null) {
       widget.onOpenDeviceHealth!();
       return;
     }
-    final id = _resolvedChildId;
-    final path = id == null
+    final deviceId = _linkedDeviceId();
+    final path = deviceId == null
         ? '/scr-fat-026'
-        : '/scr-fat-026?deviceId=${Uri.encodeComponent(id)}';
+        : '/scr-fat-026?deviceId=${Uri.encodeComponent(deviceId)}';
     context.push(path);
   }
 
@@ -456,12 +588,17 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
             )
           : _ProfileBody(
               profile: _profile!,
+              localDemoSeeded:
+                  isChildrenListSeededProvenance(_rosterProvenance),
               tools: _tools(l10n),
               devices: _devicesForCurrentChild(),
               capabilities: _capabilities(),
               maxDevicesBlocked: _maxDevicesBlocked,
+              assignedZonesCount: _assignedZonesCount,
               onTool: _goTool,
               onOpenLocation: _goLocation,
+              onOpenLocationHistory: _goLocationHistory,
+              onOpenSafeZones: _goSafeZones,
               onOpenDeviceHealth: _goDeviceHealth,
               onDeleteChild: _deleteChild,
               onAddDevice: _addDevice,
@@ -574,12 +711,16 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
 class _ProfileBody extends StatelessWidget {
   const _ProfileBody({
     required this.profile,
+    required this.localDemoSeeded,
     required this.tools,
     required this.devices,
     required this.capabilities,
     required this.maxDevicesBlocked,
+    required this.assignedZonesCount,
     required this.onTool,
     required this.onOpenLocation,
+    required this.onOpenLocationHistory,
+    required this.onOpenSafeZones,
     required this.onOpenDeviceHealth,
     required this.onDeleteChild,
     required this.onAddDevice,
@@ -592,12 +733,16 @@ class _ProfileBody extends StatelessWidget {
   });
 
   final ChildProfile profile;
+  final bool localDemoSeeded;
   final List<ChildProfileTool> tools;
   final List<ManagedDeviceRecord> devices;
   final ChildManagementCapabilities capabilities;
   final bool maxDevicesBlocked;
+  final int assignedZonesCount;
   final void Function(ChildProfileTool tool) onTool;
   final VoidCallback onOpenLocation;
+  final VoidCallback onOpenLocationHistory;
+  final VoidCallback onOpenSafeZones;
   final VoidCallback onOpenDeviceHealth;
   final VoidCallback onDeleteChild;
   final VoidCallback onAddDevice;
@@ -624,7 +769,7 @@ class _ProfileBody extends StatelessWidget {
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final radii = Theme.of(context).extension<FamilyRadii>()!;
     final gradients = Theme.of(context).extension<FamilyGradients>()!;
-    final ageText = l10n.addChildAgeYears(toEasternDigits(profile.ageYears));
+    final ageText = l10n.addChildAgeYears(formatAppInt(profile.ageYears));
     final statusLabel = switch (profile.health) {
       ChildListHealth.excellent => l10n.childProfileStatusOk,
       ChildListHealth.atRisk => l10n.childProfileStatusAtRisk,
@@ -647,6 +792,18 @@ class _ProfileBody extends StatelessWidget {
       key: ChildProfileKeys.body,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       children: [
+        if (localDemoSeeded) ...[
+          BannerNote(
+            key: ChildProfileKeys.localDemoBanner,
+            message: l10n.childrenListLocalDemoBanner,
+            variant: BannerVariant.a,
+            leading: Text(
+              'ℹ',
+              style: TextStyle(fontSize: 18, color: colors.ink),
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
         Semantics(
           container: true,
           label: identitySemantics,
@@ -886,6 +1043,7 @@ class _ProfileBody extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         _SectionCard(
+          key: ChildProfileKeys.locationCard,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -901,27 +1059,10 @@ class _ProfileBody extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Semantics(
-                    button: true,
-                    label: l10n.childProfileDetailsLink,
-                    child: InkWell(
-                      onTap: onOpenLocation,
-                      borderRadius: BorderRadius.circular(8),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 8,
-                        ),
-                        child: Text(
-                          l10n.childProfileDetailsLink,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            color: colors.p600,
-                          ),
-                        ),
-                      ),
-                    ),
+                  Tag(
+                    key: ChildProfileKeys.locationNetworkChip,
+                    label: l10n.locationMapNetworkUnavailable,
+                    variant: TagVariant.a,
                   ),
                 ],
               ),
@@ -938,6 +1079,92 @@ class _ProfileBody extends StatelessWidget {
                   color: colors.ink2,
                   height: 1.45,
                 ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                key: ChildProfileKeys.locationGpsHonesty,
+                l10n.childProfileLocationGpsHonesty,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: colors.ink2,
+                  height: 1.35,
+                ),
+              ),
+              if (assignedZonesCount > 0) ...[
+                const SizedBox(height: 4),
+                Semantics(
+                  button: true,
+                  label: l10n.childProfileAssignedZonesSemantics,
+                  child: InkWell(
+                    key: ChildProfileKeys.assignedZonesLink,
+                    onTap: onOpenSafeZones,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Text(
+                        l10n.childProfileAssignedZonesCount(
+                          formatAppInt(assignedZonesCount),
+                        ),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: colors.p600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: Semantics(
+                      button: true,
+                      label: l10n.childProfileLocationMapCta,
+                      child: OutlinedButton(
+                        key: ChildProfileKeys.locationMapCta,
+                        onPressed: onOpenLocation,
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(48, 48),
+                          foregroundColor: colors.p600,
+                          side: BorderSide(color: colors.border),
+                        ),
+                        child: Text(
+                          l10n.childProfileLocationMapCta,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Semantics(
+                      button: true,
+                      label: l10n.childProfileLocationHistoryCta,
+                      child: FilledButton(
+                        key: ChildProfileKeys.locationHistoryCta,
+                        onPressed: onOpenLocationHistory,
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size(48, 48),
+                          backgroundColor: colors.p600,
+                          foregroundColor: colors.surface,
+                        ),
+                        child: Text(
+                          l10n.childProfileLocationHistoryCta,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -1287,7 +1514,7 @@ class _ChildPickerBody extends StatelessWidget {
             child: ListTile(
               key: ChildProfileKeys.selectChildRow(child.childId.value),
               title: Text(child.childId.value),
-              trailing: const Icon(Icons.chevron_left),
+              trailing: const Icon(Icons.chevron_right),
               onTap: () => onSelect(child.childId.value),
             ),
           ),

@@ -29,7 +29,7 @@ void main() {
     expect(find.byKey(AttributionRewardKeys.whoCard), findsOneWidget);
     expect(find.byKey(AttributionRewardKeys.scheduleField), findsOneWidget);
     expect(find.byKey(AttributionRewardKeys.rewardsCard), findsOneWidget);
-    expect(find.byKey(AttributionRewardKeys.childChip('child_a')), findsOneWidget);
+    expect(find.byKey(AttributionRewardKeys.childChip('demo-child')), findsOneWidget);
     expect(find.byKey(AttributionRewardKeys.rewardSwitch('wallet')), findsOneWidget);
     expect(find.byKey(AttributionRewardKeys.rewardSwitch('play')), findsOneWidget);
     expect(find.textContaining('20 minutes to their wallet'), findsOneWidget);

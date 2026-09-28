@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/capability_honesty_badge.dart';
 import 'package:family_os/core/design/components/silent_locate_sheet.dart';
 import 'package:family_os/core/design/tokens.dart';
@@ -23,6 +24,7 @@ import 'package:family_os/features/n02_day/location_ux_bridge.dart';
 import 'package:family_os/features/n02_day/safe_zones_repository.dart';
 
 void main() {
+  tearDown(AppToast.dismiss);
   testWidgets('FAT-014 shows GPS NOT IMPLEMENTED honesty + silent locate CTA', (
     tester,
   ) async {
@@ -85,6 +87,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(saved, isFalse);
     expect(find.textContaining('Select at least one child'), findsWidgets);
+    AppToast.dismiss();
 
     await tester.tap(find.byKey(CreateSafeZoneKeys.childChip('c1')));
     await tester.pumpAndSettle();
@@ -92,6 +95,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(saved, isTrue);
     expect((await repo.load()).zones.single.assignedChildIds, ['c1']);
+    AppToast.dismiss();
   });
 
   test('DomainSafeZonesRepository persists circle assignment', () async {
@@ -158,7 +162,7 @@ void main() {
     await tester.tap(find.byKey(SilentLocateKeys.confirm));
     await tester.pumpAndSettle();
     expect(find.byKey(SilentLocateKeys.result), findsOneWidget);
-    expect(find.textContaining('NOT IMPLEMENTED'), findsWidgets);
+    expect(find.textContaining('Coming soon'), findsWidgets);
   });
 }
 

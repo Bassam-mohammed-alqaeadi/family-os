@@ -10,6 +10,7 @@ import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n08_platform/smart_alert_detail_models.dart';
 import 'package:family_os/features/n08_platform/smart_alert_detail_repository.dart';
@@ -100,7 +101,7 @@ class _SmartAlertDetailScreenState extends State<SmartAlertDetailScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'self');
+    await sosSenderForRole(context, _role).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-CHD-005'));

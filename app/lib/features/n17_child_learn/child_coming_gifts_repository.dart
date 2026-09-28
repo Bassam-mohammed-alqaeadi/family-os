@@ -7,7 +7,7 @@ abstract class ChildComingGiftsRepository {
 final class InMemoryChildComingGiftsRepository
     implements ChildComingGiftsRepository {
   InMemoryChildComingGiftsRepository({ChildComingGiftsSnapshot? seed})
-    : _snap = seed ?? childComingGiftsPrototypeFixture();
+    : _snap = seed ?? childComingGiftsEmptyFixture();
 
   ChildComingGiftsSnapshot _snap;
   Future<void> Function()? loadGate;

@@ -7,6 +7,8 @@ import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/chat_availability.dart';
 import 'package:family_os/core/policy/screen_time_policy.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
@@ -41,7 +43,7 @@ class TimeExpiryScreen extends StatefulWidget {
     this.onQuran,
     this.onSos,
     this.onEntertainment,
-  }) : childId = childId ?? ChildId('demo-child'),
+  }) : childId = resolveActiveChildId(explicit: childId),
        policy = policy ?? TimeExpirySurface.exhaustedPolicy();
 
   final ChildId childId;
@@ -134,7 +136,10 @@ class _TimeExpiryScreenState extends State<TimeExpiryScreen> {
     }
     setState(() => _sosBusy = true);
     final fire = widget.sosFire ?? stage1SosFireService;
-    await fire.fire(childId: widget.childId.value);
+    await childSosSenderOf(
+      context,
+      explicit: widget.childId,
+    ).fireThrough(fire);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.go(screenPath('SCR-CHD-005'));
@@ -343,7 +348,7 @@ class _ExpiryCtaRow extends StatelessWidget {
                   if (locked)
                     Icon(Icons.lock_outline, size: 20, color: colors.ink2)
                   else if (interactive)
-                    Icon(Icons.chevron_left, size: 22, color: colors.ink2),
+                    Icon(Icons.chevron_right, size: 22, color: colors.ink2),
                 ],
               ),
             ),

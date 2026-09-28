@@ -21,8 +21,9 @@ void main() {
 
       final assigned = await father.assign();
       expect(assigned.assigned, isTrue);
+      final assignedChildId = ChildId(assigned.selectedChildId!);
 
-      final latest = await bus.latestForChild(ChildId('child_a'));
+      final latest = await bus.latestForChild(assignedChildId);
       expect(latest, isNotNull);
       expect(latest!.rewardMinutes, Minutes(35));
       expect(latest.source, LearningAssignmentSource.attribution);

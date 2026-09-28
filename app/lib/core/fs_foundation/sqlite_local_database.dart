@@ -81,6 +81,29 @@ final class SqliteLocalDatabase implements FamilyLocalDatabase {
             await db.execute(sql);
           }
         }
+        if (oldVersion < 11) {
+          // Fresh CREATE at v9 (post-OD-13) already includes raised_by_actor_id;
+          // real v9→v11 upgrades that lack the column still need ALTER.
+          final cols = await db.rawQuery('PRAGMA table_info(sos_incident)');
+          final hasActor = cols.any((c) => c['name'] == 'raised_by_actor_id');
+          if (!hasActor) {
+            for (final sql in FamilyLocalSchema.sosOd13Statements) {
+              await db.execute(sql);
+            }
+          }
+        }
+        if (oldVersion < 12) {
+          final cols = await db.rawQuery('PRAGMA table_info(loc_zone)');
+          final hasDeadline = cols.any(
+            (c) => c['name'] == 'no_show_deadline_minutes',
+          );
+          if (!hasDeadline) {
+            for (final sql
+                in FamilyLocalSchema.locationNoShowDeadlineStatements) {
+              await db.execute(sql);
+            }
+          }
+        }
         await db.insert('schema_meta', {
           'key': 'schema_version',
           'value': '$newVersion',

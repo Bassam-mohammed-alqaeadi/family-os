@@ -7,7 +7,7 @@ abstract class SmartAlertDetailRepository {
 final class InMemorySmartAlertDetailRepository
     implements SmartAlertDetailRepository {
   InMemorySmartAlertDetailRepository({SmartAlertDetailSnapshot? seed})
-    : _snap = seed ?? smartAlertDetailPrototypeFixture();
+    : _snap = seed ?? smartAlertDetailEmptyFixture();
 
   SmartAlertDetailSnapshot _snap;
   Future<void> Function()? loadGate;

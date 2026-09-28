@@ -63,6 +63,7 @@ void main() {
     expect(find.byKey(RequestInboxKeys.emptyState), findsOneWidget);
     expect(find.byType(AppEmptyState), findsOneWidget);
     expect(find.text('لا يوجد شيء هنا بعد'), findsOneWidget);
+    expect(find.byKey(RequestInboxKeys.localHonesty), findsOneWidget);
     expect(find.byKey(RequestInboxKeys.list), findsNothing);
   });
 

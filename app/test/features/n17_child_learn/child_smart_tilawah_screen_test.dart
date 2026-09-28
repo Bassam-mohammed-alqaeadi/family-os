@@ -36,6 +36,8 @@ void main() {
     );
     await _pump(tester, repository: repo);
     expect(find.byKey(ChildSmartTilawahKeys.ayahCard), findsOneWidget);
+    expect(find.byKey(ChildSmartTilawahKeys.honestyBanner), findsOneWidget);
+    expect(find.textContaining('upcoming update'), findsOneWidget);
     await tester.tap(find.byKey(ChildSmartTilawahKeys.listenCta));
     await tester.pump();
     expect(find.textContaining('Listening'), findsOneWidget);

@@ -33,7 +33,7 @@ void main() {
     expect(find.byKey(ConversationKeys.composer), findsOneWidget);
     expect(find.byKey(ConversationKeys.encryptedTag), findsOneWidget);
     expect(find.byKey(ConversationKeys.toneBridge), findsOneWidget);
-    expect(find.textContaining('ابن ١'), findsWidgets);
+    expect(find.textContaining('ابن 1'), findsWidgets);
   });
 
   testWidgets('SCR-FAT-022 family branch + pin note + mother OK',
@@ -54,8 +54,10 @@ void main() {
 
     expect(find.byKey(ConversationKeys.body), findsOneWidget);
     expect(find.byKey(ConversationKeys.familyPinNote), findsOneWidget);
+    // Locale is ar — honesty uses glossary "تحديث قادم".
+    expect(find.textContaining('تحديث قادم'), findsOneWidget);
     expect(find.byKey(ConversationKeys.bubble('f1')), findsOneWidget);
-    expect(find.textContaining('شريكة ١'), findsWidgets);
+    expect(find.textContaining('شريكة 1'), findsWidgets);
   });
 
   testWidgets('SCR-FAT-022 parametric peers mother/child_b/child_c',

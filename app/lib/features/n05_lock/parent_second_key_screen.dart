@@ -10,6 +10,7 @@ import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n05_lock/child_mode_lock_service.dart';
 
@@ -126,7 +127,7 @@ class _ParentSecondKeyScreenState extends State<ParentSecondKeyScreen> {
         widget.onSos!();
         return;
       }
-      await _sos.fire(childId: 'parent_local');
+      await sosSenderForRole(context, _role).fireThrough(_sos);
       if (!mounted) return;
       context.go(screenPath('SCR-CHD-005'));
     } finally {

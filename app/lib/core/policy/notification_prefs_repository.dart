@@ -40,6 +40,9 @@ final class MemoryNotificationPrefsStore implements NotificationPrefsStore {
 }
 
 /// Shared Stage-1 store (survives within process).
+///
+/// LEGACY / RETAINED — FAT-058 production prefers Local KV
+/// ([PrefsMiscLocalPersistence.openNotificationRepository]).
 final MemoryNotificationPrefsStore stage1NotificationPrefsStore =
     MemoryNotificationPrefsStore();
 

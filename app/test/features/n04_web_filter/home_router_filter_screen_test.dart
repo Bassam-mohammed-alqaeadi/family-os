@@ -31,14 +31,14 @@ void main() {
     expect(nav, contains('SCR-FAT-003'));
   });
 
-  testWidgets('prototype guide + check toasts', (tester) async {
+  testWidgets('local family body + guide + Native-closed check toast', (tester) async {
     final repo = InMemoryHomeRouterFilterRepository(
-      seed: homeRouterFilterPrototypeFixture(),
+      seed: homeRouterFilterOneFixture(),
     );
     await _pump(tester, repository: repo);
     expect(find.byKey(HomeRouterFilterKeys.body), findsOneWidget);
     expect(find.byKey(HomeRouterFilterKeys.hero), findsOneWidget);
-    expect(find.textContaining('12'), findsWidgets);
+    expect(find.textContaining('upcoming update'), findsWidgets);
 
     await tester.tap(find.byKey(HomeRouterFilterKeys.guideCta));
     await tester.pump();
@@ -48,7 +48,7 @@ void main() {
 
     await tester.tap(find.byKey(HomeRouterFilterKeys.checkCta));
     await tester.pump();
-    expect(find.textContaining('protected'), findsWidgets);
+    expect(find.textContaining('Router DNS protection check'), findsOneWidget);
     expect(repo.checkCount, 1);
     AppToast.dismiss();
     await tester.pumpAndSettle();
@@ -58,7 +58,7 @@ void main() {
     await _pump(
       tester,
       repository: InMemoryHomeRouterFilterRepository(
-        seed: homeRouterFilterPrototypeFixture(),
+        seed: homeRouterFilterOneFixture(),
       ),
       role: AppRole.mother,
       motherLevel: MotherLevel.observer,

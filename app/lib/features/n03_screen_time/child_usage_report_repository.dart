@@ -7,7 +7,7 @@ abstract class ChildUsageReportRepository {
 final class InMemoryChildUsageReportRepository
     implements ChildUsageReportRepository {
   InMemoryChildUsageReportRepository({ChildUsageReportSnapshot? seed})
-    : _snap = seed ?? childUsageReportPrototypeFixture();
+      : _snap = seed ?? childUsageReportEmptyFixture();
 
   ChildUsageReportSnapshot _snap;
   Future<void> Function()? loadGate;
@@ -29,8 +29,16 @@ final class InMemoryChildUsageReportRepository
   void seed(ChildUsageReportSnapshot snap) => _snap = snap;
 }
 
-final InMemoryChildUsageReportRepository stage1ChildUsageReportRepository =
-    InMemoryChildUsageReportRepository();
+/// Shared Stage-1 — empty until Local usage facts exist (CE-B2 / CE-G008).
+/// OS usage telemetry remains NATIVE_CLOSED — no prototype weekHours as default.
+ChildUsageReportRepository stage1ChildUsageReportRepository =
+    InMemoryChildUsageReportRepository(seed: childUsageReportEmptyFixture());
+
+void rebindStage1ChildUsageReportRepository(
+  ChildUsageReportRepository repository,
+) {
+  stage1ChildUsageReportRepository = repository;
+}
 
 ChildUsageReportSnapshot childUsageReportEmptyFixture() =>
     const ChildUsageReportSnapshot();
@@ -53,6 +61,7 @@ ChildUsageReportSnapshot childUsageReportOneFixture() {
   );
 }
 
+/// LOCAL_DEMO / tests only — not production stage1 default.
 ChildUsageReportSnapshot childUsageReportPrototypeFixture() {
   return const ChildUsageReportSnapshot(
     childNameKey: 'childOne',

@@ -4,11 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/app/role_guard.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
+import 'package:family_os/core/design/components/app_error_state.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n02_day/child_stickers_backgrounds_models.dart';
 import 'package:family_os/features/n02_day/child_stickers_backgrounds_repository.dart';
@@ -17,17 +19,19 @@ abstract final class ChildStickersBackgroundsKeys {
   static const screen = Key('child_stickers_backgrounds_screen');
   static const loading = Key('child_stickers_backgrounds_loading');
   static const empty = Key('child_stickers_backgrounds_empty');
+  static const error = Key('child_stickers_backgrounds_error');
   static const body = Key('child_stickers_backgrounds_body');
   static const stickers = Key('child_stickers_backgrounds_stickers');
   static const unlockCta = Key('child_stickers_backgrounds_unlock');
   static const backgrounds = Key('child_stickers_backgrounds_bgs');
+  static const localHonesty = Key('child_stickers_backgrounds_local_honesty');
   static const parentLean = Key('child_stickers_backgrounds_parent_lean');
   static const sosIconCta = Key('child_stickers_backgrounds_sos_icon');
 
   static Key background(String id) => Key('child_stickers_backgrounds_bg_$id');
 }
 
-/// SCR-CHD-037 — ملصقاتي وخلفياتي (modest pack · chat wallpaper).
+/// SCR-CHD-037 — ملصقاتي وخلفياتي (local catalog · chat apply honesty).
 class ChildStickersBackgroundsScreen extends StatefulWidget {
   const ChildStickersBackgroundsScreen({
     super.key,
@@ -55,6 +59,7 @@ class _ChildStickersBackgroundsScreenState
   late final SosFireService _sos;
   var _sosBusy = false;
   var _loading = true;
+  var _loadFailed = false;
   ChildStickersBackgroundsSnapshot _snap =
       const ChildStickersBackgroundsSnapshot();
 
@@ -78,13 +83,24 @@ class _ChildStickersBackgroundsScreenState
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
-    final snap = await _repo.load();
-    if (!mounted) return;
     setState(() {
-      _snap = snap;
-      _loading = false;
+      _loading = true;
+      _loadFailed = false;
     });
+    try {
+      final snap = await _repo.load();
+      if (!mounted) return;
+      setState(() {
+        _snap = snap;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadFailed = true;
+      });
+    }
   }
 
   Future<void> _openSos() async {
@@ -94,7 +110,7 @@ class _ChildStickersBackgroundsScreenState
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'self');
+    await childSosSenderOf(context).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-CHD-005'));
@@ -180,6 +196,13 @@ class _ChildStickersBackgroundsScreenState
         ),
       );
     }
+    if (_loadFailed) {
+      return AppErrorState(
+        key: ChildStickersBackgroundsKeys.error,
+        kind: AppErrorKind.network,
+        onRetry: _load,
+      );
+    }
     if (_snap.isEmpty) {
       return AppEmptyState(
         key: ChildStickersBackgroundsKeys.empty,
@@ -198,6 +221,12 @@ class _ChildStickersBackgroundsScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          BannerNote(
+            key: ChildStickersBackgroundsKeys.localHonesty,
+            variant: BannerVariant.t,
+            message: l10n.honestyChildGentleLine,
+          ),
+          const SizedBox(height: 10),
           Container(
             key: ChildStickersBackgroundsKeys.stickers,
             padding: const EdgeInsets.all(14),

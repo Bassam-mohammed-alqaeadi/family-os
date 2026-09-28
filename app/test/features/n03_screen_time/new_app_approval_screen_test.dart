@@ -20,6 +20,16 @@ void main() {
     AppToast.dismiss();
   });
 
+  InMemoryChildAppsRepository seededRepo({AppAccessRulesRepository? accessRules}) {
+    return InMemoryChildAppsRepository(
+      seed: {
+        for (final e in kDefaultChildAppsByChild.entries)
+          e.key: List<ChildAppEntry>.from(e.value),
+      },
+      accessRules: accessRules,
+    );
+  }
+
   testWidgets('empty when no pending installs', (tester) async {
     final repo = InMemoryChildAppsRepository(seed: {
       'demo-child': childAppsOneFixture(),
@@ -32,8 +42,13 @@ void main() {
   });
 
   testWidgets('pending snapchat shows approve/deny', (tester) async {
-    final repo = InMemoryChildAppsRepository();
-    await _pump(tester, repository: repo, appId: 'snapchat');
+    final repo = seededRepo();
+    await _pump(
+      tester,
+      repository: repo,
+      childId: kDefaultChildAppsChildKey,
+      appId: 'snapchat',
+    );
 
     expect(find.byKey(NewAppApprovalKeys.body), findsOneWidget);
     expect(find.byKey(NewAppApprovalKeys.hero), findsOneWidget);
@@ -44,8 +59,13 @@ void main() {
   });
 
   testWidgets('approve sets allowed + done banner', (tester) async {
-    final repo = InMemoryChildAppsRepository();
-    await _pump(tester, repository: repo, appId: 'snapchat');
+    final repo = seededRepo();
+    await _pump(
+      tester,
+      repository: repo,
+      childId: kDefaultChildAppsChildKey,
+      appId: 'snapchat',
+    );
 
     await tester.tap(find.byKey(NewAppApprovalKeys.approve));
     await tester.pump();
@@ -53,7 +73,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      repo.appsFor(ChildId('demo-child')).firstWhere((a) => a.id == 'snapchat').status,
+      repo.appsFor(ChildId(kDefaultChildAppsChildKey)).firstWhere((a) => a.id == 'snapchat').status,
       ChildAppStatus.allowed,
     );
     expect(find.byKey(NewAppApprovalKeys.doneBanner), findsOneWidget);
@@ -62,11 +82,12 @@ void main() {
   });
 
   testWidgets('deny sets blocked + done banner', (tester) async {
-    final repo = InMemoryChildAppsRepository();
+    final repo = seededRepo();
     var backApps = false;
     await _pump(
       tester,
       repository: repo,
+      childId: kDefaultChildAppsChildKey,
       appId: 'snapchat',
       onBackToApps: () => backApps = true,
     );
@@ -77,7 +98,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      repo.appsFor(ChildId('demo-child')).firstWhere((a) => a.id == 'snapchat').status,
+      repo.appsFor(ChildId(kDefaultChildAppsChildKey)).firstWhere((a) => a.id == 'snapchat').status,
       ChildAppStatus.blocked,
     );
     expect(find.byKey(NewAppApprovalKeys.doneBanner), findsOneWidget);
@@ -88,7 +109,7 @@ void main() {
   });
 
   testWidgets('mother partner can decide', (tester) async {
-    final repo = InMemoryChildAppsRepository(
+    final repo = seededRepo(
       accessRules: PrefsAppAccessRulesRepository(
         MemoryAppAccessRulesPrefsStore(),
       ),
@@ -96,6 +117,7 @@ void main() {
     await _pump(
       tester,
       repository: repo,
+      childId: kDefaultChildAppsChildKey,
       role: AppRole.mother,
       motherLevel: MotherLevel.partner,
     );
@@ -103,7 +125,7 @@ void main() {
   });
 
   testWidgets('mother observer is view-only', (tester) async {
-    final repo = InMemoryChildAppsRepository(
+    final repo = seededRepo(
       accessRules: PrefsAppAccessRulesRepository(
         MemoryAppAccessRulesPrefsStore(),
       ),
@@ -111,6 +133,7 @@ void main() {
     await _pump(
       tester,
       repository: repo,
+      childId: kDefaultChildAppsChildKey,
       role: AppRole.mother,
       motherLevel: MotherLevel.observer,
     );
@@ -120,7 +143,7 @@ void main() {
   });
 
   testWidgets('child RoleGuard lean', (tester) async {
-    final repo = InMemoryChildAppsRepository();
+    final repo = seededRepo();
     await _pump(tester, repository: repo, role: AppRole.child);
 
     expect(find.byKey(NewAppApprovalKeys.childLean), findsOneWidget);

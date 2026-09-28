@@ -10,7 +10,7 @@ abstract class ChildFocusSoundsRepository {
 final class InMemoryChildFocusSoundsRepository
     implements ChildFocusSoundsRepository {
   InMemoryChildFocusSoundsRepository({ChildFocusSoundsSnapshot? seed})
-    : _snap = seed ?? childFocusSoundsPrototypeFixture();
+      : _snap = seed ?? childFocusSoundsEmptyFixture();
 
   ChildFocusSoundsSnapshot _snap;
   Future<void> Function()? loadGate;
@@ -47,10 +47,17 @@ final class InMemoryChildFocusSoundsRepository
   bool get fadeLastTwoMinutes => _snap.fadeLastTwoMinutes;
 }
 
-final InMemoryChildFocusSoundsRepository stage1ChildFocusSoundsRepository =
-    InMemoryChildFocusSoundsRepository();
+/// Shared Stage-1 — empty until Local bind / test seed (CE-B1 / CE-G023).
+ChildFocusSoundsRepository stage1ChildFocusSoundsRepository =
+    InMemoryChildFocusSoundsRepository(seed: childFocusSoundsEmptyFixture());
 
-const _prototypeSounds = [
+void rebindStage1ChildFocusSoundsRepository(
+  ChildFocusSoundsRepository repository,
+) {
+  stage1ChildFocusSoundsRepository = repository;
+}
+
+const focusSoundsCatalog = [
   FocusSoundOption(
     id: 'rain',
     labelKey: 'rain',
@@ -94,9 +101,10 @@ ChildFocusSoundsSnapshot childFocusSoundsOneFixture() {
   );
 }
 
+/// LOCAL_DEMO / tests — catalog present; prefs default unset.
 ChildFocusSoundsSnapshot childFocusSoundsPrototypeFixture() {
   return const ChildFocusSoundsSnapshot(
     hasSounds: true,
-    sounds: _prototypeSounds,
+    sounds: focusSoundsCatalog,
   );
 }

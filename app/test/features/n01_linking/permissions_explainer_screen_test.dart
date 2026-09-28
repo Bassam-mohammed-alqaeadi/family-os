@@ -18,7 +18,7 @@ void main() {
     await _pumpScreen(tester);
 
     expect(find.text('لماذا هذه الأذونات؟'), findsOneWidget);
-    expect(find.text('٣ من ٣'), findsOneWidget);
+    expect(find.text('3 من 3'), findsOneWidget);
     expect(find.text('الموقع «طوال الوقت»'), findsOneWidget);
     expect(find.text('خدمة إمكانية الوصول'), findsOneWidget);
     expect(find.text('استثناء البطارية'), findsOneWidget);
@@ -27,7 +27,7 @@ void main() {
       find.textContaining('إن رُفض أي إذن لن تُقفل أي شاشة'),
       findsOneWidget,
     );
-    expect(find.textContaining('القاعدة ٣'), findsOneWidget);
+    expect(find.textContaining('القاعدة 3'), findsOneWidget);
   });
 
   testWidgets('video tap → toast', (tester) async {

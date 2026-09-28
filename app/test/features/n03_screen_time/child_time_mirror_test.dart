@@ -137,7 +137,7 @@ void main() {
     await tester.tap(find.byKey(const Key('child_screen_time_save')));
     await tester.pumpAndSettle();
 
-    expect(find.text('وُصل للابن'), findsOneWidget);
+    expect(find.text('حُفظ على هذا الجهاز (جلسة محلية)'), findsOneWidget);
     AppToast.dismiss();
     await tester.pump(const Duration(milliseconds: 2600));
   });

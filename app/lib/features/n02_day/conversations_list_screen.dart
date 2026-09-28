@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/role_controller.dart';
+import 'package:family_os/app/shell_tab_more_tools.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/app_error_state.dart';
 import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/row_tile.dart';
@@ -11,8 +13,10 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/chat_availability.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n02_day/conversations_list_repository.dart';
+import 'package:family_os/features/n02_day/family_chat_labels.dart';
 
 Color _swatchColor(ConversationSwatch swatch, FamilyColors colors) =>
     switch (swatch) {
@@ -147,7 +151,7 @@ class ConversationsListScreenState extends State<ConversationsListScreen> {
     }
     setState(() => _sosBusy = true);
     final fire = widget.sosFire ?? stage1SosFireService;
-    await fire.fire(childId: 'family');
+    await parentSosSenderOf(context).fireThrough(fire);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push('/scr-fat-018');
@@ -175,9 +179,7 @@ class ConversationsListScreenState extends State<ConversationsListScreen> {
       return;
     }
     final l10n = AppLocalizations.of(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.conversationsListNewChatToast)),
-    );
+    AppToast.show(context, message: l10n.conversationsListNewChatToast);
   }
 
   @override
@@ -249,24 +251,21 @@ class ConversationsListScreenState extends State<ConversationsListScreen> {
 
     final snap = _snapshot ?? const ConversationsListSnapshot();
     if (snap.isEmpty) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      return ListView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: BannerNote(
-              key: ConversationsListKeys.honestyBanner,
-              variant: BannerVariant.t,
-              message: l10n.conversationsListHonestyBanner,
-            ),
+          BannerNote(
+            key: ConversationsListKeys.honestyBanner,
+            variant: BannerVariant.t,
+            message: l10n.conversationsListHonestyBanner,
           ),
-          Expanded(
-            child: AppEmptyState(
-              key: ConversationsListKeys.empty,
-              title: l10n.conversationsListEmptyTitle,
-              message: l10n.conversationsListEmptyMessage,
-            ),
+          const SizedBox(height: 24),
+          AppEmptyState(
+            key: ConversationsListKeys.empty,
+            title: l10n.conversationsListEmptyTitle,
+            message: l10n.conversationsListEmptyMessage,
           ),
+          const ShellTabMoreTools(tabId: 'family'),
         ],
       );
     }
@@ -333,6 +332,7 @@ class ConversationsListScreenState extends State<ConversationsListScreen> {
               ),
             ),
           ),
+          const ShellTabMoreTools(tabId: 'family'),
         ],
       ),
     );
@@ -352,8 +352,19 @@ class _ConversationRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final avatarColor = _swatchColor(thread.swatch, colors);
+    final title = localizedConversationThreadTitle(
+      l10n,
+      thread.chatWith,
+      thread.title,
+    );
+    final preview = localizedConversationThreadPreview(
+      l10n,
+      thread.chatWith,
+      thread.preview,
+    );
 
     return RowTile(
       key: ConversationsListKeys.row(thread.id),
@@ -362,8 +373,8 @@ class _ConversationRow extends StatelessWidget {
         backgroundColor: avatarColor,
         child: Text(thread.emoji, style: const TextStyle(fontSize: 18)),
       ),
-      title: thread.title,
-      subtitle: thread.preview,
+      title: title,
+      subtitle: preview,
       trailing: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         mainAxisSize: MainAxisSize.min,
@@ -378,10 +389,7 @@ class _ConversationRow extends StatelessWidget {
           ),
           if (thread.hasUnread) ...[
             const SizedBox(height: 4),
-            Tag(
-              label: '${thread.unreadCount}',
-              variant: TagVariant.p,
-            ),
+            Tag(label: '${thread.unreadCount}', variant: TagVariant.p),
           ],
         ],
       ),

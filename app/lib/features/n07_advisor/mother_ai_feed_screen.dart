@@ -12,6 +12,7 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n07_advisor/mother_ai_feed_models.dart';
 import 'package:family_os/features/n07_advisor/mother_ai_feed_repository.dart';
@@ -111,7 +112,7 @@ class _MotherAiFeedScreenState extends State<MotherAiFeedScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'family');
+    await parentSosSenderOf(context).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-FAT-018'));
@@ -260,10 +261,10 @@ class _MotherAiFeedScreenState extends State<MotherAiFeedScreen> {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [const Color(0xFFFFF7F9), colors.p50],
+                colors: [colors.p50, colors.p100],
               ),
               borderRadius: BorderRadius.circular(radii.card),
-              border: Border.all(color: const Color(0xFFFF8FA3), width: 1.5),
+              border: Border.all(color: colors.coral, width: 1.5),
             ),
             child: Padding(
               padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),

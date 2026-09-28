@@ -115,6 +115,36 @@ void main() {
       );
     });
 
+    test('child request respects prefs + quiet hours', () {
+      const noon = TimeOfDay(hour: 12, minute: 0);
+      const night = TimeOfDay(hour: 23, minute: 30);
+      final off = quietOn.copyWith(childRequestsEnabled: false);
+      expect(
+        NotificationDelivery.simulateChildRequestNotify(
+          'father',
+          prefs: quietOn,
+          now: noon,
+        ).delivered,
+        isTrue,
+      );
+      expect(
+        NotificationDelivery.simulateChildRequestNotify(
+          'father',
+          prefs: off,
+          now: noon,
+        ).delivered,
+        isFalse,
+      );
+      expect(
+        NotificationDelivery.simulateChildRequestNotify(
+          'father',
+          prefs: quietOn,
+          now: night,
+        ).delivered,
+        isFalse,
+      );
+    });
+
     test('prefs filter excludes critical tier', () {
       expect(
         NotificationPrefs.filterableTiers().toList(),

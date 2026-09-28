@@ -6,7 +6,7 @@ abstract class ChildResultRepository {
 
 final class InMemoryChildResultRepository implements ChildResultRepository {
   InMemoryChildResultRepository({ChildResultSnapshot? seed})
-    : _snap = seed ?? childResultPrototypeFixture();
+    : _snap = seed ?? childResultEmptyFixture();
 
   ChildResultSnapshot _snap;
   Future<void> Function()? loadGate;

@@ -9,6 +9,8 @@ import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/identity/identity_runtime.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n12_devices/device_health_detail_screen.dart';
 import 'package:family_os/features/n12_devices/device_health_list_screen.dart';
@@ -113,17 +115,20 @@ void main() {
         addTearDown(router.dispose);
 
         await tester.pumpWidget(
-          MaterialApp.router(
-            theme: buildFamilyTheme(),
-            locale: const Locale('ar'),
-            supportedLocales: AppLocalizations.supportedLocales,
-            localizationsDelegates: const [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            routerConfig: router,
+          CurrentIdentity(
+            runtime: createStage1IdentityRuntime(),
+            child: MaterialApp.router(
+              theme: buildFamilyTheme(),
+              locale: const Locale('ar'),
+              supportedLocales: AppLocalizations.supportedLocales,
+              localizationsDelegates: const [
+                AppLocalizations.delegate,
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              routerConfig: router,
+            ),
           ),
         );
         await tester.pumpAndSettle();
@@ -164,7 +169,7 @@ void main() {
           DeviceHealthSnapshot(
             deviceId: 'dev_perm',
             childId: 'child_p',
-            displayLabel: 'ابن ١',
+            displayLabel: 'ابن 1',
             modelLabel: 'OEM device',
             level: DeviceHealthLevel.atRisk,
             permissions: const [
@@ -238,7 +243,7 @@ void main() {
           DeviceHealthSnapshot(
             deviceId: 'dev_ok',
             childId: 'child_ok',
-            displayLabel: 'ابن ١',
+            displayLabel: 'ابن 1',
             modelLabel: 'OK',
             level: DeviceHealthLevel.healthy,
             permissions: const [
@@ -273,20 +278,23 @@ Future<void> _pumpDetail(
   required String deviceId,
 }) async {
   await tester.pumpWidget(
-    MaterialApp(
-      theme: buildFamilyTheme(),
-      locale: const Locale('ar'),
-      supportedLocales: AppLocalizations.supportedLocales,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      home: DeviceHealthDetailScreen(
-        deviceId: deviceId,
-        healthSeam: seam,
-        onOpenSettingsToast: false,
+    CurrentIdentity(
+      runtime: createStage1IdentityRuntime(),
+      child: MaterialApp(
+        theme: buildFamilyTheme(),
+        locale: const Locale('ar'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: DeviceHealthDetailScreen(
+          deviceId: deviceId,
+          healthSeam: seam,
+          onOpenSettingsToast: false,
+        ),
       ),
     ),
   );

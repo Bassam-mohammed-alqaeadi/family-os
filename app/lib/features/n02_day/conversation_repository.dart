@@ -1,10 +1,17 @@
 import 'package:flutter/foundation.dart';
 
-/// Delivery ticks for outbound bubbles (prototype ✓ / ✓✓).
+/// Local outbound status for chat bubbles (CE-B0 / Q-CEX-001).
+///
+/// Multi-device relay is REMOTE CLOSED — do not treat [delivered]/[read] as
+/// proven remote delivery. UI maps those legacy values to local-sent ticks.
 enum ConversationDeliveryStatus {
   sending,
   sent,
+
+  /// Legacy alias — UI shows local-sent only until chat relay is authorized.
   delivered,
+
+  /// Legacy alias — UI shows local-sent only until chat relay is authorized.
   read,
 }
 
@@ -17,7 +24,7 @@ final class ConversationMessage {
     required this.timeLabel,
     required this.isMine,
     this.senderLabel,
-    this.status = ConversationDeliveryStatus.delivered,
+    this.status = ConversationDeliveryStatus.sent,
   });
 
   final String id;
@@ -183,4 +190,22 @@ final class InMemoryConversationRepository implements ConversationRepository {
 }
 
 /// Stage-1 singleton — empty until tests/repos seed (Rule 23).
-final stage1ConversationRepository = InMemoryConversationRepository();
+final InMemoryConversationRepository _stage1ConversationMemory =
+    InMemoryConversationRepository();
+
+ConversationRepository? _stage1ConversationBound;
+
+/// Stage-1 conversation — Local when bound, else InMemory.
+ConversationRepository get stage1ConversationRepository =>
+    _stage1ConversationBound ?? _stage1ConversationMemory;
+
+void rebindStage1ConversationRepository(ConversationRepository repository) {
+  _stage1ConversationBound = repository;
+}
+
+@visibleForTesting
+void resetStage1ConversationRepositoryForTest() {
+  _stage1ConversationBound = null;
+  _stage1ConversationMemory.seed(const []);
+  _stage1ConversationMemory.failLoad = false;
+}

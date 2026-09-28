@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import 'package:family_os/core/sos_final/sos_escalation_resolver.dart';
+
 import '../domain/role.dart';
 import 'sos_alert.dart';
 import 'sos_fire.dart';
@@ -41,7 +43,8 @@ final class InMemorySosAlertRepository implements SosAlertRepository {
   /// Test/demo fixture — generic labels only (ابن ١), never product defaults.
   static SosAlert demoActive({
     String id = 'sos_1',
-    String childId = 'child_a',
+    String childId = 'demo-child',
+    String? raisedByActorId,
     DateTime? pressedAt,
     SosLocationClass locationClass = SosLocationClass.acquiring,
     SosConnectionClass connectionClass = SosConnectionClass.online,
@@ -51,6 +54,7 @@ final class InMemorySosAlertRepository implements SosAlertRepository {
     return SosAlert(
       id: id,
       childId: childId,
+      raisedByActorId: raisedByActorId,
       childDisplayName: 'ابن ١',
       childEmoji: '🦁',
       pressedAt: pressedAt ?? DateTime.utc(2026, 9, 21, 12, 47),
@@ -157,11 +161,50 @@ final class InMemorySosAlertRepository implements SosAlertRepository {
     if (a == null || a.id != alertId || !a.isOpen) {
       throw StateError('no open SOS alert $alertId');
     }
-    final next = a.copyWith(status: SosAlertStatus.escalating);
+    // Local Stage-1: mark escalating + attach eligible outside contacts only.
+    // Unverified hard-skipped via SosEscalationResolver / verifiedEscalationBackups.
+    final ladder = await (_ladderLoader?.call() ??
+        Future.value(SosLadder.defaults()));
+    final settings = _settingsLoader?.call() ?? const SosLocalSettings();
+    final plan = SosEscalationResolver.resolve(
+      childId: a.childId,
+      ladder: ladder,
+      settings: settings,
+    );
+    final deliveries = <SosDeliveryRow>[
+      ...a.deliveries,
+      for (final c in plan.contacts)
+        SosDeliveryRow(
+          recipientId: c.id,
+          channel: plan.prepareSmsFallback ? 'sms_prepare' : 'in_app',
+          status: SosDeliveryClass.pending,
+        ),
+    ];
+    final next = a.copyWith(
+      status: SosAlertStatus.escalating,
+      deliveries: deliveries,
+    );
     _active = next;
     escalateCount++;
+    lastEscalationPlan = plan;
     return next;
   }
+
+  /// Optional test / DI seams for escalate recipient resolution.
+  Future<SosLadder> Function()? _ladderLoader;
+  SosLocalSettings Function()? _settingsLoader;
+
+  @visibleForTesting
+  void bindEscalationSources({
+    Future<SosLadder> Function()? ladderLoader,
+    SosLocalSettings Function()? settingsLoader,
+  }) {
+    _ladderLoader = ladderLoader;
+    _settingsLoader = settingsLoader;
+  }
+
+  @visibleForTesting
+  SosEscalationPlan? lastEscalationPlan;
 
   /// Test seam — plant or clear the active alert.
   void seed(SosAlert? alert) {
@@ -178,21 +221,44 @@ final InMemorySosAlertRepository stage1SosAlertRepository =
 
 /// Builds recipient display labels from [SosLadder] + ARB parent names.
 ///
-/// Used when the alert payload omits recipients; keeps SET-020 ladder as source.
+/// Outside backups: only [SosBackupContact.isEscalationEligible] (hard-skip).
+/// When [childId] + [settings] are set, FAT-028 per-child prefs gate the net.
 List<String> sosAlertRecipientsFromLadder(
   SosLadder ladder, {
   required String fatherLabel,
   required String motherLabel,
+  String? childId,
+  SosLocalSettings? settings,
 }) {
   final labels = <String>[];
   for (final id in ladder.rung1MemberIds) {
     if (id == 'father') labels.add(fatherLabel);
     if (id == 'mother') labels.add(motherLabel);
   }
-  for (final b in ladder.verifiedEscalationBackups) {
+  final backups = _outsideEscalationContacts(
+    ladder: ladder,
+    childId: childId,
+    settings: settings,
+  );
+  for (final b in backups) {
     labels.add(b.name);
   }
   return labels;
+}
+
+List<SosBackupContact> _outsideEscalationContacts({
+  required SosLadder ladder,
+  String? childId,
+  SosLocalSettings? settings,
+}) {
+  if (childId != null && settings != null) {
+    return SosEscalationResolver.resolve(
+      childId: childId,
+      ladder: ladder,
+      settings: settings,
+    ).contacts;
+  }
+  return ladder.verifiedEscalationBackups;
 }
 
 /// Fires SOS via [SosFireService] and seeds [SosAlertRepository] (P-4 path).
@@ -200,19 +266,21 @@ List<String> sosAlertRecipientsFromLadder(
 /// Entitlement-free — [SosFireService] has no billing parameter (UI-007).
 Future<SosFireResult> fireAndSeedSosAlert({
   required String childId,
+  String? actorId,
   required SosFireService sosFire,
   required InMemorySosAlertRepository alerts,
   SosLadder? ladder,
   SosAlert Function(SosFireResult result)? alertFactory,
-  InMemorySosSettingsStore? settings,
+  SosSettingsStore? settings,
 }) async {
-  final result = await sosFire.fire(childId: childId);
+  final result = await sosFire.fire(childId: childId, actorId: actorId);
   final panicQuiet =
       settings?.settings.panicQuietPreferred ?? false;
   final alert = alertFactory?.call(result) ??
       InMemorySosAlertRepository.demoActive(
         id: 'sos_${result.at.millisecondsSinceEpoch}',
-        childId: childId,
+        childId: result.childId,
+        raisedByActorId: result.actorId,
         pressedAt: result.at,
         panicQuietAtTrigger: panicQuiet,
       );

@@ -3,7 +3,7 @@ import 'package:family_os/features/n02_day/location_map_repository.dart';
 
 /// Test / demo fixtures for SCR-FAT-014 — Rule 12 allowlisted (`*mock*.dart`).
 ///
-/// Generic labels only (ابن ١/٢/٣). Never the screen default (Rule 23).
+/// Generic labels only (ابن 1/2/3). Never the screen default (Rule 23).
 abstract final class LocationMapMock {
   const LocationMapMock._();
 
@@ -26,36 +26,36 @@ abstract final class LocationMapMock {
   static const List<LocationMapPin> manyPins = [
     LocationMapPin(
       id: 'child_a',
-      displayName: 'ابن ١',
+      displayName: 'ابن 1',
       emoji: '🦁',
       swatch: DayChildSwatch.purple,
       locationLabel: 'ثانوية النور',
-      lastSeenLabel: 'قبل ٣ د',
-      batteryLabel: '٨٤٪',
+      lastSeenLabel: 'قبل 3 د',
+      batteryLabel: '84٪',
       xFraction: 0.70,
       yFraction: 0.28,
       safeZoneLabel: 'المدرسة',
     ),
     LocationMapPin(
       id: 'child_b',
-      displayName: 'ابن ٢',
+      displayName: 'ابن 2',
       emoji: '🐱',
       swatch: DayChildSwatch.sky,
       locationLabel: 'المنزل',
-      lastSeenLabel: 'قبل ٩ د',
-      batteryLabel: '٣٢٪',
+      lastSeenLabel: 'قبل 9 د',
+      batteryLabel: '32٪',
       xFraction: 0.22,
       yFraction: 0.72,
       batteryWarn: true,
     ),
     LocationMapPin(
       id: 'child_c',
-      displayName: 'ابن ٣',
+      displayName: 'ابن 3',
       emoji: '🐼',
       swatch: DayChildSwatch.amber,
       locationLabel: 'بيت الجد',
       lastSeenLabel: 'قبل دقيقة',
-      batteryLabel: '٦٧٪',
+      batteryLabel: '67٪',
       xFraction: 0.42,
       yFraction: 0.52,
     ),
@@ -65,16 +65,16 @@ abstract final class LocationMapMock {
     'child_a': [
       LocationThreadStop(
         title: '🏫 ثانوية النور',
-        timeLabel: '٧:١٢ ص حتى الآن · داخل منطقة آمنة',
+        timeLabel: '7:12 ص حتى الآن · داخل منطقة آمنة',
         isCurrent: true,
       ),
       LocationThreadStop(
         title: '🚗 الطريق إلى المدرسة',
-        timeLabel: '٦:٥٥ – ٧:١٢ ص · ١٧ دقيقة',
+        timeLabel: '6:55 – 7:12 ص · 17 دقيقة',
       ),
       LocationThreadStop(
         title: '🏠 المنزل',
-        timeLabel: 'حتى ٦:٥٥ ص',
+        timeLabel: 'حتى 6:55 ص',
       ),
     ],
     'child_b': [

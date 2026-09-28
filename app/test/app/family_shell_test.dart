@@ -26,6 +26,14 @@ void main() {
     final kids = hubTilesForTab('kids');
     expect(kids.map((e) => e.screenId), isNot(contains('SCR-FAT-032')));
     expect(kids.map((e) => e.screenId), isNot(contains('SCR-FAT-013')));
+    // VX-B4 · G-08
+    expect(kids.map((e) => e.screenId), isNot(contains('SCR-FAT-014')));
+    expect(kids.map((e) => e.screenId), isNot(contains('SCR-FAT-016')));
+    expect(kids.map((e) => e.screenId), isNot(contains('SCR-FAT-017')));
+    expect(kids.map((e) => e.screenId), isNot(contains('SCR-FAT-085')));
+
+    final settings = hubTilesForTab('settings');
+    expect(settings.map((e) => e.screenId), isNot(contains('SCR-FAT-026')));
   });
 
   testWidgets('parent day board shows 5 tabs + hub + AI FAB', (tester) async {
@@ -55,7 +63,9 @@ void main() {
     expect(find.byKey(FamilyShellKeys.hub), findsNothing);
   });
 
-  testWidgets('tab tap navigates to kids root', (tester) async {
+  testWidgets('tab tap navigates to kids root with in-scroll more tools', (
+    tester,
+  ) async {
     final role = RoleController(AppRole.father);
     final router = createAppRouter(
       roleListenable: role,
@@ -67,9 +77,38 @@ void main() {
     await tester.pumpAndSettle();
     expect(router.state.uri.path, '/scr-fat-012');
     expect(find.byKey(FamilyShellKeys.tabs), findsOneWidget);
+    expect(find.byKey(FamilyShellKeys.hub), findsOneWidget);
+    expect(find.textContaining('المزيد من الأدوات'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(FamilyShellKeys.hub),
+      80,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.byKey(FamilyShellKeys.hub), findsOneWidget);
   });
 
-  testWidgets('child myday shows 4 tabs + SOS FAB', (tester) async {
+  testWidgets('settings root scrolls more tools with page content', (
+    tester,
+  ) async {
+    final role = RoleController(AppRole.father);
+    final router = createAppRouter(
+      roleListenable: role,
+      initialLocation: '/scr-fat-025',
+    );
+    await _pump(tester, role: role, router: router);
+
+    expect(find.byKey(FamilyShellKeys.hub), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(FamilyShellKeys.hub),
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.textContaining('المزيد من الأدوات'), findsOneWidget);
+  });
+
+  testWidgets('child myday shows 4 tabs + SOS FAB + in-scroll more tools', (
+    tester,
+  ) async {
     final role = RoleController(AppRole.child);
     final router = createAppRouter(
       roleListenable: role,
@@ -81,6 +120,7 @@ void main() {
     expect(find.byKey(FamilyShellKeys.sosFab), findsOneWidget);
     expect(find.byKey(FamilyShellKeys.aiFab), findsNothing);
     expect(find.text('يومي'), findsWidgets);
+    expect(find.byKey(FamilyShellKeys.hub), findsOneWidget);
   });
 
   testWidgets('login go() rebuilds shell tabs on day board', (tester) async {

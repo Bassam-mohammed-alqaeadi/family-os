@@ -7,10 +7,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/domain/minutes.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/features/n16_tasks/child_tasks_models.dart';
 import 'package:family_os/features/n16_tasks/child_tasks_repository.dart';
 import 'package:family_os/features/n16_tasks/child_tasks_screen.dart';
+import 'package:family_os/features/n16_tasks/family_tasks_models.dart';
+import 'package:family_os/features/n16_tasks/family_tasks_repository.dart';
 
 void main() {
   tearDown(AppToast.dismiss);
@@ -35,6 +39,7 @@ void main() {
     );
     expect(find.byKey(ChildTasksKeys.body), findsOneWidget);
     expect(find.textContaining('minutes'), findsWidgets);
+    expect(find.byKey(ChildTasksKeys.localHonesty), findsOneWidget);
 
     await tester.ensureVisible(find.byKey(ChildTasksKeys.submit('t1')));
     await tester.pumpAndSettle();
@@ -58,6 +63,16 @@ void main() {
     expect(find.byKey(ChildTasksKeys.body), findsOneWidget);
   });
 
+  testWidgets('load error → retry', (tester) async {
+    final repo = InMemoryChildTasksRepository(seed: childTasksOneFixture())
+      ..loadError = Exception('offline');
+    await _pump(tester, repository: repo);
+    expect(find.byKey(ChildTasksKeys.error), findsOneWidget);
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(ChildTasksKeys.body), findsOneWidget);
+  });
+
   testWidgets('parent lean', (tester) async {
     await _pump(tester, role: AppRole.father);
     expect(find.byKey(ChildTasksKeys.parentLean), findsOneWidget);
@@ -73,6 +88,43 @@ void main() {
     await tester.tap(find.byKey(ChildTasksKeys.sosIconCta));
     await tester.pumpAndSettle();
     expect(sos, 1);
+  });
+
+  test('family bind: child submitProof updates FAT-054 pending', () async {
+    final family = InMemoryFamilyTasksRepository(
+      seed: FamilyTasksSnapshot(
+        childTasks: [
+          FamilyChildTask(
+            id: 't-loop',
+            titleKey: 'washDishes',
+            assigneeNameKey: 'childOne',
+            avatarKey: 'lion',
+            reward: Minutes(15),
+            status: FamilyTaskStatus.assigned,
+            timeKey: 'today',
+          ),
+        ],
+      ),
+    );
+    final child = FamilyBoundChildTasksRepository(family: family);
+    final before = await child.load();
+    expect(before.tasks.single.status, ChildTaskItemStatus.assigned);
+
+    await child.submitProof('t-loop');
+
+    final familySnap = await family.load();
+    expect(
+      familySnap.childTasks.single.status,
+      FamilyTaskStatus.pendingApproval,
+    );
+    expect(familySnap.childTasks.single.proofKey, 'photoAttached');
+
+    final after = await child.load();
+    expect(after.tasks.single.status, ChildTaskItemStatus.pendingApproval);
+
+    await family.approveTask('t-loop');
+    final rewarded = await child.load();
+    expect(rewarded.tasks.single.status, ChildTaskItemStatus.completed);
   });
 }
 

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/app/role_guard.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
+import 'package:family_os/core/design/components/app_error_state.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
@@ -12,6 +13,7 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n02_day/friend_approval_models.dart';
 import 'package:family_os/features/n02_day/friend_approval_repository.dart';
@@ -21,6 +23,7 @@ abstract final class FriendApprovalKeys {
   static const screen = Key('friend_approval_screen');
   static const loading = Key('friend_approval_loading');
   static const empty = Key('friend_approval_empty');
+  static const error = Key('friend_approval_error');
   static const body = Key('friend_approval_body');
   static const profileCard = Key('friend_approval_profile');
   static const channelsCard = Key('friend_approval_channels');
@@ -30,13 +33,13 @@ abstract final class FriendApprovalKeys {
   static const declineCta = Key('friend_approval_decline');
   static const observerHint = Key('friend_approval_observer');
   static const childLean = Key('friend_approval_child_lean');
+  static const localHonesty = Key('friend_approval_local_honesty');
   static const sosIconCta = Key('friend_approval_sos_icon');
 }
 
 /// SCR-FAT-071 — موافقة طلب صديق (friend request approval).
 ///
-/// Prototype FAT-071 · partner+ may approve · observer view-only ·
-/// Rule 12/23 · P-4 SOS · empty → FAT-070.
+/// Bound to outer-circle authority (FAT-070). Partner+ may approve.
 class FriendApprovalScreen extends StatefulWidget {
   const FriendApprovalScreen({
     super.key,
@@ -65,6 +68,7 @@ class _FriendApprovalScreenState extends State<FriendApprovalScreen> {
   var _sosBusy = false;
   var _loading = true;
   var _busy = false;
+  var _loadFailed = false;
   FriendApprovalSnapshot _snap = const FriendApprovalSnapshot();
 
   AppRole get _role {
@@ -101,13 +105,24 @@ class _FriendApprovalScreenState extends State<FriendApprovalScreen> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
-    final snap = await _repo.load();
-    if (!mounted) return;
     setState(() {
-      _snap = snap;
-      _loading = false;
+      _loading = true;
+      _loadFailed = false;
     });
+    try {
+      final snap = await _repo.load();
+      if (!mounted) return;
+      setState(() {
+        _snap = snap;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadFailed = true;
+      });
+    }
   }
 
   Future<void> _openSos() async {
@@ -117,7 +132,7 @@ class _FriendApprovalScreenState extends State<FriendApprovalScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'family');
+    await parentSosSenderOf(context).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-FAT-018'));
@@ -282,6 +297,14 @@ class _FriendApprovalScreenState extends State<FriendApprovalScreen> {
       );
     }
 
+    if (_loadFailed) {
+      return AppErrorState(
+        key: FriendApprovalKeys.error,
+        kind: AppErrorKind.network,
+        onRetry: _load,
+      );
+    }
+
     if (_snap.isEmpty) {
       return AppEmptyState(
         key: FriendApprovalKeys.empty,
@@ -302,6 +325,12 @@ class _FriendApprovalScreenState extends State<FriendApprovalScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          BannerNote(
+            key: FriendApprovalKeys.localHonesty,
+            variant: BannerVariant.t,
+            message: l10n.friendApprovalLocalHonestyBanner,
+          ),
+          const SizedBox(height: 12),
           if (_isObserverMother) ...[
             BannerNote(
               key: FriendApprovalKeys.observerHint,

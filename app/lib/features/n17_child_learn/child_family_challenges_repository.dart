@@ -7,7 +7,7 @@ abstract class ChildFamilyChallengesRepository {
 final class InMemoryChildFamilyChallengesRepository
     implements ChildFamilyChallengesRepository {
   InMemoryChildFamilyChallengesRepository({ChildFamilyChallengesSnapshot? seed})
-    : _snap = seed ?? childFamilyChallengesPrototypeFixture();
+    : _snap = seed ?? childFamilyChallengesEmptyFixture();
 
   ChildFamilyChallengesSnapshot _snap;
   Future<void> Function()? loadGate;

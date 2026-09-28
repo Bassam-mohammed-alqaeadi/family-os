@@ -9,7 +9,9 @@ import 'package:family_os/core/design/components/row_tile.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
+import 'package:family_os/features/n02_day/alerts_hub_local_projection.dart';
 import 'package:family_os/features/n02_day/alerts_hub_repository.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
 
@@ -85,7 +87,7 @@ class AlertsHubScreen extends StatefulWidget {
 }
 
 class AlertsHubScreenState extends State<AlertsHubScreen> {
-  late final AlertsHubRepository _repo;
+  AlertsHubRepository? _injectedRepo;
   var _loading = true;
   var _loadFailed = false;
   var _sosBusy = false;
@@ -98,10 +100,26 @@ class AlertsHubScreenState extends State<AlertsHubScreen> {
 
   bool get _isParent => _role == AppRole.father || _role == AppRole.mother;
 
+  String get _prefsMemberId => switch (_role) {
+        AppRole.mother => 'mother',
+        AppRole.father || AppRole.child => 'father',
+      };
+
+  AlertsHubRepository get _repo {
+    if (widget.repository != null) return widget.repository!;
+    if (_injectedRepo != null) return _injectedRepo!;
+    // Role-aware projection when stage1 singleton is not role-bound.
+    final stage1 = stage1AlertsHubRepository;
+    if (stage1 is ProjectingAlertsHubRepository) {
+      return ProjectingAlertsHubRepository(prefsMemberId: _prefsMemberId);
+    }
+    return stage1;
+  }
+
   @override
   void initState() {
     super.initState();
-    _repo = widget.repository ?? stage1AlertsHubRepository;
+    _injectedRepo = widget.repository;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _load();
@@ -111,7 +129,9 @@ class AlertsHubScreenState extends State<AlertsHubScreen> {
   @override
   void didUpdateWidget(covariant AlertsHubScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.repository != widget.repository) {
+    if (oldWidget.repository != widget.repository ||
+        oldWidget.roleOverride != widget.roleOverride) {
+      _injectedRepo = widget.repository;
       _load();
     }
   }
@@ -147,7 +167,7 @@ class AlertsHubScreenState extends State<AlertsHubScreen> {
     }
     setState(() => _sosBusy = true);
     final fire = widget.sosFire ?? stage1SosFireService;
-    await fire.fire(childId: 'family');
+    await sosSenderForRole(context, _role).fireThrough(fire);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push('/scr-fat-018');
@@ -181,6 +201,8 @@ class AlertsHubScreenState extends State<AlertsHubScreen> {
           return;
         }
         context.push('/scr-fat-035');
+      case HubAlertTarget.friendApproval:
+        context.push('/scr-fat-071');
       case HubAlertTarget.none:
         break;
     }
@@ -435,7 +457,28 @@ class _AlertRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<FamilyColors>()!;
+    final l10n = AppLocalizations.of(context);
     final avatarColor = _swatchColor(alert.swatch, colors);
+    final title = switch (alert.titleKey) {
+      'sos' => l10n.alertsHubRowSosTitle,
+      'tamper' => l10n.alertsHubRowTamperTitle,
+      'time' => l10n.alertsHubRowTimeTitle,
+      'app' => l10n.alertsHubRowAppTitle,
+      'friend' => l10n.alertsHubRowFriendTitle,
+      'arrive' => l10n.alertsHubRowArriveTitle,
+      'leaveZone' => l10n.alertsHubRowLeaveZoneTitle,
+      _ => alert.title,
+    };
+    final subtitle = switch (alert.subtitleKey) {
+      'sos' => l10n.alertsHubRowSosSubtitle,
+      'tamper' => l10n.alertsHubRowTamperSubtitle,
+      'time' => l10n.alertsHubRowTimeSubtitle,
+      'app' => l10n.alertsHubRowAppSubtitle,
+      'friend' => l10n.alertsHubRowFriendSubtitle,
+      'arrive' => l10n.alertsHubRowArriveSubtitle,
+      'leaveZone' => l10n.alertsHubRowLeaveZoneSubtitle,
+      _ => alert.subtitle,
+    };
 
     return RowTile(
       key: AlertsHubKeys.row(alert.id),
@@ -444,10 +487,10 @@ class _AlertRow extends StatelessWidget {
         backgroundColor: avatarColor,
         child: Text(alert.emoji, style: const TextStyle(fontSize: 18)),
       ),
-      title: alert.title,
-      subtitle: alert.subtitle,
+      title: title,
+      subtitle: subtitle,
       trailing: alert.isTappable
-          ? Icon(Icons.chevron_left, color: colors.ink2, size: 20)
+          ? Icon(Icons.chevron_right, color: colors.ink2, size: 20)
           : null,
       onTap: alert.isTappable ? onTap : null,
       showDivider: showDivider,

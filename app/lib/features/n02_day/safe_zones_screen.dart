@@ -6,12 +6,15 @@ import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/app_error_state.dart';
 import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
-import 'package:family_os/core/design/components/row_tile.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/domain/identity_ids.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
+import 'package:family_os/core/identity/identity_runtime.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n02_day/location_ux_bridge.dart';
 import 'package:family_os/features/n02_day/safe_zones_repository.dart';
@@ -34,7 +37,13 @@ abstract final class SafeZonesKeys {
   static const childLean = Key('safe_zones_child_lean');
 
   static Key zone(String id) => Key('safe_zones_zone_$id');
+  /// Legacy master switch key — kept for older tests; prefer flag keys.
   static Key zoneSwitch(String id) => Key('safe_zones_switch_$id');
+  static Key zoneArrive(String id) => Key('safe_zones_arrive_$id');
+  static Key zoneLeave(String id) => Key('safe_zones_leave_$id');
+  static Key zoneNoShow(String id) => Key('safe_zones_noshow_$id');
+  static Key zoneNoShowDeadline(String id) =>
+      Key('safe_zones_noshow_deadline_$id');
 }
 
 /// SCR-FAT-016 — المناطق الآمنة (parent family safe-zones list).
@@ -50,7 +59,7 @@ class SafeZonesScreen extends StatefulWidget {
     this.childId,
     this.repository,
     this.roleOverride,
-    this.motherLevel = MotherLevel.partner,
+    this.motherLevel,
     this.canEditOverride,
     this.sosFire,
     this.onSos,
@@ -67,8 +76,8 @@ class SafeZonesScreen extends StatefulWidget {
   /// Test seam — when set, ignores [CurrentRole].
   final AppRole? roleOverride;
 
-  /// Mother permission level (ADR-035). Father ignores.
-  final MotherLevel motherLevel;
+  /// Mother permission level (ADR-035). Null → Identity [resolveAuthorizationContext].
+  final MotherLevel? motherLevel;
 
   /// Test seam — when set, overrides role/level edit gate.
   final bool? canEditOverride;
@@ -100,12 +109,16 @@ class SafeZonesScreenState extends State<SafeZonesScreen> {
 
   bool get _isParent => _role == AppRole.father || _role == AppRole.mother;
 
+  MotherLevel get _motherLevel =>
+      widget.motherLevel ??
+      resolveAuthorizationContext(context, fallbackRole: _role).motherLevel;
+
   /// Father always; mother only at [MotherLevel.full] (prototype zones≥full).
   bool get _canEdit {
     if (widget.canEditOverride != null) return widget.canEditOverride!;
     if (_role == AppRole.father) return true;
     if (_role == AppRole.mother) {
-      return widget.motherLevel == MotherLevel.full;
+      return _motherLevel == MotherLevel.full;
     }
     return false;
   }
@@ -116,13 +129,36 @@ class SafeZonesScreenState extends State<SafeZonesScreen> {
     return raw;
   }
 
+  IdentityRuntime? _identity;
+  FamilyId? _boundFamily;
+
+  /// Family whose zones are listed — the active family (follows switches).
+  FamilyId get familyId => resolveActiveFamilyIdOf(context);
+
   @override
   void initState() {
     super.initState();
+    _identity = CurrentIdentity.maybeOf(context);
+    _boundFamily = _identity?.activeFamilyId;
+    _identity?.addListener(_onIdentityChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _bootstrapAndLoad();
     });
+  }
+
+  @override
+  void dispose() {
+    _identity?.removeListener(_onIdentityChanged);
+    super.dispose();
+  }
+
+  void _onIdentityChanged() {
+    final next = _identity?.activeFamilyId;
+    if (next == _boundFamily) return;
+    _boundFamily = next;
+    if (!mounted) return;
+    _bootstrapAndLoad();
   }
 
   @override
@@ -134,6 +170,7 @@ class SafeZonesScreenState extends State<SafeZonesScreen> {
   }
 
   Future<void> _bootstrapAndLoad() async {
+    final familyId = _boundFamily ?? resolveActiveFamilyId();
     setState(() {
       _loading = true;
       _loadFailed = false;
@@ -146,7 +183,7 @@ class SafeZonesScreenState extends State<SafeZonesScreen> {
         if (!mounted) return;
         _repo = DomainSafeZonesRepository(
           domain: Stage1LocationRuntime.store,
-          familyId: const FamilyId('fam_stage1'),
+          familyId: familyId,
         );
       }
       await _load();
@@ -184,11 +221,21 @@ class SafeZonesScreenState extends State<SafeZonesScreen> {
     }
   }
 
-  Future<void> _toggleAlerts(SafeZone zone, bool enabled) async {
+  Future<void> _toggleFlag(
+    SafeZone zone, {
+    bool? alertEnter,
+    bool? alertExit,
+    bool? alertNoShow,
+  }) async {
     if (!_canEdit) return;
     final repo = _repo;
     if (repo == null) return;
-    await repo.setAlertsEnabled(zone.id, enabled);
+    await repo.setAlertFlag(
+      zone.id,
+      alertEnter: alertEnter,
+      alertExit: alertExit,
+      alertNoShow: alertNoShow,
+    );
     if (!mounted) return;
     final snap = _snapshot;
     if (snap == null) return;
@@ -196,7 +243,14 @@ class SafeZonesScreenState extends State<SafeZonesScreen> {
       _snapshot = SafeZonesSnapshot(
         zones: [
           for (final z in snap.zones)
-            if (z.id == zone.id) z.copyWith(alertsEnabled: enabled) else z,
+            if (z.id == zone.id)
+              z.copyWith(
+                alertEnter: alertEnter,
+                alertExit: alertExit,
+                alertNoShow: alertNoShow,
+              )
+            else
+              z,
         ],
       );
     });
@@ -222,8 +276,12 @@ class SafeZonesScreenState extends State<SafeZonesScreen> {
     }
     setState(() => _sosBusy = true);
     final fire = widget.sosFire ?? stage1SosFireService;
-    final id = _resolvedChildId ?? 'family';
-    await fire.fire(childId: id);
+    final sender = sosSenderForRole(
+      context,
+      _role,
+      viewedChild: childIdFromParam(_resolvedChildId),
+    );
+    await sender.fireThrough(fire);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push('/scr-fat-018');
@@ -337,7 +395,7 @@ class SafeZonesScreenState extends State<SafeZonesScreen> {
             zones: snap.zones,
             canEdit: _canEdit,
             l10n: l10n,
-            onToggle: _toggleAlerts,
+            onToggleFlag: _toggleFlag,
             onAdd: _canEdit ? _goCreate : null,
           ),
           const SizedBox(height: 14),
@@ -370,14 +428,19 @@ class _ZonesCard extends StatelessWidget {
     required this.zones,
     required this.canEdit,
     required this.l10n,
-    required this.onToggle,
+    required this.onToggleFlag,
     required this.onAdd,
   });
 
   final List<SafeZone> zones;
   final bool canEdit;
   final AppLocalizations l10n;
-  final void Function(SafeZone zone, bool enabled) onToggle;
+  final Future<void> Function(
+    SafeZone zone, {
+    bool? alertEnter,
+    bool? alertExit,
+    bool? alertNoShow,
+  }) onToggleFlag;
   final VoidCallback? onAdd;
 
   @override
@@ -424,15 +487,16 @@ class _ZonesCard extends StatelessWidget {
                     ),
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
               for (var i = 0; i < zones.length; i++) ...[
-                _ZoneRow(
+                _ZoneCard(
                   zone: zones[i],
                   canEdit: canEdit,
                   l10n: l10n,
-                  onToggle: onToggle,
-                  showDivider: i < zones.length - 1,
+                  colors: colors,
+                  onToggleFlag: onToggleFlag,
                 ),
+                if (i < zones.length - 1) const SizedBox(height: 12),
               ],
             ],
           ),
@@ -442,39 +506,160 @@ class _ZonesCard extends StatelessWidget {
   }
 }
 
-class _ZoneRow extends StatelessWidget {
-  const _ZoneRow({
+class _ZoneCard extends StatelessWidget {
+  const _ZoneCard({
     required this.zone,
     required this.canEdit,
     required this.l10n,
-    required this.onToggle,
-    required this.showDivider,
+    required this.colors,
+    required this.onToggleFlag,
   });
 
   final SafeZone zone;
   final bool canEdit;
   final AppLocalizations l10n;
-  final void Function(SafeZone zone, bool enabled) onToggle;
-  final bool showDivider;
+  final FamilyColors colors;
+  final Future<void> Function(
+    SafeZone zone, {
+    bool? alertEnter,
+    bool? alertExit,
+    bool? alertNoShow,
+  }) onToggleFlag;
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<FamilyColors>()!;
-
-    return RowTile(
+    return Container(
       key: SafeZonesKeys.zone(zone.id),
-      leading: Text(zone.emoji, style: const TextStyle(fontSize: 22)),
-      title: zone.name,
-      subtitle: l10n.safeZonesAlertSubtitle(zone.description),
-      showDivider: showDivider,
-      trailing: Semantics(
-        label: l10n.safeZonesSwitchSemantics(zone.name),
-        toggled: zone.alertsEnabled,
-        child: Switch.adaptive(
-          key: SafeZonesKeys.zoneSwitch(zone.id),
-          value: zone.alertsEnabled,
-          onChanged: canEdit ? (v) => onToggle(zone, v) : null,
-          activeThumbColor: colors.mint,
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+      decoration: BoxDecoration(
+        color: colors.bg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Text(zone.emoji, style: const TextStyle(fontSize: 22)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      zone.name,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: colors.ink,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      zone.description,
+                      style: TextStyle(fontSize: 12, color: colors.ink2),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          _AlertFlagRow(
+            switchKey: SafeZonesKeys.zoneArrive(zone.id),
+            label: l10n.createSafeZoneAlertArrival,
+            value: zone.alertEnter,
+            canEdit: canEdit,
+            colors: colors,
+            onChanged: (v) => onToggleFlag(zone, alertEnter: v),
+          ),
+          _AlertFlagRow(
+            switchKey: SafeZonesKeys.zoneLeave(zone.id),
+            label: l10n.createSafeZoneAlertDeparture,
+            value: zone.alertExit,
+            canEdit: canEdit,
+            colors: colors,
+            onChanged: (v) => onToggleFlag(zone, alertExit: v),
+          ),
+          _AlertFlagRow(
+            switchKey: SafeZonesKeys.zoneNoShow(zone.id),
+            label: l10n.createSafeZoneAlertNoShow,
+            value: zone.alertNoShow,
+            canEdit: canEdit,
+            colors: colors,
+            onChanged: (v) => onToggleFlag(zone, alertNoShow: v),
+          ),
+          if (zone.alertNoShow && zone.noShowDeadlineMinutes != null)
+            Padding(
+              key: SafeZonesKeys.zoneNoShowDeadline(zone.id),
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+              child: Text(
+                l10n.safeZonesNoShowDeadline(
+                  _formatNoShowDeadline(zone.noShowDeadlineMinutes!),
+                ),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: colors.ink2,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+String _formatNoShowDeadline(int minutes) {
+  final h = (minutes ~/ 60).clamp(0, 23);
+  final m = (minutes % 60).clamp(0, 59);
+  return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
+}
+
+class _AlertFlagRow extends StatelessWidget {
+  const _AlertFlagRow({
+    required this.switchKey,
+    required this.label,
+    required this.value,
+    required this.canEdit,
+    required this.colors,
+    required this.onChanged,
+  });
+
+  final Key switchKey;
+  final String label;
+  final bool value;
+  final bool canEdit;
+  final FamilyColors colors;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: label,
+      toggled: value,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 48),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: colors.ink,
+                ),
+              ),
+            ),
+            Switch.adaptive(
+              key: switchKey,
+              value: value,
+              onChanged: canEdit ? onChanged : null,
+              activeThumbColor: colors.mint,
+            ),
+          ],
         ),
       ),
     );

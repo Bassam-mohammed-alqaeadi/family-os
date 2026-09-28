@@ -2,6 +2,14 @@ import 'package:flutter/foundation.dart';
 
 import 'package:family_os/features/n02_day/day_child_mock.dart';
 
+/// Network honesty class for FAT-014 pin chrome (Native closed → unavailable).
+enum LocationNetworkClass {
+  online,
+  offline,
+  unknown,
+  unavailable,
+}
+
 /// One child pin on SCR-FAT-014 — values from repos, never planted in widgets.
 @immutable
 final class LocationMapPin {
@@ -17,6 +25,7 @@ final class LocationMapPin {
     required this.yFraction,
     this.safeZoneLabel = '',
     this.batteryWarn = false,
+    this.networkClass = LocationNetworkClass.unavailable,
   });
 
   final String id;
@@ -36,6 +45,9 @@ final class LocationMapPin {
 
   /// Low-battery caution (prototype ⚠️).
   final bool batteryWarn;
+
+  /// Stage-1 default [unavailable] — never greenwash live cellular/Wi‑Fi.
+  final LocationNetworkClass networkClass;
 }
 
 /// Decorative safe-zone circle on the map (prototype `.zone`).
@@ -165,5 +177,10 @@ final class InMemoryLocationMapRepository implements LocationMapRepository {
   }
 }
 
-/// Stage-1 singleton — empty until tests/repos seed (Rule 23).
-final stage1LocationMapRepository = InMemoryLocationMapRepository();
+/// Stage-1 singleton — rebound to domain at boot (LDR-B1) when SQLite honest.
+LocationMapRepository stage1LocationMapRepository =
+    InMemoryLocationMapRepository();
+
+void rebindStage1LocationMapRepository(LocationMapRepository repository) {
+  stage1LocationMapRepository = repository;
+}

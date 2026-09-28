@@ -51,9 +51,12 @@ final class InMemoryAuditLogRepository implements AuditLogRepository {
   int get lengthForTests => _entries.length;
 }
 
-/// Shared Stage-1 singleton (empty until a screen/test seeds).
-final InMemoryAuditLogRepository stage1AuditLogRepository =
-    InMemoryAuditLogRepository();
+/// Shared Stage-1 singleton — rebound to Local when DOM-AUDIT-LOCAL binds.
+AuditLogRepository stage1AuditLogRepository = InMemoryAuditLogRepository();
+
+void rebindStage1AuditLogRepository(AuditLogRepository repository) {
+  stage1AuditLogRepository = repository;
+}
 
 /// Empty — Rule 23 empty-state / first-time family.
 List<AuditLogEntry> auditLogEmptyFixture() => const [];

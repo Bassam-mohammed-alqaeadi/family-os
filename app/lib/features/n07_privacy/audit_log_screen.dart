@@ -8,6 +8,7 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n07_privacy/audit_log_models.dart';
 import 'package:family_os/features/n07_privacy/audit_log_repository.dart';
@@ -127,7 +128,7 @@ class _AuditLogScreenState extends State<AuditLogScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'demo-child');
+    await sosSenderForRole(context, _role).fireThrough(_sos);
     if (mounted) setState(() => _sosBusy = false);
   }
 

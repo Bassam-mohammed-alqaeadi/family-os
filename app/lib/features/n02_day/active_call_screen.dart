@@ -3,10 +3,12 @@ import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/app_error_state.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n02_day/active_call_repository.dart';
 
@@ -178,7 +180,7 @@ class ActiveCallScreenState extends State<ActiveCallScreen> {
     }
     setState(() => _sosBusy = true);
     final fire = widget.sosFire ?? stage1SosFireService;
-    await fire.fire(childId: _resolvedCallId ?? 'family');
+    await sosSenderForRole(context, _role).fireThrough(fire);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push('/scr-fat-018');
@@ -198,13 +200,9 @@ class ActiveCallScreenState extends State<ActiveCallScreen> {
       });
       widget.onMute?.call(next);
       final l10n = AppLocalizations.of(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
+      AppToast.show(context, message: 
             next ? l10n.activeCallMuteOnToast : l10n.activeCallMuteOffToast,
-          ),
-        ),
-      );
+          );
     } on Object {
       if (!mounted) return;
       setState(() => _actionBusy = false);
@@ -225,15 +223,11 @@ class ActiveCallScreenState extends State<ActiveCallScreen> {
       });
       widget.onSpeaker?.call(next);
       final l10n = AppLocalizations.of(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
+      AppToast.show(context, message: 
             next
                 ? l10n.activeCallSpeakerOnToast
                 : l10n.activeCallSpeakerOffToast,
-          ),
-        ),
-      );
+          );
     } on Object {
       if (!mounted) return;
       setState(() => _actionBusy = false);
@@ -254,14 +248,11 @@ class ActiveCallScreenState extends State<ActiveCallScreen> {
       });
       widget.onVideo?.call(next);
       final l10n = AppLocalizations.of(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            next
-                ? l10n.activeCallCameraOnToast(_detail!.peerLabel)
-                : l10n.activeCallCameraOffToast,
-          ),
-        ),
+      AppToast.show(
+        context,
+        message: next
+            ? l10n.activeCallCameraOnToast(_detail!.peerLabel)
+            : l10n.activeCallCameraOffToast,
       );
     } on Object {
       if (!mounted) return;
@@ -292,9 +283,7 @@ class ActiveCallScreenState extends State<ActiveCallScreen> {
       return;
     }
     final l10n = AppLocalizations.of(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.activeCallDrawToast)),
-    );
+    AppToast.show(context, message: l10n.activeCallDrawToast);
   }
 
   void _onXoPlay() {
@@ -303,9 +292,7 @@ class ActiveCallScreenState extends State<ActiveCallScreen> {
       return;
     }
     final l10n = AppLocalizations.of(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.activeCallXoToast)),
-    );
+    AppToast.show(context, message: l10n.activeCallXoToast);
   }
 
   @override

@@ -39,8 +39,32 @@ const Set<String> fatherOnlyScreenIds = {
 /// Paths derived from [fatherOnlyScreenIds] for redirect matching.
 final Set<String> fatherOnlyPaths = fatherOnlyScreenIds.map(screenPath).toSet();
 
-/// Safe landing when a non-allowed role hits a guarded route.
-const String roleGuardSafeLocation = '/gallery';
+/// Query flag appended to the landing path so the home route shows a polite
+/// "this page is not for you" toast (VX-B1 / Owner D4).
+const String roleGuardBlockedQueryKey = 'guard';
+
+/// Value of [roleGuardBlockedQueryKey] on a blocked landing.
+const String roleGuardBlockedQueryValue = 'blocked';
+
+/// Parent home (SCR-FAT-010 Today) — father and mother land here when blocked.
+const String roleGuardParentHomePath = '/scr-fat-010';
+
+/// Child home (SCR-CHD-004 My Day) — child lands here when blocked.
+const String roleGuardChildHomePath = '/scr-chd-004';
+
+/// Role home path (never the developer gallery).
+String roleHomePath(AppRole role) => switch (role) {
+  AppRole.child => roleGuardChildHomePath,
+  AppRole.father || AppRole.mother => roleGuardParentHomePath,
+};
+
+/// Safe landing when [role] hits a guarded route: its own home + blocked flag.
+String roleGuardLandingFor(AppRole role) =>
+    '${roleHomePath(role)}?$roleGuardBlockedQueryKey=$roleGuardBlockedQueryValue';
+
+/// True when [uri] is a blocked landing produced by [roleGuardLandingFor].
+bool isRoleGuardBlockedLanding(Uri uri) =>
+    uri.queryParameters[roleGuardBlockedQueryKey] == roleGuardBlockedQueryValue;
 
 /// True only for [AppRole.father] (doc 20 / S-ADM-033).
 bool canOpenBrainControl(AppRole role) => role == AppRole.father;
@@ -66,11 +90,11 @@ bool canShowSosMuteControl(AppRole role) {
   }
 }
 
-/// Father-only path redirect (SET-015 / UI-007). Mother / child → safe location.
+/// Father-only path redirect (SET-015 / UI-007). Mother / child → own home.
 String? fatherOnlyRedirect(String path, AppRole role) {
   if (!fatherOnlyPaths.contains(path)) return null;
   if (role == AppRole.father) return null;
-  return roleGuardSafeLocation;
+  return roleGuardLandingFor(role);
 }
 
 /// Path-level RoleGuard (testable without a full [GoRouterState]).
@@ -80,7 +104,7 @@ String? roleGuardRedirectForPath(String path, AppRole role) {
 
   if (role != AppRole.child) return null;
   if (ownerOnlyPaths.contains(path)) {
-    return roleGuardSafeLocation;
+    return roleGuardLandingFor(role);
   }
   return null;
 }

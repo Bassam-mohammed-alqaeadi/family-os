@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/role_controller.dart';
+import 'package:family_os/app/shell_tab_more_tools.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/app_error_state.dart';
 import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
@@ -12,9 +14,11 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/chat_availability.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n02_day/child_chats_repository.dart';
 import 'package:family_os/features/n02_day/conversations_list_repository.dart';
+import 'package:family_os/features/n02_day/family_chat_labels.dart';
 
 Color _swatchColor(ConversationSwatch swatch, FamilyColors colors) =>
     switch (swatch) {
@@ -150,7 +154,7 @@ class ChildChatsScreenState extends State<ChildChatsScreen> {
     }
     setState(() => _sosBusy = true);
     final fire = widget.sosFire ?? stage1SosFireService;
-    await fire.fire(childId: 'self');
+    await childSosSenderOf(context).fireThrough(fire);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push('/scr-chd-005');
@@ -177,9 +181,7 @@ class ChildChatsScreenState extends State<ChildChatsScreen> {
       return;
     }
     final l10n = AppLocalizations.of(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.childChatsCallContactsToast)),
-    );
+    AppToast.show(context, message: l10n.childChatsCallContactsToast);
   }
 
   @override
@@ -259,7 +261,7 @@ class ChildChatsScreenState extends State<ChildChatsScreen> {
             child: BannerNote(
               key: ChildChatsKeys.honestyBanner,
               variant: BannerVariant.t,
-              message: l10n.childChatsHonestyBanner,
+              message: l10n.honestyChildGentleLine,
             ),
           ),
           Expanded(
@@ -283,7 +285,7 @@ class ChildChatsScreenState extends State<ChildChatsScreen> {
           BannerNote(
             key: ChildChatsKeys.honestyBanner,
             variant: BannerVariant.t,
-            message: l10n.childChatsHonestyBanner,
+            message: l10n.honestyChildGentleLine,
           ),
           const SizedBox(height: 14),
           DecoratedBox(
@@ -323,6 +325,7 @@ class ChildChatsScreenState extends State<ChildChatsScreen> {
             variant: BannerVariant.t,
             message: l10n.childChatsSafeCircleBanner,
           ),
+          const ShellTabMoreTools(tabId: 'cfam'),
         ],
       ),
     );
@@ -342,8 +345,19 @@ class _ChildChatRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final avatarColor = _swatchColor(thread.swatch, colors);
+    final title = localizedConversationThreadTitle(
+      l10n,
+      thread.chatWith,
+      thread.title,
+    );
+    final preview = localizedConversationThreadPreview(
+      l10n,
+      thread.chatWith,
+      thread.preview,
+    );
 
     return RowTile(
       key: ChildChatsKeys.row(thread.id),
@@ -352,17 +366,14 @@ class _ChildChatRow extends StatelessWidget {
         backgroundColor: avatarColor,
         child: Text(thread.emoji, style: const TextStyle(fontSize: 18)),
       ),
-      title: thread.title,
-      subtitle: thread.preview,
+      title: title,
+      subtitle: preview,
       trailing: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         mainAxisSize: MainAxisSize.min,
         children: [
           if (thread.hasUnread)
-            Tag(
-              label: '${thread.unreadCount}',
-              variant: TagVariant.t,
-            )
+            Tag(label: '${thread.unreadCount}', variant: TagVariant.t)
           else
             Text(
               thread.timeLabel,

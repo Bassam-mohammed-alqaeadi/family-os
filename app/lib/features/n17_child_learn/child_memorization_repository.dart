@@ -1,4 +1,5 @@
 import 'package:family_os/features/n17_child_learn/child_memorization_models.dart';
+import 'package:family_os/features/quran/quran_local_bridge.dart';
 
 abstract class ChildMemorizationRepository {
   Future<ChildMemorizationSnapshot> load();
@@ -7,12 +8,19 @@ abstract class ChildMemorizationRepository {
 
 final class InMemoryChildMemorizationRepository
     implements ChildMemorizationRepository {
-  InMemoryChildMemorizationRepository({ChildMemorizationSnapshot? seed})
-    : _snap = seed ?? childMemorizationPrototypeFixture();
+  InMemoryChildMemorizationRepository({
+    ChildMemorizationSnapshot? seed,
+    QuranLocalBridge? bridge,
+  })  : _snap = seed ?? childMemorizationEmptyFixture(),
+        _bridgeOverride = bridge;
 
   ChildMemorizationSnapshot _snap;
+  final QuranLocalBridge? _bridgeOverride;
   Future<void> Function()? loadGate;
   final List<String> startedReviews = [];
+
+  QuranLocalBridge get _bridge =>
+      _bridgeOverride ?? stage1QuranLocalBridge;
 
   @override
   Future<ChildMemorizationSnapshot> load() async {
@@ -31,6 +39,8 @@ final class InMemoryChildMemorizationRepository
   @override
   Future<void> startReview(String id) async {
     startedReviews.add(id);
+    // P15-QUR-006 — Local review event for father FAT-072 / board.
+    _bridge.recordMemorizationReview(id);
   }
 
   void seed(ChildMemorizationSnapshot snap) => _snap = snap;

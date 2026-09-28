@@ -12,6 +12,8 @@ import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_alert_repository.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/core/policy/sos_settings.dart';
@@ -40,7 +42,7 @@ const Duration kChildSosHoldTick = Duration(seconds: 1);
 class ChildSosButtonScreen extends StatefulWidget {
   const ChildSosButtonScreen({
     super.key,
-    this.childId = 'child_local',
+    this.childId,
     this.roleOverride,
     this.sosFire,
     this.alerts,
@@ -49,8 +51,9 @@ class ChildSosButtonScreen extends StatefulWidget {
     this.onFired,
   });
 
-  /// Parametric child id for [SosFireService.fire] (Rule 23).
-  final String childId;
+  /// Parametric child id for [SosFireService.fire] (Rule 23); null → the
+  /// child using this device (family context).
+  final String? childId;
 
   /// Test seam — when set, ignores [CurrentRole].
   final AppRole? roleOverride;
@@ -175,10 +178,19 @@ class _ChildSosButtonScreenState extends State<ChildSosButtonScreen>
     });
     final fire = widget.sosFire ?? stage1SosFireService;
     final injected = widget.alerts;
+    final sender = childSosSenderOf(
+      context,
+      explicit: childIdFromParam(widget.childId),
+    );
+    final childId = sender.subjectChildId().value;
+    final deviceId =
+        deviceIdForChild(ChildId(childId), runtime: identityOf(context)) ??
+        DeviceId('dev_stage1');
     late final String? alertId;
     if (injected != null) {
       await fireAndSeedSosAlert(
-        childId: widget.childId,
+        childId: childId,
+        actorId: sender.actorId,
         sosFire: fire,
         alerts: injected,
         settings: stage1SosSettingsStore,
@@ -196,12 +208,12 @@ class _ChildSosButtonScreenState extends State<ChildSosButtonScreen>
       final panicQuiet =
           stage1SosSettingsStore.settings.panicQuietPreferred;
       final incident = await Stage1SosFinalRuntime.crossSystem.fireChildHold(
-        childId: ChildId(widget.childId),
-        deviceId: const DeviceId('dev_stage1'),
+        childId: ChildId(childId),
+        deviceId: deviceId,
         panicQuietAtTrigger: panicQuiet,
       );
       // Keep fire service audit path for P-4 parity (no entitlement).
-      await fire.fire(childId: widget.childId);
+      await fire.fire(childId: childId, actorId: sender.actorId);
       alertId = incident.id;
       if (!mounted) return;
       if (widget.onFired != null) {
@@ -211,7 +223,7 @@ class _ChildSosButtonScreenState extends State<ChildSosButtonScreen>
     }
     if (!mounted) return;
     final params = <String, String>{
-      'childId': widget.childId,
+      'childId': childId,
       if (alertId != null) 'alertId': alertId,
     };
     context.go(
@@ -303,7 +315,7 @@ class _ChildSosButtonScreenState extends State<ChildSosButtonScreen>
                                 shape: BoxShape.circle,
                                 gradient: gradients.gradCoral,
                                 border: Border.all(
-                                  color: const Color(0xFFFFD3D4),
+                                  color: colors.coral100,
                                   width: 10,
                                 ),
                                 boxShadow: [shadows.shCoral],

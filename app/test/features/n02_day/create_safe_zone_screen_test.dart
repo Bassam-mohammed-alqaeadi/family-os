@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
@@ -10,6 +11,8 @@ import 'package:family_os/features/n02_day/create_safe_zone_screen.dart';
 import 'package:family_os/features/n02_day/safe_zones_repository.dart';
 
 void main() {
+  tearDown(AppToast.dismiss);
+
   testWidgets('SCR-FAT-017 father draws + saves into repo', (tester) async {
     final repo = InMemorySafeZonesRepository();
     var saved = false;
@@ -36,9 +39,14 @@ void main() {
     expect(find.byKey(CreateSafeZoneKeys.sosCta), findsOneWidget);
 
     // Save without center → gentle block.
-    await _tapVisible(tester, CreateSafeZoneKeys.saveCta);
+    await tester.ensureVisible(find.byKey(CreateSafeZoneKeys.saveCta));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(CreateSafeZoneKeys.saveCta));
+    await tester.pump();
     expect(saved, isFalse);
     expect(find.text('👆 ضع مركز المنطقة على الخريطة أولًا'), findsOneWidget);
+    AppToast.dismiss();
+    await tester.pumpAndSettle();
 
     // Tap map center.
     await tester.ensureVisible(find.byKey(CreateSafeZoneKeys.map));
@@ -65,7 +73,7 @@ void main() {
     expect(snap.zones, hasLength(1));
     expect(snap.zones.first.id, 'z_test');
     expect(snap.zones.first.name, 'نادي الحي الرياضي');
-    expect(snap.zones.first.emoji, '🥋');
+    expect(snap.zones.first.emoji, '📍');
     expect(snap.zones.first.alertsEnabled, isTrue);
   });
 
@@ -228,10 +236,76 @@ void main() {
     await tester.tapAt(map.center);
     await tester.pumpAndSettle();
 
+    await _tapVisible(tester, CreateSafeZoneKeys.nameField);
+    await tester.enterText(
+      find.byKey(CreateSafeZoneKeys.nameField),
+      'منطقة اختبار',
+    );
+    await tester.pumpAndSettle();
+
     await _tapVisible(tester, CreateSafeZoneKeys.saveCta);
 
     final snap = await repo.load();
     expect(snap.zones.single.alertsEnabled, isFalse);
+  });
+
+  testWidgets('LOCATION-1B FAT-017 No-show shows deadline; blocks save without time',
+      (tester) async {
+    final repo = InMemorySafeZonesRepository();
+    var saved = false;
+
+    await tester.pumpWidget(
+      _app(
+        child: CreateSafeZoneScreen(
+          repository: repo,
+          roleOverride: AppRole.father,
+          childId: 'child_a',
+          idFactory: () => 'z_noshow',
+          onSos: () {},
+          onSaved: () => saved = true,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.byKey(CreateSafeZoneKeys.map));
+    await tester.pumpAndSettle();
+    final map = tester.getRect(find.byKey(CreateSafeZoneKeys.map));
+    await tester.tapAt(map.center);
+    await tester.pumpAndSettle();
+
+    await _tapVisible(tester, CreateSafeZoneKeys.nameField);
+    await tester.enterText(find.byKey(CreateSafeZoneKeys.nameField), 'مدرسة');
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.byKey(CreateSafeZoneKeys.alertNoShow));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(CreateSafeZoneKeys.alertNoShow),
+        matching: find.byType(Switch),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(CreateSafeZoneKeys.noShowDeadlineSection), findsOneWidget);
+    expect(find.byKey(CreateSafeZoneKeys.noShowDeadlineHonesty), findsOneWidget);
+
+    await tester.ensureVisible(find.byKey(CreateSafeZoneKeys.saveCta));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(CreateSafeZoneKeys.saveCta));
+    await tester.pump();
+    expect(saved, isFalse);
+    expect(find.textContaining('وقت الوصول'), findsOneWidget);
+    AppToast.dismiss();
+    await tester.pumpAndSettle();
+
+    await _tapVisible(tester, CreateSafeZoneKeys.noShowDeadlineChip730);
+    await _tapVisible(tester, CreateSafeZoneKeys.saveCta);
+    expect(saved, isTrue);
+    final snap = await repo.load();
+    expect(snap.zones.single.alertNoShow, isTrue);
+    expect(snap.zones.single.noShowDeadlineMinutes, 450);
   });
 }
 
@@ -240,6 +314,8 @@ Future<void> _tapVisible(WidgetTester tester, Key key) async {
   await tester.ensureVisible(finder);
   await tester.pumpAndSettle();
   await tester.tap(finder);
+  await tester.pump();
+  AppToast.dismiss();
   await tester.pumpAndSettle();
 }
 

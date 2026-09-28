@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import 'package:family_os/features/n02_day/conversations_list_repository.dart';
 
 /// Rule 25 seam — child chats list for SCR-CHD-007 (no Firebase; Drift later).
@@ -37,4 +39,22 @@ final class InMemoryChildChatsRepository implements ChildChatsRepository {
 }
 
 /// Stage-1 singleton — empty until tests/repos seed (Rule 23).
-final stage1ChildChatsRepository = InMemoryChildChatsRepository();
+final InMemoryChildChatsRepository _stage1ChildChatsMemory =
+    InMemoryChildChatsRepository();
+
+ChildChatsRepository? _stage1ChildChatsBound;
+
+/// Stage-1 child chats — Local when bound, else InMemory.
+ChildChatsRepository get stage1ChildChatsRepository =>
+    _stage1ChildChatsBound ?? _stage1ChildChatsMemory;
+
+void rebindStage1ChildChatsRepository(ChildChatsRepository repository) {
+  _stage1ChildChatsBound = repository;
+}
+
+@visibleForTesting
+void resetStage1ChildChatsRepositoryForTest() {
+  _stage1ChildChatsBound = null;
+  _stage1ChildChatsMemory.seed(const ConversationsListSnapshot());
+  _stage1ChildChatsMemory.failLoad = false;
+}

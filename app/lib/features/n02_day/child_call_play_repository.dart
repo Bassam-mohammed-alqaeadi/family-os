@@ -7,7 +7,7 @@ abstract class ChildCallPlayRepository {
 
 final class InMemoryChildCallPlayRepository implements ChildCallPlayRepository {
   InMemoryChildCallPlayRepository({ChildCallPlaySnapshot? seed})
-    : _snap = seed ?? childCallPlayPrototypeFixture();
+    : _snap = seed ?? childCallPlayEmptyFixture();
 
   ChildCallPlaySnapshot _snap;
   Future<void> Function()? loadGate;

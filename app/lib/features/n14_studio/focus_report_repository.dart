@@ -1,4 +1,5 @@
 import 'package:family_os/features/n14_studio/focus_report_models.dart';
+import 'package:family_os/core/identity/roster_children.dart';
 
 /// Rule 25 seam — Stage-1 mock focus report (no backend).
 abstract class FocusReportRepository {
@@ -14,7 +15,7 @@ abstract class FocusReportRepository {
 /// In-memory mock — prototype FAT-051 shape by default.
 final class InMemoryFocusReportRepository implements FocusReportRepository {
   InMemoryFocusReportRepository({FocusReportSnapshot? seed})
-    : _snap = seed ?? focusReportPrototypeFixture();
+    : _snap = seed ?? focusReportEmptyFixture();
 
   FocusReportSnapshot _snap;
 
@@ -86,8 +87,8 @@ FocusReportSnapshot focusReportEmptyFixture() {
 
 /// One child · one schedule · advisor note not yet praised.
 FocusReportSnapshot focusReportOneFixture() {
-  return const FocusReportSnapshot(
-    child: FocusReportChild(id: 'child_a', nameKey: 'one'),
+  return FocusReportSnapshot(
+    child: _rosterFocusChild(),
     weeklySummary: FocusWeeklySummary(
       sessionsCount: 2,
       totalDurationMinutes: 95,
@@ -119,8 +120,8 @@ FocusReportSnapshot focusReportOneFixture() {
 /// Rule 23: nameKey / titleKey only (no planted person names).
 /// ع-١: minutes-only reward (+15).
 FocusReportSnapshot focusReportPrototypeFixture() {
-  return const FocusReportSnapshot(
-    child: FocusReportChild(id: 'child_a', nameKey: 'one'),
+  return FocusReportSnapshot(
+    child: _rosterFocusChild(),
     weeklySummary: FocusWeeklySummary(
       sessionsCount: 5,
       totalDurationMinutes: 220,
@@ -145,4 +146,10 @@ FocusReportSnapshot focusReportPrototypeFixture() {
     ],
     rewardMinutes: 15,
   );
+}
+
+FocusReportChild? _rosterFocusChild() {
+  final c = activeRosterChild();
+  if (c == null) return null;
+  return FocusReportChild(id: c.id.value, nameKey: c.nameKey);
 }

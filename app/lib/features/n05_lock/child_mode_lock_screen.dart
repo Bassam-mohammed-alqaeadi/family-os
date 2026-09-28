@@ -12,6 +12,8 @@ import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n05_lock/child_mode_lock_service.dart';
 
@@ -52,7 +54,7 @@ class ChildModeLockScreen extends StatefulWidget {
     this.lockService,
     this.sosFire,
     this.roleOverride,
-    this.childId = 'child_local',
+    this.childId,
     this.secretHoldDuration = kChildModeLockSecretHoldDuration,
     this.secretHoldTick = kChildModeLockSecretHoldTick,
     this.onSos,
@@ -68,8 +70,8 @@ class ChildModeLockScreen extends StatefulWidget {
   /// Test seam — when set, ignores [CurrentRole].
   final AppRole? roleOverride;
 
-  /// Parametric child id for SOS fire (Rule 23).
-  final String childId;
+  /// Parametric child id for SOS fire (Rule 23); null → the device's child.
+  final String? childId;
 
   /// Test seam — shorter secret hold in widget tests.
   final Duration secretHoldDuration;
@@ -219,7 +221,11 @@ class _ChildModeLockScreenState extends State<ChildModeLockScreen> {
     }
     setState(() => _sosBusy = true);
     final fire = widget.sosFire ?? stage1SosFireService;
-    await fire.fire(childId: widget.childId);
+    final sender = childSosSenderOf(
+      context,
+      explicit: childIdFromParam(widget.childId),
+    );
+    await sender.fireThrough(fire);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.go(screenPath('SCR-CHD-005'));

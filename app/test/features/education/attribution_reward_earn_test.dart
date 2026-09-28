@@ -19,7 +19,7 @@ void main() {
       wallet: ledger,
     );
 
-    final child = ChildId('child_a');
+    final child = ChildId('demo-child');
     expect(
       await ledger.balance(
         childId: child,
@@ -65,7 +65,7 @@ void main() {
     );
 
     await repo.assign();
-    final child = ChildId('child_a');
+    final child = ChildId('demo-child');
     expect(
       await ledger.balance(
         childId: child,

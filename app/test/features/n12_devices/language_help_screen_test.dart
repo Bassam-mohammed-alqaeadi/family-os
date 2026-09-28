@@ -71,7 +71,7 @@ void main() {
 
     await tester.tap(find.byKey(LanguageHelpKeys.englishRow));
     await tester.pump();
-    expect(find.textContaining('English interface'), findsOneWidget);
+    expect(find.textContaining('Interface language updated'), findsOneWidget);
     AppToast.dismiss();
     await tester.pumpAndSettle();
 
@@ -144,7 +144,7 @@ void main() {
 
     await tester.tap(find.byKey(LanguageHelpKeys.englishRow));
     await tester.pump();
-    expect(find.textContaining('English interface'), findsOneWidget);
+    expect(find.textContaining('Interface language updated'), findsOneWidget);
     AppToast.dismiss();
     await tester.pumpAndSettle();
   });

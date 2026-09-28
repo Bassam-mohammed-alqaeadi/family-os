@@ -9,12 +9,14 @@ import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
 import 'package:family_os/core/policy/anti_tamper_alert_bus.dart';
 import 'package:family_os/core/policy/anti_tamper_permission.dart';
 import 'package:family_os/core/policy/anti_tamper_policy.dart';
 import 'package:family_os/core/policy/anti_tamper_repository.dart';
 import 'package:family_os/core/policy/device_lock_service.dart';
 import 'package:family_os/core/policy/device_lock_state.dart';
+import 'package:family_os/core/prefs_misc/prefs_misc_runtime.dart';
 
 /// Widget keys for anti-tamper switches (SET-007 / SET-008 acceptance).
 abstract final class AntiTamperKeys {
@@ -114,9 +116,9 @@ class InstantLockScreen extends StatefulWidget {
 /// Public for Stage-1 simulate hooks in widget tests (SET-008).
 class InstantLockScreenState extends State<InstantLockScreen> {
   late final ChildId _childId;
-  late final AntiTamperRepository _repository;
+  AntiTamperRepository? _repository;
   late final AntiTamperAlertBus _alertBus;
-  late final DeviceLockService _lockService;
+  DeviceLockService? _lockService;
   late AntiTamperPolicy _policy;
   DeviceLockState? _lockState;
   var _loading = true;
@@ -124,36 +126,85 @@ class InstantLockScreenState extends State<InstantLockScreen> {
   var _lockBusy = false;
   var _showPermissionBanner = false;
   var _showSupersessionBanner = false;
+  var _atUnavailable = false;
+  var _lockUnavailable = false;
 
   @override
   void initState() {
     super.initState();
-    _childId = widget.childId ?? ChildId('demo-child');
-    _repository = widget.repository ??
-        PrefsAntiTamperRepository(
-          stage1AntiTamperPrefsStore,
-          audit: stage1AntiTamperAudit,
-        );
+    _childId = resolveActiveChildIdOf(context, explicit: widget.childId);
     _alertBus = widget.alertBus ?? stage1AntiTamperAlertBus;
-    _lockService = widget.lockService ??
-        DeviceLockService(
-          store: stage1DeviceLockPrefsStore,
-          audit: stage1DeviceLockAudit,
-          notifyBus: stage1DeviceLockNotifyBus,
-        );
     _policy = AntiTamperPolicy.defaults();
-    _lockService.notifyBus.addListener(_onSupersessionNotify);
-    _load();
+    if (widget.repository != null) {
+      _repository = widget.repository;
+    }
+    if (widget.lockService != null) {
+      _lockService = widget.lockService;
+      _lockService!.notifyBus.addListener(_onSupersessionNotify);
+    }
+    if (widget.repository != null && widget.lockService != null) {
+      _load();
+    } else {
+      _bootstrapLocals();
+    }
+  }
+
+  Future<void> _bootstrapLocals() async {
+    if (widget.repository == null) {
+      try {
+        await PrefsMiscRuntime.ensureOpen();
+        if (PrefsMiscRuntime.unavailable ||
+            PrefsMiscRuntime.antiTamper == null) {
+          throw StateError('PrefsMiscRuntime AT unavailable');
+        }
+        _repository = PrefsMiscRuntime.antiTamper;
+        _atUnavailable = false;
+      } catch (e, st) {
+        debugPrint(
+          'DOM-PREFS-MISC-AT: Local KV bootstrap failed — '
+          'no Memory Prefs fallback: $e\n$st',
+        );
+        _repository = null;
+        _atUnavailable = true;
+      }
+    }
+    if (widget.lockService == null) {
+      try {
+        await PrefsMiscRuntime.ensureOpen();
+        if (PrefsMiscRuntime.unavailable ||
+            PrefsMiscRuntime.deviceLock == null) {
+          throw StateError('PrefsMiscRuntime DeviceLock unavailable');
+        }
+        _lockService = PrefsMiscRuntime.deviceLock;
+        _lockUnavailable = false;
+        _lockService!.notifyBus.addListener(_onSupersessionNotify);
+      } catch (e, st) {
+        debugPrint(
+          'DOM-PREFS-MISC-DEVICELOCK: Local KV bootstrap failed — '
+          'no Memory Prefs fallback: $e\n$st',
+        );
+        _lockService = null;
+        _lockUnavailable = true;
+      }
+    }
+    if (!mounted) return;
+    if (_atUnavailable && _lockUnavailable) {
+      setState(() => _loading = false);
+      return;
+    }
+    await _load();
   }
 
   @override
   void dispose() {
-    _lockService.notifyBus.removeListener(_onSupersessionNotify);
+    _lockService?.notifyBus.removeListener(_onSupersessionNotify);
     super.dispose();
   }
 
   void _onSupersessionNotify() {
-    final event = _lockService.notifyBus.lastSupersession;
+    final lock = _lockService;
+    if (lock == null) return;
+    final event = lock.notifyBus.lastSupersession;
     if (event == null || event.childId != _childId) return;
     if (_role != AppRole.mother) return;
     if (!mounted) return;
@@ -162,12 +213,22 @@ class InstantLockScreenState extends State<InstantLockScreen> {
   }
 
   Future<void> _load() async {
-    final loaded = await _repository.load(_childId);
-    final lock = await _lockService.load(_childId);
+    final repo = _repository;
+    final AntiTamperPolicy loaded;
+    if (repo != null) {
+      loaded = await repo.load(_childId);
+    } else {
+      loaded = AntiTamperPolicy.defaults();
+    }
+    DeviceLockState? lockState;
+    final lockSvc = _lockService;
+    if (lockSvc != null) {
+      lockState = await lockSvc.load(_childId);
+    }
     if (!mounted) return;
     setState(() {
       _policy = loaded;
-      _lockState = lock;
+      _lockState = lockState;
       _loading = false;
       _showPermissionBanner =
           loaded.noDelete && !widget.deviceAdminGranted;
@@ -175,7 +236,9 @@ class InstantLockScreenState extends State<InstantLockScreen> {
   }
 
   Future<void> _refreshLockState() async {
-    final lock = await _lockService.load(_childId);
+    final lockSvc = _lockService;
+    if (lockSvc == null) return;
+    final lock = await lockSvc.load(_childId);
     if (!mounted) return;
     setState(() => _lockState = lock);
   }
@@ -212,11 +275,15 @@ class InstantLockScreenState extends State<InstantLockScreen> {
 
   bool get _canOfferLock {
     final actor = _lockActor;
-    return actor.canLock && !(_lockState?.locked ?? false);
+    return !_lockUnavailable &&
+        _lockService != null &&
+        actor.canLock &&
+        !(_lockState?.locked ?? false);
   }
 
   bool get _canOfferUnlock {
     final state = _lockState;
+    if (_lockUnavailable || _lockService == null) return false;
     if (state == null || !state.locked) return false;
     return _lockActor.canUnlock(state);
   }
@@ -230,9 +297,12 @@ class InstantLockScreenState extends State<InstantLockScreen> {
       _alertBus.simulateSimChange(_childId, _policy);
 
   Future<void> _saveAntiTamper() async {
-    if (!_canConfigureAntiTamper || _saving) return;
+    final repo = _repository;
+    if (!_canConfigureAntiTamper || _saving || repo == null || _atUnavailable) {
+      return;
+    }
     setState(() => _saving = true);
-    final result = await _repository.write(
+    final result = await repo.write(
       _childId,
       _policy,
       actor: _role,
@@ -249,9 +319,10 @@ class InstantLockScreenState extends State<InstantLockScreen> {
   }
 
   Future<void> _onLock() async {
-    if (_lockBusy || !_canOfferLock) return;
+    final lockSvc = _lockService;
+    if (_lockBusy || !_canOfferLock || lockSvc == null) return;
     setState(() => _lockBusy = true);
-    final result = await _lockService.lock(_childId, _lockActor);
+    final result = await lockSvc.lock(_childId, _lockActor);
     if (!mounted) return;
     setState(() => _lockBusy = false);
     final l10n = AppLocalizations.of(context);
@@ -266,9 +337,10 @@ class InstantLockScreenState extends State<InstantLockScreen> {
   }
 
   Future<void> _onUnlock() async {
-    if (_lockBusy || !_canOfferUnlock) return;
+    final lockSvc = _lockService;
+    if (_lockBusy || !_canOfferUnlock || lockSvc == null) return;
     setState(() => _lockBusy = true);
-    final result = await _lockService.unlock(_childId, _lockActor);
+    final result = await lockSvc.unlock(_childId, _lockActor);
     if (!mounted) return;
     setState(() => _lockBusy = false);
     final l10n = AppLocalizations.of(context);
@@ -392,7 +464,9 @@ class InstantLockScreenState extends State<InstantLockScreen> {
                     flagLabel: (f) => _flagLabel(l10n, f),
                     flagWhenEnabled: (f) => _flagWhenEnabled(l10n, f),
                     onChanged: _onFlagChanged,
-                    onSave: _saving ? null : _saveAntiTamper,
+                    onSave: (_saving || _repository == null || _atUnavailable)
+                        ? null
+                        : _saveAntiTamper,
                     sectionTitle: l10n.antiTamperSectionTitle,
                     saveLabel: l10n.antiTamperSave,
                   ),

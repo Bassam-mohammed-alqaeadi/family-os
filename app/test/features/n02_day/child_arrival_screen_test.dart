@@ -38,18 +38,17 @@ void main() {
     await _pump(tester, repository: repo, onNavigate: nav.add);
     expect(find.byKey(ChildArrivalKeys.body), findsOneWidget);
     expect(find.byKey(ChildArrivalKeys.liveCard), findsOneWidget);
-    expect(
-      find.textContaining('Check-in only'),
-      findsOneWidget,
-    );
+    expect(find.byKey(ChildArrivalKeys.localHonesty), findsOneWidget);
+    expect(find.textContaining('Check-in only'), findsOneWidget);
 
     await tester.tap(find.byKey(ChildArrivalKeys.zone('z1')));
     await tester.pump();
-    expect(find.textContaining('Reassurance sent'), findsOneWidget);
+    expect(find.textContaining('Check-in saved locally'), findsOneWidget);
     AppToast.dismiss();
     await tester.pumpAndSettle();
     expect(nav, contains('SCR-CHD-004'));
     expect(repo.lastCheckInZoneId, 'z1');
+    expect(repo.checkInJournal, ['z1']);
   });
 
   testWidgets('loading then body', (tester) async {
@@ -60,6 +59,16 @@ void main() {
     await tester.pump();
     expect(find.byKey(ChildArrivalKeys.loading), findsOneWidget);
     gate.complete();
+    await tester.pumpAndSettle();
+    expect(find.byKey(ChildArrivalKeys.body), findsOneWidget);
+  });
+
+  testWidgets('load error → retry', (tester) async {
+    final repo = InMemoryChildArrivalRepository(seed: childArrivalOneFixture())
+      ..loadError = Exception('offline');
+    await _pump(tester, repository: repo);
+    expect(find.byKey(ChildArrivalKeys.error), findsOneWidget);
+    await tester.tap(find.text('Retry'));
     await tester.pumpAndSettle();
     expect(find.byKey(ChildArrivalKeys.body), findsOneWidget);
   });

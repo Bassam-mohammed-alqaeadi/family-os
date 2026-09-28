@@ -8,7 +8,7 @@ abstract class LearningPathRepository {
 /// In-memory mock — prototype FAT-047 shape by default.
 final class InMemoryLearningPathRepository implements LearningPathRepository {
   InMemoryLearningPathRepository({LearningPathSnapshot? seed})
-    : _snap = seed ?? learningPathPrototypeFixture();
+    : _snap = seed ?? learningPathEmptyFixture();
 
   LearningPathSnapshot _snap;
 

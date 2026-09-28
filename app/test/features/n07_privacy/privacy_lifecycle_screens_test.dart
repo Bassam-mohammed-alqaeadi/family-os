@@ -142,7 +142,7 @@ void main() {
       );
       expect(find.byKey(PrivacyDataKeys.wipePendingBanner), findsOneWidget);
       expect(
-        find.textContaining('٧ أيام'),
+        find.textContaining('7 أيام'),
         findsWidgets,
       );
       expect(

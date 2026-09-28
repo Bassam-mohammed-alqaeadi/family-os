@@ -6,7 +6,7 @@ abstract class ChildTutorRepository {
 
 final class InMemoryChildTutorRepository implements ChildTutorRepository {
   InMemoryChildTutorRepository({ChildTutorSnapshot? seed})
-    : _snap = seed ?? childTutorPrototypeFixture();
+    : _snap = seed ?? childTutorEmptyFixture();
 
   ChildTutorSnapshot _snap;
   Future<void> Function()? loadGate;

@@ -7,7 +7,9 @@ import 'package:family_os/core/design/components/enforcement_status_badge.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n03_screen_time/stage1_child_scope.dart';
@@ -90,7 +92,7 @@ class _ChildWalletScreenState extends State<ChildWalletScreen> {
     if (widget.repository != null || _scopedRepoBound) return;
     final runtime = CurrentIdentity.maybeOf(context);
     final childId = runtime == null
-        ? kStage1CanonicalChildId
+        ? resolveActiveChildId()
         : familyScopedChildId(
             familyId: runtime.activeFamilyId,
             childId: runtime.activeChildId,
@@ -117,8 +119,7 @@ class _ChildWalletScreenState extends State<ChildWalletScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    final childId = CurrentIdentity.maybeOf(context)?.activeChildId.value ?? 'self';
-    await _sos.fire(childId: childId);
+    await childSosSenderOf(context).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-CHD-005'));
@@ -442,7 +443,7 @@ class _ChildWalletScreenState extends State<ChildWalletScreen> {
                   contentPadding: EdgeInsets.zero,
                   title: Text(l10n.childWalletEarnQuranTitle),
                   subtitle: Text(l10n.childWalletEarnQuranBody),
-                  trailing: Icon(Icons.chevron_left, color: colors.ink2),
+                  trailing: Icon(Icons.chevron_right, color: colors.ink2),
                   onTap: () => _go('SCR-CHD-025'),
                 ),
                 ListTile(
@@ -450,7 +451,7 @@ class _ChildWalletScreenState extends State<ChildWalletScreen> {
                   contentPadding: EdgeInsets.zero,
                   title: Text(l10n.childWalletEarnTasksTitle),
                   subtitle: Text(l10n.childWalletEarnTasksBody),
-                  trailing: Icon(Icons.chevron_left, color: colors.ink2),
+                  trailing: Icon(Icons.chevron_right, color: colors.ink2),
                   onTap: () => _go('SCR-CHD-022'),
                 ),
                 ListTile(
@@ -458,7 +459,7 @@ class _ChildWalletScreenState extends State<ChildWalletScreen> {
                   contentPadding: EdgeInsets.zero,
                   title: Text(l10n.childWalletEarnQuizTitle),
                   subtitle: Text(l10n.childWalletEarnQuizBody),
-                  trailing: Icon(Icons.chevron_left, color: colors.ink2),
+                  trailing: Icon(Icons.chevron_right, color: colors.ink2),
                   onTap: () => _go('SCR-CHD-015'),
                 ),
               ],

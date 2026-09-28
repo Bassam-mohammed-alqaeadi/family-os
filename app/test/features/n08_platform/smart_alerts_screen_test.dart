@@ -39,6 +39,7 @@ void main() {
     expect(find.byKey(SmartAlertsKeys.body), findsOneWidget);
     expect(find.byKey(SmartAlertsKeys.honestyBanner), findsOneWidget);
     expect(find.textContaining('transparent'), findsOneWidget);
+    expect(find.textContaining('upcoming update'), findsWidgets);
 
     await tester.tap(find.byKey(SmartAlertsKeys.alert('a1')));
     await tester.pumpAndSettle();

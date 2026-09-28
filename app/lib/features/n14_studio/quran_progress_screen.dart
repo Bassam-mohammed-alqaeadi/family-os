@@ -9,9 +9,12 @@ import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n14_studio/quran_progress_models.dart';
 import 'package:family_os/features/n14_studio/quran_progress_repository.dart';
@@ -45,6 +48,7 @@ abstract final class QuranProgressKeys {
 class QuranProgressScreen extends StatefulWidget {
   const QuranProgressScreen({
     super.key,
+    this.childId,
     this.repository,
     this.sosFire,
     this.roleOverride,
@@ -53,6 +57,8 @@ class QuranProgressScreen extends StatefulWidget {
     this.onNavigate,
   });
 
+  /// Child the published ward plan targets; null → family context's child.
+  final ChildId? childId;
   final QuranProgressRepository? repository;
   final SosFireService? sosFire;
   final AppRole? roleOverride;
@@ -122,7 +128,10 @@ class _QuranProgressScreenState extends State<QuranProgressScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'family');
+    await parentSosSenderOf(
+      context,
+      viewedChild: resolveActiveChildIdOf(context, explicit: widget.childId),
+    ).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-FAT-018'));
@@ -199,7 +208,9 @@ class _QuranProgressScreenState extends State<QuranProgressScreen> {
     }
     if (_busy) return;
     setState(() => _busy = true);
-    await _repo.publishPlanToChild();
+    await _repo.publishPlanToChild(
+      childId: resolveActiveChildIdOf(context, explicit: widget.childId),
+    );
     if (!mounted) return;
     setState(() => _busy = false);
     AppToast.show(
@@ -372,10 +383,10 @@ class _QuranProgressScreenState extends State<QuranProgressScreen> {
           DecoratedBox(
             key: QuranProgressKeys.heroCard,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
+              gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFF1B3A31), Color(0xFF0E241E)],
+                colors: [colors.tealDeep, colors.ink],
               ),
               borderRadius: BorderRadius.circular(radii.card),
             ),

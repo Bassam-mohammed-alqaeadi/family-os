@@ -10,6 +10,7 @@ import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n17_child_learn/child_smart_tilawah_models.dart';
 import 'package:family_os/features/n17_child_learn/child_smart_tilawah_repository.dart';
@@ -23,6 +24,7 @@ abstract final class ChildSmartTilawahKeys {
   static const listenCta = Key('child_smart_tilawah_listen');
   static const tipCard = Key('child_smart_tilawah_tip');
   static const sheikhCta = Key('child_smart_tilawah_sheikh');
+  static const honestyBanner = Key('child_smart_tilawah_honesty');
   static const parentLean = Key('child_smart_tilawah_parent_lean');
   static const sosIconCta = Key('child_smart_tilawah_sos_icon');
 }
@@ -92,7 +94,7 @@ class _ChildSmartTilawahScreenState extends State<ChildSmartTilawahScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'self');
+    await childSosSenderOf(context).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-CHD-005'));
@@ -312,6 +314,7 @@ class _ChildSmartTilawahScreenState extends State<ChildSmartTilawahScreen> {
           ),
           const SizedBox(height: 12),
           BannerNote(
+            key: ChildSmartTilawahKeys.honestyBanner,
             message: l10n.childSmartTilawahBanner,
             variant: BannerVariant.t,
           ),

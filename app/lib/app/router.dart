@@ -4,8 +4,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
+import 'package:family_os/app/dev_screen_gallery.dart';
 import 'package:family_os/app/gallery_screen.dart';
 import 'package:family_os/app/role_guard.dart';
+import 'package:family_os/app/role_guard_notice.dart';
+import 'package:family_os/app/route_child_context.dart';
 import 'package:family_os/app/sys3_routes.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
@@ -286,10 +289,19 @@ const List<String> tombstonePaths = [
 /// SET-018 / ADR-034: school lives on FAT-085; FAT-039 deep links land here.
 const String tombstoneSchoolRedirectTarget = '/scr-fat-085';
 
+/// Owner D11 (2026-09-25): archived, non-live paths redirect to an existing
+/// live experience (FAT-039 precedent). FAT-077 Road safety → FAT-075 Coming soon.
+const Map<String, String> legacyRedirectPaths = {
+  '/scr-fat-077': '/scr-fat-075',
+};
+
 /// Builds the app [GoRouter] with gallery + every **active** CSV screen route.
 ///
-/// Product entry is welcome (`/scr-shr-001`); gallery remains at `/gallery`.
+/// Product entry is welcome (`/scr-shr-001`); design gallery at `/gallery`;
+/// QA catalog at `/dev-screens` ([DevScreenGallery]).
 /// Tombstone deep links (e.g. `/scr-fat-039`) redirect to [tombstoneSchoolRedirectTarget].
+/// Legacy paths in [legacyRedirectPaths] redirect before RoleGuard.
+/// System #3 identity routes (sys3_*) are appended via [sys3IdentityRoutes].
 GoRouter createAppRouter({
   required ValueListenable<AppRole> roleListenable,
   String initialLocation = '/scr-shr-001',
@@ -302,6 +314,8 @@ GoRouter createAppRouter({
       if (tombstonePaths.contains(path)) {
         return tombstoneSchoolRedirectTarget;
       }
+      final legacyTarget = legacyRedirectPaths[path];
+      if (legacyTarget != null) return legacyTarget;
       return roleGuardRedirect(state, roleListenable.value);
     },
     routes: [
@@ -309,6 +323,11 @@ GoRouter createAppRouter({
         path: '/gallery',
         name: 'gallery',
         builder: (context, state) => const GalleryScreen(),
+      ),
+      GoRoute(
+        path: DevScreenGallery.routePath,
+        name: DevScreenGallery.routeName,
+        builder: (context, state) => const DevScreenGallery(),
       ),
       ...sys3IdentityRoutes,
     GoRoute(
@@ -374,7 +393,7 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-fat-010',
       name: 'SCR-FAT-010',
-      builder: (context, state) => DayBoardScreen(),
+      builder: (context, state) => RoleGuardLandingNotice(uri: state.uri, isChildHome: false, child: DayBoardScreen()),
     ),
     GoRoute(
       path: '/scr-fat-011',
@@ -489,12 +508,12 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-chd-004',
       name: 'SCR-CHD-004',
-      builder: (context, state) => ChildDayBoardScreen(),
+      builder: (context, state) => RoleGuardLandingNotice(uri: state.uri, isChildHome: true, child: ChildDayBoardScreen(childId: routeChildId(context, state), screenTimeChildId: routeScopedChildId(context, state))),
     ),
     GoRoute(
       path: '/scr-chd-005',
       name: 'SCR-CHD-005',
-      builder: (context, state) => ChildSosButtonScreen(),
+      builder: (context, state) => ChildSosButtonScreen(childId: routeChildId(context, state).value),
     ),
     GoRoute(
       path: '/scr-chd-006',
@@ -519,7 +538,7 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-chd-010',
       name: 'SCR-CHD-010',
-      builder: (context, state) => WhatIsCollectedScreen(),
+      builder: (context, state) => WhatIsCollectedScreen(monitoringChildId: routeChildId(context, state).value),
     ),
     GoRoute(
       path: '/scr-shr-005',
@@ -559,7 +578,7 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-fat-032',
       name: 'SCR-FAT-032',
-      builder: (context, state) => ChildScreenTimeScreen(),
+      builder: (context, state) => ChildScreenTimeScreen(childId: routeScopedChildId(context, state)),
     ),
     GoRoute(
       path: '/scr-fat-033',
@@ -579,12 +598,12 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-fat-036',
       name: 'SCR-FAT-036',
-      builder: (context, state) => WebFilterScreen(),
+      builder: (context, state) => WebFilterScreen(childId: routeChildId(context, state)),
     ),
     GoRoute(
       path: '/scr-fat-037',
       name: 'SCR-FAT-037',
-      builder: (context, state) => InstantLockScreen(),
+      builder: (context, state) => InstantLockScreen(childId: routeChildId(context, state)),
     ),
     GoRoute(
       path: '/scr-fat-038',
@@ -764,7 +783,7 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-chd-021',
       name: 'SCR-CHD-021',
-      builder: (context, state) => TimeExpiryScreen(),
+      builder: (context, state) => TimeExpiryScreen(childId: routeChildId(context, state)),
     ),
     GoRoute(
       path: '/scr-chd-022',
@@ -784,7 +803,7 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-fat-065',
       name: 'SCR-FAT-065',
-      builder: (context, state) => SmartAlertsScreen(),
+      builder: (context, state) => SmartAlertsScreen(childId: routeChildId(context, state)),
     ),
     GoRoute(
       path: '/scr-fat-066',
@@ -794,12 +813,12 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-fat-067',
       name: 'SCR-FAT-067',
-      builder: (context, state) => SmartSupervisionScreen(),
+      builder: (context, state) => SmartSupervisionScreen(childId: routeChildId(context, state).value),
     ),
     GoRoute(
       path: '/scr-fat-068',
       name: 'SCR-FAT-068',
-      builder: (context, state) => PlatformMonitoringScreen(),
+      builder: (context, state) => PlatformMonitoringScreen(childId: routeChildId(context, state).value),
     ),
     GoRoute(
       path: '/scr-fat-069',
@@ -819,7 +838,7 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-fat-072',
       name: 'SCR-FAT-072',
-      builder: (context, state) => QuranProgressScreen(),
+      builder: (context, state) => QuranProgressScreen(childId: routeChildId(context, state)),
     ),
     GoRoute(
       path: '/scr-fat-073',
@@ -949,7 +968,7 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-fat-085',
       name: 'SCR-FAT-085',
-      builder: (context, state) => SmartModesScreen(),
+      builder: (context, state) => SmartModesScreen(childId: routeChildId(context, state).value),
     ),
     GoRoute(
       path: '/scr-fat-086',

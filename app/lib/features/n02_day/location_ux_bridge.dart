@@ -6,6 +6,7 @@ import 'package:family_os/core/fs_foundation/capability_registry.dart';
 import 'package:family_os/core/fs_foundation/capability_status.dart';
 import 'package:family_os/core/fs_foundation/fs_session_kernel.dart';
 import 'package:family_os/core/fs_foundation/local_database.dart';
+import 'package:family_os/core/identity/identity_runtime.dart';
 import 'package:family_os/core/location/geo_point.dart';
 import 'package:family_os/core/location/geofence_event.dart';
 import 'package:family_os/core/location/location_fix.dart';
@@ -13,8 +14,11 @@ import 'package:family_os/core/location/location_repository.dart';
 import 'package:family_os/core/location/location_store.dart';
 import 'package:family_os/core/location/modes_location_fact_feed.dart';
 import 'package:family_os/core/location/safe_zone_definition.dart';
+import 'package:family_os/core/location/zone_geometry.dart';
 import 'package:family_os/core/modes/modes_runtime.dart';
+import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/location_history_repository.dart';
+import 'package:family_os/features/n02_day/location_map_repository.dart';
 import 'package:family_os/features/n02_day/safe_zones_repository.dart';
 
 /// Stage-1 composition root for FS-001 UX (shared [FsSessionKernel] DB).
@@ -133,7 +137,10 @@ final class DomainSafeZonesRepository implements SafeZonesRepository {
           emoji: z.emoji,
           name: z.name,
           description: 'assigned:$assignCount',
-          alertsEnabled: z.alertEnter || z.alertExit || z.alertNoShow,
+          alertEnter: z.alertEnter,
+          alertExit: z.alertExit,
+          alertNoShow: z.alertNoShow,
+          noShowDeadlineMinutes: z.noShowDeadlineMinutes,
           assignedChildIds: [for (final c in z.assignedChildIds) c.value],
         ),
       );
@@ -150,20 +157,41 @@ final class DomainSafeZonesRepository implements SafeZonesRepository {
   }
 
   @override
-  Future<void> setAlertsEnabled(String zoneId, bool enabled) async {
+  Future<void> setAlertFlag(
+    String zoneId, {
+    bool? alertEnter,
+    bool? alertExit,
+    bool? alertNoShow,
+  }) async {
     final current = await domain.getZone(zoneId);
     if (current == null) {
-      await listRepo?.setAlertsEnabled(zoneId, enabled);
+      await listRepo?.setAlertFlag(
+        zoneId,
+        alertEnter: alertEnter,
+        alertExit: alertExit,
+        alertNoShow: alertNoShow,
+      );
       return;
     }
+    final clearDeadline = alertNoShow == false;
     await domain.saveZone(
       current.copyWith(
-        alertEnter: enabled,
-        alertExit: enabled,
-        // Keep no-show as-is unless disabling all.
-        alertNoShow: enabled ? current.alertNoShow : false,
+        alertEnter: alertEnter,
+        alertExit: alertExit,
+        alertNoShow: alertNoShow,
+        clearNoShowDeadline: clearDeadline,
         updatedAt: DateTime.now().toUtc(),
       ),
+    );
+  }
+
+  @override
+  Future<void> setAlertsEnabled(String zoneId, bool enabled) async {
+    await setAlertFlag(
+      zoneId,
+      alertEnter: enabled,
+      alertExit: enabled,
+      alertNoShow: enabled ? null : false,
     );
   }
 
@@ -182,10 +210,10 @@ final class DomainSafeZonesRepository implements SafeZonesRepository {
         emoji: definition.emoji,
         name: definition.name,
         description: 'assigned:${definition.assignedChildIds.length}',
-        alertsEnabled:
-            definition.alertEnter ||
-            definition.alertExit ||
-            definition.alertNoShow,
+        alertEnter: definition.alertEnter,
+        alertExit: definition.alertExit,
+        alertNoShow: definition.alertNoShow,
+        noShowDeadlineMinutes: definition.noShowDeadlineMinutes,
         assignedChildIds: [
           for (final c in definition.assignedChildIds) c.value,
         ],
@@ -256,6 +284,174 @@ final class DomainLocationHistoryRepository
     if (p == null) return '—';
     return '${p.latitude.toStringAsFixed(4)}, ${p.longitude.toStringAsFixed(4)}';
   }
+}
+
+/// LDR-B1 — map UX from roster + `loc_*` zones (no fabricated GPS pins).
+final class DomainLocationMapRepository implements LocationMapRepository {
+  DomainLocationMapRepository({
+    required this.domain,
+    FamilyId? familyId,
+    ChildrenListRepository? children,
+  })  : _familyIdOverride = familyId,
+        _children = children;
+
+  final LocationDomainRepository domain;
+  final FamilyId? _familyIdOverride;
+  final ChildrenListRepository? _children;
+
+  FamilyId get _familyId =>
+      _familyIdOverride ??
+      stage1IdentityRuntime.activeFamilyId;
+
+  ChildrenListRepository get _roster =>
+      _children ?? stage1ChildrenListRepository;
+
+  @override
+  Future<LocationMapSnapshot?> load({String? focusChildId}) async {
+    await Stage1LocationRuntime.ensureOpen();
+    final kids = await _roster.listChildren(familyId: _familyId);
+    final zones = await domain.listZones(_familyId);
+
+    final pins = <LocationMapPin>[];
+    for (var i = 0; i < kids.length; i++) {
+      final k = kids[i];
+      final row = i ~/ 2;
+      final col = i % 2;
+      pins.add(
+        LocationMapPin(
+          id: k.id,
+          displayName: k.displayName,
+          emoji: k.emoji,
+          swatch: k.swatch,
+          locationLabel: k.locationLabel,
+          lastSeenLabel: k.lastSeenLabel,
+          batteryLabel: k.batteryLabel,
+          xFraction: 0.28 + col * 0.36,
+          yFraction: 0.28 + row * 0.28,
+          batteryWarn: false,
+          networkClass: LocationNetworkClass.unavailable,
+        ),
+      );
+    }
+
+    final mapZones = <LocationMapZone>[];
+    for (var i = 0; i < zones.length; i++) {
+      final z = zones[i];
+      if (z.archived || !z.active) continue;
+      mapZones.add(
+        LocationMapZone(
+          id: z.id,
+          xFraction: 0.22 + (i % 3) * 0.25,
+          yFraction: 0.35 + (i ~/ 3) * 0.2,
+          diameterFraction: 0.22,
+          purpleTint: i.isOdd,
+        ),
+      );
+    }
+
+    final trimmed = focusChildId?.trim();
+    final hasFocus = trimmed != null && trimmed.isNotEmpty;
+    if (pins.isEmpty) {
+      if (hasFocus) return null;
+      return LocationMapSnapshot(pins: const [], zones: mapZones);
+    }
+    if (hasFocus) {
+      final match = pins.where((p) => p.id == trimmed).toList();
+      if (match.isEmpty) return null;
+      final focus = match.first;
+      return LocationMapSnapshot(
+        pins: List.unmodifiable(pins),
+        zones: List.unmodifiable(mapZones),
+        focusChildId: focus.id,
+        focusDisplayName: focus.displayName,
+        threadStops: const [],
+      );
+    }
+    final first = pins.first;
+    return LocationMapSnapshot(
+      pins: List.unmodifiable(pins),
+      zones: List.unmodifiable(mapZones),
+      focusChildId: first.id,
+      focusDisplayName: first.displayName,
+      threadStops: const [],
+    );
+  }
+}
+
+/// Boot-once: rebind FAT-014/015/016 stage1 repos to domain adapters (LDR-B1/B2).
+Future<void> tryBindStage1LocationUx() async {
+  try {
+    await Stage1LocationRuntime.ensureOpen();
+    if (FsSessionKernel.sqliteFallbackToMemory) return;
+    final domain = Stage1LocationRuntime.store;
+    final familyId = stage1IdentityRuntime.activeFamilyId;
+    await ensureRealLocalSafeZonesSeeded(domain: domain, familyId: familyId);
+    rebindStage1LocationMapRepository(
+      DomainLocationMapRepository(domain: domain, familyId: familyId),
+    );
+    rebindStage1LocationHistoryRepository(
+      DomainLocationHistoryRepository(
+        domain: domain,
+        familyId: familyId,
+        displayNameFor: (id) => id,
+      ),
+    );
+    rebindStage1SafeZonesRepository(
+      DomainSafeZonesRepository(domain: domain, familyId: familyId),
+    );
+  } catch (e, st) {
+    debugPrint('LDR tryBindStage1LocationUx soft-fail: $e\n$st');
+  }
+}
+
+/// LDR-B2 — zone definitions only (no trail/GPS samples). Idempotent.
+Future<void> ensureRealLocalSafeZonesSeeded({
+  required LocationDomainRepository domain,
+  required FamilyId familyId,
+}) async {
+  final existing = await domain.listZones(familyId);
+  if (existing.isNotEmpty) return;
+  final now = DateTime.now().toUtc();
+  final kids = await stage1ChildrenListRepository.listChildren(
+    familyId: familyId,
+  );
+  final childIds = [
+    for (final k in kids.take(2)) ChildId(k.id),
+  ];
+  final assigned = childIds.isNotEmpty
+      ? childIds
+      : [ChildId('demo-child'), ChildId('child_b')];
+
+  await domain.saveZone(
+    SafeZoneDefinition(
+      id: 'zone_home_real_local',
+      familyId: familyId,
+      name: 'المنزل',
+      emoji: '📍',
+      geometry: const CircleGeometry(
+        center: GeoPoint(latitude: 24.7136, longitude: 46.6753),
+        radiusMeters: 250,
+      ),
+      assignedChildIds: assigned,
+      createdAt: now,
+      updatedAt: now,
+    ),
+  );
+  await domain.saveZone(
+    SafeZoneDefinition(
+      id: 'zone_school_real_local',
+      familyId: familyId,
+      name: 'المدرسة',
+      emoji: '📍',
+      geometry: const CircleGeometry(
+        center: GeoPoint(latitude: 24.7250, longitude: 46.6900),
+        radiusMeters: 180,
+      ),
+      assignedChildIds: assigned,
+      createdAt: now,
+      updatedAt: now,
+    ),
+  );
 }
 
 /// Silent Location Request result honesty (LOC-OD-08).

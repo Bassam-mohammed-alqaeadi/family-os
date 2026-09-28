@@ -8,7 +8,7 @@ abstract class ChildDailyReviewRepository {
 final class InMemoryChildDailyReviewRepository
     implements ChildDailyReviewRepository {
   InMemoryChildDailyReviewRepository({ChildDailyReviewSnapshot? seed})
-    : _snap = seed ?? childDailyReviewPrototypeFixture();
+    : _snap = seed ?? childDailyReviewEmptyFixture();
 
   ChildDailyReviewSnapshot _snap;
   Future<void> Function()? loadGate;

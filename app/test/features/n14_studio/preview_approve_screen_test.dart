@@ -27,6 +27,7 @@ void main() {
 
     expect(find.byKey(PreviewApproveKeys.body), findsOneWidget);
     expect(find.byKey(PreviewApproveKeys.ruleBanner), findsOneWidget);
+    expect(find.textContaining('upcoming update'), findsOneWidget);
     expect(find.byKey(PreviewApproveKeys.quizCard), findsOneWidget);
     expect(find.byKey(PreviewApproveKeys.lessonCard), findsOneWidget);
     expect(find.byKey(PreviewApproveKeys.questionRow('q1')), findsOneWidget);

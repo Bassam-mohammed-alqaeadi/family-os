@@ -11,6 +11,8 @@ import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/minutes.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/education/learning_result_models.dart';
 import 'package:family_os/features/education/learning_result_repository.dart';
@@ -86,7 +88,7 @@ class _ChildQuizScreenState extends State<ChildQuizScreen> {
     super.initState();
     _repo = widget.repository ?? stage1ChildQuizRepository;
     _results = widget.results ?? stage1LearningResultRepository;
-    _childId = widget.childId ?? ChildId('child_a');
+    _childId = widget.childId ?? resolveActiveChildId();
     _sos = widget.sosFire ?? stage1SosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -114,7 +116,7 @@ class _ChildQuizScreenState extends State<ChildQuizScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'self');
+    await childSosSenderOf(context, explicit: widget.childId).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-CHD-005'));
@@ -296,10 +298,10 @@ class _ChildQuizScreenState extends State<ChildQuizScreen> {
           DecoratedBox(
             key: ChildQuizKeys.promptCard,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
+              gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFFFAF7FF), Color(0xFFF0E8FF)],
+                colors: [colors.p50, colors.p100],
               ),
               borderRadius: BorderRadius.circular(radii.card),
               border: Border.all(color: colors.p500, width: 1.5),

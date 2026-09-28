@@ -29,7 +29,7 @@ void main() {
   });
 
   test('schema v5 exposes wf_temp_allow', () async {
-    expect(FamilyLocalSchema.currentVersion, 10);
+    expect(FamilyLocalSchema.currentVersion, 12);
     await db.insert('wf_temp_allow', {
       'id': 'ta1',
       'family_id': family.value,

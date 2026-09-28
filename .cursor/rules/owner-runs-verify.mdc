@@ -1,0 +1,25 @@
+---
+description: Owner (Bassam) runs analyze/tests/verify; agent decides from pasted results
+alwaysApply: true
+---
+
+# Owner runs verify (Bassam)
+
+## Law
+The **Owner** runs Flutter analyze, scoped/full tests, and `verify_ship` on his machine.
+The **agent** does **not** run the test suite or `verify_ship` as the normal path.
+
+## Agent must
+1. Finish code + prepare exact copy-paste commands (cwd + one block).
+2. Stop and wait for Owner to paste stdout / exit code.
+3. From that paste only: decide pass / fail / fix / re-ask — then act.
+4. Mark cards `done` / write `status: passed` in evidence **only after** Owner paste shows exit 0.
+5. Prefer scoped commands for the card; ask Owner for `--full` only at milestones he names.
+
+## Agent must not
+- Run `flutter test`, `flutter analyze` (whole project), or `python .cursor/hooks/verify_ship.py` unless Owner explicitly says **agent may run verify this once**.
+- Mark Ship / `done` on agent-local green while waiting for Owner results.
+- Ask Owner to “confirm” without giving the exact commands.
+
+## Exception
+Quick one-file `dart analyze` / compile smoke **only** when Owner authorized agent-run for that turn, or when diagnosing a paste the Owner already sent.

@@ -82,6 +82,7 @@ final class DomainSosAlertRepository implements SosAlertRepository {
     return SosAlert(
       id: i.id,
       childId: i.childId.value,
+      raisedByActorId: i.raisedByActorId,
       childDisplayName: i.childDisplayName.isEmpty ? 'ابن' : i.childDisplayName,
       childEmoji: i.childEmoji.isEmpty ? '🛡️' : i.childEmoji,
       pressedAt: i.triggeredAt,

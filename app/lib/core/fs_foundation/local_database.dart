@@ -48,8 +48,8 @@ abstract class FamilyLocalDatabase {
 
 /// Canonical FS foundation schema (versioned).
 abstract final class FamilyLocalSchema {
-  /// v1=FS-A · v2=loc · v3=XSYS · v4=WF · v5=WF ENF · v6=AC · v7=SC · v8=Modes · v9=SOS · v10=AI.
-  static const int currentVersion = 10;
+  /// v1=FS-A · v2=loc · v3=XSYS · v4=WF · v5=WF ENF · v6=AC · v7=SC · v8=Modes · v9=SOS · v10=AI · v11=SOS actor.
+  static const int currentVersion = 12;
 
   static const createStatements = <String>[
     '''
@@ -107,7 +107,19 @@ CREATE TABLE IF NOT EXISTS policy_delivery (
     ...offlineAiSafetyStatements,
   ];
 
-  /// FS-001 Location Domain tables (schema v2).
+  /// OD-13 — parent + child actor column on sos_incident (schema v11 upgrade only).
+  /// Fresh installs get the column from [sosFinalStatements] CREATE.
+  static const sosOd13Statements = <String>[
+    'ALTER TABLE sos_incident ADD COLUMN raised_by_actor_id TEXT',
+  ];
+
+  /// LOCATION-1B — no-show deadline minutes from local midnight (schema v12).
+  /// Fresh installs get the column from [locationStatements] CREATE.
+  static const locationNoShowDeadlineStatements = <String>[
+    'ALTER TABLE loc_zone ADD COLUMN no_show_deadline_minutes INTEGER',
+  ];
+
+  /// FS-001 Location Domain tables (schema v2; v12 adds no_show_deadline_minutes).
   static const locationStatements = <String>[
     '''
 CREATE TABLE IF NOT EXISTS loc_zone (
@@ -120,6 +132,7 @@ CREATE TABLE IF NOT EXISTS loc_zone (
   alert_enter INTEGER NOT NULL,
   alert_exit INTEGER NOT NULL,
   alert_no_show INTEGER NOT NULL,
+  no_show_deadline_minutes INTEGER,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 )
@@ -358,6 +371,7 @@ CREATE TABLE IF NOT EXISTS mode_exception (
   ];
 
   /// FS-006-LIFE SOS Final lifecycle + evidence + break-glass (schema v9).
+  /// v11 adds raised_by_actor_id (OD-13).
   static const sosFinalStatements = <String>[
     '''
 CREATE TABLE IF NOT EXISTS sos_incident (
@@ -380,7 +394,8 @@ CREATE TABLE IF NOT EXISTS sos_incident (
   deliveries_json TEXT NOT NULL,
   child_display_name TEXT NOT NULL,
   child_emoji TEXT NOT NULL,
-  location_label TEXT NOT NULL
+  location_label TEXT NOT NULL,
+  raised_by_actor_id TEXT
 )
 ''',
     '''

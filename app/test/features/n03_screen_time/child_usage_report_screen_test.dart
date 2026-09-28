@@ -37,6 +37,7 @@ void main() {
     expect(find.byKey(ChildUsageReportKeys.weekCard), findsOneWidget);
     expect(find.byKey(ChildUsageReportKeys.categoriesCard), findsOneWidget);
     expect(find.byKey(ChildUsageReportKeys.retentionBanner), findsOneWidget);
+    expect(find.textContaining('upcoming update'), findsOneWidget);
     expect(find.byKey(ChildUsageReportKeys.category('learn')), findsOneWidget);
     expect(find.byKey(ChildUsageReportKeys.dayBar(0)), findsOneWidget);
     expect(find.textContaining('18h 40m'), findsOneWidget);

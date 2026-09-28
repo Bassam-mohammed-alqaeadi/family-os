@@ -9,6 +9,7 @@ import 'package:family_os/core/policy/desired_monitoring_sync_bus.dart';
 import 'package:family_os/core/policy/monitoring_feature.dart';
 import 'package:family_os/core/policy/platform_capability_table.dart';
 import 'package:family_os/core/policy/platform_id.dart';
+import 'package:family_os/core/prefs_misc/prefs_misc_runtime.dart';
 import 'package:family_os/features/n08_platform/capability_honesty_tile.dart';
 
 /// Widget keys for SCR-FAT-067 / SET-016 / UI-018 acceptance.
@@ -61,23 +62,56 @@ class SmartSupervisionScreen extends StatefulWidget {
 }
 
 class _SmartSupervisionScreenState extends State<SmartSupervisionScreen> {
-  late final DesiredMonitoringPrefsRepository _repository;
+  DesiredMonitoringPrefsRepository? _repository;
   late final DesiredMonitoringSyncBus _syncBus;
   late DesiredMonitoringPrefs _prefs;
   var _loading = true;
+  var _unavailable = false;
 
   @override
   void initState() {
     super.initState();
-    _repository = widget.repository ??
-        PrefsDesiredMonitoringPrefsRepository(stage1DesiredMonitoringPrefsStore);
     _syncBus = widget.syncBus ?? stage1DesiredMonitoringSyncBus;
     _prefs = DesiredMonitoringPrefs.defaults(childId: widget.childId);
-    _load();
+    if (widget.repository != null) {
+      _repository = widget.repository;
+      _load();
+    } else {
+      _bootstrapLocal();
+    }
+  }
+
+  Future<void> _bootstrapLocal() async {
+    try {
+      await PrefsMiscRuntime.ensureOpen();
+      if (PrefsMiscRuntime.unavailable || PrefsMiscRuntime.monitoring == null) {
+        throw StateError('PrefsMiscRuntime unavailable');
+      }
+      _repository = PrefsMiscRuntime.monitoring;
+      _unavailable = false;
+    } catch (e, st) {
+      debugPrint(
+        'DOM-PREFS-MISC-MONITORING: Local KV bootstrap failed — '
+        'no Memory Prefs fallback: $e\n$st',
+      );
+      if (!mounted) return;
+      setState(() {
+        _repository = null;
+        _unavailable = true;
+        _loading = false;
+      });
+      return;
+    }
+    await _load();
   }
 
   Future<void> _load() async {
-    final loaded = await _repository.load(widget.childId);
+    final repo = _repository;
+    if (repo == null) {
+      if (mounted) setState(() => _loading = false);
+      return;
+    }
+    final loaded = await repo.load(widget.childId);
     if (!mounted) return;
     _syncBus.hydrate(
       loaded,
@@ -91,13 +125,15 @@ class _SmartSupervisionScreenState extends State<SmartSupervisionScreen> {
   }
 
   Future<void> _onToggle(MonitoringFeature feature, bool value) async {
+    final repo = _repository;
+    if (repo == null || _unavailable) return;
     final capability =
         PlatformCapabilityTable.level(widget.platform, feature);
     if (!switchInteractive(capability)) return;
 
     final next = _prefs.withFeature(feature, value);
     setState(() => _prefs = next);
-    await _repository.save(next);
+    await repo.save(next);
     _syncBus.publish(
       next,
       platform: widget.platform,

@@ -25,6 +25,9 @@ enum HubAlertTarget {
   /// FAT-035 new-app approval.
   appApproval,
 
+  /// FAT-071 friend approval.
+  friendApproval,
+
   /// Informational row — no navigation.
   none,
 }
@@ -35,8 +38,10 @@ final class HubAlert {
   const HubAlert({
     required this.id,
     required this.urgency,
-    required this.title,
-    required this.subtitle,
+    this.title = '',
+    this.subtitle = '',
+    this.titleKey,
+    this.subtitleKey,
     required this.emoji,
     required this.swatch,
     this.target = HubAlertTarget.alertDetail,
@@ -47,6 +52,10 @@ final class HubAlert {
   final AlertUrgency urgency;
   final String title;
   final String subtitle;
+
+  /// ARB discriminator when set (VX-B5 local projection · Rule 23).
+  final String? titleKey;
+  final String? subtitleKey;
   final String emoji;
   final DayChildSwatch swatch;
 
@@ -63,6 +72,8 @@ final class HubAlert {
     AlertUrgency? urgency,
     String? title,
     String? subtitle,
+    String? titleKey,
+    String? subtitleKey,
     String? emoji,
     DayChildSwatch? swatch,
     HubAlertTarget? target,
@@ -73,6 +84,8 @@ final class HubAlert {
       urgency: urgency ?? this.urgency,
       title: title ?? this.title,
       subtitle: subtitle ?? this.subtitle,
+      titleKey: titleKey ?? this.titleKey,
+      subtitleKey: subtitleKey ?? this.subtitleKey,
       emoji: emoji ?? this.emoji,
       swatch: swatch ?? this.swatch,
       target: target ?? this.target,
@@ -138,5 +151,10 @@ final class InMemoryAlertsHubRepository implements AlertsHubRepository {
   }
 }
 
-/// Stage-1 singleton — empty until tests/repos seed (Rule 23).
-final stage1AlertsHubRepository = InMemoryAlertsHubRepository();
+/// Stage-1 singleton — tests seed [InMemoryAlertsHubRepository]; production
+/// screen defaults to [ProjectingAlertsHubRepository] when unbound.
+AlertsHubRepository stage1AlertsHubRepository = InMemoryAlertsHubRepository();
+
+void rebindStage1AlertsHubRepository(AlertsHubRepository repository) {
+  stage1AlertsHubRepository = repository;
+}

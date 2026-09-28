@@ -8,6 +8,8 @@ import 'package:go_router/go_router.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/identity/identity_runtime.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n12_devices/device_health_detail_screen.dart';
 import 'package:family_os/features/n12_devices/device_health_list_screen.dart';
@@ -77,6 +79,18 @@ void main() {
     expect(find.byKey(SettingsHubKeys.motherShareRow), findsOneWidget);
     expect(find.byKey(SettingsHubKeys.brainRow), findsOneWidget);
     expect(find.byKey(SettingsHubKeys.billingRow), findsOneWidget);
+    // Father control desk catalog (global settings index).
+    expect(find.byKey(SettingsHubKeys.navRow('SCR-FAT-027')), findsOneWidget);
+    expect(find.byKey(SettingsHubKeys.navRow('SCR-FAT-030')), findsOneWidget);
+    expect(find.byKey(SettingsHubKeys.navRow('SCR-FAT-028')), findsOneWidget);
+    expect(find.byKey(SettingsHubKeys.navRow('SCR-FAT-079')), findsOneWidget);
+    expect(find.byKey(SettingsHubKeys.navRow('SCR-FAT-059')), findsOneWidget);
+    expect(find.byKey(SettingsHubKeys.navRow('SCR-FAT-060')), findsOneWidget);
+    expect(find.byKey(SettingsHubKeys.navRow('SCR-FAT-058')), findsOneWidget);
+    expect(find.byKey(SettingsHubKeys.navRow('SCR-FAT-061')), findsOneWidget);
+    expect(find.byKey(SettingsHubKeys.emergencySection), findsOneWidget);
+    expect(find.byKey(SettingsHubKeys.privacySection), findsOneWidget);
+    expect(find.byKey(SettingsHubKeys.generalSection), findsOneWidget);
   });
 
   testWidgets('SCR-FAT-025 child lean', (tester) async {
@@ -156,17 +170,20 @@ void main() {
       addTearDown(router.dispose);
 
       await tester.pumpWidget(
-        MaterialApp.router(
-          theme: buildFamilyTheme(),
-          locale: const Locale('ar'),
-          supportedLocales: AppLocalizations.supportedLocales,
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          routerConfig: router,
+        CurrentIdentity(
+          runtime: createStage1IdentityRuntime(),
+          child: MaterialApp.router(
+            theme: buildFamilyTheme(),
+            locale: const Locale('ar'),
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            routerConfig: router,
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -197,6 +214,49 @@ void main() {
       expect(seam.devices.first.level, DeviceHealthLevel.healthy);
     },
   );
+
+  testWidgets('SCR-FAT-025 empty devices → AppEmptyState', (tester) async {
+    await tester.pumpWidget(
+      _app(
+        child: SettingsHubScreen(
+          roleOverride: AppRole.father,
+          onSos: () {},
+          healthSeam: FakeDeviceHealthSeam(initial: const []),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(DeviceHealthListKeys.empty), findsOneWidget);
+    expect(find.byKey(DeviceHealthListKeys.deviceCard('dev_a')), findsNothing);
+  });
+
+  testWidgets('SCR-FAT-025 without Identity → empty (no fam_stage1 leak)', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildFamilyTheme(),
+        locale: const Locale('ar'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: SettingsHubScreen(
+          roleOverride: AppRole.father,
+          onSos: () {},
+          healthSeam: FakeDeviceHealthSeam.atRiskBattery(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(DeviceHealthListKeys.empty), findsOneWidget);
+    expect(find.byKey(DeviceHealthListKeys.deviceCard('dev_ac')), findsNothing);
+  });
 
   test('Rule 23 — no planted names in settings hub / devices sources', () {
     final files = [
@@ -233,16 +293,19 @@ void main() {
 }
 
 Widget _app({required Widget child}) {
-  return MaterialApp(
-    theme: buildFamilyTheme(),
-    locale: const Locale('ar'),
-    supportedLocales: AppLocalizations.supportedLocales,
-    localizationsDelegates: const [
-      AppLocalizations.delegate,
-      GlobalMaterialLocalizations.delegate,
-      GlobalWidgetsLocalizations.delegate,
-      GlobalCupertinoLocalizations.delegate,
-    ],
-    home: child,
+  return CurrentIdentity(
+    runtime: createStage1IdentityRuntime(),
+    child: MaterialApp(
+      theme: buildFamilyTheme(),
+      locale: const Locale('ar'),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      home: child,
+    ),
   );
 }

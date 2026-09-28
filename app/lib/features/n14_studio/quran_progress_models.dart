@@ -50,6 +50,7 @@ final class QuranProgressSnapshot {
     int? rewardMinutes,
     QuranRecitationStatus? recitationStatus,
     bool? playingAudio,
+    bool? offlineReady,
   }) {
     return QuranProgressSnapshot(
       childNameKey: childNameKey,
@@ -60,7 +61,7 @@ final class QuranProgressSnapshot {
       reciterKey: reciterKey ?? this.reciterKey,
       streakDays: streakDays,
       rewardMinutes: rewardMinutes ?? this.rewardMinutes,
-      offlineReady: offlineReady,
+      offlineReady: offlineReady ?? this.offlineReady,
       audioSizeKey: audioSizeKey,
       recitationStatus: recitationStatus ?? this.recitationStatus,
       playingAudio: playingAudio ?? this.playingAudio,

@@ -41,17 +41,25 @@ abstract class AdultInviteRepository {
 
 final class InMemoryAdultInviteRepository implements AdultInviteRepository {
   InMemoryAdultInviteRepository({
-    required IdentityRuntime runtime,
+    IdentityRuntime? runtime,
+    IdentityRuntime Function()? runtimeProvider,
     DateTime Function()? nowProvider,
     this.online = true,
-  }) : _runtime = runtime,
+  }) : assert(
+         runtime != null || runtimeProvider != null,
+         'runtime or runtimeProvider required',
+       ),
+       _runtimeProvider =
+           runtimeProvider ?? (() => runtime!),
        _nowProvider = nowProvider ?? _defaultNow;
 
-  final IdentityRuntime _runtime;
+  final IdentityRuntime Function() _runtimeProvider;
   final DateTime Function() _nowProvider;
   final List<AdultInvite> _invites = <AdultInvite>[];
   final List<InviteAuditEntry> _audit = <InviteAuditEntry>[];
   var _sequence = 0;
+
+  IdentityRuntime get _runtime => _runtimeProvider();
 
   /// High-risk invite mutations are online-authority semantics, even on mocks.
   bool online;
@@ -362,4 +370,6 @@ final class InMemoryAdultInviteRepository implements AdultInviteRepository {
 DateTime _defaultNow() => DateTime.now().toUtc();
 
 final InMemoryAdultInviteRepository stage1AdultInviteRepository =
-    InMemoryAdultInviteRepository(runtime: stage1IdentityRuntime);
+    InMemoryAdultInviteRepository(
+  runtimeProvider: () => stage1IdentityRuntime,
+);

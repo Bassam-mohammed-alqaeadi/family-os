@@ -23,6 +23,8 @@ void main() {
 
     expect(find.byKey(ChildConversationKeys.body), findsOneWidget);
     expect(find.byKey(ChildConversationKeys.neverLockBanner), findsOneWidget);
+    // Locale is ar — honesty uses glossary "تحديث قادم".
+    expect(find.textContaining('تحديث قادم'), findsOneWidget);
     expect(find.byKey(ChildConversationKeys.incomingCall), findsOneWidget);
     expect(find.byKey(ChildConversationKeys.bubble('cf1')), findsOneWidget);
   });

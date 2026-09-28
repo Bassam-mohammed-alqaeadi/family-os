@@ -1,6 +1,8 @@
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/minutes.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
 import 'package:family_os/features/n17_child_learn/child_quran_ward_models.dart';
+import 'package:family_os/features/quran/quran_local_bridge.dart';
 import 'package:family_os/features/quran/quran_recitation_models.dart';
 import 'package:family_os/features/quran/quran_recitation_repository.dart';
 import 'package:family_os/features/quran/quran_ward_plan_repository.dart';
@@ -18,16 +20,25 @@ final class InMemoryChildQuranWardRepository
     QuranWardPlanRepository? plans,
     QuranRecitationRepository? recitations,
     ChildId? childId,
-  }) : _snap = seed ?? childQuranWardPrototypeFixture(),
+    QuranLocalBridge? bridge,
+  }) : _snap = seed ?? childQuranWardEmptyFixture(),
        _plans = plans ?? stage1QuranWardPlanRepository,
        _recitations = recitations ?? stage1QuranRecitationRepository,
-       _childId = childId ?? ChildId('child_a');
+       _explicitChildId = childId,
+       _bridgeOverride = bridge;
 
   ChildQuranWardSnapshot _snap;
   final QuranWardPlanRepository _plans;
   final QuranRecitationRepository _recitations;
-  final ChildId _childId;
+  final ChildId? _explicitChildId;
+
+  /// Null explicit id → the child using this device (family context).
+  ChildId get _childId => resolveActiveChildId(explicit: _explicitChildId);
+  final QuranLocalBridge? _bridgeOverride;
   Future<void> Function()? loadGate;
+
+  QuranLocalBridge get _bridge =>
+      _bridgeOverride ?? stage1QuranLocalBridge;
 
   ChildWardRecitationStatus _statusFromLive(QuranRecitationSubmission? live) {
     if (live == null) return _snap.recitationStatus;
@@ -45,6 +56,13 @@ final class InMemoryChildQuranWardRepository
     final plan = await _plans.latestForChild(_childId);
     final live = await _recitations.latestForChild(_childId);
     final status = _statusFromLive(live);
+    // P15-QUR-007 — consume Local father whisper into gift count.
+    var gifts = _snap.giftCount;
+    if (_bridge.consumeWhisper() != null) {
+      gifts += 1;
+      _snap = _snap.copyWith(giftCount: gifts);
+    }
+    final offline = _bridge.offlineReady || _snap.offlineReady;
     if (plan == null) {
       return ChildQuranWardSnapshot(
         hasWard: _snap.hasWard,
@@ -53,8 +71,8 @@ final class InMemoryChildQuranWardRepository
         toAyah: _snap.toAyah,
         reciterKey: _snap.reciterKey,
         rewardMinutes: _snap.rewardMinutes,
-        offlineReady: _snap.offlineReady,
-        giftCount: _snap.giftCount,
+        offlineReady: offline,
+        giftCount: gifts,
         ayahKey: _snap.ayahKey,
         recitationStatus: status,
         playing: _snap.playing,
@@ -68,8 +86,8 @@ final class InMemoryChildQuranWardRepository
       toAyah: plan.toAyah,
       reciterKey: plan.reciterKey,
       rewardMinutes: plan.rewardMinutes.inMinutes,
-      offlineReady: _snap.offlineReady,
-      giftCount: _snap.giftCount,
+      offlineReady: offline,
+      giftCount: gifts,
       ayahKey: plan.ayahKey,
       recitationStatus: status,
       playing: _snap.playing,

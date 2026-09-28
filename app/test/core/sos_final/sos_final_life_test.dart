@@ -33,8 +33,8 @@ void main() {
     await db.close();
   });
 
-  test('schema v9 exposes sos_final tables', () async {
-    expect(FamilyLocalSchema.currentVersion, 10);
+  test('schema v11 exposes sos_final tables', () async {
+    expect(FamilyLocalSchema.currentVersion, 12);
     await db.insert('sos_incident', {
       'id': 'x',
       'family_id': family.value,

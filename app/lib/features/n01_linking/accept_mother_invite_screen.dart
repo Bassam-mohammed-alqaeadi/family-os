@@ -5,10 +5,12 @@ import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/components/app_card.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
+import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/components/row_tile.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/identity_ids.dart';
+import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/identity/adult_invite_repository.dart';
 import 'package:family_os/core/identity/identity_models.dart';
@@ -32,6 +34,7 @@ class AcceptMotherInviteScreen extends StatelessWidget {
     this.inviteTokenId,
     this.repository,
     this.roleController,
+    this.acceptAsAccountId,
     this.onAccept,
     this.onDecline,
   });
@@ -53,6 +56,9 @@ class AcceptMotherInviteScreen extends StatelessWidget {
   /// Optional override; when null, uses [CurrentRole.maybeNotifierOf].
   final RoleController? roleController;
 
+  /// Test seam — accepting account (defaults to CurrentIdentity.account).
+  final AccountId? acceptAsAccountId;
+
   /// Test seam — when null, sets mother role, toast, `/scr-fat-028`.
   final VoidCallback? onAccept;
 
@@ -69,20 +75,37 @@ class AcceptMotherInviteScreen extends StatelessWidget {
     return trimmed.isEmpty ? l10n.acceptMotherInviteFamilyFallback : trimmed;
   }
 
-  String _levelName(AppLocalizations l10n) {
-    return switch (grantedLevel) {
+  String _levelName(AppLocalizations l10n, MotherInviteLevel level) {
+    return switch (level) {
       MotherInviteLevel.observer => l10n.inviteMotherLevelObserverTitle,
       MotherInviteLevel.partner => l10n.inviteMotherLevelPartnerTitle,
       MotherInviteLevel.full => l10n.inviteMotherLevelFullTitle,
     };
   }
 
-  String _levelMeaning(AppLocalizations l10n) {
-    return switch (grantedLevel) {
+  String _levelMeaning(AppLocalizations l10n, MotherInviteLevel level) {
+    return switch (level) {
       MotherInviteLevel.observer => l10n.acceptMotherInviteLevelObserverMeaning,
       MotherInviteLevel.partner => l10n.acceptMotherInviteLevelPartnerMeaning,
       MotherInviteLevel.full => l10n.acceptMotherInviteLevelFullMeaning,
     };
+  }
+
+  MotherInviteLevel _effectiveLevel() {
+    final token = inviteTokenId?.trim();
+    if (token != null && token.isNotEmpty) {
+      final invite = (repository ?? stage1AdultInviteRepository).findByToken(
+        InviteTokenId(token),
+      );
+      if (invite != null) {
+        return switch (invite.level) {
+          MotherLevel.observer => MotherInviteLevel.observer,
+          MotherLevel.partner => MotherInviteLevel.partner,
+          MotherLevel.full => MotherInviteLevel.full,
+        };
+      }
+    }
+    return grantedLevel;
   }
 
   void _accept(BuildContext context) {
@@ -92,11 +115,19 @@ class AcceptMotherInviteScreen extends StatelessWidget {
     }
 
     final l10n = AppLocalizations.of(context);
-    final levelName = _levelName(l10n);
+    final level = _effectiveLevel();
+    final levelName = _levelName(l10n, level);
     final runtime = CurrentIdentity.maybeOf(context);
     final repo = repository ?? stage1AdultInviteRepository;
     final token = inviteTokenId?.trim();
-    if (runtime != null && token != null && token.isNotEmpty) {
+    final hasToken = token != null && token.isNotEmpty;
+
+    // Token path requires Identity + active invite — fail closed otherwise.
+    if (hasToken) {
+      if (runtime == null) {
+        AppToast.show(context, message: l10n.settingsPersistError);
+        return;
+      }
       final invite = repo.findByToken(InviteTokenId(token));
       if (invite == null ||
           invite.stateAt(DateTime.now().toUtc()) !=
@@ -107,13 +138,19 @@ class AcceptMotherInviteScreen extends StatelessWidget {
         );
         return;
       }
-      repo.acceptInvite(
-        tokenId: invite.tokenId,
-        acceptedByAccountId: runtime.account.id,
-        actorMemberId: runtime.activeMembership.id,
-      );
-      runtime.setLegacyRoleFallback(AppRole.mother);
+      try {
+        repo.acceptInvite(
+          tokenId: invite.tokenId,
+          acceptedByAccountId: runtime.account.id,
+          actorMemberId: invite.createdByMemberId,
+        );
+        runtime.setLegacyRoleFallback(AppRole.mother);
+      } on InviteMutationDenied {
+        AppToast.show(context, message: l10n.settingsPersistError);
+        return;
+      }
     }
+
     final notifier = roleController ?? CurrentRole.maybeNotifierOf(context);
     if (notifier != null) {
       notifier.value = AppRole.mother;
@@ -170,7 +207,8 @@ class AcceptMotherInviteScreen extends StatelessWidget {
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final inviter = _resolveInviter(l10n);
     final family = _resolveFamily(l10n);
-    final levelName = _levelName(l10n);
+    final level = _effectiveLevel();
+    final levelName = _levelName(l10n, level);
     final inviteStatus = _inviteStateLabel(l10n);
     final lifecycle = _inviteLifecycleState();
     final canAccept =
@@ -256,7 +294,7 @@ class AcceptMotherInviteScreen extends StatelessWidget {
                       style: const TextStyle(fontSize: 18),
                     ),
                     title: l10n.acceptMotherInviteLevelTitle(levelName),
-                    subtitle: _levelMeaning(l10n),
+                    subtitle: _levelMeaning(l10n, level),
                   ),
                   RowTile(
                     key: const Key('accept_mother_invite_rights_row'),
@@ -270,6 +308,12 @@ class AcceptMotherInviteScreen extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
+            const SizedBox(height: 10),
+            BannerNote(
+              key: const Key('accept_mother_invite_local_honesty'),
+              variant: BannerVariant.t,
+              message: l10n.acceptMotherInviteLocalHonestyBanner,
             ),
             if (inviteTokenId?.trim().isNotEmpty ?? false) ...[
               const SizedBox(height: 8),

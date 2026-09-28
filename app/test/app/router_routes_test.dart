@@ -92,12 +92,18 @@ void main() {
     expect(namedScr, activeCsvIds.toSet());
     expect(namedScr, isNot(contains('SCR-FAT-039')));
 
-    // Gallery remains; Identity (sys3-*) may add unnamed system routes.
+    // Gallery + DEV SCR catalog remain; Identity (sys3-*) may add unnamed system routes.
     expect(
       goRoutes.any((r) => r.name == 'gallery' || r.path == '/gallery'),
       isTrue,
     );
-    expect(goRoutes.length, greaterThanOrEqualTo(activeCsvIds.length + 1));
+    expect(
+      goRoutes.any(
+        (r) => r.name == 'dev-screens' || r.path == '/dev-screens',
+      ),
+      isTrue,
+    );
+    expect(goRoutes.length, greaterThanOrEqualTo(activeCsvIds.length + 2));
 
     final named = goRoutes.map((r) => r.name);
     expect(named, isNot(contains('SCR-FAT-039')));

@@ -177,27 +177,36 @@ class _LinkSuccessScreenState extends State<LinkSuccessScreen> {
                 child: SizedBox(
                   key: const Key('link_success_mini_map'),
                   height: 170,
-                  child: Stack(
-                    children: [
-                      Positioned.fill(
-                        child: ExcludeSemantics(
-                          child: CustomPaint(
-                            painter: _MiniMapPainter(colors: colors),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final pinLeft = constraints.maxWidth * (1 - 140 / 360);
+                      final pinTop = constraints.maxHeight * (52 / 160);
+                      return Stack(
+                        children: [
+                          Positioned.fill(
+                            child: ExcludeSemantics(
+                              child: CustomPaint(
+                                painter: _MiniMapPainter(colors: colors),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      Positioned(
-                        top: 52,
-                        right: 140,
-                        child: ExcludeSemantics(
-                          child: _MapPin(
-                            emoji: '🦁',
-                            gradient: gradients.grad,
-                            shadow: shadows.shBrand,
+                          Positioned(
+                            top: pinTop,
+                            left: pinLeft.clamp(
+                              4.0,
+                              constraints.maxWidth - 48,
+                            ),
+                            child: ExcludeSemantics(
+                              child: _MapPin(
+                                emoji: '🦁',
+                                gradient: gradients.grad,
+                                shadow: shadows.shBrand,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    ],
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),

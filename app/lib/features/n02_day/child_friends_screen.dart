@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/app/role_guard.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
+import 'package:family_os/core/design/components/app_error_state.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
@@ -11,6 +12,7 @@ import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n02_day/child_friends_models.dart';
 import 'package:family_os/features/n02_day/child_friends_repository.dart';
@@ -19,9 +21,11 @@ abstract final class ChildFriendsKeys {
   static const screen = Key('child_friends_screen');
   static const loading = Key('child_friends_loading');
   static const empty = Key('child_friends_empty');
+  static const error = Key('child_friends_error');
   static const body = Key('child_friends_body');
   static const addCta = Key('child_friends_add');
   static const parentLean = Key('child_friends_parent_lean');
+  static const localHonesty = Key('child_friends_local_honesty');
   static const sosIconCta = Key('child_friends_sos_icon');
 
   static Key friend(String id) => Key('child_friends_row_$id');
@@ -29,7 +33,7 @@ abstract final class ChildFriendsKeys {
   static Key call(String id) => Key('child_friends_call_$id');
 }
 
-/// SCR-CHD-030 — أصدقائي (approved circle · father gate).
+/// SCR-CHD-030 — أصدقائي (approved circle · father gate · outer-circle bind).
 class ChildFriendsScreen extends StatefulWidget {
   const ChildFriendsScreen({
     super.key,
@@ -55,6 +59,7 @@ class _ChildFriendsScreenState extends State<ChildFriendsScreen> {
   late final SosFireService _sos;
   var _sosBusy = false;
   var _loading = true;
+  var _loadFailed = false;
   ChildFriendsSnapshot _snap = const ChildFriendsSnapshot();
 
   AppRole get _role {
@@ -77,13 +82,24 @@ class _ChildFriendsScreenState extends State<ChildFriendsScreen> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
-    final snap = await _repo.load();
-    if (!mounted) return;
     setState(() {
-      _snap = snap;
-      _loading = false;
+      _loading = true;
+      _loadFailed = false;
     });
+    try {
+      final snap = await _repo.load();
+      if (!mounted) return;
+      setState(() {
+        _snap = snap;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadFailed = true;
+      });
+    }
   }
 
   Future<void> _openSos() async {
@@ -93,7 +109,7 @@ class _ChildFriendsScreenState extends State<ChildFriendsScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'self');
+    await childSosSenderOf(context).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-CHD-005'));
@@ -192,6 +208,13 @@ class _ChildFriendsScreenState extends State<ChildFriendsScreen> {
         ),
       );
     }
+    if (_loadFailed) {
+      return AppErrorState(
+        key: ChildFriendsKeys.error,
+        kind: AppErrorKind.network,
+        onRetry: _load,
+      );
+    }
     if (_snap.isEmpty) {
       return AppEmptyState(
         key: ChildFriendsKeys.empty,
@@ -210,6 +233,12 @@ class _ChildFriendsScreenState extends State<ChildFriendsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          BannerNote(
+            key: ChildFriendsKeys.localHonesty,
+            variant: BannerVariant.t,
+            message: l10n.honestyChildGentleLine,
+          ),
+          const SizedBox(height: 10),
           DecoratedBox(
             decoration: BoxDecoration(
               color: colors.surface,
@@ -287,7 +316,7 @@ class _ChildFriendsScreenState extends State<ChildFriendsScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: DecoratedBox(
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFF9E6),
+                          color: colors.amber100,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Padding(

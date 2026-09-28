@@ -6,7 +6,7 @@ abstract class PeerCompareRepository {
 
 final class InMemoryPeerCompareRepository implements PeerCompareRepository {
   InMemoryPeerCompareRepository({PeerCompareSnapshot? seed})
-    : _snap = seed ?? peerComparePrototypeFixture();
+      : _snap = seed ?? peerCompareEmptyFixture();
 
   PeerCompareSnapshot _snap;
   Future<void> Function()? loadGate;
@@ -26,8 +26,14 @@ final class InMemoryPeerCompareRepository implements PeerCompareRepository {
   void seed(PeerCompareSnapshot snap) => _snap = snap;
 }
 
-final InMemoryPeerCompareRepository stage1PeerCompareRepository =
-    InMemoryPeerCompareRepository();
+/// Shared Stage-1 — empty until explicit seed (CE-B2 / CE-G009).
+/// Cohort averages stay MOCK — never present sample age/metrics as live.
+PeerCompareRepository stage1PeerCompareRepository =
+    InMemoryPeerCompareRepository(seed: peerCompareEmptyFixture());
+
+void rebindStage1PeerCompareRepository(PeerCompareRepository repository) {
+  stage1PeerCompareRepository = repository;
+}
 
 PeerCompareSnapshot peerCompareEmptyFixture() => const PeerCompareSnapshot();
 
@@ -44,6 +50,7 @@ PeerCompareSnapshot peerCompareOneFixture() {
   );
 }
 
+/// LOCAL_DEMO / tests only — not production stage1 default.
 PeerCompareSnapshot peerComparePrototypeFixture() {
   return const PeerCompareSnapshot(
     hasFamily: true,

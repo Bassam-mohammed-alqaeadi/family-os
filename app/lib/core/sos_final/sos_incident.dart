@@ -6,10 +6,10 @@ import 'package:family_os/core/policy/sos_alert.dart';
 
 import 'sos_evidence_policy.dart';
 
-/// Child hold trigger only — break-glass is never a create source (RD-02).
-enum SosTriggerSource { hold }
+/// Child hold or parent-raised alert — break-glass is never a create source (RD-02).
+enum SosTriggerSource { hold, parentAlert }
 
-/// Durable SOS incident (schema v9) — FS-006 owns lifecycle.
+/// Durable SOS incident (schema v11) — FS-006 owns lifecycle.
 @immutable
 final class SosIncident {
   const SosIncident({
@@ -33,6 +33,7 @@ final class SosIncident {
     this.childDisplayName = '',
     this.childEmoji = '',
     this.locationLabel = '',
+    this.raisedByActorId,
   });
 
   final String id;
@@ -56,6 +57,9 @@ final class SosIncident {
   final String childEmoji;
   final String locationLabel;
 
+  /// Who pressed SOS (parent membership or child id). OD-13 / D7.
+  final String? raisedByActorId;
+
   bool get isOpen =>
       status == SosAlertStatus.active ||
       status == SosAlertStatus.acknowledged ||
@@ -76,6 +80,7 @@ final class SosIncident {
     int? batteryPercent,
     String? deliveriesJson,
     String? locationLabel,
+    String? raisedByActorId,
   }) {
     return SosIncident(
       id: id,
@@ -100,6 +105,7 @@ final class SosIncident {
       childDisplayName: childDisplayName,
       childEmoji: childEmoji,
       locationLabel: locationLabel ?? this.locationLabel,
+      raisedByActorId: raisedByActorId ?? this.raisedByActorId,
     );
   }
 
@@ -125,6 +131,7 @@ final class SosIncident {
         'child_display_name': childDisplayName,
         'child_emoji': childEmoji,
         'location_label': locationLabel,
+        'raised_by_actor_id': raisedByActorId,
       };
 
   factory SosIncident.fromRow(Map<String, Object?> row) {
@@ -160,6 +167,7 @@ final class SosIncident {
       childDisplayName: (row['child_display_name'] as String?) ?? '',
       childEmoji: (row['child_emoji'] as String?) ?? '',
       locationLabel: (row['location_label'] as String?) ?? '',
+      raisedByActorId: row['raised_by_actor_id'] as String?,
     );
   }
 
@@ -174,6 +182,8 @@ final class SosIncident {
     required FamilyId familyId,
     required ChildId childId,
     required DateTime triggeredAt,
+    SosTriggerSource triggerSource = SosTriggerSource.hold,
+    String? raisedByActorId,
     SosLocationClass locationClass = SosLocationClass.acquiring,
     SosConnectionClass connectionClass = SosConnectionClass.online,
     int batteryPercent = 0,
@@ -189,7 +199,8 @@ final class SosIncident {
       childId: childId,
       triggeredAt: triggeredAt.toUtc(),
       status: SosAlertStatus.active,
-      triggerSource: SosTriggerSource.hold,
+      triggerSource: triggerSource,
+      raisedByActorId: raisedByActorId,
       locationClass: locationClass,
       connectionClass: connectionClass,
       batteryPercent: batteryPercent,

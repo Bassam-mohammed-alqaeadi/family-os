@@ -36,11 +36,13 @@ void main() {
     );
     await _pump(tester, repository: repo);
     expect(find.byKey(WeeklyReportKeys.body), findsOneWidget);
+    expect(find.byKey(WeeklyReportKeys.emailBanner), findsOneWidget);
+    expect(find.textContaining('upcoming update'), findsOneWidget);
     expect(find.byKey(WeeklyReportKeys.recommendCard), findsOneWidget);
     await tester.ensureVisible(find.byKey(WeeklyReportKeys.applyCta));
     await tester.tap(find.byKey(WeeklyReportKeys.applyCta));
     await tester.pump();
-    expect(find.textContaining('Sleep schedule adjusted'), findsOneWidget);
+    expect(find.textContaining('Suggestion accepted locally'), findsOneWidget);
     AppToast.dismiss();
     await tester.pumpAndSettle();
     expect(find.textContaining('Suggestion applied'), findsOneWidget);

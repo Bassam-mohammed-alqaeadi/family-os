@@ -55,7 +55,7 @@ void main() {
     expect(find.byKey(CallHistoryKeys.row('log_child_a')), findsOneWidget);
     expect(find.byKey(CallHistoryKeys.redial('log_child_a')), findsOneWidget);
     expect(find.byKey(CallHistoryKeys.row('log_child_b_missed')), findsNothing);
-    expect(find.textContaining('ابن ١'), findsWidgets);
+    expect(find.textContaining('ابن 1'), findsWidgets);
   });
 
   testWidgets('SCR-FAT-024 many + directions + mother OK', (tester) async {
@@ -136,7 +136,7 @@ void main() {
     final blank = CallLogEntry(
       id: 'log_blank',
       callId: '  ',
-      peerLabel: 'ابن ١',
+      peerLabel: 'ابن 1',
       emoji: '🦁',
       avatarColor: 0xFF7C5CE6,
       direction: CallLogDirection.outgoing,
@@ -239,8 +239,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('ابن ١'), findsWidgets);
-    expect(find.textContaining('شريكة ١'), findsWidgets);
+    expect(find.textContaining('ابن 1'), findsWidgets);
+    expect(find.textContaining('شريكة 1'), findsWidgets);
     for (final name in const ['خالد', 'نورة', 'سعد', 'نوال', 'عبدالله']) {
       expect(find.textContaining(name), findsNothing);
     }

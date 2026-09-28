@@ -26,7 +26,7 @@ void main() {
       expect(c.bg, const Color(0xFFF5F6FA));
       expect(c.surface, const Color(0xFFFFFFFF));
       expect(c.ink, const Color(0xFF1A1D2E));
-      expect(c.ink2, const Color(0xFF8A8FA3));
+      expect(c.ink2, const Color(0xFF6B7082)); // VX-B4 · OD-03
       expect(c.border, const Color(0xFFEDEEF5));
     });
   });

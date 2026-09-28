@@ -7,7 +7,7 @@ abstract class AdvisorVoiceRepository {
 
 final class InMemoryAdvisorVoiceRepository implements AdvisorVoiceRepository {
   InMemoryAdvisorVoiceRepository({AdvisorVoiceSnapshot? seed})
-    : _snap = seed ?? advisorVoicePrototypeFixture();
+    : _snap = seed ?? advisorVoiceEmptyFixture();
 
   AdvisorVoiceSnapshot _snap;
   Future<void> Function()? loadGate;

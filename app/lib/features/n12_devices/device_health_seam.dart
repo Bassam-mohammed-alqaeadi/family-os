@@ -151,8 +151,13 @@ abstract class DeviceHealthSeam {
   Future<void> recheck(String deviceId);
 }
 
-/// Stage-1 shared fake — list + detail share one stream bus.
-final FakeDeviceHealthSeam stage1DeviceHealthSeam = FakeDeviceHealthSeam.demo();
+/// Stage-1 shared seam — empty by default (LDR-B6 / Owner 1C).
+/// Tests inject [FakeDeviceHealthSeam.demo] / [atRiskBattery] explicitly.
+FakeDeviceHealthSeam stage1DeviceHealthSeam = FakeDeviceHealthSeam();
+
+void rebindStage1DeviceHealthSeam(FakeDeviceHealthSeam seam) {
+  stage1DeviceHealthSeam = seam;
+}
 
 /// Controllable fake for Stage-1 / widget tests.
 class FakeDeviceHealthSeam implements DeviceHealthSeam {

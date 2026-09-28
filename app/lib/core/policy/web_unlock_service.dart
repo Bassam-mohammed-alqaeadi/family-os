@@ -29,12 +29,30 @@ final class WebUnlockInvalidUrlException implements Exception {
 }
 
 /// Simple audit append list (SET-006 Stage-1 — no Drift).
+///
+/// EVT-01-B: optional [journalHook] soft-enqueues to Local Event Journal
+/// (enqueue ≠ remote delivery). In-memory [entries] remain for same-process UI.
 final class AuditAppend {
   final List<String> entries = [];
 
-  void add(String entry) => entries.add(entry);
+  /// Soft journal bridge — never throws to callers.
+  void Function(String entry)? journalHook;
 
-  void clear() => entries.clear();
+  void add(String entry) {
+    entries.add(entry);
+    final hook = journalHook;
+    if (hook != null) {
+      try {
+        hook(entry);
+      } catch (_) {
+        // Soft-fail — audit list still recorded in-process.
+      }
+    }
+  }
+
+  void clear() {
+    entries.clear();
+  }
 }
 
 /// Same-process bus so child UI can toast when a decision arrives (P12).

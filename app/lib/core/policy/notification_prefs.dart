@@ -28,7 +28,7 @@ final class ForbiddenSosMuteFieldException implements Exception {
       'ForbiddenSosMuteFieldException: schema forbids "$field" (P-4 / SET-021)';
 }
 
-/// Per-member notification preferences (SET-010 / SET-011).
+/// Per-member notification preferences (SET-010 / SET-011 · SCR-FAT-058).
 ///
 /// Rows are keyed by [memberId] (father owner vs mother parent).
 /// Schema intentionally has **no** muteable SOS field — [sosReceiptAlwaysOn].
@@ -40,39 +40,55 @@ final class NotificationPrefs {
     this.quietStart,
     this.quietEnd,
     this.analysisNoticesEnabled = true,
+    this.childRequestsEnabled = true,
+    this.summaryDigestEnabled = true,
+    this.eveningDigestEnabled = true,
+    this.eveningDigestTime,
   });
 
-  /// Defaults: quiet hours off; analysis notices on (R-3); SOS always on.
+  /// Defaults: quiet hours off; important/reassurance on; SOS always on.
   factory NotificationPrefs.defaults({required String memberId}) =>
-      NotificationPrefs(memberId: memberId);
+      NotificationPrefs(
+        memberId: memberId,
+        eveningDigestTime: defaultEveningDigest,
+      );
 
   final String memberId;
   final bool quietHoursEnabled;
   final TimeOfDay? quietStart;
   final TimeOfDay? quietEnd;
 
-  /// R-3 / `S-AIC-029` analysis notices (non-critical). Default on; per-member.
+  /// Important lane — Advisor / analysis notices (non-critical). Default on.
   final bool analysisNoticesEnabled;
 
-  /// Doc 20 / SET-011 / SET-021 — SOS receipt is ungradeable for guardians (and all members).
+  /// Important lane — child time/app/friend requests. Default on.
+  final bool childRequestsEnabled;
+
+  /// Reassurance lane — one summary instead of repeated soft alerts.
+  final bool summaryDigestEnabled;
+
+  /// Reassurance lane — evening digest preference (local schedule later).
+  final bool eveningDigestEnabled;
+
+  /// Preferred evening digest clock (default 20:30).
+  final TimeOfDay? eveningDigestTime;
+
+  /// Doc 20 / SET-011 / SET-021 — SOS receipt is ungradeable for guardians.
   static const bool sosReceiptAlwaysOn = true;
 
-  /// Stage-1 guardian member ids that must never mute SOS (SET-021).
   static const Set<String> guardianMemberIds = {
     'father',
     'mother',
     'guardian',
   };
 
-  /// Whether [memberId] is a guardian / parent row (SET-021).
   static bool isGuardianMemberId(String memberId) =>
       guardianMemberIds.contains(memberId);
 
-  /// Default quiet window when enabling with unset times (22:00–07:00 overnight).
   static const TimeOfDay defaultQuietStart = TimeOfDay(hour: 22, minute: 0);
   static const TimeOfDay defaultQuietEnd = TimeOfDay(hour: 7, minute: 0);
+  static const TimeOfDay defaultEveningDigest = TimeOfDay(hour: 20, minute: 30);
 
-  /// Stage-1 member ids from [AppRole]-like names.
   static String memberIdForRoleName(String roleName) {
     switch (roleName) {
       case 'mother':
@@ -87,21 +103,17 @@ final class NotificationPrefs {
     }
   }
 
-  /// Quiet hours apply only to [NotificationTier.nonCritical] (P-4).
   static bool quietHoursAppliesTo(NotificationTier tier) =>
       tier == NotificationTier.nonCritical;
 
-  /// Tiers that quiet-hours prefs may filter (excludes critical).
   static Iterable<NotificationTier> filterableTiers() =>
       NotificationTier.values.where(quietHoursAppliesTo);
 
-  /// Minutes from midnight helpers (reuse schedule encoding).
   static int? toMinutes(TimeOfDay? tod) => ScheduleWindow.toMinutes(tod);
 
   static TimeOfDay? fromMinutes(int? minutes) =>
       ScheduleWindow.fromMinutes(minutes);
 
-  /// Valid when disabled, or when both ends are set and not equal.
   bool get isValid {
     if (!quietHoursEnabled) return true;
     final s = toMinutes(quietStart);
@@ -110,23 +122,17 @@ final class NotificationPrefs {
     return s != e;
   }
 
-  /// Whether [now] falls inside the enabled quiet window.
-  ///
-  /// Supports overnight windows (start > end), e.g. 22:00–07:00.
   bool isInQuietWindow(TimeOfDay now) {
     if (!quietHoursEnabled || !isValid) return false;
     final n = toMinutes(now)!;
     final s = toMinutes(quietStart)!;
     final e = toMinutes(quietEnd)!;
     if (s < e) {
-      // Same-day window: [start, end).
       return n >= s && n < e;
     }
-    // Overnight: [start, midnight) ∪ [midnight, end).
     return n >= s || n < e;
   }
 
-  /// Seeds default times when enabling with unset range.
   NotificationPrefs seedOnEnable() {
     if (!quietHoursEnabled) return this;
     if (quietStart != null && quietEnd != null) return this;
@@ -142,8 +148,13 @@ final class NotificationPrefs {
     TimeOfDay? quietStart,
     TimeOfDay? quietEnd,
     bool? analysisNoticesEnabled,
+    bool? childRequestsEnabled,
+    bool? summaryDigestEnabled,
+    bool? eveningDigestEnabled,
+    TimeOfDay? eveningDigestTime,
     bool clearStart = false,
     bool clearEnd = false,
+    bool clearEvening = false,
   }) {
     return NotificationPrefs(
       memberId: memberId ?? this.memberId,
@@ -152,6 +163,12 @@ final class NotificationPrefs {
       quietEnd: clearEnd ? null : (quietEnd ?? this.quietEnd),
       analysisNoticesEnabled:
           analysisNoticesEnabled ?? this.analysisNoticesEnabled,
+      childRequestsEnabled: childRequestsEnabled ?? this.childRequestsEnabled,
+      summaryDigestEnabled: summaryDigestEnabled ?? this.summaryDigestEnabled,
+      eveningDigestEnabled: eveningDigestEnabled ?? this.eveningDigestEnabled,
+      eveningDigestTime: clearEvening
+          ? null
+          : (eveningDigestTime ?? this.eveningDigestTime),
     );
   }
 
@@ -161,11 +178,13 @@ final class NotificationPrefs {
         'quietStartMinutes': toMinutes(quietStart),
         'quietEndMinutes': toMinutes(quietEnd),
         'analysisNoticesEnabled': analysisNoticesEnabled,
-        // Honesty marker only — never a mute control.
+        'childRequestsEnabled': childRequestsEnabled,
+        'summaryDigestEnabled': summaryDigestEnabled,
+        'eveningDigestEnabled': eveningDigestEnabled,
+        'eveningDigestMinutes': toMinutes(eveningDigestTime),
         'sosReceiptAlwaysOn': sosReceiptAlwaysOn,
       };
 
-  /// Parses prefs; rejects any attempt to set SOS-mute fields.
   factory NotificationPrefs.fromJson(Map<String, Object?> json) {
     for (final key in json.keys) {
       if (kForbiddenSosMuteKeys.contains(key)) {
@@ -176,7 +195,6 @@ final class NotificationPrefs {
     if (sosEnabled == false) {
       throw ForbiddenSosMuteFieldException('sos_enabled');
     }
-    // Reject attempts to turn SOS receipt off via honesty key.
     if (json.containsKey('sosReceiptAlwaysOn') &&
         json['sosReceiptAlwaysOn'] == false) {
       throw ForbiddenSosMuteFieldException('sosReceiptAlwaysOn');
@@ -200,6 +218,20 @@ final class NotificationPrefs {
       analysisNoticesEnabled: json['analysisNoticesEnabled'] as bool? ??
           json['analysis_notices_enabled'] as bool? ??
           true,
+      childRequestsEnabled: json['childRequestsEnabled'] as bool? ??
+          json['child_requests_enabled'] as bool? ??
+          true,
+      summaryDigestEnabled: json['summaryDigestEnabled'] as bool? ??
+          json['summary_digest_enabled'] as bool? ??
+          true,
+      eveningDigestEnabled: json['eveningDigestEnabled'] as bool? ??
+          json['evening_digest_enabled'] as bool? ??
+          true,
+      // Preserve null through round-trip; [defaults] seeds evening digest time.
+      eveningDigestTime: fromMinutes(
+        json['eveningDigestMinutes'] as int? ??
+            json['evening_digest_minutes'] as int?,
+      ),
     );
   }
 
@@ -211,7 +243,11 @@ final class NotificationPrefs {
           quietHoursEnabled == other.quietHoursEnabled &&
           toMinutes(quietStart) == toMinutes(other.quietStart) &&
           toMinutes(quietEnd) == toMinutes(other.quietEnd) &&
-          analysisNoticesEnabled == other.analysisNoticesEnabled;
+          analysisNoticesEnabled == other.analysisNoticesEnabled &&
+          childRequestsEnabled == other.childRequestsEnabled &&
+          summaryDigestEnabled == other.summaryDigestEnabled &&
+          eveningDigestEnabled == other.eveningDigestEnabled &&
+          toMinutes(eveningDigestTime) == toMinutes(other.eveningDigestTime);
 
   @override
   int get hashCode => Object.hash(
@@ -220,5 +256,9 @@ final class NotificationPrefs {
         toMinutes(quietStart),
         toMinutes(quietEnd),
         analysisNoticesEnabled,
+        childRequestsEnabled,
+        summaryDigestEnabled,
+        eveningDigestEnabled,
+        toMinutes(eveningDigestTime),
       );
 }

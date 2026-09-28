@@ -15,6 +15,8 @@ import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/fs_foundation/capability_status.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/offline_ai_safety/offline_ai_safety.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/core/screen_camera/screen_camera.dart';
@@ -131,7 +133,8 @@ class _SmartAlertsScreenState extends State<SmartAlertsScreen> {
     return ScreenCameraActor.mother(widget.motherLevel);
   }
 
-  ChildId get _childId => widget.childId ?? ChildId('demo-child');
+  ChildId get _childId =>
+      resolveActiveChildIdOf(context, explicit: widget.childId);
 
   @override
   void initState() {
@@ -269,7 +272,10 @@ class _SmartAlertsScreenState extends State<SmartAlertsScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'self');
+    final sender = _isParent
+        ? parentSosSenderOf(context, viewedChild: _childId)
+        : childSosSenderOf(context, explicit: widget.childId);
+    await sender.fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-CHD-005'));

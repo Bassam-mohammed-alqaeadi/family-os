@@ -27,7 +27,7 @@ void main() {
       for (final id in ['SCR-FAT-056', 'SCR-FAT-057']) {
         expect(
           roleGuardRedirectForPath(screenPath(id), AppRole.mother),
-          roleGuardSafeLocation,
+          roleGuardLandingFor(AppRole.mother),
           reason: id,
         );
       }
@@ -37,7 +37,7 @@ void main() {
       for (final id in ['SCR-FAT-056', 'SCR-FAT-057']) {
         expect(
           roleGuardRedirectForPath(screenPath(id), AppRole.child),
-          roleGuardSafeLocation,
+          roleGuardLandingFor(AppRole.child),
           reason: id,
         );
       }
@@ -54,7 +54,7 @@ void main() {
     });
   });
 
-  testWidgets('mother navigating to plans lands on gallery', (tester) async {
+  testWidgets('mother navigating to plans lands on Today', (tester) async {
     final role = RoleController(AppRole.mother);
     final router = createAppRouter(roleListenable: role);
     addTearDown(() {
@@ -68,11 +68,13 @@ void main() {
     router.go(screenPath('SCR-FAT-056'));
     await tester.pumpAndSettle();
 
-    expect(router.state.uri.path, '/gallery');
+    expect(router.state.uri.path, roleGuardParentHomePath);
     expect(find.byType(PlansScreen), findsNothing);
+    AppToast.dismiss();
+    await tester.pump();
   });
 
-  testWidgets('child navigating to manage lands on gallery', (tester) async {
+  testWidgets('child navigating to manage lands on My Day', (tester) async {
     final role = RoleController(AppRole.child);
     final router = createAppRouter(roleListenable: role);
     addTearDown(() {
@@ -86,8 +88,10 @@ void main() {
     router.go(screenPath('SCR-FAT-057'));
     await tester.pumpAndSettle();
 
-    expect(router.state.uri.path, '/gallery');
+    expect(router.state.uri.path, roleGuardChildHomePath);
     expect(find.byType(ManageSubscriptionScreen), findsNothing);
+    AppToast.dismiss();
+    await tester.pump();
   });
 
   testWidgets('father opens plans with safety banner', (tester) async {

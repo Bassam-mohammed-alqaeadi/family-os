@@ -8,7 +8,7 @@ abstract class FamilyAdvisorHubRepository {
 final class InMemoryFamilyAdvisorHubRepository
     implements FamilyAdvisorHubRepository {
   InMemoryFamilyAdvisorHubRepository({FamilyAdvisorHubSnapshot? seed})
-    : _snap = seed ?? familyAdvisorHubPrototypeFixture();
+    : _snap = seed ?? familyAdvisorHubEmptyFixture();
 
   FamilyAdvisorHubSnapshot _snap;
   Future<void> Function()? loadGate;

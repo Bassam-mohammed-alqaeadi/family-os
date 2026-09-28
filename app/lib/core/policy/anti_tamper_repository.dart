@@ -86,6 +86,9 @@ final class MemoryAntiTamperPrefsStore implements AntiTamperPrefsStore {
 }
 
 /// Stage-1 shared prefs store (survives within process; Rule 25 seam).
+///
+/// LEGACY / RETAINED — production prefers Local KV
+/// ([PrefsMiscLocalPersistence.openAntiTamperRepository]).
 final MemoryAntiTamperPrefsStore stage1AntiTamperPrefsStore =
     MemoryAntiTamperPrefsStore();
 

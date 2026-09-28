@@ -12,9 +12,14 @@ import 'package:family_os/core/design/components/silent_locate_sheet.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/identity_ids.dart';
+import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/fs_foundation/capability_status.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
 import 'package:family_os/features/n02_day/location_map_repository.dart';
@@ -42,6 +47,7 @@ abstract final class LocationMapKeys {
   static const honestyBanner = Key('location_map_honesty');
   static const gpsBanner = Key('location_map_gps_banner');
   static const silentLocateCta = Key('location_map_silent_locate');
+  static Key networkChip(String id) => Key('location_map_network_$id');
   static const sosCta = Key('location_map_sos');
   static const childLean = Key('location_map_child_lean');
 
@@ -194,14 +200,35 @@ class LocationMapScreenState extends State<LocationMapScreen> {
     context.push(path);
   }
 
+  bool get _canInitiateSilentLocate {
+    if (_role == AppRole.father) return true;
+    if (_role == AppRole.mother) {
+      final level = resolveAuthorizationContext(
+        context,
+        fallbackRole: _role,
+      ).motherLevel;
+      // L2: Primary + Partner + Full may initiate; Observer may not.
+      return level != MotherLevel.observer;
+    }
+    return false;
+  }
+
   Future<void> _openSilentLocate(String childId, String label) async {
+    if (!_canInitiateSilentLocate) {
+      if (!mounted) return;
+      AppToast.show(
+        context,
+        message: AppLocalizations.of(context).locationMapSilentLocateDenied,
+      );
+      return;
+    }
     if (widget.onSilentLocate != null) {
       widget.onSilentLocate!(childId);
       return;
     }
     await Stage1LocationRuntime.ensureOpen();
     if (!mounted) return;
-    final family = widget.familyId ?? FamilyId('fam_stage1');
+    final family = widget.familyId ?? resolveActiveFamilyId();
     await SilentLocateSheet.show(
       context,
       childId: childId,
@@ -224,12 +251,13 @@ class LocationMapScreenState extends State<LocationMapScreen> {
     }
     setState(() => _sosBusy = true);
     final fire = widget.sosFire ?? stage1SosFireService;
-    final id =
-        _resolvedChildId ??
-        _snapshot?.focusChildId ??
-        _snapshot?.pins.firstOrNull?.id ??
-        'family';
-    await fire.fire(childId: id);
+    final viewed = childIdFromParam(
+      _resolvedChildId ??
+          _snapshot?.focusChildId ??
+          _snapshot?.pins.firstOrNull?.id,
+    );
+    final sender = sosSenderForRole(context, _role, viewedChild: viewed);
+    await sender.fireThrough(fire);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push('/scr-fat-018');
@@ -475,8 +503,12 @@ class _MapCanvas extends StatelessWidget {
 }
 
 /// Stylized neighborhood canvas (prototype `mapScape`) — tokens only.
+/// VX-B4 · G-12 — fractional layout (no fixed-pixel overflow on 360 dp).
 class _MapScapeBackground extends StatelessWidget {
   const _MapScapeBackground();
+
+  static const _designW = 400.0;
+  static const _designH = 220.0;
 
   @override
   Widget build(BuildContext context) {
@@ -485,106 +517,117 @@ class _MapScapeBackground extends StatelessWidget {
 
     return ColoredBox(
       color: Color.lerp(colors.bg, colors.mint100, 0.35)!,
-      child: Stack(
-        children: [
-          Positioned(
-            left: 14,
-            top: 12,
-            child: _LandmarkBlock(
-              width: 122,
-              height: 66,
-              label: l10n.locationMapLandmarkHome,
-              emoji: '🏠',
-              fill: Color.lerp(colors.border, colors.amber100, 0.4)!,
-            ),
-          ),
-          Positioned(
-            left: 182,
-            top: 10,
-            child: _LandmarkBlock(
-              width: 104,
-              height: 68,
-              label: '',
-              emoji: '',
-              fill: Color.lerp(colors.border, colors.amber100, 0.4)!,
-            ),
-          ),
-          Positioned(
-            left: 322,
-            top: 8,
-            child: _LandmarkBlock(
-              width: 60,
-              height: 72,
-              label: l10n.locationMapLandmarkSchool,
-              emoji: '🏫',
-              fill: Color.lerp(colors.sky, colors.surface, 0.55)!,
-            ),
-          ),
-          Positioned(
-            left: 18,
-            top: 128,
-            child: _LandmarkBlock(
-              width: 94,
-              height: 76,
-              label: l10n.locationMapLandmarkPark,
-              emoji: '🌳',
-              fill: Color.lerp(colors.mint100, colors.mint, 0.15)!,
-              radius: 10,
-            ),
-          ),
-          Positioned(
-            left: 182,
-            top: 126,
-            child: _LandmarkBlock(
-              width: 100,
-              height: 80,
-              label: l10n.locationMapLandmarkClub,
-              emoji: '⚽',
-              fill: Color.lerp(colors.mint100, colors.border, 0.3)!,
-            ),
-          ),
-          Positioned(
-            left: 308,
-            top: 128,
-            child: _LandmarkBlock(
-              width: 74,
-              height: 76,
-              label: l10n.locationMapLandmarkMosque,
-              emoji: '🕌',
-              fill: Color.lerp(colors.amber100, colors.border, 0.35)!,
-            ),
-          ),
-          Positioned(
-            left: 0,
-            top: 90,
-            right: 0,
-            child: ColoredBox(
-              color: colors.surface,
-              child: SizedBox(
-                height: 24,
-                child: Center(
-                  child: Text(
-                    l10n.locationMapLandmarkStreet,
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      color: colors.ink2,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final w = constraints.maxWidth;
+          final h = constraints.maxHeight;
+          double lx(double d) => d / _designW * w;
+          double ty(double d) => d / _designH * h;
+          double dw(double d) => d / _designW * w;
+          double dh(double d) => d / _designH * h;
+
+          return Stack(
+            children: [
+              Positioned(
+                left: lx(14),
+                top: ty(12),
+                child: _LandmarkBlock(
+                  width: dw(122),
+                  height: dh(66),
+                  label: l10n.locationMapLandmarkHome,
+                  emoji: '🏠',
+                  fill: Color.lerp(colors.border, colors.amber100, 0.4)!,
+                ),
+              ),
+              Positioned(
+                left: lx(182),
+                top: ty(10),
+                child: _LandmarkBlock(
+                  width: dw(104),
+                  height: dh(68),
+                  label: '',
+                  emoji: '',
+                  fill: Color.lerp(colors.border, colors.amber100, 0.4)!,
+                ),
+              ),
+              Positioned(
+                left: lx(322),
+                top: ty(8),
+                child: _LandmarkBlock(
+                  width: dw(60),
+                  height: dh(72),
+                  label: l10n.locationMapLandmarkSchool,
+                  emoji: '🏫',
+                  fill: Color.lerp(colors.sky, colors.surface, 0.55)!,
+                ),
+              ),
+              Positioned(
+                left: lx(18),
+                top: ty(128),
+                child: _LandmarkBlock(
+                  width: dw(94),
+                  height: dh(76),
+                  label: l10n.locationMapLandmarkPark,
+                  emoji: '🌳',
+                  fill: Color.lerp(colors.mint100, colors.mint, 0.15)!,
+                  radius: 10,
+                ),
+              ),
+              Positioned(
+                left: lx(182),
+                top: ty(126),
+                child: _LandmarkBlock(
+                  width: dw(100),
+                  height: dh(80),
+                  label: l10n.locationMapLandmarkClub,
+                  emoji: '⚽',
+                  fill: Color.lerp(colors.mint100, colors.border, 0.3)!,
+                ),
+              ),
+              Positioned(
+                left: lx(308),
+                top: ty(128),
+                child: _LandmarkBlock(
+                  width: dw(74),
+                  height: dh(76),
+                  label: l10n.locationMapLandmarkMosque,
+                  emoji: '🕌',
+                  fill: Color.lerp(colors.amber100, colors.border, 0.35)!,
+                ),
+              ),
+              Positioned(
+                left: 0,
+                top: ty(90),
+                right: 0,
+                child: ColoredBox(
+                  color: colors.surface,
+                  child: SizedBox(
+                    height: dh(24).clamp(16, 32),
+                    child: Center(
+                      child: Text(
+                        l10n.locationMapLandmarkStreet,
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: colors.ink2,
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ),
-          Positioned(
-            left: 0,
-            top: 101,
-            right: 0,
-            child: CustomPaint(
-              size: const Size(double.infinity, 2),
-              painter: _DashedLinePainter(color: colors.amber),
-            ),
-          ),
-        ],
+              Positioned(
+                left: 0,
+                top: ty(101),
+                right: 0,
+                child: CustomPaint(
+                  size: const Size(double.infinity, 2),
+                  painter: _DashedLinePainter(color: colors.amber),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -798,26 +841,60 @@ class _PinRow extends StatelessWidget {
             pin.batteryLabel,
           );
     final warnSuffix = pin.batteryWarn ? ' ⚠️' : '';
+    final networkLabel = switch (pin.networkClass) {
+      LocationNetworkClass.online => l10n.locationMapNetworkOnline,
+      LocationNetworkClass.offline => l10n.locationMapNetworkOffline,
+      LocationNetworkClass.unknown => l10n.locationMapNetworkUnknown,
+      LocationNetworkClass.unavailable => l10n.locationMapNetworkUnavailable,
+    };
 
-    return RowTile(
+    return Column(
       key: LocationMapKeys.pinRow(pin.id),
-      leading: CircleAvatar(
-        radius: 20,
-        backgroundColor: base,
-        child: Text(pin.emoji, style: const TextStyle(fontSize: 18)),
-      ),
-      title: l10n.locationMapPinTitle(pin.displayName, pin.locationLabel),
-      subtitle: '$subtitle$warnSuffix',
-      trailing: Text(
-        l10n.locationMapHistoryLink,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          color: colors.p600,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        RowTile(
+          leading: CircleAvatar(
+            radius: 20,
+            backgroundColor: base,
+            child: Text(pin.emoji, style: const TextStyle(fontSize: 18)),
+          ),
+          title: l10n.locationMapPinTitle(pin.displayName, pin.locationLabel),
+          subtitle: '$subtitle$warnSuffix',
+          trailing: Text(
+            l10n.locationMapHistoryLink,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: colors.p600,
+            ),
+          ),
+          onTap: onTap,
+          showDivider: false,
         ),
-      ),
-      onTap: onTap,
-      showDivider: false,
+        Padding(
+          padding: const EdgeInsetsDirectional.only(start: 56, end: 12, bottom: 8),
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Container(
+              key: LocationMapKeys.networkChip(pin.id),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: colors.p50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: colors.border),
+              ),
+              child: Text(
+                networkLabel,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: colors.ink2,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

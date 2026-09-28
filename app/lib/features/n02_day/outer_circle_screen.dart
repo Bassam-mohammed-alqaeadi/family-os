@@ -4,12 +4,14 @@ import 'package:go_router/go_router.dart';
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/app/role_guard.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
+import 'package:family_os/core/design/components/app_error_state.dart';
 import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n02_day/outer_circle_models.dart';
 import 'package:family_os/features/n02_day/outer_circle_repository.dart';
@@ -19,8 +21,10 @@ abstract final class OuterCircleKeys {
   static const screen = Key('outer_circle_screen');
   static const loading = Key('outer_circle_loading');
   static const empty = Key('outer_circle_empty');
+  static const error = Key('outer_circle_error');
   static const body = Key('outer_circle_body');
   static const strangersBanner = Key('outer_circle_strangers');
+  static const localHonesty = Key('outer_circle_local_honesty');
   static const relativesCard = Key('outer_circle_relatives');
   static const friendsCard = Key('outer_circle_friends');
   static const scheduleCard = Key('outer_circle_schedule');
@@ -34,7 +38,7 @@ abstract final class OuterCircleKeys {
 /// SCR-FAT-070 — الدائرة الخارجية (trusted outer circle).
 ///
 /// Prototype FAT-070 · strangers blocked · relatives + friends · pending →071 ·
-/// Rule 12/23 · mother levels (view) · P-4 SOS · empty → FAT-003.
+/// shared authority with FAT-071 / CHD-030 · Rule 12/23 · P-4 SOS.
 class OuterCircleScreen extends StatefulWidget {
   const OuterCircleScreen({
     super.key,
@@ -62,6 +66,7 @@ class _OuterCircleScreenState extends State<OuterCircleScreen> {
   late final SosFireService _sos;
   var _sosBusy = false;
   var _loading = true;
+  var _loadFailed = false;
   OuterCircleSnapshot _snap = const OuterCircleSnapshot();
 
   AppRole get _role {
@@ -86,13 +91,24 @@ class _OuterCircleScreenState extends State<OuterCircleScreen> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
-    final snap = await _repo.load();
-    if (!mounted) return;
     setState(() {
-      _snap = snap;
-      _loading = false;
+      _loading = true;
+      _loadFailed = false;
     });
+    try {
+      final snap = await _repo.load();
+      if (!mounted) return;
+      setState(() {
+        _snap = snap;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadFailed = true;
+      });
+    }
   }
 
   Future<void> _openSos() async {
@@ -102,7 +118,7 @@ class _OuterCircleScreenState extends State<OuterCircleScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'family');
+    await parentSosSenderOf(context).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-FAT-018'));
@@ -214,6 +230,14 @@ class _OuterCircleScreenState extends State<OuterCircleScreen> {
       );
     }
 
+    if (_loadFailed) {
+      return AppErrorState(
+        key: OuterCircleKeys.error,
+        kind: AppErrorKind.network,
+        onRetry: _load,
+      );
+    }
+
     if (_snap.isEmpty) {
       return AppEmptyState(
         key: OuterCircleKeys.empty,
@@ -236,6 +260,12 @@ class _OuterCircleScreenState extends State<OuterCircleScreen> {
             key: OuterCircleKeys.strangersBanner,
             variant: BannerVariant.t,
             message: l10n.outerCircleStrangersBanner,
+          ),
+          const SizedBox(height: 10),
+          BannerNote(
+            key: OuterCircleKeys.localHonesty,
+            variant: BannerVariant.p,
+            message: l10n.outerCircleLocalHonestyBanner,
           ),
           const SizedBox(height: 10),
           _MembersCard(
@@ -500,7 +530,7 @@ class _FriendsCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Material(
-                  color: const Color(0xFFFFF9E6),
+                  color: colors.amber100,
                   borderRadius: BorderRadius.circular(12),
                   child: InkWell(
                     key: OuterCircleKeys.pending(m.id),

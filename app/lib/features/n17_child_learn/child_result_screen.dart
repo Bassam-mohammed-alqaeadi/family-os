@@ -9,6 +9,7 @@ import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n17_child_learn/child_result_models.dart';
 import 'package:family_os/features/n17_child_learn/child_result_repository.dart';
@@ -97,7 +98,7 @@ class _ChildResultScreenState extends State<ChildResultScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'self');
+    await childSosSenderOf(context).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-CHD-005'));
@@ -112,10 +113,11 @@ class _ChildResultScreenState extends State<ChildResultScreen> {
   }
 
   String _praise(AppLocalizations l10n) {
-    return switch (_snap.praiseKey) {
-      'masteredAdd' => l10n.childResultPraiseMasteredAdd,
-      _ => l10n.childResultPraiseMasteredAdd,
+    final topic = switch (_snap.praiseKey) {
+      'masteredAdd' => l10n.childResultPraiseTopicFractions,
+      _ => l10n.childResultPraiseTopicFractions,
     };
+    return l10n.childResultPraiseMasteredAdd(topic);
   }
 
   String _rewardTitle(AppLocalizations l10n, String key) {

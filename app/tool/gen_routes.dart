@@ -31,7 +31,7 @@ void main(List<String> args) {
   final tombstoneCount = rows.length - activeCount;
   outFile.writeAsStringSync(_generateRouterDart(rows));
   stdout.writeln(
-    'Wrote ${outFile.path} ($activeCount active routes + /gallery'
+    'Wrote ${outFile.path} ($activeCount active routes + /gallery + /dev-screens'
     '${tombstoneCount > 0 ? '; skipped $tombstoneCount tombstone(s)' : ''})',
   );
 
@@ -191,7 +191,8 @@ const Map<String, String> screenBuilders = {
   'SCR-FAT-007': 'TrialModeScreen()',
   'SCR-FAT-008': 'InviteMotherScreen()',
   'SCR-FAT-009': 'AcceptMotherInviteScreen()',
-  'SCR-FAT-010': 'DayBoardScreen()',
+  'SCR-FAT-010':
+      'RoleGuardLandingNotice(uri: state.uri, isChildHome: false, child: DayBoardScreen())',
   'SCR-FAT-011': 'AdvisorSuggestionsScreen()',
   'SCR-FAT-012': 'ChildrenListScreen()',
   'SCR-FAT-013':
@@ -215,14 +216,15 @@ const Map<String, String> screenBuilders = {
   'SCR-FAT-023':
       "ActiveCallScreen(callId: state.uri.queryParameters['callId'])",
   'SCR-FAT-024': 'CallHistoryScreen()',
-  'SCR-FAT-032': 'ChildScreenTimeScreen()',
+  'SCR-FAT-032':
+      'ChildScreenTimeScreen(childId: routeScopedChildId(context, state))',
   'SCR-FAT-033': 'RequestInboxScreen()',
   'SCR-FAT-034':
       "ChildAppsScreen(childId: state.uri.queryParameters['childId'])",
   'SCR-FAT-035':
       "NewAppApprovalScreen(childId: state.uri.queryParameters['childId'], appId: state.uri.queryParameters['appId'])",
-  'SCR-FAT-036': 'WebFilterScreen()',
-  'SCR-FAT-037': 'InstantLockScreen()',
+  'SCR-FAT-036': 'WebFilterScreen(childId: routeChildId(context, state))',
+  'SCR-FAT-037': 'InstantLockScreen(childId: routeChildId(context, state))',
   'SCR-FAT-038':
       "TamperAlertsScreen(childId: state.uri.queryParameters['childId'])",
   'SCR-FAT-040': 'StudioBoardScreen()',
@@ -249,14 +251,16 @@ const Map<String, String> screenBuilders = {
   'SCR-FAT-063': 'IndividualTimelineScreen()',
   'SCR-FAT-064': 'KnowledgeMapsScreen()',
   'SCR-FAT-029': 'BrainControlScreen()',
-  'SCR-FAT-065': 'SmartAlertsScreen()',
+  'SCR-FAT-065': 'SmartAlertsScreen(childId: routeChildId(context, state))',
   'SCR-FAT-066': 'SmartAlertDetailScreen()',
-  'SCR-FAT-067': 'SmartSupervisionScreen()',
-  'SCR-FAT-068': 'PlatformMonitoringScreen()',
+  'SCR-FAT-067':
+      'SmartSupervisionScreen(childId: routeChildId(context, state).value)',
+  'SCR-FAT-068':
+      'PlatformMonitoringScreen(childId: routeChildId(context, state).value)',
   'SCR-FAT-069': 'ChildUsageReportScreen()',
   'SCR-FAT-070': 'OuterCircleScreen()',
   'SCR-FAT-071': 'FriendApprovalScreen()',
-  'SCR-FAT-072': 'QuranProgressScreen()',
+  'SCR-FAT-072': 'QuranProgressScreen(childId: routeChildId(context, state))',
   'SCR-FAT-073': 'WeeklyReportScreen()',
   'SCR-FAT-074': 'FamilyAdvisorHubScreen()',
   'SCR-FAT-076': 'MotherAiFeedScreen()',
@@ -268,7 +272,8 @@ const Map<String, String> screenBuilders = {
   'SCR-FAT-082': 'SmartChoreDistributorScreen()',
   'SCR-FAT-083': 'AdvisorVoiceScreen()',
   'SCR-FAT-084': 'StagedProjectScreen()',
-  'SCR-FAT-085': 'SmartModesScreen()',
+  'SCR-FAT-085':
+      'SmartModesScreen(childId: routeChildId(context, state).value)',
   'SCR-FAT-086': 'FamilyMomentsScreen()',
   'SCR-FAT-028': 'EmergencySetupScreen()',
   'SCR-FAT-056': 'PlansScreen()',
@@ -276,8 +281,10 @@ const Map<String, String> screenBuilders = {
   'SCR-CHD-001': 'ChildWelcomeScreen()',
   'SCR-CHD-002': 'ChildQrScanScreen()',
   'SCR-CHD-003': 'TransparencyConsentScreen()',
-  'SCR-CHD-004': 'ChildDayBoardScreen()',
-  'SCR-CHD-005': 'ChildSosButtonScreen()',
+  'SCR-CHD-004':
+      'RoleGuardLandingNotice(uri: state.uri, isChildHome: true, child: ChildDayBoardScreen(childId: routeChildId(context, state), screenTimeChildId: routeScopedChildId(context, state)))',
+  'SCR-CHD-005':
+      'ChildSosButtonScreen(childId: routeChildId(context, state).value)',
   'SCR-CHD-006':
       "ChildSosInProgressScreen(alertId: state.uri.queryParameters['alertId'], childId: state.uri.queryParameters['childId'])",
   'SCR-CHD-007': 'ChildChatsScreen()',
@@ -285,7 +292,8 @@ const Map<String, String> screenBuilders = {
       "ChildConversationScreen(chatWith: state.uri.queryParameters['chatWith'])",
   'SCR-CHD-009':
       "ChildActiveCallScreen(callId: state.uri.queryParameters['callId'])",
-  'SCR-CHD-010': 'WhatIsCollectedScreen()',
+  'SCR-CHD-010':
+      'WhatIsCollectedScreen(monitoringChildId: routeChildId(context, state).value)',
   'SCR-CHD-012': 'ChildLearnHomeScreen()',
   'SCR-CHD-013': 'ChildLessonScreen()',
   'SCR-CHD-014': 'ChildFlashcardsScreen()',
@@ -295,7 +303,7 @@ const Map<String, String> screenBuilders = {
   'SCR-CHD-018': 'ChildFocusScreen()',
   'SCR-CHD-019': 'ChildWalletScreen()',
   'SCR-CHD-020': 'ChildTimeRequestScreen()',
-  'SCR-CHD-021': 'TimeExpiryScreen()',
+  'SCR-CHD-021': 'TimeExpiryScreen(childId: routeChildId(context, state))',
   'SCR-CHD-022': 'ChildTasksScreen()',
   'SCR-CHD-023': 'ChildMediaShareScreen()',
   'SCR-CHD-024': 'ChildArrivalScreen()',
@@ -502,8 +510,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
+import 'package:family_os/app/dev_screen_gallery.dart';
 import 'package:family_os/app/gallery_screen.dart';
 ${placeholderImport}import 'package:family_os/app/role_guard.dart';
+import 'package:family_os/app/role_guard_notice.dart';
+import 'package:family_os/app/route_child_context.dart';
 import 'package:family_os/app/sys3_routes.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
@@ -528,10 +539,18 @@ $tombstonePathsLiteral
 /// SET-018 / ADR-034: school lives on FAT-085; FAT-039 deep links land here.
 const String tombstoneSchoolRedirectTarget = '/scr-fat-085';
 
+/// Owner D11 (2026-09-25): archived, non-live paths redirect to an existing
+/// live experience (FAT-039 precedent). FAT-077 Road safety → FAT-075 Coming soon.
+const Map<String, String> legacyRedirectPaths = {
+  '/scr-fat-077': '/scr-fat-075',
+};
+
 /// Builds the app [GoRouter] with gallery + every **active** CSV screen route.
 ///
-/// Product entry is welcome (`/scr-shr-001`); gallery remains at `/gallery`.
+/// Product entry is welcome (`/scr-shr-001`); design gallery at `/gallery`;
+/// QA catalog at `/dev-screens` ([DevScreenGallery]).
 /// Tombstone deep links (e.g. `/scr-fat-039`) redirect to [tombstoneSchoolRedirectTarget].
+/// Legacy paths in [legacyRedirectPaths] redirect before RoleGuard.
 /// System #3 identity routes (sys3_*) are appended via [sys3IdentityRoutes].
 GoRouter createAppRouter({
   required ValueListenable<AppRole> roleListenable,
@@ -545,6 +564,8 @@ GoRouter createAppRouter({
       if (tombstonePaths.contains(path)) {
         return tombstoneSchoolRedirectTarget;
       }
+      final legacyTarget = legacyRedirectPaths[path];
+      if (legacyTarget != null) return legacyTarget;
       return roleGuardRedirect(state, roleListenable.value);
     },
     routes: [
@@ -552,6 +573,11 @@ GoRouter createAppRouter({
         path: '/gallery',
         name: 'gallery',
         builder: (context, state) => const GalleryScreen(),
+      ),
+      GoRoute(
+        path: DevScreenGallery.routePath,
+        name: DevScreenGallery.routeName,
+        builder: (context, state) => const DevScreenGallery(),
       ),
       ...sys3IdentityRoutes,
 ${routeBlocks.toString()}    ],

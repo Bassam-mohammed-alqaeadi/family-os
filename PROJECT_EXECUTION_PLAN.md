@@ -36,11 +36,20 @@ The approved strategy is:
 | Marker | Status |
 |--------|--------|
 | `PHASE 1.5 COMPLETE` | Yes (FS-001 → FS-007 reconciliation evidenced) |
-| `PHASE 1.75 NEXT` | Yes — next implementation direction |
-| `FS-008 → FS-010 ANALYSIS CONTINUES` | Yes |
-| `GLOBAL IMPLEMENTATION PLAN NOT YET AUTHORIZED` | Yes |
-| `FULL CODEGEN NOT YET AUTHORIZED` | Yes |
+| `PHASE 1.75 COMPLETE` | Yes — residual LOCAL debt closed; see `docs/experience_discovery/PHASE_1_75_LANE_ACCEPTANCE.md` |
+| `PHASE 2 COMPLETE` | Yes (analysis 2026-09-25) — see `docs/experience_discovery/PHASE_2_ACCEPTANCE.md` |
+| `FS-008 → FS-010 ANALYSIS CONTINUES` | **No** — FS-008/009/010 analysis accepted; OPEN items listed in acceptance |
+| `PHASE 3` | **COMPLETE** (2026-09-25) — nine maps + gap register; see `docs/experience_discovery/PHASE_3_ACCEPTANCE.md` |
+| `PHASE 4` | **COMPLETE** (2026-09-25) — Master Implementation Plan; see `docs/experience_discovery/PHASE_4_ACCEPTANCE.md` |
+| `FRONTEND COMPLETION GATE` | **COMPLETE** (2026-09-25) — superseded by Full Frontend Closure |
+| `FULL FRONTEND CLOSURE` | **COMPLETE** (2026-09-25) — 128/130 FRONTEND COMPLETE; 0 POLICY · 0 DEFERRED · 2 OOS; Native/Backend still closed |
+| `CONTROL & EXPERIENCE LOCAL CAMPAIGN (CE-B0→B5)` | **COMPLETE** (2026-09-25) — Final Re-Audit + Final Frontend Gate PASSED; STOP (recorded here retroactively; see `docs/experience_discovery/final_product_experience/FINAL_RE_AUDIT.md`) |
+| `FINAL VISUAL · UX · JOURNEY VERIFICATION` | **AUTHORIZED** (Owner D12, 2026-09-25) — VX-B0…B7 **PASSED**. UX verification pack **UNLOCKED** after LDR-EXIT → execute → **D-FINAL** |
+| `LOCAL DATA REALITY (LDR)` | **COMPLETE** (Owner EXIT, 2026-09-26; B0…B8; `test/ldr/` +27; verify --full +80). Docs: `docs/experience_discovery/final_product_experience/local_data_reality/` |
+| `GLOBAL IMPLEMENTATION PLAN NOT YET AUTHORIZED` | **No** — Phase 4 Master Plan complete; Frontend Completion Gate authorizes Local/UI deepen only |
+| `FULL CODEGEN NOT YET AUTHORIZED` | **Partial** — Frontend + Local experience codegen authorized; Native/Backend codegen still closed |
 | `BACKEND INTEGRATION NOT YET AUTHORIZED` | Yes |
+| `NATIVE WAVE NOT YET AUTHORIZED` | Yes |
 
 Do not mark any of these as complete unless later evidence proves it.
 
@@ -90,7 +99,8 @@ Current findings include under-bound Stage-1 repositories, duplicate authority r
 
 ## PHASE 1.75 — REAL FLUTTER RUNTIME CONVERSION
 
-**THIS IS THE NEXT IMPLEMENTATION DIRECTION.**
+**STATUS: COMPLETE** (residual LOCAL debt closed 2026-09-25).  
+Next phase is **not started** until Owner authorizes.
 
 ### Objective
 
@@ -177,19 +187,21 @@ Until the relevant design/dependency gates are complete:
 
 After Real Local Flutter Runtime conversion progresses sufficiently:
 
-### PHASE 2
+## PHASE 2
 
-Complete remaining system analysis / policies / L2-L3:
+**STATUS: COMPLETE** (Owner `CHANGE PHASE` 2026-09-25; analysis accepted same day).  
+**Mode completed:** Analysis / design / L2–L3 / inventory reconciliation only.  
+**Not authorized still:** production codegen · NAT · REM · Phase 3+ until Owner `CHANGE PHASE`.
 
-`FS-008 → FS-010`
-
-and reconcile dependencies with the broader:
-
-`42 systems / 240 services / 73 journeys / 130 screens`
+FS-008 One-Way Audio · FS-009 PDF Activity Reports · FS-010 Ephemeral Family Chat (durable; ephemeral transport) — packs under `docs/experience_discovery/fs008_*` / `fs009_*` / `fs010_*`. Acceptance: `PHASE_2_ACCEPTANCE.md`.
 
 ### PHASE 3
 
-Global reconciliation:
+**STATUS: COMPLETE** (Owner `CHANGE PHASE` 2026-09-25; accepted same day).  
+**Mode completed:** Read-only global reconciliation maps.  
+**Not authorized still:** production codegen · NAT · REM · Phase 4+ until Owner `CHANGE PHASE`.
+
+Global reconciliation delivered:
 
 * System Map
 * Domain/Policy Ownership Map
@@ -200,18 +212,69 @@ Global reconciliation:
 * Native Capability Map
 * Backend Capability Map
 * Full Dependency Graph
+* Gap Register
+
+Evidence: `docs/experience_discovery/phase3_reconciliation/` + `PHASE_3_ACCEPTANCE.md` + `.verify/PHASE-3-COMPLETE.json`.
 
 ### PHASE 4
 
-Master Implementation Plan
+**STATUS: COMPLETE** (Owner `CHANGE PHASE` 2026-09-25; accepted same day).  
+**Mode completed:** Planning / architecture-to-execution reconciliation — Master Implementation Plan.  
+**Not authorized still:** production codegen · NAT waves · REM/backend · Phase 5+ until Owner `CHANGE PHASE`.
 
 Create the real dependency-first implementation graph.
 
 Do **NOT** implement strictly by FS number.
 
+Evidence: `docs/experience_discovery/phase4_master_plan/` + `PHASE_4_ACCEPTANCE.md` + `.verify/PHASE-4-COMPLETE.json`.
+
+### FRONTEND COMPLETION GATE (PRE-NATIVE / PRE-BACKEND)
+
+**STATUS: COMPLETE** (2026-09-25).  
+Evidence: `docs/experience_discovery/FRONTEND_COMPLETION_MATRIX.md` · `.verify/FRONTEND_COMPLETION_GATE_COMPLETE.json`.  
+**Exit met.** Do **not** auto-enter Phase 5 Native — await Owner.  
+
+**Objective:** Complete Frontend + Local Product Experience across 42/240/73/130 before Native or Backend waves.
+
+**Authorized:** UI reachability · state management · domain/local bind · SQLite where already owned · seeded coherent fixtures · loading/empty/error/offline/stale · role/RBAC · AR/EN RTL · capability honesty · focused tests · real-device UI checks.
+
+**Forbidden:** Native planes (GPS, VPN/DNS, Accessibility, Device Admin, MediaProjection, mic, OS wake/enforcement) · Backend/Remote (Render, Firestore prod sync, FCM, SMS, cloud AI, remote chat delivery) · fake capability claims.
+
+**Evidence:** `docs/experience_discovery/FRONTEND_COMPLETION_PREFLIGHT.md` · `FRONTEND_COMPLETION_MATRIX.md`.
+
+**Exit:** `FRONTEND COMPLETION = COMPLETE` with evidence — then wait for Owner before Native wave. Do **not** auto-enter Phase 5 Native.
+
+### FULL FRONTEND CLOSURE (POST GATE)
+
+**STATUS: COMPLETE** (2026-09-25).  
+Evidence: `docs/experience_discovery/FRONTEND_COMPLETION_MATRIX.md` · `.verify/FULL_FRONTEND_CLOSURE_COMPLETE.json`.  
+**128 / 130 FRONTEND COMPLETE** — Residual: **0 POLICY · 0 DEFERRED · 2 OOS** only.  
+Honesty closures without inventing AUD*/REP*/CHAT* Owner law. Native/Backend remain **CLOSED**.  
+Await Owner `CHANGE PHASE` before Phase 5 Native or Backend.
+
+### FINAL VISUAL · UX · JOURNEY VERIFICATION (POST CE-B0→B5)
+
+**STATUS: AUTHORIZED** (Owner decision D12, 2026-09-25). VX-B0…B7 **PASSED** (2026-09-26; Owner TG-7). OD-13 + OD-14 CLOSED. **LDR-EXIT PASSED** (2026-09-26). UX verification pack **UNLOCKED** under `user_experience_verification/` → then **D-FINAL**.
+**Rules:**
+* KEEP + REFINE — no redesign, no architecture rewrite, no new capability class.
+* Staged batches VX-B0 → VX-B7 (+ optional VX-B8 mock tidy, Owner D8) → **[LDR intervenes]** → Final Device Pass → Final Product Re-Audit → Final Frontend Certification → **STOP**.
+* Every batch ends at an **Owner-run test gate**: Owner runs `flutter analyze` / `flutter test` / `verify_ship` manually and reports results; Cursor does not run them.
+* Native, Backend, FCM, AI Gateway, chat relay, Render, Firestore remain **NOT AUTHORIZED**. `core/policy/` and `.cursor/rules/` unchanged (OD-06 = NO CHANGE). `tokens.dart` changes only for the contrast value(s) authorized by Owner decision D3 (rule 21 exception, VX-B4).
+* No new batches (VX-B8+) after certification without a new Owner `CHANGE PHASE`.
+
+### LOCAL DATA REALITY (LDR) — POST VX / PRE D-FINAL
+
+**STATUS: COMPLETE** (Owner LDR-EXIT PASSED, 2026-09-26; B0…B8; `test/ldr/` +27; verify --full +80).  
+**Scope:** Bind every locally supportable screen/domain to `family_os_fs.db` / `kv_store` / FS domain tables; seed coherent REAL_LOCAL family data; eliminate production mock/unbound defaults for local product state; keep Native/Remote capabilities **empty/honest** (no fabricated GPS, AI, calls, FCM, billing). Schema, binds, repositories, and defaults may change for long-term correctness (smallest coherent change; document in Decisions log).  
+**Program:** `docs/experience_discovery/final_product_experience/local_data_reality/LOCAL_DATA_REALITY_*.md`.  
+**Batches:** LDR-B0…B8 + EXIT **done** → resume UX verification → D-FINAL.  
+**Out of bounds:** Phase 5 Native, Backend, AI Gateway, FCM, redesign.
+
 ### PHASE 5
 
-Agentic implementation waves:
+**STATUS: NOT STARTED** — Native / Backend waves remain closed until Owner authorizes after Frontend Completion.
+
+Agentic implementation waves (future):
 
 1. Shared Foundation
 2. Local Domains

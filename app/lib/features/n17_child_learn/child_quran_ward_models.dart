@@ -35,6 +35,8 @@ final class ChildQuranWardSnapshot {
   ChildQuranWardSnapshot copyWith({
     ChildWardRecitationStatus? recitationStatus,
     bool? playing,
+    bool? offlineReady,
+    int? giftCount,
   }) {
     return ChildQuranWardSnapshot(
       hasWard: hasWard,
@@ -43,8 +45,8 @@ final class ChildQuranWardSnapshot {
       toAyah: toAyah,
       reciterKey: reciterKey,
       rewardMinutes: rewardMinutes,
-      offlineReady: offlineReady,
-      giftCount: giftCount,
+      offlineReady: offlineReady ?? this.offlineReady,
+      giftCount: giftCount ?? this.giftCount,
       ayahKey: ayahKey,
       recitationStatus: recitationStatus ?? this.recitationStatus,
       playing: playing ?? this.playing,

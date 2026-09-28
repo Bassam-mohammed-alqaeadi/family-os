@@ -12,6 +12,8 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n12_devices/device_health_seam.dart';
 
@@ -31,6 +33,7 @@ abstract final class DeviceHealthDetailKeys {
   static const offlineBanner = Key('device_health_offline_banner');
   static const sosCta = Key('device_health_detail_sos');
   static const childLean = Key('device_health_detail_child_lean');
+  static const missing = Key('device_health_detail_missing');
   static Key permissionRow(DevicePermissionKind kind) =>
       Key('device_health_perm_${kind.name}');
 }
@@ -106,8 +109,8 @@ class _DeviceHealthDetailScreenState extends State<DeviceHealthDetailScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _familyId =
-        CurrentIdentity.maybeOf(context)?.activeFamilyId.value ?? 'fam_stage1';
+    // Fail closed without Identity — never default to fam_stage1.
+    _familyId = CurrentIdentity.maybeOf(context)?.activeFamilyId.value;
     if (_bootstrapped) return;
     _bootstrapped = true;
     _bootstrap();
@@ -115,6 +118,14 @@ class _DeviceHealthDetailScreenState extends State<DeviceHealthDetailScreen> {
 
   Future<void> _bootstrap() async {
     final id = widget.deviceId;
+    if (_familyId == null || _familyId!.trim().isEmpty) {
+      if (!mounted) return;
+      setState(() {
+        _snap = null;
+        _loading = false;
+      });
+      return;
+    }
     if (id != null && id.isNotEmpty) {
       _resolvedId = id;
       _listen(id);
@@ -156,8 +167,12 @@ class _DeviceHealthDetailScreenState extends State<DeviceHealthDetailScreen> {
     }
     setState(() => _sosBusy = true);
     final fire = widget.sosFire ?? stage1SosFireService;
-    final childTarget = _snap?.childId ?? 'family';
-    await fire.fire(childId: childTarget);
+    final identity = identityOf(context);
+    final viewed =
+        childIdForDevice(_snap?.deviceId, runtime: identity) ??
+        familyChildOrNull(_snap?.childId, runtime: identity);
+    final sender = sosSenderForRole(context, _role, viewedChild: viewed);
+    await sender.fireThrough(fire);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push('/scr-fat-018');
@@ -269,11 +284,10 @@ class _DeviceHealthDetailScreenState extends State<DeviceHealthDetailScreen> {
 
     final snap = _snap;
     if (snap == null) {
-      return Center(
-        child: Text(
-          l10n.deviceHealthDeviceMissing,
-          style: TextStyle(fontWeight: FontWeight.w700, color: colors.ink2),
-        ),
+      return AppEmptyState(
+        key: DeviceHealthDetailKeys.missing,
+        title: l10n.deviceHealthDeviceMissing,
+        message: l10n.deviceHealthDevicesEmptyMessage,
       );
     }
 

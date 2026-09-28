@@ -102,7 +102,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(AddEventKeys.calendarGregorian));
     await tester.pump();
-    expect(find.textContaining('Stage 1 mock'), findsOneWidget);
+    expect(find.textContaining('Gregorian calendar selected'), findsOneWidget);
     AppToast.dismiss();
     await tester.pumpAndSettle();
   });

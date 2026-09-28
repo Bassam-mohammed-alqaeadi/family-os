@@ -28,7 +28,8 @@ final class InMemoryChildAppsRepository extends ChangeNotifier
     Map<String, List<ChildAppEntry>>? seed,
     AppAccessRulesRepository? accessRules,
   }) : _byChild = {
-         for (final e in (seed ?? kDefaultChildAppsByChild).entries)
+         for (final e
+             in (seed ?? const <String, List<ChildAppEntry>>{}).entries)
            e.key: List<ChildAppEntry>.from(e.value),
        },
        _accessRules =
@@ -167,6 +168,10 @@ final class InMemoryChildAppsRepository extends ChangeNotifier
   }
 }
 
-/// Process-wide Stage-1 singleton.
-final InMemoryChildAppsRepository stage1ChildAppsRepository =
+/// Process-wide Stage-1 singleton — rebound at boot (LDR-B2) to AC-backed rules.
+InMemoryChildAppsRepository stage1ChildAppsRepository =
     InMemoryChildAppsRepository();
+
+void rebindStage1ChildAppsRepository(InMemoryChildAppsRepository repository) {
+  stage1ChildAppsRepository = repository;
+}

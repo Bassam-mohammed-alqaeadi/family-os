@@ -6,6 +6,7 @@ import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/features/n02_day/children_list_local_repository.dart';
 import 'package:family_os/features/n02_day/children_list_mock.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/children_list_screen.dart';
@@ -107,6 +108,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(ChildrenListKeys.sharedPoliciesSheet), findsOneWidget);
+    expect(find.byKey(ChildrenListKeys.sharedEnforceHonesty), findsOneWidget);
+    expect(find.textContaining('محرك السياسة'), findsOneWidget);
     expect(find.byKey(ChildrenListKeys.sharedApply), findsOneWidget);
 
     await tester.tap(find.byKey(ChildrenListKeys.sharedApply));
@@ -204,6 +207,56 @@ void main() {
     expect(find.textContaining('خالد'), findsNothing);
     expect(find.textContaining('نورة'), findsNothing);
     expect(find.textContaining('سعد'), findsNothing);
+  });
+
+  testWidgets('SCR-FAT-012 LOCAL_DEMO provenance → honesty BannerNote', (
+    tester,
+  ) async {
+    final repo = InMemoryChildrenListRepository(
+      children: ChildrenListMock.manyFixture,
+      provenance: kChildrenListLocalDemoProvenance,
+    );
+
+    await tester.pumpWidget(
+      _app(
+        child: ChildrenListScreen(
+          repository: repo,
+          roleOverride: AppRole.father,
+          onAddChild: () {},
+          onOpenChildProfile: (_) {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(ChildrenListKeys.localDemoBanner), findsOneWidget);
+    expect(find.textContaining('تجريبي'), findsOneWidget);
+    expect(find.textContaining('GPS'), findsOneWidget);
+    expect(
+      find.byKey(ChildrenListKeys.childRow('child_a')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('SCR-FAT-012 no provenance → no demo BannerNote', (tester) async {
+    final repo = InMemoryChildrenListRepository(
+      children: ChildrenListMock.manyFixture,
+    );
+
+    await tester.pumpWidget(
+      _app(
+        child: ChildrenListScreen(
+          repository: repo,
+          roleOverride: AppRole.father,
+          onAddChild: () {},
+          onOpenChildProfile: (_) {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(ChildrenListKeys.localDemoBanner), findsNothing);
+    expect(find.byKey(ChildrenListKeys.list), findsOneWidget);
   });
 }
 

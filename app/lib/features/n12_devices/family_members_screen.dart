@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/app_error_state.dart';
+import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
@@ -11,8 +12,12 @@ import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
+import 'package:family_os/features/n02_day/children_list_local_repository.dart';
+import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
+import 'package:family_os/features/n12_devices/family_members_identity_repository.dart';
 import 'package:family_os/features/n12_devices/family_members_repository.dart';
 
 /// Widget keys for SCR-FAT-027 acceptance.
@@ -31,6 +36,7 @@ abstract final class FamilyMembersKeys {
   static const transferOwnership = Key('family_members_transfer_ownership');
   static const familySelector = Key('family_members_family_selector');
   static const leaveFamily = Key('family_members_leave_family');
+  static const localDemoBanner = Key('family_members_local_demo_banner');
 
   static Key memberRow(String id) => Key('family_members_row_$id');
   static Key removeAdult(String id) => Key('family_members_remove_$id');
@@ -45,6 +51,7 @@ class FamilyMembersScreen extends StatefulWidget {
   const FamilyMembersScreen({
     super.key,
     this.repository,
+    this.childrenListRepository,
     this.roleOverride,
     this.sosFire,
     this.onSos,
@@ -54,6 +61,9 @@ class FamilyMembersScreen extends StatefulWidget {
 
   /// Null → [stage1FamilyMembersRepository].
   final FamilyMembersRepository? repository;
+
+  /// Null → [stage1ChildrenListRepository] (LOCAL_DEMO provenance).
+  final ChildrenListRepository? childrenListRepository;
 
   /// Test seam — when set, ignores [CurrentRole].
   final AppRole? roleOverride;
@@ -75,10 +85,13 @@ class FamilyMembersScreen extends StatefulWidget {
 
 class FamilyMembersScreenState extends State<FamilyMembersScreen> {
   late FamilyMembersRepository _repo;
+  late ChildrenListRepository _childrenListRepo;
   var _loading = true;
   var _loadFailed = false;
   var _sosBusy = false;
   List<FamilyMemberEntry> _members = const [];
+  String? _rosterProvenance;
+  String? _loadedFamilyId;
 
   AppRole get _role =>
       widget.roleOverride ??
@@ -87,8 +100,16 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
   bool get _isParent => _role == AppRole.father || _role == AppRole.mother;
 
   /// Invite CTA — sole owner (father). Product: one_owner_per_family.
-  bool get _isOwner =>
-      resolveAuthorizationContext(context, fallbackRole: _role).canInviteAdults;
+  bool get _isOwner {
+    // Test seam: roleOverride wins over Inherited Identity for invite gate.
+    if (widget.roleOverride != null) {
+      return widget.roleOverride == AppRole.father;
+    }
+    return resolveAuthorizationContext(
+      context,
+      fallbackRole: AppRole.father,
+    ).canInviteAdults;
+  }
 
   bool get _showFamilySelector {
     final runtime = CurrentIdentity.maybeOf(context);
@@ -107,6 +128,8 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
   void initState() {
     super.initState();
     _repo = widget.repository ?? stage1FamilyMembersRepository;
+    _childrenListRepo =
+        widget.childrenListRepository ?? stage1ChildrenListRepository;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _load();
@@ -114,10 +137,43 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Depend on CurrentIdentity (InheritedNotifier) so mother-level writes
+    // from FAT-031 refresh the roster tag without a full navigation remount.
+    final familyId = CurrentIdentity.maybeOf(context)?.activeFamilyId.value;
+    if (familyId != _loadedFamilyId) {
+      if (!_loading) _load();
+      return;
+    }
+    if (familyId != null && !_loading && _loadedFamilyId != null) {
+      _refreshMembersQuiet();
+    }
+  }
+
+  /// Soft refresh after Identity notify (same family) — no loading flash.
+  Future<void> _refreshMembersQuiet() async {
+    final familyId = _loadedFamilyId;
+    if (familyId == null) return;
+    try {
+      final members = await _repo.listMembers(familyId: familyId);
+      if (!mounted) return;
+      setState(() => _members = members);
+    } catch (_) {
+      // Keep last good roster.
+    }
+  }
+
+  @override
   void didUpdateWidget(covariant FamilyMembersScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.repository != widget.repository) {
       _repo = widget.repository ?? stage1FamilyMembersRepository;
+      _load();
+    }
+    if (oldWidget.childrenListRepository != widget.childrenListRepository) {
+      _childrenListRepo =
+          widget.childrenListRepository ?? stage1ChildrenListRepository;
       _load();
     }
   }
@@ -129,10 +185,35 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
     });
     try {
       final familyId = CurrentIdentity.maybeOf(context)?.activeFamilyId.value;
+      // Fail closed without Identity — empty roster, no unscoped leak.
+      if (familyId == null || familyId.trim().isEmpty) {
+        if (!mounted) return;
+        setState(() {
+          _members = const [];
+          _rosterProvenance = null;
+          _loadedFamilyId = null;
+          _loading = false;
+          _loadFailed = false;
+        });
+        return;
+      }
       final members = await _repo.listMembers(familyId: familyId);
+      String? provenance;
+      final identityRepo = _repo;
+      if (identityRepo is IdentityFamilyMembersRepository) {
+        provenance = await identityRepo.loadProvenance(
+          familyId: FamilyId(familyId),
+        );
+      } else {
+        provenance = await _childrenListRepo.loadProvenance(
+          familyId: FamilyId(familyId),
+        );
+      }
       if (!mounted) return;
       setState(() {
         _members = members;
+        _rosterProvenance = provenance;
+        _loadedFamilyId = familyId;
         _loading = false;
         _loadFailed = false;
       });
@@ -140,6 +221,8 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
       if (!mounted) return;
       setState(() {
         _members = const [];
+        _rosterProvenance = null;
+        _loadedFamilyId = null;
         _loading = false;
         _loadFailed = true;
       });
@@ -154,7 +237,7 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
     }
     setState(() => _sosBusy = true);
     final fire = widget.sosFire ?? stage1SosFireService;
-    await fire.fire(childId: 'family');
+    await parentSosSenderOf(context).fireThrough(fire);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push('/scr-fat-018');
@@ -176,7 +259,9 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
       widget.onOpenMotherLevel!(member.id);
       return;
     }
-    context.push('/scr-fat-031');
+    context.push(
+      '/scr-fat-031?memberId=${Uri.encodeQueryComponent(member.id)}',
+    );
   }
 
   void _leaveFamily() {
@@ -347,6 +432,18 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
               runtime.switchActiveFamily(FamilyId(value));
               await _load();
             },
+          ),
+          const SizedBox(height: 10),
+        ],
+        if (isChildrenListSeededProvenance(_rosterProvenance)) ...[
+          BannerNote(
+            key: FamilyMembersKeys.localDemoBanner,
+            message: l10n.childrenListLocalDemoBanner,
+            variant: BannerVariant.a,
+            leading: Text(
+              'ℹ',
+              style: TextStyle(fontSize: 18, color: colors.ink),
+            ),
           ),
           const SizedBox(height: 10),
         ],

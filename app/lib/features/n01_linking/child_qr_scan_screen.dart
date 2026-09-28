@@ -429,7 +429,7 @@ class _ScanBody extends StatelessWidget {
               width: 230,
               height: 230,
               decoration: BoxDecoration(
-                color: const Color(0xFF1A1D2E),
+                color: colors.ink,
                 borderRadius: BorderRadius.circular(radii.card),
               ),
               child: Stack(

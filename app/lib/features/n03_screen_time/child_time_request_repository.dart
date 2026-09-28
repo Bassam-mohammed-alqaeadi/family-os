@@ -2,6 +2,7 @@ import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/policy/time_request.dart';
 import 'package:family_os/core/policy/time_request_repository.dart';
 import 'package:family_os/core/policy/time_request_service.dart';
+import 'package:family_os/core/screen_time/stage1_time_request_runtime.dart';
 import 'package:family_os/features/n03_screen_time/child_time_request_models.dart';
 import 'package:family_os/features/n03_screen_time/stage1_child_scope.dart';
 
@@ -15,11 +16,16 @@ abstract class ChildTimeRequestRepository {
 /// Stage-1 fallback childId for compatibility only.
 final ChildId kStage1TimeRequestChildId = activeScopedChildId();
 
-/// Shared Stage-1 service (same prefs + decision bus as FAT-033 inbox).
-final TimeRequestService stage1TimeRequestService = TimeRequestService(
+/// LEGACY default — Memory Prefs. Production rebinds via [ScreenTimeRuntime]
+/// to [Stage1TimeRequestRuntime] (LDR-B4 / DOM-ST-02C).
+TimeRequestService stage1TimeRequestService = TimeRequestService(
   repository: PrefsTimeRequestRepository(stage1TimeRequestPrefsStore),
   decisionBus: stage1TimeRequestDecisionBus,
 );
+
+void rebindStage1TimeRequestService(TimeRequestService service) {
+  stage1TimeRequestService = service;
+}
 
 /// Wires CHD-020 → [TimeRequestService] (G-A Temporary Grant, not WalletLedger).
 final class ServiceChildTimeRequestRepository
@@ -167,7 +173,7 @@ final class ServiceChildTimeRequestRepository
 final class InMemoryChildTimeRequestRepository
     implements ChildTimeRequestRepository {
   InMemoryChildTimeRequestRepository({ChildTimeRequestSnapshot? seed})
-    : _snap = seed ?? childTimeRequestPrototypeFixture();
+    : _snap = seed ?? childTimeRequestEmptyFixture();
 
   ChildTimeRequestSnapshot _snap;
   Future<void> Function()? loadGate;
@@ -214,8 +220,26 @@ final class InMemoryChildTimeRequestRepository
   void seed(ChildTimeRequestSnapshot snap) => _snap = snap;
 }
 
-final ChildTimeRequestRepository stage1ChildTimeRequestRepository =
+ChildTimeRequestRepository stage1ChildTimeRequestRepository =
     ServiceChildTimeRequestRepository(service: stage1TimeRequestService);
+
+void rebindStage1ChildTimeRequestRepository(
+  ChildTimeRequestRepository repository,
+) {
+  stage1ChildTimeRequestRepository = repository;
+}
+
+/// Production CHD-020 binder — Local KV TimeRequest authority (DOM-ST-02C).
+Future<ServiceChildTimeRequestRepository> openProductionChildTimeRequestRepository({
+  ChildId? childId,
+}) async {
+  final service = await Stage1TimeRequestRuntime.ensureOpen();
+  return ServiceChildTimeRequestRepository(
+    service: service,
+    repository: Stage1TimeRequestRuntime.repository,
+    childId: childId ?? activeScopedChildId(),
+  );
+}
 
 ChildTimeRequestSnapshot childTimeRequestEmptyFixture() =>
     const ChildTimeRequestSnapshot(formAvailable: false);

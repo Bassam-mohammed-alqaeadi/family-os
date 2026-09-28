@@ -1,9 +1,11 @@
 import 'package:family_os/core/domain/identity_ids.dart';
+import 'package:family_os/core/events/local_event_emitter.dart';
 import 'package:family_os/core/fs_foundation/capability_registry.dart';
 import 'package:family_os/core/fs_foundation/fs_session_kernel.dart';
 import 'package:family_os/core/fs_foundation/local_database.dart';
 import 'package:family_os/core/location/location_store.dart';
 import 'package:family_os/core/location/sos_location_handoff_service.dart';
+import 'package:family_os/core/policy/sos_break_glass.dart';
 
 import 'sos_cross_system.dart';
 import 'sos_final_service.dart';
@@ -27,7 +29,21 @@ final class Stage1SosFinalRuntime {
     if (_opened) return;
     await FsSessionKernel.ensureOpen();
     _store = LocalSosFinalStore(db);
-    _service = SosFinalService(store: _store!, familyId: familyId);
+    LocalEventEmitter? localEvents;
+    if (!FsSessionKernel.sqliteFallbackToMemory) {
+      localEvents = LocalEventPersistence.emitter(db);
+    }
+    _service = SosFinalService(
+      store: _store!,
+      familyId: familyId,
+      localEvents: localEvents,
+    );
+    // AUTH-FS006-BG — UI break-glass → Domain sos_break_glass table.
+    if (!FsSessionKernel.sqliteFallbackToMemory) {
+      final bg = LocalSosBreakGlassStore(_store!, familyId: familyId);
+      await bg.hydrate();
+      rebindStage1SosBreakGlassStore(bg);
+    }
     final locStore = LocalLocationStore(db);
     _handoff = SosLocationHandoff(db, locStore);
     _capabilities = CapabilityRegistry(db);
@@ -81,5 +97,6 @@ final class Stage1SosFinalRuntime {
     _handoff = null;
     _cross = null;
     _capabilities = null;
+    rebindStage1SosBreakGlassStore(InMemorySosBreakGlassStore());
   }
 }

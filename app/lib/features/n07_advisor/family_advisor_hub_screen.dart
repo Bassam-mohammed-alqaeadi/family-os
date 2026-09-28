@@ -9,6 +9,7 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n07_advisor/family_advisor_hub_models.dart';
 import 'package:family_os/features/n07_advisor/family_advisor_hub_repository.dart';
@@ -105,7 +106,7 @@ class _FamilyAdvisorHubScreenState extends State<FamilyAdvisorHubScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'family');
+    await parentSosSenderOf(context).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-FAT-018'));
@@ -489,7 +490,7 @@ class _CapCard extends StatelessWidget {
                     color: colors.ink2,
                   ),
                 ),
-                trailing: Icon(Icons.chevron_left, color: colors.ink2),
+                trailing: Icon(Icons.chevron_right, color: colors.ink2),
                 onTap: () => onTap(r),
               ),
           ],

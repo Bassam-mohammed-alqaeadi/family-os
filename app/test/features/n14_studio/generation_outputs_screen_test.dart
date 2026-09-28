@@ -36,6 +36,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(GenerationOutputsKeys.generateCta));
     await tester.pump();
+    expect(find.textContaining('upcoming update'), findsOneWidget);
     AppToast.dismiss();
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pumpAndSettle();

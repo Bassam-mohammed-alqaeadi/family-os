@@ -13,7 +13,9 @@ import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/fs_foundation/capability_status.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n03_screen_time/app_control_ux_bridge.dart';
@@ -29,6 +31,8 @@ abstract final class ChildAppsKeys {
   static const list = Key('child_apps_list');
   static const tipBanner = Key('child_apps_tip');
   static const honestyBanner = Key('child_apps_honesty');
+  /// FE-W2 alias — same LOCAL/OS-intercept honesty surface.
+  static const localHonesty = honestyBanner;
   static const partnerHint = Key('child_apps_partner_hint');
   static const pendingCta = Key('child_apps_pending_cta');
   static Key protectedBadge(String id) => Key('child_apps_protected_$id');
@@ -144,7 +148,7 @@ class _ChildAppsScreenState extends State<ChildAppsScreen> {
     _childId = ChildId(
       widget.childId?.trim().isNotEmpty == true
           ? widget.childId!.trim()
-          : kStage1CanonicalChildId.value,
+          : resolveActiveChildId().value,
     );
     _repo = widget.repository ?? stage1ChildAppsRepository;
     _sos = widget.sosFire ?? stage1SosFireService;
@@ -213,7 +217,7 @@ class _ChildAppsScreenState extends State<ChildAppsScreen> {
           childId: runtime.activeChildId,
         );
       }
-      return kStage1CanonicalChildId;
+      return resolveActiveChildId();
     }
     return ChildId(trimmed);
   }
@@ -252,9 +256,9 @@ class _ChildAppsScreenState extends State<ChildAppsScreen> {
         widget.onSos!();
         return;
       }
-      await _sos.fire(childId: _childId.value);
+      await parentSosSenderOf(context, viewedChild: _childId).fireThrough(_sos);
       if (!mounted) return;
-      context.go('/scr-fat-018');
+      context.push('/scr-fat-018');
     } finally {
       if (mounted) setState(() => _sosBusy = false);
     }
@@ -710,7 +714,7 @@ class _AppRow extends StatelessWidget {
 
   Color _statusColor() => switch (app.status) {
     ChildAppStatus.allowed => colors.mintInk,
-    ChildAppStatus.free => const Color(0xFF0277BD),
+    ChildAppStatus.free => colors.sky,
     ChildAppStatus.blocked => colors.coral,
     ChildAppStatus.pending => colors.amberDeep,
   };
@@ -800,7 +804,7 @@ class _AppRow extends StatelessWidget {
                 onChanged: onToggle,
               )
             else if (app.status == ChildAppStatus.pending)
-              Icon(Icons.chevron_left, color: colors.ink2)
+              Icon(Icons.chevron_right, color: colors.ink2)
             else
               const SizedBox(width: 8),
           ],

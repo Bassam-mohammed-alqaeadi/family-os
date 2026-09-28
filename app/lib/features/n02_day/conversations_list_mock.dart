@@ -2,7 +2,7 @@ import 'package:family_os/features/n02_day/conversations_list_repository.dart';
 
 /// Test / demo fixtures for SCR-FAT-021 — Rule 12 allowlisted (`*mock*.dart`).
 ///
-/// Generic labels only (عائلة ١ / شريكة ١ / ابن ١…). Never screen default (Rule 23).
+/// Generic labels only (عائلة 1 / شريكة 1 / ابن 1…). Never screen default (Rule 23).
 /// Mirrors frozen prototype FAT-021 rows without planted person names.
 abstract final class ConversationsListMock {
   const ConversationsListMock._();
@@ -13,9 +13,9 @@ abstract final class ConversationsListMock {
       ConversationThread(
         id: 'c_family',
         chatWith: 'family',
-        title: 'عائلة ١ 📌',
-        preview: 'شريكة ١: العشاء جاهز يا أحباب',
-        timeLabel: '٨:١٢ م',
+        title: 'عائلة 1 📌',
+        preview: 'شريكة 1: العشاء جاهز يا أحباب',
+        timeLabel: '8:12 م',
         emoji: '👨‍👩‍👧‍👦',
         swatch: ConversationSwatch.family,
         pinned: true,
@@ -30,9 +30,9 @@ abstract final class ConversationsListMock {
       ConversationThread(
         id: 'c_family',
         chatWith: 'family',
-        title: 'عائلة ١ 📌',
-        preview: 'شريكة ١: العشاء جاهز يا أحباب',
-        timeLabel: '٨:١٢ م',
+        title: 'عائلة 1 📌',
+        preview: 'شريكة 1: العشاء جاهز يا أحباب',
+        timeLabel: '8:12 م',
         emoji: '👨‍👩‍👧‍👦',
         swatch: ConversationSwatch.family,
         pinned: true,
@@ -41,25 +41,25 @@ abstract final class ConversationsListMock {
       ConversationThread(
         id: 'c_mother',
         chatWith: 'mother',
-        title: 'شريكة ١ 💗',
-        preview: 'ابن ١ نام بدري الليلة',
-        timeLabel: '٩:٤٠ م',
+        title: 'شريكة 1 💗',
+        preview: 'ابن 1 نام بدري الليلة',
+        timeLabel: '9:40 م',
         emoji: '🌸',
         swatch: ConversationSwatch.mother,
       ),
       ConversationThread(
         id: 'c_child_a',
         chatWith: 'child_a',
-        title: 'ابن ١',
+        title: 'ابن 1',
         preview: 'أبي وصلت المدرسة ✓',
-        timeLabel: '٧:١٤ ص',
+        timeLabel: '7:14 ص',
         emoji: '🦁',
         swatch: ConversationSwatch.purple,
       ),
       ConversationThread(
         id: 'c_child_b',
         chatWith: 'child_b',
-        title: 'ابن ٢',
+        title: 'ابن 2',
         preview: 'خلصت الواجب!',
         timeLabel: 'أمس',
         emoji: '🐱',
@@ -68,7 +68,7 @@ abstract final class ConversationsListMock {
       ConversationThread(
         id: 'c_child_c',
         chatWith: 'child_c',
-        title: 'ابن ٣',
+        title: 'ابن 3',
         preview: '🎤 رسالة صوتية',
         timeLabel: 'أمس',
         emoji: '🐼',

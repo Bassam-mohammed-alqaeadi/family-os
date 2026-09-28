@@ -7,7 +7,9 @@ enum AlertDetailKind {
   stranger,
   battery,
   games,
-  arrive;
+  arrive,
+  sos,
+  tamper;
 
   static AlertDetailKind? tryParse(String? raw) {
     switch (raw?.trim().toLowerCase()) {
@@ -19,6 +21,10 @@ enum AlertDetailKind {
         return AlertDetailKind.games;
       case 'arrive':
         return AlertDetailKind.arrive;
+      case 'sos':
+        return AlertDetailKind.sos;
+      case 'tamper':
+        return AlertDetailKind.tamper;
       default:
         return null;
     }
@@ -160,4 +166,10 @@ final class InMemoryAlertDetailRepository implements AlertDetailRepository {
 }
 
 /// Stage-1 singleton — empty until tests/repos seed (Rule 23).
-final stage1AlertDetailRepository = InMemoryAlertDetailRepository();
+/// Production rebinds to [ProjectingAlertDetailRepository] at startup.
+AlertDetailRepository stage1AlertDetailRepository =
+    InMemoryAlertDetailRepository();
+
+void rebindStage1AlertDetailRepository(AlertDetailRepository repository) {
+  stage1AlertDetailRepository = repository;
+}

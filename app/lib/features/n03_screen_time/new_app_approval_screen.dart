@@ -15,6 +15,8 @@ import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/fs_foundation/capability_status.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n03_screen_time/app_control_ux_bridge.dart';
 import 'package:family_os/features/n03_screen_time/child_apps_models.dart';
@@ -162,7 +164,7 @@ class _NewAppApprovalScreenState extends State<NewAppApprovalScreen> {
   ChildId _resolveChildId(String? raw) {
     final trimmed = raw?.trim();
     if (trimmed == null || trimmed.isEmpty) {
-      return ChildId('demo-child');
+      return resolveActiveChildIdOf(context);
     }
     return ChildId(trimmed);
   }
@@ -214,9 +216,9 @@ class _NewAppApprovalScreenState extends State<NewAppApprovalScreen> {
         widget.onSos!();
         return;
       }
-      await _sos.fire(childId: _childId.value);
+      await parentSosSenderOf(context, viewedChild: _childId).fireThrough(_sos);
       if (!mounted) return;
-      context.go('/scr-fat-018');
+      context.push('/scr-fat-018');
     } finally {
       if (mounted) setState(() => _sosBusy = false);
     }

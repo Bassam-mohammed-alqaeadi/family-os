@@ -12,6 +12,7 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n15_calendar/family_calendar_models.dart';
 import 'package:family_os/features/n15_calendar/family_calendar_repository.dart';
@@ -149,7 +150,7 @@ class _FamilyCalendarScreenState extends State<FamilyCalendarScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'family');
+    await parentSosSenderOf(context).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-FAT-018'));
@@ -203,6 +204,9 @@ class _FamilyCalendarScreenState extends State<FamilyCalendarScreen> {
   }
 
   String _eventTitle(AppLocalizations l10n, String titleKey) {
+    if (titleKey.startsWith('custom:')) {
+      return titleKey.substring('custom:'.length);
+    }
     return switch (titleKey) {
       'memorizationReview' => l10n.familyCalendarEventMemorizationReview,
       'swimPractice' => l10n.familyCalendarEventSwimPractice,
@@ -216,6 +220,9 @@ class _FamilyCalendarScreenState extends State<FamilyCalendarScreen> {
 
   String _eventWhen(AppLocalizations l10n, String whenKey) {
     return switch (whenKey) {
+      'afterMaghrib' => l10n.familyCalendarWhenTodayAfterMaghrib,
+      'afterIsha' => l10n.familyCalendarWhenTodayAfterMaghrib,
+      'specific' => l10n.familyCalendarWhenTodayAfterMaghrib,
       'todayAfterMaghrib' => l10n.familyCalendarWhenTodayAfterMaghrib,
       'today430pm' => l10n.familyCalendarWhenToday430pm,
       'today730pm' => l10n.familyCalendarWhenToday730pm,

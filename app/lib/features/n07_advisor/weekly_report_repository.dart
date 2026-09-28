@@ -11,7 +11,7 @@ abstract class WeeklyReportRepository {
 
 final class InMemoryWeeklyReportRepository implements WeeklyReportRepository {
   InMemoryWeeklyReportRepository({WeeklyReportSnapshot? seed})
-    : _snap = seed ?? weeklyReportPrototypeFixture();
+    : _snap = seed ?? weeklyReportEmptyFixture();
 
   WeeklyReportSnapshot _snap;
   Future<void> Function()? loadGate;

@@ -112,4 +112,21 @@ abstract final class NotificationDelivery {
       delivered: delivered,
     );
   }
+
+  /// Child request (time/app/friend) — Important lane; respects prefs + quiet hours.
+  static NotificationDeliveryResult simulateChildRequestNotify(
+    String recipientId, {
+    NotificationPrefs? prefs,
+    TimeOfDay? now,
+  }) {
+    final p = prefs ?? NotificationPrefs.defaults(memberId: recipientId);
+    final clock = now ?? const TimeOfDay(hour: 12, minute: 0);
+    final delivered = p.childRequestsEnabled &&
+        shouldDeliver(NotificationTier.nonCritical, p, clock);
+    return NotificationDeliveryResult(
+      recipientId: recipientId,
+      tier: NotificationTier.nonCritical,
+      delivered: delivered,
+    );
+  }
 }

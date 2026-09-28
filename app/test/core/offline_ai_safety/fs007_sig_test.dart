@@ -50,7 +50,7 @@ void main() {
   }
 
   test('schema v10 exposes ai safety tables', () async {
-    expect(FamilyLocalSchema.currentVersion, 10);
+    expect(FamilyLocalSchema.currentVersion, 12);
     await db.insert('ai_safety_signal', {
       'id': 's1',
       'family_id': family.value,

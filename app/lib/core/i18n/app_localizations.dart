@@ -116,6 +116,42 @@ abstract class AppLocalizations {
   /// **'رموز التصميم والمكوّنات الأساسية — وضع الأب / وضع الابن'**
   String get galleryHint;
 
+  /// Debug SCR-ID gallery AppBar title for UX agent
+  ///
+  /// In ar, this message translates to:
+  /// **'DEV · كتالوج الشاشات'**
+  String get devScreenGalleryTitle;
+
+  /// Dev screen gallery intro
+  ///
+  /// In ar, this message translates to:
+  /// **'اضغط SCR-ID لفتح الشاشة (يتجاوز تنقّل المنتج؛ RoleGuard ما زال سارياً).'**
+  String get devScreenGalleryHint;
+
+  /// Dev screen gallery search field hint
+  ///
+  /// In ar, this message translates to:
+  /// **'تصفية SCR-ID…'**
+  String get devScreenGallerySearchHint;
+
+  /// Semantics for dev gallery search field
+  ///
+  /// In ar, this message translates to:
+  /// **'تصفية الشاشات حسب SCR-ID'**
+  String get devScreenGallerySearchSemantics;
+
+  /// Dev gallery empty filter state
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد شاشات مطابقة لهذا الفلتر.'**
+  String get devScreenGalleryEmpty;
+
+  /// Dev gallery visible screen count
+  ///
+  /// In ar, this message translates to:
+  /// **'{count} شاشة'**
+  String devScreenGalleryCount(int count);
+
   /// Gallery section: color swatches
   ///
   /// In ar, this message translates to:
@@ -293,7 +329,7 @@ abstract class AppLocalizations {
   /// No description provided for @galleryRowSub1.
   ///
   /// In ar, this message translates to:
-  /// **'اكتمل الساعة ٧:٣٠'**
+  /// **'اكتمل الساعة 7:30'**
   String get galleryRowSub1;
 
   /// No description provided for @galleryRowTitle2.
@@ -317,7 +353,7 @@ abstract class AppLocalizations {
   /// No description provided for @galleryRowSub3.
   ///
   /// In ar, this message translates to:
-  /// **'بقي ٤٥ دقيقة'**
+  /// **'بقي 45 دقيقة'**
   String get galleryRowSub3;
 
   /// No description provided for @galleryTagG.
@@ -506,6 +542,24 @@ abstract class AppLocalizations {
   /// **'فتح الاستغاثة'**
   String get shellSosFabSemantics;
 
+  /// Debug/dev role switch → child My Day (SCR-CHD-004)
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن'**
+  String get devRoleSwitchChild;
+
+  /// Debug/dev role switch → mother on Today (SCR-FAT-010)
+  ///
+  /// In ar, this message translates to:
+  /// **'الأم'**
+  String get devRoleSwitchMother;
+
+  /// Debug/dev role switch → father Today (SCR-FAT-010)
+  ///
+  /// In ar, this message translates to:
+  /// **'الأب'**
+  String get devRoleSwitchFather;
+
   /// No description provided for @galleryHubItem1.
   ///
   /// In ar, this message translates to:
@@ -575,7 +629,7 @@ abstract class AppLocalizations {
   /// SCR-SHR-001 slide 1 body
   ///
   /// In ar, this message translates to:
-  /// **'أين أبناؤك الآن؟ وصلوا بسلام؟ كل الطمأنينة في ٨ ثوانٍ صباحًا'**
+  /// **'أين أبناؤك الآن؟ وصلوا بسلام؟ كل الطمأنينة في 8 ثوانٍ صباحًا'**
   String get welcomeSlide1Body;
 
   /// SCR-SHR-001 slide 2 emoji
@@ -647,7 +701,7 @@ abstract class AppLocalizations {
   /// SCR-SHR-002 step chip / subtitle
   ///
   /// In ar, this message translates to:
-  /// **'خطوة ١ من ٢'**
+  /// **'خطوة 1 من 2'**
   String get createAccountStep;
 
   /// SCR-SHR-002 email field label
@@ -671,7 +725,7 @@ abstract class AppLocalizations {
   /// SCR-SHR-002 password placeholder
   ///
   /// In ar, this message translates to:
-  /// **'٨ أحرف على الأقل'**
+  /// **'8 أحرف على الأقل'**
   String get createAccountPasswordHint;
 
   /// SCR-SHR-002 confirm password label
@@ -782,11 +836,11 @@ abstract class AppLocalizations {
   /// **'🔒 الدخول بالبصمة'**
   String get loginBiometric;
 
-  /// SCR-SHR-003 biometric mock success toast
+  /// SCR-SHR-003 fingerprint is NATIVE_CLOSED — honest unavailable toast (glossary D2); never signs in
   ///
   /// In ar, this message translates to:
-  /// **'تم الدخول بالبصمة'**
-  String get loginBiometricToast;
+  /// **'الدخول بالبصمة يحتاج صلاحية من الجهاز — يتوفر لاحقًا. سجّل الدخول بالبريد الآن.'**
+  String get loginBiometricUnavailable;
 
   /// SCR-SHR-003 invite footer prompt
   ///
@@ -799,6 +853,36 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'ادخلي من رابط الدعوة ‹'**
   String get loginInviteLink;
+
+  /// SCR-SHR-003 VX-B6 local-mode honesty (OD-02 glossary)
+  ///
+  /// In ar, this message translates to:
+  /// **'الحساب محفوظ على هذا الجهاز'**
+  String get loginLocalAccountHonesty;
+
+  /// SCR-SHR-003 VX-B6 required-field validation
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخلي البريد وكلمة المرور للمتابعة'**
+  String get loginFieldsRequired;
+
+  /// SCR-SHR-003 session tag when active
+  ///
+  /// In ar, this message translates to:
+  /// **'الجلسة نشطة'**
+  String get loginSessionActive;
+
+  /// SCR-SHR-003 session tag when revoked
+  ///
+  /// In ar, this message translates to:
+  /// **'الجلسة ملغاة'**
+  String get loginSessionRevoked;
+
+  /// SCR-SHR-003 session tag when expired
+  ///
+  /// In ar, this message translates to:
+  /// **'انتهت الجلسة'**
+  String get loginSessionExpired;
 
   /// SCR-SHR-007 AppBar title
   ///
@@ -923,13 +1007,13 @@ abstract class AppLocalizations {
   /// SCR-FAT-001 child count option: three
   ///
   /// In ar, this message translates to:
-  /// **'٣ أبناء'**
+  /// **'3 أبناء'**
   String get createFamilyChildCountThree;
 
   /// SCR-FAT-001 child count option: four or more
   ///
   /// In ar, this message translates to:
-  /// **'٤ فأكثر'**
+  /// **'4 فأكثر'**
   String get createFamilyChildCountFourPlus;
 
   /// SCR-FAT-001 BannerNote.g leading glyph
@@ -961,6 +1045,24 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'لم نستطع الوصول للخادم. بياناتك المحفوظة ما زالت أمامك — أعد المحاولة عندما يكون الاتصال جاهزًا.'**
   String get errorNetworkMessage;
+
+  /// VX-B1 / FVX-G-09 local save or local store unavailable — never blames a server
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر الحفظ على هذا الجهاز — حاول مرة أخرى.'**
+  String get errorLocalSaveMessage;
+
+  /// VX-B1 / D4 child blocked from a parent-only screen; lands on My Day (SCR-CHD-004)
+  ///
+  /// In ar, this message translates to:
+  /// **'هذه الصفحة لوالديك — رجعناك إلى يومي 🌱'**
+  String get roleGuardBlockedChild;
+
+  /// VX-B1 / D4 parent blocked from an owner-only screen; lands on Today (SCR-FAT-010)
+  ///
+  /// In ar, this message translates to:
+  /// **'هذه الصفحة لمالك الحساب فقط — رجعناك إلى لوحة اليوم.'**
+  String get roleGuardBlockedParent;
 
   /// SCR-SHR-005 timeout title — distinct from network
   ///
@@ -1013,7 +1115,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-002 AppBar subtitle — estimated time
   ///
   /// In ar, this message translates to:
-  /// **'٤ دقائق'**
+  /// **'4 دقائق'**
   String get setupWizardSubtitle;
 
   /// SCR-FAT-002 hero percent — mirrors mock UI progress const
@@ -1109,7 +1211,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-003 AppBar subtitle — step 1 of 3
   ///
   /// In ar, this message translates to:
-  /// **'١ من ٣'**
+  /// **'1 من 3'**
   String get addChildStep;
 
   /// SCR-FAT-003 name field label
@@ -1187,7 +1289,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-004 step indicator
   ///
   /// In ar, this message translates to:
-  /// **'٢ من ٣'**
+  /// **'2 من 3'**
   String get linkQrStep;
 
   /// SCR-FAT-004 muted instruction lead
@@ -1259,13 +1361,13 @@ abstract class AppLocalizations {
   /// SCR-FAT-005 step indicator
   ///
   /// In ar, this message translates to:
-  /// **'٣ من ٣'**
+  /// **'3 من 3'**
   String get permissionsExplainerStep;
 
   /// SCR-FAT-005 mock video card title (Rule 23 — جهازه)
   ///
   /// In ar, this message translates to:
-  /// **'فيديو: ماذا سيطلب جهازه؟ (٩٠ ثانية)'**
+  /// **'فيديو: ماذا سيطلب جهازه؟ (90 ثانية)'**
   String get permissionsExplainerVideoTitle;
 
   /// SCR-FAT-005 video card semantics button label
@@ -1319,7 +1421,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-005 rule-3 amber banner (refusal never locks)
   ///
   /// In ar, this message translates to:
-  /// **'✋ إن رُفض أي إذن لن تُقفل أي شاشة — سيعمل البديل ونعرض بطاقة استعادة. (القاعدة ٣)'**
+  /// **'✋ إن رُفض أي إذن لن تُقفل أي شاشة — سيعمل البديل ونعرض بطاقة استعادة. (القاعدة 3)'**
   String get permissionsExplainerBanner;
 
   /// SCR-FAT-005 primary CTA → FAT-006
@@ -1337,7 +1439,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-006 AppBar subtitle — mock counts (Eastern digits)
   ///
   /// In ar, this message translates to:
-  /// **'١ من ٣ أبناء'**
+  /// **'1 من 3 أبناء'**
   String get linkSuccessStep;
 
   /// SCR-FAT-006 celebration title — Rule 23 generic ابنك
@@ -1373,7 +1475,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-006 location meta (mock Eastern digits)
   ///
   /// In ar, this message translates to:
-  /// **'آخر تحديث: الآن · البطارية ٨٤٪'**
+  /// **'آخر تحديث: الآن · البطارية 84٪'**
   String get linkSuccessLocationMeta;
 
   /// SCR-FAT-006 age template card title
@@ -1385,7 +1487,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-006 age template body — Rule 23 no child name
   ///
   /// In ar, this message translates to:
-  /// **'قالب «١٤–١٧» يضبط: ٤ ساعات، فلترة مناسبة، نوم ١٠:٣٠. وتصقله متى شئت.'**
+  /// **'قالب «14–17» يضبط: 4 ساعات، فلترة مناسبة، نوم 10:30. وتصقله متى شئت.'**
   String get linkSuccessTemplateBody;
 
   /// SCR-FAT-006 apply age template CTA
@@ -1403,7 +1505,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-006 toast after applying template
   ///
   /// In ar, this message translates to:
-  /// **'✓ ضُبط على قالب ١٤–١٧'**
+  /// **'✓ ضُبط على قالب 14–17'**
   String get linkSuccessApplyToast;
 
   /// SCR-FAT-006 toast for manual path (جهازه / ملفه)
@@ -1415,7 +1517,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-006 applied BannerNote.g — no child name
   ///
   /// In ar, this message translates to:
-  /// **'✓ قالب «١٤–١٧» مطبق: ٤ ساعات · فلترة متوازنة · نوم ١٠:٣٠'**
+  /// **'✓ قالب «14–17» مطبق: 4 ساعات · فلترة متوازنة · نوم 10:30'**
   String get linkSuccessTemplateApplied;
 
   /// SCR-FAT-006 undo applied template
@@ -1433,13 +1535,13 @@ abstract class AppLocalizations {
   /// SCR-FAT-006 next-child body — جهازه wording
   ///
   /// In ar, this message translates to:
-  /// **'قلتَ إنك ستتابع ٣ أبناء — أضف التالي وجهازه أمامك، أو أجّل من دون قلق.'**
+  /// **'قلتَ إنك ستتابع 3 أبناء — أضف التالي وجهازه أمامك، أو أجّل من دون قلق.'**
   String get linkSuccessNextChildBody;
 
   /// SCR-FAT-006 add next child CTA → FAT-003
   ///
   /// In ar, this message translates to:
-  /// **'+ أضف الابن التالي (٢ من ٣)'**
+  /// **'+ أضف الابن التالي (2 من 3)'**
   String get linkSuccessAddNext;
 
   /// SCR-FAT-006 toast before navigating to FAT-003
@@ -1481,25 +1583,25 @@ abstract class AppLocalizations {
   /// SCR-FAT-007 demo child name + age (Eastern digits)
   ///
   /// In ar, this message translates to:
-  /// **'تجريبي — ١٢ سنة'**
+  /// **'تجريبي — 12 سنة'**
   String get trialModeChildTitle;
 
   /// SCR-FAT-007 demo location + battery (Eastern digits)
   ///
   /// In ar, this message translates to:
-  /// **'📍 المدرسة الافتراضية · 🔋 ٧٧٪'**
+  /// **'📍 المدرسة الافتراضية · 🔋 77٪'**
   String get trialModeChildMeta;
 
   /// SCR-FAT-007 demo time remaining (Eastern digits)
   ///
   /// In ar, this message translates to:
-  /// **'⏱ المتبقي: ٢ س ١٥ د'**
+  /// **'⏱ المتبقي: 2 س 15 د'**
   String get trialModeRemaining;
 
   /// SCR-FAT-007 demo minutes budget (Eastern digits)
   ///
   /// In ar, this message translates to:
-  /// **'⏱ ١٨٠ دقيقة'**
+  /// **'⏱ 180 دقيقة'**
   String get trialModeMinutes;
 
   /// SCR-FAT-007 try-these AppCard title
@@ -1613,7 +1715,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-008 success toast — email local-part only (Rule 23)
   ///
   /// In ar, this message translates to:
-  /// **'أُرسلت الدعوة إلى {localPart} بمستوى «{level}» ✓'**
+  /// **'أُنشئت دعوة محلية لـ {localPart} بمستوى «{level}» — إرسال البريد/الإشعار مغلق'**
   String inviteMotherToast(String localPart, String level);
 
   /// SCR-FAT-009 AppBar title
@@ -1751,7 +1853,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-010 bare shell note (no bottom tabs OK)
   ///
   /// In ar, this message translates to:
-  /// **'هيكل بدون تبويبات — مرحلة ١'**
+  /// **'هيكل بدون تبويبات — مرحلة 1'**
   String get dayBoardShellNote;
 
   /// SCR-FAT-010 mock sync line
@@ -1886,6 +1988,12 @@ abstract class AppLocalizations {
   /// **'قرار الوالد ←'**
   String get dayBoardPriorityTag;
 
+  /// SCR-FAT-010 MintProgressBar semantics when timeLeftRatio is bound
+  ///
+  /// In ar, this message translates to:
+  /// **'الوقت المتبقي للشاشة'**
+  String get dayBoardTimeLeftProgressSemantics;
+
   /// SCR-FAT-010 advisor BannerNote.p (AI Serves, Not Decides)
   ///
   /// In ar, this message translates to:
@@ -1909,6 +2017,18 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'نوافذ زمنية للنوم والصلاة والمذاكرة — ليست مفاتيح شكلية فقط'**
   String get childScreenTimeSubtitle;
+
+  /// SCR-FAT-032 BannerNote — Local persist; OS enforce CLOSED
+  ///
+  /// In ar, this message translates to:
+  /// **'تُحفظ الحدود على هذا الجهاز فقط. فرض نظام التشغيل لوقت الشاشة غير مفعّل — الحالة SIMULATED.'**
+  String get childScreenTimeLocalHonestyBanner;
+
+  /// SCR-FAT-032 fail-closed when Local KV refused
+  ///
+  /// In ar, this message translates to:
+  /// **'إعدادات وقت الشاشة غير متاحة — تعذّر فتح التخزين المحلي. الحفظ معطّل.'**
+  String get childScreenTimePolicyUnavailable;
 
   /// SCR-FAT-032 sleep schedule row
   ///
@@ -2027,7 +2147,7 @@ abstract class AppLocalizations {
   /// SET-003 parent sync status — child applied snapshot
   ///
   /// In ar, this message translates to:
-  /// **'وُصل للابن'**
+  /// **'حُفظ على هذا الجهاز (جلسة محلية)'**
   String get childScreenTimeSyncDelivered;
 
   /// SET-003 child mirror stub title (P12 proof)
@@ -2075,7 +2195,7 @@ abstract class AppLocalizations {
   /// FS-003-OWN honesty: dispositions real, os_intercept MOCK-REMOTE
   ///
   /// In ar, this message translates to:
-  /// **'سياسة وصول الحزم محفوظة محليًا. اعتراض الجهاز يبقى محاكاة عن بُعد — لا ندّعي حظر نظام التشغيل هنا.'**
+  /// **'السماح/الحظر سياسة محلية على هذا الجهاز. اعتراض التطبيقات يتوفر في تحديث قادم — لا ندّعي أن الجهاز حظر التطبيق.'**
   String get childAppsOsInterceptHonesty;
 
   /// SCR-FAT-034 mother observer / partner configure hint (FS-003-UX APP-OD-02)
@@ -2711,7 +2831,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-040 create hero subtitle (90s rule)
   ///
   /// In ar, this message translates to:
-  /// **'صوّر صفحة كتاب — ومستشار العائلة يجهز درسًا واختبارًا في ٩٠ ثانية'**
+  /// **'صوّر صفحة كتاب — ومستشار العائلة يجهز درسًا واختبارًا في 90 ثانية'**
   String get studioBoardCreateSubtitle;
 
   /// SCR-FAT-040 S-EDU-064 suggestions section
@@ -2777,19 +2897,19 @@ abstract class AppLocalizations {
   /// SCR-FAT-040 recent flashcards subtitle
   ///
   /// In ar, this message translates to:
-  /// **'أُتقن ١٨ من ٢٤'**
+  /// **'أُتقن 18 من 24'**
   String get studioBoardContentCardsSub;
 
   /// SCR-FAT-040 recent wird title
   ///
   /// In ar, this message translates to:
-  /// **'ورد سورة الملك ١–١٠'**
+  /// **'ورد سورة الملك 1–10'**
   String get studioBoardContentWirdTitle;
 
   /// SCR-FAT-040 recent wird subtitle
   ///
   /// In ar, this message translates to:
-  /// **'٣ أيام متتالية'**
+  /// **'3 أيام متتالية'**
   String get studioBoardContentWirdSub;
 
   /// SCR-FAT-040 content status — active
@@ -2801,7 +2921,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-040 content status — progress
   ///
   /// In ar, this message translates to:
-  /// **'٧٥٪'**
+  /// **'75٪'**
   String get studioBoardStatusProgress;
 
   /// SCR-FAT-040 content status — excellent
@@ -3017,7 +3137,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-041 mock PDF math meta
   ///
   /// In ar, this message translates to:
-  /// **'PDF رسمي · ١٤.٢ ميجابايت · متوسط'**
+  /// **'PDF رسمي · 14.2 ميجابايت · متوسط'**
   String get addFromSourcePdfMathSub;
 
   /// SCR-FAT-041 mock PDF option — science
@@ -3029,7 +3149,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-041 mock PDF science meta
   ///
   /// In ar, this message translates to:
-  /// **'PDF مدرسي · ٨.٥ ميجابايت · ملخص وأسئلة'**
+  /// **'PDF مدرسي · 8.5 ميجابايت · ملخص وأسئلة'**
   String get addFromSourcePdfScienceSub;
 
   /// SCR-FAT-041 pick-from-device row
@@ -3107,7 +3227,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-042 mock viewfinder page label
   ///
   /// In ar, this message translates to:
-  /// **'صفحة ٤٧ — الكسور'**
+  /// **'صفحة 47 — الكسور'**
   String get studioCameraFrameLabel;
 
   /// SCR-FAT-042 mock viewfinder subject/grade
@@ -3131,7 +3251,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-042 mock analysis toast before FAT-043
   ///
   /// In ar, this message translates to:
-  /// **'حُللت الصفحة: «جمع الكسور المتشابهة» — ٣ أمثلة و٦ تمارين'**
+  /// **'حُللت الصفحة: «جمع الكسور المتشابهة» — 3 أمثلة و6 تمارين'**
   String get studioCameraAnalyzedToast;
 
   /// SCR-FAT-042 camera denied repair title
@@ -3227,7 +3347,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-043 mock source banner (Rule 23 — discrete label from repo)
   ///
   /// In ar, this message translates to:
-  /// **'المصدر: «جمع الكسور المتشابهة» — ص٤٧ رياضيات'**
+  /// **'المصدر: «جمع الكسور المتشابهة» — ص47 رياضيات'**
   String get generationOutputsSourceFractions;
 
   /// SCR-FAT-043 output — lesson
@@ -3251,7 +3371,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-043 homework subtitle
   ///
   /// In ar, this message translates to:
-  /// **'٦ تمارين متدرجة'**
+  /// **'6 تمارين متدرجة'**
   String get generationOutputsHomeworkSub;
 
   /// SCR-FAT-043 output — quiz
@@ -3263,7 +3383,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-043 quiz subtitle
   ///
   /// In ar, this message translates to:
-  /// **'١٠ أسئلة مصححة آليًا'**
+  /// **'10 أسئلة مصححة آليًا'**
   String get generationOutputsQuizSub;
 
   /// SCR-FAT-043 output — flashcards
@@ -3287,7 +3407,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-043 challenge subtitle
   ///
   /// In ar, this message translates to:
-  /// **'حل ٥ بلا خطأ = ٢٠ دقيقة'**
+  /// **'حل 5 بلا خطأ = 20 دقيقة'**
   String get generationOutputsChallengeSub;
 
   /// SCR-FAT-043 output — review game (P1)
@@ -3326,10 +3446,10 @@ abstract class AppLocalizations {
   /// **'ولّد المحدد ({count})'**
   String generationOutputsGenerateCta(int count);
 
-  /// SCR-FAT-043 mock generate toast before FAT-044
+  /// SCR-FAT-043 mock generate toast; Gateway REM CLOSED
   ///
   /// In ar, this message translates to:
-  /// **'🧠 يولّد مستشار العائلة الآن…'**
+  /// **'طابور محلي وهمي — بوابة المستشار سيصل إلى الأجهزة الأخرى في تحديث قادم. المعاينة تفتح بعد التوليد.'**
   String get generationOutputsGeneratingToast;
 
   /// SCR-FAT-043 toast when generate with zero selected
@@ -3392,10 +3512,10 @@ abstract class AppLocalizations {
   /// **'معاينة واعتماد'**
   String get previewApproveTitle;
 
-  /// SCR-FAT-044 90-second rule banner
+  /// SCR-FAT-044 90s rule + Gateway REM honesty
   ///
   /// In ar, this message translates to:
-  /// **'⚡ قاعدة ٩٠ ثانية — الأب يعتمد ولا يؤلّف · تحرير خفيف فقط'**
+  /// **'⚡ قاعدة 90 ثانية — الأب يعتمد ولا يؤلّف. معاينة محلية — بوابة المستشار سيصل إلى الأجهزة الأخرى في تحديث قادم.'**
   String get previewApproveRuleBanner;
 
   /// SCR-FAT-044 quiz card title
@@ -3419,79 +3539,79 @@ abstract class AppLocalizations {
   /// SCR-FAT-044 quiz Q1 prompt
   ///
   /// In ar, this message translates to:
-  /// **'س١: ٢/٧ + ٣/٧ = ؟'**
+  /// **'س1: 2/7 + 3/7 = ؟'**
   String get previewApproveQ1Prompt;
 
   /// SCR-FAT-044 quiz Q1 option A
   ///
   /// In ar, this message translates to:
-  /// **'أ) ٥/٧ ✓'**
+  /// **'أ) 5/7 ✓'**
   String get previewApproveQ1OptA;
 
   /// SCR-FAT-044 quiz Q1 option B
   ///
   /// In ar, this message translates to:
-  /// **'ب) ٥/١٤'**
+  /// **'ب) 5/14'**
   String get previewApproveQ1OptB;
 
   /// SCR-FAT-044 quiz Q1 option C
   ///
   /// In ar, this message translates to:
-  /// **'ج) ٦/٧'**
+  /// **'ج) 6/7'**
   String get previewApproveQ1OptC;
 
   /// SCR-FAT-044 quiz Q2 prompt
   ///
   /// In ar, this message translates to:
-  /// **'س٢: ١/٥ + ٢/٥ = ؟'**
+  /// **'س2: 1/5 + 2/5 = ؟'**
   String get previewApproveQ2Prompt;
 
   /// SCR-FAT-044 quiz Q2 option A
   ///
   /// In ar, this message translates to:
-  /// **'أ) ٣/٥ ✓'**
+  /// **'أ) 3/5 ✓'**
   String get previewApproveQ2OptA;
 
   /// SCR-FAT-044 quiz Q2 option B
   ///
   /// In ar, this message translates to:
-  /// **'ب) ٣/١٠'**
+  /// **'ب) 3/10'**
   String get previewApproveQ2OptB;
 
   /// SCR-FAT-044 quiz Q2 option C
   ///
   /// In ar, this message translates to:
-  /// **'ج) ٢/٥'**
+  /// **'ج) 2/5'**
   String get previewApproveQ2OptC;
 
   /// SCR-FAT-044 swapped quiz Q3 prompt
   ///
   /// In ar, this message translates to:
-  /// **'س٣: ٤/٩ + ٢/٩ = ؟'**
+  /// **'س3: 4/9 + 2/9 = ؟'**
   String get previewApproveQ3Prompt;
 
   /// SCR-FAT-044 quiz Q3 option A
   ///
   /// In ar, this message translates to:
-  /// **'أ) ٦/٩ ✓'**
+  /// **'أ) 6/9 ✓'**
   String get previewApproveQ3OptA;
 
   /// SCR-FAT-044 quiz Q3 option B
   ///
   /// In ar, this message translates to:
-  /// **'ب) ٦/١٨'**
+  /// **'ب) 6/18'**
   String get previewApproveQ3OptB;
 
   /// SCR-FAT-044 quiz Q3 option C
   ///
   /// In ar, this message translates to:
-  /// **'ج) ٨/٩'**
+  /// **'ج) 8/9'**
   String get previewApproveQ3OptC;
 
   /// SCR-FAT-044 lesson preview summary
   ///
   /// In ar, this message translates to:
-  /// **'«تخيل بيتزا مقسومة ٧ قطع…» — شرح بالأمثلة البصرية'**
+  /// **'«تخيل بيتزا مقسومة 7 قطع…» — شرح بالأمثلة البصرية'**
   String get previewApproveLessonSummary;
 
   /// SCR-FAT-044 swap question CTA
@@ -3521,7 +3641,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-044 swap toast
   ///
   /// In ar, this message translates to:
-  /// **'س٣ استُبدل بسؤال أسهل'**
+  /// **'س3 استُبدل بسؤال أسهل'**
   String get previewApproveSwapToast;
 
   /// SCR-FAT-044 edit toast (mock)
@@ -3569,7 +3689,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-044 90-second timing note
   ///
   /// In ar, this message translates to:
-  /// **'من الالتقاط لهنا: ~{seconds} ثانية — ضمن قاعدة الـ٩٠ ✓'**
+  /// **'من الالتقاط لهنا: ~{seconds} ثانية — ضمن قاعدة الـ90 ✓'**
   String previewApproveTimingNote(int seconds);
 
   /// SCR-FAT-044 empty title
@@ -3641,19 +3761,19 @@ abstract class AppLocalizations {
   /// SCR-FAT-045 generic child label 1 · Rule 23
   ///
   /// In ar, this message translates to:
-  /// **'ابن ١'**
+  /// **'ابن 1'**
   String get attributionRewardChildOne;
 
   /// SCR-FAT-045 generic child label 2 · Rule 23
   ///
   /// In ar, this message translates to:
-  /// **'ابن ٢'**
+  /// **'ابن 2'**
   String get attributionRewardChildTwo;
 
   /// SCR-FAT-045 generic child label 3 · Rule 23
   ///
   /// In ar, this message translates to:
-  /// **'ابن ٣'**
+  /// **'ابن 3'**
   String get attributionRewardChildThree;
 
   /// SCR-FAT-045 schedule field label
@@ -3983,19 +4103,19 @@ abstract class AppLocalizations {
   /// SCR-FAT-047 generic child label 1 — Rule 23
   ///
   /// In ar, this message translates to:
-  /// **'ابن ١'**
+  /// **'ابن 1'**
   String get learningPathChildOne;
 
   /// SCR-FAT-047 generic child label 2 — Rule 23
   ///
   /// In ar, this message translates to:
-  /// **'ابن ٢'**
+  /// **'ابن 2'**
   String get learningPathChildTwo;
 
   /// SCR-FAT-047 generic child label 3 — Rule 23
   ///
   /// In ar, this message translates to:
-  /// **'ابن ٣'**
+  /// **'ابن 3'**
   String get learningPathChildThree;
 
   /// SCR-FAT-047 subject — fractions
@@ -4319,7 +4439,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-049 path 1 title
   ///
   /// In ar, this message translates to:
-  /// **'١. واجب المدرسة البيتي (دفتر / منصة)'**
+  /// **'1. واجب المدرسة البيتي (دفتر / منصة)'**
   String get createAssignmentHomeworkTitle;
 
   /// SCR-FAT-049 path 1 subtitle
@@ -4331,7 +4451,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-049 homework field hint
   ///
   /// In ar, this message translates to:
-  /// **'مثال: حل صفحة ٤٥ في الرياضيات'**
+  /// **'مثال: حل صفحة 45 في الرياضيات'**
   String get createAssignmentHomeworkHint;
 
   /// SCR-FAT-049 homework minutes reward (ع-١)
@@ -4367,7 +4487,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-049 path 2 title
   ///
   /// In ar, this message translates to:
-  /// **'٢. تثبيت فجوة مهارة (علاج التعثر)'**
+  /// **'2. تثبيت فجوة مهارة (علاج التعثر)'**
   String get createAssignmentSkillTitle;
 
   /// SCR-FAT-049 path 2 subtitle
@@ -4433,7 +4553,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-049 path 3 title
   ///
   /// In ar, this message translates to:
-  /// **'٣. سؤال تحدي عائلي خاص من الأب'**
+  /// **'3. سؤال تحدي عائلي خاص من الأب'**
   String get createAssignmentFamilyTitle;
 
   /// SCR-FAT-049 path 3 subtitle
@@ -4931,7 +5051,7 @@ abstract class AppLocalizations {
   /// WF-SF-10 native plane honesty
   ///
   /// In ar, this message translates to:
-  /// **'مستوى الحظر على الجهاز محاكاة عن بُعد — السياسة حقيقية؛ لا ندّعي VPN/DNS'**
+  /// **'التصنيفات والتفضيلات تُحفظ محليًا. فرض VPN/DNS يتوفر في تحديث قادم — لا ندّعي أن الجهاز حظر موقعًا.'**
   String get webFilterNativeBlockHonesty;
 
   /// SET-005 preview sheet caption
@@ -5123,61 +5243,61 @@ abstract class AppLocalizations {
   /// SCR-FAT-037 instant lock MVP switch
   ///
   /// In ar, this message translates to:
-  /// **'قفل الجهاز الآن'**
+  /// **'حفظ تفضيل القفل محليًا'**
   String get instantLockToggle;
 
   /// SCR-FAT-037 instant lock helper
   ///
   /// In ar, this message translates to:
-  /// **'يقفل جهاز الابن فورًا مع بقاء الطوارئ والدردشة والقرآن متاحة'**
+  /// **'يحفظ تفضيل قفل محلي على هذا الجهاز. قفل نظام التشغيل غير متاح حتى القدرة الأصلية. الطوارئ والدردشة والقرآن تبقى متاحة.'**
   String get instantLockSubtitle;
 
   /// SET-009 locked status label
   ///
   /// In ar, this message translates to:
-  /// **'الجهاز مقفل'**
+  /// **'تم حفظ طلب القفل محليًا'**
   String get instantLockStatusLocked;
 
   /// SET-009 unlocked status label
   ///
   /// In ar, this message translates to:
-  /// **'الجهاز غير مقفل'**
+  /// **'تم حفظ تفضيل فك القفل محليًا'**
   String get instantLockStatusUnlocked;
 
   /// SET-009 lockedBy father
   ///
   /// In ar, this message translates to:
-  /// **'مقفل بواسطة الأب'**
+  /// **'تفضيل القفل من الأب (قفل النظام يتوفر في تحديث قادم)'**
   String get instantLockLockedByFather;
 
   /// SET-009 lockedBy mother
   ///
   /// In ar, this message translates to:
-  /// **'مقفل بواسطة الأم'**
+  /// **'تفضيل القفل من الأم (قفل النظام يتوفر في تحديث قادم)'**
   String get instantLockLockedByMother;
 
   /// SET-009 Lock button
   ///
   /// In ar, this message translates to:
-  /// **'قفل'**
+  /// **'حفظ طلب القفل'**
   String get instantLockAction;
 
   /// SET-009 Unlock button
   ///
   /// In ar, this message translates to:
-  /// **'فتح القفل'**
+  /// **'حفظ تفضيل فك القفل'**
   String get instantLockUnlockAction;
 
   /// SET-009 lock/unlock denied toast
   ///
   /// In ar, this message translates to:
-  /// **'غير مسموح بتغيير قفل الجهاز'**
+  /// **'غير مسموح بتغيير تفضيل قفل الجهاز'**
   String get instantLockDeniedToast;
 
   /// SET-009 mother supersession banner
   ///
   /// In ar, this message translates to:
-  /// **'الأب فتح القفل (تم تجاوز قفلك)'**
+  /// **'الأب حفظ تفضيل فك القفل (تم تجاوز تفضيل قفلك)'**
   String get instantLockSupersessionBanner;
 
   /// SET-007 father-only anti-tamper section
@@ -5294,10 +5414,10 @@ abstract class AppLocalizations {
   /// **'الإشعارات'**
   String get notificationPrefsTitle;
 
-  /// SCR-FAT-058 ControlFit subtitle
+  /// SCR-FAT-058 ControlFit subtitle (prototype note)
   ///
   /// In ar, this message translates to:
-  /// **'ساعات الهدوء لكتم التنبيهات غير الحرجة فقط'**
+  /// **'نظّم الإشعارات بحسب درجة أهميتها لمنع الإزعاج — نداءات الاستغاثة تخترق أي وضع صامت دائماً'**
   String get notificationPrefsSubtitle;
 
   /// SET-010 quiet hours switch
@@ -5366,17 +5486,143 @@ abstract class AppLocalizations {
   /// **'الابن'**
   String get notificationPrefsMemberChild;
 
-  /// SET-011 R-3 / S-AIC-029 mother analysis notices
+  /// SCR-FAT-058 important lane — Advisor / analysis notices
   ///
   /// In ar, this message translates to:
-  /// **'إشعارات التحليلات'**
+  /// **'تنبيهات مستشار العائلة'**
   String get notificationPrefsAnalysisNotices;
 
-  /// SET-011 analysis notices helper
+  /// SCR-FAT-058 analysis notices helper
   ///
   /// In ar, this message translates to:
-  /// **'تحديثات اختيارية غير حرجة عند تحليلات المستشار'**
+  /// **'تحديثات اختيارية غير حرجة من المستشار'**
   String get notificationPrefsAnalysisNoticesHint;
+
+  /// SCR-FAT-058 critical tier card title
+  ///
+  /// In ar, this message translates to:
+  /// **'الحرجة — لا تُكتم'**
+  String get notificationPrefsCardCriticalTitle;
+
+  /// SCR-FAT-058 critical tier card body (no toggle)
+  ///
+  /// In ar, this message translates to:
+  /// **'استغاثة · خروج من منطقة آمنة · انقطاع جهاز — تخترق الصامت دائمًا. هذه طمأنينتك ولا مفتاح لها.'**
+  String get notificationPrefsCardCriticalBody;
+
+  /// SCR-FAT-058 important tier card title
+  ///
+  /// In ar, this message translates to:
+  /// **'المهمة'**
+  String get notificationPrefsCardImportantTitle;
+
+  /// SCR-FAT-058 reassurance tier card title
+  ///
+  /// In ar, this message translates to:
+  /// **'الاطمئنان'**
+  String get notificationPrefsCardReassuranceTitle;
+
+  /// SCR-FAT-058 important — time/app/friend requests
+  ///
+  /// In ar, this message translates to:
+  /// **'طلبات الأبناء'**
+  String get notificationPrefsChildRequests;
+
+  /// SCR-FAT-058 quiet hours row subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'نافذة الهدوء: تُجمَّع التنبيهات غير الحرجة للصباح'**
+  String get notificationPrefsQuietHoursHint;
+
+  /// SCR-FAT-058 reassurance — batch soft alerts
+  ///
+  /// In ar, this message translates to:
+  /// **'ملخص واحد بدل التكرار'**
+  String get notificationPrefsSummaryDigest;
+
+  /// SCR-FAT-058 summary digest helper
+  ///
+  /// In ar, this message translates to:
+  /// **'«وصل ٣ أبناء بسلام» — رسالة واحدة'**
+  String get notificationPrefsSummaryDigestHint;
+
+  /// SCR-FAT-058 reassurance — evening digest toggle
+  ///
+  /// In ar, this message translates to:
+  /// **'الملخص المسائي'**
+  String get notificationPrefsEveningDigest;
+
+  /// SCR-FAT-058 evening digest time chip label
+  ///
+  /// In ar, this message translates to:
+  /// **'وقت الملخص'**
+  String get notificationPrefsEveningDigestTime;
+
+  /// SCR-FAT-020 SOS category tag
+  ///
+  /// In ar, this message translates to:
+  /// **'فئة: استغاثة طارئة'**
+  String get alertDetailCategorySos;
+
+  /// SCR-FAT-020 tamper category tag
+  ///
+  /// In ar, this message translates to:
+  /// **'فئة: حماية الجهاز'**
+  String get alertDetailCategoryTamper;
+
+  /// SCR-FAT-020 projected SOS title
+  ///
+  /// In ar, this message translates to:
+  /// **'نداء استغاثة نشط يحتاجك'**
+  String get alertDetailSosTitle;
+
+  /// SCR-FAT-020 projected SOS body
+  ///
+  /// In ar, this message translates to:
+  /// **'استغاثة عائلية نشطة. افتح لوحة الاستغاثة — لا تُكتم بساعات الهدوء.'**
+  String get alertDetailSosBody;
+
+  /// SCR-FAT-020 projected SOS advice
+  ///
+  /// In ar, this message translates to:
+  /// **'اهدأ، افتح اللوحة، وتأكد أن الابن بأمان.'**
+  String get alertDetailSosAdvice;
+
+  /// SCR-FAT-020 SOS primary CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'افتح لوحة الاستغاثة'**
+  String get alertDetailSosOpenBoardCta;
+
+  /// SCR-FAT-020 projected tamper title
+  ///
+  /// In ar, this message translates to:
+  /// **'تنبيه حماية على جهاز ابن'**
+  String get alertDetailTamperTitle;
+
+  /// SCR-FAT-020 projected tamper body
+  ///
+  /// In ar, this message translates to:
+  /// **'حماية مكافحة العبث أبلغت عن نشاط. راجع قريبًا — مسار حرج.'**
+  String get alertDetailTamperBody;
+
+  /// SCR-FAT-020 projected tamper advice
+  ///
+  /// In ar, this message translates to:
+  /// **'راجع حالة الجهاز وتحدث مع الابن إن لزم.'**
+  String get alertDetailTamperAdvice;
+
+  /// SCR-FAT-020 tamper acknowledge CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'تم الاطلاع'**
+  String get alertDetailAcknowledgeCta;
+
+  /// SCR-FAT-020 tamper acknowledged banner
+  ///
+  /// In ar, this message translates to:
+  /// **'تم الاطلاع'**
+  String get alertDetailAcknowledgeDoneBanner;
 
   /// SCR-FAT-059 app bar title
   ///
@@ -5531,7 +5777,7 @@ abstract class AppLocalizations {
   /// SET-013 wipe step-1 explain
   ///
   /// In ar, this message translates to:
-  /// **'هذا يجدول مسحاً دائماً لبيانات العائلة. إدخالات سجل التدقيق لا تُحذف أبداً. لديك مهلة ندم ٧ أيام للإلغاء.'**
+  /// **'هذا يجدول مسحاً دائماً لبيانات العائلة. إدخالات سجل التدقيق لا تُحذف أبداً. لديك مهلة ندم 7 أيام للإلغاء.'**
   String get privacyWipeStep1Body;
 
   /// SET-013 wipe step-1 continue
@@ -5549,7 +5795,7 @@ abstract class AppLocalizations {
   /// SET-013 wipe step-2 type-confirm
   ///
   /// In ar, this message translates to:
-  /// **'اكتب {phrase} لجدولة المسح. التنفيذ ينتظر ٧ أيام — يمكنك الإلغاء في أي وقت خلال هذه المهلة.'**
+  /// **'اكتب {phrase} لجدولة المسح. التنفيذ ينتظر 7 أيام — يمكنك الإلغاء في أي وقت خلال هذه المهلة.'**
   String privacyWipeStep2Body(String phrase);
 
   /// SET-013 type-to-confirm phrase (AR)
@@ -5567,13 +5813,13 @@ abstract class AppLocalizations {
   /// SET-013 wipe scheduled toast
   ///
   /// In ar, this message translates to:
-  /// **'تمت جدولة المسح — بدأت مهلة الندم ٧ أيام'**
+  /// **'تمت جدولة المسح — بدأت مهلة الندم 7 أيام'**
   String get privacyWipeScheduledToast;
 
   /// SET-013 pending wipe banner
   ///
   /// In ar, this message translates to:
-  /// **'مسح معلّق حتى {when} — ألغِ خلال ٧ أيام'**
+  /// **'مسح معلّق حتى {when} — ألغِ خلال 7 أيام'**
   String privacyWipePendingBanner(String when);
 
   /// SET-013 cancel wipe within regret window
@@ -5957,13 +6203,13 @@ abstract class AppLocalizations {
   /// UI-005 last-synced honesty line on CHD-004
   ///
   /// In ar, this message translates to:
-  /// **'آخر مزامنة: {time}'**
+  /// **'آخر تحديث سياسة محلي: {time}'**
   String childDayBoardLastSynced(String time);
 
   /// UI-005 offline + last-synced banner on CHD-004
   ///
   /// In ar, this message translates to:
-  /// **'دون اتصال — تُعرض آخر لوحة مزامَنة ({time}). تُحدَّث عند عودة الشبكة.'**
+  /// **'تُعرض آخر لوحة محلية ({time}). مزامنة الأجهزة المتعددة مغلقة — التحديثات على هذا الجهاز فقط.'**
   String childDayBoardOfflineBanner(String time);
 
   /// SCR-FAT-033 / UI-006 app bar title
@@ -6050,6 +6296,18 @@ abstract class AppLocalizations {
   /// **'القرار في قائمة الانتظار'**
   String get requestInboxOfflineQueued;
 
+  /// SCR-FAT-033 BannerNote — local decide; no FCM
+  ///
+  /// In ar, this message translates to:
+  /// **'تُحفظ الموافقات محلياً على هذا الجهاز. إشعار جهاز الابن يتطلّب تحديث قادم للأجهزة الأخرى — لم يُسلَّم عن بُعد بعد.'**
+  String get requestInboxLocalHonestyBanner;
+
+  /// SCR-FAT-033 fail-closed when Local KV refused
+  ///
+  /// In ar, this message translates to:
+  /// **'طلبات الوقت غير متاحة — تعذّر فتح التخزين المحلي. القرارات معطّلة.'**
+  String get requestInboxUnavailable;
+
   /// UI-006 AC3 child-visible reject reason
   ///
   /// In ar, this message translates to:
@@ -6107,7 +6365,7 @@ abstract class AppLocalizations {
   /// SET-020 subtitle — parents immovable on rung 1
   ///
   /// In ar, this message translates to:
-  /// **'الوالدان مثبتان في الدرجة ١ — لا يمكن إزالتهما أو إيقاف تنبيه الطوارئ عنهما'**
+  /// **'الوالدان مثبتان في الدرجة 1 — لا يمكن إزالتهما أو إيقاف تنبيه الطوارئ عنهما'**
   String get sosLadderSubtitle;
 
   /// SET-020 ladder section heading
@@ -6278,6 +6536,12 @@ abstract class AppLocalizations {
   /// **'قفل مرن'**
   String get ruleConsequentSoftLock;
 
+  /// VX-B1 / FVX-C-04 SCR-FAT-079 title for a father-authored rule (body = consequent labels)
+  ///
+  /// In ar, this message translates to:
+  /// **'قاعدة وضعتها بنفسك'**
+  String get myAdvisorOwnRuleTitle;
+
   /// SCR-CHD-001 AppBar title
   ///
   /// In ar, this message translates to:
@@ -6425,7 +6689,7 @@ abstract class AppLocalizations {
   /// UI-003 permanently denied manual instructions
   ///
   /// In ar, this message translates to:
-  /// **'على بعض الأجهزة يُرفض الإذن نهائيًا. افتح إعدادات النظام يدويًا وفعّل الكاميرا، أو اكتب الرمز المكوّن من ٨ أحرف الظاهر أسفل شاشة والدك.'**
+  /// **'على بعض الأجهزة يُرفض الإذن نهائيًا. افتح إعدادات النظام يدويًا وفعّل الكاميرا، أو اكتب الرمز المكوّن من 8 أحرف الظاهر أسفل شاشة والدك.'**
   String get childQrPermanentBody;
 
   /// SCR-CHD-002 manual token placeholder
@@ -6443,7 +6707,7 @@ abstract class AppLocalizations {
   /// UI-003 UF-01 token validation error
   ///
   /// In ar, this message translates to:
-  /// **'الرمز غير صالح — ٨ أحرف كما يظهر عند والدك (UF-01).'**
+  /// **'الرمز غير صالح — 8 أحرف كما يظهر عند والدك (UF-01).'**
   String get childQrTokenInvalid;
 
   /// SCR-CHD-003 AppBar title — honesty charter
@@ -6677,7 +6941,7 @@ abstract class AppLocalizations {
   /// UI-007 provisional price copy
   ///
   /// In ar, this message translates to:
-  /// **'٢٩ ر.س / شهريًا لكل العائلة'**
+  /// **'29 ر.س / شهريًا لكل العائلة'**
   String get plansFamilySmartPrice;
 
   /// UI-007 free forever safety tier
@@ -6853,6 +7117,18 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'الصحة والنبض والأذونات'**
   String get deviceHealthDevicesSubtitle;
+
+  /// SCR-FAT-025 empty devices list title
+  ///
+  /// In ar, this message translates to:
+  /// **'لا أجهزة بعد'**
+  String get deviceHealthDevicesEmptyTitle;
+
+  /// SCR-FAT-025 empty devices list message
+  ///
+  /// In ar, this message translates to:
+  /// **'اربط جهاز ابن لترى الصحة والنبض والأذونات هنا.'**
+  String get deviceHealthDevicesEmptyMessage;
 
   /// UI-012 amber hint when any device at risk
   ///
@@ -7295,7 +7571,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-011 stage 1–2 on-device privacy footer
   ///
   /// In ar, this message translates to:
-  /// **'المرحلتان ١–٢ تعملان على الجهاز — خصوصية كاملة ومجانية'**
+  /// **'المرحلتان 1–2 تعملان على الجهاز — خصوصية كاملة ومجانية'**
   String get advisorSuggestionsPrivacyFooter;
 
   /// SCR-FAT-011 suggestions list Semantics label
@@ -7357,6 +7633,30 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'تُطبق على من تختار — وأي إعداد فردي لاحق يغلبها ويظهر كاستثناء.'**
   String get childrenListSharedHonesty;
+
+  /// SCR-FAT-012 BannerNote — LOCAL_DEMO_SEEDED honesty (Identity-B; not GPS/OS)
+  ///
+  /// In ar, this message translates to:
+  /// **'الموقع وآخر ظهور والبطارية والوقت المتبقي في هذه القائمة نصوص عرض تجريبي محلي — وليست GPS حيّاً ولا بطارية الجهاز.'**
+  String get childrenListLocalDemoBanner;
+
+  /// SCR-FAT-008 BannerNote — local invite record honesty (no email/FCM/Backend)
+  ///
+  /// In ar, this message translates to:
+  /// **'تُحفظ الدعوة محلياً على هذا الجهاز. إرسال البريد وانضمام حساب الأم يتوفران في تحديث قادم — لم يُرسل بريد بعد.'**
+  String get inviteMotherLocalHonestyBanner;
+
+  /// SCR-FAT-009 BannerNote — local accept honesty (no Backend sync)
+  ///
+  /// In ar, this message translates to:
+  /// **'يُسجَّل الانضمام محلياً على هذا الجهاز. مزامنة الحساب عن بُعد وتأكيد البريد يتوفران في تحديث قادم — لم يكتمل بعد.'**
+  String get acceptMotherInviteLocalHonestyBanner;
+
+  /// SCR-FAT-012 shared Apply — prefs persist only; not PolicyEngine/ST/WF enforcement yet
+  ///
+  /// In ar, this message translates to:
+  /// **'يُحفظ محليًا في قائمة الأبناء فقط — لا يُنفَّذ بعد عبر محرك السياسة أو وقت الشاشة أو فلتر الويب.'**
+  String get childrenListSharedEnforceHonesty;
 
   /// SCR-FAT-012 shared scope label
   ///
@@ -7453,6 +7753,18 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'جاري تحميل قائمة الأبناء'**
   String get childrenListLoadingSemantics;
+
+  /// SCR-FAT-012 VX-B6 empty location/battery honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يُربط الجهاز بعد'**
+  String get childrenListDeviceNotLinked;
+
+  /// SCR-FAT-012 VX-B6 blocked add/delete toast (dedicated key)
+  ///
+  /// In ar, this message translates to:
+  /// **'فقط مالك العائلة أو الأم بصلاحية كاملة يمكنهما إدارة الأبناء هنا'**
+  String get childrenListAddBlocked;
 
   /// SCR-FAT-012 roster list Semantics
   ///
@@ -7556,6 +7868,12 @@ abstract class AppLocalizations {
   /// **'طلبات الوقت'**
   String get childProfileToolTimeRequests;
 
+  /// SCR-FAT-013 tool → FAT-034
+  ///
+  /// In ar, this message translates to:
+  /// **'التطبيقات'**
+  String get childProfileToolApps;
+
   /// SCR-FAT-013 tool → FAT-036
   ///
   /// In ar, this message translates to:
@@ -7568,11 +7886,41 @@ abstract class AppLocalizations {
   /// **'القفل الفوري'**
   String get childProfileToolInstantLock;
 
+  /// SCR-FAT-013 tool → FAT-038
+  ///
+  /// In ar, this message translates to:
+  /// **'تنبيهات التحايل'**
+  String get childProfileToolTamperAlerts;
+
+  /// SCR-FAT-013 tool → FAT-065
+  ///
+  /// In ar, this message translates to:
+  /// **'التنبيهات الذكية'**
+  String get childProfileToolSmartAlerts;
+
   /// SCR-FAT-013 tool → FAT-067
   ///
   /// In ar, this message translates to:
   /// **'ضبط الرقابة'**
   String get childProfileToolSmartSupervision;
+
+  /// SCR-FAT-013 tool → FAT-069
+  ///
+  /// In ar, this message translates to:
+  /// **'تقرير الاستخدام'**
+  String get childProfileToolUsageReport;
+
+  /// SCR-FAT-013 tool → FAT-051
+  ///
+  /// In ar, this message translates to:
+  /// **'تقرير التركيز'**
+  String get childProfileToolFocusReport;
+
+  /// SCR-FAT-013 tool → FAT-072
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظ القرآن'**
+  String get childProfileToolQuranProgress;
 
   /// SCR-FAT-013 tool → FAT-026
   ///
@@ -7601,6 +7949,36 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'التفاصيل ‹'**
   String get childProfileDetailsLink;
+
+  /// LOCATION-1B FAT-013 → FAT-014 map CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'الخريطة المباشرة'**
+  String get childProfileLocationMapCta;
+
+  /// LOCATION-1B FAT-013 → FAT-015 history CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'سجل الموقع'**
+  String get childProfileLocationHistoryCta;
+
+  /// LOCATION-1B FAT-013 GPS honesty one-liner
+  ///
+  /// In ar, this message translates to:
+  /// **'GPS الجهاز قريبًا — تسميات المكان عرض عيّنة محلي وليست تتبّعًا حيًا.'**
+  String get childProfileLocationGpsHonesty;
+
+  /// LOCATION-1B FAT-013 zones count → FAT-016
+  ///
+  /// In ar, this message translates to:
+  /// **'المناطق المعيّنة: {count}'**
+  String childProfileAssignedZonesCount(String count);
+
+  /// LOCATION-1B FAT-013 assigned zones link Semantics
+  ///
+  /// In ar, this message translates to:
+  /// **'فتح المناطق الآمنة لهذا الابن'**
+  String get childProfileAssignedZonesSemantics;
 
   /// SCR-FAT-013 connection health card
   ///
@@ -7665,7 +8043,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-013 / pairing max-3 enrolled devices block
   ///
   /// In ar, this message translates to:
-  /// **'لهذا الابن ٣ أجهزة مسجّلة بالفعل — ألغِ تسجيل جهاز قبل ربط جهاز جديد.'**
+  /// **'لهذا الابن 3 أجهزة مسجّلة بالفعل — ألغِ تسجيل جهاز قبل ربط جهاز جديد.'**
   String get childProfileMaxDevicesBlock;
 
   /// Enrollment lifecycle label
@@ -7713,7 +8091,7 @@ abstract class AppLocalizations {
   /// Pairing / claim max-3 failure
   ///
   /// In ar, this message translates to:
-  /// **'تعذّر التسجيل — الحد الأقصى ٣ أجهزة نشطة لهذا الابن.'**
+  /// **'تعذّر التسجيل — الحد الأقصى 3 أجهزة نشطة لهذا الابن.'**
   String get enrollmentFailureMaxDevices;
 
   /// CHD-002 claim failure for unknown/inactive token
@@ -8115,8 +8493,56 @@ abstract class AppLocalizations {
   /// SCR-FAT-015 90-day retention honesty
   ///
   /// In ar, this message translates to:
-  /// **'يُحتفظ بالسجل ٩٠ يومًا ثم يُحذف تلقائيًا — سياسة تقليم ملزمة.'**
+  /// **'يُحتفظ بالسجل 90 يومًا ثم يُحذف تلقائيًا — سياسة تقليم ملزمة.'**
   String get locationHistoryRetentionNote;
+
+  /// SCR-FAT-015 Primary export stub CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'تصدير السجل (الأب)'**
+  String get locationHistoryExportCta;
+
+  /// SCR-FAT-015 Primary archive stub CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'أرشفة السجل (الأب)'**
+  String get locationHistoryArchiveCta;
+
+  /// SCR-FAT-015 export stub honesty toast
+  ///
+  /// In ar, this message translates to:
+  /// **'التصدير جاهز للمزامنة لاحقًا — المرحلة ١ تبقي المسار على الجهاز فقط.'**
+  String get locationHistoryExportStubToast;
+
+  /// SCR-FAT-015 archive stub honesty toast
+  ///
+  /// In ar, this message translates to:
+  /// **'الأرشفة صلاحية الأب — المرحلة ١ تسجّل النية فقط (بدون مسح سحابي).'**
+  String get locationHistoryArchiveStubToast;
+
+  /// FAT-014 network chip online
+  ///
+  /// In ar, this message translates to:
+  /// **'الشبكة · متصل'**
+  String get locationMapNetworkOnline;
+
+  /// FAT-014 network chip offline
+  ///
+  /// In ar, this message translates to:
+  /// **'الشبكة · غير متصل'**
+  String get locationMapNetworkOffline;
+
+  /// FAT-014 network chip unknown
+  ///
+  /// In ar, this message translates to:
+  /// **'الشبكة · غير معروفة'**
+  String get locationMapNetworkUnknown;
+
+  /// FAT-014 network chip Native-closed honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'الشبكة · غير متاحة (المرحلة ١)'**
+  String get locationMapNetworkUnavailable;
 
   /// SCR-FAT-016 app bar title
   ///
@@ -8286,6 +8712,12 @@ abstract class AppLocalizations {
   /// **'نادي الحي'**
   String get createSafeZoneNameHint;
 
+  /// SCR-FAT-017 VX-B6 empty name validation (hint is not a value)
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخلي اسم المنطقة قبل الحفظ'**
+  String get createSafeZoneNameRequired;
+
   /// SCR-FAT-017 alert toggles card heading
   ///
   /// In ar, this message translates to:
@@ -8313,8 +8745,44 @@ abstract class AppLocalizations {
   /// SCR-FAT-017 no-show alert subtitle
   ///
   /// In ar, this message translates to:
-  /// **'مثال: لم يصل المدرسة ٧:٣٠ ص'**
+  /// **'مثال: لم يصل المدرسة 7:30 ص'**
   String get createSafeZoneAlertNoShowHint;
+
+  /// LOCATION-1B FAT-017 no-show deadline label
+  ///
+  /// In ar, this message translates to:
+  /// **'يجب الوصول قبل'**
+  String get createSafeZoneNoShowDeadlineLabel;
+
+  /// LOCATION-1B FAT-017 block save without deadline
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر وقت الوصول الإلزامي قبل حفظ تنبيه عدم الوصول'**
+  String get createSafeZoneNoShowDeadlineRequired;
+
+  /// LOCATION-1B FAT-017 open time picker
+  ///
+  /// In ar, this message translates to:
+  /// **'وقت مخصص…'**
+  String get createSafeZoneNoShowDeadlineCustom;
+
+  /// LOCATION-1B FAT-017 no-show schedule honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'يُحفظ كنية محلية فقط — عامل الجدولة غير مفعّل في هذا البناء (نفس صدق نية الرسائل).'**
+  String get createSafeZoneNoShowDeadlineHonesty;
+
+  /// LOCATION-1B FAT-017 deadline chip Semantics
+  ///
+  /// In ar, this message translates to:
+  /// **'يجب الوصول قبل {time}'**
+  String createSafeZoneNoShowDeadlineSemantics(String time);
+
+  /// LOCATION-1B FAT-016 no-show deadline under flag
+  ///
+  /// In ar, this message translates to:
+  /// **'يجب الوصول قبل {time}'**
+  String safeZonesNoShowDeadline(String time);
 
   /// SCR-FAT-017 primary save CTA
   ///
@@ -8524,6 +8992,18 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'إعداد سلسلة الطوارئ ←'**
   String get sosAlertSetupCta;
+
+  /// SCR-FAT-018 empty CTA when ladder/readiness incomplete
+  ///
+  /// In ar, this message translates to:
+  /// **'أكمل جاهزية الطوارئ ←'**
+  String get sosAlertSetupIncompleteCta;
+
+  /// SCR-FAT-018 empty when setup incomplete
+  ///
+  /// In ar, this message translates to:
+  /// **'لا بلاغ نشط — ومكتب الطوارئ ما زال يحتاج جهات موثوقة أو جاهزية. افتح الإعداد قبل البلاغ القادم.'**
+  String get sosAlertEmptyIncompleteMessage;
 
   /// SCR-FAT-018 setup CTA Semantics
   ///
@@ -8819,11 +9299,23 @@ abstract class AppLocalizations {
   /// **'العائلة'**
   String get conversationsListTitle;
 
-  /// SCR-FAT-021 UI-007 chat never paywalled honesty
+  /// SCR-FAT-021 VX-B6 OD-02/OD-09 local-only honesty
   ///
   /// In ar, this message translates to:
-  /// **'حق ثابت: المحادثة العائلية لا تُقيَّد بأي مستوى اشتراك — مشفّرة ومتاحة دائمًا'**
+  /// **'محفوظ على هذا الجهاز فقط. المحادثة العائلية لا تُقيَّد بالاشتراك — التسليم متعدد الأجهزة يصل إلى الهواتف الأخرى في تحديث قادم.'**
   String get conversationsListHonestyBanner;
+
+  /// SCR-FAT-021/CHD-007 VX-B6 seeded family thread title
+  ///
+  /// In ar, this message translates to:
+  /// **'العائلة'**
+  String get conversationsListFamilyThreadTitle;
+
+  /// SCR-FAT-021/CHD-007 VX-B6 empty family thread preview
+  ///
+  /// In ar, this message translates to:
+  /// **'لا رسائل بعد'**
+  String get conversationsListFamilyThreadPreview;
 
   /// SCR-FAT-021 conversations section header
   ///
@@ -8840,7 +9332,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-021 Stage-1 new-chat snackbar
   ///
   /// In ar, this message translates to:
-  /// **'محادثة جديدة — قريبًا (مرحلة ١)'**
+  /// **'محادثة جديدة — قريبًا (مرحلة 1)'**
   String get conversationsListNewChatToast;
 
   /// SCR-FAT-021 empty state title
@@ -8894,14 +9386,20 @@ abstract class AppLocalizations {
   /// SCR-FAT-022 Stage-1 settings snackbar
   ///
   /// In ar, this message translates to:
-  /// **'إعدادات المحادثة — قريبًا (مرحلة ١)'**
+  /// **'إعدادات المحادثة — قريبًا (مرحلة 1)'**
   String get conversationSettingsToast;
 
-  /// SCR-FAT-022 family thread pin + UI-007 honesty
+  /// SCR-FAT-022 family pin + LOCAL + REM honesty
   ///
   /// In ar, this message translates to:
-  /// **'📌 المحادثة العائلية مثبتة دائمًا — وحق ثابت لا يُقيَّد بأي مستوى'**
+  /// **'📌 المحادثة العائلية مثبتة ولا تُقيَّد بالاشتراك. الخيط محلي على هذا الجهاز — التسليم متعدد الأجهزة سيصل إلى الأجهزة الأخرى في تحديث قادم.'**
   String get conversationFamilyPinNote;
+
+  /// SCR-FAT-022 LOCAL + REM honesty for non-family threads
+  ///
+  /// In ar, this message translates to:
+  /// **'الخيط محلي على هذا الجهاز — لا يُقيَّد بالاشتراك. التسليم متعدد الأجهزة سيصل إلى الأجهزة الأخرى في تحديث قادم.'**
+  String get conversationLocalHonestyBanner;
 
   /// SCR-FAT-022 tone-bridge helper under chips
   ///
@@ -9074,7 +9572,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-023 LiveKit + silent-breakthrough honesty
   ///
   /// In ar, this message translates to:
-  /// **'صوت وفيديو عبر LiveKit — بيانات وصفية فقط، لا تسجيل · 🔔 مكالمات الاطمئنان ترنّ عند الابن حتى لو كان جهازه صامتًا'**
+  /// **'صوت وفيديو صوت وفيديو — بيانات وصفية فقط، لا تسجيل · 🔔 مكالمات الاطمئنان ترنّ عند الابن حتى لو كان جهازه صامتًا'**
   String get activeCallHonestyNote;
 
   /// SCR-FAT-023 play-together card title
@@ -9218,7 +9716,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-024 dial seam Stage-1 snackbar
   ///
   /// In ar, this message translates to:
-  /// **'اتصال جديد — قريبًا (مرحلة ١)'**
+  /// **'اتصال جديد — قريبًا (مرحلة 1)'**
   String get callHistoryDialToast;
 
   /// SCR-FAT-024 empty state title
@@ -9542,7 +10040,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-005 hold instruction
   ///
   /// In ar, this message translates to:
-  /// **'إذا حسّيت بخطر — اضغط مطوّلًا ٣ ثوانٍ'**
+  /// **'إذا حسّيت بخطر — اضغط مطوّلًا 3 ثوانٍ'**
   String get childSosHint;
 
   /// SCR-CHD-005 big hold button label
@@ -9572,7 +10070,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-005 early release protection message
   ///
   /// In ar, this message translates to:
-  /// **'توقفت قبل ٣ ثوانٍ — لم ينطلق البلاغ (حماية من اللمس غير المقصود)'**
+  /// **'توقفت قبل 3 ثوانٍ — لم ينطلق البلاغ (حماية من اللمس غير المقصود)'**
   String get childSosStatusCancelled;
 
   /// SCR-CHD-005 after hold completes
@@ -9755,10 +10253,10 @@ abstract class AppLocalizations {
   /// **'محادثاتي'**
   String get childChatsTitle;
 
-  /// SCR-CHD-007 UI-007 encryption + never-lock honesty
+  /// SCR-CHD-007 LOCAL + REM honesty; never time-locks
   ///
   /// In ar, this message translates to:
-  /// **'🔒 كل محادثاتكم مشفّرة طرفيًا — ولا تُقفل أبدًا حتى بانتهاء وقتك'**
+  /// **'المحادثة لا تُقفل بانتهاء الوقت. القائمة محلية على هذا الجهاز — التسليم متعدد الأجهزة سيصل إلى الأجهزة الأخرى في تحديث قادم.'**
   String get childChatsHonestyBanner;
 
   /// SCR-CHD-007 closed-circle honesty
@@ -9782,7 +10280,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-007 Stage-1 phone contacts snackbar
   ///
   /// In ar, this message translates to:
-  /// **'جهات اتصال الهاتف — قريبًا (مرحلة ١)'**
+  /// **'جهات اتصال الهاتف — قريبًا (مرحلة 1)'**
   String get childChatsCallContactsToast;
 
   /// SCR-CHD-007 empty state title
@@ -9851,10 +10349,10 @@ abstract class AppLocalizations {
   /// **'📞 رددت بلمسة واحدة — يسمعك الآن'**
   String get childConversationAnswerToast;
 
-  /// SCR-CHD-008 never-lock UI-007
+  /// SCR-CHD-008 never-lock + LOCAL + REM honesty
   ///
   /// In ar, this message translates to:
-  /// **'💬 هذي المحادثة ما تقفل أبدًا — حتى لو خلص وقت اللعب. أهلك دايمًا موجودين.'**
+  /// **'المحادثة لا تُقفل بانتهاء وقت اللعب. الخيط محلي على هذا الجهاز — التسليم متعدد الأجهزة سيصل إلى الأجهزة الأخرى في تحديث قادم.'**
   String get childConversationNeverLockBanner;
 
   /// SCR-CHD-008 composer hint
@@ -10154,13 +10652,13 @@ abstract class AppLocalizations {
   /// SCR-CHD-011 secret entry step title
   ///
   /// In ar, this message translates to:
-  /// **'الخطوة ١ — المدخل السري'**
+  /// **'الخطوة 1 — المدخل السري'**
   String get childModeLockSecretStepTitle;
 
   /// SCR-CHD-011 secret hold instruction
   ///
   /// In ar, this message translates to:
-  /// **'اضغط مطوّلًا ١٠ ثوانٍ على الشعار:'**
+  /// **'اضغط مطوّلًا 10 ثوانٍ على الشعار:'**
   String get childModeLockSecretStepHint;
 
   /// SCR-CHD-011 logo hold semantics
@@ -10178,7 +10676,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-011 password step title
   ///
   /// In ar, this message translates to:
-  /// **'الخطوة ٢ — كلمة مرور الحساب'**
+  /// **'الخطوة 2 — كلمة مرور الحساب'**
   String get childModeLockPasswordStepTitle;
 
   /// SCR-CHD-011 no-PIN honesty
@@ -10232,7 +10730,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-011 awaiting second key
   ///
   /// In ar, this message translates to:
-  /// **'⏳ الخطوة ٣ — بانتظار المفتاح الثاني من جهاز والدك. كلمة المرور وحدها لا تكفي.'**
+  /// **'⏳ الخطوة 3 — بانتظار المفتاح الثاني من جهاز والدك. كلمة المرور وحدها لا تكفي.'**
   String get childModeLockAwaitingBanner;
 
   /// SCR-CHD-011 CTA to FAT-030
@@ -10250,13 +10748,13 @@ abstract class AppLocalizations {
   /// SCR-CHD-011 attempts warning banner
   ///
   /// In ar, this message translates to:
-  /// **'⚠️ كل محاولة خاطئة تصل والدك فورًا. وبعد ٣ محاولات: قفل ٢٤ ساعة + إخطار والدتك.'**
+  /// **'⚠️ كل محاولة خاطئة تصل والدك فورًا. وبعد 3 محاولات: قفل 24 ساعة + إخطار والدتك.'**
   String get childModeLockAttemptsWarning;
 
   /// SCR-CHD-011 24h lockout banner
   ///
   /// In ar, this message translates to:
-  /// **'🔒 قُفل المدخل ٢٤ ساعة بعد ثلاث محاولات فاشلة — وأُخطرت والدتك.'**
+  /// **'🔒 قُفل المدخل 24 ساعة بعد ثلاث محاولات فاشلة — وأُخطرت والدتك.'**
   String get childModeLockLockoutBanner;
 
   /// SCR-CHD-011 entertainment locked row
@@ -10322,7 +10820,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-030 approve CTA
   ///
   /// In ar, this message translates to:
-  /// **'سماح ١٠ دقائق'**
+  /// **'سماح 10 دقائق'**
   String get parentSecondKeyApprove;
 
   /// SCR-FAT-030 deny CTA
@@ -10346,7 +10844,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-030 approve toast
   ///
   /// In ar, this message translates to:
-  /// **'سُمح بفتح وضع الوالد ١٠ دقائق على جهاز الابن'**
+  /// **'سُمح بفتح وضع الوالد 10 دقائق على جهاز الابن'**
   String get parentSecondKeyApprovedToast;
 
   /// SCR-FAT-030 deny toast
@@ -10388,7 +10886,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-030 lockout honesty banner
   ///
   /// In ar, this message translates to:
-  /// **'💡 بعد ٣ محاولات فاشلة: قفل ٢٤ ساعة + إخطار الأم. الثغرة صارت جرس إنذار مبكرًا للتحايل.'**
+  /// **'💡 بعد 3 محاولات فاشلة: قفل 24 ساعة + إخطار الأم. الثغرة صارت جرس إنذار مبكرًا للتحايل.'**
   String get parentSecondKeyLockoutHint;
 
   /// SCR-FAT-030 mother view-only hint
@@ -10436,7 +10934,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-031 مشاركة description
   ///
   /// In ar, this message translates to:
-  /// **'+ توافق على الطلبات وتمنح وقتًا (≤٣٠ د) وتدير المهام'**
+  /// **'+ توافق على الطلبات وتمنح وقتًا (≤30 د) وتدير المهام'**
   String get motherPermissionLevelPartnerDesc;
 
   /// SCR-FAT-031 كاملة description
@@ -10574,7 +11072,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-051 goal tag complete
   ///
   /// In ar, this message translates to:
-  /// **'🎯 الهدف الأسبوعي: مكتمل ١٠٠٪'**
+  /// **'🎯 الهدف الأسبوعي: مكتمل 100٪'**
   String get focusReportGoalComplete;
 
   /// SCR-FAT-051 goal tag in progress
@@ -10616,13 +11114,13 @@ abstract class AppLocalizations {
   /// SCR-FAT-051 praise status sent
   ///
   /// In ar, this message translates to:
-  /// **'تم الثناء ✓'**
+  /// **'حُفظ الثناء محليًا ✓'**
   String get focusReportPraiseSentTag;
 
   /// SCR-FAT-051 send praise CTA
   ///
   /// In ar, this message translates to:
-  /// **'أرسل ثناءً وتشجيعاً'**
+  /// **'حفظ الثناء'**
   String get focusReportPraiseCta;
 
   /// SCR-FAT-051 self-discipline reward CTA — minutes only
@@ -10634,7 +11132,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-051 praise delivered label
   ///
   /// In ar, this message translates to:
-  /// **'تم إرسال تشجيعك لشاشة {name}:'**
+  /// **'حُفظ تشجيعك محليًا لـ {name}:'**
   String focusReportPraiseDeliveredLabel(String name);
 
   /// SCR-FAT-051 sent praise quote
@@ -10646,7 +11144,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-051 praise toast
   ///
   /// In ar, this message translates to:
-  /// **'تم إرسال التشجيع إلى شاشة {name}'**
+  /// **'حُفظ التشجيع محليًا لـ {name} — لم يُسلَّم لجهاز آخر'**
   String focusReportPraiseSentToast(String name);
 
   /// SCR-FAT-051 reward toast — minutes only
@@ -10676,7 +11174,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-051 schedule time
   ///
   /// In ar, this message translates to:
-  /// **'٤:٣٠ – ٥:٣٠ م'**
+  /// **'4:30 – 5:30 م'**
   String get focusReportScheduleAfternoonSlot;
 
   /// SCR-FAT-051 schedule days
@@ -10808,49 +11306,49 @@ abstract class AppLocalizations {
   /// SCR-FAT-052 header hijri line (mock)
   ///
   /// In ar, this message translates to:
-  /// **'الأحد ٢٢ ربيع الأول ١٤٤٨'**
+  /// **'الأحد 22 ربيع الأول 1448'**
   String get familyCalendarHijriDate;
 
   /// SCR-FAT-052 header gregorian line (mock)
   ///
   /// In ar, this message translates to:
-  /// **'١٤ سبتمبر ٢٠٢٦'**
+  /// **'14 سبتمبر 2026'**
   String get familyCalendarGregorianDate;
 
   /// SCR-FAT-052 prayer time mock
   ///
   /// In ar, this message translates to:
-  /// **'🕌 فجر ٤:٣٨'**
+  /// **'🕌 فجر 4:38'**
   String get familyCalendarPrayerFajr;
 
   /// SCR-FAT-052 prayer time mock
   ///
   /// In ar, this message translates to:
-  /// **'🕌 ظهر ١١:٥٤'**
+  /// **'🕌 ظهر 11:54'**
   String get familyCalendarPrayerDhuhr;
 
   /// SCR-FAT-052 prayer time mock
   ///
   /// In ar, this message translates to:
-  /// **'🕌 عصر ٣:١٨'**
+  /// **'🕌 عصر 3:18'**
   String get familyCalendarPrayerAsr;
 
   /// SCR-FAT-052 prayer time mock
   ///
   /// In ar, this message translates to:
-  /// **'🕌 مغرب ٥:٥٦'**
+  /// **'🕌 مغرب 5:56'**
   String get familyCalendarPrayerMaghrib;
 
   /// SCR-FAT-052 prayer time mock
   ///
   /// In ar, this message translates to:
-  /// **'🕌 عشاء ٧:٢٦'**
+  /// **'🕌 عشاء 7:26'**
   String get familyCalendarPrayerIsha;
 
   /// SCR-FAT-052 month grid heading
   ///
   /// In ar, this message translates to:
-  /// **'سبتمبر ٢٠٢٦ · ربيع الأول'**
+  /// **'سبتمبر 2026 · ربيع الأول'**
   String get familyCalendarMonthSep2026;
 
   /// SCR-FAT-052 weekday header
@@ -11012,13 +11510,13 @@ abstract class AppLocalizations {
   /// SCR-FAT-052 event when line
   ///
   /// In ar, this message translates to:
-  /// **'اليوم · ٤:٣٠ م'**
+  /// **'اليوم · 4:30 م'**
   String get familyCalendarWhenToday430pm;
 
   /// SCR-FAT-052 event when line
   ///
   /// In ar, this message translates to:
-  /// **'اليوم · ٧:٣٠ م'**
+  /// **'اليوم · 7:30 م'**
   String get familyCalendarWhenToday730pm;
 
   /// SCR-FAT-052 event when line
@@ -11030,13 +11528,13 @@ abstract class AppLocalizations {
   /// SCR-FAT-052 event when line
   ///
   /// In ar, this message translates to:
-  /// **'الخميس ٢٦ ربيع الأول'**
+  /// **'الخميس 26 ربيع الأول'**
   String get familyCalendarWhenThursday26;
 
   /// SCR-FAT-052 event when line
   ///
   /// In ar, this message translates to:
-  /// **'الخميس · ١٠ ص'**
+  /// **'الخميس · 10 ص'**
   String get familyCalendarWhenThursday10am;
 
   /// SCR-FAT-052 Rule 23 who label
@@ -11198,31 +11696,31 @@ abstract class AppLocalizations {
   /// SCR-FAT-053 hijri toast
   ///
   /// In ar, this message translates to:
-  /// **'🌙 التقويم الهجري معتمد (مرحلة ١)'**
+  /// **'🌙 التقويم الهجري معتمد (مرحلة 1)'**
   String get addEventCalendarHijriToast;
 
   /// SCR-FAT-053 gregorian toast
   ///
   /// In ar, this message translates to:
-  /// **'📅 التقويم الميلادي معتمد (مرحلة ١)'**
+  /// **'📅 التقويم الميلادي معتمد (مرحلة 1)'**
   String get addEventCalendarGregorianToast;
 
   /// SCR-FAT-053 mock hijri date
   ///
   /// In ar, this message translates to:
-  /// **'٢٣ ربيع الأول ١٤٤٨'**
+  /// **'23 ربيع الأول 1448'**
   String get addEventDateHijriSample;
 
   /// SCR-FAT-053 mock gregorian date
   ///
   /// In ar, this message translates to:
-  /// **'الاثنين ١٥ سبتمبر ٢٠٢٦'**
+  /// **'الاثنين 15 سبتمبر 2026'**
   String get addEventDateGregorianSample;
 
   /// SCR-FAT-053 date conversion note
   ///
   /// In ar, this message translates to:
-  /// **'= الاثنين ١٥ سبتمبر — التحويل تلقائي'**
+  /// **'= الاثنين 15 سبتمبر — التحويل تلقائي'**
   String get addEventDateConversionSample;
 
   /// SCR-FAT-053 time label
@@ -11276,7 +11774,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-053 reminder 15 min
   ///
   /// In ar, this message translates to:
-  /// **'١٥ دقيقة'**
+  /// **'15 دقيقة'**
   String get addEventReminderFifteenMin;
 
   /// SCR-FAT-053 reminder 1 hour
@@ -11564,7 +12062,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-054 time line
   ///
   /// In ar, this message translates to:
-  /// **'قبل ١٠ دقائق'**
+  /// **'قبل 10 دقائق'**
   String get familyTasksTimeTenMinAgo;
 
   /// SCR-FAT-054 time line
@@ -11906,7 +12404,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-060 unlock attempt title
   ///
   /// In ar, this message translates to:
-  /// **'محاولة فتح وضع الوالد ×٢'**
+  /// **'محاولة فتح وضع الوالد ×2'**
   String get auditLogEntryUnlockTitle;
 
   /// SCR-FAT-060 forget title
@@ -11924,7 +12422,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-060 detail
   ///
   /// In ar, this message translates to:
-  /// **'أُغلق يدويًا بعد ٦ د'**
+  /// **'أُغلق يدويًا بعد 6 د'**
   String get auditLogDetailClosedAfter6m;
 
   /// SCR-FAT-060 detail
@@ -12002,7 +12500,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-061 Stage-1 locale switch toast
   ///
   /// In ar, this message translates to:
-  /// **'واجهة English — قريبًا في تحديث لاحق'**
+  /// **'تم تغيير لغة الواجهة'**
   String get languageHelpLocaleToast;
 
   /// SCR-FAT-061 help center card heading
@@ -12188,7 +12686,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-063 prototype pattern
   ///
   /// In ar, this message translates to:
-  /// **'أيام تمرين كرة القدم ← ينام أبكر ~٢٥ د ← نتائجه التعليمية صباح اليوم التالي أعلى ~١٥٪.'**
+  /// **'أيام تمرين كرة القدم ← ينام أبكر ~25 د ← نتائجه التعليمية صباح اليوم التالي أعلى ~15٪.'**
   String get individualTimelinePatternFootballSleepStudy;
 
   /// SCR-FAT-063 suggestion prefix
@@ -12218,7 +12716,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-063 discuss toast
   ///
   /// In ar, this message translates to:
-  /// **'تمت إضافة الاقتراح لمساعد العائلة (محاكاة المرحلة ١).'**
+  /// **'تمت إضافة الاقتراح لمساعد العائلة (محاكاة المرحلة 1).'**
   String get individualTimelineDiscussToast;
 
   /// SCR-FAT-063 today section
@@ -12248,43 +12746,43 @@ abstract class AppLocalizations {
   /// SCR-FAT-063 timeline stop
   ///
   /// In ar, this message translates to:
-  /// **'نام ١١:١٠ م أمس'**
+  /// **'نام 11:10 م أمس'**
   String get individualTimelineStopLateSleep;
 
   /// SCR-FAT-063 time stamp
   ///
   /// In ar, this message translates to:
-  /// **'منذ ٧:٠٠ ص'**
+  /// **'منذ 7:00 ص'**
   String get individualTimelineTimeSince7am;
 
   /// SCR-FAT-063 time stamp
   ///
   /// In ar, this message translates to:
-  /// **'٨:٤٠ ص'**
+  /// **'8:40 ص'**
   String get individualTimelineTimeAt840am;
 
   /// SCR-FAT-063 time stamp
   ///
   /// In ar, this message translates to:
-  /// **'٧:١٤ ص'**
+  /// **'7:14 ص'**
   String get individualTimelineTimeAt714am;
 
   /// SCR-FAT-063 time stamp
   ///
   /// In ar, this message translates to:
-  /// **'١١:١٠ م أمس'**
+  /// **'11:10 م أمس'**
   String get individualTimelineTimeAt1110pmYesterday;
 
   /// SCR-FAT-063 stop detail
   ///
   /// In ar, this message translates to:
-  /// **'٩٠٪'**
+  /// **'90٪'**
   String get individualTimelineDetailScore90;
 
   /// SCR-FAT-063 stop detail
   ///
   /// In ar, this message translates to:
-  /// **'متأخر ٤٠ د عن أساسه'**
+  /// **'متأخر 40 د عن أساسه'**
   String get individualTimelineDetailLate40minBaseline;
 
   /// SCR-FAT-062 app bar title
@@ -12320,13 +12818,13 @@ abstract class AppLocalizations {
   /// SCR-FAT-062 sleep anomaly row
   ///
   /// In ar, this message translates to:
-  /// **'النوم تأخر ٤٠ د هذا الأسبوع'**
+  /// **'النوم تأخر 40 د هذا الأسبوع'**
   String get familyPatternsSleepDelayTitle;
 
   /// SCR-FAT-062 sleep baseline subtitle
   ///
   /// In ar, this message translates to:
-  /// **'عن خط أساسه ١٠:٣٠ م'**
+  /// **'عن خط أساسه 10:30 م'**
   String get familyPatternsSleepBaselineSubtitle;
 
   /// SCR-FAT-062 communication ok row
@@ -12338,13 +12836,13 @@ abstract class AppLocalizations {
   /// SCR-FAT-062 education improve row
   ///
   /// In ar, this message translates to:
-  /// **'تحسن تعليمي +١٢٪'**
+  /// **'تحسن تعليمي +12٪'**
   String get familyPatternsEducationImproveTitle;
 
   /// SCR-FAT-062 morning watch row
   ///
   /// In ar, this message translates to:
-  /// **'نشاطها الصباحي انخفض ٣ أيام'**
+  /// **'نشاطها الصباحي انخفض 3 أيام'**
   String get familyPatternsMorningActivityDropTitle;
 
   /// SCR-FAT-062 morning watch hint
@@ -12386,7 +12884,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-062 footer note
   ///
   /// In ar, this message translates to:
-  /// **'خط الأساس يُبنى من ١٤ يومًا — ومستشار العائلة يقترح ولا يحكم'**
+  /// **'خط الأساس يُبنى من 14 يومًا — ومستشار العائلة يقترح ولا يحكم'**
   String get familyPatternsFooterNote;
 
   /// SCR-FAT-062 empty title
@@ -12542,7 +13040,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-064 quran path subtitle
   ///
   /// In ar, this message translates to:
-  /// **'أنجز ١٥ من ٣٠ آية · 🔥 ٥ أيام متواصلة'**
+  /// **'أنجز 15 من 30 آية · 🔥 5 أيام متواصلة'**
   String get knowledgeMapsPathQuranSubtitle;
 
   /// SCR-FAT-064 quran CTA → FAT-072
@@ -12584,7 +13082,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-064 family share title
   ///
   /// In ar, this message translates to:
-  /// **'العائلة المباشرة (٨٠٪)'**
+  /// **'العائلة المباشرة (80٪)'**
   String get knowledgeMapsSocialFamilyTitle;
 
   /// SCR-FAT-064 family share subtitle
@@ -12596,13 +13094,13 @@ abstract class AppLocalizations {
   /// SCR-FAT-064 friends share
   ///
   /// In ar, this message translates to:
-  /// **'الأصدقاء المعتمدون (١٥٪)'**
+  /// **'الأصدقاء المعتمدون (15٪)'**
   String get knowledgeMapsSocialFriendsTitle;
 
   /// SCR-FAT-064 new interaction share
   ///
   /// In ar, this message translates to:
-  /// **'تفاعل جديد (٥٪)'**
+  /// **'تفاعل جديد (5٪)'**
   String get knowledgeMapsSocialNewTitle;
 
   /// SCR-FAT-064 foundation tag
@@ -12650,7 +13148,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-064 send toast
   ///
   /// In ar, this message translates to:
-  /// **'أُرسل لمحادثة العائلة — نقاش الليلة جاهز (محاكاة المرحلة ١)'**
+  /// **'أُرسل لمحادثة العائلة — نقاش الليلة جاهز (محاكاة المرحلة 1)'**
   String get knowledgeMapsDinnerSendToast;
 
   /// SCR-FAT-064 dinner footer
@@ -12758,13 +13256,13 @@ abstract class AppLocalizations {
   /// SCR-CHD-012 quran subtitle
   ///
   /// In ar, this message translates to:
-  /// **'وردي: الملك ١١–١٥'**
+  /// **'وردي: الملك 11–15'**
   String get childLearnHomeQuranWird;
 
   /// SCR-CHD-012 english subtitle
   ///
   /// In ar, this message translates to:
-  /// **'٦ بطاقات باقية'**
+  /// **'6 بطاقات باقية'**
   String get childLearnHomeEnglishCardsLeft;
 
   /// SCR-CHD-012 new tag
@@ -12782,7 +13280,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-012 non-linked material toast
   ///
   /// In ar, this message translates to:
-  /// **'قريبًا على هذا المسار (محاكاة المرحلة ١)'**
+  /// **'قريبًا على هذا المسار (محاكاة المرحلة 1)'**
   String get childLearnHomeMaterialSoonToast;
 
   /// SCR-CHD-012 qact → CHD-017
@@ -12860,7 +13358,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-013 body
   ///
   /// In ar, this message translates to:
-  /// **'قسمنا بيتزا إلى ٧ قطع. أكلت أنت قطعتين (٢/٧) وأخوك ٣ قطع (٣/٧). نجمع الأعلى فقط: ٢+٣=٥ — يعني ٥/٧!'**
+  /// **'قسمنا بيتزا إلى 7 قطع. أكلت أنت قطعتين (2/7) وأخوك 3 قطع (3/7). نجمع الأعلى فقط: 2+3=5 — يعني 5/7!'**
   String get childLessonBodyPizzaFractions;
 
   /// SCR-CHD-013 next toast
@@ -12956,7 +13454,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-014 A1
   ///
   /// In ar, this message translates to:
-  /// **'عدد يمثل جزءاً أو أكثر من أجزاء متساوية من الكل، ويتكون من بسط ومقام (مثال: ٣/٤).'**
+  /// **'عدد يمثل جزءاً أو أكثر من أجزاء متساوية من الكل، ويتكون من بسط ومقام (مثال: 3/4).'**
   String get childFlashcardsAOrdinaryFraction;
 
   /// SCR-CHD-014 H1
@@ -12974,7 +13472,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-014 A2
   ///
   /// In ar, this message translates to:
-  /// **'عندما يكون المقامان متساويين تماماً! نجمع البسطين ونبقي المقام نفسه (مثال: ١/٥ + ٢/٥ = ٣/٥).'**
+  /// **'عندما يكون المقامان متساويين تماماً! نجمع البسطين ونبقي المقام نفسه (مثال: 1/5 + 2/5 = 3/5).'**
   String get childFlashcardsAAddNumerators;
 
   /// SCR-CHD-014 H2
@@ -13061,11 +13559,17 @@ abstract class AppLocalizations {
   /// **'لا بطاقات بعد'**
   String get childFlashcardsEmptyTitle;
 
-  /// SCR-CHD-014 empty message
+  /// SCR-CHD-014 empty + Advisor Gateway REM honesty
   ///
   /// In ar, this message translates to:
-  /// **'عندما يستخرج الوالد بطاقات من درس تظهر هنا.'**
+  /// **'عندما يستخرج الوالد بطاقات من درس تظهر هنا. بطاقات محلية فقط — توليد المستشار سيصل إلى الأجهزة الأخرى في تحديث قادم.'**
   String get childFlashcardsEmptyMessage;
+
+  /// SCR-CHD-014 LOCAL + Advisor Gateway REM honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'البطاقات محلية من تكليف الوالد — توليد المستشار سيصل إلى الأجهزة الأخرى في تحديث قادم.'**
+  String get childFlashcardsLocalHonestyBanner;
 
   /// SCR-CHD-014 empty → CHD-012
   ///
@@ -13112,7 +13616,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-015 prompt
   ///
   /// In ar, this message translates to:
-  /// **'١/٢ ÷ ١/٤ = ؟'**
+  /// **'1/2 ÷ 1/4 = ؟'**
   String get childQuizPromptHalfDivQuarter;
 
   /// SCR-CHD-015 minutes-only earn hint
@@ -13124,31 +13628,31 @@ abstract class AppLocalizations {
   /// SCR-CHD-015 option
   ///
   /// In ar, this message translates to:
-  /// **'٢'**
+  /// **'2'**
   String get childQuizOpt2;
 
   /// SCR-CHD-015 option
   ///
   /// In ar, this message translates to:
-  /// **'١/٨'**
+  /// **'1/8'**
   String get childQuizOpt1over8;
 
   /// SCR-CHD-015 option
   ///
   /// In ar, this message translates to:
-  /// **'١/٢'**
+  /// **'1/2'**
   String get childQuizOpt1over2;
 
   /// SCR-CHD-015 option
   ///
   /// In ar, this message translates to:
-  /// **'٤'**
+  /// **'4'**
   String get childQuizOpt4;
 
   /// SCR-CHD-015 explanation
   ///
   /// In ar, this message translates to:
-  /// **'نضرب في مقلوب الكسر الثاني: ١/٢ × ٤/١ = ٢.'**
+  /// **'نضرب في مقلوب الكسر الثاني: 1/2 × 4/1 = 2.'**
   String get childQuizExplainHalfDivQuarter;
 
   /// SCR-CHD-015 correct toast
@@ -13166,13 +13670,13 @@ abstract class AppLocalizations {
   /// SCR-CHD-015 wrong hint
   ///
   /// In ar, this message translates to:
-  /// **'ليست صحيحة — اقلب الكسر الثاني: ١/٤ يصبح ٤/١'**
+  /// **'ليست صحيحة — اقلب الكسر الثاني: 1/4 يصبح 4/1'**
   String get childQuizHintFlip;
 
   /// SCR-CHD-015 wrong hint
   ///
   /// In ar, this message translates to:
-  /// **'حاول ثانية — اضرب ١/٢ في ٤'**
+  /// **'حاول ثانية — اضرب 1/2 في 4'**
   String get childQuizHintMultiply;
 
   /// SCR-CHD-015 study gift note
@@ -13229,11 +13733,11 @@ abstract class AppLocalizations {
   /// **'{correct} من {total}'**
   String childResultScore(int correct, int total);
 
-  /// SCR-CHD-016 praise
+  /// VX-B3 · CHD-016 praise with dynamic topic (Rule 23)
   ///
   /// In ar, this message translates to:
-  /// **'أتقنت جمع الكسور! والدك وصله الخبر.'**
-  String get childResultPraiseMasteredAdd;
+  /// **'أتقنت {topic}!'**
+  String childResultPraiseMasteredAdd(String topic);
 
   /// SCR-CHD-016 rewards
   ///
@@ -13244,25 +13748,25 @@ abstract class AppLocalizations {
   /// SCR-CHD-016 reward
   ///
   /// In ar, this message translates to:
-  /// **'+٢٠ دقيقة لمحفظتك'**
+  /// **'+20 دقيقة لمحفظتك'**
   String get childResultRewardWallet20;
 
   /// SCR-CHD-016 reward
   ///
   /// In ar, this message translates to:
-  /// **'+١٥ دقيقة لعب'**
+  /// **'+15 دقيقة لعب'**
   String get childResultRewardPlay15;
 
   /// SCR-CHD-016 reward
   ///
   /// In ar, this message translates to:
-  /// **'+٣٠ دقيقة'**
+  /// **'+30 دقيقة'**
   String get childResultRewardBonus30;
 
   /// SCR-CHD-016 reward sub
   ///
   /// In ar, this message translates to:
-  /// **'اقتربت من المستوى ٤!'**
+  /// **'اقتربت من المستوى 4!'**
   String get childResultRewardNearLevel4;
 
   /// SCR-CHD-016 tag
@@ -13280,7 +13784,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-016 tag
   ///
   /// In ar, this message translates to:
-  /// **'٣٧٠/٥٠٠'**
+  /// **'370/500'**
   String get childResultTagProgress370;
 
   /// SCR-CHD-016 missed heading
@@ -13292,7 +13796,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-016 missed title
   ///
   /// In ar, this message translates to:
-  /// **'س٧ — قسمة الكسور.'**
+  /// **'س7 — قسمة الكسور.'**
   String get childResultMissedQ7;
 
   /// SCR-CHD-016 missed body — no punishment
@@ -13361,10 +13865,10 @@ abstract class AppLocalizations {
   /// **'لا يحل عنك'**
   String get childTutorSubtitle;
 
-  /// SCR-CHD-017 Socratic policy
+  /// SCR-CHD-017 Socratic + Tutor Gateway REM honesty
   ///
   /// In ar, this message translates to:
-  /// **'أنا أساعدك تفهم — ما أعطيك الجواب الجاهز أبدًا. كذا تصير أنت البطل.'**
+  /// **'أنا أساعدك تفهم — ما أعطيك الجواب الجاهز أبدًا. واجهة سقراطية محلية — بوابة المعلّم سيصل إلى الأجهزة الأخرى في تحديث قادم.'**
   String get childTutorPolicyBanner;
 
   /// SCR-CHD-017 transparency
@@ -13376,7 +13880,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-017 bubble
   ///
   /// In ar, this message translates to:
-  /// **'مرحبا! شفت إنك واقف عند ٣/٥ + ١/٢ … من وين نبدأ؟'**
+  /// **'مرحبا! شفت إنك واقف عند 3/5 + 1/2 … من وين نبدأ؟'**
   String get childTutorBubbleGreetStuck;
 
   /// SCR-CHD-017 bubble
@@ -13388,31 +13892,31 @@ abstract class AppLocalizations {
   /// SCR-CHD-017 bubble
   ///
   /// In ar, this message translates to:
-  /// **'ملاحظة ممتازة! هنا السر: نحتاج نخلي الأسفل نفس الرقم. سؤالي لك: ما هو أصغر رقم يقبل القسمة على ٥ وعلى ٢ معًا؟'**
+  /// **'ملاحظة ممتازة! هنا السر: نحتاج نخلي الأسفل نفس الرقم. سؤالي لك: ما هو أصغر رقم يقبل القسمة على 5 وعلى 2 معًا؟'**
   String get childTutorBubbleLcmPrompt;
 
   /// SCR-CHD-017 choice
   ///
   /// In ar, this message translates to:
-  /// **'١٠؟'**
+  /// **'10؟'**
   String get childTutorChoiceTen;
 
   /// SCR-CHD-017 choice
   ///
   /// In ar, this message translates to:
-  /// **'٧؟'**
+  /// **'7؟'**
   String get childTutorChoiceSeven;
 
   /// SCR-CHD-017 reply
   ///
   /// In ar, this message translates to:
-  /// **'بالضبط! ١٠ ✓ — الآن حوّل ٣/٥ إلى أعشار…'**
+  /// **'بالضبط! 10 ✓ — الآن حوّل 3/5 إلى أعشار…'**
   String get childTutorReplyTen;
 
   /// SCR-CHD-017 reply
   ///
   /// In ar, this message translates to:
-  /// **'قريب! جرب: ٥×٢ كم؟'**
+  /// **'قريب! جرب: 5×2 كم؟'**
   String get childTutorReplySeven;
 
   /// SCR-CHD-017 photo CTA
@@ -13424,7 +13928,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-017 photo toast
   ///
   /// In ar, this message translates to:
-  /// **'صوّر المسألة — وسأشرحها خطوة بخطوة (محاكاة المرحلة ١)'**
+  /// **'صوّر المسألة — وسأشرحها خطوة بخطوة (محاكاة المرحلة 1)'**
   String get childTutorPhotoToast;
 
   /// SCR-CHD-017 empty
@@ -13628,7 +14132,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-019 badge
   ///
   /// In ar, this message translates to:
-  /// **'٥ جلسات تركيز'**
+  /// **'5 جلسات تركيز'**
   String get childWalletBadgeFocusFive;
 
   /// SCR-CHD-019 badge
@@ -13718,7 +14222,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-019 zero tag
   ///
   /// In ar, this message translates to:
-  /// **'٠'**
+  /// **'0'**
   String get childWalletZeroTag;
 
   /// SCR-CHD-019 earn heading
@@ -13805,6 +14309,12 @@ abstract class AppLocalizations {
   /// **'طلب وقت إضافي'**
   String get childTimeRequestTitle;
 
+  /// SCR-CHD-020 BannerNote — local request; no FCM
+  ///
+  /// In ar, this message translates to:
+  /// **'يُحفظ الطلب محلياً على هذا الجهاز. إشعار الوالدين يتطلّب تحديث قادم للأجهزة الأخرى — لم يُرسل بعد.'**
+  String get childTimeRequestLocalHonestyBanner;
+
   /// SCR-CHD-020 how much
   ///
   /// In ar, this message translates to:
@@ -13814,13 +14324,13 @@ abstract class AppLocalizations {
   /// SCR-CHD-020 mins
   ///
   /// In ar, this message translates to:
-  /// **'١٥ دقيقة'**
+  /// **'15 دقيقة'**
   String get childTimeRequestMins15;
 
   /// SCR-CHD-020 mins
   ///
   /// In ar, this message translates to:
-  /// **'٣٠ دقيقة'**
+  /// **'30 دقيقة'**
   String get childTimeRequestMins30;
 
   /// SCR-CHD-020 mins
@@ -14102,8 +14612,14 @@ abstract class AppLocalizations {
   /// SCR-CHD-022 submit toast
   ///
   /// In ar, this message translates to:
-  /// **'أُرسل الإثبات — بانتظار تأكيد الوالد (محاكاة المرحلة ١)'**
+  /// **'أُرسل الإثبات — بانتظار تأكيد الوالد. محفوظ على هذا الجهاز.'**
   String get childTasksSubmitToast;
+
+  /// SCR-CHD-022 LOCAL honesty — FAT-054 loop, no remote
+  ///
+  /// In ar, this message translates to:
+  /// **'المهام تتزامن مع لوحة العائلة على هذا الجهاز. إيداع الدقائق عند موافقة الوالد. لا مزامنة سحابية للمهام بعد.'**
+  String get childTasksLocalHonestyBanner;
 
   /// SCR-CHD-022 pending tag
   ///
@@ -14183,23 +14699,29 @@ abstract class AppLocalizations {
   /// **'ملف'**
   String get childMediaShareQuickFile;
 
-  /// SCR-CHD-023 photo toast (Stage 1 mock)
+  /// SCR-CHD-023 photo toast honesty
   ///
   /// In ar, this message translates to:
-  /// **'التقط وشارك مع عائلتك'**
+  /// **'مشاركة صورة محلية — الكاميرا تتوفر في تحديث قادم'**
   String get childMediaSharePhotoToast;
 
-  /// SCR-CHD-023 voice toast (Stage 1 mock)
+  /// SCR-CHD-023 voice toast honesty
   ///
   /// In ar, this message translates to:
-  /// **'اضغط وسجل — يوصل مكتوبًا أيضًا (P1)'**
+  /// **'مشاركة صوت محلية — الميكروفون يتوفر في تحديث قادم'**
   String get childMediaShareVoiceToast;
 
-  /// SCR-CHD-023 file toast (Stage 1 mock)
+  /// SCR-CHD-023 file toast honesty
   ///
   /// In ar, this message translates to:
-  /// **'شارك ملف الواجب'**
+  /// **'مشاركة ملف محلية — منتقي الملفات يتوفر في تحديث قادم'**
   String get childMediaShareFileToast;
+
+  /// SCR-CHD-023 LOCAL + NAT/REM honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'المشاركات الأخيرة كتالوج محلي. التقاط/ميكروفون يتوفر في تحديث قادم. تسليم محادثة العائلة الأجهزة الأخرى مغلق.'**
+  String get childMediaShareLocalHonestyBanner;
 
   /// SCR-CHD-023 recent list heading
   ///
@@ -14342,8 +14864,14 @@ abstract class AppLocalizations {
   /// SCR-CHD-024 check-in toast
   ///
   /// In ar, this message translates to:
-  /// **'تم إرسال إشعار الاطمئنان لوالديك: «وصلت {place}»'**
+  /// **'تسجيل الوصول محفوظ محلياً: «وصلت {place}». إشعار الوالد سيصل للأجهزة الأخرى لاحقاً لاحقاً.'**
   String childArrivalCheckInToast(String place);
+
+  /// SCR-CHD-024 LOCAL + NAT/REM honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل وصول بأسماء الأماكن فقط على هذا الجهاز. الموقع الحي وإشعار الوالد مغلقان.'**
+  String get childArrivalLocalHonestyBanner;
 
   /// SCR-CHD-024 live heading
   ///
@@ -14405,10 +14933,10 @@ abstract class AppLocalizations {
   /// **'الرقابة الذكية'**
   String get smartAlertsTitle;
 
-  /// SCR-FAT-065 honesty — no planted names
+  /// SCR-FAT-065 honesty + NAT/REM CLOSED
   ///
   /// In ar, this message translates to:
-  /// **'الرقابة هنا مصارحة — ابنك يعلم أن مستشار العائلة يحمي محادثاته. لا تجسس في عائلتنا.'**
+  /// **'الرقابة هنا مصارحة — لا تجسس. التقاط/صلاحية الجهاز يتوفر في تحديث قادم. بوابة المستشار سيصل إلى الأجهزة الأخرى في تحديث قادم.'**
   String get smartAlertsHonestyBanner;
 
   /// SCR-FAT-065 alert — behavior not child
@@ -14420,7 +14948,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-065 alert sub
   ///
   /// In ar, this message translates to:
-  /// **'تحليل المشاعر · آخر ٥ أيام'**
+  /// **'تحليل المشاعر · آخر 5 أيام'**
   String get smartAlertsAlertWithdrawalSub;
 
   /// SCR-FAT-065 arabizi unique claim
@@ -14555,10 +15083,10 @@ abstract class AppLocalizations {
   /// **'عند اكتشاف محتوى غير مناسب'**
   String get smartAlertsDetectHeading;
 
-  /// SCR-FAT-065 detect body
+  /// SCR-FAT-065 detect body — NAT CLOSED honesty
   ///
   /// In ar, this message translates to:
-  /// **'١. حجب فوري على جهاز الابن\n٢. حفظ اللقطة مشفرة في جهازك أنت\n٣. تقرير يصلك: التطبيق والوقت والسبب — لتقرر أنت الخطوة'**
+  /// **'1. مستويات الحجب/اللقطة/التقرير مصمّمة هنا\n2. التقاط وصلاحية الجهاز: يتوفر في تحديث قادم اليوم\n3. أنت تقرر الخطوة عند وصول التسليم الأصلي'**
   String get smartAlertsDetectBody;
 
   /// SCR-FAT-065 → FAT-067
@@ -14609,10 +15137,10 @@ abstract class AppLocalizations {
   /// **'تنبيه: نمط انسحاب'**
   String get smartAlertDetailTitle;
 
-  /// SCR-FAT-066 amber behavior banner
+  /// SCR-FAT-066 behavior + Gateway REM honesty
   ///
   /// In ar, this message translates to:
-  /// **'التنبيه يصف سلوكًا رصده مستشار العائلة — لا حكمًا على ابنك.'**
+  /// **'التنبيه يصف سلوكًا رصده مستشار العائلة — لا حكمًا. واجهة تنبيه محلية — بوابة المستشار سيصل إلى الأجهزة الأخرى في تحديث قادم.'**
   String get smartAlertDetailBehaviorBanner;
 
   /// SCR-FAT-066 changes heading
@@ -14624,7 +15152,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-066 change
   ///
   /// In ar, this message translates to:
-  /// **'ردوده أقصر بنحو ٦٠٪'**
+  /// **'ردوده أقصر بنحو 60٪'**
   String get smartAlertDetailChangeShorter;
 
   /// SCR-FAT-066 change sub
@@ -14642,7 +15170,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-066 change sub
   ///
   /// In ar, this message translates to:
-  /// **'٣ ليالٍ بعد ١١ م'**
+  /// **'3 ليالٍ بعد 11 م'**
   String get smartAlertDetailChangeLateNightsSub;
 
   /// SCR-FAT-066 change
@@ -14837,10 +15365,10 @@ abstract class AppLocalizations {
   /// **'هدية — لا تُحسب من الحد'**
   String get childUsageReportGiftNote;
 
-  /// SCR-FAT-069 retention honesty
+  /// SCR-FAT-069 retention + Email/PDF REM honesty
   ///
   /// In ar, this message translates to:
-  /// **'البيانات تُحفظ {days} يومًا فقط ثم تُمحى — وزر النسيان (الإعدادات) يمحوها فورًا. الخصوصية وعدٌ لا شعار.'**
+  /// **'البيانات تُحفظ {days} يومًا فقط ثم تُمحى — زر النسيان يمحوها فورًا. تقرير محلي فقط — تصدير Email/PDF سيصل إلى الأجهزة الأخرى في تحديث قادم.'**
   String childUsageReportRetentionBanner(int days);
 
   /// SCR-FAT-069 Rule 23 key
@@ -14870,7 +15398,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-069 empty message
   ///
   /// In ar, this message translates to:
-  /// **'أضف ابناً لترى استخدام الأسبوع وتصنيف الوقت ووعد الاحتفاظ ٣٠ يومًا.'**
+  /// **'أضف ابناً لترى استخدام الأسبوع وتصنيف الوقت ووعد الاحتفاظ 30 يومًا.'**
   String get childUsageReportEmptyMessage;
 
   /// SCR-FAT-069 → FAT-003
@@ -14915,6 +15443,12 @@ abstract class AppLocalizations {
   /// **'المجهولون محظورون دائمًا: هذا الإجراء يحمي أبناءك تلقائياً. كل تواصل خارجي يمر بموافقة الوالدين.'**
   String get outerCircleStrangersBanner;
 
+  /// SCR-FAT-070 LOCAL honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'الدائرة على هذا الجهاز. الموافقة/الرفض يحدّث القائمة المشتركة. لا مزامنة سحابية للجهات بعد.'**
+  String get outerCircleLocalHonestyBanner;
+
   /// SCR-FAT-070 relatives
   ///
   /// In ar, this message translates to:
@@ -14936,7 +15470,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-070 schedule note
   ///
   /// In ar, this message translates to:
-  /// **'الأصدقاء: بعد المدرسة حتى أذان المغرب (٤–٧ م) · الأقارب: مفتوح دائمًا'**
+  /// **'الأصدقاء: بعد المدرسة حتى أذان المغرب (4–7 م) · الأقارب: مفتوح دائمًا'**
   String get outerCircleScheduleFriendsEvening;
 
   /// SCR-FAT-070 Rule 23 key
@@ -14978,7 +15512,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-070 meta
   ///
   /// In ar, this message translates to:
-  /// **'زميل معتمد · جدول التواصل ٤–٧ م'**
+  /// **'زميل معتمد · جدول التواصل 4–7 م'**
   String get outerCircleMetaClassmateSlot;
 
   /// SCR-FAT-070 meta
@@ -15134,7 +15668,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-071 channel sub
   ///
   /// In ar, this message translates to:
-  /// **'٤–٧ مساءً فقط'**
+  /// **'4–7 مساءً فقط'**
   String get friendApprovalChannelScheduleSub;
 
   /// SCR-FAT-071 auto tag
@@ -15172,6 +15706,12 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'الاعتماد لمستوى «مشاركة» فما فوق — يمكنك الاطلاع'**
   String get friendApprovalObserverHint;
+
+  /// SCR-FAT-071 LOCAL honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'القرار يحدّث الدائرة الخارجية المشتركة على هذا الجهاز. لا مزامنة سحابية للأصدقاء بعد.'**
+  String get friendApprovalLocalHonestyBanner;
 
   /// SCR-FAT-071 blocked toast
   ///
@@ -15296,7 +15836,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-072 download toast
   ///
   /// In ar, this message translates to:
-  /// **'أُضيف التنزيل لطابور جهاز {name}'**
+  /// **'حُفظت جاهزية دون اتصال محليًا لـ {name} — حزمة الصوت المرخّصة سيصل إلى الأجهزة الأخرى في تحديث قادم'**
   String quranProgressDownloadToast(String name);
 
   /// SCR-FAT-072 recitation
@@ -15320,7 +15860,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-072 recitation sub
   ///
   /// In ar, this message translates to:
-  /// **'سجّل {name} تلاوته لسورة {surah} (الآيات ١٦–٢٠):'**
+  /// **'سجّل {name} تلاوته لسورة {surah} (الآيات 16–20):'**
   String quranProgressRecitationSub(String name, String surah);
 
   /// SCR-FAT-072 clip title
@@ -15332,7 +15872,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-072 duration
   ///
   /// In ar, this message translates to:
-  /// **'١:٢٤ د'**
+  /// **'1:24 د'**
   String get quranProgressClipDuration;
 
   /// SCR-FAT-072 play a11y
@@ -15362,7 +15902,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-072 whisper toast
   ///
   /// In ar, this message translates to:
-  /// **'أُرسلت همسة تشجيعية لـ {name}'**
+  /// **'حُفظ التشجيع محليًا لـ {name} — إشعار الابن سيصل إلى الأجهزة الأخرى في تحديث قادم'**
   String quranProgressWhisperToast(String name);
 
   /// SCR-FAT-072 approved banner
@@ -15416,7 +15956,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-072 size key
   ///
   /// In ar, this message translates to:
-  /// **'١٨.٤ م.ب'**
+  /// **'18.4 م.ب'**
   String get quranProgressAudioSize184;
 
   /// SCR-FAT-072 Rule 23 key
@@ -15602,7 +16142,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-073 tip body Rule 23
   ///
   /// In ar, this message translates to:
-  /// **'رياضيات {name} تتحسن بثبات، لكن نومه يتأخر الخميس والجمعة ويهبط تركيزه السبت. جرّب تقديم «وضع النوم» ٣٠ دقيقة في العطلة.'**
+  /// **'رياضيات {name} تتحسن بثبات، لكن نومه يتأخر الخميس والجمعة ويهبط تركيزه السبت. جرّب تقديم «وضع النوم» 30 دقيقة في العطلة.'**
   String weeklyReportRecommendBody(String name);
 
   /// SCR-FAT-073 apply — parent approve
@@ -15617,10 +16157,10 @@ abstract class AppLocalizations {
   /// **'ليس الآن'**
   String get weeklyReportDeferCta;
 
-  /// SCR-FAT-073 apply toast
+  /// SCR-FAT-073 apply toast local + REM honesty
   ///
   /// In ar, this message translates to:
-  /// **'عُدّل جدول النوم — بتدرج لطيف على أسبوعين'**
+  /// **'قُبل الاقتراح محليًا بموافقتك — إنفاذ الجدول سيصل إلى الأجهزة الأخرى في تحديث قادم.'**
   String get weeklyReportApplyToast;
 
   /// SCR-FAT-073 defer toast
@@ -15674,7 +16214,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-073 section body
   ///
   /// In ar, this message translates to:
-  /// **'المعدل ٢ س ١٢ د يوميًا — ضمن الحد. الخميس الأعلى (٣ س).'**
+  /// **'المعدل 2 س 12 د يوميًا — ضمن الحد. الخميس الأعلى (3 س).'**
   String get weeklyReportSecScreenBody;
 
   /// SCR-FAT-073 section
@@ -15698,7 +16238,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-073 wins Rule 23
   ///
   /// In ar, this message translates to:
-  /// **'{one}: ورد كامل + ٥ جلسات تركيز · {two}: تحدي العلوم · {three}: أذكار ٧/٧.'**
+  /// **'{one}: ورد كامل + 5 جلسات تركيز · {two}: تحدي العلوم · {three}: أذكار 7/7.'**
   String weeklyReportSecWinsBody(String one, String two, String three);
 
   /// SCR-FAT-073 section
@@ -15710,7 +16250,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-073 section body
   ///
   /// In ar, this message translates to:
-  /// **'سورة النبأ: ٢٧/٤٠ آية — تسميع الثلاثاء معتمد.'**
+  /// **'سورة النبأ: 27/40 آية — تسميع الثلاثاء معتمد.'**
   String get weeklyReportSecQuranBody;
 
   /// SCR-FAT-073 section
@@ -15725,10 +16265,10 @@ abstract class AppLocalizations {
   /// **'تنبيهان كهرمانيان — عولجا بالحوار. لا شيء أحمر.'**
   String get weeklyReportSecWatchBody;
 
-  /// SCR-FAT-073 email
+  /// SCR-FAT-073 Email/PDF REM honesty
   ///
   /// In ar, this message translates to:
-  /// **'وصلتك نسخة بريدية — وللأم ملخصها حسب مستواها.'**
+  /// **'تسليم Email/PDF سيصل إلى الأجهزة الأخرى في تحديث قادم — إعدادات التقرير والنصيحة واجهة محلية فقط (موافقة الوالد مطلوبة).'**
   String get weeklyReportEmailBanner;
 
   /// SCR-FAT-073 Rule 23
@@ -16052,7 +16592,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-076 whisper body Rule 23
   ///
   /// In ar, this message translates to:
-  /// **'«{name} يبدو متعباً بعد تمرين النادي اليوم، ما رأيك أن نقدم موعد نومه ٣٠ دقيقة ونعوضه بوقت لعب إضافي غداً؟»'**
+  /// **'«{name} يبدو متعباً بعد تمرين النادي اليوم، ما رأيك أن نقدم موعد نومه 30 دقيقة ونعوضه بوقت لعب إضافي غداً؟»'**
   String motherAiFeedWhisperBody(String name);
 
   /// SCR-FAT-076 whisper CTA
@@ -16088,7 +16628,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-076 item body
   ///
   /// In ar, this message translates to:
-  /// **'{name} تحسن في الرياضيات بنسبة +١٥٪'**
+  /// **'{name} تحسن في الرياضيات بنسبة +15٪'**
   String motherAiFeedItemMathBody(String name);
 
   /// SCR-FAT-076 item
@@ -16364,7 +16904,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-025 licensed ayah Mulk 16
   ///
   /// In ar, this message translates to:
-  /// **'ءَأَمِنتُم مَّن فِى ٱلسَّمَآءِ أَن يَخْسِفَ بِكُمُ ٱلْأَرْضَ فَإِذَا هِىَ تَمُورُ ﴿١٦﴾'**
+  /// **'ءَأَمِنتُم مَّن فِى ٱلسَّمَآءِ أَن يَخْسِفَ بِكُمُ ٱلْأَرْضَ فَإِذَا هِىَ تَمُورُ ﴿16﴾'**
   String get childQuranWardAyahMulk16;
 
   /// SCR-CHD-025 gift banner
@@ -16568,7 +17108,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-026 badge
   ///
   /// In ar, this message translates to:
-  /// **'📖 ٣ سور'**
+  /// **'📖 3 سور'**
   String get childMemBadgeThree;
 
   /// SCR-CHD-026 badge
@@ -16598,7 +17138,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-026 review
   ///
   /// In ar, this message translates to:
-  /// **'تبارك ١–١٠'**
+  /// **'تبارك 1–10'**
   String get childMemReviewTabarak;
 
   /// SCR-CHD-026 review
@@ -16610,7 +17150,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-026 meta
   ///
   /// In ar, this message translates to:
-  /// **'آخر مراجعة قبل ٤ أيام'**
+  /// **'آخر مراجعة قبل 4 أيام'**
   String get childMemReviewFourDays;
 
   /// SCR-CHD-026 meta
@@ -16808,7 +17348,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-028 gap body
   ///
   /// In ar, this message translates to:
-  /// **'أخطاؤك في القسمة الطويلة سببها مفهوم واحد صغير: جدول ضرب الـ٧. نقوّيه ٣ أيام — وستنطلق 🚀'**
+  /// **'أخطاؤك في القسمة الطويلة سببها مفهوم واحد صغير: جدول ضرب الـ7. نقوّيه 3 أيام — وستنطلق 🚀'**
   String get childSmartPlanGapTimes7;
 
   /// SCR-CHD-028 start
@@ -16826,7 +17366,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-028 toast
   ///
   /// In ar, this message translates to:
-  /// **'🎯 خطة الأيام الثلاثة بدأت — ١٠ دقائق يوميًا فقط'**
+  /// **'🎯 خطة الأيام الثلاثة بدأت — 10 دقائق يوميًا فقط'**
   String get childSmartPlanStartToast;
 
   /// SCR-CHD-028 project
@@ -16844,7 +17384,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-028 stage
   ///
   /// In ar, this message translates to:
-  /// **'المرحلة ٢ — زراعة الشتلات'**
+  /// **'المرحلة 2 — زراعة الشتلات'**
   String get childSmartPlanStage2;
 
   /// SCR-CHD-028 stage line
@@ -16934,7 +17474,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-029 hero
   ///
   /// In ar, this message translates to:
-  /// **'٥ دقائق تحمي أسبوع تعب 🛡'**
+  /// **'5 دقائق تحمي أسبوع تعب 🛡'**
   String get childDailyReviewHeroTitle;
 
   /// SCR-CHD-029 hero sub
@@ -16958,7 +17498,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-029 card
   ///
   /// In ar, this message translates to:
-  /// **'كلمات الوحدة ٤'**
+  /// **'كلمات الوحدة 4'**
   String get childDailyReviewCardUnit4;
 
   /// SCR-CHD-029 card
@@ -16970,7 +17510,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-029 meta
   ///
   /// In ar, this message translates to:
-  /// **'تعلمتها قبل ٣ أيام — وقت التثبيت'**
+  /// **'تعلمتها قبل 3 أيام — وقت التثبيت'**
   String get childDailyReviewMetaThreeDays;
 
   /// SCR-CHD-029 meta
@@ -17000,7 +17540,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-029 start
   ///
   /// In ar, this message translates to:
-  /// **'ابدأ الـ٥ دقائق'**
+  /// **'ابدأ الـ5 دقائق'**
   String get childDailyReviewStartCta;
 
   /// SCR-CHD-029 done
@@ -17012,7 +17552,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-029 toast
   ///
   /// In ar, this message translates to:
-  /// **'🎉 ٦/٦ — ذاكرتك تبنى مثل العضلات! ⏱ +{minutes} د'**
+  /// **'🎉 6/6 — ذاكرتك تبنى مثل العضلات! ⏱ +{minutes} د'**
   String childDailyReviewDoneToast(int minutes);
 
   /// SCR-CHD-029 empty
@@ -17072,7 +17612,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-030 meta
   ///
   /// In ar, this message translates to:
-  /// **'متاح الآن · جدول التواصل: ٤–٧ م'**
+  /// **'متاح الآن · جدول التواصل: 4–7 م'**
   String get childFriendsMetaSlot47;
 
   /// SCR-CHD-030 awaiting
@@ -17096,14 +17636,20 @@ abstract class AppLocalizations {
   /// SCR-CHD-030 chat toast
   ///
   /// In ar, this message translates to:
-  /// **'💬 فتحت المحادثة الآمنة'**
+  /// **'المحادثة الآمنة محلية — التسليم السحابي مغلق'**
   String get childFriendsChatToast;
 
   /// SCR-CHD-030 call toast
   ///
   /// In ar, this message translates to:
-  /// **'📞 جاري الاتصال…'**
+  /// **'واجهة الاتصال جاهزة — الاتصال الصوتي يتوفر في تحديث قادم'**
   String get childFriendsCallToast;
+
+  /// SCR-CHD-030 LOCAL honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'قائمة الأصدقاء من الدائرة الخارجية على هذا الجهاز. تسليم المحادثة/الاتصال يحتاج تحديث قادم لاحقاً.'**
+  String get childFriendsLocalHonestyBanner;
 
   /// SCR-CHD-030 pending
   ///
@@ -17321,10 +17867,10 @@ abstract class AppLocalizations {
   /// **'فلترة الراوتر المنزلي'**
   String get homeRouterFilterTitle;
 
-  /// SCR-FAT-078 hero
+  /// SCR-FAT-078 hero — Native DNS CLOSED
   ///
   /// In ar, this message translates to:
-  /// **'راوتر المنزل محمي'**
+  /// **'دليل الراوتر جاهز (DNS غير مُنفَّذ بعد)'**
   String get homeRouterFilterHeroProtected;
 
   /// SCR-FAT-078 hero off
@@ -17336,7 +17882,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-078 hero sub
   ///
   /// In ar, this message translates to:
-  /// **'{count} جهازًا خلف الفلترة — حتى تلفاز الصالة وأجهزة الضيوف'**
+  /// **'{count} جهازًا مدرجًا محليًا — فلترة DNS الأصلية مغلقة'**
   String homeRouterFilterHeroSub(int count);
 
   /// SCR-FAT-078 how
@@ -17360,7 +17906,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-078 cats
   ///
   /// In ar, this message translates to:
-  /// **'نفس فئات الفلترة الـ٢٩'**
+  /// **'نفس فئات الفلترة الـ29'**
   String get homeRouterFilterHowCatsTitle;
 
   /// SCR-FAT-078 cats sub
@@ -17387,10 +17933,10 @@ abstract class AppLocalizations {
   /// **'مفعّل'**
   String get homeRouterFilterTagActive;
 
-  /// SCR-FAT-078 tag
+  /// SCR-FAT-078 tag — local policy only
   ///
   /// In ar, this message translates to:
-  /// **'متزامن'**
+  /// **'فئات محلية'**
   String get homeRouterFilterTagSynced;
 
   /// SCR-FAT-078 tag
@@ -17414,7 +17960,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-078 check
   ///
   /// In ar, this message translates to:
-  /// **'اختبر الحماية الآن'**
+  /// **'تحقق من جاهزية الجهاز'**
   String get homeRouterFilterCheckCta;
 
   /// SCR-FAT-078 guide toast
@@ -17423,16 +17969,16 @@ abstract class AppLocalizations {
   /// **'فُتح دليل ضبط الراوتر خطوة بخطوة'**
   String get homeRouterFilterGuideToast;
 
-  /// SCR-FAT-078 check toast
+  /// SCR-FAT-078 check toast — NATIVE CLOSED honesty
   ///
   /// In ar, this message translates to:
-  /// **'تم الفحص — راوترك محمي وكل الأجهزة خلف الفلترة'**
+  /// **'فحص حماية DNS للراوتر يتوفر في تحديث قادم — الدليل المحلي فقط'**
   String get homeRouterFilterCheckToast;
 
-  /// SCR-FAT-078 guest
+  /// SCR-FAT-078 guest / Native honesty
   ///
   /// In ar, this message translates to:
-  /// **'ضيف تسلل بجهازه لشبكتك؟ محمي تلقائيًا — وأنت المتحكم بالاستثناءات.'**
+  /// **'فلترة DNS للراوتر المنزلي تتطلب الجهاز. فلترة جهاز الابن تبقى تحميه خارج المنزل عند ضبطها.'**
   String get homeRouterFilterGuestBanner;
 
   /// SCR-FAT-078 observer
@@ -17600,7 +18146,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-080 weekly
   ///
   /// In ar, this message translates to:
-  /// **'وضع النوم تفعّل ×٧ مرات'**
+  /// **'وضع النوم تفعّل ×7 مرات'**
   String get agentActionLogWeeklySleep;
 
   /// SCR-FAT-080 weekly
@@ -17612,25 +18158,25 @@ abstract class AppLocalizations {
   /// SCR-FAT-080 weekly
   ///
   /// In ar, this message translates to:
-  /// **'تذكير المراجعة والقرآن ×٥'**
+  /// **'تذكير المراجعة والقرآن ×5'**
   String get agentActionLogWeeklyReview;
 
   /// SCR-FAT-080 weekly
   ///
   /// In ar, this message translates to:
-  /// **'استجاب الابن ٤ مرات'**
+  /// **'استجاب الابن 4 مرات'**
   String get agentActionLogWeeklyReviewMeta;
 
   /// SCR-FAT-080 rule
   ///
   /// In ar, this message translates to:
-  /// **'القاعدة ٢'**
+  /// **'القاعدة 2'**
   String get agentActionLogRule2;
 
   /// SCR-FAT-080 rule
   ///
   /// In ar, this message translates to:
-  /// **'القاعدة ٣'**
+  /// **'القاعدة 3'**
   String get agentActionLogRule3;
 
   /// SCR-FAT-080 empty
@@ -17675,10 +18221,10 @@ abstract class AppLocalizations {
   /// **'مقارنة الأقران'**
   String get peerCompareTitle;
 
-  /// SCR-FAT-081 privacy
+  /// SCR-FAT-081 anonymous + Email/PDF REM honesty
   ///
   /// In ar, this message translates to:
-  /// **'مقارنة مجهولة بالكامل مع متوسطات عمرية عامة — لا أسماء، لا عائلات، لا تشهير. بياناتكم لا تغادر لأحد.'**
+  /// **'مقارنة مجهولة بالكامل مع متوسطات عمرية عامة — لا أسماء ولا تشهير. محاكاة محلية فقط — مشاركة Email/PDF مغلقة الأجهزة الأخرى.'**
   String get peerComparePrivacyBanner;
 
   /// SCR-FAT-081 Rule 23
@@ -17702,7 +18248,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-081 detail
   ///
   /// In ar, this message translates to:
-  /// **'الابن: ٢:٤٠ س/يوم · المتوسط: ٣:١٥'**
+  /// **'الابن: 2:40 س/يوم · المتوسط: 3:15'**
   String get peerCompareDetailScreen;
 
   /// SCR-FAT-081 metric
@@ -17714,7 +18260,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-081 detail
   ///
   /// In ar, this message translates to:
-  /// **'الابن: ٥١ د/يوم · المتوسط: ٢٥ د'**
+  /// **'الابن: 51 د/يوم · المتوسط: 25 د'**
   String get peerCompareDetailLearn;
 
   /// SCR-FAT-081 metric
@@ -17726,7 +18272,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-081 detail
   ///
   /// In ar, this message translates to:
-  /// **'متأخر ٢٠ د عن الموصى به لعمره'**
+  /// **'متأخر 20 د عن الموصى به لعمره'**
   String get peerCompareDetailSleep;
 
   /// SCR-FAT-081 tag
@@ -17816,7 +18362,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-082 chores
   ///
   /// In ar, this message translates to:
-  /// **'الصحون (٣ أيام) + النباتات'**
+  /// **'الصحون (3 أيام) + النباتات'**
   String get smartChoreDishesPlants;
 
   /// SCR-FAT-082 chores
@@ -17846,7 +18392,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-082 note
   ///
   /// In ar, this message translates to:
-  /// **'مهام خفيفة تناسب ٨ سنوات'**
+  /// **'مهام خفيفة تناسب 8 سنوات'**
   String get smartChoreNoteAge8;
 
   /// SCR-FAT-082 approve
@@ -17872,6 +18418,12 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'اعتُمد التوزيع — وصلت كل ابن مهامه بدقائقها المحددة'**
   String get smartChoreApproveToast;
+
+  /// SCR-FAT-082 suggest-only + REM CLOSED honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'اقتراح فقط — لا يُطبَّق شيء حتى تعتمد. تحديث محلي للوحة العائلة. ChoreAI السحابي مغلق.'**
+  String get smartChoreLocalHonestyBanner;
 
   /// SCR-FAT-082 shuffle toast
   ///
@@ -18050,19 +18602,19 @@ abstract class AppLocalizations {
   /// SCR-FAT-084 stage
   ///
   /// In ar, this message translates to:
-  /// **'م١: البحث والتخطيط'**
+  /// **'م1: البحث والتخطيط'**
   String get stagedProjectStageResearch;
 
   /// SCR-FAT-084 stage sub
   ///
   /// In ar, this message translates to:
-  /// **'اختار ٣ نباتات ورسم الحديقة'**
+  /// **'اختار 3 نباتات ورسم الحديقة'**
   String get stagedProjectStageResearchSub;
 
   /// SCR-FAT-084 stage
   ///
   /// In ar, this message translates to:
-  /// **'م٢: الزراعة'**
+  /// **'م2: الزراعة'**
   String get stagedProjectStagePlant;
 
   /// SCR-FAT-084 stage sub
@@ -18074,19 +18626,19 @@ abstract class AppLocalizations {
   /// SCR-FAT-084 stage
   ///
   /// In ar, this message translates to:
-  /// **'م٣: المتابعة والري'**
+  /// **'م3: المتابعة والري'**
   String get stagedProjectStageWater;
 
   /// SCR-FAT-084 stage sub
   ///
   /// In ar, this message translates to:
-  /// **'تُفتح بإتمام م٢'**
+  /// **'تُفتح بإتمام م2'**
   String get stagedProjectStageWaterSub;
 
   /// SCR-FAT-084 stage
   ///
   /// In ar, this message translates to:
-  /// **'م٤: الحصاد والعرض'**
+  /// **'م4: الحصاد والعرض'**
   String get stagedProjectStageHarvest;
 
   /// SCR-FAT-084 stage sub
@@ -18230,13 +18782,13 @@ abstract class AppLocalizations {
   /// SCR-FAT-086 star sub
   ///
   /// In ar, this message translates to:
-  /// **'٦ أشهر من المثابرة · لحظة تاريخية'**
+  /// **'6 أشهر من المثابرة · لحظة تاريخية'**
   String get familyMomentsStarQuranSub;
 
   /// SCR-FAT-086 star
   ///
   /// In ar, this message translates to:
-  /// **'{child} — قفز ١٧٪ في الرياضيات'**
+  /// **'{child} — قفز 17٪ في الرياضيات'**
   String familyMomentsStarMath(String child);
 
   /// SCR-FAT-086 star sub
@@ -18263,10 +18815,10 @@ abstract class AppLocalizations {
   /// **'شارك بطاقة الفخر مع العائلة'**
   String get familyMomentsShareCta;
 
-  /// SCR-FAT-086 pride toast
+  /// SCR-FAT-086 pride toast LOCAL + REM honesty
   ///
   /// In ar, this message translates to:
-  /// **'وصلت بطاقة الفخر لمحادثة العائلة — شافوا تصفيقكم!'**
+  /// **'بطاقة الفخر محفوظة محليًا — مشاركة محادثة العائلة سيصل إلى الأجهزة الأخرى في تحديث قادم.'**
   String get familyMomentsPrideToast;
 
   /// SCR-FAT-086 touch
@@ -18401,16 +18953,16 @@ abstract class AppLocalizations {
   /// **'+ أضف لحظة'**
   String get familyMomentsAddCta;
 
-  /// SCR-FAT-086 add toast
+  /// SCR-FAT-086 add toast LOCAL + REM honesty
   ///
   /// In ar, this message translates to:
-  /// **'أُضيفت للحظات — وأُخطرت العائلة'**
+  /// **'أُضيفت للحظات محليًا — إشعار العائلة سيصل إلى الأجهزة الأخرى في تحديث قادم.'**
   String get familyMomentsAddToast;
 
-  /// SCR-FAT-086 banner
+  /// SCR-FAT-086 Friday banner LOCAL + REM honesty
   ///
   /// In ar, this message translates to:
-  /// **'يصلك كل جمعة صباحًا — افتح، افرح، شارك. ثم أغلق مطمئنًا.'**
+  /// **'لحظات الأسبوع عرض محلي — بوابة المستشار ومشاركة المحادثة ستصلان إلى الأجهزة الأخرى في تحديث قادم.'**
   String get familyMomentsFridayBanner;
 
   /// SCR-FAT-086 empty
@@ -18512,7 +19064,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-032 sheikh toast
   ///
   /// In ar, this message translates to:
-  /// **'مقطع الشيخ للآية ١٦ — من مصحف مرخّص'**
+  /// **'مقطع الشيخ للآية 16 — من مصحف مرخّص'**
   String get childSmartTilawahSheikhToast;
 
   /// SCR-CHD-032 praise
@@ -18521,10 +19073,10 @@ abstract class AppLocalizations {
   /// **'أحسنت في: مخارج الحروف ✓ · الغنّة ✓ · وقفك سليم ✓'**
   String get childSmartTilawahPraise;
 
-  /// SCR-CHD-032 banner
+  /// SCR-CHD-032 licensed + Advisor Gateway REM honesty
   ///
   /// In ar, this message translates to:
-  /// **'مرجع التصحيح تلاوات مشايخ معتمدين من مصاحف مرخّصة — ومستشار العائلة يلاحظ بلطف، ملاحظة واحدة كل مرة حتى لا تثقل عليك.'**
+  /// **'مرجع التصحيح تلاوات مشايخ من مصاحف مرخّصة — ومستشار العائلة يلاحظ بلطف. الصوت المرخّص وبوابة المستشار سيصلان إلى الأجهزة الأخرى في تحديث قادم.'**
   String get childSmartTilawahBanner;
 
   /// SCR-CHD-032 empty
@@ -18572,7 +19124,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-033 chapter
   ///
   /// In ar, this message translates to:
-  /// **'كنز الصحراء — الفصل ٣'**
+  /// **'كنز الصحراء — الفصل 3'**
   String get childInteractiveStoriesChapterTitle;
 
   /// SCR-CHD-033 body
@@ -19016,7 +19568,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-036 toast
   ///
   /// In ar, this message translates to:
-  /// **'سؤال ١: عاصمة اليمن؟ — جدّو ضغط قبلك!'**
+  /// **'سؤال 1: عاصمة اليمن؟ — جدّو ضغط قبلك!'**
   String get childCallPlayToastQuiz;
 
   /// SCR-CHD-036 banner
@@ -19106,8 +19658,14 @@ abstract class AppLocalizations {
   /// SCR-CHD-037 bg toast
   ///
   /// In ar, this message translates to:
-  /// **'تغيرت خلفيتك — شكلها رهيب!'**
+  /// **'الخلفية محفوظة على هذا الجهاز — تطبيق المحادثة كتالوج محلي فقط'**
   String get childStickersBackgroundsBgToast;
+
+  /// SCR-CHD-037 LOCAL honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'حزمة الملصقات وتفضيل الخلفية محليان. تنسيق خيط المحادثة يحتاج عقد الدردشة المحلي — التسليم السحابي مغلق.'**
+  String get childStickersBackgroundsLocalHonestyBanner;
 
   /// SCR-CHD-037 banner
   ///
@@ -19337,10 +19895,10 @@ abstract class AppLocalizations {
   /// **'{channel} → {recipient}: غير مُعدّ'**
   String sosAlertDeliveryNotConfigured(String channel, String recipient);
 
-  /// SOS delivery row
+  /// SOS delivery row — never claim FCM/SMS success while REMOTE CLOSED
   ///
   /// In ar, this message translates to:
-  /// **'{channel} → {recipient}: وصل'**
+  /// **'{channel} → {recipient}: محلي فقط (التسليم عن بُعد مغلق)'**
   String sosAlertDeliveryDelivered(String channel, String recipient);
 
   /// SCR-FAT-018 break-glass CTA
@@ -19430,7 +19988,7 @@ abstract class AppLocalizations {
   /// FAT-028 max backups
   ///
   /// In ar, this message translates to:
-  /// **'الحد الأقصى ٥ جهات احتياط'**
+  /// **'الحد الأقصى 5 جهات احتياط'**
   String get sosLadderMaxBackupsError;
 
   /// FAT-028 verification
@@ -19487,11 +20045,65 @@ abstract class AppLocalizations {
   /// **'وضع الهدوء أثناء الاستغاثة (طفل)'**
   String get sosPanicQuietTitle;
 
-  /// FAT-028 panic quiet subtitle
+  /// FAT-028 panic quiet subtitle — not mute (Policy sanctity)
   ///
   /// In ar, this message translates to:
-  /// **'عند التفعيل، شاشة الاستغاثة النشطة للطفل تعرض الحالة الحرجة فقط'**
+  /// **'يؤثر على شاشة الطفل فقط — لا يكتم استلام ولي الأمر ولا صندوق التنبيهات'**
   String get sosPanicQuietSubtitle;
+
+  /// FAT-028 dashboard readiness section header
+  ///
+  /// In ar, this message translates to:
+  /// **'لوحة جاهزية النظام'**
+  String get sosDashboardReadinessTitle;
+
+  /// FAT-028 locked parents section chip
+  ///
+  /// In ar, this message translates to:
+  /// **'الأساس المحصن (الدرجة 1)'**
+  String get sosLadderRung1SectionTitle;
+
+  /// FAT-028 backup verify CTA when unverified
+  ///
+  /// In ar, this message translates to:
+  /// **'يحتاج توثيق'**
+  String get sosLadderNeedsVerify;
+
+  /// Short seconds label for escalation delays
+  ///
+  /// In ar, this message translates to:
+  /// **'{seconds} ثانية'**
+  String sosEscalationSecondsShort(int seconds);
+
+  /// FAT-028 empty children title
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد أبناء'**
+  String get sosChildEscalationEmptyTitle;
+
+  /// FAT-028 backup priority up tooltip
+  ///
+  /// In ar, this message translates to:
+  /// **'تقديم الجهة في سلّم التصعيد'**
+  String get sosLadderPriorityUp;
+
+  /// FAT-028 backup priority down tooltip
+  ///
+  /// In ar, this message translates to:
+  /// **'تأخير الجهة في سلّم التصعيد'**
+  String get sosLadderPriorityDown;
+
+  /// FAT-028 Mother Partner read summary title
+  ///
+  /// In ar, this message translates to:
+  /// **'سلّم الطوارئ الحالي (عرض فقط)'**
+  String get sosLadderPartnerSummaryTitle;
+
+  /// FAT-028 Mother Partner read summary body
+  ///
+  /// In ar, this message translates to:
+  /// **'{parents} والدان مثبتان في الدرجة 1 · {verified} جهة خارجية موثّقة من أصل {total}'**
+  String sosLadderPartnerSummaryBody(int parents, int verified, int total);
 
   /// FAT-028 readiness
   ///
@@ -19502,8 +20114,224 @@ abstract class AppLocalizations {
   /// FAT-028 readiness body
   ///
   /// In ar, this message translates to:
-  /// **'الدفع والرسائل والاتصال غير مُعدّة في هذه الشريحة. الاستغاثة تعمل داخل التطبيق.'**
+  /// **'عرض صادق للمرحلة ١ — الدفع/الرسائل/الاتصال/الموقع تبقى مغلقة أصلياً أو متدهورة حتى تفتح موجاتها. الاستغاثة تعمل داخل التطبيق.'**
   String get sosReadinessBody;
+
+  /// FAT-028 readiness row child_trigger
+  ///
+  /// In ar, this message translates to:
+  /// **'ربط زر استغاثة الابن'**
+  String get sosReadinessRowChild;
+
+  /// FAT-028 readiness row local_persistence
+  ///
+  /// In ar, this message translates to:
+  /// **'مخزن الطوارئ المحلي'**
+  String get sosReadinessRowPersistence;
+
+  /// FAT-028 readiness row push_alerts
+  ///
+  /// In ar, this message translates to:
+  /// **'تنبيهات الدفع'**
+  String get sosReadinessRowPush;
+
+  /// FAT-028 readiness row sms_fallback
+  ///
+  /// In ar, this message translates to:
+  /// **'احتياطي الرسائل'**
+  String get sosReadinessRowSms;
+
+  /// FAT-028 readiness row call_fallback
+  ///
+  /// In ar, this message translates to:
+  /// **'احتياطي الاتصال'**
+  String get sosReadinessRowCall;
+
+  /// FAT-028 readiness row location
+  ///
+  /// In ar, this message translates to:
+  /// **'الموقع مع الاستغاثة'**
+  String get sosReadinessRowLocation;
+
+  /// FAT-028 readiness row trusted_ladder
+  ///
+  /// In ar, this message translates to:
+  /// **'سلّم التصعيد الموثوق'**
+  String get sosReadinessRowLadder;
+
+  /// FAT-028 readiness row panic_quiet
+  ///
+  /// In ar, this message translates to:
+  /// **'تفضيل هدوء الاستغاثة'**
+  String get sosReadinessRowPanicQuiet;
+
+  /// FAT-028 readiness row break_glass
+  ///
+  /// In ar, this message translates to:
+  /// **'صلاحية كسر الزجاج'**
+  String get sosReadinessRowBreakGlass;
+
+  /// SosReadinessClass.available label
+  ///
+  /// In ar, this message translates to:
+  /// **'جاهز'**
+  String get sosReadinessClassAvailable;
+
+  /// SosReadinessClass.degraded label
+  ///
+  /// In ar, this message translates to:
+  /// **'متدهور / محلي فقط'**
+  String get sosReadinessClassDegraded;
+
+  /// SosReadinessClass.unavailable label
+  ///
+  /// In ar, this message translates to:
+  /// **'غير متاح'**
+  String get sosReadinessClassUnavailable;
+
+  /// SosReadinessClass.notConfigured label
+  ///
+  /// In ar, this message translates to:
+  /// **'غير مُعدّ'**
+  String get sosReadinessClassNotConfigured;
+
+  /// FAT-028 honesty — unverified ≠ armed
+  ///
+  /// In ar, this message translates to:
+  /// **'الجهات غير الموثّقة لا تدخل التصعيد — وثّقها حتى تستطيع المساعدة.'**
+  String get sosLadderUnverifiedEscalationNote;
+
+  /// FAT-028 backup editor title add
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة جهة موثوقة'**
+  String get sosLadderBackupSheetTitleAdd;
+
+  /// FAT-028 backup editor title edit
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل جهة موثوقة'**
+  String get sosLadderBackupSheetTitleEdit;
+
+  /// FAT-028 backup field name
+  ///
+  /// In ar, this message translates to:
+  /// **'الاسم'**
+  String get sosLadderBackupFieldName;
+
+  /// FAT-028 backup field relation
+  ///
+  /// In ar, this message translates to:
+  /// **'صلة القرابة'**
+  String get sosLadderBackupFieldRelation;
+
+  /// FAT-028 backup field phone
+  ///
+  /// In ar, this message translates to:
+  /// **'الهاتف (يفضّل E.164)'**
+  String get sosLadderBackupFieldPhone;
+
+  /// FAT-028 backup field delay
+  ///
+  /// In ar, this message translates to:
+  /// **'التصعيد بعد (ثوانٍ)'**
+  String get sosLadderBackupFieldDelay;
+
+  /// FAT-028 backup sheet save
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظ الجهة'**
+  String get sosLadderBackupSave;
+
+  /// FAT-028 start verify CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'بدء التوثيق'**
+  String get sosLadderVerifyStart;
+
+  /// FAT-028 local Stage-1 confirm verify
+  ///
+  /// In ar, this message translates to:
+  /// **'تأكيد التوثيق (محلي)'**
+  String get sosLadderVerifyConfirmLocal;
+
+  /// FAT-028 revoke verify
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء التوثيق'**
+  String get sosLadderVerifyRevoke;
+
+  /// FAT-028 local verify honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'توثيق محلي للمرحلة ١ — ليس إثبات SMS أو مشغّل. التوثيق الأصلي لاحقاً.'**
+  String get sosLadderVerifyLocalHonesty;
+
+  /// Semantics for edit backup
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل جهة طوارئ موثوقة'**
+  String get sosLadderEditBackupSemantics;
+
+  /// Per-row hint when backup cannot escalate
+  ///
+  /// In ar, this message translates to:
+  /// **'مستبعدة من التصعيد حتى التوثيق'**
+  String get sosLadderSkippedEscalation;
+
+  /// FAT-028 per-child escalation section title
+  ///
+  /// In ar, this message translates to:
+  /// **'تصعيد خارجي لكل ابن'**
+  String get sosChildEscalationSectionTitle;
+
+  /// FAT-028 per-child escalation intro
+  ///
+  /// In ar, this message translates to:
+  /// **'إن لم تجب على استغاثة ابن، يُخطر الأرقام الموثوقة التي جهّزتها أعلاه — ويمكن تفعيل ذلك لكل ابن على حدة.'**
+  String get sosChildEscalationSectionHint;
+
+  /// FAT-028 per-child master toggle
+  ///
+  /// In ar, this message translates to:
+  /// **'تصعيد إن لم يجب الوالدان'**
+  String get sosChildEscalationEnable;
+
+  /// FAT-028 per-child delay
+  ///
+  /// In ar, this message translates to:
+  /// **'الانتظار قبل التصعيد (ثوانٍ)'**
+  String get sosChildEscalationDelay;
+
+  /// FAT-028 use ladder backups for this child
+  ///
+  /// In ar, this message translates to:
+  /// **'إشعار الجهات الموثوقة الخارجية'**
+  String get sosChildEscalationUseBackups;
+
+  /// FAT-028 SMS channel preference (wire later)
+  ///
+  /// In ar, this message translates to:
+  /// **'تجهيز رسائل SMS لتلك الأرقام'**
+  String get sosChildEscalationPrepareSms;
+
+  /// FAT-028 SMS honesty for per-child
+  ///
+  /// In ar, this message translates to:
+  /// **'إرسال SMS ما زال مغلقاً أصلياً/خلفياً — هذا المفتاح يحفظ نيتك فقط لنفعّله لاحقاً بلا إعادة تصميم الشاشة.'**
+  String get sosChildEscalationSmsHonesty;
+
+  /// Opaque child label on FAT-028 (no planted names)
+  ///
+  /// In ar, this message translates to:
+  /// **'ابن {id}'**
+  String sosChildEscalationChildLabel(String id);
+
+  /// FAT-028 empty children for escalation
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد أبناء في سجل العائلة بعد — أضف ابناً أولاً ثم اضبط التصعيد لكل ابن.'**
+  String get sosChildEscalationEmptyChildren;
 
   /// SOS connection
   ///
@@ -19577,6 +20405,18 @@ abstract class AppLocalizations {
   /// **'اختبار الابن مُرسل'**
   String get dayBoardPendingQuizSubmittedTitle;
 
+  /// SCR-FAT-010 blessing from CHD-027 (P15-QUR-005)
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن أتم الأذكار'**
+  String get dayBoardPendingAthkarBlessingTitle;
+
+  /// SCR-FAT-010 athkar blessing subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'بركة محلية — أرسل همسة متى شئت'**
+  String get dayBoardPendingAthkarBlessingSubtitle;
+
   /// SCR-FAT-010 learning pending subtitle
   ///
   /// In ar, this message translates to:
@@ -19588,6 +20428,132 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'حصل على +{minutes} دقيقة — راجع في النتائج'**
   String dayBoardPendingEarnedMinutes(int minutes);
+
+  /// SCR-FAT-010 honest local-save line (FVX-S-03 / OD-02)
+  ///
+  /// In ar, this message translates to:
+  /// **'محفوظ على هذا الجهاز — يعمل دون اتصال'**
+  String get dayBoardLocalSaveLine;
+
+  /// SCR-FAT-010 pending from FAT-033
+  ///
+  /// In ar, this message translates to:
+  /// **'طلب وقت إضافي بانتظارك'**
+  String get dayBoardPendingTimeRequestTitle;
+
+  /// SCR-FAT-010 time-request pending subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'{minutes} دقيقة — افتح صندوق الطلبات للرد'**
+  String dayBoardPendingTimeRequestSubtitle(int minutes);
+
+  /// SCR-FAT-010 pending from FAT-035
+  ///
+  /// In ar, this message translates to:
+  /// **'تطبيق جديد ينتظر قرارك'**
+  String get dayBoardPendingAppApprovalTitle;
+
+  /// SCR-FAT-010 app-approval pending subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'اسمح أو امنع من شاشة الموافقة'**
+  String get dayBoardPendingAppApprovalSubtitle;
+
+  /// SCR-FAT-010 pending from FAT-071
+  ///
+  /// In ar, this message translates to:
+  /// **'طلب صداقة بانتظارك'**
+  String get dayBoardPendingFriendRequestTitle;
+
+  /// SCR-FAT-010 friend-request pending subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'راجع بأمان — لا غرباء بدونك'**
+  String get dayBoardPendingFriendRequestSubtitle;
+
+  /// SCR-FAT-019 projected SOS row title
+  ///
+  /// In ar, this message translates to:
+  /// **'نداء استغاثة نشط يحتاج انتباهك'**
+  String get alertsHubRowSosTitle;
+
+  /// SCR-FAT-019 projected SOS row subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'افتح لوحة الاستغاثة — لا تُكتم أبدًا'**
+  String get alertsHubRowSosSubtitle;
+
+  /// SCR-FAT-019 projected tamper row title
+  ///
+  /// In ar, this message translates to:
+  /// **'تنبيه عبث على جهاز ابن'**
+  String get alertsHubRowTamperTitle;
+
+  /// SCR-FAT-019 projected tamper row subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'سُجّل على هذا الجهاز — راجع إعدادات مكافحة العبث'**
+  String get alertsHubRowTamperSubtitle;
+
+  /// SCR-FAT-019 projected time-request row
+  ///
+  /// In ar, this message translates to:
+  /// **'طلب وقت إضافي بانتظارك'**
+  String get alertsHubRowTimeTitle;
+
+  /// SCR-FAT-019 projected time-request subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'افتح صندوق طلبات الوقت'**
+  String get alertsHubRowTimeSubtitle;
+
+  /// SCR-FAT-019 projected app-install row
+  ///
+  /// In ar, this message translates to:
+  /// **'تطبيق جديد يحتاج موافقة'**
+  String get alertsHubRowAppTitle;
+
+  /// SCR-FAT-019 projected app-install subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'افتح موافقة التطبيقات الجديدة'**
+  String get alertsHubRowAppSubtitle;
+
+  /// SCR-FAT-019 projected friend-request row
+  ///
+  /// In ar, this message translates to:
+  /// **'طلب صداقة بانتظارك'**
+  String get alertsHubRowFriendTitle;
+
+  /// SCR-FAT-019 projected friend-request subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'افتح موافقة الأصدقاء'**
+  String get alertsHubRowFriendSubtitle;
+
+  /// SCR-FAT-019 projected arriveSafe row
+  ///
+  /// In ar, this message translates to:
+  /// **'وصل إلى منطقة آمنة'**
+  String get alertsHubRowArriveTitle;
+
+  /// SCR-FAT-019 projected arriveSafe subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'افتح تفصيل الوصول'**
+  String get alertsHubRowArriveSubtitle;
+
+  /// SCR-FAT-019 projected leaveZone row
+  ///
+  /// In ar, this message translates to:
+  /// **'غادر منطقة آمنة'**
+  String get alertsHubRowLeaveZoneTitle;
+
+  /// SCR-FAT-019 projected leaveZone subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'افتح تفصيل المغادرة — الحرج لا يُكتم'**
+  String get alertsHubRowLeaveZoneSubtitle;
 
   /// SCR-FAT-072 surah Al-Mulk (P15-QUR-002)
   ///
@@ -19622,7 +20588,7 @@ abstract class AppLocalizations {
   /// SCR-CHD-025 licensed An-Naba 1 (never AI-generated)
   ///
   /// In ar, this message translates to:
-  /// **'عَمَّ يَتَسَاءَلُونَ ﴿١﴾'**
+  /// **'عَمَّ يَتَسَاءَلُونَ ﴿1﴾'**
   String get childQuranWardAyahNaba1;
 
   /// No description provided for @sys3MockHonesty.
@@ -20012,31 +20978,31 @@ abstract class AppLocalizations {
   /// FS honesty badge — local capability real
   ///
   /// In ar, this message translates to:
-  /// **'IMPLEMENTED'**
+  /// **'يعمل'**
   String get capabilityStatusImplemented;
 
   /// FS honesty badge — remote edge mocked
   ///
   /// In ar, this message translates to:
-  /// **'MOCK-REMOTE'**
+  /// **'على هذا الجهاز'**
   String get capabilityStatusMockRemote;
 
   /// FS honesty badge — partial / last-acked
   ///
   /// In ar, this message translates to:
-  /// **'DEGRADED'**
+  /// **'يعمل جزئيًا'**
   String get capabilityStatusDegraded;
 
   /// FS honesty badge — platform cannot support
   ///
   /// In ar, this message translates to:
-  /// **'UNSUPPORTED'**
+  /// **'غير مدعوم'**
   String get capabilityStatusUnsupported;
 
   /// FS honesty badge — not built yet
   ///
   /// In ar, this message translates to:
-  /// **'NOT IMPLEMENTED'**
+  /// **'قريبًا'**
   String get capabilityStatusNotImplemented;
 
   /// FS-001-UX label beside GPS honesty badge
@@ -20048,7 +21014,7 @@ abstract class AppLocalizations {
   /// FS-001-UX honesty on FAT-014/015/016/017
   ///
   /// In ar, this message translates to:
-  /// **'GPS الجهاز غير مُنفَّذ (NOT IMPLEMENTED) في هذا البناء — الخرائط للعرض فقط؛ لا تُعامل هذه الشاشة كتتبع حي.'**
+  /// **'GPS الجهاز غير مُنفَّذ (قريبًا) في هذا البناء — الخرائط للعرض فقط؛ لا تُعامل هذه الشاشة كتتبع حي.'**
   String get locationGpsNotImplementedBanner;
 
   /// FAT-017 Q-LOC-12 multi-select heading
@@ -20126,7 +21092,7 @@ abstract class AppLocalizations {
   /// LOC-P-SLR honesty when GPS missing
   ///
   /// In ar, this message translates to:
-  /// **'GPS الجهاز NOT IMPLEMENTED — لا يمكن ادعاء تحديد صامت حي.'**
+  /// **'GPS الجهاز قريبًا — لا يمكن ادعاء تحديد صامت حي.'**
   String get silentLocateResultGpsNotImplemented;
 
   /// FAT-014 silent locate CTA
@@ -20134,6 +21100,12 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'تحديد صامت'**
   String get locationMapSilentLocateCta;
+
+  /// FAT-014 Silent Locate Observer deny toast
+  ///
+  /// In ar, this message translates to:
+  /// **'التحديد الصامت يحتاج صلاحية أب/أم أعلى من المطّلعة.'**
+  String get locationMapSilentLocateDenied;
 
   /// CHD-024 FS-001 silent location law
   ///
@@ -20548,6 +21520,24 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'تذاكر سلامة الذكاء دون اتصال (FS-007) — إشارات فقط؛ بلا حظر تلقائي.'**
   String get fs007SmartAlertsEntry;
+
+  /// VX-B3 glossary v1 · child screens one gentle line (D2)
+  ///
+  /// In ar, this message translates to:
+  /// **'بعض الأشياء هنا تعمل على هذا الجهاز فقط الآن 🌱'**
+  String get honestyChildGentleLine;
+
+  /// VX-B3 · CHD-016 praise topic label (Rule 23)
+  ///
+  /// In ar, this message translates to:
+  /// **'جمع الكسور'**
+  String get childResultPraiseTopicFractions;
+
+  /// VX-B4 · AppLoadingState semantics label
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ التحميل'**
+  String get appLoadingSemantics;
 }
 
 class _AppLocalizationsDelegate

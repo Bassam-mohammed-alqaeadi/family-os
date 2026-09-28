@@ -10,6 +10,8 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/features/n16_tasks/family_tasks_models.dart';
+import 'package:family_os/features/n16_tasks/family_tasks_repository.dart';
 import 'package:family_os/features/n16_tasks/smart_chore_distributor_repository.dart';
 import 'package:family_os/features/n16_tasks/smart_chore_distributor_screen.dart';
 
@@ -22,6 +24,9 @@ void main() {
       tester,
       repository: InMemorySmartChoreDistributorRepository(
         seed: smartChoreDistributorEmptyFixture(),
+        familyTasks: InMemoryFamilyTasksRepository(
+          seed: familyTasksEmptyFixture(),
+        ),
       ),
       onNavigate: nav.add,
     );
@@ -33,11 +38,16 @@ void main() {
 
   testWidgets('approve → FAT-054 + shuffle toast', (tester) async {
     final nav = <String>[];
+    final family = InMemoryFamilyTasksRepository(
+      seed: familyTasksEmptyFixture(),
+    );
     final repo = InMemorySmartChoreDistributorRepository(
       seed: smartChoreDistributorPrototypeFixture(),
+      familyTasks: family,
     );
     await _pump(tester, repository: repo, onNavigate: nav.add);
     expect(find.byKey(SmartChoreDistributorKeys.proposal), findsOneWidget);
+    expect(find.byKey(SmartChoreDistributorKeys.localHonesty), findsOneWidget);
 
     await tester.tap(find.byKey(SmartChoreDistributorKeys.shuffleCta));
     await tester.pump();
@@ -54,6 +64,14 @@ void main() {
     AppToast.dismiss();
     await tester.pumpAndSettle();
     expect(nav, contains('SCR-FAT-054'));
+
+    final snap = await family.load();
+    expect(snap.childTasks.length, 3);
+    expect(
+      snap.childTasks.every((t) => t.status == FamilyTaskStatus.assigned),
+      isTrue,
+    );
+    expect(snap.childTasks.every((t) => t.id.startsWith('chore-')), isTrue);
   });
 
   testWidgets('observer cannot approve', (tester) async {
@@ -61,6 +79,9 @@ void main() {
       tester,
       repository: InMemorySmartChoreDistributorRepository(
         seed: smartChoreDistributorPrototypeFixture(),
+        familyTasks: InMemoryFamilyTasksRepository(
+          seed: familyTasksEmptyFixture(),
+        ),
       ),
       role: AppRole.mother,
       motherLevel: MotherLevel.observer,
@@ -72,11 +93,28 @@ void main() {
     final gate = Completer<void>();
     final repo = InMemorySmartChoreDistributorRepository(
       seed: smartChoreDistributorOneFixture(),
+      familyTasks: InMemoryFamilyTasksRepository(
+        seed: familyTasksEmptyFixture(),
+      ),
     )..loadGate = () => gate.future;
     await _pump(tester, repository: repo, settle: false);
     await tester.pump();
     expect(find.byKey(SmartChoreDistributorKeys.loading), findsOneWidget);
     gate.complete();
+    await tester.pumpAndSettle();
+    expect(find.byKey(SmartChoreDistributorKeys.body), findsOneWidget);
+  });
+
+  testWidgets('load error → retry', (tester) async {
+    final repo = InMemorySmartChoreDistributorRepository(
+      seed: smartChoreDistributorOneFixture(),
+      familyTasks: InMemoryFamilyTasksRepository(
+        seed: familyTasksEmptyFixture(),
+      ),
+    )..loadError = Exception('offline');
+    await _pump(tester, repository: repo);
+    expect(find.byKey(SmartChoreDistributorKeys.error), findsOneWidget);
+    await tester.tap(find.text('Retry'));
     await tester.pumpAndSettle();
     expect(find.byKey(SmartChoreDistributorKeys.body), findsOneWidget);
   });
@@ -88,6 +126,23 @@ void main() {
     await tester.tap(find.byKey(SmartChoreDistributorKeys.sosIconCta));
     await tester.pumpAndSettle();
     expect(sos, isTrue);
+  });
+
+  test('approve writes assigned tasks into family authority', () async {
+    final family = InMemoryFamilyTasksRepository(
+      seed: familyTasksEmptyFixture(),
+    );
+    final chore = InMemorySmartChoreDistributorRepository(
+      seed: smartChoreDistributorOneFixture(),
+      familyTasks: family,
+    );
+    await chore.approve();
+    final snap = await family.load();
+    expect(snap.childTasks, hasLength(1));
+    expect(snap.childTasks.single.id, 'chore-a1');
+    expect(snap.childTasks.single.assigneeNameKey, 'childOne');
+    expect(snap.childTasks.single.rewardMinutes, 15);
+    expect(snap.childTasks.single.status, FamilyTaskStatus.assigned);
   });
 }
 

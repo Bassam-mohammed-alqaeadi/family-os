@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/role_controller.dart';
+import 'package:family_os/app/shell_tab_more_tools.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/app_error_state.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
+import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
@@ -14,6 +16,7 @@ import 'package:family_os/core/identity/child_device_management_repository.dart'
 import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n01_linking/add_child_screen.dart';
+import 'package:family_os/features/n02_day/children_list_local_repository.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
 
@@ -29,6 +32,10 @@ abstract final class ChildrenListKeys {
   static const sharedPoliciesSheet = Key('children_list_shared_policies_sheet');
   static const sharedApply = Key('children_list_shared_apply');
   static const childLean = Key('children_list_child_lean');
+  static const localDemoBanner = Key('children_list_local_demo_banner');
+  static const sharedEnforceHonesty = Key(
+    'children_list_shared_enforce_honesty',
+  );
 
   static Key childRow(String id) => Key('children_list_row_$id');
 }
@@ -73,7 +80,7 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
   var _loadFailed = false;
   List<ChildrenListEntry> _children = const [];
   SharedChildrenPolicies _policies = const SharedChildrenPolicies();
-
+  String? _rosterProvenance;
   AppRole get _role =>
       widget.roleOverride ??
       CurrentRole.maybeNotifierOf(context)?.value ??
@@ -123,10 +130,12 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
           : _managementRepo.listChildren(familyId);
       final merged = _mergeChildren(kids, managed);
       final policies = await _repo.loadSharedPolicies();
+      final provenance = await _repo.loadProvenance(familyId: familyId);
       if (!mounted) return;
       setState(() {
         _children = merged;
         _policies = policies;
+        _rosterProvenance = provenance;
         _loading = false;
         _loadFailed = false;
       });
@@ -134,6 +143,7 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
       if (!mounted) return;
       setState(() {
         _children = const [];
+        _rosterProvenance = null;
         _loading = false;
         _loadFailed = true;
       });
@@ -176,7 +186,7 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
   void _goAddChild() {
     if (!_canCreateChild) {
       final l10n = AppLocalizations.of(context);
-      AppToast.show(context, message: l10n.childScreenTimeReadOnly);
+      AppToast.show(context, message: l10n.childrenListAddBlocked);
       return;
     }
     if (widget.onAddChild != null) {
@@ -197,7 +207,7 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
   Future<void> _deleteChild(String childId) async {
     if (!_canDeleteChild) {
       final l10n = AppLocalizations.of(context);
-      AppToast.show(context, message: l10n.childScreenTimeReadOnly);
+      AppToast.show(context, message: l10n.childrenListAddBlocked);
       return;
     }
     final runtime = CurrentIdentity.maybeOf(context);
@@ -259,6 +269,16 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
                         fontWeight: FontWeight.w600,
                         color: colors.ink2,
                         height: 1.55,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    BannerNote(
+                      key: ChildrenListKeys.sharedEnforceHonesty,
+                      message: l10n.childrenListSharedEnforceHonesty,
+                      variant: BannerVariant.a,
+                      leading: Text(
+                        'ℹ',
+                        style: TextStyle(fontSize: 18, color: colors.ink),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -468,31 +488,64 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
               message: l10n.childrenListChildLeanMessage,
             )
           : _loading
-          ? Center(
-              key: ChildrenListKeys.loading,
-              child: Semantics(
-                label: l10n.childrenListLoadingSemantics,
-                child: const CircularProgressIndicator(),
-              ),
+          ? ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              children: [
+                SizedBox(
+                  height: 180,
+                  child: Center(
+                    key: ChildrenListKeys.loading,
+                    child: Semantics(
+                      label: l10n.childrenListLoadingSemantics,
+                      child: const CircularProgressIndicator(),
+                    ),
+                  ),
+                ),
+                const ShellTabMoreTools(tabId: 'kids'),
+              ],
             )
           : _loadFailed
-          ? AppErrorState(
-              key: ChildrenListKeys.error,
-              kind: AppErrorKind.network,
-              onRetry: _load,
+          ? ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              children: [
+                AppErrorState(
+                  key: ChildrenListKeys.error,
+                  kind: AppErrorKind.network,
+                  onRetry: _load,
+                ),
+                const ShellTabMoreTools(tabId: 'kids'),
+              ],
             )
           : _children.isEmpty
-          ? AppEmptyState(
-              key: ChildrenListKeys.empty,
-              title: l10n.childrenListEmptyTitle,
-              message: l10n.childrenListEmptyMessage,
-              actionLabel: l10n.childrenListAddChild,
-              onAction: _goAddChild,
+          ? ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              children: [
+                AppEmptyState(
+                  key: ChildrenListKeys.empty,
+                  title: l10n.childrenListEmptyTitle,
+                  message: l10n.childrenListEmptyMessage,
+                  actionLabel: l10n.childrenListAddChild,
+                  onAction: _goAddChild,
+                ),
+                const ShellTabMoreTools(tabId: 'kids'),
+              ],
             )
           : ListView(
               key: ChildrenListKeys.list,
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
               children: [
+                if (isChildrenListSeededProvenance(_rosterProvenance)) ...[
+                  BannerNote(
+                    key: ChildrenListKeys.localDemoBanner,
+                    message: l10n.childrenListLocalDemoBanner,
+                    variant: BannerVariant.a,
+                    leading: Text(
+                      'ℹ',
+                      style: TextStyle(fontSize: 18, color: colors.ink),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 Align(
                   alignment: AlignmentDirectional.centerEnd,
                   child: ConstrainedBox(
@@ -593,7 +646,7 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
                                   ],
                                 ),
                               ),
-                              Icon(Icons.chevron_left, color: colors.ink2),
+                              Icon(Icons.chevron_right, color: colors.ink2),
                             ],
                           ),
                         ),
@@ -601,6 +654,7 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
                     ),
                   ),
                 ),
+                const ShellTabMoreTools(tabId: 'kids'),
               ],
             ),
     );
@@ -675,7 +729,7 @@ class _ChildRosterCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final radii = Theme.of(context).extension<FamilyRadii>()!;
-    final ageText = l10n.addChildAgeYears(toEasternDigits(entry.ageYears));
+    final ageText = l10n.addChildAgeYears(formatAppInt(entry.ageYears));
     final healthLabel = switch (entry.health) {
       ChildListHealth.excellent => l10n.childrenListHealthExcellent,
       ChildListHealth.atRisk => l10n.childrenListHealthAtRisk,
@@ -732,25 +786,10 @@ class _ChildRosterCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 2),
-                        Text(
-                          '📍 ${entry.locationLabel} · ${entry.lastSeenLabel}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w600,
-                            color: colors.ink2,
-                          ),
-                        ),
-                        Text(
-                          '🔋 ${entry.batteryLabel} · ⏱ ${l10n.childrenListTimeLeft(entry.timeLeftLabel)}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w600,
-                            color: colors.ink2,
-                          ),
+                        ..._childMetaLines(
+                          l10n: l10n,
+                          colors: colors,
+                          entry: entry,
                         ),
                       ],
                     ),
@@ -778,6 +817,65 @@ extension on ChildrenListEntry {
     DayChildSwatch.sky => colors.sky,
     DayChildSwatch.amber => colors.amber,
   };
+
+  bool get hasLocationMeta =>
+      locationLabel.trim().isNotEmpty || lastSeenLabel.trim().isNotEmpty;
+
+  bool get hasDeviceMeta =>
+      batteryLabel.trim().isNotEmpty || timeLeftLabel.trim().isNotEmpty;
+}
+
+List<Widget> _childMetaLines({
+  required AppLocalizations l10n,
+  required FamilyColors colors,
+  required ChildrenListEntry entry,
+}) {
+  final style = TextStyle(
+    fontSize: 11.5,
+    fontWeight: FontWeight.w600,
+    color: colors.ink2,
+  );
+  if (!entry.hasLocationMeta && !entry.hasDeviceMeta) {
+    return [
+      Text(
+        l10n.childrenListDeviceNotLinked,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: style,
+      ),
+    ];
+  }
+  final lines = <Widget>[];
+  if (entry.hasLocationMeta) {
+    final parts = <String>[
+      if (entry.locationLabel.trim().isNotEmpty) '📍 ${entry.locationLabel}',
+      if (entry.lastSeenLabel.trim().isNotEmpty) entry.lastSeenLabel,
+    ];
+    lines.add(
+      Text(
+        parts.join(' · '),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: style,
+      ),
+    );
+  }
+  if (entry.hasDeviceMeta) {
+    final parts = <String>[
+      if (entry.batteryLabel.trim().isNotEmpty) '🔋 ${entry.batteryLabel}',
+      if (entry.timeLeftLabel.trim().isNotEmpty)
+        '⏱ ${l10n.childrenListTimeLeft(entry.timeLeftLabel)}',
+    ];
+    lines.add(
+      Text(
+        parts.join(' · '),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: style,
+      ),
+    );
+  }
+  return lines;
 }
 
 class _StatusAvatar extends StatelessWidget {

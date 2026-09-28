@@ -126,6 +126,9 @@ final class MemoryDeviceLockPrefsStore implements DeviceLockPrefsStore {
 }
 
 /// Stage-1 shared prefs / audit / notify (Rule 25 seam).
+///
+/// LEGACY / RETAINED — production prefers Local KV
+/// ([PrefsMiscLocalPersistence.openDeviceLockService]).
 final MemoryDeviceLockPrefsStore stage1DeviceLockPrefsStore =
     MemoryDeviceLockPrefsStore();
 final AuditAppend stage1DeviceLockAudit = AuditAppend();

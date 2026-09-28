@@ -1,5 +1,6 @@
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/minutes.dart';
+import 'package:family_os/core/identity/roster_children.dart';
 import 'package:family_os/features/education/learning_assignment_models.dart';
 import 'package:family_os/features/education/learning_assignment_repository.dart';
 import 'package:family_os/features/n14_studio/create_assignment_models.dart';
@@ -16,16 +17,22 @@ abstract class CreateAssignmentRepository {
 }
 
 /// In-memory mock — prototype FAT-049 shape by default.
+///
+/// OD-14: [load] rebinds the target child to the active family roster.
 final class InMemoryCreateAssignmentRepository
     implements CreateAssignmentRepository {
   InMemoryCreateAssignmentRepository({
     CreateAssignmentSnapshot? seed,
     LearningAssignmentRepository? assignments,
-  }) : _snap = seed ?? createAssignmentPrototypeFixture(),
-       _assignments = assignments ?? stage1LearningAssignmentRepository;
+  })  : _snap = seed ?? createAssignmentEmptyFixture(),
+        _assignmentsOverride = assignments;
 
   CreateAssignmentSnapshot _snap;
-  final LearningAssignmentRepository _assignments;
+  final LearningAssignmentRepository? _assignmentsOverride;
+
+  /// Resolve at call time so Local LearningAssignment rebind is visible (CE-G062).
+  LearningAssignmentRepository get _assignments =>
+      _assignmentsOverride ?? stage1LearningAssignmentRepository;
 
   /// Optional gate for loading-state widget tests.
   Future<void> Function()? loadGate;
@@ -34,12 +41,14 @@ final class InMemoryCreateAssignmentRepository
   Future<CreateAssignmentSnapshot> load() async {
     final gate = loadGate;
     if (gate != null) await gate();
+    _snap = bindCreateAssignmentToRoster(_snap);
     return _copy(_snap);
   }
 
   @override
   Future<CreateAssignmentSnapshot> assignHomework(String title) async {
     final trimmed = title.trim();
+    _snap = bindCreateAssignmentToRoster(_snap);
     final child = _snap.child;
     if (child == null || trimmed.isEmpty) return _copy(_snap);
     _snap = _snap.copyWith(
@@ -59,6 +68,7 @@ final class InMemoryCreateAssignmentRepository
 
   @override
   Future<CreateAssignmentSnapshot> assignSkillGap() async {
+    _snap = bindCreateAssignmentToRoster(_snap);
     final child = _snap.child;
     final gap = _snap.skillGap;
     if (child == null || gap == null) return _copy(_snap);
@@ -79,6 +89,7 @@ final class InMemoryCreateAssignmentRepository
     String question,
   ) async {
     final trimmed = question.trim();
+    _snap = bindCreateAssignmentToRoster(_snap);
     final child = _snap.child;
     if (child == null || trimmed.isEmpty) return _copy(_snap);
     _snap = _snap.copyWith(
@@ -124,8 +135,10 @@ CreateAssignmentSnapshot createAssignmentEmptyFixture() {
 
 /// One child · no skill gap — homework + family paths only.
 CreateAssignmentSnapshot createAssignmentOneFixture() {
-  return const CreateAssignmentSnapshot(
-    child: CreateAssignmentChild(id: 'child_a', nameKey: 'one'),
+  final child = activeRosterChild();
+  if (child == null) return const CreateAssignmentSnapshot();
+  return CreateAssignmentSnapshot(
+    child: CreateAssignmentChild(id: child.id.value, nameKey: child.nameKey),
     homeworkTitle: 'Solve page 45 in the math notebook (exercises 1–6)',
     homeworkRewardMinutes: 30,
     familyQuestion: 'What is 6 × 7, and what is the smallest continent?',
@@ -137,12 +150,15 @@ CreateAssignmentSnapshot createAssignmentOneFixture() {
 ///
 /// Rule 23: nameKey / titleKey only (no planted person names).
 /// ع-١: minutes-only rewards (30 / 50 / 30).
+/// OD-14: child id comes from the active roster (never `child_a`).
 CreateAssignmentSnapshot createAssignmentPrototypeFixture() {
-  return const CreateAssignmentSnapshot(
-    child: CreateAssignmentChild(id: 'child_a', nameKey: 'one'),
+  final child = activeRosterChild();
+  if (child == null) return const CreateAssignmentSnapshot();
+  return CreateAssignmentSnapshot(
+    child: CreateAssignmentChild(id: child.id.value, nameKey: child.nameKey),
     homeworkTitle: 'Solve page 45 in the math notebook (exercises 1–6)',
     homeworkRewardMinutes: 30,
-    skillGap: CreateAssignmentSkillGap(
+    skillGap: const CreateAssignmentSkillGap(
       id: 'gap-fractions',
       titleKey: 'fractionDivision',
       missed: 3,
@@ -152,5 +168,33 @@ CreateAssignmentSnapshot createAssignmentPrototypeFixture() {
     ),
     familyQuestion: 'What is 6 × 7, and what is the smallest continent?',
     familyRewardMinutes: 30,
+  );
+}
+
+/// Rebinds a snapshot's child to the active family roster (OD-14).
+///
+/// Leaves intentional empty fixtures untouched.
+CreateAssignmentSnapshot bindCreateAssignmentToRoster(
+  CreateAssignmentSnapshot snap,
+) {
+  if (snap.isEmpty &&
+      snap.homeworkTitle.isEmpty &&
+      !snap.hasSkillGap &&
+      snap.familyQuestion.isEmpty) {
+    return snap;
+  }
+  final selected = activeRosterChild();
+  if (selected == null) {
+    return const CreateAssignmentSnapshot();
+  }
+  final current = snap.child;
+  if (current != null && current.id == selected.id.value) {
+    return snap;
+  }
+  return snap.copyWith(
+    child: CreateAssignmentChild(
+      id: selected.id.value,
+      nameKey: selected.nameKey,
+    ),
   );
 }

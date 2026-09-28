@@ -107,5 +107,10 @@ final class InMemoryChildProfileRepository implements ChildProfileRepository {
   }
 }
 
-/// Stage-1 singleton — empty until tests/repos seed (Rule 23).
-final stage1ChildProfileRepository = InMemoryChildProfileRepository();
+/// Stage-1 singleton — rebound after Identity roster bind (LDR-B1).
+ChildProfileRepository stage1ChildProfileRepository =
+    InMemoryChildProfileRepository();
+
+void rebindStage1ChildProfileRepository(ChildProfileRepository repository) {
+  stage1ChildProfileRepository = repository;
+}

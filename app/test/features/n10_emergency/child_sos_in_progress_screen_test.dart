@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/sos_cancel_confirmation.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
@@ -12,6 +13,7 @@ import 'package:family_os/core/policy/sos_alert_repository.dart';
 import 'package:family_os/features/n10_emergency/child_sos_in_progress_screen.dart';
 
 void main() {
+  tearDown(AppToast.dismiss);
   testWidgets('child — active SOS body + P-4 banner never gated', (tester) async {
     final repo = InMemorySosAlertRepository(
       initialActive: InMemorySosAlertRepository.demoActive(
@@ -110,6 +112,7 @@ void main() {
     expect(resolved, isTrue);
     expect(repo.resolveCount, 1);
     expect(await repo.loadActive(), isNull);
+    AppToast.dismiss();
   });
 
   testWidgets('call father seam fires', (tester) async {

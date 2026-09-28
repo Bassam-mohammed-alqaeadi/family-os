@@ -8,7 +8,7 @@ abstract class StagedProjectRepository {
 
 final class InMemoryStagedProjectRepository implements StagedProjectRepository {
   InMemoryStagedProjectRepository({StagedProjectSnapshot? seed})
-    : _snap = seed ?? stagedProjectPrototypeFixture();
+    : _snap = seed ?? stagedProjectEmptyFixture();
 
   StagedProjectSnapshot _snap;
   Future<void> Function()? loadGate;

@@ -25,7 +25,7 @@ void main() {
     );
 
     expect(find.text('إعداد عائلتك'), findsOneWidget);
-    expect(find.text('٤ دقائق'), findsOneWidget);
+    expect(find.text('4 دقائق'), findsOneWidget);
     // Account-only flags → 25% cached suggestion progress.
     expect(find.text('25٪'), findsOneWidget);
     expect(find.text('من الإعداد المقترح'), findsOneWidget);

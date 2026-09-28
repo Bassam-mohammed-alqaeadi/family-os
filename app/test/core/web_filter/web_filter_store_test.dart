@@ -33,7 +33,7 @@ void main() {
   });
 
   test('schema v4 exposes wf_document', () async {
-    expect(FamilyLocalSchema.currentVersion, 10);
+    expect(FamilyLocalSchema.currentVersion, 12);
     await db.insert('wf_document', {
       'scope_key': 'family',
       'family_id': family.value,

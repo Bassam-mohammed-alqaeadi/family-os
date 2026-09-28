@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
+import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/capability_honesty_badge.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/tokens.dart';
@@ -10,12 +11,13 @@ import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/fs_foundation/capability_status.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
 import 'package:family_os/core/policy/web_filter_evaluator.dart';
 import 'package:family_os/core/policy/web_filter_policy.dart';
 import 'package:family_os/core/policy/web_filter_policy_repository.dart';
 import 'package:family_os/core/policy/web_unlock_request.dart';
-import 'package:family_os/core/policy/web_unlock_request_repository.dart';
 import 'package:family_os/core/policy/web_unlock_service.dart';
+import 'package:family_os/core/sos_final/sos_prefs_local_persistence.dart';
 import 'package:family_os/features/n04_web_filter/web_block_page.dart';
 import 'package:family_os/features/n04_web_filter/web_filter_runtime.dart';
 import 'package:family_os/features/n04_web_filter/web_unlock_inbox.dart';
@@ -44,13 +46,14 @@ class WebFilterScreen extends StatefulWidget {
     this.motherLevel = MotherLevel.partner,
   });
 
-  /// Stage-1 demo child when null.
+  /// Null → family context's selected child (VX-B2).
   final ChildId? childId;
 
   /// Rule 25 seam — null → FS-002 domain store (memory/SQLite).
   final WebFilterPolicyRepository? repository;
 
-  /// SET-006 unlock service — null → prefs-backed Stage-1 singleton.
+  /// SET-006 unlock service — null → Domain temp-allow via [Stage1WebFilterRuntime]
+  /// (Slice 02-A). Request inbox Prefs remain LEGACY queue storage.
   final WebUnlockService? unlockService;
 
   /// Test seam — when null, father may edit; mother/child read-only.
@@ -70,7 +73,7 @@ class WebFilterScreen extends StatefulWidget {
 class _WebFilterScreenState extends State<WebFilterScreen> {
   late final ChildId _childId;
   WebFilterPolicyRepository? _repository;
-  late final WebUnlockService _unlockService;
+  WebUnlockService? _unlockService;
   late WebFilterPolicy _policy;
   late final TextEditingController _previewUrlController;
   late final TextEditingController _allowCtrl;
@@ -78,20 +81,16 @@ class _WebFilterScreenState extends State<WebFilterScreen> {
   late final TextEditingController _dictCtrl;
   var _loading = true;
   var _saving = false;
+  var _unlockUnavailable = false;
 
   @override
   void initState() {
     super.initState();
-    _childId = widget.childId ?? ChildId('demo-child');
-    _unlockService =
-        widget.unlockService ??
-        WebUnlockService(
-          requestRepository: PrefsWebUnlockRequestRepository(
-            stage1WebUnlockPrefsStore,
-          ),
-          audit: stage1WebUnlockAudit,
-          decisionBus: stage1WebUnlockDecisionBus,
-        );
+    _childId = resolveActiveChildIdOf(context, explicit: widget.childId);
+    if (widget.unlockService != null) {
+      _unlockService = widget.unlockService;
+      _unlockService!.decisionBus.addListener(_onUnlockDecision);
+    }
     _policy = WebFilterPolicy.defaults();
     _previewUrlController = TextEditingController(
       text: kWebFilterPreviewFixtureUrl,
@@ -99,23 +98,47 @@ class _WebFilterScreenState extends State<WebFilterScreen> {
     _allowCtrl = TextEditingController();
     _blockCtrl = TextEditingController();
     _dictCtrl = TextEditingController();
-    _unlockService.decisionBus.addListener(_onUnlockDecision);
     _bootstrap();
   }
 
   Future<void> _bootstrap() async {
-    if (widget.repository != null) {
-      _repository = widget.repository;
-    } else {
-      await Stage1WebFilterRuntime.ensureOpen();
-      _repository = Stage1WebFilterRuntime.policyRepository;
+    try {
+      if (widget.repository != null) {
+        _repository = widget.repository;
+      } else {
+        await Stage1WebFilterRuntime.ensureOpen();
+        if (!mounted) return;
+        _repository = Stage1WebFilterRuntime.policyRepository;
+      }
+
+      if (widget.unlockService == null) {
+        // Timed allow → SQLite Domain store (AUTH-FS002-UNLOCK).
+        // Request queue → Local KV (AUTH-FS002-UNLOCK-B).
+        final svc = await openWebUnlockServiceWithLocalQueue();
+        if (!mounted) return;
+        if (svc == null) {
+          throw StateError('Web unlock Local KV unavailable');
+        }
+        _unlockService = svc;
+        svc.decisionBus.addListener(_onUnlockDecision);
+        _unlockUnavailable = false;
+      }
+    } catch (e, st) {
+      debugPrint(
+        'AUTH-FS002-UNLOCK: Domain bootstrap failed — '
+        'no InMemory temp-allow fallback: $e\n$st',
+      );
+      if (widget.unlockService == null) {
+        _unlockService = null;
+        _unlockUnavailable = true;
+      }
     }
     await _load();
   }
 
   @override
   void dispose() {
-    _unlockService.decisionBus.removeListener(_onUnlockDecision);
+    _unlockService?.decisionBus.removeListener(_onUnlockDecision);
     _previewUrlController.dispose();
     _allowCtrl.dispose();
     _blockCtrl.dispose();
@@ -124,7 +147,7 @@ class _WebFilterScreenState extends State<WebFilterScreen> {
   }
 
   void _onUnlockDecision() {
-    final decided = _unlockService.decisionBus.lastDecision;
+    final decided = _unlockService?.decisionBus.lastDecision;
     if (decided == null || !mounted) return;
     final role = CurrentRole.maybeNotifierOf(context)?.value;
     // Child surfaces toast when decision arrives (same-process P12 bus).
@@ -138,7 +161,11 @@ class _WebFilterScreenState extends State<WebFilterScreen> {
 
   Future<void> _load() async {
     final repo = _repository;
-    if (repo == null) return;
+    if (repo == null) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      return;
+    }
     final loaded = await repo.load(_childId);
     if (!mounted) return;
     setState(() {
@@ -260,10 +287,25 @@ class _WebFilterScreenState extends State<WebFilterScreen> {
 
   VoidCallback? _previewUnlockHandler(Uri url) {
     if (widget.onRequestUnlock != null) return widget.onRequestUnlock;
+    final svc = _unlockService;
+    if (svc == null) {
+      return () {
+        final l10n = AppLocalizations.of(context);
+        AppToast.show(
+          context,
+          message: l10n.errorLocalSaveMessage,
+          actionLabel: l10n.errorRetryCta,
+          onAction: () {
+            setState(() => _loading = true);
+            _bootstrap();
+          },
+        );
+      };
+    }
     return () {
       defaultWebUnlockRequest(
         context: context,
-        service: _unlockService,
+        service: svc,
         childId: _childId,
         url: url,
       );
@@ -582,13 +624,19 @@ class _WebFilterScreenState extends State<WebFilterScreen> {
                           child: Text(l10n.webFilterPreviewButton),
                         ),
                         const SizedBox(height: 24),
-                        WebUnlockInbox(
-                          service: _unlockService,
-                          role:
-                              CurrentRole.maybeNotifierOf(context)?.value ??
-                              AppRole.father,
-                          motherLevel: widget.motherLevel,
-                        ),
+                        if (_unlockService != null)
+                          WebUnlockInbox(
+                            service: _unlockService!,
+                            role:
+                                CurrentRole.maybeNotifierOf(context)?.value ??
+                                AppRole.father,
+                            motherLevel: widget.motherLevel,
+                          )
+                        else if (_unlockUnavailable)
+                          BannerNote(
+                            variant: BannerVariant.a,
+                            message: l10n.errorLocalSaveMessage,
+                          ),
                       ],
                     ),
                   ),

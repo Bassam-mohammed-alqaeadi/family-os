@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/app/role_guard.dart';
+import 'package:family_os/app/shell_tab_more_tools.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
@@ -11,6 +12,7 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n14_studio/studio_board_models.dart';
 import 'package:family_os/features/n14_studio/studio_board_repository.dart';
@@ -141,7 +143,7 @@ class _StudioBoardScreenState extends State<StudioBoardScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    await _sos.fire(childId: 'family');
+    await parentSosSenderOf(context).fireThrough(_sos);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.push(screenPath('SCR-FAT-018'));
@@ -278,6 +280,7 @@ class _StudioBoardScreenState extends State<StudioBoardScreen> {
             label: l10n.studioBoardSosCta,
             onPressed: _sosBusy ? null : _openSos,
           ),
+          const ShellTabMoreTools(tabId: 'studio'),
         ],
       ),
     );
@@ -344,6 +347,7 @@ class _StudioBoardScreenState extends State<StudioBoardScreen> {
             label: l10n.studioBoardSosCta,
             onPressed: _sosBusy ? null : _openSos,
           ),
+          const ShellTabMoreTools(tabId: 'studio'),
         ],
       ),
     );
@@ -481,7 +485,10 @@ class _SuggestionsCard extends StatelessWidget {
     };
   }
 
-  static String _suggestionTitle(AppLocalizations l10n, StudioSuggestionKind k) {
+  static String _suggestionTitle(
+    AppLocalizations l10n,
+    StudioSuggestionKind k,
+  ) {
     return switch (k) {
       StudioSuggestionKind.fractions => l10n.studioBoardSugFractionsTitle,
       StudioSuggestionKind.quranWird => l10n.studioBoardSugWirdTitle,
@@ -556,7 +563,7 @@ class _SuggestionRow extends StatelessWidget {
                 ),
               ),
               if (enabled)
-                Icon(Icons.chevron_left, color: colors.ink2, size: 22),
+                Icon(Icons.chevron_right, color: colors.ink2, size: 22),
             ],
           ),
         ),
@@ -778,27 +785,28 @@ class _QuickActions extends StatelessWidget {
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final radii = Theme.of(context).extension<FamilyRadii>()!;
 
-    final actions = <({Key key, IconData icon, String label, VoidCallback onTap})>[
-      if (canCreate)
-        (
-          key: StudioBoardKeys.quickCamera,
-          icon: Icons.photo_camera_outlined,
-          label: l10n.studioBoardQuickCamera,
-          onTap: onCamera,
-        ),
-      (
-        key: StudioBoardKeys.quickLibrary,
-        icon: Icons.public_outlined,
-        label: l10n.studioBoardQuickLibrary,
-        onTap: onLibrary,
-      ),
-      (
-        key: StudioBoardKeys.quickResults,
-        icon: Icons.bar_chart_outlined,
-        label: l10n.studioBoardQuickResults,
-        onTap: onResults,
-      ),
-    ];
+    final actions =
+        <({Key key, IconData icon, String label, VoidCallback onTap})>[
+          if (canCreate)
+            (
+              key: StudioBoardKeys.quickCamera,
+              icon: Icons.photo_camera_outlined,
+              label: l10n.studioBoardQuickCamera,
+              onTap: onCamera,
+            ),
+          (
+            key: StudioBoardKeys.quickLibrary,
+            icon: Icons.public_outlined,
+            label: l10n.studioBoardQuickLibrary,
+            onTap: onLibrary,
+          ),
+          (
+            key: StudioBoardKeys.quickResults,
+            icon: Icons.bar_chart_outlined,
+            label: l10n.studioBoardQuickResults,
+            onTap: onResults,
+          ),
+        ];
 
     return Wrap(
       spacing: 8,
@@ -818,7 +826,10 @@ class _QuickActions extends StatelessWidget {
                   border: Border.all(color: colors.border),
                 ),
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(minWidth: 96, minHeight: 48),
+                  constraints: const BoxConstraints(
+                    minWidth: 96,
+                    minHeight: 48,
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,

@@ -202,7 +202,7 @@ class SetupWizardScreenState extends State<SetupWizardScreen> {
                     title: l10n.setupWizardStepInviteTitle,
                     subtitle: l10n.setupWizardStepInviteSubtitle,
                     trailing: Icon(
-                      Icons.chevron_left,
+                      Icons.chevron_right,
                       color: colors.ink2,
                       size: 22,
                     ),
@@ -214,7 +214,7 @@ class SetupWizardScreenState extends State<SetupWizardScreen> {
                     title: l10n.setupWizardStepSosTitle,
                     subtitle: l10n.setupWizardStepSosSubtitle,
                     trailing: Icon(
-                      Icons.chevron_left,
+                      Icons.chevron_right,
                       color: colors.ink2,
                       size: 22,
                     ),

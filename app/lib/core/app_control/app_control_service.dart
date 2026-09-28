@@ -234,6 +234,11 @@ final class AppControlService {
     return ticket;
   }
 
+  /// Parent inbox — pending install tickets for one child (VX-B5 day-board).
+  Future<List<AppInstallTicket>> listPendingInstalls(ChildId childId) {
+    return _installs.listPending(familyId, childId);
+  }
+
   /// Approve install → child-scoped Allow (APP-OD-18); never family-wide.
   Future<AppInstallTicket> approveInstall({
     required String ticketId,

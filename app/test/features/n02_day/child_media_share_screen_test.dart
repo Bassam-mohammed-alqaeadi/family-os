@@ -9,6 +9,7 @@ import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/features/n02_day/child_media_share_models.dart';
 import 'package:family_os/features/n02_day/child_media_share_repository.dart';
 import 'package:family_os/features/n02_day/child_media_share_screen.dart';
 
@@ -30,22 +31,22 @@ void main() {
     expect(nav, contains('SCR-CHD-007'));
   });
 
-  testWidgets('share photo toast', (tester) async {
-    await _pump(
-      tester,
-      repository: InMemoryChildMediaShareRepository(
-        seed: childMediaShareOneFixture(),
-      ),
+  testWidgets('share photo toast honesty', (tester) async {
+    final repo = InMemoryChildMediaShareRepository(
+      seed: childMediaShareOneFixture(),
     );
+    await _pump(tester, repository: repo);
     expect(find.byKey(ChildMediaShareKeys.body), findsOneWidget);
     expect(find.byKey(ChildMediaShareKeys.row('m1')), findsOneWidget);
     expect(find.byKey(ChildMediaShareKeys.safeCircleBanner), findsOneWidget);
+    expect(find.byKey(ChildMediaShareKeys.localHonesty), findsOneWidget);
 
     await tester.tap(find.byKey(ChildMediaShareKeys.quickAction('photo')));
     await tester.pump();
-    expect(find.textContaining('Capture and share'), findsOneWidget);
+    expect(find.textContaining('this device only'), findsOneWidget);
     AppToast.dismiss();
     await tester.pumpAndSettle();
+    expect(repo.queuedIntents, [ChildMediaShareType.photo]);
   });
 
   testWidgets('loading then body', (tester) async {
@@ -57,6 +58,17 @@ void main() {
     await tester.pump();
     expect(find.byKey(ChildMediaShareKeys.loading), findsOneWidget);
     gate.complete();
+    await tester.pumpAndSettle();
+    expect(find.byKey(ChildMediaShareKeys.body), findsOneWidget);
+  });
+
+  testWidgets('load error → retry', (tester) async {
+    final repo = InMemoryChildMediaShareRepository(
+      seed: childMediaShareOneFixture(),
+    )..loadError = Exception('offline');
+    await _pump(tester, repository: repo);
+    expect(find.byKey(ChildMediaShareKeys.error), findsOneWidget);
+    await tester.tap(find.text('Retry'));
     await tester.pumpAndSettle();
     expect(find.byKey(ChildMediaShareKeys.body), findsOneWidget);
   });

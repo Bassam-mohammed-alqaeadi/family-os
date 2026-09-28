@@ -42,6 +42,7 @@ void main() {
     expect(find.byKey(ChildResultKeys.body), findsOneWidget);
     expect(find.byKey(ChildResultKeys.score), findsOneWidget);
     expect(find.textContaining('9 of 10'), findsOneWidget);
+    expect(find.textContaining('adding fractions'), findsOneWidget);
     expect(find.byKey(ChildResultKeys.missedCard), findsOneWidget);
 
     await tester.ensureVisible(find.byKey(ChildResultKeys.reviewCta));

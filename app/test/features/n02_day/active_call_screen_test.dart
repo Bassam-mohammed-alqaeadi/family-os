@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/app_error_state.dart';
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
@@ -12,6 +13,7 @@ import 'package:family_os/features/n02_day/active_call_repository.dart';
 import 'package:family_os/features/n02_day/active_call_screen.dart';
 
 void main() {
+  tearDown(AppToast.dismiss);
   testWidgets('SCR-FAT-023 loads by callId=call_child_a', (tester) async {
     await tester.pumpWidget(
       _app(
@@ -38,7 +40,7 @@ void main() {
     expect(find.byKey(ActiveCallKeys.end), findsOneWidget);
     expect(find.byKey(ActiveCallKeys.honesty), findsOneWidget);
     expect(find.byKey(ActiveCallKeys.playTogether), findsOneWidget);
-    expect(find.textContaining('ابن ١'), findsWidgets);
+    expect(find.textContaining('ابن 1'), findsWidgets);
   });
 
   testWidgets('SCR-FAT-023 mother OK + parametric peers', (tester) async {
@@ -61,13 +63,13 @@ void main() {
 
     await open('call_mother');
     expect(find.byKey(ActiveCallKeys.body), findsOneWidget);
-    expect(find.textContaining('شريكة ١'), findsWidgets);
+    expect(find.textContaining('شريكة 1'), findsWidgets);
 
     await open('call_child_b');
-    expect(find.textContaining('ابن ٢'), findsWidgets);
+    expect(find.textContaining('ابن 2'), findsWidgets);
 
     await open('call_child_c_video');
-    expect(find.textContaining('ابن ٣'), findsWidgets);
+    expect(find.textContaining('ابن 3'), findsWidgets);
   });
 
   testWidgets('SCR-FAT-023 mute / speaker / end mock seams', (tester) async {
@@ -98,6 +100,7 @@ void main() {
     await tester.tap(find.byKey(ActiveCallKeys.speaker));
     await tester.pumpAndSettle();
     expect(speaker, isTrue);
+    AppToast.dismiss();
 
     await tester.tap(find.byKey(ActiveCallKeys.end));
     await tester.pumpAndSettle();
@@ -175,7 +178,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('ابن ١'), findsWidgets);
+    expect(find.textContaining('ابن 1'), findsWidgets);
     for (final name in const ['خالد', 'نورة', 'سعد', 'نوال', 'عبدالله']) {
       expect(find.textContaining(name), findsNothing);
     }

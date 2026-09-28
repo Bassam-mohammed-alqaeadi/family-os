@@ -333,8 +333,15 @@ class _RuleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final radii = Theme.of(context).extension<FamilyRadii>()!;
+    // Editor-authored rules store wire tokens only; show localized labels.
+    final fromEditor = rule.sourceSuggestionId == null;
+    final title = fromEditor ? l10n.myAdvisorOwnRuleTitle : rule.title;
+    final body = fromEditor
+        ? rule.consequents.map((c) => ruleConsequentLabel(l10n, c)).join(' · ')
+        : rule.body;
 
     return DecoratedBox(
       key: MyAdvisorKeys.ruleRow(rule.id),
@@ -349,7 +356,7 @@ class _RuleCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              rule.title,
+              title,
               style: TextStyle(
                 color: colors.ink,
                 fontSize: 15,
@@ -358,7 +365,7 @@ class _RuleCard extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              rule.body,
+              body,
               style: TextStyle(color: colors.ink2, fontSize: 13.5),
             ),
           ],

@@ -16,7 +16,7 @@ final _fakeDatePatterns = <RegExp>[
     r'October|November|December)\b',
     caseSensitive: false,
   ),
-  RegExp(r'٢٠[٢-٩][٠-٩]'),
+  RegExp(r'20[2-9][0-9]'),
   RegExp(
     r'(يناير|فبراير|مارس|أبريل|ابريل|مايو|يونيو|يوليو|أغسطس|اغسطس|'
     r'سبتمبر|أكتوبر|اكتوبر|نوفمبر|ديسمبر)',

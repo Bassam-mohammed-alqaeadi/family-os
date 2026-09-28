@@ -9,7 +9,7 @@ abstract class GenerationOutputsRepository {
 final class InMemoryGenerationOutputsRepository
     implements GenerationOutputsRepository {
   InMemoryGenerationOutputsRepository({GenerationOutputsSnapshot? seed})
-    : _snap = seed ?? generationOutputsPrototypeFixture();
+    : _snap = seed ?? generationOutputsEmptyFixture();
 
   GenerationOutputsSnapshot _snap;
 
@@ -31,7 +31,7 @@ final class InMemoryGenerationOutputsRepository
   }
 }
 
-/// Shared Stage-1 singleton (prototype fixture until a screen/test seeds).
+/// Shared Stage-1 singleton — empty (LDR-B5 / Owner 1C: no planted AI outputs).
 final InMemoryGenerationOutputsRepository stage1GenerationOutputsRepository =
     InMemoryGenerationOutputsRepository();
 

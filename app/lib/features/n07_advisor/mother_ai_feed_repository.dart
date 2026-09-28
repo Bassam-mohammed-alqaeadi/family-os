@@ -7,7 +7,7 @@ abstract class MotherAiFeedRepository {
 
 final class InMemoryMotherAiFeedRepository implements MotherAiFeedRepository {
   InMemoryMotherAiFeedRepository({MotherAiFeedSnapshot? seed})
-    : _snap = seed ?? motherAiFeedPrototypeFixture();
+    : _snap = seed ?? motherAiFeedEmptyFixture();
 
   MotherAiFeedSnapshot _snap;
   Future<void> Function()? loadGate;

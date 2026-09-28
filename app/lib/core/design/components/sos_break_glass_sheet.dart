@@ -18,9 +18,10 @@ abstract final class SosBreakGlassKeys {
 Future<SosBreakGlassSession?> showSosBreakGlassSheet({
   required BuildContext context,
   required SosActor actor,
-  required InMemorySosBreakGlassStore store,
+  required SosBreakGlassStore store,
   String capabilityKey = 'sos_response_override',
   Duration duration = const Duration(minutes: 30),
+  String? incidentId,
 }) {
   if (!SosRoleActions.canBreakGlass(actor)) {
     return Future.value(null);
@@ -38,6 +39,7 @@ Future<SosBreakGlassSession?> showSosBreakGlassSheet({
       store: store,
       capabilityKey: capabilityKey,
       duration: duration,
+      incidentId: incidentId,
     ),
   );
 }
@@ -48,12 +50,14 @@ class _SosBreakGlassSheet extends StatefulWidget {
     required this.store,
     required this.capabilityKey,
     required this.duration,
+    this.incidentId,
   });
 
   final SosActor actor;
-  final InMemorySosBreakGlassStore store;
+  final SosBreakGlassStore store;
   final String capabilityKey;
   final Duration duration;
+  final String? incidentId;
 
   @override
   State<_SosBreakGlassSheet> createState() => _SosBreakGlassSheetState();
@@ -69,19 +73,21 @@ class _SosBreakGlassSheetState extends State<_SosBreakGlassSheet> {
     super.dispose();
   }
 
-  void _submit(AppLocalizations l10n) {
+  Future<void> _submit(AppLocalizations l10n) async {
     final text = _reason.text.trim();
     if (text.isEmpty) return;
     if (!_confirming) {
       setState(() => _confirming = true);
       return;
     }
-    final session = widget.store.start(
+    final session = await widget.store.start(
       actor: widget.actor,
       capabilityKey: widget.capabilityKey,
       reason: text,
       duration: widget.duration,
+      incidentId: widget.incidentId,
     );
+    if (!mounted) return;
     Navigator.of(context).pop(session);
   }
 

@@ -75,7 +75,7 @@ void main() {
     await tester.ensureVisible(find.byKey(QuranProgressKeys.whisperCta));
     await tester.tap(find.byKey(QuranProgressKeys.whisperCta));
     await tester.pump();
-    expect(find.textContaining('whisper'), findsOneWidget);
+    expect(find.textContaining('Encouragement saved locally'), findsOneWidget);
     AppToast.dismiss();
     await tester.pumpAndSettle();
     expect(repo.whisperCount, 1);
@@ -83,7 +83,7 @@ void main() {
     await tester.ensureVisible(find.byKey(QuranProgressKeys.downloadCta));
     await tester.tap(find.byKey(QuranProgressKeys.downloadCta));
     await tester.pump();
-    expect(find.textContaining('Download queued'), findsOneWidget);
+    expect(find.textContaining('Offline-ready saved locally'), findsOneWidget);
     AppToast.dismiss();
     await tester.pumpAndSettle();
     expect(repo.downloadCount, 1);

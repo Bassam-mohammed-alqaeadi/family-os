@@ -93,7 +93,8 @@ class FamilyColors extends ThemeExtension<FamilyColors> {
     bg: Color(0xFFF5F6FA),
     surface: Color(0xFFFFFFFF),
     ink: Color(0xFF1A1D2E),
-    ink2: Color(0xFF8A8FA3),
+    // VX-B4 · OD-03 — raised to WCAG AA ≥4.5:1 on bg/surface for bodySmall.
+    ink2: Color(0xFF6B7082),
     border: Color(0xFFEDEEF5),
     toastBg: Color(0xFF22253C),
     toastAction: Color(0xFF9EE8FF),
@@ -125,7 +126,7 @@ class FamilyColors extends ThemeExtension<FamilyColors> {
     (name: 'bg', color: bg, hex: '#F5F6FA'),
     (name: 'surface', color: surface, hex: '#FFFFFF'),
     (name: 'ink', color: ink, hex: '#1A1D2E'),
-    (name: 'ink2', color: ink2, hex: '#8A8FA3'),
+    (name: 'ink2', color: ink2, hex: '#6B7082'),
     (name: 'border', color: border, hex: '#EDEEF5'),
     (name: 'toastBg', color: toastBg, hex: '#22253C'),
     (name: 'toastAction', color: toastAction, hex: '#9EE8FF'),

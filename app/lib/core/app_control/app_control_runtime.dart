@@ -3,6 +3,7 @@ import 'package:family_os/core/fs_foundation/capability_registry.dart';
 import 'package:family_os/core/fs_foundation/fs_session_kernel.dart';
 import 'package:family_os/core/fs_foundation/local_database.dart';
 import 'package:family_os/core/policy/app_access_rules_repository.dart';
+import 'package:family_os/core/screen_time/screen_time_local_persistence.dart';
 
 import 'app_control_overlay_store.dart';
 import 'app_control_service.dart';
@@ -42,7 +43,13 @@ final class Stage1AppControlRuntime {
     _accessRules = DomainAppAccessRulesRepository(
       _store!,
       familyId: familyId,
-      stAxes: PrefsAppAccessRulesRepository(stage1AppAccessRulesStore),
+      // DOM-AC-ST-AXES — ST limit/countable/unlimited on Local KV (not Memory).
+      stAxes: PrefsAppAccessRulesRepository(
+        LocalScreenTimeKvPrefsStore(
+          db,
+          namespace: ScreenTimeKvNamespaces.appAxes,
+        ),
+      ),
     );
     _capabilities = CapabilityRegistry(db);
     await _capabilities!.applyFs003OwnCapabilities();
