@@ -6,8 +6,7 @@
 program_status: RUNNING
 last_updated: 2026-09-29
 current_pillar: FAMILY_INTELLIGENCE
-CONNECTION-G1-DISCOVERY
-LEARNING_PRODUCT_READY
+current_card: INTELLIGENCE-G3-TECHNICAL_READY
 completed:
   - Harness bootstrap
   - New product charter
@@ -38,8 +37,9 @@ completed:
   - Family Intelligence phase initiation
   - Family Intelligence evidence map
   - Family Intelligence G1 direction accepted under standing Owner trust
+  - Family Intelligence G2 Hub, explainability, role journeys, settings/state model, and screen map accepted under standing Owner trust
 next_outputs:
-  - Family Intelligence Hub UX lock, role journeys, settings/state model, and screen map
+  - Family Intelligence technical capability, data/event, reliability, implementation sequence, parity, and Product Ready review
   - Preserve Security, Learning and Connection packs for later Backend/Native authorization
 blocked_by: none
 requires_owner_now: no

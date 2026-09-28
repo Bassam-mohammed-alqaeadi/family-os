@@ -29,6 +29,7 @@
 | PRV2-022 | 2026-09-29 | Complete Family Connection G3 technical readiness and declare Family Connection Product Ready. | Accepted | The Owner’s standing trust accepts the Render/Firebase boundary, connection capability/data/reliability design, parity boundaries and implementation sequence. This records readiness only; it does not authorize production Backend, Native, realtime, media, or calling implementation. |
 | PRV2-023 | 2026-09-29 | Start Family Intelligence product-refinement loop. | Accepted | Security, Learning and Family Connection are Product Ready. Intelligence will consume only source-qualified events and will not introduce hard-coded, opaque or unsupported automation. |
 | PRV2-024 | 2026-09-29 | Adopt Family Intelligence G1 direction under standing Owner trust. | Accepted | Intelligence is an explainable decision-support plane: source facts → signals → patterns → insight → human decision. “I do not know” is valid; model output is not fact; delegation is separately constrained and cannot take high-impact actions by default. |
+| PRV2-025 | 2026-09-29 | Adopt Family Intelligence G2 UX direction under standing Owner trust. | Accepted | Intelligence uses a contextual, explainable Hub: one useful insight, review queue, reports, role-scoped answers, memory/forget controls and an honest unavailable delegation state. Every inference exposes evidence, limits, feedback and an independent underlying-action truth; children receive respectful visible-consequence explanations rather than hidden scores or surveillance. |
 
 ## Pending decision format
 
