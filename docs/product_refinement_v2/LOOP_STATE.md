@@ -5,9 +5,9 @@
 ```yaml
 program_status: RUNNING
 last_updated: 2026-09-29
-current_pillar: SECURITY_AND_DIGITAL_SAFETY
-current_card: SECURITY_PRODUCT_READY_REVIEW
-current_stage: SECURITY_PRODUCT_READY
+current_pillar: LEARNING_AND_GROWTH
+current_card: LEARN-G3-TECHNICAL_READINESS
+current_stage: LEARNING_G3_TECHNICAL_READINESS
 completed:
   - Harness bootstrap
   - New product charter
@@ -24,8 +24,12 @@ completed:
   - Security data/event/delivery contracts
   - Security reliability and operations plan
   - Security implementation sequence, parity review, and Product Ready review
+  - Learning & Growth phase initiation
+  - Learning code/registry evidence map
+  - Learning G1 direction accepted under standing Owner trust
+  - Learning G2 Hub, role journeys, settings/state model, and screen map accepted under standing Owner trust
 next_outputs:
-  - Start Learning & Growth product-refinement loop
+  - Learning technical capability, data/event, reliability, and implementation-readiness pack
   - Preserve Security pack for later Backend/Native authorization
 blocked_by: none
 requires_owner_now: no
