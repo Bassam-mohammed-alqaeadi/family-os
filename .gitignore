@@ -21,6 +21,10 @@ credentials.json
 # Logs
 *.log
 
+# Node / backend dependencies and build output
+node_modules/
+**/node_modules/
+
 # Python / agent local
 **/__pycache__/
 *.py[cod]

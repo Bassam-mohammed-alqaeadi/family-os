@@ -1,0 +1,21 @@
+{
+  "name": "family-os-foundation-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Render-first Family OS account, family, membership and audit foundation.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test test/*.test.js",
+    "check": "node --check src/*.js && node --check src/auth/*.js && node --check src/store/*.js",
+    "migrate": "node src/migrate.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "jose": "^6.1.3",
+    "pg": "^8.16.3"
+  }
+}

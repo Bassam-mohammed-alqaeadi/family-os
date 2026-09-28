@@ -6,7 +6,7 @@
 program_status: FOUNDATION_WAVE_AUTHORIZED
 last_updated: 2026-09-29
 current_pillar: PLATFORM_FOUNDATION
-current_card: FOUNDATION-WAVE-0-PRECONDITIONS
+current_card: FOUNDATION-WAVE-1-FAIL-CLOSED-LOCAL-FOUNDATION
 completed:
   - Harness bootstrap
   - New product charter
@@ -46,10 +46,14 @@ completed:
   - Administration, Trust & Operations technical capability, data/event, reliability, implementation sequence, parity, and Product Ready review
   - Product Refinement V2 coverage for all 42 registered systems / 240 registered services
   - Option A Foundation Wave execution authorization
+  - Guardian-Eye Render/Firebase reference assessment with non-migration boundary
+  - Fail-closed local Render/PostgreSQL/OIDC foundation scaffold for account/family/membership/audit/outbox contracts
+  - Backend static checks and contract-test workflow definition
 next_outputs:
-  - Confirm Foundation Wave architecture/cost/security/operations preconditions
-  - Begin only the authorized Render account/family/membership/role/audit foundation after those preconditions
-blocked_by: Foundation Wave preconditions in `92_EXECUTION_AUTHORIZATION_GATE.md`
+  - Record accountable Render region/cost/operations and approved OIDC recovery decisions before connected deployment
+  - Complete controlled PostgreSQL migration and real OIDC integration only after those preconditions
+  - Plan minimal Flutter unavailable/ready/error-state integration without claiming account, device or notification capabilities
+blocked_by: Connected Render deployment and Flutter production integration remain blocked by Foundation Wave preconditions in `92_EXECUTION_AUTHORIZATION_GATE.md`
 requires_owner_now: no
 backend_native_status: BACKEND_FOUNDATION_AUTHORIZED_NATIVE_NOT_AUTHORIZED
 future_candidates_status: EXCLUDED_FROM_CURRENT_DEVELOPMENT
