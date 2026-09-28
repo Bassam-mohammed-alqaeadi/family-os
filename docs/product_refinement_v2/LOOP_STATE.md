@@ -49,6 +49,7 @@ completed:
   - Guardian-Eye Render/Firebase reference assessment with non-migration boundary
   - Fail-closed local Render/PostgreSQL/OIDC foundation scaffold for account/family/membership/audit/outbox contracts
   - Backend static checks and contract-test workflow definition
+  - Firebase Admin service-account credential intake rejected from source/runtime; repository guard added
 next_outputs:
   - Record accountable Render region/cost/operations and approved OIDC recovery decisions before connected deployment
   - Complete controlled PostgreSQL migration and real OIDC integration only after those preconditions

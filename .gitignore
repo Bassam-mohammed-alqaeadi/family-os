@@ -18,6 +18,12 @@ Desktop.ini
 *.pem
 credentials.json
 
+# Cloud service-account private keys (never add, copy, or configure from the repository)
+firebase-adminsdk.json
+*firebase-adminsdk*.json
+*service-account*.json
+*service_account*.json
+
 # Logs
 *.log
 
