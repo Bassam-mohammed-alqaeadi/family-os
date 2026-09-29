@@ -66,14 +66,14 @@ completed:
   - Family lifecycle fail-closed enforcement: suspended/archived families cannot read, mutate, accept membership or complete continuity transitions
   - Server-generated correlation propagation across successful Foundation request, audit and outbox evidence
   - Guardian-Eye reference re-check: Firebase service-account-dependent configuration remains rejected for Family OS staging and closes no staging ownership evidence
-  - Owner-directed free-tier staging selection: Render/Oregon candidate and Firebase Auth Spark synthetic-token-issuer boundary recorded; connected staging remains blocked pending named operational evidence
+  - Owner-attested synthetic staging admission: one accountable owner, temporary Oregon/Free Render boundary, encrypted external logical dump/restore, and Firebase Auth Spark Email/Password test principals only
+  - Manual Render/Firebase connection checklist with disabled auto-deploy, dashboard-only configuration and staging-only one-hour transfer expiry policy
 next_outputs:
-  - Produce the owned, dated acceptance evidence for RS-ADM-01 through RS-ADM-09 and STG-OWN/STG-ID/STG-SEC/STG-OPS/STG-QA; do not substitute templates or code comments for ownership
-  - Create only an isolated synthetic Render/OIDC/PostgreSQL staging environment after those evidence records are accepted
+  - The Staging Owner manually creates the isolated synthetic Render/Firebase resources and records the provider/execution evidence required by `11_CONTROLLED_STAGING_OPERATOR_CONNECTION_CHECKLIST.md`
   - Execute the staging verification protocol before any connected Flutter work, customer data, public claim or Recovery/Support implementation
   - Do not implement lost-account, dispute or support-mediated recovery until the Recovery/Support admission gate is accepted
-blocked_by: Connected Render deployment and Flutter production integration remain blocked by Foundation Wave preconditions in `92_EXECUTION_AUTHORIZATION_GATE.md`
-requires_owner_now: no
+blocked_by: Flutter production integration, customer data and all production/release claims remain blocked pending successful synthetic staging verification and Foundation Wave preconditions in `92_EXECUTION_AUTHORIZATION_GATE.md`
+requires_owner_now: manual Render/Firebase dashboard actions and approved encrypted dump store
 backend_native_status: BACKEND_FOUNDATION_AUTHORIZED_NATIVE_NOT_AUTHORIZED
 future_candidates_status: EXCLUDED_FROM_CURRENT_DEVELOPMENT
 ```

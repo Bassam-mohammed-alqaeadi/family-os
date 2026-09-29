@@ -1,7 +1,8 @@
-# Family OS controlled staging Blueprint TEMPLATE.
-# This file is deliberately non-deployable until accountable owners replace every OWNER_REQUIRED_* value
-# and the evidence records in docs/foundation/08_CONTROLLED_STAGING_ACTIVATION_RECORD.md are accepted.
-# Do not rename this file to render.yaml or connect it to Render before that approval.
+# Family OS controlled synthetic-staging Blueprint TEMPLATE.
+# Oregon and Free plans are approved only for the temporary synthetic environment in
+# docs/foundation/10_FREE_TIER_STAGING_ADMISSION_UPDATE.md. This file creates nothing by itself.
+# Do not rename it to render.yaml or synchronize it until the sole Staging Owner follows
+# docs/foundation/11_CONTROLLED_STAGING_OPERATOR_CONNECTION_CHECKLIST.md manually.
 # Never add secret values, Firebase Admin keys, customer data paths, or Flutter configuration here.
 
 services:
@@ -9,8 +10,8 @@ services:
     name: family-os-foundation-staging
     runtime: node
     rootDir: backend
-    region: OWNER_REQUIRED_RENDER_REGION
-    plan: OWNER_REQUIRED_WEB_PLAN
+    region: oregon
+    plan: free
     numInstances: 1
     autoDeployTrigger: 'off'
     buildCommand: npm ci
@@ -34,6 +35,6 @@ services:
 
 databases:
   - name: family-os-foundation-staging-postgres
-    region: OWNER_REQUIRED_RENDER_REGION
-    plan: OWNER_REQUIRED_POSTGRES_PLAN
+    region: oregon
+    plan: free
     ipAllowList: []

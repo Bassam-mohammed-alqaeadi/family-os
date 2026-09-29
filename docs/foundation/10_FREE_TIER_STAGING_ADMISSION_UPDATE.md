@@ -1,6 +1,6 @@
 # Free-Tier Controlled Staging Admission Update
 
-> **Status:** Owner-directed platform/provider selection recorded; connected staging remains blocked.
+> **Status:** Owner admission accepted for manual synthetic-staging connection; connected staging is not yet created.
 > **Updated:** 2026-09-29
 > **Scope:** Disposable, synthetic Foundation verification only. This is not a production, beta, customer, Flutter-connected, Recovery/Support, or release decision.
 > **Authority:** Owner direction; `05_SYSTEM_OPERATING_PROMPT.md`; `08_CONTROLLED_STAGING_ACTIVATION_RECORD.md`.
@@ -17,7 +17,7 @@
 | Secrets | Render Dashboard environment configuration | Required. No secret is placed in Git, Flutter, chat, fixture, CI output, or the Blueprint. |
 | Source deployment link | GitHub connection to Render | Allowed only as a deployment-control-plane connection; automatic deployment remains disabled for controlled staging. |
 
-The selection does **not** name an accountable infrastructure, cost, privacy, identity, operations, security, or QA owner. Consequently, it does not by itself close any `STG-*` record.
+The selection was subsequently accepted by the Owner who issued the 2026-09-29 staging attestations. That Owner is the sole accountable operator for infrastructure, security, cost, identity, operations, QA/privacy, test-data cleanup, and incident coordination for this synthetic environment. The owner assignment is recorded in Section 5; it does not claim that a provider resource or secret has already been configured.
 
 ## 2. Free-tier boundary
 
@@ -46,29 +46,40 @@ OIDC_JWKS_URL=https://www.googleapis.com/service_accounts/v1/jwk/securetoken@sys
 
 `<synthetic-firebase-project-id>` is not a secret, but it is deliberately not recorded here until an identity owner creates and approves a Family OS-specific synthetic project. The public JWKS endpoint contains signing public keys; it is not a substitute for, or reason to retain, an Admin SDK service-account key. The API independently verifies issuer, audience, token signature, expiry, and subject before it maps the subject to Render/PostgreSQL-owned family authority.
 
-The exact enabled sign-in method, test-principal creation/revocation process, recovery/compromise treatment, token handling procedure, retention, and project owner remain open under `STG-ID-01` and `STG-ID-02`. No valid Firebase token should be copied into chat, source control, Render logs, test evidence, or Flutter assets.
+The enabled staging sign-in method is **Email/Password only** for synthetic test accounts. Phone/SMS, real-user accounts, Firebase recovery claims and all other providers are excluded. The Owner must create/revoke the synthetic principals, retain tokens only in the approved operator session, and record only the protocol's minimal non-secret evidence. No valid Firebase token should be copied into chat, source control, Render logs, test evidence, or Flutter assets.
 
 ## 4. Remaining admission evidence
 
-| Record | Current state after this update | Still required before resource creation |
+| Record | Accepted owner decision | Execution evidence still required |
 |---|---|---|
-| STG-OWN-01 | Platform and candidate region selected; owner not named. | Render organization/project, service owner, incident contact. |
-| STG-OWN-02 | Oregon selected for synthetic staging; privacy/destruction owner not named. | Residency rationale, database owner, reset/destruction approval. |
-| STG-OWN-03 | Free plans selected; cost control is incomplete. | Cost owner, workspace usage/spend thresholds, shutdown rule, acknowledgement of free-tier expiry. |
-| STG-ID-01 | Firebase Auth Spark selected as a synthetic token-issuer candidate. | Family OS-specific test project, identity owner, issuer/audience/JWKS review, test-client ownership. |
-| STG-ID-02 | Open. | Synthetic-principal lifecycle, revocation, token custody and no-real-user assurance. |
-| STG-SEC-01 | Dashboard-only secret placement selected. | Named secret-access list, rotation/revocation procedure, break-glass prohibition. |
-| STG-OPS-01 | Free tier prevents a provider-backup assumption. | Migration operator, rollback approver, synthetic logical backup/restore procedure, evidence store, incident route. |
-| STG-QA-01 | Synthetic-only rule selected. | QA/privacy owner, verification operator, retention/cleanup evidence and destruction confirmation. |
+| STG-OWN-01 | The single Staging Owner owns the Render service, database and incident coordination. Oregon is approved for this synthetic environment. | Record the actual Render organization/project and non-secret service identifier after creation. |
+| STG-OWN-02 | The single Staging Owner approves Oregon for disposable synthetic data and authorizes reset/destruction within 30 days. | Record the created database identifier, creation date and scheduled destruction date. |
+| STG-OWN-03 | The single Staging Owner accepts Free web/PostgreSQL limits and owns costs. No paid upgrade is authorized by this record. | Capture dashboard usage/spend-control state and the shutdown action before traffic is allowed. |
+| STG-ID-01 | Firebase Auth Spark is approved only as the synthetic Email/Password test-token issuer under the single Staging Owner. | Record the Family OS-specific synthetic Firebase project identifier and review issuer/audience/JWKS values in the Render dashboard. |
+| STG-ID-02 | The single Staging Owner creates/revokes only synthetic Email/Password principals; phone/SMS and real users are prohibited. | Record the synthetic-principal labels and revocation/cleanup result without tokens, subjects or email addresses. |
+| STG-SEC-01 | The single Staging Owner is the only secret-access holder. Secrets are dashboard-only; no break-glass path is authorized. | Record dashboard access review plus rotation/revocation action without secret values. |
+| STG-OPS-01 | The single Staging Owner is migration, rollback and logical dump/restore operator. Dump artifacts are encrypted in an owner-controlled store outside Git, chat, Render logs and source. | Execute and record a synthetic-only migration, restore drill, deletion date and minimal pass/fail evidence. |
+| STG-QA-01 | The single Staging Owner is verification and QA/privacy operator. Only synthetic data may be retained, no later than environment destruction. | Record test-data creation, cleanup and destruction confirmation using opaque identifiers only. |
 
-## 5. Controlled next action
+## 5. Owner attestation accepted
 
-Do not create Render resources, connect Firebase credentials, set a project identifier, or enable an automatic deployment until all records above have named owners and dated acceptance evidence. Once that exists, use the existing non-deployable Render template with `autoDeployTrigger: 'off'`, enter the non-source configuration manually in the Render dashboard, deploy one reviewed commit manually, and follow the activation and verification protocol.
+On **2026-09-29**, the Owner accepted sole accountability for this environment's infrastructure, security, cost, identity, operations, QA/privacy, incident coordination, synthetic-data destruction, and the encrypted external logical dump/restore store. The Owner also approved all of the following:
 
-Until then, the truthful state is:
+- a temporary synthetic-only environment that is deleted within 30 days;
+- Render Free Web Service and Free PostgreSQL in Oregon;
+- manual, owner-operated logical dump/restore rather than a provider backup feature; and
+- Firebase Auth Spark synthetic Email/Password principals only, with no SMS, phone or real-user accounts.
+
+This is dated admission evidence for the decisions in Section 4. It does not create a Render/Firebase resource, expose a secret, or make a production/recovery/Flutter claim.
+
+## 6. Controlled next action
+
+The pre-connection operator checklist is `11_CONTROLLED_STAGING_OPERATOR_CONNECTION_CHECKLIST.md`. It prepares a manual, one-commit-at-a-time connection without automatic deploys. The Owner must record the actual provider identifiers, expiry/deletion date and dashboard access/usage evidence at execution time. After resources and configuration genuinely exist, execute the activation and verification protocol; do not infer success from a configured dashboard form.
+
+Current truthful state:
 
 ```text
-Platform/provider selection: recorded
+Owner admission: accepted for synthetic staging
 Connected Render/Firebase staging: not created
 Application identity verification: intentionally unconfigured
 Flutter connection: not authorized

@@ -11,19 +11,19 @@
 - `OIDC_*` and `GUARDIAN_TRANSFER_TTL_HOURS` are dashboard-supplied `sync: false` variables. They are not values in Git.
 - No Firebase, Firebase Admin, Firestore, Storage, Functions, FCM, provider key, Flutter setting, recovery/support resource, background worker or customer-data path.
 
-## Why it contains placeholders
+## Why it contains selected values but remains a template
 
-`OWNER_REQUIRED_RENDER_REGION`, `OWNER_REQUIRED_WEB_PLAN` and `OWNER_REQUIRED_POSTGRES_PLAN` intentionally make the template invalid until the accountable infrastructure/cost/privacy owners accept the corresponding records in `docs/foundation/08_CONTROLLED_STAGING_ACTIVATION_RECORD.md`.
+The sole approved Staging Owner accepted the temporary synthetic-staging values `oregon` and `free` in `docs/foundation/10_FREE_TIER_STAGING_ADMISSION_UPDATE.md`. The matching web/database region protects the private-network latency boundary; it is not a production-residency decision.
 
-This avoids silently creating a billable resource in an unreviewed region or environment. Do not replace placeholders based on the current developer location, a legacy project, an old Render blueprint or a credential file.
+The `.example` filename, disabled auto-deploy, missing dashboard-only configuration and the explicit operator checklist keep this from silently creating a resource. Do not copy a legacy project, credential file, Firebase Admin key or customer-data path into it.
 
-## Controlled use after admission approval
+## Controlled use after owner admission
 
-1. Confirm all `STG-OWN`, `STG-ID`, `STG-SEC`, `STG-OPS` and `STG-QA` evidence records are accepted.
-2. Copy/adopt the template only in the approved Render project/environment. Keep it separate from the root `render.yaml` until the review authorizes Blueprint synchronization.
-3. Replace the three owner-required placeholders with approved region/plan values; perform a second review that confirms the web/database regions match.
-4. Enter OIDC and transfer-policy values directly through Render's secret environment UI. Do not add values to this file or Git history.
-5. Deploy the reviewed commit manually; apply migrations through the controlled runbook, then execute the staging verifier and full synthetic-data protocol.
+1. Follow `docs/foundation/11_CONTROLLED_STAGING_OPERATOR_CONNECTION_CHECKLIST.md` manually and record provider identifiers/expiry only in the approved evidence store.
+2. Copy/adopt the template only in the isolated approved Render project/environment. Keep it separate from the root `render.yaml` until a deliberate Blueprint synchronization review.
+3. Confirm the web/database regions both remain `oregon`, plans both remain `free`, external database IP access is disabled, and automatic deployment is off.
+4. Enter OIDC, database and transfer-policy values directly through Render's secret environment UI. Do not add values to this file or Git history.
+5. Verify the reviewed branch head equals the recorded release SHA, deploy manually, apply migrations through the controlled runbook, then execute the staging verifier and full synthetic-data protocol.
 
 A GitHub connection/webhook is a Render deployment-control-plane credential only. It does not authenticate API callers and cannot replace the server's OIDC issuer/audience/JWKS checks. Keep automatic deploy disabled so a reviewed commit is selected manually.
 

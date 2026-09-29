@@ -33,11 +33,12 @@ test('a Firebase-shaped synthetic test issuer remains a provider-neutral OIDC co
     OIDC_ISSUER: 'https://securetoken.google.com/synthetic-family-os',
     OIDC_AUDIENCE: 'synthetic-family-os',
     OIDC_JWKS_URL: 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com',
-    GUARDIAN_TRANSFER_TTL_HOURS: '72',
+    GUARDIAN_TRANSFER_TTL_HOURS: '1',
   });
 
   assert.deepEqual(configurationReadiness(config), { ready: true, missing: [] });
   assert.equal(config.oidc.issuer, 'https://securetoken.google.com/synthetic-family-os');
+  assert.equal(config.guardianTransferTtlHours, 1);
 });
 
 test('OIDC issuer and JWKS endpoints fail closed unless they are credential-free HTTPS URLs', () => {

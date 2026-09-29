@@ -36,18 +36,18 @@ This table is intentionally not pre-filled. Guessing a region, provider, budget 
 
 | Record | Value/evidence required | Accountable owner | Status |
 |---|---|---|---|
-| STG-OWN-01 | Render organization/project, service owner, incident/on-call contact. | Infrastructure owner | Open |
-| STG-OWN-02 | PostgreSQL region, residency rationale, database owner and destruction/reset approval. | Infrastructure/privacy owner | Open |
-| STG-OWN-03 | Cost owner, selected staging plan, spend/usage alert and shutdown threshold. | Cost owner | Open |
-| STG-ID-01 | Development OIDC issuer, audience, JWKS endpoint, test-client ownership and subject lifecycle. | Identity/security owner | Open |
-| STG-ID-02 | Test principal creation/revocation process; no real user identities. | Identity/QA owner | Open |
-| STG-SEC-01 | Secret access list, rotation/revocation process and break-glass prohibition. | Security owner | Open |
-| STG-OPS-01 | Backup/restore scope, migration operator, rollback approver and evidence store. | Release/operations owner | Open |
-| STG-QA-01 | Test-data lifecycle, verification operator, evidence retention and cleanup confirmation. | QA/privacy owner | Open |
+| STG-OWN-01 | Render organization/project, service owner, incident/on-call contact. | Sole Staging Owner | Owner acceptance recorded; actual project/service identifier pending creation. |
+| STG-OWN-02 | PostgreSQL region, residency rationale, database owner and destruction/reset approval. | Sole Staging Owner | Oregon synthetic-only/destruction decision accepted; actual database/date pending creation. |
+| STG-OWN-03 | Cost owner, selected staging plan, spend/usage alert and shutdown threshold. | Sole Staging Owner | Free-plan boundary accepted; dashboard usage/spend evidence pending. |
+| STG-ID-01 | Development OIDC issuer, audience, JWKS endpoint, test-client ownership and subject lifecycle. | Sole Staging Owner | Firebase Spark Email/Password test-issuer boundary accepted; project/config evidence pending. |
+| STG-ID-02 | Test principal creation/revocation process; no real user identities. | Sole Staging Owner | Synthetic-only lifecycle accepted; created/revoked labels and cleanup evidence pending. |
+| STG-SEC-01 | Secret access list, rotation/revocation process and break-glass prohibition. | Sole Staging Owner | Dashboard-only, single-access-holder and no-break-glass policy accepted; dashboard evidence pending. |
+| STG-OPS-01 | Backup/restore scope, migration operator, rollback approver and evidence store. | Sole Staging Owner | Manual encrypted logical dump/restore policy accepted; drill evidence pending. |
+| STG-QA-01 | Test-data lifecycle, verification operator, evidence retention and cleanup confirmation. | Sole Staging Owner | Synthetic-only/30-day destruction boundary accepted; test and cleanup evidence pending. |
 
-A connected environment is not authorized unless every entry is accepted with a named owner and dated evidence. The Owner’s overall product authorization does not permit the system to invent real operational ownership.
+A connected environment is authorized only for the manual, synthetic resource-creation procedure in `11_CONTROLLED_STAGING_OPERATOR_CONNECTION_CHECKLIST.md`. It remains **unverified** until every row's provider/execution evidence exists. The Owner’s admission does not permit invented identifiers, secret values, direct database state edits, production data, customer access or a success claim before the protocol passes.
 
-The Owner-directed free-tier/Render/Firebase selection is recorded separately in `10_FREE_TIER_STAGING_ADMISSION_UPDATE.md`. It is a partial configuration decision, not closure of this evidence table or authorization to create resources.
+The Owner-directed free-tier/Render/Firebase decision, detailed attestation and remaining execution evidence are recorded in `10_FREE_TIER_STAGING_ADMISSION_UPDATE.md`.
 
 ## 4. Staging configuration contract
 
@@ -57,10 +57,10 @@ The service configuration is intentionally the same security shape as production
 NODE_ENV=staging
 PORT=<Render supplied>
 DATABASE_URL=<Render staging PostgreSQL secret>
-OIDC_ISSUER=<approved staging issuer>
-OIDC_AUDIENCE=<approved staging audience>
-OIDC_JWKS_URL=<approved staging JWKS endpoint>
-GUARDIAN_TRANSFER_TTL_HOURS=<approved staging policy, 1..168>
+OIDC_ISSUER=https://securetoken.google.com/<synthetic-firebase-project-id>
+OIDC_AUDIENCE=<synthetic-firebase-project-id>
+OIDC_JWKS_URL=https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com
+GUARDIAN_TRANSFER_TTL_HOURS=1  # synthetic staging only
 ```
 
 No Firebase Admin key, Firebase database URL, Firestore configuration, Cloud Function, Storage bucket, FCM token, payment key, AI key or static Flutter secret belongs in this contract.
@@ -76,7 +76,7 @@ liveness path: /health/live
 readiness path: /health/ready
 ```
 
-A deliberately non-deployable IaC template lives at `infra/render/foundation-staging.render.yaml.example`. It encodes private database networking, secret placeholders and manual deployment, but cannot be adopted until the ownership records above are accepted.
+A manual-adoption IaC template lives at `infra/render/foundation-staging.render.yaml.example`. It encodes the approved synthetic Oregon/Free boundary, private database networking, dashboard-only configuration placeholders and disabled automatic deployment. Follow `11_CONTROLLED_STAGING_OPERATOR_CONNECTION_CHECKLIST.md`; it does not create resources merely by existing in the repository.
 
 Migrations run by an authorized operator, exactly once per target database, through `npm run migrate`; application startup must never apply them automatically.
 
