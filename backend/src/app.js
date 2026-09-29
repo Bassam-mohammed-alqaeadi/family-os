@@ -32,6 +32,16 @@ function asyncRoute(handler) {
 export function createApp({ store, authVerifier, readiness }) {
   const app = express();
   app.disable('x-powered-by');
+  app.use((_request, response, next) => {
+    // Family, identity and audit responses must not be stored by shared browsers, proxies or intermediaries.
+    response.set({
+      'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff',
+      'Referrer-Policy': 'no-referrer',
+      'X-Frame-Options': 'DENY',
+    });
+    next();
+  });
   app.use(express.json({ limit: '64kb', strict: true }));
   app.use((request, response, next) => {
     request.requestId = safeRequestId(request.get('X-Request-Id'));

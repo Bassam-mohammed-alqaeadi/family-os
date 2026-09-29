@@ -359,3 +359,19 @@ test('malformed resource identifiers are rejected before tenant/store evaluation
     assert.equal((await response.json()).error.code, 'invalid_request');
   });
 });
+
+test('Foundation API applies non-cacheable and defensive headers to health and protected responses', async () => {
+  await withServer(foundationApp(), async (baseUrl) => {
+    const live = await request(baseUrl, '/health/live');
+    assert.equal(live.status, 200);
+    assert.equal(live.headers.get('cache-control'), 'no-store');
+    assert.equal(live.headers.get('x-content-type-options'), 'nosniff');
+    assert.equal(live.headers.get('referrer-policy'), 'no-referrer');
+    assert.equal(live.headers.get('x-frame-options'), 'DENY');
+    assert.equal(live.headers.get('x-powered-by'), null);
+
+    const denied = await request(baseUrl, '/v1/families/00000000-0000-4000-8000-000000000000');
+    assert.equal(denied.status, 401);
+    assert.equal(denied.headers.get('cache-control'), 'no-store');
+  });
+});

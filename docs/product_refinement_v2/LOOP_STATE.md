@@ -62,6 +62,7 @@ completed:
   - Non-mutating HTTPS staging baseline verifier for liveness, readiness and invalid/missing-token denial
   - Boundary input hardening: strict UUID resources and bounded OIDC subjects before persistence/query evaluation
   - Machine-readable Foundation OpenAPI contract with OIDC/idempotency contract-coverage checks for future Flutter/staging handshake work
+  - Sensitive API response cache/frame/referrer/content hardening with tested non-cacheable defaults
 next_outputs:
   - Produce the owned, dated acceptance evidence for RS-ADM-01 through RS-ADM-09 and STG-OWN/STG-ID/STG-SEC/STG-OPS/STG-QA; do not substitute templates or code comments for ownership
   - Create only an isolated synthetic Render/OIDC/PostgreSQL staging environment after those evidence records are accepted

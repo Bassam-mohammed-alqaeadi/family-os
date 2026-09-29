@@ -13,7 +13,7 @@ This directory is the **Render-first Foundation Wave backend**, not a replacemen
 
 This slice intentionally does not implement account registration/recovery UX, an identity provider, Firebase/Firebase Admin/Firestore/Cloud Functions/FCM, device pairing, Native enforcement, location, app usage, SOS, chat, calls, media, billing, AI, export/delete execution, realtime transport, Flutter production integration, or release deployment.
 
-There is no demo identity fallback. When OIDC or PostgreSQL configuration is absent—or the required PostgreSQL migrations are not applied—`/health/ready` returns `503` and every protected endpoint fails closed. Test-only identities and in-memory state live only under `backend/test/`; the runtime server cannot load them.
+There is no demo identity fallback. When OIDC or PostgreSQL configuration is absent—or the required PostgreSQL migrations are not applied—`/health/ready` returns `503` and every protected endpoint fails closed. Test-only identities and in-memory state live only under `backend/test/`; the runtime server cannot load them. Every response is marked `Cache-Control: no-store` and carries defensive content/referrer/frame headers so family, identity and audit responses are not retained by shared browser/proxy caches.
 
 ## Local quality commands
 
