@@ -13,4 +13,8 @@ export const FOUNDATION_SCHEMA_MIGRATIONS = Object.freeze([
     name: '003_guardian_continuity.sql',
     sha256: 'e740a795dad432a6f3770a79ff62f559f91b3c49cebeb449c45fa70926a59c35',
   }),
+  Object.freeze({
+    name: '004_audit_correlation.sql',
+    sha256: '310e1262ce68d241be13bee1f2e0242864260e9eb22ebebaa81a8c5b4aa31032',
+  }),
 ]);

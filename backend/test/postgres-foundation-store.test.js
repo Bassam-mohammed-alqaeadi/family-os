@@ -77,3 +77,47 @@ test('missing schema metadata fails readiness without pretending the database is
     reason: 'database_schema_not_ready',
   });
 });
+
+test('PostgreSQL audit and outbox inserts share only the supplied server correlation ID', async () => {
+  const store = healthStore(async () => ({ rows: [] }));
+  const statements = [];
+  const client = {
+    async query(sql, values) {
+      statements.push({ sql, values });
+      return { rows: [] };
+    },
+  };
+  const correlationId = '1f7f43e1-ea4f-4d8a-9a0a-8dc1d6421fe1';
+
+  await store.appendAuditAndOutbox(client, {
+    familyId: '6dbb6760-f609-4f3e-a29f-4c209dc1d53b',
+    actorMembershipId: 'b7fe4b27-2df2-4cf7-8071-9792b4ef665b',
+    correlationId,
+    eventType: 'family.created',
+    subjectType: 'family',
+    subjectId: '6dbb6760-f609-4f3e-a29f-4c209dc1d53b',
+  });
+
+  assert.equal(statements.length, 2);
+  assert.match(statements[0].sql, /family_audit_events[\s\S]*correlation_id/);
+  assert.match(statements[1].sql, /outbox_events[\s\S]*correlation_id/);
+  assert.equal(statements[0].values[3], correlationId);
+  assert.equal(statements[1].values[2], correlationId);
+  assert.equal(JSON.parse(statements[1].values[4]).auditEventId, statements[0].values[0]);
+});
+
+test('PostgreSQL evidence writes fail closed when internal correlation context is absent', async () => {
+  const store = healthStore(async () => ({ rows: [] }));
+  const client = { async query() { throw new Error('query should not execute'); } };
+
+  await assert.rejects(
+    store.appendAuditAndOutbox(client, {
+      familyId: '6dbb6760-f609-4f3e-a29f-4c209dc1d53b',
+      actorMembershipId: 'b7fe4b27-2df2-4cf7-8071-9792b4ef665b',
+      eventType: 'family.created',
+      subjectType: 'family',
+      subjectId: '6dbb6760-f609-4f3e-a29f-4c209dc1d53b',
+    }),
+    { code: 'correlation_context_missing', status: 500 },
+  );
+});

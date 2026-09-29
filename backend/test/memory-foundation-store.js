@@ -6,6 +6,14 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function requireServerCorrelationId(correlationId) {
+  if (typeof correlationId !== 'string' || !UUID_PATTERN.test(correlationId)) {
+    throw new HttpError(500, 'correlation_context_missing', 'A required internal trace context is unavailable.');
+  }
+}
+
 export class MemoryFoundationStore {
   configured = true;
 
@@ -14,6 +22,7 @@ export class MemoryFoundationStore {
     this.memberships = new Map();
     this.guardianTransfers = new Map();
     this.audit = [];
+    this.outbox = [];
     this.idempotency = new Map();
     this.guardianTransferTtlHours = guardianTransferTtlHours;
     this.now = now;
@@ -81,19 +90,30 @@ export class MemoryFoundationStore {
     };
   }
 
-  recordAudit(familyId, actorMembershipId, eventType, subjectType, subjectId) {
-    this.audit.push({
+  recordAudit(familyId, actorMembershipId, correlationId, eventType, subjectType, subjectId) {
+    requireServerCorrelationId(correlationId);
+    const auditEvent = {
       id: randomUUID(),
       familyId,
       actorMembershipId,
+      correlationId,
       eventType,
       subjectType,
       subjectId,
       occurredAt: new Date().toISOString(),
+    };
+    this.audit.push(auditEvent);
+    this.outbox.push({
+      id: randomUUID(),
+      aggregateType: 'family',
+      aggregateId: familyId,
+      correlationId,
+      eventType,
+      payload: { auditEventId: auditEvent.id, subjectType, subjectId },
     });
   }
 
-  async createFamily({ principal, displayName, idempotencyKey, requestHash }) {
+  async createFamily({ principal, displayName, idempotencyKey, requestHash, correlationId }) {
     return this.idempotent(`family:create:${principal.subject}`, idempotencyKey, requestHash, () => {
       const now = new Date().toISOString();
       const family = { id: randomUUID(), displayName, status: 'active', createdAt: now };
@@ -112,7 +132,7 @@ export class MemoryFoundationStore {
       family.primaryMembershipId = membership.id;
       this.families.set(family.id, family);
       this.memberships.set(membership.id, membership);
-      this.recordAudit(family.id, membership.id, 'family.created', 'family', family.id);
+      this.recordAudit(family.id, membership.id, correlationId, 'family.created', 'family', family.id);
       return { family: { ...family, members: [this.memberView(membership)] } };
     });
   }
@@ -133,7 +153,7 @@ export class MemoryFoundationStore {
     };
   }
 
-  async createMembershipInvitation({ principal, familyId, role, targetSubject, idempotencyKey, requestHash }) {
+  async createMembershipInvitation({ principal, familyId, role, targetSubject, idempotencyKey, requestHash, correlationId }) {
     return this.idempotent(`membership:create:${familyId}`, idempotencyKey, requestHash, () => {
       const actor = this.activeMembership(familyId, principal.subject, true);
       if (targetSubject === principal.subject) {
@@ -162,12 +182,12 @@ export class MemoryFoundationStore {
         createdAt: now,
       };
       this.memberships.set(membership.id, membership);
-      this.recordAudit(familyId, actor.id, 'family.membership_invited', 'membership', membership.id);
+      this.recordAudit(familyId, actor.id, correlationId, 'family.membership_invited', 'membership', membership.id);
       return { membership: this.memberView(membership) };
     });
   }
 
-  async acceptMembershipInvitation({ principal, familyId, membershipId, idempotencyKey, requestHash }) {
+  async acceptMembershipInvitation({ principal, familyId, membershipId, idempotencyKey, requestHash, correlationId }) {
     return this.idempotent(`membership:accept:${membershipId}`, idempotencyKey, requestHash, () => {
       const membership = this.memberships.get(membershipId);
       if (!membership || membership.familyId !== familyId) {
@@ -188,12 +208,12 @@ export class MemoryFoundationStore {
       membership.statusChangedAt = new Date().toISOString();
       membership.version += 1;
       membership.joinedAt = membership.statusChangedAt;
-      this.recordAudit(familyId, membership.id, 'family.membership_accepted', 'membership', membership.id);
+      this.recordAudit(familyId, membership.id, correlationId, 'family.membership_accepted', 'membership', membership.id);
       return { membership: this.memberView(membership) };
     });
   }
 
-  async revokeMembership({ principal, familyId, membershipId, reasonCode, idempotencyKey, requestHash }) {
+  async revokeMembership({ principal, familyId, membershipId, reasonCode, idempotencyKey, requestHash, correlationId }) {
     return this.idempotent(`membership:revoke:${membershipId}`, idempotencyKey, requestHash, () => {
       const actor = this.activeMembership(familyId, principal.subject, true);
       const membership = this.memberships.get(membershipId);
@@ -219,6 +239,7 @@ export class MemoryFoundationStore {
       this.recordAudit(
         familyId,
         actor.id,
+        correlationId,
         nextStatus === 'revoked' ? 'family.membership_invitation_revoked' : 'family.membership_removed',
         'membership',
         membershipId,
@@ -227,7 +248,7 @@ export class MemoryFoundationStore {
     });
   }
 
-  async createGuardianTransfer({ principal, familyId, candidateMembershipId, idempotencyKey, requestHash }) {
+  async createGuardianTransfer({ principal, familyId, candidateMembershipId, idempotencyKey, requestHash, correlationId }) {
     return this.idempotent(`guardian-transfer:create:${familyId}`, idempotencyKey, requestHash, () => {
       const actor = this.activeMembership(familyId, principal.subject, true);
       const family = this.families.get(familyId);
@@ -264,12 +285,12 @@ export class MemoryFoundationStore {
         createdAt: now.toISOString(),
       };
       this.guardianTransfers.set(transfer.id, transfer);
-      this.recordAudit(familyId, actor.id, 'guardian_transfer.requested', 'guardian_continuity_case', transfer.id);
+      this.recordAudit(familyId, actor.id, correlationId, 'guardian_transfer.requested', 'guardian_continuity_case', transfer.id);
       return { transfer: this.guardianTransferView(transfer) };
     });
   }
 
-  async acceptGuardianTransfer({ principal, familyId, transferId, idempotencyKey, requestHash }) {
+  async acceptGuardianTransfer({ principal, familyId, transferId, idempotencyKey, requestHash, correlationId }) {
     return this.idempotent(`guardian-transfer:accept:${transferId}`, idempotencyKey, requestHash, () => {
       const transfer = this.guardianTransfers.get(transferId);
       if (!transfer || transfer.familyId !== familyId) {
@@ -294,7 +315,7 @@ export class MemoryFoundationStore {
       if (new Date(transfer.expiresAt) <= now) {
         transfer.status = 'expired';
         transfer.version += 1;
-        this.recordAudit(familyId, candidate.id, 'guardian_transfer.expired', 'guardian_continuity_case', transfer.id);
+        this.recordAudit(familyId, candidate.id, correlationId, 'guardian_transfer.expired', 'guardian_continuity_case', transfer.id);
         return { transfer: this.guardianTransferView(transfer), expired: true };
       }
       if (candidate.status !== 'active' || candidate.role !== 'co_guardian') {
@@ -316,12 +337,12 @@ export class MemoryFoundationStore {
       transfer.status = 'completed';
       transfer.completedAt = now.toISOString();
       transfer.version += 1;
-      this.recordAudit(familyId, candidate.id, 'guardian_transfer.completed', 'guardian_continuity_case', transfer.id);
+      this.recordAudit(familyId, candidate.id, correlationId, 'guardian_transfer.completed', 'guardian_continuity_case', transfer.id);
       return { transfer: this.guardianTransferView(transfer) };
     });
   }
 
-  async cancelGuardianTransfer({ principal, familyId, transferId, idempotencyKey, requestHash }) {
+  async cancelGuardianTransfer({ principal, familyId, transferId, idempotencyKey, requestHash, correlationId }) {
     return this.idempotent(`guardian-transfer:cancel:${transferId}`, idempotencyKey, requestHash, () => {
       const actor = this.activeMembership(familyId, principal.subject, true);
       const transfer = this.guardianTransfers.get(transferId);
@@ -337,7 +358,7 @@ export class MemoryFoundationStore {
       transfer.status = 'cancelled';
       transfer.cancelledAt = this.now().toISOString();
       transfer.version += 1;
-      this.recordAudit(familyId, actor.id, 'guardian_transfer.cancelled', 'guardian_continuity_case', transfer.id);
+      this.recordAudit(familyId, actor.id, correlationId, 'guardian_transfer.cancelled', 'guardian_continuity_case', transfer.id);
       return { transfer: this.guardianTransferView(transfer) };
     });
   }

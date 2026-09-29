@@ -53,3 +53,10 @@ test('every protected Foundation API operation declares OIDC security and mutati
     }
   }
 });
+
+test('audit contract exposes nullable server-generated correlation evidence for new records', async () => {
+  const specification = JSON.parse(await readFile(specificationPath, 'utf8'));
+  const correlationId = specification.components.schemas.AuditEvent.properties.correlationId;
+  assert.deepEqual(correlationId.type, ['string', 'null']);
+  assert.equal(correlationId.format, 'uuid');
+});

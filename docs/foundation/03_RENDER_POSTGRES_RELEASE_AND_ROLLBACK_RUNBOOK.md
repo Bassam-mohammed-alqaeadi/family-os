@@ -58,8 +58,9 @@ npm run migrate
 The migration runner obtains a database-scoped PostgreSQL advisory lock before it inspects or changes schema history. A simultaneous migration run fails before schema work rather than racing another release. It validates the reviewed migration manifest and each SQL file's immutable SHA-256 digest, then records filename plus checksum in `schema_migrations`. Verify the recorded migration/checksum set and inspect the resulting schema through an authorized database session. A missing or mismatched digest keeps readiness closed; never rewrite an applied migration to force a match. The Foundation API requires:
 
 - `001_foundation.sql` — account/family/membership/audit/outbox/idempotency tables; and
-- `002_membership_lifecycle.sql` — membership version/status-change/reason evidence; and
-- `003_guardian_continuity.sql` — expiry-bound, two-party primary-guardian transfer cases.
+- `002_membership_lifecycle.sql` — membership version/status-change/reason evidence;
+- `003_guardian_continuity.sql` — expiry-bound, two-party primary-guardian transfer cases; and
+- `004_audit_correlation.sql` — server-generated correlation links for new audit/outbox evidence.
 
 No operator should manually edit a previously applied migration. Corrections are a new, reviewed forward migration.
 

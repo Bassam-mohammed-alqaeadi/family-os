@@ -16,10 +16,12 @@ async function withServer(app, run) {
   }
 }
 
-function request(baseUrl, path, { token, idempotencyKey, body, method = 'GET' } = {}) {
+function request(baseUrl, path, { token, idempotencyKey, requestId, correlationId, body, method = 'GET' } = {}) {
   const headers = { Accept: 'application/json' };
   if (token) headers.Authorization = `Bearer ${token}`;
   if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey;
+  if (requestId) headers['X-Request-Id'] = requestId;
+  if (correlationId) headers['X-Correlation-Id'] = correlationId;
   if (body) headers['Content-Type'] = 'application/json';
   return fetch(`${baseUrl}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
 }
@@ -399,5 +401,47 @@ test('suspended families fail closed for current members and pending membership 
     });
     assert.equal(childAcceptance.status, 409);
     assert.equal((await childAcceptance.json()).error.code, 'family_not_active');
+  });
+});
+
+test('server-generated correlation evidence links a mutation to audit/outbox without trusting client IDs', async () => {
+  const store = new MemoryFoundationStore();
+  await withServer(foundationApp({ store }), async (baseUrl) => {
+    const created = await request(baseUrl, '/v1/families', {
+      method: 'POST',
+      token: 'test-parent-a',
+      requestId: 'client-request-12345',
+      correlationId: '00000000-0000-4000-8000-000000000000',
+      idempotencyKey: 'correlation-family-create',
+      body: { displayName: 'Correlation family' },
+    });
+    assert.equal(created.status, 201);
+    const correlationId = created.headers.get('x-correlation-id');
+    assert.match(correlationId, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+    assert.equal(created.headers.get('x-request-id'), 'client-request-12345');
+    assert.notEqual(correlationId, 'client-request-12345');
+    assert.notEqual(correlationId, '00000000-0000-4000-8000-000000000000');
+    const familyId = (await created.json()).family.id;
+
+    const auditResponse = await request(baseUrl, `/v1/families/${familyId}/audit-events`, { token: 'test-parent-a' });
+    assert.equal(auditResponse.status, 200);
+    const auditEvent = (await auditResponse.json()).events[0];
+    assert.equal(auditEvent.correlationId, correlationId);
+    assert.equal(store.outbox.length, 1);
+    assert.equal(store.outbox[0].correlationId, correlationId);
+    assert.equal(store.outbox[0].payload.auditEventId, auditEvent.id);
+
+    const replay = await request(baseUrl, '/v1/families', {
+      method: 'POST',
+      token: 'test-parent-a',
+      idempotencyKey: 'correlation-family-create',
+      body: { displayName: 'Correlation family' },
+    });
+    assert.equal(replay.status, 201);
+    assert.notEqual(replay.headers.get('x-correlation-id'), correlationId);
+    assert.equal(store.audit.length, 1);
+    assert.equal(store.outbox.length, 1);
+    assert.equal(store.audit[0].correlationId, correlationId);
+    assert.equal(store.outbox[0].correlationId, correlationId);
   });
 });

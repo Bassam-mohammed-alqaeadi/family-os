@@ -42,12 +42,14 @@ export function createApp({ store, authVerifier, readiness }) {
     });
     next();
   });
-  app.use(express.json({ limit: '64kb', strict: true }));
   app.use((request, response, next) => {
     request.requestId = safeRequestId(request.get('X-Request-Id'));
+    request.correlationId = randomUUID();
     response.set('X-Request-Id', request.requestId);
+    response.set('X-Correlation-Id', request.correlationId);
     next();
   });
+  app.use(express.json({ limit: '64kb', strict: true }));
 
   const requirePrincipal = asyncRoute(async (request, _response, next) => {
     request.principal ??= await authVerifier.verify(request.get('Authorization'));
@@ -98,6 +100,7 @@ export function createApp({ store, authVerifier, readiness }) {
         principal: request.principal,
         ...input,
         idempotencyKey,
+        correlationId: request.correlationId,
         requestHash: requestFingerprint({ action: 'family.create', principal: request.principal, input }),
       });
       response.status(201).json(result);
@@ -125,6 +128,7 @@ export function createApp({ store, authVerifier, readiness }) {
         familyId,
         ...input,
         idempotencyKey,
+        correlationId: request.correlationId,
         requestHash: requestFingerprint({
           action: 'membership.create',
           principal: request.principal,
@@ -147,6 +151,7 @@ export function createApp({ store, authVerifier, readiness }) {
         familyId,
         membershipId,
         idempotencyKey,
+        correlationId: request.correlationId,
         requestHash: requestFingerprint({
           action: 'membership.accept',
           principal: request.principal,
@@ -171,6 +176,7 @@ export function createApp({ store, authVerifier, readiness }) {
         membershipId,
         reasonCode,
         idempotencyKey,
+        correlationId: request.correlationId,
         requestHash: requestFingerprint({
           action: 'membership.revoke',
           principal: request.principal,
@@ -193,6 +199,7 @@ export function createApp({ store, authVerifier, readiness }) {
         familyId,
         candidateMembershipId,
         idempotencyKey,
+        correlationId: request.correlationId,
         requestHash: requestFingerprint({
           action: 'guardian_transfer.create',
           principal: request.principal,
@@ -215,6 +222,7 @@ export function createApp({ store, authVerifier, readiness }) {
         familyId,
         transferId,
         idempotencyKey,
+        correlationId: request.correlationId,
         requestHash: requestFingerprint({
           action: 'guardian_transfer.accept',
           principal: request.principal,
@@ -240,6 +248,7 @@ export function createApp({ store, authVerifier, readiness }) {
         familyId,
         transferId,
         idempotencyKey,
+        correlationId: request.correlationId,
         requestHash: requestFingerprint({
           action: 'guardian_transfer.cancel',
           principal: request.principal,
@@ -277,6 +286,7 @@ export function createApp({ store, authVerifier, readiness }) {
       console.error(JSON.stringify({
         severity: 'error',
         requestId: request.requestId,
+        correlationId: request.correlationId,
         code: normalized.code,
         status: normalized.status,
       }));

@@ -92,7 +92,7 @@ Migrations run by an authorized operator, exactly once per target database, thro
 1. Create isolated staging PostgreSQL and web service in the approved location/project.
 2. Configure secrets directly in the approved secret manager with least-privilege access.
 3. Deploy the exact reviewed commit. Confirm liveness only.
-4. Apply migrations explicitly and verify `schema_migrations` contains `001_foundation.sql`, `002_membership_lifecycle.sql` and `003_guardian_continuity.sql`.
+4. Apply migrations explicitly and verify `schema_migrations` contains the current checksum-attested manifest: `001_foundation.sql` through `004_audit_correlation.sql`.
 5. Configure the approved test OIDC issuer; then, and only then, require `/health/ready` to return `200`.
 
 ### Phase C — controlled verification

@@ -75,6 +75,8 @@ The machine-readable contract is `openapi/foundation.v1.json`. It documents curr
 
 All protected routes require `Authorization: Bearer <OIDC access token>`. All mutation routes also require an `Idempotency-Key` unique to the operation payload.
 
+Every API response also carries a server-generated `X-Correlation-Id`. It is distinct from `X-Request-Id`: an optional client request ID is only a response/logging convenience and can never choose evidence linkage. On a newly committed mutation, the request context, appended audit event, and matching outbox event receive the same server-generated correlation ID in one database transaction. A correctly replayed idempotent request returns its saved response without creating new audit/outbox evidence. Audit records created before correlation support retain `null`; no historical IDs are fabricated.
+
 | Method | Route | Contract |
 |---|---|---|
 | `GET` | `/health/live` | Process liveness only; no dependency claim. |

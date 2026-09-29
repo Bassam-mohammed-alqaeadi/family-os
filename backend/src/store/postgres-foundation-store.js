@@ -4,6 +4,14 @@ import { HttpError } from '../http-error.js';
 import { FOUNDATION_SCHEMA_MIGRATIONS } from '../schema-manifest.js';
 
 const { Pool } = pg;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function requireServerCorrelationId(correlationId) {
+  if (typeof correlationId !== 'string' || !UUID_PATTERN.test(correlationId)) {
+    throw new HttpError(500, 'correlation_context_missing', 'A required internal trace context is unavailable.');
+  }
+  return correlationId;
+}
 
 function memberView(row) {
   return {
@@ -46,6 +54,7 @@ function auditView(row) {
     id: row.id,
     eventType: row.event_type,
     actorMembershipId: row.actor_membership_id,
+    correlationId: row.correlation_id,
     subjectType: row.subject_type,
     subjectId: row.subject_id,
     occurredAt: row.occurred_at,
@@ -156,19 +165,33 @@ export class PostgresFoundationStore {
     );
   }
 
-  async appendAuditAndOutbox(client, { familyId, actorMembershipId, eventType, subjectType, subjectId }) {
+  async appendAuditAndOutbox(client, {
+    familyId,
+    actorMembershipId,
+    correlationId,
+    eventType,
+    subjectType,
+    subjectId,
+  }) {
+    requireServerCorrelationId(correlationId);
     const auditId = randomUUID();
     await client.query(
       `INSERT INTO family_audit_events
-       (id, family_id, actor_membership_id, event_type, subject_type, subject_id)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [auditId, familyId, actorMembershipId, eventType, subjectType, subjectId],
+       (id, family_id, actor_membership_id, correlation_id, event_type, subject_type, subject_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [auditId, familyId, actorMembershipId, correlationId, eventType, subjectType, subjectId],
     );
     await client.query(
       `INSERT INTO outbox_events
-       (id, aggregate_type, aggregate_id, event_type, payload)
-       VALUES ($1, 'family', $2, $3, $4::jsonb)`,
-      [randomUUID(), familyId, eventType, JSON.stringify({ auditEventId: auditId, subjectType, subjectId })],
+       (id, aggregate_type, aggregate_id, correlation_id, event_type, payload)
+       VALUES ($1, 'family', $2, $3, $4, $5::jsonb)`,
+      [
+        randomUUID(),
+        familyId,
+        correlationId,
+        eventType,
+        JSON.stringify({ auditEventId: auditId, subjectType, subjectId }),
+      ],
     );
   }
 
@@ -224,7 +247,7 @@ export class PostgresFoundationStore {
     return family;
   }
 
-  async createFamily({ principal, displayName, idempotencyKey, requestHash }) {
+  async createFamily({ principal, displayName, idempotencyKey, requestHash, correlationId }) {
     return this.withTransaction(async (client) => {
       const response = await this.acquireIdempotencySlot(
         client,
@@ -256,6 +279,7 @@ export class PostgresFoundationStore {
       await this.appendAuditAndOutbox(client, {
         familyId,
         actorMembershipId: membershipId,
+        correlationId,
         eventType: 'family.created',
         subjectType: 'family',
         subjectId: familyId,
@@ -288,7 +312,7 @@ export class PostgresFoundationStore {
     });
   }
 
-  async createMembershipInvitation({ principal, familyId, role, targetSubject, idempotencyKey, requestHash }) {
+  async createMembershipInvitation({ principal, familyId, role, targetSubject, idempotencyKey, requestHash, correlationId }) {
     return this.withTransaction(async (client) => {
       const response = await this.acquireIdempotencySlot(
         client,
@@ -324,6 +348,7 @@ export class PostgresFoundationStore {
       await this.appendAuditAndOutbox(client, {
         familyId,
         actorMembershipId: actor.id,
+        correlationId,
         eventType: 'family.membership_invited',
         subjectType: 'membership',
         subjectId: membershipId,
@@ -334,7 +359,7 @@ export class PostgresFoundationStore {
     });
   }
 
-  async acceptMembershipInvitation({ principal, familyId, membershipId, idempotencyKey, requestHash }) {
+  async acceptMembershipInvitation({ principal, familyId, membershipId, idempotencyKey, requestHash, correlationId }) {
     return this.withTransaction(async (client) => {
       const response = await this.acquireIdempotencySlot(
         client,
@@ -389,6 +414,7 @@ export class PostgresFoundationStore {
       await this.appendAuditAndOutbox(client, {
         familyId,
         actorMembershipId: membershipId,
+        correlationId,
         eventType: 'family.membership_accepted',
         subjectType: 'membership',
         subjectId: membershipId,
@@ -399,7 +425,7 @@ export class PostgresFoundationStore {
     });
   }
 
-  async revokeMembership({ principal, familyId, membershipId, reasonCode, idempotencyKey, requestHash }) {
+  async revokeMembership({ principal, familyId, membershipId, reasonCode, idempotencyKey, requestHash, correlationId }) {
     return this.withTransaction(async (client) => {
       const response = await this.acquireIdempotencySlot(
         client,
@@ -450,6 +476,7 @@ export class PostgresFoundationStore {
       await this.appendAuditAndOutbox(client, {
         familyId,
         actorMembershipId: actor.id,
+        correlationId,
         eventType,
         subjectType: 'membership',
         subjectId: membershipId,
@@ -460,7 +487,7 @@ export class PostgresFoundationStore {
     });
   }
 
-  async createGuardianTransfer({ principal, familyId, candidateMembershipId, idempotencyKey, requestHash }) {
+  async createGuardianTransfer({ principal, familyId, candidateMembershipId, idempotencyKey, requestHash, correlationId }) {
     try {
       return await this.withTransaction(async (client) => {
         const response = await this.acquireIdempotencySlot(
@@ -506,6 +533,7 @@ export class PostgresFoundationStore {
       await this.appendAuditAndOutbox(client, {
         familyId,
         actorMembershipId: actor.id,
+        correlationId,
         eventType: 'guardian_transfer.requested',
         subjectType: 'guardian_continuity_case',
         subjectId: transfer.rows[0].id,
@@ -522,7 +550,7 @@ export class PostgresFoundationStore {
     }
   }
 
-  async acceptGuardianTransfer({ principal, familyId, transferId, idempotencyKey, requestHash }) {
+  async acceptGuardianTransfer({ principal, familyId, transferId, idempotencyKey, requestHash, correlationId }) {
     return this.withTransaction(async (client) => {
       const response = await this.acquireIdempotencySlot(
         client,
@@ -583,6 +611,7 @@ export class PostgresFoundationStore {
         await this.appendAuditAndOutbox(client, {
           familyId,
           actorMembershipId: candidate.rows[0].id,
+          correlationId,
           eventType: 'guardian_transfer.expired',
           subjectType: 'guardian_continuity_case',
           subjectId: transferId,
@@ -625,6 +654,7 @@ export class PostgresFoundationStore {
       await this.appendAuditAndOutbox(client, {
         familyId,
         actorMembershipId: current.candidate_membership_id,
+        correlationId,
         eventType: 'guardian_transfer.completed',
         subjectType: 'guardian_continuity_case',
         subjectId: transferId,
@@ -635,7 +665,7 @@ export class PostgresFoundationStore {
     });
   }
 
-  async cancelGuardianTransfer({ principal, familyId, transferId, idempotencyKey, requestHash }) {
+  async cancelGuardianTransfer({ principal, familyId, transferId, idempotencyKey, requestHash, correlationId }) {
     return this.withTransaction(async (client) => {
       const response = await this.acquireIdempotencySlot(
         client,
@@ -675,6 +705,7 @@ export class PostgresFoundationStore {
       await this.appendAuditAndOutbox(client, {
         familyId,
         actorMembershipId: actor.id,
+        correlationId,
         eventType: 'guardian_transfer.cancelled',
         subjectType: 'guardian_continuity_case',
         subjectId: transferId,
@@ -692,7 +723,7 @@ export class PostgresFoundationStore {
         throw new HttpError(403, 'audit_access_denied', 'Child memberships cannot view family audit events.');
       }
       const events = await client.query(
-        `SELECT id, event_type, actor_membership_id, subject_type, subject_id, occurred_at
+        `SELECT id, event_type, actor_membership_id, correlation_id, subject_type, subject_id, occurred_at
          FROM family_audit_events
          WHERE family_id = $1
          ORDER BY occurred_at DESC
