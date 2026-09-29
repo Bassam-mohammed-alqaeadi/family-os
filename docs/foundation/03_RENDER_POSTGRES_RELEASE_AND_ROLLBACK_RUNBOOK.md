@@ -55,7 +55,7 @@ cd backend
 npm run migrate
 ```
 
-The migration runner records every applied filename in `schema_migrations`. Verify the recorded migration set and inspect the resulting schema through an authorized database session. The Foundation API requires both:
+The migration runner validates the reviewed migration manifest and each SQL file's immutable SHA-256 digest, then records filename plus checksum in `schema_migrations`. Verify the recorded migration/checksum set and inspect the resulting schema through an authorized database session. A missing or mismatched digest keeps readiness closed; never rewrite an applied migration to force a match. The Foundation API requires:
 
 - `001_foundation.sql` — account/family/membership/audit/outbox/idempotency tables; and
 - `002_membership_lifecycle.sql` — membership version/status-change/reason evidence; and

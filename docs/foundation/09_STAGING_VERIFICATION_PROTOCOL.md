@@ -39,7 +39,7 @@ All conditions must be true before a test request is sent:
 |---|---|---|---|
 | STG-RT-001 | Request `/health/live` before identity/database setup. | `200 live` only if process starts. | Runtime cannot start; do not continue. |
 | STG-RT-002 | Request `/health/ready` before all config/schema is present. | `503 not_ready`; no false healthy response. | Runtime truth failure; stop. |
-| STG-RT-003 | Apply all expected migrations and configure approved OIDC/database secrets. | `/health/ready` becomes `200 ready`. | Dependency/schema/config problem; do not bypass. |
+| STG-RT-003 | Apply all expected migrations with manifest-matching recorded checksums and configure approved OIDC/database secrets. | `/health/ready` becomes `200 ready`. | Dependency/schema/config/integrity problem; do not bypass. |
 | STG-RT-004 | Remove/alter one required non-secret configuration in a controlled test. | Readiness and protected operations fail closed. | Configuration fail-open; stop. |
 | STG-RT-005 | Start against a database missing an expected migration. | `503 database_schema_not_ready`. | Migration/readiness integrity failure; stop. |
 

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { FOUNDATION_SCHEMA_MIGRATIONS } from '../src/schema-manifest.js';
 import { PostgresFoundationStore } from '../src/store/postgres-foundation-store.js';
 
 function healthStore(query) {
@@ -32,15 +33,33 @@ test('PostgreSQL readiness is available only with the complete expected migratio
       return { rows: [{ '?column?': 1 }] };
     }
     return {
-      rows: [
-        { name: '001_foundation.sql' },
-        { name: '002_membership_lifecycle.sql' },
-        { name: '003_guardian_continuity.sql' },
-      ],
+      rows: FOUNDATION_SCHEMA_MIGRATIONS.map((migration) => ({
+        name: migration.name,
+        checksum: migration.sha256,
+      })),
     };
   });
 
   assert.deepEqual(await store.health(), { available: true });
+});
+
+test('recorded migration checksum mismatch fails readiness', async () => {
+  const store = healthStore(async (sql) => {
+    if (sql === 'SELECT 1') {
+      return { rows: [{ '?column?': 1 }] };
+    }
+    return {
+      rows: FOUNDATION_SCHEMA_MIGRATIONS.map((migration, index) => ({
+        name: migration.name,
+        checksum: index === 0 ? '0'.repeat(64) : migration.sha256,
+      })),
+    };
+  });
+
+  assert.deepEqual(await store.health(), {
+    available: false,
+    reason: 'database_schema_not_ready',
+  });
 });
 
 test('missing schema metadata fails readiness without pretending the database is available', async () => {

@@ -1,13 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import pg from 'pg';
 import { HttpError } from '../http-error.js';
+import { FOUNDATION_SCHEMA_MIGRATIONS } from '../schema-manifest.js';
 
 const { Pool } = pg;
-const REQUIRED_SCHEMA_MIGRATIONS = [
-  '001_foundation.sql',
-  '002_membership_lifecycle.sql',
-  '003_guardian_continuity.sql',
-];
 
 function memberView(row) {
   return {
@@ -71,13 +67,16 @@ export class PostgresFoundationStore {
   async health() {
     try {
       await this.pool.query('SELECT 1');
+      const expectedMigrationNames = FOUNDATION_SCHEMA_MIGRATIONS.map((migration) => migration.name);
       const applied = await this.pool.query(
-        'SELECT name FROM schema_migrations WHERE name = ANY($1::text[])',
-        [REQUIRED_SCHEMA_MIGRATIONS],
+        'SELECT name, checksum FROM schema_migrations WHERE name = ANY($1::text[])',
+        [expectedMigrationNames],
       );
-      const appliedNames = new Set(applied.rows.map((row) => row.name));
-      const missingMigrations = REQUIRED_SCHEMA_MIGRATIONS.filter((name) => !appliedNames.has(name));
-      if (missingMigrations.length > 0) {
+      const appliedByName = new Map(applied.rows.map((row) => [row.name, row.checksum]));
+      const migrationMismatch = FOUNDATION_SCHEMA_MIGRATIONS.some(
+        (migration) => appliedByName.get(migration.name) !== migration.sha256,
+      );
+      if (migrationMismatch) {
         return { available: false, reason: 'database_schema_not_ready' };
       }
       return { available: true };

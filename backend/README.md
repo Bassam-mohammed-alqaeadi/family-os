@@ -57,7 +57,7 @@ Migrations are deliberately explicit and are **not** executed by API startup:
 DATABASE_URL='…' npm run migrate
 ```
 
-`db/migrations/001_foundation.sql` creates only Render-owned account, family, membership, audit, outbox and idempotency records. Apply it through the named deployment owner’s controlled release procedure after backup/rollback and region/cost ownership are recorded.
+The migration runner validates the ordered migration manifest and immutable SHA-256 digest of every SQL file, then records the same digest in `schema_migrations`. Readiness fails closed when a required migration is absent or its recorded digest does not match the reviewed API release. Migrations are never rewritten after application; corrective changes are new reviewed migrations. Apply them through the named deployment owner’s controlled release procedure after backup/rollback and region/cost ownership are recorded.
 
 ## HTTP contract (foundation-only)
 
