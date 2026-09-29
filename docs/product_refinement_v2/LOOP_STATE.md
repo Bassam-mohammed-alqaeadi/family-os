@@ -73,11 +73,11 @@ completed:
   - Synthetic staging runtime preflight: rotated database credential, manual deploy `0915342`, running process, liveness 200 and expected schema-not-ready readiness 503 recorded without secrets
   - First staging migration stopped on source-integrity checksum mismatch before trusted schema application; public database ingress was removed and a fresh exact-SHA local checksum preflight is now required
   - Owner staging continuity decision: one logical synthetic staging track may continue, but expiring/integrity-compromised Free databases are replaced in-place with no data or credential carryover
-  - Fresh Windows source preflight now passes exact deployed SHA, full tests and migration checksum; retry on the current rotated staging database is required before any reset decision
+  - Fresh Windows source preflight passed exact deployed SHA, full tests and migration checksum; Owner reports the corrective migration retry succeeded on the current rotated staging database
   - Cross-platform hardening: migration SQL is pinned to LF through Git attributes and source syntax checks no longer rely on CMD shell glob expansion
 next_outputs:
-  - The Staging Owner manually creates the isolated synthetic Render/Firebase resources and records the provider/execution evidence required by `11_CONTROLLED_STAGING_OPERATOR_CONNECTION_CHECKLIST.md`
-  - Execute the staging verification protocol before any connected Flutter work, customer data, public claim or Recovery/Support implementation
+  - Record post-migration runtime truth (`/health/live=200`, `/health/ready=200`), removal of temporary `/32` access and short-lived checkout cleanup without secrets
+  - Run the non-mutating baseline verifier, then execute the synthetic identity, authorization, lifecycle, audit/outbox and operations checks in `09_STAGING_VERIFICATION_PROTOCOL.md` before any connected Flutter work, customer data, public claim or Recovery/Support implementation
   - Do not implement lost-account, dispute or support-mediated recovery until the Recovery/Support admission gate is accepted
 blocked_by: Flutter production integration, customer data and all production/release claims remain blocked pending successful synthetic staging verification and Foundation Wave preconditions in `92_EXECUTION_AUTHORIZATION_GATE.md`
 requires_owner_now: manual Render/Firebase dashboard actions and approved encrypted dump store

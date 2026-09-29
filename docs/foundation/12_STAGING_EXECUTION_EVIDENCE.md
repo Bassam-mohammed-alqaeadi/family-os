@@ -1,6 +1,6 @@
 # Controlled Staging Execution Evidence
 
-> **Status:** Active — pre-migration runtime evidence recorded; migrations and synthetic verification pending.
+> **Status:** Active — migration retry reported successful; post-migration runtime and synthetic verification pending.
 > **Updated:** 2026-09-29
 > **Scope:** Family OS synthetic Foundation staging only. This record contains no database URL, credential, token, Firebase project identifier, test account identifier, raw payload or customer data.
 > **Procedure:** `11_CONTROLLED_STAGING_OPERATOR_CONNECTION_CHECKLIST.md`
@@ -17,14 +17,16 @@
 | `/health/ready` | `503` with `database_schema_not_ready` before migrations. | Pass — expected fail-closed state |
 | Temporary migration ingress | External database access is currently closed after the Staging Owner removed a temporary broad rule and rotated the database credential. A public rule is not an accepted migration fallback. | Pass — closed; `/32` only after source preflight |
 | First migration attempt | Failed with `migration_checksum_mismatch` for `001_foundation.sql`. No migration is treated as applied and no database history was edited. | Historical attempt — did not establish schema |
-| Fresh source preflight | Exact deployed SHA, clean working tree, full test suite and reviewed `001_foundation.sql` checksum all reported as passing after Windows line-ending correction. | Pass — retry current database migration before considering reset |
+| Fresh source preflight | Exact deployed SHA, clean working tree, full test suite and reviewed `001_foundation.sql` checksum all reported as passing after Windows line-ending correction. | Pass |
+| Migration retry | Staging Owner reports that the corrected exact-SHA migration run completed successfully against the current synthetic staging database. | Reported pass — retain names/status only and confirm runtime health |
 
 ## 2. Evidence not yet established
 
 The following is intentionally unverified and must not be claimed yet:
 
-- migrations `001_foundation.sql` through `004_audit_correlation.sql` applied with manifest-matching checksums;
+- retained non-sensitive migration-name/checksum outcome for migrations `001_foundation.sql` through `004_audit_correlation.sql`;
 - readiness `200` after migration and complete identity configuration;
+- confirmation that temporary `/32` ingress was removed and the migration checkout was deleted;
 - Firebase synthetic-principal token verification;
 - baseline staging verifier;
 - authorization, tenant, lifecycle, audit/outbox and correlation protocol checks;
@@ -33,12 +35,13 @@ The following is intentionally unverified and must not be claimed yet:
 
 ## 3. Next controlled operation
 
-The Staging Owner must first use a short-lived checkout of the exact deployed SHA to execute `npm ci`, `npm run check` and `npm test` **without any database ingress**. The source checksum preflight must pass before a temporary `/32` entry is added and `npm run migrate` is attempted again. Afterward, the Owner must:
+After the Owner-reported successful migration retry, the next controlled operation is to establish the post-migration runtime baseline. The Owner must:
 
 1. retain only migration names/checksum outcome and pass/fail status;
 2. remove the temporary database allow-list entry;
 3. remove the temporary checkout;
-4. report `/health/live` and `/health/ready` using status/error-code metadata only; and
-5. stop on any migration-integrity, connection, configuration or readiness failure.
+4. report `/health/live` and `/health/ready` using status/error-code metadata only;
+5. execute the non-mutating baseline verifier in `09_STAGING_VERIFICATION_PROTOCOL.md`; and
+6. stop on any migration-integrity, connection, configuration or readiness failure.
 
-This record proves a pre-migration fail-closed state only. It does not prove a connected, verified, production-ready, Flutter-connected or family-protective service.
+This record proves reported migration execution plus the earlier pre-migration fail-closed state only. It does not yet prove a connected, identity-verified, production-ready, Flutter-connected or family-protective service.
