@@ -58,6 +58,7 @@ completed:
   - Recovery & Support admission packet: OIDC, continuity, privacy, support, incident, Render and abuse-control evidence register
   - Controlled staging activation record and synthetic-data runtime/authorization/migration verification protocol
   - Immutable migration manifest/checksum verification; readiness rejects absent or altered reviewed schema history
+  - Exclusive PostgreSQL advisory-lock migration runner with rollback/release-lock contract and test coverage
 next_outputs:
   - Produce the owned, dated acceptance evidence for RS-ADM-01 through RS-ADM-09 and STG-OWN/STG-ID/STG-SEC/STG-OPS/STG-QA; do not substitute templates or code comments for ownership
   - Create only an isolated synthetic Render/OIDC/PostgreSQL staging environment after those evidence records are accepted

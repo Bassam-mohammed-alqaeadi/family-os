@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 import { loadConfig } from './config.js';
+import { applyMigrations } from './migration-runner.js';
 import { FOUNDATION_SCHEMA_MIGRATIONS } from './schema-manifest.js';
 
 const { Client } = pg;
@@ -29,45 +30,14 @@ async function readVerifiedMigration(migration) {
 }
 
 const client = new Client({ connectionString: config.databaseUrl });
-
 try {
   await client.connect();
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS schema_migrations (
-      name TEXT PRIMARY KEY,
-      checksum TEXT NOT NULL,
-      applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `);
-  await client.query('ALTER TABLE schema_migrations ADD COLUMN IF NOT EXISTS checksum TEXT');
-
-  for (const migration of FOUNDATION_SCHEMA_MIGRATIONS) {
-    const sql = await readVerifiedMigration(migration);
-    const known = await client.query(
-      'SELECT checksum FROM schema_migrations WHERE name = $1',
-      [migration.name],
-    );
-    if (known.rowCount > 0) {
-      if (known.rows[0].checksum !== migration.sha256) {
-        throw new Error(`Recorded checksum mismatch for ${migration.name}; do not modify applied migrations.`);
-      }
-      continue;
-    }
-
-    await client.query('BEGIN');
-    try {
-      await client.query(sql);
-      await client.query(
-        'INSERT INTO schema_migrations (name, checksum) VALUES ($1, $2)',
-        [migration.name, migration.sha256],
-      );
-      await client.query('COMMIT');
-      console.log(JSON.stringify({ severity: 'info', event: 'migration_applied', migration: migration.name }));
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    }
-  }
+  await applyMigrations({
+    client,
+    migrations: FOUNDATION_SCHEMA_MIGRATIONS,
+    readVerifiedMigration,
+    log: (event) => console.log(JSON.stringify(event)),
+  });
 } finally {
   await client.end();
 }

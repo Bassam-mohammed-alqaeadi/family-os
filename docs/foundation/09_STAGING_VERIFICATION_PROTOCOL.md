@@ -93,11 +93,12 @@ All conditions must be true before a test request is sent:
 
 | ID | Action | Expected authoritative result |
 |---|---|---|
-| STG-OPS-001 | Apply migrations from empty staging database. | Ordered schema history is durable and readiness succeeds only after all expected migrations. |
-| STG-OPS-002 | Deploy an API revision compatible with a later additive schema. | Controlled rollback retains safe compatibility; no manual schema edit. |
-| STG-OPS-003 | Perform an approved synthetic-data backup/restore drill. | Restored environment has expected migration history and authorization invariants; test results recorded. |
-| STG-OPS-004 | Force invalid database credentials or database outage. | Liveness/readiness/protected operations accurately fail; no fallback store or local identity. |
-| STG-OPS-005 | Rotate/revoke a staging test OIDC principal or issuer key according to provider procedure. | Invalid/revoked tokens are rejected; no cached bypass beyond documented verification behavior. |
+| STG-OPS-001 | Apply migrations from empty staging database. | Ordered, checksum-attested schema history is durable and readiness succeeds only after all expected migrations. |
+| STG-OPS-002 | Attempt a second migration run while the first holds the database advisory lock. | The second run fails before schema work; only one migration process can mutate history. |
+| STG-OPS-003 | Deploy an API revision compatible with a later additive schema. | Controlled rollback retains safe compatibility; no manual schema edit. |
+| STG-OPS-004 | Perform an approved synthetic-data backup/restore drill. | Restored environment has expected migration history and authorization invariants; test results recorded. |
+| STG-OPS-005 | Force invalid database credentials or database outage. | Liveness/readiness/protected operations accurately fail; no fallback store or local identity. |
+| STG-OPS-006 | Rotate/revoke a staging test OIDC principal or issuer key according to provider procedure. | Invalid/revoked tokens are rejected; no cached bypass beyond documented verification behavior. |
 
 ## 9. Pass, block and escalation rules
 
