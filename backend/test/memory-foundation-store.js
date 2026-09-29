@@ -38,6 +38,10 @@ export class MemoryFoundationStore {
   }
 
   activeMembership(familyId, subject, primaryOnly = false) {
+    const family = this.families.get(familyId);
+    if (!family || family.status !== 'active') {
+      throw new HttpError(403, 'family_access_denied', 'The authenticated account has no permitted family membership.');
+    }
     const found = [...this.memberships.values()].find(
       (membership) =>
         membership.familyId === familyId &&
@@ -172,6 +176,10 @@ export class MemoryFoundationStore {
       if (membership.targetSubject !== principal.subject) {
         throw new HttpError(403, 'membership_acceptance_denied', 'Only the invited account can accept this membership.');
       }
+      const family = this.families.get(familyId);
+      if (!family || family.status !== 'active') {
+        throw new HttpError(409, 'family_not_active', 'This family is not active for membership acceptance.');
+      }
       if (membership.status !== 'invited') {
         throw new HttpError(409, 'membership_not_invitable', 'This membership is not awaiting acceptance.');
       }
@@ -278,6 +286,10 @@ export class MemoryFoundationStore {
           'Only the active nominated co-guardian can accept this transfer.',
         );
       }
+      const family = this.families.get(familyId);
+      if (!family || family.status !== 'active') {
+        throw new HttpError(409, 'guardian_continuity_required', 'This family is not active for guardian continuity.');
+      }
       const now = this.now();
       if (new Date(transfer.expiresAt) <= now) {
         transfer.status = 'expired';
@@ -292,8 +304,7 @@ export class MemoryFoundationStore {
           'The nominated guardian is no longer eligible to become primary guardian.',
         );
       }
-      const family = this.families.get(familyId);
-      const primary = this.memberships.get(family?.primaryMembershipId);
+      const primary = this.memberships.get(family.primaryMembershipId);
       if (!primary || primary.id !== transfer.initiatorMembershipId || primary.role !== 'primary_guardian' || primary.status !== 'active') {
         throw new HttpError(409, 'guardian_continuity_required', 'The family primary guardian has changed.');
       }

@@ -178,9 +178,11 @@ export class PostgresFoundationStore {
       `SELECT membership.id, membership.role
        FROM family_memberships AS membership
        INNER JOIN accounts AS account ON account.id = membership.account_id
+       INNER JOIN families AS family ON family.id = membership.family_id
        WHERE membership.family_id = $1
          AND account.oidc_subject = $2
          AND membership.status = 'active'
+         AND family.status = 'active'
          ${roleClause}`,
       [familyId, subject],
     );
@@ -193,6 +195,7 @@ export class PostgresFoundationStore {
   async lockedFamilyPrimary(client, familyId) {
     const { rows } = await client.query(
       `SELECT family.id AS family_id,
+              family.status AS family_status,
               family.primary_membership_id,
               membership.id AS membership_id,
               membership.role,
@@ -207,7 +210,11 @@ export class PostgresFoundationStore {
       throw new HttpError(404, 'family_not_found', 'Family was not found.');
     }
     const family = rows[0];
-    if (family.role !== 'primary_guardian' || family.status !== 'active') {
+    if (
+      family.family_status !== 'active'
+      || family.role !== 'primary_guardian'
+      || family.status !== 'active'
+    ) {
       throw new HttpError(
         409,
         'guardian_continuity_required',
@@ -351,6 +358,16 @@ export class PostgresFoundationStore {
       }
       if (membership.rows[0].target_subject !== principal.subject) {
         throw new HttpError(403, 'membership_acceptance_denied', 'Only the invited account can accept this membership.');
+      }
+      const family = await client.query(
+        'SELECT status FROM families WHERE id = $1 FOR UPDATE',
+        [familyId],
+      );
+      if (family.rowCount === 0) {
+        throw new HttpError(404, 'family_not_found', 'Family was not found.');
+      }
+      if (family.rows[0].status !== 'active') {
+        throw new HttpError(409, 'family_not_active', 'This family is not active for membership acceptance.');
       }
       if (membership.rows[0].status !== 'invited') {
         throw new HttpError(409, 'membership_not_invitable', 'This membership is not awaiting acceptance.');

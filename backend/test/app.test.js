@@ -24,11 +24,11 @@ function request(baseUrl, path, { token, idempotencyKey, body, method = 'GET' } 
   return fetch(`${baseUrl}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
 }
 
-function foundationApp() {
+function foundationApp({ store = new MemoryFoundationStore(), readiness = () => ({ ready: true, missing: [] }) } = {}) {
   return createApp({
-    store: new MemoryFoundationStore(),
+    store,
     authVerifier: new TestAuthVerifier(),
-    readiness: () => ({ ready: true, missing: [] }),
+    readiness,
   });
 }
 
@@ -373,5 +373,31 @@ test('Foundation API applies non-cacheable and defensive headers to health and p
     const denied = await request(baseUrl, '/v1/families/00000000-0000-4000-8000-000000000000');
     assert.equal(denied.status, 401);
     assert.equal(denied.headers.get('cache-control'), 'no-store');
+  });
+});
+
+test('suspended families fail closed for current members and pending membership acceptance', async () => {
+  const store = new MemoryFoundationStore();
+  await withServer(foundationApp({ store }), async (baseUrl) => {
+    const family = await createFamily(baseUrl, 'Suspended family');
+    const pending = await invite(baseUrl, family.id, {
+      role: 'child',
+      targetSubject: 'test-child-a',
+      idempotencyKey: 'suspended-family-child-invitation',
+    });
+    store.families.get(family.id).status = 'suspended';
+
+    const parentRead = await request(baseUrl, `/v1/families/${family.id}`, { token: 'test-parent-a' });
+    assert.equal(parentRead.status, 403);
+    assert.equal((await parentRead.json()).error.code, 'family_access_denied');
+
+    const childAcceptance = await request(baseUrl, `/v1/families/${family.id}/memberships/${pending.id}/accept`, {
+      method: 'POST',
+      token: 'test-child-a',
+      idempotencyKey: 'suspended-family-child-acceptance',
+      body: {},
+    });
+    assert.equal(childAcceptance.status, 409);
+    assert.equal((await childAcceptance.json()).error.code, 'family_not_active');
   });
 });
