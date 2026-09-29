@@ -72,6 +72,7 @@ completed:
   - Approved short-lived checkout migration procedure: manual exact-SHA execution with temporary restricted database ingress; startup/build/CI migrations remain prohibited
   - Synthetic staging runtime preflight: rotated database credential, manual deploy `0915342`, running process, liveness 200 and expected schema-not-ready readiness 503 recorded without secrets
   - First staging migration stopped on source-integrity checksum mismatch before trusted schema application; public database ingress was removed and a fresh exact-SHA local checksum preflight is now required
+  - Owner staging continuity decision: one logical synthetic staging track may continue, but expiring/integrity-compromised Free databases are replaced in-place with no data or credential carryover
 next_outputs:
   - The Staging Owner manually creates the isolated synthetic Render/Firebase resources and records the provider/execution evidence required by `11_CONTROLLED_STAGING_OPERATOR_CONNECTION_CHECKLIST.md`
   - Execute the staging verification protocol before any connected Flutter work, customer data, public claim or Recovery/Support implementation

@@ -43,7 +43,7 @@ This table is intentionally not pre-filled. Guessing a region, provider, budget 
 | STG-ID-02 | Test principal creation/revocation process; no real user identities. | Sole Staging Owner | Synthetic-only lifecycle accepted; created/revoked labels and cleanup evidence pending. |
 | STG-SEC-01 | Secret access list, rotation/revocation process and break-glass prohibition. | Sole Staging Owner | Dashboard-only, single-access-holder and no-break-glass policy accepted; dashboard evidence pending. |
 | STG-OPS-01 | Backup/restore scope, migration operator, rollback approver and evidence store. | Sole Staging Owner | Manual encrypted logical dump/restore policy accepted; drill evidence pending. |
-| STG-QA-01 | Test-data lifecycle, verification operator, evidence retention and cleanup confirmation. | Sole Staging Owner | Synthetic-only/30-day destruction boundary accepted; test and cleanup evidence pending. |
+| STG-QA-01 | Test-data lifecycle, verification operator, evidence retention and cleanup confirmation. | Sole Staging Owner | Synthetic-only/free-resource expiry-replacement boundary accepted; test and cleanup evidence pending. |
 
 A connected environment is authorized only for the manual, synthetic resource-creation procedure in `11_CONTROLLED_STAGING_OPERATOR_CONNECTION_CHECKLIST.md`. It remains **unverified** until every row's provider/execution evidence exists. The Owner’s admission does not permit invented identifiers, secret values, direct database state edits, production data, customer access or a success claim before the protocol passes.
 

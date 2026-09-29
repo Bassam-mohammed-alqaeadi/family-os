@@ -105,6 +105,6 @@ Free Render PostgreSQL does not provide provider backups. The Owner-approved rep
 ## 6. Teardown and truthful closure
 
 - Delete Firebase synthetic users and remove/revoke the associated test project/access where appropriate.
-- Destroy the Render web service and free PostgreSQL database by the recorded deadline, or earlier if any control fails.
+- At a Free PostgreSQL expiry or approved integrity/security reset, destroy/recreate the Free database in the same logical Staging track, record the new expiry, re-run migrations and recreate only synthetic data. Never carry the resource, credentials or test families into Production. See `13_STAGING_CONTINUITY_AND_RESET_DECISION.md`.
 - Delete the encrypted dump by its approved deadline and retain only the minimum non-sensitive verification evidence.
 - A completed checklist can support the statement “Foundation staging verification passed using synthetic data only” only after every applicable check in `09_STAGING_VERIFICATION_PROTOCOL.md` is passed. It never authorizes production, public onboarding, Flutter integration, recovery/support, native enforcement, billing, FCM, realtime or release.

@@ -25,10 +25,12 @@ Render's free plans are compatible only with a **temporary synthetic test enviro
 
 Accordingly:
 
-1. The environment must be labelled disposable and contain only synthetic accounts/families.
-2. An owner must record the expected expiration date, destruction decision, workspace usage/spend controls, and cleanup confirmation before creation.
+1. The logical Staging track must contain only synthetic accounts/families and remain disposable; a Free database resource is replaced rather than carried into Production.
+2. The Owner must record each physical Free resource's expected expiry/replacement date, destruction decision, workspace usage/spend controls, cleanup confirmation and any replacement identifier. This preserves one logical staging evidence trail without relying on a single expiring resource.
 3. `STG-OPS-01` cannot pass merely because Free PostgreSQL exists: the operator must separately approve and execute a synthetic-only logical backup/restore drill or select a plan with suitable backup controls.
 4. A Free service's sleep, restart, lack of shell/one-off jobs, and lack of high availability are expected staging constraints—not evidence of a runtime defect or a production-ready operating model.
+
+The Owner's continuity/reset decision is `13_STAGING_CONTINUITY_AND_RESET_DECISION.md`.
 
 ## 3. Firebase Authentication test-issuer boundary
 
@@ -53,7 +55,7 @@ The enabled staging sign-in method is **Email/Password only** for synthetic test
 | Record | Accepted owner decision | Execution evidence still required |
 |---|---|---|
 | STG-OWN-01 | The single Staging Owner owns the Render service, database and incident coordination. Oregon is approved for this synthetic environment. | Record the actual Render organization/project and non-secret service identifier after creation. |
-| STG-OWN-02 | The single Staging Owner approves Oregon for disposable synthetic data and authorizes reset/destruction within 30 days. | Record the created database identifier, creation date and scheduled destruction date. |
+| STG-OWN-02 | The single Staging Owner approves Oregon for disposable synthetic data and authorizes reset/destruction at each Free resource expiry or integrity/security reset. | Record each database identifier, creation date and scheduled expiry/replacement date. |
 | STG-OWN-03 | The single Staging Owner accepts Free web/PostgreSQL limits and owns costs. No paid upgrade is authorized by this record. | Capture dashboard usage/spend-control state and the shutdown action before traffic is allowed. |
 | STG-ID-01 | Firebase Auth Spark is approved only as the synthetic Email/Password test-token issuer under the single Staging Owner. | Record the Family OS-specific synthetic Firebase project identifier and review issuer/audience/JWKS values in the Render dashboard. |
 | STG-ID-02 | The single Staging Owner creates/revokes only synthetic Email/Password principals; phone/SMS and real users are prohibited. | Record the synthetic-principal labels and revocation/cleanup result without tokens, subjects or email addresses. |
@@ -65,7 +67,7 @@ The enabled staging sign-in method is **Email/Password only** for synthetic test
 
 On **2026-09-29**, the Owner accepted sole accountability for this environment's infrastructure, security, cost, identity, operations, QA/privacy, incident coordination, synthetic-data destruction, and the encrypted external logical dump/restore store. The Owner also approved all of the following:
 
-- a temporary synthetic-only environment that is deleted within 30 days;
+- one synthetic-only logical staging track, with each Free PostgreSQL resource deleted/replaced by its provider lifecycle deadline;
 - Render Free Web Service and Free PostgreSQL in Oregon;
 - manual, owner-operated logical dump/restore rather than a provider backup feature; and
 - Firebase Auth Spark synthetic Email/Password principals only, with no SMS, phone or real-user accounts; and
