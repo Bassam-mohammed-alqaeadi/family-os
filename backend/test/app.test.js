@@ -351,3 +351,11 @@ test('protected operations fail closed when runtime readiness is unavailable', a
     assert.equal((await response.json()).error.code, 'service_not_ready');
   });
 });
+
+test('malformed resource identifiers are rejected before tenant/store evaluation', async () => {
+  await withServer(foundationApp(), async (baseUrl) => {
+    const response = await request(baseUrl, '/v1/families/not-a-uuid', { token: 'test-parent-a' });
+    assert.equal(response.status, 400);
+    assert.equal((await response.json()).error.code, 'invalid_request');
+  });
+});

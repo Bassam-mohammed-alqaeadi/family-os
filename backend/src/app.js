@@ -7,7 +7,7 @@ import {
   createMembershipInput,
   revokeMembershipInput,
   requireIdempotencyKey,
-  requirePathId,
+  requireUuid,
 } from './validation.js';
 
 function requestFingerprint({ action, principal, input }) {
@@ -98,7 +98,7 @@ export function createApp({ store, authVerifier, readiness }) {
     '/v1/families/:familyId',
     requirePrincipal,
     asyncRoute(async (request, response) => {
-      const familyId = requirePathId(request.params.familyId, 'familyId');
+      const familyId = requireUuid(request.params.familyId, 'familyId');
       response.status(200).json(await store.getFamily({ principal: request.principal, familyId }));
     }),
   );
@@ -107,7 +107,7 @@ export function createApp({ store, authVerifier, readiness }) {
     '/v1/families/:familyId/memberships',
     requirePrincipal,
     asyncRoute(async (request, response) => {
-      const familyId = requirePathId(request.params.familyId, 'familyId');
+      const familyId = requireUuid(request.params.familyId, 'familyId');
       const input = createMembershipInput(request.body);
       const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
       const result = await store.createMembershipInvitation({
@@ -129,8 +129,8 @@ export function createApp({ store, authVerifier, readiness }) {
     '/v1/families/:familyId/memberships/:membershipId/accept',
     requirePrincipal,
     asyncRoute(async (request, response) => {
-      const familyId = requirePathId(request.params.familyId, 'familyId');
-      const membershipId = requirePathId(request.params.membershipId, 'membershipId');
+      const familyId = requireUuid(request.params.familyId, 'familyId');
+      const membershipId = requireUuid(request.params.membershipId, 'membershipId');
       const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
       const result = await store.acceptMembershipInvitation({
         principal: request.principal,
@@ -151,8 +151,8 @@ export function createApp({ store, authVerifier, readiness }) {
     '/v1/families/:familyId/memberships/:membershipId/revoke',
     requirePrincipal,
     asyncRoute(async (request, response) => {
-      const familyId = requirePathId(request.params.familyId, 'familyId');
-      const membershipId = requirePathId(request.params.membershipId, 'membershipId');
+      const familyId = requireUuid(request.params.familyId, 'familyId');
+      const membershipId = requireUuid(request.params.membershipId, 'membershipId');
       const { reasonCode } = revokeMembershipInput(request.body);
       const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
       const result = await store.revokeMembership({
@@ -175,7 +175,7 @@ export function createApp({ store, authVerifier, readiness }) {
     '/v1/families/:familyId/guardian-transfers',
     requirePrincipal,
     asyncRoute(async (request, response) => {
-      const familyId = requirePathId(request.params.familyId, 'familyId');
+      const familyId = requireUuid(request.params.familyId, 'familyId');
       const { candidateMembershipId } = createGuardianTransferInput(request.body);
       const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
       const result = await store.createGuardianTransfer({
@@ -197,8 +197,8 @@ export function createApp({ store, authVerifier, readiness }) {
     '/v1/families/:familyId/guardian-transfers/:transferId/accept',
     requirePrincipal,
     asyncRoute(async (request, response) => {
-      const familyId = requirePathId(request.params.familyId, 'familyId');
-      const transferId = requirePathId(request.params.transferId, 'transferId');
+      const familyId = requireUuid(request.params.familyId, 'familyId');
+      const transferId = requireUuid(request.params.transferId, 'transferId');
       const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
       const result = await store.acceptGuardianTransfer({
         principal: request.principal,
@@ -222,8 +222,8 @@ export function createApp({ store, authVerifier, readiness }) {
     '/v1/families/:familyId/guardian-transfers/:transferId/cancel',
     requirePrincipal,
     asyncRoute(async (request, response) => {
-      const familyId = requirePathId(request.params.familyId, 'familyId');
-      const transferId = requirePathId(request.params.transferId, 'transferId');
+      const familyId = requireUuid(request.params.familyId, 'familyId');
+      const transferId = requireUuid(request.params.transferId, 'transferId');
       const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
       const result = await store.cancelGuardianTransfer({
         principal: request.principal,
@@ -244,7 +244,7 @@ export function createApp({ store, authVerifier, readiness }) {
     '/v1/families/:familyId/audit-events',
     requirePrincipal,
     asyncRoute(async (request, response) => {
-      const familyId = requirePathId(request.params.familyId, 'familyId');
+      const familyId = requireUuid(request.params.familyId, 'familyId');
       response.status(200).json(await store.listAuditEvents({ principal: request.principal, familyId }));
     }),
   );

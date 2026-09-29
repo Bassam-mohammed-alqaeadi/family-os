@@ -1,6 +1,8 @@
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { HttpError } from '../http-error.js';
 
+const MAX_OIDC_SUBJECT_LENGTH = 255;
+
 function bearerToken(value) {
   if (typeof value !== 'string') {
     throw new HttpError(401, 'authentication_required', 'A bearer access token is required.');
@@ -11,6 +13,18 @@ function bearerToken(value) {
     throw new HttpError(401, 'authentication_required', 'A bearer access token is required.');
   }
   return match[1];
+}
+
+export function validatedOidcSubject(value) {
+  if (
+    typeof value !== 'string'
+    || value.length === 0
+    || value.length > MAX_OIDC_SUBJECT_LENGTH
+    || /[\u0000-\u001F\u007F]/.test(value)
+  ) {
+    throw new HttpError(401, 'invalid_token', 'The access token has an invalid subject.');
+  }
+  return value;
 }
 
 export class DisabledAuthVerifier {
@@ -42,12 +56,8 @@ export class OidcAuthVerifier {
         issuer: this.issuer,
         audience: this.audience,
       });
-      if (typeof payload.sub !== 'string' || !payload.sub.trim()) {
-        throw new HttpError(401, 'invalid_token', 'The access token has no subject.');
-      }
-
       return {
-        subject: payload.sub,
+        subject: validatedOidcSubject(payload.sub),
         issuedAt: payload.iat,
         expiresAt: payload.exp,
       };

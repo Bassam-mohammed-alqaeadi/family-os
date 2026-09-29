@@ -2,6 +2,7 @@ import { HttpError } from './http-error.js';
 
 const MAX_DISPLAY_NAME_LENGTH = 120;
 const MAX_SUBJECT_LENGTH = 255;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const INVITABLE_ROLES = new Set(['co_guardian', 'child']);
 
 function bodyObject(value) {
@@ -46,7 +47,7 @@ export function createMembershipInput(value) {
 
 export function createGuardianTransferInput(value) {
   const body = bodyObject(value);
-  return { candidateMembershipId: requirePathId(body.candidateMembershipId, 'candidateMembershipId') };
+  return { candidateMembershipId: requireUuid(body.candidateMembershipId, 'candidateMembershipId') };
 }
 
 export function revokeMembershipInput(value) {
@@ -62,6 +63,10 @@ export function requireIdempotencyKey(value) {
   return requiredText(value, 'Idempotency-Key', { maxLength: 128 });
 }
 
-export function requirePathId(value, field) {
-  return requiredText(value, field, { maxLength: 64 });
+export function requireUuid(value, field) {
+  const id = requiredText(value, field, { maxLength: 64 });
+  if (!UUID_PATTERN.test(id)) {
+    throw new HttpError(400, 'invalid_request', `${field} must be a UUID.`);
+  }
+  return id;
 }
