@@ -69,6 +69,8 @@ DATABASE_URL='…' npm run migrate
 
 The migration runner validates the ordered migration manifest and immutable SHA-256 digest of every SQL file, then records the same digest in `schema_migrations`. Readiness fails closed when a required migration is absent or its recorded digest does not match the reviewed API release. Migrations are never rewritten after application; corrective changes are new reviewed migrations. Apply them through the named deployment owner’s controlled release procedure after backup/rollback and region/cost ownership are recorded.
 
+Never put `npm run migrate` in the service start/build command, GitHub Actions or an automatic deploy hook. If an approved operator has no existing checkout, they may use a short-lived local checkout of the exact reviewed commit, enter the protected database value through a no-echo shell prompt, run `npm ci && npm run migrate`, then remove temporary database ingress and the checkout. The complete synthetic-staging procedure is `docs/foundation/11_CONTROLLED_STAGING_OPERATOR_CONNECTION_CHECKLIST.md`.
+
 ## HTTP contract (foundation-only)
 
 The machine-readable contract is `openapi/foundation.v1.json`. It documents current local Foundation behavior, not a deployed service or Flutter production capability. Contract tests require every documented protected route to declare OIDC security and every mutation to require an idempotency key.
