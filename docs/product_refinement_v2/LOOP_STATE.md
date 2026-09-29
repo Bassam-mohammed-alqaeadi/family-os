@@ -76,10 +76,11 @@ completed:
   - Fresh Windows source preflight passed exact deployed SHA, full tests and migration checksum; Owner reports the corrective migration retry succeeded on the current rotated staging database
   - Post-migration runtime truth is reported (`/health/live=200`, `/health/ready=200`), temporary `/32`/checkout cleanup is reported, and the non-mutating staging baseline verifier passed
   - Four Firebase Email/Password synthetic principals report successful sign-in/token issuance; this proves authentication availability only, not Family OS role assignment or authorization
+  - Owner reports successful synthetic primary-family/tenant-isolation/idempotency checks and co-guardian/child invitation-acceptance happy paths; membership lifecycle completion remains intentionally unclaimed
   - Cross-platform hardening: migration SQL is pinned to LF through Git attributes and source syntax checks no longer rely on CMD shell glob expansion
 next_outputs:
-  - Execute the reviewed authenticated verifier for Guardian A and unrelated Principal X to prove family creation, tenant isolation and idempotency before lifecycle mutations
-  - Execute membership, guardian-continuity, audit/outbox and operations checks in `09_STAGING_VERIFICATION_PROTOCOL.md` before any connected Flutter work, customer data, public claim or Recovery/Support implementation
+  - Execute membership hardening: invitation revocation/denial, active-child removal/lost access, co-guardian authority denial, primary continuity denial and controlled conflict behavior
+  - Execute guardian-continuity, audit/outbox and operations checks in `09_STAGING_VERIFICATION_PROTOCOL.md` before any connected Flutter work, customer data, public claim or Recovery/Support implementation
   - Do not implement lost-account, dispute or support-mediated recovery until the Recovery/Support admission gate is accepted
 blocked_by: Flutter production integration, customer data and all production/release claims remain blocked pending successful synthetic staging verification and Foundation Wave preconditions in `92_EXECUTION_AUTHORIZATION_GATE.md`
 requires_owner_now: manual Render/Firebase dashboard actions and approved encrypted dump store

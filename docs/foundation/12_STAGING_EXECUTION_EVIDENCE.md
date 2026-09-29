@@ -24,6 +24,8 @@
 | Post-migration readiness | `/health/ready` returned `200 OK`. | Pass — reported |
 | Non-mutating baseline verifier | Owner reports the baseline verifier passed. It tested health plus missing/invalid-token denial without valid identities or mutations. | Pass — reported |
 | Synthetic identity availability | Owner reports successful Firebase Email/Password sign-in and ID-token issuance for the four designated synthetic principal labels (A, B, C and X). No identifiers, emails, tokens or project values are retained here. | Pass — authentication only; no Family OS role/authorization claim |
+| Authorization and tenant isolation | Owner reports successful reviewed checks for primary-family creation/read, unrelated-principal denial and idempotent/conflicting request behavior. | Pass — reported; synthetic authorization evidence |
+| Membership happy paths | Owner reports primary invitation and exact-principal acceptance for synthetic co-guardian and child membership, plus unrelated-principal membership denial. | Partial pass — remaining lifecycle/authority/concurrency checks required |
 
 ## 2. Evidence not yet established
 
@@ -31,7 +33,8 @@ The following is intentionally unverified and must not be claimed yet:
 
 - retained non-sensitive migration-name/checksum outcome for migrations `001_foundation.sql` through `004_audit_correlation.sql`;
 - Firebase synthetic-principal token verification;
-- authenticated authorization, tenant isolation, idempotency, membership, guardian-continuity, audit/outbox and correlation protocol checks;
+- membership lifecycle hardening: pending-invite revocation, post-revocation acceptance denial, active-member removal and immediate lost access, co-guardian authority denial, primary-guardian continuity denial and controlled concurrent mutation behavior;
+- guardian-continuity, audit/outbox and correlation protocol checks;
 - encrypted logical dump/restore drill;
 - synthetic-account/test-data cleanup at the defined lifecycle boundary.
 
@@ -39,10 +42,9 @@ The following is intentionally unverified and must not be claimed yet:
 
 After the reported migration/runtime/baseline pass, the next controlled operation is authenticated synthetic verification under `09_STAGING_VERIFICATION_PROTOCOL.md`. The Owner must:
 
-1. create only the four designated Firebase Email/Password synthetic principals: primary guardian A, co-guardian B, child C and unrelated principal X;
-2. obtain valid test tokens through an approved secure process without recording tokens, email addresses or subjects in evidence;
-3. execute the authenticated authorization, tenant-isolation and idempotency checks before lifecycle/guardian-transfer mutations;
-4. retain only the verification identifier, principal label, opaque resource identifier, HTTP status/error code, correlation identifier, timestamp and pass/fail; and
-5. stop on any authorization, tenant-isolation, idempotency, audit/outbox or runtime-truth failure.
+1. retain only the completed check names, opaque resource identifiers, HTTP status/error codes, correlation identifiers, timestamps and pass/fail status;
+2. execute the remaining membership hardening checks before any guardian-transfer mutation: revoke a pending invitation, deny later acceptance, remove an active child and confirm immediate access loss, deny co-guardian escalation/removal authority, deny ordinary primary removal, and test controlled conflicting mutations;
+3. retain no tokens, email addresses, Firebase subjects or raw request/response bodies in evidence; and
+4. stop on any authorization, tenant-isolation, idempotency, lifecycle, audit/outbox or runtime-truth failure.
 
 This record proves reported migration execution, post-migration runtime truth and a non-mutating denied-authentication baseline only. It does not yet prove a connected, identity-verified, production-ready, Flutter-connected or family-protective service.
