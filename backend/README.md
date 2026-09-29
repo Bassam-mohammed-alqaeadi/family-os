@@ -71,6 +71,8 @@ The migration runner validates the ordered migration manifest and immutable SHA-
 
 ## HTTP contract (foundation-only)
 
+The machine-readable contract is `openapi/foundation.v1.json`. It documents current local Foundation behavior, not a deployed service or Flutter production capability. Contract tests require every documented protected route to declare OIDC security and every mutation to require an idempotency key.
+
 All protected routes require `Authorization: Bearer <OIDC access token>`. All mutation routes also require an `Idempotency-Key` unique to the operation payload.
 
 | Method | Route | Contract |

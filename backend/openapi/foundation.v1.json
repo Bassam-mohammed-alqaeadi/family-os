@@ -1,0 +1,251 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Family OS Foundation API",
+    "version": "0.1.0-foundation",
+    "description": "Render-first contract for the authorized account, family, membership, guardian-transfer, audit and readiness foundation. This document describes implemented local API behavior only; it does not authorize deployment, Flutter production use, account recovery, support operations, Firebase, device control, billing, AI, realtime or release claims."
+  },
+  "tags": [
+    { "name": "Health", "description": "Process and dependency truth endpoints." },
+    { "name": "Families", "description": "Server-authorized family and membership operations." },
+    { "name": "Guardian continuity", "description": "Two-party primary-guardian transfer, not lost-account recovery." },
+    { "name": "Audit", "description": "Guardian-scoped minimum audit envelope." }
+  ],
+  "paths": {
+    "/health/live": {
+      "get": {
+        "tags": ["Health"],
+        "operationId": "getLiveness",
+        "summary": "Check process liveness only",
+        "responses": {
+          "200": {
+            "description": "The process is running; this does not prove database, identity or schema readiness.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LiveStatus" } } }
+          }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "tags": ["Health"],
+        "operationId": "getReadiness",
+        "summary": "Check configuration, database and reviewed schema readiness",
+        "responses": {
+          "200": {
+            "description": "Required configuration and PostgreSQL schema are ready.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReadyStatus" } } }
+          },
+          "503": {
+            "description": "At least one required dependency or configuration is not ready; no protected capability should be claimed.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NotReadyStatus" } } }
+          }
+        }
+      }
+    },
+    "/v1/families": {
+      "post": {
+        "tags": ["Families"],
+        "operationId": "createFamily",
+        "summary": "Create a family with the verified principal as active primary guardian",
+        "security": [{ "oidcBearer": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateFamilyRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Family created or durable idempotent replay returned.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/FamilyResponse" } } } },
+          "400": { "$ref": "#/components/responses/InvalidRequest" },
+          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+        }
+      }
+    },
+    "/v1/families/{familyId}": {
+      "get": {
+        "tags": ["Families"],
+        "operationId": "getFamily",
+        "summary": "Read a family only as an active family member",
+        "security": [{ "oidcBearer": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/FamilyId" }],
+        "responses": {
+          "200": { "description": "Family membership envelope.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/FamilyResponse" } } } },
+          "400": { "$ref": "#/components/responses/InvalidRequest" },
+          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
+          "403": { "$ref": "#/components/responses/FamilyAccessDenied" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+        }
+      }
+    },
+    "/v1/families/{familyId}/memberships": {
+      "post": {
+        "tags": ["Families"],
+        "operationId": "createMembershipInvitation",
+        "summary": "Primary guardian creates a pending co-guardian or child membership for a known OIDC subject",
+        "description": "This Foundation endpoint does not send email, push or other invitation delivery. It does not expose a finished consumer invitation experience.",
+        "security": [{ "oidcBearer": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/FamilyId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateMembershipRequest" } } } },
+        "responses": {
+          "201": { "description": "Pending membership created or durable idempotent replay returned.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MembershipResponse" } } } },
+          "400": { "$ref": "#/components/responses/InvalidRequest" },
+          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
+          "403": { "$ref": "#/components/responses/FamilyAccessDenied" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+        }
+      }
+    },
+    "/v1/families/{familyId}/memberships/{membershipId}/accept": {
+      "post": {
+        "tags": ["Families"],
+        "operationId": "acceptMembershipInvitation",
+        "summary": "Accept a pending membership only as the exact nominated verified principal",
+        "security": [{ "oidcBearer": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/FamilyId" }, { "$ref": "#/components/parameters/MembershipId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
+        "responses": {
+          "200": { "description": "Membership activated or durable idempotent replay returned.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MembershipResponse" } } } },
+          "400": { "$ref": "#/components/responses/InvalidRequest" },
+          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+        }
+      }
+    },
+    "/v1/families/{familyId}/memberships/{membershipId}/revoke": {
+      "post": {
+        "tags": ["Families"],
+        "operationId": "revokeMembership",
+        "summary": "Revoke a pending invite or remove an active non-primary membership",
+        "description": "Only the active primary guardian may perform this operation. Primary guardian removal requires the separate guardian continuity process.",
+        "security": [{ "oidcBearer": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/FamilyId" }, { "$ref": "#/components/parameters/MembershipId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RevokeMembershipRequest" } } } },
+        "responses": {
+          "200": { "description": "Membership transitioned to revoked or removed; evidence remains durable.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MembershipResponse" } } } },
+          "400": { "$ref": "#/components/responses/InvalidRequest" },
+          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
+          "403": { "$ref": "#/components/responses/FamilyAccessDenied" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+        }
+      }
+    },
+    "/v1/families/{familyId}/guardian-transfers": {
+      "post": {
+        "tags": ["Guardian continuity"],
+        "operationId": "createGuardianTransfer",
+        "summary": "Request an expiry-bound transfer from current primary guardian to active co-guardian",
+        "description": "This is not lost-account recovery, dispute resolution, custody determination or a generic role edit.",
+        "security": [{ "oidcBearer": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/FamilyId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateGuardianTransferRequest" } } } },
+        "responses": {
+          "201": { "description": "Pending two-party transfer case created.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GuardianTransferResponse" } } } },
+          "400": { "$ref": "#/components/responses/InvalidRequest" },
+          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
+          "403": { "$ref": "#/components/responses/FamilyAccessDenied" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+        }
+      }
+    },
+    "/v1/families/{familyId}/guardian-transfers/{transferId}/accept": {
+      "post": {
+        "tags": ["Guardian continuity"],
+        "operationId": "acceptGuardianTransfer",
+        "summary": "Complete an unexpired guardian transfer only as the nominated active co-guardian",
+        "security": [{ "oidcBearer": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/FamilyId" }, { "$ref": "#/components/parameters/TransferId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
+        "responses": {
+          "200": { "description": "The family primary reference and both guardian roles changed atomically.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GuardianTransferResponse" } } } },
+          "400": { "$ref": "#/components/responses/InvalidRequest" },
+          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+        }
+      }
+    },
+    "/v1/families/{familyId}/guardian-transfers/{transferId}/cancel": {
+      "post": {
+        "tags": ["Guardian continuity"],
+        "operationId": "cancelGuardianTransfer",
+        "summary": "Cancel a pending guardian transfer only as its initiating current primary guardian",
+        "security": [{ "oidcBearer": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/FamilyId" }, { "$ref": "#/components/parameters/TransferId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
+        "responses": {
+          "200": { "description": "Transfer cancelled with durable evidence.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GuardianTransferResponse" } } } },
+          "400": { "$ref": "#/components/responses/InvalidRequest" },
+          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+        }
+      }
+    },
+    "/v1/families/{familyId}/audit-events": {
+      "get": {
+        "tags": ["Audit"],
+        "operationId": "listFamilyAuditEvents",
+        "summary": "List the current guardian-scoped minimum audit envelope",
+        "security": [{ "oidcBearer": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/FamilyId" }],
+        "responses": {
+          "200": { "description": "Maximum one hundred newest minimum audit envelope entries.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuditEventListResponse" } } } },
+          "400": { "$ref": "#/components/responses/InvalidRequest" },
+          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "oidcBearer": { "type": "http", "scheme": "bearer", "bearerFormat": "OIDC access token", "description": "Issuer, audience, signature and subject are verified server-side. Provider selection is not represented in this contract." }
+    },
+    "parameters": {
+      "FamilyId": { "name": "familyId", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/Uuid" } },
+      "MembershipId": { "name": "membershipId", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/Uuid" } },
+      "TransferId": { "name": "transferId", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/Uuid" } },
+      "IdempotencyKey": { "name": "Idempotency-Key", "in": "header", "required": true, "schema": { "type": "string", "minLength": 1, "maxLength": 128 }, "description": "Unique per operation intent. Reusing it with different intent is rejected." }
+    },
+    "responses": {
+      "InvalidRequest": { "description": "Malformed JSON, identifier or input contract.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+      "AuthenticationRequired": { "description": "Missing, invalid, expired or otherwise unverifiable OIDC bearer token.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+      "FamilyAccessDenied": { "description": "No permitted active family membership for the requested action.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+      "Forbidden": { "description": "Verified principal lacks the exact required authority.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+      "NotFound": { "description": "Requested resource was not found within the authorized path.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+      "Conflict": { "description": "State, idempotency, continuity, expiry or lifecycle conflict.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+      "ServiceNotReady": { "description": "Configuration, database or reviewed schema is not ready for protected operations.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+    },
+    "schemas": {
+      "Uuid": { "type": "string", "format": "uuid", "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$" },
+      "LiveStatus": { "type": "object", "required": ["status"], "properties": { "status": { "const": "live" } }, "additionalProperties": false },
+      "ReadyStatus": { "type": "object", "required": ["status"], "properties": { "status": { "const": "ready" } }, "additionalProperties": false },
+      "NotReadyStatus": { "type": "object", "required": ["status", "dependencies"], "properties": { "status": { "const": "not_ready" }, "dependencies": { "type": "object", "required": ["configuration", "database"], "properties": { "configuration": { "type": "string" }, "database": { "type": "string" } }, "additionalProperties": false } }, "additionalProperties": false },
+      "ErrorResponse": { "type": "object", "required": ["error"], "properties": { "error": { "type": "object", "required": ["code", "message"], "properties": { "code": { "type": "string" }, "message": { "type": "string" }, "details": {} }, "additionalProperties": false } }, "additionalProperties": false },
+      "CreateFamilyRequest": { "type": "object", "required": ["displayName"], "properties": { "displayName": { "type": "string", "minLength": 1, "maxLength": 120 } }, "additionalProperties": false },
+      "CreateMembershipRequest": { "type": "object", "required": ["role", "targetSubject"], "properties": { "role": { "type": "string", "enum": ["co_guardian", "child"] }, "targetSubject": { "type": "string", "minLength": 1, "maxLength": 255 } }, "additionalProperties": false },
+      "RevokeMembershipRequest": { "type": "object", "required": ["reasonCode"], "properties": { "reasonCode": { "type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$" } }, "additionalProperties": false },
+      "CreateGuardianTransferRequest": { "type": "object", "required": ["candidateMembershipId"], "properties": { "candidateMembershipId": { "$ref": "#/components/schemas/Uuid" } }, "additionalProperties": false },
+      "Membership": { "type": "object", "required": ["id", "role", "status", "version", "createdAt"], "properties": { "id": { "$ref": "#/components/schemas/Uuid" }, "role": { "type": "string", "enum": ["primary_guardian", "co_guardian", "child"] }, "status": { "type": "string", "enum": ["invited", "active", "revoked", "removed"] }, "statusReasonCode": { "type": ["string", "null"], "maxLength": 64 }, "version": { "type": "integer", "minimum": 1 }, "joinedAt": { "type": ["string", "null"], "format": "date-time" }, "statusChangedAt": { "type": ["string", "null"], "format": "date-time" }, "createdAt": { "type": "string", "format": "date-time" } }, "additionalProperties": false },
+      "Family": { "type": "object", "required": ["id", "displayName", "status", "createdAt", "members"], "properties": { "id": { "$ref": "#/components/schemas/Uuid" }, "displayName": { "type": "string" }, "status": { "type": "string", "enum": ["active", "suspended", "archived"] }, "createdAt": { "type": "string", "format": "date-time" }, "members": { "type": "array", "items": { "$ref": "#/components/schemas/Membership" } } }, "additionalProperties": false },
+      "GuardianTransfer": { "type": "object", "required": ["id", "status", "candidateMembershipId", "expiresAt", "version", "createdAt"], "properties": { "id": { "$ref": "#/components/schemas/Uuid" }, "status": { "type": "string", "enum": ["pending_acceptance", "completed", "cancelled", "expired"] }, "candidateMembershipId": { "$ref": "#/components/schemas/Uuid" }, "expiresAt": { "type": "string", "format": "date-time" }, "completedAt": { "type": ["string", "null"], "format": "date-time" }, "cancelledAt": { "type": ["string", "null"], "format": "date-time" }, "version": { "type": "integer", "minimum": 1 }, "createdAt": { "type": "string", "format": "date-time" } }, "additionalProperties": false },
+      "AuditEvent": { "type": "object", "required": ["id", "eventType", "subjectType", "subjectId", "occurredAt"], "properties": { "id": { "$ref": "#/components/schemas/Uuid" }, "eventType": { "type": "string" }, "actorMembershipId": { "type": ["string", "null"], "format": "uuid" }, "subjectType": { "type": "string" }, "subjectId": { "$ref": "#/components/schemas/Uuid" }, "occurredAt": { "type": "string", "format": "date-time" } }, "additionalProperties": false },
+      "FamilyResponse": { "type": "object", "required": ["family"], "properties": { "family": { "$ref": "#/components/schemas/Family" } }, "additionalProperties": false },
+      "MembershipResponse": { "type": "object", "required": ["membership"], "properties": { "membership": { "$ref": "#/components/schemas/Membership" } }, "additionalProperties": false },
+      "GuardianTransferResponse": { "type": "object", "required": ["transfer"], "properties": { "transfer": { "$ref": "#/components/schemas/GuardianTransfer" } }, "additionalProperties": false },
+      "AuditEventListResponse": { "type": "object", "required": ["events"], "properties": { "events": { "type": "array", "maxItems": 100, "items": { "$ref": "#/components/schemas/AuditEvent" } } }, "additionalProperties": false }
+    }
+  }
+}
