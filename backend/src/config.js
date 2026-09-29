@@ -27,6 +27,10 @@ function parsePort(value) {
   return parsed;
 }
 
+export function loadListeningPort(environment = process.env) {
+  return parsePort(environment.PORT);
+}
+
 function optionalBoundedInteger(value, variable, { minimum, maximum }) {
   const normalized = optionalText(value);
   if (!normalized) {

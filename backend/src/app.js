@@ -78,7 +78,7 @@ export function createApp({ store, authVerifier, readiness }) {
         response.status(503).json({
           status: 'not_ready',
           dependencies: {
-            configuration: configStatus.ready ? 'ready' : 'not_configured',
+            configuration: configStatus.ready ? 'ready' : (configStatus.reason ?? 'not_configured'),
             database: databaseStatus.available ? 'ready' : databaseStatus.reason,
           },
         });
