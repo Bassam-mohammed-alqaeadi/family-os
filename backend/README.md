@@ -57,7 +57,7 @@ Populate these values through Render’s secret environment configuration only; 
 
 The OIDC variables must be set together. The API verifies issuer, audience, signature and subject server-side; it never accepts a role, family id or subject supplied as authority by the client.
 
-No issuer is selected by this code. Firebase Authentication remains an optional future token issuer only after the separately required no-cost/pricing/privacy/fallback approval; it is neither bundled nor configured here.
+No actual issuer values are selected by this code. Firebase Authentication on Spark is recorded only as a prospective synthetic-staging token issuer in `docs/foundation/10_FREE_TIER_STAGING_ADMISSION_UPDATE.md`; it is neither bundled nor configured here. It remains subject to the named-owner, pricing/privacy, lifecycle and fallback evidence in that record, and does not authorize Firebase Admin, Firestore, Functions, Storage or client-side authority.
 
 ## Database migration
 

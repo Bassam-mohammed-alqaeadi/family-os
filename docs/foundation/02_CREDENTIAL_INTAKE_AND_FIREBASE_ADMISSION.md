@@ -33,7 +33,9 @@ No key replacement should be sent to Git, chat, Flutter assets or source files. 
 
 ## What this means for Firebase Auth evaluation
 
-Firebase Authentication remains **not selected**. If it is later considered as a no-cost token issuer, the approval must name the exact enabled providers and recovery route, confirm current pricing and quota, prohibit phone/SMS or any billing-required path, document consent/privacy and an exit path, and bind the issuer/audience/JWKS values in Render secrets. It does not authorize Firestore, Functions, Storage, FCM, Firebase Admin, or client-side authorization.
+Firebase Authentication on the Spark plan is now **selected only as a prospective synthetic-staging token issuer**, recorded in `10_FREE_TIER_STAGING_ADMISSION_UPDATE.md`. It is not a selected production identity/recovery system and it remains unconfigured until `STG-ID-01` and `STG-ID-02` have named owners and dated acceptance evidence.
+
+The narrow staging use must name the exact enabled sign-in method and recovery route, confirm current pricing/quota, prohibit phone/SMS and billing-required paths, document consent/privacy and an exit path, and bind issuer/audience/JWKS values only through Render Dashboard configuration. Firebase ID-token validation by the Render API uses public signing keys and does not require an Admin SDK service-account key. This selection does not authorize Firestore, Functions, Storage, FCM, Firebase Admin, or client-side authorization.
 
 ## Existing Flutter application disposition
 

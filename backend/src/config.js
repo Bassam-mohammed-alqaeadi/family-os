@@ -7,6 +7,18 @@ function optionalText(value) {
   return trimmed ? trimmed : undefined;
 }
 
+function requiredHttpsUrl(value, variable) {
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol !== 'https:' || parsed.username || parsed.password || parsed.hash) {
+      throw new Error('invalid URL security shape');
+    }
+    return value;
+  } catch {
+    throw new HttpError(500, 'invalid_configuration', `${variable} must be an HTTPS URL without credentials or a fragment.`);
+  }
+}
+
 function parsePort(value) {
   const parsed = Number.parseInt(value ?? '10000', 10);
   if (!Number.isInteger(parsed) || parsed < 1 || parsed > 65535) {
@@ -55,9 +67,9 @@ export function loadConfig(environment = process.env) {
     oidc:
       configuredOidcKeys === REQUIRED_OIDC_KEYS.length
         ? {
-            issuer: oidcValues.OIDC_ISSUER,
+            issuer: requiredHttpsUrl(oidcValues.OIDC_ISSUER, 'OIDC_ISSUER'),
             audience: oidcValues.OIDC_AUDIENCE,
-            jwksUrl: oidcValues.OIDC_JWKS_URL,
+            jwksUrl: requiredHttpsUrl(oidcValues.OIDC_JWKS_URL, 'OIDC_JWKS_URL'),
           }
         : undefined,
   };

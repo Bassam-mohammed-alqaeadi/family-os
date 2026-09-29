@@ -29,13 +29,13 @@ This distinction lets the platform make verifiable progress without pretending a
 
 | ID | Precondition | Current status | Required evidence before Render deployment |
 |---|---|---|---|
-| FW-P1 | Render account/service/database location | Open | Chosen co-located region, residency rationale, named infrastructure owner. Do not infer this from the Owner’s present location; Family OS serves a global family product. |
-| FW-P2 | Cost and usage ownership | Open | Named cost owner, selected service/database plan, hard budget/usage alerts and approval of non-free resources. |
-| FW-P3 | Identity and recovery threat model | Partially designed | Approved OIDC issuer, email/recovery/compromise/revocation flows, audience values, key rotation and support escalation owner. |
+| FW-P1 | Render account/service/database location | Partially selected | Oregon is the candidate synthetic-staging region; named infrastructure/privacy owner and residency rationale remain required. See `10_FREE_TIER_STAGING_ADMISSION_UPDATE.md`. |
+| FW-P2 | Cost and usage ownership | Partially selected | Free web/PostgreSQL are candidates only; named cost owner, usage/spend thresholds, expiry/shutdown rule and plan acknowledgement remain required. |
+| FW-P3 | Identity and recovery threat model | Partially selected | Firebase Auth Spark is a synthetic-token-issuer candidate; exact sign-in/recovery/revocation process, project owner, audience values and escalation owner remain required. |
 | FW-P4 | Data classification and retention | Partially designed | Classification/retention/deletion/legal-hold mapping for account, family, child and audit data; privacy owner confirmation. |
-| FW-P5 | Delivery and incident operations | Partially designed | CI deployment principal, Render secret ownership, migration/backup/rollback runbook, alert route and incident commander/support owner. |
+| FW-P5 | Delivery and incident operations | Partially designed | Manual reviewed deployment, Render secret ownership, migration/rollback and a synthetic logical backup/restore runbook, alert route and incident commander/support owner. Free PostgreSQL has no provider backups. |
 | FW-P6 | External Flutter validation environment | Open | Flutter SDK/Android/iOS-capable environment and integration-test owner outside the constrained Arena workspace. |
-| FW-P7 | Optional Firebase auxiliary approval | Not started | Independent pricing/quota/privacy/fallback/kill-switch record for a precise no-cost product. This is not needed for the present backend slice. |
+| FW-P7 | Firebase test-issuer admission | Partially selected | The narrow Spark-token-issuer record is in `10_FREE_TIER_STAGING_ADMISSION_UPDATE.md`; it authorizes no Firebase persistence, Admin, FCM, Functions, Storage or client authority. |
 
 ## Guardian-Eye information use record
 

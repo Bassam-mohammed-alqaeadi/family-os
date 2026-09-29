@@ -47,6 +47,8 @@ This table is intentionally not pre-filled. Guessing a region, provider, budget 
 
 A connected environment is not authorized unless every entry is accepted with a named owner and dated evidence. The Owner’s overall product authorization does not permit the system to invent real operational ownership.
 
+The Owner-directed free-tier/Render/Firebase selection is recorded separately in `10_FREE_TIER_STAGING_ADMISSION_UPDATE.md`. It is a partial configuration decision, not closure of this evidence table or authorization to create resources.
+
 ## 4. Staging configuration contract
 
 The service configuration is intentionally the same security shape as production, with staging-specific values:

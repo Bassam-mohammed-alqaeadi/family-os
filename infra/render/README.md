@@ -25,4 +25,8 @@ This avoids silently creating a billable resource in an unreviewed region or env
 4. Enter OIDC and transfer-policy values directly through Render's secret environment UI. Do not add values to this file or Git history.
 5. Deploy the reviewed commit manually; apply migrations through the controlled runbook, then execute the staging verifier and full synthetic-data protocol.
 
+A GitHub connection/webhook is a Render deployment-control-plane credential only. It does not authenticate API callers and cannot replace the server's OIDC issuer/audience/JWKS checks. Keep automatic deploy disabled so a reviewed commit is selected manually.
+
+The Owner-directed free-tier staging proposal and its remaining evidence obligations are recorded in `docs/foundation/10_FREE_TIER_STAGING_ADMISSION_UPDATE.md`.
+
 The template does not authorize production deployment, public access, Flutter connection, Recovery/Support code or use of real family data.
