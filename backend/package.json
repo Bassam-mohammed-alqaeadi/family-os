@@ -10,7 +10,7 @@
   "scripts": {
     "start": "node src/server.js",
     "test": "node --test test/*.test.js",
-    "check": "node --check src/*.js && node --check src/auth/*.js && node --check src/store/*.js && node --check scripts/*.mjs",
+    "check": "node scripts/check-source.mjs",
     "migrate": "node src/migrate.js",
     "verify:staging": "node scripts/verify-staging-foundation.mjs"
   },

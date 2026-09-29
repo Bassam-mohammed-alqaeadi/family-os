@@ -16,7 +16,8 @@
 | `/health/live` | `200 OK`. | Pass |
 | `/health/ready` | `503` with `database_schema_not_ready` before migrations. | Pass — expected fail-closed state |
 | Temporary migration ingress | External database access is currently closed after the Staging Owner removed a temporary broad rule and rotated the database credential. A public rule is not an accepted migration fallback. | Pass — closed; `/32` only after source preflight |
-| First migration attempt | Failed with `migration_checksum_mismatch` for `001_foundation.sql`. No migration is treated as applied and no database history was edited. | Blocked — source-integrity preflight required |
+| First migration attempt | Failed with `migration_checksum_mismatch` for `001_foundation.sql`. No migration is treated as applied and no database history was edited. | Historical attempt — did not establish schema |
+| Fresh source preflight | Exact deployed SHA, clean working tree, full test suite and reviewed `001_foundation.sql` checksum all reported as passing after Windows line-ending correction. | Pass — retry current database migration before considering reset |
 
 ## 2. Evidence not yet established
 
