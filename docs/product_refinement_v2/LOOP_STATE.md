@@ -65,6 +65,7 @@ completed:
   - Sensitive API response cache/frame/referrer/content hardening with tested non-cacheable defaults
   - Family lifecycle fail-closed enforcement: suspended/archived families cannot read, mutate, accept membership or complete continuity transitions
   - Server-generated correlation propagation across successful Foundation request, audit and outbox evidence
+  - Guardian-Eye reference re-check: Firebase service-account-dependent configuration remains rejected for Family OS staging and closes no staging ownership evidence
 next_outputs:
   - Produce the owned, dated acceptance evidence for RS-ADM-01 through RS-ADM-09 and STG-OWN/STG-ID/STG-SEC/STG-OPS/STG-QA; do not substitute templates or code comments for ownership
   - Create only an isolated synthetic Render/OIDC/PostgreSQL staging environment after those evidence records are accepted

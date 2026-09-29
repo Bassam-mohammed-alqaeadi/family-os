@@ -74,3 +74,15 @@ The reference repository alone does not establish those conditions for Family OS
 ## 7. Decision result
 
 Guardian-Eye is an approved **reference source for architecture, contracts, tests and operational lessons**. It is not a source of Family OS production credentials, Firebase database/functions/storage architecture or role policy. This is the precise way to use the Owner-provided second-project information without violating the active Render/Firebase and runtime-truth policies.
+
+## 8. Controlled-staging reference re-check
+
+**Re-checked:** 2026-09-29
+
+**Reference revision:** `feature/design-system-integration` at `baf96afbc7d8dfbe913b37ddb970a0299f084ed0`
+
+**Method:** Repository metadata and configuration shape only. No secret, service-account content, project identifier or environment value was copied into this repository, chat evidence or Render.
+
+The reference still provides a useful Node web-service pattern, but its Render configuration expects Firebase project/service-account environment material and its backend depends on `firebase-admin`. Its environment documentation/configuration does not supply Family OS's required, accountable evidence for Render project/service ownership, PostgreSQL region/residency, cost limits, OIDC ownership, secret-access boundaries, rollback/restore or incident operation.
+
+**Staging admission decision:** this re-check closes **none** of `STG-OWN-01` through `STG-QA-01`. A Firebase service-account dependency is expressly unsuitable for the Family OS Render-first Foundation boundary and is a stop condition for connected staging. The reference remains architecture evidence only; it cannot be adopted as a Family OS staging environment or configuration source.
