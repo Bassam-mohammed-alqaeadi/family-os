@@ -57,6 +57,18 @@ Remove-Item Env:STAGING_API_BASE_URL
 
 The verifier prints only check names, an opaque family ID and correlation IDs. Never retain or paste its prompted tokens, emails, Firebase subjects, raw request/response bodies or credentials.
 
+After the authorization verifier passes, the membership hardening verifier creates a separate synthetic family and checks invitation revocation, post-revocation denial, active-child removal/lost access, co-guardian authority denial, primary-continuity protection and concurrent conflicting invitation control. It requires all four fresh synthetic Firebase ID tokens:
+
+```powershell
+$env:STAGING_EXECUTION_ACK = 'synthetic-authorized-mutations'
+$env:STAGING_API_BASE_URL = 'https://approved-staging-origin'
+npm --prefix backend run verify:staging:membership
+Remove-Item Env:STAGING_EXECUTION_ACK
+Remove-Item Env:STAGING_API_BASE_URL
+```
+
+A concurrency result other than exactly one successful invitation and one explicit `membership_already_exists` conflict is a stop condition. Do not correct the database manually or continue to guardian transfer tests after such a failure.
+
 ## 3. Runtime truth checks
 
 | ID | Action | Expected result | Failure meaning |

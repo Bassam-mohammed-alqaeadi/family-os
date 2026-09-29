@@ -13,7 +13,8 @@
     "check": "node scripts/check-source.mjs",
     "migrate": "node src/migrate.js",
     "verify:staging": "node scripts/verify-staging-foundation.mjs",
-    "verify:staging:authenticated": "node scripts/verify-staging-authenticated.mjs"
+    "verify:staging:authenticated": "node scripts/verify-staging-authenticated.mjs",
+    "verify:staging:membership": "node scripts/verify-staging-membership-lifecycle.mjs"
   },
   "dependencies": {
     "express": "^5.2.1",

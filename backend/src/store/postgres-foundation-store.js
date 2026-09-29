@@ -313,7 +313,8 @@ export class PostgresFoundationStore {
   }
 
   async createMembershipInvitation({ principal, familyId, role, targetSubject, idempotencyKey, requestHash, correlationId }) {
-    return this.withTransaction(async (client) => {
+    try {
+      return await this.withTransaction(async (client) => {
       const response = await this.acquireIdempotencySlot(
         client,
         `membership:create:${familyId}`,
@@ -356,7 +357,14 @@ export class PostgresFoundationStore {
       const result = { membership: memberView(membership.rows[0]) };
       await this.completeIdempotencySlot(client, `membership:create:${familyId}`, idempotencyKey, result);
       return result;
-    });
+      });
+    } catch (error) {
+      // The partial unique index is the final authority under concurrent invitation requests.
+      if (error?.code === '23505') {
+        throw new HttpError(409, 'membership_already_exists', 'This account already has an active or pending membership.');
+      }
+      throw error;
+    }
   }
 
   async acceptMembershipInvitation({ principal, familyId, membershipId, idempotencyKey, requestHash, correlationId }) {

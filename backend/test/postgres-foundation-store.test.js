@@ -78,6 +78,55 @@ test('missing schema metadata fails readiness without pretending the database is
   });
 });
 
+test('concurrent PostgreSQL membership uniqueness conflicts become an explicit lifecycle conflict', async () => {
+  const client = {
+    async query(sql) {
+      if (sql === 'BEGIN' || sql === 'ROLLBACK') {
+        return { rows: [], rowCount: 0 };
+      }
+      if (sql.startsWith('SELECT pg_advisory_xact_lock')) {
+        return { rows: [], rowCount: 1 };
+      }
+      if (sql.includes('FROM idempotency_records')) {
+        return { rows: [], rowCount: 0 };
+      }
+      if (sql.includes('INSERT INTO idempotency_records')) {
+        return { rows: [], rowCount: 1 };
+      }
+      if (sql.includes('FROM family_memberships AS membership')) {
+        return { rows: [{ id: 'b7fe4b27-2df2-4cf7-8071-9792b4ef665b', role: 'primary_guardian' }], rowCount: 1 };
+      }
+      if (sql.includes('WHERE family_id = $1 AND target_subject')) {
+        return { rows: [], rowCount: 0 };
+      }
+      if (sql.includes('INSERT INTO family_memberships')) {
+        const error = new Error('duplicate active or pending membership');
+        error.code = '23505';
+        throw error;
+      }
+      throw new Error(`Unexpected query: ${sql}`);
+    },
+    release() {},
+  };
+  const store = new PostgresFoundationStore({
+    connectionString: 'postgresql://unused-in-test',
+    pool: { async connect() { return client; }, async end() {} },
+  });
+
+  await assert.rejects(
+    store.createMembershipInvitation({
+      principal: { subject: 'guardian-a' },
+      familyId: '6dbb6760-f609-4f3e-a29f-4c209dc1d53b',
+      role: 'child',
+      targetSubject: 'child-c',
+      idempotencyKey: 'concurrent-membership-test',
+      requestHash: 'a'.repeat(64),
+      correlationId: '1f7f43e1-ea4f-4d8a-9a0a-8dc1d6421fe1',
+    }),
+    { status: 409, code: 'membership_already_exists' },
+  );
+});
+
 test('PostgreSQL audit and outbox inserts share only the supplied server correlation ID', async () => {
   const store = healthStore(async () => ({ rows: [] }));
   const statements = [];
