@@ -10,8 +10,9 @@
   "scripts": {
     "start": "node src/server.js",
     "test": "node --test test/*.test.js",
-    "check": "node --check src/*.js && node --check src/auth/*.js && node --check src/store/*.js",
-    "migrate": "node src/migrate.js"
+    "check": "node --check src/*.js && node --check src/auth/*.js && node --check src/store/*.js && node --check scripts/*.mjs",
+    "migrate": "node src/migrate.js",
+    "verify:staging": "node scripts/verify-staging-foundation.mjs"
   },
   "dependencies": {
     "express": "^5.2.1",

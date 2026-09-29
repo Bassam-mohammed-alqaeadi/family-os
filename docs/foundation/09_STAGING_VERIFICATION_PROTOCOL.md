@@ -33,6 +33,16 @@ All conditions must be true before a test request is sent:
 - Dedicated test OIDC principals exist for: primary guardian A, co-guardian B, child C and unrelated principal X.
 - Test tokens are obtained through an approved secure process and kept out of source/logs/evidence.
 
+Before valid-token or mutation checks, run the non-mutating baseline command:
+
+```bash
+STAGING_EXECUTION_ACK=synthetic-only \
+STAGING_API_BASE_URL='https://approved-staging-origin' \
+npm --prefix backend run verify:staging
+```
+
+It verifies liveness, readiness and denial of missing/invalid credentials only; it carries no valid identity, creates no data and cannot replace this full protocol.
+
 ## 3. Runtime truth checks
 
 | ID | Action | Expected result | Failure meaning |

@@ -24,6 +24,16 @@ npm run check
 npm test
 ```
 
+After an isolated staging service has been accepted and configured, run the non-mutating baseline verifier (it sends no valid token and creates no data):
+
+```bash
+STAGING_EXECUTION_ACK=synthetic-only \
+STAGING_API_BASE_URL='https://approved-staging-origin' \
+npm run verify:staging
+```
+
+It proves only liveness, readiness, missing-token denial and invalid-token denial. It is not a replacement for the full synthetic-data protocol in `docs/foundation/09_STAGING_VERIFICATION_PROTOCOL.md`.
+
 A local process without secrets can be inspected safely:
 
 ```bash
