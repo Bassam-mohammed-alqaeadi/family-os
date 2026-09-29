@@ -69,9 +69,10 @@ GUARDIAN_TRANSFER_TTL_HOURS=1
 
 This is the approved migration path for the stated situation. Use an Owner-controlled workstation with Node 22 and an encrypted filesystem; do not use a shared shell, public notebook or CI runner.
 
-1. In the Render dashboard, immediately replace broad external database access with a temporary allow-list entry for the workstation's current public IP only. Do not leave the database open to the internet. Obtain the **external** staging connection value directly from Render; do not copy it into chat, source, shell history or an evidence record.
+1. Keep external database access closed while preparing the checkout. A public `0.0.0.0/0` rule is never an acceptable timeout workaround. If a temporary `/32` allow-list entry fails, stop and diagnose the IP/routing/URL path; do not widen the database exposure.
 2. In a temporary directory, clone/fetch the exact GitHub release commit manually. Verify `git rev-parse HEAD` equals the SHA shown by the manual Render deployment before installing dependencies. Do not use `main`, a legacy branch or an unreviewed branch head.
-3. Change into `backend/`, run `npm ci`, then supply the protected external database value through the shell's secret-input mechanism. On a POSIX shell, the safe pattern is:
+3. Before opening any external database ingress, change into `backend/` and run `npm ci`, `npm run check`, and `npm test`. This validates the migration manifest/checksums without connecting to the database. For release `091534260653d468f38898434ea63f22830290af`, `db/migrations/001_foundation.sql` must hash to `18614988686dda9fbf71d79d9a75fe8da513e1e1c8f2763169ae20cc306d14e9`. A failure here is a source-integrity stop condition: discard the temporary checkout and create a fresh exact-SHA checkout; never edit the migration, manifest or database history to force a match.
+4. Only after the source preflight passes, add a temporary allow-list entry for the workstation's current public IP only. Obtain the **external** staging connection value directly from Render; do not copy it into chat, source, shell history or an evidence record. Then supply it through the shell's secret-input mechanism. On a POSIX shell, the safe pattern is:
 
 ```bash
 read -r -s DATABASE_URL
@@ -81,8 +82,8 @@ unset DATABASE_URL
 ```
 
 Do not paste the value into the command itself. Use the equivalent no-echo secret-input mechanism on another operating system.
-4. Retain only the emitted migration names/checksum result and pass/fail status. If migration fails, do not paste raw errors that could disclose connection details; stop and record the error class only.
-5. Remove the temporary external allow-list entry after the migration attempt. Remove the temporary checkout after its evidence is recorded. The application continues using Render's internal database connection only.
+5. Retain only the emitted migration names/checksum result and pass/fail status. If migration fails, do not paste raw errors that could disclose connection details; stop and record the error class only.
+6. Remove the temporary external allow-list entry after the migration attempt. Remove the temporary checkout after its evidence is recorded. The application continues using Render's internal database connection only.
 
 The migration runner itself acquires an advisory lock, verifies each reviewed SQL checksum, records checksum-attested history and rolls back a failed migration. That safety does not authorize repeated migration attempts from a service Start Command.
 

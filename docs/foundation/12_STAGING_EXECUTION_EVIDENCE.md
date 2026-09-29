@@ -15,7 +15,8 @@
 | Render process | Running/live after deployment. | Pass |
 | `/health/live` | `200 OK`. | Pass |
 | `/health/ready` | `503` with `database_schema_not_ready` before migrations. | Pass — expected fail-closed state |
-| Temporary migration ingress | External database access limited to the Staging Owner's current operator IP using a `/32` allow-list entry. No address is recorded. | Active — remove immediately after migration attempt |
+| Temporary migration ingress | External database access is currently closed after the Staging Owner removed a temporary broad rule and rotated the database credential. A public rule is not an accepted migration fallback. | Pass — closed; `/32` only after source preflight |
+| First migration attempt | Failed with `migration_checksum_mismatch` for `001_foundation.sql`. No migration is treated as applied and no database history was edited. | Blocked — source-integrity preflight required |
 
 ## 2. Evidence not yet established
 
@@ -31,7 +32,7 @@ The following is intentionally unverified and must not be claimed yet:
 
 ## 3. Next controlled operation
 
-The Staging Owner will use a short-lived checkout of the exact deployed SHA and an approved no-echo secret-input method to execute `npm ci` then `npm run migrate`. Afterward, the Owner must:
+The Staging Owner must first use a short-lived checkout of the exact deployed SHA to execute `npm ci`, `npm run check` and `npm test` **without any database ingress**. The source checksum preflight must pass before a temporary `/32` entry is added and `npm run migrate` is attempted again. Afterward, the Owner must:
 
 1. retain only migration names/checksum outcome and pass/fail status;
 2. remove the temporary database allow-list entry;
