@@ -75,9 +75,10 @@ completed:
   - Owner staging continuity decision: one logical synthetic staging track may continue, but expiring/integrity-compromised Free databases are replaced in-place with no data or credential carryover
   - Fresh Windows source preflight passed exact deployed SHA, full tests and migration checksum; Owner reports the corrective migration retry succeeded on the current rotated staging database
   - Post-migration runtime truth is reported (`/health/live=200`, `/health/ready=200`), temporary `/32`/checkout cleanup is reported, and the non-mutating staging baseline verifier passed
+  - Four Firebase Email/Password synthetic principals report successful sign-in/token issuance; this proves authentication availability only, not Family OS role assignment or authorization
   - Cross-platform hardening: migration SQL is pinned to LF through Git attributes and source syntax checks no longer rely on CMD shell glob expansion
 next_outputs:
-  - Create four Firebase Email/Password synthetic principals and execute authenticated identity, tenant-isolation and idempotency checks before lifecycle mutations
+  - Execute the reviewed authenticated verifier for Guardian A and unrelated Principal X to prove family creation, tenant isolation and idempotency before lifecycle mutations
   - Execute membership, guardian-continuity, audit/outbox and operations checks in `09_STAGING_VERIFICATION_PROTOCOL.md` before any connected Flutter work, customer data, public claim or Recovery/Support implementation
   - Do not implement lost-account, dispute or support-mediated recovery until the Recovery/Support admission gate is accepted
 blocked_by: Flutter production integration, customer data and all production/release claims remain blocked pending successful synthetic staging verification and Foundation Wave preconditions in `92_EXECUTION_AUTHORIZATION_GATE.md`

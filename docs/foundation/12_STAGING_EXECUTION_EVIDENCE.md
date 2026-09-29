@@ -23,6 +23,7 @@
 | Post-migration liveness | `/health/live` returned `200 OK`. | Pass — reported |
 | Post-migration readiness | `/health/ready` returned `200 OK`. | Pass — reported |
 | Non-mutating baseline verifier | Owner reports the baseline verifier passed. It tested health plus missing/invalid-token denial without valid identities or mutations. | Pass — reported |
+| Synthetic identity availability | Owner reports successful Firebase Email/Password sign-in and ID-token issuance for the four designated synthetic principal labels (A, B, C and X). No identifiers, emails, tokens or project values are retained here. | Pass — authentication only; no Family OS role/authorization claim |
 
 ## 2. Evidence not yet established
 
