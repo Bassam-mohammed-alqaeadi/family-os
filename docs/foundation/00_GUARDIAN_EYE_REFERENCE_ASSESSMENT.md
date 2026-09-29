@@ -86,3 +86,31 @@ Guardian-Eye is an approved **reference source for architecture, contracts, test
 The reference still provides a useful Node web-service pattern, but its Render configuration expects Firebase project/service-account environment material and its backend depends on `firebase-admin`. Its environment documentation/configuration does not supply Family OS's required, accountable evidence for Render project/service ownership, PostgreSQL region/residency, cost limits, OIDC ownership, secret-access boundaries, rollback/restore or incident operation.
 
 **Staging admission decision:** this re-check closes **none** of `STG-OWN-01` through `STG-QA-01`. A Firebase service-account dependency is expressly unsuitable for the Family OS Render-first Foundation boundary and is a stop condition for connected staging. The reference remains architecture evidence only; it cannot be adopted as a Family OS staging environment or configuration source.
+
+## 9. Non-sensitive configuration-schema comparison
+
+**Reviewed files:** `guardian_backend/render.yaml`, `guardian_backend/.env.example`, `firebase.json`, `.firebaserc`, `firebase/functions/package.json`, and `lib/core/firebase/guardian_firebase_environment.dart` at the revision above. Only file paths, configuration-key names and structural facts were inspected; no value, project identifier, API key, token, service-account material or client configuration was copied.
+
+| Reference configuration shape | Family OS treatment |
+|---|---|
+| `guardian_backend/render.yaml` declares `PORT`, `FIREBASE_SERVICE_ACCOUNT_KEY` and `FIREBASE_PROJECT_ID`. It has no Render PostgreSQL resource block and no explicit automatic-deploy control. | Reuse only the generic Render `PORT` convention. Reject the Firebase Admin/project variables. Family OS uses its own PostgreSQL resource plus manual deployment with auto-deploy disabled. |
+| `guardian_backend/.env.example` declares `PORT`, `FIREBASE_PROJECT_ID`, `FIREBASE_SERVICE_ACCOUNT_KEY_PATH` and `RENDER_EXTERNAL_URL`. | None of its Firebase or public-endpoint variables are Family OS configuration. Do not copy them. |
+| `.firebaserc` maps a Firebase project and `firebase.json`/Functions material establish a Firebase deployment surface. | Do not adopt the mapping, project or deployment configuration. Family OS uses a new, isolated synthetic Firebase Auth project only. |
+| Firebase Functions dependencies include `firebase-admin` and `firebase-functions`. | Explicitly excluded. The Family OS API verifies synthetic Firebase ID tokens through public JWKS; it does not use Firebase Admin, Functions or Firebase persistence. |
+| Flutter Firebase environment material belongs to the reference client. | No Flutter configuration is copied; connected Flutter work remains blocked pending staging verification. |
+
+The Owner explicitly decided on 2026-09-29 to create **new, empty, isolated** Render and Firebase resources for Family OS staging. Existing Guardian-Eye/legacy services, databases, Firebase projects, data and configuration are not eligible for reuse, migration or linkage.
+
+The only dashboard configuration schema for the new Family OS staging service is:
+
+```text
+NODE_ENV=staging
+PORT=<Render supplied; do not manually set unless Render requires it>
+DATABASE_URL=<new Family OS staging Render PostgreSQL internal URL>
+OIDC_ISSUER=https://securetoken.google.com/<new-synthetic-firebase-project-id>
+OIDC_AUDIENCE=<new-synthetic-firebase-project-id>
+OIDC_JWKS_URL=https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com
+GUARDIAN_TRANSFER_TTL_HOURS=1
+```
+
+This is a schema, not a source for real values. The actual database URL and project identifier stay in the Owner-controlled provider dashboards/evidence store and never enter source control, CI logs, chat or Flutter assets.

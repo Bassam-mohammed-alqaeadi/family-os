@@ -68,6 +68,7 @@ completed:
   - Guardian-Eye reference re-check: Firebase service-account-dependent configuration remains rejected for Family OS staging and closes no staging ownership evidence
   - Owner-attested synthetic staging admission: one accountable owner, temporary Oregon/Free Render boundary, encrypted external logical dump/restore, and Firebase Auth Spark Email/Password test principals only
   - Manual Render/Firebase connection checklist with disabled auto-deploy, dashboard-only configuration and staging-only one-hour transfer expiry policy
+  - Owner decision: create new empty Family OS-specific resources; Guardian-Eye/legacy services, databases, Firebase projects and configuration are excluded from reuse
 next_outputs:
   - The Staging Owner manually creates the isolated synthetic Render/Firebase resources and records the provider/execution evidence required by `11_CONTROLLED_STAGING_OPERATOR_CONNECTION_CHECKLIST.md`
   - Execute the staging verification protocol before any connected Flutter work, customer data, public claim or Recovery/Support implementation

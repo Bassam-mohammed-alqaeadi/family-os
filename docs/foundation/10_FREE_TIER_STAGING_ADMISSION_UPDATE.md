@@ -68,7 +68,8 @@ On **2026-09-29**, the Owner accepted sole accountability for this environment's
 - a temporary synthetic-only environment that is deleted within 30 days;
 - Render Free Web Service and Free PostgreSQL in Oregon;
 - manual, owner-operated logical dump/restore rather than a provider backup feature; and
-- Firebase Auth Spark synthetic Email/Password principals only, with no SMS, phone or real-user accounts.
+- Firebase Auth Spark synthetic Email/Password principals only, with no SMS, phone or real-user accounts; and
+- no reuse, migration, linkage or configuration copying from existing Guardian-Eye/legacy Render, database or Firebase resources. New Family OS-specific synthetic resources are required.
 
 This is dated admission evidence for the decisions in Section 4. It does not create a Render/Firebase resource, expose a secret, or make a production/recovery/Flutter claim.
 
