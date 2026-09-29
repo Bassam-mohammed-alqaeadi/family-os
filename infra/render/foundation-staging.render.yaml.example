@@ -1,0 +1,39 @@
+# Family OS controlled staging Blueprint TEMPLATE.
+# This file is deliberately non-deployable until accountable owners replace every OWNER_REQUIRED_* value
+# and the evidence records in docs/foundation/08_CONTROLLED_STAGING_ACTIVATION_RECORD.md are accepted.
+# Do not rename this file to render.yaml or connect it to Render before that approval.
+# Never add secret values, Firebase Admin keys, customer data paths, or Flutter configuration here.
+
+services:
+  - type: web
+    name: family-os-foundation-staging
+    runtime: node
+    rootDir: backend
+    region: OWNER_REQUIRED_RENDER_REGION
+    plan: OWNER_REQUIRED_WEB_PLAN
+    numInstances: 1
+    autoDeployTrigger: 'off'
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health/live
+    envVars:
+      - key: NODE_ENV
+        value: staging
+      - key: DATABASE_URL
+        fromDatabase:
+          name: family-os-foundation-staging-postgres
+          property: connectionString
+      - key: OIDC_ISSUER
+        sync: false
+      - key: OIDC_AUDIENCE
+        sync: false
+      - key: OIDC_JWKS_URL
+        sync: false
+      - key: GUARDIAN_TRANSFER_TTL_HOURS
+        sync: false
+
+databases:
+  - name: family-os-foundation-staging-postgres
+    region: OWNER_REQUIRED_RENDER_REGION
+    plan: OWNER_REQUIRED_POSTGRES_PLAN
+    ipAllowList: []

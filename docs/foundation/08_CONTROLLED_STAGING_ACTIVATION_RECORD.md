@@ -74,6 +74,8 @@ liveness path: /health/live
 readiness path: /health/ready
 ```
 
+A deliberately non-deployable IaC template lives at `infra/render/foundation-staging.render.yaml.example`. It encodes private database networking, secret placeholders and manual deployment, but cannot be adopted until the ownership records above are accepted.
+
 Migrations run by an authorized operator, exactly once per target database, through `npm run migrate`; application startup must never apply them automatically.
 
 ## 5. Activation sequence
