@@ -43,6 +43,20 @@ npm --prefix backend run verify:staging
 
 It verifies liveness, readiness and denial of missing/invalid credentials only; it carries no valid identity, creates no data and cannot replace this full protocol.
 
+After the baseline passes and only after the four synthetic Firebase Email/Password principals exist, the reviewed authenticated verifier may execute the first **intentional** mutation batch. It prompts for Guardian A and unrelated Principal X Firebase ID tokens without echoing them, creates one synthetic family, and verifies primary access, tenant isolation and idempotency. It is not a replacement for membership, continuity, audit/outbox or operations checks.
+
+On PowerShell, run it from an up-to-date local operator checkout only:
+
+```powershell
+$env:STAGING_EXECUTION_ACK = 'synthetic-authorized-mutations'
+$env:STAGING_API_BASE_URL = 'https://approved-staging-origin'
+npm --prefix backend run verify:staging:authenticated
+Remove-Item Env:STAGING_EXECUTION_ACK
+Remove-Item Env:STAGING_API_BASE_URL
+```
+
+The verifier prints only check names, an opaque family ID and correlation IDs. Never retain or paste its prompted tokens, emails, Firebase subjects, raw request/response bodies or credentials.
+
 ## 3. Runtime truth checks
 
 | ID | Action | Expected result | Failure meaning |
