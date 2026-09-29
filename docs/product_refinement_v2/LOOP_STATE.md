@@ -70,6 +70,7 @@ completed:
   - Manual Render/Firebase connection checklist with disabled auto-deploy, dashboard-only configuration and staging-only one-hour transfer expiry policy
   - Owner decision: create new empty Family OS-specific resources; Guardian-Eye/legacy services, databases, Firebase projects and configuration are excluded from reuse
   - Approved short-lived checkout migration procedure: manual exact-SHA execution with temporary restricted database ingress; startup/build/CI migrations remain prohibited
+  - Synthetic staging runtime preflight: rotated database credential, manual deploy `0915342`, running process, liveness 200 and expected schema-not-ready readiness 503 recorded without secrets
 next_outputs:
   - The Staging Owner manually creates the isolated synthetic Render/Firebase resources and records the provider/execution evidence required by `11_CONTROLLED_STAGING_OPERATOR_CONNECTION_CHECKLIST.md`
   - Execute the staging verification protocol before any connected Flutter work, customer data, public claim or Recovery/Support implementation
