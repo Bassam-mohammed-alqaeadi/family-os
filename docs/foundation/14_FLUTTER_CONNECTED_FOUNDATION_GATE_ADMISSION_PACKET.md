@@ -1,7 +1,7 @@
 # Flutter-connected Foundation — Gate Admission Packet
 
-> **Status:** Owner-approved Go — backend family-discovery implementation and synthetic staging verification passed; Flutter client implementation is blocked by the existing red Flutter CI baseline pending an explicit remediation/isolation decision.
-> **Owner decision:** Go, 2026-10-01.
+> **Status:** Owner-approved Go — backend family-discovery implementation and synthetic staging verification passed; Owner selected the reviewed isolated Foundation Gate CI path. Firebase client configuration and connected client behavior remain blocked pending their entry criteria.
+> **Owner decision:** Go, 2026-10-01; isolated CI path, 2026-10-01.
 > **Decision deadline:** Met on 2026-10-01.
 > **Synthetic-data retention boundary:** 2026-10-31.
 > **Scope authority:** `09_STAGING_VERIFICATION_PROTOCOL.md`, `12_STAGING_EXECUTION_EVIDENCE.md`, `02_CREDENTIAL_INTAKE_AND_FIREBASE_ADMISSION.md`.
@@ -268,7 +268,11 @@ No Flutter client implementation, local Firebase client configuration or gate-sp
 1. **Remediate:** authorize a separately scoped repair of the existing Flutter CI failures until the full Flutter CI is green; or
 2. **Isolate:** authorize a separately reviewed minimal Foundation-gate entry point and dedicated test job with no suppression, deletion or weakening of the existing Flutter CI. The existing red Flutter CI remains explicitly recorded and cannot be described as passing.
 
-Neither option authorizes Production or relaxes the gate's scope/privacy rules. Until the Owner selects a path, this gate is blocked and no Firebase client artifact may be provisioned locally.
+Neither option authorizes Production or relaxes the gate's scope/privacy rules.
+
+**Recorded Owner decision:** the Owner selected **Isolate** on 2026-10-01. The approved isolation work is limited to a dedicated Foundation Gate entry point and `Foundation Gate CI` workflow. That workflow analyzes and tests only the isolated gate paths; it does not suppress, delete, weaken or convert the existing red Flutter CI into a pass. The global Flutter CI remains recorded as red and out of this gate's scope.
+
+No Firebase client artifact may be provisioned locally until the remaining provider-control and local-configuration entry criteria are accepted.
 
 ## 7. UX and error-state contract
 
@@ -297,7 +301,8 @@ A `Go` decision requires all of the following to be accepted and recorded by lab
 - [x] The family-discovery contract was accepted, reviewed, tested, deployed and owner-reported as passing on synthetic staging.
 - [x] The API implementation received backend review, local tests, Backend CI, Credential Guard and controlled staging deployment.
 - [x] Source-only Flutter preflight found no tracked Firebase client configuration and identified the required isolated composition root.
-- [ ] Flutter CI baseline path is explicitly selected: full remediation or separately reviewed isolation. Current Flutter CI is red with a recorded 21-failure baseline; no bypass is accepted.
+- [x] Flutter CI baseline path selected: separately reviewed isolation. Current global Flutter CI remains red with a recorded 21-failure baseline; no bypass is accepted.
+- [ ] Dedicated Foundation Gate CI must pass while analyzing/testing only the isolated paths; this does not change the global Flutter CI status.
 - [ ] Flutter design must name no mutation path, no role-enforcement logic, no cache/offline mode and no telemetry sink.
 - [ ] A named Owner must confirm responsibility for local synthetic identities, emulator cleanup and the retention deadline.
 
