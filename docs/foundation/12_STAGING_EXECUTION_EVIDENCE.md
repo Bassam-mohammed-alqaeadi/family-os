@@ -48,7 +48,7 @@ The following is intentionally unverified and must not be claimed yet:
 
 ## 3. Next controlled operation
 
-The Owner selected a bounded hold for the all-synthetic staging database and remaining synthetic principals through **2026-10-31**. This hold exists only for a separately accepted future Flutter-connected Foundation gate; it does not grant that gate, connected Flutter work, real data, production, Recovery/Support, customer access or a deadline extension.
+The Owner selected a bounded hold for the all-synthetic staging database and remaining synthetic principals through **2026-10-31**. The review-only draft for the separately accepted future Flutter-connected Foundation gate is `14_FLUTTER_CONNECTED_FOUNDATION_GATE_ADMISSION_PACKET.md`. Neither the hold nor that draft grants the gate, connected Flutter work, real data, production, Recovery/Support, customer access or a deadline extension.
 
 At the earlier of gate rejection, withdrawal of this hold, an incident/integrity/provider-lifecycle event, or 2026-10-31, the Owner must:
 
