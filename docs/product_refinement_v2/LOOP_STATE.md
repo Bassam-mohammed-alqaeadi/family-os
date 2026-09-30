@@ -82,9 +82,10 @@ completed:
   - Owner reports audit API role-boundary and read-only PostgreSQL audit/outbox correlation passes; outbox is pending without a consumer and temporary `/32` access was removed
   - Owner reports log-privacy review passed: no sensitive values found; accepted/denied request paths emitted no per-request logs, while correlations remain in API/database evidence
   - Owner reports database-outage truthfulness pass: live remained 200, readiness/protected operations failed closed, and real internal database configuration was restored to healthy 200/200 state
+  - Owner reports disposable-principal valid-unrelated and fresh-sign-in disablement checks; real pre-disable-token expiry evidence remains required because Firebase deletion does not alter JWT `exp`
   - Cross-platform hardening: migration SQL is pinned to LF through Git attributes and source syntax checks no longer rely on CMD shell glob expansion
 next_outputs:
-  - Execute disposable identity-principal lifecycle verification, then remaining rollback/backup-restore operations checks in `09_STAGING_VERIFICATION_PROTOCOL.md` before any connected Flutter work, customer data, public claim or Recovery/Support implementation
+  - Capture actual expiry of a pre-disable Firebase ID token, then execute remaining rollback/backup-restore operations checks in `09_STAGING_VERIFICATION_PROTOCOL.md` before any connected Flutter work, customer data, public claim or Recovery/Support implementation
   - Do not implement lost-account, dispute or support-mediated recovery until the Recovery/Support admission gate is accepted
 blocked_by: Flutter production integration, customer data and all production/release claims remain blocked pending successful synthetic staging verification and Foundation Wave preconditions in `92_EXECUTION_AUTHORIZATION_GATE.md`
 requires_owner_now: manual Render/Firebase dashboard actions and approved encrypted dump store

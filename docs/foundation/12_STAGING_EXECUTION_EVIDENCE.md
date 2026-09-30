@@ -35,13 +35,14 @@
 | Log privacy review | Owner reports no accepted/denied request logs emitted for the reviewed synthetic paths and no sensitive values found. Correlation IDs remain available in API/database evidence rather than mandatory per-request logs. | Pass — reported metadata-minimizing logging behavior |
 | Migration history/advisory lock | Owner reports exact four-entry manifest-attested migration history, advisory-lock acquisition and rejection of a concurrent migration before schema work. Temporary database `/32` access was removed after the check. | Pass — reported operational evidence |
 | Database outage truthfulness | Owner reports controlled unreachable-database configuration resulted in liveness `200`, readiness `503 database_unavailable` and authenticated protected-operation `503 service_not_ready`; the real internal database value was restored and both health endpoints returned `200`. | Pass — reported operational evidence |
+| OIDC principal lifecycle, initial path | Owner reports a disposable synthetic principal was valid-but-unrelated before disablement, fresh sign-in was denied after disablement, no identity fallback was observed and the principal was deleted. | Partial pass — actual pre-disable token expiry evidence remains |
 
 ## 2. Evidence not yet established
 
 The following is intentionally unverified and must not be claimed yet:
 
 - retained non-sensitive migration-name/checksum outcome for migrations `001_foundation.sql` through `004_audit_correlation.sql`;
-- compatible deployment/rollback and identity-principal lifecycle operational checks;
+- compatible deployment/rollback and real pre-disable-token expiry evidence for identity-principal lifecycle;
 - encrypted logical dump/restore drill;
 - synthetic-account/test-data cleanup at the defined lifecycle boundary.
 
