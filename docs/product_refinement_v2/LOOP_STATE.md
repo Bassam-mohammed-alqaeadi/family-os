@@ -85,9 +85,10 @@ completed:
   - Owner reports disposable-principal valid-unrelated, fresh-sign-in disablement and actual pre-disable-token expiry rejection checks, with no identity fallback and post-test deletion
   - Owner reports encrypted-at-rest synthetic logical dump, isolated local Docker restore, manifest/invariant pass and complete `/32`/container/dump cleanup
   - Owner reports compatible pre-`004` application deploy/rollback and post-`004` restoration; liveness/readiness/denied-authentication baseline passed on both without schema or environment change
+  - Owner selected a synthetic-only staging retention hold through 2026-10-31 for a separately accepted future Flutter-connected Foundation gate; no gate, connected Flutter work, real data, Production or deadline extension is authorized by this hold
   - Cross-platform hardening: migration SQL is pinned to LF through Git attributes and source syntax checks no longer rely on CMD shell glob expansion
 next_outputs:
-  - Make and record the final synthetic-principal/test-data lifecycle cleanup decision under `09_STAGING_VERIFICATION_PROTOCOL.md` before any connected Flutter work, customer data, public claim or Recovery/Support implementation
+  - Either accept a separately reviewed Flutter-connected Foundation gate before 2026-10-31, or retire remaining Firebase synthetic principals and replace the synthetic staging database resource under `09_STAGING_VERIFICATION_PROTOCOL.md`; neither path authorizes Production, customer data, public claims or Recovery/Support implementation
   - Do not implement lost-account, dispute or support-mediated recovery until the Recovery/Support admission gate is accepted
 blocked_by: Flutter production integration, customer data and all production/release claims remain blocked pending successful synthetic staging verification and Foundation Wave preconditions in `92_EXECUTION_AUTHORIZATION_GATE.md`
 requires_owner_now: manual Render/Firebase dashboard actions and approved encrypted dump store

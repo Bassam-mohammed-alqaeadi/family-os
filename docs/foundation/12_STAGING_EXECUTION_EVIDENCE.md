@@ -1,6 +1,6 @@
 # Controlled Staging Execution Evidence
 
-> **Status:** Active — final synthetic-data cleanup/lifecycle decision remains; all reviewed Foundation staging evidence is owner-reported complete.
+> **Status:** Controlled retention — all reviewed Foundation staging evidence is owner-reported complete; synthetic-only test data is retained through 2026-10-31 pending a separately accepted Flutter-connected Foundation gate or mandatory cleanup.
 > **Updated:** 2026-10-01
 > **Scope:** Family OS synthetic Foundation staging only. This record contains no database URL, credential, token, Firebase project identifier, test account identifier, raw payload or customer data.
 > **Procedure:** `11_CONTROLLED_STAGING_OPERATOR_CONNECTION_CHECKLIST.md`
@@ -44,16 +44,18 @@
 The following is intentionally unverified and must not be claimed yet:
 
 - retained non-sensitive migration-name/checksum outcome for migrations `001_foundation.sql` through `004_audit_correlation.sql`;
-- synthetic-account/test-data cleanup at the defined lifecycle boundary.
+- deletion/replacement cleanup of retained synthetic principals/test data by 2026-10-31 unless a separately accepted Flutter-connected Foundation gate supersedes this hold.
 
 ## 3. Next controlled operation
 
-After the reported compatible deploy/rollback pass, the next controlled operation is the synthetic-data lifecycle cleanup decision. The Owner must:
+The Owner selected a bounded hold for the all-synthetic staging database and remaining synthetic principals through **2026-10-31**. This hold exists only for a separately accepted future Flutter-connected Foundation gate; it does not grant that gate, connected Flutter work, real data, production, Recovery/Support, customer access or a deadline extension.
+
+At the earlier of gate rejection, withdrawal of this hold, an incident/integrity/provider-lifecycle event, or 2026-10-31, the Owner must:
 
 1. delete or retire all remaining Firebase synthetic test principals through Firebase Dashboard, then record labels/counts and success only — never emails, UIDs, tokens or raw provider output;
 2. never issue direct `DELETE`/`TRUNCATE` statements or manually alter audit, outbox, family, membership, account or migration rows; the Foundation API has no family-erasure endpoint;
-3. choose and record either a time-bounded retention period for the all-synthetic staging database until provider/resource retirement, or a full replacement of the staging database resource under the existing empty-database migration procedure;
-4. if full resource replacement is selected, create no data migration, reuse no credential and rerun only the approved empty-database migration/readiness baseline process with temporary `/32` ingress; and
+3. replace the staging PostgreSQL resource under the existing empty-database migration procedure, with no data migration or credential reuse;
+4. rerun only the approved empty-database migration/readiness baseline process with temporary `/32` ingress, removing it immediately afterward; and
 5. retain no database URL, tokens, emails, Firebase subjects, URLs or raw request/response/log bodies in evidence.
 
 This record proves reported migration execution, post-migration runtime truth, authenticated authorization, membership lifecycle hardening, full guardian-continuity behavior, durable audit/outbox correlation, log privacy, migration locking, database-outage truthfulness, OIDC lifecycle behavior, backup/restore recovery and compatible application rollback. It does not yet prove final synthetic-data lifecycle cleanup, production readiness, Flutter connection or family-protective service operation.
