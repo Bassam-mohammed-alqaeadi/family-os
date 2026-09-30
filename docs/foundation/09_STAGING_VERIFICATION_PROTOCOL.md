@@ -125,6 +125,18 @@ A concurrency result other than exactly one successful invitation and one explic
 | STG-AUD-003 | Confirm audit endpoint authorization as child, co-guardian and primary according to the current policy. | Child denied; permitted guardian result contains only approved audit envelope data. |
 | STG-AUD-004 | Simulate outbox consumer unavailability without changing source state. | Mutation remains durable; no claim that downstream delivery/resolution occurred. |
 
+After API audit authorization passes, the reviewed audit/outbox verifier may inspect exactly one synthetic family/correlation pair through a temporary external database `/32` entry. It starts an explicit `READ ONLY` PostgreSQL transaction and runs only the two correlation queries needed to prove durable one-to-one audit/outbox linkage and pending outbox state. It neither changes source state nor sends delivery work.
+
+On PowerShell, use a fresh local operator checkout and an interactive terminal only:
+
+```powershell
+$env:STAGING_EXECUTION_ACK = 'synthetic-read-only-database-evidence'
+npm --prefix backend run verify:staging:audit-outbox
+Remove-Item Env:STAGING_EXECUTION_ACK
+```
+
+It prompts without echo for the external staging database URL, an opaque synthetic family ID and one server-generated mutation correlation ID. It prints check names and row counts only. Remove the `/32` entry immediately after it completes, successful or not; do not use this access for a database correction or a manual query batch.
+
 ## 8. Migration, backup and rollback checks
 
 | ID | Action | Expected authoritative result |

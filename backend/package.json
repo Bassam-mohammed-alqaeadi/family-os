@@ -14,7 +14,8 @@
     "migrate": "node src/migrate.js",
     "verify:staging": "node scripts/verify-staging-foundation.mjs",
     "verify:staging:authenticated": "node scripts/verify-staging-authenticated.mjs",
-    "verify:staging:membership": "node scripts/verify-staging-membership-lifecycle.mjs"
+    "verify:staging:membership": "node scripts/verify-staging-membership-lifecycle.mjs",
+    "verify:staging:audit-outbox": "node scripts/verify-staging-audit-outbox.mjs"
   },
   "dependencies": {
     "express": "^5.2.1",
