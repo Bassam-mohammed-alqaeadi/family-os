@@ -270,7 +270,7 @@ No Flutter client implementation, local Firebase client configuration or gate-sp
 
 Neither option authorizes Production or relaxes the gate's scope/privacy rules.
 
-**Recorded Owner decision:** the Owner selected **Isolate** on 2026-10-01. The approved isolation work is limited to a dedicated Foundation Gate entry point and `Foundation Gate CI` workflow. That workflow analyzes and tests only the isolated gate paths; it does not suppress, delete, weaken or convert the existing red Flutter CI into a pass. The global Flutter CI remains recorded as red and out of this gate's scope.
+**Recorded Owner decision:** the Owner selected **Isolate** on 2026-10-01. The approved isolation work is limited to a dedicated Foundation Gate entry point and `Foundation Gate CI` workflow. The isolated entry point and its dedicated CI passed after review; the workflow analyzes and tests only the isolated gate paths. It does not suppress, delete, weaken or convert the existing red Flutter CI into a pass. The global Flutter CI remains recorded as red and out of this gate's scope.
 
 No Firebase client artifact may be provisioned locally until the remaining provider-control and local-configuration entry criteria are accepted.
 
@@ -302,7 +302,7 @@ A `Go` decision requires all of the following to be accepted and recorded by lab
 - [x] The API implementation received backend review, local tests, Backend CI, Credential Guard and controlled staging deployment.
 - [x] Source-only Flutter preflight found no tracked Firebase client configuration and identified the required isolated composition root.
 - [x] Flutter CI baseline path selected: separately reviewed isolation. Current global Flutter CI remains red with a recorded 21-failure baseline; no bypass is accepted.
-- [ ] Dedicated Foundation Gate CI must pass while analyzing/testing only the isolated paths; this does not change the global Flutter CI status.
+- [x] Dedicated Foundation Gate CI passed while analyzing/testing only the isolated paths; this does not change the global Flutter CI status.
 - [ ] Flutter design must name no mutation path, no role-enforcement logic, no cache/offline mode and no telemetry sink.
 - [ ] A named Owner must confirm responsibility for local synthetic identities, emulator cleanup and the retention deadline.
 

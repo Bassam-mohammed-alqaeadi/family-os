@@ -1,6 +1,6 @@
 # Controlled Staging Execution Evidence
 
-> **Status:** Controlled retention — Foundation staging and the server-side family-discovery gate are owner-reported complete; the Owner selected an isolated Foundation Gate CI path, while Firebase client configuration and connected behavior remain pending.
+> **Status:** Controlled retention — Foundation staging, server-side family discovery and isolated Foundation Gate CI are complete; Firebase client configuration and connected behavior remain pending.
 > **Updated:** 2026-10-01
 > **Scope:** Family OS synthetic Foundation staging only. This record contains no database URL, credential, token, Firebase project identifier, test account identifier, raw payload or customer data.
 > **Procedure:** `11_CONTROLLED_STAGING_OPERATOR_CONNECTION_CHECKLIST.md`
