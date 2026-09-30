@@ -14,10 +14,7 @@ class FoundationGateApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: Scaffold(
         body: Center(
-          child: Semantics(
-            header: true,
-            child: Text('Foundation Gate is not configured.'),
-          ),
+          child: Text('Foundation Gate is not configured.'),
         ),
       ),
     );
