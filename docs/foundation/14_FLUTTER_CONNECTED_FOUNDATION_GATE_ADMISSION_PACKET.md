@@ -306,9 +306,9 @@ A `Go` decision requires all of the following to be accepted and recorded by lab
 - [x] Dedicated Foundation Gate CI passed while analyzing/testing only the isolated paths; this does not change the global Flutter CI status.
 - [x] Owner accepted `15_FLUTTER_CONNECTED_FOUNDATION_IMPLEMENTATION_PLAN.md` without scope expansion.
 - [x] Isolated implementation and its no-mutation/no-cache/no-telemetry tests passed in Foundation Gate CI run `36790433385` on 2026-10-01.
-- [ ] A named Owner must confirm responsibility for local synthetic identities, emulator cleanup and the retention deadline.
+- [x] Owner confirmed responsibility for local synthetic identities, emulator cleanup and the 2026-10-31 retention deadline on 2026-10-01; no identifying or configuration detail is recorded.
 
-Any unchecked entry criterion is a `No-Go` for manual connected verification. The bounded local procedure is `16_LOCAL_ANDROID_EMULATOR_FOUNDATION_VERIFICATION.md`; it does not authorize a scope change.
+The remaining connected-verification control is the Owner-only procedure in `16_LOCAL_ANDROID_EMULATOR_FOUNDATION_VERIFICATION.md`; it does not authorize a scope change.
 
 ## 9. Success criteria for the later connected verification
 
