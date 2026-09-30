@@ -4,7 +4,7 @@
 
 ```yaml
 program_status: FOUNDATION_WAVE_AUTHORIZED
-last_updated: 2026-09-29
+last_updated: 2026-10-01
 current_pillar: PLATFORM_FOUNDATION
 current_card: FOUNDATION-WAVE-3-CONTROLLED-STAGING-ACTIVATION
 completed:
@@ -83,9 +83,10 @@ completed:
   - Owner reports log-privacy review passed: no sensitive values found; accepted/denied request paths emitted no per-request logs, while correlations remain in API/database evidence
   - Owner reports database-outage truthfulness pass: live remained 200, readiness/protected operations failed closed, and real internal database configuration was restored to healthy 200/200 state
   - Owner reports disposable-principal valid-unrelated, fresh-sign-in disablement and actual pre-disable-token expiry rejection checks, with no identity fallback and post-test deletion
+  - Owner reports encrypted-at-rest synthetic logical dump, isolated local Docker restore, manifest/invariant pass and complete `/32`/container/dump cleanup
   - Cross-platform hardening: migration SQL is pinned to LF through Git attributes and source syntax checks no longer rely on CMD shell glob expansion
 next_outputs:
-  - Select a temporary encrypted restore target, then execute backup/restore and compatible rollback operations checks in `09_STAGING_VERIFICATION_PROTOCOL.md` before any connected Flutter work, customer data, public claim or Recovery/Support implementation
+  - Execute compatible application deploy/rollback for the existing additive `004_audit_correlation.sql` revision, then perform final synthetic-data cleanup under `09_STAGING_VERIFICATION_PROTOCOL.md` before any connected Flutter work, customer data, public claim or Recovery/Support implementation
   - Do not implement lost-account, dispute or support-mediated recovery until the Recovery/Support admission gate is accepted
 blocked_by: Flutter production integration, customer data and all production/release claims remain blocked pending successful synthetic staging verification and Foundation Wave preconditions in `92_EXECUTION_AUTHORIZATION_GATE.md`
 requires_owner_now: manual Render/Firebase dashboard actions and approved encrypted dump store

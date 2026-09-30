@@ -1,7 +1,7 @@
 # Controlled Staging Execution Evidence
 
-> **Status:** Active — runtime, authentication/authorization, membership hardening and immediate guardian-continuity checks reported; remaining continuity, audit/outbox and operations verification pending.
-> **Updated:** 2026-09-29
+> **Status:** Active — controlled rollback and final synthetic-data cleanup remain; all other reviewed Foundation staging evidence is owner-reported complete.
+> **Updated:** 2026-10-01
 > **Scope:** Family OS synthetic Foundation staging only. This record contains no database URL, credential, token, Firebase project identifier, test account identifier, raw payload or customer data.
 > **Procedure:** `11_CONTROLLED_STAGING_OPERATOR_CONNECTION_CHECKLIST.md`
 
@@ -36,24 +36,24 @@
 | Migration history/advisory lock | Owner reports exact four-entry manifest-attested migration history, advisory-lock acquisition and rejection of a concurrent migration before schema work. Temporary database `/32` access was removed after the check. | Pass — reported operational evidence |
 | Database outage truthfulness | Owner reports controlled unreachable-database configuration resulted in liveness `200`, readiness `503 database_unavailable` and authenticated protected-operation `503 service_not_ready`; the real internal database value was restored and both health endpoints returned `200`. | Pass — reported operational evidence |
 | OIDC principal lifecycle | Owner reports a disposable synthetic principal was valid-but-unrelated before disablement, fresh sign-in was denied after disablement, the same pre-disable token reached actual expiry and was rejected, no identity fallback was observed, and the principal was deleted. | Pass — reported stateless-JWT lifecycle evidence |
+| Encrypted logical backup/restore | Owner reports an encrypted-at-rest synthetic logical dump using a temporary `/32`, isolated local Docker restore, manifest-attested history, guardian/primary and audit/outbox invariant passes, followed by `/32`, container and dump cleanup. | Pass — reported recovery-drill evidence |
 
 ## 2. Evidence not yet established
 
 The following is intentionally unverified and must not be claimed yet:
 
 - retained non-sensitive migration-name/checksum outcome for migrations `001_foundation.sql` through `004_audit_correlation.sql`;
-- compatible deployment/rollback operational evidence;
-- encrypted logical dump/restore drill;
+- compatible deployment/rollback operational evidence for the existing additive `004_audit_correlation.sql` revision;
 - synthetic-account/test-data cleanup at the defined lifecycle boundary.
 
 ## 3. Next controlled operation
 
-After the reported identity lifecycle pass, the next controlled operation is the encrypted synthetic logical backup/restore drill under `09_STAGING_VERIFICATION_PROTOCOL.md`. The Owner must:
+After the reported backup/restore pass, the next controlled operation is a compatible deploy/rollback for the existing additive `004_audit_correlation.sql` revision under `09_STAGING_VERIFICATION_PROTOCOL.md`. The Owner must:
 
-1. select a temporary encrypted restore target before creating a dump; the current staging database cannot be altered or reset merely to test restore;
-2. use temporary `/32` database ingress only for the operator-controlled dump/restore process, remove it immediately afterward, and never use public ingress;
+1. deploy the approved pre-`004` API revision to the unchanged synthetic staging database; this is an application rollback only, never a schema rollback or manual database change;
+2. prove staging liveness, readiness and the non-mutating denied-authentication baseline on that revision, then return to the reviewed current revision and prove the same health/baseline checks;
 3. retain no database URL, dump contents, tokens, email addresses, Firebase subjects, URLs or raw request/response/log bodies in evidence;
-4. record only backup/restore pass/fail, manifest history result, authorization-invariant result, destruction/cleanup status and timestamp; and
-5. stop on any dump encryption, restore, schema, authorization-invariant, connection or cleanup failure.
+4. record only deployed revision labels, health/baseline pass/fail, restoration status, timestamps and any non-sensitive error code; and
+5. stop on any deployment, readiness, authentication-baseline or restoration failure.
 
-This record proves reported migration execution, post-migration runtime truth, authenticated authorization, membership lifecycle hardening, full guardian-continuity behavior, durable audit/outbox correlation, log privacy, migration locking, database-outage truthfulness and OIDC lifecycle behavior. It does not yet prove backup/restore operational recovery, production readiness, Flutter connection or family-protective service operation.
+This record proves reported migration execution, post-migration runtime truth, authenticated authorization, membership lifecycle hardening, full guardian-continuity behavior, durable audit/outbox correlation, log privacy, migration locking, database-outage truthfulness, OIDC lifecycle behavior and backup/restore recovery. It does not yet prove compatible deployment/rollback, final synthetic-data cleanup, production readiness, Flutter connection or family-protective service operation.
