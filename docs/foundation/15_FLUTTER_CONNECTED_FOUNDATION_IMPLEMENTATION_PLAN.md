@@ -2,7 +2,7 @@
 
 > **Status:** Owner-accepted and implemented — isolated Foundation Gate CI passed; local Firebase configuration and manual connected verification remain separately controlled.
 > **Owner decision:** Accept, 2026-10-01; scope changes: none.
-> **Implementation evidence:** Server-side `GET /v1/me/families` is deployed and owner-reported passing on synthetic staging. The isolated implementation passed Foundation Gate CI run `36790433385` on 2026-10-01, including committed-lock installation/consistency, analysis and isolated tests. The legacy global Flutter CI remains explicitly red and out of this slice's scope.
+> **Implementation evidence:** Server-side `GET /v1/me/families` is deployed and owner-reported passing on synthetic staging. The isolated implementation passed Foundation Gate CI run `36791206030` on 2026-10-01, including committed-lock installation/consistency, analysis and isolated tests. The legacy global Flutter CI remains explicitly red and out of this slice's scope.
 > **Local procedure:** `16_LOCAL_ANDROID_EMULATOR_FOUNDATION_VERIFICATION.md`; it contains no configuration values and may be used only by the Owner on the approved workstation.
 > **Scope authority:** `14_FLUTTER_CONNECTED_FOUNDATION_GATE_ADMISSION_PACKET.md`.
 
@@ -184,7 +184,7 @@ Never record emails, passwords, tokens, family IDs, API origin, Firebase identif
 - [x] Firebase provider controls and encrypted-workstation readiness are confirmed in `14_FLUTTER_CONNECTED_FOUNDATION_GATE_ADMISSION_PACKET.md`.
 - [x] Precise ignored local configuration paths and Credential Guard remain effective.
 - [x] Dependency/package review is complete; the resolved package lock is tracked.
-- [x] Isolated implementation and all listed tests passed in Foundation Gate CI run `36790433385` on 2026-10-01.
+- [x] Isolated implementation and all listed tests passed in Foundation Gate CI run `36791206030` on 2026-10-01.
 - [x] No Firebase/local configuration material is tracked or has been supplied outside the Owner workstation.
 - [ ] Owner-only manual Android-emulator synthetic verification passes under `16_LOCAL_ANDROID_EMULATOR_FOUNDATION_VERIFICATION.md`.
 - [ ] Gate evidence is reviewed before considering any second API read or broader Flutter scope.

@@ -305,7 +305,7 @@ A `Go` decision requires all of the following to be accepted and recorded by lab
 - [x] Flutter CI baseline path selected: separately reviewed isolation. Current global Flutter CI remains red with a recorded 21-failure baseline; no bypass is accepted.
 - [x] Dedicated Foundation Gate CI passed while analyzing/testing only the isolated paths; this does not change the global Flutter CI status.
 - [x] Owner accepted `15_FLUTTER_CONNECTED_FOUNDATION_IMPLEMENTATION_PLAN.md` without scope expansion.
-- [x] Isolated implementation and its no-mutation/no-cache/no-telemetry tests passed in Foundation Gate CI run `36790433385` on 2026-10-01.
+- [x] Isolated implementation and its no-mutation/no-cache/no-telemetry tests passed in Foundation Gate CI run `36791206030` on 2026-10-01.
 - [x] Owner confirmed responsibility for local synthetic identities, emulator cleanup and the 2026-10-31 retention deadline on 2026-10-01; no identifying or configuration detail is recorded.
 
 The remaining connected-verification control is the Owner-only procedure in `16_LOCAL_ANDROID_EMULATOR_FOUNDATION_VERIFICATION.md`; it does not authorize a scope change.
