@@ -45,6 +45,17 @@ jobs:
       - name: Generate localization source
         run: flutter gen-l10n
       - name: Analyze isolated gate
-        run: flutter analyze --fatal-infos lib/foundation_gate test/foundation_gate
+        id: analyze
+        continue-on-error: true
+        run: |
+          mkdir -p build/ci
+          set -o pipefail
+          flutter analyze --fatal-infos lib/foundation_gate test/foundation_gate 2>&1 | tee build/ci/foundation-gate-analyze.txt
       - name: Run isolated gate tests
+        if: steps.analyze.outcome == 'success'
         run: flutter test test/foundation_gate
+      - name: Enforce isolated analysis gate
+        if: always() && steps.analyze.outcome == 'failure'
+        run: |
+          cat build/ci/foundation-gate-analyze.txt
+          exit 1
