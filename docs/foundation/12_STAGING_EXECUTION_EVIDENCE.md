@@ -31,26 +31,26 @@
 | Guardian continuity, immediate path | Owner reports successful pending transfer creation, unapproved acceptance denial, nominated co-guardian acceptance with role transition, former-primary authority denial and transfer cancellation. No API URL, resource ID, membership ID, token or raw response is retained here. | Partial pass — post-cancel, expiry and race checks remain |
 | Guardian continuity, terminal/race path | Owner reports expected cancelled-transfer, one-hour-expiry and second-pending-transfer conflicts. The accept/cancel race completed safely with the former primary denied after the accepted transfer. A fresh accept/remove race completed with accepted transfer, stale former-primary denial and exactly one primary guardian. | Pass — reported full Guardian Continuity protocol |
 | Audit API authorization | Owner reports audit-envelope access allowed to synthetic primary/co-guardian and denied to synthetic child/unrelated principal, with correlation IDs present. No API URL, family ID, token, subject or event payload is retained here. | Pass — reported API-boundary evidence |
+| Audit/outbox durable correlation | Owner reports a read-only verifier pass for one synthetic mutation correlation: one durable audit event, one durable outbox event, one-to-one linkage, preserved server correlation and pending outbox state. Temporary database `/32` access was removed after the check. | Pass — reported database-boundary evidence |
 
 ## 2. Evidence not yet established
 
 The following is intentionally unverified and must not be claimed yet:
 
 - retained non-sensitive migration-name/checksum outcome for migrations `001_foundation.sql` through `004_audit_correlation.sql`;
-- read-only database proof that synthetic mutation correlation IDs join durable audit events to durable outbox events, with no claim of downstream delivery;
 - log privacy review for the synthetic mutation/error paths;
+- migration-lock, compatible deployment/rollback, database-unavailability and identity-revocation operational checks;
 - encrypted logical dump/restore drill;
 - synthetic-account/test-data cleanup at the defined lifecycle boundary.
 
 ## 3. Next controlled operation
 
-After the reported membership and full guardian-continuity passes, the next controlled operation is audit/outbox/correlation verification under `09_STAGING_VERIFICATION_PROTOCOL.md`. The Owner must:
+After the reported audit/outbox pass, the next controlled operation is privacy/log review followed by operations verification under `09_STAGING_VERIFICATION_PROTOCOL.md`. The Owner must:
 
-1. retain only completed check names, opaque resource identifiers, HTTP status/error codes, correlation identifiers, timestamps and pass/fail status;
-2. verify guardian and child audit-endpoint authorization over a synthetic family and record only envelope/status evidence;
-3. use a short-lived `/32` database allow-list entry only if direct read-only database evidence is required to correlate the already-recorded server correlation IDs with audit/outbox records; remove `/32` immediately afterward and do not issue direct data corrections;
-4. simulate downstream outbox-consumer unavailability without changing source family state;
-5. retain no tokens, email addresses, Firebase subjects or raw request/response bodies in evidence; and
-6. stop on any authorization, audit/outbox, correlation, connection or runtime-truth failure.
+1. inspect only the relevant Render log metadata for synthetic accepted/denied/error paths and confirm it contains status/error class/request/correlation metadata only — never paste raw log lines into evidence;
+2. stop and rotate/remediate if a bearer token, password, Firebase subject, database URL, raw family payload or audit/outbox payload appears;
+3. then execute the migration-lock, database-unavailability, OIDC-principal lifecycle and encrypted synthetic backup/restore operations checks one at a time;
+4. retain no tokens, email addresses, Firebase subjects, URLs or raw request/response/log bodies in evidence; and
+5. stop on any authorization, audit/outbox, correlation, connection, recovery or runtime-truth failure.
 
-This record proves reported migration execution, post-migration runtime truth, authenticated authorization, membership lifecycle hardening and full guardian-continuity behavior. It does not yet prove audit/outbox integrity, operational recovery, production readiness, Flutter connection or family-protective service operation.
+This record proves reported migration execution, post-migration runtime truth, authenticated authorization, membership lifecycle hardening, full guardian-continuity behavior and durable audit/outbox correlation. It does not yet prove log privacy, operational recovery, production readiness, Flutter connection or family-protective service operation.
