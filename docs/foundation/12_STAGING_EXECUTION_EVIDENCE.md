@@ -1,6 +1,6 @@
 # Controlled Staging Execution Evidence
 
-> **Status:** Controlled retention — all reviewed Foundation staging evidence is owner-reported complete; synthetic-only test data is retained through 2026-10-31 pending a separately accepted Flutter-connected Foundation gate or mandatory cleanup.
+> **Status:** Controlled retention — Foundation staging and the server-side family-discovery gate are owner-reported complete; Flutter local-configuration preflight remains before any client implementation.
 > **Updated:** 2026-10-01
 > **Scope:** Family OS synthetic Foundation staging only. This record contains no database URL, credential, token, Firebase project identifier, test account identifier, raw payload or customer data.
 > **Procedure:** `11_CONTROLLED_STAGING_OPERATOR_CONNECTION_CHECKLIST.md`
@@ -38,6 +38,7 @@
 | OIDC principal lifecycle | Owner reports a disposable synthetic principal was valid-but-unrelated before disablement, fresh sign-in was denied after disablement, the same pre-disable token reached actual expiry and was rejected, no identity fallback was observed, and the principal was deleted. | Pass — reported stateless-JWT lifecycle evidence |
 | Encrypted logical backup/restore | Owner reports an encrypted-at-rest synthetic logical dump using a temporary `/32`, isolated local Docker restore, manifest-attested history, guardian/primary and audit/outbox invariant passes, followed by `/32`, container and dump cleanup. | Pass — reported recovery-drill evidence |
 | Compatible application deploy/rollback | Owner reports successful manual deployment of the approved pre-`004` API revision and restored post-`004` revision, with liveness/readiness and denied-authentication baseline passing on both; no schema migration or environment change occurred. | Pass — reported additive-schema compatibility evidence |
+| Family discovery API gate | Owner reports deployment of the reviewed `GET /v1/me/families` revision; liveness/readiness, active-guardian minimal discovery, unexpected-query rejection and unrelated-principal empty result all passed with no schema or environment change. | Pass — reported server-side Flutter-gate prerequisite |
 
 ## 2. Evidence not yet established
 
@@ -48,7 +49,7 @@ The following is intentionally unverified and must not be claimed yet:
 
 ## 3. Next controlled operation
 
-The Owner selected a bounded hold for the all-synthetic staging database and remaining synthetic principals through **2026-10-31**. The Owner accepted a limited Go for backend family-discovery API implementation and verification first under `14_FLUTTER_CONNECTED_FOUNDATION_GATE_ADMISSION_PACKET.md`. Flutter remains blocked until that API work is reviewed, deployed and proven on synthetic staging. Neither the hold nor the limited Go grants real data, production, Recovery/Support, customer access or a deadline extension.
+The Owner selected a bounded hold for the all-synthetic staging database and remaining synthetic principals through **2026-10-31**. The Owner accepted a limited Go under `14_FLUTTER_CONNECTED_FOUNDATION_GATE_ADMISSION_PACKET.md`; its server-side family-discovery prerequisite is now reported as passed. The next controlled operation is Flutter local-configuration preflight, not client implementation: provider controls and untracked local configuration handling must be confirmed before any Firebase client artifact is provisioned. Neither the hold nor the limited Go grants real data, production, Recovery/Support, customer access or a deadline extension.
 
 At the earlier of gate rejection, withdrawal of this hold, an incident/integrity/provider-lifecycle event, or 2026-10-31, the Owner must:
 

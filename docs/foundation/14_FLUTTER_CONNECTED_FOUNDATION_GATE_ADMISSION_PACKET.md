@@ -1,6 +1,6 @@
 # Flutter-connected Foundation — Gate Admission Packet
 
-> **Status:** Owner-approved Go — backend family-discovery API implementation and verification only; Flutter remains blocked pending this API work's review.
+> **Status:** Owner-approved Go — backend family-discovery implementation and synthetic staging verification passed; Flutter local-configuration preflight is pending before client implementation.
 > **Owner decision:** Go, 2026-10-01.
 > **Decision deadline:** Met on 2026-10-01.
 > **Synthetic-data retention boundary:** 2026-10-31.
@@ -168,7 +168,11 @@ Before any Flutter client uses the endpoint, backend work must include:
 
 The approved backend branch must pass Credential Guard and Backend CI before deployment. Any staging operation remains synthetic-only and uses the existing controlled release procedure.
 
-After the approved revision is manually deployed to staging, execute the reviewed read-only discovery verifier from a fresh local checkout and interactive terminal only:
+### 4.5 Recorded server-side completion
+
+Owner reports that the reviewed family-discovery revision was deployed to synthetic staging and passed liveness/readiness, minimal active-guardian discovery, unexpected-query rejection and unrelated-principal empty-result checks, with no schema or environment change. This completes the server-side prerequisite only. It does not establish Firebase client configuration, Flutter token handling or a connected client experience.
+
+After an approved revision is manually deployed to staging, execute the reviewed read-only discovery verifier from a fresh local checkout and interactive terminal only:
 
 ```powershell
 $env:STAGING_EXECUTION_ACK = 'synthetic-read-only-family-discovery'
@@ -268,15 +272,15 @@ No server error body, token claim, correlation ID, family ID, email address or F
 
 A `Go` decision requires all of the following to be accepted and recorded by label/status only:
 
-- [ ] Owner accepts this packet's Android-emulator, synthetic-only, read-only scope.
-- [ ] Owner accepts the 2026-10-15 decision deadline and 2026-10-31 cleanup boundary.
-- [ ] Firebase client configuration policy is accepted, including no Git/CI/chat/log handling and local removal requirement.
-- [ ] Provider controls in section 5.3 are confirmed without recording configuration values.
-- [ ] The exact approved staging API origin is manually provisioned locally without being committed or reported.
-- [ ] The proposed family-discovery contract is accepted or explicitly rejected with an alternative server-authoritative bootstrap design.
-- [ ] Any API implementation receives separate backend review, tests, CI and controlled staging deployment.
-- [ ] Flutter design names no mutation path, no role-enforcement logic, no cache/offline mode and no telemetry sink.
-- [ ] A named Owner accepts responsibility for local synthetic identities, emulator cleanup and the retention deadline.
+- [x] Owner accepted this packet's Android-emulator, synthetic-only, read-only scope.
+- [x] Owner accepted the 2026-10-15 decision deadline and 2026-10-31 cleanup boundary.
+- [x] Firebase client configuration policy was accepted, including no Git/CI/chat/log handling and local removal requirement.
+- [ ] Provider controls in section 5.3 must be confirmed without recording configuration values.
+- [ ] The exact approved staging API origin must be manually provisioned locally without being committed or reported.
+- [x] The family-discovery contract was accepted, reviewed, tested, deployed and owner-reported as passing on synthetic staging.
+- [x] The API implementation received backend review, local tests, Backend CI, Credential Guard and controlled staging deployment.
+- [ ] Flutter design must name no mutation path, no role-enforcement logic, no cache/offline mode and no telemetry sink.
+- [ ] A named Owner must confirm responsibility for local synthetic identities, emulator cleanup and the retention deadline.
 
 Any unchecked entry criterion is a `No-Go` for implementation.
 
