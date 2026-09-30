@@ -272,7 +272,7 @@ Neither option authorizes Production or relaxes the gate's scope/privacy rules.
 
 **Recorded Owner decision:** the Owner selected **Isolate** on 2026-10-01. The approved isolation work is limited to a dedicated Foundation Gate entry point and `Foundation Gate CI` workflow. The isolated entry point and its dedicated CI passed after review; the workflow analyzes and tests only the isolated gate paths. It does not suppress, delete, weaken or convert the existing red Flutter CI into a pass. The global Flutter CI remains recorded as red and out of this gate's scope.
 
-No Firebase client artifact may be provisioned locally until the remaining provider-control and local-configuration entry criteria are accepted.
+No Firebase client artifact may be provisioned locally until the isolated implementation plan and remaining local-configuration entry criteria are accepted.
 
 ## 7. UX and error-state contract
 
@@ -296,8 +296,9 @@ A `Go` decision requires all of the following to be accepted and recorded by lab
 - [x] Owner accepted this packet's Android-emulator, synthetic-only, read-only scope.
 - [x] Owner accepted the 2026-10-15 decision deadline and 2026-10-31 cleanup boundary.
 - [x] Firebase client configuration policy was accepted, including no Git/CI/chat/log handling and local removal requirement.
-- [ ] Provider controls in section 5.3 must be confirmed without recording configuration values.
-- [ ] The exact approved staging API origin must be manually provisioned locally without being committed or reported.
+- [x] Owner confirms provider controls in section 5.3 without recording configuration values.
+- [x] Owner confirms an encrypted, non-cloud-synced Android-emulator workstation is ready; no local Firebase client artifact has been provisioned or reported.
+- [ ] The exact approved staging API origin must be manually provisioned locally without being committed or reported, and only after the isolated implementation plan is accepted.
 - [x] The family-discovery contract was accepted, reviewed, tested, deployed and owner-reported as passing on synthetic staging.
 - [x] The API implementation received backend review, local tests, Backend CI, Credential Guard and controlled staging deployment.
 - [x] Source-only Flutter preflight found no tracked Firebase client configuration and identified the required isolated composition root.
