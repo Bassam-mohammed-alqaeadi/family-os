@@ -44,14 +44,14 @@ jobs:
         run: flutter pub get
       - name: Generate localization source
         run: flutter gen-l10n
-      - name: Upload resolved dependency lock
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: foundation-gate-pubspec-lock-${{ github.run_id }}
-          path: app/pubspec.lock
-          if-no-files-found: error
-          retention-days: 1
+      - name: Emit resolved dependency lock for tracked update
+        run: |
+          index=0
+          while IFS= read -r chunk; do
+            index=$((index + 1))
+            echo "::notice title=Foundation gate lock part ${index}::${chunk}"
+          done < <(base64 --wrap=3500 pubspec.lock)
+          echo "::notice title=Foundation gate lock parts::${index}"
       - name: Analyze isolated gate
         id: analyze
         continue-on-error: true
