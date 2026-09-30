@@ -78,9 +78,10 @@ completed:
   - Four Firebase Email/Password synthetic principals report successful sign-in/token issuance; this proves authentication availability only, not Family OS role assignment or authorization
   - Owner reports successful synthetic primary-family/tenant-isolation/idempotency checks, co-guardian/child invitation-acceptance paths and the ten-check membership hardening verifier; no raw identifiers or tokens are retained
   - Authenticated verifiers were run through local interactive hidden prompts only; Firebase tokens, synthetic passwords and Firebase credentials did not enter CI/CD, source control or retained logs
+  - Owner reports Guardian Continuity create/unauthorized-denial/acceptance/former-primary-denial/cancellation checks; cancellation-acceptance denial, one-hour expiry and controlled conflict checks remain
   - Cross-platform hardening: migration SQL is pinned to LF through Git attributes and source syntax checks no longer rely on CMD shell glob expansion
 next_outputs:
-  - Execute guardian-continuity, audit/outbox and operations checks in `09_STAGING_VERIFICATION_PROTOCOL.md` before any connected Flutter work, customer data, public claim or Recovery/Support implementation
+  - Complete Guardian Continuity post-cancel, expiry and race checks, then execute audit/outbox and operations checks in `09_STAGING_VERIFICATION_PROTOCOL.md` before any connected Flutter work, customer data, public claim or Recovery/Support implementation
   - Do not implement lost-account, dispute or support-mediated recovery until the Recovery/Support admission gate is accepted
 blocked_by: Flutter production integration, customer data and all production/release claims remain blocked pending successful synthetic staging verification and Foundation Wave preconditions in `92_EXECUTION_AUTHORIZATION_GATE.md`
 requires_owner_now: manual Render/Firebase dashboard actions and approved encrypted dump store

@@ -1,6 +1,6 @@
 # Controlled Staging Execution Evidence
 
-> **Status:** Active — post-migration runtime and non-mutating baseline pass reported; authenticated synthetic verification pending.
+> **Status:** Active — runtime, authentication/authorization, membership hardening and immediate guardian-continuity checks reported; remaining continuity, audit/outbox and operations verification pending.
 > **Updated:** 2026-09-29
 > **Scope:** Family OS synthetic Foundation staging only. This record contains no database URL, credential, token, Firebase project identifier, test account identifier, raw payload or customer data.
 > **Procedure:** `11_CONTROLLED_STAGING_OPERATOR_CONNECTION_CHECKLIST.md`
@@ -28,24 +28,27 @@
 | Membership happy paths | Owner reports primary invitation and exact-principal acceptance for synthetic co-guardian and child membership, plus unrelated-principal membership denial. | Pass — reported |
 | Membership hardening | Owner reports that the ten-check reviewed membership lifecycle verifier passed, including revocation/removal, authority boundaries and controlled concurrent-invitation behavior. No API URL, resource ID, token, email, subject or raw response is retained here. | Pass — reported |
 | Token/CI handling | Owner confirms that authenticated checks used local interactive hidden prompts only. No Firebase ID token, synthetic password or Firebase Web API key entered CI/CD, source control or retained logs. | Pass — interactive-only boundary confirmed |
+| Guardian continuity, immediate path | Owner reports successful pending transfer creation, unapproved acceptance denial, nominated co-guardian acceptance with role transition, former-primary authority denial and transfer cancellation. No API URL, resource ID, membership ID, token or raw response is retained here. | Partial pass — post-cancel, expiry and race checks remain |
 
 ## 2. Evidence not yet established
 
 The following is intentionally unverified and must not be claimed yet:
 
 - retained non-sensitive migration-name/checksum outcome for migrations `001_foundation.sql` through `004_audit_correlation.sql`;
-- Firebase synthetic-principal token verification;
-- guardian-continuity, audit/outbox and correlation protocol checks;
+- guardian-continuity post-cancellation acceptance denial, one-hour expiry/no-role-change behavior and controlled race behavior;
+- audit/outbox and correlation protocol checks;
 - encrypted logical dump/restore drill;
 - synthetic-account/test-data cleanup at the defined lifecycle boundary.
 
 ## 3. Next controlled operation
 
-After the reported migration/runtime/baseline pass, the next controlled operation is authenticated synthetic verification under `09_STAGING_VERIFICATION_PROTOCOL.md`. The Owner must:
+After the reported membership and immediate guardian-continuity passes, the next controlled operation is to complete guardian continuity under `09_STAGING_VERIFICATION_PROTOCOL.md`. The Owner must:
 
-1. retain only the completed check names, opaque resource identifiers, HTTP status/error codes, correlation identifiers, timestamps and pass/fail status;
-2. execute the remaining membership hardening checks before any guardian-transfer mutation: revoke a pending invitation, deny later acceptance, remove an active child and confirm immediate access loss, deny co-guardian escalation/removal authority, deny ordinary primary removal, and test controlled conflicting mutations;
-3. retain no tokens, email addresses, Firebase subjects or raw request/response bodies in evidence; and
-4. stop on any authorization, tenant-isolation, idempotency, lifecycle, audit/outbox or runtime-truth failure.
+1. retain only completed check names, opaque resource identifiers, HTTP status/error codes, correlation identifiers, timestamps and pass/fail status;
+2. attempt acceptance of the cancelled transfer and require `409 guardian_transfer_not_actionable`;
+3. create a separate synthetic pending transfer, wait the configured one-hour TTL without changing clock, database or configuration, then require `409 guardian_transfer_expired` and no role/reference change;
+4. run controlled acceptance-versus-cancel/removal/another-transfer conflict tests and stop if a terminal state, role invariant or status is unexpected;
+5. retain no tokens, email addresses, Firebase subjects or raw request/response bodies in evidence; and
+6. stop on any authorization, tenant-isolation, idempotency, lifecycle, audit/outbox or runtime-truth failure.
 
-This record proves reported migration execution, post-migration runtime truth and a non-mutating denied-authentication baseline only. It does not yet prove a connected, identity-verified, production-ready, Flutter-connected or family-protective service.
+This record proves reported migration execution, post-migration runtime truth, authenticated authorization, membership lifecycle hardening and immediate guardian-continuity behavior only. It does not yet prove complete continuity, audit/outbox integrity, operational recovery, production readiness, Flutter connection or family-protective service operation.
