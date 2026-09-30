@@ -47,8 +47,8 @@ class FamilyDiscoveryApiClient {
       response = await _transport.get(
         _configuration.familyDiscoveryUri,
         headers: {
-          HttpHeaders.acceptHeader: ContentType.json.mimeType,
-          HttpHeaders.authorizationHeader: 'Bearer $idToken',
+          'accept': 'application/json',
+          'authorization': 'Bearer $idToken',
         },
       );
     } on FoundationGateApiException {
