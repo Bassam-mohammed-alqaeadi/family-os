@@ -160,6 +160,24 @@ Remove-Item Env:STAGING_EXECUTION_ACK
 
 It prompts without echo for the external staging database URL and prints check names plus the migration count only. Remove `/32` immediately on completion or failure. Do not run `npm run migrate` manually as a substitute, and do not modify `schema_migrations`.
 
+For STG-OPS-005, first preserve the real internal database value solely in the Render Dashboard, replace `DATABASE_URL` temporarily with the syntactically valid non-secret unreachable test value below, then manually restart/redeploy the same service revision:
+
+```text
+postgresql://staging-db-outage.invalid:5432/family_os
+```
+
+Run the reviewed local outage verifier with a fresh synthetic active-guardian token:
+
+```powershell
+$env:STAGING_EXECUTION_ACK = 'synthetic-operational-verification'
+$env:STAGING_API_BASE_URL = 'https://approved-staging-origin'
+npm --prefix backend run verify:staging:database-outage
+Remove-Item Env:STAGING_EXECUTION_ACK
+Remove-Item Env:STAGING_API_BASE_URL
+```
+
+It must prove `live=200`, `ready=503 database_unavailable` and an authenticated protected request receives `503 service_not_ready`. Immediately restore the exact original internal database value in Render Dashboard, redeploy/restart, and prove `live=200` plus `ready=200`. Never put the real database value into the command, a file, chat or CI.
+
 ## 9. Pass, block and escalation rules
 
 ### Pass

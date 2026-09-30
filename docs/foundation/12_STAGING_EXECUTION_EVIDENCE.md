@@ -33,13 +33,14 @@
 | Audit API authorization | Owner reports audit-envelope access allowed to synthetic primary/co-guardian and denied to synthetic child/unrelated principal, with correlation IDs present. No API URL, family ID, token, subject or event payload is retained here. | Pass — reported API-boundary evidence |
 | Audit/outbox durable correlation | Owner reports a read-only verifier pass for one synthetic mutation correlation: one durable audit event, one durable outbox event, one-to-one linkage, preserved server correlation and pending outbox state. Temporary database `/32` access was removed after the check. | Pass — reported database-boundary evidence |
 | Log privacy review | Owner reports no accepted/denied request logs emitted for the reviewed synthetic paths and no sensitive values found. Correlation IDs remain available in API/database evidence rather than mandatory per-request logs. | Pass — reported metadata-minimizing logging behavior |
+| Migration history/advisory lock | Owner reports exact four-entry manifest-attested migration history, advisory-lock acquisition and rejection of a concurrent migration before schema work. Temporary database `/32` access was removed after the check. | Pass — reported operational evidence |
 
 ## 2. Evidence not yet established
 
 The following is intentionally unverified and must not be claimed yet:
 
 - retained non-sensitive migration-name/checksum outcome for migrations `001_foundation.sql` through `004_audit_correlation.sql`;
-- migration-lock, compatible deployment/rollback, database-unavailability and identity-revocation operational checks;
+- compatible deployment/rollback, database-unavailability and identity-revocation operational checks;
 - encrypted logical dump/restore drill;
 - synthetic-account/test-data cleanup at the defined lifecycle boundary.
 
