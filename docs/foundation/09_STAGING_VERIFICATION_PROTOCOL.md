@@ -160,6 +160,28 @@ Remove-Item Env:STAGING_EXECUTION_ACK
 
 It prompts without echo for the external staging database URL and prints check names plus the migration count only. Remove `/32` immediately on completion or failure. Do not run `npm run migrate` manually as a substitute, and do not modify `schema_migrations`.
 
+For STG-OPS-004, use an owner-controlled fully encrypted, local and non-cloud-synced volume plus an isolated temporary PostgreSQL Docker container. This drill never restores into, resets or otherwise mutates the live staging database. It is an operator-controlled synthetic-data recovery check, not a provider-backup claim.
+
+1. Confirm Docker is available and select a `postgres:<major>` image whose `pg_dump` client is the same major version as, or newer than, the staging PostgreSQL version. Record neither the source connection values nor Docker output.
+2. Create a unique local recovery directory on the confirmed encrypted volume and a unique container name. Do not use a repository directory, a cloud-synced path, a shared mount or a published Docker port.
+3. Start the restore target without `-p`/`--publish`, with `POSTGRES_HOST_AUTH_METHOD=trust` only inside this isolated disposable container, and database name `family_os_restore`. This local trust configuration is not permitted on staging, a network-exposed container or any reusable database.
+4. Add the current operator's exact `/32` external database ingress immediately before the dump. Build a short-lived local `pg_service.conf` from interactive prompts for host, port, database and user; it must contain no password or full database URL. Invoke `pg_dump -W` through the matching Docker image using that service name, so the database password is entered only at the no-echo client prompt and is never placed in a command, environment variable or file. Produce a custom-format dump only in the encrypted recovery directory. Suppress and do not retain raw client/container output.
+5. In a `finally` cleanup path, delete the temporary service configuration and remove the `/32` ingress immediately after the dump attempt, whether it succeeds or fails. Never use public ingress. On dump failure, also delete any partial dump and stop.
+6. Copy the completed dump into the isolated target container and run `pg_restore --clean --if-exists --no-owner --no-privileges --exit-on-error`. Any restore error is a stop condition; do not correct restored rows manually.
+7. Run the reviewed local verifier against the restore container only. It makes no network request and emits only check names plus migration count:
+
+```powershell
+$env:STAGING_EXECUTION_ACK = 'synthetic-operational-verification'
+$env:STAGING_RESTORE_CONTAINER = 'family-os-restore-unique-local-label'
+npm --prefix backend run verify:staging:backup-restore
+Remove-Item Env:STAGING_EXECUTION_ACK
+Remove-Item Env:STAGING_RESTORE_CONTAINER
+```
+
+The verifier requires manifest-exact migration history; one valid active primary guardian and matching family primary reference for every restored family; completed guardian transfers aligned with that primary; and one-to-one correlated audit/outbox evidence where a correlation ID is present. It accepts no source database URL, token or Firebase credential.
+
+8. Destroy the temporary Docker container, delete the local dump and recovery directory, and verify the `/32` rule is absent. Full-disk encryption protects the temporary artifact at rest, but ordinary deletion is not a claim of physical-media sanitization. Evidence records only pass/fail, check names, migration count, timestamps and successful cleanup status.
+
 For STG-OPS-005, first preserve the real internal database value solely in the Render Dashboard, replace `DATABASE_URL` temporarily with the syntactically valid non-secret unreachable test value below, then manually restart/redeploy the same service revision:
 
 ```text

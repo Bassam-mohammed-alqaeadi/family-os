@@ -18,7 +18,8 @@
     "verify:staging:audit-outbox": "node scripts/verify-staging-audit-outbox.mjs",
     "verify:staging:migration-lock": "node scripts/verify-staging-migration-lock.mjs",
     "verify:staging:database-outage": "node scripts/verify-staging-database-outage.mjs",
-    "verify:staging:oidc-principal": "node scripts/verify-staging-oidc-principal-lifecycle.mjs"
+    "verify:staging:oidc-principal": "node scripts/verify-staging-oidc-principal-lifecycle.mjs",
+    "verify:staging:backup-restore": "node scripts/verify-staging-backup-restore.mjs"
   },
   "dependencies": {
     "express": "^5.2.1",
