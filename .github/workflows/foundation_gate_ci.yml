@@ -57,5 +57,6 @@ jobs:
       - name: Enforce isolated analysis gate
         if: always() && steps.analyze.outcome == 'failure'
         run: |
-          cat build/ci/foundation-gate-analyze.txt
+          summary=$(tr '\n' ' ' < build/ci/foundation-gate-analyze.txt | cut -c1-4000)
+          echo "::error title=Isolated Flutter analyzer::${summary}"
           exit 1
