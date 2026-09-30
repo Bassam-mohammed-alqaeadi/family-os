@@ -148,6 +148,18 @@ It prompts without echo for the external staging database URL, an opaque synthet
 | STG-OPS-005 | Force invalid database credentials or database outage. | Liveness/readiness/protected operations accurately fail; no fallback store or local identity. |
 | STG-OPS-006 | Rotate/revoke a staging test OIDC principal or issuer key according to provider procedure. | Invalid/revoked tokens are rejected; no cached bypass beyond documented verification behavior. |
 
+For STG-OPS-001/002, the reviewed local verifier obtains the same database-scoped advisory lock used by the migration runner, checks the recorded manifest/checksum set, then starts a second migration runner. The second runner must stop before schema work. It creates no schema/data change during the locked run.
+
+On PowerShell, use an interactive local terminal and temporary `/32` database ingress only:
+
+```powershell
+$env:STAGING_EXECUTION_ACK = 'synthetic-operational-verification'
+npm --prefix backend run verify:staging:migration-lock
+Remove-Item Env:STAGING_EXECUTION_ACK
+```
+
+It prompts without echo for the external staging database URL and prints check names plus the migration count only. Remove `/32` immediately on completion or failure. Do not run `npm run migrate` manually as a substitute, and do not modify `schema_migrations`.
+
 ## 9. Pass, block and escalation rules
 
 ### Pass
