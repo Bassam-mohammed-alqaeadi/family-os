@@ -53,3 +53,5 @@ app.*.map.json
 /android/app/google-services.json
 /ios/Runner/GoogleService-Info.plist
 /lib/foundation_gate/local/firebase_options.dart
+/lib/foundation_gate/local/foundation_gate_local_configuration.dart
+/lib/foundation_gate/local/main.dart

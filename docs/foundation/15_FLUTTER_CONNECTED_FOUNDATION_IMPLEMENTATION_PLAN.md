@@ -1,9 +1,9 @@
 # Flutter-connected Foundation — Isolated Implementation Plan
 
-> **Status:** Draft for Owner review — no connected client implementation or local Firebase artifact is authorized by this document alone.
+> **Status:** Owner-accepted — isolated implementation authorized; local Firebase configuration and manual connected verification remain separately controlled.
+> **Owner decision:** Accept, 2026-10-01; scope changes: none.
 > **Prerequisite evidence:** Server-side `GET /v1/me/families` is deployed and owner-reported passing on synthetic staging; isolated Foundation Gate CI is green; the legacy global Flutter CI remains explicitly red and out of this slice's scope.
 > **Scope authority:** `14_FLUTTER_CONNECTED_FOUNDATION_GATE_ADMISSION_PACKET.md`.
-> **Decision required:** Accept / Reject this implementation plan.
 
 ## 1. Objective
 
@@ -191,9 +191,9 @@ Never record emails, passwords, tokens, family IDs, API origin, Firebase identif
 ## 10. Owner decision
 
 ```text
-Implementation plan decision: [ Accept / Reject ]
-Decision date: [ YYYY-MM-DD ]
-Scope changes accepted: [ none / review reference ]
+Implementation plan decision: Accept
+Decision date: 2026-10-01
+Scope changes accepted: none
 ```
 
-Rejecting this plan, withdrawing the gate, an exposure, an integrity event, or reaching 2026-10-31 without a valid subsequent decision requires the retained synthetic-data cleanup procedure; it does not permit a workaround or production shortcut.
+Rejecting this plan later, withdrawing the gate, an exposure, an integrity event, or reaching 2026-10-31 without a valid subsequent decision requires the retained synthetic-data cleanup procedure; it does not permit a workaround or production shortcut.

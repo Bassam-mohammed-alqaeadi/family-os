@@ -304,7 +304,8 @@ A `Go` decision requires all of the following to be accepted and recorded by lab
 - [x] Source-only Flutter preflight found no tracked Firebase client configuration and identified the required isolated composition root.
 - [x] Flutter CI baseline path selected: separately reviewed isolation. Current global Flutter CI remains red with a recorded 21-failure baseline; no bypass is accepted.
 - [x] Dedicated Foundation Gate CI passed while analyzing/testing only the isolated paths; this does not change the global Flutter CI status.
-- [ ] Flutter design must name no mutation path, no role-enforcement logic, no cache/offline mode and no telemetry sink.
+- [x] Owner accepted `15_FLUTTER_CONNECTED_FOUNDATION_IMPLEMENTATION_PLAN.md` without scope expansion.
+- [ ] Isolated implementation and its no-mutation/no-cache/no-telemetry tests must pass in Foundation Gate CI.
 - [ ] A named Owner must confirm responsibility for local synthetic identities, emulator cleanup and the retention deadline.
 
 Any unchecked entry criterion is a `No-Go` for implementation.
