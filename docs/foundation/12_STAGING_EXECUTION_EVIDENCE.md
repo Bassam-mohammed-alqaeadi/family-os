@@ -29,7 +29,7 @@
 | Membership hardening | Owner reports that the ten-check reviewed membership lifecycle verifier passed, including revocation/removal, authority boundaries and controlled concurrent-invitation behavior. No API URL, resource ID, token, email, subject or raw response is retained here. | Pass — reported |
 | Token/CI handling | Owner confirms that authenticated checks used local interactive hidden prompts only. No Firebase ID token, synthetic password or Firebase Web API key entered CI/CD, source control or retained logs. | Pass — interactive-only boundary confirmed |
 | Guardian continuity, immediate path | Owner reports successful pending transfer creation, unapproved acceptance denial, nominated co-guardian acceptance with role transition, former-primary authority denial and transfer cancellation. No API URL, resource ID, membership ID, token or raw response is retained here. | Partial pass — post-cancel, expiry and race checks remain |
-| Guardian continuity, terminal/race path | Owner reports expected cancelled-transfer, one-hour-expiry and second-pending-transfer conflicts. The accept/cancel race completed safely with the former primary denied after the accepted transfer. The accept/remove report included `membership_not_active`, which is not an API code in the reviewed release. | Blocked — classify and rerun accept/remove race before acceptance |
+| Guardian continuity, terminal/race path | Owner reports expected cancelled-transfer, one-hour-expiry and second-pending-transfer conflicts. The accept/cancel race completed safely with the former primary denied after the accepted transfer. A later purported accept/remove race used an unknown removal route and returned `404 route_not_found`; acceptance completed, but no removal raced it. | Incomplete — rerun with the reviewed `revoke` endpoint before acceptance |
 
 ## 2. Evidence not yet established
 
@@ -47,8 +47,8 @@ After the reported membership and immediate guardian-continuity passes, the next
 
 1. retain only completed check names, opaque resource identifiers, HTTP status/error codes, correlation identifiers, timestamps and pass/fail status;
 2. preserve the passing post-cancellation, expiry, second-pending and accept/cancel outcomes as minimal evidence;
-3. rerun the accept/remove race against the reviewed deployed API, reporting separately which operation returned which HTTP status/error code and whether the winning membership response was `removed` or the winning transfer response was `completed`;
-4. stop if `membership_not_active`, `500`, dual-primary behavior or any other unreviewed code recurs; do not change database rows, schema, server clock or configuration to force a result;
+3. create a new synthetic family/transfer and rerun the accept/remove race against the reviewed deployed API. The removal operation is `POST /v1/families/{familyId}/memberships/{candidateMembershipId}/revoke` with an approved non-sensitive `reasonCode`; there is no `/remove` route. Report separately which operation returned which HTTP status/error code and whether the winning membership response was `removed` or the winning transfer response was `completed`;
+4. stop if `500`, dual-primary behavior or any other unreviewed code recurs; do not change database rows, schema, server clock or configuration to force a result;
 5. retain no tokens, email addresses, Firebase subjects or raw request/response bodies in evidence; and
 6. stop on any authorization, tenant-isolation, idempotency, lifecycle, audit/outbox or runtime-truth failure.
 
