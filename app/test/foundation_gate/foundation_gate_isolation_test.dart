@@ -21,7 +21,7 @@ void main() {
       'shared_preferences',
       'firebase_options.dart',
     ]) {
-      expect(source, isNot(contains(prohibited)), reason: prohibited);
+      expect(imports, isNot(contains(prohibited)), reason: prohibited);
     }
   });
 }
