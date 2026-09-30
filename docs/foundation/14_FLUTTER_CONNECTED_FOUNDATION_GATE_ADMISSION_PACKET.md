@@ -1,6 +1,6 @@
 # Flutter-connected Foundation — Gate Admission Packet
 
-> **Status:** Owner-approved Go — backend family-discovery implementation and synthetic staging verification passed; Flutter local-configuration preflight is pending before client implementation.
+> **Status:** Owner-approved Go — backend family-discovery implementation and synthetic staging verification passed; Flutter client implementation is blocked by the existing red Flutter CI baseline pending an explicit remediation/isolation decision.
 > **Owner decision:** Go, 2026-10-01.
 > **Decision deadline:** Met on 2026-10-01.
 > **Synthetic-data retention boundary:** 2026-10-31.
@@ -259,6 +259,17 @@ A source-only preflight found no Firebase client package or tracked Firebase con
 
 The connected Foundation slice must therefore use a dedicated, minimal entry point and composition root. It must not import or initialize the default app bootstrap, seeded local family/identity data, local audit/family persistence, role picker fallback, offline cache or unrelated product domains. This is an isolation requirement, not permission to delete or refactor legacy app functionality.
 
+### 6.4 Flutter CI baseline blocker
+
+The configuration-preflight commit ran Flutter CI and Credential Guard. Credential Guard passed. Flutter CI completed analysis and then failed its existing application test/gate suite with 21 failures. The commit contained no Dart runtime/test change; GitHub history also shows multiple earlier Flutter CI failures before this gate work. This is evidence of a pre-existing red baseline, not proof that the failures are harmless or unrelated.
+
+No Flutter client implementation, local Firebase client configuration or gate-specific CI bypass is authorized while this baseline is unresolved. The Owner must explicitly select one of the following paths:
+
+1. **Remediate:** authorize a separately scoped repair of the existing Flutter CI failures until the full Flutter CI is green; or
+2. **Isolate:** authorize a separately reviewed minimal Foundation-gate entry point and dedicated test job with no suppression, deletion or weakening of the existing Flutter CI. The existing red Flutter CI remains explicitly recorded and cannot be described as passing.
+
+Neither option authorizes Production or relaxes the gate's scope/privacy rules. Until the Owner selects a path, this gate is blocked and no Firebase client artifact may be provisioned locally.
+
 ## 7. UX and error-state contract
 
 The first connected slice must make server truth visible without leaking data:
@@ -286,6 +297,7 @@ A `Go` decision requires all of the following to be accepted and recorded by lab
 - [x] The family-discovery contract was accepted, reviewed, tested, deployed and owner-reported as passing on synthetic staging.
 - [x] The API implementation received backend review, local tests, Backend CI, Credential Guard and controlled staging deployment.
 - [x] Source-only Flutter preflight found no tracked Firebase client configuration and identified the required isolated composition root.
+- [ ] Flutter CI baseline path is explicitly selected: full remediation or separately reviewed isolation. Current Flutter CI is red with a recorded 21-failure baseline; no bypass is accepted.
 - [ ] Flutter design must name no mutation path, no role-enforcement logic, no cache/offline mode and no telemetry sink.
 - [ ] A named Owner must confirm responsibility for local synthetic identities, emulator cleanup and the retention deadline.
 
