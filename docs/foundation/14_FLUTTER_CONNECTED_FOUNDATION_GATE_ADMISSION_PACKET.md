@@ -1,6 +1,6 @@
 # Flutter-connected Foundation — Gate Admission Packet
 
-> **Status:** Owner-approved Go — backend family-discovery implementation and synthetic staging verification passed; Owner selected the reviewed isolated Foundation Gate CI path. Firebase client configuration and connected client behavior remain blocked pending their entry criteria.
+> **Status:** Owner-approved Go — backend family-discovery implementation and synthetic staging verification passed; the reviewed isolated Foundation Gate implementation passed scoped CI. Firebase client configuration and manual connected behavior remain Owner-only and blocked pending their remaining local entry criteria.
 > **Owner decision:** Go, 2026-10-01; isolated CI path, 2026-10-01.
 > **Decision deadline:** Met on 2026-10-01.
 > **Synthetic-data retention boundary:** 2026-10-31.
@@ -305,10 +305,10 @@ A `Go` decision requires all of the following to be accepted and recorded by lab
 - [x] Flutter CI baseline path selected: separately reviewed isolation. Current global Flutter CI remains red with a recorded 21-failure baseline; no bypass is accepted.
 - [x] Dedicated Foundation Gate CI passed while analyzing/testing only the isolated paths; this does not change the global Flutter CI status.
 - [x] Owner accepted `15_FLUTTER_CONNECTED_FOUNDATION_IMPLEMENTATION_PLAN.md` without scope expansion.
-- [ ] Isolated implementation and its no-mutation/no-cache/no-telemetry tests must pass in Foundation Gate CI.
+- [x] Isolated implementation and its no-mutation/no-cache/no-telemetry tests passed in Foundation Gate CI run `36790433385` on 2026-10-01.
 - [ ] A named Owner must confirm responsibility for local synthetic identities, emulator cleanup and the retention deadline.
 
-Any unchecked entry criterion is a `No-Go` for implementation.
+Any unchecked entry criterion is a `No-Go` for manual connected verification. The bounded local procedure is `16_LOCAL_ANDROID_EMULATOR_FOUNDATION_VERIFICATION.md`; it does not authorize a scope change.
 
 ## 9. Success criteria for the later connected verification
 
