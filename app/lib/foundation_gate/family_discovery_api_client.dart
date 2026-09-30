@@ -1,5 +1,6 @@
 import 'dart:convert';
-import 'dart:io';
+
+import 'package:http/http.dart' as http;
 
 import 'foundation_gate_configuration.dart';
 import 'foundation_gate_models.dart';
@@ -15,28 +16,18 @@ abstract interface class FoundationGateHttpTransport {
   Future<FoundationGateHttpResponse> get(Uri uri, {required Map<String, String> headers});
 }
 
-class IoFoundationGateHttpTransport implements FoundationGateHttpTransport {
-  IoFoundationGateHttpTransport({HttpClient? client}) : _client = client ?? HttpClient();
+class PackageFoundationGateHttpTransport implements FoundationGateHttpTransport {
+  PackageFoundationGateHttpTransport({http.Client? client}) : _client = client ?? http.Client();
 
-  final HttpClient _client;
+  final http.Client _client;
 
   @override
   Future<FoundationGateHttpResponse> get(Uri uri, {required Map<String, String> headers}) async {
-    try {
-      final request = await _client.getUrl(uri);
-      headers.forEach((name, value) => request.headers.set(name, value));
-      final response = await request.close();
-      return FoundationGateHttpResponse(
-        statusCode: response.statusCode,
-        body: await utf8.decodeStream(response),
-      );
-    } on SocketException {
-      throw const FoundationGateApiException(FoundationGateApiFailure.networkUnavailable);
-    } on HttpException {
-      throw const FoundationGateApiException(FoundationGateApiFailure.networkUnavailable);
-    } on HandshakeException {
-      throw const FoundationGateApiException(FoundationGateApiFailure.networkUnavailable);
-    }
+    final response = await _client.get(uri, headers: headers);
+    return FoundationGateHttpResponse(
+      statusCode: response.statusCode,
+      body: response.body,
+    );
   }
 }
 

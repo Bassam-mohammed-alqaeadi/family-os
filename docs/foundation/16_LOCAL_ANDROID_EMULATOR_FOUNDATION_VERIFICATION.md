@@ -49,7 +49,7 @@ Before launch, the Owner must create the ignored local composition only:
 2. `foundation_gate_local_configuration.dart` constructs `FoundationGateConfiguration` from the Owner-provisioned canonical **HTTPS staging API origin** using `FoundationGateConfiguration.fromStagingApiOrigin`. It contains no database host, Firebase Admin endpoint, internal Render hostname or credential.
 3. `main.dart` initializes Firebase with the local options, then constructs only these reviewed objects:
    - `FirebaseEmailPasswordIdentity(FirebaseAuth.instance)`;
-   - `FamilyDiscoveryApiClient(configuration: localConfiguration, transport: IoFoundationGateHttpTransport())`; and
+   - `FamilyDiscoveryApiClient(configuration: localConfiguration, transport: PackageFoundationGateHttpTransport())`; and
    - `FoundationGateSessionController(identity: ..., discoveryApi: ...)`, passed to `FoundationGateApp(controller: ...)`.
 
 The local entry point must not import `app/lib/main.dart`, a legacy bootstrap/domain, local storage, a cache, an analytics/crash package or an unrelated feature. Do not create a tracked replacement entry point. The tracked `lib/foundation_gate/main.dart` deliberately remains unconfigured.
