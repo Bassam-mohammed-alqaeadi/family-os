@@ -29,6 +29,7 @@
 | Membership hardening | Owner reports that the ten-check reviewed membership lifecycle verifier passed, including revocation/removal, authority boundaries and controlled concurrent-invitation behavior. No API URL, resource ID, token, email, subject or raw response is retained here. | Pass — reported |
 | Token/CI handling | Owner confirms that authenticated checks used local interactive hidden prompts only. No Firebase ID token, synthetic password or Firebase Web API key entered CI/CD, source control or retained logs. | Pass — interactive-only boundary confirmed |
 | Guardian continuity, immediate path | Owner reports successful pending transfer creation, unapproved acceptance denial, nominated co-guardian acceptance with role transition, former-primary authority denial and transfer cancellation. No API URL, resource ID, membership ID, token or raw response is retained here. | Partial pass — post-cancel, expiry and race checks remain |
+| Guardian continuity, terminal/race path | Owner reports expected cancelled-transfer, one-hour-expiry and second-pending-transfer conflicts. The accept/cancel race completed safely with the former primary denied after the accepted transfer. The accept/remove report included `membership_not_active`, which is not an API code in the reviewed release. | Blocked — classify and rerun accept/remove race before acceptance |
 
 ## 2. Evidence not yet established
 
@@ -45,9 +46,9 @@ The following is intentionally unverified and must not be claimed yet:
 After the reported membership and immediate guardian-continuity passes, the next controlled operation is to complete guardian continuity under `09_STAGING_VERIFICATION_PROTOCOL.md`. The Owner must:
 
 1. retain only completed check names, opaque resource identifiers, HTTP status/error codes, correlation identifiers, timestamps and pass/fail status;
-2. attempt acceptance of the cancelled transfer and require `409 guardian_transfer_not_actionable`;
-3. create a separate synthetic pending transfer, wait the configured one-hour TTL without changing clock, database or configuration, then require `409 guardian_transfer_expired` and no role/reference change;
-4. run controlled acceptance-versus-cancel/removal/another-transfer conflict tests and stop if a terminal state, role invariant or status is unexpected;
+2. preserve the passing post-cancellation, expiry, second-pending and accept/cancel outcomes as minimal evidence;
+3. rerun the accept/remove race against the reviewed deployed API, reporting separately which operation returned which HTTP status/error code and whether the winning membership response was `removed` or the winning transfer response was `completed`;
+4. stop if `membership_not_active`, `500`, dual-primary behavior or any other unreviewed code recurs; do not change database rows, schema, server clock or configuration to force a result;
 5. retain no tokens, email addresses, Firebase subjects or raw request/response bodies in evidence; and
 6. stop on any authorization, tenant-isolation, idempotency, lifecycle, audit/outbox or runtime-truth failure.
 
