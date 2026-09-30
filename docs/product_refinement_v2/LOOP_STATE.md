@@ -80,9 +80,10 @@ completed:
   - Authenticated verifiers were run through local interactive hidden prompts only; Firebase tokens, synthetic passwords and Firebase credentials did not enter CI/CD, source control or retained logs
   - Owner reports full Guardian Continuity verification: creation, unauthorized denial, acceptance/atomic role transition, former-primary denial, cancellation/post-cancel denial, one-hour expiry, duplicate pending transfer and controlled accept/cancel and accept/remove races with exactly one primary guardian
   - Owner reports audit API role-boundary and read-only PostgreSQL audit/outbox correlation passes; outbox is pending without a consumer and temporary `/32` access was removed
+  - Owner reports log-privacy review passed: no sensitive values found; accepted/denied request paths emitted no per-request logs, while correlations remain in API/database evidence
   - Cross-platform hardening: migration SQL is pinned to LF through Git attributes and source syntax checks no longer rely on CMD shell glob expansion
 next_outputs:
-  - Complete log-privacy review and operations checks in `09_STAGING_VERIFICATION_PROTOCOL.md` before any connected Flutter work, customer data, public claim or Recovery/Support implementation
+  - Execute migration-history/advisory-lock verification, then remaining operations checks in `09_STAGING_VERIFICATION_PROTOCOL.md` before any connected Flutter work, customer data, public claim or Recovery/Support implementation
   - Do not implement lost-account, dispute or support-mediated recovery until the Recovery/Support admission gate is accepted
 blocked_by: Flutter production integration, customer data and all production/release claims remain blocked pending successful synthetic staging verification and Foundation Wave preconditions in `92_EXECUTION_AUTHORIZATION_GATE.md`
 requires_owner_now: manual Render/Firebase dashboard actions and approved encrypted dump store
