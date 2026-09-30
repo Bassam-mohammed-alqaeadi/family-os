@@ -1,7 +1,8 @@
 # Flutter-connected Foundation — Gate Admission Packet
 
-> **Status:** Draft for Owner review — no implementation authorization.
-> **Decision deadline:** 2026-10-15.
+> **Status:** Owner-approved Go — backend family-discovery API implementation and verification only; Flutter remains blocked pending this API work's review.
+> **Owner decision:** Go, 2026-10-01.
+> **Decision deadline:** Met on 2026-10-01.
 > **Synthetic-data retention boundary:** 2026-10-31.
 > **Scope authority:** `09_STAGING_VERIFICATION_PROTOCOL.md`, `12_STAGING_EXECUTION_EVIDENCE.md`, `02_CREDENTIAL_INTAKE_AND_FIREBASE_ADMISSION.md`.
 > **Decision required:** Go / No-Go / Defer. Silence is **not** Go.
@@ -10,7 +11,7 @@
 
 The Owner is asked to decide whether to authorize a tightly bounded **Flutter-connected Foundation slice** on the existing Family OS synthetic staging environment.
 
-A `Go` decision authorizes only the work explicitly listed in this packet. It does **not** authorize production, real users, customer data, Flutter Web, iOS, native device enforcement, push notifications, background execution, offline family-data caching, billing, AI, realtime, Recovery/Support, a public release, or any broader Family OS capability.
+A `Go` decision authorizes only the work explicitly listed in this packet. It is sequenced: backend family-discovery implementation and verification complete first; Flutter remains blocked until that result is reviewed and accepted. It does **not** authorize production, real users, customer data, Flutter Web, iOS, native device enforcement, push notifications, background execution, offline family-data caching, billing, AI, realtime, Recovery/Support, a public release, or any broader Family OS capability.
 
 A `No-Go` decision, or no accepted decision by 2026-10-15, starts the retained-synthetic-data retirement procedure before the 2026-10-31 deadline.
 
@@ -90,13 +91,13 @@ This endpoint is proposed for the gate; it does not exist and is not approved fo
 #### Request
 
 ```text
-GET /v1/me/families?limit=<1..20>&cursor=<opaque-optional>
+GET /v1/me/families
 Authorization: Bearer <Firebase ID token>
 ```
 
-- `limit` is optional and defaults to a conservative server-owned value; values outside `1..20` are rejected before database evaluation.
-- `cursor`, when present, is an opaque server-defined pagination token. It must not encode a Firebase subject, account ID, family ID, role, raw timestamp or any client-trusted authorization state in readable form.
-- The endpoint accepts no family ID, membership ID, role, account ID or subject from the caller.
+The first slice accepts no query parameters and no family ID, membership ID, role, account ID or subject from the caller. This intentionally avoids a new cursor-signing secret or client-controlled pagination state before such state has separate admission.
+
+The server limits the result to at most twenty eligible families. If a verified principal exceeds that bound, the endpoint returns an explicit generic conflict with no partial family result. Pagination is a later, separately reviewed API decision; it is not silently approximated in this gate.
 
 #### Successful response
 
@@ -108,8 +109,7 @@ Authorization: Bearer <Firebase ID token>
       "displayName": "server-stored-family-name",
       "role": "primary_guardian | co_guardian | child"
     }
-  ],
-  "nextCursor": null
+  ]
 }
 ```
 
@@ -142,7 +142,8 @@ Suspended/archived families and invited, revoked or removed memberships are omit
 | Missing, malformed, expired, wrong-audience or invalid-signature token | Existing fail-closed `401` verified-auth error; no identity fallback. |
 | Valid token with no eligible family | `200` with an empty collection only. |
 | Runtime/database not ready | Existing `503 service_not_ready`; no local fallback or stale cached family data. |
-| Invalid limit/cursor | Explicit client-input validation error before store evaluation; no family detail. |
+| Unexpected query parameter | Explicit client-input validation error before store evaluation; no family detail. |
+| More than twenty eligible active families | Explicit generic conflict with no partial family result; pagination requires a later separate review. |
 | Read request | No mutation, no idempotency key requirement, no outbox work and no fabricated audit write. |
 
 Existing defensive response headers (`Cache-Control: no-store`, `Referrer-Policy: no-referrer`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`) continue to apply.
@@ -161,11 +162,23 @@ Before any Flutter client uses the endpoint, backend work must include:
 2. direct API tests proving primary/co-guardian/child discovery is limited to the caller's active families;
 3. tests proving unrelated, removed, revoked and invited identities receive no family data;
 4. suspension/archive tests proving ineligible family state is not discoverable through the endpoint;
-5. input-boundary tests for `limit` and cursor;
+5. input-boundary tests rejecting unexpected query parameters and a bounded-result conflict test;
 6. readiness and invalid-token fail-closed tests; and
 7. a log/privacy review confirming no token, subject, email, response body or identifier is emitted.
 
 The approved backend branch must pass Credential Guard and Backend CI before deployment. Any staging operation remains synthetic-only and uses the existing controlled release procedure.
+
+After the approved revision is manually deployed to staging, execute the reviewed read-only discovery verifier from a fresh local checkout and interactive terminal only:
+
+```powershell
+$env:STAGING_EXECUTION_ACK = 'synthetic-read-only-family-discovery'
+$env:STAGING_API_BASE_URL = 'https://approved-staging-origin'
+npm --prefix backend run verify:staging:family-discovery
+Remove-Item Env:STAGING_EXECUTION_ACK
+Remove-Item Env:STAGING_API_BASE_URL
+```
+
+It prompts without echo for a fresh active synthetic guardian token and an unrelated synthetic-principal token. It prints only check names. It requires a minimal non-empty guardian discovery result, rejects unexpected query input before discovery, and requires the unrelated principal to receive an empty non-enumerating result. Do not retain prompted values, raw output or response bodies.
 
 ## 5. Firebase material and client-configuration policy
 
@@ -290,9 +303,9 @@ This verification does not authorize a public beta, real user test, production e
 | **Defer** | No implementation authorization. | Treat as No-Go unless the Owner explicitly renews the retention decision before the cleanup boundary; no automatic extension exists. |
 
 ```text
-Owner decision: [ Go / No-Go / Defer ]
-Decision date: [ YYYY-MM-DD ]
-Scope changes accepted: [ none / listed review reference ]
+Owner decision: Go — backend family-discovery API implementation and verification first
+Decision date: 2026-10-01
+Scope changes accepted: pagination narrowed to a bounded no-query endpoint; Flutter remains blocked
 ```
 
-A decision must be recorded no later than **2026-10-15**. Without an accepted Go decision, no Flutter-connected work begins and the retained synthetic staging environment proceeds to cleanup by **2026-10-31**.
+The Go decision is deliberately sequenced: no Flutter-connected work begins until this API implementation, CI, controlled deployment and read-only synthetic staging verifier are accepted. If that sequence fails or the gate is withdrawn, the retained synthetic staging environment proceeds to cleanup by **2026-10-31**.

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
 import test from 'node:test';
 import { createApp } from '../src/app.js';
 import { DisabledAuthVerifier } from '../src/auth/oidc-verifier.js';
@@ -125,6 +126,92 @@ test('family creation is server-authenticated, tenant-scoped and idempotent', as
     const crossFamilyRead = await request(baseUrl, `/v1/families/${familyId}`, { token: 'test-stranger' });
     assert.equal(crossFamilyRead.status, 403);
     assert.equal((await crossFamilyRead.json()).error.code, 'family_access_denied');
+  });
+});
+
+test('family discovery derives only active families from the verified principal without read-side evidence writes', async () => {
+  const store = new MemoryFoundationStore();
+  await withServer(foundationApp({ store }), async (baseUrl) => {
+    const firstFamily = await createFamily(baseUrl, 'Discovery alpha');
+    const secondFamily = await createFamily(baseUrl, 'Discovery beta');
+    const invitation = await invite(baseUrl, firstFamily.id, {
+      role: 'child',
+      targetSubject: 'test-child-a',
+      idempotencyKey: 'discovery-child-invite',
+    });
+    const accepted = await request(baseUrl, `/v1/families/${firstFamily.id}/memberships/${invitation.id}/accept`, {
+      method: 'POST',
+      token: 'test-child-a',
+      idempotencyKey: 'discovery-child-accept',
+      body: {},
+    });
+    assert.equal(accepted.status, 200);
+
+    const evidenceCountBeforeRead = { audit: store.audit.length, outbox: store.outbox.length };
+    const parentDiscovery = await request(baseUrl, '/v1/me/families', { token: 'test-parent-a' });
+    assert.equal(parentDiscovery.status, 200);
+    const parentBody = await parentDiscovery.json();
+    assert.deepEqual(parentBody.families.map((family) => family.id).sort(), [firstFamily.id, secondFamily.id].sort());
+    assert.deepEqual(Object.keys(parentBody.families[0]).sort(), ['displayName', 'id', 'role']);
+    assert.equal(parentBody.families.every((family) => family.role === 'primary_guardian'), true);
+    assert.deepEqual({ audit: store.audit.length, outbox: store.outbox.length }, evidenceCountBeforeRead);
+
+    const childDiscovery = await request(baseUrl, '/v1/me/families', { token: 'test-child-a' });
+    assert.equal(childDiscovery.status, 200);
+    assert.deepEqual((await childDiscovery.json()).families, [{
+      id: firstFamily.id,
+      displayName: firstFamily.displayName,
+      role: 'child',
+    }]);
+
+    const unrelatedDiscovery = await request(baseUrl, '/v1/me/families', { token: 'test-stranger' });
+    assert.equal(unrelatedDiscovery.status, 200);
+    assert.deepEqual(await unrelatedDiscovery.json(), { families: [] });
+
+    store.families.get(secondFamily.id).status = 'suspended';
+    const activeOnly = await request(baseUrl, '/v1/me/families', { token: 'test-parent-a' });
+    assert.equal(activeOnly.status, 200);
+    assert.deepEqual((await activeOnly.json()).families, [{
+      id: firstFamily.id,
+      displayName: firstFamily.displayName,
+      role: 'primary_guardian',
+    }]);
+  });
+});
+
+test('family discovery rejects query input and fails closed for missing identity or unavailable runtime', async () => {
+  await withServer(foundationApp(), async (baseUrl) => {
+    const missingIdentity = await request(baseUrl, '/v1/me/families');
+    assert.equal(missingIdentity.status, 401);
+
+    const queryInput = await request(baseUrl, '/v1/me/families?familyId=not-accepted', { token: 'test-parent-a' });
+    assert.equal(queryInput.status, 400);
+    assert.equal((await queryInput.json()).error.code, 'invalid_request');
+  });
+
+  await withServer(foundationApp({ readiness: () => ({ ready: false, missing: ['OIDC_ISSUER'] }) }), async (baseUrl) => {
+    const unavailable = await request(baseUrl, '/v1/me/families', { token: 'test-parent-a' });
+    assert.equal(unavailable.status, 503);
+    assert.equal((await unavailable.json()).error.code, 'service_not_ready');
+  });
+});
+
+test('family discovery rejects an over-limit result without returning a partial family list', async () => {
+  const store = new MemoryFoundationStore();
+  for (let index = 0; index < 21; index += 1) {
+    await store.createFamily({
+      principal: { subject: 'test-parent-a' },
+      displayName: `Bounded discovery ${index}`,
+      idempotencyKey: `bounded-discovery-${index}`,
+      requestHash: `hash-${index}`,
+      correlationId: randomUUID(),
+    });
+  }
+
+  await withServer(foundationApp({ store }), async (baseUrl) => {
+    const result = await request(baseUrl, '/v1/me/families', { token: 'test-parent-a' });
+    assert.equal(result.status, 409);
+    assert.equal((await result.json()).error.code, 'family_discovery_limit_exceeded');
   });
 });
 

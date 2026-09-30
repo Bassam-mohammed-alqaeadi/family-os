@@ -14,6 +14,7 @@ const specificationPath = join(
 const expectedOperations = {
   '/health/live': ['get'],
   '/health/ready': ['get'],
+  '/v1/me/families': ['get'],
   '/v1/families': ['post'],
   '/v1/families/{familyId}': ['get'],
   '/v1/families/{familyId}/memberships': ['post'],
@@ -52,6 +53,19 @@ test('every protected Foundation API operation declares OIDC security and mutati
       }
     }
   }
+});
+
+test('family discovery contract is protected, minimal and bounded', async () => {
+  const specification = JSON.parse(await readFile(specificationPath, 'utf8'));
+  const operation = specification.paths['/v1/me/families'].get;
+  const response = specification.components.schemas.FamilyDiscoveryResponse;
+  const item = specification.components.schemas.FamilyDiscoveryItem;
+
+  assert.deepEqual(operation.security, [{ oidcBearer: [] }]);
+  assert.deepEqual(operation.parameters, undefined);
+  assert.equal(response.properties.families.maxItems, 20);
+  assert.deepEqual(Object.keys(item.properties).sort(), ['displayName', 'id', 'role']);
+  assert.equal(operation.responses['409'].$ref, '#/components/responses/Conflict');
 });
 
 test('audit contract exposes nullable server-generated correlation evidence for new records', async () => {

@@ -17,6 +17,10 @@ export class UnconfiguredFoundationStore {
     );
   }
 
+  async listMyFamilies() {
+    this.unavailable();
+  }
+
   async createFamily() {
     this.unavailable();
   }

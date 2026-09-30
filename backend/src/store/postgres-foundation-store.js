@@ -5,6 +5,7 @@ import { FOUNDATION_SCHEMA_MIGRATIONS } from '../schema-manifest.js';
 
 const { Pool } = pg;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const MAX_DISCOVERABLE_FAMILIES = 20;
 
 function requireServerCorrelationId(correlationId) {
   if (typeof correlationId !== 'string' || !UUID_PATTERN.test(correlationId)) {
@@ -33,6 +34,14 @@ function familyView(row, members) {
     status: row.status,
     createdAt: row.created_at,
     members,
+  };
+}
+
+function discoveredFamilyView(row) {
+  return {
+    id: row.id,
+    displayName: row.display_name,
+    role: row.role,
   };
 }
 
@@ -95,6 +104,29 @@ export class PostgresFoundationStore {
         reason: error?.code === '42P01' ? 'database_schema_not_ready' : 'database_unavailable',
       };
     }
+  }
+
+  async listMyFamilies({ principal }) {
+    const { rows } = await this.pool.query(
+      `SELECT family.id, family.display_name, membership.role
+       FROM accounts AS account
+       INNER JOIN family_memberships AS membership ON membership.account_id = account.id
+       INNER JOIN families AS family ON family.id = membership.family_id
+       WHERE account.oidc_subject = $1
+         AND membership.status = 'active'
+         AND family.status = 'active'
+       ORDER BY family.created_at ASC, family.id ASC
+       LIMIT $2`,
+      [principal.subject, MAX_DISCOVERABLE_FAMILIES + 1],
+    );
+    if (rows.length > MAX_DISCOVERABLE_FAMILIES) {
+      throw new HttpError(
+        409,
+        'family_discovery_limit_exceeded',
+        'The family discovery result exceeds the supported limit.',
+      );
+    }
+    return { families: rows.map(discoveredFamilyView) };
   }
 
   async withTransaction(run) {

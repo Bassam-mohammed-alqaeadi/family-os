@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { validatedOidcSubject } from '../src/auth/oidc-verifier.js';
-import { createGuardianTransferInput, requireUuid } from '../src/validation.js';
+import { createGuardianTransferInput, requireNoQueryParameters, requireUuid } from '../src/validation.js';
 
 const VALID_UUID = '00000000-0000-4000-8000-000000000000';
 
@@ -14,6 +14,12 @@ test('family resource identifiers are strict UUIDs before they reach PostgreSQL'
     () => createGuardianTransferInput({ candidateMembershipId: 'not-a-uuid' }),
     { code: 'invalid_request' },
   );
+});
+
+test('family discovery refuses every caller-supplied query parameter before store evaluation', () => {
+  assert.doesNotThrow(() => requireNoQueryParameters({}));
+  assert.throws(() => requireNoQueryParameters({ familyId: VALID_UUID }), { code: 'invalid_request' });
+  assert.throws(() => requireNoQueryParameters(['familyId']), { code: 'invalid_request' });
 });
 
 test('OIDC subjects are bounded before becoming durable account identifiers', () => {

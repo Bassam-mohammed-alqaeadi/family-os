@@ -7,6 +7,7 @@ import {
   createMembershipInput,
   revokeMembershipInput,
   requireIdempotencyKey,
+  requireNoQueryParameters,
   requireUuid,
 } from './validation.js';
 
@@ -89,6 +90,15 @@ export function createApp({ store, authVerifier, readiness }) {
   );
 
   app.use('/v1', requirePrincipal, requireRuntimeReady);
+
+  app.get(
+    '/v1/me/families',
+    requirePrincipal,
+    asyncRoute(async (request, response) => {
+      requireNoQueryParameters(request.query);
+      response.status(200).json(await store.listMyFamilies({ principal: request.principal }));
+    }),
+  );
 
   app.post(
     '/v1/families',

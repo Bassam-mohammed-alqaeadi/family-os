@@ -7,6 +7,7 @@ function clone(value) {
 }
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const MAX_DISCOVERABLE_FAMILIES = 20;
 
 function requireServerCorrelationId(correlationId) {
   if (typeof correlationId !== 'string' || !UUID_PATTERN.test(correlationId)) {
@@ -135,6 +136,31 @@ export class MemoryFoundationStore {
       this.recordAudit(family.id, membership.id, correlationId, 'family.created', 'family', family.id);
       return { family: { ...family, members: [this.memberView(membership)] } };
     });
+  }
+
+  async listMyFamilies({ principal }) {
+    const families = [...this.memberships.values()]
+      .filter((membership) => membership.targetSubject === principal.subject && membership.status === 'active')
+      .map((membership) => ({ membership, family: this.families.get(membership.familyId) }))
+      .filter(({ family }) => family?.status === 'active')
+      .sort(({ family: left }, { family: right }) => {
+        const createdAtOrder = left.createdAt.localeCompare(right.createdAt);
+        return createdAtOrder || left.id.localeCompare(right.id);
+      });
+    if (families.length > MAX_DISCOVERABLE_FAMILIES) {
+      throw new HttpError(
+        409,
+        'family_discovery_limit_exceeded',
+        'The family discovery result exceeds the supported limit.',
+      );
+    }
+    return {
+      families: families.map(({ membership, family }) => ({
+        id: family.id,
+        displayName: family.displayName,
+        role: membership.role,
+      })),
+    };
   }
 
   async getFamily({ principal, familyId }) {

@@ -63,6 +63,12 @@ export function requireIdempotencyKey(value) {
   return requiredText(value, 'Idempotency-Key', { maxLength: 128 });
 }
 
+export function requireNoQueryParameters(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).length !== 0) {
+    throw new HttpError(400, 'invalid_request', 'This operation does not accept query parameters.');
+  }
+}
+
 export function requireUuid(value, field) {
   const id = requiredText(value, field, { maxLength: 64 });
   if (!UUID_PATTERN.test(id)) {

@@ -86,10 +86,10 @@ completed:
   - Owner reports encrypted-at-rest synthetic logical dump, isolated local Docker restore, manifest/invariant pass and complete `/32`/container/dump cleanup
   - Owner reports compatible pre-`004` application deploy/rollback and post-`004` restoration; liveness/readiness/denied-authentication baseline passed on both without schema or environment change
   - Owner selected a synthetic-only staging retention hold through 2026-10-31 for a separately accepted future Flutter-connected Foundation gate; no gate, connected Flutter work, real data, Production or deadline extension is authorized by this hold
-  - Draft Flutter-connected Foundation admission packet prepared for a Go/No-Go/Defer Owner decision by 2026-10-15; it authorizes no implementation while in draft
+  - Owner accepted a limited Go for backend family-discovery API implementation and verification under `14_FLUTTER_CONNECTED_FOUNDATION_GATE_ADMISSION_PACKET.md`; Flutter remains blocked pending reviewed API completion and synthetic staging evidence
   - Cross-platform hardening: migration SQL is pinned to LF through Git attributes and source syntax checks no longer rely on CMD shell glob expansion
 next_outputs:
-  - Review `14_FLUTTER_CONNECTED_FOUNDATION_GATE_ADMISSION_PACKET.md` and decide Go/No-Go/Defer by 2026-10-15; absent accepted Go, retire remaining Firebase synthetic principals and replace the synthetic staging database resource under `09_STAGING_VERIFICATION_PROTOCOL.md` by 2026-10-31. Neither path authorizes Production, customer data, public claims or Recovery/Support implementation
+  - Complete backend family-discovery API review, CI and controlled synthetic staging verification. Do not begin Flutter until that evidence is accepted; if the gate fails or is withdrawn, retire remaining Firebase synthetic principals and replace the synthetic staging database resource under `09_STAGING_VERIFICATION_PROTOCOL.md` by 2026-10-31. Neither path authorizes Production, customer data, public claims or Recovery/Support implementation
   - Do not implement lost-account, dispute or support-mediated recovery until the Recovery/Support admission gate is accepted
 blocked_by: Flutter production integration, customer data and all production/release claims remain blocked pending successful synthetic staging verification and Foundation Wave preconditions in `92_EXECUTION_AUTHORIZATION_GATE.md`
 requires_owner_now: manual Render/Firebase dashboard actions and approved encrypted dump store

@@ -78,6 +78,51 @@ test('missing schema metadata fails readiness without pretending the database is
   });
 });
 
+test('PostgreSQL family discovery derives a bounded minimal view from the verified subject without writes', async () => {
+  const statements = [];
+  const store = healthStore(async (sql, values) => {
+    statements.push({ sql, values });
+    return {
+      rows: [{
+        id: '6dbb6760-f609-4f3e-a29f-4c209dc1d53b',
+        display_name: 'Synthetic family',
+        role: 'primary_guardian',
+      }],
+    };
+  });
+
+  const result = await store.listMyFamilies({ principal: { subject: 'verified-subject-only' } });
+
+  assert.deepEqual(result, {
+    families: [{
+      id: '6dbb6760-f609-4f3e-a29f-4c209dc1d53b',
+      displayName: 'Synthetic family',
+      role: 'primary_guardian',
+    }],
+  });
+  assert.equal(statements.length, 1);
+  assert.match(statements[0].sql, /FROM accounts AS account/);
+  assert.match(statements[0].sql, /membership\.status = 'active'/);
+  assert.match(statements[0].sql, /family\.status = 'active'/);
+  assert.equal(/INSERT|UPDATE|DELETE/i.test(statements[0].sql), false);
+  assert.deepEqual(statements[0].values, ['verified-subject-only', 21]);
+});
+
+test('PostgreSQL family discovery fails closed rather than returning a partial over-limit result', async () => {
+  const store = healthStore(async () => ({
+    rows: Array.from({ length: 21 }, (_, index) => ({
+      id: `family-${index}`,
+      display_name: `Family ${index}`,
+      role: 'primary_guardian',
+    })),
+  }));
+
+  await assert.rejects(
+    store.listMyFamilies({ principal: { subject: 'verified-subject-only' } }),
+    { status: 409, code: 'family_discovery_limit_exceeded' },
+  );
+});
+
 test('concurrent PostgreSQL membership uniqueness conflicts become an explicit lifecycle conflict', async () => {
   const client = {
     async query(sql) {
