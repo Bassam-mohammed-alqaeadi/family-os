@@ -178,6 +178,27 @@ Remove-Item Env:STAGING_API_BASE_URL
 
 It must prove `live=200`, `ready=503 database_unavailable` and an authenticated protected request receives `503 service_not_ready`. Immediately restore the exact original internal database value in Render Dashboard, redeploy/restart, and prove `live=200` plus `ready=200`. Never put the real database value into the command, a file, chat or CI.
 
+For STG-OPS-006, use a new disposable Firebase Email/Password synthetic principal, not an existing A/B/C/X test principal. First sign in locally and verify its current valid token is authenticated but denied as unrelated. Then disable the principal in Firebase, confirm a fresh sign-in/refresh fails, and retain no credential or Firebase identifier. A third-party stateless JWT verifier cannot immediately learn Firebase account disablement; the already-issued token may remain signature-valid until its own `exp`. After it expires, probe the same token and require `401 invalid_token`. This bounded behavior must be recorded honestly, not described as immediate server-side revocation.
+
+On PowerShell, the reviewed local probe uses a no-echo token prompt:
+
+```powershell
+$env:STAGING_EXECUTION_ACK = 'synthetic-operational-verification'
+$env:STAGING_API_BASE_URL = 'https://approved-staging-origin'
+$env:STAGING_OIDC_EXPECTATION = 'valid_unrelated'
+npm --prefix backend run verify:staging:oidc-principal
+
+# After provider disablement and the original token's expiry:
+$env:STAGING_OIDC_EXPECTATION = 'expired_or_invalid'
+npm --prefix backend run verify:staging:oidc-principal
+
+Remove-Item Env:STAGING_EXECUTION_ACK
+Remove-Item Env:STAGING_API_BASE_URL
+Remove-Item Env:STAGING_OIDC_EXPECTATION
+```
+
+No token, test password, Firebase API key or token-based probe belongs in CI/CD, source or retained logs.
+
 ## 9. Pass, block and escalation rules
 
 ### Pass
