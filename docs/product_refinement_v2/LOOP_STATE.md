@@ -84,9 +84,10 @@ completed:
   - Owner reports database-outage truthfulness pass: live remained 200, readiness/protected operations failed closed, and real internal database configuration was restored to healthy 200/200 state
   - Owner reports disposable-principal valid-unrelated, fresh-sign-in disablement and actual pre-disable-token expiry rejection checks, with no identity fallback and post-test deletion
   - Owner reports encrypted-at-rest synthetic logical dump, isolated local Docker restore, manifest/invariant pass and complete `/32`/container/dump cleanup
+  - Owner reports compatible pre-`004` application deploy/rollback and post-`004` restoration; liveness/readiness/denied-authentication baseline passed on both without schema or environment change
   - Cross-platform hardening: migration SQL is pinned to LF through Git attributes and source syntax checks no longer rely on CMD shell glob expansion
 next_outputs:
-  - Execute compatible application deploy/rollback for the existing additive `004_audit_correlation.sql` revision, then perform final synthetic-data cleanup under `09_STAGING_VERIFICATION_PROTOCOL.md` before any connected Flutter work, customer data, public claim or Recovery/Support implementation
+  - Make and record the final synthetic-principal/test-data lifecycle cleanup decision under `09_STAGING_VERIFICATION_PROTOCOL.md` before any connected Flutter work, customer data, public claim or Recovery/Support implementation
   - Do not implement lost-account, dispute or support-mediated recovery until the Recovery/Support admission gate is accepted
 blocked_by: Flutter production integration, customer data and all production/release claims remain blocked pending successful synthetic staging verification and Foundation Wave preconditions in `92_EXECUTION_AUTHORIZATION_GATE.md`
 requires_owner_now: manual Render/Firebase dashboard actions and approved encrypted dump store
