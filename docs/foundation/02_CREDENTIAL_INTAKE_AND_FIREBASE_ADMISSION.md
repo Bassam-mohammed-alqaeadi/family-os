@@ -49,4 +49,4 @@ This preserves the user-requested product continuity while preventing the prior 
 
 ## Automated repository safeguard
 
-`scripts/verify-no-service-account-keys.mjs` scans tracked files for service-account key filenames and credential markers without printing file contents. `.github/workflows/credential_guard.yml` runs it on pull requests and pushes. A guard pass confirms only that no such material is tracked; it is not an authorization to use Firebase.
+`scripts/verify-no-service-account-keys.mjs` scans tracked files for service-account key filenames/markers and for the controlled local Firebase client-configuration filenames adopted by the Flutter-connected Foundation gate, without printing file contents. `.github/workflows/credential_guard.yml` runs it on pull requests and pushes. A guard pass confirms only that no prohibited private credential or controlled client configuration is tracked; it is not an authorization to use Firebase.

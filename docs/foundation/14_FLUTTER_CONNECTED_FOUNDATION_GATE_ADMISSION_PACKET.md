@@ -202,7 +202,7 @@ If this gate is accepted, Firebase Android client configuration may be provision
 
 Before any local file is obtained:
 
-1. add a precise Git ignore rule for the native Firebase configuration file and any generated local Flutter options file;
+1. verify the precise Git ignore rules for `android/app/google-services.json`, `ios/Runner/GoogleService-Info.plist` and `lib/foundation_gate/local/firebase_options.dart` remain present;
 2. verify with `git status --ignored` and Credential Guard that no configuration/private material is tracked;
 3. use a local, untracked configuration path only; do not copy values into Dart source, launch scripts, `--dart-define`, CI variables, `.env`, test fixtures, screenshots or issue comments;
 4. prevent IDE, shell history, diagnostics and crash/analytics SDKs from exporting the values; and
@@ -253,6 +253,12 @@ A later platform must receive its own admission decision.
 - Flutter Web is out of scope. No CORS policy change is authorized by this packet.
 - The client must fail closed with a generic unavailable state if the configured API origin is absent, malformed, non-HTTPS or outside the approved staging origin.
 
+### 6.3 Existing Flutter isolation finding
+
+A source-only preflight found no Firebase client package or tracked Firebase configuration file in the current Flutter project. It also found that the existing default application is a broad mock-first runtime that initializes local SQLite/KV persistence, seeded data and legacy role/identity fallbacks during startup.
+
+The connected Foundation slice must therefore use a dedicated, minimal entry point and composition root. It must not import or initialize the default app bootstrap, seeded local family/identity data, local audit/family persistence, role picker fallback, offline cache or unrelated product domains. This is an isolation requirement, not permission to delete or refactor legacy app functionality.
+
 ## 7. UX and error-state contract
 
 The first connected slice must make server truth visible without leaking data:
@@ -279,6 +285,7 @@ A `Go` decision requires all of the following to be accepted and recorded by lab
 - [ ] The exact approved staging API origin must be manually provisioned locally without being committed or reported.
 - [x] The family-discovery contract was accepted, reviewed, tested, deployed and owner-reported as passing on synthetic staging.
 - [x] The API implementation received backend review, local tests, Backend CI, Credential Guard and controlled staging deployment.
+- [x] Source-only Flutter preflight found no tracked Firebase client configuration and identified the required isolated composition root.
 - [ ] Flutter design must name no mutation path, no role-enforcement logic, no cache/offline mode and no telemetry sink.
 - [ ] A named Owner must confirm responsibility for local synthetic identities, emulator cleanup and the retention deadline.
 

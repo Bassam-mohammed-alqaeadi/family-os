@@ -11,6 +11,9 @@ const trackedFiles = execFileSync('git', ['ls-files', '-z'], { cwd: root, encodi
 const prohibitedFilename = [
   /firebase-adminsdk/i,
   /service[-_]?account.*\.json$/i,
+  /(?:^|\/)google-services\.json$/i,
+  /(?:^|\/)GoogleService-Info\.plist$/i,
+  /(?:^|\/)firebase_options\.dart$/i,
 ];
 const credentialMarkers = [
   new RegExp(`"type"\\s*:\\s*"service${'_'}account"`),
@@ -39,11 +42,11 @@ for (const relativePath of trackedFiles) {
 }
 
 if (failures.length > 0) {
-  console.error('Service-account credential material must not be committed. Affected paths:');
+  console.error('Prohibited Firebase credential or controlled client-configuration material must not be committed. Affected paths:');
   for (const failure of failures) {
     console.error(`- ${failure}`);
   }
   process.exit(1);
 }
 
-console.log('Credential guard passed: no tracked service-account private key material detected.');
+console.log('Credential guard passed: no tracked Firebase private credential or controlled client configuration detected.');
