@@ -34,25 +34,26 @@
 | Audit/outbox durable correlation | Owner reports a read-only verifier pass for one synthetic mutation correlation: one durable audit event, one durable outbox event, one-to-one linkage, preserved server correlation and pending outbox state. Temporary database `/32` access was removed after the check. | Pass — reported database-boundary evidence |
 | Log privacy review | Owner reports no accepted/denied request logs emitted for the reviewed synthetic paths and no sensitive values found. Correlation IDs remain available in API/database evidence rather than mandatory per-request logs. | Pass — reported metadata-minimizing logging behavior |
 | Migration history/advisory lock | Owner reports exact four-entry manifest-attested migration history, advisory-lock acquisition and rejection of a concurrent migration before schema work. Temporary database `/32` access was removed after the check. | Pass — reported operational evidence |
+| Database outage truthfulness | Owner reports controlled unreachable-database configuration resulted in liveness `200`, readiness `503 database_unavailable` and authenticated protected-operation `503 service_not_ready`; the real internal database value was restored and both health endpoints returned `200`. | Pass — reported operational evidence |
 
 ## 2. Evidence not yet established
 
 The following is intentionally unverified and must not be claimed yet:
 
 - retained non-sensitive migration-name/checksum outcome for migrations `001_foundation.sql` through `004_audit_correlation.sql`;
-- compatible deployment/rollback, database-unavailability and identity-revocation operational checks;
+- compatible deployment/rollback and identity-principal lifecycle operational checks;
 - encrypted logical dump/restore drill;
 - synthetic-account/test-data cleanup at the defined lifecycle boundary.
 
 ## 3. Next controlled operation
 
-After the reported audit/outbox and log-privacy passes, the next controlled operation is the migration history/advisory-lock operations check under `09_STAGING_VERIFICATION_PROTOCOL.md`. The Owner must:
+After the reported migration-lock and database-outage passes, the next controlled operation is the identity-principal lifecycle check under `09_STAGING_VERIFICATION_PROTOCOL.md`. The Owner must:
 
-1. add temporary database ingress for the current operator public IP as `/32` only;
-2. run the reviewed migration-lock verifier from an interactive local checkout with a no-echo external database URL prompt;
-3. retain only check names, migration count and pass/fail status;
-4. remove `/32` immediately on success or failure;
+1. use a dedicated disposable synthetic Firebase Email/Password principal that is not A/B/C or X;
+2. record only principal label, status/error code, timestamp and pass/fail — never its email, UID, password or token;
+3. document the provider's stateless ID-token behavior honestly: a token issued before Firebase disablement may remain cryptographically valid until its expiry, while a fresh sign-in/refresh for the disabled principal must fail;
+4. verify that the expired/otherwise invalid token is rejected by the API and that no server-side role/identity fallback exists;
 5. retain no tokens, email addresses, Firebase subjects, URLs or raw request/response/log bodies in evidence; and
-6. stop on any migration-history, advisory-lock, connection, recovery or runtime-truth failure.
+6. stop on any authentication, identity lifecycle, recovery or runtime-truth failure.
 
-This record proves reported migration execution, post-migration runtime truth, authenticated authorization, membership lifecycle hardening, full guardian-continuity behavior, durable audit/outbox correlation and log privacy. It does not yet prove operational recovery, production readiness, Flutter connection or family-protective service operation.
+This record proves reported migration execution, post-migration runtime truth, authenticated authorization, membership lifecycle hardening, full guardian-continuity behavior, durable audit/outbox correlation, log privacy, migration locking and database-outage truthfulness. It does not yet prove identity lifecycle, backup/restore operational recovery, production readiness, Flutter connection or family-protective service operation.
