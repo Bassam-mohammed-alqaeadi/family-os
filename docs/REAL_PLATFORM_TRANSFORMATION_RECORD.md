@@ -254,7 +254,92 @@ Flutter parent / child experiences
 
 ---
 
-## 9. قواعد الجودة غير القابلة للتفاوض
+## 9. نموذج التنفيذ: نظام/رحلة كاملة في كل مرة
+
+### 9.1 القرار التنفيذي
+
+بعد بناء الطبقات المشتركة، نمضي **نظامًا نظامًا**، لكن ليس كنظام معزول أو كصفحات مستقلة. وحدة التنفيذ هي **vertical product slice**: رحلة مستخدم مكتملة تمر من التصميم إلى مصدر الحقيقة إلى التطبيق والجهاز والاختبار.
+
+لا نعمل بهذا الترتيب الخاطئ:
+
+```text
+كل Backend أولًا → كل Flutter لاحقًا → كل Native لاحقًا
+```
+
+ولا بهذا الترتيب الخاطئ أيضًا:
+
+```text
+شاشة أو API منفرد → الانتقال إلى شاشة/API آخر مع بقاء mocks دائمة
+```
+
+بل نعمل دائمًا:
+
+```text
+User job
+→ refined UX and Control Center placement
+→ typed data/API contract
+→ authorization + durable backend/native state
+→ Flutter repository and truthful UI states
+→ local/offline/retry/recovery behavior
+→ audit/notification relation where needed
+→ automated tests and device/integration proof
+→ feature declared real
+```
+
+### 9.2 ما يُبنى مرة واحدة وما يُنفذ كنظام
+
+**Shared platform foundation** يُبنى ويُحسّن مرة واحدة ويخدم كل الأنظمة:
+
+- account/session/family/membership/role/child scope authority.
+- AppScope، ports، typed repositories وAPI contract discipline.
+- device registry/capability model، audit/outbox، privacy/data truth.
+- settings registry، PermissionMatrix، PanelProfile، RoleGate.
+- design system، Control Center primitives، states، localisation، accessibility وquality harness.
+
+بعد ذلك تتحول الأنظمة إلى حلقات كاملة متتابعة. كل نظام جديد يعيد استخدام هذه الطبقات ويضيف ما ينقصها إلى الأساس بدل صنع نسخة خاصة به.
+
+### 9.3 الترتيب المقترح للأنظمة
+
+| الترتيب | النظام/الحلقة | القيمة الملموسة للمستخدم |
+|---:|---|---|
+| 1 | Family entry + roles + children | دخول، إنشاء/انضمام أسرة، عضو مصرح، طفل، وحالة Today فارغة لكنها حقيقية |
+| 2 | Child/device foundation | ربط جهاز، capability/health/repair truth، وملكية جهاز واضحة |
+| 3 | Screen Time + apps + approvals | سياسة الأب، طلب الطفل، تطبيق الجهاز، receipt موثق وaudit |
+| 4 | Routines + bedtime + modes | جداول واستثناءات وحالات تشغيل حقيقية قابلة للفهم والإصلاح |
+| 5 | Safety: GPS + zones + SOS | location freshness، safe-zone events وSOS lifecycle صادق |
+| 6 | Learning + minutes | نتيجة معتمدة، minutes ledger متين، رؤية الأب والطفل للسجل |
+| 7 | Family connection | tasks/calendar/chat مع role/relationship authorization وdelivery/read/recovery truth |
+| 8 | Privacy/support/data lifecycle | شفافية، طلبات بيانات، diagnostics آمنة ومسار استرداد/دعم |
+| 9 | Intelligence | فقط بعد أن تصبح مصادر Security/Learning/Connection حقيقية ومصرحًا بها |
+| 10 | Entitlements/billing | أخيرًا، بعد وجود المنتج والثقة والتشغيل والتحقق الخارجي |
+
+هذا الترتيب قابل للمراجعة عند اعتماد التنفيذ، لكن المبدأ ثابت: **لا نفتح أنظمة كثيرة نصف مكتملة في وقت واحد.**
+
+### 9.4 مثال ملزم: Screen Time ليس "شاشة مكتملة" قبل اكتمال الحلقة
+
+```text
+Parent chooses child/device
+→ defines time/app rule and sees its impact
+→ authorized service validates and persists versioned policy
+→ policy is published/delivered to eligible device
+→ child agent applies the policy
+→ device returns applied/verified or offline/repair/unsupported truth
+→ child sees rule, reason, expiry and request path
+→ parent sees audit/history and can change, undo or repair
+```
+
+عندئذ فقط يسمى النظام حقيقيًا. أما تغيير toggle مع toast محلي فلا يعتبر إنجازًا للنظام.
+
+### 9.5 قاعدة التركيز والتنفيذ المتوازي
+
+- يوجد **نظام رئيسي واحد** قيد التحويل إلى حقيقة في أي وقت.
+- يمكن لمسار التصميم/Control Center ومسار quality/native الصغير العمل لدعمه، لا فتح منتجات مستقلة عنه.
+- لا يبدأ النظام التالي قبل أن يجتاز السابق exit gate المتفق عليه أو يصدر قرار موثق بأن جزءًا منه مؤجل وغير معروض كقدرة حقيقية.
+- لا يصبح التوازي سببًا لوجود عشرات APIs وشاشات بلا رحلة مكتملة.
+
+---
+
+## 10. قواعد الجودة غير القابلة للتفاوض
 
 لكل slice:
 
@@ -311,7 +396,7 @@ Control Center & Settings Superiority is a first-class workstream
 
 ---
 
-## 12. قاعدة العمل المقبلة
+## 13. قاعدة العمل المقبلة
 
 لا نعود إلى:
 
