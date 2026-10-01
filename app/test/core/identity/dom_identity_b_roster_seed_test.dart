@@ -46,7 +46,8 @@ void main() {
     final kids2 = await repo2.listChildren(familyId: fam);
     expect(kids2.length, 2);
     expect(kids2.firstWhere((e) => e.id == 'demo-child').displayName, 'ابن 1');
-    expect(kids2.firstWhere((e) => e.id == 'child_b').warnRing, isTrue);
+    // The local roster does not fabricate a connectivity or device warning.
+    expect(kids2.firstWhere((e) => e.id == 'child_b').warnRing, isFalse);
     expect(
       await repo2.loadProvenance(familyId: fam),
       kChildrenListRealLocalProvenance,
