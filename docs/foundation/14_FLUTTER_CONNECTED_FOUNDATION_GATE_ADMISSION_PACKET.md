@@ -1,6 +1,6 @@
 # Flutter-connected Foundation — Gate Admission Packet
 
-> **Status:** Owner-approved Go — backend family-discovery implementation and synthetic staging verification passed; the reviewed isolated Foundation Gate implementation passed scoped CI. Firebase client configuration and manual connected behavior remain Owner-only and blocked pending their remaining local entry criteria.
+> **Status:** Owner-approved bounded gate complete — backend family discovery, isolated implementation/CI and Owner-only synthetic Android-emulator verification passed. No second API read, broader client behavior, Production or release is authorized.
 > **Owner decision:** Go, 2026-10-01; isolated CI path, 2026-10-01.
 > **Decision deadline:** Met on 2026-10-01.
 > **Synthetic-data retention boundary:** 2026-10-31.
@@ -323,6 +323,10 @@ If implementation is accepted later, the connected verification must prove only:
 7. no prohibited material appears in Git, CI, logs, screenshots or retained evidence.
 
 This verification does not authorize a public beta, real user test, production environment or release.
+
+### Recorded Owner-only result
+
+On 2026-10-01, the Owner reported `pass` for the synthetic Android-emulator sign-in, server family discovery, empty/unrelated behavior, `401`, `403`, `503`, network-unavailable handling, volatile sign-out clear and compliant local-configuration disposition. The report contains status labels only; no configuration, identifier, token, origin, family data, raw body, log or screenshot is retained.
 
 ## 10. Decision and deadline
 

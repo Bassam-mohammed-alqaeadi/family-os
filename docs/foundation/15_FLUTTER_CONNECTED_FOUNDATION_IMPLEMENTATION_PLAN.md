@@ -1,6 +1,6 @@
 # Flutter-connected Foundation — Isolated Implementation Plan
 
-> **Status:** Owner-accepted and implemented — isolated Foundation Gate CI passed; local Firebase configuration and manual connected verification remain separately controlled.
+> **Status:** Owner-accepted and complete — isolated Foundation Gate CI and Owner-only synthetic Android-emulator verification passed. Local configuration remains unrecorded and separately controlled.
 > **Owner decision:** Accept, 2026-10-01; scope changes: none.
 > **Implementation evidence:** Server-side `GET /v1/me/families` is deployed and owner-reported passing on synthetic staging. The isolated implementation passed Foundation Gate CI run `36791206030` on 2026-10-01, including committed-lock installation/consistency, analysis and isolated tests. The legacy global Flutter CI remains explicitly red and out of this slice's scope.
 > **Local procedure:** `16_LOCAL_ANDROID_EMULATOR_FOUNDATION_VERIFICATION.md`; it contains no configuration values and may be used only by the Owner on the approved workstation.
@@ -186,8 +186,8 @@ Never record emails, passwords, tokens, family IDs, API origin, Firebase identif
 - [x] Dependency/package review is complete; the resolved package lock is tracked.
 - [x] Isolated implementation and all listed tests passed in Foundation Gate CI run `36791206030` on 2026-10-01.
 - [x] No Firebase/local configuration material is tracked or has been supplied outside the Owner workstation.
-- [ ] Owner-only manual Android-emulator synthetic verification passes under `16_LOCAL_ANDROID_EMULATOR_FOUNDATION_VERIFICATION.md`.
-- [ ] Gate evidence is reviewed before considering any second API read or broader Flutter scope.
+- [x] Owner-only manual Android-emulator synthetic verification passed under `16_LOCAL_ANDROID_EMULATOR_FOUNDATION_VERIFICATION.md` on 2026-10-01; status labels only are retained.
+- [x] Gate evidence was reviewed and recorded; it does not authorize any second API read or broader Flutter scope.
 
 ## 10. Owner decision
 
