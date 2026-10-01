@@ -7,6 +7,7 @@ import 'package:family_os/core/fs_foundation/capability_status.dart';
 import 'package:family_os/core/fs_foundation/fs_session_kernel.dart';
 import 'package:family_os/core/fs_foundation/local_database.dart';
 import 'package:family_os/core/identity/identity_runtime.dart';
+import 'package:family_os/core/identity/roster_children.dart';
 import 'package:family_os/core/location/geo_point.dart';
 import 'package:family_os/core/location/geofence_event.dart';
 import 'package:family_os/core/location/location_fix.dart';
@@ -14,11 +15,11 @@ import 'package:family_os/core/location/location_repository.dart';
 import 'package:family_os/core/location/location_store.dart';
 import 'package:family_os/core/location/modes_location_fact_feed.dart';
 import 'package:family_os/core/location/safe_zone_definition.dart';
-import 'package:family_os/core/location/zone_geometry.dart';
 import 'package:family_os/core/modes/modes_runtime.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/location_history_repository.dart';
 import 'package:family_os/features/n02_day/location_map_repository.dart';
+import 'package:family_os/features/n02_day/location_real_local_seed_mock.dart';
 import 'package:family_os/features/n02_day/safe_zones_repository.dart';
 
 /// Stage-1 composition root for FS-001 UX (shared [FsSessionKernel] DB).
@@ -420,38 +421,15 @@ Future<void> ensureRealLocalSafeZonesSeeded({
   ];
   final assigned = childIds.isNotEmpty
       ? childIds
-      : [ChildId('demo-child'), ChildId('child_b')];
+      : activeFamilyRosterChildren().take(2).map((child) => child.id).toList();
 
-  await domain.saveZone(
-    SafeZoneDefinition(
-      id: 'zone_home_real_local',
-      familyId: familyId,
-      name: 'المنزل',
-      emoji: '📍',
-      geometry: const CircleGeometry(
-        center: GeoPoint(latitude: 24.7136, longitude: 46.6753),
-        radiusMeters: 250,
-      ),
-      assignedChildIds: assigned,
-      createdAt: now,
-      updatedAt: now,
-    ),
-  );
-  await domain.saveZone(
-    SafeZoneDefinition(
-      id: 'zone_school_real_local',
-      familyId: familyId,
-      name: 'المدرسة',
-      emoji: '📍',
-      geometry: const CircleGeometry(
-        center: GeoPoint(latitude: 24.7250, longitude: 46.6900),
-        radiusMeters: 180,
-      ),
-      assignedChildIds: assigned,
-      createdAt: now,
-      updatedAt: now,
-    ),
-  );
+  for (final zone in realLocalSafeZoneSeedMock(
+    familyId: familyId,
+    assignedChildIds: assigned,
+    now: now,
+  )) {
+    await domain.saveZone(zone);
+  }
 }
 
 /// Silent Location Request result honesty (LOC-OD-08).

@@ -19,7 +19,10 @@ final class InMemoryChildLearnHomeRepository
     ChildLearnHomeSnapshot? seed,
     LearningAssignmentRepository? assignments,
     ChildId? childId,
-  }) : _base = seed ?? childLearnHomeEmptyFixture(),
+  }) : _base = seed ??
+           (assignments == null
+               ? childLearnHomeEmptyFixture()
+               : childLearnHomePrototypeFixture()),
        _assignments = assignments ?? stage1LearningAssignmentRepository,
        _explicitChildId = childId;
 

@@ -6,6 +6,7 @@ import 'package:family_os/core/identity/identity_runtime.dart';
 import 'package:family_os/features/n02_day/child_chats_repository.dart';
 import 'package:family_os/features/n02_day/conversation_repository.dart';
 import 'package:family_os/features/n02_day/conversations_list_repository.dart';
+import 'package:family_os/features/n02_day/family_chat_local_seed_mock.dart';
 
 /// Provenance for OD-09 / LDR-B3 local family-chat (device-local only).
 const String kFamilyChatLocalProvenance = 'LOCAL_FAMILY_THREAD';
@@ -64,29 +65,7 @@ final class FamilyChatLocalStore {
     await ensureFamilyThreadSeeded(familyId: fid);
     final existing = await _readMessages(fid, familyChatWith);
     if (existing.isNotEmpty) return;
-    final messages = [
-      ConversationMessage(
-        id: 'seed_in_1',
-        body: 'السلام عليكم — رسالة محفوظة على هذا الجهاز',
-        timeLabel: '9:00',
-        isMine: false,
-        status: ConversationDeliveryStatus.sent,
-      ),
-      ConversationMessage(
-        id: 'seed_out_1',
-        body: 'وعليكم السلام',
-        timeLabel: '9:01',
-        isMine: true,
-        status: ConversationDeliveryStatus.sent,
-      ),
-      ConversationMessage(
-        id: 'seed_out_2',
-        body: 'كيف الحال؟',
-        timeLabel: '9:02',
-        isMine: true,
-        status: ConversationDeliveryStatus.sent,
-      ),
-    ];
+    final messages = familyChatLocalSampleMessages();
     await _writeMessages(fid, familyChatWith, messages);
     final threads = await _readThreads(fid);
     final next = [

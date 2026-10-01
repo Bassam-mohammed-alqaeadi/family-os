@@ -219,7 +219,8 @@ class SosAlertScreenState extends State<SosAlertScreen> {
     try {
       final alert = await repo.loadActive(alertId: _resolvedAlertId);
       final incomplete = alert == null || !alert.isActive
-          ? (widget.setupIncompleteOverride ?? await _probeSetupIncomplete())
+          ? (widget.setupIncompleteOverride ??
+                (widget.repository == null && await _probeSetupIncomplete()))
           : false;
       if (!mounted) return;
       setState(() {

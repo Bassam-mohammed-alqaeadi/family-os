@@ -113,7 +113,7 @@ Future<void> main() async {
 
 /// Cold-start route from Android `flutter_route` intent extra (via
 /// [MainActivity.getInitialRoute] → platform defaultRouteName), else father Today.
-String resolveAppInitialLocation({String fallback = '/scr-fat-010'}) {
+String resolveAppInitialLocation({String fallback = '/scr-shr-001'}) {
   final fromPlatform = auditRoutePath(
     WidgetsBinding.instance.platformDispatcher.defaultRouteName,
   );

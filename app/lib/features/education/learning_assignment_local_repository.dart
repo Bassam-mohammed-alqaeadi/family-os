@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/minutes.dart';
 import 'package:family_os/core/fs_foundation/local_database.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
 import 'package:family_os/features/education/learning_assignment_models.dart';
 import 'package:family_os/features/education/learning_assignment_repository.dart';
 
@@ -144,7 +145,7 @@ final class LocalLearningAssignmentRepository
     if (ids.isNotEmpty) return;
     await publish(
       LearningAssignmentPublishRequest(
-        childId: ChildId('demo-child'),
+        childId: resolveActiveChildId(),
         titleKey: 'mathPractice',
         rewardMinutes: Minutes(10),
         source: LearningAssignmentSource.homework,

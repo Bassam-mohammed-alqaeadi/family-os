@@ -40,7 +40,7 @@ final class LocalChildrenListRepository implements ChildrenListRepository {
   static String _childrenKey(FamilyId familyId) =>
       'children:${familyId.value}';
 
-  /// Ensures deterministic LOCAL DEMO seed when family roster key is missing.
+  /// Ensures deterministic local roster seed when the family key is missing.
   Future<void> ensureSeeded(FamilyId familyId) async {
     final existing = await _readRaw(_childrenKey(familyId));
     if (existing != null && existing.isNotEmpty) return;

@@ -12,7 +12,8 @@ final class InMemoryChildQuizRepository implements ChildQuizRepository {
   InMemoryChildQuizRepository({
     ChildQuizSnapshot? seed,
     ApprovedPackRepository? packs,
-  }) : _snap = seed ?? childQuizEmptyFixture(),
+  }) : _snap = seed ??
+           (packs == null ? childQuizEmptyFixture() : childQuizPrototypeFixture()),
        _packs = packs ?? stage1ApprovedPackRepository;
 
   ChildQuizSnapshot _snap;

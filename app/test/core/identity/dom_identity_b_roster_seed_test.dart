@@ -23,7 +23,7 @@ void main() {
     await FsSessionKernel.resetForTest();
   });
 
-  test('seed→persist→close→reopen→read LOCAL_DEMO provenance', () async {
+  test('seed→persist→close→reopen→read REAL_LOCAL provenance', () async {
     final dir = await Directory.systemTemp.createTemp('dom_id_b_');
     final path = p.join(dir.path, 'roster.db');
     final fam = FamilyId('fam_stage1');
@@ -36,7 +36,7 @@ void main() {
     expect(kids1.map((e) => e.id), containsAll(['demo-child', 'child_b']));
     expect(
       await repo1.loadProvenance(familyId: fam),
-      kChildrenListLocalDemoProvenance,
+      kChildrenListRealLocalProvenance,
     );
     await FsSessionKernel.resetForTest();
 
@@ -49,9 +49,9 @@ void main() {
     expect(kids2.firstWhere((e) => e.id == 'child_b').warnRing, isTrue);
     expect(
       await repo2.loadProvenance(familyId: fam),
-      kChildrenListLocalDemoProvenance,
+      kChildrenListRealLocalProvenance,
     );
-    // Provenance proves demo seed — not native GPS/battery authority.
+    // Provenance proves a local seed — not GPS/battery authority.
     expect(
       await repo2.loadProvenance(familyId: fam),
       isNot(anyOf('GPS', 'NATIVE', 'OS_BATTERY')),

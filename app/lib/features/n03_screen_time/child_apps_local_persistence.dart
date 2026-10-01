@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:family_os/core/app_control/app_control_runtime.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/fs_foundation/fs_session_kernel.dart';
+import 'package:family_os/core/identity/roster_children.dart';
 import 'package:family_os/features/n02_day/children_list_local_seed_mock.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n03_screen_time/child_apps_real_local_seed_mock.dart';
@@ -24,8 +25,11 @@ abstract final class ChildAppsLocalPersistence {
         for (final k in kids) ChildId(k.id),
       ];
       if (ids.isEmpty) {
-        ids.addAll([ChildId('demo-child'), ChildId('child_b')]);
+        ids.addAll(
+          activeFamilyRosterChildren().map((child) => child.id),
+        );
       }
+      if (ids.isEmpty) return;
 
       // Seed only when production inventory is empty (idempotent).
       final existing = stage1ChildAppsRepository.appsFor(ids.first);

@@ -30,7 +30,10 @@ final class InMemoryAttributionRewardRepository
     AttributionRewardSnapshot? seed,
     LearningAssignmentRepository? assignments,
     WalletLedger? wallet,
-  }) : _snap = seed ?? attributionRewardEmptyFixture(),
+  }) : _snap = seed ??
+           (assignments == null && wallet == null
+               ? attributionRewardEmptyFixture()
+               : attributionRewardPrototypeFixture()),
        _assignments = assignments ?? stage1LearningAssignmentRepository,
        _injectedWallet = wallet;
 

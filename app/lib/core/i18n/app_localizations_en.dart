@@ -11508,7 +11508,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sosReadinessBody =>
-      'Honest Stage-1 view — push/SMS/call/GPS stay Native-closed or degraded until those waves open. SOS still fires in-app.';
+      'Honest Stage-1 view — push, text messages, calls, and location can remain unavailable or limited until later stages. SOS still fires in-app.';
 
   @override
   String get sosReadinessRowChild => 'Child trigger linked';
@@ -11585,7 +11585,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sosLadderVerifyLocalHonesty =>
-      'Local Stage-1 verification — not SMS or carrier proof. Native verify comes later.';
+      'This Stage-1 check is not proof that a text message or call was delivered. Device verification comes later.';
 
   @override
   String get sosLadderEditBackupSemantics => 'Edit trusted backup contact';
@@ -11615,7 +11615,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sosChildEscalationSmsHonesty =>
-      'SMS send stays Native/Backend-closed — this switch only saves your intent so we can activate it later without redesigning the screen.';
+      'Sending a text message is not available yet — this switch only saves your intent for a future stage.';
 
   @override
   String sosChildEscalationChildLabel(String id) {
