@@ -418,3 +418,54 @@ User job
 ```
 
 هذا هو المسار إلى Family OS حقيقية، عالمية ومرنة، تتفوق بالثقة وتجربة المستخدم لا بمجرد كثرة الشاشات أو endpoints.
+
+---
+
+## 14. قرار قابلية التوسع: Permission Matrix الديناميكية
+
+### 14.1 الوضع المرحلي الحالي
+
+`PermissionMatrix` الحالية في Flutter هي **bootstrap typed policy layer** فقط. تستخدم `AppRole` و`MotherLevel` و`PanelCapability` لإزالة شروط الصلاحيات المتناثرة وتوحيد طريقة عرض control إلى `allow` أو `readOnly` أو `requestOnly` أو `hidden`.
+
+هي ليست المصدر النهائي للسلطة، وليست ديناميكية بالكامل بعد. لا يجوز وصفها بأنها authorization خادمي أو كأنها قابلة وحدها لتغيير صلاحيات عضو حقيقي.
+
+### 14.2 الهدف الملزم
+
+المصفوفة النهائية تكون مزيجًا من baseline آمن معروف للتطبيق و**PermissionSnapshot** صادر من مصدر Runtime مصرح به:
+
+```text
+Render-authoritative membership and role
++ mother level
++ family policy and child/device scopes
++ feature/capability availability
++ entitlement where applicable
+→ versioned PermissionSnapshot
+→ Flutter router / Control Center / RoleGate / settings controls
+```
+
+الـsnapshot يتضمن، على الأقل:
+
+```text
+policyVersion
+family/member identity references
+role and mother level
+child and device scopes
+capability dispositions
+availability/repair/pending state
+effectiveAt / expiresAt
+source and freshness: remote / cached / local-only
+```
+
+Render أو Native adapter يفرضان القرار عند كل mutation. Flutter يعرضه ويمنع تجربة مضللة، لكنه لا يصبح سلطة عن بعد.
+
+### 14.3 حدود الديناميكية الآمنة
+
+- لا ينفذ Flutter code أو UI عشوائيًا يرسله الخادم. يبقى التطبيق مالكًا لأنواع controls المعتمدة والآمنة.
+- لا يستطيع remote configuration إلغاء قوانين السلامة الدستورية، مثل إخفاء/تعطيل SOS أو منح طفل سطح تحكم والدي.
+- لا يمنح cache قديم صلاحيات جديدة. عند offline تعرض الواجهة source/freshness، وتسمح فقط بالتصرفات المحلية الآمنة أو تجعل العملية pending.
+- الإضافة المستقبلية تتم عبر capability/setting contracts versioned، لا عبر تعديل شروط متناثرة في مئات الشاشات.
+- كل قرار صلاحية ديناميكي قابل للتدقيق، له version وسبب ونطاق وانتهاء عند اللزوم.
+
+### 14.4 أثر القرار على التنفيذ
+
+الخطوة الحالية تبني contract وRoleGate الموحدين. الخطوة التي تلي أول migration للشاشات الجذرية هي إضافة `PermissionPolicySource`/`PermissionSnapshotSource`، ثم استبدال الـbootstrap matrix تدريجيًا بـruntime overlay مع backend contract وoffline truth واختبارات role/scope/revocation.
