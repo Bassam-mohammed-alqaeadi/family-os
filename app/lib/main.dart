@@ -22,6 +22,9 @@ import 'package:family_os/core/identity/identity_runtime.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/policy/advisor_repository.dart';
 import 'package:family_os/core/prefs_misc/prefs_misc_runtime.dart';
+import 'package:family_os/core/runtime/app_runtime.dart';
+import 'package:family_os/core/runtime/app_scope.dart';
+import 'package:family_os/core/runtime/identity_source.dart';
 import 'package:family_os/core/screen_time/screen_time_runtime.dart';
 import 'package:family_os/core/sos_final/sos_prefs_local_persistence.dart';
 import 'package:family_os/features/n02_day/alert_detail_local_projection.dart';
@@ -147,6 +150,7 @@ class _FamilyOsAppState extends State<FamilyOsApp> {
   late final GoRouter _router;
   late final IdentityRuntime _identity;
   late final LocaleController _locale;
+  late final AppRuntime _runtime;
   var _ownsRole = false;
   var _ownsLocale = false;
 
@@ -154,6 +158,7 @@ class _FamilyOsAppState extends State<FamilyOsApp> {
   void initState() {
     super.initState();
     _identity = stage1IdentityRuntime;
+    _runtime = AppRuntime(identity: RuntimeIdentitySource(_identity));
     if (widget.roleController != null) {
       _role = widget.roleController!;
     } else {
@@ -189,40 +194,44 @@ class _FamilyOsAppState extends State<FamilyOsApp> {
       _locale.dispose();
     }
     _router.dispose();
+    _runtime.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return CurrentLocale(
-      controller: _locale,
-      child: CurrentIdentity(
-        runtime: _identity,
-        child: CurrentRole(
-          notifier: _role,
-          child: ListenableBuilder(
-            listenable: _locale,
-            builder: (context, _) {
-              return MaterialApp.router(
-                onGenerateTitle: (context) =>
-                    AppLocalizations.of(context).appTitle,
-                theme: buildFamilyTheme(),
-                locale: _locale.locale,
-                supportedLocales: AppLocalizations.supportedLocales,
-                localizationsDelegates: const [
-                  AppLocalizations.delegate,
-                  GlobalMaterialLocalizations.delegate,
-                  GlobalWidgetsLocalizations.delegate,
-                  GlobalCupertinoLocalizations.delegate,
-                ],
-                routerConfig: _router,
-                builder: (context, child) => FamilyShellHost(
-                  router: _router,
-                  child: child ?? const SizedBox.shrink(),
-                ),
-                debugShowCheckedModeBanner: false,
-              );
-            },
+    return AppScope(
+      runtime: _runtime,
+      child: CurrentLocale(
+        controller: _locale,
+        child: CurrentIdentity(
+          runtime: _identity,
+          child: CurrentRole(
+            notifier: _role,
+            child: ListenableBuilder(
+              listenable: _locale,
+              builder: (context, _) {
+                return MaterialApp.router(
+                  onGenerateTitle: (context) =>
+                      AppLocalizations.of(context).appTitle,
+                  theme: buildFamilyTheme(),
+                  locale: _locale.locale,
+                  supportedLocales: AppLocalizations.supportedLocales,
+                  localizationsDelegates: const [
+                    AppLocalizations.delegate,
+                    GlobalMaterialLocalizations.delegate,
+                    GlobalWidgetsLocalizations.delegate,
+                    GlobalCupertinoLocalizations.delegate,
+                  ],
+                  routerConfig: _router,
+                  builder: (context, child) => FamilyShellHost(
+                    router: _router,
+                    child: child ?? const SizedBox.shrink(),
+                  ),
+                  debugShowCheckedModeBanner: false,
+                );
+              },
+            ),
           ),
         ),
       ),
