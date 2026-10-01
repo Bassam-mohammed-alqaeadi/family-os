@@ -18,13 +18,16 @@ void main() {
     addTearDown(runtime.dispose);
 
     await tester.pumpWidget(
-      AppScope(
-        runtime: runtime,
-        child: Builder(
-          builder: (context) {
-            final snapshot = AppScope.of(context).identity.value;
-            return Text(snapshot.familyId?.value ?? 'unavailable');
-          },
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: AppScope(
+          runtime: runtime,
+          child: Builder(
+            builder: (context) {
+              final snapshot = AppScope.of(context).identity.value;
+              return Text(snapshot.familyId?.value ?? 'unavailable');
+            },
+          ),
         ),
       ),
     );
