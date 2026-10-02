@@ -71,6 +71,8 @@ The migration runner validates the ordered migration manifest and immutable SHA-
 
 Never put `npm run migrate` in the service start/build command, GitHub Actions or an automatic deploy hook. If an approved operator has no existing checkout, they may use a short-lived local checkout of the exact reviewed commit, enter the protected database value through a no-echo shell prompt, run `npm ci && npm run migrate`, then remove temporary database ingress and the checkout. The complete synthetic-staging procedure is `docs/foundation/11_CONTROLLED_STAGING_OPERATOR_CONNECTION_CHECKLIST.md`.
 
+The synthetic roster release procedure, including its mutating HTTP and optional read-only audit/outbox verifier, is `docs/foundation/17_CHILDREN_ROSTER_STAGING_RELEASE.md`.
+
 ## HTTP contract (foundation-only)
 
 The machine-readable contract is `openapi/foundation.v1.json`. It documents current local Foundation behavior, not a deployed service or Flutter production capability. Contract tests require every documented protected route to declare OIDC security and every mutation to require an idempotency key.
@@ -85,6 +87,8 @@ Every API response also carries a server-generated `X-Correlation-Id`. It is dis
 | `GET` | `/health/ready` | Returns `200` only when required config and database are genuinely available. |
 | `POST` | `/v1/families` | Creates a family and active `primary_guardian` membership for the verified subject. |
 | `GET` | `/v1/families/:familyId` | Returns only to an active family member. |
+| `GET` | `/v1/families/:familyId/children` | Returns durable roster profiles only to active guardians. Child memberships are denied the parent control-centre surface. Device, location and policy truth are excluded. |
+| `POST` | `/v1/families/:familyId/children` | Primary guardian creates one durable roster profile with a required idempotency key, audit/outbox evidence and server correlation. This does not create a child login or device/policy state. |
 | `POST` | `/v1/families/:familyId/memberships` | Primary guardian creates a pending `co_guardian` or `child` membership for a known OIDC subject. There is no email/push invitation transport in this wave. |
 | `POST` | `/v1/families/:familyId/memberships/:membershipId/accept` | Only the exact invited OIDC subject can accept. |
 | `POST` | `/v1/families/:familyId/memberships/:membershipId/revoke` | Only the primary guardian can revoke a pending invitation or remove an active non-primary member. Requires an idempotency key and a non-sensitive machine `reasonCode`. The record and audit evidence remain durable. |

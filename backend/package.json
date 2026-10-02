@@ -20,7 +20,8 @@
     "verify:staging:database-outage": "node scripts/verify-staging-database-outage.mjs",
     "verify:staging:oidc-principal": "node scripts/verify-staging-oidc-principal-lifecycle.mjs",
     "verify:staging:backup-restore": "node scripts/verify-staging-backup-restore.mjs",
-    "verify:staging:family-discovery": "node scripts/verify-staging-family-discovery.mjs"
+    "verify:staging:family-discovery": "node scripts/verify-staging-family-discovery.mjs",
+    "verify:staging:children-roster": "node scripts/verify-staging-children-roster.mjs"
   },
   "dependencies": {
     "express": "^5.2.1",

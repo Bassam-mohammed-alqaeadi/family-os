@@ -45,6 +45,8 @@
 
 The following is intentionally unverified and must not be claimed yet:
 
+- application of migration `005_family_children_roster.sql`, deployment of its reviewed API revision, or any authenticated Children Roster verification; the prior evidence covers only migrations `001` through `004` and must not be extended by inference;
+
 - retained non-sensitive migration-name/checksum outcome for migrations `001_foundation.sql` through `004_audit_correlation.sql`;
 - deletion/replacement cleanup of retained synthetic principals/test data by 2026-10-31 unless a separately accepted Flutter-connected Foundation gate supersedes this hold.
 
