@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/fs_foundation/local_database.dart';
 import 'package:family_os/core/fs_foundation/memory_local_database.dart';
+import 'package:family_os/core/identity/identity_local_persistence.dart';
 import 'package:family_os/features/n02_day/children_list_local_repository.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
