@@ -21542,7 +21542,7 @@ abstract class AppLocalizations {
   /// No description provided for @childrenListLocalOnlyBanner.
   ///
   /// In ar, this message translates to:
-  /// **'معلومات الأسرة في هذه الشاشة محفوظة حاليًا على هذا الجهاز. التغييرات ليست إثباتًا لتطبيق سياسة عن بُعد.'**
+  /// **'معلومات الأسرة في هذه الشاشة محفوظة حاليًا على هذا الجهاز. قد لا تظهر التغييرات على الأجهزة الأخرى بعد.'**
   String get childrenListLocalOnlyBanner;
 
   /// No description provided for @childrenListProfileRepairTitle.
