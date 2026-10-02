@@ -17,6 +17,7 @@ const expectedOperations = {
   '/v1/me/families': ['get'],
   '/v1/families': ['post'],
   '/v1/families/{familyId}': ['get'],
+  '/v1/families/{familyId}/children': ['get', 'post'],
   '/v1/families/{familyId}/memberships': ['post'],
   '/v1/families/{familyId}/memberships/{membershipId}/accept': ['post'],
   '/v1/families/{familyId}/memberships/{membershipId}/revoke': ['post'],
@@ -73,4 +74,21 @@ test('audit contract exposes nullable server-generated correlation evidence for 
   const correlationId = specification.components.schemas.AuditEvent.properties.correlationId;
   assert.deepEqual(correlationId.type, ['string', 'null']);
   assert.equal(correlationId.format, 'uuid');
+});
+
+
+test('children roster contract is guardian-scoped, explicit about its narrow truth, and idempotent on create', async () => {
+  const specification = JSON.parse(await readFile(specificationPath, 'utf8'));
+  const operation = specification.paths['/v1/families/{familyId}/children'];
+
+  assert.deepEqual(operation.get.security, [{ oidcBearer: [] }]);
+  assert.match(operation.get.description, /Device, location and policy state/);
+  assert.deepEqual(operation.post.security, [{ oidcBearer: [] }]);
+  assert.ok(operation.post.parameters.some((parameter) => parameter.$ref === '#/components/parameters/IdempotencyKey'));
+  assert.deepEqual(
+    specification.components.schemas.CreateFamilyChildRequest.required,
+    ['displayName', 'ageYears'],
+  );
+  assert.equal(specification.components.schemas.FamilyChild.properties.ageYears.minimum, 0);
+  assert.equal(specification.components.schemas.FamilyChild.properties.ageYears.maximum, 25);
 });

@@ -45,6 +45,17 @@ function discoveredFamilyView(row) {
   };
 }
 
+function familyChildView(row) {
+  return {
+    id: row.id,
+    displayName: row.display_name,
+    ageYears: row.age_years,
+    version: row.version,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 function guardianTransferView(row) {
   return {
     id: row.id,
@@ -341,6 +352,67 @@ export class PostgresFoundationStore {
         [familyId],
       );
       return { family: familyView(family.rows[0], memberships.rows.map(memberView)) };
+    });
+  }
+
+  async listFamilyChildren({ principal, familyId }) {
+    return this.withTransaction(async (client) => {
+      const actor = await this.activeActorMembership(client, familyId, principal.subject);
+      if (actor.role === 'child') {
+        throw new HttpError(
+          403,
+          'children_control_centre_access_denied',
+          'Child memberships cannot access the parent children control centre.',
+        );
+      }
+      const children = await client.query(
+        `SELECT id, display_name, age_years, version, created_at, updated_at
+         FROM family_children
+         WHERE family_id = $1
+         ORDER BY created_at ASC, id ASC`,
+        [familyId],
+      );
+      return { children: children.rows.map(familyChildView) };
+    });
+  }
+
+  async createFamilyChild({ principal, familyId, displayName, ageYears, idempotencyKey, requestHash, correlationId }) {
+    return this.withTransaction(async (client) => {
+      // Authorize before accepting a replay so a removed guardian cannot use an
+      // old idempotency key as a roster-read side channel.
+      const actor = await this.activeActorMembership(client, familyId, principal.subject, { primaryGuardianOnly: true });
+      const response = await this.acquireIdempotencySlot(
+        client,
+        `family-child:create:${familyId}`,
+        idempotencyKey,
+        requestHash,
+      );
+      if (response) {
+        return response;
+      }
+
+      const child = await client.query(
+        `INSERT INTO family_children (id, family_id, display_name, age_years)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id, display_name, age_years, version, created_at, updated_at`,
+        [randomUUID(), familyId, displayName, ageYears],
+      );
+      await this.appendAuditAndOutbox(client, {
+        familyId,
+        actorMembershipId: actor.id,
+        correlationId,
+        eventType: 'family.child_created',
+        subjectType: 'family_child',
+        subjectId: child.rows[0].id,
+      });
+      const result = { child: familyChildView(child.rows[0]) };
+      await this.completeIdempotencySlot(
+        client,
+        `family-child:create:${familyId}`,
+        idempotencyKey,
+        result,
+      );
+      return result;
     });
   }
 

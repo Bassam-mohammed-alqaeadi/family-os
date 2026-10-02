@@ -57,12 +57,15 @@ final class LocalChildrenListRepository implements ChildrenListRepository {
     final key = _policiesKey(id);
     final existing = await _readRaw(key);
     if (existing != null && existing.isNotEmpty) return;
-    // Preserve a pre-scoping local draft once, then write it into the family
-    // namespace. New writes are always family-scoped.
-    final legacy = await _readRaw(_legacyPoliciesKey);
-    if (legacy != null && legacy.isNotEmpty) {
-      await _write(key, legacy);
-      return;
+    // The old unscoped key predates family selection. It is only attributable
+    // to the original Stage-1 local family; copying it to a later-selected
+    // family would leak another family's local policy draft.
+    if (id == ChildrenListLocalSeed.famStage1) {
+      final legacy = await _readRaw(_legacyPoliciesKey);
+      if (legacy != null && legacy.isNotEmpty) {
+        await _write(key, legacy);
+        return;
+      }
     }
     await saveSharedPolicies(
       ChildrenListLocalSeed.defaultPolicies,

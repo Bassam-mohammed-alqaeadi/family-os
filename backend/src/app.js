@@ -2,6 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import express from 'express';
 import { asHttpError, HttpError } from './http-error.js';
 import {
+  createChildInput,
   createFamilyInput,
   createGuardianTransferInput,
   createMembershipInput,
@@ -123,6 +124,42 @@ export function createApp({ store, authVerifier, readiness }) {
     asyncRoute(async (request, response) => {
       const familyId = requireUuid(request.params.familyId, 'familyId');
       response.status(200).json(await store.getFamily({ principal: request.principal, familyId }));
+    }),
+  );
+
+  app.get(
+    '/v1/families/:familyId/children',
+    requirePrincipal,
+    asyncRoute(async (request, response) => {
+      const familyId = requireUuid(request.params.familyId, 'familyId');
+      requireNoQueryParameters(request.query);
+      response.status(200).json(await store.listFamilyChildren({
+        principal: request.principal,
+        familyId,
+      }));
+    }),
+  );
+
+  app.post(
+    '/v1/families/:familyId/children',
+    requirePrincipal,
+    asyncRoute(async (request, response) => {
+      const familyId = requireUuid(request.params.familyId, 'familyId');
+      const input = createChildInput(request.body);
+      const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+      const result = await store.createFamilyChild({
+        principal: request.principal,
+        familyId,
+        ...input,
+        idempotencyKey,
+        correlationId: request.correlationId,
+        requestHash: requestFingerprint({
+          action: 'family_child.create',
+          principal: request.principal,
+          input: { familyId, ...input },
+        }),
+      });
+      response.status(201).json(result);
     }),
   );
 

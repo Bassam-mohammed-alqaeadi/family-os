@@ -22,6 +22,7 @@ export class MemoryFoundationStore {
     this.families = new Map();
     this.memberships = new Map();
     this.guardianTransfers = new Map();
+    this.children = new Map();
     this.audit = [];
     this.outbox = [];
     this.idempotency = new Map();
@@ -88,6 +89,17 @@ export class MemoryFoundationStore {
       cancelledAt: transfer.cancelledAt,
       version: transfer.version,
       createdAt: transfer.createdAt,
+    };
+  }
+
+  familyChildView(child) {
+    return {
+      id: child.id,
+      displayName: child.displayName,
+      ageYears: child.ageYears,
+      version: child.version,
+      createdAt: child.createdAt,
+      updatedAt: child.updatedAt,
     };
   }
 
@@ -177,6 +189,44 @@ export class MemoryFoundationStore {
           .map((membership) => this.memberView(membership)),
       },
     };
+  }
+
+  async listFamilyChildren({ principal, familyId }) {
+    const actor = this.activeMembership(familyId, principal.subject);
+    if (actor.role === 'child') {
+      throw new HttpError(
+        403,
+        'children_control_centre_access_denied',
+        'Child memberships cannot access the parent children control centre.',
+      );
+    }
+    return {
+      children: [...this.children.values()]
+        .filter((child) => child.familyId === familyId)
+        .sort((left, right) => left.createdAt.localeCompare(right.createdAt) || left.id.localeCompare(right.id))
+        .map((child) => this.familyChildView(child)),
+    };
+  }
+
+  async createFamilyChild({ principal, familyId, displayName, ageYears, idempotencyKey, requestHash, correlationId }) {
+    // Authorize before accepting a replay so a removed guardian cannot use an
+    // old idempotency key as a roster-read side channel.
+    const actor = this.activeMembership(familyId, principal.subject, true);
+    return this.idempotent(`family-child:create:${familyId}`, idempotencyKey, requestHash, () => {
+      const now = this.now().toISOString();
+      const child = {
+        id: randomUUID(),
+        familyId,
+        displayName,
+        ageYears,
+        version: 1,
+        createdAt: now,
+        updatedAt: now,
+      };
+      this.children.set(child.id, child);
+      this.recordAudit(familyId, actor.id, correlationId, 'family.child_created', 'family_child', child.id);
+      return { child: this.familyChildView(child) };
+    });
   }
 
   async createMembershipInvitation({ principal, familyId, role, targetSubject, idempotencyKey, requestHash, correlationId }) {

@@ -95,6 +95,40 @@
         }
       }
     },
+    "/v1/families/{familyId}/children": {
+      "get": {
+        "tags": ["Families"],
+        "operationId": "listFamilyChildren",
+        "summary": "Read the verified guardian's durable children roster",
+        "description": "Only active guardian memberships can read this parent control-centre roster. Device, location and policy state are deliberately outside this roster endpoint.",
+        "security": [{ "oidcBearer": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/FamilyId" }],
+        "responses": {
+          "200": { "description": "Durable child profile roster, including an empty roster.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/FamilyChildListResponse" } } } },
+          "400": { "$ref": "#/components/responses/InvalidRequest" },
+          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+        }
+      },
+      "post": {
+        "tags": ["Families"],
+        "operationId": "createFamilyChild",
+        "summary": "Create one durable child profile as the active primary guardian",
+        "description": "This creates only a family roster profile. It does not create a child login, pair a device, report location, or apply a policy.",
+        "security": [{ "oidcBearer": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/FamilyId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateFamilyChildRequest" } } } },
+        "responses": {
+          "201": { "description": "Child profile created or durable idempotent replay returned.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/FamilyChildResponse" } } } },
+          "400": { "$ref": "#/components/responses/InvalidRequest" },
+          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
+          "403": { "$ref": "#/components/responses/FamilyAccessDenied" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+        }
+      }
+    },
     "/v1/families/{familyId}/memberships": {
       "post": {
         "tags": ["Families"],
@@ -251,9 +285,11 @@
       "NotReadyStatus": { "type": "object", "required": ["status", "dependencies"], "properties": { "status": { "const": "not_ready" }, "dependencies": { "type": "object", "required": ["configuration", "database"], "properties": { "configuration": { "type": "string" }, "database": { "type": "string" } }, "additionalProperties": false } }, "additionalProperties": false },
       "ErrorResponse": { "type": "object", "required": ["error"], "properties": { "error": { "type": "object", "required": ["code", "message"], "properties": { "code": { "type": "string" }, "message": { "type": "string" }, "details": {} }, "additionalProperties": false } }, "additionalProperties": false },
       "CreateFamilyRequest": { "type": "object", "required": ["displayName"], "properties": { "displayName": { "type": "string", "minLength": 1, "maxLength": 120 } }, "additionalProperties": false },
+      "CreateFamilyChildRequest": { "type": "object", "required": ["displayName", "ageYears"], "properties": { "displayName": { "type": "string", "minLength": 1, "maxLength": 120 }, "ageYears": { "type": "integer", "minimum": 0, "maximum": 25 } }, "additionalProperties": false },
       "CreateMembershipRequest": { "type": "object", "required": ["role", "targetSubject"], "properties": { "role": { "type": "string", "enum": ["co_guardian", "child"] }, "targetSubject": { "type": "string", "minLength": 1, "maxLength": 255 } }, "additionalProperties": false },
       "RevokeMembershipRequest": { "type": "object", "required": ["reasonCode"], "properties": { "reasonCode": { "type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$" } }, "additionalProperties": false },
       "CreateGuardianTransferRequest": { "type": "object", "required": ["candidateMembershipId"], "properties": { "candidateMembershipId": { "$ref": "#/components/schemas/Uuid" } }, "additionalProperties": false },
+      "FamilyChild": { "type": "object", "required": ["id", "displayName", "ageYears", "version", "createdAt", "updatedAt"], "properties": { "id": { "$ref": "#/components/schemas/Uuid" }, "displayName": { "type": "string", "minLength": 1, "maxLength": 120 }, "ageYears": { "type": "integer", "minimum": 0, "maximum": 25 }, "version": { "type": "integer", "minimum": 1 }, "createdAt": { "type": "string", "format": "date-time" }, "updatedAt": { "type": "string", "format": "date-time" } }, "additionalProperties": false },
       "Membership": { "type": "object", "required": ["id", "role", "status", "version", "createdAt"], "properties": { "id": { "$ref": "#/components/schemas/Uuid" }, "role": { "type": "string", "enum": ["primary_guardian", "co_guardian", "child"] }, "status": { "type": "string", "enum": ["invited", "active", "revoked", "removed"] }, "statusReasonCode": { "type": ["string", "null"], "maxLength": 64 }, "version": { "type": "integer", "minimum": 1 }, "joinedAt": { "type": ["string", "null"], "format": "date-time" }, "statusChangedAt": { "type": ["string", "null"], "format": "date-time" }, "createdAt": { "type": "string", "format": "date-time" } }, "additionalProperties": false },
       "Family": { "type": "object", "required": ["id", "displayName", "status", "createdAt", "members"], "properties": { "id": { "$ref": "#/components/schemas/Uuid" }, "displayName": { "type": "string" }, "status": { "type": "string", "enum": ["active", "suspended", "archived"] }, "createdAt": { "type": "string", "format": "date-time" }, "members": { "type": "array", "items": { "$ref": "#/components/schemas/Membership" } } }, "additionalProperties": false },
       "FamilyDiscoveryItem": { "type": "object", "required": ["id", "displayName", "role"], "properties": { "id": { "$ref": "#/components/schemas/Uuid" }, "displayName": { "type": "string", "minLength": 1, "maxLength": 120 }, "role": { "type": "string", "enum": ["primary_guardian", "co_guardian", "child"], "description": "Display-only current role. The API remains the authorization authority." } }, "additionalProperties": false },
@@ -261,6 +297,8 @@
       "GuardianTransfer":  { "type": "object", "required": ["id", "status", "candidateMembershipId", "expiresAt", "version", "createdAt"], "properties": { "id": { "$ref": "#/components/schemas/Uuid" }, "status": { "type": "string", "enum": ["pending_acceptance", "completed", "cancelled", "expired"] }, "candidateMembershipId": { "$ref": "#/components/schemas/Uuid" }, "expiresAt": { "type": "string", "format": "date-time" }, "completedAt": { "type": ["string", "null"], "format": "date-time" }, "cancelledAt": { "type": ["string", "null"], "format": "date-time" }, "version": { "type": "integer", "minimum": 1 }, "createdAt": { "type": "string", "format": "date-time" } }, "additionalProperties": false },
       "AuditEvent": { "type": "object", "required": ["id", "eventType", "subjectType", "subjectId", "occurredAt"], "properties": { "id": { "$ref": "#/components/schemas/Uuid" }, "eventType": { "type": "string" }, "actorMembershipId": { "type": ["string", "null"], "format": "uuid" }, "correlationId": { "type": ["string", "null"], "format": "uuid", "description": "Server-generated linkage for newer audit/outbox evidence. Historical entries can be null." }, "subjectType": { "type": "string" }, "subjectId": { "$ref": "#/components/schemas/Uuid" }, "occurredAt": { "type": "string", "format": "date-time" } }, "additionalProperties": false },
       "FamilyResponse": { "type": "object", "required": ["family"], "properties": { "family": { "$ref": "#/components/schemas/Family" } }, "additionalProperties": false },
+      "FamilyChildResponse": { "type": "object", "required": ["child"], "properties": { "child": { "$ref": "#/components/schemas/FamilyChild" } }, "additionalProperties": false },
+      "FamilyChildListResponse": { "type": "object", "required": ["children"], "properties": { "children": { "type": "array", "items": { "$ref": "#/components/schemas/FamilyChild" } } }, "additionalProperties": false },
       "MembershipResponse": { "type": "object", "required": ["membership"], "properties": { "membership": { "$ref": "#/components/schemas/Membership" } }, "additionalProperties": false },
       "GuardianTransferResponse": { "type": "object", "required": ["transfer"], "properties": { "transfer": { "$ref": "#/components/schemas/GuardianTransfer" } }, "additionalProperties": false },
       "AuditEventListResponse": { "type": "object", "required": ["events"], "properties": { "events": { "type": "array", "maxItems": 100, "items": { "$ref": "#/components/schemas/AuditEvent" } } }, "additionalProperties": false }

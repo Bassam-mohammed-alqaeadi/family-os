@@ -2,6 +2,7 @@ import { HttpError } from './http-error.js';
 
 const MAX_DISPLAY_NAME_LENGTH = 120;
 const MAX_SUBJECT_LENGTH = 255;
+const MAX_CHILD_AGE_YEARS = 25;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const INVITABLE_ROLES = new Set(['co_guardian', 'child']);
 
@@ -29,6 +30,18 @@ export function createFamilyInput(value) {
   const body = bodyObject(value);
   return {
     displayName: requiredText(body.displayName, 'displayName', { maxLength: MAX_DISPLAY_NAME_LENGTH }),
+  };
+}
+
+export function createChildInput(value) {
+  const body = bodyObject(value);
+  const ageYears = body.ageYears;
+  if (!Number.isInteger(ageYears) || ageYears < 0 || ageYears > MAX_CHILD_AGE_YEARS) {
+    throw new HttpError(400, 'invalid_request', 'ageYears must be an integer between 0 and 25.');
+  }
+  return {
+    displayName: requiredText(body.displayName, 'displayName', { maxLength: MAX_DISPLAY_NAME_LENGTH }),
+    ageYears,
   };
 }
 

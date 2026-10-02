@@ -215,3 +215,57 @@ test('PostgreSQL evidence writes fail closed when internal correlation context i
     { code: 'correlation_context_missing', status: 500 },
   );
 });
+
+test('PostgreSQL children roster read is guardian-scoped and performs no evidence writes', async () => {
+  const statements = [];
+  const client = {
+    async query(sql, values) {
+      statements.push({ sql, values });
+      if (sql === 'BEGIN' || sql === 'COMMIT' || sql === 'ROLLBACK') {
+        return { rows: [], rowCount: 0 };
+      }
+      if (sql.includes('FROM family_memberships AS membership')) {
+        return {
+          rows: [{ id: 'b7fe4b27-2df2-4cf7-8071-9792b4ef665b', role: 'co_guardian' }],
+          rowCount: 1,
+        };
+      }
+      if (sql.includes('FROM family_children')) {
+        return {
+          rows: [{
+            id: '4a3846da-8f5f-4f2b-b7ea-8a0afcd989fb',
+            display_name: 'Amani',
+            age_years: 0,
+            version: 1,
+            created_at: '2026-10-02T00:00:00.000Z',
+            updated_at: '2026-10-02T00:00:00.000Z',
+          }],
+          rowCount: 1,
+        };
+      }
+      throw new Error(`Unexpected query: ${sql}`);
+    },
+    release() {},
+  };
+  const store = new PostgresFoundationStore({
+    connectionString: 'postgresql://unused-in-test',
+    pool: { async connect() { return client; }, async end() {} },
+  });
+
+  const result = await store.listFamilyChildren({
+    principal: { subject: 'guardian-b' },
+    familyId: '6dbb6760-f609-4f3e-a29f-4c209dc1d53b',
+  });
+
+  assert.deepEqual(result.children, [{
+    id: '4a3846da-8f5f-4f2b-b7ea-8a0afcd989fb',
+    displayName: 'Amani',
+    ageYears: 0,
+    version: 1,
+    createdAt: '2026-10-02T00:00:00.000Z',
+    updatedAt: '2026-10-02T00:00:00.000Z',
+  }]);
+  const childRead = statements.find((statement) => statement.sql.includes('FROM family_children'));
+  assert.deepEqual(childRead.values, ['6dbb6760-f609-4f3e-a29f-4c209dc1d53b']);
+  assert.equal(statements.some((statement) => /^\s*(?:INSERT|UPDATE|DELETE)\b/i.test(statement.sql)), false);
+});

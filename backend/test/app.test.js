@@ -532,3 +532,83 @@ test('server-generated correlation evidence links a mutation to audit/outbox wit
     assert.equal(store.outbox[0].correlationId, correlationId);
   });
 });
+
+test('children roster is server-authorized, audit-backed and never exposed to a child membership', async () => {
+  const store = new MemoryFoundationStore();
+  await withServer(foundationApp({ store }), async (baseUrl) => {
+    const family = await createFamily(baseUrl, 'Roster family');
+
+    const invalidChild = await request(baseUrl, `/v1/families/${family.id}/children`, {
+      method: 'POST',
+      token: 'test-parent-a',
+      idempotencyKey: 'child-invalid-age',
+      body: { displayName: 'Amani', ageYears: 26 },
+    });
+    assert.equal(invalidChild.status, 400);
+
+    const create = await request(baseUrl, `/v1/families/${family.id}/children`, {
+      method: 'POST',
+      token: 'test-parent-a',
+      idempotencyKey: 'child-create-amani',
+      body: { displayName: 'Amani', ageYears: 0 },
+    });
+    assert.equal(create.status, 201);
+    const child = (await create.json()).child;
+    assert.equal(child.displayName, 'Amani');
+    assert.equal(child.ageYears, 0);
+    assert.equal(child.version, 1);
+
+    const replay = await request(baseUrl, `/v1/families/${family.id}/children`, {
+      method: 'POST',
+      token: 'test-parent-a',
+      idempotencyKey: 'child-create-amani',
+      body: { displayName: 'Amani', ageYears: 0 },
+    });
+    assert.equal(replay.status, 201);
+    assert.equal((await replay.json()).child.id, child.id);
+
+    const changedReplay = await request(baseUrl, `/v1/families/${family.id}/children`, {
+      method: 'POST',
+      token: 'test-parent-a',
+      idempotencyKey: 'child-create-amani',
+      body: { displayName: 'Amani', ageYears: 1 },
+    });
+    assert.equal(changedReplay.status, 409);
+    assert.equal((await changedReplay.json()).error.code, 'idempotency_key_reused');
+
+    const roster = await request(baseUrl, `/v1/families/${family.id}/children`, { token: 'test-parent-a' });
+    assert.equal(roster.status, 200);
+    assert.deepEqual((await roster.json()).children.map((entry) => entry.id), [child.id]);
+    assert.equal(store.audit.at(-1).eventType, 'family.child_created');
+    assert.equal(store.outbox.at(-1).eventType, 'family.child_created');
+
+    const childMembership = await invite(baseUrl, family.id, {
+      role: 'child',
+      targetSubject: 'test-child-a',
+      idempotencyKey: 'roster-child-membership',
+    });
+    const accepted = await request(baseUrl, `/v1/families/${family.id}/memberships/${childMembership.id}/accept`, {
+      method: 'POST',
+      token: 'test-child-a',
+      idempotencyKey: 'roster-child-membership-accept',
+      body: {},
+    });
+    assert.equal(accepted.status, 200);
+
+    const deniedRead = await request(baseUrl, `/v1/families/${family.id}/children`, { token: 'test-child-a' });
+    assert.equal(deniedRead.status, 403);
+    assert.equal((await deniedRead.json()).error.code, 'children_control_centre_access_denied');
+
+    const deniedWrite = await request(baseUrl, `/v1/families/${family.id}/children`, {
+      method: 'POST',
+      token: 'test-child-a',
+      idempotencyKey: 'roster-child-write-denied',
+      body: { displayName: 'Nope', ageYears: 7 },
+    });
+    assert.equal(deniedWrite.status, 403);
+    assert.equal((await deniedWrite.json()).error.code, 'family_access_denied');
+
+    const queryRejected = await request(baseUrl, `/v1/families/${family.id}/children?limit=1`, { token: 'test-parent-a' });
+    assert.equal(queryRejected.status, 400);
+  });
+});

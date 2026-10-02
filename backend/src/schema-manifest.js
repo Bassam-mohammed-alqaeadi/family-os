@@ -17,4 +17,8 @@ export const FOUNDATION_SCHEMA_MIGRATIONS = Object.freeze([
     name: '004_audit_correlation.sql',
     sha256: '310e1262ce68d241be13bee1f2e0242864260e9eb22ebebaa81a8c5b4aa31032',
   }),
+  Object.freeze({
+    name: '005_family_children_roster.sql',
+    sha256: '0da71c0880da2e10ae306888902e933b10b7090a54cf428af9ceae395bf4503e',
+  }),
 ]);
