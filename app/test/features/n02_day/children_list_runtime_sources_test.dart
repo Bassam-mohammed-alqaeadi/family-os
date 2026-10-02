@@ -11,7 +11,7 @@ import 'package:family_os/features/n02_day/children_list_runtime_sources.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
 
 void main() {
-  const familyId = FamilyId('fam_a');
+  final familyId = FamilyId('fam_a');
 
   test('local roster keeps a managed child without manufacturing a profile', () async {
     final source = LocalFamilyRosterSource(
@@ -34,7 +34,7 @@ void main() {
         },
       ),
       managementRepository: _ManagementFake(
-        children: const [
+        children: [
           ManagedChildRecord(
             familyId: familyId,
             childId: ChildId('child_profiled'),
@@ -51,10 +51,10 @@ void main() {
 
     final snapshot = await source.load(familyId);
     final profiled = snapshot.children.firstWhere(
-      (it) => it.childId == const ChildId('child_profiled'),
+      (it) => it.childId == ChildId('child_profiled'),
     );
     final incomplete = snapshot.children.firstWhere(
-      (it) => it.childId == const ChildId('child_needs_profile'),
+      (it) => it.childId == ChildId('child_needs_profile'),
     );
 
     expect(snapshot.origin, RuntimeDataOrigin.localOnly);
@@ -87,7 +87,7 @@ void main() {
   test('local device source only reports registered device truth', () async {
     final source = LocalFamilyDeviceSource(
       managementRepository: _ManagementFake(
-        children: const [
+        children: [
           ManagedChildRecord(familyId: familyId, childId: ChildId('child_a')),
         ],
       ),
@@ -98,14 +98,14 @@ void main() {
     final snapshot = await source.load(familyId);
 
     expect(snapshot.origin, RuntimeDataOrigin.localOnly);
-    expect(snapshot.forChild(const ChildId('child_a'))!.connectionState,
+    expect(snapshot.forChild(ChildId('child_a'))!.connectionState,
         ChildDeviceConnectionState.noDevice);
-    expect(snapshot.forChild(const ChildId('unknown')), isNull);
+    expect(snapshot.forChild(ChildId('unknown')), isNull);
   });
 }
 
 final class _ManagementFake implements ChildDeviceManagementRepository {
-  const _ManagementFake({this.children = const []});
+  _ManagementFake({this.children = const []});
 
   final List<ManagedChildRecord> children;
 

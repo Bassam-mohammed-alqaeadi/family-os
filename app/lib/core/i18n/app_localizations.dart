@@ -21538,6 +21538,54 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'جارٍ التحميل'**
   String get appLoadingSemantics;
+
+  /// No description provided for @childrenListLocalOnlyBanner.
+  ///
+  /// In ar, this message translates to:
+  /// **'معلومات الأسرة في هذه الشاشة محفوظة حاليًا على هذا الجهاز. التغييرات ليست إثباتًا لتطبيق سياسة عن بُعد.'**
+  String get childrenListLocalOnlyBanner;
+
+  /// No description provided for @childrenListProfileRepairTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'ملف الابن يحتاج إلى استكمال'**
+  String get childrenListProfileRepairTitle;
+
+  /// No description provided for @childrenListProfileRepairMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا الابن مسجّل، لكن بيانات العرض في ملفه غير مكتملة. أكمل الإعداد قبل الاعتماد على أدوات التحكم.'**
+  String get childrenListProfileRepairMessage;
+
+  /// No description provided for @childrenListProfileRepairCta.
+  ///
+  /// In ar, this message translates to:
+  /// **'إكمال الإعداد'**
+  String get childrenListProfileRepairCta;
+
+  /// No description provided for @childrenListDeviceActive.
+  ///
+  /// In ar, this message translates to:
+  /// **'الجهاز متصل'**
+  String get childrenListDeviceActive;
+
+  /// No description provided for @childrenListDevicePairing.
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ ربط الجهاز'**
+  String get childrenListDevicePairing;
+
+  /// No description provided for @childrenListDeviceNeedsAttention.
+  ///
+  /// In ar, this message translates to:
+  /// **'الجهاز يحتاج إلى انتباه'**
+  String get childrenListDeviceNeedsAttention;
+
+  /// No description provided for @childrenListDeviceStateUnavailable.
+  ///
+  /// In ar, this message translates to:
+  /// **'حالة الجهاز غير متاحة'**
+  String get childrenListDeviceStateUnavailable;
 }
 
 class _AppLocalizationsDelegate
@@ -21555,21 +21603,6 @@ class _AppLocalizationsDelegate
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
-  String get childrenListLocalOnlyBanner;
-
-  String get childrenListProfileRepairTitle;
-
-  String get childrenListProfileRepairMessage;
-
-  String get childrenListProfileRepairCta;
-
-  String get childrenListDeviceActive;
-
-  String get childrenListDevicePairing;
-
-  String get childrenListDeviceNeedsAttention;
-
-  String get childrenListDeviceStateUnavailable;
 }
 
 AppLocalizations lookupAppLocalizations(Locale locale) {

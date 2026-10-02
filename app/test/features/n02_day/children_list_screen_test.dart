@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -249,10 +248,10 @@ void main() {
   testWidgets(
     'SCR-FAT-012 runtime roster renders profile repair instead of fake child facts',
     (tester) async {
-      const familyId = FamilyId('fam_runtime');
+      final familyId = FamilyId('fam_runtime');
       final runtime = AppRuntime(
         identity: _StaticIdentitySource(
-          const IdentitySnapshot(
+          IdentitySnapshot(
             authority: IdentityAuthority.localOnly,
             accountId: AccountId('parent_runtime'),
             familyId: familyId,
@@ -261,7 +260,7 @@ void main() {
           ),
         ),
         roster: _StaticRosterSource(
-          const FamilyRosterSnapshot(
+          FamilyRosterSnapshot(
             familyId: familyId,
             origin: RuntimeDataOrigin.localOnly,
             children: [
@@ -335,7 +334,7 @@ Widget _app({required Widget child, AppRuntime? runtime}) {
 final class _StaticIdentitySource extends ChangeNotifier implements IdentitySource {
   _StaticIdentitySource(this._value);
 
-  IdentitySnapshot _value;
+  final IdentitySnapshot _value;
 
   @override
   IdentitySnapshot get value => _value;
@@ -347,7 +346,7 @@ final class _StaticIdentitySource extends ChangeNotifier implements IdentitySour
 final class _StaticRosterSource extends ChangeNotifier implements FamilyRosterSource {
   _StaticRosterSource(this._value);
 
-  FamilyRosterSnapshot _value;
+  final FamilyRosterSnapshot _value;
 
   @override
   FamilyRosterSnapshot get value => _value;

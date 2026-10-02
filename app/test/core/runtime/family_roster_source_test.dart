@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/runtime/family_roster_source.dart';
+import 'package:family_os/core/runtime/runtime_data_origin.dart';
 
 void main() {
   test('unavailable roster source never fabricates a family or child', () async {
@@ -18,7 +19,7 @@ void main() {
   });
 
   test('roster child distinguishes absent profile fields from zero/default data', () {
-    const child = FamilyRosterChild(childId: ChildId('child_unknown'));
+    final child = FamilyRosterChild(childId: ChildId('child_unknown'));
 
     expect(child.displayName, isNull);
     expect(child.ageYears, isNull);
