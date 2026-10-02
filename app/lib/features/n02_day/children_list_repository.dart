@@ -81,9 +81,12 @@ abstract class ChildrenListRepository {
   /// Persist display fields for a child (VX-B6 / FVX-S-04). Idempotent upsert.
   Future<void> upsertChild(ChildrenListEntry entry, {FamilyId? familyId});
 
-  Future<SharedChildrenPolicies> loadSharedPolicies();
+  Future<SharedChildrenPolicies> loadSharedPolicies({FamilyId? familyId});
 
-  Future<void> saveSharedPolicies(SharedChildrenPolicies policies);
+  Future<void> saveSharedPolicies(
+    SharedChildrenPolicies policies, {
+    FamilyId? familyId,
+  });
 
   /// Envelope provenance (`LOCAL_DEMO_SEEDED`) when roster is demo seed.
   /// Null → no honesty banner (live/unmarked).
@@ -96,17 +99,20 @@ final class InMemoryChildrenListRepository implements ChildrenListRepository {
     List<ChildrenListEntry> children = const [],
     Map<String, List<ChildrenListEntry>> byFamily = const {},
     SharedChildrenPolicies policies = const SharedChildrenPolicies(),
+    Map<String, SharedChildrenPolicies> policiesByFamily = const {},
     this.failLoad = false,
     this.provenance,
   }) : _children = List.of(children),
        _byFamily = {
          for (final entry in byFamily.entries) entry.key: List.of(entry.value),
        },
-       _policies = policies;
+       _policies = policies,
+       _policiesByFamily = Map.of(policiesByFamily);
 
   List<ChildrenListEntry> _children;
   final Map<String, List<ChildrenListEntry>> _byFamily;
   SharedChildrenPolicies _policies;
+  final Map<String, SharedChildrenPolicies> _policiesByFamily;
 
   /// Test seam — next [listChildren] throws.
   bool failLoad;
@@ -161,11 +167,21 @@ final class InMemoryChildrenListRepository implements ChildrenListRepository {
   }
 
   @override
-  Future<SharedChildrenPolicies> loadSharedPolicies() async => _policies;
+  Future<SharedChildrenPolicies> loadSharedPolicies({FamilyId? familyId}) async {
+    if (familyId == null) return _policies;
+    return _policiesByFamily[familyId.value] ?? _policies;
+  }
 
   @override
-  Future<void> saveSharedPolicies(SharedChildrenPolicies policies) async {
-    _policies = policies;
+  Future<void> saveSharedPolicies(
+    SharedChildrenPolicies policies, {
+    FamilyId? familyId,
+  }) async {
+    if (familyId == null) {
+      _policies = policies;
+    } else {
+      _policiesByFamily[familyId.value] = policies;
+    }
   }
 
   @override

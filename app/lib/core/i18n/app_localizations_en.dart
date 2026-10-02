@@ -12302,4 +12302,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appLoadingSemantics => 'Loading';
+
+  @override
+  String get childrenListLocalOnlyBanner =>
+      'Family information on this screen is currently stored on this device. Changes are not remote policy enforcement.';
+
+  @override
+  String get childrenListProfileRepairTitle => 'Child profile needs setup';
+
+  @override
+  String get childrenListProfileRepairMessage =>
+      'This child is registered, but their display profile is incomplete. Finish setup before relying on child controls.';
+
+  @override
+  String get childrenListProfileRepairCta => 'Finish setup';
+
+  @override
+  String get childrenListDeviceActive => 'Device connected';
+
+  @override
+  String get childrenListDevicePairing => 'Device pairing in progress';
+
+  @override
+  String get childrenListDeviceNeedsAttention => 'Device needs attention';
+
+  @override
+  String get childrenListDeviceStateUnavailable => 'Device status unavailable';
 }

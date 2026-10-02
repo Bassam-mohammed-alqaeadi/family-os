@@ -17,6 +17,7 @@ import 'package:family_os/core/fs_foundation/fs_composition_runtime.dart';
 import 'package:family_os/core/fs_foundation/fs_session_kernel.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/i18n/locale_controller.dart';
+import 'package:family_os/core/identity/child_device_management_repository.dart';
 import 'package:family_os/core/identity/identity_local_persistence.dart';
 import 'package:family_os/core/identity/identity_runtime.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
@@ -31,6 +32,7 @@ import 'package:family_os/features/n02_day/alert_detail_local_projection.dart';
 import 'package:family_os/features/n02_day/alerts_hub_local_projection.dart';
 import 'package:family_os/features/n02_day/child_profile_repository.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
+import 'package:family_os/features/n02_day/children_list_runtime_sources.dart';
 import 'package:family_os/features/n02_day/family_chat_local_persistence.dart';
 import 'package:family_os/features/n02_day/location_ux_bridge.dart';
 import 'package:family_os/features/n03_screen_time/child_apps_local_persistence.dart';
@@ -158,7 +160,19 @@ class _FamilyOsAppState extends State<FamilyOsApp> {
   void initState() {
     super.initState();
     _identity = stage1IdentityRuntime;
-    _runtime = AppRuntime(identity: RuntimeIdentitySource(_identity));
+    _runtime = AppRuntime(
+      identity: RuntimeIdentitySource(_identity),
+      roster: LocalFamilyRosterSource(
+        repository: stage1ChildrenListRepository,
+        managementRepository: stage1ChildDeviceManagementRepository,
+      ),
+      devices: LocalFamilyDeviceSource(
+        managementRepository: stage1ChildDeviceManagementRepository,
+      ),
+      policies: LocalFamilyPolicySource(
+        repository: stage1ChildrenListRepository,
+      ),
+    );
     if (widget.roleController != null) {
       _role = widget.roleController!;
     } else {

@@ -15714,5 +15714,13 @@
   "appLoadingSemantics": "جارٍ التحميل",
   "@appLoadingSemantics": {
     "description": "VX-B4 · AppLoadingState semantics label"
-  }
+  },
+  "childrenListLocalOnlyBanner": "معلومات الأسرة في هذه الشاشة محفوظة حاليًا على هذا الجهاز. التغييرات ليست إثباتًا لتطبيق سياسة عن بُعد.",
+  "childrenListProfileRepairTitle": "ملف الابن يحتاج إلى استكمال",
+  "childrenListProfileRepairMessage": "هذا الابن مسجّل، لكن بيانات العرض في ملفه غير مكتملة. أكمل الإعداد قبل الاعتماد على أدوات التحكم.",
+  "childrenListProfileRepairCta": "إكمال الإعداد",
+  "childrenListDeviceActive": "الجهاز متصل",
+  "childrenListDevicePairing": "جارٍ ربط الجهاز",
+  "childrenListDeviceNeedsAttention": "الجهاز يحتاج إلى انتباه",
+  "childrenListDeviceStateUnavailable": "حالة الجهاز غير متاحة"
 }

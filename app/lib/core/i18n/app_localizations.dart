@@ -21555,6 +21555,21 @@ class _AppLocalizationsDelegate
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
+  String get childrenListLocalOnlyBanner;
+
+  String get childrenListProfileRepairTitle;
+
+  String get childrenListProfileRepairMessage;
+
+  String get childrenListProfileRepairCta;
+
+  String get childrenListDeviceActive;
+
+  String get childrenListDevicePairing;
+
+  String get childrenListDeviceNeedsAttention;
+
+  String get childrenListDeviceStateUnavailable;
 }
 
 AppLocalizations lookupAppLocalizations(Locale locale) {

@@ -8,13 +8,22 @@ import 'package:family_os/core/design/components/app_error_state.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
+import 'package:family_os/core/design/components/role_gate.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
+import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/identity/child_device_management_repository.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/runtime/app_scope.dart';
+import 'package:family_os/core/runtime/family_device_source.dart';
+import 'package:family_os/core/runtime/family_policy_source.dart';
+import 'package:family_os/core/runtime/family_roster_source.dart';
+import 'package:family_os/core/runtime/permission_matrix.dart';
+import 'package:family_os/core/runtime/runtime_data_origin.dart';
 import 'package:family_os/features/n01_linking/add_child_screen.dart';
 import 'package:family_os/features/n02_day/children_list_local_repository.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
@@ -36,6 +45,9 @@ abstract final class ChildrenListKeys {
   static const sharedEnforceHonesty = Key(
     'children_list_shared_enforce_honesty',
   );
+  static const localOnlyBanner = Key('children_list_local_only_banner');
+
+  static Key profileRepair(String id) => Key('children_list_profile_repair_$id');
 
   static Key childRow(String id) => Key('children_list_row_$id');
 }
@@ -51,6 +63,9 @@ class ChildrenListScreen extends StatefulWidget {
     super.key,
     this.repository,
     this.managementRepository,
+    this.rosterSource,
+    this.deviceSource,
+    this.policySource,
     this.roleOverride,
     this.onAddChild,
     this.onOpenChildProfile,
@@ -59,6 +74,13 @@ class ChildrenListScreen extends StatefulWidget {
   /// Null → [stage1ChildrenListRepository].
   final ChildrenListRepository? repository;
   final ChildDeviceManagementRepository? managementRepository;
+
+  /// Explicit runtime sources for the real Children Control Centre slice.
+  /// Product routes receive these from [AppScope]; direct injection is kept
+  /// for isolated tests and preview hosts.
+  final FamilyRosterSource? rosterSource;
+  final FamilyDeviceSource? deviceSource;
+  final FamilyPolicySource? policySource;
 
   /// Test seam — when set, ignores [CurrentRole].
   final AppRole? roleOverride;
@@ -79,19 +101,51 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
   var _loading = true;
   var _loadFailed = false;
   List<ChildrenListEntry> _children = const [];
+  List<FamilyRosterChild> _runtimeRoster = const [];
+  List<ManagedChildRecord> _profileRepairs = const [];
+  FamilyDeviceSnapshot _deviceSnapshot = const FamilyDeviceSnapshot.unavailable();
+  RuntimeDataOrigin _rosterOrigin = RuntimeDataOrigin.unavailable;
+  RuntimeDataOrigin _policyOrigin = RuntimeDataOrigin.unavailable;
+  FamilyId? _loadedFamilyId;
+  bool _usesRuntimeSources = false;
   SharedChildrenPolicies _policies = const SharedChildrenPolicies();
   String? _rosterProvenance;
+
   AppRole get _role =>
       widget.roleOverride ??
+      AppScope.maybeOf(context)?.identity.value.role ??
       CurrentRole.maybeNotifierOf(context)?.value ??
       AppRole.father;
 
+  PanelProfile get _panelProfile {
+    final identity = AppScope.maybeOf(context)?.identity.value;
+    return PanelProfile.fromRole(
+      _role,
+      motherLevel: identity?.motherLevel ?? MotherLevel.observer,
+    );
+  }
+
   bool get _isParent => _role == AppRole.father || _role == AppRole.mother;
 
-  bool get _canEditShared => _role == AppRole.father;
+  bool get _canEditShared =>
+      PermissionMatrix.dispositionFor(
+        _panelProfile,
+        PanelCapability.editChildRules,
+      ) ==
+          PermissionDisposition.allow &&
+      (!_usesRuntimeSources ||
+          _policyOrigin == RuntimeDataOrigin.localOnly ||
+          _policyOrigin == RuntimeDataOrigin.remoteAuthoritative);
   bool get _canCreateChild {
+    if (PermissionMatrix.dispositionFor(
+          _panelProfile,
+          PanelCapability.manageFamily,
+        ) !=
+        PermissionDisposition.allow) {
+      return false;
+    }
     final runtime = CurrentIdentity.maybeOf(context);
-    if (runtime == null) return _role == AppRole.father;
+    if (runtime == null) return true;
     return _managementRepo
         .capabilitiesFor(runtime.activeFamilyId)
         .canCreateChild;
@@ -108,6 +162,8 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
   @override
   void initState() {
     super.initState();
+    // The repository paths below remain isolated preview/test seams. Normal
+    // routed screens obtain their data ports from AppScope in [_load].
     _repo = widget.repository ?? stage1ChildrenListRepository;
     _managementRepo =
         widget.managementRepository ?? stage1ChildDeviceManagementRepository;
@@ -123,17 +179,64 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
       _loadFailed = false;
     });
     try {
-      final familyId = CurrentIdentity.maybeOf(context)?.activeFamilyId;
+      final scope = AppScope.maybeOf(context);
+      final familyId =
+          scope?.identity.value.familyId ??
+          CurrentIdentity.maybeOf(context)?.activeFamilyId;
+      final rosterSource = widget.rosterSource ?? scope?.roster;
+      final deviceSource = widget.deviceSource ?? scope?.devices;
+      final policySource = widget.policySource ?? scope?.policies;
+
+      // A scoped runtime source is the only production roster path. The
+      // repository path remains only for tests and isolated preview hosts that
+      // explicitly inject [repository] without an AppScope.
+      if (familyId != null && rosterSource != null) {
+        final roster = await rosterSource.load(familyId);
+        final devices = deviceSource == null
+            ? const FamilyDeviceSnapshot.unavailable()
+            : await deviceSource.load(familyId);
+        final policy = policySource == null
+            ? const FamilyPolicySnapshot.unavailable()
+            : await policySource.load(familyId);
+        if (!mounted) return;
+        setState(() {
+          _children = const [];
+          _runtimeRoster = roster.children;
+          _profileRepairs = const [];
+          _deviceSnapshot = devices;
+          _rosterOrigin = roster.origin;
+          _policyOrigin = policy.origin;
+          _loadedFamilyId = familyId;
+          _usesRuntimeSources = true;
+          _policies = _legacyPolicyOf(policy.sharedPolicy);
+          _rosterProvenance = null;
+          _loading = false;
+          _loadFailed = false;
+        });
+        return;
+      }
+
+      // Explicit legacy seam only. This cannot run for the normal app route,
+      // because FamilyOsApp supplies AppScope and an active family context.
       final kids = await _repo.listChildren(familyId: familyId);
       final managed = familyId == null
           ? const <ManagedChildRecord>[]
           : _managementRepo.listChildren(familyId);
-      final merged = _mergeChildren(kids, managed);
-      final policies = await _repo.loadSharedPolicies();
+      final repairs = managed
+          .where((managedChild) => !kids.any((it) => it.id == managedChild.childId.value))
+          .toList(growable: false);
+      final policies = await _repo.loadSharedPolicies(familyId: familyId);
       final provenance = await _repo.loadProvenance(familyId: familyId);
       if (!mounted) return;
       setState(() {
-        _children = merged;
+        _children = kids;
+        _runtimeRoster = const [];
+        _profileRepairs = repairs;
+        _deviceSnapshot = const FamilyDeviceSnapshot.unavailable();
+        _rosterOrigin = RuntimeDataOrigin.localOnly;
+        _policyOrigin = RuntimeDataOrigin.localOnly;
+        _loadedFamilyId = familyId;
+        _usesRuntimeSources = false;
         _policies = policies;
         _rosterProvenance = provenance;
         _loading = false;
@@ -143,6 +246,12 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
       if (!mounted) return;
       setState(() {
         _children = const [];
+        _runtimeRoster = const [];
+        _profileRepairs = const [];
+        _deviceSnapshot = const FamilyDeviceSnapshot.unavailable();
+        _rosterOrigin = RuntimeDataOrigin.unavailable;
+        _policyOrigin = RuntimeDataOrigin.unavailable;
+        _loadedFamilyId = null;
         _rosterProvenance = null;
         _loading = false;
         _loadFailed = true;
@@ -150,38 +259,30 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
     }
   }
 
-  List<ChildrenListEntry> _mergeChildren(
-    List<ChildrenListEntry> fromRepo,
-    List<ManagedChildRecord> managed,
-  ) {
-    if (managed.isEmpty) return fromRepo;
-    final byId = <String, ChildrenListEntry>{
-      for (final item in fromRepo) item.id: item,
-    };
-    final next = <ChildrenListEntry>[];
-    for (final child in managed) {
-      final record = byId[child.childId.value];
-      if (record != null) {
-        next.add(record);
-        continue;
-      }
-      next.add(
-        ChildrenListEntry(
-          id: child.childId.value,
-          displayName: child.childId.value,
-          emoji: '🧒',
-          swatch: DayChildSwatch.purple,
-          ageYears: 0,
-          locationLabel: '',
-          lastSeenLabel: '',
-          batteryLabel: '',
-          timeLeftLabel: '',
-          health: ChildListHealth.excellent,
-        ),
-      );
-    }
-    return next;
+  SharedChildrenPolicies _legacyPolicyOf(FamilySharedPolicy? policy) {
+    if (policy == null) return const SharedChildrenPolicies();
+    return SharedChildrenPolicies(
+      scopeAll: policy.scopeAll,
+      selectedChildIds: policy.selectedChildIds,
+      dailyCapHours: policy.dailyCapHours,
+      bedtimeLabel: policy.bedtimeLabel,
+      webFilterOn: policy.webFilterOn,
+    );
   }
+
+  FamilySharedPolicy _runtimePolicyOf(SharedChildrenPolicies policy) =>
+      FamilySharedPolicy(
+        scopeAll: policy.scopeAll,
+        selectedChildIds: policy.selectedChildIds,
+        dailyCapHours: policy.dailyCapHours,
+        bedtimeLabel: policy.bedtimeLabel,
+        webFilterOn: policy.webFilterOn,
+      );
+
+  bool get _hasVisibleRoster =>
+      _children.isNotEmpty ||
+      _runtimeRoster.isNotEmpty ||
+      _profileRepairs.isNotEmpty;
 
   void _goAddChild() {
     if (!_canCreateChild) {
@@ -435,22 +536,55 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
                         ),
                       ),
                     ),
-                    if (_canEditShared) ...[
-                      const SizedBox(height: 14),
-                      PrimaryBtn(
-                        key: ChildrenListKeys.sharedApply,
-                        label: l10n.childrenListSharedApply,
-                        variant: PrimaryBtnVariant.mint,
-                        onPressed: () async {
-                          await _repo.saveSharedPolicies(draft);
-                          if (!mounted) return;
-                          setState(() => _policies = draft);
-                          if (sheetContext.mounted) {
-                            Navigator.of(sheetContext).pop();
-                          }
-                        },
-                      ),
-                    ],
+                    RoleGate(
+                      profile: _panelProfile,
+                      capability: PanelCapability.editChildRules,
+                      builder: (context, disposition) {
+                        if (disposition != PermissionDisposition.allow ||
+                            !_canEditShared) {
+                          return const SizedBox.shrink();
+                        }
+                        return Column(
+                          children: [
+                            const SizedBox(height: 14),
+                            PrimaryBtn(
+                              key: ChildrenListKeys.sharedApply,
+                              label: l10n.childrenListSharedApply,
+                              variant: PrimaryBtnVariant.mint,
+                              onPressed: () async {
+                                final source =
+                                    widget.policySource ??
+                                    AppScope.maybeOf(context)?.policies;
+                                if (_usesRuntimeSources &&
+                                    _loadedFamilyId != null &&
+                                    source != null) {
+                                  final saved = await source.saveSharedPolicy(
+                                    _loadedFamilyId!,
+                                    _runtimePolicyOf(draft),
+                                  );
+                                  if (!mounted) return;
+                                  setState(() {
+                                    _policies = _legacyPolicyOf(
+                                      saved.sharedPolicy,
+                                    );
+                                  });
+                                } else {
+                                  await _repo.saveSharedPolicies(
+                              draft,
+                              familyId: _loadedFamilyId,
+                            );
+                                  if (!mounted) return;
+                                  setState(() => _policies = draft);
+                                }
+                                if (sheetContext.mounted) {
+                                  Navigator.of(sheetContext).pop();
+                                }
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -516,7 +650,7 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
                 const ShellTabMoreTools(tabId: 'kids'),
               ],
             )
-          : _children.isEmpty
+          : !_hasVisibleRoster
           ? ListView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
               children: [
@@ -546,29 +680,45 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
                   ),
                   const SizedBox(height: 8),
                 ],
+                if (_usesRuntimeSources &&
+                    _rosterOrigin == RuntimeDataOrigin.localOnly) ...[
+                  BannerNote(
+                    key: ChildrenListKeys.localOnlyBanner,
+                    message: l10n.childrenListLocalOnlyBanner,
+                    variant: BannerVariant.a,
+                    leading: Icon(Icons.info_outline, color: colors.ink),
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 Align(
                   alignment: AlignmentDirectional.centerEnd,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: 48),
-                    child: TextButton(
-                      key: ChildrenListKeys.addChild,
-                      onPressed: _goAddChild,
-                      style: TextButton.styleFrom(
-                        foregroundColor: colors.tealDeep,
-                        backgroundColor: colors.teal100,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
+                  child: RoleGate(
+                    profile: _panelProfile,
+                    capability: PanelCapability.manageFamily,
+                    builder: (context, disposition) => ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 48),
+                      child: TextButton(
+                        key: ChildrenListKeys.addChild,
+                        onPressed: disposition == PermissionDisposition.allow
+                            ? _goAddChild
+                            : null,
+                        style: TextButton.styleFrom(
+                          foregroundColor: colors.tealDeep,
+                          backgroundColor: colors.teal100,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(radii.btn),
+                          ),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(radii.btn),
-                        ),
-                      ),
-                      child: Text(
-                        l10n.childrenListAddChild,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
+                        child: Text(
+                          l10n.childrenListAddChild,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                       ),
                     ),
@@ -587,6 +737,27 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
                           onDelete: _canDeleteChild
                               ? () => _deleteChild(kid.id)
                               : null,
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+                      for (final child in _runtimeRoster) ...[
+                        if (child.hasCompleteDisplayProfile)
+                          _RuntimeChildRosterCard(
+                            child: child,
+                            device: _deviceSnapshot.forChild(child.childId),
+                            onTap: () => _goProfile(child.childId.value),
+                          )
+                        else
+                          _ProfileRepairCard(
+                            childId: child.childId.value,
+                            onRepair: () => _goProfile(child.childId.value),
+                          ),
+                        const SizedBox(height: 10),
+                      ],
+                      for (final child in _profileRepairs) ...[
+                        _ProfileRepairCard(
+                          childId: child.childId.value,
+                          onRepair: () => _goProfile(child.childId.value),
                         ),
                         const SizedBox(height: 10),
                       ],
@@ -708,6 +879,199 @@ class _SharedPolicyRow extends StatelessWidget {
           ),
           if (trailing != null) trailing!,
         ],
+      ),
+    );
+  }
+}
+
+class _RuntimeChildRosterCard extends StatelessWidget {
+  const _RuntimeChildRosterCard({
+    required this.child,
+    required this.device,
+    required this.onTap,
+  });
+
+  final FamilyRosterChild child;
+  final FamilyChildDeviceSummary? device;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = Theme.of(context).extension<FamilyColors>()!;
+    final radii = Theme.of(context).extension<FamilyRadii>()!;
+    final name = child.displayName!;
+    final age = l10n.addChildAgeYears(formatAppInt(child.ageYears!));
+    final deviceLabel = _deviceLabel(l10n, device);
+
+    return Semantics(
+      button: true,
+      label: [name, age, deviceLabel].whereType<String>().join('، '),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          key: ChildrenListKeys.childRow(child.childId.value),
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(radii.card),
+          child: Ink(
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(radii.card),
+              boxShadow: [Theme.of(context).extension<FamilyShadows>()!.shCard],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+              child: Row(
+                children: [
+                  _InitialAvatar(name: name),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '$name — $age',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: colors.ink,
+                          ),
+                        ),
+                        if (deviceLabel != null) ...[
+                          const SizedBox(height: 3),
+                          Text(
+                            deviceLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: colors.ink2,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.chevron_right, color: colors.ink2),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String? _deviceLabel(
+    AppLocalizations l10n,
+    FamilyChildDeviceSummary? device,
+  ) {
+    if (device == null) return l10n.childrenListDeviceStateUnavailable;
+    return switch (device.connectionState) {
+      ChildDeviceConnectionState.unavailable =>
+        l10n.childrenListDeviceStateUnavailable,
+      ChildDeviceConnectionState.noDevice => l10n.childrenListDeviceNotLinked,
+      ChildDeviceConnectionState.pairing => l10n.childrenListDevicePairing,
+      ChildDeviceConnectionState.active => l10n.childrenListDeviceActive,
+      ChildDeviceConnectionState.needsAttention =>
+        l10n.childrenListDeviceNeedsAttention,
+    };
+  }
+}
+
+class _ProfileRepairCard extends StatelessWidget {
+  const _ProfileRepairCard({required this.childId, required this.onRepair});
+
+  final String childId;
+  final VoidCallback onRepair;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = Theme.of(context).extension<FamilyColors>()!;
+    final radii = Theme.of(context).extension<FamilyRadii>()!;
+    return Semantics(
+      container: true,
+      label:
+          '${l10n.childrenListProfileRepairTitle}، ${l10n.childrenListProfileRepairMessage}',
+      child: DecoratedBox(
+        key: ChildrenListKeys.profileRepair(childId),
+        decoration: BoxDecoration(
+          color: colors.amber100,
+          borderRadius: BorderRadius.circular(radii.card),
+          border: Border.all(color: colors.amber),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Icon(Icons.assignment_late_outlined, color: colors.ink),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.childrenListProfileRepairTitle,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w800,
+                        color: colors.ink,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      l10n.childrenListProfileRepairMessage,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: colors.ink2,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              TextButton(
+                onPressed: onRepair,
+                child: Text(l10n.childrenListProfileRepairCta),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InitialAvatar extends StatelessWidget {
+  const _InitialAvatar({required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<FamilyColors>()!;
+    final initial = name.trim().isEmpty ? '?' : String.fromCharCode(name.trim().runes.first);
+    return Semantics(
+      excludeSemantics: true,
+      child: Container(
+        width: 48,
+        height: 48,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(color: colors.p100, shape: BoxShape.circle),
+        child: Text(
+          initial,
+          style: TextStyle(
+            color: colors.p700,
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+          ),
+        ),
       ),
     );
   }

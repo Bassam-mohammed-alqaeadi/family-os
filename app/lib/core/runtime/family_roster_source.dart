@@ -2,13 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/identity_ids.dart';
-
-/// Origin of data rendered by a family-facing screen.
-///
-/// A source must never report [remoteAuthoritative] unless it is backed by a
-/// server-authorized read. Cached data remains distinct so stale state cannot
-/// impersonate current family truth.
-enum RuntimeDataOrigin { unavailable, localOnly, cached, remoteAuthoritative }
+import 'package:family_os/core/runtime/runtime_data_origin.dart';
 
 @immutable
 final class FamilyRosterChild {

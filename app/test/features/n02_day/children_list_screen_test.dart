@@ -1,10 +1,18 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/domain/child_id.dart';
+import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/runtime/app_runtime.dart';
+import 'package:family_os/core/runtime/app_scope.dart';
+import 'package:family_os/core/runtime/family_roster_source.dart';
+import 'package:family_os/core/runtime/identity_source.dart';
+import 'package:family_os/core/runtime/runtime_data_origin.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n02_day/children_list_local_repository.dart';
 import 'package:family_os/features/n02_day/children_list_mock.dart';
@@ -238,6 +246,53 @@ void main() {
     );
   });
 
+  testWidgets(
+    'SCR-FAT-012 runtime roster renders profile repair instead of fake child facts',
+    (tester) async {
+      const familyId = FamilyId('fam_runtime');
+      final runtime = AppRuntime(
+        identity: _StaticIdentitySource(
+          const IdentitySnapshot(
+            authority: IdentityAuthority.localOnly,
+            accountId: AccountId('parent_runtime'),
+            familyId: familyId,
+            role: AppRole.father,
+            isPrimaryOwner: true,
+          ),
+        ),
+        roster: _StaticRosterSource(
+          const FamilyRosterSnapshot(
+            familyId: familyId,
+            origin: RuntimeDataOrigin.localOnly,
+            children: [
+              FamilyRosterChild(childId: ChildId('child_profile_missing')),
+            ],
+          ),
+        ),
+      );
+      addTearDown(runtime.dispose);
+
+      await tester.pumpWidget(
+        _app(
+          runtime: runtime,
+          child: const ChildrenListScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(ChildrenListKeys.profileRepair('child_profile_missing')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(ChildrenListKeys.childRow('child_profile_missing')),
+        findsNothing,
+      );
+      expect(find.text('child_profile_missing'), findsNothing);
+      expect(find.byKey(ChildrenListKeys.localOnlyBanner), findsOneWidget);
+    },
+  );
+
   testWidgets('SCR-FAT-012 no provenance → no demo BannerNote', (tester) async {
     final repo = InMemoryChildrenListRepository(
       children: ChildrenListMock.manyFixture,
@@ -260,8 +315,8 @@ void main() {
   });
 }
 
-Widget _app({required Widget child}) {
-  return MaterialApp(
+Widget _app({required Widget child, AppRuntime? runtime}) {
+  final app = MaterialApp(
     theme: buildFamilyTheme(),
     locale: const Locale('ar'),
     supportedLocales: AppLocalizations.supportedLocales,
@@ -273,4 +328,30 @@ Widget _app({required Widget child}) {
     ],
     home: child,
   );
+  if (runtime == null) return app;
+  return AppScope(runtime: runtime, child: app);
+}
+
+final class _StaticIdentitySource extends ChangeNotifier implements IdentitySource {
+  _StaticIdentitySource(this._value);
+
+  IdentitySnapshot _value;
+
+  @override
+  IdentitySnapshot get value => _value;
+
+  @override
+  Future<IdentitySnapshot> refresh() async => _value;
+}
+
+final class _StaticRosterSource extends ChangeNotifier implements FamilyRosterSource {
+  _StaticRosterSource(this._value);
+
+  FamilyRosterSnapshot _value;
+
+  @override
+  FamilyRosterSnapshot get value => _value;
+
+  @override
+  Future<FamilyRosterSnapshot> load(FamilyId familyId) async => _value;
 }

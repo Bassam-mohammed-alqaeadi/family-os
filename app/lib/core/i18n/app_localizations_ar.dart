@@ -12128,4 +12128,30 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get appLoadingSemantics => 'جارٍ التحميل';
+
+  @override
+  String get childrenListLocalOnlyBanner =>
+      'معلومات الأسرة في هذه الشاشة محفوظة حاليًا على هذا الجهاز. التغييرات ليست إثباتًا لتطبيق سياسة عن بُعد.';
+
+  @override
+  String get childrenListProfileRepairTitle => 'ملف الابن يحتاج إلى استكمال';
+
+  @override
+  String get childrenListProfileRepairMessage =>
+      'هذا الابن مسجّل، لكن بيانات العرض في ملفه غير مكتملة. أكمل الإعداد قبل الاعتماد على أدوات التحكم.';
+
+  @override
+  String get childrenListProfileRepairCta => 'إكمال الإعداد';
+
+  @override
+  String get childrenListDeviceActive => 'الجهاز متصل';
+
+  @override
+  String get childrenListDevicePairing => 'جارٍ ربط الجهاز';
+
+  @override
+  String get childrenListDeviceNeedsAttention => 'الجهاز يحتاج إلى انتباه';
+
+  @override
+  String get childrenListDeviceStateUnavailable => 'حالة الجهاز غير متاحة';
 }

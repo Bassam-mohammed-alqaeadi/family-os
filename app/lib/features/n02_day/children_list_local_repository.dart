@@ -35,7 +35,10 @@ final class LocalChildrenListRepository implements ChildrenListRepository {
   final DateTime Function() _clock;
 
   static const _table = 'kv_store';
-  static const _policiesKey = 'shared_policies';
+  static const _legacyPoliciesKey = 'shared_policies';
+
+  static String _policiesKey(FamilyId familyId) =>
+      'shared_policies:${familyId.value}';
 
   static String _childrenKey(FamilyId familyId) =>
       'children:${familyId.value}';
@@ -49,10 +52,22 @@ final class LocalChildrenListRepository implements ChildrenListRepository {
     await _writeChildren(familyId, seed);
   }
 
-  Future<void> ensurePoliciesSeeded() async {
-    final existing = await _readRaw(_policiesKey);
+  Future<void> ensurePoliciesSeeded({FamilyId? familyId}) async {
+    final id = familyId ?? ChildrenListLocalSeed.famStage1;
+    final key = _policiesKey(id);
+    final existing = await _readRaw(key);
     if (existing != null && existing.isNotEmpty) return;
-    await saveSharedPolicies(ChildrenListLocalSeed.defaultPolicies);
+    // Preserve a pre-scoping local draft once, then write it into the family
+    // namespace. New writes are always family-scoped.
+    final legacy = await _readRaw(_legacyPoliciesKey);
+    if (legacy != null && legacy.isNotEmpty) {
+      await _write(key, legacy);
+      return;
+    }
+    await saveSharedPolicies(
+      ChildrenListLocalSeed.defaultPolicies,
+      familyId: id,
+    );
   }
 
   /// Envelope provenance after load (empty if not seeded / missing).
@@ -133,9 +148,10 @@ final class LocalChildrenListRepository implements ChildrenListRepository {
   }
 
   @override
-  Future<SharedChildrenPolicies> loadSharedPolicies() async {
-    await ensurePoliciesSeeded();
-    final raw = await _readRaw(_policiesKey);
+  Future<SharedChildrenPolicies> loadSharedPolicies({FamilyId? familyId}) async {
+    final id = familyId ?? ChildrenListLocalSeed.famStage1;
+    await ensurePoliciesSeeded(familyId: id);
+    final raw = await _readRaw(_policiesKey(id));
     if (raw == null || raw.isEmpty) {
       return ChildrenListLocalSeed.defaultPolicies;
     }
@@ -145,9 +161,13 @@ final class LocalChildrenListRepository implements ChildrenListRepository {
   }
 
   @override
-  Future<void> saveSharedPolicies(SharedChildrenPolicies policies) async {
+  Future<void> saveSharedPolicies(
+    SharedChildrenPolicies policies, {
+    FamilyId? familyId,
+  }) async {
+    final id = familyId ?? ChildrenListLocalSeed.famStage1;
     await _write(
-      _policiesKey,
+      _policiesKey(id),
       jsonEncode({
         'provenance': kChildrenListRealLocalProvenance,
         ..._policiesToJson(policies),
