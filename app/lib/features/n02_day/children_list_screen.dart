@@ -906,7 +906,11 @@ class _RuntimeChildRosterCard extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: [name, age, deviceLabel].whereType<String>().join('، '),
+      label: l10n.childrenListRuntimeRowSemantics(
+        name,
+        age,
+        deviceLabel ?? '',
+      ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -995,8 +999,7 @@ class _ProfileRepairCard extends StatelessWidget {
     final radii = Theme.of(context).extension<FamilyRadii>()!;
     return Semantics(
       container: true,
-      label:
-          '${l10n.childrenListProfileRepairTitle}، ${l10n.childrenListProfileRepairMessage}',
+      label: l10n.childrenListProfileRepairMessage,
       child: DecoratedBox(
         key: ChildrenListKeys.profileRepair(childId),
         decoration: BoxDecoration(

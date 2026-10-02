@@ -12131,7 +12131,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childrenListLocalOnlyBanner =>
-      'معلومات الأسرة في هذه الشاشة محفوظة حاليًا على هذا الجهاز. التغييرات ليست إثباتًا لتطبيق سياسة عن بُعد.';
+      'معلومات الأسرة في هذه الشاشة محفوظة حاليًا على هذا الجهاز. قد لا تظهر التغييرات على الأجهزة الأخرى بعد.';
 
   @override
   String get childrenListProfileRepairTitle => 'ملف الابن يحتاج إلى استكمال';
@@ -12154,4 +12154,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childrenListDeviceStateUnavailable => 'حالة الجهاز غير متاحة';
+
+  @override
+  String childrenListRuntimeRowSemantics(
+    String name,
+    String age,
+    String device,
+  ) {
+    return '$name، $age، $device';
+  }
 }

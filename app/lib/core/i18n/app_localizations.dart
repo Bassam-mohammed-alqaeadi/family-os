@@ -21586,6 +21586,16 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'حالة الجهاز غير متاحة'**
   String get childrenListDeviceStateUnavailable;
+
+  /// دلالات بطاقة قائمة الأبناء لمسار وقت التشغيل SCR-FAT-012
+  ///
+  /// In ar, this message translates to:
+  /// **'{name}، {age}، {device}'**
+  String childrenListRuntimeRowSemantics(
+    String name,
+    String age,
+    String device,
+  );
 }
 
 class _AppLocalizationsDelegate

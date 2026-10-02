@@ -12305,7 +12305,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get childrenListLocalOnlyBanner =>
-      'Family information on this screen is currently stored on this device. Changes are not remote policy enforcement.';
+      'Family information on this screen is currently stored on this device. Changes may not appear on other devices yet.';
 
   @override
   String get childrenListProfileRepairTitle => 'Child profile needs setup';
@@ -12328,4 +12328,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get childrenListDeviceStateUnavailable => 'Device status unavailable';
+
+  @override
+  String childrenListRuntimeRowSemantics(
+    String name,
+    String age,
+    String device,
+  ) {
+    return '$name, $age, $device';
+  }
 }
