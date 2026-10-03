@@ -1,10 +1,14 @@
 # Children Control Centre — Real + Refined Vertical Slice
 
-> **Status:** Active Phase-0 design and migration contract.
+> **Status:** Active refinement and migration contract. The isolated roster connection is not UX-complete until the execution gate in [`../foundation/20_CHILDREN_CONTROL_CENTRE_REFINEMENT_EXECUTION.md`](../foundation/20_CHILDREN_CONTROL_CENTRE_REFINEMENT_EXECUTION.md) passes.
 >
 > **Screen:** `SCR-FAT-012` — Children list / parent Kids control centre.
 >
 > **Purpose:** Replace the current mock-first roster presentation with a truthful, role-aware and polished control centre. This contract is an implementation gate, not a promise that an unavailable device or remote state already works.
+
+## 0. Familiarity and system continuity
+
+This screen applies the binding [`../product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md`](../product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md) standard. Its hierarchy must be familiar to a parent who has used modern family-management products—family context, an understandable roster, clear status and recovery—while remaining recognisably Family OS through shared tokens, Arabic-first language, role-aware explanation and truthful capability boundaries. Familiarity never permits a copied competitor surface, a fabricated device/policy state or a client-side authorization decision.
 
 ## 1. User jobs
 

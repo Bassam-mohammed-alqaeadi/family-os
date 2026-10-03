@@ -14,7 +14,7 @@ When documents conflict, do not average them or revive an older plan. Follow the
 
 ## Current phase
 
-**Isolated Flutter-connected Children Roster read.** The protected synthetic Children Roster staging release passed on 2026-10-03; its minimal execution evidence is recorded in [`docs/foundation/18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md`](docs/foundation/18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md). The Owner separately authorized one server-authoritative, read-only Flutter roster view under [`docs/foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md`](docs/foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md).
+**Children Control Centre refinement inside the isolated Flutter-connected roster read.** The protected synthetic Children Roster staging release passed on 2026-10-03; its minimal execution evidence is recorded in [`docs/foundation/18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md`](docs/foundation/18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md). The Owner separately authorized one server-authoritative, read-only Flutter roster view under [`docs/foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md`](docs/foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md). Its familiar, coherent UX refinement is required by [`docs/foundation/20_CHILDREN_CONTROL_CENTRE_REFINEMENT_EXECUTION.md`](docs/foundation/20_CHILDREN_CONTROL_CENTRE_REFINEMENT_EXECUTION.md) before Owner emulator acceptance.
 
 ## Scope guard
 

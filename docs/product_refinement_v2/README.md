@@ -17,11 +17,12 @@ This workspace is the governing product record for **Product Refinement V2**. It
 | Order | Artifact | Purpose |
 |---|---|---|
 | 1 | `00_PRODUCT_CHARTER.md` | Product direction, boundaries, and quality bar. |
-| 2 | `04_DECISION_REGISTER.md` | Accepted and pending product decisions. |
-| 3 | `01_PLATFORM_SYSTEM_UNIVERSE.md` | Full system inventory and platform connections. |
-| 4 | `02_GLOBAL_DELIVERY_HARNESS.md` | The repeatable discovery-to-readiness workflow. |
-| 5 | Pillar packs, beginning with `03_SECURITY_PHASE_INITIATION.md` | Detailed work for one domain at a time. |
-| 6 | `LOOP_STATE.md` | Current work pointer only; it never decides scope or phase. |
+| 2 | `18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md` | Binding familiar-pattern, coherent-system and refinement standard. |
+| 3 | `04_DECISION_REGISTER.md` | Accepted and pending product decisions. |
+| 4 | `01_PLATFORM_SYSTEM_UNIVERSE.md` | Full system inventory and platform connections. |
+| 5 | `02_GLOBAL_DELIVERY_HARNESS.md` | The repeatable discovery-to-readiness workflow. |
+| 6 | Pillar packs, beginning with `03_SECURITY_PHASE_INITIATION.md` | Detailed work for one domain at a time. |
+| 7 | `LOOP_STATE.md` | Current work pointer only; it never decides scope or phase. |
 
 ## Relationship to older material
 

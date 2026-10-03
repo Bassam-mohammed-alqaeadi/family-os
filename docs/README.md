@@ -11,14 +11,15 @@ Read these in order for active work:
 1. [`REAL_PLATFORM_TRANSFORMATION_RECORD.md`](REAL_PLATFORM_TRANSFORMATION_RECORD.md) — product direction: real, truthful Family OS rather than a UI or API demo.
 2. [`product_refinement_v2/00_PRODUCT_CHARTER.md`](product_refinement_v2/00_PRODUCT_CHARTER.md) — product charter and scope.
 3. [`product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md`](product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md) — non-negotiable runtime-truth policy.
-4. [`product_refinement_v2/92_EXECUTION_AUTHORIZATION_GATE.md`](product_refinement_v2/92_EXECUTION_AUTHORIZATION_GATE.md) — the authorization boundary for implementation.
-5. [`CURRENT_EXECUTION_PLAN.md`](CURRENT_EXECUTION_PLAN.md) — live programme position, next controlled operation, and explicit exclusions.
+4. [`product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md`](product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md) — binding familiarity, consistency and refinement standard.
+5. [`product_refinement_v2/92_EXECUTION_AUTHORIZATION_GATE.md`](product_refinement_v2/92_EXECUTION_AUTHORIZATION_GATE.md) — the authorization boundary for implementation.
+6. [`CURRENT_EXECUTION_PLAN.md`](CURRENT_EXECUTION_PLAN.md) — live programme position, next controlled operation, and explicit exclusions.
 
 ## Active delivery material
 
 | Path | Purpose | Status |
 |---|---|---|
-| [`foundation/`](foundation/) | Render/PostgreSQL/OIDC foundation, controlled staging evidence, and the bounded connected-roster slice | Active; the staging pass is recorded and isolated Flutter roster verification is next. |
+| [`foundation/`](foundation/) | Render/PostgreSQL/OIDC foundation, controlled staging evidence, and the bounded connected-roster slice | Active; the staging pass is recorded, Children Control Centre refinement is in progress, then isolated Flutter roster verification follows. |
 | [`real_platform/`](real_platform/) | Truthful vertical-slice contracts, including the Children Control Centre | Active; roster Flutter integration is not yet authorized. |
 | [`product_refinement_v2/`](product_refinement_v2/) | Product direction, runtime truth, system contracts and authorization gates | Active product authority. |
 | [`OPEN_DECISIONS.md`](OPEN_DECISIONS.md) | Explicit current blockers and decisions; not a legacy backlog | Active. |

@@ -35,4 +35,15 @@ void main() {
     expect(source, isNot(contains('Idempotency-Key')));
     expect(configuration.existsSync(), isFalse);
   });
+
+  test('the refined control centre reuses shared design tokens and has no device or policy model', () {
+    final source = File('lib/foundation_gate/children_control_centre.dart').readAsStringSync();
+
+    expect(source, contains('package:family_os/core/design/tokens.dart'));
+    expect(source, contains('FamilyColors'));
+    expect(source, contains('ChildrenControlCentreStatus'));
+    expect(source, isNot(contains('deviceState')));
+    expect(source, isNot(contains('policyState')));
+    expect(source, isNot(contains('Icon(Icons.add')));
+  });
 }

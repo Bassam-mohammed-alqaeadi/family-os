@@ -13,6 +13,7 @@ Build Family OS as a truthful, secure and polished family platform. The complete
 | Product direction | Active | [`REAL_PLATFORM_TRANSFORMATION_RECORD.md`](REAL_PLATFORM_TRANSFORMATION_RECORD.md) |
 | Runtime truth | Binding | [`product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md`](product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md) |
 | Execution authorization | Foundation wave plus the bounded connected roster read | [`product_refinement_v2/92_EXECUTION_AUTHORIZATION_GATE.md`](product_refinement_v2/92_EXECUTION_AUTHORIZATION_GATE.md), [`foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md`](foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md) |
+| Experience standard | Binding: familiar, coherent Family OS patterns plus truthful states | [`product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md`](product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md) |
 | Backend Children Roster | Source, contract tests and CI complete | [`foundation/17_CHILDREN_ROSTER_STAGING_RELEASE.md`](foundation/17_CHILDREN_ROSTER_STAGING_RELEASE.md) |
 | Controlled staging | **Executed and passed** on synthetic staging, 2026-10-03 | [`foundation/18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md`](foundation/18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md) |
 | Flutter family discovery | Completed bounded Foundation Gate | [`foundation/14_FLUTTER_CONNECTED_FOUNDATION_GATE_ADMISSION_PACKET.md`](foundation/14_FLUTTER_CONNECTED_FOUNDATION_GATE_ADMISSION_PACKET.md), [`foundation/15_FLUTTER_CONNECTED_FOUNDATION_IMPLEMENTATION_PLAN.md`](foundation/15_FLUTTER_CONNECTED_FOUNDATION_IMPLEMENTATION_PLAN.md) |
@@ -21,17 +22,17 @@ Build Family OS as a truthful, secure and polished family platform. The complete
 
 ## The next authorized operation
 
-Implement and verify the **isolated Flutter-connected Children Roster read** exactly as defined in [`foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md`](foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md):
+Refine and verify the **Children Control Centre experience** before treating the isolated roster connection as user-experience complete. Follow [`foundation/20_CHILDREN_CONTROL_CENTRE_REFINEMENT_EXECUTION.md`](foundation/20_CHILDREN_CONTROL_CENTRE_REFINEMENT_EXECUTION.md) in this order:
 
-1. Extend the existing isolated Foundation Gate composition root only; do not wire the default mock-first application.
-2. After server-authoritative family discovery and explicit family selection, make one authenticated `GET /v1/families/{familyId}/children` request against the approved HTTPS synthetic staging origin.
-3. Render only returned child profile roster facts, clear source/freshness messaging, role-specific read-only context, and explicit loading/empty/denied/unavailable/network/retry/sign-out states.
-4. Keep all family, roster and token state volatile; do not create any Flutter mutation or local persistence path.
-5. Pass focused Foundation Gate CI, then perform the Owner-only synthetic Android-emulator verification without retaining secrets, identifiers, origin values, raw payloads or screenshots containing data.
+1. Audit the current children screen, preserve only shared design-system patterns and remove no source truth merely for visual convenience.
+2. Build a reusable isolated control-centre presentation with familiar hierarchy, family context, source/current-session truth, role-aware read-only treatment, AR/EN, RTL/LTR, responsive and accessible states.
+3. Feed that presentation only from the existing server-authoritative discovery/roster controller; do not wire the default mock-first app or add a client mutation/API read.
+4. Prove populated, loading, empty/setup, denied, unavailable, network, retry, family-switch and sign-out states through focused visual/widget/isolation tests.
+5. Only after the refinement gate and CI pass, perform the Owner-only synthetic Android-emulator verification without retaining secrets, identifiers, origin values, raw payloads or screenshots containing data.
 
 ## Completion boundary for the connected roster increment
 
-This increment is complete only after the isolated implementation, focused CI and Owner-only synthetic emulator evidence required by plan 19 exist.
+This increment is complete only after the refined isolated presentation, focused CI and Owner-only synthetic emulator evidence required by plans 19 and 20 exist.
 
 A successful result proves only a server-authoritative, read-only roster presentation for the approved synthetic Android-emulator scope. It does **not** authorize a Flutter mutation, default-app migration, another API read, device control, policy delivery/enforcement, location claims, recovery/support, real data, production or public release.
 

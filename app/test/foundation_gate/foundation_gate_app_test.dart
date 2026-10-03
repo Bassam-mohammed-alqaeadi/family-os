@@ -76,7 +76,7 @@ void main() {
     await tester.tap(find.text('Synthetic family'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Children roster'), findsOneWidget);
+    expect(find.text('Children control centre'), findsOneWidget);
     expect(find.text('Synthetic child'), findsOneWidget);
     expect(find.text('Age: 8'), findsOneWidget);
     expect(find.textContaining('Co-guardian read-only view'), findsOneWidget);
