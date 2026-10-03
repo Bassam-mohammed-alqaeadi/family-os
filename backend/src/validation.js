@@ -13,6 +13,12 @@ function bodyObject(value) {
   return value;
 }
 
+function onlyKnownFields(body, allowed) {
+  if (Object.keys(body).some((key) => !allowed.has(key))) {
+    throw new HttpError(400, 'invalid_request', 'Request body contains unsupported fields.');
+  }
+}
+
 export function requiredText(value, field, { maxLength = 255 } = {}) {
   if (typeof value !== 'string') {
     throw new HttpError(400, 'invalid_request', `${field} is required.`);
@@ -35,6 +41,7 @@ export function createFamilyInput(value) {
 
 export function createChildInput(value) {
   const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['displayName', 'ageYears']));
   const ageYears = body.ageYears;
   if (!Number.isInteger(ageYears) || ageYears < 0 || ageYears > MAX_CHILD_AGE_YEARS) {
     throw new HttpError(400, 'invalid_request', 'ageYears must be an integer between 0 and 25.');

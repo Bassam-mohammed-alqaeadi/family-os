@@ -89,6 +89,7 @@ test('children roster contract is guardian-scoped, explicit about its narrow tru
     specification.components.schemas.CreateFamilyChildRequest.required,
     ['displayName', 'ageYears'],
   );
+  assert.equal(specification.components.schemas.CreateFamilyChildRequest.additionalProperties, false);
   assert.equal(specification.components.schemas.FamilyChild.properties.ageYears.minimum, 0);
   assert.equal(specification.components.schemas.FamilyChild.properties.ageYears.maximum, 25);
 });

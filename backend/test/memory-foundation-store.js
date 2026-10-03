@@ -193,11 +193,11 @@ export class MemoryFoundationStore {
 
   async listFamilyChildren({ principal, familyId }) {
     const actor = this.activeMembership(familyId, principal.subject);
-    if (actor.role === 'child') {
+    if (!['primary_guardian', 'co_guardian'].includes(actor.role)) {
       throw new HttpError(
         403,
         'children_control_centre_access_denied',
-        'Child memberships cannot access the parent children control centre.',
+        'Only guardian memberships can access the parent children control centre.',
       );
     }
     return {

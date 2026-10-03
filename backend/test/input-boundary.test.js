@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { validatedOidcSubject } from '../src/auth/oidc-verifier.js';
-import { createGuardianTransferInput, requireNoQueryParameters, requireUuid } from '../src/validation.js';
+import { createChildInput, createGuardianTransferInput, requireNoQueryParameters, requireUuid } from '../src/validation.js';
 
 const VALID_UUID = '00000000-0000-4000-8000-000000000000';
 
@@ -27,4 +27,12 @@ test('OIDC subjects are bounded before becoming durable account identifiers', ()
   assert.throws(() => validatedOidcSubject(''), { code: 'invalid_token' });
   assert.throws(() => validatedOidcSubject('subject\u0000injection'), { code: 'invalid_token' });
   assert.throws(() => validatedOidcSubject('x'.repeat(256)), { code: 'invalid_token' });
+});
+
+test('children roster request rejects fields outside its published contract', () => {
+  assert.doesNotThrow(() => createChildInput({ displayName: 'Amani', ageYears: 0 }));
+  assert.throws(
+    () => createChildInput({ displayName: 'Amani', ageYears: 0, role: 'primary_guardian' }),
+    { code: 'invalid_request' },
+  );
 });

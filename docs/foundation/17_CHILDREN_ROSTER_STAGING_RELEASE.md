@@ -1,7 +1,18 @@
 # Children Roster — Controlled Staging Release and Verification
 
-> **Status:** Prepared for a reviewed synthetic-staging release; not deployment evidence.
+> **Status:** Owner-authorized for a controlled synthetic-staging release on 2026-10-03; not deployment evidence.
 > **Scope:** Migration `005_family_children_roster.sql` and the narrowly scoped Children Control Centre roster API. This operation creates only synthetic families, memberships and child roster profiles. It does **not** create a child account, device enrollment, location signal or policy-enforcement receipt.
+
+## 0. Authorization record
+
+| Decision | Record |
+|---|---|
+| Owner direction | Controlled Children Roster staging release approved on 2026-10-03. |
+| Authorized scope | Exact reviewed SHA, additive migration `005`, synthetic-only HTTP verifier, and optional read-only audit/outbox evidence. |
+| Explicit exclusions | Flutter roster connection, remote-authoritative UI claims, device/location/policy implementation, real data, production, public/beta release and deletion tooling. |
+| Completion evidence | A later operator record must contain only reviewed SHA, operator/approver, pass/fail check labels, migration/checksum outcome, readiness result and temporary-ingress removal confirmation. |
+
+This authorization does not replace the exact-SHA preflight below and does not establish that a deployment, migration or verifier run has occurred.
 
 ## 1. Preconditions
 

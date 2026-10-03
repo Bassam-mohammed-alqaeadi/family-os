@@ -358,11 +358,11 @@ export class PostgresFoundationStore {
   async listFamilyChildren({ principal, familyId }) {
     return this.withTransaction(async (client) => {
       const actor = await this.activeActorMembership(client, familyId, principal.subject);
-      if (actor.role === 'child') {
+      if (!['primary_guardian', 'co_guardian'].includes(actor.role)) {
         throw new HttpError(
           403,
           'children_control_centre_access_denied',
-          'Child memberships cannot access the parent children control centre.',
+          'Only guardian memberships can access the parent children control centre.',
         );
       }
       const children = await client.query(

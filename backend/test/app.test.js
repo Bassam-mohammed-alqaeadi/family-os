@@ -546,6 +546,14 @@ test('children roster is server-authorized, audit-backed and never exposed to a 
     });
     assert.equal(invalidChild.status, 400);
 
+    const unsupportedChildField = await request(baseUrl, `/v1/families/${family.id}/children`, {
+      method: 'POST',
+      token: 'test-parent-a',
+      idempotencyKey: 'child-unsupported-field',
+      body: { displayName: 'Amani', ageYears: 0, role: 'primary_guardian' },
+    });
+    assert.equal(unsupportedChildField.status, 400);
+
     const create = await request(baseUrl, `/v1/families/${family.id}/children`, {
       method: 'POST',
       token: 'test-parent-a',
@@ -581,6 +589,30 @@ test('children roster is server-authorized, audit-backed and never exposed to a 
     assert.deepEqual((await roster.json()).children.map((entry) => entry.id), [child.id]);
     assert.equal(store.audit.at(-1).eventType, 'family.child_created');
     assert.equal(store.outbox.at(-1).eventType, 'family.child_created');
+
+    const guardianMembership = await invite(baseUrl, family.id, {
+      role: 'co_guardian',
+      targetSubject: 'test-guardian-b',
+      idempotencyKey: 'roster-co-guardian-membership',
+    });
+    const guardianAccepted = await request(baseUrl, `/v1/families/${family.id}/memberships/${guardianMembership.id}/accept`, {
+      method: 'POST',
+      token: 'test-guardian-b',
+      idempotencyKey: 'roster-co-guardian-membership-accept',
+      body: {},
+    });
+    assert.equal(guardianAccepted.status, 200);
+    const coGuardianRead = await request(baseUrl, `/v1/families/${family.id}/children`, { token: 'test-guardian-b' });
+    assert.equal(coGuardianRead.status, 200);
+    assert.deepEqual((await coGuardianRead.json()).children.map((entry) => entry.id), [child.id]);
+    const coGuardianWrite = await request(baseUrl, `/v1/families/${family.id}/children`, {
+      method: 'POST',
+      token: 'test-guardian-b',
+      idempotencyKey: 'roster-co-guardian-write-denied',
+      body: { displayName: 'Nope', ageYears: 7 },
+    });
+    assert.equal(coGuardianWrite.status, 403);
+    assert.equal((await coGuardianWrite.json()).error.code, 'family_access_denied');
 
     const childMembership = await invite(baseUrl, family.id, {
       role: 'child',

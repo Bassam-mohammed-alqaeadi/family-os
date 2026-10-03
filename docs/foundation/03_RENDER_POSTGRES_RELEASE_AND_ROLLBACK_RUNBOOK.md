@@ -60,9 +60,10 @@ The migration runner obtains a database-scoped PostgreSQL advisory lock before i
 - `001_foundation.sql` — account/family/membership/audit/outbox/idempotency tables; and
 - `002_membership_lifecycle.sql` — membership version/status-change/reason evidence;
 - `003_guardian_continuity.sql` — expiry-bound, two-party primary-guardian transfer cases; and
-- `004_audit_correlation.sql` — server-generated correlation links for new audit/outbox evidence.
+- `004_audit_correlation.sql` — server-generated correlation links for new audit/outbox evidence; and
+- `005_family_children_roster.sql` — durable family-scoped child roster profiles only. It does not create child accounts, devices, location facts or policy-enforcement evidence.
 
-No operator should manually edit a previously applied migration. Corrections are a new, reviewed forward migration.
+For the Children Roster release, the operator must also complete `17_CHILDREN_ROSTER_STAGING_RELEASE.md`, including its guardian/child/tenant-isolation verifier and read-only audit/outbox evidence check. No operator should manually edit a previously applied migration. Corrections are a new, reviewed forward migration.
 
 ## 5. Render service configuration
 
