@@ -266,11 +266,13 @@ The configuration-preflight commit ran Flutter CI and Credential Guard. Credenti
 No Flutter client implementation, local Firebase client configuration or gate-specific CI bypass is authorized while this baseline is unresolved. The Owner must explicitly select one of the following paths:
 
 1. **Remediate:** authorize a separately scoped repair of the existing Flutter CI failures until the full Flutter CI is green; or
-2. **Isolate:** authorize a separately reviewed minimal Foundation-gate entry point and dedicated test job with no suppression, deletion or weakening of the existing Flutter CI. The existing red Flutter CI remains explicitly recorded and cannot be described as passing.
+2. **Isolate:** authorize a separately reviewed minimal Foundation-gate entry point and dedicated test job with no suppression, deletion or weakening of the existing Flutter CI. The then-red Flutter CI remains historical baseline evidence and was not described as passing at that time.
 
 Neither option authorizes Production or relaxes the gate's scope/privacy rules.
 
-**Recorded Owner decision:** the Owner selected **Isolate** on 2026-10-01. The approved isolation work is limited to a dedicated Foundation Gate entry point and `Foundation Gate CI` workflow. The isolated entry point and its dedicated CI passed after review; the workflow analyzes and tests only the isolated gate paths. It does not suppress, delete, weaken or convert the existing red Flutter CI into a pass. The global Flutter CI remains recorded as red and out of this gate's scope.
+**Recorded Owner decision:** the Owner selected **Isolate** on 2026-10-01. The approved isolation work is limited to a dedicated Foundation Gate entry point and `Foundation Gate CI` workflow. The isolated entry point and its dedicated CI passed after review; the workflow analyzes and tests only the isolated gate paths. It does not suppress, delete or weaken the broader Flutter CI.
+
+**Subsequent CI status:** the full Flutter CI later passed at current SHA `ab984070fa523ba82c099f60793cfdec9bd5a97b` (run `37155018169`, 2026-10-04). This replaces the current red-baseline claim, but does not expand this gate or retroactively weaken its isolation/privacy constraints.
 
 No Firebase client artifact may be provisioned locally until the isolated implementation plan and remaining local-configuration entry criteria are accepted.
 
@@ -302,7 +304,7 @@ A `Go` decision requires all of the following to be accepted and recorded by lab
 - [x] The family-discovery contract was accepted, reviewed, tested, deployed and owner-reported as passing on synthetic staging.
 - [x] The API implementation received backend review, local tests, Backend CI, Credential Guard and controlled staging deployment.
 - [x] Source-only Flutter preflight found no tracked Firebase client configuration and identified the required isolated composition root.
-- [x] Flutter CI baseline path selected: separately reviewed isolation. Current global Flutter CI remains red with a recorded 21-failure baseline; no bypass is accepted.
+- [x] Flutter CI baseline path selected: separately reviewed isolation. The historical 21-failure baseline remains recorded; the full Flutter CI currently passes at SHA `ab984070fa523ba82c099f60793cfdec9bd5a97b` (run `37155018169`) without a bypass.
 - [x] Dedicated Foundation Gate CI passed while analyzing/testing only the isolated paths; this does not change the global Flutter CI status.
 - [x] Owner accepted `15_FLUTTER_CONNECTED_FOUNDATION_IMPLEMENTATION_PLAN.md` without scope expansion.
 - [x] Isolated implementation and its no-mutation/no-cache/no-telemetry tests passed in Foundation Gate CI run `36791206030` on 2026-10-01.

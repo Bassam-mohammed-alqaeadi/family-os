@@ -2,7 +2,7 @@
 
 > **Status:** Owner-accepted family-discovery implementation complete — isolated Foundation Gate CI and Owner-only synthetic Android-emulator verification passed. Local configuration remains unrecorded and separately controlled. The subsequent, separately authorized Children Roster read is governed by [`19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md`](19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md).
 > **Owner decision:** Accept, 2026-10-01; scope changes: none.
-> **Implementation evidence:** Server-side `GET /v1/me/families` is deployed and owner-reported passing on synthetic staging. The isolated implementation passed Foundation Gate CI run `36791206030` on 2026-10-01, including committed-lock installation/consistency, analysis and isolated tests. The legacy global Flutter CI remains explicitly red and out of this slice's scope.
+> **Implementation evidence:** Server-side `GET /v1/me/families` is deployed and owner-reported passing on synthetic staging. The isolated implementation passed Foundation Gate CI run `36791206030` on 2026-10-01, including committed-lock installation/consistency, analysis and isolated tests. The historical global Flutter CI baseline was red at the original gate; full Flutter CI currently passes at SHA `ab984070fa523ba82c099f60793cfdec9bd5a97b` (run `37155018169`) without expanding this slice.
 > **Local procedure:** `16_LOCAL_ANDROID_EMULATOR_FOUNDATION_VERIFICATION.md`; it contains no configuration values and may be used only by the Owner on the approved workstation.
 > **Scope authority:** `14_FLUTTER_CONNECTED_FOUNDATION_GATE_ADMISSION_PACKET.md`.
 
@@ -31,7 +31,7 @@ The implementation must not add or enable:
 - Firebase Admin, Firestore, Functions, Storage, FCM or a service-account key; or
 - a dependency on the legacy mock-first application bootstrap, seeded identity/family data or local role fallback.
 
-The existing global Flutter CI remains red. The isolated `Foundation Gate CI` is a scoped acceptance signal only and must never be described as the global application CI passing.
+The historical global Flutter CI was red when this isolation plan was accepted. It currently passes at SHA `ab984070fa523ba82c099f60793cfdec9bd5a97b` (run `37155018169`). The isolated `Foundation Gate CI` remains a scoped acceptance signal and does not by itself prove the global application CI passing.
 
 ## 3. Composition and configuration model
 
