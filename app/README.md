@@ -26,7 +26,7 @@ version pin without an owner decision.
 
 **Font:** IBM Plex Sans Arabic (OFL) — see `assets/fonts/` + `IBM_Plex_OFL.txt`
 
-**Structure:** feature-first per `../handoff/02_ARCHITECTURE.md`  
+**Structure:** feature-first; the frozen historical rationale is preserved in `../docs/reference/frozen-prototype-handoff/02_ARCHITECTURE.md`, while current execution authority is `../docs/CURRENT_EXECUTION_PLAN.md`.
 **i18n:** Arabic-first ARB in `lib/core/i18n/` (`app_ar.arb` template)
 
 ## Commands

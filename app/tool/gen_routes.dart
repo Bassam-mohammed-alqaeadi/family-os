@@ -714,7 +714,7 @@ String _hubIconForType(String type) {
   if (icon == null) {
     stderr.writeln(
       'Unknown screen type "$type" — no hub icon in frozen prototype map. '
-      'STOP: add a QUESTIONS.md entry; do not invent an emoji.',
+      'STOP: record the decision in docs/OPEN_DECISIONS.md; do not invent an emoji.',
     );
     exit(1);
   }

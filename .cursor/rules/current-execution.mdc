@@ -1,0 +1,15 @@
+---
+description: Family OS current execution and runtime-truth guard
+alwaysApply: true
+---
+
+# Family OS — current execution guard
+
+Before significant work, read `PROJECT_EXECUTION_PLAN.md`, `AGENTS.md`, `docs/CURRENT_EXECUTION_PLAN.md`, and the authorization/runtime-truth documents they name.
+
+- Do not revive a phase, backlog card, loop state or scope claim from `docs/archive/`.
+- The active increment is the controlled synthetic Children Roster staging release. A local test or CI pass is not deployment or staging-verifier evidence.
+- Do not add Flutter remote integration, a second client API read, provider expansion, device/native enforcement, recovery/support scope, real data, production or public release without a separate decision.
+- Preserve truthful UX: a real vertical slice includes role/scope authorization, source/freshness visibility, loading/empty/error/denied/pending/recovery states, accessibility, responsive behavior and RTL/EN quality.
+- Never put credentials, database URLs, JWTs, identities, raw provider responses or real family data in source, Git, CI, docs or chat.
+- Use only reviewed forward migrations; never migrate at application startup, in a build step or in CI.
