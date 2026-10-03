@@ -54,6 +54,7 @@
           "400": { "$ref": "#/components/responses/InvalidRequest" },
           "401": { "$ref": "#/components/responses/AuthenticationRequired" },
           "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
           "503": { "$ref": "#/components/responses/ServiceNotReady" }
         }
       }
@@ -74,6 +75,7 @@
           "400": { "$ref": "#/components/responses/InvalidRequest" },
           "401": { "$ref": "#/components/responses/AuthenticationRequired" },
           "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
           "503": { "$ref": "#/components/responses/ServiceNotReady" }
         }
       }
@@ -91,6 +93,7 @@
           "401": { "$ref": "#/components/responses/AuthenticationRequired" },
           "403": { "$ref": "#/components/responses/FamilyAccessDenied" },
           "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
           "503": { "$ref": "#/components/responses/ServiceNotReady" }
         }
       }
@@ -108,6 +111,7 @@
           "400": { "$ref": "#/components/responses/InvalidRequest" },
           "401": { "$ref": "#/components/responses/AuthenticationRequired" },
           "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
           "503": { "$ref": "#/components/responses/ServiceNotReady" }
         }
       },
@@ -125,6 +129,7 @@
           "401": { "$ref": "#/components/responses/AuthenticationRequired" },
           "403": { "$ref": "#/components/responses/FamilyAccessDenied" },
           "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
           "503": { "$ref": "#/components/responses/ServiceNotReady" }
         }
       }
@@ -144,6 +149,7 @@
           "401": { "$ref": "#/components/responses/AuthenticationRequired" },
           "403": { "$ref": "#/components/responses/FamilyAccessDenied" },
           "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
           "503": { "$ref": "#/components/responses/ServiceNotReady" }
         }
       }
@@ -162,6 +168,7 @@
           "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
           "503": { "$ref": "#/components/responses/ServiceNotReady" }
         }
       }
@@ -182,6 +189,7 @@
           "403": { "$ref": "#/components/responses/FamilyAccessDenied" },
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
           "503": { "$ref": "#/components/responses/ServiceNotReady" }
         }
       }
@@ -202,6 +210,7 @@
           "403": { "$ref": "#/components/responses/FamilyAccessDenied" },
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
           "503": { "$ref": "#/components/responses/ServiceNotReady" }
         }
       }
@@ -220,6 +229,7 @@
           "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
           "503": { "$ref": "#/components/responses/ServiceNotReady" }
         }
       }
@@ -238,6 +248,7 @@
           "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
           "503": { "$ref": "#/components/responses/ServiceNotReady" }
         }
       }
@@ -254,6 +265,7 @@
           "400": { "$ref": "#/components/responses/InvalidRequest" },
           "401": { "$ref": "#/components/responses/AuthenticationRequired" },
           "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
           "503": { "$ref": "#/components/responses/ServiceNotReady" }
         }
       }
@@ -276,6 +288,7 @@
       "Forbidden": { "description": "Verified principal lacks the exact required authority.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
       "NotFound": { "description": "Requested resource was not found within the authorized path.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
       "Conflict": { "description": "State, idempotency, continuity, expiry or lifecycle conflict.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+      "RateLimited": { "description": "The verified principal exceeded the protected API request allowance. Respect the standard RateLimit response header before retrying.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
       "ServiceNotReady": { "description": "Configuration, database or reviewed schema is not ready for protected operations.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
     },
     "schemas": {

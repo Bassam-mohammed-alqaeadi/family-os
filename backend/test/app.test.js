@@ -27,11 +27,16 @@ function request(baseUrl, path, { token, idempotencyKey, requestId, correlationI
   return fetch(`${baseUrl}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
 }
 
-function foundationApp({ store = new MemoryFoundationStore(), readiness = () => ({ ready: true, missing: [] }) } = {}) {
+function foundationApp({
+  store = new MemoryFoundationStore(),
+  readiness = () => ({ ready: true, missing: [] }),
+  protectedRateLimit,
+} = {}) {
   return createApp({
     store,
     authVerifier: new TestAuthVerifier(),
     readiness,
+    protectedRateLimit,
   });
 }
 
@@ -81,6 +86,21 @@ test('unconfigured runtime is live but never claims readiness or identity capabi
     });
     assert.equal(protectedResponse.status, 503);
     assert.equal((await protectedResponse.json()).error.code, 'identity_provider_not_configured');
+  });
+});
+
+test('protected API rate limit is per verified principal and returns a contract error', async () => {
+  await withServer(foundationApp({ protectedRateLimit: { limit: 2, windowMs: 60_000 } }), async (baseUrl) => {
+    const first = await request(baseUrl, '/v1/me/families', { token: 'test-parent-a' });
+    const second = await request(baseUrl, '/v1/me/families', { token: 'test-parent-a' });
+    const blocked = await request(baseUrl, '/v1/me/families', { token: 'test-parent-a' });
+    const distinctPrincipal = await request(baseUrl, '/v1/me/families', { token: 'test-parent-b' });
+
+    assert.equal(first.status, 200);
+    assert.equal(second.status, 200);
+    assert.equal(blocked.status, 429);
+    assert.equal((await blocked.json()).error.code, 'rate_limit_exceeded');
+    assert.equal(distinctPrincipal.status, 200);
   });
 });
 

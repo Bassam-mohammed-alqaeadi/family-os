@@ -46,6 +46,11 @@ test('every protected Foundation API operation declares OIDC security and mutati
     for (const method of methods) {
       const operation = specification.paths[path][method];
       assert.deepEqual(operation.security, [{ oidcBearer: [] }], `${method.toUpperCase()} ${path}`);
+      assert.equal(
+        operation.responses['429']?.$ref,
+        '#/components/responses/RateLimited',
+        `${method.toUpperCase()} ${path} must declare protected rate limiting`,
+      );
       if (method === 'post') {
         assert.ok(
           operation.parameters.some((parameter) => parameter.$ref === '#/components/parameters/IdempotencyKey'),
@@ -75,7 +80,6 @@ test('audit contract exposes nullable server-generated correlation evidence for 
   assert.deepEqual(correlationId.type, ['string', 'null']);
   assert.equal(correlationId.format, 'uuid');
 });
-
 
 test('children roster contract is guardian-scoped, explicit about its narrow truth, and idempotent on create', async () => {
   const specification = JSON.parse(await readFile(specificationPath, 'utf8'));

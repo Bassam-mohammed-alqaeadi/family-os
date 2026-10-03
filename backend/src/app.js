@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import express from 'express';
+import { rateLimit } from 'express-rate-limit';
 import { asHttpError, HttpError } from './http-error.js';
 import {
   createChildInput,
@@ -31,7 +32,7 @@ function asyncRoute(handler) {
   };
 }
 
-export function createApp({ store, authVerifier, readiness }) {
+export function createApp({ store, authVerifier, readiness, protectedRateLimit = {} }) {
   const app = express();
   app.disable('x-powered-by');
   app.use((_request, response, next) => {
@@ -67,6 +68,20 @@ export function createApp({ store, authVerifier, readiness }) {
     next();
   });
 
+  const protectedApiRateLimit = rateLimit({
+    windowMs: protectedRateLimit.windowMs ?? 60_000,
+    limit: protectedRateLimit.limit ?? 120,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    // Identity has already been signature-verified. A subject-scoped limit avoids
+    // conflating all users behind a trusted hosting proxy and cannot be evaded by
+    // a client-controlled forwarding header.
+    keyGenerator: (request) => request.principal.subject,
+    handler: (_request, _response, next) => {
+      next(new HttpError(429, 'rate_limit_exceeded', 'Too many protected API requests. Try again later.'));
+    },
+  });
+
   app.get('/health/live', (_request, response) => {
     response.status(200).json({ status: 'live' });
   });
@@ -90,11 +105,11 @@ export function createApp({ store, authVerifier, readiness }) {
     }),
   );
 
-  app.use('/v1', requirePrincipal, requireRuntimeReady);
-
   app.get(
     '/v1/me/families',
     requirePrincipal,
+    protectedApiRateLimit,
+    requireRuntimeReady,
     asyncRoute(async (request, response) => {
       requireNoQueryParameters(request.query);
       response.status(200).json(await store.listMyFamilies({ principal: request.principal }));
@@ -104,6 +119,8 @@ export function createApp({ store, authVerifier, readiness }) {
   app.post(
     '/v1/families',
     requirePrincipal,
+    protectedApiRateLimit,
+    requireRuntimeReady,
     asyncRoute(async (request, response) => {
       const input = createFamilyInput(request.body);
       const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
@@ -121,6 +138,8 @@ export function createApp({ store, authVerifier, readiness }) {
   app.get(
     '/v1/families/:familyId',
     requirePrincipal,
+    protectedApiRateLimit,
+    requireRuntimeReady,
     asyncRoute(async (request, response) => {
       const familyId = requireUuid(request.params.familyId, 'familyId');
       response.status(200).json(await store.getFamily({ principal: request.principal, familyId }));
@@ -130,6 +149,8 @@ export function createApp({ store, authVerifier, readiness }) {
   app.get(
     '/v1/families/:familyId/children',
     requirePrincipal,
+    protectedApiRateLimit,
+    requireRuntimeReady,
     asyncRoute(async (request, response) => {
       const familyId = requireUuid(request.params.familyId, 'familyId');
       requireNoQueryParameters(request.query);
@@ -143,6 +164,8 @@ export function createApp({ store, authVerifier, readiness }) {
   app.post(
     '/v1/families/:familyId/children',
     requirePrincipal,
+    protectedApiRateLimit,
+    requireRuntimeReady,
     asyncRoute(async (request, response) => {
       const familyId = requireUuid(request.params.familyId, 'familyId');
       const input = createChildInput(request.body);
@@ -166,6 +189,8 @@ export function createApp({ store, authVerifier, readiness }) {
   app.post(
     '/v1/families/:familyId/memberships',
     requirePrincipal,
+    protectedApiRateLimit,
+    requireRuntimeReady,
     asyncRoute(async (request, response) => {
       const familyId = requireUuid(request.params.familyId, 'familyId');
       const input = createMembershipInput(request.body);
@@ -189,6 +214,8 @@ export function createApp({ store, authVerifier, readiness }) {
   app.post(
     '/v1/families/:familyId/memberships/:membershipId/accept',
     requirePrincipal,
+    protectedApiRateLimit,
+    requireRuntimeReady,
     asyncRoute(async (request, response) => {
       const familyId = requireUuid(request.params.familyId, 'familyId');
       const membershipId = requireUuid(request.params.membershipId, 'membershipId');
@@ -212,6 +239,8 @@ export function createApp({ store, authVerifier, readiness }) {
   app.post(
     '/v1/families/:familyId/memberships/:membershipId/revoke',
     requirePrincipal,
+    protectedApiRateLimit,
+    requireRuntimeReady,
     asyncRoute(async (request, response) => {
       const familyId = requireUuid(request.params.familyId, 'familyId');
       const membershipId = requireUuid(request.params.membershipId, 'membershipId');
@@ -237,6 +266,8 @@ export function createApp({ store, authVerifier, readiness }) {
   app.post(
     '/v1/families/:familyId/guardian-transfers',
     requirePrincipal,
+    protectedApiRateLimit,
+    requireRuntimeReady,
     asyncRoute(async (request, response) => {
       const familyId = requireUuid(request.params.familyId, 'familyId');
       const { candidateMembershipId } = createGuardianTransferInput(request.body);
@@ -260,6 +291,8 @@ export function createApp({ store, authVerifier, readiness }) {
   app.post(
     '/v1/families/:familyId/guardian-transfers/:transferId/accept',
     requirePrincipal,
+    protectedApiRateLimit,
+    requireRuntimeReady,
     asyncRoute(async (request, response) => {
       const familyId = requireUuid(request.params.familyId, 'familyId');
       const transferId = requireUuid(request.params.transferId, 'transferId');
@@ -286,6 +319,8 @@ export function createApp({ store, authVerifier, readiness }) {
   app.post(
     '/v1/families/:familyId/guardian-transfers/:transferId/cancel',
     requirePrincipal,
+    protectedApiRateLimit,
+    requireRuntimeReady,
     asyncRoute(async (request, response) => {
       const familyId = requireUuid(request.params.familyId, 'familyId');
       const transferId = requireUuid(request.params.transferId, 'transferId');
@@ -309,6 +344,8 @@ export function createApp({ store, authVerifier, readiness }) {
   app.get(
     '/v1/families/:familyId/audit-events',
     requirePrincipal,
+    protectedApiRateLimit,
+    requireRuntimeReady,
     asyncRoute(async (request, response) => {
       const familyId = requireUuid(request.params.familyId, 'familyId');
       response.status(200).json(await store.listAuditEvents({ principal: request.principal, familyId }));
