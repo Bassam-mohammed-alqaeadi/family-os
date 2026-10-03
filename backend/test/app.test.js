@@ -30,12 +30,14 @@ function request(baseUrl, path, { token, idempotencyKey, requestId, correlationI
 function foundationApp({
   store = new MemoryFoundationStore(),
   readiness = () => ({ ready: true, missing: [] }),
+  preAuthenticationRateLimit,
   protectedRateLimit,
 } = {}) {
   return createApp({
     store,
     authVerifier: new TestAuthVerifier(),
     readiness,
+    preAuthenticationRateLimit,
     protectedRateLimit,
   });
 }
@@ -86,6 +88,19 @@ test('unconfigured runtime is live but never claims readiness or identity capabi
     });
     assert.equal(protectedResponse.status, 503);
     assert.equal((await protectedResponse.json()).error.code, 'identity_provider_not_configured');
+  });
+});
+
+test('pre-authentication API rate limit rejects repeated unauthenticated traffic', async () => {
+  await withServer(foundationApp({ preAuthenticationRateLimit: { limit: 2, windowMs: 60_000 } }), async (baseUrl) => {
+    const first = await request(baseUrl, '/v1/not-a-route');
+    const second = await request(baseUrl, '/v1/not-a-route');
+    const blocked = await request(baseUrl, '/v1/not-a-route');
+
+    assert.equal(first.status, 404);
+    assert.equal(second.status, 404);
+    assert.equal(blocked.status, 429);
+    assert.equal((await blocked.json()).error.code, 'rate_limit_exceeded');
   });
 });
 

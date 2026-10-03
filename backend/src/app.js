@@ -32,7 +32,13 @@ function asyncRoute(handler) {
   };
 }
 
-export function createApp({ store, authVerifier, readiness, protectedRateLimit = {} }) {
+export function createApp({
+  store,
+  authVerifier,
+  readiness,
+  preAuthenticationRateLimit = {},
+  protectedRateLimit = {},
+}) {
   const app = express();
   app.disable('x-powered-by');
   app.use((_request, response, next) => {
@@ -81,6 +87,20 @@ export function createApp({ store, authVerifier, readiness, protectedRateLimit =
       next(new HttpError(429, 'rate_limit_exceeded', 'Too many protected API requests. Try again later.'));
     },
   });
+
+  // This limit deliberately runs before token verification: malformed or
+  // unauthorized traffic must not be able to exhaust identity or database work.
+  // It uses Express's direct peer address rather than a client-supplied forwarding
+  // header; the stricter subject limit below protects verified principals.
+  app.use('/v1', rateLimit({
+    windowMs: preAuthenticationRateLimit.windowMs ?? 60_000,
+    limit: preAuthenticationRateLimit.limit ?? 600,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    handler: (_request, _response, next) => {
+      next(new HttpError(429, 'rate_limit_exceeded', 'Too many API requests. Try again later.'));
+    },
+  }));
 
   app.get('/health/live', (_request, response) => {
     response.status(200).json({ status: 'live' });
