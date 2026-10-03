@@ -29,7 +29,7 @@ Family OS is being developed as a truthful, role-aware family platform: polished
 
 ## Current release boundary
 
-The immediate approved work is a controlled, synthetic staging release of the narrowly scoped Children Roster API. It is **not** evidence of a production deployment, remote-authoritative Flutter UI, real-data usage, device enforcement or policy delivery. The exact owner-operated procedure is [`docs/foundation/17_CHILDREN_ROSTER_STAGING_RELEASE.md`](docs/foundation/17_CHILDREN_ROSTER_STAGING_RELEASE.md).
+The controlled synthetic Children Roster staging release passed on 2026-10-03; minimal evidence is recorded in [`docs/foundation/18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md`](docs/foundation/18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md). The immediate approved work is the isolated, synthetic Flutter roster-read slice in [`docs/foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md`](docs/foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md). It is **not** a production deployment, a general remote-app authorization, real-data usage, device enforcement or policy delivery.
 
 ## Verification
 

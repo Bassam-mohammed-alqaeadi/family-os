@@ -1,4 +1,4 @@
-import 'package:family_os/foundation_gate/family_discovery_api_client.dart';
+import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 import 'package:family_os/foundation_gate/foundation_gate_identity.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
@@ -8,11 +8,21 @@ class FakeIdentity implements FoundationGateIdentity {
   String token;
   Object? failure;
   int signInCalls = 0;
+  int currentTokenCalls = 0;
   int signOutCalls = 0;
 
   @override
   Future<String> signIn({required String email, required String password}) async {
     signInCalls += 1;
+    if (failure != null) {
+      throw failure!;
+    }
+    return token;
+  }
+
+  @override
+  Future<String> currentIdToken() async {
+    currentTokenCalls += 1;
     if (failure != null) {
       throw failure!;
     }

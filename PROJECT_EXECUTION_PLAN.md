@@ -14,13 +14,13 @@ When documents conflict, do not average them or revive an older plan. Follow the
 
 ## Current phase
 
-**Controlled Children Roster staging release preparation.** Source hardening, contracts, tests and CI have been completed. Live staging remains unexecuted until the Staging Owner uses the protected, synthetic-only procedure in [`docs/foundation/17_CHILDREN_ROSTER_STAGING_RELEASE.md`](docs/foundation/17_CHILDREN_ROSTER_STAGING_RELEASE.md).
+**Isolated Flutter-connected Children Roster read.** The protected synthetic Children Roster staging release passed on 2026-10-03; its minimal execution evidence is recorded in [`docs/foundation/18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md`](docs/foundation/18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md). The Owner separately authorized one server-authoritative, read-only Flutter roster view under [`docs/foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md`](docs/foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md).
 
 ## Scope guard
 
 Do not start or imply:
 
-- a Flutter remote-authoritative roster integration or an additional Flutter API read;
+- a Flutter roster mutation, a third API read, migration of the default mock-first application, or any scope beyond the precise plan-19 roster read;
 - device registration, native control, policy delivery/enforcement, GPS/location truth or provider expansion;
 - recovery/support implementation, real data, production, public/beta release or customer access.
 

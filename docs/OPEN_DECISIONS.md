@@ -2,25 +2,25 @@
 
 > **Status:** Current only. Historical questions and completed campaign backlogs are preserved in [`archive/`](archive/).
 
-## No code-policy decision is currently open
+## Resolved current decision
 
-The approved Foundation/Children Roster source work is complete and its narrow staging procedure is documented. The remaining blockers are intentionally external and must not be bypassed in code.
+The controlled synthetic Children Roster staging release passed on 2026-10-03. Its minimal evidence is preserved in [`foundation/18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md`](foundation/18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md). The Owner separately authorized one isolated Flutter roster read, with no mutation or broader client expansion, in [`foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md`](foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md).
 
-## Controlled staging prerequisites
+## Remaining external verification boundary
 
-| Item | Owner | Why it blocks the live evidence | Prohibited workaround |
+No additional code-policy decision is open for the approved roster read. The following protected steps remain Owner-operated and must not be bypassed in source or CI:
+
+| Item | Owner | Why it is required | Prohibited workaround |
 |---|---|---|---|
-| Isolated synthetic Render web service and PostgreSQL environment | Staging Owner | The release must target a known synthetic-only service and database. | Using a legacy, customer or production resource. |
-| Protected OIDC configuration and four fresh synthetic principals | Staging Owner | The verifier proves role boundaries only with real signed synthetic identities. | Checking tokens, subjects, emails or project identifiers into source/evidence. |
-| Short-lived protected migration/readonly database access | Staging Owner | Migration `005` and durable audit/outbox confirmation require controlled database access. | Startup migrations, public `0.0.0.0/0` access, CI migrations or direct history edits. |
-| Minimal operator evidence record | Staging Owner | Prevents a source/CI result being mistaken for live staging fact. | Retaining URLs, tokens, IDs, payloads, database values or logs. |
+| Local-only approved staging origin and Firebase Android client configuration | Owner | The isolated Android-emulator build needs controlled client metadata, never server credentials. | Committing, pasting, attaching or logging configuration/project values; using a database/Render-internal/localhost origin. |
+| Synthetic Android-emulator roster verification after focused CI | Owner | Proves the client renders server truth and failure/denial states without retaining sensitive data. | Using a real account/family, screenshots/raw logs, physical-device distribution or CI-held credentials. |
+| Minimal status-only emulator evidence and later synthetic-data cleanup decision | Owner | Preserves the current data-retention and traceability boundary. | Retaining identities, tokens, URLs, IDs, responses or diagnostic payloads in Git/chat/evidence. |
 
-The operating procedure is [`foundation/17_CHILDREN_ROSTER_STAGING_RELEASE.md`](foundation/17_CHILDREN_ROSTER_STAGING_RELEASE.md). These are execution prerequisites, not a request to expand scope.
+The exact implementation and evidence labels are in [`foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md`](foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md). These are protected verification prerequisites, not permission to expand scope.
 
 ## Explicitly deferred pending separate authorization
 
-- Flutter connection to the roster API or any remote-authoritative user-facing claim.
-- A second Flutter/API read, broader client behaviour, provider/Firebase expansion or real-data testing.
+- Flutter roster mutations, a third Flutter/API read, default-app migration, broader client behaviour, provider/Firebase expansion or real-data testing.
 - Device registration, policy delivery/enforcement, GPS/location truth, recovery/support operations and production/public release.
 
 See [`CURRENT_EXECUTION_PLAN.md`](CURRENT_EXECUTION_PLAN.md) and [`product_refinement_v2/92_EXECUTION_AUTHORIZATION_GATE.md`](product_refinement_v2/92_EXECUTION_AUTHORIZATION_GATE.md).

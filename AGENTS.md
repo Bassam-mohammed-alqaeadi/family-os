@@ -12,7 +12,7 @@ Historical planning, old continuous-loop automation and completed campaign mater
 
 ## Current scope
 
-The active increment is the controlled, synthetic Children Roster staging release defined in [`docs/foundation/17_CHILDREN_ROSTER_STAGING_RELEASE.md`](docs/foundation/17_CHILDREN_ROSTER_STAGING_RELEASE.md). Source/CI readiness is complete; live deployment, migration and authenticated verification evidence are not yet recorded.
+The controlled synthetic Children Roster staging release passed on 2026-10-03; minimal evidence is recorded in [`docs/foundation/18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md`](docs/foundation/18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md). The active increment is the single isolated, synthetic Flutter Children Roster read defined in [`docs/foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md`](docs/foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md).
 
 ## Hard guards
 
@@ -20,7 +20,7 @@ The active increment is the controlled, synthetic Children Roster staging releas
 - Keep authorization server-owned for remote facts. Validate scope and role, fail closed, and make source/freshness/capability state visible.
 - Treat UX polish, RTL/EN, accessibility, responsive behavior and real loading/empty/error/denied/pending/recovery states as part of each vertical slice.
 - Do not expose secrets, provider/database URLs, tokens, synthetic identifiers, raw payloads, real data or logs in source, chat, CI or evidence.
-- Do not expand into Flutter remote integration, a second client API read, device/native enforcement, recovery/support, provider expansion, production or real-data work without a separate documented decision.
+- Do not expand beyond the specifically documented plan-19 Flutter roster read into any Flutter mutation, a third client API read, device/native enforcement, recovery/support, provider expansion, production or real-data work without a separate documented decision.
 - Use additive forward migrations only. Never alter applied migration history or run a migration on application startup/CI.
 - Record only durable evidence actually produced. Passing unit tests, CI and source review are not live staging evidence.
 - Preserve `family-os/`, `prototype/` and `docs/reference/frozen-prototype-handoff/` as reference inputs unless a deliberate, tested migration updates their consumers.

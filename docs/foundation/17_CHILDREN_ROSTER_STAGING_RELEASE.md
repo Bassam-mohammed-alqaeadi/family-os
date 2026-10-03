@@ -1,6 +1,6 @@
 # Children Roster — Controlled Staging Release and Verification
 
-> **Status:** Owner-authorized for a controlled synthetic-staging release on 2026-10-03; not deployment evidence.
+> **Status:** Executed and passed on controlled synthetic staging on 2026-10-03; evidence is recorded in [`18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md`](18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md).
 > **Scope:** Migration `005_family_children_roster.sql` and the narrowly scoped Children Control Centre roster API. This operation creates only synthetic families, memberships and child roster profiles. It does **not** create a child account, device enrollment, location signal or policy-enforcement receipt.
 
 ## 0. Authorization record
@@ -10,9 +10,9 @@
 | Owner direction | Controlled Children Roster staging release approved on 2026-10-03. |
 | Authorized scope | Exact reviewed SHA, additive migration `005`, synthetic-only HTTP verifier, and optional read-only audit/outbox evidence. |
 | Explicit exclusions | Flutter roster connection, remote-authoritative UI claims, device/location/policy implementation, real data, production, public/beta release and deletion tooling. |
-| Completion evidence | A later operator record must contain only reviewed SHA, operator/approver, pass/fail check labels, migration/checksum outcome, readiness result and temporary-ingress removal confirmation. |
+| Completion evidence | Recorded in [`18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md`](18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md): reviewed SHA, pass check labels, migration outcome and temporary-ingress removal confirmation only. |
 
-This authorization does not replace the exact-SHA preflight below and does not establish that a deployment, migration or verifier run has occurred.
+The completed release evidence does not replace the exact-SHA preflight below. It establishes this narrow synthetic operation only.
 
 ## 1. Preconditions
 
@@ -60,7 +60,7 @@ The verifier establishes, with synthetic data only:
 - a second synthetic family cannot be read by the first family guardian;
 - one server correlation connects the roster creation to exactly one audit event and, when the read-only evidence option is enabled, exactly one pending outbox event.
 
-A pass is evidence for this narrow roster contract only. It is not permission to mark Flutter as remote-authoritative, use real family data, deploy to production, expose device/location facts, or claim policy delivery/enforcement.
+A pass is evidence for this narrow roster contract only. It does not alone authorize a Flutter remote-authority claim, real family data, production, device/location facts or policy delivery/enforcement. The Owner's subsequent, separate decision authorizes only the isolated synthetic Flutter roster read defined in [`19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md`](19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md); all other exclusions remain in force.
 
 ## 4. Evidence and cleanup
 

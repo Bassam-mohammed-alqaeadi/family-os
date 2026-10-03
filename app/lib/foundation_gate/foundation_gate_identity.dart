@@ -5,6 +5,10 @@ import 'foundation_gate_models.dart';
 abstract interface class FoundationGateIdentity {
   Future<String> signIn({required String email, required String password});
 
+  /// Returns a provider-managed token only for the immediate authorized request.
+  /// Callers must not retain it in controller or UI state.
+  Future<String> currentIdToken();
+
   Future<void> signOut();
 }
 
@@ -17,14 +21,27 @@ class FirebaseEmailPasswordIdentity implements FoundationGateIdentity {
   Future<String> signIn({required String email, required String password}) async {
     try {
       final credential = await _auth.signInWithEmailAndPassword(email: email, password: password);
-      final token = await credential.user?.getIdToken();
-      if (token == null || token.trim().isEmpty) {
-        throw const FoundationGateIdentityException();
-      }
-      return token;
+      return _tokenFromUser(credential.user);
     } catch (_) {
       throw const FoundationGateIdentityException();
     }
+  }
+
+  @override
+  Future<String> currentIdToken() async {
+    try {
+      return _tokenFromUser(_auth.currentUser);
+    } catch (_) {
+      throw const FoundationGateIdentityException();
+    }
+  }
+
+  Future<String> _tokenFromUser(User? user) async {
+    final token = await user?.getIdToken();
+    if (token == null || token.trim().isEmpty) {
+      throw const FoundationGateIdentityException();
+    }
+    return token;
   }
 
   @override

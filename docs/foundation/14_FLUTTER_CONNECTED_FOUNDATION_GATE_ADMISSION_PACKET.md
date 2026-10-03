@@ -1,6 +1,6 @@
 # Flutter-connected Foundation — Gate Admission Packet
 
-> **Status:** Owner-approved bounded gate complete — backend family discovery, isolated implementation/CI and Owner-only synthetic Android-emulator verification passed. No second API read, broader client behavior, Production or release is authorized.
+> **Status:** Owner-approved bounded family-discovery gate complete — backend family discovery, isolated implementation/CI and Owner-only synthetic Android-emulator verification passed. Its original scope did not authorize a second API read. A later, separate Owner decision authorizes only the isolated Children Roster read in [`19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md`](19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md); broader client behavior, Production and release remain unauthorized.
 > **Owner decision:** Go, 2026-10-01; isolated CI path, 2026-10-01.
 > **Decision deadline:** Met on 2026-10-01.
 > **Synthetic-data retention boundary:** 2026-10-31.

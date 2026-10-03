@@ -1,3 +1,9 @@
+final _foundationGateUuid = RegExp(
+  r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+);
+
+bool isFoundationGateUuid(String value) => _foundationGateUuid.hasMatch(value);
+
 class FoundationGateConfiguration {
   FoundationGateConfiguration._(this.stagingApiOrigin);
 
@@ -17,4 +23,11 @@ class FoundationGateConfiguration {
   final Uri stagingApiOrigin;
 
   Uri get familyDiscoveryUri => stagingApiOrigin.replace(path: '/v1/me/families');
+
+  Uri childrenRosterUri(String familyId) {
+    if (!isFoundationGateUuid(familyId)) {
+      throw ArgumentError.value(familyId, 'familyId', 'A server-returned UUID family identifier is required.');
+    }
+    return stagingApiOrigin.replace(path: '/v1/families/$familyId/children');
+  }
 }

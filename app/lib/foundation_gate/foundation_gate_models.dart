@@ -4,10 +4,14 @@ enum FoundationGatePhase {
   signingIn,
   loadingFamilies,
   familiesAvailable,
+  loadingRoster,
+  childrenAvailable,
+  noChildren,
   noActiveFamily,
   signInFailed,
   sessionInvalid,
   accessDenied,
+  rosterAccessDenied,
   serviceUnavailable,
   networkUnavailable,
 }
@@ -22,6 +26,18 @@ class FoundationGateFamily {
   final String id;
   final String displayName;
   final String role;
+}
+
+class FoundationGateChild {
+  const FoundationGateChild({
+    required this.id,
+    required this.displayName,
+    required this.ageYears,
+  });
+
+  final String id;
+  final String displayName;
+  final int ageYears;
 }
 
 enum FoundationGateApiFailure {

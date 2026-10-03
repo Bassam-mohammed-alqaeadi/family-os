@@ -1,10 +1,10 @@
-# Current execution plan — Foundation and Children Roster release
+# Current execution plan — connected Children Roster slice
 
-> **Status:** Active programme pointer as of 2026-10-04. This is the only live execution summary; it does not replace the detailed contracts or controlled operator runbooks it links to.
+> **Status:** Active programme pointer as of 2026-10-04. This is the only live execution summary; it does not replace the detailed contracts, authorization decisions, operator runbooks or evidence it links to.
 
 ## Objective
 
-Build Family OS as a truthful, secure and polished family platform. The present approved increment is deliberately narrow: establish authoritative family/role/children-roster foundations and obtain controlled synthetic staging evidence before any Flutter remote-authority claim or broader device/policy work.
+Build Family OS as a truthful, secure and polished family platform. The completed Foundation increment established authoritative family/role/children-roster facts and obtained controlled synthetic staging evidence. The present approved increment is the next narrow vertical slice: render that already verified Children Roster truth in an isolated Flutter client without expanding into mutations, device/policy work or a public product claim.
 
 ## Current position
 
@@ -12,37 +12,29 @@ Build Family OS as a truthful, secure and polished family platform. The present 
 |---|---|---|
 | Product direction | Active | [`REAL_PLATFORM_TRANSFORMATION_RECORD.md`](REAL_PLATFORM_TRANSFORMATION_RECORD.md) |
 | Runtime truth | Binding | [`product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md`](product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md) |
-| Execution authorization | Foundation wave only | [`product_refinement_v2/92_EXECUTION_AUTHORIZATION_GATE.md`](product_refinement_v2/92_EXECUTION_AUTHORIZATION_GATE.md) |
-| Backend children roster | Source implementation, contract tests and CI complete | [`foundation/17_CHILDREN_ROSTER_STAGING_RELEASE.md`](foundation/17_CHILDREN_ROSTER_STAGING_RELEASE.md) |
-| Controlled staging | Owner-authorized, **not yet executed** | [`foundation/17_CHILDREN_ROSTER_STAGING_RELEASE.md`](foundation/17_CHILDREN_ROSTER_STAGING_RELEASE.md), [`foundation/12_STAGING_EXECUTION_EVIDENCE.md`](foundation/12_STAGING_EXECUTION_EVIDENCE.md) |
-| Flutter roster connection | Not authorized | [`foundation/14_FLUTTER_CONNECTED_FOUNDATION_GATE_ADMISSION_PACKET.md`](foundation/14_FLUTTER_CONNECTED_FOUNDATION_GATE_ADMISSION_PACKET.md), [`foundation/15_FLUTTER_CONNECTED_FOUNDATION_IMPLEMENTATION_PLAN.md`](foundation/15_FLUTTER_CONNECTED_FOUNDATION_IMPLEMENTATION_PLAN.md) |
-| Device/policy enforcement, recovery, production | Not authorized by this increment | [`product_refinement_v2/92_EXECUTION_AUTHORIZATION_GATE.md`](product_refinement_v2/92_EXECUTION_AUTHORIZATION_GATE.md) |
+| Execution authorization | Foundation wave plus the bounded connected roster read | [`product_refinement_v2/92_EXECUTION_AUTHORIZATION_GATE.md`](product_refinement_v2/92_EXECUTION_AUTHORIZATION_GATE.md), [`foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md`](foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md) |
+| Backend Children Roster | Source, contract tests and CI complete | [`foundation/17_CHILDREN_ROSTER_STAGING_RELEASE.md`](foundation/17_CHILDREN_ROSTER_STAGING_RELEASE.md) |
+| Controlled staging | **Executed and passed** on synthetic staging, 2026-10-03 | [`foundation/18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md`](foundation/18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md) |
+| Flutter family discovery | Completed bounded Foundation Gate | [`foundation/14_FLUTTER_CONNECTED_FOUNDATION_GATE_ADMISSION_PACKET.md`](foundation/14_FLUTTER_CONNECTED_FOUNDATION_GATE_ADMISSION_PACKET.md), [`foundation/15_FLUTTER_CONNECTED_FOUNDATION_IMPLEMENTATION_PLAN.md`](foundation/15_FLUTTER_CONNECTED_FOUNDATION_IMPLEMENTATION_PLAN.md) |
+| Flutter Children Roster read | Authorized; implementation and isolated verification next | [`foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md`](foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md) |
+| Device/policy enforcement, recovery, production | Not authorized | [`product_refinement_v2/92_EXECUTION_AUTHORIZATION_GATE.md`](product_refinement_v2/92_EXECUTION_AUTHORIZATION_GATE.md) |
 
-## The next controlled operation
+## The next authorized operation
 
-The next operation is the Owner-operated **synthetic Children Roster staging release**. It must follow the exact sequence in [`foundation/17_CHILDREN_ROSTER_STAGING_RELEASE.md`](foundation/17_CHILDREN_ROSTER_STAGING_RELEASE.md):
+Implement and verify the **isolated Flutter-connected Children Roster read** exactly as defined in [`foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md`](foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md):
 
-1. Select and record one exact reviewed release SHA with passing CI.
-2. Manually deploy that SHA to the isolated synthetic Render staging service.
-3. Run the reviewed additive migration `005` once through a protected short-lived operator session.
-4. Remove temporary database ingress immediately; prove liveness and readiness.
-5. Run the synthetic authenticated roster verifier and the optional required read-only audit/outbox evidence check.
-6. Retain only approved minimal evidence: SHA, timestamps, pass/fail labels, migration/checksum state, readiness state, and ingress-removal confirmation.
+1. Extend the existing isolated Foundation Gate composition root only; do not wire the default mock-first application.
+2. After server-authoritative family discovery and explicit family selection, make one authenticated `GET /v1/families/{familyId}/children` request against the approved HTTPS synthetic staging origin.
+3. Render only returned child profile roster facts, clear source/freshness messaging, role-specific read-only context, and explicit loading/empty/denied/unavailable/network/retry/sign-out states.
+4. Keep all family, roster and token state volatile; do not create any Flutter mutation or local persistence path.
+5. Pass focused Foundation Gate CI, then perform the Owner-only synthetic Android-emulator verification without retaining secrets, identifiers, origin values, raw payloads or screenshots containing data.
 
-The procedure is intentionally Owner-operated because it requires protected Render/PostgreSQL/OIDC access. Do not place credentials in Git, CI, chat, shell history, source or evidence. Do not represent this document, a successful local test, or a passing CI run as deployment evidence.
+## Completion boundary for the connected roster increment
 
-## Completion boundary for this increment
+This increment is complete only after the isolated implementation, focused CI and Owner-only synthetic emulator evidence required by plan 19 exist.
 
-The release increment is complete only after the documented staging evidence exists. A successful result proves the narrow family-scoped roster contract only:
+A successful result proves only a server-authoritative, read-only roster presentation for the approved synthetic Android-emulator scope. It does **not** authorize a Flutter mutation, default-app migration, another API read, device control, policy delivery/enforcement, location claims, recovery/support, real data, production or public release.
 
-- active primary guardian creation and idempotency;
-- active guardian reads and co-guardian write denial;
-- child and unrelated-principal denial;
-- tenant isolation;
-- correlated audit/outbox evidence.
+## Why the boundary remains narrow
 
-It does **not** authorize Flutter remote-authoritative UI, real data, production, public release, device control, policy delivery/enforcement, location claims, recovery/support expansion, or a second API read.
-
-## After staging evidence
-
-Only after the evidence above and a separate governance decision may the programme consider a small Flutter vertical slice. That slice must preserve role-specific UX, source/freshness truth, empty/error/denied/pending states, accessibility, RTL/EN behaviour, responsive polish and corresponding integration/device evidence. It must not simply wire the existing local screen to an API.
+The staging PASS proves that the backend is authoritative for this contract, not that every product surface or future capability is ready. The connected UI must keep that truth legible: a roster profile is not a child device, an applied policy, a current location, a health signal or a security-enforcement receipt.

@@ -18,7 +18,7 @@ Read these in order for active work:
 
 | Path | Purpose | Status |
 |---|---|---|
-| [`foundation/`](foundation/) | Render/PostgreSQL/OIDC foundation, controlled staging, migration and verification procedures | Active; live staging evidence is still required. |
+| [`foundation/`](foundation/) | Render/PostgreSQL/OIDC foundation, controlled staging evidence, and the bounded connected-roster slice | Active; the staging pass is recorded and isolated Flutter roster verification is next. |
 | [`real_platform/`](real_platform/) | Truthful vertical-slice contracts, including the Children Control Centre | Active; roster Flutter integration is not yet authorized. |
 | [`product_refinement_v2/`](product_refinement_v2/) | Product direction, runtime truth, system contracts and authorization gates | Active product authority. |
 | [`OPEN_DECISIONS.md`](OPEN_DECISIONS.md) | Explicit current blockers and decisions; not a legacy backlog | Active. |

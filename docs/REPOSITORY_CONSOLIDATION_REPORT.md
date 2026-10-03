@@ -48,6 +48,6 @@ prototype/                   Frozen route-registry reference used by tests
 
 ## Current operational conclusion
 
-The only active external operation is the Owner-operated synthetic Children Roster staging release. Source changes, local tests and CI do not count as live staging evidence. Flutter remote-authoritative integration, policy/device work, recovery/support, production and real-data usage remain outside the present authorization.
+The Owner-operated synthetic Children Roster staging release subsequently passed; minimal evidence is now recorded in [`foundation/18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md`](foundation/18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md). The only currently authorized follow-on is the bounded isolated Flutter roster read in [`foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md`](foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md). Source changes, local tests and CI do not count as Owner-only emulator evidence. Policy/device work, recovery/support, production and real-data usage remain outside the present authorization.
 
 See [`CURRENT_EXECUTION_PLAN.md`](CURRENT_EXECUTION_PLAN.md) for the live path and [`archive/README.md`](archive/README.md) for preserved historical material.

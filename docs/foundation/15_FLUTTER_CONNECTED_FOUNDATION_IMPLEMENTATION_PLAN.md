@@ -1,6 +1,6 @@
 # Flutter-connected Foundation — Isolated Implementation Plan
 
-> **Status:** Owner-accepted and complete — isolated Foundation Gate CI and Owner-only synthetic Android-emulator verification passed. Local configuration remains unrecorded and separately controlled.
+> **Status:** Owner-accepted family-discovery implementation complete — isolated Foundation Gate CI and Owner-only synthetic Android-emulator verification passed. Local configuration remains unrecorded and separately controlled. The subsequent, separately authorized Children Roster read is governed by [`19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md`](19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md).
 > **Owner decision:** Accept, 2026-10-01; scope changes: none.
 > **Implementation evidence:** Server-side `GET /v1/me/families` is deployed and owner-reported passing on synthetic staging. The isolated implementation passed Foundation Gate CI run `36791206030` on 2026-10-01, including committed-lock installation/consistency, analysis and isolated tests. The legacy global Flutter CI remains explicitly red and out of this slice's scope.
 > **Local procedure:** `16_LOCAL_ANDROID_EMULATOR_FOUNDATION_VERIFICATION.md`; it contains no configuration values and may be used only by the Owner on the approved workstation.

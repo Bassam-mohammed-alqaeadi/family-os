@@ -15,6 +15,7 @@ void main() {
 
     for (final prohibited in [
       'package:family_os/app/',
+      'package:family_os/features/',
       'package:family_os/core/fs_foundation/',
       'local_persistence',
       'sqflite',
@@ -23,5 +24,15 @@ void main() {
     ]) {
       expect(imports, isNot(contains(prohibited)), reason: prohibited);
     }
+  });
+
+  test('the connected roster client exposes no mutation transport or local configuration source', () {
+    final source = File('lib/foundation_gate/children_roster_api_client.dart').readAsStringSync();
+    final configuration = Directory('lib/foundation_gate/local');
+
+    expect(source, contains('Future<List<FoundationGateChild>> list'));
+    expect(source, isNot(contains('.post(')));
+    expect(source, isNot(contains('Idempotency-Key')));
+    expect(configuration.existsSync(), isFalse);
   });
 }
