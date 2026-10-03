@@ -11,6 +11,7 @@ import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/i18n/notebook_studio_i18n.dart';
 import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n17_child_learn/child_flashcards_models.dart';
@@ -28,6 +29,8 @@ abstract final class ChildFlashcardsKeys {
   static const knownCta = Key('child_flashcards_known');
   static const reviewCta = Key('child_flashcards_review');
   static const quizCta = Key('child_flashcards_quiz');
+  static const noteboardCard = Key('child_flashcards_noteboard');
+  static const convertNoteCta = Key('child_flashcards_convert_note');
   static const honestyBanner = Key('child_flashcards_honesty');
   static const parentLean = Key('child_flashcards_parent_lean');
   static const sosIconCta = Key('child_flashcards_sos_icon');
@@ -446,6 +449,41 @@ class _ChildFlashcardsScreenState extends State<ChildFlashcardsScreen> {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+          DecoratedBox(
+            key: ChildFlashcardsKeys.noteboardCard,
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: colors.border),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    l10n.childFlashcardsNoteboardHeading,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                      color: colors.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  PrimaryBtn(
+                    key: ChildFlashcardsKeys.convertNoteCta,
+                    label: l10n.childFlashcardsConvertNoteCta,
+                    variant: PrimaryBtnVariant.sec,
+                    onPressed: () => AppToast.show(
+                      context,
+                      message: l10n.childFlashcardsNoteConvertedToast,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 12),
           PrimaryBtn(

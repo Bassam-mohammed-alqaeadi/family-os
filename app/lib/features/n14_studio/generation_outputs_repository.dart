@@ -23,6 +23,8 @@ final class InMemoryGenerationOutputsRepository
     return GenerationOutputsSnapshot(
       source: _snap.source,
       outputs: List<GenerationOutputItem>.from(_snap.outputs),
+      sources: List<NotebookSourceItem>.from(_snap.sources),
+      flexibility: _snap.flexibility,
     );
   }
 
@@ -40,7 +42,7 @@ GenerationOutputsSnapshot generationOutputsEmptyFixture() {
   return const GenerationOutputsSnapshot(outputs: []);
 }
 
-/// Prototype FAT-043 — five on + review game P1 locked off.
+/// Prototype FAT-043 — five on + review game P1 locked off + NotebookLM outputs.
 GenerationOutputsSnapshot generationOutputsPrototypeFixture() {
   return const GenerationOutputsSnapshot(
     source: GenerationSourceLabel.fractionsPage47,
@@ -58,6 +60,26 @@ GenerationOutputsSnapshot generationOutputsPrototypeFixture() {
       GenerationOutputItem(
         id: 'out-challenge',
         kind: GenerationOutputKind.challenge,
+      ),
+      GenerationOutputItem(
+        id: 'out-study-guide',
+        kind: GenerationOutputKind.studyGuideFaq,
+        selected: false,
+      ),
+      GenerationOutputItem(
+        id: 'out-audio-overview',
+        kind: GenerationOutputKind.audioOverview,
+        selected: false,
+      ),
+      GenerationOutputItem(
+        id: 'out-mind-map',
+        kind: GenerationOutputKind.conceptMindMap,
+        selected: false,
+      ),
+      GenerationOutputItem(
+        id: 'out-timeline',
+        kind: GenerationOutputKind.timeline,
+        selected: false,
       ),
       GenerationOutputItem(
         id: 'out-review',

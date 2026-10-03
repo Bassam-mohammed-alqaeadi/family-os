@@ -181,6 +181,63 @@ void main() {
     await tester.pumpAndSettle();
     expect(sos, isTrue);
   });
+
+  testWidgets(
+    'NotebookLM studio: toggle audio overview + source grounding + depth chip',
+    (tester) async {
+      final repo = InMemoryGenerationOutputsRepository(
+        seed: generationOutputsPrototypeFixture(),
+      );
+      await _pump(tester, repository: repo);
+
+      expect(find.byKey(GenerationOutputsKeys.sourcesCard), findsOneWidget);
+      expect(find.byKey(GenerationOutputsKeys.flexibilityCard), findsOneWidget);
+      expect(
+        find.byKey(GenerationOutputsKeys.outputRow('out-audio-overview')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(GenerationOutputsKeys.outputRow('out-mind-map')),
+        findsOneWidget,
+      );
+
+      await tester.ensureVisible(
+        find.byKey(GenerationOutputsKeys.outputSwitch('out-audio-overview')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(GenerationOutputsKeys.outputSwitch('out-audio-overview')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Generate selected (6)'), findsOneWidget);
+
+      await tester.ensureVisible(
+        find.byKey(GenerationOutputsKeys.sourceSwitch('src-voice-father')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(GenerationOutputsKeys.sourceSwitch('src-voice-father')),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('Active grounding sources: 2 of 3'),
+        findsOneWidget,
+      );
+
+      await tester.ensureVisible(
+        find.byKey(GenerationOutputsKeys.depthChip('examCrunch')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(GenerationOutputsKeys.depthChip('examCrunch')),
+      );
+      await tester.pumpAndSettle();
+      final chip = tester.widget<ChoiceChip>(
+        find.byKey(GenerationOutputsKeys.depthChip('examCrunch')),
+      );
+      expect(chip.selected, isTrue);
+    },
+  );
 }
 
 Future<void> _pump(

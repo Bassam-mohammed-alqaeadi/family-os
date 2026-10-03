@@ -74,6 +74,46 @@ void main() {
     await tester.pumpAndSettle();
     expect(sos, 1);
   });
+
+  testWidgets(
+    'NotebookLM modes: pin note, audio overview hand-raise → 017, mind map',
+    (tester) async {
+      final nav = <String>[];
+      final repo = InMemoryChildLessonRepository(
+        seed: childLessonPrototypeFixture(),
+      );
+      await _pump(tester, repository: repo, onNavigate: nav.add);
+
+      expect(find.byKey(ChildLessonKeys.notebookPanel), findsOneWidget);
+      expect(find.byKey(ChildLessonKeys.citationBadge), findsOneWidget);
+
+      await tester.ensureVisible(find.byKey(ChildLessonKeys.pinNoteCta));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(ChildLessonKeys.pinNoteCta));
+      await tester.pump();
+      expect(find.textContaining('Pinned to your noteboard'), findsOneWidget);
+      AppToast.dismiss();
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.byKey(ChildLessonKeys.modeAudioChip));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(ChildLessonKeys.modeAudioChip));
+      await tester.pumpAndSettle();
+      expect(find.byKey(ChildLessonKeys.audioOverviewCard), findsOneWidget);
+
+      await tester.ensureVisible(find.byKey(ChildLessonKeys.handRaiseCta));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(ChildLessonKeys.handRaiseCta));
+      await tester.pumpAndSettle();
+      expect(nav, contains('SCR-CHD-017'));
+
+      await tester.ensureVisible(find.byKey(ChildLessonKeys.modeMindMapChip));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(ChildLessonKeys.modeMindMapChip));
+      await tester.pumpAndSettle();
+      expect(find.byKey(ChildLessonKeys.mindMapCard), findsOneWidget);
+    },
+  );
 }
 
 Future<void> _pump(

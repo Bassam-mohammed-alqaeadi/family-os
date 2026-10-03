@@ -190,6 +190,27 @@ void main() {
     await tester.pumpAndSettle();
     expect(sos, isTrue);
   });
+
+  testWidgets('NotebookLM inline citations switch verified excerpt', (
+    tester,
+  ) async {
+    final repo = InMemoryPreviewApproveRepository(
+      seed: previewApprovePrototypeFixture(),
+    );
+    await _pump(tester, repository: repo);
+
+    expect(find.byKey(PreviewApproveKeys.citationsCard), findsOneWidget);
+    expect(find.byKey(PreviewApproveKeys.audioMapCard), findsOneWidget);
+    expect(find.textContaining('Math Textbook - p. 47'), findsOneWidget);
+
+    await tester.ensureVisible(
+      find.byKey(PreviewApproveKeys.citationChip('cit-w2')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(PreviewApproveKeys.citationChip('cit-w2')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Teacher Worksheet - p. 2'), findsOneWidget);
+  });
 }
 
 Future<void> _pump(
