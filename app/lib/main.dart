@@ -19,7 +19,6 @@ import 'package:family_os/core/fs_foundation/fs_composition_runtime.dart';
 import 'package:family_os/core/fs_foundation/fs_session_kernel.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/i18n/locale_controller.dart';
-import 'package:family_os/core/identity/child_device_management_repository.dart';
 import 'package:family_os/core/identity/identity_local_persistence.dart';
 import 'package:family_os/core/identity/identity_runtime.dart';
 import 'package:family_os/core/identity/identity_scope.dart';

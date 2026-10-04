@@ -1175,37 +1175,6 @@ class _ProfileRepairCard extends StatelessWidget {
   }
 }
 
-class _InitialAvatar extends StatelessWidget {
-  const _InitialAvatar({required this.name});
-
-  final String name;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<FamilyColors>()!;
-    final initial = name.trim().isEmpty
-        ? '?'
-        : String.fromCharCode(name.trim().runes.first);
-    return Semantics(
-      excludeSemantics: true,
-      child: Container(
-        width: 48,
-        height: 48,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(color: colors.p100, shape: BoxShape.circle),
-        child: Text(
-          initial,
-          style: TextStyle(
-            color: colors.p700,
-            fontWeight: FontWeight.w800,
-            fontSize: 18,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _ChildRosterCard extends StatelessWidget {
   const _ChildRosterCard({
     required this.entry,
