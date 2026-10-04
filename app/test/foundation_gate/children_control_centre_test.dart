@@ -91,7 +91,9 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Add child profile'));
+    final addChild = find.text('Add child profile');
+    await tester.ensureVisible(addChild);
+    await tester.tap(addChild);
     await tester.pumpAndSettle();
     expect(find.text('Enter only a name and age.'), findsOneWidget);
     await tester.enterText(find.byType(TextField), 'New child');
