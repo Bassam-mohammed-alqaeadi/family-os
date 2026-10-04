@@ -70,7 +70,10 @@ jobs:
             echo "::error title=Isolated Flutter analyzer::${summary}"
           fi
           if [ "${{ steps.tests.outcome }}" = 'failure' ]; then
-            transcript=$(tail -100 build/ci/foundation-gate-test.txt | tr '\n' ' ' | cut -c1-4000)
+            transcript=$(grep -A80 -B2 'EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK' build/ci/foundation-gate-test.txt | tr '\n' ' ' | cut -c1-4000)
+            if [ -z "$transcript" ]; then
+              transcript=$(tail -60 build/ci/foundation-gate-test.txt | tr '\n' ' ' | cut -c1-4000)
+            fi
             echo "::error title=Isolated Foundation Gate test transcript::${transcript}"
             python3 - <<'PY'
           import json
