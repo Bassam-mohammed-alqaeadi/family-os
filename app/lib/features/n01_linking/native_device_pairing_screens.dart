@@ -249,9 +249,11 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
                 onPressed: () async {
                   final stopped = await NativeChildTelemetryBridge.stop();
                   await _refreshServiceStatus();
-                  if (mounted) setState(() => _message = stopped
-                      ? 'Child Mode foreground service stopped on this device.'
-                      : 'Child Mode service could not be stopped.');
+                  if (mounted) {
+                    setState(() => _message = stopped
+                        ? 'Child Mode foreground service stopped on this device.'
+                        : 'Child Mode service could not be stopped.');
+                  }
                 },
                 icon: const Icon(Icons.stop_circle_outlined),
                 label: const Text('Stop Child Mode on this device'),

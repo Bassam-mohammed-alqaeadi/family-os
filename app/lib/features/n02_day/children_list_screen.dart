@@ -1065,10 +1065,12 @@ class _RuntimeChildRosterCard extends StatelessWidget {
   }
 
   String _healthLabel(AppLocalizations l10n, FamilyChildDeviceSummary? device) {
-    if (device == null || !device.hasTelemetry)
+    if (device == null || !device.hasTelemetry) {
       return _deviceStateLabel(l10n, device);
-    if (device.connectionState == ChildDeviceConnectionState.needsAttention)
+    }
+    if (device.connectionState == ChildDeviceConnectionState.needsAttention) {
       return 'Battery low';
+    }
     if (device.batteryStatus == 'charging') return 'Charging';
     return 'Healthy';
   }
