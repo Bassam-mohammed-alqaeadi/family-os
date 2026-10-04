@@ -1,5 +1,7 @@
 # Product Refinement V2 — Decision Register
 
+> **Status note — 2026-10-04:** Entries remain durable decisions and evidence. The Global Super-App Constitution (`../../AGENTS.md`) and [`../CURRENT_EXECUTION_PLAN.md`](../CURRENT_EXECUTION_PLAN.md) supersede Foundation Wave-only sequencing as the current portfolio delivery model; they do not erase the historical facts recorded below.
+
 > **Purpose:** Record product decisions once, with their rationale and consequences.
 > **Status legend:** Accepted / Pending Owner / Superseded.
 

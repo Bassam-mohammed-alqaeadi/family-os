@@ -34,7 +34,7 @@ The current service, journey, and screen registries remain valuable discovery in
 
 - **In current refinement:** the 42 systems and 240 registered services already present in the platform inventory.
 - **Future developments:** new candidate systems outside that inventory, including expanded home organization, financial responsibility, expanded values/religion, and one-way audio. They are recorded for future consideration only and are not part of the current build, navigation, data model, or release promise.
-- **Current focus:** Option A Foundation Wave is authorized. Follow `92_EXECUTION_AUTHORIZATION_GATE.md` exactly: establish the Render account/family/membership/role/audit foundation first, while keeping Native/device, Firebase/FCM, billing, providers, realtime and release work out of scope.
+- **Current focus:** The live system selection is in [`../CURRENT_EXECUTION_PLAN.md`](../CURRENT_EXECUTION_PLAN.md). The Foundation Wave record in `92_EXECUTION_AUTHORIZATION_GATE.md` is preserved as evidence of the base already built; it does not replace the system-by-system Global Super-App execution model.
 
 ## Runtime truth and backend placement
 

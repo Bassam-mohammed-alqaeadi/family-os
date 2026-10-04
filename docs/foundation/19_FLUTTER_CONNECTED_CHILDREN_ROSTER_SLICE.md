@@ -1,8 +1,8 @@
 # Flutter-connected Children Roster — bounded vertical slice
 
-> **Status:** Owner-authorized, implementation in progress — 2026-10-04
+> **Status:** Bounded Foundation technical record — retained evidence, 2026-10-04.
 > **Authorization trigger:** Synthetic Children Roster staging PASS recorded in [`18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md`](18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md).
-> **Scope:** One authenticated, read-only, refined Children Control Centre roster view in the existing isolated Foundation Gate composition root. The required refinement sequence is [`20_CHILDREN_CONTROL_CENTRE_REFINEMENT_EXECUTION.md`](20_CHILDREN_CONTROL_CENTRE_REFINEMENT_EXECUTION.md).
+> **Scope recorded here:** One authenticated, read-only roster view in the isolated Foundation Gate composition root. It is evidence of the base that exists; it does not select or cap the current Global Super-App system plan in [`../CURRENT_EXECUTION_PLAN.md`](../CURRENT_EXECUTION_PLAN.md).
 
 ## 1. Decision
 

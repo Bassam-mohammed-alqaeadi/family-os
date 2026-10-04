@@ -96,7 +96,7 @@ Children
    └─ explanation, history and recovery through progressive disclosure
 ```
 
-During the present roster-only increment, only the family context, roster, empty/setup, access and recovery nodes are permitted to appear as connected functionality. The other nodes belong in the target design and capability map until their sources and authorization gates exist; they must not be represented by persuasive but non-working toggles.
+The completed roster-only increment proves only its own connected foundation. Under the Global Super-App strategy, the other nodes are retained as product targets and are brought online system by system when their Node.js/Express, PostgreSQL or Native source and role/safety contract exist. They must not be represented by persuasive but non-working toggles in the meantime.
 
 ## 6. Recommended product sequence
 

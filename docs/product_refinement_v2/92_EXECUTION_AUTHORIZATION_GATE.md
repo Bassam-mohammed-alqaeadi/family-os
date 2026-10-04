@@ -1,8 +1,9 @@
 # Execution Authorization Gate — Product Refinement V2
 
-> **Status:** Authorized — Option A, Foundation Wave only
+> **Status:** Historical Foundation authorization — retained technical decision, superseded as the global delivery ceiling on 2026-10-04
 > **Authorized:** 2026-09-29 under Owner direction to select the appropriate option
-> **Purpose:** Record the exact, deliberately narrow authorization that closes Product Refinement V2 and permits the first Render-backed production engineering wave.
+> **Current strategic authority:** [`../../AGENTS.md`](../../AGENTS.md) and [`../CURRENT_EXECUTION_PLAN.md`](../CURRENT_EXECUTION_PLAN.md) select systems one at a time and build the real engine behind the prototype promise.
+> **Purpose:** Preserve the exact, deliberately narrow Foundation authorization and its evidence. It remains valid for what it authorized; it no longer limits the Global Super-App programme to that Foundation-only sequence.
 
 ## 1. Decision question
 

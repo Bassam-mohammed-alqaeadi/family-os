@@ -84,8 +84,8 @@ A screen may be called refined only when reviewers can answer “yes” to all o
 7. Does the screen avoid unimplemented actions, fabricated status and unbounded scope expansion?
 8. Do component/widget/integration tests and the relevant operator evidence match the claim being made?
 
-## 8. Current application — Children Control Centre
+## 8. First candidate application — Family Entry & Children Control
 
-`SCR-FAT-012` is the first active application of this standard. Its implementation must use the familiar control-centre pattern—family context, clear roster hierarchy, role-aware read-only treatment, recognisable recovery states and progressive disclosure—while showing only the narrow profile-roster truth currently available.
+`SCR-FAT-012` and its related family/child journeys are the recommended first candidate system under the Global Super-App Constitution. The current isolated Flutter roster read is valuable technical evidence, not a declaration that the Children Control Centre is complete or the maximum product scope.
 
-The current isolated Flutter roster read is a technical connection, not a declaration that the Children Control Centre is visually complete. Its refinement/acceptance sequence is recorded in [`../foundation/20_CHILDREN_CONTROL_CENTRE_REFINEMENT_EXECUTION.md`](../foundation/20_CHILDREN_CONTROL_CENTRE_REFINEMENT_EXECUTION.md).
+If the system is selected, it must use the familiar control-centre pattern—family context, clear child hierarchy, role-aware actions, recognisable recovery states and progressive disclosure—while progressively replacing every mock promise with a truthful Node.js/Express, PostgreSQL or Native source. The current prototype-to-real map is [`../foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md`](../foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md).

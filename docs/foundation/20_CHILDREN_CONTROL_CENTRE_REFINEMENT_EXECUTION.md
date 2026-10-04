@@ -1,8 +1,8 @@
 # Children Control Centre — refinement execution
 
-> **Status:** Active implementation sequence — 2026-10-04
-> **Authority:** [`19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md`](19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md), [`../real_platform/01_CHILDREN_CONTROL_CENTRE_SLICE.md`](../real_platform/01_CHILDREN_CONTROL_CENTRE_SLICE.md), and [`../product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md`](../product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md).
-> **Boundary:** This refines the narrow, read-only synthetic Flutter roster experience. It does not authorize a roster mutation, default-app migration, device/policy claim, additional API read, real data or release.
+> **Status:** Bounded Foundation refinement record — retained technical evidence, 2026-10-04.
+> **Authority at time of record:** [`19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md`](19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md), [`../real_platform/01_CHILDREN_CONTROL_CENTRE_SLICE.md`](../real_platform/01_CHILDREN_CONTROL_CENTRE_SLICE.md), and [`../product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md`](../product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md).
+> **Boundary of this evidence:** This record refines the narrow read-only roster proof. The current Global Super-App plan retains it as a base but selects and completes whole systems under [`../CURRENT_EXECUTION_PLAN.md`](../CURRENT_EXECUTION_PLAN.md).
 
 ## 1. Why this comes before owner emulator evidence
 

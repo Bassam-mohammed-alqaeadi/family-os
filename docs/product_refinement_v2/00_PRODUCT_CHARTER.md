@@ -1,8 +1,8 @@
 # Product Charter — Family OS Product Refinement V2
 
-> **Status:** Product Refinement V2 complete; Foundation Wave authorized
-> **Owner direction recorded:** 2026-09-29
-> **Program position:** All active pillars are Product Ready. Option A in `92_EXECUTION_AUTHORIZATION_GATE.md` authorizes a narrow Render account/family/membership/audit foundation only. Native/device, Firebase/FCM, billing, providers, realtime and release work remain unauthorized.
+> **Status:** Active product charter under the Global Super-App Constitution — 2026-10-04
+> **Strategic authority:** [`../../AGENTS.md`](../../AGENTS.md) and [`../CURRENT_EXECUTION_PLAN.md`](../CURRENT_EXECUTION_PLAN.md).
+> **Program position:** The earlier Foundation Wave established reusable technical evidence. It is retained as a historical implementation decision, not as the ceiling for product design. Delivery now selects one system at a time, preserves the prototype's valuable UX promise, and builds the real Node.js/Express, PostgreSQL, Native-where-needed and Flutter engine behind that system.
 
 ## 1. Product outcome
 

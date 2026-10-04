@@ -2,42 +2,43 @@
 
 > **Current documentation entry point — 2026-10-04**
 >
-> This directory separates the active release programme from preserved historical discovery. Start here instead of scanning old phase plans.
+> Family OS now operates as a Global Super-App programme delivered **system by system**. Preserve historical analysis and evidence, but start from the current constitution and one live execution plan.
 
-## Current authority
+## Authority order
 
-Read these in order for active work:
+Read these in order before significant work:
 
-1. [`REAL_PLATFORM_TRANSFORMATION_RECORD.md`](REAL_PLATFORM_TRANSFORMATION_RECORD.md) — product direction: real, truthful Family OS rather than a UI or API demo.
-2. [`product_refinement_v2/00_PRODUCT_CHARTER.md`](product_refinement_v2/00_PRODUCT_CHARTER.md) — product charter and scope.
-3. [`product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md`](product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md) — non-negotiable runtime-truth policy.
-4. [`product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md`](product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md) — binding familiarity, consistency and refinement standard.
-5. [`product_refinement_v2/92_EXECUTION_AUTHORIZATION_GATE.md`](product_refinement_v2/92_EXECUTION_AUTHORIZATION_GATE.md) — the authorization boundary for implementation.
-6. [`CURRENT_EXECUTION_PLAN.md`](CURRENT_EXECUTION_PLAN.md) — live programme position, next controlled operation, and explicit exclusions.
+1. [`../AGENTS.md`](../AGENTS.md) — Global Super-App Constitution: prototype promise, system-by-system execution and hard guards.
+2. [`CURRENT_EXECUTION_PLAN.md`](CURRENT_EXECUTION_PLAN.md) — the active-system selection, current delivery stage and next decision.
+3. [`REAL_PLATFORM_TRANSFORMATION_RECORD.md`](REAL_PLATFORM_TRANSFORMATION_RECORD.md) — real-platform transformation record and long-range system sequence.
+4. [`product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md`](product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md) — non-negotiable runtime truth.
+5. [`product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md`](product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md) — binding experience continuity and refinement standard.
+6. The selected system's product, data, privacy, Native and operational contracts.
 
 ## Active delivery material
 
 | Path | Purpose | Status |
 |---|---|---|
-| [`foundation/`](foundation/) | Render/PostgreSQL/OIDC foundation, controlled staging evidence, and the bounded connected-roster slice | Active; isolated technical roster verification exists, while product parity and the next capability decision remain open. |
-| [`foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md`](foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md) | Prototype-to-real capability, UX and state-gap audit for `SCR-FAT-012` | Decision-ready; not implementation authorization. |
-| [`real_platform/`](real_platform/) | Truthful vertical-slice contracts, including the Children Control Centre | Active; default-app migration and every capability beyond the bounded roster read require their own authorization. |
-| [`product_refinement_v2/`](product_refinement_v2/) | Product direction, runtime truth, system contracts and authorization gates | Active product authority. |
-| [`OPEN_DECISIONS.md`](OPEN_DECISIONS.md) | Explicit current blockers and decisions; not a legacy backlog | Active. |
-| [`REPOSITORY_CONSOLIDATION_REPORT.md`](REPOSITORY_CONSOLIDATION_REPORT.md) | What was archived, retained or deleted and why | Completed 2026-10-04. |
+| [`CURRENT_EXECUTION_PLAN.md`](CURRENT_EXECUTION_PLAN.md) | The single live execution plan | System selection pending; Family Entry & Children Control is the recommended first system. |
+| [`foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md`](foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md) | Prototype-to-real capability, UX and state audit for the recommended first system | Compare/Gaps complete; Cover specification awaits system selection. |
+| [`REAL_PLATFORM_TRANSFORMATION_RECORD.md`](REAL_PLATFORM_TRANSFORMATION_RECORD.md) | Real platform vision, shared foundations and system sequencing | Active strategic record. |
+| [`product_refinement_v2/`](product_refinement_v2/) | Product principles, truth policy, system contracts and decision history | Active product authority; Foundation Wave material is retained as historical technical evidence. |
+| [`foundation/`](foundation/) | Node.js/Express/PostgreSQL Foundation contracts, controlled staging and narrow roster evidence | Reusable technical foundation; not the Global Super-App scope ceiling. |
+| [`real_platform/`](real_platform/) | Vertical-slice truth contracts and system migration material | Reused and updated as each system is selected. |
+| [`OPEN_DECISIONS.md`](OPEN_DECISIONS.md) | Current system-selection and high-risk external decisions | Active. |
 
 ## Preserved reference material
 
 | Path | Purpose | How to use it |
 |---|---|---|
-| [`../family-os/`](../family-os/) | Frozen Arabic prototype, registry, contracts and decision history | Reference input for product/design fidelity; not the current execution plan. |
-| [`../prototype/`](../prototype/) | Frozen registry used by Flutter route-generation tests | Keep stable until the registry is deliberately migrated with matching test changes. |
-| [`reference/frozen-prototype-handoff/`](reference/frozen-prototype-handoff/) | Historical policy and UX handoff | Consult for frozen-product context; current authorization is governed above. |
-| [`archive/`](archive/) | Dated plans, discovery packs, old harness material and academic deliverables | Read-only history. It cannot authorize current work. |
+| [`../family-os/`](../family-os/) | Frozen Arabic prototype, registry and historical contracts | Product/UX reference input. Retain valuable journeys; replace mock engines with real ones. |
+| [`../prototype/`](../prototype/) | Frozen registry used by Flutter route-generation tests | Keep stable until a deliberate, tested migration updates its consumers. |
+| [`reference/frozen-prototype-handoff/`](reference/frozen-prototype-handoff/) | Historical policy and UX handoff | Reference only; it cannot override the current constitution and plan. |
+| [`archive/`](archive/) | Dated discovery, prior plans and completed campaign material | Read-only evidence/history; not current authority. |
 
 ## Documentation rules
 
-- Do not create a second roadmap, unbounded backlog, or shadow authorization document.
-- A document that claims an operation happened must link to durable evidence; source/CI readiness is not live staging evidence.
-- New work belongs in an existing active authority folder or in a narrowly named current document. Historical material belongs in `archive/` with a dated index entry.
-- Do not put secrets, tokens, origins, real family data, or raw provider/database output in documentation.
+- Do not create a second roadmap or a shadow authorization source.
+- Preserve evidence of what happened; update its status/role rather than rewriting history.
+- A document that claims a capability is real must link to durable source, authorization and verification evidence.
+- Never record secrets, tokens, configuration values, real family data or raw provider/database responses.

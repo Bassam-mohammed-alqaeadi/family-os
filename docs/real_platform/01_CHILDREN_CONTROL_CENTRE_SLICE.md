@@ -1,10 +1,10 @@
 # Children Control Centre — Real + Refined Vertical Slice
 
-> **Status:** Active refinement and migration contract. The isolated roster connection is not UX-complete until the execution gate in [`../foundation/20_CHILDREN_CONTROL_CENTRE_REFINEMENT_EXECUTION.md`](../foundation/20_CHILDREN_CONTROL_CENTRE_REFINEMENT_EXECUTION.md) passes.
+> **Status:** Candidate-system contract for Family Entry & Children Control — 2026-10-04. The Global Super-App plan in [`../CURRENT_EXECUTION_PLAN.md`](../CURRENT_EXECUTION_PLAN.md) must select this system before new migration work begins.
 >
 > **Screen:** `SCR-FAT-012` — Children list / parent Kids control centre.
 >
-> **Purpose:** Replace the current mock-first roster presentation with a truthful, role-aware and polished control centre. This contract is an implementation gate, not a promise that an unavailable device or remote state already works.
+> **Purpose:** Preserve the prototype's valuable control-centre promise and replace its mock engines with truthful, role-aware Node.js/Express, PostgreSQL and Native-where-needed capabilities. This is not permission to fabricate unavailable device or remote state.
 
 ## 0. Familiarity and system continuity
 

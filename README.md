@@ -1,35 +1,43 @@
 # Family OS
 
-Family OS is being developed as a truthful, role-aware family platform: polished parent, co-guardian and child experiences backed by explicitly scoped runtime sources, authorization, durable evidence and honest capability states.
+Family OS is a **Global Super App for families**: one coherent Arabic-first and globally usable platform for family identity, safety, control, learning, connection and administration. Its rich prototype is the user-experience promise; the programme replaces mock engines with real, secure and recoverable product capabilities.
 
 ## Start here
 
 | Read | Why |
 |---|---|
-| [`docs/README.md`](docs/README.md) | Documentation map and authority order. |
-| [`docs/CURRENT_EXECUTION_PLAN.md`](docs/CURRENT_EXECUTION_PLAN.md) | Current release position, next controlled operation and exclusions. |
-| [`docs/REAL_PLATFORM_TRANSFORMATION_RECORD.md`](docs/REAL_PLATFORM_TRANSFORMATION_RECORD.md) | Product direction and the real-platform standard. |
+| [`AGENTS.md`](AGENTS.md) | Global Super-App Constitution: prototype promise, system-by-system delivery and hard guards. |
+| [`docs/CURRENT_EXECUTION_PLAN.md`](docs/CURRENT_EXECUTION_PLAN.md) | The one live plan: selected system, current stage and immediate decision. |
+| [`docs/REAL_PLATFORM_TRANSFORMATION_RECORD.md`](docs/REAL_PLATFORM_TRANSFORMATION_RECORD.md) | Real-platform direction, system sequencing and durable truth standard. |
 | [`docs/product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md`](docs/product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md) | Runtime-truth policy. |
-| [`docs/product_refinement_v2/92_EXECUTION_AUTHORIZATION_GATE.md`](docs/product_refinement_v2/92_EXECUTION_AUTHORIZATION_GATE.md) | Current authorization boundary. |
+| [`docs/foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md`](docs/foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md) | First candidate-system prototype-to-real assessment. |
+
+## Delivery model
+
+```text
+Prototype UX promise
+→ competitor and user-job analysis
+→ control-centre / state design
+→ PostgreSQL + Node.js/Express authority
+→ Native Android capability where the user job requires it
+→ Flutter with truthful roles, states and recovery
+→ quality, privacy, accessibility and controlled evidence
+→ system locked before the next begins
+```
+
+A successful API request, mock interaction or attractive screen is not a completed capability. Every visible user fact and action must have an authorized source, a truthful result and a recovery path.
 
 ## Repository layout
 
 | Path | Role |
 |---|---|
-| `app/` | Flutter product application. |
-| `backend/` | Fail-closed Foundation API, schema migrations, OpenAPI contract and staging verifiers. |
+| `app/` | Flutter product application and shared design system. |
+| `backend/` | Node.js/Express Foundation API, PostgreSQL migrations, OpenAPI contract and staging verifiers. |
 | `infra/` | Reviewed infrastructure templates; not a deployment record. |
-| `docs/foundation/` | Controlled staging, release and evidence procedures. |
-| `docs/real_platform/` | Active vertical-slice and runtime-truth contracts. |
-| `docs/product_refinement_v2/` | Product authority and execution gates. |
+| `docs/` | Current plan, system contracts, audits, product authority and preserved evidence. |
 | `family-os/` | Frozen prototype/specification/registry reference. |
 | `prototype/` | Frozen route-registry reference used by Flutter tests. |
-| `docs/reference/frozen-prototype-handoff/` | Historical product-law and UX handoff reference. |
-| `docs/archive/` | Preserved historical plans and disabled automation; never current authority. |
-
-## Current release boundary
-
-The controlled synthetic Children Roster staging release passed on 2026-10-03; minimal evidence is recorded in [`docs/foundation/18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md`](docs/foundation/18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md). The immediate approved work is the familiar, coherent Children Control Centre refinement within the isolated, synthetic Flutter roster-read slice in [`docs/foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md`](docs/foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md) and [`docs/foundation/20_CHILDREN_CONTROL_CENTRE_REFINEMENT_EXECUTION.md`](docs/foundation/20_CHILDREN_CONTROL_CENTRE_REFINEMENT_EXECUTION.md). It is **not** a production deployment, a general remote-app authorization, real-data usage, device enforcement or policy delivery.
+| `docs/archive/` | Preserved historical material; evidence, never the current execution authority. |
 
 ## Verification
 
@@ -39,4 +47,4 @@ npm run check --prefix backend
 npm test --prefix backend
 ```
 
-Flutter and Foundation Gate checks are defined in `.github/workflows/`. Do not put provider credentials, database URLs, JWTs, real family data or raw staging responses in the repository, CI logs or documentation.
+Flutter and Foundation Gate checks are defined in `.github/workflows/`. Never place provider credentials, database URLs, JWTs, real family data or raw staging responses in source, CI logs or documentation.

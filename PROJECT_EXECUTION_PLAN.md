@@ -1,27 +1,35 @@
-# Family OS — current execution plan
+# Family OS — execution plan pointer
 
-> **Status:** Active pointer, updated 2026-10-04. Previous phase plans, campaigns, question queues and continuous-loop instructions are preserved under [`docs/archive/`](docs/archive/); they are not execution authority.
+> **Authority:** [`docs/CURRENT_EXECUTION_PLAN.md`](docs/CURRENT_EXECUTION_PLAN.md) is the single live execution plan. This root file is intentionally concise so it cannot become a competing roadmap.
+>
+> **Strategic constitution:** [`AGENTS.md`](AGENTS.md).
 
-## Authority order
+## Delivery model
 
-1. [`docs/REAL_PLATFORM_TRANSFORMATION_RECORD.md`](docs/REAL_PLATFORM_TRANSFORMATION_RECORD.md) — product outcome and non-negotiable real-platform direction.
-2. [`docs/product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md`](docs/product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md) — truthfulness requirements.
-3. [`docs/product_refinement_v2/92_EXECUTION_AUTHORIZATION_GATE.md`](docs/product_refinement_v2/92_EXECUTION_AUTHORIZATION_GATE.md) — approved scope.
-4. [`docs/CURRENT_EXECUTION_PLAN.md`](docs/CURRENT_EXECUTION_PLAN.md) — current position and next operation.
-5. Domain/runbook documents named by the current plan — operational detail only within the approved scope.
+Family OS is built as a Global Super App, **system by system**:
 
-When documents conflict, do not average them or revive an older plan. Follow the highest applicable current authority and record a required new decision in [`docs/OPEN_DECISIONS.md`](docs/OPEN_DECISIONS.md).
+```text
+Prototype promise
+→ competitive UX gap analysis
+→ real data / authorization contract
+→ PostgreSQL + Node.js/Express backend
+→ Native Android service where required
+→ Flutter experience and truthful states
+→ quality, privacy and device proof
+→ lock the system
+```
 
-## Current phase
+The prototype is not disposable mock UI. Its valuable journeys and controls are the UX target; mock data and placeholder actions are replaced by real, authorized engines.
 
-**Children Control Centre refinement inside the isolated Flutter-connected roster read.** The protected synthetic Children Roster staging release passed on 2026-10-03; its minimal execution evidence is recorded in [`docs/foundation/18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md`](docs/foundation/18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md). The Owner separately authorized one server-authoritative, read-only Flutter roster view under [`docs/foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md`](docs/foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md). Its familiar, coherent UX refinement is required by [`docs/foundation/20_CHILDREN_CONTROL_CENTRE_REFINEMENT_EXECUTION.md`](docs/foundation/20_CHILDREN_CONTROL_CENTRE_REFINEMENT_EXECUTION.md) before Owner emulator acceptance.
+## Current decision point
 
-## Scope guard
+The programme is selecting the first active system. The recommended candidate is **Family Entry & Children Control**, documented in [`docs/CURRENT_EXECUTION_PLAN.md`](docs/CURRENT_EXECUTION_PLAN.md) and analysed in [`docs/foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md`](docs/foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md).
 
-Do not start or imply:
+## Guards that remain true
 
-- a Flutter roster mutation, a third API read, migration of the default mock-first application, or any scope beyond the precise plan-19 roster read;
-- device registration, native control, policy delivery/enforcement, GPS/location truth or provider expansion;
-- recovery/support implementation, real data, production, public/beta release or customer access.
-
-Each needs evidence from the current increment and separate authorization. Product/UX refinement remains part of every eventual vertical slice; it is not a postponed cosmetic pass.
+- Do not open unrelated systems while one system is active.
+- Do not make mock/seed/local fallback data look like production truth.
+- Do not expose credentials, tokens, raw payloads or sensitive family data.
+- Keep remote authorization server-owned and make source, scope, outcome and recovery clear.
+- Preserve Foundation records and historical plans as evidence; do not let their narrow completed scope redefine the product ambition.
+- Require deliberate review for invasive device capability, provider adoption, real-data expansion and public release.

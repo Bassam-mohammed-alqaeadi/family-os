@@ -1,27 +1,52 @@
 # Family OS Global Super-App Constitution (The Execution Guard)
 
-## 1. The Grand Vision
-Family OS is not a simple app; it is a **Global Super App** for families, designed to replace fragmented single-purpose apps (e.g., Life360 for security, Qustodio for parental control, NotebookLM/Duolingo for education). It must anticipate every family need and provide a seamless, incredibly flexible, and beautiful user experience that matches or beats top global competitors.
+## 1. Authority and execution pointer
 
-## 2. The True Meaning of "Polishing" (عملية الصقل)
-- **The Prototype is the Target:** The initial rich, colorful UI prototype is our ultimate goal. It is a "promise" to the user, not a draft to be discarded.
-- **Do Not Delete, BUILD:** If a beautiful UI feature relies on mock data, **DO NOT delete the UI**. Instead, build the actual backend, database, and native device services to make that UI *real*.
-- **Competitive UX Completion:** Polishing means analyzing top competitors, identifying what our UX lacks, designing those missing cards/buttons beautifully to fit our design system, and wiring them to the real backend.
-- **Runtime Truth:** The application must never lie to the user with fake data in production. We solve fake data by building the real data pipeline, not by stripping down the UI.
+This document sets the product direction. Before significant work, read the live system-selection and delivery pointer in [`docs/CURRENT_EXECUTION_PLAN.md`](docs/CURRENT_EXECUTION_PLAN.md), then the applicable domain contract.
 
-## 3. Execution Strategy: System by System (نظام بنظام)
-Development MUST proceed vertically, **System by System**, NOT screen by screen. This ensures deep focus, engineering sanity, and market readiness.
-For every System (e.g., Security, Education, Operations), the workflow is:
-1. **Domain Selection:** Lock focus on one specific system.
-2. **Competitive Analysis:** Analyze top global apps in this domain to extract best-in-class features.
-3. **UX Gap Analysis:** Add missing buttons, states, and flows to our prototype to beat competitors.
-4. **The Real Engine:** Build the complete vertical slice (PostgreSQL -> Go Backend API -> Native Android Background Services -> Flutter UI) to make the system 100% real.
-5. **Lock & Ship:** Finalize the system completely before moving to the next domain.
+The authority order is:
 
-## 4. Hard Guards
-- **No Scattered Development:** Do not jump between unrelated systems. Finish the active system first.
-- **No Mock Persistence:** Do not persist mock data into production states. All data presented to the user must originate from the authoritative backend servers or real native device telemetry.
-- **Maintain Flexibility:** The platform must remain highly adaptable to future AI and structural features.
-- **Security & Secrets:** Do not expose secrets, tokens, or raw payloads in source code or CI. Keep authorization strictly server-owned.
+1. this Global Super-App Constitution — strategic direction and delivery model;
+2. [`docs/CURRENT_EXECUTION_PLAN.md`](docs/CURRENT_EXECUTION_PLAN.md) — the one active system, its current stage and the next decision;
+3. [`docs/product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md`](docs/product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md) and [`docs/product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md`](docs/product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md) — truth and experience requirements;
+4. system-specific contracts, privacy/security decisions and runbooks — operational detail for the selected system.
 
-> **Historical Note:** The previous "Foundation Wave" policies (which advocated for stripping down the UI to match minimal backend capabilities) are now superseded by this Global Super App Constitution. We now build the backend to meet the UI's demands.
+Foundation and staging documents preserve real technical evidence. They do not reduce the product destination to the smallest endpoint that has already been implemented.
+
+## 2. The Grand Vision
+
+Family OS is not a simple app; it is a **Global Super App** for families, designed to replace fragmented single-purpose apps such as Life360 for safety, Qustodio for parental control, and NotebookLM/Duolingo for learning. It must anticipate family needs and provide a seamless, flexible and beautiful experience that matches or exceeds leading global products.
+
+## 3. The true meaning of polishing (عملية الصقل)
+
+- **The prototype is the target.** The rich, colourful prototype is a promise to the user, not a draft to discard.
+- **Do not delete — build.** If a valuable UI feature relies on mock data, retain its user value and build the data, backend and device services needed to make it real.
+- **Competitive UX completion.** Polishing includes analysing strong competitors, finding missing journeys, controls and states, designing them coherently in the Family OS system, and wiring them to truthful runtime sources.
+- **Runtime truth.** Production must never present fake data or a fake outcome. We solve mock gaps by building the real data pipeline, not by shrinking the product into a technical demo.
+
+## 4. System-by-system execution (نظام بنظام)
+
+Development proceeds vertically **system by system**, not as disconnected screen work. One selected system remains in focus until it passes its agreed exit gate; supporting design, backend, quality and Native work may proceed only in service of that system.
+
+For every system:
+
+1. **Domain selection:** lock one user problem and its affected family roles.
+2. **Competitive analysis:** learn from global products without copying their branding or private workflows.
+3. **UX gap analysis:** make the prototype journey, controls, states, settings and recovery good enough to compete.
+4. **The real engine:** build the complete vertical slice as required: PostgreSQL data model → **Node.js/Express backend API** → authorised Native Android services where the capability requires them → Flutter UI.
+5. **Lock and ship:** verify truth, roles, privacy, reliability, accessibility and experience quality before moving to the next system.
+
+A system does not require Native work merely because another system will. Conversely, a device-control claim cannot be called real until its necessary Native lifecycle is implemented and evidenced.
+
+## 5. Hard guards
+
+- **No scattered development:** do not open unrelated systems before the active system reaches its exit decision.
+- **No mock persistence:** no production outcome may originate from mock/seed data, a local role picker or a hidden fallback. Test and explicit demo routes remain separate.
+- **One capability, one truth:** every visible state has a source, freshness, authorization scope, result and recovery path.
+- **Server-owned authorization:** the client explains permission but does not decide it for remote or sensitive actions.
+- **Keep and refine:** preserve valuable prototype UX while replacing its mock engines with real ones. Never let a technical shortcut force a degraded product journey.
+- **Family OS continuity:** use the shared Arabic-first design system, familiar interaction patterns, role-aware flows, AR/EN, RTL/LTR, accessibility and responsive states.
+- **Security and privacy:** never expose credentials, tokens, raw payloads, family identifiers or sensitive diagnostics in source, CI, evidence or chat.
+- **Deliberate high-risk decisions:** production/public release, real-data expansion, invasive device capability, provider use and irreversible policy changes require explicit system-level decisions and evidence.
+
+> **Historical note:** earlier Foundation Wave documents remain evidence of the base that was built. They are no longer the global product ceiling. The Global Super-App strategy builds truthful real engines to fulfil the user experience promised by the prototype.
