@@ -36,8 +36,14 @@ jobs:
       - name: Generate localization source
         run: flutter gen-l10n
       - name: Analyze
-        run: flutter analyze --fatal-infos
+        id: analyze
+        continue-on-error: true
+        run: |
+          mkdir -p build/ci
+          set -o pipefail
+          flutter analyze --fatal-infos 2>&1 | tee build/ci/flutter-analyze.txt
       - name: Run tests
+        if: steps.analyze.outcome == 'success'
         id: tests
         continue-on-error: true
         run: |
@@ -139,6 +145,11 @@ jobs:
             lib/app/router.dart \
             lib/app/shell_config.dart \
             lib/core/i18n
-      - name: Enforce test and generated-source gates
-        if: always() && (steps.tests.outcome == 'failure' || steps.generated.outcome == 'failure')
-        run: exit 1
+      - name: Enforce analyzer, test and generated-source gates
+        if: always() && (steps.analyze.outcome == 'failure' || steps.tests.outcome == 'failure' || steps.generated.outcome == 'failure')
+        run: |
+          if [ "${{ steps.analyze.outcome }}" = 'failure' ]; then
+            summary=$(grep -E ' (error|warning|info) • ' build/ci/flutter-analyze.txt | tr '\n' ' ' | cut -c1-4000)
+            echo "::error title=Flutter analyzer::${summary:-flutter analyze failed; inspect build/ci/flutter-analyze.txt}"
+          fi
+          exit 1
