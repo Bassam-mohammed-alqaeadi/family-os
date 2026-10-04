@@ -50,6 +50,15 @@ class NativeChildPairingCopy {
   String get locationPermissionNotGranted => isArabic
       ? 'لم يُمنح إذن الموقع. يظل رمز الربط غير مستخدم.'
       : 'Location access was not granted. The pairing code remains unused.';
+  String get backgroundLocationRequired => isArabic
+      ? 'يتطلب وضع الابن إذن الموقع في الخلفية. افتح إعدادات Android، واختر السماح بالموقع طوال الوقت، ثم عُد إلى هنا.'
+      : 'Child Mode needs background location. Open Android settings, choose Allow all the time for location, then return here.';
+  String get openLocationSettings => isArabic
+      ? 'فتح إعدادات موقع Android'
+      : 'Open Android location settings';
+  String get locationSettingsUnavailable => isArabic
+      ? 'تعذر فتح إعدادات موقع Android. راجع أذونات التطبيق من إعدادات الجهاز.'
+      : 'Android location settings could not be opened. Review this app’s permissions in device settings.';
   String get childModeActive => isArabic
       ? 'وضع الابن نشط. يرسل هذا الجهاز الآن قياسات البطارية والموقع الحقيقية.'
       : 'Child Mode is active. This device now sends real battery and location telemetry.';

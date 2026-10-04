@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
@@ -28,6 +29,7 @@ class MainActivity : FlutterActivity() {
             .setMethodCallHandler { call, result ->
                 when (call.method) {
                     "requestLocationPermissions" -> requestLocationPermissions(result)
+                    "openLocationSettings" -> openLocationSettings(result)
                     "configureAndStart" -> configureAndStart(call, result)
                     "startStored" -> startStoredTelemetry(result)
                     "stop" -> stopTelemetry(result)
@@ -57,6 +59,19 @@ class MainActivity : FlutterActivity() {
             return
         }
         requestBackgroundLocation()
+    }
+
+    private fun openLocationSettings(result: MethodChannel.Result) {
+        try {
+            startActivity(
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.fromParts("package", packageName, null)
+                },
+            )
+            result.success(mapOf("opened" to true))
+        } catch (_: Exception) {
+            result.success(mapOf("opened" to false))
+        }
     }
 
     private fun requestBackgroundLocation() {

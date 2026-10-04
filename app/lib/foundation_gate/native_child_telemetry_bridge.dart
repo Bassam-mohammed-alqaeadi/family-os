@@ -25,6 +25,20 @@ class NativeChildTelemetryBridge {
     }
   }
 
+  /// Opens this app's Android settings page after the person has seen the
+  /// background-location rationale. Returning true means Settings opened, not
+  /// that any permission was granted.
+  static Future<bool> openLocationSettings() async {
+    try {
+      final result = await _channel.invokeMapMethod<String, dynamic>('openLocationSettings');
+      return result?['opened'] == true;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException {
+      return false;
+    }
+  }
+
   static Future<NativeTelemetryStatus> status() async {
     try {
       final result = await _channel.invokeMapMethod<String, dynamic>('status');

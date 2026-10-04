@@ -145,6 +145,7 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
   final _code = TextEditingController();
   var _loading = false;
   String? _message;
+  bool _showLocationSettingsAction = false;
   NativeTelemetryStatus? _serviceStatus;
 
   @override
@@ -206,12 +207,20 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
     setState(() {
       _loading = true;
       _message = null;
+      _showLocationSettingsAction = false;
     });
     try {
       final permissions = await NativeChildTelemetryBridge.requestLocationPermissions();
       if (!permissions.available || !permissions.fineLocationGranted || !permissions.backgroundLocationGranted) {
         if (!mounted) return;
-        setState(() => _message = copy.locationPermissionNotGranted);
+        setState(() {
+          _showLocationSettingsAction = permissions.available &&
+              permissions.fineLocationGranted &&
+              !permissions.backgroundLocationGranted;
+          _message = _showLocationSettingsAction
+              ? copy.backgroundLocationRequired
+              : copy.locationPermissionNotGranted;
+        });
         return;
       }
       final claimed = await client.claimPairing(pairingCode: pairingCode);
@@ -260,6 +269,16 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
               const SizedBox(height: 12),
               Text(_message!, style: TextStyle(color: colors.ink, fontWeight: FontWeight.w700, height: 1.45)),
             ],
+            if (_showLocationSettingsAction)
+              TextButton.icon(
+                onPressed: () async {
+                  final opened = await NativeChildTelemetryBridge.openLocationSettings();
+                  if (!mounted || opened) return;
+                  setState(() => _message = copy.locationSettingsUnavailable);
+                },
+                icon: const Icon(Icons.settings_outlined),
+                label: Text(copy.openLocationSettings),
+              ),
             const SizedBox(height: 12),
             PrimaryBtn(
               label: _loading ? copy.settingUpChildMode : copy.enterChildMode,
