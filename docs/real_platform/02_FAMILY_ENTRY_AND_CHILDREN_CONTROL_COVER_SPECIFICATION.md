@@ -2,7 +2,7 @@
 
 > **System:** Family Entry & Children Control — the first active Global Super-App system, selected 2026-10-04.
 >
-> **Stage:** **Cover** — target experience, role journeys, state model and source/contract map. This is design and engineering preparation; it does not by itself expose a mutation, real family data, device enforcement, location, policy delivery, provider capability or public release.
+> **Stage:** **Cover** remains the system design authority. On 2026-10-04, the product owner separately admitted the bounded name-and-age primary-guardian create-child capability for real implementation; see [`03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md`](03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md). No broader child, device, policy, location, provider or release capability is admitted.
 >
 > **Authority:** [`../../AGENTS.md`](../../AGENTS.md), [`../CURRENT_EXECUTION_PLAN.md`](../CURRENT_EXECUTION_PLAN.md), [`01_CHILDREN_CONTROL_CENTRE_SLICE.md`](01_CHILDREN_CONTROL_CENTRE_SLICE.md), and [`../foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md`](../foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md).
 
@@ -105,16 +105,16 @@ Children
 | Capability | Current fact | Required authoritative source before it is real | System decision |
 |---|---|---|---|
 | Family context and roster | Node.js/Express family discovery and `GET /children` foundation exists | Existing server authority, typed Flutter adapter and isolation/migration plan | Reuse; remove normal-route mock fallback when migrated. |
-| Child profile creation | Backend has a narrow primary-guardian `POST /children` foundation for name and age | Node.js/Express contract, idempotency, server role/scope check, audit/result, Flutter typed mutation client and refreshed roster | **Recommended first admitted real capability; approval still required.** |
+| Child profile creation | Backend has a narrow primary-guardian `POST /children` foundation for name and age | Node.js/Express contract, idempotency, server role/scope check, audit/result, Flutter typed mutation client and refreshed roster | **Admitted 2026-10-04; implementation is bounded by [`03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md`](03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md).** |
 | Child detail/control-centre entry | Prototype route exists | New minimum child-detail read model, source/freshness, authorization and repair state | Define after creation lifecycle shape is accepted. |
 | Edit/delete profile | Local prototype action only | Lifecycle/safeguarding policy, API contract, conflict/reversal/audit and role matrix | Separate decision; never infer from create. |
 | Device connection | Local/prototype record only | Authorized Native enrollment/capability/repair source and server linkage | Later Native capability slice. |
 | Shared policies | Local UI/projection only | Policy version, scope, delivery, applied/verified receipt and audit | Later policy/enforcement capability slice. |
 | Location/health/battery/activity | Mock/local display values | Separate consented, fresh and privacy-reviewed sources | Absent until built. |
 
-## 7. Recommended first real capability: create child profile
+## 7. Admitted first real capability: create child profile
 
-This is a recommendation for the next capability-admission decision, not an implementation claim.
+The product owner admitted this narrow capability on 2026-10-04. The binding implementation record is [`03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md`](03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md); this section retains the system journey and contract principles.
 
 ### User journey
 
@@ -141,7 +141,7 @@ Primary guardian sees an honest empty/setup roster
 
 ## 8. Cover deliverables and exit gate
 
-Before the system moves to **Compete** or implementation of the first mutation, the following must be reviewed together:
+Before the system moves beyond this bounded mutation into **Compete**, broader real-engine work or a larger family-control surface, the following must be reviewed together:
 
 1. Primary-guardian, co-guardian and child journey maps, including what each sees at every state.
 2. Phone/tablet AR/EN, RTL/LTR wireflows for family context, roster, empty/setup, create-profile, pending, success, denied, conflict and recovery.

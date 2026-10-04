@@ -10,7 +10,7 @@ import 'foundation_gate_copy.dart';
 import 'foundation_gate_models.dart';
 import 'foundation_gate_session_controller.dart';
 
-/// Isolated composition root for the approved synthetic Foundation Gate.
+/// Isolated composition root for the approved Foundation Gate vertical slice.
 ///
 /// It deliberately has no dependency on the legacy mock-first application,
 /// local persistence, telemetry or token storage. A configured controller is
@@ -91,6 +91,8 @@ class _FoundationGateSessionScreenState extends State<_FoundationGateSessionScre
     _passwordController.clear();
   }
 
+  bool get _mayOfferCreateChild => widget.controller.selectedFamily?.role == 'primary_guardian';
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -133,6 +135,8 @@ class _FoundationGateSessionScreenState extends State<_FoundationGateSessionScre
                   children: widget.controller.children,
                   onChooseFamily: widget.controller.returnToFamilySelection,
                   onSignOut: widget.controller.signOut,
+                  onCreateChild: _mayOfferCreateChild ? widget.controller.createChild : null,
+                  isCreatingChild: widget.controller.isCreatingChild,
                 ),
                 FoundationGatePhase.noActiveFamily => _MessageState(
                   message: copy.noActiveFamily,

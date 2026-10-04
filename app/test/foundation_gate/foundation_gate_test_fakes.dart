@@ -36,12 +36,20 @@ class FakeIdentity implements FoundationGateIdentity {
 }
 
 class FakeTransport implements FoundationGateHttpTransport {
-  FakeTransport(this.response);
+  FakeTransport(this.response, {FoundationGateHttpResponse? postResponse}) : _postResponse = postResponse;
 
   FoundationGateHttpResponse response;
+  FoundationGateHttpResponse? _postResponse;
   Uri? requestedUri;
   Map<String, String>? requestedHeaders;
+  Uri? postedUri;
+  Map<String, String>? postedHeaders;
+  String? postedBody;
+  final List<Map<String, String>> postedHeadersHistory = [];
   Object? failure;
+  Object? postFailure;
+
+  set postResponse(FoundationGateHttpResponse? value) => _postResponse = value;
 
   @override
   Future<FoundationGateHttpResponse> get(Uri uri, {required Map<String, String> headers}) async {
@@ -51,6 +59,25 @@ class FakeTransport implements FoundationGateHttpTransport {
       throw failure!;
     }
     return response;
+  }
+
+  @override
+  Future<FoundationGateHttpResponse> post(
+    Uri uri, {
+    required Map<String, String> headers,
+    required String body,
+  }) async {
+    postedUri = uri;
+    postedHeaders = headers;
+    postedHeadersHistory.add(Map.unmodifiable(headers));
+    postedBody = body;
+    if (postFailure != null) {
+      throw postFailure!;
+    }
+    if (failure != null) {
+      throw failure!;
+    }
+    return _postResponse ?? response;
   }
 }
 

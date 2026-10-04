@@ -44,9 +44,9 @@ class FoundationGateCopy {
   String get rosterBoundary => isArabic
       ? 'حالة الأجهزة والسياسات غير متصلة في هذه الخطوة؛ لن نعرضها كتوقع أو حقيقة.'
       : 'Device and policy states are not connected in this slice, so they are not shown as estimates or facts.';
-  String get primaryGuardianRosterOnly => isArabic
-      ? 'عرض سجل فقط؛ الإضافة والتعديل غير متاحين هنا.'
-      : 'Roster view only; creating or editing is not available here.';
+  String get primaryGuardianCanCreate => isArabic
+      ? 'يمكن للوصي الأساسي إنشاء ملف طفل بالاسم والعمر. الخادم هو صاحب قرار الصلاحية.'
+      : 'A primary guardian can create a name-and-age child profile. The server makes the authorization decision.';
   String get coGuardianReadOnly => isArabic
       ? 'عرض وصفي للوصي المشارك؛ لا يمنح هذا العرض صلاحية تعديل.'
       : 'Co-guardian read-only view; viewing does not grant edit authority.';
@@ -59,11 +59,12 @@ class FoundationGateCopy {
   String get serviceUnavailable => isArabic ? 'الخدمة غير متاحة مؤقتًا.' : 'Service is temporarily unavailable.';
   String get networkUnavailable => isArabic ? 'الاتصال غير متاح.' : 'Connection is unavailable.';
   String get retry => isArabic ? 'إعادة المحاولة' : 'Retry';
+  String get cancel => isArabic ? 'إلغاء' : 'Cancel';
   String get chooseAnotherFamily => isArabic ? 'اختيار عائلة أخرى' : 'Choose another family';
   String get emptyRosterTitle => isArabic ? 'لم تُضف ملفات أطفال بعد' : 'No child profiles are set up yet';
   String get emptyRosterBody => isArabic
-      ? 'لا تتوفر أي عملية إضافة من هذا المسار التجريبي للقراءة فقط.'
-      : 'This read-only synthetic flow does not offer a child-creation action.';
+      ? 'إذا أكد الخادم أن هذا الحساب وصي أساسي، يمكنك إنشاء ملف طفل بالاسم والعمر.'
+      : 'If the server confirms this account is a primary guardian, you can create a child profile with a name and age.';
   String get setupStatus => isArabic ? 'حالة الإعداد' : 'Setup status';
   String get sourceLabel => isArabic ? 'المصدر' : 'Source';
   String get familyContext => isArabic ? 'سياق العائلة' : 'Family context';
@@ -78,6 +79,31 @@ class FoundationGateCopy {
   String get childCountOne => isArabic ? 'ملف طفل واحد' : '1 child profile';
   String childCount(int count) => isArabic ? '$count ملفات أطفال' : '$count child profiles';
   String age(int ageYears) => isArabic ? 'العمر: $ageYears' : 'Age: $ageYears';
+
+  String get addChildProfile => isArabic ? 'إضافة ملف طفل' : 'Add child profile';
+  String get addChildProfileHint => isArabic
+      ? 'أدخل الاسم والعمر فقط. تُرسل هذه المحاولة إلى الخادم، ثم يُعاد تحميل سجل الأطفال المؤكد.'
+      : 'Enter only a name and age. This attempt is sent to the server, then the confirmed children roster is reloaded.';
+  String get childDisplayName => isArabic ? 'اسم الطفل' : 'Child name';
+  String get childAgeYears => isArabic ? 'العمر بالسنوات' : 'Age in years';
+  String get createChildProfile => isArabic ? 'إنشاء ملف الطفل' : 'Create child profile';
+  String get creatingChildProfile => isArabic ? 'جارٍ إنشاء ملف الطفل…' : 'Creating child profile…';
+  String get childProfileCreated => isArabic ? 'تم إنشاء ملف الطفل وتحديث السجل.' : 'Child profile created and roster refreshed.';
+  String get childProfileSavedRefreshUnavailable => isArabic
+      ? 'تم حفظ ملف الطفل، لكن تعذر تحديث السجل الآن. أعد المحاولة لعرض السجل المؤكد.'
+      : 'The child profile was saved, but the roster could not refresh. Retry to view the confirmed roster.';
+  String get childProfileInvalid => isArabic
+      ? 'راجع الاسم والعمر ثم أعد المحاولة.'
+      : 'Check the name and age, then try again.';
+  String get childProfileConflict => isArabic
+      ? 'تعذر تأكيد هذه المحاولة. راجع البيانات وأعد المحاولة.'
+      : 'This attempt could not be confirmed. Review the details and try again.';
+  String get childProfileUnavailable => isArabic
+      ? 'خدمة إنشاء الملف غير متاحة مؤقتًا. أعد المحاولة بنفس البيانات.'
+      : 'Profile creation is temporarily unavailable. Retry with the same details.';
+  String get childProfileNetworkUnavailable => isArabic
+      ? 'تعذر الاتصال لإنشاء الملف. أعد المحاولة بنفس البيانات.'
+      : 'Could not connect to create the profile. Retry with the same details.';
 
   String displayRole(String role) {
     return switch (role) {

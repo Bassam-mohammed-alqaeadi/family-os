@@ -26,13 +26,15 @@ void main() {
     }
   });
 
-  test('the connected roster client exposes no mutation transport or local configuration source', () {
+  test('the roster client exposes only the admitted typed mutation and no local configuration source', () {
     final source = File('lib/foundation_gate/children_roster_api_client.dart').readAsStringSync();
     final configuration = Directory('lib/foundation_gate/local');
 
     expect(source, contains('Future<List<FoundationGateChild>> list'));
-    expect(source, isNot(contains('.post(')));
-    expect(source, isNot(contains('Idempotency-Key')));
+    expect(source, contains('Future<FoundationGateChild> create'));
+    expect(source, contains("'idempotency-key'"));
+    expect(source, contains("'displayName'"));
+    expect(source, contains("'ageYears'"));
     expect(configuration.existsSync(), isFalse);
   });
 

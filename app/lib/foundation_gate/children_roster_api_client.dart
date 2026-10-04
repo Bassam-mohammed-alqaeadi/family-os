@@ -4,10 +4,11 @@ import 'foundation_gate_configuration.dart';
 import 'foundation_gate_http.dart';
 import 'foundation_gate_models.dart';
 
-/// Typed, read-only client for the narrowly authorized Children Roster slice.
+/// Typed client for the Family Entry & Children Control system.
 ///
 /// It accepts only a family identifier previously returned by server-side family
-/// discovery. The server remains authoritative for guardian eligibility.
+/// discovery. The server remains authoritative for guardian eligibility on both
+/// roster reads and child-profile creation.
 class ChildrenRosterApiClient {
   ChildrenRosterApiClient({
     required FoundationGateConfiguration configuration,
@@ -22,12 +23,7 @@ class ChildrenRosterApiClient {
     required String familyId,
     required String idToken,
   }) async {
-    final Uri rosterUri;
-    try {
-      rosterUri = _configuration.childrenRosterUri(familyId);
-    } on ArgumentError {
-      throw const FoundationGateApiException(FoundationGateApiFailure.invalidResponse);
-    }
+    final rosterUri = _rosterUri(familyId);
 
     FoundationGateHttpResponse response;
     try {
@@ -59,6 +55,69 @@ class ChildrenRosterApiClient {
     }
   }
 
+  /// Sends one idempotent primary-guardian child-profile creation request.
+  ///
+  /// The returned child is only a server-confirmed response. The controller
+  /// subsequently refreshes the roster before presenting it as the current
+  /// collection state.
+  Future<FoundationGateChild> create({
+    required String familyId,
+    required String idToken,
+    required String idempotencyKey,
+    required String displayName,
+    required int ageYears,
+  }) async {
+    final rosterUri = _rosterUri(familyId);
+    final normalizedName = displayName.trim();
+    if (!_isValidDisplayName(normalizedName) || !_isValidIdempotencyKey(idempotencyKey) || ageYears < 0 || ageYears > 25) {
+      throw const FoundationGateApiException(FoundationGateApiFailure.invalidInput);
+    }
+
+    FoundationGateHttpResponse response;
+    try {
+      response = await _transport.post(
+        rosterUri,
+        headers: {
+          'accept': 'application/json',
+          'content-type': 'application/json',
+          'authorization': 'Bearer $idToken',
+          'idempotency-key': idempotencyKey,
+        },
+        body: jsonEncode({'displayName': normalizedName, 'ageYears': ageYears}),
+      );
+    } on FoundationGateApiException {
+      rethrow;
+    } catch (_) {
+      throw const FoundationGateApiException(FoundationGateApiFailure.networkUnavailable);
+    }
+
+    switch (response.statusCode) {
+      case 201:
+        return _parseCreatedChild(response.body);
+      case 400:
+        throw const FoundationGateApiException(FoundationGateApiFailure.invalidInput);
+      case 401:
+        throw const FoundationGateApiException(FoundationGateApiFailure.unauthenticated);
+      case 403:
+        throw const FoundationGateApiException(FoundationGateApiFailure.accessDenied);
+      case 409:
+        throw const FoundationGateApiException(FoundationGateApiFailure.conflict);
+      case 429:
+      case 503:
+        throw const FoundationGateApiException(FoundationGateApiFailure.serviceUnavailable);
+      default:
+        throw const FoundationGateApiException(FoundationGateApiFailure.invalidResponse);
+    }
+  }
+
+  Uri _rosterUri(String familyId) {
+    try {
+      return _configuration.childrenRosterUri(familyId);
+    } on ArgumentError {
+      throw const FoundationGateApiException(FoundationGateApiFailure.invalidResponse);
+    }
+  }
+
   List<FoundationGateChild> _parseChildren(String body) {
     try {
       final decoded = jsonDecode(body);
@@ -70,6 +129,18 @@ class ChildrenRosterApiClient {
         throw const FormatException();
       }
       return List.unmodifiable(rawChildren.map(_parseChild));
+    } catch (_) {
+      throw const FoundationGateApiException(FoundationGateApiFailure.invalidResponse);
+    }
+  }
+
+  FoundationGateChild _parseCreatedChild(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is! Map<String, Object?> || decoded.keys.length != 1) {
+        throw const FormatException();
+      }
+      return _parseChild(decoded['child']);
     } catch (_) {
       throw const FoundationGateApiException(FoundationGateApiFailure.invalidResponse);
     }
@@ -89,7 +160,7 @@ class ChildrenRosterApiClient {
         id is! String ||
         !isFoundationGateUuid(id) ||
         displayName is! String ||
-        displayName.trim().isEmpty ||
+        !_isValidDisplayName(displayName) ||
         ageYears is! int ||
         ageYears < 0 ||
         ageYears > 25 ||
@@ -102,5 +173,13 @@ class ChildrenRosterApiClient {
       throw const FormatException();
     }
     return FoundationGateChild(id: id, displayName: displayName, ageYears: ageYears);
+  }
+
+  bool _isValidDisplayName(String value) {
+    return value.isNotEmpty && value.length <= 120 && !RegExp(r'[\u0000-\u001F\u007F]').hasMatch(value);
+  }
+
+  bool _isValidIdempotencyKey(String value) {
+    return value.trim().isNotEmpty && value.length <= 128 && !RegExp(r'[\u0000-\u001F\u007F]').hasMatch(value);
   }
 }

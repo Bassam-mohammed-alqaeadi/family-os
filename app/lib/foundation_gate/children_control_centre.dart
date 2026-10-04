@@ -21,8 +21,17 @@ enum ChildrenControlCentreStatus {
   networkUnavailable,
 }
 
-/// Reusable read-only Children Control Centre surface for the narrow roster
-/// slice. It intentionally has no mutation callback or device/policy model.
+/// Reusable Children Control Centre for the bounded server-backed roster slice.
+///
+/// It may collect a minimal child profile from a primary guardian, but it never
+/// owns authorization or persistence. Device and policy controls remain outside
+/// this capability.
+typedef CreateChildProfile = Future<FoundationGateChildCreateResult> Function({
+  required String displayName,
+  required int ageYears,
+  required String idempotencyKey,
+});
+
 class ChildrenControlCentre extends StatelessWidget {
   const ChildrenControlCentre({
     super.key,
@@ -32,6 +41,8 @@ class ChildrenControlCentre extends StatelessWidget {
     required this.onSignOut,
     this.onRetry,
     this.onChooseFamily,
+    this.onCreateChild,
+    this.isCreatingChild = false,
   });
 
   final ChildrenControlCentreStatus status;
@@ -40,11 +51,16 @@ class ChildrenControlCentre extends StatelessWidget {
   final Future<void> Function() onSignOut;
   final Future<void> Function()? onRetry;
   final VoidCallback? onChooseFamily;
+  final CreateChildProfile? onCreateChild;
+  final bool isCreatingChild;
 
   @override
   Widget build(BuildContext context) {
     final copy = FoundationGateCopy.of(context);
     final colors = Theme.of(context).extension<FamilyColors>()!;
+    // Discovery role only controls whether the affordance is shown. The POST
+    // remains server-authorized, including if this context becomes stale.
+    final createChildAction = family?.role == 'primary_guardian' ? onCreateChild : null;
 
     return ColoredBox(
       color: colors.bg,
@@ -95,6 +111,8 @@ class ChildrenControlCentre extends StatelessWidget {
                   _CentreActions(
                     onChooseFamily: onChooseFamily,
                     onSignOut: onSignOut,
+                    onCreateChild: createChildAction,
+                    isCreatingChild: isCreatingChild,
                   ),
                 ],
               ),
@@ -170,7 +188,7 @@ class _FamilyContextHeader extends StatelessWidget {
               );
               final source = _SourceContext(
                 roleText: copy.displayRole(family.role),
-                roleDescription: isCoGuardian ? copy.coGuardianReadOnly : copy.primaryGuardianRosterOnly,
+                roleDescription: isCoGuardian ? copy.coGuardianReadOnly : copy.primaryGuardianCanCreate,
               );
 
               if (!isWide) {
@@ -502,10 +520,17 @@ class _TruthBoundaryCard extends StatelessWidget {
 }
 
 class _CentreActions extends StatelessWidget {
-  const _CentreActions({required this.onSignOut, this.onChooseFamily});
+  const _CentreActions({
+    required this.onSignOut,
+    this.onChooseFamily,
+    this.onCreateChild,
+    required this.isCreatingChild,
+  });
 
   final Future<void> Function() onSignOut;
   final VoidCallback? onChooseFamily;
+  final CreateChildProfile? onCreateChild;
+  final bool isCreatingChild;
 
   @override
   Widget build(BuildContext context) {
@@ -514,17 +539,215 @@ class _CentreActions extends StatelessWidget {
       spacing: 8,
       runSpacing: 8,
       children: [
+        if (onCreateChild != null)
+          FilledButton.icon(
+            onPressed: isCreatingChild
+                ? null
+                : () => unawaited(_showCreateChildProfileSheet(context, onCreateChild!)),
+            icon: const Icon(Icons.person_add_alt_1_outlined),
+            label: Text(isCreatingChild ? copy.creatingChildProfile : copy.addChildProfile),
+          ),
         if (onChooseFamily != null)
           OutlinedButton.icon(
-            onPressed: onChooseFamily,
+            onPressed: isCreatingChild ? null : onChooseFamily,
             icon: const Icon(Icons.swap_horiz),
             label: Text(copy.chooseAnotherFamily),
           ),
         TextButton(
-          onPressed: () => unawaited(onSignOut()),
+          onPressed: isCreatingChild ? null : () => unawaited(onSignOut()),
           child: Text(copy.signOut),
         ),
       ],
     );
+  }
+}
+
+Future<void> _showCreateChildProfileSheet(BuildContext context, CreateChildProfile onCreateChild) async {
+  final copy = FoundationGateCopy.of(context);
+  final result = await showModalBottomSheet<FoundationGateChildCreateResult>(
+    context: context,
+    isDismissible: false,
+    enableDrag: false,
+    isScrollControlled: true,
+    builder: (context) => _CreateChildProfileSheet(onCreateChild: onCreateChild),
+  );
+  if (!context.mounted || result == null) {
+    return;
+  }
+  final message = switch (result) {
+    FoundationGateChildCreateResult.created => copy.childProfileCreated,
+    FoundationGateChildCreateResult.createdRosterRefreshUnavailable => copy.childProfileSavedRefreshUnavailable,
+    _ => null,
+  };
+  if (message != null) {
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+class _CreateChildProfileSheet extends StatefulWidget {
+  const _CreateChildProfileSheet({required this.onCreateChild});
+
+  final CreateChildProfile onCreateChild;
+
+  @override
+  State<_CreateChildProfileSheet> createState() => _CreateChildProfileSheetState();
+}
+
+class _CreateChildProfileSheetState extends State<_CreateChildProfileSheet> {
+  final TextEditingController _displayNameController = TextEditingController();
+  String? _idempotencyKey;
+  String? _submittedDisplayName;
+  int? _submittedAgeYears;
+  int _ageYears = 8;
+  bool _submitting = false;
+  FoundationGateChildCreateResult? _result;
+
+  @override
+  void dispose() {
+    _displayNameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final displayName = _displayNameController.text.trim();
+    if (displayName.isEmpty) {
+      setState(() => _result = FoundationGateChildCreateResult.invalidInput);
+      return;
+    }
+
+    // A retry of identical input uses the same key. Changing either field
+    // creates a distinct logical request, so it receives a fresh key instead.
+    if (_idempotencyKey == null || _submittedDisplayName != displayName || _submittedAgeYears != _ageYears) {
+      _idempotencyKey = newFoundationGateIdempotencyKey();
+      _submittedDisplayName = displayName;
+      _submittedAgeYears = _ageYears;
+    }
+    setState(() {
+      _submitting = true;
+      _result = null;
+    });
+    final result = await widget.onCreateChild(
+      displayName: displayName,
+      ageYears: _ageYears,
+      idempotencyKey: _idempotencyKey!,
+    );
+    if (!mounted) {
+      return;
+    }
+    switch (result) {
+      case FoundationGateChildCreateResult.created:
+      case FoundationGateChildCreateResult.createdRosterRefreshUnavailable:
+      case FoundationGateChildCreateResult.accessDenied:
+      case FoundationGateChildCreateResult.sessionInvalid:
+        Navigator.of(context).pop(result);
+        return;
+      case FoundationGateChildCreateResult.invalidInput:
+      case FoundationGateChildCreateResult.conflict:
+      case FoundationGateChildCreateResult.serviceUnavailable:
+      case FoundationGateChildCreateResult.networkUnavailable:
+        setState(() {
+          _submitting = false;
+          _result = result;
+        });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final copy = FoundationGateCopy.of(context);
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    return PopScope(
+      canPop: !_submitting,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(24, 24, 24, bottomInset + 24),
+          child: SingleChildScrollView(
+            child: Semantics(
+              container: true,
+              label: copy.addChildProfile,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(copy.addChildProfile, style: Theme.of(context).textTheme.headlineSmall),
+                  const SizedBox(height: 8),
+                  Text(copy.addChildProfileHint),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: _displayNameController,
+                    autofocus: true,
+                    enabled: !_submitting,
+                    textCapitalization: TextCapitalization.words,
+                    maxLength: 120,
+                    decoration: InputDecoration(labelText: copy.childDisplayName),
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<int>(
+                    initialValue: _ageYears,
+                    decoration: InputDecoration(labelText: copy.childAgeYears),
+                    items: List<DropdownMenuItem<int>>.generate(
+                      26,
+                      (age) => DropdownMenuItem(value: age, child: Text('$age')),
+                    ),
+                    onChanged: _submitting ? null : (age) => setState(() => _ageYears = age ?? _ageYears),
+                  ),
+                  if (_result != null) ...[
+                    const SizedBox(height: 16),
+                    Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        _resultMessage(copy, _result!),
+                        style: TextStyle(color: Theme.of(context).colorScheme.error),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _submitting ? null : () => Navigator.of(context).pop(),
+                          child: Text(copy.cancel),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: _submitting ? null : () => unawaited(_submit()),
+                          child: _submitting
+                              ? Semantics(
+                                  liveRegion: true,
+                                  label: copy.creatingChildProfile,
+                                  child: const SizedBox.square(
+                                    dimension: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  ),
+                                )
+                              : Text(copy.createChildProfile),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _resultMessage(FoundationGateCopy copy, FoundationGateChildCreateResult result) {
+    return switch (result) {
+      FoundationGateChildCreateResult.invalidInput => copy.childProfileInvalid,
+      FoundationGateChildCreateResult.conflict => copy.childProfileConflict,
+      FoundationGateChildCreateResult.serviceUnavailable => copy.childProfileUnavailable,
+      FoundationGateChildCreateResult.networkUnavailable => copy.childProfileNetworkUnavailable,
+      FoundationGateChildCreateResult.accessDenied => copy.accessDenied,
+      FoundationGateChildCreateResult.sessionInvalid => copy.signInAgain,
+      FoundationGateChildCreateResult.created => copy.childProfileCreated,
+      FoundationGateChildCreateResult.createdRosterRefreshUnavailable => copy.childProfileSavedRefreshUnavailable,
+    };
   }
 }
