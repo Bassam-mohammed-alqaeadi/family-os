@@ -65,7 +65,7 @@ export function createApp({
     app.use(express.json({ limit: '64kb', strict: true }));
 
     const requirePrincipal = asyncRoute(async(request, _response, next) => {
-        request.principal ? ? = await authVerifier.verify(request.get('Authorization'));
+        request.principal ??= await authVerifier.verify(request.get('Authorization'));
         next();
     });
 
@@ -79,8 +79,8 @@ export function createApp({
     });
 
     const protectedApiRateLimit = rateLimit({
-        windowMs: protectedRateLimit.windowMs ? ? 60 _000,
-        limit: protectedRateLimit.limit ? ? 120,
+        windowMs: protectedRateLimit.windowMs ?? 60 _000,
+        limit: protectedRateLimit.limit ?? 120,
         standardHeaders: 'draft-7',
         legacyHeaders: false,
         validate: { xForwardedForHeader: false },
@@ -99,8 +99,8 @@ export function createApp({
     // It uses Express's direct peer address rather than a client-supplied forwarding
     // header; the stricter subject limit below protects verified principals.
     app.use('/v1', rateLimit({
-        windowMs: preAuthenticationRateLimit.windowMs ? ? ,
-        limit: preAuthenticationRateLimit.limit ? ? 600,
+        windowMs: preAuthenticationRateLimit.windowMs ?? ,
+        limit: preAuthenticationRateLimit.limit ?? 600,
         standardHeaders: 'draft-7',
         legacyHeaders: false,
         validate: { xForwardedForHeader: false },
@@ -123,7 +123,7 @@ export function createApp({
                 response.status(503).json({
                     status: 'not_ready',
                     dependencies: {
-                        configuration: configStatus.ready ? 'ready' : (configStatus.reason ? ? 'not_configured'),
+                        configuration: configStatus.ready ? 'ready' : (configStatus.reason ?? 'not_configured'),
                         database: databaseStatus.available ? 'ready' : databaseStatus.reason,
                     },
                 });
