@@ -38,12 +38,27 @@ class NativeChildPairingCopy {
       ? 'ينتهي في ${value.toLocal()}. لا يمكن استخدامه مرة أخرى بعد نجاح ربط جهاز الابن.'
       : 'Expires at ${value.toLocal()}. It cannot be used again after a successful child-device claim.';
   String get copyCode => isArabic ? 'نسخ الرمز' : 'Copy code';
+  String get showScannableCode => isArabic ? 'إظهار رمز قابل للمسح' : 'Show scannable code';
+  String get pairingQrTitle => isArabic ? 'مسح رمز ربط الابن' : 'Scan child pairing code';
+  String get pairingQrBody => isArabic
+      ? 'دع جهاز الابن يمسح هذا الرمز قبل انتهاء صلاحيته.'
+      : 'Let the child device scan this code before it expires.';
+  String get pairingQrDescription => isArabic ? 'رمز QR لربط جهاز الابن' : 'QR code for child-device pairing';
+  String get dismissQr => isArabic ? 'إغلاق' : 'Close';
+  String get pairingQrUnavailable => isArabic
+      ? 'تعذر إظهار الرمز القابل للمسح على هذا الجهاز.'
+      : 'A scannable pairing code could not be shown on this device.';
 
   String get childTitle => isArabic ? 'الدخول إلى وضع الابن' : 'Enter Child Mode';
   String get childIntro => isArabic
       ? 'اطلب من الوالد إنشاء رمز ربط لمرة واحدة. لإرسال الموقع الحقيقي للجهاز عندما لا يكون التطبيق مفتوحًا، سيطلب Android إذن الموقع الدقيق وإذن الموقع في الخلفية. بعد القبول، يبدأ وضع الابن خدمة أمامية مرئية دائمًا ويمكن إيقافها على هذا الجهاز.'
       : 'Ask the parent to create a one-time pairing code. To send the device’s real location while this app is not open, Android will ask for precise and background location access. After acceptance, Child Mode starts an always-visible foreground service that you can stop on this device.';
   String get pairingCodeLabel => isArabic ? 'رمز الربط لمرة واحدة' : 'One-time pairing code';
+  String get scanPairingCode => isArabic ? 'مسح رمز الربط' : 'Scan pairing code';
+  String get pairingScanUnavailable => isArabic
+      ? 'تعذر الحصول على رمز من الكاميرا. أدخل الرمز يدويًا.'
+      : 'No pairing code was received from the camera. Enter the code manually.';
+  String get scanPairingDescription => isArabic ? 'ماسح رمز ربط الابن' : 'Child pairing code scanner';
   String get secureOriginAndCodeRequired => isArabic
       ? 'يلزم عنوان API آمن ورمز ربط.'
       : 'A secure API origin and pairing code are required.';

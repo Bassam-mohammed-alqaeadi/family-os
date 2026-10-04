@@ -69,6 +69,21 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen> {
     });
   }
 
+  Future<void> _showScannableCode(
+    FoundationGateDevicePairing pairing,
+    NativeChildPairingCopy copy,
+  ) async {
+    final shown = await NativeChildTelemetryBridge.showPairingQr(
+      pairingCode: pairing.pairingCode,
+      title: copy.pairingQrTitle,
+      body: copy.pairingQrBody,
+      contentDescription: copy.pairingQrDescription,
+      dismissLabel: copy.dismissQr,
+    );
+    if (!mounted || shown) return;
+    setState(() => _error = copy.pairingQrUnavailable);
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<FamilyColors>()!;
@@ -120,6 +135,11 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen> {
                 onPressed: () => Clipboard.setData(ClipboardData(text: pairing.pairingCode)),
                 icon: const Icon(Icons.copy_outlined),
                 label: Text(copy.copyCode),
+              ),
+              TextButton.icon(
+                onPressed: () => _showScannableCode(pairing, copy),
+                icon: const Icon(Icons.qr_code_2_outlined),
+                label: Text(copy.showScannableCode),
               ),
             ],
           ],
@@ -177,6 +197,22 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
     } on Object {
       return null;
     }
+  }
+
+  Future<void> _scanPairingCode() async {
+    final copy = NativeChildPairingCopy.of(context);
+    final pairingCode = await NativeChildTelemetryBridge.scanPairingCode(
+      contentDescription: copy.scanPairingDescription,
+    );
+    if (!mounted) return;
+    if (pairingCode == null) {
+      setState(() => _message = copy.pairingScanUnavailable);
+      return;
+    }
+    setState(() {
+      _code.text = pairingCode;
+      _message = null;
+    });
   }
 
   Future<void> _resumeStored() async {
@@ -264,6 +300,11 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
               enableSuggestions: false,
               textCapitalization: TextCapitalization.none,
               decoration: InputDecoration(labelText: copy.pairingCodeLabel, border: const OutlineInputBorder()),
+            ),
+            TextButton.icon(
+              onPressed: _loading ? null : _scanPairingCode,
+              icon: const Icon(Icons.qr_code_scanner_outlined),
+              label: Text(copy.scanPairingCode),
             ),
             if (_message != null) ...[
               const SizedBox(height: 12),

@@ -22,6 +22,7 @@ import io.flutter.plugin.common.MethodChannel
  */
 class MainActivity : FlutterActivity() {
     private var pendingPermissionResult: MethodChannel.Result? = null
+    private var pendingPairingScanResult: MethodChannel.Result? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -30,6 +31,8 @@ class MainActivity : FlutterActivity() {
                 when (call.method) {
                     "requestLocationPermissions" -> requestLocationPermissions(result)
                     "openLocationSettings" -> openLocationSettings(result)
+                    "showPairingQr" -> showPairingQr(call, result)
+                    "scanPairingCode" -> scanPairingCode(call, result)
                     "configureAndStart" -> configureAndStart(call, result)
                     "startStored" -> startStoredTelemetry(result)
                     "stop" -> stopTelemetry(result)
@@ -71,6 +74,48 @@ class MainActivity : FlutterActivity() {
             result.success(mapOf("opened" to true))
         } catch (_: Exception) {
             result.success(mapOf("opened" to false))
+        }
+    }
+
+    private fun showPairingQr(call: MethodCall, result: MethodChannel.Result) {
+        val pairingCode = call.argument<String>("pairingCode")?.trim()
+        if (pairingCode == null || !PAIRING_CODE_PATTERN.matches(pairingCode)) {
+            result.success(mapOf("shown" to false))
+            return
+        }
+        try {
+            startActivity(Intent(this, PairingCodeQrActivity::class.java).apply {
+                putExtra(PairingCodeQrActivity.EXTRA_PAIRING_CODE, pairingCode)
+                putExtra(PairingCodeQrActivity.EXTRA_TITLE, call.argument<String>("title").orEmpty())
+                putExtra(PairingCodeQrActivity.EXTRA_BODY, call.argument<String>("body").orEmpty())
+                putExtra(PairingCodeQrActivity.EXTRA_CONTENT_DESCRIPTION, call.argument<String>("contentDescription").orEmpty())
+                putExtra(PairingCodeQrActivity.EXTRA_DISMISS_LABEL, call.argument<String>("dismissLabel").orEmpty())
+            })
+            result.success(mapOf("shown" to true))
+        } catch (_: Exception) {
+            result.success(mapOf("shown" to false))
+        }
+    }
+
+    private fun scanPairingCode(call: MethodCall, result: MethodChannel.Result) {
+        if (pendingPairingScanResult != null) {
+            result.error("pairing_scan_in_progress", "A pairing scan is already active.", null)
+            return
+        }
+        pendingPairingScanResult = result
+        try {
+            startActivityForResult(
+                Intent(this, PairingCodeScannerActivity::class.java).apply {
+                    putExtra(
+                        PairingCodeScannerActivity.EXTRA_CONTENT_DESCRIPTION,
+                        call.argument<String>("contentDescription").orEmpty(),
+                    )
+                },
+                REQUEST_PAIRING_SCAN,
+            )
+        } catch (_: Exception) {
+            pendingPairingScanResult = null
+            result.success(mapOf("pairingCode" to null))
         }
     }
 
@@ -187,6 +232,22 @@ class MainActivity : FlutterActivity() {
     private fun validUuid(value: String?): Boolean =
         value != null && Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$").matches(value)
 
+    @Deprecated("Deprecated in AndroidX Activity")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != REQUEST_PAIRING_SCAN) return
+        val result = pendingPairingScanResult ?: return
+        pendingPairingScanResult = null
+        val pairingCode = if (resultCode == RESULT_OK) {
+            data?.getStringExtra(PairingCodeScannerActivity.EXTRA_PAIRING_CODE)
+                ?.trim()
+                ?.takeIf { PAIRING_CODE_PATTERN.matches(it) }
+        } else {
+            null
+        }
+        result.success(mapOf("pairingCode" to pairingCode))
+    }
+
     override fun getInitialRoute(): String? {
         val fromIntent = intent?.getStringExtra(EXTRA_FLUTTER_ROUTE)?.trim()
         if (!fromIntent.isNullOrEmpty()) {
@@ -204,6 +265,8 @@ class MainActivity : FlutterActivity() {
         private const val TELEMETRY_CHANNEL = "com.familyos.family_os/native_child_telemetry"
         private const val REQUEST_FOREGROUND_LOCATION = 8101
         private const val REQUEST_BACKGROUND_LOCATION = 8102
+        private const val REQUEST_PAIRING_SCAN = 8103
+        private val PAIRING_CODE_PATTERN = Regex("^[A-Za-z0-9_-]{32,128}$")
         const val EXTRA_FLUTTER_ROUTE = "flutter_route"
         const val EXTRA_FLUTTER_AUDIT = "flutter_audit"
     }

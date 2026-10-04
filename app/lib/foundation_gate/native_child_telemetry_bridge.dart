@@ -39,6 +39,48 @@ class NativeChildTelemetryBridge {
     }
   }
 
+  /// Opens a native QR view for a code that remains in Flutter widget memory.
+  static Future<bool> showPairingQr({
+    required String pairingCode,
+    required String title,
+    required String body,
+    required String contentDescription,
+    required String dismissLabel,
+  }) async {
+    try {
+      final result = await _channel.invokeMapMethod<String, dynamic>('showPairingQr', {
+        'pairingCode': pairingCode,
+        'title': title,
+        'body': body,
+        'contentDescription': contentDescription,
+        'dismissLabel': dismissLabel,
+      });
+      return result?['shown'] == true;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException {
+      return false;
+    }
+  }
+
+  /// Scans an actual QR image with Android's camera and returns only a valid
+  /// one-time pairing capability. Cancellation or unavailable camera returns null.
+  static Future<String?> scanPairingCode({required String contentDescription}) async {
+    try {
+      final result = await _channel.invokeMapMethod<String, dynamic>('scanPairingCode', {
+        'contentDescription': contentDescription,
+      });
+      final code = result?['pairingCode'];
+      return code is String && RegExp(r'^[A-Za-z0-9_-]{32,128}$').hasMatch(code)
+          ? code
+          : null;
+    } on MissingPluginException {
+      return null;
+    } on PlatformException {
+      return null;
+    }
+  }
+
   static Future<NativeTelemetryStatus> status() async {
     try {
       final result = await _channel.invokeMapMethod<String, dynamic>('status');
