@@ -124,6 +124,10 @@ void main() {
     expect(find.text('سياق العائلة'), findsOneWidget);
     expect(find.text('مركز الأطفال'), findsOneWidget);
     expect(find.text('سجل الخادم · الجلسة الحالية'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('foundation_gate_add_child_profile')),
+      300,
+    );
     expect(find.text('إضافة ملف طفل'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
