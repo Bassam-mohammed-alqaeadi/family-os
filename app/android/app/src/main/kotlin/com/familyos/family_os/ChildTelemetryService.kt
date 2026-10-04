@@ -219,22 +219,24 @@ class TelemetryConfigStore(private val context: Context) {
         file().writeBytes(bytes)
     }
 
-    fun read(): TelemetryConfig? = try {
-        val bytes = file().readBytes()
-        val buffer = ByteBuffer.wrap(bytes)
-        val ivLength = buffer.int
-        if (ivLength !in 12..32 || buffer.remaining() <= ivLength) return null
-        val iv = ByteArray(ivLength)
-        buffer.get(iv)
-        val encrypted = ByteArray(buffer.remaining())
-        buffer.get(encrypted)
-        val cipher = Cipher.getInstance(TRANSFORMATION)
-        cipher.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, iv))
-        val pieces = String(cipher.doFinal(encrypted), Charsets.UTF_8).split('\n')
-        if (pieces.size != 3 || pieces.any { it.isBlank() }) null
-        else TelemetryConfig(pieces[0], pieces[1], pieces[2])
-    } catch (_: Exception) {
-        null
+    fun read(): TelemetryConfig? {
+        return try {
+            val bytes = file().readBytes()
+            val buffer = ByteBuffer.wrap(bytes)
+            val ivLength = buffer.int
+            if (ivLength !in 12..32 || buffer.remaining() <= ivLength) return null
+            val iv = ByteArray(ivLength)
+            buffer.get(iv)
+            val encrypted = ByteArray(buffer.remaining())
+            buffer.get(encrypted)
+            val cipher = Cipher.getInstance(TRANSFORMATION)
+            cipher.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, iv))
+            val pieces = String(cipher.doFinal(encrypted), Charsets.UTF_8).split('\n')
+            if (pieces.size != 3 || pieces.any { it.isBlank() }) null
+            else TelemetryConfig(pieces[0], pieces[1], pieces[2])
+        } catch (_: Exception) {
+            null
+        }
     }
 
     private fun file(): File = File(context.noBackupFilesDir, "child-telemetry.v1")
