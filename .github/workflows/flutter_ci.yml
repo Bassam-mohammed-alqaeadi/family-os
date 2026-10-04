@@ -149,7 +149,7 @@ jobs:
         if: always() && (steps.analyze.outcome == 'failure' || steps.tests.outcome == 'failure' || steps.generated.outcome == 'failure')
         run: |
           if [ "${{ steps.analyze.outcome }}" = 'failure' ]; then
-            summary=$(grep -E ' (error|warning|info) • ' build/ci/flutter-analyze.txt | tr '\n' ' ' | cut -c1-4000)
+            summary=$(tr '\n' ' ' < build/ci/flutter-analyze.txt | cut -c1-4000)
             echo "::error title=Flutter analyzer::${summary:-flutter analyze failed; inspect build/ci/flutter-analyze.txt}"
           fi
           exit 1
