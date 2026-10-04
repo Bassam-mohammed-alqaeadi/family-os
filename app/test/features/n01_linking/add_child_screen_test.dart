@@ -48,7 +48,9 @@ void main() {
       routes: [
         GoRoute(
           path: '/scr-fat-003',
-          builder: (context, state) => const AddChildScreen(),
+          builder: (context, state) => AddChildScreen(
+            onContinue: () => context.go('/scr-fat-004?childId=preview-child'),
+          ),
         ),
         GoRoute(
           path: '/scr-fat-004',

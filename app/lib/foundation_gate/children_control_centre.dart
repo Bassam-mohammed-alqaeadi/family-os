@@ -718,6 +718,7 @@ class _CreateChildProfileSheetState extends State<_CreateChildProfileSheet> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: FilledButton(
+                          key: const Key('foundation_gate_create_child_profile_submit'),
                           onPressed: _submitting ? null : () => unawaited(_submit()),
                           child: _submitting
                               ? Semantics(

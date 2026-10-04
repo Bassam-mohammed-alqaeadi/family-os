@@ -95,7 +95,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Enter only a name and age.'), findsOneWidget);
     await tester.enterText(find.byType(TextField), 'New child');
-    await tester.tap(find.text('Create child profile'));
+    await tester.tap(find.byKey(const Key('foundation_gate_create_child_profile_submit')));
     await tester.pumpAndSettle();
 
     expect(submittedName, 'New child');

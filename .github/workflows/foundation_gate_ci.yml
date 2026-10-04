@@ -58,8 +58,10 @@ jobs:
         id: tests
         continue-on-error: true
         run: |
+          set -o pipefail
           flutter test test/foundation_gate \
-            --file-reporter=json:build/ci/foundation-gate-test.json
+            --file-reporter=json:build/ci/foundation-gate-test.json 2>&1 \
+            | tee build/ci/foundation-gate-test.txt
       - name: Enforce isolated analysis and test gates
         if: always() && (steps.analyze.outcome == 'failure' || steps.tests.outcome == 'failure')
         run: |
@@ -68,6 +70,8 @@ jobs:
             echo "::error title=Isolated Flutter analyzer::${summary}"
           fi
           if [ "${{ steps.tests.outcome }}" = 'failure' ]; then
+            transcript=$(tail -100 build/ci/foundation-gate-test.txt | tr '\n' ' ' | cut -c1-4000)
+            echo "::error title=Isolated Foundation Gate test transcript::${transcript}"
             python3 - <<'PY'
           import json
           from pathlib import Path
