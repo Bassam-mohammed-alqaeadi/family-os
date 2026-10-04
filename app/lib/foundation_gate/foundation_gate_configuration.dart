@@ -51,4 +51,13 @@ class FoundationGateConfiguration {
     }
     return stagingApiOrigin.replace(path: '/v1/devices/$deviceId/telemetry');
   }
+
+  Uri familyChildDevicePairingsUri(String familyId, String childId) {
+    if (!isFoundationGateUuid(familyId) || !isFoundationGateUuid(childId)) {
+      throw ArgumentError('Server-returned UUID family and child identifiers are required.');
+    }
+    return stagingApiOrigin.replace(path: '/v1/families/$familyId/children/$childId/device-pairings');
+  }
+
+  Uri get devicePairingClaimUri => stagingApiOrigin.replace(path: '/v1/device-pairings/claim');
 }

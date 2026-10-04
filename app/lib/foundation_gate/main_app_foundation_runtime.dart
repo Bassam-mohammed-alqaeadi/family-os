@@ -192,56 +192,32 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     }
   }
 
-  /// Developer-only integration seam: creates a clearly labelled simulated
-  /// linked device when needed, then sends 78% / Soccer Practice through the
-  /// same server routes used by the UI reader. This is not child device data.
-  Future<bool> injectDeveloperTelemetry({
+  Future<FoundationGateDevicePairing?> createDevicePairing({
     required FamilyId familyId,
     required ChildId childId,
+    required String deviceLabel,
+    required String idempotencyKey,
   }) async {
-    if (!kDeveloperTelemetrySimulationEnabled) return false;
     await refreshIdentity();
     final selected = _controller.selectedFamily;
     if (!_identityValue.isRemoteAuthoritative ||
         !_identityValue.isPrimaryOwner ||
         selected == null ||
         selected.id != familyId.value) {
-      return false;
+      return null;
     }
     try {
-      final idToken = await _identity.currentIdToken();
-      final existing = await _deviceApi.list(familyId: familyId.value, idToken: idToken);
-      const deviceLabel = 'Developer simulation — not a child device';
-      FoundationGateFamilyDevice device;
-      final matching = existing.where(
-        (candidate) => candidate.childId == childId.value && candidate.deviceLabel == deviceLabel,
+      return await _deviceApi.createPairing(
+        familyId: familyId.value,
+        childId: childId.value,
+        deviceLabel: deviceLabel,
+        idempotencyKey: idempotencyKey,
+        idToken: await _identity.currentIdToken(),
       );
-      if (matching.isEmpty) {
-        device = await _deviceApi.register(
-          familyId: familyId.value,
-          childId: childId.value,
-          deviceLabel: deviceLabel,
-          idempotencyKey: newFoundationGateIdempotencyKey(),
-          idToken: idToken,
-        );
-      } else {
-        device = matching.first;
-      }
-      await _deviceApi.ingestTelemetry(
-        deviceId: device.id,
-        batteryLevel: 78,
-        batteryStatus: 'unplugged',
-        locationLat: 38.8646,
-        locationLng: -77.2749,
-        locationLabel: 'Soccer Practice',
-        idToken: idToken,
-      );
-      await loadDevices(familyId);
-      return true;
     } on FoundationGateIdentityException {
-      return false;
+      return null;
     } on FoundationGateApiException {
-      return false;
+      return null;
     }
   }
 
@@ -426,10 +402,17 @@ final class RemoteFamilyDeviceSource extends ChangeNotifier
   @override
   Future<FamilyDeviceSnapshot> load(FamilyId familyId) => _runtime.loadDevices(familyId);
 
-  Future<bool> injectDeveloperTelemetry({
+  Future<FoundationGateDevicePairing?> createPairing({
     required FamilyId familyId,
     required ChildId childId,
-  }) => _runtime.injectDeveloperTelemetry(familyId: familyId, childId: childId);
+    required String deviceLabel,
+    required String idempotencyKey,
+  }) => _runtime.createDevicePairing(
+    familyId: familyId,
+    childId: childId,
+    deviceLabel: deviceLabel,
+    idempotencyKey: idempotencyKey,
+  );
 
   @override
   void dispose() {
@@ -437,12 +420,6 @@ final class RemoteFamilyDeviceSource extends ChangeNotifier
     super.dispose();
   }
 }
-
-/// Explicit build-time guard for the temporary API integration seam.
-const bool kDeveloperTelemetrySimulationEnabled = bool.fromEnvironment(
-  'FAMILY_OS_ENABLE_DEVELOPER_TELEMETRY',
-  defaultValue: false,
-);
 
 final class RemoteFamilyChildProfileSource
     implements FamilyChildProfileSource {

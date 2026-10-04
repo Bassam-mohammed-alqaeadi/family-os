@@ -1,5 +1,5 @@
 // Test-only fixture. It is never imported by the runtime server and is not a development fallback.
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { HttpError } from '../src/http-error.js';
 
 function clone(value) {
@@ -24,6 +24,7 @@ export class MemoryFoundationStore {
     this.guardianTransfers = new Map();
     this.children = new Map();
     this.devices = new Map();
+    this.devicePairings = new Map();
     this.audit = [];
     this.outbox = [];
     this.idempotency = new Map();
@@ -104,6 +105,14 @@ export class MemoryFoundationStore {
       createdAt: child.createdAt,
       updatedAt: child.updatedAt,
     };
+  }
+
+  capabilityHash(value) {
+    return createHash('sha256').update(value).digest('hex');
+  }
+
+  newCapability() {
+    return `${randomUUID().replaceAll('-', '')}${randomUUID().replaceAll('-', '')}`;
   }
 
   familyDeviceView(device) {
@@ -318,8 +327,71 @@ export class MemoryFoundationStore {
     });
   }
 
+  async createDevicePairing({
+    principal,
+    familyId,
+    childId,
+    deviceLabel,
+    idempotencyKey,
+    requestHash,
+    correlationId,
+  }) {
+    const actor = this.activeMembership(familyId, principal.subject, true);
+    const child = this.children.get(childId);
+    if (!child || child.familyId !== familyId) {
+      throw new HttpError(404, 'family_child_not_found', 'Child profile was not found in this family.');
+    }
+    const idempotencyRecordKey = `family-device-pairing:create:${familyId}:${childId}:${idempotencyKey}`;
+    const existing = this.idempotency.get(idempotencyRecordKey);
+    if (existing) {
+      if (existing.hash !== requestHash) {
+        throw new HttpError(409, 'idempotency_key_reused', 'Idempotency-Key cannot be reused with a different request.');
+      }
+      throw new HttpError(409, 'pairing_code_not_replayable', 'A pairing code was already issued. Create a new pairing code.');
+    }
+    const pairingCode = this.newCapability();
+    const pairing = {
+      id: randomUUID(), familyId, childId, deviceLabel,
+      pairingCodeHash: this.capabilityHash(pairingCode),
+      expiresAt: new Date(this.now().getTime() + 10 * 60 * 1000).toISOString(),
+      claimedAt: null, claimedDeviceId: null, createdByMembershipId: actor.id,
+    };
+    this.devicePairings.set(pairing.id, pairing);
+    this.recordAudit(familyId, actor.id, correlationId, 'family.device_pairing_created', 'family_device_pairing', pairing.id);
+    // Deliberately retain no raw pairing capability in test-only idempotency
+    // storage either; this matches the production persistence invariant.
+    this.idempotency.set(idempotencyRecordKey, { hash: requestHash, response: { pairingIssued: true } });
+    return { pairing: {
+      id: pairing.id, childId, deviceLabel, pairingCode, expiresAt: pairing.expiresAt,
+    } };
+  }
+
+  async claimDevicePairing({ pairingCode, correlationId }) {
+    const now = this.now().toISOString();
+    const pairing = [...this.devicePairings.values()].find((item) =>
+      item.pairingCodeHash === this.capabilityHash(pairingCode) &&
+      item.claimedAt == null && item.expiresAt > now,
+    );
+    if (!pairing) {
+      throw new HttpError(400, 'pairing_not_claimable', 'This pairing code is invalid, expired, or already used.');
+    }
+    const deviceCredential = this.newCapability();
+    const device = {
+      id: randomUUID(), familyId: pairing.familyId, childId: pairing.childId,
+      deviceLabel: pairing.deviceLabel, batteryLevel: null, batteryStatus: null,
+      locationLat: null, locationLng: null, locationLabel: null, lastSeenAt: null,
+      linkedAt: now, version: 1, credentialHash: this.capabilityHash(deviceCredential), credentialRevokedAt: null,
+    };
+    this.devices.set(device.id, device);
+    pairing.claimedAt = now;
+    pairing.claimedDeviceId = device.id;
+    this.recordAudit(pairing.familyId, null, correlationId, 'family.device_paired', 'family_child_device', device.id);
+    return { device: this.familyDeviceView(device), deviceCredential };
+  }
+
   async ingestDeviceTelemetry({
     principal,
+    deviceCredential,
     deviceId,
     batteryLevel,
     batteryStatus,
@@ -332,7 +404,17 @@ export class MemoryFoundationStore {
     if (!device) {
       throw new HttpError(404, 'device_not_found', 'Linked device was not found.');
     }
-    const actor = this.activeMembership(device.familyId, principal.subject, true);
+    let actorMembershipId = null;
+    if (deviceCredential != null) {
+      if (device.credentialRevokedAt != null || this.capabilityHash(deviceCredential) !== device.credentialHash) {
+        throw new HttpError(401, 'invalid_device_credential', 'The device credential is invalid or revoked.');
+      }
+    } else {
+      if (!principal) {
+        throw new HttpError(401, 'authentication_required', 'A device credential or bearer token is required.');
+      }
+      actorMembershipId = this.activeMembership(device.familyId, principal.subject, true).id;
+    }
     device.batteryLevel = batteryLevel;
     device.batteryStatus = batteryStatus;
     device.locationLat = locationLat;
@@ -340,7 +422,7 @@ export class MemoryFoundationStore {
     device.locationLabel = locationLabel;
     device.lastSeenAt = this.now().toISOString();
     device.version += 1;
-    this.recordAudit(device.familyId, actor.id, correlationId, 'family.device_telemetry_received', 'family_child_device', device.id);
+    this.recordAudit(device.familyId, actorMembershipId, correlationId, 'family.device_telemetry_received', 'family_child_device', device.id);
     return { device: this.familyDeviceView(device) };
   }
 

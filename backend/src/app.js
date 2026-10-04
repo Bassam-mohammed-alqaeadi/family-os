@@ -3,7 +3,9 @@ import express from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { asHttpError, HttpError } from './http-error.js';
 import {
+    claimDevicePairingInput,
     createChildInput,
+    createDevicePairingInput,
     createFamilyInput,
     deviceTelemetryInput,
     registerFamilyChildDeviceInput,
@@ -19,6 +21,12 @@ function requestFingerprint({ action, principal, input }) {
     return createHash('sha256')
         .update(JSON.stringify({ action, subject: principal.subject, input }))
         .digest('hex');
+}
+
+function deviceCredentialFromAuthorization(value) {
+    if (typeof value !== 'string') return null;
+    const match = /^Device ([A-Za-z0-9_-]{32,128})$/.exec(value);
+    return match?.[1] ?? null;
 }
 
 function safeRequestId(value) {
@@ -69,6 +77,17 @@ export function createApp({
         next();
     });
 
+    const requireTelemetryActor = asyncRoute(async(request, _response, next) => {
+        const deviceCredential = deviceCredentialFromAuthorization(request.get('Authorization'));
+        if (deviceCredential != null) {
+            request.deviceCredential = deviceCredential;
+            next();
+            return;
+        }
+        request.principal ??= await authVerifier.verify(request.get('Authorization'));
+        next();
+    });
+
     const requireRuntimeReady = asyncRoute(async(_request, _response, next) => {
         const configStatus = readiness();
         const databaseStatus = await store.health();
@@ -91,6 +110,34 @@ export function createApp({
         keyGenerator: (request) => request.principal.subject,
         handler: (_request, _response, next) => {
             next(new HttpError(429, 'rate_limit_exceeded', 'Too many protected API requests. Try again later.'));
+        },
+    });
+
+    const deviceTelemetryRateLimit = rateLimit({
+        windowMs: protectedRateLimit.windowMs ?? 60_000,
+        limit: protectedRateLimit.limit ?? 120,
+        standardHeaders: 'draft-7',
+        legacyHeaders: false,
+        validate: { xForwardedForHeader: false },
+        keyGenerator: (request) => {
+            if (request.deviceCredential) {
+                return `device:${createHash('sha256').update(request.deviceCredential).digest('hex')}`;
+            }
+            return `guardian:${request.principal?.subject ?? 'unauthenticated'}`;
+        },
+        handler: (_request, _response, next) => {
+            next(new HttpError(429, 'rate_limit_exceeded', 'Too many telemetry updates. Try again later.'));
+        },
+    });
+
+    const pairingClaimRateLimit = rateLimit({
+        windowMs: 60_000,
+        limit: 12,
+        standardHeaders: 'draft-7',
+        legacyHeaders: false,
+        validate: { xForwardedForHeader: false },
+        handler: (_request, _response, next) => {
+            next(new HttpError(429, 'rate_limit_exceeded', 'Too many pairing attempts. Try again later.'));
         },
     });
 
@@ -230,6 +277,46 @@ export function createApp({
     );
 
     app.post(
+        '/v1/families/:familyId/children/:childId/device-pairings',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            const input = createDevicePairingInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await store.createDevicePairing({
+                principal: request.principal,
+                familyId,
+                childId,
+                ...input,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'family_device_pairing.create',
+                    principal: request.principal,
+                    input: { familyId, childId, ...input },
+                }),
+            });
+            response.status(201).json(result);
+        }),
+    );
+
+    app.post(
+        '/v1/device-pairings/claim',
+        pairingClaimRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const input = claimDevicePairingInput(request.body);
+            response.status(201).json(await store.claimDevicePairing({
+                ...input,
+                correlationId: request.correlationId,
+            }));
+        }),
+    );
+
+    app.post(
         '/v1/families/:familyId/children/:childId/devices',
         requirePrincipal,
         protectedApiRateLimit,
@@ -258,14 +345,15 @@ export function createApp({
 
     app.post(
         '/v1/devices/:deviceId/telemetry',
-        requirePrincipal,
-        protectedApiRateLimit,
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
         requireRuntimeReady,
         asyncRoute(async(request, response) => {
             const deviceId = requireUuid(request.params.deviceId, 'deviceId');
             const input = deviceTelemetryInput(request.body);
             const result = await store.ingestDeviceTelemetry({
                 principal: request.principal,
+                deviceCredential: request.deviceCredential,
                 deviceId,
                 ...input,
                 correlationId: request.correlationId,

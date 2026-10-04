@@ -28,7 +28,6 @@ import 'package:family_os/features/n01_linking/add_child_screen.dart';
 import 'package:family_os/features/n02_day/children_list_local_repository.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
-import 'package:family_os/foundation_gate/main_app_foundation_runtime.dart';
 
 /// Widget keys for SCR-FAT-012 acceptance.
 abstract final class ChildrenListKeys {
@@ -47,9 +46,6 @@ abstract final class ChildrenListKeys {
     'children_list_shared_enforce_honesty',
   );
   static const localOnlyBanner = Key('children_list_local_only_banner');
-  static const developerInjectTelemetry = Key(
-    'children_list_developer_inject_telemetry',
-  );
 
   static Key profileRepair(String id) =>
       Key('children_list_profile_repair_$id');
@@ -337,38 +333,6 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
       return;
     }
     context.push('/scr-fat-013?childId=${Uri.encodeComponent(childId)}');
-  }
-
-  bool get _showsDeveloperTelemetryInjector {
-    if (!kDeveloperTelemetrySimulationEnabled || !_usesRuntimeSources)
-      return false;
-    final identity = AppScope.maybeOf(context)?.identity.value;
-    return identity?.isRemoteAuthoritative == true &&
-        identity?.isPrimaryOwner == true;
-  }
-
-  Future<void> _injectDeveloperTelemetry(FamilyRosterChild child) async {
-    final familyId = _loadedFamilyId;
-    final source = widget.deviceSource ?? AppScope.maybeOf(context)?.devices;
-    if (familyId == null || source is! RemoteFamilyDeviceSource) return;
-    final succeeded = await source.injectDeveloperTelemetry(
-      familyId: familyId,
-      childId: child.childId,
-    );
-    if (!mounted) return;
-    if (succeeded) {
-      AppToast.show(
-        context,
-        message:
-            'Developer simulation sent: 78% at Soccer Practice. Not child-device telemetry.',
-      );
-      await _load();
-    } else {
-      AppToast.show(
-        context,
-        message: 'Developer telemetry simulation could not be sent.',
-      );
-    }
   }
 
   Future<void> _deleteChild(String childId) async {
@@ -793,14 +757,6 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                if (_showsDeveloperTelemetryInjector &&
-                    _runtimeRoster.isNotEmpty) ...[
-                  _DeveloperTelemetryInjector(
-                    onPressed: () =>
-                        _injectDeveloperTelemetry(_runtimeRoster.first),
-                  ),
-                  const SizedBox(height: 10),
-                ],
                 Semantics(
                   container: true,
                   label: l10n.childrenListListSemantics,
@@ -955,54 +911,6 @@ class _SharedPolicyRow extends StatelessWidget {
           ),
           if (trailing != null) trailing!,
         ],
-      ),
-    );
-  }
-}
-
-class _DeveloperTelemetryInjector extends StatelessWidget {
-  const _DeveloperTelemetryInjector({required this.onPressed});
-
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<FamilyColors>()!;
-    final radii = Theme.of(context).extension<FamilyRadii>()!;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.amber100,
-        borderRadius: BorderRadius.circular(radii.card),
-        border: Border.all(color: colors.amber),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Row(
-          children: [
-            Icon(Icons.developer_mode_outlined, color: colors.ink),
-            const SizedBox(width: 8),
-            const Expanded(
-              child: Text(
-                'Developer simulation — sends 78% / Soccer Practice through the API. Not a child device.',
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w600,
-                  height: 1.35,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            TextButton(
-              key: ChildrenListKeys.developerInjectTelemetry,
-              onPressed: onPressed,
-              child: const Text(
-                'Developer: Inject Telemetry',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

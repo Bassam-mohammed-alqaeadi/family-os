@@ -45,6 +45,14 @@ export class UnconfiguredFoundationStore {
     this.unavailable();
   }
 
+  async createDevicePairing() {
+    this.unavailable();
+  }
+
+  async claimDevicePairing() {
+    this.unavailable();
+  }
+
   async ingestDeviceTelemetry() {
     this.unavailable();
   }

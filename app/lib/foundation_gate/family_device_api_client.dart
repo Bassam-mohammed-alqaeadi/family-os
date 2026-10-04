@@ -36,11 +36,43 @@ class FoundationGateFamilyDevice {
   final int version;
 }
 
-/// Narrow client for the device telemetry Phase 1 endpoints.
+/// A one-time server-issued child-device pairing capability.
 ///
-/// The current write calls support only the build-time-gated developer
-/// simulation. They do not establish a device credential or claim that a child
-/// handset sent the update.
+/// The code is deliberately held in widget memory only. The server stores only
+/// its digest and invalidates it after a successful claim or expiry.
+class FoundationGateDevicePairing {
+  const FoundationGateDevicePairing({
+    required this.id,
+    required this.childId,
+    required this.deviceLabel,
+    required this.pairingCode,
+    required this.expiresAt,
+  });
+
+  final String id;
+  final String childId;
+  final String deviceLabel;
+  final String pairingCode;
+  final DateTime expiresAt;
+}
+
+/// Returned once to the child-device hand-off. Flutter passes the credential
+/// straight to Android Keystore storage and does not persist it itself.
+class FoundationGateClaimedDevice {
+  const FoundationGateClaimedDevice({
+    required this.device,
+    required this.deviceCredential,
+  });
+
+  final FoundationGateFamilyDevice device;
+  final String deviceCredential;
+}
+
+/// Narrow client for device telemetry and server-authoritative native pairing.
+///
+/// Guardian bearer writes remain a transitional support path. Child-device
+/// telemetry is authorized by the separate device-scoped credential returned
+/// only after a successful one-time pairing claim.
 class FamilyDeviceApiClient {
   FamilyDeviceApiClient({
     required FoundationGateConfiguration configuration,
@@ -103,6 +135,65 @@ class FamilyDeviceApiClient {
         throw const FoundationGateApiException(FoundationGateApiFailure.invalidResponse);
       case 409:
         throw const FoundationGateApiException(FoundationGateApiFailure.conflict);
+      case 429:
+      case 503:
+        throw const FoundationGateApiException(FoundationGateApiFailure.serviceUnavailable);
+      default:
+        throw const FoundationGateApiException(FoundationGateApiFailure.invalidResponse);
+    }
+  }
+
+  Future<FoundationGateDevicePairing> createPairing({
+    required String familyId,
+    required String childId,
+    required String deviceLabel,
+    required String idempotencyKey,
+    required String idToken,
+  }) async {
+    if (!isFoundationGateUuid(childId) || !_validText(deviceLabel, 80) || !_validText(idempotencyKey, 128)) {
+      throw const FoundationGateApiException(FoundationGateApiFailure.invalidInput);
+    }
+    Uri uri;
+    try {
+      uri = _configuration.familyChildDevicePairingsUri(familyId, childId);
+    } on ArgumentError {
+      throw const FoundationGateApiException(FoundationGateApiFailure.invalidInput);
+    }
+    final response = await _post(uri, idToken, {'deviceLabel': deviceLabel.trim()}, idempotencyKey: idempotencyKey);
+    switch (response.statusCode) {
+      case 201:
+        return _parsePairing(response.body);
+      case 400:
+        throw const FoundationGateApiException(FoundationGateApiFailure.invalidInput);
+      case 401:
+        throw const FoundationGateApiException(FoundationGateApiFailure.unauthenticated);
+      case 403:
+        throw const FoundationGateApiException(FoundationGateApiFailure.accessDenied);
+      case 404:
+        throw const FoundationGateApiException(FoundationGateApiFailure.invalidResponse);
+      case 409:
+        throw const FoundationGateApiException(FoundationGateApiFailure.conflict);
+      case 429:
+      case 503:
+        throw const FoundationGateApiException(FoundationGateApiFailure.serviceUnavailable);
+      default:
+        throw const FoundationGateApiException(FoundationGateApiFailure.invalidResponse);
+    }
+  }
+
+  Future<FoundationGateClaimedDevice> claimPairing({required String pairingCode}) async {
+    if (!RegExp(r'^[A-Za-z0-9_-]{32,128}$').hasMatch(pairingCode)) {
+      throw const FoundationGateApiException(FoundationGateApiFailure.invalidInput);
+    }
+    final response = await _postUnauthenticated(
+      _configuration.devicePairingClaimUri,
+      {'pairingCode': pairingCode},
+    );
+    switch (response.statusCode) {
+      case 201:
+        return _parseClaimedDevice(response.body);
+      case 400:
+        throw const FoundationGateApiException(FoundationGateApiFailure.invalidInput);
       case 429:
       case 503:
         throw const FoundationGateApiException(FoundationGateApiFailure.serviceUnavailable);
@@ -179,6 +270,23 @@ class FamilyDeviceApiClient {
     }
   }
 
+  Future<FoundationGateHttpResponse> _postUnauthenticated(
+    Uri uri,
+    Map<String, Object> body,
+  ) async {
+    try {
+      return await _transport.post(
+        uri,
+        headers: const {'accept': 'application/json', 'content-type': 'application/json'},
+        body: jsonEncode(body),
+      );
+    } on FoundationGateApiException {
+      rethrow;
+    } catch (_) {
+      throw const FoundationGateApiException(FoundationGateApiFailure.networkUnavailable);
+    }
+  }
+
   Future<FoundationGateHttpResponse> _post(
     Uri uri,
     String idToken,
@@ -214,6 +322,51 @@ class FamilyDeviceApiClient {
       final rawDevices = decoded['devices'];
       if (rawDevices is! List<Object?>) throw const FormatException();
       return List.unmodifiable(rawDevices.map(_parseDevice));
+    } catch (_) {
+      throw const FoundationGateApiException(FoundationGateApiFailure.invalidResponse);
+    }
+  }
+
+  FoundationGateDevicePairing _parsePairing(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is! Map<String, Object?> || decoded.keys.length != 1) throw const FormatException();
+      final pairing = decoded['pairing'];
+      if (pairing is! Map<String, Object?> || pairing.keys.length != 5) throw const FormatException();
+      final id = pairing['id'];
+      final childId = pairing['childId'];
+      final deviceLabel = pairing['deviceLabel'];
+      final pairingCode = pairing['pairingCode'];
+      final expiresAt = pairing['expiresAt'];
+      final parsedExpiry = expiresAt is String ? DateTime.tryParse(expiresAt)?.toUtc() : null;
+      if (id is! String || !isFoundationGateUuid(id) ||
+          childId is! String || !isFoundationGateUuid(childId) ||
+          deviceLabel is! String || !_validText(deviceLabel, 80) ||
+          pairingCode is! String || !RegExp(r'^[A-Za-z0-9_-]{32,128}$').hasMatch(pairingCode) ||
+          parsedExpiry == null) {
+        throw const FormatException();
+      }
+      return FoundationGateDevicePairing(
+        id: id, childId: childId, deviceLabel: deviceLabel,
+        pairingCode: pairingCode, expiresAt: parsedExpiry,
+      );
+    } catch (_) {
+      throw const FoundationGateApiException(FoundationGateApiFailure.invalidResponse);
+    }
+  }
+
+  FoundationGateClaimedDevice _parseClaimedDevice(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is! Map<String, Object?> || decoded.keys.length != 2) throw const FormatException();
+      final credential = decoded['deviceCredential'];
+      if (credential is! String || !RegExp(r'^[A-Za-z0-9_-]{32,128}$').hasMatch(credential)) {
+        throw const FormatException();
+      }
+      return FoundationGateClaimedDevice(
+        device: _parseDevice(decoded['device']),
+        deviceCredential: credential,
+      );
     } catch (_) {
       throw const FoundationGateApiException(FoundationGateApiFailure.invalidResponse);
     }

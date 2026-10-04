@@ -29,4 +29,8 @@ export const FOUNDATION_SCHEMA_MIGRATIONS = Object.freeze([
     name: '007_device_telemetry.sql',
     sha256: '0b6aa7c741ba6b8abf00ad1a3d81edd34615486b1687e8e662867d5b48df798e',
   }),
+  Object.freeze({
+    name: '008_native_device_pairing.sql',
+    sha256: '7685932c64f70e7f5e4e9bf63c728cbb36d56bfc8c3568e00c61283a5d75edb1',
+  }),
 ]);

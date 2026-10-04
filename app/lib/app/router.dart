@@ -25,6 +25,7 @@ import 'package:family_os/features/n01_linking/create_family_screen.dart';
 import 'package:family_os/features/n01_linking/setup_wizard_screen.dart';
 import 'package:family_os/features/n01_linking/add_child_screen.dart';
 import 'package:family_os/features/n01_linking/link_qr_screen.dart';
+import 'package:family_os/features/n01_linking/native_device_pairing_screens.dart';
 import 'package:family_os/features/n01_linking/permissions_explainer_screen.dart';
 import 'package:family_os/features/n01_linking/link_success_screen.dart';
 import 'package:family_os/features/n01_linking/trial_mode_screen.dart';
@@ -363,7 +364,7 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-fat-004',
       name: 'SCR-FAT-004',
-      builder: (context, state) => LinkQrScreen(),
+      builder: (context, state) => NativeParentPairingScreen(childId: state.uri.queryParameters['childId']),
     ),
     GoRoute(
       path: '/scr-fat-005',
@@ -498,7 +499,7 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-chd-002',
       name: 'SCR-CHD-002',
-      builder: (context, state) => ChildQrScanScreen(),
+      builder: (context, state) => ChildModePairingScreen(),
     ),
     GoRoute(
       path: '/scr-chd-003',

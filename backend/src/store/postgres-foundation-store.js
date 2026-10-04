@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import pg from 'pg';
 import { HttpError } from '../http-error.js';
 import { FOUNDATION_SCHEMA_MIGRATIONS } from '../schema-manifest.js';
@@ -56,6 +56,23 @@ function familyChildView(row) {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+function capabilityHash(value) {
+  return createHash('sha256').update(value).digest('hex');
+}
+
+function newCapability() {
+  return randomBytes(32).toString('base64url');
+}
+
+function capabilityMatches(expectedHash, rawCapability) {
+  if (typeof expectedHash !== 'string' || !/^[0-9a-f]{64}$/.test(expectedHash) || typeof rawCapability !== 'string') {
+    return false;
+  }
+  const expected = Buffer.from(expectedHash, 'hex');
+  const actual = Buffer.from(capabilityHash(rawCapability), 'hex');
+  return expected.length === actual.length && timingSafeEqual(expected, actual);
 }
 
 function familyDeviceView(row) {
@@ -523,8 +540,118 @@ export class PostgresFoundationStore {
     });
   }
 
+  async createDevicePairing({
+    principal,
+    familyId,
+    childId,
+    deviceLabel,
+    idempotencyKey,
+    requestHash,
+    correlationId,
+  }) {
+    return this.withTransaction(async (client) => {
+      const actor = await this.activeActorMembership(client, familyId, principal.subject, { primaryGuardianOnly: true });
+      const response = await this.acquireIdempotencySlot(
+        client,
+        `family-device-pairing:create:${familyId}:${childId}`,
+        idempotencyKey,
+        requestHash,
+      );
+      if (response) {
+        // The raw code is intentionally never stored in idempotency_records,
+        // so a network retry cannot reveal it a second time.
+        throw new HttpError(409, 'pairing_code_not_replayable', 'A pairing code was already issued. Create a new pairing code.');
+      }
+      const child = await client.query(
+        'SELECT id FROM family_children WHERE family_id = $1 AND id = $2',
+        [familyId, childId],
+      );
+      if (child.rowCount === 0) {
+        throw new HttpError(404, 'family_child_not_found', 'Child profile was not found in this family.');
+      }
+      const pairingCode = newCapability();
+      const pairing = await client.query(
+        `INSERT INTO family_device_pairings
+         (id, family_id, child_id, pairing_code_hash, device_label, expires_at, created_by_membership_id)
+         VALUES ($1, $2, $3, $4, $5, NOW() + INTERVAL '10 minutes', $6)
+         RETURNING id, child_id, device_label, expires_at`,
+        [randomUUID(), familyId, childId, capabilityHash(pairingCode), deviceLabel, actor.id],
+      );
+      await this.appendAuditAndOutbox(client, {
+        familyId,
+        actorMembershipId: actor.id,
+        correlationId,
+        eventType: 'family.device_pairing_created',
+        subjectType: 'family_device_pairing',
+        subjectId: pairing.rows[0].id,
+      });
+      const result = {
+        pairing: {
+          id: pairing.rows[0].id,
+          childId: pairing.rows[0].child_id,
+          deviceLabel: pairing.rows[0].device_label,
+          pairingCode,
+          expiresAt: pairing.rows[0].expires_at,
+        },
+      };
+      await this.completeIdempotencySlot(
+        client,
+        `family-device-pairing:create:${familyId}:${childId}`,
+        idempotencyKey,
+        { pairing: { id: pairing.rows[0].id, issued: true } },
+      );
+      return result;
+    });
+  }
+
+  async claimDevicePairing({ pairingCode, correlationId }) {
+    return this.withTransaction(async (client) => {
+      const pairing = await client.query(
+        `SELECT id, family_id, child_id, device_label
+         FROM family_device_pairings
+         WHERE pairing_code_hash = $1
+           AND claimed_at IS NULL
+           AND expires_at > NOW()
+         FOR UPDATE`,
+        [capabilityHash(pairingCode)],
+      );
+      if (pairing.rowCount === 0) {
+        throw new HttpError(400, 'pairing_not_claimable', 'This pairing code is invalid, expired, or already used.');
+      }
+      const item = pairing.rows[0];
+      const deviceCredential = newCapability();
+      const device = await client.query(
+        `INSERT INTO family_child_devices
+         (id, family_id, child_id, device_label, credential_hash, credential_issued_at)
+         VALUES ($1, $2, $3, $4, $5, NOW())
+         RETURNING id, child_id, device_label, battery_level, battery_status,
+                   location_lat, location_lng, location_label, last_seen_at,
+                   linked_at, version`,
+        [randomUUID(), item.family_id, item.child_id, item.device_label, capabilityHash(deviceCredential)],
+      );
+      await client.query(
+        `UPDATE family_device_pairings
+         SET claimed_at = NOW(), claimed_device_id = $2
+         WHERE id = $1`,
+        [item.id, device.rows[0].id],
+      );
+      await this.appendAuditAndOutbox(client, {
+        familyId: item.family_id,
+        // Claim is intentionally unauthenticated bootstrap; do not attribute a
+        // child-device claim to the guardian who issued the pairing code.
+        actorMembershipId: null,
+        correlationId,
+        eventType: 'family.device_paired',
+        subjectType: 'family_child_device',
+        subjectId: device.rows[0].id,
+      });
+      return { device: familyDeviceView(device.rows[0]), deviceCredential };
+    });
+  }
+
   async ingestDeviceTelemetry({
     principal,
+    deviceCredential,
     deviceId,
     batteryLevel,
     batteryStatus,
@@ -534,18 +661,30 @@ export class PostgresFoundationStore {
     correlationId,
   }) {
     return this.withTransaction(async (client) => {
-      // A device UUID is opaque, but it is still never enough to write telemetry:
-      // Phase 1 accepts only an active primary guardian until child-device
-      // credentials and attestation have a separately reviewed capability.
       const located = await client.query(
-        'SELECT id, family_id FROM family_child_devices WHERE id = $1 FOR UPDATE',
+        `SELECT id, family_id, credential_hash, credential_revoked_at
+         FROM family_child_devices
+         WHERE id = $1
+         FOR UPDATE`,
         [deviceId],
       );
       if (located.rowCount === 0) {
         throw new HttpError(404, 'device_not_found', 'Linked device was not found.');
       }
-      const familyId = located.rows[0].family_id;
-      const actor = await this.activeActorMembership(client, familyId, principal.subject, { primaryGuardianOnly: true });
+      const locatedDevice = located.rows[0];
+      const familyId = locatedDevice.family_id;
+      let actorMembershipId = null;
+      if (deviceCredential != null) {
+        if (locatedDevice.credential_revoked_at != null || !capabilityMatches(locatedDevice.credential_hash, deviceCredential)) {
+          throw new HttpError(401, 'invalid_device_credential', 'The device credential is invalid or revoked.');
+        }
+      } else {
+        if (!principal) {
+          throw new HttpError(401, 'authentication_required', 'A device credential or bearer token is required.');
+        }
+        const actor = await this.activeActorMembership(client, familyId, principal.subject, { primaryGuardianOnly: true });
+        actorMembershipId = actor.id;
+      }
       const device = await client.query(
         `UPDATE family_child_devices
          SET battery_level = $2,
@@ -563,7 +702,7 @@ export class PostgresFoundationStore {
       );
       await this.appendAuditAndOutbox(client, {
         familyId,
-        actorMembershipId: actor.id,
+        actorMembershipId,
         correlationId,
         eventType: 'family.device_telemetry_received',
         subjectType: 'family_child_device',

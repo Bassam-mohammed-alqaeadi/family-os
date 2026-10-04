@@ -2,9 +2,7 @@
 
 ## Scope and truth boundary
 
-This acceptance validates **linked child devices plus their latest stored battery/location fact**. It does **not** validate Android background GPS, device attestation, an always-on child-agent, location history, or a claim that the developer simulator is a physical device.
-
-The temporary simulator is compiled in only with `FAMILY_OS_ENABLE_DEVELOPER_TELEMETRY=true`; its device label and on-screen copy explicitly say that it is a developer simulation.
+This acceptance validated **linked child devices plus their latest stored battery/location fact**. It did **not** validate Android background GPS, device attestation, an always-on child-agent, or location history. The owner has accepted Phase 1 after a verified Staging run.
 
 ## One comprehensive live acceptance run
 
@@ -23,22 +21,10 @@ Use four **distinct, short-lived synthetic Firebase/OIDC user tokens**. Do not p
    ```
 
    Pass criteria: command exits `0` and prints all check names plus opaque server correlation IDs. It must not print bearer tokens or decoded subjects.
-3. Start the Flutter app against the **same** API and an authenticated primary-guardian Firebase session. The developer-only seam is intentionally build-time gated:
+3. The Phase 1 Flutter rendering was verified against the same authenticated Staging family during the owner acceptance run.
 
-   ```bash
-   cd app
-   flutter run \
-     --dart-define=FAMILY_OS_API_ORIGIN=https://your-node-api.example \
-     --dart-define=FAMILY_OS_ACTIVE_FAMILY_ID=<synthetic-family-id> \
-     --dart-define=FAMILY_OS_ENABLE_DEVELOPER_TELEMETRY=true
-   ```
-
-4. Open the parent Children Control Centre, tap **Developer: Inject Telemetry**, then let the roster refresh. The temporary seam targets the first server-roster child; pass criteria for that child card:
-   - location: `Soccer Practice`;
-   - battery row/icon: `78% · unplugged`;
-   - green health tag: `Healthy`;
-   - developer copy remains visible and says this is **not child-device telemetry**.
-5. Build/run again **without** `FAMILY_OS_ENABLE_DEVELOPER_TELEMETRY=true`. Pass criterion: neither the developer simulation copy nor its button appears.
+4. Phase 1 has been accepted after the owner-completed Staging verification. The temporary developer injector was removed from the production Flutter codebase after acceptance; it is not a valid acceptance path for any later phase.
+5. Phase 2 native telemetry must use the real child-device pairing and Android foreground-service path instead of any injected location or battery data.
 
 ## API cases covered by the one run
 
@@ -53,7 +39,7 @@ Use four **distinct, short-lived synthetic Firebase/OIDC user tokens**. Do not p
 | Read authority | Child membership gets `403 device_telemetry_access_denied`; unrelated principal gets `403 family_access_denied`. |
 | Audit/outbox evidence | Exactly one correlated `family.child_device_linked` event and exactly one correlated `family.device_telemetry_received` event exist. |
 | Flutter real-read rendering | The card renders remote `GET /v1/families/{familyId}/devices` facts; it does not invent battery/location before a response exists. |
-| Developer seam | The injection call uses the real registration and telemetry routes, labels the source as simulated, and disappears from normal builds. |
+| Production data boundary | No developer telemetry injector remains in Flutter production code; Phase 2 uses a real paired-device capability. |
 
 ## Repeatable local checks
 

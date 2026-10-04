@@ -75,6 +75,24 @@ export function registerFamilyChildDeviceInput(value) {
   };
 }
 
+export function createDevicePairingInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['deviceLabel']));
+  return {
+    deviceLabel: requiredText(body.deviceLabel, 'deviceLabel', { maxLength: MAX_DEVICE_LABEL_LENGTH }),
+  };
+}
+
+export function claimDevicePairingInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['pairingCode']));
+  const pairingCode = requiredText(body.pairingCode, 'pairingCode', { maxLength: 128 });
+  if (!/^[A-Za-z0-9_-]{32,128}$/.test(pairingCode)) {
+    throw new HttpError(400, 'invalid_request', 'pairingCode is invalid.');
+  }
+  return { pairingCode };
+}
+
 export function deviceTelemetryInput(value) {
   const body = bodyObject(value);
   onlyKnownFields(body, new Set(['batteryLevel', 'batteryStatus', 'locationLat', 'locationLng', 'locationLabel']));
