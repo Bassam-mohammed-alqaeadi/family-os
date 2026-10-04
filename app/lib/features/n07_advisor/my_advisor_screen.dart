@@ -81,8 +81,7 @@ class MyAdvisorScreenState extends State<MyAdvisorScreen> {
     super.initState();
     _rules = widget.rules ?? stage1RulesEngineRuleRepository;
     _suggestions =
-        widget.suggestions ??
-        MockAiSuggestionRepository(rules: _rules);
+        widget.suggestions ?? MockAiSuggestionRepository(rules: _rules);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _load();
@@ -128,9 +127,7 @@ class MyAdvisorScreenState extends State<MyAdvisorScreen> {
 
     return Scaffold(
       backgroundColor: colors.bg,
-      appBar: AppBar(
-        title: Text(l10n.myAdvisorTitle),
-      ),
+      appBar: AppBar(title: Text(l10n.myAdvisorTitle)),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -138,106 +135,106 @@ class MyAdvisorScreenState extends State<MyAdvisorScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                BannerNote(
-                  key: MyAdvisorKeys.servesBanner,
-                  message: l10n.myAdvisorServesBanner,
-                  variant: BannerVariant.t,
-                ),
-                if (!_canEdit) ...[
-                  const SizedBox(height: 12),
                   BannerNote(
-                    key: MyAdvisorKeys.readOnlyHint,
-                    message: l10n.myAdvisorReadOnlyHint,
-                    variant: BannerVariant.a,
+                    key: MyAdvisorKeys.servesBanner,
+                    message: l10n.myAdvisorServesBanner,
+                    variant: BannerVariant.t,
                   ),
-                ],
-                const SizedBox(height: 20),
-                Text(
-                  l10n.myAdvisorSuggestionsHeading,
-                  key: MyAdvisorKeys.suggestionsSection,
-                  style: TextStyle(
-                    color: colors.ink,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.myAdvisorSuggestionsHint,
-                  style: TextStyle(color: colors.ink2, fontSize: 13),
-                ),
-                const SizedBox(height: 12),
-                if (_pending.isEmpty)
-                  Text(
-                    l10n.myAdvisorSuggestionsEmpty,
-                    style: TextStyle(color: colors.ink2, fontSize: 13.5),
-                  )
-                else
-                  Column(
-                    key: MyAdvisorKeys.suggestionsList,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (final item in _pending) ...[
-                        _SuggestionCard(
-                          item: item,
-                          canEdit: _canEdit,
-                          approveLabel: l10n.myAdvisorApprove,
-                          rejectLabel: l10n.myAdvisorReject,
-                          onApprove: () => approveSuggestion(item.id),
-                          onReject: () => rejectSuggestion(item.id),
-                        ),
-                        const SizedBox(height: 10),
-                      ],
-                    ],
-                  ),
-                const SizedBox(height: 28),
-                Text(
-                  l10n.myAdvisorMyRulesHeading,
-                  key: MyAdvisorKeys.myRulesSection,
-                  style: TextStyle(
-                    color: colors.ink,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.myAdvisorMyRulesHint,
-                  style: TextStyle(color: colors.ink2, fontSize: 13),
-                ),
-                const SizedBox(height: 12),
-                if (_canEdit) ...[
-                  RuleEditor(
-                    rules: _rules,
-                    canEdit: _canEdit,
-                    onSaved: _load,
-                  ),
+                  if (!_canEdit) ...[
+                    const SizedBox(height: 12),
+                    BannerNote(
+                      key: MyAdvisorKeys.readOnlyHint,
+                      message: l10n.myAdvisorReadOnlyHint,
+                      variant: BannerVariant.a,
+                    ),
+                  ],
                   const SizedBox(height: 20),
-                ],
-                if (_approveBlockedHint != null) ...[
-                  BannerNote(
-                    key: MyAdvisorKeys.approveForbiddenBlocked,
-                    message: l10n.ruleEditorForbiddenBlocked,
-                    variant: BannerVariant.a,
+                  Text(
+                    l10n.myAdvisorSuggestionsHeading,
+                    key: MyAdvisorKeys.suggestionsSection,
+                    style: TextStyle(
+                      color: colors.ink,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.myAdvisorSuggestionsHint,
+                    style: TextStyle(color: colors.ink2, fontSize: 13),
                   ),
                   const SizedBox(height: 12),
-                ],
-                if (_enabledRules.isEmpty)
-                  Text(
-                    l10n.myAdvisorMyRulesEmpty,
-                    style: TextStyle(color: colors.ink2, fontSize: 13.5),
-                  )
-                else
-                  Column(
-                    key: MyAdvisorKeys.rulesList,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (final rule in _enabledRules) ...[
-                        _RuleCard(rule: rule),
-                        const SizedBox(height: 10),
+                  if (_pending.isEmpty)
+                    Text(
+                      l10n.myAdvisorSuggestionsEmpty,
+                      style: TextStyle(color: colors.ink2, fontSize: 13.5),
+                    )
+                  else
+                    Column(
+                      key: MyAdvisorKeys.suggestionsList,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (final item in _pending) ...[
+                          _SuggestionCard(
+                            item: item,
+                            canEdit: _canEdit,
+                            approveLabel: l10n.myAdvisorApprove,
+                            rejectLabel: l10n.myAdvisorReject,
+                            onApprove: () => approveSuggestion(item.id),
+                            onReject: () => rejectSuggestion(item.id),
+                          ),
+                          const SizedBox(height: 10),
+                        ],
                       ],
-                    ],
+                    ),
+                  const SizedBox(height: 28),
+                  Text(
+                    l10n.myAdvisorMyRulesHeading,
+                    key: MyAdvisorKeys.myRulesSection,
+                    style: TextStyle(
+                      color: colors.ink,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.myAdvisorMyRulesHint,
+                    style: TextStyle(color: colors.ink2, fontSize: 13),
+                  ),
+                  const SizedBox(height: 12),
+                  if (_canEdit) ...[
+                    RuleEditor(
+                      rules: _rules,
+                      canEdit: _canEdit,
+                      onSaved: _load,
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                  if (_approveBlockedHint != null) ...[
+                    BannerNote(
+                      key: MyAdvisorKeys.approveForbiddenBlocked,
+                      message: l10n.ruleEditorForbiddenBlocked,
+                      variant: BannerVariant.a,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  if (_enabledRules.isEmpty)
+                    Text(
+                      l10n.myAdvisorMyRulesEmpty,
+                      style: TextStyle(color: colors.ink2, fontSize: 13.5),
+                    )
+                  else
+                    Column(
+                      key: MyAdvisorKeys.rulesList,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (final rule in _enabledRules) ...[
+                          _RuleCard(rule: rule),
+                          const SizedBox(height: 10),
+                        ],
+                      ],
+                    ),
                 ],
               ),
             ),
@@ -289,10 +286,7 @@ class _SuggestionCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 6),
-            Text(
-              s.body,
-              style: TextStyle(color: colors.ink2, fontSize: 13.5),
-            ),
+            Text(s.body, style: TextStyle(color: colors.ink2, fontSize: 13.5)),
             if (canEdit) ...[
               const SizedBox(height: 12),
               Row(
@@ -364,10 +358,7 @@ class _RuleCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 6),
-            Text(
-              body,
-              style: TextStyle(color: colors.ink2, fontSize: 13.5),
-            ),
+            Text(body, style: TextStyle(color: colors.ink2, fontSize: 13.5)),
           ],
         ),
       ),

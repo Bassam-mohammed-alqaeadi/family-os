@@ -81,37 +81,36 @@ void main() {
     expect(Entitlement.expired().isExpired, isTrue);
   });
 
-  test('fire under hostile gates + unavailable GPS still creates incident',
-      () async {
-    expect(
-      (await capabilities.get('fs001.native_gps'))!.status,
-      CapabilityStatus.notImplemented,
-    );
+  test(
+    'fire under hostile gates + unavailable GPS still creates incident',
+    () async {
+      expect(
+        (await capabilities.get('fs001.native_gps'))!.status,
+        CapabilityStatus.notImplemented,
+      );
 
-    final incident = await cross.fireChildHold(
-      childId: child,
-      deviceId: device,
-      subscriptionExpired: true,
-      quietHoursActive: true,
-      screenTimeExpired: true,
-      modesActive: true,
-      appControlLockedDown: true,
-      batteryPercent: 40,
-    );
+      final incident = await cross.fireChildHold(
+        childId: child,
+        deviceId: device,
+        subscriptionExpired: true,
+        quietHoursActive: true,
+        screenTimeExpired: true,
+        modesActive: true,
+        appControlLockedDown: true,
+        batteryPercent: 40,
+      );
 
-    expect(incident.status, SosAlertStatus.active);
-    expect(incident.locationClass, SosLocationClass.unavailable);
-    expect(incident.locationLabel, 'unavailable');
+      expect(incident.status, SosAlertStatus.active);
+      expect(incident.locationClass, SosLocationClass.unavailable);
+      expect(incident.locationLabel, 'unavailable');
 
-    final ops = await lifecycle.opsSamples(incident.id);
-    expect(
-      ops.any((s) => s.kind == SosOpsSampleKind.location),
-      isTrue,
-    );
-    final evidence = await handoff.listEvidence(incident.id);
-    expect(evidence, isNotEmpty);
-    expect(evidence.first.honesty, SosLocationHonesty.unavailable);
-  });
+      final ops = await lifecycle.opsSamples(incident.id);
+      expect(ops.any((s) => s.kind == SosOpsSampleKind.location), isTrue);
+      final evidence = await handoff.listEvidence(incident.id);
+      expect(evidence, isNotEmpty);
+      expect(evidence.first.honesty, SosLocationHonesty.unavailable);
+    },
+  );
 
   test('located fix maps to ready honesty without owning GPS', () async {
     await locStore.appendFix(
@@ -139,22 +138,25 @@ void main() {
     expect(SosBreakGlassLocationLaw.breakGlassIsFindMyChild, isFalse);
   });
 
-  test('applyFs006XsysCapabilities keeps remote_delivery MOCK-REMOTE', () async {
-    expect(
-      (await capabilities.get('fs006.permanent_exemptions'))!.status,
-      CapabilityStatus.implemented,
-    );
-    expect(
-      (await capabilities.get('fs006.location_honesty_bridge'))!.status,
-      CapabilityStatus.implemented,
-    );
-    expect(
-      (await capabilities.get('fs006.remote_delivery'))!.status,
-      CapabilityStatus.mockRemote,
-    );
-    expect(
-      (await capabilities.get('fs001.native_gps'))!.status,
-      CapabilityStatus.notImplemented,
-    );
-  });
+  test(
+    'applyFs006XsysCapabilities keeps remote_delivery MOCK-REMOTE',
+    () async {
+      expect(
+        (await capabilities.get('fs006.permanent_exemptions'))!.status,
+        CapabilityStatus.implemented,
+      );
+      expect(
+        (await capabilities.get('fs006.location_honesty_bridge'))!.status,
+        CapabilityStatus.implemented,
+      );
+      expect(
+        (await capabilities.get('fs006.remote_delivery'))!.status,
+        CapabilityStatus.mockRemote,
+      );
+      expect(
+        (await capabilities.get('fs001.native_gps'))!.status,
+        CapabilityStatus.notImplemented,
+      );
+    },
+  );
 }

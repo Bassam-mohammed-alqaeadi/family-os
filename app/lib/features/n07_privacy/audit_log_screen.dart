@@ -247,13 +247,8 @@ class _AuditLogScreenState extends State<AuditLogScreen> {
               child: Column(
                 children: [
                   for (var i = 0; i < _entries.length; i++) ...[
-                    if (i > 0)
-                      Divider(height: 1, color: colors.border),
-                    _AuditRow(
-                      entry: _entries[i],
-                      l10n: l10n,
-                      colors: colors,
-                    ),
+                    if (i > 0) Divider(height: 1, color: colors.border),
+                    _AuditRow(entry: _entries[i], l10n: l10n, colors: colors),
                   ],
                 ],
               ),
@@ -369,8 +364,9 @@ class _AuditRow extends StatelessWidget {
       AuditLogEntryKind.parentModeUnlockAttempt =>
         l10n.auditLogEntryUnlockTitle,
       AuditLogEntryKind.forgetUsed => l10n.auditLogEntryForgetTitle,
-      AuditLogEntryKind.parentalConsentPair =>
-        l10n.auditLogEntryConsentTitle(subject),
+      AuditLogEntryKind.parentalConsentPair => l10n.auditLogEntryConsentTitle(
+        subject,
+      ),
     };
   }
 
@@ -400,8 +396,8 @@ class _AuditRow extends StatelessWidget {
       AuditLogActor.mother => l10n.auditLogActorMother,
       AuditLogActor.system => l10n.auditLogActorSystem,
       AuditLogActor.childDevice => l10n.auditLogActorChildDevice(
-          _subjectLabel(),
-        ),
+        _subjectLabel(),
+      ),
     };
   }
 

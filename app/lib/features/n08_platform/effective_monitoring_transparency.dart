@@ -59,7 +59,8 @@ class _EffectiveMonitoringTransparencyState
   void initState() {
     super.initState();
     _syncBus = widget.syncBus ?? stage1DesiredMonitoringSyncBus;
-    _prefs = widget.initialPrefs ??
+    _prefs =
+        widget.initialPrefs ??
         _syncBus.prefsOf(widget.childId) ??
         DesiredMonitoringPrefs.defaults(childId: widget.childId);
     _platform = _syncBus.prefsOf(widget.childId) != null
@@ -112,8 +113,9 @@ class _EffectiveMonitoringTransparencyState
         ),
     ];
     // Active honesty: full + reportsOnly only — unavailable never listed as on.
-    final visible =
-        lines.where((e) => e.$2 != CapabilityLevel.unavailable).toList();
+    final visible = lines
+        .where((e) => e.$2 != CapabilityLevel.unavailable)
+        .toList();
 
     return Column(
       key: EffectiveMonitoringTransparencyKeys.section,

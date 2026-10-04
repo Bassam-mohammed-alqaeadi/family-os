@@ -15,9 +15,7 @@ void main() {
 
   setUp(() async {
     resetStage1IdentityRuntimeForTest();
-    rebindStage1IdentityRuntime(
-      familyContextStore: MemoryFamilyContextStore(),
-    );
+    rebindStage1IdentityRuntime(familyContextStore: MemoryFamilyContextStore());
     await FsSessionKernel.resetForTest();
     Stage1SosFinalRuntime.resetForTest();
     await FsSessionKernel.ensureOpen();
@@ -42,9 +40,7 @@ void main() {
 
   test('parent fireThrough opens durable incident with both ids', () async {
     final fire = MockSosFireService();
-    final sender = resolveParentSosSender(
-      viewedChild: ChildId('child_b'),
-    );
+    final sender = resolveParentSosSender(viewedChild: ChildId('child_b'));
     await sender.fireThrough(fire);
 
     expect(fire.fireLog.single.childId, 'child_b');

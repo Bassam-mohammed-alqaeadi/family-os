@@ -22,13 +22,13 @@ void main() {
   final adultsUrl = Uri.parse(kWebFilterPreviewFixtureUrl);
 
   WebFilterPolicy adultsOnPolicy({int version = 1}) => WebFilterPolicy(
-        level: WebFilterLevel.open,
-        categories: {
-          for (final k in WebFilterCategories.known) k: false,
-          WebFilterCategories.adults: true,
-        },
-        policyVersion: version,
-      );
+    level: WebFilterLevel.open,
+    categories: {
+      for (final k in WebFilterCategories.known) k: false,
+      WebFilterCategories.adults: true,
+    },
+    policyVersion: version,
+  );
 
   test('AC1 unit: same URL+policy → identical snapshot (shared evaluate)', () {
     final policy = adultsOnPolicy(version: 9);
@@ -62,11 +62,7 @@ void main() {
       expect(find.byKey(const Key('web_block_unlock_cta')), findsOneWidget);
 
       final repo = InMemoryWebFilterPolicyRepository({child.value: policy});
-      await _pumpFilter(
-        tester,
-        repository: repo,
-        childId: child,
-      );
+      await _pumpFilter(tester, repository: repo, childId: child);
 
       await _scrollToPreview(tester);
       await tester.enterText(
@@ -78,7 +74,10 @@ void main() {
 
       expect(find.byKey(const Key('web_filter_preview_block')), findsOneWidget);
       expect(find.byKey(verdictKey), findsOneWidget);
-      expect(find.byKey(const Key('web_block_preview_caption')), findsOneWidget);
+      expect(
+        find.byKey(const Key('web_block_preview_caption')),
+        findsOneWidget,
+      );
     },
   );
 
@@ -87,11 +86,7 @@ void main() {
       child.value: adultsOnPolicy(),
     });
 
-    await _pumpFilter(
-      tester,
-      repository: repo,
-      childId: child,
-    );
+    await _pumpFilter(tester, repository: repo, childId: child);
 
     expect(find.byKey(const Key('web_filter_preview_open')), findsNothing);
     await _scrollToPreview(tester);
@@ -112,56 +107,51 @@ void main() {
     );
   });
 
-  testWidgets(
-    'stale preview after policy edit → reopen refreshes verdict',
-    (tester) async {
-      final repo = InMemoryWebFilterPolicyRepository({
-        child.value: adultsOnPolicy(version: 1),
-      });
+  testWidgets('stale preview after policy edit → reopen refreshes verdict', (
+    tester,
+  ) async {
+    final repo = InMemoryWebFilterPolicyRepository({
+      child.value: adultsOnPolicy(version: 1),
+    });
 
-      await _pumpFilter(
-        tester,
-        repository: repo,
-        childId: child,
-      );
+    await _pumpFilter(tester, repository: repo, childId: child);
 
-      await _scrollToPreview(tester);
-      await tester.tap(find.byKey(const Key('web_filter_preview_open')));
-      await tester.pumpAndSettle();
-      expect(
-        find.byKey(const Key('web_block_verdict_deny_adults_v1')),
-        findsOneWidget,
-      );
+    await _scrollToPreview(tester);
+    await tester.tap(find.byKey(const Key('web_filter_preview_open')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('web_block_verdict_deny_adults_v1')),
+      findsOneWidget,
+    );
 
-      Navigator.of(
-        tester.element(find.byKey(const Key('web_filter_preview_block'))),
-      ).pop();
-      await tester.pumpAndSettle();
+    Navigator.of(
+      tester.element(find.byKey(const Key('web_filter_preview_block'))),
+    ).pop();
+    await tester.pumpAndSettle();
 
-      await tester.scrollUntilVisible(
-        find.byKey(const Key('web_filter_switch_adults')),
-        -300,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('web_filter_switch_adults')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('web_filter_save')));
-      await tester.pump();
-      AppToast.dismiss();
-      await tester.pump(const Duration(milliseconds: 2600));
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('web_filter_switch_adults')),
+      -300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('web_filter_switch_adults')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('web_filter_save')));
+    await tester.pump();
+    AppToast.dismiss();
+    await tester.pump(const Duration(milliseconds: 2600));
 
-      await _scrollToPreview(tester);
-      await tester.tap(find.byKey(const Key('web_filter_preview_open')));
-      await tester.pumpAndSettle();
+    await _scrollToPreview(tester);
+    await tester.tap(find.byKey(const Key('web_filter_preview_open')));
+    await tester.pumpAndSettle();
 
-      expect(
-        find.byKey(const Key('web_block_verdict_allow_none_v2')),
-        findsOneWidget,
-      );
-      expect(find.byKey(const Key('web_block_unlock_cta')), findsNothing);
-    },
-  );
+    expect(
+      find.byKey(const Key('web_block_verdict_allow_none_v2')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('web_block_unlock_cta')), findsNothing);
+  });
 }
 
 Widget _l10nApp({required Widget home}) {
@@ -189,10 +179,7 @@ Future<void> _pumpFilter(
     CurrentRole(
       notifier: roleCtrl,
       child: _l10nApp(
-        home: WebFilterScreen(
-          childId: childId,
-          repository: repository,
-        ),
+        home: WebFilterScreen(childId: childId, repository: repository),
       ),
     ),
   );

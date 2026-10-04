@@ -67,9 +67,9 @@ void main() {
     });
 
     test('RulesEngineRuleRepository is outside AI gateways', () {
-      final text =
-          File('lib/core/policy/rules_engine_rule_repository.dart')
-              .readAsStringSync();
+      final text = File(
+        'lib/core/policy/rules_engine_rule_repository.dart',
+      ).readAsStringSync();
       expect(text.contains('implements AdvisorRepository'), isFalse);
       expect(text.contains('implements InsightsRepository'), isFalse);
       expect(text.contains('implements TutorRepository'), isFalse);
@@ -88,8 +88,10 @@ void main() {
         if (entity is! File || !entity.path.endsWith('.dart')) continue;
         final text = entity.readAsStringSync();
         if (callPattern.hasMatch(text) ||
-            RegExp(r'\.execute\s*\(\s*\).*suggestion', caseSensitive: false)
-                .hasMatch(text)) {
+            RegExp(
+              r'\.execute\s*\(\s*\).*suggestion',
+              caseSensitive: false,
+            ).hasMatch(text)) {
           offenders.add(entity.path);
         }
       }

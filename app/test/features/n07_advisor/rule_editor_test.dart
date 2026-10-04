@@ -53,7 +53,9 @@ void main() {
     },
   );
 
-  testWidgets('SET-023 father can save allow-listed consequent', (tester) async {
+  testWidgets('SET-023 father can save allow-listed consequent', (
+    tester,
+  ) async {
     final rules = InMemoryRulesEngineRuleRepository();
 
     await tester.pumpWidget(

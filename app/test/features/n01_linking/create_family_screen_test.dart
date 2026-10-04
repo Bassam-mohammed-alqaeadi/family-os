@@ -195,8 +195,9 @@ void main() {
       await tester.tap(find.byKey(const Key('create_family_submit')));
       await tester.pumpAndSettle();
 
-      final semantics =
-          tester.getSemantics(find.byKey(const Key('app_error_retry')));
+      final semantics = tester.getSemantics(
+        find.byKey(const Key('app_error_retry')),
+      );
       expect(semantics.label, contains('إعادة المحاولة'));
     } finally {
       handle.dispose();

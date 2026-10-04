@@ -25,8 +25,7 @@ abstract class NotificationPrefsStore {
 
 /// In-memory prefs — share [data] across instances to simulate restart.
 final class MemoryNotificationPrefsStore implements NotificationPrefsStore {
-  MemoryNotificationPrefsStore([Map<String, String>? data])
-      : data = data ?? {};
+  MemoryNotificationPrefsStore([Map<String, String>? data]) : data = data ?? {};
 
   final Map<String, String> data;
 
@@ -106,10 +105,10 @@ final class PrefsNotificationPrefsRepository
 final class InMemoryNotificationPrefsRepository
     implements NotificationPrefsRepository {
   InMemoryNotificationPrefsRepository([Map<String, NotificationPrefs>? seed])
-      : _byMember = {
-          if (seed != null)
-            for (final e in seed.entries) e.key: e.value,
-        };
+    : _byMember = {
+        if (seed != null)
+          for (final e in seed.entries) e.key: e.value,
+      };
 
   final Map<String, NotificationPrefs> _byMember;
 

@@ -38,7 +38,10 @@ final InMemoryStudioBoardRepository stage1StudioBoardRepository =
 StudioBoardSnapshot studioBoardOneFixture() {
   return const StudioBoardSnapshot(
     suggestions: [
-      StudioSuggestion(id: 'sug-fractions', kind: StudioSuggestionKind.fractions),
+      StudioSuggestion(
+        id: 'sug-fractions',
+        kind: StudioSuggestionKind.fractions,
+      ),
     ],
     recent: [
       StudioContentItem(
@@ -54,7 +57,10 @@ StudioBoardSnapshot studioBoardOneFixture() {
 StudioBoardSnapshot studioBoardManyFixture() {
   return const StudioBoardSnapshot(
     suggestions: [
-      StudioSuggestion(id: 'sug-fractions', kind: StudioSuggestionKind.fractions),
+      StudioSuggestion(
+        id: 'sug-fractions',
+        kind: StudioSuggestionKind.fractions,
+      ),
       StudioSuggestion(id: 'sug-wird', kind: StudioSuggestionKind.quranWird),
     ],
     recent: [

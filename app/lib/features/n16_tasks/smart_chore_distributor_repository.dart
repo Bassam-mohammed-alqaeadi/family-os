@@ -15,8 +15,8 @@ final class InMemorySmartChoreDistributorRepository
   InMemorySmartChoreDistributorRepository({
     SmartChoreDistributorSnapshot? seed,
     FamilyTasksRepository? familyTasks,
-  })  : _snap = seed ?? smartChoreDistributorEmptyFixture(),
-        _familyOverride = familyTasks;
+  }) : _snap = seed ?? smartChoreDistributorEmptyFixture(),
+       _familyOverride = familyTasks;
 
   SmartChoreDistributorSnapshot _snap;
   final FamilyTasksRepository? _familyOverride;

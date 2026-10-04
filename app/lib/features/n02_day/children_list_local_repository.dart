@@ -40,8 +40,7 @@ final class LocalChildrenListRepository implements ChildrenListRepository {
   static String _policiesKey(FamilyId familyId) =>
       'shared_policies:${familyId.value}';
 
-  static String _childrenKey(FamilyId familyId) =>
-      'children:${familyId.value}';
+  static String _childrenKey(FamilyId familyId) => 'children:${familyId.value}';
 
   /// Ensures deterministic local roster seed when the family key is missing.
   Future<void> ensureSeeded(FamilyId familyId) async {
@@ -137,7 +136,10 @@ final class LocalChildrenListRepository implements ChildrenListRepository {
   }
 
   @override
-  Future<void> upsertChild(ChildrenListEntry entry, {FamilyId? familyId}) async {
+  Future<void> upsertChild(
+    ChildrenListEntry entry, {
+    FamilyId? familyId,
+  }) async {
     final id = familyId ?? ChildrenListLocalSeed.famStage1;
     final existing = await listChildren(familyId: id);
     final next = List<ChildrenListEntry>.of(existing);
@@ -151,7 +153,9 @@ final class LocalChildrenListRepository implements ChildrenListRepository {
   }
 
   @override
-  Future<SharedChildrenPolicies> loadSharedPolicies({FamilyId? familyId}) async {
+  Future<SharedChildrenPolicies> loadSharedPolicies({
+    FamilyId? familyId,
+  }) async {
     final id = familyId ?? ChildrenListLocalSeed.famStage1;
     await ensurePoliciesSeeded(familyId: id);
     final raw = await _readRaw(_policiesKey(id));
@@ -203,31 +207,27 @@ final class LocalChildrenListRepository implements ChildrenListRepository {
   }
 
   Future<void> _write(String key, String value) async {
-    await _db.insert(
-      _table,
-      {
-        'namespace': namespace,
-        'key': key,
-        'value': value,
-        'updated_at': _clock().toUtc().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: LocalConflictAlgorithm.replace,
-    );
+    await _db.insert(_table, {
+      'namespace': namespace,
+      'key': key,
+      'value': value,
+      'updated_at': _clock().toUtc().millisecondsSinceEpoch,
+    }, conflictAlgorithm: LocalConflictAlgorithm.replace);
   }
 
   static Map<String, Object?> _entryToJson(ChildrenListEntry e) => {
-        'id': e.id,
-        'displayName': e.displayName,
-        'emoji': e.emoji,
-        'swatch': e.swatch.name,
-        'ageYears': e.ageYears,
-        'locationLabel': e.locationLabel,
-        'lastSeenLabel': e.lastSeenLabel,
-        'batteryLabel': e.batteryLabel,
-        'timeLeftLabel': e.timeLeftLabel,
-        'health': e.health.name,
-        'warnRing': e.warnRing,
-      };
+    'id': e.id,
+    'displayName': e.displayName,
+    'emoji': e.emoji,
+    'swatch': e.swatch.name,
+    'ageYears': e.ageYears,
+    'locationLabel': e.locationLabel,
+    'lastSeenLabel': e.lastSeenLabel,
+    'batteryLabel': e.batteryLabel,
+    'timeLeftLabel': e.timeLeftLabel,
+    'health': e.health.name,
+    'warnRing': e.warnRing,
+  };
 
   static ChildrenListEntry _entryFromJson(Map<String, Object?> json) {
     final swatchName = json['swatch'] as String? ?? DayChildSwatch.purple.name;
@@ -255,12 +255,12 @@ final class LocalChildrenListRepository implements ChildrenListRepository {
   }
 
   static Map<String, Object?> _policiesToJson(SharedChildrenPolicies p) => {
-        'scopeAll': p.scopeAll,
-        'selectedChildIds': p.selectedChildIds,
-        'dailyCapHours': p.dailyCapHours,
-        'bedtimeLabel': p.bedtimeLabel,
-        'webFilterOn': p.webFilterOn,
-      };
+    'scopeAll': p.scopeAll,
+    'selectedChildIds': p.selectedChildIds,
+    'dailyCapHours': p.dailyCapHours,
+    'bedtimeLabel': p.bedtimeLabel,
+    'webFilterOn': p.webFilterOn,
+  };
 
   static SharedChildrenPolicies _policiesFromJson(Map<String, Object?> json) {
     final ids = json['selectedChildIds'];

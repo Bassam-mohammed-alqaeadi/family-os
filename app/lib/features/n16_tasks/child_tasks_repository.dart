@@ -55,11 +55,9 @@ final class FamilyBoundChildTasksRepository implements ChildTasksRepository {
     final filtered = assigneeNameKey == null
         ? snap.childTasks
         : snap.childTasks
-            .where((t) => t.assigneeNameKey == assigneeNameKey)
-            .toList();
-    return ChildTasksSnapshot(
-      tasks: filtered.map(_mapTask).toList(),
-    );
+              .where((t) => t.assigneeNameKey == assigneeNameKey)
+              .toList();
+    return ChildTasksSnapshot(tasks: filtered.map(_mapTask).toList());
   }
 
   ChildTaskItem _mapTask(FamilyChildTask t) {

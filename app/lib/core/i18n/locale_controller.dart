@@ -8,8 +8,8 @@ final class LocaleController extends ChangeNotifier {
   LocaleController({
     Locale initial = const Locale('ar'),
     Future<void> Function(String languageCode)? persist,
-  })  : _locale = _normalize(initial),
-        _persist = persist;
+  }) : _locale = _normalize(initial),
+       _persist = persist;
 
   static const kvNamespace = 'prefs_locale';
   static const kvKey = 'language_code';
@@ -67,8 +67,7 @@ final class CurrentLocale extends InheritedNotifier<LocaleController> {
   }) : super(notifier: controller);
 
   static LocaleController of(BuildContext context) {
-    final scope =
-        context.dependOnInheritedWidgetOfExactType<CurrentLocale>();
+    final scope = context.dependOnInheritedWidgetOfExactType<CurrentLocale>();
     assert(scope != null, 'CurrentLocale not found');
     return scope!.notifier!;
   }

@@ -39,7 +39,10 @@ void main() {
 
     expect(find.byKey(IndividualTimelineKeys.body), findsOneWidget);
     expect(find.byKey(IndividualTimelineKeys.todayThread), findsOneWidget);
-    expect(find.byKey(IndividualTimelineKeys.stop('stop-school')), findsOneWidget);
+    expect(
+      find.byKey(IndividualTimelineKeys.stop('stop-school')),
+      findsOneWidget,
+    );
     expect(find.byKey(IndividualTimelineKeys.empty), findsNothing);
     expect(find.textContaining('Child one'), findsWidgets);
   });
@@ -53,10 +56,22 @@ void main() {
     expect(find.byKey(IndividualTimelineKeys.body), findsOneWidget);
     expect(find.byKey(IndividualTimelineKeys.insightCard), findsOneWidget);
     expect(find.byKey(IndividualTimelineKeys.todayHeading), findsOneWidget);
-    expect(find.byKey(IndividualTimelineKeys.stop('stop-school')), findsOneWidget);
-    expect(find.byKey(IndividualTimelineKeys.stop('stop-fractions')), findsOneWidget);
-    expect(find.byKey(IndividualTimelineKeys.stop('stop-arrived')), findsOneWidget);
-    expect(find.byKey(IndividualTimelineKeys.stop('stop-sleep')), findsOneWidget);
+    expect(
+      find.byKey(IndividualTimelineKeys.stop('stop-school')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(IndividualTimelineKeys.stop('stop-fractions')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(IndividualTimelineKeys.stop('stop-arrived')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(IndividualTimelineKeys.stop('stop-sleep')),
+      findsOneWidget,
+    );
     expect(find.text('Cross-domain link'), findsOneWidget);
     expect(find.text('Discuss with advisor'), findsOneWidget);
     expect(find.textContaining('School mode active'), findsOneWidget);
@@ -111,10 +126,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(IndividualTimelineKeys.discussCta));
     await tester.pump();
-    expect(
-      find.textContaining('Partner or Full permission'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('Partner or Full permission'), findsOneWidget);
     AppToast.dismiss();
     await tester.pumpAndSettle();
   });

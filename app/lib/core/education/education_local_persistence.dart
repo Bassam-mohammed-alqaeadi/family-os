@@ -11,7 +11,7 @@ abstract final class EducationLocalPersistence {
   EducationLocalPersistence._();
 
   static Future<LocalLearningAssignmentRepository>
-      openAssignmentRepository() async {
+  openAssignmentRepository() async {
     await FsSessionKernel.ensureOpen();
     if (FsSessionKernel.sqliteFallbackToMemory) {
       throw StateError(

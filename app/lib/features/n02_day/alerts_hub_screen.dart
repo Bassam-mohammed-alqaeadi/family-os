@@ -101,9 +101,9 @@ class AlertsHubScreenState extends State<AlertsHubScreen> {
   bool get _isParent => _role == AppRole.father || _role == AppRole.mother;
 
   String get _prefsMemberId => switch (_role) {
-        AppRole.mother => 'mother',
-        AppRole.father || AppRole.child => 'father',
-      };
+    AppRole.mother => 'mother',
+    AppRole.father || AppRole.child => 'father',
+  };
 
   AlertsHubRepository get _repo {
     if (widget.repository != null) return widget.repository!;

@@ -97,12 +97,12 @@ final class FamilyDataLifecycleService extends ChangeNotifier {
     WipeJob? initialJob,
     DateTime Function()? clock,
     String Function()? idFactory,
-  })  : _memory = memory ?? MemoryAdvisorMemoryStore(),
-        _chat = chat ?? MemoryChatMockStore(),
-        _audit = audit ?? AuditAppend(),
-        _job = initialJob,
-        _clock = clock ?? DateTime.now,
-        _idFactory = idFactory ?? _defaultWipeId;
+  }) : _memory = memory ?? MemoryAdvisorMemoryStore(),
+       _chat = chat ?? MemoryChatMockStore(),
+       _audit = audit ?? AuditAppend(),
+       _job = initialJob,
+       _clock = clock ?? DateTime.now,
+       _idFactory = idFactory ?? _defaultWipeId;
 
   static String _defaultWipeId() =>
       'wipe-${DateTime.now().toUtc().microsecondsSinceEpoch}';
@@ -124,11 +124,12 @@ final class FamilyDataLifecycleService extends ChangeNotifier {
   /// Clears advisor memory only. Never touches chat or audit entries.
   Future<ForgetResult> forgetAdvisorMemory({required AppRole actor}) async {
     if (!canRunFamilyDataLifecycle(actor)) {
-      _audit.add(
-        '403 ADVISOR_FORGET denied actor=${actor.name}',
-      );
+      _audit.add('403 ADVISOR_FORGET denied actor=${actor.name}');
       return ForgetDenied(
-        FamilyDataLifecycleDenied(actor: actor, message: 'ADVISOR_FORGET denied'),
+        FamilyDataLifecycleDenied(
+          actor: actor,
+          message: 'ADVISOR_FORGET denied',
+        ),
       );
     }
     await _memory.clear();
@@ -139,9 +140,7 @@ final class FamilyDataLifecycleService extends ChangeNotifier {
   /// Schedules wipe with 7-day regret window and appends audit immediately.
   Future<WipeScheduleResult> scheduleWipe({required AppRole actor}) async {
     if (!canRunFamilyDataLifecycle(actor)) {
-      _audit.add(
-        '403 FAMILY_WIPE schedule denied actor=${actor.name}',
-      );
+      _audit.add('403 FAMILY_WIPE schedule denied actor=${actor.name}');
       return WipeScheduleDenied(
         FamilyDataLifecycleDenied(
           actor: actor,
@@ -172,9 +171,7 @@ final class FamilyDataLifecycleService extends ChangeNotifier {
   /// Cancels pending wipe within the 7-day regret window.
   Future<WipeCancelResult> cancelWipe({required AppRole actor}) async {
     if (!canRunFamilyDataLifecycle(actor)) {
-      _audit.add(
-        '403 FAMILY_WIPE cancel denied actor=${actor.name}',
-      );
+      _audit.add('403 FAMILY_WIPE cancel denied actor=${actor.name}');
       return WipeCancelDenied(
         FamilyDataLifecycleDenied(
           actor: actor,
@@ -192,9 +189,7 @@ final class FamilyDataLifecycleService extends ChangeNotifier {
     }
     final cancelled = job.copyWith(status: WipeJobStatus.cancelled);
     _job = cancelled;
-    _audit.add(
-      'FAMILY_WIPE_CANCELLED id=${cancelled.id} actor=${actor.name}',
-    );
+    _audit.add('FAMILY_WIPE_CANCELLED id=${cancelled.id} actor=${actor.name}');
     notifyListeners();
     return WipeCancelOk(cancelled);
   }
@@ -203,6 +198,6 @@ final class FamilyDataLifecycleService extends ChangeNotifier {
 /// Stage-1 shared lifecycle service.
 final FamilyDataLifecycleService stage1FamilyDataLifecycle =
     FamilyDataLifecycleService(
-  memory: stage1AdvisorMemoryStore,
-  chat: stage1ChatMockStore,
-);
+      memory: stage1AdvisorMemoryStore,
+      chat: stage1ChatMockStore,
+    );

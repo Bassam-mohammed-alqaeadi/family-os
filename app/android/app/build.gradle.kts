@@ -24,9 +24,7 @@ android {
         applicationId = "com.familyos.family_os"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        // AES/GCM keys in Android Keystore use KeyGenParameterSpec (API 23+).
-        // A lower floor would turn Child Mode setup into a runtime failure.
-        minSdk = 23
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -39,15 +37,6 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
-}
-
-dependencies {
-    implementation("androidx.camera:camera-camera2:1.4.2")
-    implementation("androidx.camera:camera-core:1.4.2")
-    implementation("androidx.camera:camera-lifecycle:1.4.2")
-    implementation("androidx.camera:camera-view:1.4.2")
-    implementation("com.google.mlkit:barcode-scanning:17.3.0")
-    implementation("com.google.zxing:core:3.5.3")
 }
 
 flutter {

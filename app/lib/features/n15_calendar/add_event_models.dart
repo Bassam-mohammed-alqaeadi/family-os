@@ -14,10 +14,7 @@ enum AddEventReminder { atTime, fifteenMin, oneHour, oneDay }
 
 @immutable
 final class AddEventChild {
-  const AddEventChild({
-    required this.id,
-    required this.nameKey,
-  });
+  const AddEventChild({required this.id, required this.nameKey});
 
   final String id;
 

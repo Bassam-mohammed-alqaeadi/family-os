@@ -14,7 +14,9 @@ import 'package:family_os/features/n10_emergency/child_sos_in_progress_screen.da
 
 void main() {
   tearDown(AppToast.dismiss);
-  testWidgets('child — active SOS body + P-4 banner never gated', (tester) async {
+  testWidgets('child — active SOS body + P-4 banner never gated', (
+    tester,
+  ) async {
     final repo = InMemorySosAlertRepository(
       initialActive: InMemorySosAlertRepository.demoActive(
         childId: 'child_test_a',

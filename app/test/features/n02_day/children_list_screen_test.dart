@@ -57,14 +57,8 @@ void main() {
 
     expect(find.byKey(ChildrenListKeys.list), findsOneWidget);
     expect(find.byKey(ChildrenListKeys.addChild), findsOneWidget);
-    expect(
-      find.byKey(ChildrenListKeys.childRow('child_a')),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(ChildrenListKeys.childRow('child_b')),
-      findsOneWidget,
-    );
+    expect(find.byKey(ChildrenListKeys.childRow('child_a')), findsOneWidget);
+    expect(find.byKey(ChildrenListKeys.childRow('child_b')), findsOneWidget);
     expect(find.text('ممتاز'), findsWidgets);
     expect(find.text('قد ينقطع'), findsOneWidget);
     expect(find.byKey(ChildrenListKeys.sharedPoliciesCard), findsOneWidget);
@@ -239,10 +233,7 @@ void main() {
     expect(find.byKey(ChildrenListKeys.localDemoBanner), findsOneWidget);
     expect(find.textContaining('تجريبي'), findsOneWidget);
     expect(find.textContaining('GPS'), findsOneWidget);
-    expect(
-      find.byKey(ChildrenListKeys.childRow('child_a')),
-      findsOneWidget,
-    );
+    expect(find.byKey(ChildrenListKeys.childRow('child_a')), findsOneWidget);
   });
 
   testWidgets(
@@ -272,10 +263,7 @@ void main() {
       addTearDown(runtime.dispose);
 
       await tester.pumpWidget(
-        _app(
-          runtime: runtime,
-          child: const ChildrenListScreen(),
-        ),
+        _app(runtime: runtime, child: const ChildrenListScreen()),
       );
       await tester.pumpAndSettle();
 
@@ -331,7 +319,8 @@ Widget _app({required Widget child, AppRuntime? runtime}) {
   return AppScope(runtime: runtime, child: app);
 }
 
-final class _StaticIdentitySource extends ChangeNotifier implements IdentitySource {
+final class _StaticIdentitySource extends ChangeNotifier
+    implements IdentitySource {
   _StaticIdentitySource(this._value);
 
   final IdentitySnapshot _value;
@@ -343,7 +332,8 @@ final class _StaticIdentitySource extends ChangeNotifier implements IdentitySour
   Future<IdentitySnapshot> refresh() async => _value;
 }
 
-final class _StaticRosterSource extends ChangeNotifier implements FamilyRosterSource {
+final class _StaticRosterSource extends ChangeNotifier
+    implements FamilyRosterSource {
   _StaticRosterSource(this._value);
 
   final FamilyRosterSnapshot _value;

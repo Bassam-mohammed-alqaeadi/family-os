@@ -5,10 +5,7 @@ enum CreateAssignmentPath { homework, skillGap, familyChallenge }
 
 @immutable
 final class CreateAssignmentChild {
-  const CreateAssignmentChild({
-    required this.id,
-    required this.nameKey,
-  });
+  const CreateAssignmentChild({required this.id, required this.nameKey});
 
   final String id;
 

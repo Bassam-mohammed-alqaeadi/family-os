@@ -35,7 +35,7 @@ abstract class RulesEngineRuleRepository {
 final class InMemoryRulesEngineRuleRepository
     implements RulesEngineRuleRepository {
   InMemoryRulesEngineRuleRepository({List<RulesEngineRule>? seed})
-      : _rules = List<RulesEngineRule>.from(seed ?? const []);
+    : _rules = List<RulesEngineRule>.from(seed ?? const []);
 
   final List<RulesEngineRule> _rules;
   var _seq = 0;
@@ -47,9 +47,7 @@ final class InMemoryRulesEngineRuleRepository
 
   @override
   Future<List<RulesEngineRule>> listEnabled() {
-    return SynchronousFuture(
-      List.unmodifiable(_rules.where((r) => r.enabled)),
-    );
+    return SynchronousFuture(List.unmodifiable(_rules.where((r) => r.enabled)));
   }
 
   @override
@@ -88,13 +86,13 @@ final class InMemoryRulesEngineRuleRepository
   }
 
   @override
-  Future<RulesEngineRule> addFromApprovedSuggestion(AiSuggestion suggestion) async {
+  Future<RulesEngineRule> addFromApprovedSuggestion(
+    AiSuggestion suggestion,
+  ) async {
     final proposed = suggestion.proposedConsequentIds;
     validate(proposed);
 
-    final existing = _rules.where(
-      (r) => r.sourceSuggestionId == suggestion.id,
-    );
+    final existing = _rules.where((r) => r.sourceSuggestionId == suggestion.id);
     if (existing.isNotEmpty) {
       return existing.first;
     }

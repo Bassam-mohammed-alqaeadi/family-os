@@ -148,9 +148,7 @@ class _AddFromSourceScreenState extends State<AddFromSourceScreen> {
       isScrollControlled: true,
       backgroundColor: colors.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(radii.card),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(radii.card)),
       ),
       builder: (_) => StatefulBuilder(
         builder: (sheetContext, setSheetState) {
@@ -474,7 +472,7 @@ class _PdfHeroCard extends StatelessWidget {
       child: Material(
         key: cardKey,
         color: Colors.transparent,
-          child: InkWell(
+        child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(radii.card),
           child: Ink(
@@ -494,7 +492,11 @@ class _PdfHeroCard extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  Icon(Icons.picture_as_pdf_outlined, size: 36, color: colors.p700),
+                  Icon(
+                    Icons.picture_as_pdf_outlined,
+                    size: 36,
+                    color: colors.p700,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(

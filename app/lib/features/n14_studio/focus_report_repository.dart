@@ -48,9 +48,7 @@ final class InMemoryFocusReportRepository implements FocusReportRepository {
   Future<FocusReportSnapshot> rewardSelfDiscipline() async {
     final note = _snap.advisorNote;
     if (_snap.child == null || note == null) return _copy(_snap);
-    _snap = _snap.copyWith(
-      advisorNote: note.copyWith(rewardSent: true),
-    );
+    _snap = _snap.copyWith(advisorNote: note.copyWith(rewardSent: true));
     return _copy(_snap);
   }
 

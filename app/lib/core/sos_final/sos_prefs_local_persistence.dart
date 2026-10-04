@@ -11,8 +11,7 @@ import 'package:family_os/core/policy/web_unlock_service.dart';
 import 'package:family_os/features/n04_web_filter/web_filter_runtime.dart';
 
 /// Shared KV adapter for SOS prefs + web unlock request queue residuals.
-final class LocalStringKvStore
-    implements SosLadderStore, WebUnlockPrefsStore {
+final class LocalStringKvStore implements SosLadderStore, WebUnlockPrefsStore {
   LocalStringKvStore(this._db, {required this.namespace});
 
   final FamilyLocalDatabase _db;
@@ -33,16 +32,12 @@ final class LocalStringKvStore
 
   @override
   Future<void> write(String key, String value) async {
-    await _db.insert(
-      _table,
-      {
-        'namespace': namespace,
-        'key': key,
-        'value': value,
-        'updated_at': DateTime.now().toUtc().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: LocalConflictAlgorithm.replace,
-    );
+    await _db.insert(_table, {
+      'namespace': namespace,
+      'key': key,
+      'value': value,
+      'updated_at': DateTime.now().toUtc().millisecondsSinceEpoch,
+    }, conflictAlgorithm: LocalConflictAlgorithm.replace);
   }
 }
 

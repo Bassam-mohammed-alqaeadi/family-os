@@ -19,7 +19,8 @@ import 'package:family_os/features/n02_day/day_child_mock.dart';
 import 'package:family_os/foundation_gate/foundation_gate_copy.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
-export 'package:family_os/core/i18n/numeral_format.dart' show toEasternDigits, formatAppInt;
+export 'package:family_os/core/i18n/numeral_format.dart'
+    show toEasternDigits, formatAppInt;
 
 /// Character emoji options (prototype FAT-003 picker).
 const List<String> kAddChildCharacters = ['🦁', '🐱', '🐼', '🦊', '🐰'];
@@ -94,19 +95,19 @@ class _AddChildScreenState extends State<AddChildScreen> {
   bool get _canContinue => _nameController.text.trim().isNotEmpty;
 
   String get _themeColor => switch (_colorIndex) {
-        0 => 'purple',
-        1 => 'sky',
-        2 => 'amber',
-        3 => 'coral',
-        4 => 'mint',
-        _ => 'teal',
-      };
+    0 => 'purple',
+    1 => 'sky',
+    2 => 'amber',
+    3 => 'coral',
+    4 => 'mint',
+    _ => 'teal',
+  };
 
   DayChildSwatch get _previewSwatch => switch (_colorIndex % 3) {
-        0 => DayChildSwatch.purple,
-        1 => DayChildSwatch.sky,
-        _ => DayChildSwatch.amber,
-      };
+    0 => DayChildSwatch.purple,
+    1 => DayChildSwatch.sky,
+    _ => DayChildSwatch.amber,
+  };
 
   Future<void> _continue() async {
     if (!_canContinue || _submitting) return;
@@ -123,13 +124,20 @@ class _AddChildScreenState extends State<AddChildScreen> {
       await _continuePreview();
       return;
     }
-    if (appRuntime == null || familyId == null || !appRuntime.identity.value.isRemoteAuthoritative) {
-      AppToast.show(context, message: AppLocalizations.of(context).settingsPersistError);
+    if (appRuntime == null ||
+        familyId == null ||
+        !appRuntime.identity.value.isRemoteAuthoritative) {
+      AppToast.show(
+        context,
+        message: AppLocalizations.of(context).settingsPersistError,
+      );
       return;
     }
 
     final name = _nameController.text.trim();
-    if (_idempotencyKey == null || _submittedName != name || _submittedAge != _age) {
+    if (_idempotencyKey == null ||
+        _submittedName != name ||
+        _submittedAge != _age) {
       _idempotencyKey = newFoundationGateIdempotencyKey();
       _submittedName = name;
       _submittedAge = _age;
@@ -149,28 +157,43 @@ class _AddChildScreenState extends State<AddChildScreen> {
     setState(() => _submitting = false);
     final childId = result.childId;
     if (childId == null) {
-      AppToast.show(context, message: AppLocalizations.of(context).settingsPersistError);
+      AppToast.show(
+        context,
+        message: AppLocalizations.of(context).settingsPersistError,
+      );
       return;
     }
 
     // A profile exists now; linking stays an explicit pending setup journey.
     // No device, telemetry or policy result is fabricated by this hand-off.
-    context.go('/scr-fat-004?childId=${Uri.encodeComponent(childId)}&source=server');
+    context.go(
+      '/scr-fat-004?childId=${Uri.encodeComponent(childId)}&source=server',
+    );
   }
 
   Future<void> _continuePreview() async {
-    final repo = widget.managementRepository ?? stage1ChildDeviceManagementRepository;
-    final IdentityRuntime? runtime = repo is RuntimeChildDeviceManagementRepository
+    final repo =
+        widget.managementRepository ?? stage1ChildDeviceManagementRepository;
+    final IdentityRuntime? runtime =
+        repo is RuntimeChildDeviceManagementRepository
         ? repo.runtime
         : CurrentIdentity.maybeOf(context);
     if (runtime != null) {
       try {
-        repo.createChild(familyId: runtime.activeFamilyId, childId: ChildId(_alias));
+        repo.createChild(
+          familyId: runtime.activeFamilyId,
+          childId: ChildId(_alias),
+        );
       } on IdentityInvariantViolation {
-        if (mounted) AppToast.show(context, message: AppLocalizations.of(context).settingsPersistError);
+        if (mounted)
+          AppToast.show(
+            context,
+            message: AppLocalizations.of(context).settingsPersistError,
+          );
         return;
       }
-      final roster = widget.childrenListRepository ?? stage1ChildrenListRepository;
+      final roster =
+          widget.childrenListRepository ?? stage1ChildrenListRepository;
       await roster.upsertChild(
         ChildrenListEntry(
           id: _alias,
@@ -216,7 +239,8 @@ class _AddChildScreenState extends State<AddChildScreen> {
     final radii = Theme.of(context).extension<FamilyRadii>()!;
     final kidColors = _kidColors(colors);
     final usesRemoteProfileCreation =
-        AppScope.maybeOf(context)?.identity.value.isRemoteAuthoritative ?? false;
+        AppScope.maybeOf(context)?.identity.value.isRemoteAuthoritative ??
+        false;
 
     return Scaffold(
       backgroundColor: colors.bg,
@@ -380,9 +404,13 @@ class _AddChildScreenState extends State<AddChildScreen> {
             const SizedBox(height: 10),
             if (usesRemoteProfileCreation)
               Semantics(
-                label: FoundationGateCopy.of(context).serverAssignedProfileIdentifier,
+                label: FoundationGateCopy.of(
+                  context,
+                ).serverAssignedProfileIdentifier,
                 child: Text(
-                  FoundationGateCopy.of(context).serverAssignedProfileIdentifier,
+                  FoundationGateCopy.of(
+                    context,
+                  ).serverAssignedProfileIdentifier,
                   key: const Key('add_child_server_assigned_id'),
                   textAlign: TextAlign.center,
                   style: TextStyle(

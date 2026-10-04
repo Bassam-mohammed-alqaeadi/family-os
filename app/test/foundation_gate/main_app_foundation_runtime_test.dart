@@ -26,84 +26,95 @@ const _createdChildBody =
     '{"child":{"id":"$_childId","displayName":"Synthetic child","ageYears":8,"avatarEmoji":"🧒","themeColor":"teal","version":1,"createdAt":"2026-10-03T10:00:00.000Z","updatedAt":"2026-10-03T10:00:00.000Z"}}';
 
 void main() {
-  test('main runtime exposes only remote family authority and passes presentation fields to the server', () async {
-    final identity = FakeIdentity(subject: 'firebase-subject');
-    final discoveryTransport = FakeTransport(
-      const FoundationGateHttpResponse(statusCode: 200, body: _familyBody),
-    );
-    final rosterTransport = FakeTransport(
-      const FoundationGateHttpResponse(statusCode: 200, body: _emptyRosterBody),
-    )..postResponse = const FoundationGateHttpResponse(
-        statusCode: 201,
-        body: _createdChildBody,
+  test(
+    'main runtime exposes only remote family authority and passes presentation fields to the server',
+    () async {
+      final identity = FakeIdentity(subject: 'firebase-subject');
+      final discoveryTransport = FakeTransport(
+        const FoundationGateHttpResponse(statusCode: 200, body: _familyBody),
       );
-    final configuration = FoundationGateConfiguration.fromStagingApiOrigin(
-      Uri.parse('https://staging.example.test'),
-    );
-    final runtime = MainAppFoundationRuntime(
-      identity: identity,
-      controller: FoundationGateSessionController(
+      final rosterTransport =
+          FakeTransport(
+              const FoundationGateHttpResponse(
+                statusCode: 200,
+                body: _emptyRosterBody,
+              ),
+            )
+            ..postResponse = const FoundationGateHttpResponse(
+              statusCode: 201,
+              body: _createdChildBody,
+            );
+      final configuration = FoundationGateConfiguration.fromStagingApiOrigin(
+        Uri.parse('https://staging.example.test'),
+      );
+      final runtime = MainAppFoundationRuntime(
         identity: identity,
-        discoveryApi: FamilyDiscoveryApiClient(
+        controller: FoundationGateSessionController(
+          identity: identity,
+          discoveryApi: FamilyDiscoveryApiClient(
+            configuration: configuration,
+            transport: discoveryTransport,
+          ),
+          rosterApi: ChildrenRosterApiClient(
+            configuration: configuration,
+            transport: rosterTransport,
+          ),
+        ),
+        deviceApi: FamilyDeviceApiClient(
           configuration: configuration,
-          transport: discoveryTransport,
+          transport: FakeTransport(
+            const FoundationGateHttpResponse(
+              statusCode: 200,
+              body: '{"devices":[]}',
+            ),
+          ),
         ),
-        rosterApi: ChildrenRosterApiClient(
-          configuration: configuration,
-          transport: rosterTransport,
+      );
+      addTearDown(runtime.dispose);
+
+      final identitySource = MainAppFoundationIdentitySource(runtime);
+      final rosterSource = RemoteFamilyRosterSource(runtime);
+      final childProfiles = RemoteFamilyChildProfileSource(runtime);
+      addTearDown(identitySource.dispose);
+      addTearDown(rosterSource.dispose);
+
+      final snapshot = await identitySource.signIn(
+        email: 'guardian@example.test',
+        password: 'synthetic-password',
+      );
+      expect(snapshot.authority, IdentityAuthority.remoteAuthoritative);
+      expect(snapshot.accountId?.value, 'firebase-subject');
+      expect(snapshot.familyId?.value, _familyId);
+      expect(snapshot.isPrimaryOwner, isTrue);
+
+      final roster = await rosterSource.load(FamilyId(_familyId));
+      expect(roster.isAuthoritative, isTrue);
+      expect(roster.children, isEmpty);
+
+      rosterTransport.response = const FoundationGateHttpResponse(
+        statusCode: 200,
+        body: _rosterBody,
+      );
+      final result = await childProfiles.create(
+        familyId: FamilyId(_familyId),
+        idempotencyKey: _idempotencyKey,
+        draft: const FamilyChildProfileDraft(
+          displayName: 'Synthetic child',
+          ageYears: 8,
+          avatarEmoji: '🧒',
+          themeColor: 'teal',
         ),
-      ),
-      deviceApi: FamilyDeviceApiClient(
-        configuration: configuration,
-        transport: FakeTransport(
-          const FoundationGateHttpResponse(statusCode: 200, body: '{"devices":[]}'),
-        ),
-      ),
-    );
-    addTearDown(runtime.dispose);
+      );
 
-    final identitySource = MainAppFoundationIdentitySource(runtime);
-    final rosterSource = RemoteFamilyRosterSource(runtime);
-    final childProfiles = RemoteFamilyChildProfileSource(runtime);
-    addTearDown(identitySource.dispose);
-    addTearDown(rosterSource.dispose);
-
-    final snapshot = await identitySource.signIn(
-      email: 'guardian@example.test',
-      password: 'synthetic-password',
-    );
-    expect(snapshot.authority, IdentityAuthority.remoteAuthoritative);
-    expect(snapshot.accountId?.value, 'firebase-subject');
-    expect(snapshot.familyId?.value, _familyId);
-    expect(snapshot.isPrimaryOwner, isTrue);
-
-    final roster = await rosterSource.load(FamilyId(_familyId));
-    expect(roster.isAuthoritative, isTrue);
-    expect(roster.children, isEmpty);
-
-    rosterTransport.response = const FoundationGateHttpResponse(
-      statusCode: 200,
-      body: _rosterBody,
-    );
-    final result = await childProfiles.create(
-      familyId: FamilyId(_familyId),
-      idempotencyKey: _idempotencyKey,
-      draft: const FamilyChildProfileDraft(
-        displayName: 'Synthetic child',
-        ageYears: 8,
-        avatarEmoji: '🧒',
-        themeColor: 'teal',
-      ),
-    );
-
-    expect(result.childId, _childId);
-    expect(jsonDecode(rosterTransport.postedBody!), {
-      'displayName': 'Synthetic child',
-      'ageYears': 8,
-      'avatarEmoji': '🧒',
-      'themeColor': 'teal',
-    });
-    expect(rosterSource.value.children.single.avatarEmoji, '🧒');
-    expect(rosterSource.value.children.single.themeColor, 'teal');
-  });
+      expect(result.childId, _childId);
+      expect(jsonDecode(rosterTransport.postedBody!), {
+        'displayName': 'Synthetic child',
+        'ageYears': 8,
+        'avatarEmoji': '🧒',
+        'themeColor': 'teal',
+      });
+      expect(rosterSource.value.children.single.avatarEmoji, '🧒');
+      expect(rosterSource.value.children.single.themeColor, 'teal');
+    },
+  );
 }

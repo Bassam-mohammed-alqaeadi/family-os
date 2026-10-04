@@ -255,17 +255,17 @@ class _StudioCameraCaptureScreenState extends State<StudioCameraCaptureScreen> {
 
     return switch (_status!) {
       CameraPermissionStatus.granted => _CaptureBody(
-          capturing: _capturing,
-          isObserver: _isObserverMother,
-          onCapture: _onCapture,
-        ),
+        capturing: _capturing,
+        isObserver: _isObserverMother,
+        onCapture: _onCapture,
+      ),
       CameraPermissionStatus.denied => _RepairBody(
-          onOpenSettings: _onOpenSettings,
-          onRetryRequest: _onRequestThenRefresh,
-        ),
+        onOpenSettings: _onOpenSettings,
+        onRetryRequest: _onRequestThenRefresh,
+      ),
       CameraPermissionStatus.permanentlyDenied => _PermanentBody(
-          onOpenSettings: _onOpenSettings,
-        ),
+        onOpenSettings: _onOpenSettings,
+      ),
     };
   }
 }

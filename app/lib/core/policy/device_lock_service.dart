@@ -14,9 +14,7 @@ const List<String> kDeviceLockExemptSurfaces = ['chat', 'quran', 'sos'];
 /// Who issues a lock/unlock command (SET-009 / ADR-035).
 @immutable
 final class DeviceLockActor {
-  const DeviceLockActor.father()
-      : role = AppRole.father,
-        motherLevel = null;
+  const DeviceLockActor.father() : role = AppRole.father, motherLevel = null;
 
   const DeviceLockActor.mother(this.motherLevel) : role = AppRole.mother;
 
@@ -58,10 +56,7 @@ sealed class DeviceLockCommandResult {
 }
 
 final class DeviceLockCommandOk extends DeviceLockCommandResult {
-  const DeviceLockCommandOk(
-    this.state, {
-    this.superseded = false,
-  });
+  const DeviceLockCommandOk(this.state, {this.superseded = false});
 
   final DeviceLockState state;
   final bool superseded;
@@ -76,10 +71,7 @@ final class DeviceLockCommandDenied extends DeviceLockCommandResult {
 /// Mother-facing supersession notice (father unlocked after mother lock).
 @immutable
 final class DeviceLockSupersessionEvent {
-  const DeviceLockSupersessionEvent({
-    required this.childId,
-    required this.at,
-  });
+  const DeviceLockSupersessionEvent({required this.childId, required this.at});
 
   final ChildId childId;
   final DateTime at;
@@ -145,12 +137,12 @@ final class DeviceLockService extends ChangeNotifier {
     DeviceLockNotifyBus? notifyBus,
     DateTime Function()? clock,
     Map<String, DeviceLockState>? memorySeed,
-  })  : _store = store ?? MemoryDeviceLockPrefsStore(),
-        _audit = audit ?? AuditAppend(),
-        _bus = notifyBus ?? DeviceLockNotifyBus(),
-        _clock = clock ?? DateTime.now,
-        _memoryOnly = memorySeed != null,
-        _memory = memorySeed ?? {};
+  }) : _store = store ?? MemoryDeviceLockPrefsStore(),
+       _audit = audit ?? AuditAppend(),
+       _bus = notifyBus ?? DeviceLockNotifyBus(),
+       _clock = clock ?? DateTime.now,
+       _memoryOnly = memorySeed != null,
+       _memory = memorySeed ?? {};
 
   /// Pure in-memory alternate (no prefs) for unit tests.
   factory DeviceLockService.inMemory({
@@ -224,9 +216,7 @@ final class DeviceLockService extends ChangeNotifier {
         'DENIED device_lock lock actor=${actor.auditLabel} '
         'child=${childId.value}',
       );
-      return DeviceLockCommandDenied(
-        'lock denied for ${actor.auditLabel}',
-      );
+      return DeviceLockCommandDenied('lock denied for ${actor.auditLabel}');
     }
 
     final previous = await load(childId);
@@ -273,9 +263,7 @@ final class DeviceLockService extends ChangeNotifier {
         'DENIED device_lock unlock actor=${actor.auditLabel} '
         'child=${childId.value} lockedBy=${previous.lockedBy?.name}',
       );
-      return DeviceLockCommandDenied(
-        'unlock denied for ${actor.auditLabel}',
-      );
+      return DeviceLockCommandDenied('unlock denied for ${actor.auditLabel}');
     }
 
     final now = _clock().toUtc();
@@ -283,20 +271,17 @@ final class DeviceLockService extends ChangeNotifier {
     await _persist(next);
 
     final motherLocked =
-        previous.lockedBy == DeviceLockedBy.mother && actor.role == AppRole.father;
+        previous.lockedBy == DeviceLockedBy.mother &&
+        actor.role == AppRole.father;
 
-    _audit.add(
-      'UNLOCK actor=${actor.auditLabel} child=${childId.value}',
-    );
+    _audit.add('UNLOCK actor=${actor.auditLabel} child=${childId.value}');
 
     if (motherLocked) {
       _audit.add(
         'SUPERSESSION father unlock supersedes mother lock '
         'child=${childId.value}',
       );
-      _bus.publish(
-        DeviceLockSupersessionEvent(childId: childId, at: now),
-      );
+      _bus.publish(DeviceLockSupersessionEvent(childId: childId, at: now));
     }
 
     notifyListeners();

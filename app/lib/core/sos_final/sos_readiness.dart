@@ -6,12 +6,7 @@ import 'package:family_os/core/policy/sos_ladder.dart';
 import 'package:family_os/core/policy/sos_settings.dart';
 
 /// OD-21 readiness capability class (matches sos_final vocabulary).
-enum SosReadinessClass {
-  available,
-  degraded,
-  unavailable,
-  notConfigured,
-}
+enum SosReadinessClass { available, degraded, unavailable, notConfigured }
 
 @immutable
 final class SosReadinessRow {
@@ -28,10 +23,7 @@ final class SosReadinessRow {
 
 @immutable
 final class SosReadinessSnapshot {
-  const SosReadinessSnapshot({
-    required this.rows,
-    required this.checkedAt,
-  });
+  const SosReadinessSnapshot({required this.rows, required this.checkedAt});
 
   final List<SosReadinessRow> rows;
   final DateTime checkedAt;
@@ -48,12 +40,15 @@ final class SosReadinessSnapshot {
     final push = byId('push_alerts');
     final sms = byId('sms_fallback');
     final call = byId('call_fallback');
-    final pushBad = push == null ||
+    final pushBad =
+        push == null ||
         push.klass == SosReadinessClass.unavailable ||
         push.klass == SosReadinessClass.notConfigured;
-    final smsOk = sms?.klass == SosReadinessClass.available ||
+    final smsOk =
+        sms?.klass == SosReadinessClass.available ||
         sms?.klass == SosReadinessClass.degraded;
-    final callOk = call?.klass == SosReadinessClass.available ||
+    final callOk =
+        call?.klass == SosReadinessClass.available ||
         call?.klass == SosReadinessClass.degraded;
     if (pushBad && !smsOk && !callOk) return false;
 
@@ -102,24 +97,26 @@ abstract final class SosReadinessEvaluator {
     final backups = input.ladder.backups.length;
     final rung1Ok = input.ladder.presentParentIds.isNotEmpty;
 
-    final (SosReadinessClass pushClass, String pushNote) =
-        switch (input.pushCapability) {
+    final (
+      SosReadinessClass pushClass,
+      String pushNote,
+    ) = switch (input.pushCapability) {
       CapabilityStatus.implemented => (
-          SosReadinessClass.available,
-          'Push entitlement OK',
-        ),
+        SosReadinessClass.available,
+        'Push entitlement OK',
+      ),
       CapabilityStatus.degraded || CapabilityStatus.mockRemote => (
-          SosReadinessClass.degraded,
-          'Push MOCK-REMOTE — no live FCM claim',
-        ),
+        SosReadinessClass.degraded,
+        'Push MOCK-REMOTE — no live FCM claim',
+      ),
       CapabilityStatus.unsupported => (
-          SosReadinessClass.unavailable,
-          'Push unsupported on this platform',
-        ),
+        SosReadinessClass.unavailable,
+        'Push unsupported on this platform',
+      ),
       CapabilityStatus.notImplemented => (
-          SosReadinessClass.notConfigured,
-          'Push not configured',
-        ),
+        SosReadinessClass.notConfigured,
+        'Push not configured',
+      ),
     };
 
     final rows = <SosReadinessRow>[
@@ -163,8 +160,7 @@ abstract final class SosReadinessEvaluator {
         klass: switch (input.locationClass) {
           SosLocationClass.ready => SosReadinessClass.available,
           SosLocationClass.acquiring ||
-          SosLocationClass.stale =>
-            SosReadinessClass.degraded,
+          SosLocationClass.stale => SosReadinessClass.degraded,
           SosLocationClass.unavailable => SosReadinessClass.unavailable,
         },
         note: 'Location ${input.locationClass.name} (never blocks fire)',
@@ -174,8 +170,8 @@ abstract final class SosReadinessEvaluator {
         klass: !rung1Ok
             ? SosReadinessClass.notConfigured
             : (verified == 0 && backups > 0)
-                ? SosReadinessClass.degraded
-                : SosReadinessClass.available,
+            ? SosReadinessClass.degraded
+            : SosReadinessClass.available,
         note: rung1Ok
             ? 'Rung-1 OK · verified backups $verified/$backups'
             : 'Rung-1 parents missing',

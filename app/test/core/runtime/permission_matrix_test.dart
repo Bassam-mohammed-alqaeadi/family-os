@@ -64,7 +64,10 @@ void main() {
       PermissionDisposition.allow,
     );
     expect(
-      PermissionMatrix.dispositionFor(child, PanelCapability.requestPolicyChange),
+      PermissionMatrix.dispositionFor(
+        child,
+        PanelCapability.requestPolicyChange,
+      ),
       PermissionDisposition.requestOnly,
     );
     expect(
@@ -73,20 +76,21 @@ void main() {
     );
   });
 
-  testWidgets('RoleGate supplies the shared disposition to a localized surface', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      Directionality(
-        textDirection: TextDirection.ltr,
-        child: RoleGate(
-          profile: PanelProfile.fromRole(AppRole.child),
-          capability: PanelCapability.requestPolicyChange,
-          builder: (_, disposition) => Text(disposition.name),
+  testWidgets(
+    'RoleGate supplies the shared disposition to a localized surface',
+    (tester) async {
+      await tester.pumpWidget(
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: RoleGate(
+            profile: PanelProfile.fromRole(AppRole.child),
+            capability: PanelCapability.requestPolicyChange,
+            builder: (_, disposition) => Text(disposition.name),
+          ),
         ),
-      ),
-    );
+      );
 
-    expect(find.text('requestOnly'), findsOneWidget);
-  });
+      expect(find.text('requestOnly'), findsOneWidget);
+    },
+  );
 }

@@ -77,7 +77,8 @@ class DayBoardMotionPulseState extends State<DayBoardMotionPulse>
       return;
     }
     // One-shot soft pulse (not infinite) so widget tests can pumpAndSettle.
-    if (!controller.isAnimating && controller.status != AnimationStatus.completed) {
+    if (!controller.isAnimating &&
+        controller.status != AnimationStatus.completed) {
       controller.forward(from: 0);
     }
   }
@@ -97,13 +98,13 @@ class DayBoardMotionPulseState extends State<DayBoardMotionPulse>
         final t = motionOn ? controller.value : 1.0;
         return switch (widget.mode) {
           DayBoardMotionPulseMode.scale => Transform.scale(
-              scale: 0.92 + (0.08 * t),
-              child: child,
-            ),
+            scale: 0.92 + (0.08 * t),
+            child: child,
+          ),
           DayBoardMotionPulseMode.opacity => Opacity(
-              opacity: 0.88 + (0.12 * t),
-              child: child,
-            ),
+            opacity: 0.88 + (0.12 * t),
+            child: child,
+          ),
         };
       },
       child: widget.child,

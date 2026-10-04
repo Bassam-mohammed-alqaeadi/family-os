@@ -23,10 +23,7 @@ abstract final class LocationHistoryMock {
             title: '🚗 الطريق إلى المدرسة',
             timeLabel: '6:55 – 7:12 ص · 17 دقيقة',
           ),
-          LocationHistoryStop(
-            title: '🏠 المنزل',
-            timeLabel: 'حتى 6:55 ص',
-          ),
+          LocationHistoryStop(title: '🏠 المنزل', timeLabel: 'حتى 6:55 ص'),
         ],
       ),
       LocationHistoryDay(
@@ -37,10 +34,7 @@ abstract final class LocationHistoryMock {
             title: '🏠 المنزل',
             timeLabel: '6:40 م – حتى الصباح',
           ),
-          LocationHistoryStop(
-            title: '⚽ نادي الحي',
-            timeLabel: '4:30 – 6:25 م',
-          ),
+          LocationHistoryStop(title: '⚽ نادي الحي', timeLabel: '4:30 – 6:25 م'),
           LocationHistoryStop(
             title: '🏫 ثانوية النور',
             timeLabel: '7:10 ص – 1:45 م',
@@ -81,7 +75,7 @@ abstract final class LocationHistoryMock {
   );
 
   static Map<String, LocationHistorySnapshot> get seeded => {
-        childA.childId: childA,
-        childEmpty.childId: childEmpty,
-      };
+    childA.childId: childA,
+    childEmpty.childId: childEmpty,
+  };
 }

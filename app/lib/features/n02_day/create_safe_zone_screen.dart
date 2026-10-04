@@ -142,6 +142,7 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
   var _alertArrival = true;
   var _alertDeparture = true;
   var _alertNoShow = false;
+
   /// Minutes from local midnight when No-show is armed (LOCATION-1B).
   int? _noShowDeadlineMinutes;
   var _sosBusy = false;
@@ -286,10 +287,7 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
             minute: _noShowDeadlineMinutes! % 60,
           )
         : const TimeOfDay(hour: 7, minute: 30);
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: initial,
-    );
+    final picked = await showTimePicker(context: context, initialTime: initial);
     if (!mounted || picked == null) return;
     setState(() {
       _noShowDeadlineMinutes = picked.hour * 60 + picked.minute;
@@ -325,7 +323,10 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
       return;
     }
     if (_alertNoShow && _noShowDeadlineMinutes == null) {
-      AppToast.show(context, message: l10n.createSafeZoneNoShowDeadlineRequired);
+      AppToast.show(
+        context,
+        message: l10n.createSafeZoneNoShowDeadlineRequired,
+      );
       return;
     }
     final meters = _metersLabel(l10n);
@@ -1162,7 +1163,8 @@ class _AlertsCard extends StatelessWidget {
                             ),
                           _DeadlineChip(
                             chipKey: CreateSafeZoneKeys.noShowDeadlineCustom,
-                            label: noShowDeadlineMinutes != null &&
+                            label:
+                                noShowDeadlineMinutes != null &&
                                     !CreateSafeZoneScreenState._presetDeadlines
                                         .contains(noShowDeadlineMinutes)
                                 ? formatDeadlineClock(noShowDeadlineMinutes!)

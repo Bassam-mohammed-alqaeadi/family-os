@@ -29,9 +29,7 @@ void main() {
       child,
       WebFilterPolicy(
         level: WebFilterLevel.open,
-        categories: {
-          for (final k in WebFilterCategories.known) k: false,
-        },
+        categories: {for (final k in WebFilterCategories.known) k: false},
       ),
     );
 
@@ -144,10 +142,7 @@ Future<void> _pump(
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        home: WebFilterScreen(
-          childId: childId,
-          repository: repository,
-        ),
+        home: WebFilterScreen(childId: childId, repository: repository),
       ),
     ),
   );

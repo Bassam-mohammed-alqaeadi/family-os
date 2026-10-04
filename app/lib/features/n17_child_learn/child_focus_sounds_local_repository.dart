@@ -11,8 +11,8 @@ final class LocalChildFocusSoundsRepository
   LocalChildFocusSoundsRepository(
     FamilyLocalDatabase db, {
     List<FocusSoundOption> catalog = focusSoundsCatalog,
-  })  : _store = KvSnapshotStore(db, namespace: kvNamespace),
-        _catalog = catalog;
+  }) : _store = KvSnapshotStore(db, namespace: kvNamespace),
+       _catalog = catalog;
 
   static const kvNamespace = 'child_focus_sounds';
 

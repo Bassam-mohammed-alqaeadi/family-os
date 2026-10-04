@@ -9,12 +9,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n01_linking/create_family_create.dart';
 
 /// How many children the father plans to follow (mock UX only).
-enum ChildCountChoice {
-  one,
-  two,
-  three,
-  fourPlus,
-}
+enum ChildCountChoice { one, two, three, fourPlus }
 
 /// SCR-FAT-001 — إنشاء العائلة (bare parent onboarding, mock-first).
 ///
@@ -22,11 +17,7 @@ enum ChildCountChoice {
 /// No Firebase / backend on this card. Create failures surface SHR-005
 /// ([AppErrorState]) with Retry — UI-001.
 class CreateFamilyScreen extends StatefulWidget {
-  const CreateFamilyScreen({
-    super.key,
-    this.onCreated,
-    this.createFamily,
-  });
+  const CreateFamilyScreen({super.key, this.onCreated, this.createFamily});
 
   /// Test seam — when null after successful create, navigates to `/scr-fat-002`.
   final VoidCallback? onCreated;
@@ -45,8 +36,7 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
   AppErrorKind? _errorKind;
   bool _submitting = false;
 
-  CreateFamilyFn get _create =>
-      widget.createFamily ?? mockCreateFamilySuccess;
+  CreateFamilyFn get _create => widget.createFamily ?? mockCreateFamilySuccess;
 
   @override
   void initState() {
@@ -64,8 +54,7 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
 
   void _onNameChanged() => setState(() {});
 
-  bool get _canSubmit =>
-      _nameController.text.trim().isNotEmpty && !_submitting;
+  bool get _canSubmit => _nameController.text.trim().isNotEmpty && !_submitting;
 
   Future<void> _submit() async {
     if (!_canSubmit) return;

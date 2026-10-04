@@ -97,9 +97,7 @@ void main() {
       isTrue,
     );
     expect(
-      goRoutes.any(
-        (r) => r.name == 'dev-screens' || r.path == '/dev-screens',
-      ),
+      goRoutes.any((r) => r.name == 'dev-screens' || r.path == '/dev-screens'),
       isTrue,
     );
     expect(goRoutes.length, greaterThanOrEqualTo(activeCsvIds.length + 2));

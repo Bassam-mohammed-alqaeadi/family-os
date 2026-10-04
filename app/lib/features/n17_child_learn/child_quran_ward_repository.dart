@@ -37,8 +37,7 @@ final class InMemoryChildQuranWardRepository
   final QuranLocalBridge? _bridgeOverride;
   Future<void> Function()? loadGate;
 
-  QuranLocalBridge get _bridge =>
-      _bridgeOverride ?? stage1QuranLocalBridge;
+  QuranLocalBridge get _bridge => _bridgeOverride ?? stage1QuranLocalBridge;
 
   ChildWardRecitationStatus _statusFromLive(QuranRecitationSubmission? live) {
     if (live == null) return _snap.recitationStatus;

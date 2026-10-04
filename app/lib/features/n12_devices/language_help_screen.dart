@@ -218,8 +218,7 @@ class _LanguageHelpScreenState extends State<LanguageHelpScreen> {
     return switch (kind) {
       LanguageHelpLinkKind.deviceDisconnect =>
         l10n.languageHelpDeviceDisconnectTitle,
-      LanguageHelpLinkKind.parentModeUnlock =>
-        l10n.languageHelpParentModeTitle,
+      LanguageHelpLinkKind.parentModeUnlock => l10n.languageHelpParentModeTitle,
     };
   }
 

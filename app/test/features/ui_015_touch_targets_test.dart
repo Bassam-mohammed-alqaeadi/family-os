@@ -93,11 +93,7 @@ void main() {
 
     await tester.pumpWidget(
       wrap(
-        RequestInboxScreen(
-          service: inbox,
-          role: AppRole.father,
-          onBack: () {},
-        ),
+        RequestInboxScreen(service: inbox, role: AppRole.father, onBack: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -149,9 +145,7 @@ void main() {
     await tester.pumpWidget(
       wrap(
         DayBoardScreen(
-          projection: DayBoardProjection(
-            children: DayChildMock.manyFixture,
-          ),
+          projection: DayBoardProjection(children: DayChildMock.manyFixture),
           onLock: () {},
         ),
       ),

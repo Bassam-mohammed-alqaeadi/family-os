@@ -73,12 +73,15 @@ void main() {
     ];
 
     final db1 = await SqliteLocalDatabase.openAt(path);
-    await ScreenTimeLocalPersistence.scheduleRepository(db1).save(child, windows);
+    await ScreenTimeLocalPersistence.scheduleRepository(
+      db1,
+    ).save(child, windows);
     await db1.close();
 
     final db2 = await SqliteLocalDatabase.openAt(path);
-    final loaded =
-        await ScreenTimeLocalPersistence.scheduleRepository(db2).load(child);
+    final loaded = await ScreenTimeLocalPersistence.scheduleRepository(
+      db2,
+    ).load(child);
     expect(loaded.length, 3);
     final sleep = loaded.firstWhere((w) => w.kind == ScheduleKind.sleep);
     expect(sleep.enabled, isTrue);
@@ -163,12 +166,15 @@ void main() {
     );
 
     final db1 = await SqliteLocalDatabase.openAt(path);
-    await ScreenTimeLocalPersistence.timeRequestRepository(db1).saveGrant(grant);
+    await ScreenTimeLocalPersistence.timeRequestRepository(
+      db1,
+    ).saveGrant(grant);
     await db1.close();
 
     final db2 = await SqliteLocalDatabase.openAt(path);
-    final grants =
-        await ScreenTimeLocalPersistence.timeRequestRepository(db2).loadGrants();
+    final grants = await ScreenTimeLocalPersistence.timeRequestRepository(
+      db2,
+    ).loadGrants();
     expect(grants.single.id, 'tg_1');
     expect(grants.single.expiresAt, expires);
     expect(grants.single.remainingMinutes, 40);

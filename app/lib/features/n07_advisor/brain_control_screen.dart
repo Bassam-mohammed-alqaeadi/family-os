@@ -134,16 +134,16 @@ class BrainControlScreenState extends State<BrainControlScreen> {
   }
 
   String _stageTitle(AppLocalizations l10n, AiStageId id) => switch (id) {
-        AiStageId.analyze => l10n.brainStageAnalyzeTitle,
-        AiStageId.suggest => l10n.brainStageSuggestTitle,
-        AiStageId.coach => l10n.brainStageCoachTitle,
-      };
+    AiStageId.analyze => l10n.brainStageAnalyzeTitle,
+    AiStageId.suggest => l10n.brainStageSuggestTitle,
+    AiStageId.coach => l10n.brainStageCoachTitle,
+  };
 
   String _stageSubtitle(AppLocalizations l10n, AiStageId id) => switch (id) {
-        AiStageId.analyze => l10n.brainStageAnalyzeSubtitle,
-        AiStageId.suggest => l10n.brainStageSuggestSubtitle,
-        AiStageId.coach => l10n.brainStageCoachSubtitle,
-      };
+    AiStageId.analyze => l10n.brainStageAnalyzeSubtitle,
+    AiStageId.suggest => l10n.brainStageSuggestSubtitle,
+    AiStageId.coach => l10n.brainStageCoachSubtitle,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -164,55 +164,52 @@ class BrainControlScreenState extends State<BrainControlScreen> {
               child: _BrainDenyPanel(message: l10n.brainControlUnavailable),
             )
           : _loading
-              ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      BannerNote(
-                        key: BrainControlKeys.servesBanner,
-                        message: l10n.brainServesNotDecidesBanner,
-                        variant: BannerVariant.p,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        l10n.brainStagesHeading,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: colors.ink,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      for (final id in AiStageId.values) ...[
-                        _StageCard(
-                          stageId: id,
-                          title: _stageTitle(l10n, id),
-                          subtitle: _stageSubtitle(l10n, id),
-                          enabled: _flags.isEnabled(id),
-                          activeLabel: l10n.brainStageActive,
-                          comingSoonLabel: l10n.brainStageComingSoon,
-                          ctaLabel: l10n.brainStageViewSuggestions,
-                          onCta: () {
-                            openSuggestions(id);
-                          },
-                          colors: colors,
-                          radii: Theme.of(context).extension<FamilyRadii>()!,
-                        ),
-                        const SizedBox(height: 10),
-                      ],
-                      ..._suggestionSection(l10n, colors),
-                    ],
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  BannerNote(
+                    key: BrainControlKeys.servesBanner,
+                    message: l10n.brainServesNotDecidesBanner,
+                    variant: BannerVariant.p,
                   ),
-                ),
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.brainStagesHeading,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: colors.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  for (final id in AiStageId.values) ...[
+                    _StageCard(
+                      stageId: id,
+                      title: _stageTitle(l10n, id),
+                      subtitle: _stageSubtitle(l10n, id),
+                      enabled: _flags.isEnabled(id),
+                      activeLabel: l10n.brainStageActive,
+                      comingSoonLabel: l10n.brainStageComingSoon,
+                      ctaLabel: l10n.brainStageViewSuggestions,
+                      onCta: () {
+                        openSuggestions(id);
+                      },
+                      colors: colors,
+                      radii: Theme.of(context).extension<FamilyRadii>()!,
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  ..._suggestionSection(l10n, colors),
+                ],
+              ),
+            ),
     );
   }
 
-  List<Widget> _suggestionSection(
-    AppLocalizations l10n,
-    FamilyColors colors,
-  ) {
+  List<Widget> _suggestionSection(AppLocalizations l10n, FamilyColors colors) {
     final suggestions = _suggestions;
     if (suggestions == null) return const [];
     return [
@@ -239,11 +236,7 @@ class BrainControlScreenState extends State<BrainControlScreen> {
         const SizedBox(height: 4),
         Text(
           s.body,
-          style: TextStyle(
-            color: colors.ink2,
-            fontSize: 12,
-            height: 1.55,
-          ),
+          style: TextStyle(color: colors.ink2, fontSize: 12, height: 1.55),
         ),
         const SizedBox(height: 12),
       ],
@@ -255,11 +248,7 @@ class BrainControlScreenState extends State<BrainControlScreen> {
       if (_openStage != null)
         Text(
           l10n.brainSuggestionsDecideHint,
-          style: TextStyle(
-            color: colors.ink2,
-            fontSize: 11.5,
-            height: 1.5,
-          ),
+          style: TextStyle(color: colors.ink2, fontSize: 11.5, height: 1.5),
         ),
     ];
   }
@@ -288,9 +277,9 @@ class _BrainDenyPanel extends StatelessWidget {
           message,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: colors.ink,
-                fontWeight: FontWeight.w700,
-              ),
+            color: colors.ink,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
     );
@@ -379,7 +368,9 @@ class _StageCard extends StatelessWidget {
               key: BrainControlKeys.stageCta(stageId),
               label: enabled ? ctaLabel : comingSoonLabel,
               onPressed: enabled ? onCta : null,
-              variant: enabled ? PrimaryBtnVariant.primary : PrimaryBtnVariant.ghost,
+              variant: enabled
+                  ? PrimaryBtnVariant.primary
+                  : PrimaryBtnVariant.ghost,
             ),
           ],
         ),

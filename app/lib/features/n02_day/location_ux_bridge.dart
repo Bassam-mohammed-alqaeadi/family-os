@@ -293,16 +293,15 @@ final class DomainLocationMapRepository implements LocationMapRepository {
     required this.domain,
     FamilyId? familyId,
     ChildrenListRepository? children,
-  })  : _familyIdOverride = familyId,
-        _children = children;
+  }) : _familyIdOverride = familyId,
+       _children = children;
 
   final LocationDomainRepository domain;
   final FamilyId? _familyIdOverride;
   final ChildrenListRepository? _children;
 
   FamilyId get _familyId =>
-      _familyIdOverride ??
-      stage1IdentityRuntime.activeFamilyId;
+      _familyIdOverride ?? stage1IdentityRuntime.activeFamilyId;
 
   ChildrenListRepository get _roster =>
       _children ?? stage1ChildrenListRepository;
@@ -416,9 +415,7 @@ Future<void> ensureRealLocalSafeZonesSeeded({
   final kids = await stage1ChildrenListRepository.listChildren(
     familyId: familyId,
   );
-  final childIds = [
-    for (final k in kids.take(2)) ChildId(k.id),
-  ];
+  final childIds = [for (final k in kids.take(2)) ChildId(k.id)];
   final assigned = childIds.isNotEmpty
       ? childIds
       : activeFamilyRosterChildren().take(2).map((child) => child.id).toList();

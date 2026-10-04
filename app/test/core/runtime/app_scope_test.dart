@@ -10,51 +10,53 @@ import 'package:family_os/core/runtime/app_scope.dart';
 import 'package:family_os/core/runtime/identity_source.dart';
 
 void main() {
-  testWidgets('AppScope exposes injected identity state and rebuilds dependents', (
-    tester,
-  ) async {
-    final source = _FakeIdentitySource(const IdentitySnapshot.unavailable());
-    final runtime = AppRuntime(identity: source);
-    addTearDown(runtime.dispose);
+  testWidgets(
+    'AppScope exposes injected identity state and rebuilds dependents',
+    (tester) async {
+      final source = _FakeIdentitySource(const IdentitySnapshot.unavailable());
+      final runtime = AppRuntime(identity: source);
+      addTearDown(runtime.dispose);
 
-    await tester.pumpWidget(
-      Directionality(
-        textDirection: TextDirection.ltr,
-        child: AppScope(
-          runtime: runtime,
-          child: Builder(
-            builder: (context) {
-              final snapshot = AppScope.of(context).identity.value;
-              return Text(snapshot.familyId?.value ?? 'unavailable');
-            },
+      await tester.pumpWidget(
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: AppScope(
+            runtime: runtime,
+            child: Builder(
+              builder: (context) {
+                final snapshot = AppScope.of(context).identity.value;
+                return Text(snapshot.familyId?.value ?? 'unavailable');
+              },
+            ),
           ),
         ),
-      ),
-    );
+      );
 
-    expect(find.text('unavailable'), findsOneWidget);
+      expect(find.text('unavailable'), findsOneWidget);
 
-    source.emit(_remoteFamilySnapshot());
-    await tester.pump();
+      source.emit(_remoteFamilySnapshot());
+      await tester.pump();
 
-    expect(find.text('fam_real'), findsOneWidget);
-  });
+      expect(find.text('fam_real'), findsOneWidget);
+    },
+  );
 
-  testWidgets('AppScope has no implicit fallback outside explicit composition', (
-    tester,
-  ) async {
-    AppRuntime? resolved;
-    await tester.pumpWidget(
-      Builder(
-        builder: (context) {
-          resolved = AppScope.maybeOf(context);
-          return const SizedBox();
-        },
-      ),
-    );
+  testWidgets(
+    'AppScope has no implicit fallback outside explicit composition',
+    (tester) async {
+      AppRuntime? resolved;
+      await tester.pumpWidget(
+        Builder(
+          builder: (context) {
+            resolved = AppScope.maybeOf(context);
+            return const SizedBox();
+          },
+        ),
+      );
 
-    expect(resolved, isNull);
-  });
+      expect(resolved, isNull);
+    },
+  );
 
   test('runtime refresh delegates to its typed identity port', () async {
     final source = _FakeIdentitySource(const IdentitySnapshot.unavailable());
@@ -81,7 +83,8 @@ IdentitySnapshot _remoteFamilySnapshot() {
   );
 }
 
-final class _FakeIdentitySource extends ChangeNotifier implements IdentitySource {
+final class _FakeIdentitySource extends ChangeNotifier
+    implements IdentitySource {
   _FakeIdentitySource(this._value);
 
   IdentitySnapshot _value;

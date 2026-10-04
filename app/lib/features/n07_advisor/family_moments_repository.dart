@@ -18,8 +18,8 @@ final class LocalFactsFamilyMomentsRepository
   LocalFactsFamilyMomentsRepository({
     FamilyTasksRepository? familyTasks,
     ChildrenListRepository? children,
-  })  : _familyTasksOverride = familyTasks,
-        _childrenOverride = children;
+  }) : _familyTasksOverride = familyTasks,
+       _childrenOverride = children;
 
   final FamilyTasksRepository? _familyTasksOverride;
   final ChildrenListRepository? _childrenOverride;
@@ -95,7 +95,7 @@ final class LocalFactsFamilyMomentsRepository
 
 final class InMemoryFamilyMomentsRepository implements FamilyMomentsRepository {
   InMemoryFamilyMomentsRepository({FamilyMomentsSnapshot? seed})
-      : _snap = seed ?? familyMomentsEmptyFixture();
+    : _snap = seed ?? familyMomentsEmptyFixture();
 
   FamilyMomentsSnapshot _snap;
   Future<void> Function()? loadGate;
@@ -176,18 +176,18 @@ final class InMemoryFamilyMomentsRepository implements FamilyMomentsRepository {
   bool get prideShared => _snap.prideShared;
 
   FamilyMomentsSnapshot _copy() => FamilyMomentsSnapshot(
-        hasFamily: _snap.hasFamily,
-        weekLabelKey: _snap.weekLabelKey,
-        learnHours: _snap.learnHours,
-        versesMemorized: _snap.versesMemorized,
-        tasksDone: _snap.tasksDone,
-        worryAlerts: _snap.worryAlerts,
-        stars: List<FamilyMomentStar>.from(_snap.stars),
-        touchHintKey: _snap.touchHintKey,
-        album: List<FamilyMomentAlbumItem>.from(_snap.album),
-        prideShared: _snap.prideShared,
-        touchReminded: _snap.touchReminded,
-      );
+    hasFamily: _snap.hasFamily,
+    weekLabelKey: _snap.weekLabelKey,
+    learnHours: _snap.learnHours,
+    versesMemorized: _snap.versesMemorized,
+    tasksDone: _snap.tasksDone,
+    worryAlerts: _snap.worryAlerts,
+    stars: List<FamilyMomentStar>.from(_snap.stars),
+    touchHintKey: _snap.touchHintKey,
+    album: List<FamilyMomentAlbumItem>.from(_snap.album),
+    prideShared: _snap.prideShared,
+    touchReminded: _snap.touchReminded,
+  );
 }
 
 /// Shared Stage-1 — Local-facts projector (empty when roster empty) (CE-B2).

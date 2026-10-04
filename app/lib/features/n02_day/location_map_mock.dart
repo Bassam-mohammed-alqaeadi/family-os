@@ -72,10 +72,7 @@ abstract final class LocationMapMock {
         title: '🚗 الطريق إلى المدرسة',
         timeLabel: '6:55 – 7:12 ص · 17 دقيقة',
       ),
-      LocationThreadStop(
-        title: '🏠 المنزل',
-        timeLabel: 'حتى 6:55 ص',
-      ),
+      LocationThreadStop(title: '🏠 المنزل', timeLabel: 'حتى 6:55 ص'),
     ],
     'child_b': [
       LocationThreadStop(

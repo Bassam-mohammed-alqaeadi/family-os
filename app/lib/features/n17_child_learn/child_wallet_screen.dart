@@ -70,7 +70,10 @@ class _ChildWalletScreenState extends State<ChildWalletScreen> {
   AppRole get _role {
     final override = widget.roleOverride;
     if (override != null) return override;
-    return resolveAuthorizationContext(context, fallbackRole: AppRole.child).role;
+    return resolveAuthorizationContext(
+      context,
+      fallbackRole: AppRole.child,
+    ).role;
   }
 
   bool get _isChild => _role == AppRole.child;

@@ -84,7 +84,6 @@ class AlertDetailScreen extends StatefulWidget {
   /// Null → [stage1MotherPermissionLevelRepository.level] (Identity-bound).
   final MotherLevel? motherLevel;
 
-
   /// P-4 SOS seam — null → [stage1SosFireService].
   final SosFireService? sosFire;
 
@@ -136,8 +135,7 @@ class AlertDetailScreenState extends State<AlertDetailScreen> {
     return raw;
   }
 
-  bool get _hasLookup =>
-      _resolvedAlertId != null || _resolvedKind != null;
+  bool get _hasLookup => _resolvedAlertId != null || _resolvedKind != null;
 
   @override
   void initState() {
@@ -207,8 +205,9 @@ class AlertDetailScreenState extends State<AlertDetailScreen> {
         );
       case AlertDetailKind.tamper:
         return detail.copyWith(
-          title:
-              detail.title.isEmpty ? l10n.alertDetailTamperTitle : detail.title,
+          title: detail.title.isEmpty
+              ? l10n.alertDetailTamperTitle
+              : detail.title,
           body: detail.body.isEmpty ? l10n.alertDetailTamperBody : detail.body,
           advice: (detail.advice == null || detail.advice!.isEmpty)
               ? l10n.alertDetailTamperAdvice
@@ -446,7 +445,10 @@ class AlertDetailScreenState extends State<AlertDetailScreen> {
               onPressed: _busy
                   ? null
                   : () {
-                      AppToast.show(context, message: l10n.alertDetailRequestBlockToast);
+                      AppToast.show(
+                        context,
+                        message: l10n.alertDetailRequestBlockToast,
+                      );
                     },
             ),
           const SizedBox(height: 10),
@@ -683,20 +685,20 @@ class _UrgencyChip extends StatelessWidget {
     final radii = Theme.of(context).extension<FamilyRadii>()!;
     final (label, bg, fg) = switch (urgency) {
       AlertUrgency.critical => (
-          l10n.alertDetailUrgencyCritical,
-          colors.coral100,
-          colors.coral,
-        ),
+        l10n.alertDetailUrgencyCritical,
+        colors.coral100,
+        colors.coral,
+      ),
       AlertUrgency.attention => (
-          l10n.alertDetailUrgencyAttention,
-          colors.amber100,
-          colors.amberInk,
-        ),
+        l10n.alertDetailUrgencyAttention,
+        colors.amber100,
+        colors.amberInk,
+      ),
       AlertUrgency.reassurance => (
-          l10n.alertDetailUrgencyReassurance,
-          colors.mint100,
-          colors.mintInk,
-        ),
+        l10n.alertDetailUrgencyReassurance,
+        colors.mint100,
+        colors.mintInk,
+      ),
     };
 
     return Semantics(

@@ -10,10 +10,7 @@ import 'package:family_os/core/design/components/settings_persist_toggle.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 
-Future<void> _pump(
-  WidgetTester tester,
-  Widget child,
-) async {
+Future<void> _pump(WidgetTester tester, Widget child) async {
   await tester.pumpWidget(
     MaterialApp(
       theme: buildFamilyTheme(),
@@ -38,8 +35,9 @@ void main() {
   tearDown(AppToast.dismiss);
 
   group('SettingsPersistToggle UI-008', () {
-    testWidgets('AC2: success toast after persist (not CSS-only)',
-        (tester) async {
+    testWidgets('AC2: success toast after persist (not CSS-only)', (
+      tester,
+    ) async {
       var value = false;
       var saves = 0;
       final gate = Completer<void>();
@@ -81,8 +79,9 @@ void main() {
       await tester.pump();
     });
 
-    testWidgets('AC1: save failure shows error and reverts switch',
-        (tester) async {
+    testWidgets('AC1: save failure shows error and reverts switch', (
+      tester,
+    ) async {
       var value = false;
 
       await _pump(

@@ -136,9 +136,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                       Expanded(
                         child: Text(
                           l10n.manageCurrentPlan(_planDisplayName(l10n, ent)),
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
+                          style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                       ),
@@ -180,9 +178,9 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
           const SizedBox(height: 12),
           Text(
             l10n.manageCancelSafetyNote,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: colors.ink2,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: colors.ink2),
           ),
         ],
       ),
@@ -193,8 +191,8 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
     return switch (ent.status) {
       EntitlementStatus.active => l10n.billingStatusActive,
       EntitlementStatus.trial => l10n.billingStatusTrial(
-          ent.trialDaysRemaining ?? 0,
-        ),
+        ent.trialDaysRemaining ?? 0,
+      ),
       EntitlementStatus.expired => l10n.billingStatusExpired,
     };
   }

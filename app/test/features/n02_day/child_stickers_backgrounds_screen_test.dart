@@ -36,7 +36,10 @@ void main() {
     );
     await _pump(tester, repository: repo);
     expect(find.byKey(ChildStickersBackgroundsKeys.stickers), findsOneWidget);
-    expect(find.byKey(ChildStickersBackgroundsKeys.localHonesty), findsOneWidget);
+    expect(
+      find.byKey(ChildStickersBackgroundsKeys.localHonesty),
+      findsOneWidget,
+    );
     await tester.tap(
       find.byKey(ChildStickersBackgroundsKeys.background('indigo')),
     );

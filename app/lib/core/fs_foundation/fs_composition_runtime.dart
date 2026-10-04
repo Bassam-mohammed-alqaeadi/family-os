@@ -46,7 +46,9 @@ abstract final class FsCompositionRuntime {
       _partial = false;
       _opened = true;
     } catch (e, st) {
-      debugPrint('HOST-ROUTER-C FsCompositionRuntime.tryBind soft-fail: $e\n$st');
+      debugPrint(
+        'HOST-ROUTER-C FsCompositionRuntime.tryBind soft-fail: $e\n$st',
+      );
       _partial = true;
       _opened = true;
     }

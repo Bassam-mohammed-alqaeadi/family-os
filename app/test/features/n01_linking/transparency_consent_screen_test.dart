@@ -90,11 +90,7 @@ void main() {
   });
 
   testWidgets('EN locale pumps honesty banner', (tester) async {
-    await _pumpConsent(
-      tester,
-      role: AppRole.child,
-      locale: const Locale('en'),
-    );
+    await _pumpConsent(tester, role: AppRole.child, locale: const Locale('en'));
 
     expect(find.text('Being honest with you'), findsOneWidget);
     expect(find.textContaining("We don't spy"), findsOneWidget);
@@ -102,14 +98,7 @@ void main() {
   });
 
   test('Rule 23 — no planted person names in CHD-003 ARB keys', () {
-    const banned = [
-      'خالد',
-      'عبدالله',
-      'نوال',
-      'Khalid',
-      'Abdullah',
-      'Nawal',
-    ];
+    const banned = ['خالد', 'عبدالله', 'نوال', 'Khalid', 'Abdullah', 'Nawal'];
     const sources = [
       'بصراحة معك',
       'نحن لا نتجسس — نطمئن. وهذا بالضبط ما سيعرفه والداك عنك:',

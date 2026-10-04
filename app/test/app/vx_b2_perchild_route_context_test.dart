@@ -24,8 +24,7 @@ void main() {
         'SmartSupervisionScreen(childId: routeChildId(context, state).value)',
     'SCR-FAT-068':
         'PlatformMonitoringScreen(childId: routeChildId(context, state).value)',
-    'SCR-FAT-072':
-        'QuranProgressScreen(childId: routeChildId(context, state))',
+    'SCR-FAT-072': 'QuranProgressScreen(childId: routeChildId(context, state))',
     'SCR-FAT-085':
         'SmartModesScreen(childId: routeChildId(context, state).value)',
     'SCR-CHD-004':

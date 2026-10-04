@@ -20,7 +20,9 @@ void main() {
     AppToast.dismiss();
   });
 
-  InMemoryChildAppsRepository seededRepo({AppAccessRulesRepository? accessRules}) {
+  InMemoryChildAppsRepository seededRepo({
+    AppAccessRulesRepository? accessRules,
+  }) {
     return InMemoryChildAppsRepository(
       seed: {
         for (final e in kDefaultChildAppsByChild.entries)
@@ -31,9 +33,9 @@ void main() {
   }
 
   testWidgets('empty when no pending installs', (tester) async {
-    final repo = InMemoryChildAppsRepository(seed: {
-      'demo-child': childAppsOneFixture(),
-    });
+    final repo = InMemoryChildAppsRepository(
+      seed: {'demo-child': childAppsOneFixture()},
+    );
     await _pump(tester, repository: repo);
 
     expect(find.byKey(NewAppApprovalKeys.empty), findsOneWidget);
@@ -73,7 +75,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      repo.appsFor(ChildId(kDefaultChildAppsChildKey)).firstWhere((a) => a.id == 'snapchat').status,
+      repo
+          .appsFor(ChildId(kDefaultChildAppsChildKey))
+          .firstWhere((a) => a.id == 'snapchat')
+          .status,
       ChildAppStatus.allowed,
     );
     expect(find.byKey(NewAppApprovalKeys.doneBanner), findsOneWidget);
@@ -98,7 +103,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      repo.appsFor(ChildId(kDefaultChildAppsChildKey)).firstWhere((a) => a.id == 'snapchat').status,
+      repo
+          .appsFor(ChildId(kDefaultChildAppsChildKey))
+          .firstWhere((a) => a.id == 'snapchat')
+          .status,
       ChildAppStatus.blocked,
     );
     expect(find.byKey(NewAppApprovalKeys.doneBanner), findsOneWidget);
@@ -152,9 +160,9 @@ void main() {
   });
 
   testWidgets('parametric childId empty pending', (tester) async {
-    final repo = InMemoryChildAppsRepository(seed: {
-      'k2': const <ChildAppEntry>[],
-    });
+    final repo = InMemoryChildAppsRepository(
+      seed: {'k2': const <ChildAppEntry>[]},
+    );
     await _pump(tester, repository: repo, childId: 'k2');
     expect(find.byKey(NewAppApprovalKeys.empty), findsOneWidget);
   });

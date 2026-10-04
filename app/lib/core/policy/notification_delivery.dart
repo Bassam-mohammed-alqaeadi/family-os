@@ -75,7 +75,8 @@ abstract final class NotificationDelivery {
         NotificationDeliveryResult(
           recipientId: id,
           tier: NotificationTier.critical,
-          delivered: guardianReceivesSos(
+          delivered:
+              guardianReceivesSos(
                 memberId: id,
                 motherLevel: motherLevelByMember?[id],
               ) &&
@@ -104,7 +105,8 @@ abstract final class NotificationDelivery {
   }) {
     final p = prefs ?? NotificationPrefs.defaults(memberId: recipientId);
     final clock = now ?? const TimeOfDay(hour: 12, minute: 0);
-    final delivered = p.analysisNoticesEnabled &&
+    final delivered =
+        p.analysisNoticesEnabled &&
         shouldDeliver(NotificationTier.nonCritical, p, clock);
     return NotificationDeliveryResult(
       recipientId: recipientId,
@@ -121,7 +123,8 @@ abstract final class NotificationDelivery {
   }) {
     final p = prefs ?? NotificationPrefs.defaults(memberId: recipientId);
     final clock = now ?? const TimeOfDay(hour: 12, minute: 0);
-    final delivered = p.childRequestsEnabled &&
+    final delivered =
+        p.childRequestsEnabled &&
         shouldDeliver(NotificationTier.nonCritical, p, clock);
     return NotificationDeliveryResult(
       recipientId: recipientId,

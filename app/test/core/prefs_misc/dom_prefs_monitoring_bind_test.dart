@@ -27,16 +27,18 @@ void main() {
     final db1 = await SqliteLocalDatabase.openAt(path);
     await FsSessionKernel.ensureOpen(override: db1);
     final repo1 = await PrefsMiscLocalPersistence.openMonitoringRepository();
-    final prefs = DesiredMonitoringPrefs.defaults(childId: 'demo-child')
-        .copyWith(webFilter: true, locationAlways: true);
+    final prefs = DesiredMonitoringPrefs.defaults(
+      childId: 'demo-child',
+    ).copyWith(webFilter: true, locationAlways: true);
     await repo1.save(prefs);
     await FsSessionKernel.resetForTest();
 
     final db2 = await SqliteLocalDatabase.openAt(path);
     await FsSessionKernel.ensureOpen(override: db2);
     final loaded =
-        await (await PrefsMiscLocalPersistence.openMonitoringRepository())
-            .load('demo-child');
+        await (await PrefsMiscLocalPersistence.openMonitoringRepository()).load(
+          'demo-child',
+        );
     expect(loaded.webFilter, isTrue);
     expect(loaded.locationAlways, isTrue);
     expect(loaded.appLimits, isFalse);
@@ -72,8 +74,9 @@ void main() {
     final db = await SqliteLocalDatabase.openAt(path);
     await FsSessionKernel.ensureOpen(override: db);
     final repo = await PrefsMiscLocalPersistence.openMonitoringRepository();
-    final prefs = DesiredMonitoringPrefs.defaults(childId: 'demo-child')
-        .copyWith(notificationListen: true);
+    final prefs = DesiredMonitoringPrefs.defaults(
+      childId: 'demo-child',
+    ).copyWith(notificationListen: true);
     await repo.save(prefs);
     final json = (await repo.load('demo-child')).toJson();
     expect(json.containsKey('nativeGranted'), isFalse);

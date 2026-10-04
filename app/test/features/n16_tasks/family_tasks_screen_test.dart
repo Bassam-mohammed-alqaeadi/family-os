@@ -18,9 +18,7 @@ void main() {
 
   testWidgets('empty → FAT-003', (tester) async {
     final nav = <String>[];
-    final repo = InMemoryFamilyTasksRepository(
-      seed: familyTasksEmptyFixture(),
-    );
+    final repo = InMemoryFamilyTasksRepository(seed: familyTasksEmptyFixture());
     await _pump(tester, repository: repo, onNavigate: nav.add);
 
     expect(find.byKey(FamilyTasksKeys.empty), findsOneWidget);
@@ -34,9 +32,7 @@ void main() {
   testWidgets('one pending task · approve toast and status update', (
     tester,
   ) async {
-    final repo = InMemoryFamilyTasksRepository(
-      seed: familyTasksOneFixture(),
-    );
+    final repo = InMemoryFamilyTasksRepository(seed: familyTasksOneFixture());
     await _pump(tester, repository: repo);
 
     expect(find.byKey(FamilyTasksKeys.body), findsOneWidget);
@@ -82,9 +78,8 @@ void main() {
 
   testWidgets('loading then body', (tester) async {
     final gate = Completer<void>();
-    final repo = InMemoryFamilyTasksRepository(
-      seed: familyTasksOneFixture(),
-    )..loadGate = () => gate.future;
+    final repo = InMemoryFamilyTasksRepository(seed: familyTasksOneFixture())
+      ..loadGate = () => gate.future;
 
     await _pump(tester, repository: repo, settle: false);
     await tester.pump();
@@ -96,9 +91,7 @@ void main() {
   });
 
   testWidgets('mother observer view-only — approve blocked', (tester) async {
-    final repo = InMemoryFamilyTasksRepository(
-      seed: familyTasksOneFixture(),
-    );
+    final repo = InMemoryFamilyTasksRepository(seed: familyTasksOneFixture());
     await _pump(
       tester,
       repository: repo,
@@ -144,9 +137,7 @@ void main() {
   });
 
   testWidgets('mother partner can approve', (tester) async {
-    final repo = InMemoryFamilyTasksRepository(
-      seed: familyTasksOneFixture(),
-    );
+    final repo = InMemoryFamilyTasksRepository(seed: familyTasksOneFixture());
     await _pump(
       tester,
       repository: repo,

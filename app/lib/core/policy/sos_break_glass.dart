@@ -52,17 +52,16 @@ final class SosBreakGlassSession {
     SosBreakGlassPhase? phase,
     String? auditNote,
     String? incidentId,
-  }) =>
-      SosBreakGlassSession(
-        id: id,
-        capabilityKey: capabilityKey,
-        reason: reason,
-        startedAt: startedAt,
-        expiresAt: expiresAt,
-        phase: phase ?? this.phase,
-        auditNote: auditNote ?? this.auditNote,
-        incidentId: incidentId ?? this.incidentId,
-      );
+  }) => SosBreakGlassSession(
+    id: id,
+    capabilityKey: capabilityKey,
+    reason: reason,
+    startedAt: startedAt,
+    expiresAt: expiresAt,
+    phase: phase ?? this.phase,
+    auditNote: auditNote ?? this.auditNote,
+    incidentId: incidentId ?? this.incidentId,
+  );
 }
 
 /// Rule 25 seam — break-glass temporary override store.
@@ -170,8 +169,8 @@ final class LocalSosBreakGlassStore implements SosBreakGlassStore {
     this._store, {
     FamilyId? familyId,
     DateTime Function()? clock,
-  })  : familyId = familyId ?? FamilyId('fam_stage1'),
-        _clock = clock ?? DateTime.now;
+  }) : familyId = familyId ?? FamilyId('fam_stage1'),
+       _clock = clock ?? DateTime.now;
 
   final LocalSosFinalStore _store;
   final FamilyId familyId;
@@ -240,10 +239,7 @@ final class LocalSosBreakGlassStore implements SosBreakGlassStore {
     );
     _active = session;
     _audit.add(session);
-    await _persist(
-      session,
-      actorId: actorId ?? 'actor_${actor.role.name}',
-    );
+    await _persist(session, actorId: actorId ?? 'actor_${actor.role.name}');
     return session;
   }
 
@@ -271,7 +267,8 @@ final class LocalSosBreakGlassStore implements SosBreakGlassStore {
     String? actorId,
     String? endReason,
   }) async {
-    final ended = session.phase == SosBreakGlassPhase.expired ||
+    final ended =
+        session.phase == SosBreakGlassPhase.expired ||
         session.phase == SosBreakGlassPhase.revoked;
     final row = <String, Object?>{
       'id': session.id,

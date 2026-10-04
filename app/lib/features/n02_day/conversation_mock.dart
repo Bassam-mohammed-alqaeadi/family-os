@@ -74,12 +74,7 @@ abstract final class ConversationMock {
     title: 'ابن 1 🦁',
     subtitle: 'متصل الآن',
     emoji: '🦁',
-    toneChips: [
-      'أحسنت يا بطل',
-      'اتفقنا',
-      'كلمني لما توصل',
-      'أنا فخور فيك',
-    ],
+    toneChips: ['أحسنت يا بطل', 'اتفقنا', 'كلمني لما توصل', 'أنا فخور فيك'],
     messages: [
       ConversationMessage(
         id: 'a1',

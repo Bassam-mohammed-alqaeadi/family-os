@@ -13,9 +13,6 @@ void main() {
 
   test('prototype fixture still available for LOCAL_DEMO / tests', () {
     final repo = InMemoryChildAppsRepository(seed: kDefaultChildAppsByChild);
-    expect(
-      repo.appsFor(ChildId(kDefaultChildAppsChildKey)),
-      isNotEmpty,
-    );
+    expect(repo.appsFor(ChildId(kDefaultChildAppsChildKey)), isNotEmpty);
   });
 }

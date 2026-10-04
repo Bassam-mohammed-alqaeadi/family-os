@@ -49,11 +49,7 @@ void main() {
 
   testWidgets('Today board reloads on family switch', (tester) async {
     final repo = _RecordingProjection(runtime);
-    await _pump(
-      tester,
-      runtime,
-      DayBoardScreen(projectionRepository: repo),
-    );
+    await _pump(tester, runtime, DayBoardScreen(projectionRepository: repo));
     expect(repo.loadedFor, [fam1]);
 
     runtime.switchActiveFamily(fam2);
@@ -133,13 +129,12 @@ final class _CountingSafeZones implements SafeZonesRepository {
     bool? alertEnter,
     bool? alertExit,
     bool? alertNoShow,
-  }) =>
-      _inner.setAlertFlag(
-        zoneId,
-        alertEnter: alertEnter,
-        alertExit: alertExit,
-        alertNoShow: alertNoShow,
-      );
+  }) => _inner.setAlertFlag(
+    zoneId,
+    alertEnter: alertEnter,
+    alertExit: alertExit,
+    alertNoShow: alertNoShow,
+  );
 
   @override
   Future<void> setAlertsEnabled(String zoneId, bool enabled) =>

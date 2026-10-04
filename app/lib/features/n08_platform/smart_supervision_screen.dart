@@ -127,18 +127,13 @@ class _SmartSupervisionScreenState extends State<SmartSupervisionScreen> {
   Future<void> _onToggle(MonitoringFeature feature, bool value) async {
     final repo = _repository;
     if (repo == null || _unavailable) return;
-    final capability =
-        PlatformCapabilityTable.level(widget.platform, feature);
+    final capability = PlatformCapabilityTable.level(widget.platform, feature);
     if (!switchInteractive(capability)) return;
 
     final next = _prefs.withFeature(feature, value);
     setState(() => _prefs = next);
     await repo.save(next);
-    _syncBus.publish(
-      next,
-      platform: widget.platform,
-      offline: widget.offline,
-    );
+    _syncBus.publish(next, platform: widget.platform, offline: widget.offline);
   }
 
   String _featureLabel(AppLocalizations l10n, MonitoringFeature f) =>
@@ -151,9 +146,9 @@ class _SmartSupervisionScreenState extends State<SmartSupervisionScreen> {
       };
 
   String _platformLabel(AppLocalizations l10n) => switch (widget.platform) {
-        PlatformId.android => l10n.smartSupervisionPlatformAndroid,
-        PlatformId.ios => l10n.smartSupervisionPlatformIos,
-      };
+    PlatformId.android => l10n.smartSupervisionPlatformAndroid,
+    PlatformId.ios => l10n.smartSupervisionPlatformIos,
+  };
 
   @override
   Widget build(BuildContext context) {

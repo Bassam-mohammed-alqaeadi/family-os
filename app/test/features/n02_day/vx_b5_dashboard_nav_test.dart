@@ -60,9 +60,7 @@ void main() {
         GoRoute(
           path: '/scr-fat-010',
           builder: (context, state) => DayBoardScreen(
-            projection: DayBoardProjection(
-              children: DayChildMock.manyFixture,
-            ),
+            projection: DayBoardProjection(children: DayChildMock.manyFixture),
           ),
         ),
         GoRoute(

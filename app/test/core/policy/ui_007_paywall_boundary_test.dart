@@ -40,10 +40,7 @@ void main() {
 
       expect(result.fired, isTrue);
       expect(sos.fireCount, 1);
-      expect(
-        result.recipientDeliveries.every((d) => d.delivered),
-        isTrue,
-      );
+      expect(result.recipientDeliveries.every((d) => d.delivered), isTrue);
     });
 
     test('active and trial also fire', () async {

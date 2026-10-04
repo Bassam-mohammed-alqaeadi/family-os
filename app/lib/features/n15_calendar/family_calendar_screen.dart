@@ -510,14 +510,26 @@ class _HeaderCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _PrayerChip(label: l10n.familyCalendarPrayerFajr, colors: colors),
-                _PrayerChip(label: l10n.familyCalendarPrayerDhuhr, colors: colors),
-                _PrayerChip(label: l10n.familyCalendarPrayerAsr, colors: colors),
+                _PrayerChip(
+                  label: l10n.familyCalendarPrayerFajr,
+                  colors: colors,
+                ),
+                _PrayerChip(
+                  label: l10n.familyCalendarPrayerDhuhr,
+                  colors: colors,
+                ),
+                _PrayerChip(
+                  label: l10n.familyCalendarPrayerAsr,
+                  colors: colors,
+                ),
                 _PrayerChip(
                   label: l10n.familyCalendarPrayerMaghrib,
                   colors: colors,
                 ),
-                _PrayerChip(label: l10n.familyCalendarPrayerIsha, colors: colors),
+                _PrayerChip(
+                  label: l10n.familyCalendarPrayerIsha,
+                  colors: colors,
+                ),
               ],
             ),
           ],

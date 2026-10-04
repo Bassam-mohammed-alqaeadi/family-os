@@ -37,44 +37,48 @@ void main() {
     expect(stage1AdvisorRepository, isA<EmptyAdvisorRepository>());
   });
 
-  test('LDR-B1 LocalChildrenListRepository seeds REAL_LOCAL provenance', () async {
-    final db = MemoryLocalDatabase();
-    await db.open();
-    final repo = LocalChildrenListRepository(db);
-    final kids =
-        await repo.listChildren(familyId: ChildrenListLocalSeed.famStage1);
-    expect(kids, isNotEmpty);
-    expect(kids.first.locationLabel, isEmpty);
-    final prov = await repo.loadProvenance(
-      familyId: ChildrenListLocalSeed.famStage1,
-    );
-    expect(prov, kChildrenListRealLocalProvenance);
-    expect(isChildrenListSeededProvenance(prov), isTrue);
-  });
+  test(
+    'LDR-B1 LocalChildrenListRepository seeds REAL_LOCAL provenance',
+    () async {
+      final db = MemoryLocalDatabase();
+      await db.open();
+      final repo = LocalChildrenListRepository(db);
+      final kids = await repo.listChildren(
+        familyId: ChildrenListLocalSeed.famStage1,
+      );
+      expect(kids, isNotEmpty);
+      expect(kids.first.locationLabel, isEmpty);
+      final prov = await repo.loadProvenance(
+        familyId: ChildrenListLocalSeed.famStage1,
+      );
+      expect(prov, kChildrenListRealLocalProvenance);
+      expect(isChildrenListSeededProvenance(prov), isTrue);
+    },
+  );
 
-  test('LDR-B1 DomainLocationMapRepository pins from roster without trails',
-      () async {
-    await FsSessionKernel.ensureOpen(
-      preferSqlite: false,
-      override: MemoryLocalDatabase(),
-    );
-    await Stage1LocationRuntime.ensureOpen();
-    final domain = Stage1LocationRuntime.store;
-    final map = DomainLocationMapRepository(
-      domain: domain,
-      familyId: FamilyId('fam_stage1'),
-      children: InMemoryChildrenListRepository(
-        byFamily: {
-          'fam_stage1': ChildrenListLocalSeedMock.famStage1Children,
-        },
-      ),
-    );
-    final snap = await map.load();
-    expect(snap, isNotNull);
-    expect(snap!.pins.length, 2);
-    expect(snap.pins.first.locationLabel, isEmpty);
-    expect(snap.threadStops, isEmpty);
-  });
+  test(
+    'LDR-B1 DomainLocationMapRepository pins from roster without trails',
+    () async {
+      await FsSessionKernel.ensureOpen(
+        preferSqlite: false,
+        override: MemoryLocalDatabase(),
+      );
+      await Stage1LocationRuntime.ensureOpen();
+      final domain = Stage1LocationRuntime.store;
+      final map = DomainLocationMapRepository(
+        domain: domain,
+        familyId: FamilyId('fam_stage1'),
+        children: InMemoryChildrenListRepository(
+          byFamily: {'fam_stage1': ChildrenListLocalSeedMock.famStage1Children},
+        ),
+      );
+      final snap = await map.load();
+      expect(snap, isNotNull);
+      expect(snap!.pins.length, 2);
+      expect(snap.pins.first.locationLabel, isEmpty);
+      expect(snap.threadStops, isEmpty);
+    },
+  );
 
   test('LDR-B1 QuranLocalBridgeStore round-trips offlineReady', () async {
     final db = MemoryLocalDatabase();

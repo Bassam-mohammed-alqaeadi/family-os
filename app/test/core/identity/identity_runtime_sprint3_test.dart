@@ -37,10 +37,11 @@ void main() {
         ),
       ],
       activeFamilyId: familyId,
-      activeChildScope: ChildScope(familyId: familyId, childId: ChildId('child_a')),
-      children: [
-        ChildIdentity(id: ChildId('child_a'), familyId: familyId),
-      ],
+      activeChildScope: ChildScope(
+        familyId: familyId,
+        childId: ChildId('child_a'),
+      ),
+      children: [ChildIdentity(id: ChildId('child_a'), familyId: familyId)],
       devices: [
         DeviceIdentity(
           id: DeviceId('dev_1'),
@@ -186,44 +187,51 @@ void main() {
     );
   });
 
-  test('lost/decommissioned enrollment cannot regain authority automatically', () {
-    final runtime = buildRuntime();
-    runtime.markEnrollmentLost(EnrollmentId('enr_1'));
-    expect(
-      () => runtime.finalizeEnrollment(EnrollmentId('enr_1')),
-      throwsA(isA<IdentityInvariantViolation>()),
-    );
+  test(
+    'lost/decommissioned enrollment cannot regain authority automatically',
+    () {
+      final runtime = buildRuntime();
+      runtime.markEnrollmentLost(EnrollmentId('enr_1'));
+      expect(
+        () => runtime.finalizeEnrollment(EnrollmentId('enr_1')),
+        throwsA(isA<IdentityInvariantViolation>()),
+      );
 
-    runtime.revokeEnrollment(EnrollmentId('enr_1'));
-    final pending = runtime.startPairing(
-      familyId: FamilyId('fam_a'),
-      childId: ChildId('child_a'),
-      deviceId: DeviceId('dev_1'),
-    );
-    runtime.decommissionEnrollment(pending.id);
-    expect(
-      () => runtime.finalizeEnrollment(pending.id),
-      throwsA(isA<IdentityInvariantViolation>()),
-    );
-  });
+      runtime.revokeEnrollment(EnrollmentId('enr_1'));
+      final pending = runtime.startPairing(
+        familyId: FamilyId('fam_a'),
+        childId: ChildId('child_a'),
+        deviceId: DeviceId('dev_1'),
+      );
+      runtime.decommissionEnrollment(pending.id);
+      expect(
+        () => runtime.finalizeEnrollment(pending.id),
+        throwsA(isA<IdentityInvariantViolation>()),
+      );
+    },
+  );
 
-  test('child logout is enrollment-scoped OFF/ON and remote end is separate', () {
-    final runtime = buildRuntime();
-    expect(runtime.canChildLogout(EnrollmentId('enr_1')), isFalse);
+  test(
+    'child logout is enrollment-scoped OFF/ON and remote end is separate',
+    () {
+      final runtime = buildRuntime();
+      expect(runtime.canChildLogout(EnrollmentId('enr_1')), isFalse);
 
-    final changed = runtime.setChildLogoutAllowedForEnrollment(
-      enrollmentId: EnrollmentId('enr_1'),
-      allowed: true,
-    );
-    expect(changed, isTrue);
-    expect(runtime.canChildLogout(EnrollmentId('enr_1')), isTrue);
+      final changed = runtime.setChildLogoutAllowedForEnrollment(
+        enrollmentId: EnrollmentId('enr_1'),
+        allowed: true,
+      );
+      expect(changed, isTrue);
+      expect(runtime.canChildLogout(EnrollmentId('enr_1')), isTrue);
 
-    expect(runtime.isChildSessionEnded(EnrollmentId('enr_1')), isFalse);
-    expect(runtime.endChildSessionRemotely(EnrollmentId('enr_1')), isTrue);
-    expect(runtime.isChildSessionEnded(EnrollmentId('enr_1')), isTrue);
-    // Logout permission toggle does not revoke enrollment.
-    final enrollment =
-        runtime.enrollments.firstWhere((e) => e.id == EnrollmentId('enr_1'));
-    expect(enrollment.state, EnrollmentState.enrolled);
-  });
+      expect(runtime.isChildSessionEnded(EnrollmentId('enr_1')), isFalse);
+      expect(runtime.endChildSessionRemotely(EnrollmentId('enr_1')), isTrue);
+      expect(runtime.isChildSessionEnded(EnrollmentId('enr_1')), isTrue);
+      // Logout permission toggle does not revoke enrollment.
+      final enrollment = runtime.enrollments.firstWhere(
+        (e) => e.id == EnrollmentId('enr_1'),
+      );
+      expect(enrollment.state, EnrollmentState.enrolled);
+    },
+  );
 }

@@ -52,14 +52,10 @@ final class LocalOfflineAiSafetyStore implements OfflineAiSafetyRepository {
       for (final row in existing) {
         final id = row['model_id']! as String;
         if (id == model.modelId) continue;
-        await _db.insert(
-          _models,
-          {
-            ...row,
-            'active': 0,
-          },
-          conflictAlgorithm: LocalConflictAlgorithm.replace,
-        );
+        await _db.insert(_models, {
+          ...row,
+          'active': 0,
+        }, conflictAlgorithm: LocalConflictAlgorithm.replace);
       }
     }
     await _db.insert(
@@ -198,18 +194,14 @@ final class LocalOfflineAiSafetyStore implements OfflineAiSafetyRepository {
     String? actorId,
     String payloadJson = '{}',
   }) async {
-    await _db.insert(
-      _audit,
-      {
-        'id': id,
-        'family_id': familyId.value,
-        'event_type': eventType,
-        'at_ms': at.toUtc().millisecondsSinceEpoch,
-        'actor_id': actorId,
-        'payload_json': payloadJson,
-      },
-      conflictAlgorithm: LocalConflictAlgorithm.replace,
-    );
+    await _db.insert(_audit, {
+      'id': id,
+      'family_id': familyId.value,
+      'event_type': eventType,
+      'at_ms': at.toUtc().millisecondsSinceEpoch,
+      'actor_id': actorId,
+      'payload_json': payloadJson,
+    }, conflictAlgorithm: LocalConflictAlgorithm.replace);
   }
 
   @override

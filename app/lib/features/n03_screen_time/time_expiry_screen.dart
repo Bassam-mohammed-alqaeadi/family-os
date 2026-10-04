@@ -136,10 +136,7 @@ class _TimeExpiryScreenState extends State<TimeExpiryScreen> {
     }
     setState(() => _sosBusy = true);
     final fire = widget.sosFire ?? stage1SosFireService;
-    await childSosSenderOf(
-      context,
-      explicit: widget.childId,
-    ).fireThrough(fire);
+    await childSosSenderOf(context, explicit: widget.childId).fireThrough(fire);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.go(screenPath('SCR-CHD-005'));

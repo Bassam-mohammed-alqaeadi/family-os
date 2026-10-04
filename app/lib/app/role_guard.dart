@@ -14,10 +14,7 @@ String screenPath(String screenId) =>
 /// Explicitly **not** owner-only (never block SOS / location / chat):
 /// - SCR-CHD-005 notes mention «اشتراك» but is SOS — allowed for child
 /// - SCR-FAT-014/015 location, SCR-FAT-021/022 chat, SCR-CHD-007/008 chat, etc.
-const Set<String> ownerOnlyScreenIds = {
-  'SCR-FAT-059',
-  'SCR-FAT-060',
-};
+const Set<String> ownerOnlyScreenIds = {'SCR-FAT-059', 'SCR-FAT-060'};
 
 /// Paths derived from [ownerOnlyScreenIds] for redirect matching.
 final Set<String> ownerOnlyPaths = ownerOnlyScreenIds.map(screenPath).toSet();

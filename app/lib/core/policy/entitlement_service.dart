@@ -19,7 +19,7 @@ abstract class EntitlementService {
 final class MockEntitlementService extends ChangeNotifier
     implements EntitlementService {
   MockEntitlementService([Entitlement? initial])
-      : _current = initial ?? Entitlement.trial();
+    : _current = initial ?? Entitlement.trial();
 
   Entitlement _current;
 
@@ -46,4 +46,5 @@ final class MockEntitlementService extends ChangeNotifier
 }
 
 /// Stage-1 process singleton for billing screens.
-final MockEntitlementService stage1EntitlementService = MockEntitlementService();
+final MockEntitlementService stage1EntitlementService =
+    MockEntitlementService();

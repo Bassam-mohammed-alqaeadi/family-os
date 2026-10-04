@@ -389,11 +389,7 @@ class _PreviewApproveScreenState extends State<PreviewApproveScreen> {
             },
           ),
           const SizedBox(height: 12),
-          _AudioMapCard(
-            colors: colors,
-            radii: radii,
-            l10n: l10n,
-          ),
+          _AudioMapCard(colors: colors, radii: radii, l10n: l10n),
           const SizedBox(height: 16),
           PrimaryBtn(
             key: PreviewApproveKeys.approveCta,
@@ -484,10 +480,15 @@ class _CitationsCard extends StatelessWidget {
               children: [
                 for (final c in snap.citations)
                   ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
+                    constraints: const BoxConstraints(
+                      minHeight: 48,
+                      minWidth: 48,
+                    ),
                     child: ChoiceChip(
                       key: PreviewApproveKeys.citationChip(c.id),
-                      label: Text(l10n.previewApproveCitationChipLabel(c.refLabel)),
+                      label: Text(
+                        l10n.previewApproveCitationChipLabel(c.refLabel),
+                      ),
                       selected: active?.id == c.id,
                       onSelected: (_) => onSelect(c.id),
                     ),

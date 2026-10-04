@@ -38,9 +38,8 @@ List<RouteBase> get sys3IdentityRoutes => [
   GoRoute(
     path: '/sys3-remove-adult',
     name: 'sys3-remove-adult',
-    builder: (context, state) => RemoveAdultScreen(
-      memberId: state.uri.queryParameters['memberId'],
-    ),
+    builder: (context, state) =>
+        RemoveAdultScreen(memberId: state.uri.queryParameters['memberId']),
   ),
   GoRoute(
     path: '/sys3-ownership-transfer',

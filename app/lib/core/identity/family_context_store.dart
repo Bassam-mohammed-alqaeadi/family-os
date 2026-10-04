@@ -11,7 +11,9 @@ abstract class FamilyContextStore {
 @visibleForTesting
 final class MemoryFamilyContextStore implements FamilyContextStore {
   MemoryFamilyContextStore([Map<String, String>? seed])
-      : _data = seed == null ? <String, String>{} : Map<String, String>.from(seed);
+    : _data = seed == null
+          ? <String, String>{}
+          : Map<String, String>.from(seed);
 
   final Map<String, String> _data;
 

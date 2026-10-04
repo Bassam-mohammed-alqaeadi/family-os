@@ -429,7 +429,9 @@ class _FamilyTasksScreenState extends State<FamilyTasksScreen> {
                           _proofLine(l10n, task.proofKey),
                           _timeLine(l10n, task.timeKey),
                         ].where((s) => s.isNotEmpty).join(' · '),
-                        approveLabel: l10n.familyTasksApproveCta(task.rewardMinutes),
+                        approveLabel: l10n.familyTasksApproveCta(
+                          task.rewardMinutes,
+                        ),
                         colors: colors,
                         onApprove: () => _onApprove(task),
                       ),
@@ -645,9 +647,7 @@ class _MotherHelpRow extends StatelessWidget {
             child: const SizedBox(
               width: 34,
               height: 34,
-              child: Center(
-                child: Text('🌸', style: TextStyle(fontSize: 14)),
-              ),
+              child: Center(child: Text('🌸', style: TextStyle(fontSize: 14))),
             ),
           ),
           const SizedBox(width: 10),

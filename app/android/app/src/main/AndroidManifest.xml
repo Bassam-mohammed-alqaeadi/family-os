@@ -15,12 +15,6 @@
         android:label="family_os"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
-        <activity
-            android:name=".PairingCodeQrActivity"
-            android:exported="false" />
-        <activity
-            android:name=".PairingCodeScannerActivity"
-            android:exported="false" />
         <service
             android:name=".ChildTelemetryService"
             android:exported="false"

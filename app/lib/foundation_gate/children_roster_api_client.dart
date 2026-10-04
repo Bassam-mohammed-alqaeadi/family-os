@@ -37,21 +37,31 @@ class ChildrenRosterApiClient {
     } on FoundationGateApiException {
       rethrow;
     } catch (_) {
-      throw const FoundationGateApiException(FoundationGateApiFailure.networkUnavailable);
+      throw const FoundationGateApiException(
+        FoundationGateApiFailure.networkUnavailable,
+      );
     }
 
     switch (response.statusCode) {
       case 200:
         return _parseChildren(response.body);
       case 401:
-        throw const FoundationGateApiException(FoundationGateApiFailure.unauthenticated);
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.unauthenticated,
+        );
       case 403:
-        throw const FoundationGateApiException(FoundationGateApiFailure.accessDenied);
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.accessDenied,
+        );
       case 429:
       case 503:
-        throw const FoundationGateApiException(FoundationGateApiFailure.serviceUnavailable);
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.serviceUnavailable,
+        );
       default:
-        throw const FoundationGateApiException(FoundationGateApiFailure.invalidResponse);
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.invalidResponse,
+        );
     }
   }
 
@@ -72,14 +82,15 @@ class ChildrenRosterApiClient {
     final rosterUri = _rosterUri(familyId);
     final normalizedName = displayName.trim();
     final normalizedEmoji = avatarEmoji.trim();
-    if (
-        !_isValidDisplayName(normalizedName) ||
+    if (!_isValidDisplayName(normalizedName) ||
         !_isValidAvatarEmoji(normalizedEmoji) ||
         !kFoundationGateChildThemeColors.contains(themeColor) ||
         !_isValidIdempotencyKey(idempotencyKey) ||
         ageYears < 0 ||
         ageYears > 25) {
-      throw const FoundationGateApiException(FoundationGateApiFailure.invalidInput);
+      throw const FoundationGateApiException(
+        FoundationGateApiFailure.invalidInput,
+      );
     }
 
     FoundationGateHttpResponse response;
@@ -102,25 +113,39 @@ class ChildrenRosterApiClient {
     } on FoundationGateApiException {
       rethrow;
     } catch (_) {
-      throw const FoundationGateApiException(FoundationGateApiFailure.networkUnavailable);
+      throw const FoundationGateApiException(
+        FoundationGateApiFailure.networkUnavailable,
+      );
     }
 
     switch (response.statusCode) {
       case 201:
         return _parseCreatedChild(response.body);
       case 400:
-        throw const FoundationGateApiException(FoundationGateApiFailure.invalidInput);
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.invalidInput,
+        );
       case 401:
-        throw const FoundationGateApiException(FoundationGateApiFailure.unauthenticated);
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.unauthenticated,
+        );
       case 403:
-        throw const FoundationGateApiException(FoundationGateApiFailure.accessDenied);
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.accessDenied,
+        );
       case 409:
-        throw const FoundationGateApiException(FoundationGateApiFailure.conflict);
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.conflict,
+        );
       case 429:
       case 503:
-        throw const FoundationGateApiException(FoundationGateApiFailure.serviceUnavailable);
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.serviceUnavailable,
+        );
       default:
-        throw const FoundationGateApiException(FoundationGateApiFailure.invalidResponse);
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.invalidResponse,
+        );
     }
   }
 
@@ -128,7 +153,9 @@ class ChildrenRosterApiClient {
     try {
       return _configuration.childrenRosterUri(familyId);
     } on ArgumentError {
-      throw const FoundationGateApiException(FoundationGateApiFailure.invalidResponse);
+      throw const FoundationGateApiException(
+        FoundationGateApiFailure.invalidResponse,
+      );
     }
   }
 
@@ -144,7 +171,9 @@ class ChildrenRosterApiClient {
       }
       return List.unmodifiable(rawChildren.map(_parseChild));
     } catch (_) {
-      throw const FoundationGateApiException(FoundationGateApiFailure.invalidResponse);
+      throw const FoundationGateApiException(
+        FoundationGateApiFailure.invalidResponse,
+      );
     }
   }
 
@@ -156,7 +185,9 @@ class ChildrenRosterApiClient {
       }
       return _parseChild(decoded['child']);
     } catch (_) {
-      throw const FoundationGateApiException(FoundationGateApiFailure.invalidResponse);
+      throw const FoundationGateApiException(
+        FoundationGateApiFailure.invalidResponse,
+      );
     }
   }
 
@@ -172,8 +203,7 @@ class ChildrenRosterApiClient {
     final version = value['version'];
     final createdAt = value['createdAt'];
     final updatedAt = value['updatedAt'];
-    if (
-        id is! String ||
+    if (id is! String ||
         !isFoundationGateUuid(id) ||
         displayName is! String ||
         !_isValidDisplayName(displayName) ||
@@ -202,7 +232,9 @@ class ChildrenRosterApiClient {
   }
 
   bool _isValidDisplayName(String value) {
-    return value.isNotEmpty && value.length <= 120 && !RegExp(r'[\u0000-\u001F\u007F]').hasMatch(value);
+    return value.isNotEmpty &&
+        value.length <= 120 &&
+        !RegExp(r'[\u0000-\u001F\u007F]').hasMatch(value);
   }
 
   bool _isValidAvatarEmoji(String value) {
@@ -213,6 +245,8 @@ class ChildrenRosterApiClient {
   }
 
   bool _isValidIdempotencyKey(String value) {
-    return value.trim().isNotEmpty && value.length <= 128 && !RegExp(r'[\u0000-\u001F\u007F]').hasMatch(value);
+    return value.trim().isNotEmpty &&
+        value.length <= 128 &&
+        !RegExp(r'[\u0000-\u001F\u007F]').hasMatch(value);
   }
 }

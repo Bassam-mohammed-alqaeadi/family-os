@@ -69,32 +69,31 @@ void main() {
       );
     }
 
-    test('mother childRequestsEnabled=false hides child-request rows',
-        () async {
-      await prefs.save(
-        const NotificationPrefs(
-          memberId: 'father',
-          childRequestsEnabled: true,
-        ),
-      );
-      await prefs.save(
-        const NotificationPrefs(
-          memberId: 'mother',
-          childRequestsEnabled: false,
-        ),
-      );
+    test(
+      'mother childRequestsEnabled=false hides child-request rows',
+      () async {
+        await prefs.save(
+          const NotificationPrefs(
+            memberId: 'father',
+            childRequestsEnabled: true,
+          ),
+        );
+        await prefs.save(
+          const NotificationPrefs(
+            memberId: 'mother',
+            childRequestsEnabled: false,
+          ),
+        );
 
-      final motherSnap = await hub(prefsMemberId: 'mother').load();
-      expect(motherSnap.critical.any((a) => a.titleKey == 'tamper'), isTrue);
-      expect(motherSnap.attention, isEmpty);
-    });
+        final motherSnap = await hub(prefsMemberId: 'mother').load();
+        expect(motherSnap.critical.any((a) => a.titleKey == 'tamper'), isTrue);
+        expect(motherSnap.attention, isEmpty);
+      },
+    );
 
     test('father unchanged when only mother muted child requests', () async {
       await prefs.save(
-        const NotificationPrefs(
-          memberId: 'father',
-          childRequestsEnabled: true,
-        ),
+        const NotificationPrefs(memberId: 'father', childRequestsEnabled: true),
       );
       await prefs.save(
         const NotificationPrefs(

@@ -78,7 +78,9 @@ final class LocalFamilyRosterSource extends ChangeNotifier
     final displayName = profile?.displayName.trim();
     return FamilyRosterChild(
       childId: ChildId(id),
-      displayName: displayName == null || displayName.isEmpty ? null : displayName,
+      displayName: displayName == null || displayName.isEmpty
+          ? null
+          : displayName,
       // Zero is a valid known age for an infant. It is only null when there is
       // no profile record, never synthesized for a managed registry record.
       ageYears: profile?.ageYears,
@@ -120,9 +122,7 @@ final class LocalFamilyDeviceSource extends ChangeNotifier
         familyId: familyId,
         childId: child.childId,
       );
-      final enrollments = [
-        for (final device in devices) ...device.enrollments,
-      ];
+      final enrollments = [for (final device in devices) ...device.enrollments];
       summaries.add(
         FamilyChildDeviceSummary(
           childId: child.childId,
@@ -184,10 +184,7 @@ final class LocalFamilyPolicySource extends ChangeNotifier
     FamilyId familyId,
     FamilySharedPolicy policy,
   ) async {
-    await _repository.saveSharedPolicies(
-      _toLegacy(policy),
-      familyId: familyId,
-    );
+    await _repository.saveSharedPolicies(_toLegacy(policy), familyId: familyId);
     return _publish(familyId, policy);
   }
 

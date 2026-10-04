@@ -52,66 +52,64 @@ void main() {
           childId: child,
           updatedAt: DateTime.utc(2026, 9, 20, 18),
           kind: PolicySyncKind.policy,
-          policy: ScreenTimePolicy(
-            dailyCapMinutes: 90,
-            usedMinutesToday: 20,
-          ),
+          policy: ScreenTimePolicy(dailyCapMinutes: 90, usedMinutesToday: 20),
         ),
       );
       await tester.pumpAndSettle();
 
       expect(find.text('متبقي 70 دقيقة'), findsOneWidget);
       expect(
-        identical(mirrorState, tester.state(find.byType(ChildScreenTimeMirror))),
+        identical(
+          mirrorState,
+          tester.state(find.byType(ChildScreenTimeMirror)),
+        ),
         isTrue,
       );
     },
   );
 
-  testWidgets(
-    'offline: child keeps old values until markOnline delivers',
-    (tester) async {
-      final bus = PolicySyncBus();
-      addTearDown(bus.dispose);
+  testWidgets('offline: child keeps old values until markOnline delivers', (
+    tester,
+  ) async {
+    final bus = PolicySyncBus();
+    addTearDown(bus.dispose);
 
-      final initial = ScreenTimePolicy(
-        dailyCapMinutes: 120,
-        usedMinutesToday: 0,
-      );
-      bus.hydrate(child, policy: initial);
-      bus.markChildOffline(child);
+    final initial = ScreenTimePolicy(dailyCapMinutes: 120, usedMinutesToday: 0);
+    bus.hydrate(child, policy: initial);
+    bus.markChildOffline(child);
 
-      await tester.pumpWidget(
-        _app(
-          ChildScreenTimeMirror(
-            childId: child,
-            syncBus: bus,
-            initialPolicy: initial,
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('متبقي 120 دقيقة'), findsOneWidget);
-
-      final status = bus.publish(
-        PolicySyncEvent(
+    await tester.pumpWidget(
+      _app(
+        ChildScreenTimeMirror(
           childId: child,
-          updatedAt: DateTime.utc(2026, 9, 20, 19),
-          kind: PolicySyncKind.policy,
-          policy: ScreenTimePolicy(dailyCapMinutes: 80),
+          syncBus: bus,
+          initialPolicy: initial,
         ),
-      );
-      expect(status, PolicySyncStatus.offlineQueued);
-      await tester.pumpAndSettle();
-      expect(find.text('متبقي 120 دقيقة'), findsOneWidget);
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('متبقي 120 دقيقة'), findsOneWidget);
 
-      bus.markChildOnline(child);
-      await tester.pumpAndSettle();
-      expect(find.text('متبقي 80 دقيقة'), findsOneWidget);
-    },
-  );
+    final status = bus.publish(
+      PolicySyncEvent(
+        childId: child,
+        updatedAt: DateTime.utc(2026, 9, 20, 19),
+        kind: PolicySyncKind.policy,
+        policy: ScreenTimePolicy(dailyCapMinutes: 80),
+      ),
+    );
+    expect(status, PolicySyncStatus.offlineQueued);
+    await tester.pumpAndSettle();
+    expect(find.text('متبقي 120 دقيقة'), findsOneWidget);
 
-  testWidgets('parent save shows delivered Tag when child online', (tester) async {
+    bus.markChildOnline(child);
+    await tester.pumpAndSettle();
+    expect(find.text('متبقي 80 دقيقة'), findsOneWidget);
+  });
+
+  testWidgets('parent save shows delivered Tag when child online', (
+    tester,
+  ) async {
     final bus = PolicySyncBus();
     addTearDown(bus.dispose);
     final policyRepo = InMemoryScreenTimePolicyRepository({
@@ -142,7 +140,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 2600));
   });
 
-  testWidgets('parent save shows pending Tag when child offline', (tester) async {
+  testWidgets('parent save shows pending Tag when child offline', (
+    tester,
+  ) async {
     final bus = PolicySyncBus();
     addTearDown(bus.dispose);
     bus.markChildOffline(child);

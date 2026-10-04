@@ -78,7 +78,7 @@ final class PrefsSmartModePrefsRepository implements SmartModePrefsRepository {
 final class InMemorySmartModePrefsRepository
     implements SmartModePrefsRepository {
   InMemorySmartModePrefsRepository([Map<String, SmartModePrefs>? seed])
-      : _byChild = seed ?? {};
+    : _byChild = seed ?? {};
 
   final Map<String, SmartModePrefs> _byChild;
 
@@ -92,6 +92,5 @@ final class InMemorySmartModePrefsRepository
     _byChild[prefs.childId] = prefs;
   }
 
-  Map<String, SmartModePrefs> get debugSnapshot =>
-      Map.unmodifiable(_byChild);
+  Map<String, SmartModePrefs> get debugSnapshot => Map.unmodifiable(_byChild);
 }

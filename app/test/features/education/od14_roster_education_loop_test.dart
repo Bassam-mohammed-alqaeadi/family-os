@@ -17,9 +17,7 @@ void main() {
 
   setUp(() {
     resetStage1IdentityRuntimeForTest();
-    rebindStage1IdentityRuntime(
-      familyContextStore: MemoryFamilyContextStore(),
-    );
+    rebindStage1IdentityRuntime(familyContextStore: MemoryFamilyContextStore());
     stage1IdentityRuntime.setActiveChild(ChildId('demo-child'));
     assignments = InMemoryLearningAssignmentRepository();
     rebindStage1LearningAssignmentRepository(assignments);
@@ -32,13 +30,16 @@ void main() {
     resetStage1IdentityRuntimeForTest();
   });
 
-  test('roster lists only active-family children (not child_a / other family)', () {
-    final roster = activeFamilyRosterChildren();
-    final ids = roster.map((c) => c.id.value).toList();
-    expect(ids, containsAll(['demo-child', 'child_b']));
-    expect(ids, isNot(contains('child_a')));
-    expect(ids, isNot(contains('child_c'))); // second family
-  });
+  test(
+    'roster lists only active-family children (not child_a / other family)',
+    () {
+      final roster = activeFamilyRosterChildren();
+      final ids = roster.map((c) => c.id.value).toList();
+      expect(ids, containsAll(['demo-child', 'child_b']));
+      expect(ids, isNot(contains('child_a')));
+      expect(ids, isNot(contains('child_c'))); // second family
+    },
+  );
 
   test('create assignment publishes to the active roster child', () async {
     final repo = InMemoryCreateAssignmentRepository(assignments: assignments);

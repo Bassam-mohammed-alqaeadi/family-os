@@ -129,7 +129,9 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   Future<FamilyRosterSnapshot> loadRoster(FamilyId familyId) async {
     await refreshIdentity();
     final selected = _controller.selectedFamily;
-    if (!_identityValue.isRemoteAuthoritative || selected == null || selected.id != familyId.value) {
+    if (!_identityValue.isRemoteAuthoritative ||
+        selected == null ||
+        selected.id != familyId.value) {
       return _publishRoster(const FamilyRosterSnapshot.unavailable());
     }
 
@@ -147,7 +149,9 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   Future<FamilyDeviceSnapshot> loadDevices(FamilyId familyId) async {
     await refreshIdentity();
     final selected = _controller.selectedFamily;
-    if (!_identityValue.isRemoteAuthoritative || selected == null || selected.id != familyId.value) {
+    if (!_identityValue.isRemoteAuthoritative ||
+        selected == null ||
+        selected.id != familyId.value) {
       return _publishDevices(const FamilyDeviceSnapshot.unavailable());
     }
     try {
@@ -159,32 +163,40 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
       for (final device in devices) {
         (byChild[device.childId] ??= []).add(device);
       }
-      final children = byChild.entries.map((entry) {
-        final candidates = entry.value
-          ..sort((left, right) {
-            final leftTime = left.lastSeenAt ?? left.linkedAt;
-            final rightTime = right.lastSeenAt ?? right.linkedAt;
-            return rightTime.compareTo(leftTime);
-          });
-        final latest = candidates.first;
-        return FamilyChildDeviceSummary(
-          childId: ChildId(entry.key),
-          connectionState: _connectionStateOf(latest),
-          deviceCount: candidates.length,
-          deviceLabel: latest.deviceLabel,
-          batteryLevel: latest.batteryLevel,
-          batteryStatus: latest.batteryStatus,
-          locationLabel: latest.locationLabel,
-          lastSeenAt: latest.lastSeenAt,
-        );
-      }).toList(growable: false)
-        ..sort((left, right) => left.childId.value.compareTo(right.childId.value));
-      return _publishDevices(FamilyDeviceSnapshot(
-        familyId: familyId,
-        origin: RuntimeDataOrigin.remoteAuthoritative,
-        children: List.unmodifiable(children),
-        observedAt: DateTime.now().toUtc(),
-      ));
+      final children =
+          byChild.entries
+              .map((entry) {
+                final candidates = entry.value
+                  ..sort((left, right) {
+                    final leftTime = left.lastSeenAt ?? left.linkedAt;
+                    final rightTime = right.lastSeenAt ?? right.linkedAt;
+                    return rightTime.compareTo(leftTime);
+                  });
+                final latest = candidates.first;
+                return FamilyChildDeviceSummary(
+                  childId: ChildId(entry.key),
+                  connectionState: _connectionStateOf(latest),
+                  deviceCount: candidates.length,
+                  deviceLabel: latest.deviceLabel,
+                  batteryLevel: latest.batteryLevel,
+                  batteryStatus: latest.batteryStatus,
+                  locationLabel: latest.locationLabel,
+                  lastSeenAt: latest.lastSeenAt,
+                );
+              })
+              .toList(growable: false)
+            ..sort(
+              (left, right) =>
+                  left.childId.value.compareTo(right.childId.value),
+            );
+      return _publishDevices(
+        FamilyDeviceSnapshot(
+          familyId: familyId,
+          origin: RuntimeDataOrigin.remoteAuthoritative,
+          children: List.unmodifiable(children),
+          observedAt: DateTime.now().toUtc(),
+        ),
+      );
     } on FoundationGateIdentityException {
       return _publishDevices(const FamilyDeviceSnapshot.unavailable());
     } on FoundationGateApiException {
@@ -221,7 +233,9 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     }
   }
 
-  ChildDeviceConnectionState _connectionStateOf(FoundationGateFamilyDevice device) {
+  ChildDeviceConnectionState _connectionStateOf(
+    FoundationGateFamilyDevice device,
+  ) {
     if (device.lastSeenAt == null) return ChildDeviceConnectionState.pairing;
     if (device.batteryLevel != null && device.batteryLevel! <= 15) {
       return ChildDeviceConnectionState.needsAttention;
@@ -242,7 +256,9 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   }) async {
     await refreshIdentity();
     final selected = _controller.selectedFamily;
-    if (!_identityValue.isRemoteAuthoritative || selected == null || selected.id != familyId.value) {
+    if (!_identityValue.isRemoteAuthoritative ||
+        selected == null ||
+        selected.id != familyId.value) {
       return const FamilyChildProfileCreateResult.failed(
         FamilyChildProfileCreateFailure.unavailable,
       );
@@ -299,7 +315,8 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
         FamilyChildProfileCreateFailure.rosterRefreshUnavailable,
       FoundationGateChildCreateResult.invalidInput =>
         FamilyChildProfileCreateFailure.invalidInput,
-      FoundationGateChildCreateResult.conflict => FamilyChildProfileCreateFailure.conflict,
+      FoundationGateChildCreateResult.conflict =>
+        FamilyChildProfileCreateFailure.conflict,
       FoundationGateChildCreateResult.accessDenied =>
         FamilyChildProfileCreateFailure.accessDenied,
       FoundationGateChildCreateResult.sessionInvalid =>
@@ -379,7 +396,8 @@ final class RemoteFamilyRosterSource extends ChangeNotifier
   FamilyRosterSnapshot get value => _runtime.rosterValue;
 
   @override
-  Future<FamilyRosterSnapshot> load(FamilyId familyId) => _runtime.loadRoster(familyId);
+  Future<FamilyRosterSnapshot> load(FamilyId familyId) =>
+      _runtime.loadRoster(familyId);
 
   @override
   void dispose() {
@@ -400,7 +418,8 @@ final class RemoteFamilyDeviceSource extends ChangeNotifier
   FamilyDeviceSnapshot get value => _runtime.deviceValue;
 
   @override
-  Future<FamilyDeviceSnapshot> load(FamilyId familyId) => _runtime.loadDevices(familyId);
+  Future<FamilyDeviceSnapshot> load(FamilyId familyId) =>
+      _runtime.loadDevices(familyId);
 
   Future<FoundationGateDevicePairing?> createPairing({
     required FamilyId familyId,
@@ -421,8 +440,7 @@ final class RemoteFamilyDeviceSource extends ChangeNotifier
   }
 }
 
-final class RemoteFamilyChildProfileSource
-    implements FamilyChildProfileSource {
+final class RemoteFamilyChildProfileSource implements FamilyChildProfileSource {
   RemoteFamilyChildProfileSource(this._runtime);
 
   final MainAppFoundationRuntime _runtime;

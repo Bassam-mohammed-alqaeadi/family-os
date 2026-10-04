@@ -98,7 +98,10 @@ class LocationHistoryScreenState extends State<LocationHistoryScreen> {
 
   /// Primary-only export/archive stubs (L2).
   bool get _isPrimary =>
-      resolveAuthorizationContext(context, fallbackRole: _role).isPrimaryOwner ||
+      resolveAuthorizationContext(
+        context,
+        fallbackRole: _role,
+      ).isPrimaryOwner ||
       _role == AppRole.father;
 
   String? get _resolvedChildId {

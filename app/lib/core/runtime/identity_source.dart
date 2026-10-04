@@ -79,7 +79,8 @@ final class IdentitySnapshot {
 ///
 /// Implementations may be local during the migration or Render-authoritative
 /// later. Screens consume [value], not a process-global identity singleton.
-abstract interface class IdentitySource implements ValueListenable<IdentitySnapshot> {
+abstract interface class IdentitySource
+    implements ValueListenable<IdentitySnapshot> {
   Future<IdentitySnapshot> refresh();
 
   void dispose();

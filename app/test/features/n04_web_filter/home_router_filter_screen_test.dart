@@ -31,7 +31,9 @@ void main() {
     expect(nav, contains('SCR-FAT-003'));
   });
 
-  testWidgets('local family body + guide + Native-closed check toast', (tester) async {
+  testWidgets('local family body + guide + Native-closed check toast', (
+    tester,
+  ) async {
     final repo = InMemoryHomeRouterFilterRepository(
       seed: homeRouterFilterOneFixture(),
     );

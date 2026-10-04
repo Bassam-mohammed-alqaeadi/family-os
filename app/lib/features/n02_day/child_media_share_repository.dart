@@ -10,7 +10,7 @@ abstract class ChildMediaShareRepository {
 final class InMemoryChildMediaShareRepository
     implements ChildMediaShareRepository {
   InMemoryChildMediaShareRepository({ChildMediaShareSnapshot? seed})
-      : _snap = seed ?? childMediaShareEmptyFixture();
+    : _snap = seed ?? childMediaShareEmptyFixture();
 
   ChildMediaShareSnapshot _snap;
   Future<void> Function()? loadGate;

@@ -124,10 +124,7 @@ class AiSafetyTicketReviewPanel extends StatelessWidget {
                       contentPadding: EdgeInsets.zero,
                       dense: true,
                       title: Text(
-                        _categoryLabel(
-                          l10n,
-                          signalsById[t.signalId]?.category,
-                        ),
+                        _categoryLabel(l10n, signalsById[t.signalId]?.category),
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           color: colors.ink,
@@ -266,8 +263,7 @@ class _TicketDetail extends StatelessWidget {
                     signal?.severity,
                   ),
                 ),
-                if (signal != null)
-                  Tag(label: signal!.provenance.wireName),
+                if (signal != null) Tag(label: signal!.provenance.wireName),
               ],
             ),
             const SizedBox(height: 8),
@@ -281,11 +277,7 @@ class _TicketDetail extends StatelessWidget {
               Text(
                 key: AiSafetyTicketReviewKeys.preview,
                 preview,
-                style: TextStyle(
-                  fontSize: 13,
-                  height: 1.45,
-                  color: colors.ink,
-                ),
+                style: TextStyle(fontSize: 13, height: 1.45, color: colors.ink),
               ),
             if (canReview) ...[
               const SizedBox(height: 10),

@@ -74,10 +74,7 @@ void main() {
     await tester.pumpWidget(
       _app(
         role: AppRole.child,
-        child: WhatIsCollectedScreen(
-          childId: child,
-          repository: repo,
-        ),
+        child: WhatIsCollectedScreen(childId: child, repository: repo),
       ),
     );
     await tester.pumpAndSettle();
@@ -131,16 +128,14 @@ void main() {
     expect(tile.value, isFalse);
   });
 
-  testWidgets('mother sees read-only — no save, switches disabled',
-      (tester) async {
+  testWidgets('mother sees read-only — no save, switches disabled', (
+    tester,
+  ) async {
     final repo = InMemoryPrivacyCollectionRepository();
     await tester.pumpWidget(
       _app(
         role: AppRole.mother,
-        child: PrivacyDataScreen(
-          childId: child,
-          repository: repo,
-        ),
+        child: PrivacyDataScreen(childId: child, repository: repo),
       ),
     );
     await tester.pumpAndSettle();
@@ -154,8 +149,9 @@ void main() {
     expect(tile.onChanged, isNull);
   });
 
-  testWidgets('retention note visible on father privacy screen',
-      (tester) async {
+  testWidgets('retention note visible on father privacy screen', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _app(
         role: AppRole.father,
@@ -168,10 +164,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(PrivacyDataKeys.retentionBanner), findsOneWidget);
-    expect(
-      find.textContaining('الاحتفاظ ≠ الجمع'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('الاحتفاظ ≠ الجمع'), findsOneWidget);
   });
 }
 

@@ -15,8 +15,9 @@ import 'package:family_os/features/n10_emergency/sos_alert_screen.dart';
 void main() {
   tearDown(AppToast.dismiss);
 
-  testWidgets('SCR-FAT-018 father sees active coral board + CTAs',
-      (tester) async {
+  testWidgets('SCR-FAT-018 father sees active coral board + CTAs', (
+    tester,
+  ) async {
     final repo = InMemorySosAlertRepository(
       initialActive: InMemorySosAlertRepository.demoActive(),
     );
@@ -56,8 +57,9 @@ void main() {
     expect(find.textContaining('يطلب النجدة'), findsOneWidget);
   });
 
-  testWidgets('SCR-FAT-018 Observer CANNOT ack, resolve, or escalate',
-      (tester) async {
+  testWidgets('SCR-FAT-018 Observer CANNOT ack, resolve, or escalate', (
+    tester,
+  ) async {
     final repo = InMemorySosAlertRepository(
       initialActive: InMemorySosAlertRepository.demoActive(),
     );
@@ -86,8 +88,9 @@ void main() {
     expect(repo.escalateCount, 0);
   });
 
-  testWidgets('SCR-FAT-018 Partner can acknowledge; ACK ≠ RESOLVE',
-      (tester) async {
+  testWidgets('SCR-FAT-018 Partner can acknowledge; ACK ≠ RESOLVE', (
+    tester,
+  ) async {
     final repo = InMemorySosAlertRepository(
       initialActive: InMemorySosAlertRepository.demoActive(),
     );
@@ -145,8 +148,9 @@ void main() {
     expect(after?.status, SosAlertStatus.escalating);
   });
 
-  testWidgets('SCR-FAT-018 auto-call fires after delay (S-SEC-028)',
-      (tester) async {
+  testWidgets('SCR-FAT-018 auto-call fires after delay (S-SEC-028)', (
+    tester,
+  ) async {
     final repo = InMemorySosAlertRepository(
       initialActive: InMemorySosAlertRepository.demoActive(),
     );
@@ -198,8 +202,9 @@ void main() {
     expect(setup, isTrue);
   });
 
-  testWidgets('SCR-FAT-018 empty incomplete CTA deep-links setup',
-      (tester) async {
+  testWidgets('SCR-FAT-018 empty incomplete CTA deep-links setup', (
+    tester,
+  ) async {
     final repo = InMemorySosAlertRepository();
     var setup = false;
 

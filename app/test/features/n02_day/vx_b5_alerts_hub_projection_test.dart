@@ -76,10 +76,7 @@ void main() {
   test('childRequestsEnabled=false hides time/app/friend rows', () async {
     final prefs = InMemoryNotificationPrefsRepository();
     await prefs.save(
-      const NotificationPrefs(
-        memberId: 'father',
-        childRequestsEnabled: false,
-      ),
+      const NotificationPrefs(memberId: 'father', childRequestsEnabled: false),
     );
     final bus = AntiTamperAlertBus();
     bus.simulateBypassAttempt(

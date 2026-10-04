@@ -28,8 +28,14 @@ void main() {
     expect(find.byKey(GenerationOutputsKeys.body), findsOneWidget);
     expect(find.byKey(GenerationOutputsKeys.sourceBanner), findsOneWidget);
     expect(find.byKey(GenerationOutputsKeys.religiousLock), findsOneWidget);
-    expect(find.byKey(GenerationOutputsKeys.outputRow('out-lesson')), findsOneWidget);
-    expect(find.byKey(GenerationOutputsKeys.outputRow('out-review')), findsOneWidget);
+    expect(
+      find.byKey(GenerationOutputsKeys.outputRow('out-lesson')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(GenerationOutputsKeys.outputRow('out-review')),
+      findsOneWidget,
+    );
     expect(find.textContaining('Generate selected (5)'), findsOneWidget);
 
     await tester.ensureVisible(find.byKey(GenerationOutputsKeys.generateCta));
@@ -51,7 +57,9 @@ void main() {
 
     expect(find.textContaining('Generate selected (5)'), findsOneWidget);
 
-    await tester.tap(find.byKey(GenerationOutputsKeys.outputSwitch('out-quiz')));
+    await tester.tap(
+      find.byKey(GenerationOutputsKeys.outputSwitch('out-quiz')),
+    );
     await tester.pumpAndSettle();
     expect(find.textContaining('Generate selected (4)'), findsOneWidget);
   });
@@ -67,7 +75,9 @@ void main() {
     );
     expect(sw.value, isFalse);
 
-    await tester.tap(find.byKey(GenerationOutputsKeys.outputSwitch('out-review')));
+    await tester.tap(
+      find.byKey(GenerationOutputsKeys.outputSwitch('out-review')),
+    );
     await tester.pump();
     AppToast.dismiss();
     await tester.pumpAndSettle();
@@ -167,11 +177,7 @@ void main() {
 
   testWidgets('child RoleGuard lean + SOS', (tester) async {
     var sos = false;
-    await _pump(
-      tester,
-      role: AppRole.child,
-      onSos: () => sos = true,
-    );
+    await _pump(tester, role: AppRole.child, onSos: () => sos = true);
 
     expect(find.byKey(GenerationOutputsKeys.childLean), findsOneWidget);
     expect(find.byKey(GenerationOutputsKeys.body), findsNothing);

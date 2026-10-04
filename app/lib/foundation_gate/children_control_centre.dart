@@ -26,13 +26,14 @@ enum ChildrenControlCentreStatus {
 /// It may collect a minimal child profile from a primary guardian, but it never
 /// owns authorization or persistence. Device and policy controls remain outside
 /// this capability.
-typedef CreateChildProfile = Future<FoundationGateChildCreateResult> Function({
-  required String displayName,
-  required int ageYears,
-  required String avatarEmoji,
-  required String themeColor,
-  required String idempotencyKey,
-});
+typedef CreateChildProfile =
+    Future<FoundationGateChildCreateResult> Function({
+      required String displayName,
+      required int ageYears,
+      required String avatarEmoji,
+      required String themeColor,
+      required String idempotencyKey,
+    });
 
 class ChildrenControlCentre extends StatelessWidget {
   const ChildrenControlCentre({
@@ -62,7 +63,9 @@ class ChildrenControlCentre extends StatelessWidget {
     final colors = Theme.of(context).extension<FamilyColors>()!;
     // Discovery role only controls whether the affordance is shown. The POST
     // remains server-authorized, including if this context becomes stale.
-    final createChildAction = family?.role == 'primary_guardian' ? onCreateChild : null;
+    final createChildAction = family?.role == 'primary_guardian'
+        ? onCreateChild
+        : null;
 
     return ColoredBox(
       color: colors.bg,
@@ -75,13 +78,20 @@ class ChildrenControlCentre extends StatelessWidget {
               child: ListView(
                 padding: EdgeInsets.fromLTRB(horizontal, 20, horizontal, 32),
                 children: [
-                  if (status != ChildrenControlCentreStatus.accessDenied && family != null) ...[
-                    _FamilyContextHeader(family: family!, childCount: children.length),
+                  if (status != ChildrenControlCentreStatus.accessDenied &&
+                      family != null) ...[
+                    _FamilyContextHeader(
+                      family: family!,
+                      childCount: children.length,
+                    ),
                     const SizedBox(height: 20),
                   ],
                   switch (status) {
-                    ChildrenControlCentreStatus.loading => const _RosterLoading(),
-                    ChildrenControlCentreStatus.ready => _RosterReady(children: children),
+                    ChildrenControlCentreStatus.loading =>
+                      const _RosterLoading(),
+                    ChildrenControlCentreStatus.ready => _RosterReady(
+                      children: children,
+                    ),
                     ChildrenControlCentreStatus.empty => const _RosterEmpty(),
                     ChildrenControlCentreStatus.accessDenied => _RosterIssue(
                       icon: Icons.lock_outline,
@@ -98,17 +108,19 @@ class ChildrenControlCentre extends StatelessWidget {
                       onChooseFamily: onChooseFamily,
                       onSignOut: onSignOut,
                     ),
-                    ChildrenControlCentreStatus.networkUnavailable => _RosterIssue(
-                      icon: Icons.wifi_off_outlined,
-                      title: copy.networkUnavailable,
-                      body: copy.rosterUnavailableBody,
-                      onRetry: onRetry,
-                      onChooseFamily: onChooseFamily,
-                      onSignOut: onSignOut,
-                    ),
+                    ChildrenControlCentreStatus.networkUnavailable =>
+                      _RosterIssue(
+                        icon: Icons.wifi_off_outlined,
+                        title: copy.networkUnavailable,
+                        body: copy.rosterUnavailableBody,
+                        onRetry: onRetry,
+                        onChooseFamily: onChooseFamily,
+                        onSignOut: onSignOut,
+                      ),
                   },
                   const SizedBox(height: 20),
-                  if (status != ChildrenControlCentreStatus.accessDenied) const _TruthBoundaryCard(),
+                  if (status != ChildrenControlCentreStatus.accessDenied)
+                    const _TruthBoundaryCard(),
                   const SizedBox(height: 16),
                   _CentreActions(
                     onChooseFamily: onChooseFamily,
@@ -179,7 +191,9 @@ class _FamilyContextHeader extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    childCount == 1 ? copy.childCountOne : copy.childCount(childCount),
+                    childCount == 1
+                        ? copy.childCountOne
+                        : copy.childCount(childCount),
                     style: TextStyle(
                       color: colors.ink2,
                       fontSize: 13,
@@ -190,7 +204,9 @@ class _FamilyContextHeader extends StatelessWidget {
               );
               final source = _SourceContext(
                 roleText: copy.displayRole(family.role),
-                roleDescription: isCoGuardian ? copy.coGuardianReadOnly : copy.primaryGuardianCanCreate,
+                roleDescription: isCoGuardian
+                    ? copy.coGuardianReadOnly
+                    : copy.primaryGuardianCanCreate,
               );
 
               if (!isWide) {
@@ -201,7 +217,11 @@ class _FamilyContextHeader extends StatelessWidget {
               }
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [Expanded(child: details), const SizedBox(width: 20), source],
+                children: [
+                  Expanded(child: details),
+                  const SizedBox(width: 20),
+                  source,
+                ],
               );
             },
           ),
@@ -237,12 +257,20 @@ class _SourceContext extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.verified_user_outlined, size: 16, color: colors.mintInk),
+                  Icon(
+                    Icons.verified_user_outlined,
+                    size: 16,
+                    color: colors.mintInk,
+                  ),
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
                       copy.serverRosterCurrentSession,
-                      style: TextStyle(color: colors.mintInk, fontSize: 12, fontWeight: FontWeight.w800),
+                      style: TextStyle(
+                        color: colors.mintInk,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                 ],
@@ -250,9 +278,19 @@ class _SourceContext extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          Text(roleText, style: TextStyle(color: colors.ink, fontSize: 13, fontWeight: FontWeight.w800)),
+          Text(
+            roleText,
+            style: TextStyle(
+              color: colors.ink,
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
           const SizedBox(height: 3),
-          Text(roleDescription, style: TextStyle(color: colors.ink2, fontSize: 12, height: 1.4)),
+          Text(
+            roleDescription,
+            style: TextStyle(color: colors.ink2, fontSize: 12, height: 1.4),
+          ),
         ],
       ),
     );
@@ -273,7 +311,10 @@ class _RosterLoading extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(copy.childrenTitle, style: Theme.of(context).textTheme.headlineSmall),
+          Text(
+            copy.childrenTitle,
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
           const SizedBox(height: 8),
           Text(copy.childrenSubtitle, style: TextStyle(color: colors.ink2)),
           const SizedBox(height: 20),
@@ -312,7 +353,10 @@ class _RosterReady extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(copy.childrenTitle, style: Theme.of(context).textTheme.headlineSmall),
+            Text(
+              copy.childrenTitle,
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
             const SizedBox(height: 6),
             Text(copy.childrenSubtitle, style: TextStyle(color: colors.ink2)),
             const SizedBox(height: 16),
@@ -322,7 +366,9 @@ class _RosterReady extends StatelessWidget {
               children: children
                   .map(
                     (child) => SizedBox(
-                      width: columnCount == 2 ? (constraints.maxWidth - 12) / 2 : constraints.maxWidth,
+                      width: columnCount == 2
+                          ? (constraints.maxWidth - 12) / 2
+                          : constraints.maxWidth,
                       child: _ChildProfileCard(child: child),
                     ),
                   )
@@ -346,7 +392,9 @@ class _ChildProfileCard extends StatelessWidget {
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final radii = Theme.of(context).extension<FamilyRadii>()!;
     final shadows = Theme.of(context).extension<FamilyShadows>()!;
-    final initial = child.displayName.trim().isEmpty ? '?' : String.fromCharCode(child.displayName.trim().runes.first);
+    final initial = child.displayName.trim().isEmpty
+        ? '?'
+        : String.fromCharCode(child.displayName.trim().runes.first);
     return Semantics(
       container: true,
       label: '${child.displayName}, ${copy.age(child.ageYears)}',
@@ -364,7 +412,10 @@ class _ChildProfileCard extends StatelessWidget {
               CircleAvatar(
                 backgroundColor: colors.p100,
                 foregroundColor: colors.p700,
-                child: Text(initial, style: const TextStyle(fontWeight: FontWeight.w800)),
+                child: Text(
+                  initial,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -376,10 +427,20 @@ class _ChildProfileCard extends StatelessWidget {
                       child.displayName,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: colors.ink, fontSize: 16, fontWeight: FontWeight.w800),
+                      style: TextStyle(
+                        color: colors.ink,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                     const SizedBox(height: 4),
-                    Text(copy.age(child.ageYears), style: TextStyle(color: colors.ink2, fontWeight: FontWeight.w600)),
+                    Text(
+                      copy.age(child.ageYears),
+                      style: TextStyle(
+                        color: colors.ink2,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -412,9 +473,19 @@ class _RosterEmpty extends StatelessWidget {
           children: [
             Icon(Icons.people_outline, color: colors.p600, size: 32),
             const SizedBox(height: 14),
-            Text(copy.emptyRosterTitle, style: TextStyle(color: colors.ink, fontSize: 18, fontWeight: FontWeight.w800)),
+            Text(
+              copy.emptyRosterTitle,
+              style: TextStyle(
+                color: colors.ink,
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
             const SizedBox(height: 6),
-            Text(copy.emptyRosterBody, style: TextStyle(color: colors.ink2, height: 1.5)),
+            Text(
+              copy.emptyRosterBody,
+              style: TextStyle(color: colors.ink2, height: 1.5),
+            ),
           ],
         ),
       ),
@@ -459,10 +530,18 @@ class _RosterIssue extends StatelessWidget {
             children: [
               Icon(icon, color: colors.coral, size: 32),
               const SizedBox(height: 14),
-              Text(title, style: TextStyle(color: colors.ink, fontSize: 18, fontWeight: FontWeight.w800)),
+              Text(
+                title,
+                style: TextStyle(
+                  color: colors.ink,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
               const SizedBox(height: 6),
               Text(body, style: TextStyle(color: colors.ink2, height: 1.5)),
-              if (onRetry != null || onChooseFamily != null) const SizedBox(height: 18),
+              if (onRetry != null || onChooseFamily != null)
+                const SizedBox(height: 18),
               if (onRetry != null)
                 FilledButton(
                   onPressed: () => unawaited(onRetry!()),
@@ -508,9 +587,18 @@ class _TruthBoundaryCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(copy.noDevicePolicyTitle, style: TextStyle(color: colors.ink, fontWeight: FontWeight.w800)),
+                  Text(
+                    copy.noDevicePolicyTitle,
+                    style: TextStyle(
+                      color: colors.ink,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
                   const SizedBox(height: 4),
-                  Text(copy.rosterBoundary, style: TextStyle(color: colors.ink2, height: 1.45)),
+                  Text(
+                    copy.rosterBoundary,
+                    style: TextStyle(color: colors.ink2, height: 1.45),
+                  ),
                 ],
               ),
             ),
@@ -546,9 +634,15 @@ class _CentreActions extends StatelessWidget {
             key: const Key('foundation_gate_add_child_profile'),
             onPressed: isCreatingChild
                 ? null
-                : () => unawaited(_showCreateChildProfileSheet(context, onCreateChild!)),
+                : () => unawaited(
+                    _showCreateChildProfileSheet(context, onCreateChild!),
+                  ),
             icon: const Icon(Icons.person_add_alt_1_outlined),
-            label: Text(isCreatingChild ? copy.creatingChildProfile : copy.addChildProfile),
+            label: Text(
+              isCreatingChild
+                  ? copy.creatingChildProfile
+                  : copy.addChildProfile,
+            ),
           ),
         if (onChooseFamily != null)
           OutlinedButton.icon(
@@ -565,25 +659,32 @@ class _CentreActions extends StatelessWidget {
   }
 }
 
-Future<void> _showCreateChildProfileSheet(BuildContext context, CreateChildProfile onCreateChild) async {
+Future<void> _showCreateChildProfileSheet(
+  BuildContext context,
+  CreateChildProfile onCreateChild,
+) async {
   final copy = FoundationGateCopy.of(context);
   final result = await showModalBottomSheet<FoundationGateChildCreateResult>(
     context: context,
     isDismissible: false,
     enableDrag: false,
     isScrollControlled: true,
-    builder: (context) => _CreateChildProfileSheet(onCreateChild: onCreateChild),
+    builder: (context) =>
+        _CreateChildProfileSheet(onCreateChild: onCreateChild),
   );
   if (!context.mounted || result == null) {
     return;
   }
   final message = switch (result) {
     FoundationGateChildCreateResult.created => copy.childProfileCreated,
-    FoundationGateChildCreateResult.createdRosterRefreshUnavailable => copy.childProfileSavedRefreshUnavailable,
+    FoundationGateChildCreateResult.createdRosterRefreshUnavailable =>
+      copy.childProfileSavedRefreshUnavailable,
     _ => null,
   };
   if (message != null) {
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.maybeOf(
+      context,
+    )?.showSnackBar(SnackBar(content: Text(message)));
   }
 }
 
@@ -593,7 +694,8 @@ class _CreateChildProfileSheet extends StatefulWidget {
   final CreateChildProfile onCreateChild;
 
   @override
-  State<_CreateChildProfileSheet> createState() => _CreateChildProfileSheetState();
+  State<_CreateChildProfileSheet> createState() =>
+      _CreateChildProfileSheetState();
 }
 
 class _CreateChildProfileSheetState extends State<_CreateChildProfileSheet> {
@@ -620,7 +722,9 @@ class _CreateChildProfileSheetState extends State<_CreateChildProfileSheet> {
 
     // A retry of identical input uses the same key. Changing either field
     // creates a distinct logical request, so it receives a fresh key instead.
-    if (_idempotencyKey == null || _submittedDisplayName != displayName || _submittedAgeYears != _ageYears) {
+    if (_idempotencyKey == null ||
+        _submittedDisplayName != displayName ||
+        _submittedAgeYears != _ageYears) {
       _idempotencyKey = newFoundationGateIdempotencyKey();
       _submittedDisplayName = displayName;
       _submittedAgeYears = _ageYears;
@@ -675,7 +779,10 @@ class _CreateChildProfileSheetState extends State<_CreateChildProfileSheet> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(copy.addChildProfile, style: Theme.of(context).textTheme.headlineSmall),
+                  Text(
+                    copy.addChildProfile,
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
                   const SizedBox(height: 8),
                   Text(copy.addChildProfileHint),
                   const SizedBox(height: 20),
@@ -685,7 +792,9 @@ class _CreateChildProfileSheetState extends State<_CreateChildProfileSheet> {
                     enabled: !_submitting,
                     textCapitalization: TextCapitalization.words,
                     maxLength: 120,
-                    decoration: InputDecoration(labelText: copy.childDisplayName),
+                    decoration: InputDecoration(
+                      labelText: copy.childDisplayName,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<int>(
@@ -693,9 +802,12 @@ class _CreateChildProfileSheetState extends State<_CreateChildProfileSheet> {
                     decoration: InputDecoration(labelText: copy.childAgeYears),
                     items: List<DropdownMenuItem<int>>.generate(
                       26,
-                      (age) => DropdownMenuItem(value: age, child: Text('$age')),
+                      (age) =>
+                          DropdownMenuItem(value: age, child: Text('$age')),
                     ),
-                    onChanged: _submitting ? null : (age) => setState(() => _ageYears = age ?? _ageYears),
+                    onChanged: _submitting
+                        ? null
+                        : (age) => setState(() => _ageYears = age ?? _ageYears),
                   ),
                   if (_result != null) ...[
                     const SizedBox(height: 16),
@@ -703,7 +815,9 @@ class _CreateChildProfileSheetState extends State<_CreateChildProfileSheet> {
                       liveRegion: true,
                       child: Text(
                         _resultMessage(copy, _result!),
-                        style: TextStyle(color: Theme.of(context).colorScheme.error),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
                       ),
                     ),
                   ],
@@ -712,22 +826,30 @@ class _CreateChildProfileSheetState extends State<_CreateChildProfileSheet> {
                     children: [
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: _submitting ? null : () => Navigator.of(context).pop(),
+                          onPressed: _submitting
+                              ? null
+                              : () => Navigator.of(context).pop(),
                           child: Text(copy.cancel),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: FilledButton(
-                          key: const Key('foundation_gate_create_child_profile_submit'),
-                          onPressed: _submitting ? null : () => unawaited(_submit()),
+                          key: const Key(
+                            'foundation_gate_create_child_profile_submit',
+                          ),
+                          onPressed: _submitting
+                              ? null
+                              : () => unawaited(_submit()),
                           child: _submitting
                               ? Semantics(
                                   liveRegion: true,
                                   label: copy.creatingChildProfile,
                                   child: const SizedBox.square(
                                     dimension: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
                                   ),
                                 )
                               : Text(copy.createChildProfile),
@@ -744,16 +866,22 @@ class _CreateChildProfileSheetState extends State<_CreateChildProfileSheet> {
     );
   }
 
-  String _resultMessage(FoundationGateCopy copy, FoundationGateChildCreateResult result) {
+  String _resultMessage(
+    FoundationGateCopy copy,
+    FoundationGateChildCreateResult result,
+  ) {
     return switch (result) {
       FoundationGateChildCreateResult.invalidInput => copy.childProfileInvalid,
       FoundationGateChildCreateResult.conflict => copy.childProfileConflict,
-      FoundationGateChildCreateResult.serviceUnavailable => copy.childProfileUnavailable,
-      FoundationGateChildCreateResult.networkUnavailable => copy.childProfileNetworkUnavailable,
+      FoundationGateChildCreateResult.serviceUnavailable =>
+        copy.childProfileUnavailable,
+      FoundationGateChildCreateResult.networkUnavailable =>
+        copy.childProfileNetworkUnavailable,
       FoundationGateChildCreateResult.accessDenied => copy.accessDenied,
       FoundationGateChildCreateResult.sessionInvalid => copy.signInAgain,
       FoundationGateChildCreateResult.created => copy.childProfileCreated,
-      FoundationGateChildCreateResult.createdRosterRefreshUnavailable => copy.childProfileSavedRefreshUnavailable,
+      FoundationGateChildCreateResult.createdRosterRefreshUnavailable =>
+        copy.childProfileSavedRefreshUnavailable,
     };
   }
 }

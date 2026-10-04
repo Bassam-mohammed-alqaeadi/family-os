@@ -63,44 +63,43 @@ void main() {
     );
   }
 
-  testWidgets(
-    'forget leaves audit + chat intact; memory cleared',
-    (tester) async {
-      final lifecycle = seededLifecycle();
-      await tester.pumpWidget(
-        _app(
-          role: AppRole.father,
-          child: PrivacyDataScreen(
-            childId: child,
-            repository: InMemoryPrivacyCollectionRepository(),
-            lifecycle: lifecycle,
-          ),
+  testWidgets('forget leaves audit + chat intact; memory cleared', (
+    tester,
+  ) async {
+    final lifecycle = seededLifecycle();
+    await tester.pumpWidget(
+      _app(
+        role: AppRole.father,
+        child: PrivacyDataScreen(
+          childId: child,
+          repository: InMemoryPrivacyCollectionRepository(),
+          lifecycle: lifecycle,
         ),
-      );
-      await tester.pumpAndSettle();
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      expect(find.byKey(PrivacyDataKeys.forgetButton), findsOneWidget);
-      expect(find.byKey(AuditLogPanelKeys.panel), findsOneWidget);
-      // Forget must not live on the audit panel.
-      expect(
-        find.descendant(
-          of: find.byKey(AuditLogPanelKeys.panel),
-          matching: find.byKey(PrivacyDataKeys.forgetButton),
-        ),
-        findsNothing,
-      );
+    expect(find.byKey(PrivacyDataKeys.forgetButton), findsOneWidget);
+    expect(find.byKey(AuditLogPanelKeys.panel), findsOneWidget);
+    // Forget must not live on the audit panel.
+    expect(
+      find.descendant(
+        of: find.byKey(AuditLogPanelKeys.panel),
+        matching: find.byKey(PrivacyDataKeys.forgetButton),
+      ),
+      findsNothing,
+    );
 
-      await tapKey(tester, PrivacyDataKeys.forgetButton);
-      expect(find.byKey(PrivacyDataKeys.forgetConfirmDialog), findsOneWidget);
-      await tapKey(tester, PrivacyDataKeys.forgetConfirmAction);
-      await tester.pump(const Duration(seconds: 4));
-      await tester.pumpAndSettle();
+    await tapKey(tester, PrivacyDataKeys.forgetButton);
+    expect(find.byKey(PrivacyDataKeys.forgetConfirmDialog), findsOneWidget);
+    await tapKey(tester, PrivacyDataKeys.forgetConfirmAction);
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pumpAndSettle();
 
-      expect(lifecycle.memory.notes, isEmpty);
-      expect(lifecycle.chat.messages, isNotEmpty);
-      expect(lifecycle.audit.entries, contains('preexisting_audit'));
-    },
-  );
+    expect(lifecycle.memory.notes, isEmpty);
+    expect(lifecycle.chat.messages, isNotEmpty);
+    expect(lifecycle.audit.entries, contains('preexisting_audit'));
+  });
 
   testWidgets(
     'wipe requires two steps; shows 7-day window; audit has wipe-request',
@@ -126,10 +125,7 @@ void main() {
       await tapKey(tester, PrivacyDataKeys.wipeStep1Continue);
       expect(find.byKey(PrivacyDataKeys.wipeStep2Dialog), findsOneWidget);
 
-      await tester.enterText(
-        find.byKey(PrivacyDataKeys.wipeStep2Field),
-        'مسح',
-      );
+      await tester.enterText(find.byKey(PrivacyDataKeys.wipeStep2Field), 'مسح');
       await tester.pumpAndSettle();
       await tapKey(tester, PrivacyDataKeys.wipeStep2Action);
       await tester.pump(const Duration(seconds: 4));
@@ -141,13 +137,9 @@ void main() {
         DateTime.utc(2026, 9, 27, 12),
       );
       expect(find.byKey(PrivacyDataKeys.wipePendingBanner), findsOneWidget);
+      expect(find.textContaining('7 أيام'), findsWidgets);
       expect(
-        find.textContaining('7 أيام'),
-        findsWidgets,
-      );
-      expect(
-        lifecycle.audit.entries
-            .any((e) => e.contains('FAMILY_WIPE_REQUESTED')),
+        lifecycle.audit.entries.any((e) => e.contains('FAMILY_WIPE_REQUESTED')),
         isTrue,
       );
       expect(lifecycle.audit.entries.first, 'preexisting_audit');
@@ -213,9 +205,7 @@ void main() {
     await tester.pumpWidget(
       _app(
         role: AppRole.father,
-        child: Scaffold(
-          body: AuditLogPanel(audit: audit),
-        ),
+        child: Scaffold(body: AuditLogPanel(audit: audit)),
       ),
     );
     await tester.pumpAndSettle();

@@ -124,9 +124,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                for (var d = 0;
-                                    d < WelcomeScreen.slideCount;
-                                    d++)
+                                for (
+                                  var d = 0;
+                                  d < WelcomeScreen.slideCount;
+                                  d++
+                                )
                                   _Dot(
                                     key: Key('welcome_dot_$d'),
                                     active: d == _index,

@@ -34,11 +34,7 @@ final class WalletLedger {
       return Minutes.zero;
     }
     final deposited = PolicyEngine.depositOnApproval(reward: reward);
-    await deposit(
-      childId: childId,
-      appId: appId,
-      amount: deposited,
-    );
+    await deposit(childId: childId, appId: appId, amount: deposited);
     return deposited;
   }
 

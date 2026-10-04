@@ -21,7 +21,7 @@ abstract class DesiredMonitoringPrefsStore {
 final class MemoryDesiredMonitoringPrefsStore
     implements DesiredMonitoringPrefsStore {
   MemoryDesiredMonitoringPrefsStore([Map<String, String>? data])
-      : data = data ?? {};
+    : data = data ?? {};
 
   final Map<String, String> data;
 
@@ -77,12 +77,12 @@ final class PrefsDesiredMonitoringPrefsRepository
 /// Pure in-memory alternate for unit/widget tests (Rule 25 fake).
 final class InMemoryDesiredMonitoringPrefsRepository
     implements DesiredMonitoringPrefsRepository {
-  InMemoryDesiredMonitoringPrefsRepository(
-      [Map<String, DesiredMonitoringPrefs>? seed])
-      : _byChild = {
-          if (seed != null)
-            for (final e in seed.entries) e.key: e.value,
-        };
+  InMemoryDesiredMonitoringPrefsRepository([
+    Map<String, DesiredMonitoringPrefs>? seed,
+  ]) : _byChild = {
+         if (seed != null)
+           for (final e in seed.entries) e.key: e.value,
+       };
 
   final Map<String, DesiredMonitoringPrefs> _byChild;
 

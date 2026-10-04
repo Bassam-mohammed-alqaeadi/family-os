@@ -16,10 +16,10 @@ final class LocalEventEmitter {
     required RemoteSyncPort outbox,
     DateTime Function()? clock,
     String Function()? idFactory,
-  })  : _journal = journal,
-        _outbox = outbox,
-        _clock = clock ?? DateTime.now,
-        _idFactory = idFactory ?? _defaultId;
+  }) : _journal = journal,
+       _outbox = outbox,
+       _clock = clock ?? DateTime.now,
+       _idFactory = idFactory ?? _defaultId;
 
   final LocalEventJournal _journal;
   final RemoteSyncPort _outbox;
@@ -48,11 +48,7 @@ final class LocalEventEmitter {
       await _journal.append(envelope);
       await _outbox.enqueue(
         channel: channel,
-        payload: {
-          'eventId': id,
-          'deliveryClaim': 'queued_locally',
-          ...payload,
-        },
+        payload: {'eventId': id, 'deliveryClaim': 'queued_locally', ...payload},
       );
       return id;
     } catch (e, st) {
@@ -69,13 +65,10 @@ abstract final class LocalEventPersistence {
   static LocalEventJournal journal(FamilyLocalDatabase db) =>
       LocalEventJournal(db);
 
-  static RemoteSyncPort outbox(FamilyLocalDatabase db) =>
-      MockRemoteAdapter(db);
+  static RemoteSyncPort outbox(FamilyLocalDatabase db) => MockRemoteAdapter(db);
 
-  static LocalEventEmitter emitter(FamilyLocalDatabase db) => LocalEventEmitter(
-        journal: journal(db),
-        outbox: outbox(db),
-      );
+  static LocalEventEmitter emitter(FamilyLocalDatabase db) =>
+      LocalEventEmitter(journal: journal(db), outbox: outbox(db));
 
   /// Opens session DB; refuses SQLite→Memory fallback for durable journal.
   static Future<LocalEventEmitter> openEmitter() async {

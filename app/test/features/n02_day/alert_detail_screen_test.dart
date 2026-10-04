@@ -58,8 +58,9 @@ void main() {
     expect(find.byKey(AlertDetailKeys.secondaryAction), findsOneWidget);
   });
 
-  testWidgets('SCR-FAT-020 Rule 23 — no planted names in default empty',
-      (tester) async {
+  testWidgets('SCR-FAT-020 Rule 23 — no planted names in default empty', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _app(
         child: AlertDetailScreen(
@@ -79,8 +80,9 @@ void main() {
     expect(find.textContaining('عبدالله'), findsNothing);
   });
 
-  testWidgets('SCR-FAT-020 Rule 23 — seeded uses generic labels only',
-      (tester) async {
+  testWidgets('SCR-FAT-020 Rule 23 — seeded uses generic labels only', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _app(
         child: AlertDetailScreen(
@@ -193,8 +195,9 @@ void main() {
     expect(find.byKey(AlertDetailKeys.body), findsOneWidget);
   });
 
-  testWidgets('SCR-FAT-020 mother partner → request block (not rules)',
-      (tester) async {
+  testWidgets('SCR-FAT-020 mother partner → request block (not rules)', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _app(
         child: AlertDetailScreen(
@@ -214,8 +217,9 @@ void main() {
     expect(find.byKey(AlertDetailKeys.primaryAction), findsNothing);
   });
 
-  testWidgets('SCR-FAT-020 mother observer → request block (Identity level)',
-      (tester) async {
+  testWidgets('SCR-FAT-020 mother observer → request block (Identity level)', (
+    tester,
+  ) async {
     resetStage1MotherPermissionLevelRepositoryForTest();
     stage1MotherPermissionLevelRepository.setLevel(MotherLevel.observer);
     await tester.pumpWidget(
@@ -258,8 +262,9 @@ void main() {
     expect(find.byKey(AlertDetailKeys.requestBlock), findsNothing);
   });
 
-  testWidgets('SCR-FAT-020 kind actions: games → screen time + dismiss',
-      (tester) async {
+  testWidgets('SCR-FAT-020 kind actions: games → screen time + dismiss', (
+    tester,
+  ) async {
     String? screenTimeChild;
     await tester.pumpWidget(
       _app(

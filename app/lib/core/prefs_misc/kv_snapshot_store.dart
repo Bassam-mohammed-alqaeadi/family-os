@@ -34,15 +34,11 @@ final class KvSnapshotStore {
   }
 
   Future<void> writeMap(Map<String, Object?> map) async {
-    await _db.insert(
-      _table,
-      {
-        'namespace': namespace,
-        'key': key,
-        'value': jsonEncode(map),
-        'updated_at': _clock().toUtc().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: LocalConflictAlgorithm.replace,
-    );
+    await _db.insert(_table, {
+      'namespace': namespace,
+      'key': key,
+      'value': jsonEncode(map),
+      'updated_at': _clock().toUtc().millisecondsSinceEpoch,
+    }, conflictAlgorithm: LocalConflictAlgorithm.replace);
   }
 }

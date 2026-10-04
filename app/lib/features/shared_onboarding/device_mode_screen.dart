@@ -13,11 +13,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 /// Guardian → `/scr-fat-001` without setting child role.
 /// Child → [AppRole.child] then `/scr-chd-001`.
 class DeviceModeScreen extends StatelessWidget {
-  const DeviceModeScreen({
-    super.key,
-    this.onGuardian,
-    this.onChild,
-  });
+  const DeviceModeScreen({super.key, this.onGuardian, this.onChild});
 
   /// Test seam — when null, navigates to `/scr-fat-001` (role unchanged).
   final VoidCallback? onGuardian;

@@ -48,10 +48,7 @@ void main() {
   test('LDR-B7 call-play / road-safety / AI studio defaults empty', () async {
     expect((await stage1ChildCallPlayRepository.load()).isEmpty, isTrue);
     expect((await stage1RoadSafetyRepository.load()).isEmpty, isTrue);
-    expect(
-      (await InMemoryPreviewApproveRepository().load()).isEmpty,
-      isTrue,
-    );
+    expect((await InMemoryPreviewApproveRepository().load()).isEmpty, isTrue);
     expect(
       (await InMemoryGenerationOutputsRepository().load()).outputs,
       isEmpty,

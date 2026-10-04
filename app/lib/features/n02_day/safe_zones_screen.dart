@@ -37,6 +37,7 @@ abstract final class SafeZonesKeys {
   static const childLean = Key('safe_zones_child_lean');
 
   static Key zone(String id) => Key('safe_zones_zone_$id');
+
   /// Legacy master switch key — kept for older tests; prefer flag keys.
   static Key zoneSwitch(String id) => Key('safe_zones_switch_$id');
   static Key zoneArrive(String id) => Key('safe_zones_arrive_$id');
@@ -440,7 +441,8 @@ class _ZonesCard extends StatelessWidget {
     bool? alertEnter,
     bool? alertExit,
     bool? alertNoShow,
-  }) onToggleFlag;
+  })
+  onToggleFlag;
   final VoidCallback? onAdd;
 
   @override
@@ -524,7 +526,8 @@ class _ZoneCard extends StatelessWidget {
     bool? alertEnter,
     bool? alertExit,
     bool? alertNoShow,
-  }) onToggleFlag;
+  })
+  onToggleFlag;
 
   @override
   Widget build(BuildContext context) {

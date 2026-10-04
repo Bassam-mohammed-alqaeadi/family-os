@@ -1,10 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 /// App locale options on SCR-FAT-061 (prototype FAT-061).
-enum LanguageHelpLocale {
-  arabic,
-  english,
-}
+enum LanguageHelpLocale { arabic, english }
 
 /// Help-center link kinds — prototype rows.
 enum LanguageHelpLinkKind {
@@ -18,10 +15,7 @@ enum LanguageHelpLinkKind {
 /// One help-center row (Rule 23 — kind only, no planted names).
 @immutable
 final class LanguageHelpLink {
-  const LanguageHelpLink({
-    required this.id,
-    required this.kind,
-  });
+  const LanguageHelpLink({required this.id, required this.kind});
 
   final String id;
   final LanguageHelpLinkKind kind;

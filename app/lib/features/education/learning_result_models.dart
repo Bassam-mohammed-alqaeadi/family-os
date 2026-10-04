@@ -31,15 +31,15 @@ final class LearningResultSubmission {
   final int? scoreTotal;
 
   Map<String, Object?> toJson() => {
-        'id': id,
-        'childId': childId.value,
-        'kind': kind.name,
-        'titleKey': titleKey,
-        'submittedAt': submittedAt.toUtc().toIso8601String(),
-        'rewardMinutes': rewardMinutes.inMinutes,
-        'scoreCorrect': scoreCorrect,
-        'scoreTotal': scoreTotal,
-      };
+    'id': id,
+    'childId': childId.value,
+    'kind': kind.name,
+    'titleKey': titleKey,
+    'submittedAt': submittedAt.toUtc().toIso8601String(),
+    'rewardMinutes': rewardMinutes.inMinutes,
+    'scoreCorrect': scoreCorrect,
+    'scoreTotal': scoreTotal,
+  };
 
   factory LearningResultSubmission.fromJson(Map<String, Object?> json) {
     final kindName = json['kind'] as String? ?? 'quiz';

@@ -92,13 +92,16 @@ void main() {
     await dir.delete(recursive: true);
   });
 
-  test('STOR-01 intentional Memory is not claimed as SQLite fallback', () async {
-    await FsSessionKernel.resetForTest();
-    await FsSessionKernel.ensureOpen(preferSqlite: false);
-    expect(FsSessionKernel.usingSqlite, isFalse);
-    expect(FsSessionKernel.sqliteFallbackToMemory, isFalse);
-    expect(FsSessionKernel.db, isA<MemoryLocalDatabase>());
-  });
+  test(
+    'STOR-01 intentional Memory is not claimed as SQLite fallback',
+    () async {
+      await FsSessionKernel.resetForTest();
+      await FsSessionKernel.ensureOpen(preferSqlite: false);
+      expect(FsSessionKernel.usingSqlite, isFalse);
+      expect(FsSessionKernel.sqliteFallbackToMemory, isFalse);
+      expect(FsSessionKernel.db, isA<MemoryLocalDatabase>());
+    },
+  );
 
   test('STOR-01 preferSqlite open failure is honest Memory fallback', () async {
     await FsSessionKernel.resetForTest();

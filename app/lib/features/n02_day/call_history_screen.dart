@@ -150,10 +150,7 @@ class CallHistoryScreenState extends State<CallHistoryScreen> {
       return;
     }
     context.push(
-      Uri(
-        path: '/scr-fat-023',
-        queryParameters: {'callId': callId},
-      ).toString(),
+      Uri(path: '/scr-fat-023', queryParameters: {'callId': callId}).toString(),
     );
   }
 
@@ -300,7 +297,8 @@ class CallHistoryScreenState extends State<CallHistoryScreen> {
                     _CallHistoryRow(
                       entry: entries[i],
                       subtitle: _subtitle(l10n, entries[i]),
-                      subtitleColor: entries[i].direction == CallLogDirection.missed
+                      subtitleColor:
+                          entries[i].direction == CallLogDirection.missed
                           ? colors.coral
                           : null,
                       redialSemantics: l10n.callHistoryRedialSemantics,
@@ -420,7 +418,11 @@ class _CallHistoryRow extends StatelessWidget {
           ),
         ),
         if (showDivider)
-          Divider(height: 1, thickness: 1, color: colors.border.withValues(alpha: 0.7)),
+          Divider(
+            height: 1,
+            thickness: 1,
+            color: colors.border.withValues(alpha: 0.7),
+          ),
       ],
     );
   }

@@ -31,9 +31,7 @@ abstract final class FamilyOpsLocalPersistence {
       final circle = LocalOuterCircleRepository(db);
       await circle.ensureRealLocalSeeded();
       rebindStage1OuterCircleRepository(circle);
-      rebindStage1ChildMediaShareRepository(
-        LocalChildMediaShareRepository(db),
-      );
+      rebindStage1ChildMediaShareRepository(LocalChildMediaShareRepository(db));
       rebindStage1ChildArrivalRepository(LocalChildArrivalRepository(db));
       rebindStage1ChildFocusSoundsRepository(
         LocalChildFocusSoundsRepository(db),

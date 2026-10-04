@@ -64,10 +64,12 @@ class _FoundationGateSessionScreen extends StatefulWidget {
   final FoundationGateSessionController controller;
 
   @override
-  State<_FoundationGateSessionScreen> createState() => _FoundationGateSessionScreenState();
+  State<_FoundationGateSessionScreen> createState() =>
+      _FoundationGateSessionScreenState();
 }
 
-class _FoundationGateSessionScreenState extends State<_FoundationGateSessionScreen> {
+class _FoundationGateSessionScreenState
+    extends State<_FoundationGateSessionScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
@@ -91,7 +93,8 @@ class _FoundationGateSessionScreenState extends State<_FoundationGateSessionScre
     _passwordController.clear();
   }
 
-  bool get _mayOfferCreateChild => widget.controller.selectedFamily?.role == 'primary_guardian';
+  bool get _mayOfferCreateChild =>
+      widget.controller.selectedFamily?.role == 'primary_guardian';
 
   @override
   Widget build(BuildContext context) {
@@ -106,14 +109,16 @@ class _FoundationGateSessionScreenState extends State<_FoundationGateSessionScre
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: switch (phase) {
-                FoundationGatePhase.signedOut || FoundationGatePhase.signInFailed => _SignInForm(
+                FoundationGatePhase.signedOut ||
+                FoundationGatePhase.signInFailed => _SignInForm(
                   emailController: _emailController,
                   passwordController: _passwordController,
                   submitting: false,
                   showGenericFailure: phase == FoundationGatePhase.signInFailed,
                   onSubmit: _submit,
                 ),
-                FoundationGatePhase.signingIn || FoundationGatePhase.loadingFamilies => _LoadingState(
+                FoundationGatePhase.signingIn ||
+                FoundationGatePhase.loadingFamilies => _LoadingState(
                   label: copy.signingIn,
                 ),
                 FoundationGatePhase.familiesAvailable => _FamilySelection(
@@ -127,7 +132,8 @@ class _FoundationGateSessionScreenState extends State<_FoundationGateSessionScre
                   onChooseFamily: widget.controller.returnToFamilySelection,
                   onSignOut: widget.controller.signOut,
                 ),
-                FoundationGatePhase.childrenAvailable || FoundationGatePhase.noChildren => ChildrenControlCentre(
+                FoundationGatePhase.childrenAvailable ||
+                FoundationGatePhase.noChildren => ChildrenControlCentre(
                   status: phase == FoundationGatePhase.childrenAvailable
                       ? ChildrenControlCentreStatus.ready
                       : ChildrenControlCentreStatus.empty,
@@ -135,7 +141,9 @@ class _FoundationGateSessionScreenState extends State<_FoundationGateSessionScre
                   children: widget.controller.children,
                   onChooseFamily: widget.controller.returnToFamilySelection,
                   onSignOut: widget.controller.signOut,
-                  onCreateChild: _mayOfferCreateChild ? widget.controller.createChild : null,
+                  onCreateChild: _mayOfferCreateChild
+                      ? widget.controller.createChild
+                      : null,
                   isCreatingChild: widget.controller.isCreatingChild,
                 ),
                 FoundationGatePhase.noActiveFamily => _MessageState(
@@ -158,7 +166,9 @@ class _FoundationGateSessionScreenState extends State<_FoundationGateSessionScre
                 FoundationGatePhase.serviceUnavailable => ChildrenControlCentre(
                   status: ChildrenControlCentreStatus.unavailable,
                   family: widget.controller.selectedFamily,
-                  onRetry: widget.controller.selectedFamily == null ? null : widget.controller.retryRoster,
+                  onRetry: widget.controller.selectedFamily == null
+                      ? null
+                      : widget.controller.retryRoster,
                   onChooseFamily: widget.controller.selectedFamily == null
                       ? null
                       : widget.controller.returnToFamilySelection,
@@ -167,13 +177,16 @@ class _FoundationGateSessionScreenState extends State<_FoundationGateSessionScre
                 FoundationGatePhase.networkUnavailable => ChildrenControlCentre(
                   status: ChildrenControlCentreStatus.networkUnavailable,
                   family: widget.controller.selectedFamily,
-                  onRetry: widget.controller.selectedFamily == null ? null : widget.controller.retryRoster,
+                  onRetry: widget.controller.selectedFamily == null
+                      ? null
+                      : widget.controller.retryRoster,
                   onChooseFamily: widget.controller.selectedFamily == null
                       ? null
                       : widget.controller.returnToFamilySelection,
                   onSignOut: widget.controller.signOut,
                 ),
-                FoundationGatePhase.unconfigured => const _UnconfiguredFoundationGateScreen(),
+                FoundationGatePhase.unconfigured =>
+                  const _UnconfiguredFoundationGateScreen(),
               },
             ),
           ),
@@ -231,9 +244,15 @@ class _SignInForm extends StatelessWidget {
         child: ListView(
           shrinkWrap: true,
           children: [
-            Text(copy.signInTitle, style: Theme.of(context).textTheme.headlineSmall),
+            Text(
+              copy.signInTitle,
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
             const SizedBox(height: 8),
-            Text(copy.syntheticOnly, style: Theme.of(context).textTheme.bodyMedium),
+            Text(
+              copy.syntheticOnly,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
             const SizedBox(height: 24),
             TextField(
               controller: emailController,
@@ -286,9 +305,15 @@ class _FamilySelection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(copy.chooseFamily, style: Theme.of(context).textTheme.headlineSmall),
+            Text(
+              copy.chooseFamily,
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
             const SizedBox(height: 8),
-            Text(copy.chooseFamilyHint, style: Theme.of(context).textTheme.bodyMedium),
+            Text(
+              copy.chooseFamilyHint,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
             const SizedBox(height: 16),
             Expanded(
               child: ListView.separated(
@@ -334,7 +359,10 @@ class _MessageState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Semantics(liveRegion: true, child: Text(message, textAlign: TextAlign.center)),
+          Semantics(
+            liveRegion: true,
+            child: Text(message, textAlign: TextAlign.center),
+          ),
           const SizedBox(height: 16),
           FilledButton.tonal(
             onPressed: () => unawaited(onSignOut()),

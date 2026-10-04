@@ -4,11 +4,7 @@ import 'package:flutter/material.dart' show Color;
 import 'package:family_os/core/design/tokens.dart';
 
 /// Schedule choices on SCR-FAT-045 (prototype FAT-045 select).
-enum AttributionSchedule {
-  tomorrowAfterSchool,
-  today,
-  weekend,
-}
+enum AttributionSchedule { tomorrowAfterSchool, today, weekend }
 
 /// Avatar swatch from [FamilyColors] — no Color literals in fixtures.
 enum AttributionChildSwatch { purple, sky, amber }
@@ -33,10 +29,10 @@ final class AttributionChild {
   final AttributionChildSwatch swatch;
 
   Color resolveColor(FamilyColors colors) => switch (swatch) {
-        AttributionChildSwatch.purple => colors.p500,
-        AttributionChildSwatch.sky => colors.sky,
-        AttributionChildSwatch.amber => colors.amber,
-      };
+    AttributionChildSwatch.purple => colors.p500,
+    AttributionChildSwatch.sky => colors.sky,
+    AttributionChildSwatch.amber => colors.amber,
+  };
 }
 
 @immutable

@@ -72,8 +72,9 @@ void main() {
     expect(find.byKey(LocationHistoryKeys.body), findsNothing);
   });
 
-  testWidgets('SCR-FAT-015 thread + frequent + honesty + retention',
-      (tester) async {
+  testWidgets('SCR-FAT-015 thread + frequent + honesty + retention', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _app(
         child: LocationHistoryScreen(
@@ -93,9 +94,15 @@ void main() {
     expect(find.byKey(LocationHistoryKeys.honestyBanner), findsOneWidget);
     expect(find.byKey(LocationHistoryKeys.threadSection), findsOneWidget);
     expect(find.byKey(LocationHistoryKeys.day('day_today')), findsOneWidget);
-    expect(find.byKey(LocationHistoryKeys.day('day_yesterday')), findsOneWidget);
+    expect(
+      find.byKey(LocationHistoryKeys.day('day_yesterday')),
+      findsOneWidget,
+    );
     expect(find.byKey(LocationHistoryKeys.frequentSection), findsOneWidget);
-    expect(find.byKey(LocationHistoryKeys.place('freq_school')), findsOneWidget);
+    expect(
+      find.byKey(LocationHistoryKeys.place('freq_school')),
+      findsOneWidget,
+    );
     expect(find.byKey(LocationHistoryKeys.place('freq_cafe')), findsOneWidget);
     expect(find.byKey(LocationHistoryKeys.retentionNote), findsOneWidget);
     expect(find.byKey(LocationHistoryKeys.exportCta), findsOneWidget);
@@ -103,8 +110,9 @@ void main() {
     expect(find.textContaining('ابن 1'), findsWidgets);
   });
 
-  testWidgets('SCR-FAT-015 mother has no Primary export/archive stubs',
-      (tester) async {
+  testWidgets('SCR-FAT-015 mother has no Primary export/archive stubs', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _app(
         child: LocationHistoryScreen(

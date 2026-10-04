@@ -111,8 +111,9 @@ class TrialModeScreen extends StatelessWidget {
                           ExcludeSemantics(
                             child: CircleAvatar(
                               radius: 22,
-                              backgroundColor:
-                                  colors.surface.withValues(alpha: 0.25),
+                              backgroundColor: colors.surface.withValues(
+                                alpha: 0.25,
+                              ),
                               child: Text(
                                 l10n.trialModeAvatarLetter,
                                 style: TextStyle(
@@ -143,8 +144,9 @@ class TrialModeScreen extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w600,
-                                    color: colors.surface
-                                        .withValues(alpha: 0.85),
+                                    color: colors.surface.withValues(
+                                      alpha: 0.85,
+                                    ),
                                     height: 1.4,
                                   ),
                                 ),

@@ -129,8 +129,8 @@ final class InMemoryConversationRepository implements ConversationRepository {
     List<ConversationDetail>? initial,
     this.failLoad = false,
   }) : _threads = {
-          for (final t in initial ?? const <ConversationDetail>[]) t.chatWith: t,
-        };
+         for (final t in initial ?? const <ConversationDetail>[]) t.chatWith: t,
+       };
 
   final Map<String, ConversationDetail> _threads;
   var _sendSeq = 0;
@@ -182,9 +182,7 @@ final class InMemoryConversationRepository implements ConversationRepository {
       isMine: true,
       status: ConversationDeliveryStatus.sent,
     );
-    _threads[key] = existing.copyWith(
-      messages: [...existing.messages, msg],
-    );
+    _threads[key] = existing.copyWith(messages: [...existing.messages, msg]);
     return msg;
   }
 }

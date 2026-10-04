@@ -89,19 +89,15 @@ void main() {
       final repo = InMemorySmartModePrefsRepository();
 
       await tester.pumpWidget(
-        _wrap(
-          SmartModesScreen(
-            repository: repo,
-            activationBus: bus,
-          ),
-        ),
+        _wrap(SmartModesScreen(repository: repo, activationBus: bus)),
       );
       await tester.pumpAndSettle();
 
       expect(bus.activationOf(SmartModePrefs.defaultChildId).active, isFalse);
 
-      final schoolSwitch =
-          find.byKey(SmartModesKeys.modeSwitch(BuiltInModeId.school));
+      final schoolSwitch = find.byKey(
+        SmartModesKeys.modeSwitch(BuiltInModeId.school),
+      );
       await tester.ensureVisible(schoolSwitch);
       await tester.pumpAndSettle();
       await tester.tap(schoolSwitch);
@@ -123,50 +119,49 @@ void main() {
     },
   );
 
-  testWidgets(
-    'SET-019 offline: child keeps last activation until reconnect',
-    (tester) async {
-      final bus = SmartModeActivationBus();
-      const childKey = SmartModePrefs.defaultChildId;
-      final childId = ChildId(childKey);
-      bus.hydrate(
-        SmartModeActivation(
-          childId: childKey,
-          modeId: BuiltInModeId.school,
-          active: true,
-          updatedAt: DateTime.utc(2026, 9, 21, 8),
-        ),
-      );
+  testWidgets('SET-019 offline: child keeps last activation until reconnect', (
+    tester,
+  ) async {
+    final bus = SmartModeActivationBus();
+    const childKey = SmartModePrefs.defaultChildId;
+    final childId = ChildId(childKey);
+    bus.hydrate(
+      SmartModeActivation(
+        childId: childKey,
+        modeId: BuiltInModeId.school,
+        active: true,
+        updatedAt: DateTime.utc(2026, 9, 21, 8),
+      ),
+    );
 
-      await tester.pumpWidget(
-        _wrap(
-          ChildDayBoardScreen(
-            childId: childId,
-            activationBus: bus,
-            showModeNotices: false,
-          ),
+    await tester.pumpWidget(
+      _wrap(
+        ChildDayBoardScreen(
+          childId: childId,
+          activationBus: bus,
+          showModeNotices: false,
         ),
-      );
-      await tester.pumpAndSettle();
-      expect(find.byKey(ChildDayBoardKeys.activeModeLabel), findsOneWidget);
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(ChildDayBoardKeys.activeModeLabel), findsOneWidget);
 
-      bus.markChildOffline(childKey);
-      bus.publish(
-        SmartModeActivation(
-          childId: childKey,
-          modeId: null,
-          active: false,
-          updatedAt: DateTime.utc(2026, 9, 21, 9),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(find.byKey(ChildDayBoardKeys.activeModeLabel), findsOneWidget);
+    bus.markChildOffline(childKey);
+    bus.publish(
+      SmartModeActivation(
+        childId: childKey,
+        modeId: null,
+        active: false,
+        updatedAt: DateTime.utc(2026, 9, 21, 9),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(ChildDayBoardKeys.activeModeLabel), findsOneWidget);
 
-      bus.markChildOnline(childKey);
-      await tester.pumpAndSettle();
-      expect(find.byKey(ChildDayBoardKeys.idleStatus), findsOneWidget);
-    },
-  );
+    bus.markChildOnline(childKey);
+    await tester.pumpAndSettle();
+    expect(find.byKey(ChildDayBoardKeys.idleStatus), findsOneWidget);
+  });
 
   test('SmartModeActivation json round-trip', () {
     final a = SmartModeActivation(

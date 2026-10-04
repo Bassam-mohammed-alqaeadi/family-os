@@ -29,9 +29,18 @@ void main() {
     expect(find.byKey(AttributionRewardKeys.whoCard), findsOneWidget);
     expect(find.byKey(AttributionRewardKeys.scheduleField), findsOneWidget);
     expect(find.byKey(AttributionRewardKeys.rewardsCard), findsOneWidget);
-    expect(find.byKey(AttributionRewardKeys.childChip('demo-child')), findsOneWidget);
-    expect(find.byKey(AttributionRewardKeys.rewardSwitch('wallet')), findsOneWidget);
-    expect(find.byKey(AttributionRewardKeys.rewardSwitch('play')), findsOneWidget);
+    expect(
+      find.byKey(AttributionRewardKeys.childChip('demo-child')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(AttributionRewardKeys.rewardSwitch('wallet')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(AttributionRewardKeys.rewardSwitch('play')),
+      findsOneWidget,
+    );
     expect(find.textContaining('20 minutes to their wallet'), findsOneWidget);
     expect(find.textContaining('+15 play minutes'), findsOneWidget);
 
@@ -170,11 +179,7 @@ void main() {
 
   testWidgets('child RoleGuard lean + SOS', (tester) async {
     var sos = false;
-    await _pump(
-      tester,
-      role: AppRole.child,
-      onSos: () => sos = true,
-    );
+    await _pump(tester, role: AppRole.child, onSos: () => sos = true);
 
     expect(find.byKey(AttributionRewardKeys.childLean), findsOneWidget);
     expect(find.byKey(AttributionRewardKeys.body), findsNothing);

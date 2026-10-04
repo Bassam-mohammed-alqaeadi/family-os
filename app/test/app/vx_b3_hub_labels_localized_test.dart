@@ -58,8 +58,14 @@ void main() {
     final ar = await l10nFor(tester, const Locale('ar'));
     final en = await l10nFor(tester, const Locale('en'));
     for (final tab in childShellTabs) {
-      expect(shellTabLabel(ar, tab.arbLabelKey), isNot(equals(tab.arbLabelKey)));
-      expect(shellTabLabel(en, tab.arbLabelKey), isNot(equals(tab.arbLabelKey)));
+      expect(
+        shellTabLabel(ar, tab.arbLabelKey),
+        isNot(equals(tab.arbLabelKey)),
+      );
+      expect(
+        shellTabLabel(en, tab.arbLabelKey),
+        isNot(equals(tab.arbLabelKey)),
+      );
     }
     expect(ar.tabChildMyDay, 'يومي');
     expect(en.tabChildMyDay, 'My day');

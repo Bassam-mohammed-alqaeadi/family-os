@@ -27,21 +27,31 @@ class FamilyDiscoveryApiClient {
     } on FoundationGateApiException {
       rethrow;
     } catch (_) {
-      throw const FoundationGateApiException(FoundationGateApiFailure.networkUnavailable);
+      throw const FoundationGateApiException(
+        FoundationGateApiFailure.networkUnavailable,
+      );
     }
 
     switch (response.statusCode) {
       case 200:
         return _parseFamilies(response.body);
       case 401:
-        throw const FoundationGateApiException(FoundationGateApiFailure.unauthenticated);
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.unauthenticated,
+        );
       case 403:
-        throw const FoundationGateApiException(FoundationGateApiFailure.accessDenied);
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.accessDenied,
+        );
       case 429:
       case 503:
-        throw const FoundationGateApiException(FoundationGateApiFailure.serviceUnavailable);
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.serviceUnavailable,
+        );
       default:
-        throw const FoundationGateApiException(FoundationGateApiFailure.invalidResponse);
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.invalidResponse,
+        );
     }
   }
 
@@ -57,7 +67,9 @@ class FamilyDiscoveryApiClient {
       }
       return List.unmodifiable(rawFamilies.map(_parseFamily));
     } catch (_) {
-      throw const FoundationGateApiException(FoundationGateApiFailure.invalidResponse);
+      throw const FoundationGateApiException(
+        FoundationGateApiFailure.invalidResponse,
+      );
     }
   }
 
@@ -68,8 +80,7 @@ class FamilyDiscoveryApiClient {
     final id = value['id'];
     final displayName = value['displayName'];
     final role = value['role'];
-    if (
-        id is! String ||
+    if (id is! String ||
         !isFoundationGateUuid(id) ||
         displayName is! String ||
         displayName.trim().isEmpty ||

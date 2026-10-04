@@ -12,17 +12,13 @@ import '../domain/role.dart';
 /// Actor context for SOS actions (father = Primary; mother uses [motherLevel]).
 @immutable
 final class SosActor {
-  const SosActor({
-    required this.role,
-    this.motherLevel,
-  });
+  const SosActor({required this.role, this.motherLevel});
 
   final AppRole role;
   final MotherLevel? motherLevel;
 
   /// Primary parent (father) or mother Full / Partner / Observer.
-  factory SosActor.primary() =>
-      const SosActor(role: AppRole.father);
+  factory SosActor.primary() => const SosActor(role: AppRole.father);
 
   factory SosActor.mother(MotherLevel level) =>
       SosActor(role: AppRole.mother, motherLevel: level);

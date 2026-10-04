@@ -31,21 +31,21 @@ final class SignedModelManifest {
   bool get mayExecute => isSigned && isVersioned;
 
   SignedModelManifest copyWith({bool? active}) => SignedModelManifest(
-        modelId: modelId,
-        version: version,
-        signature: signature,
-        policyVersion: policyVersion,
-        active: active ?? this.active,
-      );
+    modelId: modelId,
+    version: version,
+    signature: signature,
+    policyVersion: policyVersion,
+    active: active ?? this.active,
+  );
 
   Map<String, Object?> toRow(FamilyId familyId) => {
-        'model_id': modelId,
-        'family_id': familyId.value,
-        'version': version,
-        'signature': signature,
-        'policy_version': policyVersion,
-        'active': active ? 1 : 0,
-      };
+    'model_id': modelId,
+    'family_id': familyId.value,
+    'version': version,
+    'signature': signature,
+    'policy_version': policyVersion,
+    'active': active ? 1 : 0,
+  };
 
   factory SignedModelManifest.fromRow(Map<String, Object?> row) {
     return SignedModelManifest(
@@ -115,29 +115,30 @@ final class SafetySignal {
       policyVersion: policyVersion,
       createdAt: createdAt,
       tool: tool,
-      redactedPreview:
-          clearPreview ? null : (redactedPreview ?? this.redactedPreview),
+      redactedPreview: clearPreview
+          ? null
+          : (redactedPreview ?? this.redactedPreview),
       notified: notified ?? this.notified,
       ticketId: ticketId ?? this.ticketId,
     );
   }
 
   Map<String, Object?> toRow() => {
-        'id': id,
-        'family_id': familyId.value,
-        'child_id': childId.value,
-        'category': category.wireName,
-        'certainty': certainty.wireName,
-        'severity': severity.wireName,
-        'provenance': provenance.wireName,
-        'model_version': modelVersion,
-        'policy_version': policyVersion,
-        'tool': tool.name,
-        'redacted_preview': redactedPreview,
-        'notified': notified ? 1 : 0,
-        'ticket_id': ticketId,
-        'created_at': createdAt.toUtc().millisecondsSinceEpoch,
-      };
+    'id': id,
+    'family_id': familyId.value,
+    'child_id': childId.value,
+    'category': category.wireName,
+    'certainty': certainty.wireName,
+    'severity': severity.wireName,
+    'provenance': provenance.wireName,
+    'model_version': modelVersion,
+    'policy_version': policyVersion,
+    'tool': tool.name,
+    'redacted_preview': redactedPreview,
+    'notified': notified ? 1 : 0,
+    'ticket_id': ticketId,
+    'created_at': createdAt.toUtc().millisecondsSinceEpoch,
+  };
 
   factory SafetySignal.fromRow(Map<String, Object?> row) {
     return SafetySignal(
@@ -213,24 +214,25 @@ final class SafetyTicket {
       childId: childId,
       status: status ?? this.status,
       createdAt: createdAt,
-      redactedPreview:
-          clearPreview ? null : (redactedPreview ?? this.redactedPreview),
+      redactedPreview: clearPreview
+          ? null
+          : (redactedPreview ?? this.redactedPreview),
       closedAt: closedAt ?? this.closedAt,
       closedBy: closedBy ?? this.closedBy,
     );
   }
 
   Map<String, Object?> toRow() => {
-        'id': id,
-        'family_id': familyId.value,
-        'signal_id': signalId,
-        'child_id': childId.value,
-        'status': status.name,
-        'redacted_preview': redactedPreview,
-        'created_at': createdAt.toUtc().millisecondsSinceEpoch,
-        'closed_at': closedAt?.toUtc().millisecondsSinceEpoch,
-        'closed_by': closedBy,
-      };
+    'id': id,
+    'family_id': familyId.value,
+    'signal_id': signalId,
+    'child_id': childId.value,
+    'status': status.name,
+    'redacted_preview': redactedPreview,
+    'created_at': createdAt.toUtc().millisecondsSinceEpoch,
+    'closed_at': closedAt?.toUtc().millisecondsSinceEpoch,
+    'closed_by': closedBy,
+  };
 
   factory SafetyTicket.fromRow(Map<String, Object?> row) {
     return SafetyTicket(
@@ -284,14 +286,14 @@ final class SafetySuggestion {
   bool get mayAutoApply => false;
 
   Map<String, Object?> toRow() => {
-        'id': id,
-        'family_id': familyId.value,
-        'ticket_id': ticketId,
-        'target': target.name,
-        'summary': summary,
-        'status': status.name,
-        'created_at': createdAt.toUtc().millisecondsSinceEpoch,
-      };
+    'id': id,
+    'family_id': familyId.value,
+    'ticket_id': ticketId,
+    'target': target.name,
+    'summary': summary,
+    'status': status.name,
+    'created_at': createdAt.toUtc().millisecondsSinceEpoch,
+  };
 
   factory SafetySuggestion.fromRow(Map<String, Object?> row) {
     return SafetySuggestion(

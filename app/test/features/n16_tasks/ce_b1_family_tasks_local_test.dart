@@ -23,9 +23,7 @@ void main() {
   });
 
   test('InMemory empty-first + create→submit→approve loop', () async {
-    final repo = InMemoryFamilyTasksRepository(
-      seed: familyTasksEmptyFixture(),
-    );
+    final repo = InMemoryFamilyTasksRepository(seed: familyTasksEmptyFixture());
     expect((await repo.load()).isEmpty, isTrue);
 
     await repo.addTask(

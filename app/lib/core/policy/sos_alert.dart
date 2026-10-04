@@ -4,42 +4,18 @@ library;
 import 'package:flutter/foundation.dart';
 
 /// Incident lifecycle (separate from delivery / location).
-enum SosAlertStatus {
-  active,
-  acknowledged,
-  escalating,
-  resolved,
-}
+enum SosAlertStatus { active, acknowledged, escalating, resolved }
 
 /// How an open incident was closed.
-enum SosTerminalReason {
-  helped,
-  falseAlarm,
-  other,
-}
+enum SosTerminalReason { helped, falseAlarm, other }
 
 /// Location honesty (OD-16) — independent of incident status.
-enum SosLocationClass {
-  ready,
-  acquiring,
-  stale,
-  unavailable,
-}
+enum SosLocationClass { ready, acquiring, stale, unavailable }
 
 /// Per-channel delivery honesty (OD-09 / OD-20).
-enum SosDeliveryClass {
-  pending,
-  delivered,
-  failed,
-  unavailable,
-  notConfigured,
-}
+enum SosDeliveryClass { pending, delivered, failed, unavailable, notConfigured }
 
-enum SosConnectionClass {
-  online,
-  degraded,
-  offline,
-}
+enum SosConnectionClass { online, degraded, offline }
 
 /// One recipient×channel delivery row (mock-first).
 @immutable
@@ -55,10 +31,10 @@ final class SosDeliveryRow {
   final SosDeliveryClass status;
 
   SosDeliveryRow copyWith({SosDeliveryClass? status}) => SosDeliveryRow(
-        recipientId: recipientId,
-        channel: channel,
-        status: status ?? this.status,
-      );
+    recipientId: recipientId,
+    channel: channel,
+    status: status ?? this.status,
+  );
 }
 
 /// Parent SOS incident payload (SCR-FAT-018 / CHD-006).
@@ -155,8 +131,9 @@ final class SosAlert {
       accuracyMeters: accuracyMeters ?? this.accuracyMeters,
       recipientLabels: recipientLabels ?? this.recipientLabels,
       status: status ?? this.status,
-      terminalReason:
-          clearTerminalReason ? null : (terminalReason ?? this.terminalReason),
+      terminalReason: clearTerminalReason
+          ? null
+          : (terminalReason ?? this.terminalReason),
       locationClass: locationClass ?? this.locationClass,
       connectionClass: connectionClass ?? this.connectionClass,
       deliveries: deliveries ?? this.deliveries,

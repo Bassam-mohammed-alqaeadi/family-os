@@ -14,16 +14,15 @@ enum SafetyCategory {
 
 extension SafetyCategoryWire on SafetyCategory {
   String get wireName => switch (this) {
-        SafetyCategory.sexualContent => 'sexual_content',
-        SafetyCategory.sensitiveVisual => 'sensitive_visual',
-        SafetyCategory.violenceOrThreat => 'violence_or_threat',
-        SafetyCategory.selfHarmSignal => 'self_harm_signal',
-        SafetyCategory.predatoryOrGroomingSignal =>
-          'predatory_or_grooming_signal',
-        SafetyCategory.substanceOrGambling => 'substance_or_gambling',
-        SafetyCategory.suspiciousLanguage => 'suspicious_language',
-        SafetyCategory.uncategorizedConcern => 'uncategorized_concern',
-      };
+    SafetyCategory.sexualContent => 'sexual_content',
+    SafetyCategory.sensitiveVisual => 'sensitive_visual',
+    SafetyCategory.violenceOrThreat => 'violence_or_threat',
+    SafetyCategory.selfHarmSignal => 'self_harm_signal',
+    SafetyCategory.predatoryOrGroomingSignal => 'predatory_or_grooming_signal',
+    SafetyCategory.substanceOrGambling => 'substance_or_gambling',
+    SafetyCategory.suspiciousLanguage => 'suspicious_language',
+    SafetyCategory.uncategorizedConcern => 'uncategorized_concern',
+  };
 
   static SafetyCategory parse(String raw) {
     switch (raw.trim().toLowerCase()) {
@@ -50,12 +49,7 @@ extension SafetyCategoryWire on SafetyCategory {
 }
 
 /// AI-OD-08 certainty (ticket gate uses these — no numeric %).
-enum SafetyCertainty {
-  unknown,
-  preliminary,
-  analysis,
-  confirmed,
-}
+enum SafetyCertainty { unknown, preliminary, analysis, confirmed }
 
 extension SafetyCertaintyWire on SafetyCertainty {
   String get wireName => name;
@@ -79,10 +73,10 @@ enum SafetyProvenance { localMl, localHeuristic, localOcrMl }
 
 extension SafetyProvenanceWire on SafetyProvenance {
   String get wireName => switch (this) {
-        SafetyProvenance.localMl => 'local_ml',
-        SafetyProvenance.localHeuristic => 'local_heuristic',
-        SafetyProvenance.localOcrMl => 'local_ocr+ml',
-      };
+    SafetyProvenance.localMl => 'local_ml',
+    SafetyProvenance.localHeuristic => 'local_heuristic',
+    SafetyProvenance.localOcrMl => 'local_ocr+ml',
+  };
 
   static SafetyProvenance parse(String raw) {
     switch (raw.trim().toLowerCase()) {
@@ -100,7 +94,11 @@ extension SafetyProvenanceWire on SafetyProvenance {
 }
 
 /// Input tool plane for child transparency (AI-OD-06).
-enum SafetyToolKind { searchAnalysis, imageClassification, screenshotMonitoring }
+enum SafetyToolKind {
+  searchAnalysis,
+  imageClassification,
+  screenshotMonitoring,
+}
 
 /// Ticket gate B1 — open only for analysis|confirmed (AI-OD-03-GATE).
 abstract final class SafetyTicketGate {

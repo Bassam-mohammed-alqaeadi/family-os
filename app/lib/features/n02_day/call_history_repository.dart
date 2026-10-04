@@ -13,10 +13,7 @@ enum CallLogDirection {
 }
 
 /// Media kind for a logged call (schema AUDIO | VIDEO).
-enum CallLogKind {
-  audio,
-  video,
-}
+enum CallLogKind { audio, video }
 
 /// One row in SCR-FAT-024 call history.
 @immutable
@@ -119,9 +116,7 @@ final class InMemoryCallHistoryRepository implements CallHistoryRepository {
     if (failLoad) {
       throw StateError('mock call history load failure');
     }
-    return CallHistorySnapshot(
-      entries: List.unmodifiable(_snapshot.entries),
-    );
+    return CallHistorySnapshot(entries: List.unmodifiable(_snapshot.entries));
   }
 }
 

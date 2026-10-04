@@ -59,8 +59,7 @@ final class InMemoryQuranProgressRepository implements QuranProgressRepository {
   var whisperCount = 0;
   var downloadCount = 0;
 
-  QuranLocalBridge get _bridge =>
-      _bridgeOverride ?? stage1QuranLocalBridge;
+  QuranLocalBridge get _bridge => _bridgeOverride ?? stage1QuranLocalBridge;
 
   Future<WalletLedger> _wallet() async {
     final injected = _injectedWallet;

@@ -76,10 +76,7 @@ void main() {
     );
     expect(fired.status, SosAlertStatus.active);
     expect(fired.triggerSource, SosTriggerSource.hold);
-    expect(
-      fired.evidenceRetainUntil,
-      SosEvidencePolicy.retainUntilFrom(now),
-    );
+    expect(fired.evidenceRetainUntil, SosEvidencePolicy.retainUntilFrom(now));
 
     final acked = await svc.acknowledge(
       incidentId: fired.id,
@@ -111,12 +108,15 @@ void main() {
     expect(still!.isResolved, isTrue);
 
     final audit = await svc.auditTrail(fired.id);
-    expect(audit.map((e) => e.eventType), containsAll([
-      SosAuditEventType.fired,
-      SosAuditEventType.acknowledged,
-      SosAuditEventType.escalating,
-      SosAuditEventType.resolved,
-    ]));
+    expect(
+      audit.map((e) => e.eventType),
+      containsAll([
+        SosAuditEventType.fired,
+        SosAuditEventType.acknowledged,
+        SosAuditEventType.escalating,
+        SosAuditEventType.resolved,
+      ]),
+    );
 
     final ops = await svc.opsSamples(fired.id);
     expect(ops.any((s) => s.kind == SosOpsSampleKind.location), isTrue);
@@ -163,10 +163,7 @@ void main() {
       clock: () => now,
       idFactory: () => 'sos_p_${++idSeq}',
     );
-    final fired = await svc.fireHold(
-      childId: child,
-      locationSampleJson: '{}',
-    );
+    final fired = await svc.fireHold(childId: child, locationSampleJson: '{}');
     expect(await svc.opsSamples(fired.id), isNotEmpty);
 
     final purged = await svc.purgeExpiredOps(
@@ -250,29 +247,29 @@ void main() {
     );
     // Location unavailable would fail; ready + degraded push + SMS OK.
     expect(ok.claimsReady, isTrue);
-    expect(
-      ok.rows.any((r) => r.id == 'panic_quiet'),
-      isTrue,
-    );
+    expect(ok.rows.any((r) => r.id == 'panic_quiet'), isTrue);
   });
 
-  test('applyFs006LifeCapabilities marks lifecycle/evidence/readiness', () async {
-    await capabilities.applyFs006LifeCapabilities();
-    expect(
-      (await capabilities.get('fs006.sos_lifecycle'))!.status,
-      CapabilityStatus.implemented,
-    );
-    expect(
-      (await capabilities.get('fs006.evidence_retention'))!.status,
-      CapabilityStatus.implemented,
-    );
-    expect(
-      (await capabilities.get('fs006.readiness'))!.status,
-      CapabilityStatus.implemented,
-    );
-    expect(
-      (await capabilities.get('fs006.remote_delivery'))!.status,
-      CapabilityStatus.mockRemote,
-    );
-  });
+  test(
+    'applyFs006LifeCapabilities marks lifecycle/evidence/readiness',
+    () async {
+      await capabilities.applyFs006LifeCapabilities();
+      expect(
+        (await capabilities.get('fs006.sos_lifecycle'))!.status,
+        CapabilityStatus.implemented,
+      );
+      expect(
+        (await capabilities.get('fs006.evidence_retention'))!.status,
+        CapabilityStatus.implemented,
+      );
+      expect(
+        (await capabilities.get('fs006.readiness'))!.status,
+        CapabilityStatus.implemented,
+      );
+      expect(
+        (await capabilities.get('fs006.remote_delivery'))!.status,
+        CapabilityStatus.mockRemote,
+      );
+    },
+  );
 }

@@ -52,8 +52,9 @@ void main() {
     final db2 = await SqliteLocalDatabase.openAt(path);
     await FsSessionKernel.ensureOpen(override: db2);
     final loaded =
-        await (await ScreenTimeLocalPersistence.openScheduleRepository())
-            .load(child);
+        await (await ScreenTimeLocalPersistence.openScheduleRepository()).load(
+          child,
+        );
 
     expect(loaded.length, 3);
     final sleep = loaded.firstWhere((w) => w.kind == ScheduleKind.sleep);
@@ -70,8 +71,10 @@ void main() {
     expect(ScheduleWindow.toMinutes(study.end), 18 * 60);
 
     // Missing/default: fresh child → disabled stubs.
-    final empty = await (await ScreenTimeLocalPersistence.openScheduleRepository())
-        .load(ChildId('never_saved'));
+    final empty =
+        await (await ScreenTimeLocalPersistence.openScheduleRepository()).load(
+          ChildId('never_saved'),
+        );
     expect(empty.every((w) => !w.enabled), isTrue);
 
     await FsSessionKernel.resetForTest();

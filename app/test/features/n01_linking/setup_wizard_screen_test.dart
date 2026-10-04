@@ -96,30 +96,29 @@ void main() {
 
   // —— UI-002 acceptance ——
 
-  testWidgets(
-    'AC1 — skip proceeds with zero optional rows done (no gate)',
-    (tester) async {
-      final flags = OnboardingProgressFlags.afterFamilyCreate();
-      expect(flags.noOptionalRowsDone, isTrue);
-      expect(flags.progressPercent, 25);
+  testWidgets('AC1 — skip proceeds with zero optional rows done (no gate)', (
+    tester,
+  ) async {
+    final flags = OnboardingProgressFlags.afterFamilyCreate();
+    expect(flags.noOptionalRowsDone, isTrue);
+    expect(flags.progressPercent, 25);
 
-      var skipped = 0;
-      await _pumpWizard(
-        tester,
-        onSkipLater: () => skipped++,
-        repository: InMemoryOnboardingProgressRepository(flags),
-      );
+    var skipped = 0;
+    await _pumpWizard(
+      tester,
+      onSkipLater: () => skipped++,
+      repository: InMemoryOnboardingProgressRepository(flags),
+    );
 
-      final skipBtn = tester.widget<PrimaryBtn>(
-        find.byKey(const Key('setup_wizard_skip')),
-      );
-      expect(skipBtn.onPressed, isNotNull);
+    final skipBtn = tester.widget<PrimaryBtn>(
+      find.byKey(const Key('setup_wizard_skip')),
+    );
+    expect(skipBtn.onPressed, isNotNull);
 
-      await tester.tap(find.byKey(const Key('setup_wizard_skip')));
-      await tester.pump();
-      expect(skipped, 1);
-    },
-  );
+    await tester.tap(find.byKey(const Key('setup_wizard_skip')));
+    await tester.pump();
+    expect(skipped, 1);
+  });
 
   testWidgets('AC2 — copy reads as suggestion (not must-complete)', (
     tester,
@@ -140,35 +139,34 @@ void main() {
     expect(find.text('من الإعداد اكتمل'), findsNothing);
   });
 
-  testWidgets(
-    'AC3 — mother invite remains optional; skip without inviting',
-    (tester) async {
-      var inviteTaps = 0;
-      var skipped = 0;
-      final flags = const OnboardingProgressFlags(
-        accountCreated: true,
-        childLinked: false,
-        motherInvited: false,
-        sosConfigured: false,
-      );
+  testWidgets('AC3 — mother invite remains optional; skip without inviting', (
+    tester,
+  ) async {
+    var inviteTaps = 0;
+    var skipped = 0;
+    final flags = const OnboardingProgressFlags(
+      accountCreated: true,
+      childLinked: false,
+      motherInvited: false,
+      sosConfigured: false,
+    );
 
-      await _pumpWizard(
-        tester,
-        onInviteMother: () => inviteTaps++,
-        onSkipLater: () => skipped++,
-        repository: InMemoryOnboardingProgressRepository(flags),
-      );
+    await _pumpWizard(
+      tester,
+      onInviteMother: () => inviteTaps++,
+      onSkipLater: () => skipped++,
+      repository: InMemoryOnboardingProgressRepository(flags),
+    );
 
-      expect(find.textContaining('اختياري'), findsOneWidget);
+    expect(find.textContaining('اختياري'), findsOneWidget);
 
-      // Skip without ever opening invite.
-      await tester.tap(find.byKey(const Key('setup_wizard_skip')));
-      await tester.pump();
-      expect(inviteTaps, 0);
-      expect(skipped, 1);
-      expect(flags.motherInvited, isFalse);
-    },
-  );
+    // Skip without ever opening invite.
+    await tester.tap(find.byKey(const Key('setup_wizard_skip')));
+    await tester.pump();
+    expect(inviteTaps, 0);
+    expect(skipped, 1);
+    expect(flags.motherInvited, isFalse);
+  });
 
   testWidgets('offline cache — shows last saved progress percent', (
     tester,
@@ -220,7 +218,8 @@ GoRouter _router({OnboardingProgressRepository? repository}) {
       GoRoute(
         path: '/scr-fat-002',
         builder: (context, state) => SetupWizardScreen(
-          repository: repository ??
+          repository:
+              repository ??
               InMemoryOnboardingProgressRepository(
                 OnboardingProgressFlags.afterFamilyCreate(),
               ),
@@ -298,7 +297,8 @@ Future<void> _pumpWizard(
         onAddChild: onAddChild,
         onInviteMother: onInviteMother,
         onSkipLater: onSkipLater,
-        repository: repository ??
+        repository:
+            repository ??
             InMemoryOnboardingProgressRepository(
               OnboardingProgressFlags.afterFamilyCreate(),
             ),

@@ -65,7 +65,10 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     if (!_validate() || _submitting) {
       if (!_submitting) {
-        AppToast.show(context, message: AppLocalizations.of(context).loginFieldsRequired);
+        AppToast.show(
+          context,
+          message: AppLocalizations.of(context).loginFieldsRequired,
+        );
       }
       return;
     }
@@ -80,7 +83,10 @@ class _LoginScreenState extends State<LoginScreen> {
       if (remoteIdentity is! MainAppFoundationIdentitySource) {
         // A composed main route with no Firebase/API configuration must not
         // imitate a successful local account sign-in.
-        AppToast.show(context, message: FoundationGateCopy.of(context).unconfigured);
+        AppToast.show(
+          context,
+          message: FoundationGateCopy.of(context).unconfigured,
+        );
         return;
       }
       setState(() => _submitting = true);
@@ -103,7 +109,10 @@ class _LoginScreenState extends State<LoginScreen> {
         context.go('/scr-fat-012');
       } on Object {
         if (mounted) {
-          AppToast.show(context, message: FoundationGateCopy.of(context).signInFailure);
+          AppToast.show(
+            context,
+            message: FoundationGateCopy.of(context).signInFailure,
+          );
         }
       } finally {
         if (mounted) setState(() => _submitting = false);
@@ -114,7 +123,8 @@ class _LoginScreenState extends State<LoginScreen> {
     // Standalone preview/test host seam: preserve the previous mock-only flow
     // only where no composed application runtime exists.
     final runtime = CurrentIdentity.maybeOf(context);
-    if (runtime != null && runtime.session.isExpiredAt(DateTime.now().toUtc())) {
+    if (runtime != null &&
+        runtime.session.isExpiredAt(DateTime.now().toUtc())) {
       context.go('/sys3-session-expired');
       return;
     }
@@ -131,8 +141,8 @@ class _LoginScreenState extends State<LoginScreen> {
   ) => switch (phase) {
     FoundationGatePhase.signInFailed => copy.signInFailure,
     FoundationGatePhase.sessionInvalid => copy.signInAgain,
-    FoundationGatePhase.accessDenied || FoundationGatePhase.rosterAccessDenied =>
-      copy.accessDenied,
+    FoundationGatePhase.accessDenied ||
+    FoundationGatePhase.rosterAccessDenied => copy.accessDenied,
     FoundationGatePhase.serviceUnavailable => copy.serviceUnavailable,
     FoundationGatePhase.networkUnavailable => copy.networkUnavailable,
     _ => copy.noActiveFamily,
@@ -169,7 +179,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final runtime = CurrentIdentity.maybeOf(context);
     final appRuntime = AppScope.maybeOf(context);
-    final usesRemoteIdentity = appRuntime?.identity is MainAppFoundationIdentitySource;
+    final usesRemoteIdentity =
+        appRuntime?.identity is MainAppFoundationIdentitySource;
     final now = DateTime.now().toUtc();
     final sessionExpired = runtime?.session.isExpiredAt(now) ?? false;
     final sessionTag = runtime == null
@@ -286,8 +297,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     colors: colors,
                     radii: radii,
                     hint: l10n.loginPasswordHint,
-                    errorText:
-                        _passwordError ? l10n.loginFieldsRequired : null,
+                    errorText: _passwordError ? l10n.loginFieldsRequired : null,
                   ),
                 ),
               ),

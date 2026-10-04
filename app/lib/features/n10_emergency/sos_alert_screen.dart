@@ -247,13 +247,12 @@ class SosAlertScreenState extends State<SosAlertScreen> {
     try {
       await SosPrefsRuntime.ensureOpen();
       final ladderRepo = SosPrefsRuntime.ladder;
-      final settings = SosPrefsRuntime.settings?.settings ??
-          stage1SosSettingsStore.settings;
+      final settings =
+          SosPrefsRuntime.settings?.settings ?? stage1SosSettingsStore.settings;
       final ladder = ladderRepo != null
           ? await ladderRepo.load()
           : SosLadder.defaults();
-      final hasPhone =
-          ladder.backups.any((b) => b.phoneE164.trim().isNotEmpty);
+      final hasPhone = ladder.backups.any((b) => b.phoneE164.trim().isNotEmpty);
       final snap = SosReadinessEvaluator.evaluate(
         SosReadinessInputs(
           ladder: ladder,
@@ -380,8 +379,10 @@ class SosAlertScreenState extends State<SosAlertScreen> {
     if (!SosRoleActions.canEscalate(_actor)) return;
     setState(() => _busy = true);
     try {
-      final next =
-          await _repo!.escalateEmergencyContacts(alert.id, actor: _actor);
+      final next = await _repo!.escalateEmergencyContacts(
+        alert.id,
+        actor: _actor,
+      );
       if (!mounted) return;
       setState(() {
         _alert = next;
@@ -436,16 +437,26 @@ class SosAlertScreenState extends State<SosAlertScreen> {
 
   String _deliveryLabel(AppLocalizations l10n, SosDeliveryRow row) {
     return switch (row.status) {
-      SosDeliveryClass.pending =>
-        l10n.sosAlertDeliveryPending(row.channel, row.recipientId),
-      SosDeliveryClass.delivered =>
-        l10n.sosAlertDeliveryDelivered(row.channel, row.recipientId),
-      SosDeliveryClass.failed =>
-        l10n.sosAlertDeliveryFailed(row.channel, row.recipientId),
-      SosDeliveryClass.unavailable =>
-        l10n.sosAlertDeliveryUnavailable(row.channel, row.recipientId),
-      SosDeliveryClass.notConfigured =>
-        l10n.sosAlertDeliveryNotConfigured(row.channel, row.recipientId),
+      SosDeliveryClass.pending => l10n.sosAlertDeliveryPending(
+        row.channel,
+        row.recipientId,
+      ),
+      SosDeliveryClass.delivered => l10n.sosAlertDeliveryDelivered(
+        row.channel,
+        row.recipientId,
+      ),
+      SosDeliveryClass.failed => l10n.sosAlertDeliveryFailed(
+        row.channel,
+        row.recipientId,
+      ),
+      SosDeliveryClass.unavailable => l10n.sosAlertDeliveryUnavailable(
+        row.channel,
+        row.recipientId,
+      ),
+      SosDeliveryClass.notConfigured => l10n.sosAlertDeliveryNotConfigured(
+        row.channel,
+        row.recipientId,
+      ),
     };
   }
 
@@ -470,10 +481,7 @@ class SosAlertScreenState extends State<SosAlertScreen> {
     );
   }
 
-  Widget _buildBody(
-    AppLocalizations l10n,
-    FamilyColors colors,
-  ) {
+  Widget _buildBody(AppLocalizations l10n, FamilyColors colors) {
     if (!_isParent) {
       return AppEmptyState(
         key: SosAlertKeys.childLean,
@@ -672,10 +680,7 @@ class _ActiveBoard extends StatelessWidget {
               label: l10n.sosAlertHeadline(alert.childDisplayName),
               child: Column(
                 children: [
-                  Text(
-                    alert.childEmoji,
-                    style: const TextStyle(fontSize: 46),
-                  ),
+                  Text(alert.childEmoji, style: const TextStyle(fontSize: 46)),
                   const SizedBox(height: 8),
                   Text(
                     key: SosAlertKeys.headline,
@@ -727,11 +732,7 @@ class _ActiveBoard extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 16),
-            _LiveMap(
-              alert: alert,
-              l10n: l10n,
-              colors: colors,
-            ),
+            _LiveMap(alert: alert, l10n: l10n, colors: colors),
             const SizedBox(height: 14),
             KeyedSubtree(
               key: SosAlertKeys.locationStatus,
@@ -759,8 +760,10 @@ class _ActiveBoard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 child: Text(
                   l10n.sosAlertMetaLine(
                     alert.locationLabel,
@@ -768,11 +771,7 @@ class _ActiveBoard extends StatelessWidget {
                     alert.movementLabel,
                     '${alert.accuracyMeters}',
                   ),
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    height: 1.8,
-                    color: onCoral,
-                  ),
+                  style: TextStyle(fontSize: 12.5, height: 1.8, color: onCoral),
                 ),
               ),
             ),
@@ -887,10 +886,8 @@ class _LiveMap extends StatelessWidget {
             height: 180,
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final pinLeft =
-                    (alert.pinFracX * constraints.maxWidth) - 22;
-                final pinTop =
-                    (alert.pinFracY * constraints.maxHeight) - 22;
+                final pinLeft = (alert.pinFracX * constraints.maxWidth) - 22;
+                final pinTop = (alert.pinFracY * constraints.maxHeight) - 22;
                 return Stack(
                   children: [
                     Positioned.fill(
@@ -911,8 +908,7 @@ class _LiveMap extends StatelessWidget {
                       top: constraints.maxHeight * (14 / 180),
                       child: _Block(
                         label: l10n.locationMapLandmarkHome,
-                        fill:
-                            Color.lerp(colors.border, colors.amber100, 0.4)!,
+                        fill: Color.lerp(colors.border, colors.amber100, 0.4)!,
                       ),
                     ),
                     Positioned(

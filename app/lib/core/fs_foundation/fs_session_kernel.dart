@@ -99,9 +99,7 @@ final class FsSessionKernel {
       _sqliteFallback = false;
       return sqlite;
     } catch (e) {
-      debugPrint(
-        'FsSessionKernel: SQLite open failed — Memory fallback ($e)',
-      );
+      debugPrint('FsSessionKernel: SQLite open failed — Memory fallback ($e)');
       _usingSqlite = false;
       _sqliteFallback = true;
       return MemoryLocalDatabase();

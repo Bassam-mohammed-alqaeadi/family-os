@@ -8,7 +8,7 @@ import 'package:family_os/features/n02_day/child_arrival_repository.dart';
 /// Zones may be empty until configured; GPS remains NATIVE_CLOSED.
 final class LocalChildArrivalRepository implements ChildArrivalRepository {
   LocalChildArrivalRepository(FamilyLocalDatabase db)
-      : _store = KvSnapshotStore(db, namespace: kvNamespace);
+    : _store = KvSnapshotStore(db, namespace: kvNamespace);
 
   static const kvNamespace = 'child_arrival';
 

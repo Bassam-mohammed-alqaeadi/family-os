@@ -17,7 +17,9 @@ void main() {
     required FoundationGateHttpResponse discovery,
     required FoundationGateHttpResponse roster,
   }) {
-    final configuration = FoundationGateConfiguration.fromStagingApiOrigin(Uri.parse('https://staging.example.test'));
+    final configuration = FoundationGateConfiguration.fromStagingApiOrigin(
+      Uri.parse('https://staging.example.test'),
+    );
     return FoundationGateSessionController(
       identity: FakeIdentity(),
       discoveryApi: FamilyDiscoveryApiClient(
@@ -31,21 +33,35 @@ void main() {
     );
   }
 
-  testWidgets('tracked Foundation Gate entry starts unconfigured without network or legacy mock data', (tester) async {
-    await tester.pumpWidget(const FoundationGateApp());
+  testWidgets(
+    'tracked Foundation Gate entry starts unconfigured without network or legacy mock data',
+    (tester) async {
+      await tester.pumpWidget(const FoundationGateApp());
 
-    expect(find.text('Foundation Gate is not configured.'), findsOneWidget);
-    expect(find.byType(TextField), findsNothing);
-  });
+      expect(find.text('Foundation Gate is not configured.'), findsOneWidget);
+      expect(find.byType(TextField), findsNothing);
+    },
+  );
 
-  testWidgets('configured gate clears local form fields before discovery', (tester) async {
+  testWidgets('configured gate clears local form fields before discovery', (
+    tester,
+  ) async {
     final controller = controllerFor(
-      discovery: const FoundationGateHttpResponse(statusCode: 200, body: '{"families":[]}'),
-      roster: const FoundationGateHttpResponse(statusCode: 200, body: '{"children":[]}'),
+      discovery: const FoundationGateHttpResponse(
+        statusCode: 200,
+        body: '{"families":[]}',
+      ),
+      roster: const FoundationGateHttpResponse(
+        statusCode: 200,
+        body: '{"children":[]}',
+      ),
     );
 
     await tester.pumpWidget(FoundationGateApp(controller: controller));
-    await tester.enterText(find.byType(TextField).at(0), 'synthetic@example.test');
+    await tester.enterText(
+      find.byType(TextField).at(0),
+      'synthetic@example.test',
+    );
     await tester.enterText(find.byType(TextField).at(1), 'synthetic-password');
     await tester.tap(find.text('Sign in'));
     await tester.pump();
@@ -55,31 +71,41 @@ void main() {
     expect(find.byType(TextField), findsNothing);
   });
 
-  testWidgets('guardian roster renders only server profile facts and no mutation action', (tester) async {
-    final controller = controllerFor(
-      discovery: const FoundationGateHttpResponse(
-        statusCode: 200,
-        body: '{"families":[{"id":"$familyId","displayName":"Synthetic family","role":"co_guardian"}]}',
-      ),
-      roster: const FoundationGateHttpResponse(
-        statusCode: 200,
-        body:
-            '{"children":[{"id":"$childId","displayName":"Synthetic child","ageYears":8,"avatarEmoji":"🧒","themeColor":"purple","version":1,"createdAt":"2026-10-03T10:00:00.000Z","updatedAt":"2026-10-03T10:00:00.000Z"}]}',
-      ),
-    );
+  testWidgets(
+    'guardian roster renders only server profile facts and no mutation action',
+    (tester) async {
+      final controller = controllerFor(
+        discovery: const FoundationGateHttpResponse(
+          statusCode: 200,
+          body:
+              '{"families":[{"id":"$familyId","displayName":"Synthetic family","role":"co_guardian"}]}',
+        ),
+        roster: const FoundationGateHttpResponse(
+          statusCode: 200,
+          body:
+              '{"children":[{"id":"$childId","displayName":"Synthetic child","ageYears":8,"avatarEmoji":"🧒","themeColor":"purple","version":1,"createdAt":"2026-10-03T10:00:00.000Z","updatedAt":"2026-10-03T10:00:00.000Z"}]}',
+        ),
+      );
 
-    await tester.pumpWidget(FoundationGateApp(controller: controller));
-    await tester.enterText(find.byType(TextField).at(0), 'synthetic@example.test');
-    await tester.enterText(find.byType(TextField).at(1), 'synthetic-password');
-    await tester.tap(find.text('Sign in'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Synthetic family'));
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(FoundationGateApp(controller: controller));
+      await tester.enterText(
+        find.byType(TextField).at(0),
+        'synthetic@example.test',
+      );
+      await tester.enterText(
+        find.byType(TextField).at(1),
+        'synthetic-password',
+      );
+      await tester.tap(find.text('Sign in'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Synthetic family'));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Children control centre'), findsOneWidget);
-    expect(find.text('Synthetic child'), findsOneWidget);
-    expect(find.text('Age: 8'), findsOneWidget);
-    expect(find.textContaining('Co-guardian read-only view'), findsOneWidget);
-    expect(find.textContaining('Add child'), findsNothing);
-  });
+      expect(find.text('Children control centre'), findsOneWidget);
+      expect(find.text('Synthetic child'), findsOneWidget);
+      expect(find.text('Age: 8'), findsOneWidget);
+      expect(find.textContaining('Co-guardian read-only view'), findsOneWidget);
+      expect(find.textContaining('Add child'), findsNothing);
+    },
+  );
 }

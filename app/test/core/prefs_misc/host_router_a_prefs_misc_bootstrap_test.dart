@@ -62,15 +62,16 @@ void main() {
 
     await PrefsMiscRuntime.notification!.save(
       NotificationPrefs.defaults(memberId: 'father').copyWith(
-            quietHoursEnabled: true,
-            quietStart: NotificationPrefs.defaultQuietStart,
-            quietEnd: NotificationPrefs.defaultQuietEnd,
-            analysisNoticesEnabled: false,
-          ),
+        quietHoursEnabled: true,
+        quietStart: NotificationPrefs.defaultQuietStart,
+        quietEnd: NotificationPrefs.defaultQuietEnd,
+        analysisNoticesEnabled: false,
+      ),
     );
     await PrefsMiscRuntime.privacy!.save(
-      PrivacyCollectionPolicy.defaults(childId: 'demo-child')
-          .withScope(CollectionScope.location, false),
+      PrivacyCollectionPolicy.defaults(
+        childId: 'demo-child',
+      ).withScope(CollectionScope.location, false),
       actor: AppRole.father,
     );
     await PrefsMiscRuntime.antiTamper!.write(
@@ -83,8 +84,9 @@ void main() {
       const DeviceLockActor.father(),
     );
     await PrefsMiscRuntime.monitoring!.save(
-      DesiredMonitoringPrefs.defaults(childId: 'demo-child')
-          .copyWith(webFilter: true),
+      DesiredMonitoringPrefs.defaults(
+        childId: 'demo-child',
+      ).copyWith(webFilter: true),
     );
 
     PrefsMiscRuntime.resetForTest();
@@ -98,8 +100,9 @@ void main() {
     expect(notif.quietHoursEnabled, isTrue);
     expect(notif.analysisNoticesEnabled, isFalse);
     expect(
-      (await PrefsMiscRuntime.privacy!.load('demo-child'))
-          .isEnabled(CollectionScope.location),
+      (await PrefsMiscRuntime.privacy!.load(
+        'demo-child',
+      )).isEnabled(CollectionScope.location),
       isFalse,
     );
     expect(

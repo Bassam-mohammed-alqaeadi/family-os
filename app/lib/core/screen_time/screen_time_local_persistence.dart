@@ -56,16 +56,12 @@ final class LocalScreenTimeKvPrefsStore
 
   @override
   Future<void> write(String key, String value) async {
-    await _db.insert(
-      _table,
-      {
-        'namespace': namespace,
-        'key': key,
-        'value': value,
-        'updated_at': _clock().toUtc().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: LocalConflictAlgorithm.replace,
-    );
+    await _db.insert(_table, {
+      'namespace': namespace,
+      'key': key,
+      'value': value,
+      'updated_at': _clock().toUtc().millisecondsSinceEpoch,
+    }, conflictAlgorithm: LocalConflictAlgorithm.replace);
   }
 }
 
@@ -78,10 +74,7 @@ abstract final class ScreenTimeLocalPersistence {
 
   static ScreenTimePolicyRepository policyRepository(FamilyLocalDatabase db) {
     return PrefsScreenTimePolicyRepository(
-      LocalScreenTimeKvPrefsStore(
-        db,
-        namespace: ScreenTimeKvNamespaces.policy,
-      ),
+      LocalScreenTimeKvPrefsStore(db, namespace: ScreenTimeKvNamespaces.policy),
     );
   }
 

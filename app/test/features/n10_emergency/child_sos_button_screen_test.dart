@@ -66,8 +66,9 @@ void main() {
     expect(firedNav, isTrue);
   });
 
-  testWidgets('hold completes → route /scr-chd-006 with handoff params',
-      (tester) async {
+  testWidgets('hold completes → route /scr-chd-006 with handoff params', (
+    tester,
+  ) async {
     final fire = MockSosFireService();
     final alerts = InMemorySosAlertRepository();
     final role = RoleController(AppRole.child);

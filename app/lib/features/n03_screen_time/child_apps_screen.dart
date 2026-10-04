@@ -31,6 +31,7 @@ abstract final class ChildAppsKeys {
   static const list = Key('child_apps_list');
   static const tipBanner = Key('child_apps_tip');
   static const honestyBanner = Key('child_apps_honesty');
+
   /// FE-W2 alias — same LOCAL/OS-intercept honesty surface.
   static const localHonesty = honestyBanner;
   static const partnerHint = Key('child_apps_partner_hint');
@@ -152,8 +153,7 @@ class _ChildAppsScreenState extends State<ChildAppsScreen> {
     );
     _repo = widget.repository ?? stage1ChildAppsRepository;
     _sos = widget.sosFire ?? stage1SosFireService;
-    _bootstrapping =
-        !(widget.repository != null && widget.appControl != null);
+    _bootstrapping = !(widget.repository != null && widget.appControl != null);
     _bindRepo(_repo);
     if (_bootstrapping) {
       _bootstrapDomain();

@@ -70,11 +70,7 @@ class SosReadinessCard extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               body,
-              style: TextStyle(
-                fontSize: 12,
-                height: 1.45,
-                color: colors.ink2,
-              ),
+              style: TextStyle(fontSize: 12, height: 1.45, color: colors.ink2),
             ),
             if (rows.isNotEmpty) ...[
               const SizedBox(height: 10),
@@ -97,11 +93,11 @@ class _ReadinessLine extends StatelessWidget {
   final FamilyColors colors;
 
   Color get _klassColor => switch (row.klass) {
-        SosReadinessClass.available => colors.mint,
-        SosReadinessClass.degraded => colors.amber,
-        SosReadinessClass.unavailable => colors.coral,
-        SosReadinessClass.notConfigured => colors.ink2,
-      };
+    SosReadinessClass.available => colors.mint,
+    SosReadinessClass.degraded => colors.amber,
+    SosReadinessClass.unavailable => colors.coral,
+    SosReadinessClass.notConfigured => colors.ink2,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -113,10 +109,7 @@ class _ReadinessLine extends StatelessWidget {
           width: 8,
           height: 8,
           margin: const EdgeInsets.only(top: 4),
-          decoration: BoxDecoration(
-            color: _klassColor,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: _klassColor, shape: BoxShape.circle),
         ),
         const SizedBox(width: 8),
         Expanded(
@@ -134,7 +127,11 @@ class _ReadinessLine extends StatelessWidget {
               if (row.detail.isNotEmpty)
                 Text(
                   row.detail,
-                  style: TextStyle(fontSize: 11, color: colors.ink2, height: 1.35),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: colors.ink2,
+                    height: 1.35,
+                  ),
                 ),
             ],
           ),

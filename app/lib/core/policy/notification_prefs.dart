@@ -76,11 +76,7 @@ final class NotificationPrefs {
   /// Doc 20 / SET-011 / SET-021 — SOS receipt is ungradeable for guardians.
   static const bool sosReceiptAlwaysOn = true;
 
-  static const Set<String> guardianMemberIds = {
-    'father',
-    'mother',
-    'guardian',
-  };
+  static const Set<String> guardianMemberIds = {'father', 'mother', 'guardian'};
 
   static bool isGuardianMemberId(String memberId) =>
       guardianMemberIds.contains(memberId);
@@ -173,17 +169,17 @@ final class NotificationPrefs {
   }
 
   Map<String, Object?> toJson() => {
-        'memberId': memberId,
-        'quietHoursEnabled': quietHoursEnabled,
-        'quietStartMinutes': toMinutes(quietStart),
-        'quietEndMinutes': toMinutes(quietEnd),
-        'analysisNoticesEnabled': analysisNoticesEnabled,
-        'childRequestsEnabled': childRequestsEnabled,
-        'summaryDigestEnabled': summaryDigestEnabled,
-        'eveningDigestEnabled': eveningDigestEnabled,
-        'eveningDigestMinutes': toMinutes(eveningDigestTime),
-        'sosReceiptAlwaysOn': sosReceiptAlwaysOn,
-      };
+    'memberId': memberId,
+    'quietHoursEnabled': quietHoursEnabled,
+    'quietStartMinutes': toMinutes(quietStart),
+    'quietEndMinutes': toMinutes(quietEnd),
+    'analysisNoticesEnabled': analysisNoticesEnabled,
+    'childRequestsEnabled': childRequestsEnabled,
+    'summaryDigestEnabled': summaryDigestEnabled,
+    'eveningDigestEnabled': eveningDigestEnabled,
+    'eveningDigestMinutes': toMinutes(eveningDigestTime),
+    'sosReceiptAlwaysOn': sosReceiptAlwaysOn,
+  };
 
   factory NotificationPrefs.fromJson(Map<String, Object?> json) {
     for (final key in json.keys) {
@@ -200,12 +196,14 @@ final class NotificationPrefs {
       throw ForbiddenSosMuteFieldException('sosReceiptAlwaysOn');
     }
 
-    final memberId = json['memberId'] as String? ??
+    final memberId =
+        json['memberId'] as String? ??
         json['member_id'] as String? ??
         'unknown';
     return NotificationPrefs(
       memberId: memberId,
-      quietHoursEnabled: json['quietHoursEnabled'] as bool? ??
+      quietHoursEnabled:
+          json['quietHoursEnabled'] as bool? ??
           json['quiet_hours_enabled'] as bool? ??
           false,
       quietStart: fromMinutes(
@@ -215,16 +213,20 @@ final class NotificationPrefs {
       quietEnd: fromMinutes(
         json['quietEndMinutes'] as int? ?? json['quiet_end_minutes'] as int?,
       ),
-      analysisNoticesEnabled: json['analysisNoticesEnabled'] as bool? ??
+      analysisNoticesEnabled:
+          json['analysisNoticesEnabled'] as bool? ??
           json['analysis_notices_enabled'] as bool? ??
           true,
-      childRequestsEnabled: json['childRequestsEnabled'] as bool? ??
+      childRequestsEnabled:
+          json['childRequestsEnabled'] as bool? ??
           json['child_requests_enabled'] as bool? ??
           true,
-      summaryDigestEnabled: json['summaryDigestEnabled'] as bool? ??
+      summaryDigestEnabled:
+          json['summaryDigestEnabled'] as bool? ??
           json['summary_digest_enabled'] as bool? ??
           true,
-      eveningDigestEnabled: json['eveningDigestEnabled'] as bool? ??
+      eveningDigestEnabled:
+          json['eveningDigestEnabled'] as bool? ??
           json['evening_digest_enabled'] as bool? ??
           true,
       // Preserve null through round-trip; [defaults] seeds evening digest time.
@@ -251,14 +253,14 @@ final class NotificationPrefs {
 
   @override
   int get hashCode => Object.hash(
-        memberId,
-        quietHoursEnabled,
-        toMinutes(quietStart),
-        toMinutes(quietEnd),
-        analysisNoticesEnabled,
-        childRequestsEnabled,
-        summaryDigestEnabled,
-        eveningDigestEnabled,
-        toMinutes(eveningDigestTime),
-      );
+    memberId,
+    quietHoursEnabled,
+    toMinutes(quietStart),
+    toMinutes(quietEnd),
+    analysisNoticesEnabled,
+    childRequestsEnabled,
+    summaryDigestEnabled,
+    eveningDigestEnabled,
+    toMinutes(eveningDigestTime),
+  );
 }

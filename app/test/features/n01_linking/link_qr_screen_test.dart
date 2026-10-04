@@ -17,10 +17,7 @@ void main() {
     await _pumpLinkQr(tester, mockToken: 'pair_abcd1234');
 
     expect(find.byKey(const Key('link_qr_instruction')), findsOneWidget);
-    expect(
-      find.textContaining('حمّل نفس التطبيق «عائلتي»'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('حمّل نفس التطبيق «عائلتي»'), findsOneWidget);
     expect(find.byKey(const Key('link_qr_visual')), findsOneWidget);
     expect(find.bySemanticsLabel('رمز الربط QR'), findsOneWidget);
     expect(find.text('اربط جهازه'), findsOneWidget);
@@ -74,11 +71,7 @@ void main() {
   });
 
   testWidgets('renew resets timer + toast', (tester) async {
-    await _pumpLinkQr(
-      tester,
-      initialSeconds: 0,
-      mockToken: 'pair_oldtoken',
-    );
+    await _pumpLinkQr(tester, initialSeconds: 0, mockToken: 'pair_oldtoken');
 
     expect(find.byKey(const Key('link_qr_expired')), findsOneWidget);
     final before = tester.widget<Text>(find.byKey(const Key('link_qr_token')));

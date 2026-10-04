@@ -77,10 +77,7 @@ void main() {
 
     expect(find.byKey(ChildQrScanKeys.permanentPanel), findsOneWidget);
     expect(find.byKey(ChildQrScanKeys.manualCode), findsOneWidget);
-    expect(
-      find.textContaining('أدخل الرمز يدويًا'),
-      findsWidgets,
-    );
+    expect(find.textContaining('أدخل الرمز يدويًا'), findsWidgets);
     expect(find.byKey(ChildQrScanKeys.openSettings), findsNothing);
     expect(find.byKey(ChildQrScanKeys.scanFrame), findsNothing);
   });
@@ -170,10 +167,7 @@ Future<void> _pumpScreen(
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: ChildQrScanScreen(
-        permissionSeam: seam,
-        onOpenSettingsToast: false,
-      ),
+      home: ChildQrScanScreen(permissionSeam: seam, onOpenSettingsToast: false),
     ),
   );
   await tester.pumpAndSettle();

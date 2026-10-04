@@ -205,8 +205,7 @@ class _ChildSosButtonScreenState extends State<ChildSosButtonScreen>
     } else {
       // Production: durable sos_final lifecycle (AUTH-FS006).
       await Stage1SosFinalRuntime.ensureOpen();
-      final panicQuiet =
-          stage1SosSettingsStore.settings.panicQuietPreferred;
+      final panicQuiet = stage1SosSettingsStore.settings.panicQuietPreferred;
       final incident = await Stage1SosFinalRuntime.crossSystem.fireChildHold(
         childId: ChildId(childId),
         deviceId: deviceId,
@@ -226,9 +225,7 @@ class _ChildSosButtonScreenState extends State<ChildSosButtonScreen>
       'childId': childId,
       if (alertId != null) 'alertId': alertId,
     };
-    context.go(
-      Uri(path: '/scr-chd-006', queryParameters: params).toString(),
-    );
+    context.go(Uri(path: '/scr-chd-006', queryParameters: params).toString());
   }
 
   String _statusText(AppLocalizations l10n) {

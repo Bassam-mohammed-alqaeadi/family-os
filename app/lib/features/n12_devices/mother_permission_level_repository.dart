@@ -33,8 +33,8 @@ final class InMemoryMotherPermissionLevelRepository
   InMemoryMotherPermissionLevelRepository({
     MotherLevel initial = MotherLevel.partner,
     List<MotherLevelAuditEntry> audit = const [],
-  })  : _level = initial,
-        _audit = List.of(audit);
+  }) : _level = initial,
+       _audit = List.of(audit);
 
   MotherLevel _level;
   final List<MotherLevelAuditEntry> _audit;
@@ -45,10 +45,7 @@ final class InMemoryMotherPermissionLevelRepository
   @override
   List<MotherLevelAuditEntry> get auditLog => List.unmodifiable(_audit);
 
-  void seed({
-    MotherLevel? level,
-    List<MotherLevelAuditEntry>? audit,
-  }) {
+  void seed({MotherLevel? level, List<MotherLevelAuditEntry>? audit}) {
     if (level != null) _level = level;
     if (audit != null) {
       _audit
@@ -86,8 +83,8 @@ final class InMemoryMotherPermissionLevelRepository
 /// Stage-1 accessor — Identity-backed when bound, else InMemory partner default.
 MotherPermissionLevelRepository? _stage1MotherPermissionBound;
 
-final InMemoryMotherPermissionLevelRepository
-_stage1MotherPermissionMemory = InMemoryMotherPermissionLevelRepository();
+final InMemoryMotherPermissionLevelRepository _stage1MotherPermissionMemory =
+    InMemoryMotherPermissionLevelRepository();
 
 MotherPermissionLevelRepository get stage1MotherPermissionLevelRepository =>
     _stage1MotherPermissionBound ?? _stage1MotherPermissionMemory;
@@ -106,10 +103,10 @@ void resetStage1MotherPermissionLevelRepositoryForTest() {
 
 /// Ordinal for upgrade / downgrade detection (observer < partner < full).
 int motherLevelRank(MotherLevel level) => switch (level) {
-      MotherLevel.observer => 0,
-      MotherLevel.partner => 1,
-      MotherLevel.full => 2,
-    };
+  MotherLevel.observer => 0,
+  MotherLevel.partner => 1,
+  MotherLevel.full => 2,
+};
 
 bool isMotherLevelDowngrade(MotherLevel from, MotherLevel to) =>
     motherLevelRank(to) < motherLevelRank(from);

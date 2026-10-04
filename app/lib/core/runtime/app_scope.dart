@@ -8,11 +8,8 @@ import 'package:family_os/core/runtime/app_runtime.dart';
 /// not silently fall back to a mutable `stage1*` singleton when the scope is
 /// absent. Test and development hosts inject an explicit [AppRuntime].
 final class AppScope extends InheritedNotifier<AppRuntime> {
-  const AppScope({
-    super.key,
-    required AppRuntime runtime,
-    required super.child,
-  }) : super(notifier: runtime);
+  const AppScope({super.key, required AppRuntime runtime, required super.child})
+    : super(notifier: runtime);
 
   static AppRuntime of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<AppScope>();

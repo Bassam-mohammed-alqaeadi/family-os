@@ -145,7 +145,10 @@ final class InMemoryChildrenListRepository implements ChildrenListRepository {
   }
 
   @override
-  Future<void> upsertChild(ChildrenListEntry entry, {FamilyId? familyId}) async {
+  Future<void> upsertChild(
+    ChildrenListEntry entry, {
+    FamilyId? familyId,
+  }) async {
     if (familyId != null) {
       final key = familyId.value;
       final list = List<ChildrenListEntry>.of(_byFamily[key] ?? const []);
@@ -167,7 +170,9 @@ final class InMemoryChildrenListRepository implements ChildrenListRepository {
   }
 
   @override
-  Future<SharedChildrenPolicies> loadSharedPolicies({FamilyId? familyId}) async {
+  Future<SharedChildrenPolicies> loadSharedPolicies({
+    FamilyId? familyId,
+  }) async {
     if (familyId == null) return _policies;
     return _policiesByFamily[familyId.value] ?? _policies;
   }

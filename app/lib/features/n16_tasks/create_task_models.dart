@@ -24,10 +24,7 @@ extension CreateTaskPlaytimeMinutesX on CreateTaskPlaytimeMinutes {
 
 @immutable
 final class CreateTaskChild {
-  const CreateTaskChild({
-    required this.id,
-    required this.nameKey,
-  });
+  const CreateTaskChild({required this.id, required this.nameKey});
 
   final String id;
 

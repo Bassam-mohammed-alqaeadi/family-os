@@ -160,67 +160,63 @@ void main() {
     },
   );
 
-  testWidgets(
-    'AC2 EN: screen reader labels for SOS / lock / approve',
-    (tester) async {
-      final handle = tester.ensureSemantics();
-      final child = ChildId('ui014-en');
-      final pending = TimeRequest(
-        id: 'tr-en',
-        childId: child,
-        requestedMinutes: 30,
+  testWidgets('AC2 EN: screen reader labels for SOS / lock / approve', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    final child = ChildId('ui014-en');
+    final pending = TimeRequest(
+      id: 'tr-en',
+      childId: child,
+      requestedMinutes: 30,
+    );
+    final inbox = TimeRequestService(
+      repository: InMemoryTimeRequestRepository([pending]),
+      decisionBus: TimeRequestDecisionBus(),
+    );
+    addTearDown(inbox.dispose);
+
+    try {
+      await tester.pumpWidget(
+        wrap(
+          TimeExpiryScreen(
+            childId: child,
+            sosFire: MockSosFireService(),
+            onSos: () {},
+          ),
+          locale: const Locale('en'),
+        ),
       );
-      final inbox = TimeRequestService(
-        repository: InMemoryTimeRequestRepository([pending]),
-        decisionBus: TimeRequestDecisionBus(),
+      await tester.pumpAndSettle();
+      expect(find.bySemanticsLabel('Send SOS emergency alert'), findsWidgets);
+
+      await tester.pumpWidget(
+        wrap(
+          InstantLockScreen(
+            childId: child,
+            repository: InMemoryAntiTamperRepository(),
+            lockService: DeviceLockService.inMemory(),
+            roleOverride: AppRole.father,
+          ),
+          locale: const Locale('en'),
+        ),
       );
-      addTearDown(inbox.dispose);
+      await tester.pumpAndSettle();
+      expect(find.bySemanticsLabel('Lock child device now'), findsOneWidget);
 
-      try {
-        await tester.pumpWidget(
-          wrap(
-            TimeExpiryScreen(
-              childId: child,
-              sosFire: MockSosFireService(),
-              onSos: () {},
-            ),
-            locale: const Locale('en'),
-          ),
-        );
-        await tester.pumpAndSettle();
-        expect(
-          find.bySemanticsLabel('Send SOS emergency alert'),
-          findsWidgets,
-        );
-
-        await tester.pumpWidget(
-          wrap(
-            InstantLockScreen(
-              childId: child,
-              repository: InMemoryAntiTamperRepository(),
-              lockService: DeviceLockService.inMemory(),
-              roleOverride: AppRole.father,
-            ),
-            locale: const Locale('en'),
-          ),
-        );
-        await tester.pumpAndSettle();
-        expect(find.bySemanticsLabel('Lock child device now'), findsOneWidget);
-
-        await tester.pumpWidget(
-          wrap(
-            RequestInboxScreen(service: inbox, role: AppRole.father),
-            locale: const Locale('en'),
-          ),
-        );
-        await tester.pumpAndSettle();
-        expect(
-          find.bySemanticsLabel('Approve extra-time request'),
-          findsOneWidget,
-        );
-      } finally {
-        handle.dispose();
-      }
-    },
-  );
+      await tester.pumpWidget(
+        wrap(
+          RequestInboxScreen(service: inbox, role: AppRole.father),
+          locale: const Locale('en'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.bySemanticsLabel('Approve extra-time request'),
+        findsOneWidget,
+      );
+    } finally {
+      handle.dispose();
+    }
+  });
 }

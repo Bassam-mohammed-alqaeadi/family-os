@@ -238,10 +238,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
       return;
     }
     setState(() => _saveBusy = true);
-    final draft = _draft.copyWith(
-      title: title,
-      place: _placeCtrl.text.trim(),
-    );
+    final draft = _draft.copyWith(title: title, place: _placeCtrl.text.trim());
     final snap = await _repo.saveEvent(draft);
     if (!mounted) return;
     setState(() {
@@ -458,9 +455,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
                       child: _ToggleBtn(
                         key: AddEventKeys.calendarHijri,
                         label: l10n.addEventCalendarHijri,
-                        selected: _draft.calendarType == AddEventCalendarType.hijri,
+                        selected:
+                            _draft.calendarType == AddEventCalendarType.hijri,
                         colors: colors,
-                        onTap: () => _onCalendarType(AddEventCalendarType.hijri),
+                        onTap: () =>
+                            _onCalendarType(AddEventCalendarType.hijri),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -469,7 +468,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
                         key: AddEventKeys.calendarGregorian,
                         label: l10n.addEventCalendarGregorian,
                         selected:
-                            _draft.calendarType == AddEventCalendarType.gregorian,
+                            _draft.calendarType ==
+                            AddEventCalendarType.gregorian,
                         colors: colors,
                         onTap: () =>
                             _onCalendarType(AddEventCalendarType.gregorian),
@@ -681,18 +681,14 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 vertical: 4,
               ),
             ),
-            items: [
-              'childOne',
-              'childTwo',
-              'childThree',
-              'mother',
-              'everyone',
-            ].map((key) {
-              return DropdownMenuItem(
-                value: key,
-                child: Text(_whoLabel(l10n, key)),
-              );
-            }).toList(),
+            items: ['childOne', 'childTwo', 'childThree', 'mother', 'everyone']
+                .map((key) {
+                  return DropdownMenuItem(
+                    value: key,
+                    child: Text(_whoLabel(l10n, key)),
+                  );
+                })
+                .toList(),
             onChanged: (v) {
               if (v == null) return;
               setState(() => _draft = _draft.copyWith(whoNameKey: v));
@@ -845,9 +841,7 @@ class _ToggleBtn extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: selected ? colors.mint : colors.border,
-            ),
+            border: Border.all(color: selected ? colors.mint : colors.border),
           ),
           child: Text(
             label,
@@ -889,9 +883,7 @@ class _TimeChip extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: selected ? colors.p500 : colors.border,
-            ),
+            border: Border.all(color: selected ? colors.p500 : colors.border),
           ),
           child: Text(
             label,

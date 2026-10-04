@@ -1,10 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 /// Call media mode for SCR-FAT-023 (LiveKit audio/video — Stage-1 mock).
-enum ActiveCallKind {
-  audio,
-  video,
-}
+enum ActiveCallKind { audio, video }
 
 /// Live call payload for SCR-FAT-023 (`?callId=`).
 @immutable
@@ -77,8 +74,8 @@ final class InMemoryActiveCallRepository implements ActiveCallRepository {
     List<ActiveCallDetail>? initial,
     this.failLoad = false,
   }) : _calls = {
-          for (final c in initial ?? const <ActiveCallDetail>[]) c.callId: c,
-        };
+         for (final c in initial ?? const <ActiveCallDetail>[]) c.callId: c,
+       };
 
   final Map<String, ActiveCallDetail> _calls;
 

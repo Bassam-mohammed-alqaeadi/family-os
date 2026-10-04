@@ -157,7 +157,9 @@ final class LocalSosFinalStore implements SosFinalRepository {
   }
 
   @override
-  Future<List<Map<String, Object?>>> listBreakGlass({String? incidentId}) async {
+  Future<List<Map<String, Object?>>> listBreakGlass({
+    String? incidentId,
+  }) async {
     if (incidentId == null) {
       return _db.query(_bg, orderBy: 'started_at DESC');
     }

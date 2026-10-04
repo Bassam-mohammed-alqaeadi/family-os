@@ -116,7 +116,8 @@ class _RequestInboxScreenState extends State<RequestInboxScreen> {
   Future<void> _bootstrapProduction() async {
     try {
       await ScreenTimeRuntime.ensureOpen();
-      final service = ScreenTimeRuntime.timeRequest ??
+      final service =
+          ScreenTimeRuntime.timeRequest ??
           await Stage1TimeRequestRuntime.ensureOpen();
       if (!mounted) return;
       _service = service;

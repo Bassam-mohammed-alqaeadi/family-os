@@ -349,10 +349,7 @@ class DeviceUserSwitchScreenState extends State<DeviceUserSwitchScreen> {
 }
 
 class _SwitchConfirmDialog extends StatefulWidget {
-  const _SwitchConfirmDialog({
-    required this.profileName,
-    required this.l10n,
-  });
+  const _SwitchConfirmDialog({required this.profileName, required this.l10n});
 
   final String profileName;
   final AppLocalizations l10n;

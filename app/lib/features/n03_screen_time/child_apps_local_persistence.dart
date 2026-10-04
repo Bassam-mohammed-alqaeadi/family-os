@@ -21,13 +21,9 @@ abstract final class ChildAppsLocalPersistence {
       final kids = await stage1ChildrenListRepository.listChildren(
         familyId: ChildrenListLocalSeedMock.famStage1,
       );
-      final ids = <ChildId>[
-        for (final k in kids) ChildId(k.id),
-      ];
+      final ids = <ChildId>[for (final k in kids) ChildId(k.id)];
       if (ids.isEmpty) {
-        ids.addAll(
-          activeFamilyRosterChildren().map((child) => child.id),
-        );
+        ids.addAll(activeFamilyRosterChildren().map((child) => child.id));
       }
       if (ids.isEmpty) return;
 

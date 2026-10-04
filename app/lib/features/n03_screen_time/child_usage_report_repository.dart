@@ -7,7 +7,7 @@ abstract class ChildUsageReportRepository {
 final class InMemoryChildUsageReportRepository
     implements ChildUsageReportRepository {
   InMemoryChildUsageReportRepository({ChildUsageReportSnapshot? seed})
-      : _snap = seed ?? childUsageReportEmptyFixture();
+    : _snap = seed ?? childUsageReportEmptyFixture();
 
   ChildUsageReportSnapshot _snap;
   Future<void> Function()? loadGate;

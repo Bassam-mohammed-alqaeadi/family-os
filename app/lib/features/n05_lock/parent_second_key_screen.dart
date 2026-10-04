@@ -139,20 +139,14 @@ class _ParentSecondKeyScreenState extends State<ParentSecondKeyScreen> {
     if (!_canDecide) return;
     _lock.approveSecondKey(window: widget.approveWindow);
     final l10n = AppLocalizations.of(context);
-    AppToast.show(
-      context,
-      message: l10n.parentSecondKeyApprovedToast,
-    );
+    AppToast.show(context, message: l10n.parentSecondKeyApprovedToast);
   }
 
   void _deny(ChildModeUnlockRequest request) {
     if (!_canDecide) return;
     _lock.rejectSecondKey();
     final l10n = AppLocalizations.of(context);
-    AppToast.show(
-      context,
-      message: l10n.parentSecondKeyDeniedToast,
-    );
+    AppToast.show(context, message: l10n.parentSecondKeyDeniedToast);
   }
 
   @override
@@ -359,11 +353,7 @@ class _PendingUnlockCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               l10n.parentSecondKeyPendingMeta,
-              style: TextStyle(
-                fontSize: 12,
-                height: 1.5,
-                color: colors.ink2,
-              ),
+              style: TextStyle(fontSize: 12, height: 1.5, color: colors.ink2),
             ),
             if (canDecide) ...[
               const SizedBox(height: 14),

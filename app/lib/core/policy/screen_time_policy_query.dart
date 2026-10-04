@@ -17,11 +17,11 @@ abstract final class ScreenTimePolicyQuery {
     required String appId,
     int temporaryGrantRemaining = 0,
   }) {
-    final wallet = policy.walletFor(appId) ??
+    final wallet =
+        policy.walletFor(appId) ??
         AppWallet(appId: appId, earnedMinutes: Minutes.zero);
     final countable = wallet.countable;
-    final capExhausted =
-        policy.isCapExhausted && temporaryGrantRemaining <= 0;
+    final capExhausted = policy.isCapExhausted && temporaryGrantRemaining <= 0;
     final dailyLimitExhausted = countable ? capExhausted : false;
 
     return TimeContext(
@@ -44,11 +44,10 @@ abstract final class ScreenTimePolicyQuery {
     required ScreenTimePolicySnapshot snapshot,
     required String appId,
     int temporaryGrantRemaining = 0,
-  }) =>
-      timeContextFromPolicy(
-        base: base,
-        policy: snapshot.policy,
-        appId: appId,
-        temporaryGrantRemaining: temporaryGrantRemaining,
-      );
+  }) => timeContextFromPolicy(
+    base: base,
+    policy: snapshot.policy,
+    appId: appId,
+    temporaryGrantRemaining: temporaryGrantRemaining,
+  );
 }

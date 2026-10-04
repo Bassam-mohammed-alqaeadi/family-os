@@ -44,58 +44,55 @@ void main() {
     },
   );
 
-  testWidgets(
-    'SET-017 unavailable ≠ selected-on mint tokens',
-    (tester) async {
-      final repo = InMemoryDesiredMonitoringPrefsRepository({
-        DesiredMonitoringPrefs.defaultChildId: const DesiredMonitoringPrefs(
-          notificationListen: true,
-          // appLimits starts false so Android full toggle can turn ON.
+  testWidgets('SET-017 unavailable ≠ selected-on mint tokens', (tester) async {
+    final repo = InMemoryDesiredMonitoringPrefsRepository({
+      DesiredMonitoringPrefs.defaultChildId: const DesiredMonitoringPrefs(
+        notificationListen: true,
+        // appLimits starts false so Android full toggle can turn ON.
+      ),
+    });
+
+    await _pump(tester, repository: repo);
+
+    final colors = FamilyColors.defaults;
+
+    final unavailable = tester.widget<Switch>(
+      find.byKey(
+        PlatformMonitoringKeys.featureSwitch(
+          PlatformId.ios,
+          MonitoringFeature.notificationListen,
         ),
-      });
+      ),
+    );
+    expect(unavailable.value, isFalse);
+    expect(unavailable.onChanged, isNull);
 
-      await _pump(tester, repository: repo);
+    final offThumb = unavailable.thumbColor?.resolve(const {});
+    final offTrack = unavailable.trackColor?.resolve(const {});
+    expect(offThumb, colors.ink2);
+    expect(offTrack, colors.border);
+    expect(offThumb, isNot(colors.mint));
+    expect(offTrack, isNot(colors.mint100));
 
-      final colors = FamilyColors.defaults;
+    // Android full ON uses mint selected-on tokens.
+    final androidAppLimits = PlatformMonitoringKeys.featureSwitch(
+      PlatformId.android,
+      MonitoringFeature.appLimits,
+    );
+    await tester.tap(find.byKey(androidAppLimits));
+    await tester.pumpAndSettle();
 
-      final unavailable = tester.widget<Switch>(
-        find.byKey(
-          PlatformMonitoringKeys.featureSwitch(
-            PlatformId.ios,
-            MonitoringFeature.notificationListen,
-          ),
-        ),
-      );
-      expect(unavailable.value, isFalse);
-      expect(unavailable.onChanged, isNull);
+    final fullOn = tester.widget<Switch>(find.byKey(androidAppLimits));
+    expect(fullOn.value, isTrue);
+    expect(fullOn.onChanged, isNotNull);
 
-      final offThumb = unavailable.thumbColor?.resolve(const {});
-      final offTrack = unavailable.trackColor?.resolve(const {});
-      expect(offThumb, colors.ink2);
-      expect(offTrack, colors.border);
-      expect(offThumb, isNot(colors.mint));
-      expect(offTrack, isNot(colors.mint100));
-
-      // Android full ON uses mint selected-on tokens.
-      final androidAppLimits = PlatformMonitoringKeys.featureSwitch(
-        PlatformId.android,
-        MonitoringFeature.appLimits,
-      );
-      await tester.tap(find.byKey(androidAppLimits));
-      await tester.pumpAndSettle();
-
-      final fullOn = tester.widget<Switch>(find.byKey(androidAppLimits));
-      expect(fullOn.value, isTrue);
-      expect(fullOn.onChanged, isNotNull);
-
-      final onThumb = fullOn.thumbColor?.resolve({WidgetState.selected});
-      final onTrack = fullOn.trackColor?.resolve({WidgetState.selected});
-      expect(onThumb, colors.mint);
-      expect(onTrack, colors.mint100);
-      expect(onThumb, isNot(offThumb));
-      expect(onTrack, isNot(offTrack));
-    },
-  );
+    final onThumb = fullOn.thumbColor?.resolve({WidgetState.selected});
+    final onTrack = fullOn.trackColor?.resolve({WidgetState.selected});
+    expect(onThumb, colors.mint);
+    expect(onTrack, colors.mint100);
+    expect(onThumb, isNot(offThumb));
+    expect(onTrack, isNot(offTrack));
+  });
 
   testWidgets('SET-017 reportsOnly shows limited state', (tester) async {
     final repo = InMemoryDesiredMonitoringPrefsRepository({

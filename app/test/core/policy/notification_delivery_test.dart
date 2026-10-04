@@ -99,20 +99,14 @@ void main() {
       );
       final results = NotificationDelivery.simulateSosAlert(
         const ['father', 'mother'],
-        prefsByMember: {
-          'father': quietOn,
-          'mother': motherQuiet,
-        },
+        prefsByMember: {'father': quietOn, 'mother': motherQuiet},
         now: const TimeOfDay(hour: 23, minute: 0),
       );
 
       expect(results, hasLength(2));
       expect(results.every((r) => r.tier == NotificationTier.critical), isTrue);
       expect(results.every((r) => r.delivered), isTrue);
-      expect(
-        results.map((r) => r.recipientId).toSet(),
-        {'father', 'mother'},
-      );
+      expect(results.map((r) => r.recipientId).toSet(), {'father', 'mother'});
     });
 
     test('child request respects prefs + quiet hours', () {
@@ -146,10 +140,9 @@ void main() {
     });
 
     test('prefs filter excludes critical tier', () {
-      expect(
-        NotificationPrefs.filterableTiers().toList(),
-        [NotificationTier.nonCritical],
-      );
+      expect(NotificationPrefs.filterableTiers().toList(), [
+        NotificationTier.nonCritical,
+      ]);
       expect(
         NotificationPrefs.quietHoursAppliesTo(NotificationTier.critical),
         isFalse,
@@ -228,10 +221,7 @@ void main() {
     test('independent quiet hours rows for two members', () async {
       final repo = InMemoryNotificationPrefsRepository();
       await repo.save(
-        const NotificationPrefs(
-          memberId: 'father',
-          quietHoursEnabled: false,
-        ),
+        const NotificationPrefs(memberId: 'father', quietHoursEnabled: false),
       );
       await repo.save(
         const NotificationPrefs(
@@ -254,10 +244,7 @@ void main() {
       );
       await repo.save(father);
       await repo.save(
-        const NotificationPrefs(
-          memberId: 'mother',
-          quietHoursEnabled: false,
-        ),
+        const NotificationPrefs(memberId: 'mother', quietHoursEnabled: false),
       );
       await repo.save(
         const NotificationPrefs(
@@ -318,8 +305,9 @@ void main() {
     });
 
     test('simulateAnalysisNotify suppressed when mother flag off', () {
-      final mother = NotificationPrefs.defaults(memberId: 'mother')
-          .copyWith(analysisNoticesEnabled: false);
+      final mother = NotificationPrefs.defaults(
+        memberId: 'mother',
+      ).copyWith(analysisNoticesEnabled: false);
       final result = NotificationDelivery.simulateAnalysisNotify(
         'mother',
         prefs: mother,

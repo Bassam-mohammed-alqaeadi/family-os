@@ -3,7 +3,11 @@ import 'package:family_os/foundation_gate/foundation_gate_identity.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
 class FakeIdentity implements FoundationGateIdentity {
-  FakeIdentity({this.token = 'synthetic-token', this.subject = 'synthetic-subject', this.failure});
+  FakeIdentity({
+    this.token = 'synthetic-token',
+    this.subject = 'synthetic-subject',
+    this.failure,
+  });
 
   String token;
   String subject;
@@ -13,7 +17,10 @@ class FakeIdentity implements FoundationGateIdentity {
   int signOutCalls = 0;
 
   @override
-  Future<String> signIn({required String email, required String password}) async {
+  Future<String> signIn({
+    required String email,
+    required String password,
+  }) async {
     signInCalls += 1;
     if (failure != null) {
       throw failure!;
@@ -45,7 +52,8 @@ class FakeIdentity implements FoundationGateIdentity {
 }
 
 class FakeTransport implements FoundationGateHttpTransport {
-  FakeTransport(this.response, {FoundationGateHttpResponse? postResponse}) : _postResponse = postResponse;
+  FakeTransport(this.response, {FoundationGateHttpResponse? postResponse})
+    : _postResponse = postResponse;
 
   FoundationGateHttpResponse response;
   FoundationGateHttpResponse? _postResponse;
@@ -61,7 +69,10 @@ class FakeTransport implements FoundationGateHttpTransport {
   set postResponse(FoundationGateHttpResponse? value) => _postResponse = value;
 
   @override
-  Future<FoundationGateHttpResponse> get(Uri uri, {required Map<String, String> headers}) async {
+  Future<FoundationGateHttpResponse> get(
+    Uri uri, {
+    required Map<String, String> headers,
+  }) async {
     requestedUri = uri;
     requestedHeaders = headers;
     if (failure != null) {

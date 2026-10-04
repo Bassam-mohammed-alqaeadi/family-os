@@ -58,13 +58,19 @@ final class AppRuntime extends ChangeNotifier {
     policies.removeListener(notifyListeners);
     identity.dispose();
     if (!identical(roster, identity)) roster.dispose();
-    if (!identical(childProfiles, identity) && !identical(childProfiles, roster)) {
+    if (!identical(childProfiles, identity) &&
+        !identical(childProfiles, roster)) {
       childProfiles.dispose();
     }
-    if (!identical(devices, identity) && !identical(devices, roster) && !identical(devices, childProfiles)) {
+    if (!identical(devices, identity) &&
+        !identical(devices, roster) &&
+        !identical(devices, childProfiles)) {
       devices.dispose();
     }
-    if (!identical(policies, identity) && !identical(policies, roster) && !identical(policies, childProfiles) && !identical(policies, devices)) {
+    if (!identical(policies, identity) &&
+        !identical(policies, roster) &&
+        !identical(policies, childProfiles) &&
+        !identical(policies, devices)) {
       policies.dispose();
     }
     super.dispose();

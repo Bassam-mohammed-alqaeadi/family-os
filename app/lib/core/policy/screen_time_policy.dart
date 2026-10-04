@@ -32,8 +32,9 @@ final class AppWallet {
       );
     }
     // S-1: education apps are never countable.
-    final effectiveCountable =
-        EducationAppIds.isEducation(id) ? false : countable;
+    final effectiveCountable = EducationAppIds.isEducation(id)
+        ? false
+        : countable;
     return AppWallet._(
       appId: id,
       earnedMinutes: earnedMinutes,
@@ -53,10 +54,7 @@ final class AppWallet {
   /// When false, usage does not consume the daily entertainment cap (S-1).
   final bool countable;
 
-  AppWallet copyWith({
-    Minutes? earnedMinutes,
-    bool? countable,
-  }) {
+  AppWallet copyWith({Minutes? earnedMinutes, bool? countable}) {
     return AppWallet(
       appId: appId,
       earnedMinutes: earnedMinutes ?? this.earnedMinutes,
@@ -65,10 +63,10 @@ final class AppWallet {
   }
 
   Map<String, Object?> toJson() => {
-        'appId': appId,
-        'earnedMinutes': earnedMinutes.inMinutes,
-        'countable': countable,
-      };
+    'appId': appId,
+    'earnedMinutes': earnedMinutes.inMinutes,
+    'countable': countable,
+  };
 
   factory AppWallet.fromJson(Map<String, Object?> json) {
     final rawEarned = json['earnedMinutes'];
@@ -135,12 +133,12 @@ final class ScreenTimePolicy {
 
   /// Default Stage-1 policy (Ruling B: overflow off).
   static ScreenTimePolicy defaults() => ScreenTimePolicy(
-        wallets: [
-          AppWallet(appId: 'games', earnedMinutes: Minutes.zero),
-          AppWallet(appId: 'youtube', earnedMinutes: Minutes.zero),
-          AppWallet(appId: 'quran', earnedMinutes: Minutes.zero),
-        ],
-      );
+    wallets: [
+      AppWallet(appId: 'games', earnedMinutes: Minutes.zero),
+      AppWallet(appId: 'youtube', earnedMinutes: Minutes.zero),
+      AppWallet(appId: 'quran', earnedMinutes: Minutes.zero),
+    ],
+  );
 
   /// Non-negative daily entertainment cap in minutes.
   final int dailyCapMinutes;
@@ -195,11 +193,11 @@ final class ScreenTimePolicy {
   }
 
   Map<String, Object?> toJson() => {
-        'dailyCapMinutes': dailyCapMinutes,
-        'allowWalletOverflow': allowWalletOverflow,
-        'usedMinutesToday': usedMinutesToday,
-        'wallets': wallets.map((w) => w.toJson()).toList(),
-      };
+    'dailyCapMinutes': dailyCapMinutes,
+    'allowWalletOverflow': allowWalletOverflow,
+    'usedMinutesToday': usedMinutesToday,
+    'wallets': wallets.map((w) => w.toJson()).toList(),
+  };
 
   factory ScreenTimePolicy.fromJson(Map<String, Object?> json) {
     final rawWallets = json['wallets'];
@@ -233,9 +231,9 @@ final class ScreenTimePolicy {
 
   @override
   int get hashCode => Object.hash(
-        dailyCapMinutes,
-        allowWalletOverflow,
-        usedMinutesToday,
-        Object.hashAll(wallets),
-      );
+    dailyCapMinutes,
+    allowWalletOverflow,
+    usedMinutesToday,
+    Object.hashAll(wallets),
+  );
 }

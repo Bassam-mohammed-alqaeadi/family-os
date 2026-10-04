@@ -48,14 +48,14 @@ final class AntiTamperPolicy {
   final DateTime? updatedAt;
 
   bool flag(String key) => switch (key) {
-        AntiTamperFlags.noDelete => noDelete,
-        AntiTamperFlags.noClockChange => noClockChange,
-        AntiTamperFlags.noVpn => noVpn,
-        AntiTamperFlags.simAlert => simAlert,
-        AntiTamperFlags.settingsPin => settingsPin,
-        AntiTamperFlags.bypassAlert => bypassAlert,
-        _ => false,
-      };
+    AntiTamperFlags.noDelete => noDelete,
+    AntiTamperFlags.noClockChange => noClockChange,
+    AntiTamperFlags.noVpn => noVpn,
+    AntiTamperFlags.simAlert => simAlert,
+    AntiTamperFlags.settingsPin => settingsPin,
+    AntiTamperFlags.bypassAlert => bypassAlert,
+    _ => false,
+  };
 
   AntiTamperPolicy copyWith({
     bool? noDelete,
@@ -92,15 +92,15 @@ final class AntiTamperPolicy {
   }
 
   Map<String, dynamic> toJson() => {
-        'noDelete': noDelete,
-        'noClockChange': noClockChange,
-        'noVpn': noVpn,
-        'simAlert': simAlert,
-        'settingsPin': settingsPin,
-        'bypassAlert': bypassAlert,
-        'policyVersion': policyVersion,
-        if (updatedAt != null) 'updatedAt': updatedAt!.toUtc().toIso8601String(),
-      };
+    'noDelete': noDelete,
+    'noClockChange': noClockChange,
+    'noVpn': noVpn,
+    'simAlert': simAlert,
+    'settingsPin': settingsPin,
+    'bypassAlert': bypassAlert,
+    'policyVersion': policyVersion,
+    if (updatedAt != null) 'updatedAt': updatedAt!.toUtc().toIso8601String(),
+  };
 
   factory AntiTamperPolicy.fromJson(Map<String, dynamic> json) {
     return AntiTamperPolicy(
@@ -131,12 +131,12 @@ final class AntiTamperPolicy {
 
   @override
   int get hashCode => Object.hash(
-        noDelete,
-        noClockChange,
-        noVpn,
-        simAlert,
-        settingsPin,
-        bypassAlert,
-        policyVersion,
-      );
+    noDelete,
+    noClockChange,
+    noVpn,
+    simAlert,
+    settingsPin,
+    bypassAlert,
+    policyVersion,
+  );
 }

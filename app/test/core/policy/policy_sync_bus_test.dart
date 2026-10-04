@@ -23,10 +23,7 @@ void main() {
   test('online publish delivers policy and updates remaining', () async {
     bus.hydrate(
       child,
-      policy: ScreenTimePolicy(
-        dailyCapMinutes: 120,
-        usedMinutesToday: 30,
-      ),
+      policy: ScreenTimePolicy(dailyCapMinutes: 120, usedMinutesToday: 30),
     );
     expect(bus.mirrorOf(child).remainingMinutes, 90);
 
@@ -38,10 +35,7 @@ void main() {
         childId: child,
         updatedAt: DateTime.utc(2026, 9, 20, 12),
         kind: PolicySyncKind.policy,
-        policy: ScreenTimePolicy(
-          dailyCapMinutes: 90,
-          usedMinutesToday: 30,
-        ),
+        policy: ScreenTimePolicy(dailyCapMinutes: 90, usedMinutesToday: 30),
       ),
     );
 
@@ -50,20 +44,14 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     expect(bus.mirrorOf(child).remainingMinutes, 60);
     expect(bus.mirrorOf(child).applyCount, 1);
-    expect(
-      events.where((e) => e.remainingMinutes == 60).isNotEmpty,
-      isTrue,
-    );
+    expect(events.where((e) => e.remainingMinutes == 60).isNotEmpty, isTrue);
     await sub.cancel();
   });
 
   test('offline save stays queued; markOnline delivers', () async {
     bus.hydrate(
       child,
-      policy: ScreenTimePolicy(
-        dailyCapMinutes: 120,
-        usedMinutesToday: 10,
-      ),
+      policy: ScreenTimePolicy(dailyCapMinutes: 120, usedMinutesToday: 10),
     );
     bus.markChildOffline(child);
 
@@ -72,10 +60,7 @@ void main() {
         childId: child,
         updatedAt: DateTime.utc(2026, 9, 20, 13),
         kind: PolicySyncKind.policy,
-        policy: ScreenTimePolicy(
-          dailyCapMinutes: 90,
-          usedMinutesToday: 10,
-        ),
+        policy: ScreenTimePolicy(dailyCapMinutes: 90, usedMinutesToday: 10),
       ),
     );
 
@@ -95,9 +80,7 @@ void main() {
     final policy = ScreenTimePolicy(
       dailyCapMinutes: 100,
       usedMinutesToday: 40,
-      wallets: [
-        AppWallet(appId: 'games', earnedMinutes: Minutes(10)),
-      ],
+      wallets: [AppWallet(appId: 'games', earnedMinutes: Minutes(10))],
     );
 
     bus.publish(
@@ -123,9 +106,7 @@ void main() {
         kind: PolicySyncKind.policy,
         policy: policy.copyWith(
           usedMinutesToday: 99,
-          wallets: [
-            AppWallet(appId: 'games', earnedMinutes: Minutes(999)),
-          ],
+          wallets: [AppWallet(appId: 'games', earnedMinutes: Minutes(999))],
         ),
       ),
     );

@@ -84,8 +84,7 @@ final class EmptyAdvisorRepository implements AdvisorRepository {
   @override
   Future<List<AiSuggestion>> suggestions({
     AiStageId stage = AiStageId.suggest,
-  }) =>
-      SynchronousFuture(const []);
+  }) => SynchronousFuture(const []);
 }
 
 /// Stage-1 Advisor — empty at boot; [MockAdvisorRepository] for explicit tests.

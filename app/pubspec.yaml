@@ -22,6 +22,9 @@ dependencies:
   firebase_core: ^3.15.2
   firebase_auth: ^5.7.0
   http: ^1.2.2
+  # QR Code — pairing flow (parent shows QR, child scans with camera)
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^7.0.0
 
 dev_dependencies:
   flutter_test:

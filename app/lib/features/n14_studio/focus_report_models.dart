@@ -5,10 +5,7 @@ enum FocusReportGoalStatus { complete, inProgress }
 
 @immutable
 final class FocusReportChild {
-  const FocusReportChild({
-    required this.id,
-    required this.nameKey,
-  });
+  const FocusReportChild({required this.id, required this.nameKey});
 
   final String id;
 

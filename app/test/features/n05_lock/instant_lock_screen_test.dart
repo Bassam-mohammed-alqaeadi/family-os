@@ -40,8 +40,9 @@ void main() {
     expect(find.byKey(InstantLockKeys.lockButton), findsOneWidget);
   });
 
-  testWidgets('mother FULL lock then father unlock → supersession banner',
-      (tester) async {
+  testWidgets('mother FULL lock then father unlock → supersession banner', (
+    tester,
+  ) async {
     final sharedService = DeviceLockService.inMemory();
 
     await _pump(
@@ -77,19 +78,20 @@ void main() {
     );
     // Bus already holds supersession from father unlock; re-notify mother UI.
     sharedService.notifyBus.publish(
-      DeviceLockSupersessionEvent(
-        childId: child,
-        at: DateTime.now().toUtc(),
-      ),
+      DeviceLockSupersessionEvent(childId: child, at: DateTime.now().toUtc()),
     );
     await tester.pumpAndSettle();
 
     expect(find.byKey(InstantLockKeys.supersessionBanner), findsOneWidget);
-    expect(find.text('الأب حفظ تفضيل فك القفل (تم تجاوز تفضيل قفلك)'), findsOneWidget);
+    expect(
+      find.text('الأب حفظ تفضيل فك القفل (تم تجاوز تفضيل قفلك)'),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('mother observer: lock button disabled, stays unlocked',
-      (tester) async {
+  testWidgets('mother observer: lock button disabled, stays unlocked', (
+    tester,
+  ) async {
     await _pump(
       tester,
       repository: InMemoryAntiTamperRepository(),
@@ -99,7 +101,9 @@ void main() {
       motherLevel: MotherLevel.observer,
     );
 
-    final btn = tester.widget<PrimaryBtn>(find.byKey(InstantLockKeys.lockButton));
+    final btn = tester.widget<PrimaryBtn>(
+      find.byKey(InstantLockKeys.lockButton),
+    );
     expect(btn.onPressed, isNull);
     await tester.tap(find.byKey(InstantLockKeys.lockButton));
     await tester.pumpAndSettle();
@@ -122,8 +126,9 @@ void main() {
     expect(AntiTamperKeys.allSwitches, hasLength(6));
   });
 
-  testWidgets('father: all six whenEnabled strings visible (SET-008)',
-      (tester) async {
+  testWidgets('father: all six whenEnabled strings visible (SET-008)', (
+    tester,
+  ) async {
     await _pump(
       tester,
       repository: InMemoryAntiTamperRepository(),
@@ -141,33 +146,23 @@ void main() {
       find.text('لا يمكن إلغاء تثبيت عائلتي من جهاز الابن'),
       findsOneWidget,
     );
-    expect(
-      find.text('أي تلاعب بالساعة يُعاد تلقائيًا ويُسجل'),
-      findsOneWidget,
-    );
+    expect(find.text('أي تلاعب بالساعة يُعاد تلقائيًا ويُسجل'), findsOneWidget);
     expect(find.text('تُعطل فور تثبيتها ويصلك تنبيه'), findsOneWidget);
-    expect(
-      find.text('إشعار فوري إن أُخرجت شريحة الاتصال'),
-      findsOneWidget,
-    );
-    expect(
-      find.text('إعدادات الجهاز الحساسة تطلب رمز الأب'),
-      findsOneWidget,
-    );
+    expect(find.text('إشعار فوري إن أُخرجت شريحة الاتصال'), findsOneWidget);
+    expect(find.text('إعدادات الجهاز الحساسة تطلب رمز الأب'), findsOneWidget);
     expect(
       find.text('أي محاولة التفاف تصلك لحظيًا كمعلومة تربوية'),
       findsOneWidget,
     );
   });
 
-  testWidgets('father bypassAlert ON + simulate → father alert event',
-      (tester) async {
+  testWidgets('father bypassAlert ON + simulate → father alert event', (
+    tester,
+  ) async {
     final bus = AntiTamperAlertBus();
     final screenKey = GlobalKey<InstantLockScreenState>();
     final repo = InMemoryAntiTamperRepository(
-      seed: {
-        child.value: const AntiTamperPolicy(bypassAlert: true),
-      },
+      seed: {child.value: const AntiTamperPolicy(bypassAlert: true)},
     );
 
     await _pump(
@@ -202,8 +197,9 @@ void main() {
     expect(find.byKey(AntiTamperKeys.section), findsNothing);
   });
 
-  testWidgets('mother deep-link force → deny panel, still no switches',
-      (tester) async {
+  testWidgets('mother deep-link force → deny panel, still no switches', (
+    tester,
+  ) async {
     await _pump(
       tester,
       repository: InMemoryAntiTamperRepository(),
@@ -220,12 +216,11 @@ void main() {
     }
   });
 
-  testWidgets('father toggle + save persists across repo reopen',
-      (tester) async {
+  testWidgets('father toggle + save persists across repo reopen', (
+    tester,
+  ) async {
     final shared = <String, String>{};
-    final repo = PrefsAntiTamperRepository(
-      MemoryAntiTamperPrefsStore(shared),
-    );
+    final repo = PrefsAntiTamperRepository(MemoryAntiTamperPrefsStore(shared));
 
     await _pump(
       tester,
@@ -252,8 +247,9 @@ void main() {
     expect(loaded.noDelete, isTrue);
   });
 
-  testWidgets('enabling noDelete without device admin → permission banner',
-      (tester) async {
+  testWidgets('enabling noDelete without device admin → permission banner', (
+    tester,
+  ) async {
     await _pump(
       tester,
       repository: InMemoryAntiTamperRepository(),

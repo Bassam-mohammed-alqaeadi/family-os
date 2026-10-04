@@ -74,9 +74,7 @@ void main() {
         child,
         ScreenTimePolicy(
           dailyCapMinutes: 60,
-          wallets: [
-            AppWallet(appId: 'games', earnedMinutes: Minutes(8)),
-          ],
+          wallets: [AppWallet(appId: 'games', earnedMinutes: Minutes(8))],
         ),
       );
       final loaded = await repo.load(child);
@@ -117,15 +115,10 @@ void main() {
         dailyCapMinutes: 60,
         allowWalletOverflow: true,
         usedMinutesToday: 60,
-        wallets: [
-          AppWallet(appId: 'games', earnedMinutes: Minutes(99)),
-        ],
+        wallets: [AppWallet(appId: 'games', earnedMinutes: Minutes(99))],
       );
       final ctx = ScreenTimePolicyQuery.timeContextFromPolicy(
-        base: TimeContext(
-          childId: child,
-          permanentlyBlocked: true,
-        ),
+        base: TimeContext(childId: child, permanentlyBlocked: true),
         policy: policy,
         appId: 'games',
       );
@@ -138,9 +131,7 @@ void main() {
         dailyCapMinutes: 60,
         allowWalletOverflow: false,
         usedMinutesToday: 60,
-        wallets: [
-          AppWallet(appId: 'games', earnedMinutes: Minutes.zero),
-        ],
+        wallets: [AppWallet(appId: 'games', earnedMinutes: Minutes.zero)],
       );
       final ctx = ScreenTimePolicyQuery.timeContextFromPolicy(
         base: TimeContext(childId: child),
@@ -156,9 +147,7 @@ void main() {
         dailyCapMinutes: 60,
         allowWalletOverflow: true,
         usedMinutesToday: 90,
-        wallets: [
-          AppWallet(appId: 'games', earnedMinutes: Minutes(20)),
-        ],
+        wallets: [AppWallet(appId: 'games', earnedMinutes: Minutes(20))],
       );
       final ctx = ScreenTimePolicyQuery.timeContextFromPolicy(
         base: TimeContext(childId: child),
@@ -173,9 +162,7 @@ void main() {
         dailyCapMinutes: 30,
         allowWalletOverflow: false,
         usedMinutesToday: 30,
-        wallets: [
-          AppWallet(appId: 'quran', earnedMinutes: Minutes.zero),
-        ],
+        wallets: [AppWallet(appId: 'quran', earnedMinutes: Minutes.zero)],
       );
       final ctx = ScreenTimePolicyQuery.timeContextFromPolicy(
         base: TimeContext(childId: child),
@@ -198,49 +185,44 @@ void main() {
       expect(ScreenTimePolicy().allowWalletOverflow, isFalse);
     });
 
-    test(
-      '2. overflow OFF + cap exhausted + wallet >0 → deniedCap '
-      '(cannot exceed daily cap; access deny, not deposit clamp)',
-      () {
-        final policy = ScreenTimePolicy(
-          dailyCapMinutes: 60,
-          allowWalletOverflow: false,
-          usedMinutesToday: 60,
-          wallets: [
-            AppWallet(appId: 'games', earnedMinutes: Minutes(25)),
-          ],
-        );
-        final ctx = ScreenTimePolicyQuery.timeContextFromPolicy(
-          base: TimeContext(childId: child),
-          policy: policy,
-          appId: 'games',
-        );
-        expect(ctx.allowWalletOverflow, isFalse);
-        expect(ctx.earnedBalance, Minutes(25));
-        expect(ctx.dailyLimitExhausted, isTrue);
-        expect(TimeEngine.resolve(ctx), AppAccess.deniedCap);
-        expect(TimeEngine.canUse(ctx), isFalse);
-      },
-    );
-
-    test('3. overflow ON + cap exhausted + wallet >0 → allowed via TimeEngine',
-        () {
+    test('2. overflow OFF + cap exhausted + wallet >0 → deniedCap '
+        '(cannot exceed daily cap; access deny, not deposit clamp)', () {
       final policy = ScreenTimePolicy(
         dailyCapMinutes: 60,
-        allowWalletOverflow: true,
-        usedMinutesToday: 90,
-        wallets: [
-          AppWallet(appId: 'games', earnedMinutes: Minutes(20)),
-        ],
+        allowWalletOverflow: false,
+        usedMinutesToday: 60,
+        wallets: [AppWallet(appId: 'games', earnedMinutes: Minutes(25))],
       );
       final ctx = ScreenTimePolicyQuery.timeContextFromPolicy(
         base: TimeContext(childId: child),
         policy: policy,
         appId: 'games',
       );
-      expect(TimeEngine.resolve(ctx), AppAccess.allowed);
-      expect(TimeEngine.canUse(ctx), isTrue);
+      expect(ctx.allowWalletOverflow, isFalse);
+      expect(ctx.earnedBalance, Minutes(25));
+      expect(ctx.dailyLimitExhausted, isTrue);
+      expect(TimeEngine.resolve(ctx), AppAccess.deniedCap);
+      expect(TimeEngine.canUse(ctx), isFalse);
     });
+
+    test(
+      '3. overflow ON + cap exhausted + wallet >0 → allowed via TimeEngine',
+      () {
+        final policy = ScreenTimePolicy(
+          dailyCapMinutes: 60,
+          allowWalletOverflow: true,
+          usedMinutesToday: 90,
+          wallets: [AppWallet(appId: 'games', earnedMinutes: Minutes(20))],
+        );
+        final ctx = ScreenTimePolicyQuery.timeContextFromPolicy(
+          base: TimeContext(childId: child),
+          policy: policy,
+          appId: 'games',
+        );
+        expect(TimeEngine.resolve(ctx), AppAccess.allowed);
+        expect(TimeEngine.canUse(ctx), isTrue);
+      },
+    );
 
     test(
       '4. Ruling A: permanentlyBlocked + overflow ON + wallet → deniedBlocked',
@@ -249,9 +231,7 @@ void main() {
           dailyCapMinutes: 60,
           allowWalletOverflow: true,
           usedMinutesToday: 60,
-          wallets: [
-            AppWallet(appId: 'games', earnedMinutes: Minutes(99)),
-          ],
+          wallets: [AppWallet(appId: 'games', earnedMinutes: Minutes(99))],
         );
         final ctx = ScreenTimePolicyQuery.timeContextFromPolicy(
           base: TimeContext(childId: child, permanentlyBlocked: true),
@@ -271,9 +251,7 @@ void main() {
             dailyCapMinutes: 30,
             allowWalletOverflow: false,
             usedMinutesToday: 30,
-            wallets: [
-              AppWallet(appId: 'games', earnedMinutes: Minutes.zero),
-            ],
+            wallets: [AppWallet(appId: 'games', earnedMinutes: Minutes.zero)],
           ),
         });
         final ledger = WalletLedger(repo);
@@ -284,7 +262,10 @@ void main() {
           fatherSetReward: Minutes(40),
         );
         expect(deposited, Minutes(40));
-        expect(await ledger.balance(childId: child, appId: 'games'), Minutes(40));
+        expect(
+          await ledger.balance(childId: child, appId: 'games'),
+          Minutes(40),
+        );
 
         final policy = await repo.load(child);
         final ctx = ScreenTimePolicyQuery.timeContextFromPolicy(

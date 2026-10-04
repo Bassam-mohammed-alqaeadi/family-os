@@ -588,8 +588,9 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
             )
           : _ProfileBody(
               profile: _profile!,
-              localDemoSeeded:
-                  isChildrenListSeededProvenance(_rosterProvenance),
+              localDemoSeeded: isChildrenListSeededProvenance(
+                _rosterProvenance,
+              ),
               tools: _tools(l10n),
               devices: _devicesForCurrentChild(),
               capabilities: _capabilities(),

@@ -35,8 +35,7 @@ extension NotebookStudioLocalizations on AppLocalizations {
       ? 'محرك المرونة والتخصيص الذكي (NotebookLM)'
       : 'Smart flexibility & adaptation engine (NotebookLM)';
 
-  String get notebookDepthLabel =>
-      _isAr ? 'عمق المعالجة:' : 'Study depth:';
+  String get notebookDepthLabel => _isAr ? 'عمق المعالجة:' : 'Study depth:';
 
   String get notebookDepthQuick =>
       _isAr ? 'ملخص سريع (3 د)' : 'Quick briefing (3m)';
@@ -104,9 +103,8 @@ extension NotebookStudioLocalizations on AppLocalizations {
   String previewApproveCitationChipLabel(String ref) =>
       _isAr ? 'المصدر: $ref' : 'Source: $ref';
 
-  String get previewApproveCitationSelectedTitle => _isAr
-      ? 'مقتطف المصدر الموثق:'
-      : 'Verified source excerpt:';
+  String get previewApproveCitationSelectedTitle =>
+      _isAr ? 'مقتطف المصدر الموثق:' : 'Verified source excerpt:';
 
   String get previewApproveCitationExcerptP47 => _isAr
       ? '«عند جمع كسرين لهما المقام نفسه، نجمع البسطين فقط ويبقى المقام كما هو: 2/7 + 3/7 = 5/7.» (كتاب الرياضيات - ص 47)'

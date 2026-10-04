@@ -58,7 +58,7 @@ final class ProjectingAlertsHubRepository implements AlertsHubRepository {
   final ChildrenListRepository? _children;
   final FamilyId Function()? _familyId;
   final Future<List<AppInstallTicket>> Function(ChildId childId)?
-      _listAppPending;
+  _listAppPending;
   final NotificationPrefsRepository? _notificationPrefs;
   final String _prefsMemberId;
   final String Function()? _resolvePrefsMemberId;
@@ -134,8 +134,8 @@ final class ProjectingAlertsHubRepository implements AlertsHubRepository {
 
     if (allowChildRequests) {
       try {
-        final pending = await (_listTimePending ??
-            stage1TimeRequestService.listPending)();
+        final pending =
+            await (_listTimePending ?? stage1TimeRequestService.listPending)();
         for (final r in pending) {
           attention.add(
             HubAlert(
@@ -153,8 +153,8 @@ final class ProjectingAlertsHubRepository implements AlertsHubRepository {
       } catch (_) {}
 
       try {
-        final circle =
-            await (_outerCircle ?? stage1OuterCircleRepository).load();
+        final circle = await (_outerCircle ?? stage1OuterCircleRepository)
+            .load();
         for (final m in circle.pending) {
           attention.add(
             HubAlert(

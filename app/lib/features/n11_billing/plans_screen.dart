@@ -28,11 +28,7 @@ abstract final class PlansScreenKeys {
 /// Father OWNER only. Plan UI never disables SOS/chat/location.
 /// Numbers are provisional (prototype). Mock entitlement only.
 class PlansScreen extends StatefulWidget {
-  const PlansScreen({
-    super.key,
-    this.entitlement,
-    this.roleOverride,
-  });
+  const PlansScreen({super.key, this.entitlement, this.roleOverride});
 
   /// Rule 25 seam — null → [stage1EntitlementService].
   final EntitlementService? entitlement;
@@ -159,8 +155,8 @@ class _PlansScreenState extends State<PlansScreen> {
     return switch (ent.status) {
       EntitlementStatus.active => l10n.billingStatusActive,
       EntitlementStatus.trial => l10n.billingStatusTrial(
-          ent.trialDaysRemaining ?? 0,
-        ),
+        ent.trialDaysRemaining ?? 0,
+      ),
       EntitlementStatus.expired => l10n.billingStatusExpired,
     };
   }
@@ -210,8 +206,8 @@ class _PlanCard extends StatelessWidget {
                   child: Text(
                     title,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
                 if (recommended)
@@ -221,16 +217,16 @@ class _PlanCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               subtitle,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colors.ink2,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: colors.ink2),
             ),
             const SizedBox(height: 8),
             Text(
               price,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
             ),
             for (final b in bullets) ...[
               const SizedBox(height: 8),

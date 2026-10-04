@@ -9,11 +9,11 @@ enum CollectionScope {
 
   /// Stable JSON / prefs key.
   String get key => switch (this) {
-        CollectionScope.location => 'location',
-        CollectionScope.screenTime => 'screenTime',
-        CollectionScope.webActivity => 'webActivity',
-        CollectionScope.communications => 'communications',
-      };
+    CollectionScope.location => 'location',
+    CollectionScope.screenTime => 'screenTime',
+    CollectionScope.webActivity => 'webActivity',
+    CollectionScope.communications => 'communications',
+  };
 
   static CollectionScope? tryParse(String raw) {
     switch (raw.trim()) {

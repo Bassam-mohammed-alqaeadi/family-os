@@ -185,7 +185,8 @@ const Map<String, String> screenBuilders = {
   'SCR-FAT-001': 'CreateFamilyScreen()',
   'SCR-FAT-002': 'SetupWizardScreen()',
   'SCR-FAT-003': 'AddChildScreen()',
-  'SCR-FAT-004': "NativeParentPairingScreen(childId: state.uri.queryParameters['childId'])",
+  'SCR-FAT-004':
+      "NativeParentPairingScreen(childId: state.uri.queryParameters['childId'])",
   'SCR-FAT-005': 'PermissionsExplainerScreen()',
   'SCR-FAT-006': 'LinkSuccessScreen()',
   'SCR-FAT-007': 'TrialModeScreen()',

@@ -17,8 +17,9 @@ void main() {
     resetStage1MotherPermissionLevelRepositoryForTest();
   });
 
-  testWidgets('father sees three levels + fixed rights + empty audit',
-      (tester) async {
+  testWidgets('father sees three levels + fixed rights + empty audit', (
+    tester,
+  ) async {
     final repo = InMemoryMotherPermissionLevelRepository();
     await _pump(tester, repository: repo);
 
@@ -53,10 +54,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(
-      find.byKey(MotherPermissionLevelKeys.upgradeDialog),
-      findsOneWidget,
-    );
+    expect(find.byKey(MotherPermissionLevelKeys.upgradeDialog), findsOneWidget);
     await tester.tap(find.byKey(MotherPermissionLevelKeys.upgradeConfirm));
     await tester.pump();
     AppToast.dismiss();
@@ -106,15 +104,13 @@ void main() {
     expect(repo.auditLog.first.to, MotherLevel.observer);
   });
 
-  testWidgets('mother sees owner-only banner — cannot change level',
-      (tester) async {
+  testWidgets('mother sees owner-only banner — cannot change level', (
+    tester,
+  ) async {
     final repo = InMemoryMotherPermissionLevelRepository();
     await _pump(tester, repository: repo, role: AppRole.mother);
 
-    expect(
-      find.byKey(MotherPermissionLevelKeys.ownerOnly),
-      findsOneWidget,
-    );
+    expect(find.byKey(MotherPermissionLevelKeys.ownerOnly), findsOneWidget);
     expect(
       find.byKey(MotherPermissionLevelKeys.levelRow(MotherLevel.partner)),
       findsNothing,

@@ -25,8 +25,9 @@ final _fakeDatePatterns = <RegExp>[
 
 void main() {
   group('UI-013 SCR-FAT-075 coming soon', () {
-    testWidgets('AC1: honesty banner visible; no concrete fake dates (AR)',
-        (tester) async {
+    testWidgets('AC1: honesty banner visible; no concrete fake dates (AR)', (
+      tester,
+    ) async {
       await _pump(tester, locale: const Locale('ar'));
 
       expect(find.byKey(ComingSoonKeys.honestyBanner), findsOneWidget);
@@ -45,8 +46,9 @@ void main() {
       }
     });
 
-    testWidgets('AC1: honesty banner visible; no concrete fake dates (EN)',
-        (tester) async {
+    testWidgets('AC1: honesty banner visible; no concrete fake dates (EN)', (
+      tester,
+    ) async {
       await _pump(tester, locale: const Locale('en'));
 
       expect(find.byKey(ComingSoonKeys.honestyBanner), findsOneWidget);
@@ -67,8 +69,9 @@ void main() {
       }
     });
 
-    testWidgets('AC2: no Switch widgets; not-settings honesty visible',
-        (tester) async {
+    testWidgets('AC2: no Switch widgets; not-settings honesty visible', (
+      tester,
+    ) async {
       await _pump(tester, locale: const Locale('ar'));
 
       expect(find.byType(Switch), findsNothing);
@@ -82,8 +85,9 @@ void main() {
       );
     });
 
-    testWidgets('feature rows are present with coming-soon tags; no toggles',
-        (tester) async {
+    testWidgets('feature rows are present with coming-soon tags; no toggles', (
+      tester,
+    ) async {
       await _pump(tester, locale: const Locale('ar'));
 
       expect(find.byKey(ComingSoonKeys.featureList), findsOneWidget);
@@ -105,10 +109,7 @@ String _allText(WidgetTester tester) {
   return buffer.toString();
 }
 
-Future<void> _pump(
-  WidgetTester tester, {
-  required Locale locale,
-}) async {
+Future<void> _pump(WidgetTester tester, {required Locale locale}) async {
   await tester.pumpWidget(
     MaterialApp(
       locale: locale,

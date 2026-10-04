@@ -7,7 +7,7 @@ abstract class SmartAlertsRepository {
 
 final class InMemorySmartAlertsRepository implements SmartAlertsRepository {
   InMemorySmartAlertsRepository({SmartAlertsSnapshot? seed})
-      : _snap = seed ?? smartAlertsEmptyFixture();
+    : _snap = seed ?? smartAlertsEmptyFixture();
 
   SmartAlertsSnapshot _snap;
   Future<void> Function()? loadGate;

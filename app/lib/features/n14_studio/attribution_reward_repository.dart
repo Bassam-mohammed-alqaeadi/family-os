@@ -30,7 +30,8 @@ final class InMemoryAttributionRewardRepository
     AttributionRewardSnapshot? seed,
     LearningAssignmentRepository? assignments,
     WalletLedger? wallet,
-  }) : _snap = seed ??
+  }) : _snap =
+           seed ??
            (assignments == null && wallet == null
                ? attributionRewardEmptyFixture()
                : attributionRewardPrototypeFixture()),
@@ -196,4 +197,3 @@ AttributionRewardSnapshot bindAttributionToRoster(
     assigned: snap.assigned,
   );
 }
-

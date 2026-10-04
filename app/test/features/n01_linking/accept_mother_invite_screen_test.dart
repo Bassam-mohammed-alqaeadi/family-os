@@ -201,9 +201,8 @@ void main() {
       routes: [
         GoRoute(
           path: '/scr-fat-009',
-          builder: (context, state) => AcceptMotherInviteScreen(
-            inviteTokenId: invite.tokenId.value,
-          ),
+          builder: (context, state) =>
+              AcceptMotherInviteScreen(inviteTokenId: invite.tokenId.value),
         ),
         GoRoute(
           path: '/scr-fat-028',

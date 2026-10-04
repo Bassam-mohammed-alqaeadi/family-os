@@ -57,11 +57,7 @@ void main() {
     test('backups editable on lower rung — toggle + remove', () async {
       final repo = InMemorySosLadderRepository();
       await repo.upsertBackup(
-        const SosBackupContact(
-          id: 'uncle',
-          name: 'عم',
-          delaySeconds: 60,
-        ),
+        const SosBackupContact(id: 'uncle', name: 'عم', delaySeconds: 60),
       );
 
       var ladder = await repo.load();
@@ -76,20 +72,23 @@ void main() {
       expect(ladder.rung1MemberIds, ['father', 'mother']);
     });
 
-    test('PrefsSosLadderRepository round-trip + reject remove mother', () async {
-      final store = MemorySosLadderStore();
-      final repo = PrefsSosLadderRepository(store);
-      await repo.upsertBackup(
-        const SosBackupContact(id: 'ec1', name: 'Backup'),
-      );
-      final loaded = await PrefsSosLadderRepository(store).load();
-      expect(loaded.backups.single.id, 'ec1');
-      expect(loaded.rung1MemberIds, containsAll(['father', 'mother']));
+    test(
+      'PrefsSosLadderRepository round-trip + reject remove mother',
+      () async {
+        final store = MemorySosLadderStore();
+        final repo = PrefsSosLadderRepository(store);
+        await repo.upsertBackup(
+          const SosBackupContact(id: 'ec1', name: 'Backup'),
+        );
+        final loaded = await PrefsSosLadderRepository(store).load();
+        expect(loaded.backups.single.id, 'ec1');
+        expect(loaded.rung1MemberIds, containsAll(['father', 'mother']));
 
-      await expectLater(
-        repo.removeFromRung1('mother'),
-        throwsA(isA<SosLadderValidationException>()),
-      );
-    });
+        await expectLater(
+          repo.removeFromRung1('mother'),
+          throwsA(isA<SosLadderValidationException>()),
+        );
+      },
+    );
   });
 }

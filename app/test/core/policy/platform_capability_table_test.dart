@@ -47,48 +47,30 @@ void main() {
         CapabilityLevel.reportsOnly,
       );
       expect(
-        effectiveMonitoring(
-          desired: true,
-          capability: CapabilityLevel.full,
-        ),
+        effectiveMonitoring(desired: true, capability: CapabilityLevel.full),
         CapabilityLevel.full,
       );
       expect(
-        effectiveMonitoring(
-          desired: false,
-          capability: CapabilityLevel.full,
-        ),
+        effectiveMonitoring(desired: false, capability: CapabilityLevel.full),
         CapabilityLevel.unavailable,
       );
     });
 
     test('switchLooksOn only when effective is full', () {
       expect(
-        switchLooksOn(
-          desired: true,
-          capability: CapabilityLevel.unavailable,
-        ),
+        switchLooksOn(desired: true, capability: CapabilityLevel.unavailable),
         isFalse,
       );
       expect(
-        switchLooksOn(
-          desired: true,
-          capability: CapabilityLevel.reportsOnly,
-        ),
+        switchLooksOn(desired: true, capability: CapabilityLevel.reportsOnly),
         isFalse,
       );
       expect(
-        switchLooksOn(
-          desired: true,
-          capability: CapabilityLevel.full,
-        ),
+        switchLooksOn(desired: true, capability: CapabilityLevel.full),
         isTrue,
       );
       expect(
-        switchLooksOn(
-          desired: false,
-          capability: CapabilityLevel.full,
-        ),
+        switchLooksOn(desired: false, capability: CapabilityLevel.full),
         isFalse,
       );
     });
@@ -106,12 +88,11 @@ void main() {
       final repo = PrefsDesiredMonitoringPrefsRepository(store);
 
       await repo.save(
-        const DesiredMonitoringPrefs(
-          childId: 'c1',
-          webFilter: true,
-        ),
+        const DesiredMonitoringPrefs(childId: 'c1', webFilter: true),
       );
-      final loaded = await PrefsDesiredMonitoringPrefsRepository(store).load('c1');
+      final loaded = await PrefsDesiredMonitoringPrefsRepository(
+        store,
+      ).load('c1');
       expect(loaded.webFilter, isTrue);
       expect(loaded.appLimits, isFalse);
     });

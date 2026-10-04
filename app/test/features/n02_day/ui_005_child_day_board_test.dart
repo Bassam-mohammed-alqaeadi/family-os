@@ -57,10 +57,7 @@ void main() {
           childId: child,
           updatedAt: DateTime.utc(2026, 9, 21, 14),
           kind: PolicySyncKind.policy,
-          policy: ScreenTimePolicy(
-            dailyCapMinutes: 90,
-            usedMinutesToday: 20,
-          ),
+          policy: ScreenTimePolicy(dailyCapMinutes: 90, usedMinutesToday: 20),
         ),
       );
       await tester.pumpAndSettle();
@@ -73,27 +70,26 @@ void main() {
     },
   );
 
-  testWidgets(
-    'UI-005 AC2: empty day uses SHR-006 AppEmptyState',
-    (tester) async {
-      await tester.pumpWidget(
-        _wrap(
-          ChildDayBoardScreen(
-            childId: child,
-            emptyDay: true,
-            showModeNotices: false,
-          ),
+  testWidgets('UI-005 AC2: empty day uses SHR-006 AppEmptyState', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        ChildDayBoardScreen(
+          childId: child,
+          emptyDay: true,
+          showModeNotices: false,
         ),
-      );
-      await tester.pumpAndSettle();
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      expect(find.byKey(ChildDayBoardKeys.emptyState), findsOneWidget);
-      expect(find.byType(AppEmptyState), findsOneWidget);
-      expect(find.text('لا يوجد شيء هنا بعد'), findsOneWidget);
-      expect(find.byKey(ChildDayBoardKeys.remainingMinutes), findsNothing);
-      expect(find.byKey(ChildDayBoardKeys.statusCard), findsNothing);
-    },
-  );
+    expect(find.byKey(ChildDayBoardKeys.emptyState), findsOneWidget);
+    expect(find.byType(AppEmptyState), findsOneWidget);
+    expect(find.text('لا يوجد شيء هنا بعد'), findsOneWidget);
+    expect(find.byKey(ChildDayBoardKeys.remainingMinutes), findsNothing);
+    expect(find.byKey(ChildDayBoardKeys.statusCard), findsNothing);
+  });
 
   testWidgets(
     'UI-005 AC3: no planted prototype minutes without synced policy',
@@ -177,8 +173,10 @@ void main() {
           ChildDayBoardScreen(
             childId: a,
             syncBus: syncBus,
-            initialPolicy:
-                ScreenTimePolicy(dailyCapMinutes: 60, usedMinutesToday: 0),
+            initialPolicy: ScreenTimePolicy(
+              dailyCapMinutes: 60,
+              usedMinutesToday: 0,
+            ),
             showModeNotices: false,
           ),
         ),
@@ -240,8 +238,15 @@ void main() {
       return syncBus;
     }
 
-    final req = await service.createRequest(childId: child, requestedMinutes: 15);
-    await service.approve(req.id, const TimeRequestActor.father(), grantMinutes: 15);
+    final req = await service.createRequest(
+      childId: child,
+      requestedMinutes: 15,
+    );
+    await service.approve(
+      req.id,
+      const TimeRequestActor.father(),
+      grantMinutes: 15,
+    );
 
     final syncBus = syncSeed();
     addTearDown(syncBus.dispose);

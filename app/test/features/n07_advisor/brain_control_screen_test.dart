@@ -15,9 +15,7 @@ import 'package:family_os/features/n07_advisor/brain_control_screen.dart';
 
 void main() {
   testWidgets('flag off → CTA disabled / coming soon', (tester) async {
-    final flags = MockRemoteAiStageFlags(
-      initialServer: AiStageFlags.allOff(),
-    );
+    final flags = MockRemoteAiStageFlags(initialServer: AiStageFlags.allOff());
     await tester.pumpWidget(
       _app(
         child: BrainControlScreen(
@@ -75,9 +73,7 @@ void main() {
   });
 
   testWidgets('cannot locally unlock inference', (tester) async {
-    final flags = MockRemoteAiStageFlags(
-      initialServer: AiStageFlags.allOff(),
-    );
+    final flags = MockRemoteAiStageFlags(initialServer: AiStageFlags.allOff());
     expect(
       () => flags.setLocalEnableInference(AiStageId.coach, enable: true),
       throwsA(isA<UnsupportedError>()),
@@ -95,7 +91,9 @@ void main() {
 
     expect(
       tester
-          .widget<PrimaryBtn>(find.byKey(BrainControlKeys.stageCta(AiStageId.coach)))
+          .widget<PrimaryBtn>(
+            find.byKey(BrainControlKeys.stageCta(AiStageId.coach)),
+          )
           .onPressed,
       isNull,
     );
@@ -149,7 +147,10 @@ void main() {
 
     expect(find.byKey(BrainControlKeys.denyPanel), findsOneWidget);
     expect(find.text('غير متاح'), findsOneWidget);
-    expect(find.byKey(BrainControlKeys.stageCta(AiStageId.analyze)), findsNothing);
+    expect(
+      find.byKey(BrainControlKeys.stageCta(AiStageId.analyze)),
+      findsNothing,
+    );
   });
 
   testWidgets('SET-015 father → stages visible (SET-014 surface)', (

@@ -12,8 +12,9 @@ import 'package:family_os/features/n02_day/alerts_hub_repository.dart';
 import 'package:family_os/features/n02_day/alerts_hub_screen.dart';
 
 void main() {
-  testWidgets('SCR-FAT-019 empty → AppEmptyState + SOS ungated',
-      (tester) async {
+  testWidgets('SCR-FAT-019 empty → AppEmptyState + SOS ungated', (
+    tester,
+  ) async {
     var sos = false;
     await tester.pumpWidget(
       _app(

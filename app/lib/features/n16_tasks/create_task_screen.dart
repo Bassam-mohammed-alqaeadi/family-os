@@ -366,12 +366,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                 vertical: 4,
               ),
             ),
-            items: [
-              'childOne',
-              'childTwo',
-              'childThree',
-              'mother',
-            ].map((key) {
+            items: ['childOne', 'childTwo', 'childThree', 'mother'].map((key) {
               return DropdownMenuItem(
                 value: key,
                 child: Text(_assigneeLabel(l10n, key)),

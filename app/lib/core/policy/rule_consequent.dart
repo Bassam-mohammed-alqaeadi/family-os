@@ -21,20 +21,16 @@ abstract final class ForbiddenRuleConsequentIds {
   static const blockOverride = 'BLOCK_OVERRIDE';
   static const delegationEdit = 'DELEGATION_EDIT';
 
-  static const Set<String> all = {
-    antiTamper,
-    blockOverride,
-    delegationEdit,
-  };
+  static const Set<String> all = {antiTamper, blockOverride, delegationEdit};
 }
 
 /// Wire id for an allow-listed [RuleConsequent] (stable API / AST token).
 extension RuleConsequentWire on RuleConsequent {
   String get id => switch (this) {
-        RuleConsequent.notifyFather => 'NOTIFY_FATHER',
-        RuleConsequent.grantMinutes => 'GRANT_MINUTES',
-        RuleConsequent.softLock => 'SOFT_LOCK',
-      };
+    RuleConsequent.notifyFather => 'NOTIFY_FATHER',
+    RuleConsequent.grantMinutes => 'GRANT_MINUTES',
+    RuleConsequent.softLock => 'SOFT_LOCK',
+  };
 }
 
 /// Thrown when a rule payload includes an ADR-038(d) forbidden consequent.

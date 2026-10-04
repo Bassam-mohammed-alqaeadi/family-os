@@ -50,16 +50,12 @@ final class LocalPrefsMiscKvStore
 
   @override
   Future<void> write(String key, String value) async {
-    await _db.insert(
-      _table,
-      {
-        'namespace': namespace,
-        'key': key,
-        'value': value,
-        'updated_at': _clock().toUtc().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: LocalConflictAlgorithm.replace,
-    );
+    await _db.insert(_table, {
+      'namespace': namespace,
+      'key': key,
+      'value': value,
+      'updated_at': _clock().toUtc().millisecondsSinceEpoch,
+    }, conflictAlgorithm: LocalConflictAlgorithm.replace);
   }
 }
 
@@ -76,7 +72,8 @@ abstract final class PrefsMiscLocalPersistence {
   }
 
   /// Opens session DB; refuses SQLite→Memory fallback.
-  static Future<NotificationPrefsRepository> openNotificationRepository() async {
+  static Future<NotificationPrefsRepository>
+  openNotificationRepository() async {
     await FsSessionKernel.ensureOpen();
     if (FsSessionKernel.sqliteFallbackToMemory) {
       throw StateError(
@@ -179,7 +176,7 @@ abstract final class PrefsMiscLocalPersistence {
 
   /// Opens DesiredMonitoring Prefs on Local KV; refuses Memory fallback.
   static Future<DesiredMonitoringPrefsRepository>
-      openMonitoringRepository() async {
+  openMonitoringRepository() async {
     await FsSessionKernel.ensureOpen();
     if (FsSessionKernel.sqliteFallbackToMemory) {
       throw StateError(

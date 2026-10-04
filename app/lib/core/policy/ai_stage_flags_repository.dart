@@ -29,8 +29,7 @@ abstract class AiStageFlagsCacheStore {
 
 /// In-memory cache — share [data] across instances to simulate restart.
 final class MemoryAiStageFlagsCacheStore implements AiStageFlagsCacheStore {
-  MemoryAiStageFlagsCacheStore([Map<String, String>? data])
-      : data = data ?? {};
+  MemoryAiStageFlagsCacheStore([Map<String, String>? data]) : data = data ?? {};
 
   final Map<String, String> data;
 
@@ -52,8 +51,8 @@ final class MockRemoteAiStageFlags implements AiStageFlagsRepository {
     AiStageFlags? initialServer,
     AiStageFlagsCacheStore? cache,
     this.prefsKey = 'ai_stage_flags_v1',
-  })  : _server = initialServer ?? AiStageFlags.allOff(),
-        _cacheStore = cache ?? MemoryAiStageFlagsCacheStore();
+  }) : _server = initialServer ?? AiStageFlags.allOff(),
+       _cacheStore = cache ?? MemoryAiStageFlagsCacheStore();
 
   static const _unsupported =
       'AI stages are server flags only (SET-014 / Rule 26). '
@@ -124,8 +123,7 @@ final class MockRemoteAiStageFlags implements AiStageFlagsRepository {
 }
 
 /// Stage-1 shared mock remote (process lifetime).
-final MockRemoteAiStageFlags stage1AiStageFlags =
-    MockRemoteAiStageFlags(
+final MockRemoteAiStageFlags stage1AiStageFlags = MockRemoteAiStageFlags(
   initialServer: AiStageFlags.fromMap({
     AiStageId.suggest: true,
     AiStageId.analyze: false,

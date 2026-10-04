@@ -19,8 +19,8 @@ final class FamilyChatLocalStore {
     this.namespace = kvNamespace,
     IdentityRuntime Function()? runtime,
     DateTime Function()? clock,
-  })  : _runtime = runtime ?? (() => stage1IdentityRuntime),
-        _clock = clock ?? DateTime.now;
+  }) : _runtime = runtime ?? (() => stage1IdentityRuntime),
+       _clock = clock ?? DateTime.now;
 
   static const kvNamespace = 'family_chat';
   static const _table = 'kv_store';
@@ -31,8 +31,7 @@ final class FamilyChatLocalStore {
   final IdentityRuntime Function() _runtime;
   final DateTime Function() _clock;
 
-  static String _threadsKey(FamilyId familyId) =>
-      'threads:${familyId.value}';
+  static String _threadsKey(FamilyId familyId) => 'threads:${familyId.value}';
   static String _messagesKey(FamilyId familyId, String chatWith) =>
       'messages:${familyId.value}:$chatWith';
 
@@ -90,18 +89,14 @@ final class FamilyChatLocalStore {
   }
 
   Future<void> _writeProvenanceMarker(FamilyId familyId) async {
-    await _db.insert(
-      _table,
-      {
-        'namespace': namespace,
-        'key': 'provenance:${familyId.value}',
-        'value': jsonEncode({
-          'provenance': kFamilyChatRealLocalMessagesProvenance,
-        }),
-        'updated_at': _clock().toUtc().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: LocalConflictAlgorithm.replace,
-    );
+    await _db.insert(_table, {
+      'namespace': namespace,
+      'key': 'provenance:${familyId.value}',
+      'value': jsonEncode({
+        'provenance': kFamilyChatRealLocalMessagesProvenance,
+      }),
+      'updated_at': _clock().toUtc().millisecondsSinceEpoch,
+    }, conflictAlgorithm: LocalConflictAlgorithm.replace);
   }
 
   Future<ConversationsListSnapshot> loadThreads({FamilyId? familyId}) async {
@@ -219,19 +214,15 @@ final class FamilyChatLocalStore {
     FamilyId familyId,
     List<ConversationThread> threads,
   ) async {
-    await _db.insert(
-      _table,
-      {
-        'namespace': namespace,
-        'key': _threadsKey(familyId),
-        'value': jsonEncode({
-          'provenance': kFamilyChatLocalProvenance,
-          'threads': [for (final t in threads) _threadToJson(t)],
-        }),
-        'updated_at': _clock().toUtc().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: LocalConflictAlgorithm.replace,
-    );
+    await _db.insert(_table, {
+      'namespace': namespace,
+      'key': _threadsKey(familyId),
+      'value': jsonEncode({
+        'provenance': kFamilyChatLocalProvenance,
+        'threads': [for (final t in threads) _threadToJson(t)],
+      }),
+      'updated_at': _clock().toUtc().millisecondsSinceEpoch,
+    }, conflictAlgorithm: LocalConflictAlgorithm.replace);
   }
 
   Future<List<ConversationMessage>> _readMessages(
@@ -263,31 +254,27 @@ final class FamilyChatLocalStore {
     String chatWith,
     List<ConversationMessage> messages,
   ) async {
-    await _db.insert(
-      _table,
-      {
-        'namespace': namespace,
-        'key': _messagesKey(familyId, chatWith),
-        'value': jsonEncode({
-          'messages': [for (final m in messages) _messageToJson(m)],
-        }),
-        'updated_at': _clock().toUtc().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: LocalConflictAlgorithm.replace,
-    );
+    await _db.insert(_table, {
+      'namespace': namespace,
+      'key': _messagesKey(familyId, chatWith),
+      'value': jsonEncode({
+        'messages': [for (final m in messages) _messageToJson(m)],
+      }),
+      'updated_at': _clock().toUtc().millisecondsSinceEpoch,
+    }, conflictAlgorithm: LocalConflictAlgorithm.replace);
   }
 
   static Map<String, Object?> _threadToJson(ConversationThread t) => {
-        'id': t.id,
-        'chatWith': t.chatWith,
-        'title': t.title,
-        'preview': t.preview,
-        'timeLabel': t.timeLabel,
-        'emoji': t.emoji,
-        'swatch': t.swatch.name,
-        'pinned': t.pinned,
-        'unreadCount': t.unreadCount,
-      };
+    'id': t.id,
+    'chatWith': t.chatWith,
+    'title': t.title,
+    'preview': t.preview,
+    'timeLabel': t.timeLabel,
+    'emoji': t.emoji,
+    'swatch': t.swatch.name,
+    'pinned': t.pinned,
+    'unreadCount': t.unreadCount,
+  };
 
   static ConversationThread _threadFromJson(Map<String, Object?> json) {
     final swatchName =
@@ -309,13 +296,13 @@ final class FamilyChatLocalStore {
   }
 
   static Map<String, Object?> _messageToJson(ConversationMessage m) => {
-        'id': m.id,
-        'body': m.body,
-        'timeLabel': m.timeLabel,
-        'isMine': m.isMine,
-        'senderLabel': m.senderLabel,
-        'status': m.status.name,
-      };
+    'id': m.id,
+    'body': m.body,
+    'timeLabel': m.timeLabel,
+    'isMine': m.isMine,
+    'senderLabel': m.senderLabel,
+    'status': m.status.name,
+  };
 
   static ConversationMessage _messageFromJson(Map<String, Object?> json) {
     final statusName =
@@ -360,8 +347,7 @@ final class LocalConversationRepository implements ConversationRepository {
     String chatWith,
     String text, {
     required String timeLabel,
-  }) =>
-      _store.send(chatWith, text, timeLabel: timeLabel);
+  }) => _store.send(chatWith, text, timeLabel: timeLabel);
 }
 
 /// Local [ChildChatsRepository] — same family thread as parent list.

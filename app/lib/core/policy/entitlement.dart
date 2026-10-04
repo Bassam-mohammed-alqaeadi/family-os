@@ -27,23 +27,23 @@ final class Entitlement {
 
   /// Stage-1 demo: active family plan.
   factory Entitlement.activeFamily() => const Entitlement(
-        status: EntitlementStatus.active,
-        planId: 'family_smart',
-        autoRenew: true,
-      );
+    status: EntitlementStatus.active,
+    planId: 'family_smart',
+    autoRenew: true,
+  );
 
   /// Stage-1 demo: trial with days left.
   factory Entitlement.trial({int daysRemaining = 9}) => Entitlement(
-        status: EntitlementStatus.trial,
-        planId: 'trial_full',
-        trialDaysRemaining: daysRemaining,
-      );
+    status: EntitlementStatus.trial,
+    planId: 'trial_full',
+    trialDaysRemaining: daysRemaining,
+  );
 
   /// Stage-1 demo: expired — safety surfaces must still work.
   factory Entitlement.expired() => const Entitlement(
-        status: EntitlementStatus.expired,
-        planId: 'basic_safety',
-      );
+    status: EntitlementStatus.expired,
+    planId: 'basic_safety',
+  );
 
   final EntitlementStatus status;
   final String planId;
@@ -64,8 +64,9 @@ final class Entitlement {
     return Entitlement(
       status: status ?? this.status,
       planId: planId ?? this.planId,
-      trialDaysRemaining:
-          clearTrialDays ? null : (trialDaysRemaining ?? this.trialDaysRemaining),
+      trialDaysRemaining: clearTrialDays
+          ? null
+          : (trialDaysRemaining ?? this.trialDaysRemaining),
       autoRenew: autoRenew ?? this.autoRenew,
     );
   }

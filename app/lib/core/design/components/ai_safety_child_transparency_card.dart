@@ -33,7 +33,8 @@ class AiSafetyChildTransparencyCard extends StatelessWidget {
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final radii = Theme.of(context).extension<FamilyRadii>()!;
 
-    final anyOn = transparency.searchAnalysis != 'off' ||
+    final anyOn =
+        transparency.searchAnalysis != 'off' ||
         transparency.imageClassification != 'off' ||
         transparency.screenshotMonitoring != 'off';
 
@@ -98,11 +99,7 @@ class AiSafetyChildTransparencyCard extends StatelessWidget {
 }
 
 class _ToolLine extends StatelessWidget {
-  const _ToolLine({
-    super.key,
-    required this.label,
-    required this.state,
-  });
+  const _ToolLine({super.key, required this.label, required this.state});
 
   final String label;
   final String state;

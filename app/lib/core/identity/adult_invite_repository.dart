@@ -49,8 +49,7 @@ final class InMemoryAdultInviteRepository implements AdultInviteRepository {
          runtime != null || runtimeProvider != null,
          'runtime or runtimeProvider required',
        ),
-       _runtimeProvider =
-           runtimeProvider ?? (() => runtime!),
+       _runtimeProvider = runtimeProvider ?? (() => runtime!),
        _nowProvider = nowProvider ?? _defaultNow;
 
   final IdentityRuntime Function() _runtimeProvider;
@@ -370,6 +369,4 @@ final class InMemoryAdultInviteRepository implements AdultInviteRepository {
 DateTime _defaultNow() => DateTime.now().toUtc();
 
 final InMemoryAdultInviteRepository stage1AdultInviteRepository =
-    InMemoryAdultInviteRepository(
-  runtimeProvider: () => stage1IdentityRuntime,
-);
+    InMemoryAdultInviteRepository(runtimeProvider: () => stage1IdentityRuntime);

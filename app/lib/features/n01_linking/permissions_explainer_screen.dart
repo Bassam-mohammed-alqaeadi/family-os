@@ -15,10 +15,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 /// Parametric / Rule 23: no default child name — «جهازه» wording only.
 /// Mock video only — tap shows toast; no player / assets / system dialogs.
 class PermissionsExplainerScreen extends StatelessWidget {
-  const PermissionsExplainerScreen({
-    super.key,
-    this.onContinue,
-  });
+  const PermissionsExplainerScreen({super.key, this.onContinue});
 
   /// Test seam — when null, navigates to `/scr-fat-006`.
   final VoidCallback? onContinue;

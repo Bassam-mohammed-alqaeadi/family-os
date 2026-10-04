@@ -381,10 +381,7 @@ class ConversationScreenState extends State<ConversationScreen> {
                 ),
         ),
         if (detail.toneChips.isNotEmpty)
-          _ToneChips(
-            chips: detail.toneChips,
-            onTap: (text) => _send(text),
-          ),
+          _ToneChips(chips: detail.toneChips, onTap: (text) => _send(text)),
         _Composer(
           controller: _inputCtrl,
           enabled: _chat.canSend && !_sending,
@@ -480,8 +477,9 @@ class _Bubble extends StatelessWidget {
     final isMine = message.isMine;
     final bg = isMine ? colors.p500 : colors.surface;
     final fg = isMine ? Colors.white : colors.ink;
-    final align =
-        isMine ? AlignmentDirectional.centerEnd : AlignmentDirectional.centerStart;
+    final align = isMine
+        ? AlignmentDirectional.centerEnd
+        : AlignmentDirectional.centerStart;
     final radii = const BorderRadius.only(
       topLeft: Radius.circular(18),
       topRight: Radius.circular(18),
@@ -506,8 +504,7 @@ class _Bubble extends StatelessWidget {
                 ? null
                 : Border.all(color: colors.border.withValues(alpha: 0.85)),
             boxShadow: [
-              if (!isMine)
-                Theme.of(context).extension<FamilyShadows>()!.shCard,
+              if (!isMine) Theme.of(context).extension<FamilyShadows>()!.shCard,
             ],
           ),
           child: Padding(
@@ -555,12 +552,11 @@ class _Bubble extends StatelessWidget {
   /// Q-CEX-001 — single ✓ = saved locally / sent on this device.
   /// Never ✓✓ (would imply remote delivered/read while relay is CLOSED).
   String _statusTicks(ConversationDeliveryStatus status) => switch (status) {
-        ConversationDeliveryStatus.sending => ' · …',
-        ConversationDeliveryStatus.sent ||
-        ConversationDeliveryStatus.delivered ||
-        ConversationDeliveryStatus.read =>
-          ' ✓',
-      };
+    ConversationDeliveryStatus.sending => ' · …',
+    ConversationDeliveryStatus.sent ||
+    ConversationDeliveryStatus.delivered ||
+    ConversationDeliveryStatus.read => ' ✓',
+  };
 }
 
 class _ToneChips extends StatelessWidget {
@@ -669,8 +665,10 @@ class _Composer extends StatelessWidget {
                 hintText: l10n.conversationInputHint,
                 filled: true,
                 fillColor: colors.surface,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(99),
                   borderSide: BorderSide(color: colors.border),

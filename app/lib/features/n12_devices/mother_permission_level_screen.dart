@@ -22,25 +22,26 @@ abstract final class MotherPermissionLevelKeys {
   static const screen = Key('mother_permission_level_screen');
   static const ownerOnly = Key('mother_permission_level_owner_only');
   static const childLean = Key('mother_permission_level_child_lean');
-  static const fixedRightsBanner =
-      Key('mother_permission_level_fixed_rights');
+  static const fixedRightsBanner = Key('mother_permission_level_fixed_rights');
   static const auditSection = Key('mother_permission_level_audit');
   static const auditEmpty = Key('mother_permission_level_audit_empty');
   static const sosCta = Key('mother_permission_level_sos');
   static const sosIconCta = Key('mother_permission_level_sos_icon');
   static const backButton = Key('mother_permission_level_back');
-  static const downgradeDialog = Key('mother_permission_level_downgrade_dialog');
+  static const downgradeDialog = Key(
+    'mother_permission_level_downgrade_dialog',
+  );
   static const upgradeDialog = Key('mother_permission_level_upgrade_dialog');
-  static const downgradeConfirm =
-      Key('mother_permission_level_downgrade_confirm');
+  static const downgradeConfirm = Key(
+    'mother_permission_level_downgrade_confirm',
+  );
   static const upgradeConfirm = Key('mother_permission_level_upgrade_confirm');
   static const dialogCancel = Key('mother_permission_level_dialog_cancel');
 
   static Key levelRow(MotherLevel level) =>
       Key('mother_permission_level_${level.name}');
 
-  static Key auditRow(int index) =>
-      Key('mother_permission_level_audit_$index');
+  static Key auditRow(int index) => Key('mother_permission_level_audit_$index');
 }
 
 /// SCR-FAT-031 — مستوى صلاحية الأم.
@@ -219,7 +220,10 @@ class _MotherPermissionLevelScreenState
         ),
       );
       if (confirmed != true || !mounted) return;
-      _applyLevel(next, toast: l10n.motherPermissionLevelDowngradedToast(nextName));
+      _applyLevel(
+        next,
+        toast: l10n.motherPermissionLevelDowngradedToast(nextName),
+      );
       return;
     }
 
@@ -245,7 +249,10 @@ class _MotherPermissionLevelScreenState
         ),
       );
       if (confirmed != true || !mounted) return;
-      _applyLevel(next, toast: l10n.motherPermissionLevelUpgradedToast(nextName));
+      _applyLevel(
+        next,
+        toast: l10n.motherPermissionLevelUpgradedToast(nextName),
+      );
       return;
     }
   }
@@ -297,8 +304,8 @@ class _MotherPermissionLevelScreenState
                 message: l10n.motherPermissionLevelChildLeanMessage,
               )
             : !_isOwner
-                ? _buildOwnerOnly(context, l10n, colors)
-                : _buildOwnerBody(context, l10n, colors),
+            ? _buildOwnerOnly(context, l10n, colors)
+            : _buildOwnerBody(context, l10n, colors),
       ),
     );
   }
@@ -514,7 +521,8 @@ class _AuditCard extends StatelessWidget {
   final List<MotherLevelAuditEntry> entries;
   final AppLocalizations l10n;
   final FamilyColors colors;
-  final String Function(AppLocalizations, MotherLevelAuditEntry) transitionLabel;
+  final String Function(AppLocalizations, MotherLevelAuditEntry)
+  transitionLabel;
   final String Function(DateTime) formatWhen;
 
   @override

@@ -47,10 +47,7 @@ void main() {
 
     test('simAlert OFF → no SIM alert', () {
       final bus = AntiTamperAlertBus();
-      expect(
-        bus.simulateSimChange(child, const AntiTamperPolicy()),
-        isFalse,
-      );
+      expect(bus.simulateSimChange(child, const AntiTamperPolicy()), isFalse);
       expect(bus.delivered, isEmpty);
       bus.dispose();
     });

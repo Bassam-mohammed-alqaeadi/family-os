@@ -31,9 +31,7 @@ void main() {
 
   testWidgets('prototype form · save → FAT-052', (tester) async {
     final nav = <String>[];
-    final repo = InMemoryAddEventRepository(
-      seed: addEventPrototypeFixture(),
-    );
+    final repo = InMemoryAddEventRepository(seed: addEventPrototypeFixture());
     await _pump(tester, repository: repo, onNavigate: nav.add);
 
     expect(find.byKey(AddEventKeys.body), findsOneWidget);
@@ -93,9 +91,7 @@ void main() {
   });
 
   testWidgets('calendar toggle shows toast', (tester) async {
-    final repo = InMemoryAddEventRepository(
-      seed: addEventPrototypeFixture(),
-    );
+    final repo = InMemoryAddEventRepository(seed: addEventPrototypeFixture());
     await _pump(tester, repository: repo);
 
     await tester.ensureVisible(find.byKey(AddEventKeys.calendarGregorian));
@@ -109,9 +105,7 @@ void main() {
 
   testWidgets('mother observer view-only — save blocked', (tester) async {
     final nav = <String>[];
-    final repo = InMemoryAddEventRepository(
-      seed: addEventPrototypeFixture(),
-    );
+    final repo = InMemoryAddEventRepository(seed: addEventPrototypeFixture());
     await _pump(
       tester,
       repository: repo,
@@ -131,9 +125,7 @@ void main() {
 
   testWidgets('mother partner save → FAT-052', (tester) async {
     final nav = <String>[];
-    final repo = InMemoryAddEventRepository(
-      seed: addEventPrototypeFixture(),
-    );
+    final repo = InMemoryAddEventRepository(seed: addEventPrototypeFixture());
     await _pump(
       tester,
       repository: repo,

@@ -37,7 +37,8 @@ class AppEmptyState extends StatelessWidget {
     final radii = Theme.of(context).extension<FamilyRadii>()!;
 
     final resolvedTitle = title ?? l10n.emptyStateTitle;
-    final resolvedMessage = message ??
+    final resolvedMessage =
+        message ??
         l10n.emptyStateMessage(contextName ?? l10n.emptyStateDefaultContext);
     final resolvedAction = actionLabel ?? l10n.emptyStateActionCta;
 

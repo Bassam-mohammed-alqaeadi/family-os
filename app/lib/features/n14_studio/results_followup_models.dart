@@ -8,10 +8,7 @@ enum ResultsFollowupActivityKind { homework, familyChallenge }
 
 @immutable
 final class ResultsFollowupChild {
-  const ResultsFollowupChild({
-    required this.id,
-    required this.nameKey,
-  });
+  const ResultsFollowupChild({required this.id, required this.nameKey});
 
   final String id;
 

@@ -33,11 +33,7 @@ void main() {
   ) async {
     final repo = InMemoryStudioBoardRepository();
     final nav = <String>[];
-    await _pump(
-      tester,
-      repository: repo,
-      onNavigate: nav.add,
-    );
+    await _pump(tester, repository: repo, onNavigate: nav.add);
 
     expect(find.byKey(StudioBoardKeys.empty), findsOneWidget);
     expect(find.byKey(StudioBoardKeys.body), findsNothing);
@@ -62,11 +58,19 @@ void main() {
 
     expect(find.byKey(StudioBoardKeys.body), findsOneWidget);
     expect(find.byKey(StudioBoardKeys.suggestionsSection), findsOneWidget);
-    expect(find.byKey(StudioBoardKeys.suggestionRow('sug-fractions')), findsOneWidget);
-    expect(find.byKey(StudioBoardKeys.contentRow('cnt-quiz-1')), findsOneWidget);
+    expect(
+      find.byKey(StudioBoardKeys.suggestionRow('sug-fractions')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(StudioBoardKeys.contentRow('cnt-quiz-1')),
+      findsOneWidget,
+    );
     expect(find.byKey(StudioBoardKeys.empty), findsNothing);
 
-    await tester.tap(find.byKey(StudioBoardKeys.suggestionRow('sug-fractions')));
+    await tester.tap(
+      find.byKey(StudioBoardKeys.suggestionRow('sug-fractions')),
+    );
     await tester.pumpAndSettle();
     expect(nav, contains('SCR-FAT-041'));
   });
@@ -76,11 +80,26 @@ void main() {
     final nav = <String>[];
     await _pump(tester, repository: repo, onNavigate: nav.add);
 
-    expect(find.byKey(StudioBoardKeys.suggestionRow('sug-fractions')), findsOneWidget);
-    expect(find.byKey(StudioBoardKeys.suggestionRow('sug-wird')), findsOneWidget);
-    expect(find.byKey(StudioBoardKeys.contentRow('cnt-quiz-1')), findsOneWidget);
-    expect(find.byKey(StudioBoardKeys.contentRow('cnt-cards-1')), findsOneWidget);
-    expect(find.byKey(StudioBoardKeys.contentRow('cnt-wird-1')), findsOneWidget);
+    expect(
+      find.byKey(StudioBoardKeys.suggestionRow('sug-fractions')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(StudioBoardKeys.suggestionRow('sug-wird')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(StudioBoardKeys.contentRow('cnt-quiz-1')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(StudioBoardKeys.contentRow('cnt-cards-1')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(StudioBoardKeys.contentRow('cnt-wird-1')),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byKey(StudioBoardKeys.recentAllCta));
     await tester.pumpAndSettle();

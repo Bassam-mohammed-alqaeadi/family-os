@@ -23,24 +23,34 @@ void main() {
     );
   });
 
-  test('approve creates active temporary grant (G-A), not wallet earn', () async {
-    final repo = InMemoryTimeRequestRepository();
-    final service = TimeRequestService(
-      repository: repo,
-      clock: () => DateTime.utc(2026, 9, 23, 9, 0),
-    );
-    addTearDown(service.dispose);
+  test(
+    'approve creates active temporary grant (G-A), not wallet earn',
+    () async {
+      final repo = InMemoryTimeRequestRepository();
+      final service = TimeRequestService(
+        repository: repo,
+        clock: () => DateTime.utc(2026, 9, 23, 9, 0),
+      );
+      addTearDown(service.dispose);
 
-    final req = await service.createRequest(childId: child, requestedMinutes: 20);
-    await service.approve(req.id, const TimeRequestActor.father(), grantMinutes: 15);
+      final req = await service.createRequest(
+        childId: child,
+        requestedMinutes: 20,
+      );
+      await service.approve(
+        req.id,
+        const TimeRequestActor.father(),
+        grantMinutes: 15,
+      );
 
-    final grants = await repo.loadGrants();
-    expect(grants, hasLength(1));
-    expect(grants.first.minutes, 15);
-    expect(grants.first.activeRemaining, 15);
-    expect(grants.first.status, TimeGrantStatus.active);
-    expect(await service.activeGrantRemaining(child), 15);
-  });
+      final grants = await repo.loadGrants();
+      expect(grants, hasLength(1));
+      expect(grants.first.minutes, 15);
+      expect(grants.first.activeRemaining, 15);
+      expect(grants.first.status, TimeGrantStatus.active);
+      expect(await service.activeGrantRemaining(child), 15);
+    },
+  );
 
   test('mother ceiling still enforced for partner/full', () async {
     final repo = InMemoryTimeRequestRepository();
@@ -51,7 +61,10 @@ void main() {
     );
     addTearDown(service.dispose);
 
-    final req = await service.createRequest(childId: child, requestedMinutes: 60);
+    final req = await service.createRequest(
+      childId: child,
+      requestedMinutes: 60,
+    );
     await expectLater(
       service.approve(
         req.id,

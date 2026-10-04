@@ -23,7 +23,7 @@ abstract class OuterCircleRepository {
 
 final class InMemoryOuterCircleRepository implements OuterCircleRepository {
   InMemoryOuterCircleRepository({OuterCircleSnapshot? seed})
-      : _snap = seed ?? outerCircleEmptyFixture();
+    : _snap = seed ?? outerCircleEmptyFixture();
 
   OuterCircleSnapshot _snap;
   Future<void> Function()? loadGate;
@@ -52,10 +52,7 @@ final class InMemoryOuterCircleRepository implements OuterCircleRepository {
     final idx = pending.indexWhere((m) => m.id == memberId);
     if (idx == -1) return _copy(_snap);
     final member = pending.removeAt(idx);
-    final meta = [
-      if (allowText) 'text',
-      if (allowCalls) 'calls',
-    ].join('+');
+    final meta = [if (allowText) 'text', if (allowCalls) 'calls'].join('+');
     final friends = List<OuterCircleMember>.from(_snap.friends)
       ..add(
         OuterCircleMember(

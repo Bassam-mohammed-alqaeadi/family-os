@@ -43,7 +43,10 @@ void main() {
     await _pump(tester, repository: repo);
 
     expect(find.byKey(FamilyPatternsKeys.body), findsOneWidget);
-    expect(find.byKey(FamilyPatternsKeys.childCard('child_card_a')), findsOneWidget);
+    expect(
+      find.byKey(FamilyPatternsKeys.childCard('child_card_a')),
+      findsOneWidget,
+    );
     expect(
       find.byKey(FamilyPatternsKeys.confidenceSeal('child_card_a')),
       findsOneWidget,
@@ -61,14 +64,32 @@ void main() {
     expect(find.byKey(FamilyPatternsKeys.body), findsOneWidget);
     expect(find.byKey(FamilyPatternsKeys.advisorBanner), findsOneWidget);
     expect(find.textContaining('79%'), findsOneWidget);
-    expect(find.byKey(FamilyPatternsKeys.childCard('child_card_one')), findsOneWidget);
-    expect(find.byKey(FamilyPatternsKeys.childCard('child_card_two')), findsOneWidget);
+    expect(
+      find.byKey(FamilyPatternsKeys.childCard('child_card_one')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(FamilyPatternsKeys.childCard('child_card_two')),
+      findsOneWidget,
+    );
     expect(find.text('Trust 85%'), findsOneWidget);
     expect(find.text('Trust 72%'), findsOneWidget);
-    expect(find.byKey(FamilyPatternsKeys.patternRow('pat-sleep-one')), findsOneWidget);
-    expect(find.byKey(FamilyPatternsKeys.patternRow('pat-comm-one')), findsOneWidget);
-    expect(find.byKey(FamilyPatternsKeys.patternRow('pat-edu-one')), findsOneWidget);
-    expect(find.byKey(FamilyPatternsKeys.patternRow('pat-morning-two')), findsOneWidget);
+    expect(
+      find.byKey(FamilyPatternsKeys.patternRow('pat-sleep-one')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(FamilyPatternsKeys.patternRow('pat-comm-one')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(FamilyPatternsKeys.patternRow('pat-edu-one')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(FamilyPatternsKeys.patternRow('pat-morning-two')),
+      findsOneWidget,
+    );
     expect(find.text('Anomaly'), findsOneWidget);
     expect(find.text('Watch'), findsOneWidget);
     expect(find.byKey(FamilyPatternsKeys.footerNote), findsOneWidget);
@@ -109,10 +130,14 @@ void main() {
       find.byKey(FamilyPatternsKeys.timelineLink('child_card_one')),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(FamilyPatternsKeys.timelineLink('child_card_one')));
+    await tester.tap(
+      find.byKey(FamilyPatternsKeys.timelineLink('child_card_one')),
+    );
     await tester.pump();
     expect(
-      find.textContaining('ask the father or a partner mother to open the timeline'),
+      find.textContaining(
+        'ask the father or a partner mother to open the timeline',
+      ),
       findsOneWidget,
     );
     AppToast.dismiss();
@@ -139,7 +164,9 @@ void main() {
       find.byKey(FamilyPatternsKeys.timelineLink('child_card_one')),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(FamilyPatternsKeys.timelineLink('child_card_one')));
+    await tester.tap(
+      find.byKey(FamilyPatternsKeys.timelineLink('child_card_one')),
+    );
     await tester.pumpAndSettle();
     expect(nav, contains('SCR-FAT-063'));
   });

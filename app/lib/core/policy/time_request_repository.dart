@@ -58,9 +58,7 @@ final class PrefsTimeRequestRepository implements TimeRequestRepository {
     return [
       for (final item in decoded)
         if (item is Map)
-          TimeRequest.fromJson(
-            item.map((k, v) => MapEntry(k.toString(), v)),
-          ),
+          TimeRequest.fromJson(item.map((k, v) => MapEntry(k.toString(), v))),
     ];
   }
 
@@ -107,9 +105,7 @@ final class PrefsTimeRequestRepository implements TimeRequestRepository {
     return [
       for (final item in decoded)
         if (item is Map)
-          TimeGrant.fromJson(
-            item.map((k, v) => MapEntry(k.toString(), v)),
-          ),
+          TimeGrant.fromJson(item.map((k, v) => MapEntry(k.toString(), v))),
     ];
   }
 
@@ -127,7 +123,7 @@ final class PrefsTimeRequestRepository implements TimeRequestRepository {
 /// Pure in-memory alternate for unit / widget tests (Rule 25 fake).
 final class InMemoryTimeRequestRepository implements TimeRequestRepository {
   InMemoryTimeRequestRepository([List<TimeRequest>? seed])
-      : _items = [if (seed != null) ...seed];
+    : _items = [if (seed != null) ...seed];
 
   final List<TimeRequest> _items;
   final List<TimeGrant> _grants = [];

@@ -47,9 +47,7 @@ void main() {
 
   test('LDR-B2 child apps seed via InMemory with managed catalog', () {
     final repo = InMemoryChildAppsRepository(
-      seed: ChildAppsRealLocalSeedMock.forChildren([
-        ChildId('demo-child'),
-      ]),
+      seed: ChildAppsRealLocalSeedMock.forChildren([ChildId('demo-child')]),
     );
     final apps = repo.appsFor(ChildId('demo-child'));
     expect(apps.length, ChildAppsRealLocalSeedMock.managedCatalog.length);

@@ -198,8 +198,7 @@ class _EmptyAdvisor implements AdvisorRepository {
   @override
   Future<List<AiSuggestion>> suggestions({
     AiStageId stage = AiStageId.suggest,
-  }) async =>
-      const [];
+  }) async => const [];
 }
 
 class _FailingSuggestions implements AiSuggestionRepository {

@@ -8,37 +8,34 @@ import 'package:family_os/features/n03_screen_time/child_time_request_repository
 import 'package:family_os/features/n03_screen_time/stage1_child_scope.dart';
 
 void main() {
-  test(
-    'default child scope uses canonical runtime active child',
-    () async {
-      final previous = stage1IdentityRuntime.activeChildId;
-      addTearDown(() {
-        stage1IdentityRuntime.setActiveChild(previous);
-      });
+  test('default child scope uses canonical runtime active child', () async {
+    final previous = stage1IdentityRuntime.activeChildId;
+    addTearDown(() {
+      stage1IdentityRuntime.setActiveChild(previous);
+    });
 
-      stage1IdentityRuntime.setActiveChild(ChildId('child_b'));
+    stage1IdentityRuntime.setActiveChild(ChildId('child_b'));
 
-      final repo = InMemoryTimeRequestRepository();
-      final service = TimeRequestService(repository: repo);
-      addTearDown(service.dispose);
+    final repo = InMemoryTimeRequestRepository();
+    final service = TimeRequestService(repository: repo);
+    addTearDown(service.dispose);
 
-      final childRepo = ServiceChildTimeRequestRepository(
-        service: service,
-        repository: repo,
-      );
+    final childRepo = ServiceChildTimeRequestRepository(
+      service: service,
+      repository: repo,
+    );
 
-      await childRepo.selectMinutes(30);
-      await childRepo.submit();
+    await childRepo.selectMinutes(30);
+    await childRepo.submit();
 
-      final all = await repo.loadAll();
-      expect(all, hasLength(1));
-      expect(
-        all.first.childId,
-        familyScopedChildId(
-          familyId: stage1IdentityRuntime.activeFamilyId,
-          childId: ChildId('child_b'),
-        ),
-      );
-    },
-  );
+    final all = await repo.loadAll();
+    expect(all, hasLength(1));
+    expect(
+      all.first.childId,
+      familyScopedChildId(
+        familyId: stage1IdentityRuntime.activeFamilyId,
+        childId: ChildId('child_b'),
+      ),
+    );
+  });
 }

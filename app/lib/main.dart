@@ -70,9 +70,7 @@ Future<void> main() async {
   // FE-W1-FAT-027 — family members roster ← Identity + Local children.
   await IdentityLocalPersistence.tryBindStage1FamilyMembers();
   // VX-B6 / SHR-008 — device user switch ← Identity + Local children.
-  rebindStage1DeviceUserSwitchRepository(
-    IdentityDeviceUserSwitchRepository(),
-  );
+  rebindStage1DeviceUserSwitchRepository(IdentityDeviceUserSwitchRepository());
   // FE-W1-FAT-031 — mother permission level ← Identity membership.
   rebindStage1MotherPermissionLevelRepository(
     IdentityMotherPermissionLevelRepository(),
@@ -130,10 +128,12 @@ Future<void> main() async {
   if (familyEntryRuntime != null) {
     await familyEntryRuntime.refreshIdentity();
   }
-  runApp(FamilyOsApp(
-    localeController: localeController,
-    foundationRuntime: familyEntryRuntime,
-  ));
+  runApp(
+    FamilyOsApp(
+      localeController: localeController,
+      foundationRuntime: familyEntryRuntime,
+    ),
+  );
 }
 
 /// Initializes the real Family Entry port only when the owner provides a
@@ -142,7 +142,9 @@ Future<void> main() async {
 /// than falling back to seeded/local roster authority.
 Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
   const apiOrigin = String.fromEnvironment('FAMILY_OS_API_ORIGIN');
-  const preferredFamilyId = String.fromEnvironment('FAMILY_OS_ACTIVE_FAMILY_ID');
+  const preferredFamilyId = String.fromEnvironment(
+    'FAMILY_OS_ACTIVE_FAMILY_ID',
+  );
   if (apiOrigin.trim().isEmpty) return null;
   try {
     await Firebase.initializeApp();
@@ -229,7 +231,10 @@ class _FamilyOsAppState extends State<FamilyOsApp> {
     final foundationRuntime = widget.foundationRuntime;
     _runtime = AppRuntime(
       identity: foundationRuntime == null
-          ? RuntimeIdentitySource(_identity, authority: IdentityAuthority.unavailable)
+          ? RuntimeIdentitySource(
+              _identity,
+              authority: IdentityAuthority.unavailable,
+            )
           : MainAppFoundationIdentitySource(foundationRuntime),
       roster: foundationRuntime == null
           ? UnavailableFamilyRosterSource()

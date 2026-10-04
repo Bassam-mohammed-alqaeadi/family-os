@@ -200,9 +200,12 @@ class ActiveCallScreenState extends State<ActiveCallScreen> {
       });
       widget.onMute?.call(next);
       final l10n = AppLocalizations.of(context);
-      AppToast.show(context, message: 
-            next ? l10n.activeCallMuteOnToast : l10n.activeCallMuteOffToast,
-          );
+      AppToast.show(
+        context,
+        message: next
+            ? l10n.activeCallMuteOnToast
+            : l10n.activeCallMuteOffToast,
+      );
     } on Object {
       if (!mounted) return;
       setState(() => _actionBusy = false);
@@ -223,11 +226,12 @@ class ActiveCallScreenState extends State<ActiveCallScreen> {
       });
       widget.onSpeaker?.call(next);
       final l10n = AppLocalizations.of(context);
-      AppToast.show(context, message: 
-            next
-                ? l10n.activeCallSpeakerOnToast
-                : l10n.activeCallSpeakerOffToast,
-          );
+      AppToast.show(
+        context,
+        message: next
+            ? l10n.activeCallSpeakerOnToast
+            : l10n.activeCallSpeakerOffToast,
+      );
     } on Object {
       if (!mounted) return;
       setState(() => _actionBusy = false);

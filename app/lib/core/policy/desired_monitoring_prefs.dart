@@ -24,11 +24,11 @@ final class DesiredMonitoringPrefs {
       DesiredMonitoringPrefs(childId: childId);
 
   bool desiredFor(MonitoringFeature feature) => switch (feature) {
-        MonitoringFeature.webFilter => webFilter,
-        MonitoringFeature.appLimits => appLimits,
-        MonitoringFeature.notificationListen => notificationListen,
-        MonitoringFeature.locationAlways => locationAlways,
-      };
+    MonitoringFeature.webFilter => webFilter,
+    MonitoringFeature.appLimits => appLimits,
+    MonitoringFeature.notificationListen => notificationListen,
+    MonitoringFeature.locationAlways => locationAlways,
+  };
 
   DesiredMonitoringPrefs copyWith({
     String? childId,
@@ -50,19 +50,20 @@ final class DesiredMonitoringPrefs {
     return switch (feature) {
       MonitoringFeature.webFilter => copyWith(webFilter: value),
       MonitoringFeature.appLimits => copyWith(appLimits: value),
-      MonitoringFeature.notificationListen =>
-        copyWith(notificationListen: value),
+      MonitoringFeature.notificationListen => copyWith(
+        notificationListen: value,
+      ),
       MonitoringFeature.locationAlways => copyWith(locationAlways: value),
     };
   }
 
   Map<String, Object> toJson() => {
-        'childId': childId,
-        'webFilter': webFilter,
-        'appLimits': appLimits,
-        'notificationListen': notificationListen,
-        'locationAlways': locationAlways,
-      };
+    'childId': childId,
+    'webFilter': webFilter,
+    'appLimits': appLimits,
+    'notificationListen': notificationListen,
+    'locationAlways': locationAlways,
+  };
 
   factory DesiredMonitoringPrefs.fromJson(Map<String, Object?> json) {
     return DesiredMonitoringPrefs(
@@ -86,10 +87,10 @@ final class DesiredMonitoringPrefs {
 
   @override
   int get hashCode => Object.hash(
-        childId,
-        webFilter,
-        appLimits,
-        notificationListen,
-        locationAlways,
-      );
+    childId,
+    webFilter,
+    appLimits,
+    notificationListen,
+    locationAlways,
+  );
 }

@@ -48,7 +48,9 @@ class FoundationGateSessionController extends ChangeNotifier {
       _setPhase(FoundationGatePhase.loadingFamilies);
       final discovered = await _discoveryApi.discover(idToken: idToken);
       _families = discovered;
-      _phase = discovered.isEmpty ? FoundationGatePhase.noActiveFamily : FoundationGatePhase.familiesAvailable;
+      _phase = discovered.isEmpty
+          ? FoundationGatePhase.noActiveFamily
+          : FoundationGatePhase.familiesAvailable;
       notifyListeners();
     } on FoundationGateIdentityException {
       _clearAllVolatileState();
@@ -70,7 +72,9 @@ class FoundationGateSessionController extends ChangeNotifier {
       idToken = await _identity.currentIdToken();
       final discovered = await _discoveryApi.discover(idToken: idToken);
       _families = discovered;
-      _phase = discovered.isEmpty ? FoundationGatePhase.noActiveFamily : FoundationGatePhase.familiesAvailable;
+      _phase = discovered.isEmpty
+          ? FoundationGatePhase.noActiveFamily
+          : FoundationGatePhase.familiesAvailable;
       notifyListeners();
     } on FoundationGateIdentityException {
       _clearAllVolatileState();
@@ -85,7 +89,8 @@ class FoundationGateSessionController extends ChangeNotifier {
   /// Requests the roster only after family discovery returned this exact family.
   /// The role returned by discovery is display context, never local authorization.
   Future<void> selectFamily(FoundationGateFamily family) async {
-    if (_phase != FoundationGatePhase.familiesAvailable || !_families.any((item) => item.id == family.id)) {
+    if (_phase != FoundationGatePhase.familiesAvailable ||
+        !_families.any((item) => item.id == family.id)) {
       return;
     }
 
@@ -145,22 +150,30 @@ class FoundationGateSessionController extends ChangeNotifier {
       // A POST response confirms the mutation, but the roster shown to the
       // user is always refreshed from the collection source of truth.
       try {
-        final roster = await _rosterApi.list(familyId: family.id, idToken: idToken);
+        final roster = await _rosterApi.list(
+          familyId: family.id,
+          idToken: idToken,
+        );
         _children = roster;
         _lastCreatedChildId = createdChild.id;
-        _phase = roster.isEmpty ? FoundationGatePhase.noChildren : FoundationGatePhase.childrenAvailable;
+        _phase = roster.isEmpty
+            ? FoundationGatePhase.noChildren
+            : FoundationGatePhase.childrenAvailable;
         notifyListeners();
         return FoundationGateChildCreateResult.created;
       } on FoundationGateApiException catch (error) {
         await _handleRosterFailure(error.failure);
         return switch (error.failure) {
-          FoundationGateApiFailure.unauthenticated => FoundationGateChildCreateResult.sessionInvalid,
-          FoundationGateApiFailure.accessDenied => FoundationGateChildCreateResult.accessDenied,
+          FoundationGateApiFailure.unauthenticated =>
+            FoundationGateChildCreateResult.sessionInvalid,
+          FoundationGateApiFailure.accessDenied =>
+            FoundationGateChildCreateResult.accessDenied,
           FoundationGateApiFailure.invalidInput ||
           FoundationGateApiFailure.conflict ||
           FoundationGateApiFailure.serviceUnavailable ||
           FoundationGateApiFailure.networkUnavailable ||
-          FoundationGateApiFailure.invalidResponse => FoundationGateChildCreateResult.createdRosterRefreshUnavailable,
+          FoundationGateApiFailure.invalidResponse =>
+            FoundationGateChildCreateResult.createdRosterRefreshUnavailable,
         };
       }
     } on FoundationGateIdentityException {
@@ -220,9 +233,14 @@ class FoundationGateSessionController extends ChangeNotifier {
     String? idToken;
     try {
       idToken = await _identity.currentIdToken();
-      final roster = await _rosterApi.list(familyId: family.id, idToken: idToken);
+      final roster = await _rosterApi.list(
+        familyId: family.id,
+        idToken: idToken,
+      );
       _children = roster;
-      _phase = roster.isEmpty ? FoundationGatePhase.noChildren : FoundationGatePhase.childrenAvailable;
+      _phase = roster.isEmpty
+          ? FoundationGatePhase.noChildren
+          : FoundationGatePhase.childrenAvailable;
       notifyListeners();
     } on FoundationGateIdentityException {
       _clearAllVolatileState();

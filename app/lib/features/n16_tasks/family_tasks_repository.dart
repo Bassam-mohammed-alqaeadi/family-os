@@ -35,9 +35,9 @@ final class InMemoryFamilyTasksRepository implements FamilyTasksRepository {
     FamilyTasksSnapshot? seed,
     WalletLedger? walletLedger,
     ChildId Function(String assigneeNameKey)? resolveChildId,
-  })  : _snap = seed ?? familyTasksEmptyFixture(),
-        _walletLedger = walletLedger,
-        _resolveChildId = resolveChildId;
+  }) : _snap = seed ?? familyTasksEmptyFixture(),
+       _walletLedger = walletLedger,
+       _resolveChildId = resolveChildId;
 
   FamilyTasksSnapshot _snap;
   final WalletLedger? _walletLedger;
@@ -111,10 +111,11 @@ final class InMemoryFamilyTasksRepository implements FamilyTasksRepository {
     if (task.reward.isZero) return;
     if (task.assigneeNameKey == 'mother') return;
     try {
-      final ledger = _walletLedger ??
+      final ledger =
+          _walletLedger ??
           WalletLedger(await ScreenTimeLocalPersistence.openPolicyRepository());
-      final childId = _resolveChildId?.call(task.assigneeNameKey) ??
-          activeScopedChildId();
+      final childId =
+          _resolveChildId?.call(task.assigneeNameKey) ?? activeScopedChildId();
       await ledger.earn(
         childId: childId,
         appId: 'family_tasks',

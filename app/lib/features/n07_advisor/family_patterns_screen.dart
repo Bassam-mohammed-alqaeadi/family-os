@@ -33,7 +33,8 @@ abstract final class FamilyPatternsKeys {
 
   static Key confidenceSeal(String id) => Key('family_patterns_seal_$id');
 
-  static Key timelineLink(String childId) => Key('family_patterns_timeline_$childId');
+  static Key timelineLink(String childId) =>
+      Key('family_patterns_timeline_$childId');
 
   static Key patternRow(String id) => Key('family_patterns_row_$id');
 }
@@ -198,16 +199,10 @@ class _FamilyPatternsScreenState extends State<FamilyPatternsScreen> {
     FamilyPatternTag tag,
   ) {
     return switch (tag) {
-      FamilyPatternTag.anomaly => (
-        l10n.familyPatternsTagAnomaly,
-        TagVariant.a,
-      ),
+      FamilyPatternTag.anomaly => (l10n.familyPatternsTagAnomaly, TagVariant.a),
       FamilyPatternTag.ok => (l10n.familyPatternsTagOk, TagVariant.g),
       FamilyPatternTag.watch => (l10n.familyPatternsTagWatch, TagVariant.a),
-      FamilyPatternTag.improve => (
-        l10n.familyPatternsTagImprove,
-        TagVariant.g,
-      ),
+      FamilyPatternTag.improve => (l10n.familyPatternsTagImprove, TagVariant.g),
     };
   }
 
@@ -350,11 +345,7 @@ class _FamilyPatternsScreenState extends State<FamilyPatternsScreen> {
             l10n.familyPatternsFooterNote,
             key: FamilyPatternsKeys.footerNote,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: colors.ink2,
-              fontSize: 12,
-              height: 1.5,
-            ),
+            style: TextStyle(color: colors.ink2, fontSize: 12, height: 1.5),
           ),
         ],
       ),
@@ -363,10 +354,7 @@ class _FamilyPatternsScreenState extends State<FamilyPatternsScreen> {
 }
 
 class _AdvisorBanner extends StatelessWidget {
-  const _AdvisorBanner({
-    required this.l10n,
-    required this.confidencePercent,
-  });
+  const _AdvisorBanner({required this.l10n, required this.confidencePercent});
 
   final AppLocalizations l10n;
   final int confidencePercent;
@@ -406,7 +394,8 @@ class _ChildPatternCard extends StatelessWidget {
   final String timelineLabel;
   final String Function(AppLocalizations, FamilyPatternRow) patternTitle;
   final String? Function(AppLocalizations, FamilyPatternRow) patternSubtitle;
-  final (String, TagVariant) Function(AppLocalizations, FamilyPatternTag) tagFor;
+  final (String, TagVariant) Function(AppLocalizations, FamilyPatternTag)
+  tagFor;
   final IconData Function(FamilyPatternDomain) domainIcon;
   final VoidCallback onTimeline;
 

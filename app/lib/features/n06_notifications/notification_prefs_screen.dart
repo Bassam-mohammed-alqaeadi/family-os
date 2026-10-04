@@ -13,10 +13,8 @@ import 'package:family_os/core/policy/notification_prefs_repository.dart';
 import 'package:family_os/core/prefs_misc/prefs_misc_runtime.dart';
 
 /// Optional time-picker override for widget tests.
-typedef QuietHoursTimePicker = Future<TimeOfDay?> Function(
-  BuildContext context,
-  TimeOfDay initial,
-);
+typedef QuietHoursTimePicker =
+    Future<TimeOfDay?> Function(BuildContext context, TimeOfDay initial);
 
 /// Widget keys for SCR-FAT-058 / SET-010 / SET-011 / SET-021 / UI-010 acceptance.
 abstract final class NotificationPrefsKeys {

@@ -41,9 +41,7 @@ void main() {
     await tester.pumpWidget(
       _app(
         child: SafeZonesScreen(
-          repository: InMemorySafeZonesRepository(
-            zones: SafeZonesMock.seeded,
-          ),
+          repository: InMemorySafeZonesRepository(zones: SafeZonesMock.seeded),
           roleOverride: AppRole.father,
           onSos: () {},
           onCreateZone: () {},
@@ -63,8 +61,9 @@ void main() {
     expect(find.byKey(SafeZonesKeys.readOnlyBanner), findsNothing);
   });
 
-  testWidgets('SCR-FAT-016 father toggles Arrive / Leave / No-show',
-      (tester) async {
+  testWidgets('SCR-FAT-016 father toggles Arrive / Leave / No-show', (
+    tester,
+  ) async {
     final repo = InMemorySafeZonesRepository(zones: SafeZonesMock.seeded);
     await tester.pumpWidget(
       _app(
@@ -106,9 +105,7 @@ void main() {
     await tester.pumpWidget(
       _app(
         child: SafeZonesScreen(
-          repository: InMemorySafeZonesRepository(
-            zones: SafeZonesMock.seeded,
-          ),
+          repository: InMemorySafeZonesRepository(zones: SafeZonesMock.seeded),
           roleOverride: AppRole.mother,
           motherLevel: MotherLevel.partner,
           onSos: () {},
@@ -132,9 +129,7 @@ void main() {
     await tester.pumpWidget(
       _app(
         child: SafeZonesScreen(
-          repository: InMemorySafeZonesRepository(
-            zones: SafeZonesMock.seeded,
-          ),
+          repository: InMemorySafeZonesRepository(zones: SafeZonesMock.seeded),
           roleOverride: AppRole.mother,
           motherLevel: MotherLevel.full,
           onSos: () {},
@@ -158,9 +153,7 @@ void main() {
       _app(
         child: SafeZonesScreen(
           childId: 'child_a',
-          repository: InMemorySafeZonesRepository(
-            zones: SafeZonesMock.seeded,
-          ),
+          repository: InMemorySafeZonesRepository(zones: SafeZonesMock.seeded),
           roleOverride: AppRole.father,
           onSos: () {},
           onCreateZone: () => created = true,
@@ -216,9 +209,7 @@ void main() {
     await tester.pumpWidget(
       _app(
         child: SafeZonesScreen(
-          repository: InMemorySafeZonesRepository(
-            zones: SafeZonesMock.seeded,
-          ),
+          repository: InMemorySafeZonesRepository(zones: SafeZonesMock.seeded),
           roleOverride: AppRole.child,
           onSos: () {},
         ),

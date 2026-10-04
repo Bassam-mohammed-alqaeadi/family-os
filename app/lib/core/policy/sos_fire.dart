@@ -50,8 +50,8 @@ final class MockSosFireService implements SosFireService {
   MockSosFireService({
     Map<String, NotificationPrefs>? prefsByMember,
     DateTime Function()? clock,
-  })  : _prefsByMember = prefsByMember,
-        _clock = clock ?? DateTime.now;
+  }) : _prefsByMember = prefsByMember,
+       _clock = clock ?? DateTime.now;
 
   final Map<String, NotificationPrefs>? _prefsByMember;
   final DateTime Function() _clock;

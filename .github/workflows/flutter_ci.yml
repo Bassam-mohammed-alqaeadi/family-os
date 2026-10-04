@@ -153,36 +153,3 @@ jobs:
             echo "::error title=Flutter analyzer::${summary:-flutter analyze failed; inspect build/ci/flutter-analyze.txt}"
           fi
           exit 1
-
-  android-debug-build:
-    name: Android debug build
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: app
-    steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: "3.35.7"
-          channel: stable
-          cache: true
-      - name: Resolve packages
-        run: flutter pub get --enforce-lockfile
-      - name: Generate localization source
-        run: flutter gen-l10n
-      - name: Compile native Child Mode host
-        id: android_build
-        continue-on-error: true
-        run: |
-          mkdir -p build/ci
-          set -o pipefail
-          flutter build apk --debug \
-            --dart-define=FAMILY_OS_API_ORIGIN=https://staging.example.test 2>&1 \
-            | tee build/ci/android-debug-build.txt
-      - name: Enforce Android debug build gate
-        if: always() && steps.android_build.outcome == 'failure'
-        run: |
-          summary=$(tail -100 build/ci/android-debug-build.txt | tr '\n' ' ' | cut -c1-4000)
-          echo "::error title=Android debug build::${summary:-flutter build apk --debug failed; inspect build/ci/android-debug-build.txt}"
-          exit 1

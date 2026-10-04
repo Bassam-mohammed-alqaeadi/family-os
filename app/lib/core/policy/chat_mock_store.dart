@@ -25,7 +25,7 @@ abstract class ChatMockStore {
 
 final class MemoryChatMockStore implements ChatMockStore {
   MemoryChatMockStore([List<ChatMockMessage>? seed])
-      : _messages = List<ChatMockMessage>.from(seed ?? const []);
+    : _messages = List<ChatMockMessage>.from(seed ?? const []);
 
   final List<ChatMockMessage> _messages;
 

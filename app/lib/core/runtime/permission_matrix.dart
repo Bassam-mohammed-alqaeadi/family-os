@@ -35,10 +35,7 @@ final class PanelProfile {
   final AppRole role;
   final MotherLevel? motherLevel;
 
-  factory PanelProfile.fromRole(
-    AppRole role, {
-    MotherLevel? motherLevel,
-  }) {
+  factory PanelProfile.fromRole(AppRole role, {MotherLevel? motherLevel}) {
     return PanelProfile(
       role: role,
       motherLevel: role == AppRole.mother

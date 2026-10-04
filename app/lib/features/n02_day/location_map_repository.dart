@@ -3,12 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
 
 /// Network honesty class for FAT-014 pin chrome (Native closed → unavailable).
-enum LocationNetworkClass {
-  online,
-  offline,
-  unknown,
-  unavailable,
-}
+enum LocationNetworkClass { online, offline, unknown, unavailable }
 
 /// One child pin on SCR-FAT-014 — values from repos, never planted in widgets.
 @immutable
@@ -118,9 +113,9 @@ final class InMemoryLocationMapRepository implements LocationMapRepository {
     List<LocationMapZone> zones = const [],
     Map<String, List<LocationThreadStop>> threadsByChildId = const {},
     this.failLoad = false,
-  })  : _pins = List.of(pins),
-        _zones = List.of(zones),
-        _threads = Map.of(threadsByChildId);
+  }) : _pins = List.of(pins),
+       _zones = List.of(zones),
+       _threads = Map.of(threadsByChildId);
 
   List<LocationMapPin> _pins;
   List<LocationMapZone> _zones;

@@ -185,7 +185,8 @@ class _IndividualTimelineScreenState extends State<IndividualTimelineScreen> {
 
   String _suggestionText(AppLocalizations l10n, String suggestionKey) {
     return switch (suggestionKey) {
-      'testsAfterPractice' => l10n.individualTimelineSuggestionTestsAfterPractice,
+      'testsAfterPractice' =>
+        l10n.individualTimelineSuggestionTestsAfterPractice,
       _ => l10n.individualTimelineSuggestionTestsAfterPractice,
     };
   }
@@ -433,9 +434,7 @@ class _InsightCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
-              children: [
-                Tag(label: badge, variant: TagVariant.p),
-              ],
+              children: [Tag(label: badge, variant: TagVariant.p)],
             ),
             const SizedBox(height: 10),
             RichText(
@@ -481,7 +480,9 @@ class _InsightCard extends StatelessWidget {
                           children: [
                             TextSpan(
                               text: l10n.individualTimelineSuggestionLabel,
-                              style: const TextStyle(fontWeight: FontWeight.w800),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                             TextSpan(text: suggestion),
                           ],
@@ -555,11 +556,7 @@ class _TimelineStopRow extends StatelessWidget {
                 ),
               ),
               if (stop.isNow)
-                Container(
-                  width: 2,
-                  height: 18,
-                  color: colors.p100,
-                ),
+                Container(width: 2, height: 18, color: colors.p100),
             ],
           ),
           const SizedBox(width: 12),

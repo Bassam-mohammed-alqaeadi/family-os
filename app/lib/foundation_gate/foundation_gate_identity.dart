@@ -21,9 +21,15 @@ class FirebaseEmailPasswordIdentity implements FoundationGateIdentity {
   final FirebaseAuth _auth;
 
   @override
-  Future<String> signIn({required String email, required String password}) async {
+  Future<String> signIn({
+    required String email,
+    required String password,
+  }) async {
     try {
-      final credential = await _auth.signInWithEmailAndPassword(email: email, password: password);
+      final credential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
       return _tokenFromUser(credential.user);
     } catch (_) {
       throw const FoundationGateIdentityException();

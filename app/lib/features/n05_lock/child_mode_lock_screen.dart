@@ -31,7 +31,9 @@ abstract final class ChildModeLockKeys {
   static const viewFatherCta = Key('child_mode_lock_view_father_cta');
   static const attemptsBanner = Key('child_mode_lock_attempts_banner');
   static const lockoutBanner = Key('child_mode_lock_lockout_banner');
-  static const entertainmentLocked = Key('child_mode_lock_entertainment_locked');
+  static const entertainmentLocked = Key(
+    'child_mode_lock_entertainment_locked',
+  );
   static const sosCta = Key('child_mode_lock_sos_cta');
   static const sosIconCta = Key('child_mode_lock_sos_icon_cta');
   static const parentLean = Key('child_mode_lock_parent_lean');
@@ -148,7 +150,10 @@ class _ChildModeLockScreenState extends State<ChildModeLockScreen> {
     final tickMs = widget.secretHoldTick.inMilliseconds.clamp(1, 60000);
     final totalSeconds = widget.secretHoldDuration.inMilliseconds <= 0
         ? 1
-        : (widget.secretHoldDuration.inMilliseconds / tickMs).ceil().clamp(1, 99);
+        : (widget.secretHoldDuration.inMilliseconds / tickMs).ceil().clamp(
+            1,
+            99,
+          );
     setState(() {
       _holding = true;
       _holdSecondsLeft = totalSeconds;
@@ -303,7 +308,8 @@ class _ChildModeLockScreenState extends State<ChildModeLockScreen> {
     AppLocalizations l10n,
     FamilyColors colors,
   ) {
-    final awaiting = _lock.pendingRequest != null &&
+    final awaiting =
+        _lock.pendingRequest != null &&
         !(_lock.pendingRequest?.isApproved ?? false);
     final radii = Theme.of(context).extension<FamilyRadii>()!;
 
@@ -312,102 +318,102 @@ class _ChildModeLockScreenState extends State<ChildModeLockScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-        BannerNote(
-          key: ChildModeLockKeys.dualKeyBanner,
-          variant: BannerVariant.t,
-          message: l10n.childModeLockDualKeyBanner,
-        ),
-        const SizedBox(height: 12),
-        if (_lock.isLockedOut) ...[
           BannerNote(
-            key: ChildModeLockKeys.lockoutBanner,
-            variant: BannerVariant.a,
-            message: l10n.childModeLockLockoutBanner,
+            key: ChildModeLockKeys.dualKeyBanner,
+            variant: BannerVariant.t,
+            message: l10n.childModeLockDualKeyBanner,
           ),
           const SizedBox(height: 12),
-        ],
-        _SecretEntryCard(
-          colors: colors,
-          radii: radii,
-          l10n: l10n,
-          lockedOut: _lock.isLockedOut,
-          secretOpen: _lock.secretEntryOpen,
-          holding: _holding,
-          holdSecondsLeft: _holdSecondsLeft,
-          onPointerDown: _onLogoPointerDown,
-          onPointerUp: _onLogoPointerUp,
-          onPointerCancel: _onLogoPointerUp,
-        ),
-        if (_lock.secretEntryOpen && !_lock.isLockedOut) ...[
-          const SizedBox(height: 12),
-          _PasswordStepCard(
+          if (_lock.isLockedOut) ...[
+            BannerNote(
+              key: ChildModeLockKeys.lockoutBanner,
+              variant: BannerVariant.a,
+              message: l10n.childModeLockLockoutBanner,
+            ),
+            const SizedBox(height: 12),
+          ],
+          _SecretEntryCard(
             colors: colors,
             radii: radii,
             l10n: l10n,
-            controller: _passwordController,
-            verifying: _verifying,
-            statusMessage: _statusMessage,
-            onVerify: (awaiting || _verifying) ? null : _verifyPassword,
+            lockedOut: _lock.isLockedOut,
+            secretOpen: _lock.secretEntryOpen,
+            holding: _holding,
+            holdSecondsLeft: _holdSecondsLeft,
+            onPointerDown: _onLogoPointerDown,
+            onPointerUp: _onLogoPointerUp,
+            onPointerCancel: _onLogoPointerUp,
           ),
-        ],
-        if (awaiting) ...[
+          if (_lock.secretEntryOpen && !_lock.isLockedOut) ...[
+            const SizedBox(height: 12),
+            _PasswordStepCard(
+              colors: colors,
+              radii: radii,
+              l10n: l10n,
+              controller: _passwordController,
+              verifying: _verifying,
+              statusMessage: _statusMessage,
+              onVerify: (awaiting || _verifying) ? null : _verifyPassword,
+            ),
+          ],
+          if (awaiting) ...[
+            const SizedBox(height: 12),
+            BannerNote(
+              key: ChildModeLockKeys.awaitingBanner,
+              variant: BannerVariant.p,
+              message: l10n.childModeLockAwaitingBanner,
+            ),
+            const SizedBox(height: 10),
+            PrimaryBtn(
+              key: ChildModeLockKeys.viewFatherCta,
+              label: l10n.childModeLockViewFatherCta,
+              variant: PrimaryBtnVariant.sec,
+              onPressed: _viewFatherRequest,
+              semanticsLabel: l10n.childModeLockViewFatherSemantics,
+            ),
+          ],
           const SizedBox(height: 12),
           BannerNote(
-            key: ChildModeLockKeys.awaitingBanner,
-            variant: BannerVariant.p,
-            message: l10n.childModeLockAwaitingBanner,
+            key: ChildModeLockKeys.attemptsBanner,
+            variant: BannerVariant.a,
+            message: l10n.childModeLockAttemptsWarning,
           ),
-          const SizedBox(height: 10),
-          PrimaryBtn(
-            key: ChildModeLockKeys.viewFatherCta,
-            label: l10n.childModeLockViewFatherCta,
-            variant: PrimaryBtnVariant.sec,
-            onPressed: _viewFatherRequest,
-            semanticsLabel: l10n.childModeLockViewFatherSemantics,
-          ),
-        ],
-        const SizedBox(height: 12),
-        BannerNote(
-          key: ChildModeLockKeys.attemptsBanner,
-          variant: BannerVariant.a,
-          message: l10n.childModeLockAttemptsWarning,
-        ),
-        const SizedBox(height: 16),
-        DecoratedBox(
-          key: ChildModeLockKeys.entertainmentLocked,
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(radii.card),
-            border: Border.all(color: colors.border),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              children: [
-                Icon(Icons.lock_outline, color: colors.ink2),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    l10n.childModeLockEntertainmentLocked,
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w700,
-                      color: colors.ink,
+          const SizedBox(height: 16),
+          DecoratedBox(
+            key: ChildModeLockKeys.entertainmentLocked,
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(radii.card),
+              border: Border.all(color: colors.border),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  Icon(Icons.lock_outline, color: colors.ink2),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      l10n.childModeLockEntertainmentLocked,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: colors.ink,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 16),
-        PrimaryBtn(
-          key: ChildModeLockKeys.sosCta,
-          label: l10n.childModeLockSosCta,
-          variant: PrimaryBtnVariant.coral,
-          onPressed: _sosBusy ? null : _openSos,
-          semanticsLabel: l10n.spineCtaSosSemantics,
-        ),
+          const SizedBox(height: 16),
+          PrimaryBtn(
+            key: ChildModeLockKeys.sosCta,
+            label: l10n.childModeLockSosCta,
+            variant: PrimaryBtnVariant.coral,
+            onPressed: _sosBusy ? null : _openSos,
+            semanticsLabel: l10n.spineCtaSosSemantics,
+          ),
         ],
       ),
     );
@@ -464,20 +470,20 @@ class _SecretEntryCard extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               l10n.childModeLockSecretStepHint,
-              style: TextStyle(
-                fontSize: 13,
-                color: colors.ink2,
-                height: 1.45,
-              ),
+              style: TextStyle(fontSize: 13, color: colors.ink2, height: 1.45),
             ),
             const SizedBox(height: 14),
             Center(
               child: Listener(
-                onPointerDown:
-                    lockedOut || secretOpen ? null : (_) => onPointerDown(),
-                onPointerUp: lockedOut || secretOpen ? null : (_) => onPointerUp(),
-                onPointerCancel:
-                    lockedOut || secretOpen ? null : (_) => onPointerCancel(),
+                onPointerDown: lockedOut || secretOpen
+                    ? null
+                    : (_) => onPointerDown(),
+                onPointerUp: lockedOut || secretOpen
+                    ? null
+                    : (_) => onPointerUp(),
+                onPointerCancel: lockedOut || secretOpen
+                    ? null
+                    : (_) => onPointerCancel(),
                 child: Semantics(
                   key: ChildModeLockKeys.logoHold,
                   button: true,
@@ -572,11 +578,7 @@ class _PasswordStepCard extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               l10n.childModeLockPasswordStepHint,
-              style: TextStyle(
-                fontSize: 13,
-                color: colors.ink2,
-                height: 1.45,
-              ),
+              style: TextStyle(fontSize: 13, color: colors.ink2, height: 1.45),
             ),
             const SizedBox(height: 12),
             TextField(

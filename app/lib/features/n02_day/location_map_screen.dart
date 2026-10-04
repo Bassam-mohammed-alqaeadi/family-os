@@ -872,7 +872,11 @@ class _PinRow extends StatelessWidget {
           showDivider: false,
         ),
         Padding(
-          padding: const EdgeInsetsDirectional.only(start: 56, end: 12, bottom: 8),
+          padding: const EdgeInsetsDirectional.only(
+            start: 56,
+            end: 12,
+            bottom: 8,
+          ),
           child: Align(
             alignment: AlignmentDirectional.centerStart,
             child: Container(

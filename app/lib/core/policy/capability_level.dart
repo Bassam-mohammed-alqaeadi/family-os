@@ -14,10 +14,10 @@ enum CapabilityLevel {
 
 extension CapabilityLevelX on CapabilityLevel {
   String get storageKey => switch (this) {
-        CapabilityLevel.unavailable => 'unavailable',
-        CapabilityLevel.reportsOnly => 'reports_only',
-        CapabilityLevel.full => 'full',
-      };
+    CapabilityLevel.unavailable => 'unavailable',
+    CapabilityLevel.reportsOnly => 'reports_only',
+    CapabilityLevel.full => 'full',
+  };
 
   /// Rank for min() — higher = stronger.
   int get rank => index;

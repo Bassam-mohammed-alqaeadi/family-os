@@ -230,8 +230,7 @@ class InstantLockScreenState extends State<InstantLockScreen> {
       _policy = loaded;
       _lockState = lockState;
       _loading = false;
-      _showPermissionBanner =
-          loaded.noDelete && !widget.deviceAdminGranted;
+      _showPermissionBanner = loaded.noDelete && !widget.deviceAdminGranted;
     });
   }
 
@@ -293,8 +292,7 @@ class InstantLockScreenState extends State<InstantLockScreen> {
       _alertBus.simulateBypassAttempt(_childId, _policy);
 
   /// Test / Stage-1 hook — fires father alert when [simAlert] is ON.
-  bool simulateSimChange() =>
-      _alertBus.simulateSimChange(_childId, _policy);
+  bool simulateSimChange() => _alertBus.simulateSimChange(_childId, _policy);
 
   Future<void> _saveAntiTamper() async {
     final repo = _repository;
@@ -302,11 +300,7 @@ class InstantLockScreenState extends State<InstantLockScreen> {
       return;
     }
     setState(() => _saving = true);
-    final result = await repo.write(
-      _childId,
-      _policy,
-      actor: _role,
-    );
+    final result = await repo.write(_childId, _policy, actor: _role);
     if (!mounted) return;
     setState(() => _saving = false);
     final l10n = AppLocalizations.of(context);
@@ -525,8 +519,8 @@ class _InstantLockCard extends StatelessWidget {
     final byText = lockedBy == DeviceLockedBy.father
         ? lockedByFather
         : lockedBy == DeviceLockedBy.mother
-            ? lockedByMother
-            : null;
+        ? lockedByMother
+        : null;
 
     return DecoratedBox(
       key: InstantLockKeys.card,
@@ -543,33 +537,33 @@ class _InstantLockCard extends StatelessWidget {
             Text(
               title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: colors.ink,
-                    fontWeight: FontWeight.w700,
-                  ),
+                color: colors.ink,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
               subtitle,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colors.ink2,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: colors.ink2),
             ),
             const SizedBox(height: 12),
             Text(
               statusText,
               key: InstantLockKeys.status,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: colors.ink,
-                    fontWeight: FontWeight.w700,
-                  ),
+                color: colors.ink,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             if (byText != null) ...[
               const SizedBox(height: 4),
               Text(
                 byText,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colors.ink2,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: colors.ink2),
               ),
             ],
             const SizedBox(height: 12),
@@ -652,9 +646,9 @@ class _AntiTamperSection extends StatelessWidget {
             Text(
               sectionTitle,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: colors.ink,
-                    fontWeight: FontWeight.w700,
-                  ),
+                color: colors.ink,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 8),
             for (final flag in AntiTamperFlags.known)
@@ -705,9 +699,9 @@ class _AntiTamperDenyPanel extends StatelessWidget {
           message,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: colors.ink,
-                fontWeight: FontWeight.w700,
-              ),
+            color: colors.ink,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
     );

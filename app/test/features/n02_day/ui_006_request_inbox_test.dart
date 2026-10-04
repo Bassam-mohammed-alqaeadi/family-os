@@ -31,10 +31,7 @@ void main() {
     );
   }
 
-  Widget wrap(
-    Widget child, {
-    Locale locale = const Locale('ar'),
-  }) {
+  Widget wrap(Widget child, {Locale locale = const Locale('ar')}) {
     return MaterialApp(
       theme: buildFamilyTheme(),
       locale: locale,
@@ -55,9 +52,7 @@ void main() {
     final service = buildService();
     addTearDown(service.dispose);
 
-    await tester.pumpWidget(
-      wrap(RequestInboxScreen(service: service)),
-    );
+    await tester.pumpWidget(wrap(RequestInboxScreen(service: service)));
     await tester.pumpAndSettle();
 
     expect(find.byKey(RequestInboxKeys.emptyState), findsOneWidget);
@@ -141,55 +136,51 @@ void main() {
     expect(find.byKey(RequestInboxKeys.approve('tr-ob1')), findsNothing);
   });
 
-  testWidgets(
-    'UI-006 AC3: child sees reject reason via decision seam',
-    (tester) async {
-      final bus = TimeRequestDecisionBus();
-      final pending = TimeRequest(
-        id: 'tr-r1',
-        childId: child,
-        requestedMinutes: 15,
-      );
-      final service = buildService(seed: [pending], bus: bus);
-      addTearDown(service.dispose);
+  testWidgets('UI-006 AC3: child sees reject reason via decision seam', (
+    tester,
+  ) async {
+    final bus = TimeRequestDecisionBus();
+    final pending = TimeRequest(
+      id: 'tr-r1',
+      childId: child,
+      requestedMinutes: 15,
+    );
+    final service = buildService(seed: [pending], bus: bus);
+    addTearDown(service.dispose);
 
-      await tester.pumpWidget(
-        wrap(
-          Column(
-            children: [
-              Expanded(
-                child: RequestInboxScreen(
-                  service: service,
-                  role: AppRole.father,
-                ),
-              ),
-              ChildTimeDecisionSeam(
-                decisionBus: bus,
-                childId: child.value,
-              ),
-            ],
-          ),
+    await tester.pumpWidget(
+      wrap(
+        Column(
+          children: [
+            Expanded(
+              child: RequestInboxScreen(service: service, role: AppRole.father),
+            ),
+            ChildTimeDecisionSeam(decisionBus: bus, childId: child.value),
+          ],
         ),
-      );
-      await tester.pumpAndSettle();
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      const reason = 'أنهِ واجبك أولًا';
-      await tester.enterText(
-        find.byKey(RequestInboxKeys.rejectReason('tr-r1')),
-        reason,
-      );
-      await tester.tap(find.byKey(RequestInboxKeys.reject('tr-r1')));
-      await tester.pumpAndSettle();
+    const reason = 'أنهِ واجبك أولًا';
+    await tester.enterText(
+      find.byKey(RequestInboxKeys.rejectReason('tr-r1')),
+      reason,
+    );
+    await tester.tap(find.byKey(RequestInboxKeys.reject('tr-r1')));
+    await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('child_time_decision_rejected')), findsOneWidget);
-      expect(find.textContaining(reason), findsOneWidget);
+    expect(
+      find.byKey(const Key('child_time_decision_rejected')),
+      findsOneWidget,
+    );
+    expect(find.textContaining(reason), findsOneWidget);
 
-      final stored = await service.getById('tr-r1');
-      expect(stored?.status, TimeRequestStatus.rejected);
-      expect(stored?.decisionReason, reason);
-      expect(bus.lastDecision?.decisionReason, reason);
-    },
-  );
+    final stored = await service.getById('tr-r1');
+    expect(stored?.status, TimeRequestStatus.rejected);
+    expect(stored?.decisionReason, reason);
+    expect(bus.lastDecision?.decisionReason, reason);
+  });
 
   testWidgets('UI-006 father may grant over-ceiling options', (tester) async {
     final pending = TimeRequest(
@@ -201,12 +192,7 @@ void main() {
     addTearDown(service.dispose);
 
     await tester.pumpWidget(
-      wrap(
-        RequestInboxScreen(
-          service: service,
-          role: AppRole.father,
-        ),
-      ),
+      wrap(RequestInboxScreen(service: service, role: AppRole.father)),
     );
     await tester.pumpAndSettle();
 
@@ -244,11 +230,17 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(service.pendingOfflineDecisions, hasLength(1));
-    expect((await service.getById('tr-off'))?.status, TimeRequestStatus.pending);
+    expect(
+      (await service.getById('tr-off'))?.status,
+      TimeRequestStatus.pending,
+    );
 
     service.offline = false;
     await service.flushOfflineQueue();
-    expect((await service.getById('tr-off'))?.status, TimeRequestStatus.rejected);
+    expect(
+      (await service.getById('tr-off'))?.status,
+      TimeRequestStatus.rejected,
+    );
     expect((await service.getById('tr-off'))?.decisionReason, 'لاحقًا');
   });
 

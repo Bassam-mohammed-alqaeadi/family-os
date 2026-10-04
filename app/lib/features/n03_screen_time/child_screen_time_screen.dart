@@ -313,11 +313,9 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
     return parsed != null && parsed >= 0;
   }
 
-  bool get _canSavePolicy =>
-      _policyRepository != null && !_policyUnavailable;
+  bool get _canSavePolicy => _policyRepository != null && !_policyUnavailable;
 
-  bool get _canSaveSchedule =>
-      _repository != null && !_policyUnavailable;
+  bool get _canSaveSchedule => _repository != null && !_policyUnavailable;
 
   bool get _canSave =>
       _canEdit &&

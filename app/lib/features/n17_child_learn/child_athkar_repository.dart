@@ -10,15 +10,14 @@ final class InMemoryChildAthkarRepository implements ChildAthkarRepository {
   InMemoryChildAthkarRepository({
     ChildAthkarSnapshot? seed,
     QuranLocalBridge? bridge,
-  })  : _snap = seed ?? childAthkarEmptyFixture(),
-        _bridgeOverride = bridge;
+  }) : _snap = seed ?? childAthkarEmptyFixture(),
+       _bridgeOverride = bridge;
 
   ChildAthkarSnapshot _snap;
   final QuranLocalBridge? _bridgeOverride;
   Future<void> Function()? loadGate;
 
-  QuranLocalBridge get _bridge =>
-      _bridgeOverride ?? stage1QuranLocalBridge;
+  QuranLocalBridge get _bridge => _bridgeOverride ?? stage1QuranLocalBridge;
 
   @override
   Future<ChildAthkarSnapshot> load() async {

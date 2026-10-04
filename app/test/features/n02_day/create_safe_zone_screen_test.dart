@@ -193,8 +193,9 @@ void main() {
     expect(sos, isTrue);
   });
 
-  testWidgets('SCR-FAT-017 alert toggles persist flags into alertsEnabled',
-      (tester) async {
+  testWidgets('SCR-FAT-017 alert toggles persist flags into alertsEnabled', (
+    tester,
+  ) async {
     final repo = InMemorySafeZonesRepository();
     await tester.pumpWidget(
       _app(
@@ -249,64 +250,72 @@ void main() {
     expect(snap.zones.single.alertsEnabled, isFalse);
   });
 
-  testWidgets('LOCATION-1B FAT-017 No-show shows deadline; blocks save without time',
-      (tester) async {
-    final repo = InMemorySafeZonesRepository();
-    var saved = false;
+  testWidgets(
+    'LOCATION-1B FAT-017 No-show shows deadline; blocks save without time',
+    (tester) async {
+      final repo = InMemorySafeZonesRepository();
+      var saved = false;
 
-    await tester.pumpWidget(
-      _app(
-        child: CreateSafeZoneScreen(
-          repository: repo,
-          roleOverride: AppRole.father,
-          childId: 'child_a',
-          idFactory: () => 'z_noshow',
-          onSos: () {},
-          onSaved: () => saved = true,
+      await tester.pumpWidget(
+        _app(
+          child: CreateSafeZoneScreen(
+            repository: repo,
+            roleOverride: AppRole.father,
+            childId: 'child_a',
+            idFactory: () => 'z_noshow',
+            onSos: () {},
+            onSaved: () => saved = true,
+          ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.byKey(CreateSafeZoneKeys.map));
-    await tester.pumpAndSettle();
-    final map = tester.getRect(find.byKey(CreateSafeZoneKeys.map));
-    await tester.tapAt(map.center);
-    await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(CreateSafeZoneKeys.map));
+      await tester.pumpAndSettle();
+      final map = tester.getRect(find.byKey(CreateSafeZoneKeys.map));
+      await tester.tapAt(map.center);
+      await tester.pumpAndSettle();
 
-    await _tapVisible(tester, CreateSafeZoneKeys.nameField);
-    await tester.enterText(find.byKey(CreateSafeZoneKeys.nameField), 'مدرسة');
-    await tester.pumpAndSettle();
+      await _tapVisible(tester, CreateSafeZoneKeys.nameField);
+      await tester.enterText(find.byKey(CreateSafeZoneKeys.nameField), 'مدرسة');
+      await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.byKey(CreateSafeZoneKeys.alertNoShow));
-    await tester.pumpAndSettle();
-    await tester.tap(
-      find.descendant(
-        of: find.byKey(CreateSafeZoneKeys.alertNoShow),
-        matching: find.byType(Switch),
-      ),
-    );
-    await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(CreateSafeZoneKeys.alertNoShow));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(CreateSafeZoneKeys.alertNoShow),
+          matching: find.byType(Switch),
+        ),
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.byKey(CreateSafeZoneKeys.noShowDeadlineSection), findsOneWidget);
-    expect(find.byKey(CreateSafeZoneKeys.noShowDeadlineHonesty), findsOneWidget);
+      expect(
+        find.byKey(CreateSafeZoneKeys.noShowDeadlineSection),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(CreateSafeZoneKeys.noShowDeadlineHonesty),
+        findsOneWidget,
+      );
 
-    await tester.ensureVisible(find.byKey(CreateSafeZoneKeys.saveCta));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(CreateSafeZoneKeys.saveCta));
-    await tester.pump();
-    expect(saved, isFalse);
-    expect(find.textContaining('وقت الوصول'), findsOneWidget);
-    AppToast.dismiss();
-    await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(CreateSafeZoneKeys.saveCta));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(CreateSafeZoneKeys.saveCta));
+      await tester.pump();
+      expect(saved, isFalse);
+      expect(find.textContaining('وقت الوصول'), findsOneWidget);
+      AppToast.dismiss();
+      await tester.pumpAndSettle();
 
-    await _tapVisible(tester, CreateSafeZoneKeys.noShowDeadlineChip730);
-    await _tapVisible(tester, CreateSafeZoneKeys.saveCta);
-    expect(saved, isTrue);
-    final snap = await repo.load();
-    expect(snap.zones.single.alertNoShow, isTrue);
-    expect(snap.zones.single.noShowDeadlineMinutes, 450);
-  });
+      await _tapVisible(tester, CreateSafeZoneKeys.noShowDeadlineChip730);
+      await _tapVisible(tester, CreateSafeZoneKeys.saveCta);
+      expect(saved, isTrue);
+      final snap = await repo.load();
+      expect(snap.zones.single.alertNoShow, isTrue);
+      expect(snap.zones.single.noShowDeadlineMinutes, 450);
+    },
+  );
 }
 
 Future<void> _tapVisible(WidgetTester tester, Key key) async {

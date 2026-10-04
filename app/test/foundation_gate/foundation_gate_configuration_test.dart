@@ -9,27 +9,47 @@ void main() {
       Uri.parse('https://staging.example.test'),
     );
 
-    expect(configuration.familyDiscoveryUri.toString(), 'https://staging.example.test/v1/me/families');
-    expect(configuration.childrenRosterUri(familyId).toString(), 'https://staging.example.test/v1/families/$familyId/children');
+    expect(
+      configuration.familyDiscoveryUri.toString(),
+      'https://staging.example.test/v1/me/families',
+    );
+    expect(
+      configuration.childrenRosterUri(familyId).toString(),
+      'https://staging.example.test/v1/families/$familyId/children',
+    );
   });
 
-  test('Foundation Gate rejects unsafe origins and roster path values before networking', () {
-    for (final value in [
-      'http://staging.example.test',
-      'https://user:password@staging.example.test',
-      'https://staging.example.test/base-path',
-      'https://staging.example.test?debug=true',
-      'https://staging.example.test#fragment',
-    ]) {
-      expect(
-        () => FoundationGateConfiguration.fromStagingApiOrigin(Uri.parse(value)),
-        throwsArgumentError,
+  test(
+    'Foundation Gate rejects unsafe origins and roster path values before networking',
+    () {
+      for (final value in [
+        'http://staging.example.test',
+        'https://user:password@staging.example.test',
+        'https://staging.example.test/base-path',
+        'https://staging.example.test?debug=true',
+        'https://staging.example.test#fragment',
+      ]) {
+        expect(
+          () => FoundationGateConfiguration.fromStagingApiOrigin(
+            Uri.parse(value),
+          ),
+          throwsArgumentError,
+        );
+      }
+
+      final configuration = FoundationGateConfiguration.fromStagingApiOrigin(
+        Uri.parse('https://staging.example.test'),
       );
-    }
-
-    final configuration = FoundationGateConfiguration.fromStagingApiOrigin(Uri.parse('https://staging.example.test'));
-    for (final unsafeId in ['family-a', '$familyId/children', '$familyId?query=value']) {
-      expect(() => configuration.childrenRosterUri(unsafeId), throwsArgumentError);
-    }
-  });
+      for (final unsafeId in [
+        'family-a',
+        '$familyId/children',
+        '$familyId?query=value',
+      ]) {
+        expect(
+          () => configuration.childrenRosterUri(unsafeId),
+          throwsArgumentError,
+        );
+      }
+    },
+  );
 }

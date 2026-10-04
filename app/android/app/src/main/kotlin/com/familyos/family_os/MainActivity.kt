@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
-import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
@@ -22,7 +21,6 @@ import io.flutter.plugin.common.MethodChannel
  */
 class MainActivity : FlutterActivity() {
     private var pendingPermissionResult: MethodChannel.Result? = null
-    private var pendingPairingScanResult: MethodChannel.Result? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -30,11 +28,7 @@ class MainActivity : FlutterActivity() {
             .setMethodCallHandler { call, result ->
                 when (call.method) {
                     "requestLocationPermissions" -> requestLocationPermissions(result)
-                    "openLocationSettings" -> openLocationSettings(result)
-                    "showPairingQr" -> showPairingQr(call, result)
-                    "scanPairingCode" -> scanPairingCode(call, result)
                     "configureAndStart" -> configureAndStart(call, result)
-                    "startStored" -> startStoredTelemetry(result)
                     "stop" -> stopTelemetry(result)
                     "status" -> telemetryStatus(result)
                     else -> result.notImplemented()
@@ -62,61 +56,6 @@ class MainActivity : FlutterActivity() {
             return
         }
         requestBackgroundLocation()
-    }
-
-    private fun openLocationSettings(result: MethodChannel.Result) {
-        try {
-            startActivity(
-                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                    data = Uri.fromParts("package", packageName, null)
-                },
-            )
-            result.success(mapOf("opened" to true))
-        } catch (_: Exception) {
-            result.success(mapOf("opened" to false))
-        }
-    }
-
-    private fun showPairingQr(call: MethodCall, result: MethodChannel.Result) {
-        val pairingCode = call.argument<String>("pairingCode")?.trim()
-        if (pairingCode == null || !PAIRING_CODE_PATTERN.matches(pairingCode)) {
-            result.success(mapOf("shown" to false))
-            return
-        }
-        try {
-            startActivity(Intent(this, PairingCodeQrActivity::class.java).apply {
-                putExtra(PairingCodeQrActivity.EXTRA_PAIRING_CODE, pairingCode)
-                putExtra(PairingCodeQrActivity.EXTRA_TITLE, call.argument<String>("title").orEmpty())
-                putExtra(PairingCodeQrActivity.EXTRA_BODY, call.argument<String>("body").orEmpty())
-                putExtra(PairingCodeQrActivity.EXTRA_CONTENT_DESCRIPTION, call.argument<String>("contentDescription").orEmpty())
-                putExtra(PairingCodeQrActivity.EXTRA_DISMISS_LABEL, call.argument<String>("dismissLabel").orEmpty())
-            })
-            result.success(mapOf("shown" to true))
-        } catch (_: Exception) {
-            result.success(mapOf("shown" to false))
-        }
-    }
-
-    private fun scanPairingCode(call: MethodCall, result: MethodChannel.Result) {
-        if (pendingPairingScanResult != null) {
-            result.error("pairing_scan_in_progress", "A pairing scan is already active.", null)
-            return
-        }
-        pendingPairingScanResult = result
-        try {
-            startActivityForResult(
-                Intent(this, PairingCodeScannerActivity::class.java).apply {
-                    putExtra(
-                        PairingCodeScannerActivity.EXTRA_CONTENT_DESCRIPTION,
-                        call.argument<String>("contentDescription").orEmpty(),
-                    )
-                },
-                REQUEST_PAIRING_SCAN,
-            )
-        } catch (_: Exception) {
-            pendingPairingScanResult = null
-            result.success(mapOf("pairingCode" to null))
-        }
     }
 
     private fun requestBackgroundLocation() {
@@ -165,27 +104,8 @@ class MainActivity : FlutterActivity() {
         }
         try {
             TelemetryConfigStore(this).write(TelemetryConfig(apiOrigin!!.trimEnd('/'), deviceId!!, credential))
-            startTelemetryService(result)
-        } catch (_: Exception) {
-            result.success(mapOf("started" to false, "reason" to "native_telemetry_start_failed"))
-        }
-    }
-
-    private fun startStoredTelemetry(result: MethodChannel.Result) {
-        if (!hasFineLocation() || !hasBackgroundLocation()) {
-            result.success(mapOf("started" to false, "reason" to "location_permission_required"))
-            return
-        }
-        if (TelemetryConfigStore(this).read() == null) {
-            result.success(mapOf("started" to false, "reason" to "native_telemetry_not_configured"))
-            return
-        }
-        startTelemetryService(result)
-    }
-
-    private fun startTelemetryService(result: MethodChannel.Result) {
-        try {
-            ContextCompat.startForegroundService(this, Intent(this, ChildTelemetryService::class.java))
+            val serviceIntent = Intent(this, ChildTelemetryService::class.java)
+            ContextCompat.startForegroundService(this, serviceIntent)
             result.success(mapOf("started" to true, "reason" to "started"))
         } catch (_: Exception) {
             result.success(mapOf("started" to false, "reason" to "native_telemetry_start_failed"))
@@ -194,7 +114,7 @@ class MainActivity : FlutterActivity() {
 
     private fun stopTelemetry(result: MethodChannel.Result) {
         val stopped = stopService(Intent(this, ChildTelemetryService::class.java))
-        result.success(mapOf("stopped" to (stopped || !ChildTelemetryService.isRunning)))
+        result.success(mapOf("stopped" to stopped || !ChildTelemetryService.isRunning))
     }
 
     private fun telemetryStatus(result: MethodChannel.Result) {
@@ -232,22 +152,6 @@ class MainActivity : FlutterActivity() {
     private fun validUuid(value: String?): Boolean =
         value != null && Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$").matches(value)
 
-    @Deprecated("Deprecated in AndroidX Activity")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode != REQUEST_PAIRING_SCAN) return
-        val result = pendingPairingScanResult ?: return
-        pendingPairingScanResult = null
-        val pairingCode = if (resultCode == RESULT_OK) {
-            data?.getStringExtra(PairingCodeScannerActivity.EXTRA_PAIRING_CODE)
-                ?.trim()
-                ?.takeIf { PAIRING_CODE_PATTERN.matches(it) }
-        } else {
-            null
-        }
-        result.success(mapOf("pairingCode" to pairingCode))
-    }
-
     override fun getInitialRoute(): String? {
         val fromIntent = intent?.getStringExtra(EXTRA_FLUTTER_ROUTE)?.trim()
         if (!fromIntent.isNullOrEmpty()) {
@@ -265,8 +169,6 @@ class MainActivity : FlutterActivity() {
         private const val TELEMETRY_CHANNEL = "com.familyos.family_os/native_child_telemetry"
         private const val REQUEST_FOREGROUND_LOCATION = 8101
         private const val REQUEST_BACKGROUND_LOCATION = 8102
-        private const val REQUEST_PAIRING_SCAN = 8103
-        private val PAIRING_CODE_PATTERN = Regex("^[A-Za-z0-9_-]{32,128}$")
         const val EXTRA_FLUTTER_ROUTE = "flutter_route"
         const val EXTRA_FLUTTER_AUDIT = "flutter_audit"
     }
