@@ -79,7 +79,7 @@ export function createApp({
     });
 
     const protectedApiRateLimit = rateLimit({
-        windowMs: protectedRateLimit.windowMs ?? 60 _000,
+        windowMs: protectedRateLimit.windowMs ?? 60_000,
         limit: protectedRateLimit.limit ?? 120,
         standardHeaders: 'draft-7',
         legacyHeaders: false,
@@ -99,7 +99,7 @@ export function createApp({
     // It uses Express's direct peer address rather than a client-supplied forwarding
     // header; the stricter subject limit below protects verified principals.
     app.use('/v1', rateLimit({
-        windowMs: preAuthenticationRateLimit.windowMs ?? ,
+        windowMs: preAuthenticationRateLimit.windowMs ?? 60_000,
         limit: preAuthenticationRateLimit.limit ?? 600,
         standardHeaders: 'draft-7',
         legacyHeaders: false,
@@ -445,7 +445,7 @@ export function createApp({
     });
 
     app.use((error, request, response, _next) => {
-        const normalized = error ? .type === 'entity.parse.failed' ?
+        const normalized = error?.type === 'entity.parse.failed' ?
             new HttpError(400, 'invalid_json', 'Request body must contain valid JSON.') :
             asHttpError(error);
         const expectedUnavailableState = new Set([
