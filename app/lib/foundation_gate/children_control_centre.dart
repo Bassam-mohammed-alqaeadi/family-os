@@ -543,6 +543,7 @@ class _CentreActions extends StatelessWidget {
       children: [
         if (onCreateChild != null)
           FilledButton.icon(
+            key: const Key('foundation_gate_add_child_profile'),
             onPressed: isCreatingChild
                 ? null
                 : () => unawaited(_showCreateChildProfileSheet(context, onCreateChild!)),

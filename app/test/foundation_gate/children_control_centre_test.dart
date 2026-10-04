@@ -91,7 +91,7 @@ void main() {
       ),
     );
 
-    final addChild = find.text('Add child profile');
+    final addChild = find.byKey(const Key('foundation_gate_add_child_profile'));
     await tester.ensureVisible(addChild);
     await tester.tap(addChild);
     await tester.pumpAndSettle();
