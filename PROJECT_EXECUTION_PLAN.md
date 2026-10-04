@@ -21,9 +21,9 @@ Prototype promise
 
 The prototype is not disposable mock UI. Its valuable journeys and controls are the UX target; mock data and placeholder actions are replaced by real, authorized engines.
 
-## Current decision point
+## Current active system
 
-The programme is selecting the first active system. The recommended candidate is **Family Entry & Children Control**, documented in [`docs/CURRENT_EXECUTION_PLAN.md`](docs/CURRENT_EXECUTION_PLAN.md) and analysed in [`docs/foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md`](docs/foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md).
+**Family Entry & Children Control** is the first active system. It is in the Cover stage, documented in [`docs/real_platform/02_FAMILY_ENTRY_AND_CHILDREN_CONTROL_COVER_SPECIFICATION.md`](docs/real_platform/02_FAMILY_ENTRY_AND_CHILDREN_CONTROL_COVER_SPECIFICATION.md), with its prototype-to-real audit in [`docs/foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md`](docs/foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md).
 
 ## Guards that remain true
 

@@ -1,6 +1,6 @@
 # Children Control Centre — Real + Refined Vertical Slice
 
-> **Status:** Candidate-system contract for Family Entry & Children Control — 2026-10-04. The Global Super-App plan in [`../CURRENT_EXECUTION_PLAN.md`](../CURRENT_EXECUTION_PLAN.md) must select this system before new migration work begins.
+> **Status:** Supporting contract for the active Family Entry & Children Control system — 2026-10-04. The current Cover specification is [`02_FAMILY_ENTRY_AND_CHILDREN_CONTROL_COVER_SPECIFICATION.md`](02_FAMILY_ENTRY_AND_CHILDREN_CONTROL_COVER_SPECIFICATION.md); no implementation migration begins until the relevant capability is admitted.
 >
 > **Screen:** `SCR-FAT-012` — Children list / parent Kids control centre.
 >

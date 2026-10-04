@@ -1,10 +1,10 @@
 # Children Control Centre — Prototype-to-Real Product Parity Audit
 
-> **Status:** Decision-ready product/UX audit — 2026-10-04.
+> **Status:** Compare/Gaps complete for the active Family Entry & Children Control system — 2026-10-04.
 >
-> **Purpose:** Turn the existing prototype's visible user experience into a sequence of truthful, real capabilities. This is **not** an authorization to add a Flutter mutation, migrate the default application, connect device/policy/location data, or make a market/release claim.
+> **Purpose:** Turn the existing prototype's visible user experience into a sequence of truthful, real capabilities. It is the completed Compare input to the active Cover specification; it does not itself make a high-risk mutation, device/policy/location, provider or release claim real.
 >
-> **Authority:** [`19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md`](19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md), [`20_CHILDREN_CONTROL_CENTRE_REFINEMENT_EXECUTION.md`](20_CHILDREN_CONTROL_CENTRE_REFINEMENT_EXECUTION.md), [`../real_platform/01_CHILDREN_CONTROL_CENTRE_SLICE.md`](../real_platform/01_CHILDREN_CONTROL_CENTRE_SLICE.md), and the binding [`../product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md`](../product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md).
+> **Authority:** [`../../AGENTS.md`](../../AGENTS.md), [`../CURRENT_EXECUTION_PLAN.md`](../CURRENT_EXECUTION_PLAN.md), [`../real_platform/01_CHILDREN_CONTROL_CENTRE_SLICE.md`](../real_platform/01_CHILDREN_CONTROL_CENTRE_SLICE.md), and the binding [`../product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md`](../product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md). The narrow plans 19 and 20 remain technical Foundation evidence, not the Global Super-App scope ceiling.
 
 ## 1. Executive verdict
 
@@ -100,9 +100,9 @@ The completed roster-only increment proves only its own connected foundation. Un
 
 ## 6. Recommended product sequence
 
-The sequence below follows the large-product-team pattern: validate the user job and interaction model, authorize one capability boundary, build the full vertical slice across design/backend/mobile/security/QA, then measure it before the next capability.
+The sequence below follows the Global Super-App, large-product-team pattern: select one system, validate the user job and interaction model, cover its UX gaps, build each real capability across design/Node.js-Express/PostgreSQL/mobile/Native-where-needed/security/QA, then lock the system before the next one.
 
-### Step 0 — Complete this parity audit and the visual/interaction specification
+### Step 0 — Compare complete; Cover specification active
 
 - Treat the prototype as a research/reference input, tagging every visible value and action as `real now`, `local/demo`, `needs contract`, or `out of scope`.
 - Produce state maps and responsive AR/EN designs for primary guardian, co-guardian and child—not one parent screen with hidden buttons.
@@ -111,7 +111,7 @@ The sequence below follows the large-product-team pattern: validate the user job
 
 ### Step 1 — Authorize one bounded child-profile lifecycle slice
 
-The most natural candidate is a **primary-guardian create-child-profile** flow because a narrow server contract already exists. It still requires a separate authorization decision; the current Flutter roster scope is read-only.
+The recommended first real capability for the selected Family Entry & Children Control system is a **primary-guardian create-child-profile** flow because a narrow Node.js/Express server contract already exists. It still requires Cover exit and a mutation/security decision; the earlier read-only Flutter roster scope is technical history, not the product destination.
 
 A complete slice would include:
 
@@ -168,7 +168,7 @@ A capability reaches parity with the prototype only when the user can find and c
 
 ## 9. Immediate conclusion
 
-The next work is **not** to attach more server endpoints to the present roster layout. It is to use this audit to create the target Children Control Centre interaction/state specification, then seek one intentional capability authorization and deliver that capability as a fully refined real vertical slice.
+The next work is **not** to attach more server endpoints to the present roster layout. It is to use this completed Compare input in the active Cover review, then admit one intentional capability and deliver it as a fully refined real vertical slice.
 
 Until then, the correct current label is:
 

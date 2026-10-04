@@ -19,8 +19,9 @@ Read these in order before significant work:
 
 | Path | Purpose | Status |
 |---|---|---|
-| [`CURRENT_EXECUTION_PLAN.md`](CURRENT_EXECUTION_PLAN.md) | The single live execution plan | System selection pending; Family Entry & Children Control is the recommended first system. |
-| [`foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md`](foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md) | Prototype-to-real capability, UX and state audit for the recommended first system | Compare/Gaps complete; Cover specification awaits system selection. |
+| [`CURRENT_EXECUTION_PLAN.md`](CURRENT_EXECUTION_PLAN.md) | The single live execution plan | Family Entry & Children Control is the active first system; Cover is in progress. |
+| [`real_platform/02_FAMILY_ENTRY_AND_CHILDREN_CONTROL_COVER_SPECIFICATION.md`](real_platform/02_FAMILY_ENTRY_AND_CHILDREN_CONTROL_COVER_SPECIFICATION.md) | Active Family Entry & Children Control system: Cover-stage experience and contract specification | Cross-discipline review and first-capability admission are next. |
+| [`foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md`](foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md) | Prototype-to-real capability, UX and state audit for the active first system | Completed Compare/Gaps input to the Cover specification. |
 | [`REAL_PLATFORM_TRANSFORMATION_RECORD.md`](REAL_PLATFORM_TRANSFORMATION_RECORD.md) | Real platform vision, shared foundations and system sequencing | Active strategic record. |
 | [`product_refinement_v2/`](product_refinement_v2/) | Product principles, truth policy, system contracts and decision history | Active product authority; Foundation Wave material is retained as historical technical evidence. |
 | [`foundation/`](foundation/) | Node.js/Express/PostgreSQL Foundation contracts, controlled staging and narrow roster evidence | Reusable technical foundation; not the Global Super-App scope ceiling. |
