@@ -109,7 +109,7 @@ export function createApp({
             next(new HttpError(429, 'rate_limit_exceeded', 'Too many API requests. Try again later.'));
         },
     }));
-    ن
+
     app.get('/health/live', (_request, response) => {
         response.status(200).json({ status: 'live' });
     });
@@ -445,7 +445,7 @@ export function createApp({
     });
 
     app.use((error, request, response, _next) => {
-        const normalized = error?.type === 'entity.parse.failed' ?
+        const normalized = error ?.type === 'entity.parse.failed' ?
             new HttpError(400, 'invalid_json', 'Request body must contain valid JSON.') :
             asHttpError(error);
         const expectedUnavailableState = new Set([
