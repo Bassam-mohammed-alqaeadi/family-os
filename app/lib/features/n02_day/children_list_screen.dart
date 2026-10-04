@@ -28,6 +28,7 @@ import 'package:family_os/features/n01_linking/add_child_screen.dart';
 import 'package:family_os/features/n02_day/children_list_local_repository.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
+import 'package:family_os/foundation_gate/main_app_foundation_runtime.dart';
 
 /// Widget keys for SCR-FAT-012 acceptance.
 abstract final class ChildrenListKeys {
@@ -46,6 +47,7 @@ abstract final class ChildrenListKeys {
     'children_list_shared_enforce_honesty',
   );
   static const localOnlyBanner = Key('children_list_local_only_banner');
+  static const developerInjectTelemetry = Key('children_list_developer_inject_telemetry');
 
   static Key profileRepair(String id) => Key('children_list_profile_repair_$id');
 
@@ -327,6 +329,35 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
       return;
     }
     context.push('/scr-fat-013?childId=${Uri.encodeComponent(childId)}');
+  }
+
+  bool get _showsDeveloperTelemetryInjector {
+    if (!kDeveloperTelemetrySimulationEnabled || !_usesRuntimeSources) return false;
+    final identity = AppScope.maybeOf(context)?.identity.value;
+    return identity?.isRemoteAuthoritative == true && identity?.isPrimaryOwner == true;
+  }
+
+  Future<void> _injectDeveloperTelemetry(FamilyRosterChild child) async {
+    final familyId = _loadedFamilyId;
+    final source = widget.deviceSource ?? AppScope.maybeOf(context)?.devices;
+    if (familyId == null || source is! RemoteFamilyDeviceSource) return;
+    final succeeded = await source.injectDeveloperTelemetry(
+      familyId: familyId,
+      childId: child.childId,
+    );
+    if (!mounted) return;
+    if (succeeded) {
+      AppToast.show(
+        context,
+        message: 'Developer simulation sent: 78% at Soccer Practice. Not child-device telemetry.',
+      );
+      await _load();
+    } else {
+      AppToast.show(
+        context,
+        message: 'Developer telemetry simulation could not be sent.',
+      );
+    }
   }
 
   Future<void> _deleteChild(String childId) async {
@@ -749,6 +780,12 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
+                if (_showsDeveloperTelemetryInjector && _runtimeRoster.isNotEmpty) ...[
+                  _DeveloperTelemetryInjector(
+                    onPressed: () => _injectDeveloperTelemetry(_runtimeRoster.first),
+                  ),
+                  const SizedBox(height: 10),
+                ],
                 Semantics(
                   container: true,
                   label: l10n.childrenListListSemantics,
@@ -908,6 +945,50 @@ class _SharedPolicyRow extends StatelessWidget {
   }
 }
 
+class _DeveloperTelemetryInjector extends StatelessWidget {
+  const _DeveloperTelemetryInjector({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<FamilyColors>()!;
+    final radii = Theme.of(context).extension<FamilyRadii>()!;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.amber100,
+        borderRadius: BorderRadius.circular(radii.card),
+        border: Border.all(color: colors.amber),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Row(
+          children: [
+            Icon(Icons.developer_mode_outlined, color: colors.ink),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                'Developer simulation — sends 78% / Soccer Practice through the API. Not a child device.',
+                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, height: 1.35),
+              ),
+            ),
+            const SizedBox(width: 8),
+            TextButton(
+              key: ChildrenListKeys.developerInjectTelemetry,
+              onPressed: onPressed,
+              child: const Text(
+                'Developer: Inject Telemetry',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _RuntimeChildRosterCard extends StatelessWidget {
   const _RuntimeChildRosterCard({
     required this.child,
@@ -926,18 +1007,19 @@ class _RuntimeChildRosterCard extends StatelessWidget {
     final radii = Theme.of(context).extension<FamilyRadii>()!;
     final name = child.displayName!;
     final age = l10n.addChildAgeYears(formatAppInt(child.ageYears!));
-    final deviceLabel = _deviceLabel(l10n, device);
-    final deviceVariant = switch (device?.connectionState) {
-      ChildDeviceConnectionState.active => TagVariant.g,
-      ChildDeviceConnectionState.needsAttention => TagVariant.a,
-      ChildDeviceConnectionState.pairing => TagVariant.b,
-      ChildDeviceConnectionState.noDevice => TagVariant.b,
-      ChildDeviceConnectionState.unavailable || null => TagVariant.b,
-    };
+    final deviceStateLabel = _deviceStateLabel(l10n, device);
+    final healthLabel = _healthLabel(l10n, device);
+    final locationLabel = device?.locationLabel ?? l10n.childrenListDeviceStateUnavailable;
+    final batteryLabel = _batteryLabel(l10n, device);
+    final deviceVariant = _deviceVariant(device);
 
     return Semantics(
       button: true,
-      label: l10n.childrenListRuntimeRowSemantics(name, age, deviceLabel),
+      label: l10n.childrenListRuntimeRowSemantics(
+        name,
+        age,
+        '$locationLabel; $batteryLabel; $healthLabel',
+      ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -975,24 +1057,26 @@ class _RuntimeChildRosterCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 2),
-                        // The layout deliberately remains present before any
-                        // telemetry source exists. These are availability
-                        // states, never invented location or battery values.
                         _runtimeMetaLine(
                           icon: Icons.location_on_outlined,
-                          label: l10n.childrenListDeviceStateUnavailable,
+                          label: locationLabel,
+                          colors: colors,
+                        ),
+                        _runtimeMetaLine(
+                          icon: _batteryIcon(device),
+                          label: batteryLabel,
                           colors: colors,
                         ),
                         _runtimeMetaLine(
                           icon: Icons.devices_other_outlined,
-                          label: deviceLabel,
+                          label: '${device?.deviceLabel ?? deviceStateLabel} · $deviceStateLabel',
                           colors: colors,
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Tag(label: deviceLabel, variant: deviceVariant),
+                  Tag(label: healthLabel, variant: deviceVariant),
                 ],
               ),
             ),
@@ -1011,20 +1095,45 @@ class _RuntimeChildRosterCard extends StatelessWidget {
     _ => colors.p500,
   };
 
-  String _deviceLabel(
-    AppLocalizations l10n,
-    FamilyChildDeviceSummary? device,
-  ) {
+  TagVariant _deviceVariant(FamilyChildDeviceSummary? device) => switch (device?.connectionState) {
+    ChildDeviceConnectionState.active => TagVariant.g,
+    ChildDeviceConnectionState.needsAttention => TagVariant.a,
+    ChildDeviceConnectionState.pairing => TagVariant.b,
+    ChildDeviceConnectionState.noDevice => TagVariant.b,
+    ChildDeviceConnectionState.unavailable || null => TagVariant.b,
+  };
+
+  String _deviceStateLabel(AppLocalizations l10n, FamilyChildDeviceSummary? device) {
     if (device == null) return l10n.childrenListDeviceStateUnavailable;
     return switch (device.connectionState) {
-      ChildDeviceConnectionState.unavailable =>
-        l10n.childrenListDeviceStateUnavailable,
+      ChildDeviceConnectionState.unavailable => l10n.childrenListDeviceStateUnavailable,
       ChildDeviceConnectionState.noDevice => l10n.childrenListDeviceNotLinked,
       ChildDeviceConnectionState.pairing => l10n.childrenListDevicePairing,
       ChildDeviceConnectionState.active => l10n.childrenListDeviceActive,
-      ChildDeviceConnectionState.needsAttention =>
-        l10n.childrenListDeviceNeedsAttention,
+      ChildDeviceConnectionState.needsAttention => l10n.childrenListDeviceNeedsAttention,
     };
+  }
+
+  String _batteryLabel(AppLocalizations l10n, FamilyChildDeviceSummary? device) {
+    final level = device?.batteryLevel;
+    if (level == null) return l10n.childrenListDeviceStateUnavailable;
+    final status = device?.batteryStatus == 'charging' ? 'charging' : 'unplugged';
+    return '$level% · $status';
+  }
+
+  String _healthLabel(AppLocalizations l10n, FamilyChildDeviceSummary? device) {
+    if (device == null || !device.hasTelemetry) return _deviceStateLabel(l10n, device);
+    if (device.connectionState == ChildDeviceConnectionState.needsAttention) return 'Battery low';
+    if (device.batteryStatus == 'charging') return 'Charging';
+    return 'Healthy';
+  }
+
+  IconData _batteryIcon(FamilyChildDeviceSummary? device) {
+    if (device?.batteryLevel == null) return Icons.battery_unknown_outlined;
+    if (device?.batteryStatus == 'charging') return Icons.battery_charging_full;
+    if (device!.batteryLevel! <= 15) return Icons.battery_alert_outlined;
+    if (device.batteryLevel! <= 45) return Icons.battery_3_bar_outlined;
+    return Icons.battery_full_outlined;
   }
 }
 

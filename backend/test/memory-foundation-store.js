@@ -23,6 +23,7 @@ export class MemoryFoundationStore {
     this.memberships = new Map();
     this.guardianTransfers = new Map();
     this.children = new Map();
+    this.devices = new Map();
     this.audit = [];
     this.outbox = [];
     this.idempotency = new Map();
@@ -102,6 +103,22 @@ export class MemoryFoundationStore {
       version: child.version,
       createdAt: child.createdAt,
       updatedAt: child.updatedAt,
+    };
+  }
+
+  familyDeviceView(device) {
+    return {
+      id: device.id,
+      childId: device.childId,
+      deviceLabel: device.deviceLabel,
+      batteryLevel: device.batteryLevel,
+      batteryStatus: device.batteryStatus,
+      locationLat: device.locationLat,
+      locationLng: device.locationLng,
+      locationLabel: device.locationLabel,
+      lastSeenAt: device.lastSeenAt,
+      linkedAt: device.linkedAt,
+      version: device.version,
     };
   }
 
@@ -241,6 +258,90 @@ export class MemoryFoundationStore {
       this.recordAudit(familyId, actor.id, correlationId, 'family.child_created', 'family_child', child.id);
       return { child: this.familyChildView(child) };
     });
+  }
+
+  async listFamilyDevices({ principal, familyId }) {
+    const actor = this.activeMembership(familyId, principal.subject);
+    if (!['primary_guardian', 'co_guardian'].includes(actor.role)) {
+      throw new HttpError(
+        403,
+        'device_telemetry_access_denied',
+        'Only guardian memberships can access family device telemetry.',
+      );
+    }
+    return {
+      devices: [...this.devices.values()]
+        .filter((device) => device.familyId === familyId)
+        .sort((left, right) => {
+          const childOrder = left.childId.localeCompare(right.childId);
+          if (childOrder) return childOrder;
+          const seenOrder = (right.lastSeenAt ?? '').localeCompare(left.lastSeenAt ?? '');
+          return seenOrder || left.linkedAt.localeCompare(right.linkedAt) || left.id.localeCompare(right.id);
+        })
+        .map((device) => this.familyDeviceView(device)),
+    };
+  }
+
+  async registerFamilyChildDevice({
+    principal,
+    familyId,
+    childId,
+    deviceLabel,
+    idempotencyKey,
+    requestHash,
+    correlationId,
+  }) {
+    const actor = this.activeMembership(familyId, principal.subject, true);
+    return this.idempotent(`family-child-device:register:${familyId}:${childId}`, idempotencyKey, requestHash, () => {
+      const child = this.children.get(childId);
+      if (!child || child.familyId !== familyId) {
+        throw new HttpError(404, 'family_child_not_found', 'Child profile was not found in this family.');
+      }
+      const now = this.now().toISOString();
+      const device = {
+        id: randomUUID(),
+        familyId,
+        childId,
+        deviceLabel,
+        batteryLevel: null,
+        batteryStatus: null,
+        locationLat: null,
+        locationLng: null,
+        locationLabel: null,
+        lastSeenAt: null,
+        linkedAt: now,
+        version: 1,
+      };
+      this.devices.set(device.id, device);
+      this.recordAudit(familyId, actor.id, correlationId, 'family.child_device_linked', 'family_child_device', device.id);
+      return { device: this.familyDeviceView(device) };
+    });
+  }
+
+  async ingestDeviceTelemetry({
+    principal,
+    deviceId,
+    batteryLevel,
+    batteryStatus,
+    locationLat,
+    locationLng,
+    locationLabel,
+    correlationId,
+  }) {
+    const device = this.devices.get(deviceId);
+    if (!device) {
+      throw new HttpError(404, 'device_not_found', 'Linked device was not found.');
+    }
+    const actor = this.activeMembership(device.familyId, principal.subject, true);
+    device.batteryLevel = batteryLevel;
+    device.batteryStatus = batteryStatus;
+    device.locationLat = locationLat;
+    device.locationLng = locationLng;
+    device.locationLabel = locationLabel;
+    device.lastSeenAt = this.now().toISOString();
+    device.version += 1;
+    this.recordAudit(device.familyId, actor.id, correlationId, 'family.device_telemetry_received', 'family_child_device', device.id);
+    return { device: this.familyDeviceView(device) };
   }
 
   async createMembershipInvitation({ principal, familyId, role, targetSubject, idempotencyKey, requestHash, correlationId }) {

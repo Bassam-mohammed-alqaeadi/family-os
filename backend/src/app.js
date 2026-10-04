@@ -5,6 +5,8 @@ import { asHttpError, HttpError } from './http-error.js';
 import {
   createChildInput,
   createFamilyInput,
+  deviceTelemetryInput,
+  registerFamilyChildDeviceInput,
   createGuardianTransferInput,
   createMembershipInput,
   revokeMembershipInput,
@@ -203,6 +205,66 @@ export function createApp({
         }),
       });
       response.status(201).json(result);
+    }),
+  );
+
+  app.get(
+    '/v1/families/:familyId/devices',
+    requirePrincipal,
+    protectedApiRateLimit,
+    requireRuntimeReady,
+    asyncRoute(async (request, response) => {
+      const familyId = requireUuid(request.params.familyId, 'familyId');
+      requireNoQueryParameters(request.query);
+      response.status(200).json(await store.listFamilyDevices({
+        principal: request.principal,
+        familyId,
+      }));
+    }),
+  );
+
+  app.post(
+    '/v1/families/:familyId/children/:childId/devices',
+    requirePrincipal,
+    protectedApiRateLimit,
+    requireRuntimeReady,
+    asyncRoute(async (request, response) => {
+      const familyId = requireUuid(request.params.familyId, 'familyId');
+      const childId = requireUuid(request.params.childId, 'childId');
+      const input = registerFamilyChildDeviceInput(request.body);
+      const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+      const result = await store.registerFamilyChildDevice({
+        principal: request.principal,
+        familyId,
+        childId,
+        ...input,
+        idempotencyKey,
+        correlationId: request.correlationId,
+        requestHash: requestFingerprint({
+          action: 'family_child_device.register',
+          principal: request.principal,
+          input: { familyId, childId, ...input },
+        }),
+      });
+      response.status(201).json(result);
+    }),
+  );
+
+  app.post(
+    '/v1/devices/:deviceId/telemetry',
+    requirePrincipal,
+    protectedApiRateLimit,
+    requireRuntimeReady,
+    asyncRoute(async (request, response) => {
+      const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+      const input = deviceTelemetryInput(request.body);
+      const result = await store.ingestDeviceTelemetry({
+        principal: request.principal,
+        deviceId,
+        ...input,
+        correlationId: request.correlationId,
+      });
+      response.status(200).json(result);
     }),
   );
 

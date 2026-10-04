@@ -5,10 +5,12 @@ import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/runtime/family_child_profile_source.dart';
+import 'package:family_os/core/runtime/family_device_source.dart';
 import 'package:family_os/core/runtime/family_roster_source.dart';
 import 'package:family_os/core/runtime/identity_source.dart';
 import 'package:family_os/core/runtime/runtime_data_origin.dart';
 
+import 'family_device_api_client.dart';
 import 'foundation_gate_identity.dart';
 import 'foundation_gate_models.dart';
 import 'foundation_gate_session_controller.dart';
@@ -23,23 +25,29 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   MainAppFoundationRuntime({
     required FoundationGateSessionController controller,
     required FoundationGateIdentity identity,
+    required FamilyDeviceApiClient deviceApi,
     String? preferredFamilyId,
   }) : _controller = controller,
        _identity = identity,
+       _deviceApi = deviceApi,
        _preferredFamilyId = preferredFamilyId?.trim(),
        _identityValue = const IdentitySnapshot.unavailable(),
-       _rosterValue = const FamilyRosterSnapshot.unavailable() {
+       _rosterValue = const FamilyRosterSnapshot.unavailable(),
+       _deviceValue = const FamilyDeviceSnapshot.unavailable() {
     _controller.addListener(_synchronizeControllerState);
   }
 
   final FoundationGateSessionController _controller;
   final FoundationGateIdentity _identity;
+  final FamilyDeviceApiClient _deviceApi;
   final String? _preferredFamilyId;
   IdentitySnapshot _identityValue;
   FamilyRosterSnapshot _rosterValue;
+  FamilyDeviceSnapshot _deviceValue;
 
   IdentitySnapshot get identityValue => _identityValue;
   FamilyRosterSnapshot get rosterValue => _rosterValue;
+  FamilyDeviceSnapshot get deviceValue => _deviceValue;
   FoundationGatePhase get phase => _controller.phase;
 
   Future<IdentitySnapshot> signIn({
@@ -55,6 +63,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     await _controller.signOut();
     _identityValue = const IdentitySnapshot.unavailable();
     _rosterValue = const FamilyRosterSnapshot.unavailable();
+    _deviceValue = const FamilyDeviceSnapshot.unavailable();
     notifyListeners();
   }
 
@@ -131,6 +140,123 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     }
 
     return _publishCurrentRemoteRoster(familyId);
+  }
+
+  /// Loads the family-scoped latest device facts from the Node/Express API.
+  /// It never falls back to the local demo/device registry.
+  Future<FamilyDeviceSnapshot> loadDevices(FamilyId familyId) async {
+    await refreshIdentity();
+    final selected = _controller.selectedFamily;
+    if (!_identityValue.isRemoteAuthoritative || selected == null || selected.id != familyId.value) {
+      return _publishDevices(const FamilyDeviceSnapshot.unavailable());
+    }
+    try {
+      final devices = await _deviceApi.list(
+        familyId: familyId.value,
+        idToken: await _identity.currentIdToken(),
+      );
+      final byChild = <String, List<FoundationGateFamilyDevice>>{};
+      for (final device in devices) {
+        (byChild[device.childId] ??= []).add(device);
+      }
+      final children = byChild.entries.map((entry) {
+        final candidates = entry.value
+          ..sort((left, right) {
+            final leftTime = left.lastSeenAt ?? left.linkedAt;
+            final rightTime = right.lastSeenAt ?? right.linkedAt;
+            return rightTime.compareTo(leftTime);
+          });
+        final latest = candidates.first;
+        return FamilyChildDeviceSummary(
+          childId: ChildId(entry.key),
+          connectionState: _connectionStateOf(latest),
+          deviceCount: candidates.length,
+          deviceLabel: latest.deviceLabel,
+          batteryLevel: latest.batteryLevel,
+          batteryStatus: latest.batteryStatus,
+          locationLabel: latest.locationLabel,
+          lastSeenAt: latest.lastSeenAt,
+        );
+      }).toList(growable: false)
+        ..sort((left, right) => left.childId.value.compareTo(right.childId.value));
+      return _publishDevices(FamilyDeviceSnapshot(
+        familyId: familyId,
+        origin: RuntimeDataOrigin.remoteAuthoritative,
+        children: List.unmodifiable(children),
+        observedAt: DateTime.now().toUtc(),
+      ));
+    } on FoundationGateIdentityException {
+      return _publishDevices(const FamilyDeviceSnapshot.unavailable());
+    } on FoundationGateApiException {
+      return _publishDevices(const FamilyDeviceSnapshot.unavailable());
+    }
+  }
+
+  /// Developer-only integration seam: creates a clearly labelled simulated
+  /// linked device when needed, then sends 78% / Soccer Practice through the
+  /// same server routes used by the UI reader. This is not child device data.
+  Future<bool> injectDeveloperTelemetry({
+    required FamilyId familyId,
+    required ChildId childId,
+  }) async {
+    if (!kDeveloperTelemetrySimulationEnabled) return false;
+    await refreshIdentity();
+    final selected = _controller.selectedFamily;
+    if (!_identityValue.isRemoteAuthoritative ||
+        !_identityValue.isPrimaryOwner ||
+        selected == null ||
+        selected.id != familyId.value) {
+      return false;
+    }
+    try {
+      final idToken = await _identity.currentIdToken();
+      final existing = await _deviceApi.list(familyId: familyId.value, idToken: idToken);
+      const deviceLabel = 'Developer simulation — not a child device';
+      FoundationGateFamilyDevice device;
+      final matching = existing.where(
+        (candidate) => candidate.childId == childId.value && candidate.deviceLabel == deviceLabel,
+      );
+      if (matching.isEmpty) {
+        device = await _deviceApi.register(
+          familyId: familyId.value,
+          childId: childId.value,
+          deviceLabel: deviceLabel,
+          idempotencyKey: newFoundationGateIdempotencyKey(),
+          idToken: idToken,
+        );
+      } else {
+        device = matching.first;
+      }
+      await _deviceApi.ingestTelemetry(
+        deviceId: device.id,
+        batteryLevel: 78,
+        batteryStatus: 'unplugged',
+        locationLat: 38.8646,
+        locationLng: -77.2749,
+        locationLabel: 'Soccer Practice',
+        idToken: idToken,
+      );
+      await loadDevices(familyId);
+      return true;
+    } on FoundationGateIdentityException {
+      return false;
+    } on FoundationGateApiException {
+      return false;
+    }
+  }
+
+  ChildDeviceConnectionState _connectionStateOf(FoundationGateFamilyDevice device) {
+    if (device.lastSeenAt == null) return ChildDeviceConnectionState.pairing;
+    if (device.batteryLevel != null && device.batteryLevel! <= 15) {
+      return ChildDeviceConnectionState.needsAttention;
+    }
+    return ChildDeviceConnectionState.active;
+  }
+
+  FamilyDeviceSnapshot _publishDevices(FamilyDeviceSnapshot value) {
+    _deviceValue = value;
+    notifyListeners();
+    return value;
   }
 
   Future<FamilyChildProfileCreateResult> createChild({
@@ -285,6 +411,38 @@ final class RemoteFamilyRosterSource extends ChangeNotifier
     super.dispose();
   }
 }
+
+final class RemoteFamilyDeviceSource extends ChangeNotifier
+    implements FamilyDeviceSource {
+  RemoteFamilyDeviceSource(this._runtime) {
+    _runtime.addListener(notifyListeners);
+  }
+
+  final MainAppFoundationRuntime _runtime;
+
+  @override
+  FamilyDeviceSnapshot get value => _runtime.deviceValue;
+
+  @override
+  Future<FamilyDeviceSnapshot> load(FamilyId familyId) => _runtime.loadDevices(familyId);
+
+  Future<bool> injectDeveloperTelemetry({
+    required FamilyId familyId,
+    required ChildId childId,
+  }) => _runtime.injectDeveloperTelemetry(familyId: familyId, childId: childId);
+
+  @override
+  void dispose() {
+    _runtime.removeListener(notifyListeners);
+    super.dispose();
+  }
+}
+
+/// Explicit build-time guard for the temporary API integration seam.
+const bool kDeveloperTelemetrySimulationEnabled = bool.fromEnvironment(
+  'FAMILY_OS_ENABLE_DEVELOPER_TELEMETRY',
+  defaultValue: false,
+);
 
 final class RemoteFamilyChildProfileSource
     implements FamilyChildProfileSource {

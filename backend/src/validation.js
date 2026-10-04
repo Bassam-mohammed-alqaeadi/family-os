@@ -5,6 +5,9 @@ const MAX_SUBJECT_LENGTH = 255;
 const MAX_CHILD_AGE_YEARS = 25;
 const MAX_AVATAR_EMOJI_LENGTH = 32;
 const CHILD_THEME_COLORS = new Set(['purple', 'sky', 'amber', 'coral', 'mint', 'teal']);
+const BATTERY_STATUSES = new Set(['charging', 'unplugged']);
+const MAX_DEVICE_LABEL_LENGTH = 80;
+const MAX_LOCATION_LABEL_LENGTH = 160;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const INVITABLE_ROLES = new Set(['co_guardian', 'child']);
 
@@ -61,6 +64,42 @@ export function createChildInput(value) {
     ageYears,
     avatarEmoji,
     themeColor,
+  };
+}
+
+export function registerFamilyChildDeviceInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['deviceLabel']));
+  return {
+    deviceLabel: requiredText(body.deviceLabel, 'deviceLabel', { maxLength: MAX_DEVICE_LABEL_LENGTH }),
+  };
+}
+
+export function deviceTelemetryInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['batteryLevel', 'batteryStatus', 'locationLat', 'locationLng', 'locationLabel']));
+  const batteryLevel = body.batteryLevel;
+  if (!Number.isInteger(batteryLevel) || batteryLevel < 0 || batteryLevel > 100) {
+    throw new HttpError(400, 'invalid_request', 'batteryLevel must be an integer between 0 and 100.');
+  }
+  const batteryStatus = requiredText(body.batteryStatus, 'batteryStatus', { maxLength: 16 });
+  if (!BATTERY_STATUSES.has(batteryStatus)) {
+    throw new HttpError(400, 'invalid_request', 'batteryStatus must be charging or unplugged.');
+  }
+  const locationLat = body.locationLat;
+  const locationLng = body.locationLng;
+  if (!Number.isFinite(locationLat) || locationLat < -90 || locationLat > 90) {
+    throw new HttpError(400, 'invalid_request', 'locationLat must be between -90 and 90.');
+  }
+  if (!Number.isFinite(locationLng) || locationLng < -180 || locationLng > 180) {
+    throw new HttpError(400, 'invalid_request', 'locationLng must be between -180 and 180.');
+  }
+  return {
+    batteryLevel,
+    batteryStatus,
+    locationLat,
+    locationLng,
+    locationLabel: requiredText(body.locationLabel, 'locationLabel', { maxLength: MAX_LOCATION_LABEL_LENGTH }),
   };
 }
 

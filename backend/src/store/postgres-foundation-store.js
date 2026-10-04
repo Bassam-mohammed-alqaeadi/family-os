@@ -58,6 +58,22 @@ function familyChildView(row) {
   };
 }
 
+function familyDeviceView(row) {
+  return {
+    id: row.id,
+    childId: row.child_id,
+    deviceLabel: row.device_label,
+    batteryLevel: row.battery_level,
+    batteryStatus: row.battery_status,
+    locationLat: row.location_lat,
+    locationLng: row.location_lng,
+    locationLabel: row.location_label,
+    lastSeenAt: row.last_seen_at,
+    linkedAt: row.linked_at,
+    version: row.version,
+  };
+}
+
 function guardianTransferView(row) {
   return {
     id: row.id,
@@ -425,6 +441,135 @@ export class PostgresFoundationStore {
         result,
       );
       return result;
+    });
+  }
+
+  async listFamilyDevices({ principal, familyId }) {
+    return this.withTransaction(async (client) => {
+      const actor = await this.activeActorMembership(client, familyId, principal.subject);
+      if (!['primary_guardian', 'co_guardian'].includes(actor.role)) {
+        throw new HttpError(
+          403,
+          'device_telemetry_access_denied',
+          'Only guardian memberships can access family device telemetry.',
+        );
+      }
+      const devices = await client.query(
+        `SELECT id, child_id, device_label, battery_level, battery_status,
+                location_lat, location_lng, location_label, last_seen_at,
+                linked_at, version
+         FROM family_child_devices
+         WHERE family_id = $1
+         ORDER BY child_id ASC, last_seen_at DESC NULLS LAST, linked_at ASC, id ASC`,
+        [familyId],
+      );
+      return { devices: devices.rows.map(familyDeviceView) };
+    });
+  }
+
+  async registerFamilyChildDevice({
+    principal,
+    familyId,
+    childId,
+    deviceLabel,
+    idempotencyKey,
+    requestHash,
+    correlationId,
+  }) {
+    return this.withTransaction(async (client) => {
+      const actor = await this.activeActorMembership(client, familyId, principal.subject, { primaryGuardianOnly: true });
+      const response = await this.acquireIdempotencySlot(
+        client,
+        `family-child-device:register:${familyId}:${childId}`,
+        idempotencyKey,
+        requestHash,
+      );
+      if (response) return response;
+
+      // The scoped foreign key also enforces this at write time. This explicit
+      // check yields an intentional API result instead of a driver error.
+      const child = await client.query(
+        'SELECT id FROM family_children WHERE family_id = $1 AND id = $2',
+        [familyId, childId],
+      );
+      if (child.rowCount === 0) {
+        throw new HttpError(404, 'family_child_not_found', 'Child profile was not found in this family.');
+      }
+
+      const device = await client.query(
+        `INSERT INTO family_child_devices (id, family_id, child_id, device_label)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id, child_id, device_label, battery_level, battery_status,
+                   location_lat, location_lng, location_label, last_seen_at,
+                   linked_at, version`,
+        [randomUUID(), familyId, childId, deviceLabel],
+      );
+      await this.appendAuditAndOutbox(client, {
+        familyId,
+        actorMembershipId: actor.id,
+        correlationId,
+        eventType: 'family.child_device_linked',
+        subjectType: 'family_child_device',
+        subjectId: device.rows[0].id,
+      });
+      const result = { device: familyDeviceView(device.rows[0]) };
+      await this.completeIdempotencySlot(
+        client,
+        `family-child-device:register:${familyId}:${childId}`,
+        idempotencyKey,
+        result,
+      );
+      return result;
+    });
+  }
+
+  async ingestDeviceTelemetry({
+    principal,
+    deviceId,
+    batteryLevel,
+    batteryStatus,
+    locationLat,
+    locationLng,
+    locationLabel,
+    correlationId,
+  }) {
+    return this.withTransaction(async (client) => {
+      // A device UUID is opaque, but it is still never enough to write telemetry:
+      // Phase 1 accepts only an active primary guardian until child-device
+      // credentials and attestation have a separately reviewed capability.
+      const located = await client.query(
+        'SELECT id, family_id FROM family_child_devices WHERE id = $1 FOR UPDATE',
+        [deviceId],
+      );
+      if (located.rowCount === 0) {
+        throw new HttpError(404, 'device_not_found', 'Linked device was not found.');
+      }
+      const familyId = located.rows[0].family_id;
+      const actor = await this.activeActorMembership(client, familyId, principal.subject, { primaryGuardianOnly: true });
+      const device = await client.query(
+        `UPDATE family_child_devices
+         SET battery_level = $2,
+             battery_status = $3,
+             location_lat = $4,
+             location_lng = $5,
+             location_label = $6,
+             last_seen_at = NOW(),
+             version = version + 1
+         WHERE id = $1
+         RETURNING id, child_id, device_label, battery_level, battery_status,
+                   location_lat, location_lng, location_label, last_seen_at,
+                   linked_at, version`,
+        [deviceId, batteryLevel, batteryStatus, locationLat, locationLng, locationLabel],
+      );
+      await this.appendAuditAndOutbox(client, {
+        familyId,
+        actorMembershipId: actor.id,
+        correlationId,
+        eventType: 'family.device_telemetry_received',
+        subjectType: 'family_child_device',
+        subjectId: deviceId,
+      });
+      return { device: familyDeviceView(device.rows[0]) };
     });
   }
 

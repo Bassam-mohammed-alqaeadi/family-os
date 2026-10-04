@@ -30,4 +30,25 @@ class FoundationGateConfiguration {
     }
     return stagingApiOrigin.replace(path: '/v1/families/$familyId/children');
   }
+
+  Uri familyDevicesUri(String familyId) {
+    if (!isFoundationGateUuid(familyId)) {
+      throw ArgumentError.value(familyId, 'familyId', 'A server-returned UUID family identifier is required.');
+    }
+    return stagingApiOrigin.replace(path: '/v1/families/$familyId/devices');
+  }
+
+  Uri familyChildDevicesUri(String familyId, String childId) {
+    if (!isFoundationGateUuid(familyId) || !isFoundationGateUuid(childId)) {
+      throw ArgumentError('Server-returned UUID family and child identifiers are required.');
+    }
+    return stagingApiOrigin.replace(path: '/v1/families/$familyId/children/$childId/devices');
+  }
+
+  Uri deviceTelemetryUri(String deviceId) {
+    if (!isFoundationGateUuid(deviceId)) {
+      throw ArgumentError.value(deviceId, 'deviceId', 'A server-returned UUID device identifier is required.');
+    }
+    return stagingApiOrigin.replace(path: '/v1/devices/$deviceId/telemetry');
+  }
 }

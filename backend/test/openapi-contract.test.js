@@ -18,6 +18,9 @@ const expectedOperations = {
   '/v1/families': ['post'],
   '/v1/families/{familyId}': ['get'],
   '/v1/families/{familyId}/children': ['get', 'post'],
+  '/v1/families/{familyId}/devices': ['get'],
+  '/v1/families/{familyId}/children/{childId}/devices': ['post'],
+  '/v1/devices/{deviceId}/telemetry': ['post'],
   '/v1/families/{familyId}/memberships': ['post'],
   '/v1/families/{familyId}/memberships/{membershipId}/accept': ['post'],
   '/v1/families/{familyId}/memberships/{membershipId}/revoke': ['post'],
@@ -51,7 +54,7 @@ test('every protected Foundation API operation declares OIDC security and mutati
         '#/components/responses/RateLimited',
         `${method.toUpperCase()} ${path} must declare protected rate limiting`,
       );
-      if (method === 'post') {
+      if (method === 'post' && path !== '/v1/devices/{deviceId}/telemetry') {
         assert.ok(
           operation.parameters.some((parameter) => parameter.$ref === '#/components/parameters/IdempotencyKey'),
           `${method.toUpperCase()} ${path} must require Idempotency-Key`,
@@ -101,4 +104,22 @@ test('children roster contract is guardian-scoped, explicit about its narrow tru
     ['purple', 'sky', 'amber', 'coral', 'mint', 'teal'],
   );
   assert.equal(specification.components.schemas.FamilyChild.properties.avatarEmoji.maxLength, 32);
+});
+
+
+test('device telemetry contract is guardian-scoped and distinguishes temporary ingestion from device credentials', async () => {
+  const specification = JSON.parse(await readFile(specificationPath, 'utf8'));
+  const register = specification.paths['/v1/families/{familyId}/children/{childId}/devices'].post;
+  const ingest = specification.paths['/v1/devices/{deviceId}/telemetry'].post;
+  const device = specification.components.schemas.FamilyDevice;
+
+  assert.match(register.description, /guardian-authorized/);
+  assert.match(ingest.description, /primary guardian/);
+  assert.deepEqual(specification.components.schemas.DeviceTelemetryRequest.required, [
+    'batteryLevel', 'batteryStatus', 'locationLat', 'locationLng', 'locationLabel',
+  ]);
+  assert.equal(specification.components.schemas.DeviceTelemetryRequest.additionalProperties, false);
+  assert.equal(device.properties.batteryLevel.maximum, 100);
+  assert.deepEqual(device.properties.batteryStatus.enum, ['charging', 'unplugged', null]);
+  assert.equal(device.properties.lastSeenAt.format, 'date-time');
 });

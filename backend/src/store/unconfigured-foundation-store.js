@@ -29,6 +29,26 @@ export class UnconfiguredFoundationStore {
     this.unavailable();
   }
 
+  async listFamilyChildren() {
+    this.unavailable();
+  }
+
+  async createFamilyChild() {
+    this.unavailable();
+  }
+
+  async listFamilyDevices() {
+    this.unavailable();
+  }
+
+  async registerFamilyChildDevice() {
+    this.unavailable();
+  }
+
+  async ingestDeviceTelemetry() {
+    this.unavailable();
+  }
+
   async createMembershipInvitation() {
     this.unavailable();
   }

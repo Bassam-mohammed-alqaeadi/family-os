@@ -4,6 +4,7 @@ import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/runtime/family_child_profile_source.dart';
 import 'package:family_os/core/runtime/identity_source.dart';
 import 'package:family_os/foundation_gate/children_roster_api_client.dart';
+import 'package:family_os/foundation_gate/family_device_api_client.dart';
 import 'package:family_os/foundation_gate/family_discovery_api_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_http.dart';
@@ -50,6 +51,12 @@ void main() {
         rosterApi: ChildrenRosterApiClient(
           configuration: configuration,
           transport: rosterTransport,
+        ),
+      ),
+      deviceApi: FamilyDeviceApiClient(
+        configuration: configuration,
+        transport: FakeTransport(
+          const FoundationGateHttpResponse(statusCode: 200, body: '{"devices":[]}'),
         ),
       ),
     );

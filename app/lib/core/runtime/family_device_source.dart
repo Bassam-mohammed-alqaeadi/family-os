@@ -22,11 +22,27 @@ final class FamilyChildDeviceSummary {
     required this.childId,
     required this.connectionState,
     required this.deviceCount,
+    this.deviceLabel,
+    this.batteryLevel,
+    this.batteryStatus,
+    this.locationLabel,
+    this.lastSeenAt,
   });
 
   final ChildId childId;
   final ChildDeviceConnectionState connectionState;
   final int deviceCount;
+
+  /// The selected latest device is shown only when the remote device endpoint
+  /// provided it. Null remains an honest "not reported" state.
+  final String? deviceLabel;
+  final int? batteryLevel;
+  final String? batteryStatus;
+  final String? locationLabel;
+  final DateTime? lastSeenAt;
+
+  bool get hasTelemetry =>
+      batteryLevel != null || locationLabel != null || lastSeenAt != null;
 }
 
 @immutable
