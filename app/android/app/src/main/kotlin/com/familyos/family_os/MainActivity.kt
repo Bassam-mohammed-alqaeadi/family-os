@@ -29,6 +29,7 @@ class MainActivity : FlutterActivity() {
                 when (call.method) {
                     "requestLocationPermissions" -> requestLocationPermissions(result)
                     "configureAndStart" -> configureAndStart(call, result)
+                    "startStored" -> startStoredTelemetry(result)
                     "stop" -> stopTelemetry(result)
                     "status" -> telemetryStatus(result)
                     else -> result.notImplemented()
@@ -104,8 +105,27 @@ class MainActivity : FlutterActivity() {
         }
         try {
             TelemetryConfigStore(this).write(TelemetryConfig(apiOrigin!!.trimEnd('/'), deviceId!!, credential))
-            val serviceIntent = Intent(this, ChildTelemetryService::class.java)
-            ContextCompat.startForegroundService(this, serviceIntent)
+            startTelemetryService(result)
+        } catch (_: Exception) {
+            result.success(mapOf("started" to false, "reason" to "native_telemetry_start_failed"))
+        }
+    }
+
+    private fun startStoredTelemetry(result: MethodChannel.Result) {
+        if (!hasFineLocation() || !hasBackgroundLocation()) {
+            result.success(mapOf("started" to false, "reason" to "location_permission_required"))
+            return
+        }
+        if (TelemetryConfigStore(this).read() == null) {
+            result.success(mapOf("started" to false, "reason" to "native_telemetry_not_configured"))
+            return
+        }
+        startTelemetryService(result)
+    }
+
+    private fun startTelemetryService(result: MethodChannel.Result) {
+        try {
+            ContextCompat.startForegroundService(this, Intent(this, ChildTelemetryService::class.java))
             result.success(mapOf("started" to true, "reason" to "started"))
         } catch (_: Exception) {
             result.success(mapOf("started" to false, "reason" to "native_telemetry_start_failed"))

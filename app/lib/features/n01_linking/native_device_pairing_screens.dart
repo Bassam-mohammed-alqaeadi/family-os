@@ -178,6 +178,23 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
     }
   }
 
+  Future<void> _resumeStored() async {
+    final copy = NativeChildPairingCopy.of(context);
+    setState(() {
+      _loading = true;
+      _message = null;
+    });
+    final result = await NativeChildTelemetryBridge.startStored();
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      _message = result.started
+          ? copy.childModeResumed
+          : copy.childModeStartFailed(result.reason);
+    });
+    await _refreshServiceStatus();
+  }
+
   Future<void> _claimAndStart() async {
     final copy = NativeChildPairingCopy.of(context);
     final client = _client();
@@ -248,6 +265,13 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
               label: _loading ? copy.settingUpChildMode : copy.enterChildMode,
               onPressed: _loading ? null : _claimAndStart,
             ),
+            if (_serviceStatus?.configured == true && _serviceStatus?.running != true) ...[
+              const SizedBox(height: 8),
+              PrimaryBtn(
+                label: copy.resumeChildMode,
+                onPressed: _loading ? null : _resumeStored,
+              ),
+            ],
             if (_serviceStatus?.running == true)
               TextButton.icon(
                 onPressed: () async {

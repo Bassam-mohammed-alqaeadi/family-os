@@ -47,6 +47,19 @@ class NativeChildTelemetryBridge {
     }
   }
 
+  /// Starts Child Mode again using only the configuration already encrypted in
+  /// Android Keystore. The device credential never returns to Dart.
+  static Future<NativeTelemetryStartResult> startStored() async {
+    try {
+      final result = await _channel.invokeMapMethod<String, dynamic>('startStored');
+      return NativeTelemetryStartResult.fromMap(result);
+    } on MissingPluginException {
+      return const NativeTelemetryStartResult.unavailable();
+    } on PlatformException {
+      return const NativeTelemetryStartResult.unavailable();
+    }
+  }
+
   /// Moves the one-time device credential directly into Android Keystore-backed
   /// storage, then starts the foreground service only if real location access
   /// has been granted by the device owner/guardian.

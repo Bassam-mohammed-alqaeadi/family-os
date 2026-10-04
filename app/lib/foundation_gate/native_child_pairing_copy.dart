@@ -69,6 +69,12 @@ class NativeChildPairingCopy {
   String get childModeStopFailed => isArabic
       ? 'تعذر إيقاف خدمة وضع الابن.'
       : 'Child Mode service could not be stopped.';
+  String get childModeResumed => isArabic
+      ? 'تمت إعادة تشغيل وضع الابن باستخدام إعدادات هذا الجهاز المحمية.'
+      : 'Child Mode resumed with this device’s protected configuration.';
+  String get resumeChildMode => isArabic
+      ? 'استئناف وضع الابن على هذا الجهاز'
+      : 'Resume Child Mode on this device';
   String get stopChildMode => isArabic
       ? 'إيقاف وضع الابن على هذا الجهاز'
       : 'Stop Child Mode on this device';

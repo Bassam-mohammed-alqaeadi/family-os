@@ -153,3 +153,25 @@ jobs:
             echo "::error title=Flutter analyzer::${summary:-flutter analyze failed; inspect build/ci/flutter-analyze.txt}"
           fi
           exit 1
+
+  android-debug-build:
+    name: Android debug build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.35.7"
+          channel: stable
+          cache: true
+      - name: Resolve packages
+        run: flutter pub get --enforce-lockfile
+      - name: Generate localization source
+        run: flutter gen-l10n
+      - name: Compile native Child Mode host
+        run: >-
+          flutter build apk --debug
+          --dart-define=FAMILY_OS_API_ORIGIN=https://staging.example.test
