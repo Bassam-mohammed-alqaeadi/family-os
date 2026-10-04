@@ -64,7 +64,7 @@ void main() {
       roster: const FoundationGateHttpResponse(
         statusCode: 200,
         body:
-            '{"children":[{"id":"$childId","displayName":"Synthetic child","ageYears":8,"version":1,"createdAt":"2026-10-03T10:00:00.000Z","updatedAt":"2026-10-03T10:00:00.000Z"}]}',
+            '{"children":[{"id":"$childId","displayName":"Synthetic child","ageYears":8,"avatarEmoji":"🧒","themeColor":"purple","version":1,"createdAt":"2026-10-03T10:00:00.000Z","updatedAt":"2026-10-03T10:00:00.000Z"}]}',
       ),
     );
 

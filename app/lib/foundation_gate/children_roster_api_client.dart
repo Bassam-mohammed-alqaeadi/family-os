@@ -66,10 +66,19 @@ class ChildrenRosterApiClient {
     required String idempotencyKey,
     required String displayName,
     required int ageYears,
+    required String avatarEmoji,
+    required String themeColor,
   }) async {
     final rosterUri = _rosterUri(familyId);
     final normalizedName = displayName.trim();
-    if (!_isValidDisplayName(normalizedName) || !_isValidIdempotencyKey(idempotencyKey) || ageYears < 0 || ageYears > 25) {
+    final normalizedEmoji = avatarEmoji.trim();
+    if (
+        !_isValidDisplayName(normalizedName) ||
+        !_isValidAvatarEmoji(normalizedEmoji) ||
+        !kFoundationGateChildThemeColors.contains(themeColor) ||
+        !_isValidIdempotencyKey(idempotencyKey) ||
+        ageYears < 0 ||
+        ageYears > 25) {
       throw const FoundationGateApiException(FoundationGateApiFailure.invalidInput);
     }
 
@@ -83,7 +92,12 @@ class ChildrenRosterApiClient {
           'authorization': 'Bearer $idToken',
           'idempotency-key': idempotencyKey,
         },
-        body: jsonEncode({'displayName': normalizedName, 'ageYears': ageYears}),
+        body: jsonEncode({
+          'displayName': normalizedName,
+          'ageYears': ageYears,
+          'avatarEmoji': normalizedEmoji,
+          'themeColor': themeColor,
+        }),
       );
     } on FoundationGateApiException {
       rethrow;
@@ -147,12 +161,14 @@ class ChildrenRosterApiClient {
   }
 
   FoundationGateChild _parseChild(Object? value) {
-    if (value is! Map<String, Object?> || value.keys.length != 6) {
+    if (value is! Map<String, Object?> || value.keys.length != 8) {
       throw const FormatException();
     }
     final id = value['id'];
     final displayName = value['displayName'];
     final ageYears = value['ageYears'];
+    final avatarEmoji = value['avatarEmoji'];
+    final themeColor = value['themeColor'];
     final version = value['version'];
     final createdAt = value['createdAt'];
     final updatedAt = value['updatedAt'];
@@ -164,6 +180,10 @@ class ChildrenRosterApiClient {
         ageYears is! int ||
         ageYears < 0 ||
         ageYears > 25 ||
+        avatarEmoji is! String ||
+        !_isValidAvatarEmoji(avatarEmoji) ||
+        themeColor is! String ||
+        !kFoundationGateChildThemeColors.contains(themeColor) ||
         version is! int ||
         version < 1 ||
         createdAt is! String ||
@@ -172,11 +192,24 @@ class ChildrenRosterApiClient {
         DateTime.tryParse(updatedAt) == null) {
       throw const FormatException();
     }
-    return FoundationGateChild(id: id, displayName: displayName, ageYears: ageYears);
+    return FoundationGateChild(
+      id: id,
+      displayName: displayName,
+      ageYears: ageYears,
+      avatarEmoji: avatarEmoji,
+      themeColor: themeColor,
+    );
   }
 
   bool _isValidDisplayName(String value) {
     return value.isNotEmpty && value.length <= 120 && !RegExp(r'[\u0000-\u001F\u007F]').hasMatch(value);
+  }
+
+  bool _isValidAvatarEmoji(String value) {
+    return value.isNotEmpty &&
+        value.length <= 32 &&
+        !RegExp(r'[\u0000-\u001F\u007F]').hasMatch(value) &&
+        RegExp(r'[\u{1F000}-\u{1FAFF}]', unicode: true).hasMatch(value);
   }
 
   bool _isValidIdempotencyKey(String value) {

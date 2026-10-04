@@ -19,6 +19,8 @@ const _child = FoundationGateChild(
   id: '22222222-2222-4222-8222-222222222222',
   displayName: 'Synthetic child',
   ageYears: 8,
+  avatarEmoji: '🧒',
+  themeColor: 'purple',
 );
 
 void main() {
@@ -80,7 +82,7 @@ void main() {
         status: ChildrenControlCentreStatus.empty,
         family: _primaryFamily,
         children: const [],
-        onCreateChild: ({required displayName, required ageYears, required idempotencyKey}) async {
+        onCreateChild: ({required displayName, required ageYears, required avatarEmoji, required themeColor, required idempotencyKey}) async {
           submittedName = displayName;
           submittedAge = ageYears;
           submittedKey = idempotencyKey;
@@ -111,7 +113,7 @@ void main() {
         textScale: 1.7,
         children: const [_child, _child],
         family: _primaryFamily,
-        onCreateChild: ({required displayName, required ageYears, required idempotencyKey}) async {
+        onCreateChild: ({required displayName, required ageYears, required avatarEmoji, required themeColor, required idempotencyKey}) async {
           return FoundationGateChildCreateResult.invalidInput;
         },
       ),

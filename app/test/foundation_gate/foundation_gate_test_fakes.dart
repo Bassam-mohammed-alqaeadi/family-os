@@ -3,9 +3,10 @@ import 'package:family_os/foundation_gate/foundation_gate_identity.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
 class FakeIdentity implements FoundationGateIdentity {
-  FakeIdentity({this.token = 'synthetic-token', this.failure});
+  FakeIdentity({this.token = 'synthetic-token', this.subject = 'synthetic-subject', this.failure});
 
   String token;
+  String subject;
   Object? failure;
   int signInCalls = 0;
   int currentTokenCalls = 0;
@@ -27,6 +28,14 @@ class FakeIdentity implements FoundationGateIdentity {
       throw failure!;
     }
     return token;
+  }
+
+  @override
+  Future<String> currentSubject() async {
+    if (failure != null) {
+      throw failure!;
+    }
+    return subject;
   }
 
   @override

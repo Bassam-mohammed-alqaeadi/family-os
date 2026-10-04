@@ -30,16 +30,29 @@ class FoundationGateFamily {
   final String role;
 }
 
+const Set<String> kFoundationGateChildThemeColors = {
+  'purple',
+  'sky',
+  'amber',
+  'coral',
+  'mint',
+  'teal',
+};
+
 class FoundationGateChild {
   const FoundationGateChild({
     required this.id,
     required this.displayName,
     required this.ageYears,
+    required this.avatarEmoji,
+    required this.themeColor,
   });
 
   final String id;
   final String displayName;
   final int ageYears;
+  final String avatarEmoji;
+  final String themeColor;
 }
 
 enum FoundationGateChildCreateResult {

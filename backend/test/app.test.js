@@ -577,7 +577,7 @@ test('children roster is server-authorized, audit-backed and never exposed to a 
       method: 'POST',
       token: 'test-parent-a',
       idempotencyKey: 'child-invalid-age',
-      body: { displayName: 'Amani', ageYears: 26 },
+      body: { displayName: 'Amani', ageYears: 26, avatarEmoji: '🦁', themeColor: 'purple' },
     });
     assert.equal(invalidChild.status, 400);
 
@@ -585,7 +585,7 @@ test('children roster is server-authorized, audit-backed and never exposed to a 
       method: 'POST',
       token: 'test-parent-a',
       idempotencyKey: 'child-unsupported-field',
-      body: { displayName: 'Amani', ageYears: 0, role: 'primary_guardian' },
+      body: { displayName: 'Amani', ageYears: 0, avatarEmoji: '🦁', themeColor: 'purple', role: 'primary_guardian' },
     });
     assert.equal(unsupportedChildField.status, 400);
 
@@ -593,19 +593,21 @@ test('children roster is server-authorized, audit-backed and never exposed to a 
       method: 'POST',
       token: 'test-parent-a',
       idempotencyKey: 'child-create-amani',
-      body: { displayName: 'Amani', ageYears: 0 },
+      body: { displayName: 'Amani', ageYears: 0, avatarEmoji: '🦁', themeColor: 'purple' },
     });
     assert.equal(create.status, 201);
     const child = (await create.json()).child;
     assert.equal(child.displayName, 'Amani');
     assert.equal(child.ageYears, 0);
+    assert.equal(child.avatarEmoji, '🦁');
+    assert.equal(child.themeColor, 'purple');
     assert.equal(child.version, 1);
 
     const replay = await request(baseUrl, `/v1/families/${family.id}/children`, {
       method: 'POST',
       token: 'test-parent-a',
       idempotencyKey: 'child-create-amani',
-      body: { displayName: 'Amani', ageYears: 0 },
+      body: { displayName: 'Amani', ageYears: 0, avatarEmoji: '🦁', themeColor: 'purple' },
     });
     assert.equal(replay.status, 201);
     assert.equal((await replay.json()).child.id, child.id);
@@ -614,7 +616,7 @@ test('children roster is server-authorized, audit-backed and never exposed to a 
       method: 'POST',
       token: 'test-parent-a',
       idempotencyKey: 'child-create-amani',
-      body: { displayName: 'Amani', ageYears: 1 },
+      body: { displayName: 'Amani', ageYears: 1, avatarEmoji: '🦁', themeColor: 'purple' },
     });
     assert.equal(changedReplay.status, 409);
     assert.equal((await changedReplay.json()).error.code, 'idempotency_key_reused');
@@ -644,7 +646,7 @@ test('children roster is server-authorized, audit-backed and never exposed to a 
       method: 'POST',
       token: 'test-guardian-b',
       idempotencyKey: 'roster-co-guardian-write-denied',
-      body: { displayName: 'Nope', ageYears: 7 },
+      body: { displayName: 'Nope', ageYears: 7, avatarEmoji: '🦁', themeColor: 'purple' },
     });
     assert.equal(coGuardianWrite.status, 403);
     assert.equal((await coGuardianWrite.json()).error.code, 'family_access_denied');
@@ -670,7 +672,7 @@ test('children roster is server-authorized, audit-backed and never exposed to a 
       method: 'POST',
       token: 'test-child-a',
       idempotencyKey: 'roster-child-write-denied',
-      body: { displayName: 'Nope', ageYears: 7 },
+      body: { displayName: 'Nope', ageYears: 7, avatarEmoji: '🦁', themeColor: 'purple' },
     });
     assert.equal(deniedWrite.status, 403);
     assert.equal((await deniedWrite.json()).error.code, 'family_access_denied');

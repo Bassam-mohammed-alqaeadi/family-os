@@ -30,9 +30,17 @@ test('OIDC subjects are bounded before becoming durable account identifiers', ()
 });
 
 test('children roster request rejects fields outside its published contract', () => {
-  assert.doesNotThrow(() => createChildInput({ displayName: 'Amani', ageYears: 0 }));
+  assert.doesNotThrow(() => createChildInput({ displayName: 'Amani', ageYears: 0, avatarEmoji: '🦁', themeColor: 'purple' }));
   assert.throws(
-    () => createChildInput({ displayName: 'Amani', ageYears: 0, role: 'primary_guardian' }),
+    () => createChildInput({ displayName: 'Amani', ageYears: 0, avatarEmoji: '🦁', themeColor: 'purple', role: 'primary_guardian' }),
+    { code: 'invalid_request' },
+  );
+  assert.throws(
+    () => createChildInput({ displayName: 'Amani', ageYears: 0, avatarEmoji: 'name', themeColor: 'purple' }),
+    { code: 'invalid_request' },
+  );
+  assert.throws(
+    () => createChildInput({ displayName: 'Amani', ageYears: 0, avatarEmoji: '🦁', themeColor: 'gradient' }),
     { code: 'invalid_request' },
   );
 });

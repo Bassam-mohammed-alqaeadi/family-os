@@ -10,6 +10,8 @@ final class FamilyRosterChild {
     required this.childId,
     this.displayName,
     this.ageYears,
+    this.avatarEmoji,
+    this.themeColor,
   });
 
   final ChildId childId;
@@ -20,6 +22,11 @@ final class FamilyRosterChild {
 
   /// Null means age has not been supplied by an authoritative profile source.
   final int? ageYears;
+
+  /// Presentation data is optional for legacy/local records, but an
+  /// authoritative remote child profile supplies both values.
+  final String? avatarEmoji;
+  final String? themeColor;
 
   bool get hasCompleteDisplayProfile =>
       displayName != null && displayName!.trim().isNotEmpty && ageYears != null;

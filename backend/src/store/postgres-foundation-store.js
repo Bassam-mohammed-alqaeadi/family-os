@@ -50,6 +50,8 @@ function familyChildView(row) {
     id: row.id,
     displayName: row.display_name,
     ageYears: row.age_years,
+    avatarEmoji: row.avatar_emoji,
+    themeColor: row.theme_color,
     version: row.version,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -366,7 +368,7 @@ export class PostgresFoundationStore {
         );
       }
       const children = await client.query(
-        `SELECT id, display_name, age_years, version, created_at, updated_at
+        `SELECT id, display_name, age_years, avatar_emoji, theme_color, version, created_at, updated_at
          FROM family_children
          WHERE family_id = $1
          ORDER BY created_at ASC, id ASC`,
@@ -376,7 +378,17 @@ export class PostgresFoundationStore {
     });
   }
 
-  async createFamilyChild({ principal, familyId, displayName, ageYears, idempotencyKey, requestHash, correlationId }) {
+  async createFamilyChild({
+    principal,
+    familyId,
+    displayName,
+    ageYears,
+    avatarEmoji,
+    themeColor,
+    idempotencyKey,
+    requestHash,
+    correlationId,
+  }) {
     return this.withTransaction(async (client) => {
       // Authorize before accepting a replay so a removed guardian cannot use an
       // old idempotency key as a roster-read side channel.
@@ -392,10 +404,10 @@ export class PostgresFoundationStore {
       }
 
       const child = await client.query(
-        `INSERT INTO family_children (id, family_id, display_name, age_years)
-         VALUES ($1, $2, $3, $4)
-         RETURNING id, display_name, age_years, version, created_at, updated_at`,
-        [randomUUID(), familyId, displayName, ageYears],
+        `INSERT INTO family_children (id, family_id, display_name, age_years, avatar_emoji, theme_color)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING id, display_name, age_years, avatar_emoji, theme_color, version, created_at, updated_at`,
+        [randomUUID(), familyId, displayName, ageYears, avatarEmoji, themeColor],
       );
       await this.appendAuditAndOutbox(client, {
         familyId,

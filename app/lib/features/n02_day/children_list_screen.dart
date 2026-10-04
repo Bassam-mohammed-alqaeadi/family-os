@@ -144,6 +144,13 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
         PermissionDisposition.allow) {
       return false;
     }
+    final scopedIdentity = AppScope.maybeOf(context)?.identity.value;
+    if (scopedIdentity != null) {
+      // Child creation is intentionally admitted only for the server-confirmed
+      // primary guardian. Co-guardian presentation is not mistaken for create
+      // authority while this limited capability is rolled out.
+      return scopedIdentity.isRemoteAuthoritative && scopedIdentity.isPrimaryOwner;
+    }
     final runtime = CurrentIdentity.maybeOf(context);
     if (runtime == null) return true;
     return _managementRepo
@@ -187,10 +194,27 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
       final deviceSource = widget.deviceSource ?? scope?.devices;
       final policySource = widget.policySource ?? scope?.policies;
 
-      // A scoped runtime source is the only production roster path. The
-      // repository path remains only for tests and isolated preview hosts that
-      // explicitly inject [repository] without an AppScope.
-      if (familyId != null && rosterSource != null) {
+      // A scoped runtime source is the only production roster path. Once an
+      // AppScope is composed, an absent remote family is an unavailable state,
+      // not permission to read a seeded/local roster.
+      if (scope != null || widget.rosterSource != null) {
+        if (familyId == null || rosterSource == null) {
+          if (!mounted) return;
+          setState(() {
+            _children = const [];
+            _runtimeRoster = const [];
+            _profileRepairs = const [];
+            _deviceSnapshot = const FamilyDeviceSnapshot.unavailable();
+            _rosterOrigin = RuntimeDataOrigin.unavailable;
+            _policyOrigin = RuntimeDataOrigin.unavailable;
+            _loadedFamilyId = null;
+            _usesRuntimeSources = true;
+            _rosterProvenance = null;
+            _loading = false;
+            _loadFailed = false;
+          });
+          return;
+        }
         final roster = await rosterSource.load(familyId);
         final devices = deviceSource == null
             ? const FamilyDeviceSnapshot.unavailable()
@@ -699,7 +723,7 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
                       constraints: const BoxConstraints(minHeight: 48),
                       child: TextButton(
                         key: ChildrenListKeys.addChild,
-                        onPressed: disposition == PermissionDisposition.allow
+                        onPressed: disposition == PermissionDisposition.allow && _canCreateChild
                             ? _goAddChild
                             : null,
                         style: TextButton.styleFrom(
@@ -903,14 +927,17 @@ class _RuntimeChildRosterCard extends StatelessWidget {
     final name = child.displayName!;
     final age = l10n.addChildAgeYears(formatAppInt(child.ageYears!));
     final deviceLabel = _deviceLabel(l10n, device);
+    final deviceVariant = switch (device?.connectionState) {
+      ChildDeviceConnectionState.active => TagVariant.g,
+      ChildDeviceConnectionState.needsAttention => TagVariant.a,
+      ChildDeviceConnectionState.pairing => TagVariant.b,
+      ChildDeviceConnectionState.noDevice => TagVariant.b,
+      ChildDeviceConnectionState.unavailable || null => TagVariant.b,
+    };
 
     return Semantics(
       button: true,
-      label: l10n.childrenListRuntimeRowSemantics(
-        name,
-        age,
-        deviceLabel ?? '',
-      ),
+      label: l10n.childrenListRuntimeRowSemantics(name, age, deviceLabel),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -924,10 +951,14 @@ class _RuntimeChildRosterCard extends StatelessWidget {
               boxShadow: [Theme.of(context).extension<FamilyShadows>()!.shCard],
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               child: Row(
                 children: [
-                  _InitialAvatar(name: name),
+                  _StatusAvatar(
+                    emoji: child.avatarEmoji ?? '🧒',
+                    color: _themeColor(colors, child.themeColor),
+                    warnRing: device?.connectionState == ChildDeviceConnectionState.needsAttention,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -943,23 +974,25 @@ class _RuntimeChildRosterCard extends StatelessWidget {
                             color: colors.ink,
                           ),
                         ),
-                        if (deviceLabel != null) ...[
-                          const SizedBox(height: 3),
-                          Text(
-                            deviceLabel,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w600,
-                              color: colors.ink2,
-                            ),
-                          ),
-                        ],
+                        const SizedBox(height: 2),
+                        // The layout deliberately remains present before any
+                        // telemetry source exists. These are availability
+                        // states, never invented location or battery values.
+                        _runtimeMetaLine(
+                          icon: Icons.location_on_outlined,
+                          label: l10n.childrenListDeviceStateUnavailable,
+                          colors: colors,
+                        ),
+                        _runtimeMetaLine(
+                          icon: Icons.devices_other_outlined,
+                          label: deviceLabel,
+                          colors: colors,
+                        ),
                       ],
                     ),
                   ),
-                  Icon(Icons.chevron_right, color: colors.ink2),
+                  const SizedBox(width: 8),
+                  Tag(label: deviceLabel, variant: deviceVariant),
                 ],
               ),
             ),
@@ -969,7 +1002,16 @@ class _RuntimeChildRosterCard extends StatelessWidget {
     );
   }
 
-  String? _deviceLabel(
+  Color _themeColor(FamilyColors colors, String? themeColor) => switch (themeColor) {
+    'sky' => colors.sky,
+    'amber' => colors.amber,
+    'coral' => colors.coral,
+    'mint' => colors.mint,
+    'teal' => colors.teal600,
+    _ => colors.p500,
+  };
+
+  String _deviceLabel(
     AppLocalizations l10n,
     FamilyChildDeviceSummary? device,
   ) {
@@ -985,6 +1027,32 @@ class _RuntimeChildRosterCard extends StatelessWidget {
     };
   }
 }
+
+Widget _runtimeMetaLine({
+  required IconData icon,
+  required String label,
+  required FamilyColors colors,
+}) => Padding(
+  padding: const EdgeInsets.only(top: 2),
+  child: Row(
+    children: [
+      Icon(icon, size: 14, color: colors.ink2),
+      const SizedBox(width: 3),
+      Expanded(
+        child: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 11.5,
+            fontWeight: FontWeight.w600,
+            color: colors.ink2,
+          ),
+        ),
+      ),
+    ],
+  ),
+);
 
 class _ProfileRepairCard extends StatelessWidget {
   const _ProfileRepairCard({required this.childId, required this.onRepair});

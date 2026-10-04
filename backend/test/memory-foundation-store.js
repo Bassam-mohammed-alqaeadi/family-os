@@ -97,6 +97,8 @@ export class MemoryFoundationStore {
       id: child.id,
       displayName: child.displayName,
       ageYears: child.ageYears,
+      avatarEmoji: child.avatarEmoji,
+      themeColor: child.themeColor,
       version: child.version,
       createdAt: child.createdAt,
       updatedAt: child.updatedAt,
@@ -208,7 +210,17 @@ export class MemoryFoundationStore {
     };
   }
 
-  async createFamilyChild({ principal, familyId, displayName, ageYears, idempotencyKey, requestHash, correlationId }) {
+  async createFamilyChild({
+    principal,
+    familyId,
+    displayName,
+    ageYears,
+    avatarEmoji,
+    themeColor,
+    idempotencyKey,
+    requestHash,
+    correlationId,
+  }) {
     // Authorize before accepting a replay so a removed guardian cannot use an
     // old idempotency key as a roster-read side channel.
     const actor = this.activeMembership(familyId, principal.subject, true);
@@ -219,6 +231,8 @@ export class MemoryFoundationStore {
         familyId,
         displayName,
         ageYears,
+        avatarEmoji,
+        themeColor,
         version: 1,
         createdAt: now,
         updatedAt: now,

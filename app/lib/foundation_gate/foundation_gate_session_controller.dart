@@ -21,12 +21,17 @@ class FoundationGateSessionController extends ChangeNotifier {
   List<FoundationGateFamily> _families = const [];
   FoundationGateFamily? _selectedFamily;
   List<FoundationGateChild> _children = const [];
+  String? _lastCreatedChildId;
   bool _creatingChild = false;
 
   FoundationGatePhase get phase => _phase;
   List<FoundationGateFamily> get families => _families;
   FoundationGateFamily? get selectedFamily => _selectedFamily;
   List<FoundationGateChild> get children => _children;
+
+  /// Opaque server child identifier for a just-confirmed main-app hand-off.
+  /// It is cleared on the next attempt or session reset and is never rendered.
+  String? get lastCreatedChildId => _lastCreatedChildId;
   bool get isCreatingChild => _creatingChild;
 
   Future<void> signIn({required String email, required String password}) async {
@@ -48,6 +53,28 @@ class FoundationGateSessionController extends ChangeNotifier {
     } on FoundationGateIdentityException {
       _clearAllVolatileState();
       _setPhase(FoundationGatePhase.signInFailed);
+    } on FoundationGateApiException catch (error) {
+      await _handleDiscoveryFailure(error.failure);
+    } finally {
+      idToken = null;
+    }
+  }
+
+  /// Discovers an existing provider session without retaining its token.
+  /// A caller may select only a family returned by this server discovery.
+  Future<void> restoreCurrentSession() async {
+    _clearAllVolatileState();
+    _setPhase(FoundationGatePhase.loadingFamilies);
+    String? idToken;
+    try {
+      idToken = await _identity.currentIdToken();
+      final discovered = await _discoveryApi.discover(idToken: idToken);
+      _families = discovered;
+      _phase = discovered.isEmpty ? FoundationGatePhase.noActiveFamily : FoundationGatePhase.familiesAvailable;
+      notifyListeners();
+    } on FoundationGateIdentityException {
+      _clearAllVolatileState();
+      _setPhase(FoundationGatePhase.signedOut);
     } on FoundationGateApiException catch (error) {
       await _handleDiscoveryFailure(error.failure);
     } finally {
@@ -85,6 +112,8 @@ class FoundationGateSessionController extends ChangeNotifier {
   Future<FoundationGateChildCreateResult> createChild({
     required String displayName,
     required int ageYears,
+    required String avatarEmoji,
+    required String themeColor,
     required String idempotencyKey,
   }) async {
     final family = _selectedFamily;
@@ -97,17 +126,20 @@ class FoundationGateSessionController extends ChangeNotifier {
       return FoundationGateChildCreateResult.invalidInput;
     }
 
+    _lastCreatedChildId = null;
     _creatingChild = true;
     notifyListeners();
     String? idToken;
     try {
       idToken = await _identity.currentIdToken();
-      await _rosterApi.create(
+      final createdChild = await _rosterApi.create(
         familyId: family.id,
         idToken: idToken,
         idempotencyKey: idempotencyKey,
         displayName: displayName,
         ageYears: ageYears,
+        avatarEmoji: avatarEmoji,
+        themeColor: themeColor,
       );
 
       // A POST response confirms the mutation, but the roster shown to the
@@ -115,6 +147,7 @@ class FoundationGateSessionController extends ChangeNotifier {
       try {
         final roster = await _rosterApi.list(familyId: family.id, idToken: idToken);
         _children = roster;
+        _lastCreatedChildId = createdChild.id;
         _phase = roster.isEmpty ? FoundationGatePhase.noChildren : FoundationGatePhase.childrenAvailable;
         notifyListeners();
         return FoundationGateChildCreateResult.created;
@@ -263,6 +296,7 @@ class FoundationGateSessionController extends ChangeNotifier {
   void _clearAllVolatileState() {
     _families = const [];
     _selectedFamily = null;
+    _lastCreatedChildId = null;
     _clearRoster();
   }
 

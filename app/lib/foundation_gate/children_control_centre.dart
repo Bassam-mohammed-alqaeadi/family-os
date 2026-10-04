@@ -29,6 +29,8 @@ enum ChildrenControlCentreStatus {
 typedef CreateChildProfile = Future<FoundationGateChildCreateResult> Function({
   required String displayName,
   required int ageYears,
+  required String avatarEmoji,
+  required String themeColor,
   required String idempotencyKey,
 });
 
@@ -629,6 +631,8 @@ class _CreateChildProfileSheetState extends State<_CreateChildProfileSheet> {
     final result = await widget.onCreateChild(
       displayName: displayName,
       ageYears: _ageYears,
+      avatarEmoji: '🧒',
+      themeColor: 'purple',
       idempotencyKey: _idempotencyKey!,
     );
     if (!mounted) {

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import 'package:family_os/core/runtime/family_child_profile_source.dart';
 import 'package:family_os/core/runtime/family_device_source.dart';
 import 'package:family_os/core/runtime/family_policy_source.dart';
 import 'package:family_os/core/runtime/family_roster_source.dart';
@@ -13,9 +14,11 @@ final class AppRuntime extends ChangeNotifier {
   AppRuntime({
     required this.identity,
     FamilyRosterSource? roster,
+    FamilyChildProfileSource? childProfiles,
     FamilyDeviceSource? devices,
     FamilyPolicySource? policies,
   }) : roster = roster ?? UnavailableFamilyRosterSource(),
+       childProfiles = childProfiles ?? UnavailableFamilyChildProfileSource(),
        devices = devices ?? UnavailableFamilyDeviceSource(),
        policies = policies ?? UnavailableFamilyPolicySource() {
     identity.addListener(notifyListeners);
@@ -30,6 +33,10 @@ final class AppRuntime extends ChangeNotifier {
   /// never a seeded/global fallback; a normal product route must compose the
   /// local or remote adapter it is allowed to use.
   final FamilyRosterSource roster;
+
+  /// The only main-app child-profile creation source. An unavailable source
+  /// fails closed rather than delegating to the legacy local roster.
+  final FamilyChildProfileSource childProfiles;
 
   /// Explicit device-summary source. It does not grant mutation authority.
   final FamilyDeviceSource devices;
@@ -50,9 +57,16 @@ final class AppRuntime extends ChangeNotifier {
     devices.removeListener(notifyListeners);
     policies.removeListener(notifyListeners);
     identity.dispose();
-    roster.dispose();
-    devices.dispose();
-    policies.dispose();
+    if (!identical(roster, identity)) roster.dispose();
+    if (!identical(childProfiles, identity) && !identical(childProfiles, roster)) {
+      childProfiles.dispose();
+    }
+    if (!identical(devices, identity) && !identical(devices, roster) && !identical(devices, childProfiles)) {
+      devices.dispose();
+    }
+    if (!identical(policies, identity) && !identical(policies, roster) && !identical(policies, childProfiles) && !identical(policies, devices)) {
+      policies.dispose();
+    }
     super.dispose();
   }
 }

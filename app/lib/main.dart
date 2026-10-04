@@ -1,3 +1,5 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
@@ -25,6 +27,9 @@ import 'package:family_os/core/policy/advisor_repository.dart';
 import 'package:family_os/core/prefs_misc/prefs_misc_runtime.dart';
 import 'package:family_os/core/runtime/app_runtime.dart';
 import 'package:family_os/core/runtime/app_scope.dart';
+import 'package:family_os/core/runtime/family_device_source.dart';
+import 'package:family_os/core/runtime/family_policy_source.dart';
+import 'package:family_os/core/runtime/family_roster_source.dart';
 import 'package:family_os/core/runtime/identity_source.dart';
 import 'package:family_os/core/screen_time/screen_time_runtime.dart';
 import 'package:family_os/core/sos_final/sos_prefs_local_persistence.dart';
@@ -32,7 +37,6 @@ import 'package:family_os/features/n02_day/alert_detail_local_projection.dart';
 import 'package:family_os/features/n02_day/alerts_hub_local_projection.dart';
 import 'package:family_os/features/n02_day/child_profile_repository.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
-import 'package:family_os/features/n02_day/children_list_runtime_sources.dart';
 import 'package:family_os/features/n02_day/family_chat_local_persistence.dart';
 import 'package:family_os/features/n02_day/location_ux_bridge.dart';
 import 'package:family_os/features/n03_screen_time/child_apps_local_persistence.dart';
@@ -43,6 +47,13 @@ import 'package:family_os/features/n16_tasks/family_tasks_local_persistence.dart
 import 'package:family_os/features/quran/quran_local_bridge.dart';
 import 'package:family_os/features/shared_onboarding/device_user_switch_identity_repository.dart';
 import 'package:family_os/features/shared_onboarding/device_user_switch_repository.dart';
+import 'package:family_os/foundation_gate/children_roster_api_client.dart';
+import 'package:family_os/foundation_gate/family_discovery_api_client.dart';
+import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
+import 'package:family_os/foundation_gate/foundation_gate_http.dart';
+import 'package:family_os/foundation_gate/foundation_gate_identity.dart';
+import 'package:family_os/foundation_gate/foundation_gate_session_controller.dart';
+import 'package:family_os/foundation_gate/main_app_foundation_runtime.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -113,7 +124,50 @@ Future<void> main() async {
   auditHostActive = resolveAuditVisionHost();
   // EVT-01-B — PolicySyncBus + AuditAppend → Local Event Journal (enqueue ≠ deliver).
   await LocalEventPolicyBridge.tryBind();
-  runApp(FamilyOsApp(localeController: localeController));
+  final familyEntryRuntime = await _tryCreateMainAppFoundationRuntime();
+  // Restore only a provider-managed session; no local family/roster fallback is
+  // consulted when this remote capability has not been configured.
+  if (familyEntryRuntime != null) {
+    await familyEntryRuntime.refreshIdentity();
+  }
+  runApp(FamilyOsApp(
+    localeController: localeController,
+    foundationRuntime: familyEntryRuntime,
+  ));
+}
+
+/// Initializes the real Family Entry port only when the owner provides a
+/// credential-free HTTPS API origin and the platform Firebase configuration is
+/// present. Any setup failure leaves the production route unavailable rather
+/// than falling back to seeded/local roster authority.
+Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
+  const apiOrigin = String.fromEnvironment('FAMILY_OS_API_ORIGIN');
+  const preferredFamilyId = String.fromEnvironment('FAMILY_OS_ACTIVE_FAMILY_ID');
+  if (apiOrigin.trim().isEmpty) return null;
+  try {
+    await Firebase.initializeApp();
+    final configuration = FoundationGateConfiguration.fromStagingApiOrigin(
+      Uri.parse(apiOrigin),
+    );
+    final identity = FirebaseEmailPasswordIdentity(FirebaseAuth.instance);
+    return MainAppFoundationRuntime(
+      controller: FoundationGateSessionController(
+        identity: identity,
+        discoveryApi: FamilyDiscoveryApiClient(
+          configuration: configuration,
+          transport: PackageFoundationGateHttpTransport(),
+        ),
+        rosterApi: ChildrenRosterApiClient(
+          configuration: configuration,
+          transport: PackageFoundationGateHttpTransport(),
+        ),
+      ),
+      identity: identity,
+      preferredFamilyId: preferredFamilyId,
+    );
+  } on Object {
+    return null;
+  }
 }
 
 /// Cold-start route from Android `flutter_route` intent extra (via
@@ -135,13 +189,21 @@ String resolveAppInitialLocation({String fallback = '/scr-shr-001'}) {
 
 /// Family OS root — Arabic-first RTL, IBM Plex Sans Arabic, go_router.
 class FamilyOsApp extends StatefulWidget {
-  const FamilyOsApp({super.key, this.roleController, this.localeController});
+  const FamilyOsApp({
+    super.key,
+    this.roleController,
+    this.localeController,
+    this.foundationRuntime,
+  });
 
   /// Optional override for tests / gallery role switching.
   final RoleController? roleController;
 
   /// VX-B3 · D1 — when null, Arabic default (tests).
   final LocaleController? localeController;
+
+  /// Null means the required remote Family Entry configuration is unavailable.
+  final MainAppFoundationRuntime? foundationRuntime;
 
   @override
   State<FamilyOsApp> createState() => _FamilyOsAppState();
@@ -160,18 +222,19 @@ class _FamilyOsAppState extends State<FamilyOsApp> {
   void initState() {
     super.initState();
     _identity = stage1IdentityRuntime;
+    final foundationRuntime = widget.foundationRuntime;
     _runtime = AppRuntime(
-      identity: RuntimeIdentitySource(_identity),
-      roster: LocalFamilyRosterSource(
-        repository: stage1ChildrenListRepository,
-        managementRepository: stage1ChildDeviceManagementRepository,
-      ),
-      devices: LocalFamilyDeviceSource(
-        managementRepository: stage1ChildDeviceManagementRepository,
-      ),
-      policies: LocalFamilyPolicySource(
-        repository: stage1ChildrenListRepository,
-      ),
+      identity: foundationRuntime == null
+          ? RuntimeIdentitySource(_identity, authority: IdentityAuthority.unavailable)
+          : MainAppFoundationIdentitySource(foundationRuntime),
+      roster: foundationRuntime == null
+          ? UnavailableFamilyRosterSource()
+          : RemoteFamilyRosterSource(foundationRuntime),
+      childProfiles: foundationRuntime == null
+          ? null
+          : RemoteFamilyChildProfileSource(foundationRuntime),
+      devices: UnavailableFamilyDeviceSource(),
+      policies: UnavailableFamilyPolicySource(),
     );
     if (widget.roleController != null) {
       _role = widget.roleController!;

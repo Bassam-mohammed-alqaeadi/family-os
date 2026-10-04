@@ -105,6 +105,10 @@ class FoundationGateCopy {
       ? 'تعذر الاتصال لإنشاء الملف. أعد المحاولة بنفس البيانات.'
       : 'Could not connect to create the profile. Retry with the same details.';
 
+  String get serverAssignedProfileIdentifier => isArabic
+      ? 'يعيّن الخادم معرّف الملف بعد الإنشاء.'
+      : 'The server assigns the profile identifier after creation.';
+
   String displayRole(String role) {
     return switch (role) {
       'primary_guardian' => isArabic ? 'الوصي الأساسي' : 'Primary guardian',

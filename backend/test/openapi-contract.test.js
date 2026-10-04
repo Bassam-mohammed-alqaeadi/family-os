@@ -91,9 +91,14 @@ test('children roster contract is guardian-scoped, explicit about its narrow tru
   assert.ok(operation.post.parameters.some((parameter) => parameter.$ref === '#/components/parameters/IdempotencyKey'));
   assert.deepEqual(
     specification.components.schemas.CreateFamilyChildRequest.required,
-    ['displayName', 'ageYears'],
+    ['displayName', 'ageYears', 'avatarEmoji', 'themeColor'],
   );
   assert.equal(specification.components.schemas.CreateFamilyChildRequest.additionalProperties, false);
   assert.equal(specification.components.schemas.FamilyChild.properties.ageYears.minimum, 0);
   assert.equal(specification.components.schemas.FamilyChild.properties.ageYears.maximum, 25);
+  assert.deepEqual(
+    specification.components.schemas.CreateFamilyChildRequest.properties.themeColor.enum,
+    ['purple', 'sky', 'amber', 'coral', 'mint', 'teal'],
+  );
+  assert.equal(specification.components.schemas.FamilyChild.properties.avatarEmoji.maxLength, 32);
 });

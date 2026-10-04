@@ -13,10 +13,10 @@ const childId = '22222222-2222-4222-8222-222222222222';
 const familyBody =
     '{"families":[{"id":"$familyId","displayName":"Synthetic family","role":"primary_guardian"}]}';
 const rosterBody =
-    '{"children":[{"id":"$childId","displayName":"Synthetic child","ageYears":8,"version":1,"createdAt":"2026-10-03T10:00:00.000Z","updatedAt":"2026-10-03T10:00:00.000Z"}]}';
+    '{"children":[{"id":"$childId","displayName":"Synthetic child","ageYears":8,"avatarEmoji":"🧒","themeColor":"purple","version":1,"createdAt":"2026-10-03T10:00:00.000Z","updatedAt":"2026-10-03T10:00:00.000Z"}]}';
 const emptyRosterBody = '{"children":[]}';
 const createdChildBody =
-    '{"child":{"id":"$childId","displayName":"Synthetic child","ageYears":8,"version":1,"createdAt":"2026-10-03T10:00:00.000Z","updatedAt":"2026-10-03T10:00:00.000Z"}}';
+    '{"child":{"id":"$childId","displayName":"Synthetic child","ageYears":8,"avatarEmoji":"🧒","themeColor":"purple","version":1,"createdAt":"2026-10-03T10:00:00.000Z","updatedAt":"2026-10-03T10:00:00.000Z"}}';
 const idempotencyKey = '33333333-3333-4333-8333-333333333333';
 
 void main() {
@@ -90,6 +90,8 @@ void main() {
     final result = await controller.createChild(
       displayName: 'Synthetic child',
       ageYears: 8,
+      avatarEmoji: '🧒',
+      themeColor: 'purple',
       idempotencyKey: idempotencyKey,
     );
 
@@ -110,11 +112,15 @@ void main() {
     final first = await controller.createChild(
       displayName: 'Synthetic child',
       ageYears: 8,
+      avatarEmoji: '🧒',
+      themeColor: 'purple',
       idempotencyKey: idempotencyKey,
     );
     final second = await controller.createChild(
       displayName: 'Synthetic child',
       ageYears: 8,
+      avatarEmoji: '🧒',
+      themeColor: 'purple',
       idempotencyKey: idempotencyKey,
     );
 
@@ -134,6 +140,8 @@ void main() {
     final first = await controller.createChild(
       displayName: 'Synthetic child',
       ageYears: 8,
+      avatarEmoji: '🧒',
+      themeColor: 'purple',
       idempotencyKey: idempotencyKey,
     );
     expect(first, FoundationGateChildCreateResult.networkUnavailable);
@@ -147,6 +155,8 @@ void main() {
     final second = await controller.createChild(
       displayName: 'Synthetic child',
       ageYears: 8,
+      avatarEmoji: '🧒',
+      themeColor: 'purple',
       idempotencyKey: idempotencyKey,
     );
 
@@ -167,6 +177,8 @@ void main() {
     final result = await controller.createChild(
       displayName: 'Synthetic child',
       ageYears: 8,
+      avatarEmoji: '🧒',
+      themeColor: 'purple',
       idempotencyKey: idempotencyKey,
     );
 
@@ -187,6 +199,8 @@ void main() {
     final result = await controller.createChild(
       displayName: 'Synthetic child',
       ageYears: 8,
+      avatarEmoji: '🧒',
+      themeColor: 'purple',
       idempotencyKey: idempotencyKey,
     );
 
@@ -205,6 +219,8 @@ void main() {
     final result = await controller.createChild(
       displayName: 'Synthetic child',
       ageYears: 8,
+      avatarEmoji: '🧒',
+      themeColor: 'purple',
       idempotencyKey: idempotencyKey,
     );
 

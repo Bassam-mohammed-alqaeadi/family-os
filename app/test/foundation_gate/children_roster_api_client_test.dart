@@ -9,9 +9,9 @@ import 'foundation_gate_test_fakes.dart';
 const familyId = '11111111-1111-4111-8111-111111111111';
 const childId = '22222222-2222-4222-8222-222222222222';
 const rosterBody =
-    '{"children":[{"id":"$childId","displayName":"Synthetic child","ageYears":8,"version":1,"createdAt":"2026-10-03T10:00:00.000Z","updatedAt":"2026-10-03T10:00:00.000Z"}]}';
+    '{"children":[{"id":"$childId","displayName":"Synthetic child","ageYears":8,"avatarEmoji":"🧒","themeColor":"purple","version":1,"createdAt":"2026-10-03T10:00:00.000Z","updatedAt":"2026-10-03T10:00:00.000Z"}]}';
 const createdChildBody =
-    '{"child":{"id":"$childId","displayName":"Synthetic child","ageYears":8,"version":1,"createdAt":"2026-10-03T10:00:00.000Z","updatedAt":"2026-10-03T10:00:00.000Z"}}';
+    '{"child":{"id":"$childId","displayName":"Synthetic child","ageYears":8,"avatarEmoji":"🧒","themeColor":"purple","version":1,"createdAt":"2026-10-03T10:00:00.000Z","updatedAt":"2026-10-03T10:00:00.000Z"}}';
 const idempotencyKey = '33333333-3333-4333-8333-333333333333';
 
 void main() {
@@ -46,6 +46,8 @@ void main() {
       idempotencyKey: idempotencyKey,
       displayName: '  Synthetic child  ',
       ageYears: 8,
+      avatarEmoji: '🧒',
+      themeColor: 'purple',
     );
 
     expect(transport.postedUri.toString(), 'https://staging.example.test/v1/families/$familyId/children');
@@ -55,7 +57,7 @@ void main() {
       'authorization': 'Bearer synthetic-token',
       'idempotency-key': idempotencyKey,
     });
-    expect(transport.postedBody, '{"displayName":"Synthetic child","ageYears":8}');
+    expect(transport.postedBody, '{"displayName":"Synthetic child","ageYears":8,"avatarEmoji":"🧒","themeColor":"purple"}');
     expect(child.id, childId);
     expect(child.displayName, 'Synthetic child');
     expect(child.ageYears, 8);
@@ -96,6 +98,8 @@ void main() {
           idempotencyKey: idempotencyKey,
           displayName: 'Synthetic child',
           ageYears: 8,
+        avatarEmoji: '🧒',
+        themeColor: 'purple',
         ),
         throwsA(isA<FoundationGateApiException>().having((error) => error.failure, 'failure', entry.value)),
       );
@@ -112,6 +116,8 @@ void main() {
         idempotencyKey: idempotencyKey,
         displayName: '   ',
         ageYears: 8,
+      avatarEmoji: '🧒',
+      themeColor: 'purple',
       ),
       throwsA(isA<FoundationGateApiException>().having(
         (error) => error.failure,
@@ -136,7 +142,7 @@ void main() {
           const FoundationGateHttpResponse(
             statusCode: 200,
             body:
-                '{"children":[{"id":"$childId","displayName":"Synthetic child","ageYears":8,"version":1,"createdAt":"bad","updatedAt":"2026-10-03T10:00:00.000Z","deviceState":"invented"}]}',
+                '{"children":[{"id":"$childId","displayName":"Synthetic child","ageYears":8,"avatarEmoji":"🧒","themeColor":"purple","version":1,"createdAt":"bad","updatedAt":"2026-10-03T10:00:00.000Z","deviceState":"invented"}]}',
           ),
         ),
       ).list(familyId: familyId, idToken: 'synthetic-token'),
@@ -153,7 +159,7 @@ void main() {
           const FoundationGateHttpResponse(
             statusCode: 201,
             body:
-                '{"child":{"id":"$childId","displayName":"Synthetic child","ageYears":8,"version":1,"createdAt":"bad","updatedAt":"2026-10-03T10:00:00.000Z"}}',
+                '{"child":{"id":"$childId","displayName":"Synthetic child","ageYears":8,"avatarEmoji":"🧒","themeColor":"purple","version":1,"createdAt":"bad","updatedAt":"2026-10-03T10:00:00.000Z"}}',
           ),
         ),
       ).create(
@@ -162,6 +168,8 @@ void main() {
         idempotencyKey: idempotencyKey,
         displayName: 'Synthetic child',
         ageYears: 8,
+      avatarEmoji: '🧒',
+      themeColor: 'purple',
       ),
       throwsA(isA<FoundationGateApiException>().having(
         (error) => error.failure,
