@@ -47,9 +47,12 @@ abstract final class ChildrenListKeys {
     'children_list_shared_enforce_honesty',
   );
   static const localOnlyBanner = Key('children_list_local_only_banner');
-  static const developerInjectTelemetry = Key('children_list_developer_inject_telemetry');
+  static const developerInjectTelemetry = Key(
+    'children_list_developer_inject_telemetry',
+  );
 
-  static Key profileRepair(String id) => Key('children_list_profile_repair_$id');
+  static Key profileRepair(String id) =>
+      Key('children_list_profile_repair_$id');
 
   static Key childRow(String id) => Key('children_list_row_$id');
 }
@@ -105,7 +108,8 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
   List<ChildrenListEntry> _children = const [];
   List<FamilyRosterChild> _runtimeRoster = const [];
   List<ManagedChildRecord> _profileRepairs = const [];
-  FamilyDeviceSnapshot _deviceSnapshot = const FamilyDeviceSnapshot.unavailable();
+  FamilyDeviceSnapshot _deviceSnapshot =
+      const FamilyDeviceSnapshot.unavailable();
   RuntimeDataOrigin _rosterOrigin = RuntimeDataOrigin.unavailable;
   RuntimeDataOrigin _policyOrigin = RuntimeDataOrigin.unavailable;
   FamilyId? _loadedFamilyId;
@@ -131,9 +135,9 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
 
   bool get _canEditShared =>
       PermissionMatrix.dispositionFor(
-        _panelProfile,
-        PanelCapability.editChildRules,
-      ) ==
+            _panelProfile,
+            PanelCapability.editChildRules,
+          ) ==
           PermissionDisposition.allow &&
       (!_usesRuntimeSources ||
           _policyOrigin == RuntimeDataOrigin.localOnly ||
@@ -151,7 +155,8 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
       // Child creation is intentionally admitted only for the server-confirmed
       // primary guardian. Co-guardian presentation is not mistaken for create
       // authority while this limited capability is rolled out.
-      return scopedIdentity.isRemoteAuthoritative && scopedIdentity.isPrimaryOwner;
+      return scopedIdentity.isRemoteAuthoritative &&
+          scopedIdentity.isPrimaryOwner;
     }
     final runtime = CurrentIdentity.maybeOf(context);
     if (runtime == null) return true;
@@ -249,7 +254,10 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
           ? const <ManagedChildRecord>[]
           : _managementRepo.listChildren(familyId);
       final repairs = managed
-          .where((managedChild) => !kids.any((it) => it.id == managedChild.childId.value))
+          .where(
+            (managedChild) =>
+                !kids.any((it) => it.id == managedChild.childId.value),
+          )
           .toList(growable: false);
       final policies = await _repo.loadSharedPolicies(familyId: familyId);
       final provenance = await _repo.loadProvenance(familyId: familyId);
@@ -332,9 +340,11 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
   }
 
   bool get _showsDeveloperTelemetryInjector {
-    if (!kDeveloperTelemetrySimulationEnabled || !_usesRuntimeSources) return false;
+    if (!kDeveloperTelemetrySimulationEnabled || !_usesRuntimeSources)
+      return false;
     final identity = AppScope.maybeOf(context)?.identity.value;
-    return identity?.isRemoteAuthoritative == true && identity?.isPrimaryOwner == true;
+    return identity?.isRemoteAuthoritative == true &&
+        identity?.isPrimaryOwner == true;
   }
 
   Future<void> _injectDeveloperTelemetry(FamilyRosterChild child) async {
@@ -349,7 +359,8 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
     if (succeeded) {
       AppToast.show(
         context,
-        message: 'Developer simulation sent: 78% at Soccer Practice. Not child-device telemetry.',
+        message:
+            'Developer simulation sent: 78% at Soccer Practice. Not child-device telemetry.',
       );
       await _load();
     } else {
@@ -625,9 +636,9 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
                                   });
                                 } else {
                                   await _repo.saveSharedPolicies(
-                              draft,
-                              familyId: _loadedFamilyId,
-                            );
+                                    draft,
+                                    familyId: _loadedFamilyId,
+                                  );
                                   if (!mounted) return;
                                   setState(() => _policies = draft);
                                 }
@@ -754,7 +765,9 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
                       constraints: const BoxConstraints(minHeight: 48),
                       child: TextButton(
                         key: ChildrenListKeys.addChild,
-                        onPressed: disposition == PermissionDisposition.allow && _canCreateChild
+                        onPressed:
+                            disposition == PermissionDisposition.allow &&
+                                _canCreateChild
                             ? _goAddChild
                             : null,
                         style: TextButton.styleFrom(
@@ -780,9 +793,11 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                if (_showsDeveloperTelemetryInjector && _runtimeRoster.isNotEmpty) ...[
+                if (_showsDeveloperTelemetryInjector &&
+                    _runtimeRoster.isNotEmpty) ...[
                   _DeveloperTelemetryInjector(
-                    onPressed: () => _injectDeveloperTelemetry(_runtimeRoster.first),
+                    onPressed: () =>
+                        _injectDeveloperTelemetry(_runtimeRoster.first),
                   ),
                   const SizedBox(height: 10),
                 ],
@@ -969,7 +984,11 @@ class _DeveloperTelemetryInjector extends StatelessWidget {
             const Expanded(
               child: Text(
                 'Developer simulation — sends 78% / Soccer Practice through the API. Not a child device.',
-                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, height: 1.35),
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  height: 1.35,
+                ),
               ),
             ),
             const SizedBox(width: 8),
@@ -1009,7 +1028,8 @@ class _RuntimeChildRosterCard extends StatelessWidget {
     final age = l10n.addChildAgeYears(formatAppInt(child.ageYears!));
     final deviceStateLabel = _deviceStateLabel(l10n, device);
     final healthLabel = _healthLabel(l10n, device);
-    final locationLabel = device?.locationLabel ?? l10n.childrenListDeviceStateUnavailable;
+    final locationLabel =
+        device?.locationLabel ?? l10n.childrenListDeviceStateUnavailable;
     final batteryLabel = _batteryLabel(l10n, device);
     final deviceVariant = _deviceVariant(device);
 
@@ -1039,7 +1059,9 @@ class _RuntimeChildRosterCard extends StatelessWidget {
                   _StatusAvatar(
                     emoji: child.avatarEmoji ?? '🧒',
                     color: _themeColor(colors, child.themeColor),
-                    warnRing: device?.connectionState == ChildDeviceConnectionState.needsAttention,
+                    warnRing:
+                        device?.connectionState ==
+                        ChildDeviceConnectionState.needsAttention,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -1069,7 +1091,8 @@ class _RuntimeChildRosterCard extends StatelessWidget {
                         ),
                         _runtimeMetaLine(
                           icon: Icons.devices_other_outlined,
-                          label: '${device?.deviceLabel ?? deviceStateLabel} · $deviceStateLabel',
+                          label:
+                              '${device?.deviceLabel ?? deviceStateLabel} · $deviceStateLabel',
                           colors: colors,
                         ),
                       ],
@@ -1086,44 +1109,58 @@ class _RuntimeChildRosterCard extends StatelessWidget {
     );
   }
 
-  Color _themeColor(FamilyColors colors, String? themeColor) => switch (themeColor) {
-    'sky' => colors.sky,
-    'amber' => colors.amber,
-    'coral' => colors.coral,
-    'mint' => colors.mint,
-    'teal' => colors.teal600,
-    _ => colors.p500,
-  };
+  Color _themeColor(FamilyColors colors, String? themeColor) =>
+      switch (themeColor) {
+        'sky' => colors.sky,
+        'amber' => colors.amber,
+        'coral' => colors.coral,
+        'mint' => colors.mint,
+        'teal' => colors.teal600,
+        _ => colors.p500,
+      };
 
-  TagVariant _deviceVariant(FamilyChildDeviceSummary? device) => switch (device?.connectionState) {
-    ChildDeviceConnectionState.active => TagVariant.g,
-    ChildDeviceConnectionState.needsAttention => TagVariant.a,
-    ChildDeviceConnectionState.pairing => TagVariant.b,
-    ChildDeviceConnectionState.noDevice => TagVariant.b,
-    ChildDeviceConnectionState.unavailable || null => TagVariant.b,
-  };
+  TagVariant _deviceVariant(FamilyChildDeviceSummary? device) =>
+      switch (device?.connectionState) {
+        ChildDeviceConnectionState.active => TagVariant.g,
+        ChildDeviceConnectionState.needsAttention => TagVariant.a,
+        ChildDeviceConnectionState.pairing => TagVariant.p,
+        ChildDeviceConnectionState.noDevice => TagVariant.p,
+        ChildDeviceConnectionState.unavailable || null => TagVariant.p,
+      };
 
-  String _deviceStateLabel(AppLocalizations l10n, FamilyChildDeviceSummary? device) {
+  String _deviceStateLabel(
+    AppLocalizations l10n,
+    FamilyChildDeviceSummary? device,
+  ) {
     if (device == null) return l10n.childrenListDeviceStateUnavailable;
     return switch (device.connectionState) {
-      ChildDeviceConnectionState.unavailable => l10n.childrenListDeviceStateUnavailable,
+      ChildDeviceConnectionState.unavailable =>
+        l10n.childrenListDeviceStateUnavailable,
       ChildDeviceConnectionState.noDevice => l10n.childrenListDeviceNotLinked,
       ChildDeviceConnectionState.pairing => l10n.childrenListDevicePairing,
       ChildDeviceConnectionState.active => l10n.childrenListDeviceActive,
-      ChildDeviceConnectionState.needsAttention => l10n.childrenListDeviceNeedsAttention,
+      ChildDeviceConnectionState.needsAttention =>
+        l10n.childrenListDeviceNeedsAttention,
     };
   }
 
-  String _batteryLabel(AppLocalizations l10n, FamilyChildDeviceSummary? device) {
+  String _batteryLabel(
+    AppLocalizations l10n,
+    FamilyChildDeviceSummary? device,
+  ) {
     final level = device?.batteryLevel;
     if (level == null) return l10n.childrenListDeviceStateUnavailable;
-    final status = device?.batteryStatus == 'charging' ? 'charging' : 'unplugged';
+    final status = device?.batteryStatus == 'charging'
+        ? 'charging'
+        : 'unplugged';
     return '$level% · $status';
   }
 
   String _healthLabel(AppLocalizations l10n, FamilyChildDeviceSummary? device) {
-    if (device == null || !device.hasTelemetry) return _deviceStateLabel(l10n, device);
-    if (device.connectionState == ChildDeviceConnectionState.needsAttention) return 'Battery low';
+    if (device == null || !device.hasTelemetry)
+      return _deviceStateLabel(l10n, device);
+    if (device.connectionState == ChildDeviceConnectionState.needsAttention)
+      return 'Battery low';
     if (device.batteryStatus == 'charging') return 'Charging';
     return 'Healthy';
   }
@@ -1236,7 +1273,9 @@ class _InitialAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<FamilyColors>()!;
-    final initial = name.trim().isEmpty ? '?' : String.fromCharCode(name.trim().runes.first);
+    final initial = name.trim().isEmpty
+        ? '?'
+        : String.fromCharCode(name.trim().runes.first);
     return Semantics(
       excludeSemantics: true,
       child: Container(
