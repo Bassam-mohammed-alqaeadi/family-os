@@ -19,8 +19,9 @@ Read these in order for active work:
 
 | Path | Purpose | Status |
 |---|---|---|
-| [`foundation/`](foundation/) | Render/PostgreSQL/OIDC foundation, controlled staging evidence, and the bounded connected-roster slice | Active; the staging pass is recorded, Children Control Centre refinement is in progress, then isolated Flutter roster verification follows. |
-| [`real_platform/`](real_platform/) | Truthful vertical-slice contracts, including the Children Control Centre | Active; roster Flutter integration is not yet authorized. |
+| [`foundation/`](foundation/) | Render/PostgreSQL/OIDC foundation, controlled staging evidence, and the bounded connected-roster slice | Active; isolated technical roster verification exists, while product parity and the next capability decision remain open. |
+| [`foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md`](foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md) | Prototype-to-real capability, UX and state-gap audit for `SCR-FAT-012` | Decision-ready; not implementation authorization. |
+| [`real_platform/`](real_platform/) | Truthful vertical-slice contracts, including the Children Control Centre | Active; default-app migration and every capability beyond the bounded roster read require their own authorization. |
 | [`product_refinement_v2/`](product_refinement_v2/) | Product direction, runtime truth, system contracts and authorization gates | Active product authority. |
 | [`OPEN_DECISIONS.md`](OPEN_DECISIONS.md) | Explicit current blockers and decisions; not a legacy backlog | Active. |
 | [`REPOSITORY_CONSOLIDATION_REPORT.md`](REPOSITORY_CONSOLIDATION_REPORT.md) | What was archived, retained or deleted and why | Completed 2026-10-04. |
