@@ -1,32 +1,27 @@
-# Family OS execution guard
+# Family OS Global Super-App Constitution (The Execution Guard)
 
-## Read before significant work
+## 1. The Grand Vision
+Family OS is not a simple app; it is a **Global Super App** for families, designed to replace fragmented single-purpose apps (e.g., Life360 for security, Qustodio for parental control, NotebookLM/Duolingo for education). It must anticipate every family need and provide a seamless, incredibly flexible, and beautiful user experience that matches or beats top global competitors.
 
-1. [`PROJECT_EXECUTION_PLAN.md`](PROJECT_EXECUTION_PLAN.md)
-2. [`docs/CURRENT_EXECUTION_PLAN.md`](docs/CURRENT_EXECUTION_PLAN.md)
-3. [`docs/product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md`](docs/product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md)
-4. [`docs/product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md`](docs/product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md)
-5. [`docs/product_refinement_v2/92_EXECUTION_AUTHORIZATION_GATE.md`](docs/product_refinement_v2/92_EXECUTION_AUTHORIZATION_GATE.md)
-6. The domain contract/runbook named by the requested work.
+## 2. The True Meaning of "Polishing" (عملية الصقل)
+- **The Prototype is the Target:** The initial rich, colorful UI prototype is our ultimate goal. It is a "promise" to the user, not a draft to be discarded.
+- **Do Not Delete, BUILD:** If a beautiful UI feature relies on mock data, **DO NOT delete the UI**. Instead, build the actual backend, database, and native device services to make that UI *real*.
+- **Competitive UX Completion:** Polishing means analyzing top competitors, identifying what our UX lacks, designing those missing cards/buttons beautifully to fit our design system, and wiring them to the real backend.
+- **Runtime Truth:** The application must never lie to the user with fake data in production. We solve fake data by building the real data pipeline, not by stripping down the UI.
 
-Historical planning, old continuous-loop automation and completed campaign material live in [`docs/archive/`](docs/archive/) and cannot authorize new work.
+## 3. Execution Strategy: System by System (نظام بنظام)
+Development MUST proceed vertically, **System by System**, NOT screen by screen. This ensures deep focus, engineering sanity, and market readiness.
+For every System (e.g., Security, Education, Operations), the workflow is:
+1. **Domain Selection:** Lock focus on one specific system.
+2. **Competitive Analysis:** Analyze top global apps in this domain to extract best-in-class features.
+3. **UX Gap Analysis:** Add missing buttons, states, and flows to our prototype to beat competitors.
+4. **The Real Engine:** Build the complete vertical slice (PostgreSQL -> Go Backend API -> Native Android Background Services -> Flutter UI) to make the system 100% real.
+5. **Lock & Ship:** Finalize the system completely before moving to the next domain.
 
-## Current scope
+## 4. Hard Guards
+- **No Scattered Development:** Do not jump between unrelated systems. Finish the active system first.
+- **No Mock Persistence:** Do not persist mock data into production states. All data presented to the user must originate from the authoritative backend servers or real native device telemetry.
+- **Maintain Flexibility:** The platform must remain highly adaptable to future AI and structural features.
+- **Security & Secrets:** Do not expose secrets, tokens, or raw payloads in source code or CI. Keep authorization strictly server-owned.
 
-The controlled synthetic Children Roster staging release passed on 2026-10-03; minimal evidence is recorded in [`docs/foundation/18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md`](docs/foundation/18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md). The active increment is the familiar, coherent Children Control Centre refinement inside the single isolated, synthetic Flutter Children Roster read defined in [`docs/foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md`](docs/foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md) and [`docs/foundation/20_CHILDREN_CONTROL_CENTRE_REFINEMENT_EXECUTION.md`](docs/foundation/20_CHILDREN_CONTROL_CENTRE_REFINEMENT_EXECUTION.md).
-
-## Hard guards
-
-- Preserve runtime truth. Never use fixtures, local role selection, a mock fallback or a success-looking UI as a substitute for real family/role/child/device/policy facts.
-- Keep authorization server-owned for remote facts. Validate scope and role, fail closed, and make source/freshness/capability state visible.
-- Treat UX polish, RTL/EN, accessibility, responsive behavior and real loading/empty/error/denied/pending/recovery states as part of each vertical slice.
-- Apply Jacob’s Law and the shared Family OS design system: use familiar interaction patterns and coherent family context, never novelty or a one-off mini-app. Familiarity never overrides authorization, runtime truth, privacy or accessibility.
-- Do not expose secrets, provider/database URLs, tokens, synthetic identifiers, raw payloads, real data or logs in source, chat, CI or evidence.
-- Do not expand beyond the specifically documented plan-19 Flutter roster read into any Flutter mutation, a third client API read, device/native enforcement, recovery/support, provider expansion, production or real-data work without a separate documented decision.
-- Use additive forward migrations only. Never alter applied migration history or run a migration on application startup/CI.
-- Record only durable evidence actually produced. Passing unit tests, CI and source review are not live staging evidence.
-- Preserve `family-os/`, `prototype/` and `docs/reference/frozen-prototype-handoff/` as reference inputs unless a deliberate, tested migration updates their consumers.
-
-## When external access is required
-
-A protected Render/PostgreSQL/OIDC operation is Owner-operated. Prepare and validate the exact runbook, but do not request, store or paste credentials. Stop only for a genuine policy/security decision that is not already resolved by the authority documents; otherwise complete the permitted work.
+> **Historical Note:** The previous "Foundation Wave" policies (which advocated for stripping down the UI to match minimal backend capabilities) are now superseded by this Global Super App Constitution. We now build the backend to meet the UI's demands.
