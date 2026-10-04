@@ -10,6 +10,7 @@ import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 import 'package:family_os/foundation_gate/main_app_foundation_runtime.dart';
+import 'package:family_os/foundation_gate/native_child_pairing_copy.dart';
 import 'package:family_os/foundation_gate/native_child_telemetry_bridge.dart';
 
 /// Parent side of Phase 2 pairing. The code exists only in this widget's
@@ -36,17 +37,18 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen> {
   }
 
   Future<void> _create() async {
+    final copy = NativeChildPairingCopy.of(context);
     final childRaw = widget.childId?.trim();
     final deviceLabel = _label.text.trim();
     final runtime = AppScope.maybeOf(context);
     final familyId = runtime?.identity.value.familyId;
     final source = runtime?.devices;
     if (childRaw == null || childRaw.isEmpty || familyId == null || source is! RemoteFamilyDeviceSource) {
-      setState(() => _error = 'Pairing is available only to the authenticated primary guardian.');
+      setState(() => _error = copy.parentAccessRequired);
       return;
     }
     if (deviceLabel.isEmpty) {
-      setState(() => _error = 'Enter this child device name first.');
+      setState(() => _error = copy.deviceNameRequired);
       return;
     }
     setState(() {
@@ -63,32 +65,33 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen> {
     setState(() {
       _loading = false;
       _pairing = pairing;
-      _error = pairing == null ? 'The server could not create a pairing code.' : null;
+      _error = pairing == null ? copy.pairingUnavailable : null;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<FamilyColors>()!;
+    final copy = NativeChildPairingCopy.of(context);
     final pairing = _pairing;
     return Scaffold(
       backgroundColor: colors.bg,
-      appBar: AppBar(backgroundColor: colors.surface, title: const Text('Pair child device')),
+      appBar: AppBar(backgroundColor: colors.surface, title: Text(copy.parentTitle)),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            const Text(
-              'Create a one-time pairing code on the parent device. Give it to the child device only while you are present.',
+            Text(
+              copy.parentIntro,
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, height: 1.5),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _label,
               maxLength: 80,
-              decoration: const InputDecoration(
-                labelText: 'Child device name',
-                hintText: 'For example: Amani’s Android phone',
+              decoration: InputDecoration(
+                labelText: copy.deviceNameLabel,
+                hintText: copy.deviceNameHint,
                 border: OutlineInputBorder(),
               ),
             ),
@@ -98,12 +101,12 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen> {
             ],
             const SizedBox(height: 8),
             PrimaryBtn(
-              label: _loading ? 'Creating secure pairing code…' : 'Create pairing code',
+              label: _loading ? copy.creatingPairing : copy.createPairing,
               onPressed: _loading ? null : _create,
             ),
             if (pairing != null) ...[
               const SizedBox(height: 24),
-              const Text('One-time child pairing code', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+              Text(copy.oneTimePairingCode, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
               const SizedBox(height: 8),
               SelectableText(
                 pairing.pairingCode,
@@ -111,12 +114,12 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen> {
                 style: TextStyle(fontSize: 17, letterSpacing: 1.2, fontWeight: FontWeight.w800, color: colors.tealDeep),
               ),
               const SizedBox(height: 8),
-              Text('Expires at ${pairing.expiresAt.toLocal()}. It cannot be used again after a successful child-device claim.'),
+              Text(copy.pairingExpiresAt(pairing.expiresAt)),
               const SizedBox(height: 8),
               TextButton.icon(
                 onPressed: () => Clipboard.setData(ClipboardData(text: pairing.pairingCode)),
                 icon: const Icon(Icons.copy_outlined),
-                label: const Text('Copy code'),
+                label: Text(copy.copyCode),
               ),
             ],
           ],
@@ -176,10 +179,11 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
   }
 
   Future<void> _claimAndStart() async {
+    final copy = NativeChildPairingCopy.of(context);
     final client = _client();
     final pairingCode = _code.text.trim().replaceAll(' ', '');
     if (client == null || pairingCode.isEmpty) {
-      setState(() => _message = 'A secure API origin and pairing code are required.');
+      setState(() => _message = copy.secureOriginAndCodeRequired);
       return;
     }
     setState(() {
@@ -190,7 +194,7 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
       final permissions = await NativeChildTelemetryBridge.requestLocationPermissions();
       if (!permissions.available || !permissions.fineLocationGranted || !permissions.backgroundLocationGranted) {
         if (!mounted) return;
-        setState(() => _message = 'Location access was not granted. The pairing code remains unused.');
+        setState(() => _message = copy.locationPermissionNotGranted);
         return;
       }
       final claimed = await client.claimPairing(pairingCode: pairingCode);
@@ -202,11 +206,11 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
       );
       if (!mounted) return;
       setState(() => _message = result.started
-          ? 'Child Mode is active. This device now sends real battery and location telemetry.'
-          : 'Child Mode could not start: ${result.reason}');
+          ? copy.childModeActive
+          : copy.childModeStartFailed(result.reason));
       await _refreshServiceStatus();
     } on FoundationGateApiException {
-      if (mounted) setState(() => _message = 'The pairing code is invalid, expired, already used, or the server is unavailable.');
+      if (mounted) setState(() => _message = copy.pairingClaimFailed);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -215,15 +219,16 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<FamilyColors>()!;
+    final copy = NativeChildPairingCopy.of(context);
     return Scaffold(
       backgroundColor: colors.bg,
-      appBar: AppBar(backgroundColor: colors.surface, title: const Text('Enter Child Mode')),
+      appBar: AppBar(backgroundColor: colors.surface, title: Text(copy.childTitle)),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            const Text(
-              'Ask the parent to create a one-time pairing code. To send the device’s real location while this app is not open, Android will ask for precise and background location access. After acceptance, Child Mode starts an always-visible foreground service that you can stop on this device.',
+            Text(
+              copy.childIntro,
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, height: 1.5),
             ),
             const SizedBox(height: 16),
@@ -232,7 +237,7 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
               autocorrect: false,
               enableSuggestions: false,
               textCapitalization: TextCapitalization.none,
-              decoration: const InputDecoration(labelText: 'One-time pairing code', border: OutlineInputBorder()),
+              decoration: InputDecoration(labelText: copy.pairingCodeLabel, border: const OutlineInputBorder()),
             ),
             if (_message != null) ...[
               const SizedBox(height: 12),
@@ -240,7 +245,7 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
             ],
             const SizedBox(height: 12),
             PrimaryBtn(
-              label: _loading ? 'Setting up Child Mode…' : 'Enter Child Mode',
+              label: _loading ? copy.settingUpChildMode : copy.enterChildMode,
               onPressed: _loading ? null : _claimAndStart,
             ),
             if (_serviceStatus?.running == true)
@@ -250,12 +255,12 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
                   await _refreshServiceStatus();
                   if (mounted) {
                     setState(() => _message = stopped
-                        ? 'Child Mode foreground service stopped on this device.'
-                        : 'Child Mode service could not be stopped.');
+                        ? copy.childModeStopped
+                        : copy.childModeStopFailed);
                   }
                 },
                 icon: const Icon(Icons.stop_circle_outlined),
-                label: const Text('Stop Child Mode on this device'),
+                label: Text(copy.stopChildMode),
               ),
           ],
         ),
