@@ -8,7 +8,7 @@ class FoundationGateConfiguration {
   FoundationGateConfiguration._(this.stagingApiOrigin);
 
   factory FoundationGateConfiguration.fromStagingApiOrigin(Uri origin) {
-    if (origin.scheme != 'https' ||
+    if ((origin.scheme != 'https' && origin.scheme != 'http') ||
         origin.host.isEmpty ||
         origin.userInfo.isNotEmpty ||
         origin.hasQuery ||

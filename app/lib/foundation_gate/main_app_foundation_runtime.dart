@@ -59,6 +59,15 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     return _refreshIdentitySnapshot();
   }
 
+  Future<IdentitySnapshot> signUp({
+    required String email,
+    required String password,
+  }) async {
+    await _controller.signUp(email: email, password: password);
+    await _selectConfiguredFamily();
+    return _refreshIdentitySnapshot();
+  }
+
   Future<void> signOut() async {
     await _controller.signOut();
     _identityValue = const IdentitySnapshot.unavailable();
@@ -374,6 +383,11 @@ final class MainAppFoundationIdentitySource extends ChangeNotifier
     required String email,
     required String password,
   }) => _runtime.signIn(email: email, password: password);
+
+  Future<IdentitySnapshot> signUp({
+    required String email,
+    required String password,
+  }) => _runtime.signUp(email: email, password: password);
 
   FoundationGatePhase get phase => _runtime.phase;
 

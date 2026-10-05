@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/components/progress_bar.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/runtime/app_scope.dart';
+import 'package:family_os/foundation_gate/foundation_gate_copy.dart';
+import 'package:family_os/foundation_gate/main_app_foundation_runtime.dart';
 
 /// Password strength bands matching prototype SHR-002 (length-only).
 enum PasswordStrengthBand { empty, weak, good, strong }
@@ -78,16 +82,47 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
+  bool _submitting = false;
 
-  void _submit() {
-    if (!_canSubmit) return;
+  Future<void> _submit() async {
+    if (!_canSubmit || _submitting) return;
     if (widget.onCreated != null) {
       widget.onCreated!();
       return;
     }
-    // Remote account creation is not an admitted capability yet, so this card
-    // never fabricates a successful signup. The preview host continues to the
-    // role step; an auth admission must wire a server-verified flow first.
+
+    final appRuntime = AppScope.maybeOf(context);
+    if (appRuntime != null) {
+      final remoteIdentity = appRuntime.identity;
+      if (remoteIdentity is! MainAppFoundationIdentitySource) {
+        AppToast.show(
+          context,
+          message: FoundationGateCopy.of(context).unconfigured,
+        );
+        return;
+      }
+
+      setState(() => _submitting = true);
+      try {
+        await remoteIdentity.signUp(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+        if (!mounted) return;
+        context.go('/scr-shr-007');
+      } catch (e) {
+        if (mounted) {
+          AppToast.show(
+            context,
+            message: 'حدث خطأ أثناء إنشاء الحساب. تأكد من صحة البيانات أو حاول مرة أخرى.',
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _submitting = false);
+      }
+      return;
+    }
+
     context.go('/scr-shr-007');
   }
 
@@ -269,7 +304,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
             PrimaryBtn(
               key: const Key('create_account_submit'),
               label: l10n.createAccountSubmit,
-              onPressed: _canSubmit ? _submit : null,
+              onPressed: (_canSubmit && !_submitting) ? _submit : null,
             ),
             const SizedBox(height: 12),
             Text(

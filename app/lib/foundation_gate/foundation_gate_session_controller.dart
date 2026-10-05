@@ -62,6 +62,34 @@ class FoundationGateSessionController extends ChangeNotifier {
     }
   }
 
+  Future<void> signUp({required String email, required String password}) async {
+    if (email.trim().isEmpty || password.isEmpty) {
+      _setPhase(FoundationGatePhase.signInFailed);
+      return;
+    }
+
+    _clearAllVolatileState();
+    _setPhase(FoundationGatePhase.signingIn);
+    String? idToken;
+    try {
+      idToken = await _identity.signUp(email: email, password: password);
+      _setPhase(FoundationGatePhase.loadingFamilies);
+      final discovered = await _discoveryApi.discover(idToken: idToken);
+      _families = discovered;
+      _phase = discovered.isEmpty
+          ? FoundationGatePhase.noActiveFamily
+          : FoundationGatePhase.familiesAvailable;
+      notifyListeners();
+    } on FoundationGateIdentityException {
+      _clearAllVolatileState();
+      _setPhase(FoundationGatePhase.signInFailed);
+    } on FoundationGateApiException catch (error) {
+      await _handleDiscoveryFailure(error.failure);
+    } finally {
+      idToken = null;
+    }
+  }
+
   /// Discovers an existing provider session without retaining its token.
   /// A caller may select only a family returned by this server discovery.
   Future<void> restoreCurrentSession() async {

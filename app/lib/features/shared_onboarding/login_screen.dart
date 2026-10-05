@@ -98,7 +98,7 @@ class _LoginScreenState extends State<LoginScreen> {
           password: _passwordController.text,
         );
         if (!mounted) return;
-        if (!snapshot.isRemoteAuthoritative || snapshot.familyId == null) {
+        if (!snapshot.isRemoteAuthoritative) {
           AppToast.show(
             context,
             message: _signInOutcomeMessage(
@@ -108,6 +108,12 @@ class _LoginScreenState extends State<LoginScreen> {
           );
           return;
         }
+        
+        if (snapshot.familyId == null) {
+          context.go('/scr-shr-007');
+          return;
+        }
+
         context.go('/scr-fat-012');
       } on Object {
         if (mounted) {
