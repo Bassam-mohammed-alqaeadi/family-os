@@ -4,7 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
+import 'package:family_os/app/role_controller.dart';
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
+import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/app/child_device_mode.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/runtime/app_scope.dart';
@@ -257,9 +261,13 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class ChildModePairingScreen extends StatefulWidget {
-  const ChildModePairingScreen({super.key, this.apiClient});
+  const ChildModePairingScreen({super.key, this.apiClient, this.onPaired});
 
   final FamilyDeviceApiClient? apiClient;
+
+  /// Test seam — when null a successful pairing switches the role to child
+  /// and navigates to the child home (`/scr-chd-004?childId=…`).
+  final void Function(String childId)? onPaired;
 
   @override
   State<ChildModePairingScreen> createState() => _ChildModePairingScreenState();
@@ -364,12 +372,29 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
         deviceCredential: claimed.deviceCredential,
       );
       if (!mounted) return;
-      setState(
-        () => _message = result.started
-            ? copy.childModeActive
-            : copy.childModeStartFailed(result.reason),
+      if (!result.started) {
+        setState(() => _message = copy.childModeStartFailed(result.reason));
+        await _refreshServiceStatus();
+        return;
+      }
+      // Pairing is real and the native service is running: this handset is
+      // now the child's device. Remember that (UUIDs only — never the
+      // credential), switch the in-app role and land on the child home.
+      await ChildDeviceMode.markPaired(
+        childId: claimed.device.childId,
+        deviceId: claimed.device.id,
       );
-      await _refreshServiceStatus();
+      if (!mounted) return;
+      final roleNotifier = CurrentRole.maybeNotifierOf(context);
+      if (roleNotifier != null) roleNotifier.value = AppRole.child;
+      final onPaired = widget.onPaired;
+      if (onPaired != null) {
+        onPaired(claimed.device.childId);
+        return;
+      }
+      AppToast.show(context, message: copy.childModeActive);
+      context.go('/scr-chd-004?childId=${claimed.device.childId}');
+      return;
     } on FoundationGateApiException {
       if (mounted) setState(() => _message = copy.pairingClaimFailed);
     } on Object {

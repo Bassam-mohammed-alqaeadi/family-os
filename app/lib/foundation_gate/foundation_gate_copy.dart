@@ -99,8 +99,8 @@ class FoundationGateCopy {
   /// Account was created with the provider, but family discovery failed. The
   /// account exists; the user should sign in and will land on family setup.
   String get accountCreatedDiscoveryUnavailable => isArabic
-      ? 'تم إنشاء الحساب، لكن تعذر الاتصال بخادم العائلة الآن. سجّل الدخول لاحقًا للمتابعة.'
-      : 'Your account was created, but the family server could not be reached. Sign in later to continue.';
+      ? 'تم إنشاء حسابك. تعذر الوصول إلى خادم العائلة الآن — تابع الإعداد وسنعيد المحاولة.'
+      : 'Your account was created. The family server is unreachable right now — continue setup and we will retry.';
 
   // ── SCR-FAT-001 real family-creation failure copy (title + message) ──
   String get familyCreationUnavailableTitle =>

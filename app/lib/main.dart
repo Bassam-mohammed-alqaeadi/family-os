@@ -46,6 +46,7 @@ import 'package:family_os/features/n16_tasks/family_tasks_local_persistence.dart
 import 'package:family_os/features/quran/quran_local_bridge.dart';
 import 'package:family_os/features/shared_onboarding/device_user_switch_identity_repository.dart';
 import 'package:family_os/features/shared_onboarding/device_user_switch_repository.dart';
+import 'package:family_os/app/child_device_mode.dart';
 import 'package:family_os/foundation_gate/children_roster_api_client.dart';
 import 'package:family_os/foundation_gate/family_creation_api_client.dart';
 import 'package:family_os/foundation_gate/family_device_api_client.dart';
@@ -123,7 +124,12 @@ Future<void> main() async {
   auditHostActive = resolveAuditVisionHost();
   // EVT-01-B — PolicySyncBus + AuditAppend → Local Event Journal (enqueue ≠ deliver).
   await LocalEventPolicyBridge.tryBind();
-  final familyEntryRuntime = await _tryCreateMainAppFoundationRuntime();
+  // A handset paired as a child device (native Keystore credential present)
+  // boots straight into the child home — the guardian never has to re-pick.
+  final childDevice = await ChildDeviceMode.resolveForBoot();
+  final familyEntryRuntime = childDevice == null
+      ? await _tryCreateMainAppFoundationRuntime()
+      : null;
   // Restore only a provider-managed session; no local family/roster fallback is
   // consulted when this remote capability has not been configured.
   if (familyEntryRuntime != null) {
@@ -133,6 +139,8 @@ Future<void> main() async {
     FamilyOsApp(
       localeController: localeController,
       foundationRuntime: familyEntryRuntime,
+      initialRole: childDevice == null ? null : AppRole.child,
+      initialLocationOverride: childDevice?.homeLocation,
     ),
   );
 }
@@ -205,7 +213,15 @@ class FamilyOsApp extends StatefulWidget {
     this.roleController,
     this.localeController,
     this.foundationRuntime,
+    this.initialRole,
+    this.initialLocationOverride,
   });
+
+  /// Boot role when no [roleController] is injected (paired child device).
+  final AppRole? initialRole;
+
+  /// Boot location that wins over the platform/default route (child home).
+  final String? initialLocationOverride;
 
   /// Optional override for tests / gallery role switching.
   final RoleController? roleController;
@@ -258,7 +274,7 @@ class _FamilyOsAppState extends State<FamilyOsApp> {
     if (widget.roleController != null) {
       _role = widget.roleController!;
     } else {
-      _role = RoleController(AppRole.father);
+      _role = RoleController(widget.initialRole ?? AppRole.father);
       _ownsRole = true;
     }
     if (widget.localeController != null) {
@@ -271,7 +287,8 @@ class _FamilyOsAppState extends State<FamilyOsApp> {
     _syncLegacyRoleFallback();
     _router = createAppRouter(
       roleListenable: _role,
-      initialLocation: resolveAppInitialLocation(),
+      initialLocation:
+          widget.initialLocationOverride ?? resolveAppInitialLocation(),
     );
   }
 

@@ -131,11 +131,15 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
             return;
           case FoundationGatePhase.serviceUnavailable:
           case FoundationGatePhase.networkUnavailable:
-            // The provider account exists; only family discovery failed.
+            // The provider account now exists and the user is signed in; only
+            // family discovery failed. Staying here would make the natural
+            // retry hit "email already in use". Move on: the family-setup
+            // screen owns an honest retry against the family server.
             AppToast.show(
               context,
               message: copy.accountCreatedDiscoveryUnavailable,
             );
+            context.go('/scr-shr-007');
             return;
           case FoundationGatePhase.noActiveFamily:
           case FoundationGatePhase.familiesAvailable:
