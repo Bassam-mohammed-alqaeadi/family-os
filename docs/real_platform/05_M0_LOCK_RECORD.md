@@ -64,7 +64,9 @@ The Flutter toolchain cannot be installed in the current workspace (`storage.goo
 | Step | Result |
 |---|---|
 | Resolve packages, generate localization, **Analyze** | ✅ passed — `flutter analyze --fatal-infos` is clean, including the new widget tests |
-| Run tests | ❌ `1781 → 1784` passing, **2 failing** (see below) |
+| Run tests | ❌ `1784` passing, **2 failing** — both pre-existing, both now fixed (§4.1.1, §4.1.2) |
+
+Foundation Gate CI (`37371273564`, commit `f110422`) narrowed its own scope to the same files and reported **43 passed, 1 failed** with the analyzer green, which is where the failing test was finally named. Both failures are now addressed and the next run is the verification.
 
 **Canary comparison — did this phase break anything?**
 
@@ -86,7 +88,28 @@ Three added tests, three added passes, and the failure count is unchanged. **Eve
 
 The rule is now reproduced at **0 violations** locally. The exact Arabic wording is preserved verbatim in the new getters, so no user-visible copy changed; only its ownership moved out of the widget. A repository-wide grep confirms no test asserted the removed literals.
 
-The **second** pre-existing failure is not yet identified: all four repository-scanning suites (`vx_b1`, `vx_b4`, foundation-gate isolation, ARB jargon/parity) were ported and reproduce clean, so it is a functional test rather than a source guard. It is not attributable to this phase, and it is tracked here rather than hidden.
+### 4.1.2 The second pre-existing failure — identified and fixed
+Foundation Gate CI acquired a runner for commit `f110422` and named it:
+
+```
+Foundation Gate rejects unsafe origins and roster path values before networking
+  Expected: throws <Instance of 'ArgumentError'>
+```
+
+`foundation_gate_configuration_test.dart` asserts that `http://staging.example.test` is **refused**. The factory did not refuse it — it accepted both `https` and `http` for any host, while its own error message already said *"A canonical HTTPS staging origin is required."* The contract, the message and the test all agreed; only the code disagreed.
+
+**This is a real security boundary, not a test technicality.** That origin carries the guardian's bearer token and child roster data, so accepting cleartext for an arbitrary host means a public staging endpoint could be reached unencrypted.
+
+**Fix:** every public origin is now HTTPS. Cleartext HTTP survives only where a real Android device reaches a developer machine — loopback (`localhost`, `*.localhost`, `::1`, `127.x`), mDNS `*.local`, and the RFC 1918 private ranges (`10.x`, `172.16–31.x`, `192.168.x`) — and the decision is made before any networking happens.
+
+| Origin | Before | After |
+|---|---|---|
+| `https://staging.example.test` | accepted | accepted |
+| `http://staging.example.test` | **accepted** | refused |
+| `http://localhost:3000`, `http://10.0.2.2:3000`, `http://192.168.1.5:3000` | accepted | accepted (development only) |
+| `http://172.32.0.1`, `http://evil.example.com`, `http://999.1.1.1` | accepted | refused |
+
+The rejecting logic was ported and checked against ten representative origins before pushing, including the Android emulator host and a value outside the RFC 1918 B range.
 
 ### 4.2 Run ledger — commit `844ec82`
 
