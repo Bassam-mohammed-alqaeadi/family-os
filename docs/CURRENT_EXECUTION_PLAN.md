@@ -8,6 +8,8 @@
 >
 > **Active system:** **Family Entry & Children Control** — selected 2026-10-04; Cover remains governing design authority and the bounded **primary-guardian create child profile** capability is now admitted for real-engine implementation.
 >
+> **Executive operating model:** [`EXECUTIVE_OPERATING_MODEL.md`](EXECUTIVE_OPERATING_MODEL.md) is the governance, revenue-ladder and team-scaling layer for the Owner. It sits **under** `AGENTS.md`: it changes no truth gate and opens no system early. It reconciles the 2028 revenue ambition against the market ceiling and fixes the approved ladder (0.5–4M$ ARR in 2028 → 29B$ horizon at 2035+).
+>
 > **This document:** selects the current system and its stage. Historical Foundation, staging and discovery material remains evidence, not a competing roadmap.
 
 ## 1. Product operating model

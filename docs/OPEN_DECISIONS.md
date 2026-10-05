@@ -44,7 +44,20 @@ The Node.js/Express/PostgreSQL Foundation and controlled synthetic roster eviden
 | Local protected configuration and synthetic emulator checks | Owner-operated when an admitted capability needs them | Never commit/paste configuration, identities, tokens, URLs or screenshots containing data. |
 | Children parity audit and Cover specification | Product/design input | Define what must become real and the exact exit gate before implementation. |
 
-## 5. Not decisions to bypass
+## 5. Owner decisions raised 2026-10-05 — revenue and scale
+
+The Owner raised a 2028 revenue target and a 19,000-person organization. The market evidence and the resulting operating model are recorded in [`EXECUTIVE_OPERATING_MODEL.md`](EXECUTIVE_OPERATING_MODEL.md).
+
+| Decision | Status | Why it cannot be inferred |
+|---|---|---|
+| D1 — Approved revenue ladder (0.5–4M$ ARR in 2028, $29B horizon at 2035+) | **Awaiting Owner** | The requested 2028 figure is 59× the category leader's revenue and 6× the entire category market by 2030; a binding replacement must be explicitly approved, not assumed. |
+| D2 — Status of the $29B figure | **Awaiting Owner** | It is either a north-star horizon or removed; leaving it as a 2028 commitment contradicts the plan's own exit criteria. |
+| D3 — Multi-engine readiness (B2B2C, marketplace, hardware) | **Awaiting Owner** | Architectural readiness costs nothing now; building them early violates the one-system rule. |
+| D4 — Declared 2028 objective | **Awaiting Owner** | The published number changes hiring, cost and launch pressure. |
+| Team scaling curve (1 → 5 → 40 → 400 → 19,000) | Recorded as model | A 19,000-person payroll is ~2.85B$/year and must follow revenue, never precede it. |
+| Agent-operated delivery layer (AGENTS.md + `.verify/` + CI + pinned skills) | **In force now** | This is the current execution capacity; it is not a claim of managing 19,000 employees. |
+
+## 6. Not decisions to bypass
 
 - Do not use a mock, local role fallback or fixed sample state to make a production capability appear available.
 - Do not start unrelated systems while Family Entry & Children Control is incomplete.
