@@ -6,31 +6,36 @@ import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/runtime/app_scope.dart';
+import 'package:family_os/core/runtime/family_creation_source.dart';
 import 'package:family_os/features/n01_linking/create_family_create.dart';
+import 'package:family_os/foundation_gate/foundation_gate_copy.dart';
+import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
 /// How many children the father plans to follow (mock UX only).
 enum ChildCountChoice { one, two, three, fourPlus }
 
-/// SCR-FAT-001 — إنشاء العائلة (bare parent onboarding, mock-first).
+/// SCR-FAT-001 — إنشاء العائلة (real-engine admission).
 ///
-/// Creator becomes OWNER — product note only (one_owner_per_family).
-/// No Firebase / backend on this card. Create failures surface SHR-005
-/// ([AppErrorState]) with Retry — UI-001.
+/// Creator becomes OWNER — server-assigned after a confirmed 201. Create
+/// failures surface SHR-005 ([AppErrorState]) with Retry — UI-001.
 ///
-/// The previously injected draft attempted a direct backend POST from the
-/// widget with an empty bearer token, a path-only URI and a timestamp
-/// idempotency value; that path could never produce a truthful server result.
-/// The production route intentionally stays unavailable until a dedicated
-/// family-creation admission wires this card through the isolated
-/// Foundation Gate typed client, server discovery and explicit error states.
+/// The production route is wired through the real typed client: it resolves
+/// the [FamilyCreationSource] from [AppScope], sends only the trimmed display
+/// name with a fresh idempotency key and a real bearer token, and reports
+/// server-contract failures as explicit error states. When no real source is
+/// configured the card fails closed with an honest "not configured" state —
+/// it never manufactures a family. The injectable [CreateFamilyFn] seam
+/// remains for tests and explicit demo hosts.
 class CreateFamilyScreen extends StatefulWidget {
   const CreateFamilyScreen({super.key, this.onCreated, this.createFamily});
 
   /// Test seam — when null after successful create, navigates to `/scr-fat-002`.
   final VoidCallback? onCreated;
 
-  /// Injectable create (Rule 23/25). Defaults to [mockCreateFamilySuccess].
-  /// Throw [CreateFamilyException] to force SHR-005 variants in tests.
+  /// Injectable create (Rule 23/25). When null the card resolves the real
+  /// [FamilyCreationSource] from [AppScope]. Throw [CreateFamilyException] to
+  /// force SHR-005 variants in tests.
   final CreateFamilyFn? createFamily;
 
   @override
@@ -41,10 +46,11 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
   final _nameController = TextEditingController();
   ChildCountChoice _childCount = ChildCountChoice.three;
   AppErrorKind? _errorKind;
+  String? _errorTitle;
+  String? _errorMessage;
   bool _submitting = false;
 
-  CreateFamilyFn get _create =>
-      widget.createFamily ?? mockCreateFamilySuccess;
+  CreateFamilyFn get _create => widget.createFamily ?? _createWithSource;
   @override
   void initState() {
     super.initState();
@@ -75,6 +81,8 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
     setState(() {
       _submitting = true;
       _errorKind = null;
+      _errorTitle = null;
+      _errorMessage = null;
     });
     try {
       await _create(name);
@@ -83,17 +91,86 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
         widget.onCreated!();
         return;
       }
-      // Mock-only: creator is OWNER (no persistence this card).
+      // The server confirmed the family; continue the admitted onboarding
+      // journey. The creator's OWNER role is server-assigned.
       context.go('/scr-fat-002');
     } on CreateFamilyException catch (e) {
       if (!mounted) return;
-      setState(() => _errorKind = e.kind);
+      setState(() {
+        _errorKind = e.kind;
+        _errorTitle = e.title;
+        _errorMessage = e.message;
+      });
     } catch (_) {
       if (!mounted) return;
       setState(() => _errorKind = AppErrorKind.network);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  /// Real-engine default: resolves the typed family-creation source from the
+  /// app scope and fails closed when no real source is composed.
+  Future<void> _createWithSource(String name) async {
+    final copy = FoundationGateCopy.of(context);
+    final source =
+        AppScope.maybeOf(context)?.familyCreation ??
+        const UnavailableFamilyCreationSource();
+    final result = await source.create(
+      displayName: name,
+      idempotencyKey: newFoundationGateIdempotencyKey(),
+    );
+    final failure = _failureFor(result, copy);
+    if (failure != null) throw failure;
+  }
+
+  /// Maps a failed creation outcome to an explicit SHR-005 error state.
+  /// Returns null for a server-confirmed family.
+  static CreateFamilyException? _failureFor(
+    FamilyCreationResult result,
+    FoundationGateCopy copy,
+  ) {
+    if (result.isCreated) return null;
+    return switch (result.outcome) {
+      FamilyCreationOutcome.created =>
+        throw StateError('a created family is not a failure'),
+      FamilyCreationOutcome.validation => const CreateFamilyException(
+        AppErrorKind.validation,
+      ),
+      FamilyCreationOutcome.networkUnavailable => const CreateFamilyException(
+        AppErrorKind.network,
+      ),
+      FamilyCreationOutcome.unauthenticated => CreateFamilyException(
+        AppErrorKind.network,
+        title: copy.familyCreationSessionExpiredTitle,
+        message: copy.familyCreationSessionExpiredMessage,
+      ),
+      FamilyCreationOutcome.denied => CreateFamilyException(
+        AppErrorKind.network,
+        title: copy.familyCreationDeniedTitle,
+        message: copy.familyCreationDeniedMessage,
+      ),
+      FamilyCreationOutcome.conflict => CreateFamilyException(
+        AppErrorKind.network,
+        title: copy.familyCreationConflictTitle,
+        message: copy.familyCreationConflictMessage,
+      ),
+      FamilyCreationOutcome.serviceUnavailable => CreateFamilyException(
+        AppErrorKind.network,
+        title: copy.familyCreationServiceUnavailableTitle,
+        message: copy.familyCreationServiceUnavailableMessage,
+      ),
+      FamilyCreationOutcome.invalidResponse => CreateFamilyException(
+        AppErrorKind.network,
+        title: copy.familyCreationUnexpectedTitle,
+        message: copy.familyCreationUnexpectedMessage,
+      ),
+      FamilyCreationOutcome.unavailable => CreateFamilyException(
+        AppErrorKind.network,
+        title: copy.familyCreationUnavailableTitle,
+        message: copy.familyCreationUnavailableMessage,
+      ),
+    };
   }
 
   String _childCountLabel(AppLocalizations l10n, ChildCountChoice choice) {
@@ -142,6 +219,8 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
             ? AppErrorState(
                 key: const Key('create_family_error'),
                 kind: _errorKind!,
+                title: _errorTitle,
+                message: _errorMessage,
                 onRetry: _submitting ? null : _submit,
               )
             : ListView(

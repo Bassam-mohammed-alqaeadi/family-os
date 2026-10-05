@@ -24,6 +24,9 @@ void main() {
     () {
       for (final value in [
         'http://staging.example.test',
+        'http://8.8.8.8',
+        'http://evil.example.test',
+        'ftp://staging.example.test',
         'https://user:password@staging.example.test',
         'https://staging.example.test/base-path',
         'https://staging.example.test?debug=true',
@@ -48,6 +51,27 @@ void main() {
         expect(
           () => configuration.childrenRosterUri(unsafeId),
           throwsArgumentError,
+        );
+      }
+    },
+  );
+  test(
+    'Foundation Gate permits cleartext HTTP only for loopback and private development hosts',
+    () {
+      for (final value in [
+        'http://localhost:8080',
+        'http://127.0.0.1:8080',
+        'http://10.0.2.2:8080',
+        'http://192.168.1.5:8080',
+        'http://172.16.0.9',
+        'http://dev-machine.local',
+      ]) {
+        final configuration = FoundationGateConfiguration.fromStagingApiOrigin(
+          Uri.parse(value),
+        );
+        expect(
+          configuration.familyDiscoveryUri.toString(),
+          '${Uri.parse(value).replace(path: '')}/v1/me/families',
         );
       }
     },

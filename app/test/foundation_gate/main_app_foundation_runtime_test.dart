@@ -2,8 +2,10 @@ import 'dart:convert';
 
 import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/runtime/family_child_profile_source.dart';
+import 'package:family_os/core/runtime/family_creation_source.dart';
 import 'package:family_os/core/runtime/identity_source.dart';
 import 'package:family_os/foundation_gate/children_roster_api_client.dart';
+import 'package:family_os/foundation_gate/family_creation_api_client.dart';
 import 'package:family_os/foundation_gate/family_device_api_client.dart';
 import 'package:family_os/foundation_gate/family_discovery_api_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
@@ -24,6 +26,8 @@ const _rosterBody =
     '{"children":[{"id":"$_childId","displayName":"Synthetic child","ageYears":8,"avatarEmoji":"🧒","themeColor":"teal","version":1,"createdAt":"2026-10-03T10:00:00.000Z","updatedAt":"2026-10-03T10:00:00.000Z"}]}';
 const _createdChildBody =
     '{"child":{"id":"$_childId","displayName":"Synthetic child","ageYears":8,"avatarEmoji":"🧒","themeColor":"teal","version":1,"createdAt":"2026-10-03T10:00:00.000Z","updatedAt":"2026-10-03T10:00:00.000Z"}}';
+const _createdFamilyBody =
+    '{"family":{"id":"$_familyId","displayName":"Synthetic family"}}';
 
 void main() {
   test(
@@ -66,6 +70,16 @@ void main() {
             const FoundationGateHttpResponse(
               statusCode: 200,
               body: '{"devices":[]}',
+            ),
+          ),
+        ),
+        familyCreationApi: FamilyCreationApiClient(
+          configuration: configuration,
+          transport: FakeTransport(
+            const FoundationGateHttpResponse(statusCode: 200, body: '{}'),
+            postResponse: const FoundationGateHttpResponse(
+              statusCode: 201,
+              body: _createdFamilyBody,
             ),
           ),
         ),
@@ -117,4 +131,150 @@ void main() {
       expect(rosterSource.value.children.single.themeColor, 'teal');
     },
   );
+
+  test(
+    'main runtime creates a family through the real contract and re-discovers it',
+    () async {
+      final identity = FakeIdentity(subject: 'firebase-subject');
+      final discoveryTransport = FakeTransport(
+        const FoundationGateHttpResponse(statusCode: 200, body: _familyBody),
+      );
+      final familyCreationTransport = FakeTransport(
+        const FoundationGateHttpResponse(statusCode: 200, body: '{}'),
+        postResponse: const FoundationGateHttpResponse(
+          statusCode: 201,
+          body: _createdFamilyBody,
+        ),
+      );
+      final configuration = FoundationGateConfiguration.fromStagingApiOrigin(
+        Uri.parse('https://staging.example.test'),
+      );
+      final runtime = MainAppFoundationRuntime(
+        identity: identity,
+        controller: FoundationGateSessionController(
+          identity: identity,
+          discoveryApi: FamilyDiscoveryApiClient(
+            configuration: configuration,
+            transport: discoveryTransport,
+          ),
+          rosterApi: ChildrenRosterApiClient(
+            configuration: configuration,
+            transport: FakeTransport(
+              const FoundationGateHttpResponse(
+                statusCode: 200,
+                body: _emptyRosterBody,
+              ),
+            ),
+          ),
+        ),
+        deviceApi: FamilyDeviceApiClient(
+          configuration: configuration,
+          transport: FakeTransport(
+            const FoundationGateHttpResponse(
+              statusCode: 200,
+              body: '{"devices":[]}',
+            ),
+          ),
+        ),
+        familyCreationApi: FamilyCreationApiClient(
+          configuration: configuration,
+          transport: familyCreationTransport,
+        ),
+      );
+      addTearDown(runtime.dispose);
+
+      final identitySource = MainAppFoundationIdentitySource(runtime);
+      addTearDown(identitySource.dispose);
+      await identitySource.signIn(
+        email: 'guardian@example.test',
+        password: 'synthetic-password',
+      );
+
+      final result = await runtime.createFamily(
+        displayName: 'Synthetic family',
+        idempotencyKey: _idempotencyKey,
+      );
+
+      expect(result.isCreated, isTrue);
+      expect(result.familyId, _familyId);
+      expect(result.displayName, 'Synthetic family');
+      expect(
+        familyCreationTransport.postedUri.toString(),
+        'https://staging.example.test/v1/families',
+      );
+      expect(jsonDecode(familyCreationTransport.postedBody!), {
+        'displayName': 'Synthetic family',
+      });
+      expect(
+        familyCreationTransport.postedHeaders!['authorization'],
+        startsWith('Bearer '),
+      );
+      expect(
+        familyCreationTransport.postedHeaders!['idempotency-key'],
+        _idempotencyKey,
+      );
+      // Re-discovery ran again after the confirmed create.
+      expect(discoveryTransport.requestedUri.toString(), contains('/v1/me/families'));
+    },
+  );
+
+  test('main runtime maps a 503 family-creation failure to an explicit outcome', () async {
+    final identity = FakeIdentity(subject: 'firebase-subject');
+    final configuration = FoundationGateConfiguration.fromStagingApiOrigin(
+      Uri.parse('https://staging.example.test'),
+    );
+    final runtime = MainAppFoundationRuntime(
+      identity: identity,
+      controller: FoundationGateSessionController(
+        identity: identity,
+        discoveryApi: FamilyDiscoveryApiClient(
+          configuration: configuration,
+          transport: FakeTransport(
+            const FoundationGateHttpResponse(statusCode: 200, body: _familyBody),
+          ),
+        ),
+        rosterApi: ChildrenRosterApiClient(
+          configuration: configuration,
+          transport: FakeTransport(
+            const FoundationGateHttpResponse(
+              statusCode: 200,
+              body: _emptyRosterBody,
+            ),
+          ),
+        ),
+      ),
+      deviceApi: FamilyDeviceApiClient(
+        configuration: configuration,
+        transport: FakeTransport(
+          const FoundationGateHttpResponse(
+            statusCode: 200,
+            body: '{"devices":[]}',
+          ),
+        ),
+      ),
+      familyCreationApi: FamilyCreationApiClient(
+        configuration: configuration,
+        transport: FakeTransport(
+          const FoundationGateHttpResponse(statusCode: 200, body: '{}'),
+          postResponse: const FoundationGateHttpResponse(statusCode: 503),
+        ),
+      ),
+    );
+    addTearDown(runtime.dispose);
+
+    final identitySource = MainAppFoundationIdentitySource(runtime);
+    addTearDown(identitySource.dispose);
+    await identitySource.signIn(
+      email: 'guardian@example.test',
+      password: 'synthetic-password',
+    );
+
+    final result = await runtime.createFamily(
+      displayName: 'Synthetic family',
+      idempotencyKey: _idempotencyKey,
+    );
+
+    expect(result.isCreated, isFalse);
+    expect(result.outcome, FamilyCreationOutcome.serviceUnavailable);
+  });
 }

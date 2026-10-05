@@ -50,6 +50,9 @@ class NativeChildPairingCopy {
       : 'Ask the parent to create a one-time pairing code. To send the device’s real location while this app is not open, Android will ask for precise and background location access. After acceptance, Child Mode starts an always-visible foreground service that you can stop on this device.';
   String get pairingCodeLabel =>
       isArabic ? 'رمز الربط لمرة واحدة' : 'One-time pairing code';
+  String get pairingCodeHint => isArabic
+      ? 'مثال: ABC DEF'
+      : 'For example: ABC DEF';
   String get secureOriginAndCodeRequired => isArabic
       ? 'يلزم عنوان API آمن ورمز ربط.'
       : 'A secure API origin and pairing code are required.';

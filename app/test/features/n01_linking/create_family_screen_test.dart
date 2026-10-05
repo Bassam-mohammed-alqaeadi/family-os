@@ -7,7 +7,14 @@ import 'package:family_os/app/placeholder_screen.dart';
 import 'package:family_os/core/design/components/app_error_state.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/domain/identity_ids.dart';
+import 'package:family_os/core/domain/mother_level.dart';
+import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/runtime/app_runtime.dart';
+import 'package:family_os/core/runtime/app_scope.dart';
+import 'package:family_os/core/runtime/family_creation_source.dart';
+import 'package:family_os/core/runtime/identity_source.dart';
 import 'package:family_os/features/n01_linking/create_family_create.dart';
 import 'package:family_os/features/n01_linking/create_family_screen.dart';
 
@@ -45,7 +52,9 @@ void main() {
     expect(find.textContaining('الاستغاثة والسلامة'), findsOneWidget);
   });
 
-  testWidgets('filled name → /scr-fat-002', (tester) async {
+  testWidgets('unconfigured composition fails closed — no mock family', (
+    tester,
+  ) async {
     final router = GoRouter(
       initialLocation: '/scr-fat-001',
       routes: [
@@ -86,17 +95,198 @@ void main() {
     );
     await tester.pump();
 
-    final btn = tester.widget<PrimaryBtn>(
-      find.byKey(const Key('create_family_submit')),
+    await tester.tap(find.byKey(const Key('create_family_submit')));
+    await tester.pumpAndSettle();
+
+    // Honest unavailability: no navigation, no fabricated family.
+    expect(router.state.uri.path, '/scr-fat-001');
+    expect(find.byType(PlaceholderScreen), findsNothing);
+    expect(find.byKey(const Key('create_family_error')), findsOneWidget);
+    expect(find.text('إنشاء العائلة غير مهيأ'), findsOneWidget);
+    expect(find.textContaining('لا ننشئ عائلة وهمية'), findsOneWidget);
+  });
+
+  testWidgets('configured real source → server-confirmed create navigates', (
+    tester,
+  ) async {
+    final source = _FakeFamilyCreationSource(
+      const FamilyCreationResult.created(
+        familyId: '11111111-1111-4111-8111-111111111111',
+        displayName: 'عائلة النور',
+      ),
     );
-    expect(btn.onPressed, isNotNull);
+    final router = GoRouter(
+      initialLocation: '/scr-fat-001',
+      routes: [
+        GoRoute(
+          path: '/scr-fat-001',
+          builder: (context, state) => AppScope(
+            runtime: AppRuntime(
+              identity: _FakeIdentitySource(_remoteIdentitySnapshot()),
+              familyCreation: source,
+            ),
+            child: const CreateFamilyScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/scr-fat-002',
+          builder: (context, state) => const PlaceholderScreen(
+            screenId: 'SCR-FAT-002',
+            title: 'معالج الإعداد',
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp.router(
+        theme: buildFamilyTheme(),
+        locale: const Locale('ar'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        routerConfig: router,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('create_family_name')),
+      'عائلة النور',
+    );
+    await tester.pump();
 
     await tester.tap(find.byKey(const Key('create_family_submit')));
     await tester.pumpAndSettle();
 
+    expect(source.calls, hasLength(1));
+    expect(source.calls.single.displayName, 'عائلة النور');
+    expect(source.calls.single.idempotencyKey, isNotEmpty);
     expect(router.state.uri.path, '/scr-fat-002');
     expect(find.byType(PlaceholderScreen), findsOneWidget);
     expect(find.text('SCR-FAT-002'), findsWidgets);
+  });
+
+  testWidgets('server session failure renders explicit session error', (
+    tester,
+  ) async {
+    await _pumpWithSource(
+      tester,
+      source: _FakeFamilyCreationSource(
+        const FamilyCreationResult.failed(
+          FamilyCreationOutcome.unauthenticated,
+        ),
+      ),
+    );
+
+    await tester.enterText(
+      find.byKey(const Key('create_family_name')),
+      'عائلة الجلسة',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('create_family_submit')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AppErrorState), findsOneWidget);
+    expect(find.text('انتهت الجلسة'), findsOneWidget);
+    expect(find.textContaining('سجّل الدخول مرة أخرى'), findsOneWidget);
+  });
+
+  testWidgets('idempotency conflict renders explicit conflict error', (
+    tester,
+  ) async {
+    await _pumpWithSource(
+      tester,
+      source: _FakeFamilyCreationSource(
+        const FamilyCreationResult.failed(FamilyCreationOutcome.conflict),
+      ),
+    );
+
+    await tester.enterText(
+      find.byKey(const Key('create_family_name')),
+      'عائلة التعارض',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('create_family_submit')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AppErrorState), findsOneWidget);
+    expect(find.text('تعذّر تأكيد المحاولة'), findsOneWidget);
+    expect(find.textContaining('راجع اسم العائلة'), findsOneWidget);
+  });
+
+  testWidgets('server unavailability renders explicit service error', (
+    tester,
+  ) async {
+    await _pumpWithSource(
+      tester,
+      source: _FakeFamilyCreationSource(
+        const FamilyCreationResult.failed(
+          FamilyCreationOutcome.serviceUnavailable,
+        ),
+      ),
+    );
+
+    await tester.enterText(
+      find.byKey(const Key('create_family_name')),
+      'عائلة الخدمة',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('create_family_submit')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AppErrorState), findsOneWidget);
+    expect(find.text('الخدمة غير متاحة مؤقتًا'), findsOneWidget);
+  });
+
+  testWidgets('access denied renders explicit denial error', (tester) async {
+    await _pumpWithSource(
+      tester,
+      source: _FakeFamilyCreationSource(
+        const FamilyCreationResult.failed(FamilyCreationOutcome.denied),
+      ),
+    );
+
+    await tester.enterText(
+      find.byKey(const Key('create_family_name')),
+      'عائلة الرفض',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('create_family_submit')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AppErrorState), findsOneWidget);
+    expect(find.text('الوصول غير متاح'), findsOneWidget);
+    expect(find.textContaining('لا يسمح هذا الحساب'), findsOneWidget);
+  });
+
+  testWidgets('unexpected server response renders explicit error', (
+    tester,
+  ) async {
+    await _pumpWithSource(
+      tester,
+      source: _FakeFamilyCreationSource(
+        const FamilyCreationResult.failed(
+          FamilyCreationOutcome.invalidResponse,
+        ),
+      ),
+    );
+
+    await tester.enterText(
+      find.byKey(const Key('create_family_name')),
+      'عائلة الاستجابة',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('create_family_submit')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AppErrorState), findsOneWidget);
+    expect(find.text('استجابة غير متوقعة'), findsOneWidget);
   });
 
   testWidgets('AC1: forced network fail renders AppErrorState (not snackbar)', (
@@ -317,6 +507,36 @@ void main() {
   });
 }
 
+Future<void> _pumpWithSource(
+  WidgetTester tester, {
+  required FamilyCreationSource source,
+  VoidCallback? onCreated,
+}) async {
+  final runtime = AppRuntime(
+    identity: _FakeIdentitySource(_remoteIdentitySnapshot()),
+    familyCreation: source,
+  );
+  addTearDown(runtime.dispose);
+
+  await tester.pumpWidget(
+    MaterialApp(
+      theme: buildFamilyTheme(),
+      locale: const Locale('ar'),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      home: AppScope(
+        runtime: runtime,
+        child: CreateFamilyScreen(onCreated: onCreated),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
 Future<void> _pumpCreateFamily(
   WidgetTester tester, {
   VoidCallback? onCreated,
@@ -340,4 +560,44 @@ Future<void> _pumpCreateFamily(
     ),
   );
   await tester.pumpAndSettle();
+}
+
+IdentitySnapshot _remoteIdentitySnapshot() {
+  return const IdentitySnapshot(
+    authority: IdentityAuthority.remoteAuthoritative,
+    accountId: AccountId('acc_real'),
+    familyId: FamilyId('fam_real'),
+    role: AppRole.father,
+    motherLevel: MotherLevel.full,
+    isPrimaryOwner: true,
+  );
+}
+
+final class _FakeIdentitySource extends ChangeNotifier
+    implements IdentitySource {
+  _FakeIdentitySource(this._value);
+
+  IdentitySnapshot _value;
+
+  @override
+  IdentitySnapshot get value => _value;
+
+  @override
+  Future<IdentitySnapshot> refresh() async => _value;
+}
+
+final class _FakeFamilyCreationSource implements FamilyCreationSource {
+  _FakeFamilyCreationSource(this._result);
+
+  FamilyCreationResult _result;
+  final List<({String displayName, String idempotencyKey})> calls = [];
+
+  @override
+  Future<FamilyCreationResult> create({
+    required String displayName,
+    required String idempotencyKey,
+  }) async {
+    calls.add((displayName: displayName, idempotencyKey: idempotencyKey));
+    return _result;
+  }
 }

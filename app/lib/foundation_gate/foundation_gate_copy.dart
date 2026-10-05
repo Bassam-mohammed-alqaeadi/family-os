@@ -35,6 +35,44 @@ class FoundationGateCopy {
       isArabic ? 'كلمة المرور التجريبية' : 'Synthetic password';
   String get signInFailure =>
       isArabic ? 'تعذر تسجيل الدخول.' : 'Sign-in is unavailable.';
+  String get createAccountFailed => isArabic
+      ? 'حدث خطأ أثناء إنشاء الحساب. تأكد من صحة البيانات أو حاول مرة أخرى.'
+      : 'Account creation failed. Check the details or try again.';
+  String get alreadyHaveAccountSignIn => isArabic
+      ? 'لديك حساب بالفعل؟ تسجيل الدخول'
+      : 'Already have an account? Sign in';
+
+  // ── SCR-FAT-001 real family-creation failure copy (title + message) ──
+  String get familyCreationUnavailableTitle =>
+      isArabic ? 'إنشاء العائلة غير مهيأ' : 'Family creation is not configured';
+  String get familyCreationUnavailableMessage => isArabic
+      ? 'هذا البناء لا يتصل بخادم حقيقي لإنشاء العائلة، ولا ننشئ عائلة وهمية.'
+      : 'This build has no real family-creation server, and no mock family is created.';
+  String get familyCreationSessionExpiredTitle =>
+      isArabic ? 'انتهت الجلسة' : 'Session expired';
+  String get familyCreationSessionExpiredMessage => isArabic
+      ? 'سجّل الدخول مرة أخرى، ثم أعد إنشاء العائلة.'
+      : 'Sign in again, then create the family.';
+  String get familyCreationDeniedTitle =>
+      isArabic ? 'الوصول غير متاح' : 'Access is not available';
+  String get familyCreationDeniedMessage => isArabic
+      ? 'لا يسمح هذا الحساب بإنشاء عائلة.'
+      : 'This account may not create a family.';
+  String get familyCreationConflictTitle =>
+      isArabic ? 'تعذّر تأكيد المحاولة' : 'Attempt could not be confirmed';
+  String get familyCreationConflictMessage => isArabic
+      ? 'راجع اسم العائلة وأعد المحاولة.'
+      : 'Review the family name and try again.';
+  String get familyCreationServiceUnavailableTitle =>
+      isArabic ? 'الخدمة غير متاحة مؤقتًا' : 'Service temporarily unavailable';
+  String get familyCreationServiceUnavailableMessage => isArabic
+      ? 'تعذّر إنشاء العائلة على الخادم الآن. أعد المحاولة بعد قليل.'
+      : 'The server could not create the family right now. Try again shortly.';
+  String get familyCreationUnexpectedTitle =>
+      isArabic ? 'استجابة غير متوقعة' : 'Unexpected response';
+  String get familyCreationUnexpectedMessage => isArabic
+      ? 'لم يفهم التطبيق رد الخادم. أعد المحاولة.'
+      : 'The app could not understand the server response. Retry.';
   String get signIn => isArabic ? 'تسجيل الدخول' : 'Sign in';
   String get signOut => isArabic ? 'تسجيل الخروج' : 'Sign out';
   String get chooseFamily => isArabic ? 'اختر العائلة' : 'Choose a family';

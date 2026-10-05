@@ -114,8 +114,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         if (mounted) {
           AppToast.show(
             context,
-            message:
-                'حدث خطأ أثناء إنشاء الحساب. تأكد من صحة البيانات أو حاول مرة أخرى.',
+            message: FoundationGateCopy.of(context).createAccountFailed,
           );
         }
       } finally {
@@ -341,7 +340,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
             TextButton(
               onPressed: () => context.pushReplacement('/scr-shr-003'),
               child: Text(
-                'لديك حساب بالفعل؟ تسجيل الدخول',
+                FoundationGateCopy.of(context).alreadyHaveAccountSignIn,
                 style: TextStyle(
                   fontSize: 14,
                   color: colors.p400,

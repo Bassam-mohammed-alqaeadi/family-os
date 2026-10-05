@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import 'package:family_os/core/runtime/family_child_profile_source.dart';
+import 'package:family_os/core/runtime/family_creation_source.dart';
 import 'package:family_os/core/runtime/family_device_source.dart';
 import 'package:family_os/core/runtime/family_policy_source.dart';
 import 'package:family_os/core/runtime/family_roster_source.dart';
@@ -17,10 +18,13 @@ final class AppRuntime extends ChangeNotifier {
     FamilyChildProfileSource? childProfiles,
     FamilyDeviceSource? devices,
     FamilyPolicySource? policies,
+    FamilyCreationSource? familyCreation,
   }) : roster = roster ?? UnavailableFamilyRosterSource(),
        childProfiles = childProfiles ?? UnavailableFamilyChildProfileSource(),
        devices = devices ?? UnavailableFamilyDeviceSource(),
-       policies = policies ?? UnavailableFamilyPolicySource() {
+       policies = policies ?? UnavailableFamilyPolicySource(),
+       familyCreation =
+           familyCreation ?? const UnavailableFamilyCreationSource() {
     identity.addListener(notifyListeners);
     this.roster.addListener(notifyListeners);
     this.devices.addListener(notifyListeners);
@@ -44,6 +48,11 @@ final class AppRuntime extends ChangeNotifier {
   /// Explicit shared-policy source. A local source can persist a draft, but
   /// may never be presented as remote policy enforcement.
   final FamilyPolicySource policies;
+
+  /// The only main-app family-creation source. Its default is intentionally
+  /// unavailable: an unconfigured composition reports that honestly instead of
+  /// creating a mock family.
+  final FamilyCreationSource familyCreation;
 
   /// Refreshes only the identity projection. Future runtime ports expose their
   /// own explicit refresh/sync commands; there is intentionally no generic

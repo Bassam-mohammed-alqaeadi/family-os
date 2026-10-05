@@ -47,6 +47,7 @@ import 'package:family_os/features/quran/quran_local_bridge.dart';
 import 'package:family_os/features/shared_onboarding/device_user_switch_identity_repository.dart';
 import 'package:family_os/features/shared_onboarding/device_user_switch_repository.dart';
 import 'package:family_os/foundation_gate/children_roster_api_client.dart';
+import 'package:family_os/foundation_gate/family_creation_api_client.dart';
 import 'package:family_os/foundation_gate/family_device_api_client.dart';
 import 'package:family_os/foundation_gate/family_discovery_api_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
@@ -169,6 +170,10 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
         configuration: configuration,
         transport: PackageFoundationGateHttpTransport(),
       ),
+      familyCreationApi: FamilyCreationApiClient(
+        configuration: configuration,
+        transport: PackageFoundationGateHttpTransport(),
+      ),
       preferredFamilyId: preferredFamilyId,
     );
   } on Object {
@@ -245,6 +250,9 @@ class _FamilyOsAppState extends State<FamilyOsApp> {
       devices: foundationRuntime == null
           ? UnavailableFamilyDeviceSource()
           : RemoteFamilyDeviceSource(foundationRuntime),
+      familyCreation: foundationRuntime == null
+          ? null
+          : RemoteFamilyCreationSource(foundationRuntime),
       policies: UnavailableFamilyPolicySource(),
     );
     if (widget.roleController != null) {

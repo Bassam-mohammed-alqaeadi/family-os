@@ -5,11 +5,13 @@ import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/runtime/family_child_profile_source.dart';
+import 'package:family_os/core/runtime/family_creation_source.dart';
 import 'package:family_os/core/runtime/family_device_source.dart';
 import 'package:family_os/core/runtime/family_roster_source.dart';
 import 'package:family_os/core/runtime/identity_source.dart';
 import 'package:family_os/core/runtime/runtime_data_origin.dart';
 
+import 'family_creation_api_client.dart';
 import 'family_device_api_client.dart';
 import 'foundation_gate_identity.dart';
 import 'foundation_gate_models.dart';
@@ -26,10 +28,12 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     required FoundationGateSessionController controller,
     required FoundationGateIdentity identity,
     required FamilyDeviceApiClient deviceApi,
+    required FamilyCreationApiClient familyCreationApi,
     String? preferredFamilyId,
   }) : _controller = controller,
        _identity = identity,
        _deviceApi = deviceApi,
+       _familyCreationApi = familyCreationApi,
        _preferredFamilyId = preferredFamilyId?.trim(),
        _identityValue = const IdentitySnapshot.unavailable(),
        _rosterValue = const FamilyRosterSnapshot.unavailable(),
@@ -40,6 +44,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   final FoundationGateSessionController _controller;
   final FoundationGateIdentity _identity;
   final FamilyDeviceApiClient _deviceApi;
+  final FamilyCreationApiClient _familyCreationApi;
   final String? _preferredFamilyId;
   IdentitySnapshot _identityValue;
   FamilyRosterSnapshot _rosterValue;
@@ -211,6 +216,66 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     } on FoundationGateApiException {
       return _publishDevices(const FamilyDeviceSnapshot.unavailable());
     }
+  }
+
+  /// Creates a family through the real Node/Express contract. The server
+  /// assigns the identifier; a failure is reported as an outcome, never as a
+  /// locally invented family.
+  Future<FamilyCreationResult> createFamily({
+    required String displayName,
+    required String idempotencyKey,
+  }) async {
+    await refreshIdentity();
+    if (!_identityValue.isRemoteAuthoritative) {
+      return const FamilyCreationResult.failed(
+        FamilyCreationOutcome.unauthenticated,
+      );
+    }
+    try {
+      final created = await _familyCreationApi.create(
+        idToken: await _identity.currentIdToken(),
+        idempotencyKey: idempotencyKey,
+        displayName: displayName,
+      );
+      // Re-discover so the newly created family becomes the selected family
+      // context. A discovery failure must not rewrite a confirmed 201 into a
+      // failure, so it is swallowed here and retried on the next refresh.
+      try {
+        await _controller.restoreCurrentSession();
+        await _selectConfiguredFamily();
+      } on Object {
+        // The family exists on the server; selection recovers on next refresh.
+      }
+      return FamilyCreationResult.created(
+        familyId: created.id,
+        displayName: created.displayName,
+      );
+    } on FoundationGateIdentityException {
+      return const FamilyCreationResult.failed(
+        FamilyCreationOutcome.unauthenticated,
+      );
+    } on FoundationGateApiException catch (error) {
+      return FamilyCreationResult.failed(_mapFamilyCreationFailure(error));
+    }
+  }
+
+  static FamilyCreationOutcome _mapFamilyCreationFailure(
+    FoundationGateApiException error,
+  ) {
+    return switch (error.failure) {
+      FoundationGateApiFailure.unauthenticated =>
+        FamilyCreationOutcome.unauthenticated,
+      FoundationGateApiFailure.accessDenied => FamilyCreationOutcome.denied,
+      FoundationGateApiFailure.invalidInput =>
+        FamilyCreationOutcome.validation,
+      FoundationGateApiFailure.conflict => FamilyCreationOutcome.conflict,
+      FoundationGateApiFailure.serviceUnavailable =>
+        FamilyCreationOutcome.serviceUnavailable,
+      FoundationGateApiFailure.networkUnavailable =>
+        FamilyCreationOutcome.networkUnavailable,
+      FoundationGateApiFailure.invalidResponse =>
+        FamilyCreationOutcome.invalidResponse,
+    };
   }
 
   Future<FoundationGateDevicePairing?> createDevicePairing({
@@ -472,4 +537,20 @@ final class RemoteFamilyChildProfileSource implements FamilyChildProfileSource {
 
   @override
   void dispose() => _runtime.dispose();
+}
+
+/// Remote family-creation port for the main app composition root.
+final class RemoteFamilyCreationSource implements FamilyCreationSource {
+  RemoteFamilyCreationSource(this._runtime);
+
+  final MainAppFoundationRuntime _runtime;
+
+  @override
+  Future<FamilyCreationResult> create({
+    required String displayName,
+    required String idempotencyKey,
+  }) => _runtime.createFamily(
+    displayName: displayName,
+    idempotencyKey: idempotencyKey,
+  );
 }

@@ -24,6 +24,12 @@ firebase-adminsdk.json
 *service-account*.json
 *service_account*.json
 
+# Firebase platform configuration is developer-provided per machine and must
+# never enter source control (google-services.json / GoogleService-Info.plist).
+app/google-services.json
+**/google-services.json
+**/GoogleService-Info.plist
+
 # Logs
 *.log
 

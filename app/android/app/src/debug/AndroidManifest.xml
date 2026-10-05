@@ -4,4 +4,9 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Development-only cleartext: lets a debug build on a real device
+         reach a loopback/private HTTP API origin. Release builds keep the
+         platform default (no cleartext); public HTTP origins are rejected
+         before networking by FoundationGateConfiguration. -->
+    <application android:networkSecurityConfig="@xml/network_security_config" />
 </manifest>

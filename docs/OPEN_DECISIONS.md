@@ -1,6 +1,6 @@
 # Open decisions and external blockers
 
-> **Status:** Current only — 2026-10-04.
+> **Status:** Current only — 2026-10-05.
 >
 > **Authority:** [`../AGENTS.md`](../AGENTS.md) and [`CURRENT_EXECUTION_PLAN.md`](CURRENT_EXECUTION_PLAN.md). Historical Foundation decisions remain evidence, but do not replace the active system plan.
 
@@ -33,6 +33,16 @@ The product owner admitted **primary-guardian create child profile** for real im
 | Native capability admission | Required for device links, enforcement, GPS, background services or applied/verified receipts | A Flutter toggle or local device record |
 | Provider admission | Required for AI, voice, image, maps, messaging or other external providers | A prototype label, source badge or generated-looking result |
 | Release admission | Required for real data, production, public/beta access, operations and support | Passing CI or a synthetic staging run |
+
+## 3a. Native lifecycle decision — child telemetry boot restart (deferred, not dropped)
+
+**Context:** commit `ce11dcd` added `BootReceiver` so a paired child device restarts `ChildTelemetryService` after `BOOT_COMPLETED` / `MY_PACKAGE_REPLACED` when a paired configuration exists. During local build recovery, commit `4bb4337` emptied `BootReceiver.kt` and removed its manifest registration plus `RECEIVE_BOOT_COMPLETED`.
+
+**Decision (2026-10-05):** boot restart is **deferred**, not silently dropped. The honest current state is: a paired child device keeps sending real telemetry while the app process and foreground service are alive; the service does **not** restart itself after a device reboot or app update.
+
+**Why:** the removal restored a buildable local state, and CI has no Android build verification — re-adding the receiver without that gate would repeat the same unverifiable cycle and risk another broken build.
+
+**Re-entry criteria (M1 device wave):** an Android build job in CI (`assembleDebug`) that passes with the receiver registered, a manifest/permission review, and an owner-verified reboot test on a real device before the capability is claimed anywhere.
 
 ## 4. Retained Foundation evidence and protected verification
 
