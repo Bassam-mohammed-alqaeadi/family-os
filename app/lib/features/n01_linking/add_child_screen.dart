@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/runtime/app_scope.dart';
 import 'package:family_os/core/runtime/family_child_profile_source.dart';
-import 'package:family_os/features/shared_onboarding/onboarding_copy.dart';
+import 'package:family_os/foundation_gate/onboarding_copy.dart';
 import 'package:family_os/features/shared_onboarding/onboarding_form.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 

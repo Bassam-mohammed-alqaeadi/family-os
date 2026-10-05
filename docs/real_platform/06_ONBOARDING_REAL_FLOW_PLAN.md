@@ -98,7 +98,7 @@ All of §5 ticked on two physical Android devices · Flutter CI + Foundation Gat
 
 ## Onboarding UI kit (shared by B1–B6)
 
-`app/lib/features/shared_onboarding/onboarding_form.dart` + `onboarding_copy.dart`:
+`app/lib/features/shared_onboarding/onboarding_form.dart` + `app/lib/foundation_gate/onboarding_copy.dart` (copy lives outside `features/` per Rule 12):
 `OnboardingScaffold`, `OnboardingHeader`, `OnboardingTextField` (inline error under the field),
 `OnboardingNotice` (persistent inline server outcome with optional action), `OnboardingSubmitButton`
 (spinner + lock = double-submit guard), `PasswordVisibilityToggle`, `looksLikeEmail`, `passwordStrength`.

@@ -7,7 +7,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/runtime/app_scope.dart';
 import 'package:family_os/core/runtime/family_creation_source.dart';
 import 'package:family_os/features/n01_linking/create_family_create.dart';
-import 'package:family_os/features/shared_onboarding/onboarding_copy.dart';
+import 'package:family_os/foundation_gate/onboarding_copy.dart';
 import 'package:family_os/features/shared_onboarding/onboarding_form.dart';
 import 'package:family_os/foundation_gate/foundation_gate_copy.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
