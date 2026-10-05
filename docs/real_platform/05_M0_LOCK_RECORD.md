@@ -1,6 +1,6 @@
 # M0 Lock Record — Phase 0 foundation
 
-> **Status:** **Open** — the implementation is complete, the backend suite is green, and gate 3 (Flutter analyze + test) is unverified because GitHub-hosted runners were not acquired (§4.2). It becomes **Locked** only when every gate in §5 is green on the same commit.
+> **Status:** **LOCKED — 2026-10-05 on commit `3d7ff18`.** Every gate in §5 is green on that commit: the backend suite passes locally (93/93), and Flutter CI acquired a runner and passed analyze, the full widget/unit suite and the generated-source check. Two pre-existing repository failures were found and fixed to get there (§4.1.1, §4.1.2).
 >
 > **Scope:** Wave M0 of [`../GLOBAL_LAUNCH_MASTER_PLAN.md`](../GLOBAL_LAUNCH_MASTER_PLAN.md) — the three Phase 0 deliverables. It does **not** lock the wider Family Entry & Children Control system, and it opens no later wave.
 >
@@ -148,15 +148,37 @@ Local evidence fully covers the backend contract, store, authorization and OpenA
 | # | Gate | State |
 |---|---|---|
 | 1 | All three M0 deliverables implemented and reviewed | ✅ |
-| 2 | Backend suite green on the locking commit | ✅ 93/93 |
-| 3 | Flutter analyze + test green on the locking commit | ⏳ **unverified** — CI runner acquisition blocked (§4.2) |
+| 2 | Backend suite green on the locking commit | ✅ `93/93` locally; `npm run check` clean |
+| 3 | Flutter analyze + test green on the locking commit | ✅ Flutter CI `37372946441` — success, every step green, enforcement step **skipped** because no gate failed |
 | 4 | No mock, seed or local-authority fallback on the normal path | ✅ (unchanged from the admitted slice) |
 | 5 | Admission boundary reconciled, including presentation facts | ✅ [`03` §6](03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md) |
-| 6 | No secret, credential or real family data introduced | ✅ |
+| 6 | No secret, credential or real family data introduced | ✅ Credential Guard `37372946422` |
 | 7 | Next wave selectable without reopening M0 | ✅ M1 (system 37, Devices) |
+
+### 5.1 Run ledger for the locking commit `3d7ff18`
+
+| Workflow | Run | Outcome |
+|---|---|---|
+| Flutter CI | `37372946441` | ✅ **success** — analyze, full test suite, generated-source check; runner `GitHub Actions 1000000795` |
+| Credential Guard | `37372946422` | ✅ success |
+| Foundation Gate CI | `37372946356` | ⛔ runner not acquired (infrastructure). Recorded for completeness: that workflow is a **faster subset** of the same `lib/foundation_gate` + `test/foundation_gate` scope, which the green Flutter CI run already covered in full. |
 
 ## 6. What Lock authorizes, and what it does not
 
-**Authorizes:** opening **M1 — Devices** (system 37) under its own Compare → Cover → Compete → Real Engine cadence.
+**Authorizes:** opening **M1 — Devices** (system 37) under its own Compare → Cover → Compete → Real Engine cadence, exactly as [`../GLOBAL_LAUNCH_MASTER_PLAN.md`](../GLOBAL_LAUNCH_MASTER_PLAN.md) sequences it after M0.
 
 **Does not authorize:** device pairing as a product capability, any Native service, provider use, staging/production release, or the claim that the wider Family Entry & Children Control system is complete. Each remains conditional on its own admission.
+
+## 7. What changed in the repository to reach this lock
+
+| Change | Why it was needed |
+|---|---|
+| `AiEvent v1` — envelope, migration `009`, transactional emission, guardian-scoped read | Part of the Phase 0 exit criteria in the master plan |
+| `PermissionSnapshot v1` — capability catalog, expiring explanation, enforcement-drift test | Same; the client must explain permission, never decide it |
+| OpenAPI contract + contract test extended | The two new operations must be enumerated, secured and rate-limited like every other |
+| Three widget guarantees added | The admission requires retry-stable idempotency, pending-state lock-out and an Arabic RTL form; the third was untested and the first two were untested when this phase began |
+| Admission record amended (`03` §6) | The shipped contract already required `avatarEmoji` and `themeColor`, which the record excluded |
+| 3 Rule-12 hardcoded literals moved into copy classes | Pre-existing Flutter CI failure |
+| HTTPS enforced for public staging origins | Pre-existing Flutter CI failure and a real cleartext-token boundary defect |
+
+Every one of these is committed with its evidence; nothing in this lock rests on a claim that was not executed.
