@@ -31,8 +31,7 @@ class NativeParentPairingScreen extends StatefulWidget {
       _NativeParentPairingScreenState();
 }
 
-class _NativeParentPairingScreenState
-    extends State<NativeParentPairingScreen> {
+class _NativeParentPairingScreenState extends State<NativeParentPairingScreen> {
   final _label = TextEditingController();
   FoundationGateDevicePairing? _pairing;
   var _loading = false;
@@ -90,11 +89,12 @@ class _NativeParentPairingScreenState
       appBar: AppBar(
         backgroundColor: colors.surface,
         title: Text(copy.parentTitle),
-        leading: ModalRoute.of(context)?.canPop == true 
-            ? const BackButton() 
+        leading: ModalRoute.of(context)?.canPop == true
+            ? const BackButton()
             : IconButton(
                 icon: const Icon(Icons.arrow_back),
-                onPressed: () => context.go('/scr-fat-002'), // Go to dashboard safely
+                onPressed: () =>
+                    context.go('/scr-fat-002'), // Go to dashboard safely
               ),
       ),
       body: SafeArea(
@@ -229,8 +229,9 @@ class _NativeParentPairingScreenState
               const SizedBox(height: 8),
               Center(
                 child: TextButton.icon(
-                  onPressed: () =>
-                      Clipboard.setData(ClipboardData(text: pairing.pairingCode)),
+                  onPressed: () => Clipboard.setData(
+                    ClipboardData(text: pairing.pairingCode),
+                  ),
                   icon: const Icon(Icons.copy_outlined, size: 18),
                   label: Text(copy.copyCode),
                 ),
@@ -371,6 +372,13 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
       await _refreshServiceStatus();
     } on FoundationGateApiException {
       if (mounted) setState(() => _message = copy.pairingClaimFailed);
+    } on Object {
+      // Native bridge / platform failures must surface as an honest state
+      // instead of an unhandled error; the credential (if any) stays in the
+      // Keystore-backed store and is never echoed here.
+      if (mounted) {
+        setState(() => _message = copy.childModeStartFailed('unavailable'));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -413,10 +421,7 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
     return Stack(
       children: [
         // Full-screen camera preview
-        MobileScanner(
-          controller: _scannerController!,
-          onDetect: _onQrDetected,
-        ),
+        MobileScanner(controller: _scannerController!, onDetect: _onQrDetected),
 
         // Scan frame overlay
         Center(

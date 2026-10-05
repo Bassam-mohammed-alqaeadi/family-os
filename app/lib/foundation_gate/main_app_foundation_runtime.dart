@@ -55,6 +55,24 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   FamilyDeviceSnapshot get deviceValue => _deviceValue;
   FoundationGatePhase get phase => _controller.phase;
 
+  /// Presentation-safe reason for the most recent failed sign-in / sign-up.
+  FoundationGateIdentityFailure? get lastIdentityFailure =>
+      _controller.lastIdentityFailure;
+
+  /// The provider holds an authenticated principal (family may not exist yet).
+  bool get hasAuthenticatedPrincipal => _controller.hasAuthenticatedPrincipal;
+
+  /// Signed in, discovery succeeded, and the server returned zero families —
+  /// the exact state in which the user must create (or be invited to) one.
+  bool get needsFamilyCreation =>
+      _controller.phase == FoundationGatePhase.noActiveFamily;
+
+  /// Signed in and the server returned several families but none matched the
+  /// configured preferred family — a picker is required before any roster.
+  bool get needsFamilySelection =>
+      _controller.phase == FoundationGatePhase.familiesAvailable &&
+      _controller.selectedFamily == null;
+
   Future<IdentitySnapshot> signIn({
     required String email,
     required String password,
@@ -93,19 +111,30 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     return _refreshIdentitySnapshot();
   }
 
-  Future<void> _selectConfiguredFamily() async {
+  Future<void> _selectConfiguredFamily({String? preferCreatedId}) async {
     if (_controller.phase != FoundationGatePhase.familiesAvailable) return;
     final families = _controller.families;
     FoundationGateFamily? selected;
+    // A family the user just created wins over any build-time preference so
+    // onboarding continues inside the family that was actually confirmed.
+    if (preferCreatedId != null && preferCreatedId.isNotEmpty) {
+      for (final family in families) {
+        if (family.id == preferCreatedId) {
+          selected = family;
+          break;
+        }
+      }
+    }
     final preferred = _preferredFamilyId;
-    if (preferred != null && preferred.isNotEmpty) {
+    if (selected == null && preferred != null && preferred.isNotEmpty) {
       for (final family in families) {
         if (family.id == preferred) {
           selected = family;
           break;
         }
       }
-    } else if (families.length == 1) {
+    }
+    if (selected == null && families.length == 1) {
       selected = families.single;
     }
     if (selected != null) {
@@ -225,8 +254,15 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     required String displayName,
     required String idempotencyKey,
   }) async {
-    await refreshIdentity();
-    if (!_identityValue.isRemoteAuthoritative) {
+    // A brand-new account has no family yet, so a selected family context
+    // cannot be the precondition here. The precondition is an authenticated
+    // provider principal; the server enforces everything else on the bearer.
+    if (!_controller.hasAuthenticatedPrincipal) {
+      await _controller.restoreCurrentSession();
+      await _selectConfiguredFamily();
+      await _refreshIdentitySnapshot();
+    }
+    if (!_controller.hasAuthenticatedPrincipal) {
       return const FamilyCreationResult.failed(
         FamilyCreationOutcome.unauthenticated,
       );
@@ -242,7 +278,8 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
       // failure, so it is swallowed here and retried on the next refresh.
       try {
         await _controller.restoreCurrentSession();
-        await _selectConfiguredFamily();
+        await _selectConfiguredFamily(preferCreatedId: created.id);
+        await _refreshIdentitySnapshot();
       } on Object {
         // The family exists on the server; selection recovers on next refresh.
       }
@@ -266,8 +303,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
       FoundationGateApiFailure.unauthenticated =>
         FamilyCreationOutcome.unauthenticated,
       FoundationGateApiFailure.accessDenied => FamilyCreationOutcome.denied,
-      FoundationGateApiFailure.invalidInput =>
-        FamilyCreationOutcome.validation,
+      FoundationGateApiFailure.invalidInput => FamilyCreationOutcome.validation,
       FoundationGateApiFailure.conflict => FamilyCreationOutcome.conflict,
       FoundationGateApiFailure.serviceUnavailable =>
         FamilyCreationOutcome.serviceUnavailable,
@@ -455,6 +491,15 @@ final class MainAppFoundationIdentitySource extends ChangeNotifier
   }) => _runtime.signUp(email: email, password: password);
 
   FoundationGatePhase get phase => _runtime.phase;
+
+  FoundationGateIdentityFailure? get lastIdentityFailure =>
+      _runtime.lastIdentityFailure;
+
+  bool get hasAuthenticatedPrincipal => _runtime.hasAuthenticatedPrincipal;
+
+  bool get needsFamilyCreation => _runtime.needsFamilyCreation;
+
+  bool get needsFamilySelection => _runtime.needsFamilySelection;
 
   @override
   void dispose() {

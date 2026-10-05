@@ -8,6 +8,7 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/runtime/app_scope.dart';
 import 'package:family_os/foundation_gate/foundation_gate_copy.dart';
+import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 import 'package:family_os/foundation_gate/main_app_foundation_runtime.dart';
 
 /// Password strength bands matching prototype SHR-002 (length-only).
@@ -109,8 +110,49 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
           password: _passwordController.text,
         );
         if (!mounted) return;
-        context.go('/scr-shr-007');
-      } catch (e) {
+        final copy = FoundationGateCopy.of(context);
+        // signUp() reports failures through the session phase; it does not
+        // throw. Never advance the journey on a failed or half-finished
+        // provider sign-up.
+        switch (remoteIdentity.phase) {
+          case FoundationGatePhase.signInFailed:
+            AppToast.show(
+              context,
+              message: copy.createAccountFailureFor(
+                remoteIdentity.lastIdentityFailure,
+              ),
+            );
+            return;
+          case FoundationGatePhase.sessionInvalid:
+            AppToast.show(context, message: copy.signInAgain);
+            return;
+          case FoundationGatePhase.accessDenied:
+            AppToast.show(context, message: copy.accessDenied);
+            return;
+          case FoundationGatePhase.serviceUnavailable:
+          case FoundationGatePhase.networkUnavailable:
+            // The provider account exists; only family discovery failed.
+            AppToast.show(
+              context,
+              message: copy.accountCreatedDiscoveryUnavailable,
+            );
+            return;
+          case FoundationGatePhase.noActiveFamily:
+          case FoundationGatePhase.familiesAvailable:
+          case FoundationGatePhase.childrenAvailable:
+          case FoundationGatePhase.noChildren:
+            context.go('/scr-shr-007');
+            return;
+          case FoundationGatePhase.unconfigured:
+          case FoundationGatePhase.signedOut:
+          case FoundationGatePhase.signingIn:
+          case FoundationGatePhase.loadingFamilies:
+          case FoundationGatePhase.loadingRoster:
+          case FoundationGatePhase.rosterAccessDenied:
+            AppToast.show(context, message: copy.createAccountFailed);
+            return;
+        }
+      } on Object {
         if (mounted) {
           AppToast.show(
             context,

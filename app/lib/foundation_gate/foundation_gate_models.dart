@@ -82,8 +82,49 @@ class FoundationGateApiException implements Exception {
   final FoundationGateApiFailure failure;
 }
 
+/// Presentation-safe identity provider outcomes.
+///
+/// Wrong e-mail and wrong password are deliberately collapsed into
+/// [invalidCredentials] so the UI can never be used to enumerate accounts.
+/// No provider message, code string or stack is retained.
+enum FoundationGateIdentityFailure {
+  /// Generic failure (default); nothing more specific can be said safely.
+  unknown,
+
+  /// Sign-in rejected: unknown account or wrong password (never distinguished).
+  invalidCredentials,
+
+  /// Sign-up rejected because the e-mail already has an account.
+  emailAlreadyInUse,
+
+  /// Sign-up rejected because the password does not meet provider policy.
+  weakPassword,
+
+  /// The e-mail address is syntactically invalid.
+  invalidEmail,
+
+  /// The identity provider could not be reached.
+  networkUnavailable,
+
+  /// Too many attempts; the provider is throttling this device/account.
+  tooManyAttempts,
+
+  /// The account exists but has been disabled by an administrator.
+  accountDisabled,
+
+  /// No current provider session (signed out or token refresh failed).
+  noSession,
+}
+
 class FoundationGateIdentityException implements Exception {
-  const FoundationGateIdentityException();
+  const FoundationGateIdentityException([
+    this.failure = FoundationGateIdentityFailure.unknown,
+  ]);
+
+  final FoundationGateIdentityFailure failure;
+
+  @override
+  String toString() => 'FoundationGateIdentityException($failure)';
 }
 
 /// Produces a local, opaque UUID-shaped idempotency key for one user attempt.

@@ -13,6 +13,7 @@ class FakeIdentity implements FoundationGateIdentity {
   String subject;
   Object? failure;
   int signInCalls = 0;
+  int signUpCalls = 0;
   int currentTokenCalls = 0;
   int signOutCalls = 0;
 
@@ -51,9 +52,15 @@ class FakeIdentity implements FoundationGateIdentity {
   }
 
   @override
-  Future<String> signUp({required String email, required String password}) {
-    // TODO: implement signUp
-    throw UnimplementedError();
+  Future<String> signUp({
+    required String email,
+    required String password,
+  }) async {
+    signUpCalls += 1;
+    if (failure != null) {
+      throw failure!;
+    }
+    return token;
   }
 }
 

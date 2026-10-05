@@ -1,5 +1,7 @@
 import 'package:flutter/widgets.dart';
 
+import 'foundation_gate_models.dart';
+
 /// Copy for the isolated, synthetic Foundation Gate.
 ///
 /// This keeps the same words and state grammar across its sign-in, family
@@ -41,6 +43,64 @@ class FoundationGateCopy {
   String get alreadyHaveAccountSignIn => isArabic
       ? 'لديك حساب بالفعل؟ تسجيل الدخول'
       : 'Already have an account? Sign in';
+
+  // ── Identity-provider outcomes (presentation-safe; never provider text) ──
+  String get identityInvalidCredentials => isArabic
+      ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة.'
+      : 'The e-mail or password is incorrect.';
+  String get identityEmailAlreadyInUse => isArabic
+      ? 'هذا البريد مسجّل مسبقًا. سجّل الدخول بدلًا من ذلك.'
+      : 'This e-mail already has an account. Sign in instead.';
+  String get identityWeakPassword => isArabic
+      ? 'كلمة المرور ضعيفة. استخدم 8 أحرف على الأقل مع أرقام وحروف.'
+      : 'The password is too weak. Use at least 8 characters with letters and numbers.';
+  String get identityInvalidEmail => isArabic
+      ? 'صيغة البريد الإلكتروني غير صحيحة.'
+      : 'The e-mail address format is not valid.';
+  String get identityNetworkUnavailable => isArabic
+      ? 'تعذر الوصول إلى خدمة الحساب. تحقق من الاتصال ثم أعد المحاولة.'
+      : 'The account service could not be reached. Check your connection and try again.';
+  String get identityTooManyAttempts => isArabic
+      ? 'محاولات كثيرة. انتظر قليلًا ثم أعد المحاولة.'
+      : 'Too many attempts. Wait a moment and try again.';
+  String get identityAccountDisabled => isArabic
+      ? 'هذا الحساب معطّل. تواصل مع الدعم.'
+      : 'This account is disabled. Contact support.';
+
+  /// Message for a failed sign-in attempt. Unknown reasons fall back to the
+  /// generic [signInFailure] text on purpose.
+  String signInFailureFor(FoundationGateIdentityFailure? failure) {
+    return switch (failure) {
+      FoundationGateIdentityFailure.invalidCredentials =>
+        identityInvalidCredentials,
+      FoundationGateIdentityFailure.invalidEmail => identityInvalidEmail,
+      FoundationGateIdentityFailure.networkUnavailable =>
+        identityNetworkUnavailable,
+      FoundationGateIdentityFailure.tooManyAttempts => identityTooManyAttempts,
+      FoundationGateIdentityFailure.accountDisabled => identityAccountDisabled,
+      _ => signInFailure,
+    };
+  }
+
+  /// Message for a failed sign-up attempt.
+  String createAccountFailureFor(FoundationGateIdentityFailure? failure) {
+    return switch (failure) {
+      FoundationGateIdentityFailure.emailAlreadyInUse =>
+        identityEmailAlreadyInUse,
+      FoundationGateIdentityFailure.weakPassword => identityWeakPassword,
+      FoundationGateIdentityFailure.invalidEmail => identityInvalidEmail,
+      FoundationGateIdentityFailure.networkUnavailable =>
+        identityNetworkUnavailable,
+      FoundationGateIdentityFailure.tooManyAttempts => identityTooManyAttempts,
+      _ => createAccountFailed,
+    };
+  }
+
+  /// Account was created with the provider, but family discovery failed. The
+  /// account exists; the user should sign in and will land on family setup.
+  String get accountCreatedDiscoveryUnavailable => isArabic
+      ? 'تم إنشاء الحساب، لكن تعذر الاتصال بخادم العائلة الآن. سجّل الدخول لاحقًا للمتابعة.'
+      : 'Your account was created, but the family server could not be reached. Sign in later to continue.';
 
   // ── SCR-FAT-001 real family-creation failure copy (title + message) ──
   String get familyCreationUnavailableTitle =>

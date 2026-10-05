@@ -45,7 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
   var _emailError = false;
   var _passwordError = false;
   var _submitting = false;
-    bool _obscurePassword = true;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -98,23 +98,33 @@ class _LoginScreenState extends State<LoginScreen> {
           password: _passwordController.text,
         );
         if (!mounted) return;
-        if (!snapshot.isRemoteAuthoritative) {
-          AppToast.show(
-            context,
-            message: _signInOutcomeMessage(
-              FoundationGateCopy.of(context),
-              remoteIdentity.phase,
-            ),
-          );
+        if (snapshot.isRemoteAuthoritative) {
+          context.go('/scr-fat-012');
           return;
         }
-        
-        if (snapshot.familyId == null) {
+        // Authenticated but the server returned no family yet: this is the
+        // normal path for a new guardian, not an error. Continue to setup.
+        if (remoteIdentity.needsFamilyCreation) {
           context.go('/scr-shr-007');
           return;
         }
-
-        context.go('/scr-fat-012');
+        // Several families and no configured preference: honest stop until a
+        // real picker is admitted (never guess a family context).
+        if (remoteIdentity.needsFamilySelection) {
+          AppToast.show(
+            context,
+            message: FoundationGateCopy.of(context).chooseFamilyHint,
+          );
+          return;
+        }
+        AppToast.show(
+          context,
+          message: _signInOutcomeMessage(
+            FoundationGateCopy.of(context),
+            remoteIdentity.phase,
+            remoteIdentity.lastIdentityFailure,
+          ),
+        );
       } on Object {
         if (mounted) {
           AppToast.show(
@@ -146,8 +156,9 @@ class _LoginScreenState extends State<LoginScreen> {
   String _signInOutcomeMessage(
     FoundationGateCopy copy,
     FoundationGatePhase phase,
+    FoundationGateIdentityFailure? failure,
   ) => switch (phase) {
-    FoundationGatePhase.signInFailed => copy.signInFailure,
+    FoundationGatePhase.signInFailed => copy.signInFailureFor(failure),
     FoundationGatePhase.sessionInvalid => copy.signInAgain,
     FoundationGatePhase.accessDenied ||
     FoundationGatePhase.rosterAccessDenied => copy.accessDenied,
@@ -301,12 +312,26 @@ class _LoginScreenState extends State<LoginScreen> {
                   onChanged: (_) {
                     if (_passwordError) setState(() => _passwordError = false);
                   },
-                  decoration: _inputDecoration(
-                    colors: colors,
-                    radii: radii,
-                    hint: l10n.loginPasswordHint,
-                    errorText: _passwordError ? l10n.loginFieldsRequired : null,
-                  ).copyWith(suffixIcon: IconButton(icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility), onPressed: () => setState(() => _obscurePassword = !_obscurePassword)))
+                  decoration:
+                      _inputDecoration(
+                        colors: colors,
+                        radii: radii,
+                        hint: l10n.loginPasswordHint,
+                        errorText: _passwordError
+                            ? l10n.loginFieldsRequired
+                            : null,
+                      ).copyWith(
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                          onPressed: () => setState(
+                            () => _obscurePassword = !_obscurePassword,
+                          ),
+                        ),
+                      ),
                 ),
               ),
             ),

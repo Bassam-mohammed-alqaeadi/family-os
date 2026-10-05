@@ -10,6 +10,7 @@ import 'package:family_os/foundation_gate/family_device_api_client.dart';
 import 'package:family_os/foundation_gate/family_discovery_api_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_http.dart';
+import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 import 'package:family_os/foundation_gate/foundation_gate_session_controller.dart';
 import 'package:family_os/foundation_gate/main_app_foundation_runtime.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -28,6 +29,7 @@ const _createdChildBody =
     '{"child":{"id":"$_childId","displayName":"Synthetic child","ageYears":8,"avatarEmoji":"🧒","themeColor":"teal","version":1,"createdAt":"2026-10-03T10:00:00.000Z","updatedAt":"2026-10-03T10:00:00.000Z"}}';
 const _createdFamilyBody =
     '{"family":{"id":"$_familyId","displayName":"Synthetic family"}}';
+const _noFamiliesBody = '{"families":[]}';
 
 void main() {
   test(
@@ -214,14 +216,193 @@ void main() {
         _idempotencyKey,
       );
       // Re-discovery ran again after the confirmed create.
-      expect(discoveryTransport.requestedUri.toString(), contains('/v1/me/families'));
+      expect(
+        discoveryTransport.requestedUri.toString(),
+        contains('/v1/me/families'),
+      );
     },
   );
 
-  test('main runtime maps a 503 family-creation failure to an explicit outcome', () async {
-    final identity = FakeIdentity(subject: 'firebase-subject');
+  test(
+    'main runtime maps a 503 family-creation failure to an explicit outcome',
+    () async {
+      final identity = FakeIdentity(subject: 'firebase-subject');
+      final configuration = FoundationGateConfiguration.fromStagingApiOrigin(
+        Uri.parse('https://staging.example.test'),
+      );
+      final runtime = MainAppFoundationRuntime(
+        identity: identity,
+        controller: FoundationGateSessionController(
+          identity: identity,
+          discoveryApi: FamilyDiscoveryApiClient(
+            configuration: configuration,
+            transport: FakeTransport(
+              const FoundationGateHttpResponse(
+                statusCode: 200,
+                body: _familyBody,
+              ),
+            ),
+          ),
+          rosterApi: ChildrenRosterApiClient(
+            configuration: configuration,
+            transport: FakeTransport(
+              const FoundationGateHttpResponse(
+                statusCode: 200,
+                body: _emptyRosterBody,
+              ),
+            ),
+          ),
+        ),
+        deviceApi: FamilyDeviceApiClient(
+          configuration: configuration,
+          transport: FakeTransport(
+            const FoundationGateHttpResponse(
+              statusCode: 200,
+              body: '{"devices":[]}',
+            ),
+          ),
+        ),
+        familyCreationApi: FamilyCreationApiClient(
+          configuration: configuration,
+          transport: FakeTransport(
+            const FoundationGateHttpResponse(statusCode: 200, body: '{}'),
+            postResponse: const FoundationGateHttpResponse(
+              statusCode: 503,
+              body: '',
+            ),
+          ),
+        ),
+      );
+      addTearDown(runtime.dispose);
+
+      final identitySource = MainAppFoundationIdentitySource(runtime);
+      addTearDown(identitySource.dispose);
+      await identitySource.signIn(
+        email: 'guardian@example.test',
+        password: 'synthetic-password',
+      );
+
+      final result = await runtime.createFamily(
+        displayName: 'Synthetic family',
+        idempotencyKey: _idempotencyKey,
+      );
+
+      expect(result.isCreated, isFalse);
+      expect(result.outcome, FamilyCreationOutcome.serviceUnavailable);
+    },
+  );
+
+  test(
+    'a brand-new account with no family can create its first family and is selected into it',
+    () async {
+      final identity = FakeIdentity(subject: 'firebase-subject');
+      // Discovery is empty until the family exists, then returns it.
+      final discoveryTransport = FakeTransport(
+        const FoundationGateHttpResponse(
+          statusCode: 200,
+          body: _noFamiliesBody,
+        ),
+      );
+      final familyCreationTransport = FakeTransport(
+        const FoundationGateHttpResponse(statusCode: 200, body: '{}'),
+        postResponse: const FoundationGateHttpResponse(
+          statusCode: 201,
+          body: _createdFamilyBody,
+        ),
+      );
+      final configuration = FoundationGateConfiguration.fromStagingApiOrigin(
+        Uri.parse('https://staging.example.test'),
+      );
+      final runtime = MainAppFoundationRuntime(
+        identity: identity,
+        controller: FoundationGateSessionController(
+          identity: identity,
+          discoveryApi: FamilyDiscoveryApiClient(
+            configuration: configuration,
+            transport: discoveryTransport,
+          ),
+          rosterApi: ChildrenRosterApiClient(
+            configuration: configuration,
+            transport: FakeTransport(
+              const FoundationGateHttpResponse(
+                statusCode: 200,
+                body: _emptyRosterBody,
+              ),
+            ),
+          ),
+        ),
+        deviceApi: FamilyDeviceApiClient(
+          configuration: configuration,
+          transport: FakeTransport(
+            const FoundationGateHttpResponse(
+              statusCode: 200,
+              body: '{"devices":[]}',
+            ),
+          ),
+        ),
+        familyCreationApi: FamilyCreationApiClient(
+          configuration: configuration,
+          transport: familyCreationTransport,
+        ),
+      );
+      addTearDown(runtime.dispose);
+
+      final identitySource = MainAppFoundationIdentitySource(runtime);
+      addTearDown(identitySource.dispose);
+      final afterSignUp = await identitySource.signUp(
+        email: 'new-guardian@example.test',
+        password: 'synthetic-password',
+      );
+
+      // Signed in, but honestly without a family context yet.
+      expect(identity.signUpCalls, 1);
+      expect(afterSignUp.isRemoteAuthoritative, isFalse);
+      expect(identitySource.needsFamilyCreation, isTrue);
+      expect(identitySource.hasAuthenticatedPrincipal, isTrue);
+
+      // The server now knows the family on the next discovery.
+      discoveryTransport.response = const FoundationGateHttpResponse(
+        statusCode: 200,
+        body: _familyBody,
+      );
+      final result = await runtime.createFamily(
+        displayName: 'Synthetic family',
+        idempotencyKey: _idempotencyKey,
+      );
+
+      expect(
+        result.isCreated,
+        isTrue,
+        reason: 'first family must be creatable',
+      );
+      expect(result.familyId, _familyId);
+      expect(
+        familyCreationTransport.postedHeaders!['authorization'],
+        startsWith('Bearer '),
+      );
+      // Re-discovery selected the created family and identity became authoritative.
+      expect(identitySource.needsFamilyCreation, isFalse);
+      expect(identitySource.value.isRemoteAuthoritative, isTrue);
+      expect(identitySource.value.familyId?.value, _familyId);
+      expect(identitySource.value.isPrimaryOwner, isTrue);
+    },
+  );
+
+  test('a signed-out runtime cannot create a family', () async {
+    final identity = FakeIdentity(
+      failure: const FoundationGateIdentityException(
+        FoundationGateIdentityFailure.noSession,
+      ),
+    );
     final configuration = FoundationGateConfiguration.fromStagingApiOrigin(
       Uri.parse('https://staging.example.test'),
+    );
+    final familyCreationTransport = FakeTransport(
+      const FoundationGateHttpResponse(statusCode: 200, body: '{}'),
+      postResponse: const FoundationGateHttpResponse(
+        statusCode: 201,
+        body: _createdFamilyBody,
+      ),
     );
     final runtime = MainAppFoundationRuntime(
       identity: identity,
@@ -230,7 +411,10 @@ void main() {
         discoveryApi: FamilyDiscoveryApiClient(
           configuration: configuration,
           transport: FakeTransport(
-            const FoundationGateHttpResponse(statusCode: 200, body: _familyBody),
+            const FoundationGateHttpResponse(
+              statusCode: 200,
+              body: _noFamiliesBody,
+            ),
           ),
         ),
         rosterApi: ChildrenRosterApiClient(
@@ -254,20 +438,10 @@ void main() {
       ),
       familyCreationApi: FamilyCreationApiClient(
         configuration: configuration,
-        transport: FakeTransport(
-          const FoundationGateHttpResponse(statusCode: 200, body: '{}'),
-          postResponse: const FoundationGateHttpResponse(statusCode: 503, body: ''),
-        ),
+        transport: familyCreationTransport,
       ),
     );
     addTearDown(runtime.dispose);
-
-    final identitySource = MainAppFoundationIdentitySource(runtime);
-    addTearDown(identitySource.dispose);
-    await identitySource.signIn(
-      email: 'guardian@example.test',
-      password: 'synthetic-password',
-    );
 
     final result = await runtime.createFamily(
       displayName: 'Synthetic family',
@@ -275,6 +449,81 @@ void main() {
     );
 
     expect(result.isCreated, isFalse);
-    expect(result.outcome, FamilyCreationOutcome.serviceUnavailable);
+    expect(result.outcome, FamilyCreationOutcome.unauthenticated);
+    expect(
+      familyCreationTransport.postedUri,
+      isNull,
+      reason: 'no request may leave the device without a principal',
+    );
   });
+
+  test(
+    'a failed sign-up keeps the account unauthenticated and reports a safe reason',
+    () async {
+      final identity = FakeIdentity(
+        failure: const FoundationGateIdentityException(
+          FoundationGateIdentityFailure.emailAlreadyInUse,
+        ),
+      );
+      final configuration = FoundationGateConfiguration.fromStagingApiOrigin(
+        Uri.parse('https://staging.example.test'),
+      );
+      final runtime = MainAppFoundationRuntime(
+        identity: identity,
+        controller: FoundationGateSessionController(
+          identity: identity,
+          discoveryApi: FamilyDiscoveryApiClient(
+            configuration: configuration,
+            transport: FakeTransport(
+              const FoundationGateHttpResponse(
+                statusCode: 200,
+                body: _noFamiliesBody,
+              ),
+            ),
+          ),
+          rosterApi: ChildrenRosterApiClient(
+            configuration: configuration,
+            transport: FakeTransport(
+              const FoundationGateHttpResponse(
+                statusCode: 200,
+                body: _emptyRosterBody,
+              ),
+            ),
+          ),
+        ),
+        deviceApi: FamilyDeviceApiClient(
+          configuration: configuration,
+          transport: FakeTransport(
+            const FoundationGateHttpResponse(
+              statusCode: 200,
+              body: '{"devices":[]}',
+            ),
+          ),
+        ),
+        familyCreationApi: FamilyCreationApiClient(
+          configuration: configuration,
+          transport: FakeTransport(
+            const FoundationGateHttpResponse(statusCode: 200, body: '{}'),
+          ),
+        ),
+      );
+      addTearDown(runtime.dispose);
+
+      final identitySource = MainAppFoundationIdentitySource(runtime);
+      addTearDown(identitySource.dispose);
+      final snapshot = await identitySource.signUp(
+        email: 'taken@example.test',
+        password: 'synthetic-password',
+      );
+
+      expect(snapshot.isRemoteAuthoritative, isFalse);
+      expect(identitySource.phase, FoundationGatePhase.signInFailed);
+      expect(
+        identitySource.lastIdentityFailure,
+        FoundationGateIdentityFailure.emailAlreadyInUse,
+      );
+      expect(identitySource.hasAuthenticatedPrincipal, isFalse);
+      expect(identitySource.needsFamilyCreation, isFalse);
+    },
+  );
 }

@@ -23,6 +23,7 @@ class FoundationGateSessionController extends ChangeNotifier {
   List<FoundationGateChild> _children = const [];
   String? _lastCreatedChildId;
   bool _creatingChild = false;
+  FoundationGateIdentityFailure? _lastIdentityFailure;
 
   FoundationGatePhase get phase => _phase;
   List<FoundationGateFamily> get families => _families;
@@ -34,6 +35,32 @@ class FoundationGateSessionController extends ChangeNotifier {
   String? get lastCreatedChildId => _lastCreatedChildId;
   bool get isCreatingChild => _creatingChild;
 
+  /// Presentation-safe reason for the most recent [FoundationGatePhase.signInFailed].
+  /// Cleared on every new sign-in / sign-up attempt. Never contains provider text.
+  FoundationGateIdentityFailure? get lastIdentityFailure =>
+      _lastIdentityFailure;
+
+  /// True when the identity provider holds an authenticated principal — even
+  /// before any family exists. Family creation needs exactly this and must not
+  /// wait for a selected family (a brand-new account has none yet).
+  bool get hasAuthenticatedPrincipal => switch (_phase) {
+    FoundationGatePhase.familiesAvailable ||
+    FoundationGatePhase.loadingRoster ||
+    FoundationGatePhase.childrenAvailable ||
+    FoundationGatePhase.noChildren ||
+    FoundationGatePhase.noActiveFamily ||
+    FoundationGatePhase.rosterAccessDenied ||
+    FoundationGatePhase.serviceUnavailable ||
+    FoundationGatePhase.networkUnavailable => true,
+    FoundationGatePhase.unconfigured ||
+    FoundationGatePhase.signedOut ||
+    FoundationGatePhase.signingIn ||
+    FoundationGatePhase.loadingFamilies ||
+    FoundationGatePhase.signInFailed ||
+    FoundationGatePhase.sessionInvalid ||
+    FoundationGatePhase.accessDenied => false,
+  };
+
   Future<void> signIn({required String email, required String password}) async {
     if (email.trim().isEmpty || password.isEmpty) {
       _setPhase(FoundationGatePhase.signInFailed);
@@ -41,6 +68,7 @@ class FoundationGateSessionController extends ChangeNotifier {
     }
 
     _clearAllVolatileState();
+    _lastIdentityFailure = null;
     _setPhase(FoundationGatePhase.signingIn);
     String? idToken;
     try {
@@ -52,8 +80,9 @@ class FoundationGateSessionController extends ChangeNotifier {
           ? FoundationGatePhase.noActiveFamily
           : FoundationGatePhase.familiesAvailable;
       notifyListeners();
-    } on FoundationGateIdentityException {
+    } on FoundationGateIdentityException catch (error) {
       _clearAllVolatileState();
+      _lastIdentityFailure = error.failure;
       _setPhase(FoundationGatePhase.signInFailed);
     } on FoundationGateApiException catch (error) {
       await _handleDiscoveryFailure(error.failure);
@@ -69,6 +98,7 @@ class FoundationGateSessionController extends ChangeNotifier {
     }
 
     _clearAllVolatileState();
+    _lastIdentityFailure = null;
     _setPhase(FoundationGatePhase.signingIn);
     String? idToken;
     try {
@@ -80,8 +110,9 @@ class FoundationGateSessionController extends ChangeNotifier {
           ? FoundationGatePhase.noActiveFamily
           : FoundationGatePhase.familiesAvailable;
       notifyListeners();
-    } on FoundationGateIdentityException {
+    } on FoundationGateIdentityException catch (error) {
       _clearAllVolatileState();
+      _lastIdentityFailure = error.failure;
       _setPhase(FoundationGatePhase.signInFailed);
     } on FoundationGateApiException catch (error) {
       await _handleDiscoveryFailure(error.failure);
