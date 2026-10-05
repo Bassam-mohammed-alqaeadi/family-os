@@ -239,8 +239,10 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(tester.widget<TextField>(find.byType(TextField)).controller!.text,
-          'New child');
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'New child',
+      );
 
       await tester.tap(find.byKey(submitKey));
       await tester.pumpAndSettle();
@@ -310,6 +312,65 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Child profile created and roster refreshed.'),
           findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'the primary create form is fully Arabic and right-to-left at tablet size with enlarged text',
+    (tester) async {
+      String? submittedName;
+      await tester.pumpWidget(
+        host(
+          status: ChildrenControlCentreStatus.empty,
+          locale: const Locale('ar'),
+          size: const Size(900, 1024),
+          textScale: 1.7,
+          family: _primaryFamily,
+          children: const [],
+          onCreateChild:
+              ({
+                required displayName,
+                required ageYears,
+                required avatarEmoji,
+                required themeColor,
+                required idempotencyKey,
+              }) async {
+                submittedName = displayName;
+                return FoundationGateChildCreateResult.created;
+              },
+        ),
+      );
+
+      final addChild = find.byKey(
+        const Key('foundation_gate_add_child_profile'),
+      );
+      await tester.scrollUntilVisible(addChild, 300);
+      await tester.tap(addChild);
+      await tester.pumpAndSettle();
+
+      // The form itself — not only the list behind it — must be Arabic.
+      expect(find.text('اسم الطفل'), findsOneWidget);
+      expect(find.text('العمر بالسنوات'), findsOneWidget);
+      expect(find.text('إنشاء ملف الطفل'), findsOneWidget);
+      expect(find.text('إلغاء'), findsOneWidget);
+
+      // A translated label inside a left-to-right layout is still a broken
+      // Arabic form, so the direction is asserted where the fields are built.
+      final formDirection = Directionality.of(
+        tester.element(find.byType(TextField)),
+      );
+      expect(formDirection, TextDirection.rtl);
+
+      // Enlarged text must not clip the submit control out of reach.
+      await tester.enterText(find.byType(TextField), 'سارة');
+      await tester.tap(
+        find.byKey(const Key('foundation_gate_create_child_profile_submit')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(submittedName, 'سارة');
+      expect(find.text('تم إنشاء ملف الطفل وتحديث السجل.'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     },
   );
 

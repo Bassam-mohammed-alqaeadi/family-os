@@ -68,9 +68,23 @@ The Flutter toolchain cannot be installed in the current workspace (`storage.goo
 | Flutter CI | `37366768515` | ⛔ cancelled after 15m queued — same runner-acquisition failure |
 | Foundation Gate CI | `37366768468` | ⛔ cancelled after 15m queued — same runner-acquisition failure |
 
-The three cancelled workflows never executed a step. Their conclusions therefore carry **no information about the change** — no analyzer result and no test result exists for this commit. The available GitHub credential cannot re-run or dispatch workflows (`HTTP 403 Resource not accessible by integration`), so the retry is a `push` event.
+The three cancelled workflows never executed a step. Their conclusions therefore carry **no information about the change** — no analyzer result and no test result exists for this commit.
 
-**Consequence, stated plainly:** the Flutter gate of this lock is **unverified**, not passed. M0 remains **Open**. The next push that touches `app/**` retries it, and the run ledger above is the record to update.
+### 4.2.1 Workflow dispatch attempt — blocked by the available credential
+
+Re-running or dispatching was attempted through every available route, because a `workflow_dispatch` would have produced the Flutter evidence without a new commit:
+
+| Route | Command | Result |
+|---|---|---|
+| REST dispatch by workflow ID | `POST /repos/{owner}/{repo}/actions/workflows/364337833/dispatches` | `403 Resource not accessible by integration` |
+| REST dispatch by workflow file | `POST /repos/{owner}/{repo}/actions/workflows/flutter_ci.yml/dispatches` | `403 Resource not accessible by integration` |
+| CLI dispatch | `gh workflow run flutter_ci.yml --ref arena/6233f1a1-family-os` | `403 Resource not accessible by integration` |
+| REST re-run of the cancelled run | `POST /repos/{owner}/{repo}/actions/runs/37366768515/rerun` | `403 Resource not accessible by integration` |
+| Control: read runs | `GET /repos/{owner}/{repo}/actions/runs` | ✅ `200`, 626 runs readable |
+
+The credential is a GitHub App installation token (`X-Oauth-Scopes` empty, `X-Accepted-Github-Permissions: allows_permissionless_access=true`). It carries **read** access to Actions and **no write** access, so the dispatch is refused before any workflow is considered. This is a permission boundary, not a workflow or syntax problem: REST dispatch versus CLI dispatch made no difference, and the workflow is resolvable (its numeric ID `364337833` was returned).
+
+**Consequence, stated plainly:** the Flutter gate of this lock is **unverified**, not passed, and M0 remains **Open**. The retry is a `push` event, because `push` is the one trigger this credential is allowed to create.
 
 ### 4.3 What local evidence does and does not cover
 Local evidence fully covers the backend contract, store, authorization and OpenAPI behaviour, because the Node suite runs here. It cannot cover the Dart analyzer or any widget test. The two new widget guarantees in this phase — retry-stable idempotency key with preserved input, and pending-state lock-out — are **written but not yet executed**.
