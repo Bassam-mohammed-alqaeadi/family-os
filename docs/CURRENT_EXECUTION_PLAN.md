@@ -4,6 +4,8 @@
 >
 > **Direction:** The Global Super-App Constitution in [`../AGENTS.md`](../AGENTS.md) is binding. Family OS preserves the prototype's user promise, then builds the real engine behind it with PostgreSQL, **Node.js/Express**, Native Android services where required, and Flutter.
 >
+> **Global Launch Master Plan:** [`GLOBAL_LAUNCH_MASTER_PLAN.md`](GLOBAL_LAUNCH_MASTER_PLAN.md) is the execution master plan from now to launch (approved 2026-10-05 by Owner + technical partner; **comprehensive 12-section edition completed 2026-10-05**). It fixes: AI last but prepared from day one (on-device light + cloud subscription via gateway), global market from Arabic to worldwide, cloud from temporary Render to full production, pricing deferred, and target ≥$4M ARR in 2028. It now contains the full **42-system map grouped into 11 delivery waves (M0–M10)**, the detailed 2026 Q4 → 2028 Q2 schedule with per-wave exit criteria, the 10-week per-system cadence, a 9-item risk matrix, monthly cost projections, and the 7-point launch gate. This plan (`CURRENT_EXECUTION_PLAN.md`) remains the live pointer for the active system.
+>
 > **Active system:** **Family Entry & Children Control** — selected 2026-10-04; Cover remains governing design authority and the bounded **primary-guardian create child profile** capability is now admitted for real-engine implementation.
 >
 > **This document:** selects the current system and its stage. Historical Foundation, staging and discovery material remains evidence, not a competing roadmap.
