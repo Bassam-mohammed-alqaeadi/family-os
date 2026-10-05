@@ -1,6 +1,6 @@
 # M0 Lock Record — Phase 0 foundation
 
-> **Status:** Open — awaiting the verification evidence listed in §4. It becomes **Locked** only when every gate in §5 is green on the same commit.
+> **Status:** **Open** — the implementation is complete, the backend suite is green, and gate 3 (Flutter analyze + test) is unverified because GitHub-hosted runners were not acquired (§4.2). It becomes **Locked** only when every gate in §5 is green on the same commit.
 >
 > **Scope:** Wave M0 of [`../GLOBAL_LAUNCH_MASTER_PLAN.md`](../GLOBAL_LAUNCH_MASTER_PLAN.md) — the three Phase 0 deliverables. It does **not** lock the wider Family Entry & Children Control system, and it opens no later wave.
 >
@@ -53,17 +53,27 @@ The following are **not** part of this lock and were refused rather than half-bu
 | OpenAPI contract enumerates every operation, security and idempotency | `backend/test/openapi-contract.test.js` | Passed for the two new operations |
 | Permission/enforcement drift gate | `backend/test/permission-snapshot.test.js` | Passed for all three roles |
 | AiEvent emission inside the mutation transaction | `backend/test/postgres-foundation-store.test.js` | Passed |
-| Flutter analyzer + widget/unit suite | GitHub Actions `Flutter CI` (workspace network blocks `pub.dev`, so the local machine cannot run Flutter) | See §4.1 |
+| Flutter analyzer + widget/unit suite | GitHub Actions `Flutter CI` (workspace network blocks `pub.dev`, so the local machine cannot run Flutter) | ⏳ blocked — see §4.1 |
+| Secret/credential guard | GitHub Actions `Credential Guard` | ✅ passed (run `37366768433`) |
 
-### 4.1 Flutter verification
-The Flutter toolchain cannot be installed in the current workspace (`storage.googleapis.com`, `pub.dev` and `dl.google.com` are unreachable). Flutter evidence is therefore taken from the repository's own CI, which runs `flutter analyze --fatal-infos`, `flutter test` and the generated-source check on Flutter 3.35.7.
+### 4.1 Flutter verification — blocked by runner availability, not by code
+The Flutter toolchain cannot be installed in the current workspace (`storage.googleapis.com`, `pub.dev` and `dl.google.com` are unreachable), so Flutter evidence must come from the repository's own CI, which runs `flutter analyze --fatal-infos`, `flutter test` and the generated-source check on Flutter 3.35.7.
 
-| Run | Scope | Result |
+### 4.2 Run ledger — commit `844ec82`
+
+| Workflow | Run | Outcome |
 |---|---|---|
-| Flutter CI on `arena/6233f1a1-family-os` | Two new widget guarantees: retry-stable idempotency key, and pending-state lock-out | Recorded in §4.2 once the run completes |
+| Credential Guard | `37366768433` | ✅ success, 5m37s |
+| Backend CI | `37366768461` | ⛔ cancelled after 15m queued — `The job was not acquired by Runner of type hosted even after multiple attempts` |
+| Flutter CI | `37366768515` | ⛔ cancelled after 15m queued — same runner-acquisition failure |
+| Foundation Gate CI | `37366768468` | ⛔ cancelled after 15m queued — same runner-acquisition failure |
 
-### 4.2 Run ledger
-_Run identifiers are appended here after the workflow finishes; the lock is not declared before they are green._
+The three cancelled workflows never executed a step. Their conclusions therefore carry **no information about the change** — no analyzer result and no test result exists for this commit. The available GitHub credential cannot re-run or dispatch workflows (`HTTP 403 Resource not accessible by integration`), so the retry is a `push` event.
+
+**Consequence, stated plainly:** the Flutter gate of this lock is **unverified**, not passed. M0 remains **Open**. The next push that touches `app/**` retries it, and the run ledger above is the record to update.
+
+### 4.3 What local evidence does and does not cover
+Local evidence fully covers the backend contract, store, authorization and OpenAPI behaviour, because the Node suite runs here. It cannot cover the Dart analyzer or any widget test. The two new widget guarantees in this phase — retry-stable idempotency key with preserved input, and pending-state lock-out — are **written but not yet executed**.
 
 ## 5. Lock gates
 
@@ -71,7 +81,7 @@ _Run identifiers are appended here after the workflow finishes; the lock is not 
 |---|---|---|
 | 1 | All three M0 deliverables implemented and reviewed | ✅ |
 | 2 | Backend suite green on the locking commit | ✅ 93/93 |
-| 3 | Flutter analyze + test green on the locking commit | ⏳ pending run ledger |
+| 3 | Flutter analyze + test green on the locking commit | ⏳ **unverified** — CI runner acquisition blocked (§4.2) |
 | 4 | No mock, seed or local-authority fallback on the normal path | ✅ (unchanged from the admitted slice) |
 | 5 | Admission boundary reconciled, including presentation facts | ✅ [`03` §6](03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md) |
 | 6 | No secret, credential or real family data introduced | ✅ |
