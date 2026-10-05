@@ -256,7 +256,7 @@ void main() {
         configuration: configuration,
         transport: FakeTransport(
           const FoundationGateHttpResponse(statusCode: 200, body: '{}'),
-          postResponse: const FoundationGateHttpResponse(statusCode: 503),
+          postResponse: const FoundationGateHttpResponse(statusCode: 503, body: ''),
         ),
       ),
     );

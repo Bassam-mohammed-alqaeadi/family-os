@@ -563,7 +563,7 @@ Future<void> _pumpCreateFamily(
 }
 
 IdentitySnapshot _remoteIdentitySnapshot() {
-  return const IdentitySnapshot(
+  return IdentitySnapshot(
     authority: IdentityAuthority.remoteAuthoritative,
     accountId: AccountId('acc_real'),
     familyId: FamilyId('fam_real'),
@@ -577,7 +577,7 @@ final class _FakeIdentitySource extends ChangeNotifier
     implements IdentitySource {
   _FakeIdentitySource(this._value);
 
-  IdentitySnapshot _value;
+  final IdentitySnapshot _value;
 
   @override
   IdentitySnapshot get value => _value;
@@ -589,7 +589,7 @@ final class _FakeIdentitySource extends ChangeNotifier
 final class _FakeFamilyCreationSource implements FamilyCreationSource {
   _FakeFamilyCreationSource(this._result);
 
-  FamilyCreationResult _result;
+  final FamilyCreationResult _result;
   final List<({String displayName, String idempotencyKey})> calls = [];
 
   @override
