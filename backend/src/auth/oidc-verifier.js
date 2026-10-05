@@ -60,6 +60,8 @@ export class OidcAuthVerifier {
         subject: validatedOidcSubject(payload.sub),
         issuedAt: payload.iat,
         expiresAt: payload.exp,
+        // Firebase/OIDC standard claim. Absent or non-boolean ⇒ not verified.
+        emailVerified: payload.email_verified === true,
       };
     } catch (error) {
       if (error instanceof HttpError) {

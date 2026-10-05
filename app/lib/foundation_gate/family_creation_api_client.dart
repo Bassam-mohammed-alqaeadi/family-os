@@ -6,7 +6,10 @@ import 'foundation_gate_models.dart';
 
 /// Server-confirmed family created by the verified principal.
 class FoundationGateCreatedFamily {
-  const FoundationGateCreatedFamily({required this.id, required this.displayName});
+  const FoundationGateCreatedFamily({
+    required this.id,
+    required this.displayName,
+  });
 
   final String id;
   final String displayName;
@@ -23,8 +26,8 @@ class FamilyCreationApiClient {
   FamilyCreationApiClient({
     required FoundationGateConfiguration configuration,
     required FoundationGateHttpTransport transport,
-  })  : _configuration = configuration,
-        _transport = transport;
+  }) : _configuration = configuration,
+       _transport = transport;
 
   final FoundationGateConfiguration _configuration;
   final FoundationGateHttpTransport _transport;
@@ -106,10 +109,7 @@ class FamilyCreationApiClient {
           !_isValidDisplayName(displayName)) {
         throw const FormatException();
       }
-      return FoundationGateCreatedFamily(
-        id: id,
-        displayName: displayName,
-      );
+      return FoundationGateCreatedFamily(id: id, displayName: displayName);
     } catch (_) {
       throw const FoundationGateApiException(
         FoundationGateApiFailure.invalidResponse,

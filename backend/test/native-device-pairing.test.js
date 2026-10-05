@@ -105,3 +105,32 @@ test('one-time pairing returns a device-only credential and it can submit real-s
     assert.equal(telemetryEvent.actorMembershipId, null);
   });
 });
+
+test('an unverified guardian e-mail can create a family and a child but cannot mint a pairing code (Owner C1)', async () => {
+  const store = new MemoryFoundationStore({ now: () => new Date('2026-10-06T09:00:00.000Z') });
+  const app = createApp({ store, authVerifier: new TestAuthVerifier(), readiness: () => ({ ready: true }) });
+  await withServer(app, async (baseUrl) => {
+    const familyResponse = await request(baseUrl, '/v1/families', {
+      method: 'POST', authorization: 'Bearer test-primary-unverified', idempotencyKey: 'c1-family',
+      body: { displayName: 'Unverified family' },
+    });
+    assert.equal(familyResponse.status, 201);
+    const family = (await familyResponse.json()).family;
+    const childResponse = await request(baseUrl, `/v1/families/${family.id}/children`, {
+      method: 'POST', authorization: 'Bearer test-primary-unverified', idempotencyKey: 'c1-child',
+      body: { displayName: 'Sami', ageYears: 7, avatarEmoji: '🧒', themeColor: 'sky' },
+    });
+    assert.equal(childResponse.status, 201);
+    const child = (await childResponse.json()).child;
+
+    const pairing = await request(baseUrl, `/v1/families/${family.id}/children/${child.id}/device-pairings`, {
+      method: 'POST', authorization: 'Bearer test-primary-unverified', idempotencyKey: 'c1-pair',
+      body: { deviceLabel: 'Sami phone' },
+    });
+    assert.equal(pairing.status, 403);
+    const body = await pairing.json();
+    assert.equal(body.error.code, 'email_verification_required');
+    // No capability row, no audit event, nothing claimable was created.
+    assert.equal(store.devicePairings.size, 0);
+  });
+});

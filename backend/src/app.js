@@ -88,6 +88,19 @@ export function createApp({
         next();
     });
 
+    // Issuing a child-device pairing capability is the most consequential
+    // guardian action in onboarding: it binds a child's handset to this
+    // account. The guardian must therefore own a verified e-mail (account
+    // recovery channel) before any code is minted. Family and child creation
+    // deliberately stay open so onboarding is not blocked early (Owner C1).
+    const requireVerifiedEmail = (request, _response, next) => {
+        if (request.principal?.emailVerified !== true) {
+            next(new HttpError(403, 'email_verification_required', 'Verify the account e-mail before pairing a child device.'));
+            return;
+        }
+        next();
+    };
+
     const requireRuntimeReady = asyncRoute(async(_request, _response, next) => {
         const configStatus = readiness();
         const databaseStatus = await store.health();
@@ -280,6 +293,7 @@ export function createApp({
         '/v1/families/:familyId/children/:childId/device-pairings',
         requirePrincipal,
         protectedApiRateLimit,
+        requireVerifiedEmail,
         requireRuntimeReady,
         asyncRoute(async(request, response) => {
             const familyId = requireUuid(request.params.familyId, 'familyId');

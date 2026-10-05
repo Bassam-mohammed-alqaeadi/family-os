@@ -46,6 +46,25 @@ class FakeIdentity implements FoundationGateIdentity {
     return subject;
   }
 
+  bool emailVerified = true;
+  int verificationEmailsSent = 0;
+
+  @override
+  Future<bool> isEmailVerified({bool reload = false}) async {
+    if (failure != null) {
+      throw failure!;
+    }
+    return emailVerified;
+  }
+
+  @override
+  Future<void> sendEmailVerification() async {
+    if (failure != null) {
+      throw failure!;
+    }
+    verificationEmailsSent += 1;
+  }
+
   @override
   Future<void> signOut() async {
     signOutCalls += 1;

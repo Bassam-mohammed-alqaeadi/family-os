@@ -314,6 +314,28 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     };
   }
 
+  /// Owner decision C1: the guardian may create a family and children before
+  /// verifying the account e-mail, but may not mint a child-device pairing
+  /// code until it is verified. The server enforces the same rule (403
+  /// `email_verification_required`); this is the UX-side mirror.
+  Future<bool> isEmailVerified({bool reload = false}) async {
+    try {
+      return await _identity.isEmailVerified(reload: reload);
+    } on FoundationGateIdentityException {
+      return false;
+    }
+  }
+
+  /// Returns true when the provider accepted the send request.
+  Future<bool> sendEmailVerification() async {
+    try {
+      await _identity.sendEmailVerification();
+      return true;
+    } on FoundationGateIdentityException {
+      return false;
+    }
+  }
+
   Future<FoundationGateDevicePairing?> createDevicePairing({
     required FamilyId familyId,
     required ChildId childId,
@@ -556,6 +578,11 @@ final class RemoteFamilyDeviceSource extends ChangeNotifier
     deviceLabel: deviceLabel,
     idempotencyKey: idempotencyKey,
   );
+
+  Future<bool> isEmailVerified({bool reload = false}) =>
+      _runtime.isEmailVerified(reload: reload);
+
+  Future<bool> sendEmailVerification() => _runtime.sendEmailVerification();
 
   @override
   void dispose() {

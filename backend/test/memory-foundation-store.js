@@ -657,6 +657,8 @@ export class TestAuthVerifier {
     if (!match) {
       throw new HttpError(401, 'authentication_required', 'A bearer access token is required.');
     }
-    return { subject: match[1] };
+    // Test subjects are verified by default; a subject ending in
+    // "-unverified" models a provider account whose e-mail is not yet verified.
+    return { subject: match[1], emailVerified: !match[1].endsWith('-unverified') };
   }
 }

@@ -55,12 +55,12 @@ For every screen: **empty / loading / success / each failure** + RTL/AR first + 
 - [ ] B2 `LoginScreen`: remove prototype fingerprint/trial affordances or make them honest (disabled + why); forgot-password → **real** Firebase reset e-mail
 - [ ] B3 `CreateFamilyScreen`: remove `ChildCountChoice` mock or make it a real server field; pending state; conflict/validation copy
 - [ ] B4 `AddChildScreen` ↔ `ChildrenControlCentre`: single real create path (name+age+avatar+colour) with roster refresh and "add another / pair device" next actions
-- [ ] B5 `NativeParentPairingScreen`: countdown to `expiresAt`, regenerate on expiry, large QR, manual code fallback, "device connected" live confirmation via `/devices` poll
-- [ ] B6 `ChildModePairingScreen`: permission pre-flight explainer *before* claiming (so a denied permission never burns a code), scan → claim → start progress steps, clear failure reasons per `NativeTelemetryStartResult.reason`
+- [x] B5 `NativeParentPairingScreen`: countdown to `expiresAt`, regenerate on expiry, large QR, manual code fallback, "device connected" live confirmation via `/devices` poll
+- [x] B6 `ChildModePairingScreen` (also: https-origin pre-check before claim, because the native service rejects http origins): permission pre-flight explainer *before* claiming (so a denied permission never burns a code), scan → claim → start progress steps, clear failure reasons per `NativeTelemetryStartResult.reason`
 - [ ] B7 `ChildDayBoardScreen` first-run for a real paired child: show device label/battery/last-seen from server, hide guardian-only chrome
 
 ### Wave C — Security hardening around the journey
-- [ ] C1 E-mail verification policy decision (Firebase `sendEmailVerification`) — Owner decision in `QUESTIONS.md`
+- [x] C1 E-mail verification — Owner decision (2026-10-05): family creation and adding children are NOT blocked; only issuing a pairing QR/code requires a verified e-mail. Server enforces it: `POST .../device-pairings` → `403 {error.code:'email_verification_required'}` unless the ID token carries `email_verified:true`. Parent pairing screen shows a verification card (send e-mail / "I verified" reload) and re-checks on app resume.
 - [ ] C2 Backend: `pairing_code` TTL review (short, e.g. 10 min) and max-claim-attempts per code hash
 - [ ] C3 Child device anti-tamper v1: detect cleared config (native `configured=false` after being true) → guardian alert via `/devices` `lastSeenAt` staleness
 - [ ] C4 Release build: `network_security_config` debug-only (already), signing config, `minifyEnabled`/R8 with keep rules for Firebase

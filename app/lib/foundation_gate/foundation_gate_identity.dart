@@ -13,6 +13,13 @@ abstract interface class FoundationGateIdentity {
   /// Returns the provider's stable subject without exposing a token.
   Future<String> currentSubject();
 
+  /// Whether the provider has verified the account e-mail. With [reload] the
+  /// provider record is refreshed first (after the user clicked the link).
+  Future<bool> isEmailVerified({bool reload = false});
+
+  /// Asks the provider to send (or re-send) the verification e-mail.
+  Future<void> sendEmailVerification();
+
   Future<void> signOut();
 }
 
@@ -150,6 +157,48 @@ class FirebaseEmailPasswordIdentity implements FoundationGateIdentity {
       'too-many-requests' => FoundationGateIdentityFailure.tooManyAttempts,
       _ => FoundationGateIdentityFailure.unknown,
     };
+  }
+
+  @override
+  Future<bool> isEmailVerified({bool reload = false}) async {
+    try {
+      var user = _auth.currentUser;
+      if (user == null) {
+        throw const FoundationGateIdentityException(
+          FoundationGateIdentityFailure.noSession,
+        );
+      }
+      if (reload) {
+        await user.reload();
+        user = _auth.currentUser ?? user;
+      }
+      return user.emailVerified;
+    } on FirebaseAuthException catch (error) {
+      throw FoundationGateIdentityException(_mapSessionCode(error.code));
+    } on FoundationGateIdentityException {
+      rethrow;
+    } catch (_) {
+      throw const FoundationGateIdentityException();
+    }
+  }
+
+  @override
+  Future<void> sendEmailVerification() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw const FoundationGateIdentityException(
+          FoundationGateIdentityFailure.noSession,
+        );
+      }
+      await user.sendEmailVerification();
+    } on FirebaseAuthException catch (error) {
+      throw FoundationGateIdentityException(_mapCommonCode(error.code));
+    } on FoundationGateIdentityException {
+      rethrow;
+    } catch (_) {
+      throw const FoundationGateIdentityException();
+    }
   }
 
   @override

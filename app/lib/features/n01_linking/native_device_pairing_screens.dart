@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
@@ -6,11 +8,13 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
+import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/app/child_device_mode.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
+import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/runtime/app_scope.dart';
 import 'package:family_os/foundation_gate/family_device_api_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
@@ -35,17 +39,109 @@ class NativeParentPairingScreen extends StatefulWidget {
       _NativeParentPairingScreenState();
 }
 
-class _NativeParentPairingScreenState extends State<NativeParentPairingScreen> {
+enum _VerificationState { checking, verified, unverified }
+
+class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
+    with WidgetsBindingObserver {
+  static const _devicePollInterval = Duration(seconds: 5);
+
   final _label = TextEditingController();
   FoundationGateDevicePairing? _pairing;
   var _loading = false;
   String? _error;
 
+  _VerificationState _verification = _VerificationState.checking;
+  var _verificationBusy = false;
+  String? _verificationNote;
+
+  Timer? _ticker;
+  Timer? _devicePoll;
+  Duration _remaining = Duration.zero;
+  int _baselineDeviceCount = 0;
+  var _childConnected = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _label.addListener(() => setState(() {}));
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkVerification());
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _ticker?.cancel();
+    _devicePoll?.cancel();
     _label.dispose();
     super.dispose();
   }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // The guardian typically leaves to the mail app to click the link and
+    // comes back: re-check silently on resume.
+    if (state == AppLifecycleState.resumed &&
+        _verification == _VerificationState.unverified) {
+      _checkVerification(reload: true, silent: true);
+    }
+  }
+
+  RemoteFamilyDeviceSource? get _deviceSource {
+    final source = AppScope.maybeOf(context)?.devices;
+    return source is RemoteFamilyDeviceSource ? source : null;
+  }
+
+  // ── E-mail verification gate (Owner decision C1) ───────────────────────
+
+  Future<void> _checkVerification({
+    bool reload = false,
+    bool silent = false,
+  }) async {
+    final copy = NativeChildPairingCopy.of(context);
+    final source = _deviceSource;
+    if (source == null) {
+      setState(() => _verification = _VerificationState.unverified);
+      return;
+    }
+    if (!silent) setState(() => _verificationBusy = true);
+    final verified = await source.isEmailVerified(reload: reload);
+    if (!mounted) return;
+    setState(() {
+      _verificationBusy = false;
+      _verification = verified
+          ? _VerificationState.verified
+          : _VerificationState.unverified;
+      if (!silent) {
+        _verificationNote = verified
+            ? null
+            : (reload ? copy.stillNotVerified : null);
+      }
+      if (verified) _verificationNote = null;
+    });
+  }
+
+  Future<void> _sendVerification() async {
+    final copy = NativeChildPairingCopy.of(context);
+    final source = _deviceSource;
+    if (source == null) return;
+    setState(() => _verificationBusy = true);
+    final sent = await source.sendEmailVerification();
+    if (!mounted) return;
+    setState(() {
+      _verificationBusy = false;
+      _verificationNote = sent
+          ? copy.verificationEmailSent
+          : copy.verificationEmailSendFailed;
+    });
+  }
+
+  // ── Pairing code lifecycle ─────────────────────────────────────────────
+
+  bool get _canCreate =>
+      !_loading &&
+      _verification == _VerificationState.verified &&
+      _label.text.trim().isNotEmpty;
 
   Future<void> _create() async {
     final copy = NativeChildPairingCopy.of(context);
@@ -53,11 +149,11 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen> {
     final deviceLabel = _label.text.trim();
     final runtime = AppScope.maybeOf(context);
     final familyId = runtime?.identity.value.familyId;
-    final source = runtime?.devices;
+    final source = _deviceSource;
     if (childRaw == null ||
         childRaw.isEmpty ||
         familyId == null ||
-        source is! RemoteFamilyDeviceSource) {
+        source == null) {
       setState(() => _error = copy.parentAccessRequired);
       return;
     }
@@ -65,10 +161,27 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen> {
       setState(() => _error = copy.deviceNameRequired);
       return;
     }
+    if (_verification != _VerificationState.verified) {
+      setState(() => _error = copy.emailVerificationRequiredTitle);
+      return;
+    }
+    _stopTimers();
     setState(() {
       _loading = true;
       _error = null;
+      _pairing = null;
+      _childConnected = false;
     });
+
+    // Baseline: how many devices this child already has, so a *new* device
+    // appearing is the only thing that counts as "connected".
+    _baselineDeviceCount = await _currentDeviceCount(
+      source,
+      familyId,
+      childRaw,
+    );
+    if (!mounted) return;
+
     final pairing = await source.createPairing(
       familyId: familyId,
       childId: ChildId(childRaw),
@@ -81,7 +194,57 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen> {
       _pairing = pairing;
       _error = pairing == null ? copy.pairingUnavailable : null;
     });
+    if (pairing != null) _startTimers(pairing, source, familyId, childRaw);
   }
+
+  Future<int> _currentDeviceCount(
+    RemoteFamilyDeviceSource source,
+    FamilyId familyId,
+    String childId,
+  ) async {
+    final snapshot = await source.load(familyId);
+    for (final child in snapshot.children) {
+      if (child.childId.value == childId) return child.deviceCount;
+    }
+    return 0;
+  }
+
+  void _startTimers(
+    FoundationGateDevicePairing pairing,
+    RemoteFamilyDeviceSource source,
+    FamilyId familyId,
+    String childId,
+  ) {
+    _tick(pairing);
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _tick(pairing));
+    _devicePoll = Timer.periodic(_devicePollInterval, (_) async {
+      final count = await _currentDeviceCount(source, familyId, childId);
+      if (!mounted) return;
+      if (count > _baselineDeviceCount) {
+        _stopTimers();
+        setState(() => _childConnected = true);
+      }
+    });
+  }
+
+  void _tick(FoundationGateDevicePairing pairing) {
+    final remaining = pairing.expiresAt.difference(DateTime.now().toUtc());
+    if (!mounted) return;
+    setState(
+      () => _remaining = remaining.isNegative ? Duration.zero : remaining,
+    );
+    if (remaining.isNegative) _stopTimers();
+  }
+
+  void _stopTimers() {
+    _ticker?.cancel();
+    _ticker = null;
+    _devicePoll?.cancel();
+    _devicePoll = null;
+  }
+
+  bool get _expired =>
+      _pairing != null && _remaining == Duration.zero && !_childConnected;
 
   @override
   Widget build(BuildContext context) {
@@ -97,8 +260,7 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen> {
             ? const BackButton()
             : IconButton(
                 icon: const Icon(Icons.arrow_back),
-                onPressed: () =>
-                    context.go('/scr-fat-002'), // Go to dashboard safely
+                onPressed: () => context.go('/scr-fat-002'),
               ),
       ),
       body: SafeArea(
@@ -114,9 +276,12 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen> {
               ),
             ),
             const SizedBox(height: 16),
+            _verificationCard(colors, copy),
+            const SizedBox(height: 16),
             TextField(
               controller: _label,
               maxLength: 80,
+              enabled: !_loading && !_childConnected,
               decoration: InputDecoration(
                 labelText: copy.deviceNameLabel,
                 hintText: copy.deviceNameHint,
@@ -134,112 +299,32 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen> {
               ),
             ],
             const SizedBox(height: 8),
-            PrimaryBtn(
-              label: _loading ? copy.creatingPairing : copy.createPairing,
-              onPressed: _loading ? null : _create,
-            ),
-
-            // ── QR Code + manual code display ─────────────────────────────
+            if (!_childConnected)
+              PrimaryBtn(
+                label: _loading
+                    ? copy.creatingPairing
+                    : (pairing == null
+                          ? copy.createPairing
+                          : copy.regenerateCode),
+                onPressed: _canCreate ? _create : null,
+              ),
             if (pairing != null) ...[
-              const SizedBox(height: 32),
+              const SizedBox(height: 28),
               const Divider(),
               const SizedBox(height: 16),
-
-              // Title
-              Text(
-                copy.oneTimePairingCode,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                copy.pairingExpiresAt(pairing.expiresAt),
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 12),
-              ),
-              const SizedBox(height: 20),
-
-              // QR Code — child scans this with their phone camera
-              Center(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 16,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+              if (_childConnected)
+                _connectedCard(colors, copy)
+              else if (_expired)
+                BannerNote(
+                  message: copy.pairingExpired,
+                  variant: BannerVariant.a,
+                  leading: Icon(
+                    Icons.timer_off_outlined,
+                    color: colors.amberDeep,
                   ),
-                  padding: const EdgeInsets.all(16),
-                  child: QrImageView(
-                    data: pairing.pairingCode,
-                    version: QrVersions.auto,
-                    size: 220,
-                    backgroundColor: Colors.white,
-                    eyeStyle: const QrEyeStyle(
-                      eyeShape: QrEyeShape.square,
-                      color: Colors.black,
-                    ),
-                    dataModuleStyle: const QrDataModuleStyle(
-                      dataModuleShape: QrDataModuleShape.square,
-                      color: Colors.black,
-                    ),
-                    errorCorrectionLevel: QrErrorCorrectLevel.M,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Divider between QR and manual code
-              Row(
-                children: [
-                  const Expanded(child: Divider()),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Text(
-                      copy.orEnterManually,
-                      style: TextStyle(
-                        color: colors.ink.withValues(alpha: 0.5),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const Expanded(child: Divider()),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Manual code — large, selectable, copyable
-              Center(
-                child: SelectableText(
-                  _formatPairingCode(pairing.pairingCode),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 28,
-                    letterSpacing: 6,
-                    fontWeight: FontWeight.w800,
-                    color: colors.tealDeep,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Center(
-                child: TextButton.icon(
-                  onPressed: () => Clipboard.setData(
-                    ClipboardData(text: pairing.pairingCode),
-                  ),
-                  icon: const Icon(Icons.copy_outlined, size: 18),
-                  label: Text(copy.copyCode),
-                ),
-              ),
+                )
+              else
+                _codeSection(colors, copy, pairing),
             ],
           ],
         ),
@@ -247,10 +332,250 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen> {
     );
   }
 
-  /// Formats "ABCDEF" → "ABC DEF" for readability.
+  Widget _verificationCard(FamilyColors colors, NativeChildPairingCopy copy) {
+    switch (_verification) {
+      case _VerificationState.checking:
+        return BannerNote(
+          message: copy.checkingVerification,
+          leading: const SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        );
+      case _VerificationState.verified:
+        return BannerNote(
+          message: copy.emailVerified,
+          variant: BannerVariant.g,
+          leading: Icon(Icons.verified_outlined, color: colors.mintInk),
+        );
+      case _VerificationState.unverified:
+        return Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: colors.amber100,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.mark_email_unread_outlined,
+                    color: colors.amberDeep,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      copy.emailVerificationRequiredTitle,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: colors.amberDeep,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                copy.emailVerificationRequiredBody,
+                style: const TextStyle(height: 1.5, fontSize: 13),
+              ),
+              if (_verificationNote != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  _verificationNote!,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _verificationBusy ? null : _sendVerification,
+                      icon: const Icon(Icons.send_outlined, size: 18),
+                      label: Text(copy.sendVerificationEmail),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: _verificationBusy
+                          ? null
+                          : () => _checkVerification(reload: true),
+                      icon: const Icon(Icons.refresh, size: 18),
+                      label: Text(copy.iVerified),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+    }
+  }
+
+  Widget _connectedCard(FamilyColors colors, NativeChildPairingCopy copy) {
+    return Column(
+      children: [
+        Icon(Icons.check_circle, color: colors.mint, size: 64),
+        const SizedBox(height: 12),
+        Text(
+          copy.childDeviceConnected,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 16),
+        PrimaryBtn(
+          label: copy.backToChildren,
+          onPressed: () => context.go('/scr-fat-002'),
+        ),
+      ],
+    );
+  }
+
+  Widget _codeSection(
+    FamilyColors colors,
+    NativeChildPairingCopy copy,
+    FoundationGateDevicePairing pairing,
+  ) {
+    final urgent = _remaining < const Duration(minutes: 2);
+    return Column(
+      children: [
+        Text(
+          copy.oneTimePairingCode,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          copy.expiresIn(_remaining),
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: urgent ? colors.coral : colors.ink2,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Center(
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(16),
+            child: QrImageView(
+              data: pairing.pairingCode,
+              version: QrVersions.auto,
+              size: 260,
+              backgroundColor: Colors.white,
+              eyeStyle: const QrEyeStyle(
+                eyeShape: QrEyeShape.square,
+                color: Colors.black,
+              ),
+              dataModuleStyle: const QrDataModuleStyle(
+                dataModuleShape: QrDataModuleShape.square,
+                color: Colors.black,
+              ),
+              errorCorrectionLevel: QrErrorCorrectLevel.M,
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                copy.waitingForChildDevice,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          copy.keepScreenOpen,
+          style: TextStyle(fontSize: 12, color: colors.ink2),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            const Expanded(child: Divider()),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                copy.orEnterManually,
+                style: TextStyle(
+                  color: colors.ink.withValues(alpha: 0.5),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const Expanded(child: Divider()),
+          ],
+        ),
+        const SizedBox(height: 10),
+        SelectableText(
+          _formatPairingCode(pairing.pairingCode),
+          textAlign: TextAlign.center,
+          textDirection: TextDirection.ltr,
+          style: TextStyle(
+            fontSize: 16,
+            letterSpacing: 1.5,
+            height: 1.6,
+            fontWeight: FontWeight.w800,
+            color: colors.tealDeep,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
+        const SizedBox(height: 4),
+        TextButton.icon(
+          onPressed: () async {
+            await Clipboard.setData(ClipboardData(text: pairing.pairingCode));
+            if (!mounted) return;
+            // ignore: use_build_context_synchronously
+            AppToast.show(context, message: copy.codeCopied);
+          },
+          icon: const Icon(Icons.copy_outlined, size: 18),
+          label: Text(copy.copyCode),
+        ),
+      ],
+    );
+  }
+
+  /// Groups the opaque code in blocks of 4 for reading aloud / typing.
   String _formatPairingCode(String raw) {
-    if (raw.length == 6) return '${raw.substring(0, 3)} ${raw.substring(3)}';
-    return raw;
+    final buffer = StringBuffer();
+    for (var i = 0; i < raw.length; i += 4) {
+      if (i > 0) buffer.write(' ');
+      buffer.write(raw.substring(i, i + 4 > raw.length ? raw.length : i + 4));
+    }
+    return buffer.toString();
   }
 }
 
@@ -273,11 +598,22 @@ class ChildModePairingScreen extends StatefulWidget {
   State<ChildModePairingScreen> createState() => _ChildModePairingScreenState();
 }
 
-class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
+/// Where the child hand-off currently is. Drives the step header and which
+/// controls are enabled; nothing here holds a code or credential.
+enum _ChildStep { permissions, code, activating }
+
+enum _ActivatePhase { idle, verifyingCode, starting }
+
+class _ChildModePairingScreenState extends State<ChildModePairingScreen>
+    with WidgetsBindingObserver {
   final _code = TextEditingController();
   var _loading = false;
   String? _message;
+  var _messageIsError = false;
   NativeTelemetryStatus? _serviceStatus;
+  NativeTelemetryPermissionState? _permissions;
+  var _permissionsBusy = false;
+  _ActivatePhase _phase = _ActivatePhase.idle;
 
   // QR scanner state
   bool _showScanner = false;
@@ -286,29 +622,83 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
   @override
   void initState() {
     super.initState();
-    _refreshServiceStatus();
+    WidgetsBinding.instance.addObserver(this);
+    _code.addListener(() => setState(() {}));
+    _refreshNative();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _code.dispose();
     _scannerController?.dispose();
     super.dispose();
   }
 
-  Future<void> _refreshServiceStatus() async {
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Returning from the OS settings screen: re-read permission state.
+    if (state == AppLifecycleState.resumed) _refreshNative();
+  }
+
+  Future<void> _refreshNative() async {
     final status = await NativeChildTelemetryBridge.status();
-    if (mounted) setState(() => _serviceStatus = status);
+    if (!mounted) return;
+    setState(() {
+      _serviceStatus = status;
+      _permissions = NativeTelemetryPermissionState(
+        available: status.available,
+        fineLocationGranted: status.fineLocationGranted,
+        backgroundLocationGranted: status.backgroundLocationGranted,
+      );
+    });
+  }
+
+  Future<void> _refreshServiceStatus() => _refreshNative();
+
+  // ── Pre-flight ─────────────────────────────────────────────────────────
+
+  static const _origin = String.fromEnvironment('FAMILY_OS_API_ORIGIN');
+
+  /// The native side only accepts HTTPS origins. Decide that *before* a code
+  /// is claimed, so a misconfigured build can never burn a pairing code.
+  bool get _originSecure {
+    final uri = Uri.tryParse(_origin.trim());
+    return uri != null && uri.scheme == 'https' && uri.host.isNotEmpty;
+  }
+
+  bool get _permissionsReady =>
+      (_permissions?.available ?? false) &&
+      (_permissions?.fineLocationGranted ?? false) &&
+      (_permissions?.backgroundLocationGranted ?? false);
+
+  _ChildStep get _step {
+    if (_loading) return _ChildStep.activating;
+    if (!_permissionsReady) return _ChildStep.permissions;
+    return _ChildStep.code;
+  }
+
+  Future<void> _grantPermissions() async {
+    setState(() {
+      _permissionsBusy = true;
+      _message = null;
+    });
+    final granted =
+        await NativeChildTelemetryBridge.requestLocationPermissions();
+    if (!mounted) return;
+    setState(() {
+      _permissionsBusy = false;
+      _permissions = granted;
+    });
   }
 
   FamilyDeviceApiClient? _client() {
     if (widget.apiClient != null) return widget.apiClient;
-    const origin = String.fromEnvironment('FAMILY_OS_API_ORIGIN');
-    if (origin.trim().isEmpty) return null;
+    if (!_originSecure) return null;
     try {
       return FamilyDeviceApiClient(
         configuration: FoundationGateConfiguration.fromStagingApiOrigin(
-          Uri.parse(origin),
+          Uri.parse(_origin),
         ),
         transport: PackageFoundationGateHttpTransport(),
       );
@@ -316,6 +706,8 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
       return null;
     }
   }
+
+  // ── Scanner ────────────────────────────────────────────────────────────
 
   void _startScanner() {
     _scannerController = MobileScannerController(
@@ -337,49 +729,60 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
     if (raw != null && raw.isNotEmpty) {
       _stopScanner();
       _code.text = raw.trim();
-      // Auto-submit after scanning
       _claimAndStart();
     }
   }
 
+  // ── Claim + activate ───────────────────────────────────────────────────
+
   Future<void> _claimAndStart() async {
     final copy = NativeChildPairingCopy.of(context);
-    final client = _client();
     final pairingCode = _code.text.trim().replaceAll(' ', '');
-    if (client == null || pairingCode.isEmpty) {
-      setState(() => _message = copy.secureOriginAndCodeRequired);
+    if (widget.apiClient == null && !_originSecure) {
+      _fail(copy.secureOriginRequired);
       return;
+    }
+    final client = _client();
+    if (client == null || pairingCode.isEmpty) {
+      _fail(copy.secureOriginAndCodeRequired);
+      return;
+    }
+    // Permissions are a hard pre-condition of the *claim*, never an
+    // afterthought: a denied permission must leave the code unused.
+    if (!_permissionsReady) {
+      final granted =
+          await NativeChildTelemetryBridge.requestLocationPermissions();
+      if (!mounted) return;
+      setState(() => _permissions = granted);
+      if (!_permissionsReady) {
+        _fail(copy.locationPermissionNotGranted);
+        return;
+      }
     }
     setState(() {
       _loading = true;
       _message = null;
+      _messageIsError = false;
+      _phase = _ActivatePhase.verifyingCode;
     });
     try {
-      final permissions =
-          await NativeChildTelemetryBridge.requestLocationPermissions();
-      if (!permissions.available ||
-          !permissions.fineLocationGranted ||
-          !permissions.backgroundLocationGranted) {
-        if (!mounted) return;
-        setState(() => _message = copy.locationPermissionNotGranted);
-        return;
-      }
       final claimed = await client.claimPairing(pairingCode: pairingCode);
-      const origin = String.fromEnvironment('FAMILY_OS_API_ORIGIN');
+      if (!mounted) return;
+      setState(() => _phase = _ActivatePhase.starting);
       final result = await NativeChildTelemetryBridge.configureAndStart(
-        apiOrigin: origin,
+        apiOrigin: _origin,
         deviceId: claimed.device.id,
         deviceCredential: claimed.deviceCredential,
       );
       if (!mounted) return;
       if (!result.started) {
-        setState(() => _message = copy.childModeStartFailed(result.reason));
+        // The code is consumed server-side at this point; say so honestly.
+        _fail(
+          '${copy.codeConsumedStartFailed}\n${copy.startFailureReason(result.reason)}',
+        );
         await _refreshServiceStatus();
         return;
       }
-      // Pairing is real and the native service is running: this handset is
-      // now the child's device. Remember that (UUIDs only — never the
-      // credential), switch the in-app role and land on the child home.
       await ChildDeviceMode.markPaired(
         childId: claimed.device.childId,
         deviceId: claimed.device.id,
@@ -396,18 +799,28 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
       context.go('/scr-chd-004?childId=${claimed.device.childId}');
       return;
     } on FoundationGateApiException {
-      if (mounted) setState(() => _message = copy.pairingClaimFailed);
+      _fail(copy.pairingClaimFailed);
     } on Object {
-      // Native bridge / platform failures must surface as an honest state
-      // instead of an unhandled error; the credential (if any) stays in the
-      // Keystore-backed store and is never echoed here.
-      if (mounted) {
-        setState(() => _message = copy.childModeStartFailed('unavailable'));
-      }
+      _fail(copy.startFailureReason('native_telemetry_start_failed'));
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _phase = _ActivatePhase.idle;
+        });
+      }
     }
   }
+
+  void _fail(String message) {
+    if (!mounted) return;
+    setState(() {
+      _message = message;
+      _messageIsError = true;
+    });
+  }
+
+  // ── UI ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -419,14 +832,7 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
         backgroundColor: colors.surface,
         title: Text(copy.childTitle),
         actions: [
-          // Toggle between scanner and manual entry
-          if (!_showScanner)
-            IconButton(
-              icon: const Icon(Icons.qr_code_scanner),
-              tooltip: copy.scanQrCode,
-              onPressed: _loading ? null : _startScanner,
-            )
-          else
+          if (_showScanner)
             IconButton(
               icon: const Icon(Icons.keyboard_outlined),
               tooltip: copy.enterCodeManually,
@@ -437,7 +843,7 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
       body: SafeArea(
         child: _showScanner
             ? _buildScanner(colors, copy)
-            : _buildManualEntry(colors, copy),
+            : _buildSteps(colors, copy),
       ),
     );
   }
@@ -445,10 +851,7 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
   Widget _buildScanner(FamilyColors colors, NativeChildPairingCopy copy) {
     return Stack(
       children: [
-        // Full-screen camera preview
         MobileScanner(controller: _scannerController!, onDetect: _onQrDetected),
-
-        // Scan frame overlay
         Center(
           child: Container(
             width: 260,
@@ -459,8 +862,6 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
             ),
           ),
         ),
-
-        // Instruction text at the bottom
         Positioned(
           left: 0,
           right: 0,
@@ -487,26 +888,118 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
     );
   }
 
-  Widget _buildManualEntry(FamilyColors colors, NativeChildPairingCopy copy) {
+  Widget _buildSteps(FamilyColors colors, NativeChildPairingCopy copy) {
+    final step = _step;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // Scan QR button — primary CTA
-        OutlinedButton.icon(
-          onPressed: _loading ? null : _startScanner,
-          icon: const Icon(Icons.qr_code_scanner_outlined, size: 22),
-          label: Text(copy.scanQrCode),
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            side: BorderSide(color: colors.tealDeep, width: 1.5),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
+        _StepHeader(
+          current: step,
+          labels: [copy.stepPermissions, copy.stepScan, copy.stepActivate],
         ),
         const SizedBox(height: 20),
+        if (!(_permissions?.available ?? true))
+          BannerNote(message: copy.nativeUnavailable, variant: BannerVariant.a)
+        else if (!_originSecure && widget.apiClient == null)
+          BannerNote(
+            message: copy.secureOriginRequired,
+            variant: BannerVariant.a,
+            leading: Icon(Icons.lock_outline, color: colors.amberDeep),
+          ),
+        if (step == _ChildStep.permissions) _permissionsSection(colors, copy),
+        if (step == _ChildStep.code) _codeSection(colors, copy),
+        if (step == _ChildStep.activating) _activatingSection(colors, copy),
+        if (_message != null) ...[
+          const SizedBox(height: 14),
+          Text(
+            _message!,
+            style: TextStyle(
+              color: _messageIsError ? colors.coral : colors.ink,
+              fontWeight: FontWeight.w700,
+              height: 1.45,
+            ),
+          ),
+        ],
+        if (_serviceStatus?.running == true && step != _ChildStep.activating)
+          TextButton.icon(
+            onPressed: () async {
+              final stopped = await NativeChildTelemetryBridge.stop();
+              await _refreshServiceStatus();
+              if (mounted) {
+                setState(() {
+                  _message = stopped
+                      ? copy.childModeStopped
+                      : copy.childModeStopFailed;
+                  _messageIsError = !stopped;
+                });
+              }
+            },
+            icon: const Icon(Icons.stop_circle_outlined),
+            label: Text(copy.stopChildMode),
+          ),
+      ],
+    );
+  }
 
-        // Divider
+  Widget _permissionsSection(FamilyColors colors, NativeChildPairingCopy copy) {
+    final p = _permissions;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          copy.permissionsIntro,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            height: 1.5,
+          ),
+        ),
+        const SizedBox(height: 14),
+        _PermissionRow(
+          label: copy.permissionLocation,
+          granted: p?.fineLocationGranted ?? false,
+          grantedText: copy.granted,
+          notGrantedText: copy.notGranted,
+        ),
+        const SizedBox(height: 8),
+        _PermissionRow(
+          label: copy.permissionBackground,
+          granted: p?.backgroundLocationGranted ?? false,
+          grantedText: copy.granted,
+          notGrantedText: copy.notGranted,
+        ),
+        const SizedBox(height: 16),
+        PrimaryBtn(
+          label: copy.grantPermissions,
+          onPressed: _permissionsBusy || !(p?.available ?? false)
+              ? null
+              : _grantPermissions,
+        ),
+        const SizedBox(height: 10),
+        Text(
+          copy.permissionsHelp,
+          style: TextStyle(fontSize: 12, color: colors.ink2, height: 1.5),
+        ),
+      ],
+    );
+  }
+
+  Widget _codeSection(FamilyColors colors, NativeChildPairingCopy copy) {
+    final canSubmit = _code.text.trim().isNotEmpty && !_loading;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        PrimaryBtn(
+          label: copy.scanQrCode,
+          onPressed: _loading ? null : _startScanner,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          copy.codeFormatHint,
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 12, color: colors.ink2),
+        ),
+        const SizedBox(height: 20),
         Row(
           children: [
             const Expanded(child: Divider()),
@@ -525,7 +1018,6 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
           ],
         ),
         const SizedBox(height: 16),
-
         Text(
           copy.childIntro,
           style: const TextStyle(
@@ -534,22 +1026,21 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
             height: 1.5,
           ),
         ),
-        const SizedBox(height: 16),
-
+        const SizedBox(height: 12),
         TextField(
           controller: _code,
           autocorrect: false,
           enableSuggestions: false,
-          textCapitalization: TextCapitalization.characters,
           keyboardType: TextInputType.visiblePassword,
+          textDirection: TextDirection.ltr,
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 24,
-            letterSpacing: 6,
+            fontSize: 16,
+            letterSpacing: 1.2,
             fontWeight: FontWeight.w800,
             color: colors.tealDeep,
           ),
-          maxLength: 10,
+          maxLength: 128,
           decoration: InputDecoration(
             labelText: copy.pairingCodeLabel,
             hintText: copy.pairingCodeHint,
@@ -558,39 +1049,149 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
           ),
           onSubmitted: (_) => _claimAndStart(),
         ),
-        if (_message != null) ...[
-          const SizedBox(height: 12),
+        const SizedBox(height: 12),
+        PrimaryBtn(
+          label: copy.enterChildMode,
+          onPressed: canSubmit ? _claimAndStart : null,
+        ),
+      ],
+    );
+  }
+
+  Widget _activatingSection(FamilyColors colors, NativeChildPairingCopy copy) {
+    final label = switch (_phase) {
+      _ActivatePhase.starting => copy.activatingProtection,
+      _ => copy.verifyingCode,
+    };
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 32),
+      child: Column(
+        children: [
+          const CircularProgressIndicator(),
+          const SizedBox(height: 16),
           Text(
-            _message!,
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StepHeader extends StatelessWidget {
+  const _StepHeader({required this.current, required this.labels});
+
+  final _ChildStep current;
+  final List<String> labels;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<FamilyColors>()!;
+    final index = _ChildStep.values.indexOf(current);
+    return Row(
+      children: [
+        for (var i = 0; i < labels.length; i++) ...[
+          Expanded(
+            child: Column(
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: i < index
+                        ? colors.mint
+                        : (i == index ? colors.tealDeep : colors.surface),
+                    border: Border.all(
+                      color: i <= index ? Colors.transparent : colors.border,
+                    ),
+                  ),
+                  child: i < index
+                      ? const Icon(Icons.check, size: 16, color: Colors.white)
+                      : Text(
+                          '${i + 1}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: i == index ? Colors.white : colors.ink2,
+                          ),
+                        ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  labels[i],
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: i == index ? FontWeight.w800 : FontWeight.w600,
+                    color: i == index ? colors.ink : colors.ink2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (i < labels.length - 1)
+            Expanded(
+              child: Container(
+                height: 2,
+                margin: const EdgeInsets.only(bottom: 22),
+                color: i < index ? colors.mint : colors.border,
+              ),
+            ),
+        ],
+      ],
+    );
+  }
+}
+
+class _PermissionRow extends StatelessWidget {
+  const _PermissionRow({
+    required this.label,
+    required this.granted,
+    required this.grantedText,
+    required this.notGrantedText,
+  });
+
+  final String label;
+  final bool granted;
+  final String grantedText;
+  final String notGrantedText;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<FamilyColors>()!;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colors.border),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            granted ? Icons.check_circle : Icons.radio_button_unchecked,
+            color: granted ? colors.mint : colors.ink2,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+          Text(
+            granted ? grantedText : notGrantedText,
             style: TextStyle(
-              color: colors.ink,
+              fontSize: 12,
               fontWeight: FontWeight.w700,
-              height: 1.45,
+              color: granted ? colors.mintInk : colors.ink2,
             ),
           ),
         ],
-        const SizedBox(height: 12),
-        PrimaryBtn(
-          label: _loading ? copy.settingUpChildMode : copy.enterChildMode,
-          onPressed: _loading ? null : _claimAndStart,
-        ),
-        if (_serviceStatus?.running == true)
-          TextButton.icon(
-            onPressed: () async {
-              final stopped = await NativeChildTelemetryBridge.stop();
-              await _refreshServiceStatus();
-              if (mounted) {
-                setState(
-                  () => _message = stopped
-                      ? copy.childModeStopped
-                      : copy.childModeStopFailed,
-                );
-              }
-            },
-            icon: const Icon(Icons.stop_circle_outlined),
-            label: Text(copy.stopChildMode),
-          ),
-      ],
+      ),
     );
   }
 }

@@ -526,4 +526,71 @@ void main() {
       expect(identitySource.needsFamilyCreation, isFalse);
     },
   );
+
+  test(
+    'e-mail verification is surfaced to the pairing UI and can be re-sent (Owner C1)',
+    () async {
+      final identity = FakeIdentity(subject: 'firebase-subject')
+        ..emailVerified = false;
+      final configuration = FoundationGateConfiguration.fromStagingApiOrigin(
+        Uri.parse('https://staging.example.test'),
+      );
+      final runtime = MainAppFoundationRuntime(
+        identity: identity,
+        controller: FoundationGateSessionController(
+          identity: identity,
+          discoveryApi: FamilyDiscoveryApiClient(
+            configuration: configuration,
+            transport: FakeTransport(
+              const FoundationGateHttpResponse(
+                statusCode: 200,
+                body: _familyBody,
+              ),
+            ),
+          ),
+          rosterApi: ChildrenRosterApiClient(
+            configuration: configuration,
+            transport: FakeTransport(
+              const FoundationGateHttpResponse(
+                statusCode: 200,
+                body: _emptyRosterBody,
+              ),
+            ),
+          ),
+        ),
+        deviceApi: FamilyDeviceApiClient(
+          configuration: configuration,
+          transport: FakeTransport(
+            const FoundationGateHttpResponse(
+              statusCode: 200,
+              body: '{"devices":[]}',
+            ),
+          ),
+        ),
+        familyCreationApi: FamilyCreationApiClient(
+          configuration: configuration,
+          transport: FakeTransport(
+            const FoundationGateHttpResponse(statusCode: 200, body: '{}'),
+          ),
+        ),
+      );
+      addTearDown(runtime.dispose);
+      final devices = RemoteFamilyDeviceSource(runtime);
+      addTearDown(devices.dispose);
+
+      expect(await devices.isEmailVerified(), isFalse);
+      expect(await devices.sendEmailVerification(), isTrue);
+      expect(identity.verificationEmailsSent, 1);
+
+      identity.emailVerified = true;
+      expect(await devices.isEmailVerified(reload: true), isTrue);
+
+      // Signed-out provider: never reports verified, never throws to the UI.
+      identity.failure = const FoundationGateIdentityException(
+        FoundationGateIdentityFailure.noSession,
+      );
+      expect(await devices.isEmailVerified(), isFalse);
+      expect(await devices.sendEmailVerification(), isFalse);
+    },
+  );
 }
