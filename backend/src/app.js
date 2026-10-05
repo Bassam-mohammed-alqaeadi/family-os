@@ -528,6 +528,41 @@ export function createApp({
         }),
     );
 
+    // Server-owned permission explanation. It grants nothing: the role is
+    // re-resolved from the durable membership on every call, and every
+    // protected route re-checks authorization independently.
+    app.get(
+        '/v1/families/:familyId/permission-snapshot',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            requireNoQueryParameters(request.query);
+            response.status(200).json(await store.getFamilyPermissionSnapshot({
+                principal: request.principal,
+                familyId,
+            }));
+        }),
+    );
+
+    // AiEvent v1 read surface for the emitted fact history. Identifier-only and
+    // guardian-scoped; it exposes no payload, token or provider material.
+    app.get(
+        '/v1/families/:familyId/ai-events',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            requireNoQueryParameters(request.query);
+            response.status(200).json(await store.listFamilyAiEvents({
+                principal: request.principal,
+                familyId,
+            }));
+        }),
+    );
+
     app.use((_request, _response, next) => {
         next(new HttpError(404, 'route_not_found', 'Route was not found.'));
     });

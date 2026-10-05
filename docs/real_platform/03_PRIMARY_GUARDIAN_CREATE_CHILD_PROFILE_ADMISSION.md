@@ -56,3 +56,17 @@ The isolated Foundation Gate remains a separately configured synthetic/staging c
 - Node.js/Express backend test regression run confirming existing authorization, idempotency, audit and outbox behavior.
 
 A successful implementation changes this capability's status, not the status of the larger Family Entry & Children Control system. The wider Cover/Compete/Polish/Lock gates and the migration/release decisions remain open.
+
+## 6. Amendment — presentation facts reconciled (2026-10-05)
+
+**Divergence found.** §2 of this record admitted `displayName` and `ageYears` only, and explicitly excluded avatar and colour from the request. The shipped contract had already moved past that wording: `006_family_child_presentation.sql` added durable `avatar_emoji` and `theme_color` columns with constraints, `backend/src/validation.js` requires both fields, and the typed Flutter client sends them. The record was stale, not the code.
+
+**Reconciliation.** This amendment records what the contract is, rather than silently widening it. The admitted v1 body is:
+
+```json
+{ "displayName": "…", "ageYears": 8, "avatarEmoji": "🧒", "themeColor": "purple" }
+```
+
+**Why the risk is acceptable, stated plainly.** Both facts are non-identifying presentation choices: a single emoji and one of six fixed colour tokens, each server-validated against a closed set (`[purple, sky, amber, coral, mint, teal]`, emoji 1–32 characters containing an Extended_Pictographic). Neither reveals a location, contact, health state, device, school or any other sensitive category, and neither becomes a personal-data expansion under COPPA/GDPR-K data-minimization expectations. The data-minimization intent of the original exclusion is preserved: the request still carries no free-form profile fact beyond a display name and an age band.
+
+**Effect on scope.** Nothing else moves. The exclusion of child detail, edit/delete, device enrollment, policy, location, AI and providers remains exactly as written in §4. A reversal of this amendment is a one-line change in `backend/src/validation.js` plus the client call site, so the owner can still close this door cheaply; the open decision is recorded in [`../OPEN_DECISIONS.md`](../OPEN_DECISIONS.md).

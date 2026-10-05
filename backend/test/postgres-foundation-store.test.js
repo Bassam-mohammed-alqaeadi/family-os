@@ -273,3 +273,145 @@ test('PostgreSQL children roster read is guardian-scoped and performs no evidenc
   assert.deepEqual(childRead.values, ['6dbb6760-f609-4f3e-a29f-4c209dc1d53b']);
   assert.equal(statements.some((statement) => /^\s*(?:INSERT|UPDATE|DELETE)\b/i.test(statement.sql)), false);
 });
+
+test('PostgreSQL AiEvent writes exactly one registered fact envelope with the server correlation ID', async () => {
+  const store = healthStore(async () => ({ rows: [] }));
+  const statements = [];
+  const client = {
+    async query(sql, values) {
+      statements.push({ sql, values });
+      return { rows: [] };
+    },
+  };
+  const correlationId = '1f7f43e1-ea4f-4d8a-9a0a-8dc1d6421fe1';
+
+  await store.appendAiEvent(client, {
+    familyId: '6dbb6760-f609-4f3e-a29f-4c209dc1d53b',
+    childId: '4a3846da-8f5f-4f2b-b7ea-8a0afcd989fb',
+    eventType: 'family.child.created',
+    correlationId,
+  });
+
+  assert.equal(statements.length, 1);
+  const [statement] = statements;
+  assert.match(statement.sql, /INSERT INTO ai_events/);
+  assert.equal(statement.values[1], 'ai-event.v1');
+  assert.equal(statement.values[2], 'family.child.created');
+  assert.equal(statement.values[3], '6dbb6760-f609-4f3e-a29f-4c209dc1d53b');
+  assert.equal(statement.values[4], '4a3846da-8f5f-4f2b-b7ea-8a0afcd989fb');
+  assert.equal(statement.values[5], null);
+  assert.equal(statement.values[7], 'server');
+  assert.equal(statement.values[8], 1);
+  assert.equal(statement.values[10], null, 'an observed fact carries no reject path');
+  assert.equal(statement.values[11], correlationId);
+});
+
+test('PostgreSQL refuses an unregistered AiEvent type and a missing correlation context', async () => {
+  const store = healthStore(async () => ({ rows: [] }));
+  const client = { async query() { return { rows: [] }; } };
+  const base = {
+    familyId: '6dbb6760-f609-4f3e-a29f-4c209dc1d53b',
+    childId: '4a3846da-8f5f-4f2b-b7ea-8a0afcd989fb',
+  };
+
+  await assert.rejects(
+    store.appendAiEvent(client, { ...base, eventType: 'family.child.guessed', correlationId: '1f7f43e1-ea4f-4d8a-9a0a-8dc1d6421fe1' }),
+    TypeError,
+  );
+  await assert.rejects(
+    store.appendAiEvent(client, { ...base, eventType: 'family.child.created', correlationId: undefined }),
+    { status: 500, code: 'correlation_context_missing' },
+  );
+});
+
+function createChildClient({ replay }) {
+  const statements = [];
+  const client = {
+    async query(sql, values) {
+      statements.push({ sql, values });
+      if (sql === 'BEGIN' || sql === 'COMMIT' || sql === 'ROLLBACK') return { rows: [], rowCount: 0 };
+      if (sql.startsWith('SELECT pg_advisory_xact_lock')) return { rows: [], rowCount: 1 };
+      if (sql.includes('FROM idempotency_records')) {
+        return replay
+          ? { rows: [{ request_hash: 'a'.repeat(64), response_body: { child: { id: '4a3846da-8f5f-4f2b-b7ea-8a0afcd989fb' } } }], rowCount: 1 }
+          : { rows: [], rowCount: 0 };
+      }
+      if (sql.includes('INSERT INTO idempotency_records')) return { rows: [], rowCount: 1 };
+      if (sql.includes('FROM family_memberships AS membership')) {
+        return { rows: [{ id: 'b7fe4b27-2df2-4cf7-8071-9792b4ef665b', role: 'primary_guardian' }], rowCount: 1 };
+      }
+      if (sql.includes('INSERT INTO family_children')) {
+        return {
+          rows: [{
+            id: '4a3846da-8f5f-4f2b-b7ea-8a0afcd989fb',
+            display_name: 'Synthetic child',
+            age_years: 8,
+            avatar_emoji: '🧒',
+            theme_color: 'purple',
+            version: 1,
+            created_at: '2026-10-02T00:00:00.000Z',
+            updated_at: '2026-10-02T00:00:00.000Z',
+          }],
+          rowCount: 1,
+        };
+      }
+      if (sql.includes('UPDATE idempotency_records')) return { rows: [], rowCount: 1 };
+      if (sql.includes('INSERT INTO')) return { rows: [], rowCount: 1 };
+      throw new Error(`Unexpected query: ${sql}`);
+    },
+    release() {},
+  };
+  return { client, statements };
+}
+
+test('PostgreSQL child creation emits the AiEvent fact inside the same transaction as the roster row', async () => {
+  const { client, statements } = createChildClient({ replay: false });
+  const store = new PostgresFoundationStore({
+    connectionString: 'postgresql://unused-in-test',
+    pool: { async connect() { return client; }, async end() {} },
+  });
+
+  const result = await store.createFamilyChild({
+    principal: { subject: 'guardian-a' },
+    familyId: '6dbb6760-f609-4f3e-a29f-4c209dc1d53b',
+    displayName: 'Synthetic child',
+    ageYears: 8,
+    avatarEmoji: '🧒',
+    themeColor: 'purple',
+    idempotencyKey: 'create-child-fact-test',
+    requestHash: 'a'.repeat(64),
+    correlationId: '1f7f43e1-ea4f-4d8a-9a0a-8dc1d6421fe1',
+  });
+
+  assert.equal(result.child.id, '4a3846da-8f5f-4f2b-b7ea-8a0afcd989fb');
+  const childInsert = statements.findIndex((statement) => statement.sql.includes('INSERT INTO family_children'));
+  const factInsert = statements.findIndex((statement) => statement.sql.includes('INSERT INTO ai_events'));
+  const commit = statements.findIndex((statement) => statement.sql === 'COMMIT');
+  assert.ok(childInsert !== -1 && factInsert !== -1, 'both the roster row and the fact must be written');
+  assert.ok(childInsert < factInsert, 'the fact is written after the mutation it describes');
+  assert.ok(factInsert < commit, 'the fact is committed with the mutation, never after it');
+  assert.equal(statements.filter((statement) => statement.sql.includes('INSERT INTO ai_events')).length, 1);
+});
+
+test('PostgreSQL idempotent replay of child creation writes no second roster row and no second fact', async () => {
+  const { client, statements } = createChildClient({ replay: true });
+  const store = new PostgresFoundationStore({
+    connectionString: 'postgresql://unused-in-test',
+    pool: { async connect() { return client; }, async end() {} },
+  });
+
+  await store.createFamilyChild({
+    principal: { subject: 'guardian-a' },
+    familyId: '6dbb6760-f609-4f3e-a29f-4c209dc1d53b',
+    displayName: 'Synthetic child',
+    ageYears: 8,
+    avatarEmoji: '🧒',
+    themeColor: 'purple',
+    idempotencyKey: 'create-child-fact-test',
+    requestHash: 'a'.repeat(64),
+    correlationId: '1f7f43e1-ea4f-4d8a-9a0a-8dc1d6421fe1',
+  });
+
+  assert.equal(statements.some((statement) => statement.sql.includes('INSERT INTO family_children')), false);
+  assert.equal(statements.some((statement) => statement.sql.includes('INSERT INTO ai_events')), false);
+});

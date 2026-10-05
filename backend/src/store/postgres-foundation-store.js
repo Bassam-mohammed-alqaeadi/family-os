@@ -1,6 +1,8 @@
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import pg from 'pg';
+import { AI_EVENT_SCHEMA_VERSION, aiEventDefinition, aiEventView } from '../ai-events.js';
 import { HttpError } from '../http-error.js';
+import { PERMISSION_POLICY_VERSION, buildPermissionSnapshot } from '../permission-policy.js';
 import { FOUNDATION_SCHEMA_MIGRATIONS } from '../schema-manifest.js';
 
 const { Pool } = pg;
@@ -273,6 +275,44 @@ export class PostgresFoundationStore {
     );
   }
 
+  /**
+   * Appends one AiEvent v1 fact inside the caller's transaction.
+   *
+   * It joins the same transaction as the mutation it describes, so a recorded
+   * fact can never outlive a rolled-back change and a committed change is never
+   * missing its event.
+   */
+  async appendAiEvent(client, {
+    familyId,
+    childId = null,
+    deviceId = null,
+    eventType,
+    correlationId,
+  }) {
+    const definition = aiEventDefinition(eventType);
+    requireServerCorrelationId(correlationId);
+    await client.query(
+      `INSERT INTO ai_events
+       (id, schema_version, event_type, family_id, child_id, device_id,
+        policy_version, source, confidence, explanation, reject_path, correlation_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      [
+        randomUUID(),
+        AI_EVENT_SCHEMA_VERSION,
+        eventType,
+        familyId,
+        childId,
+        deviceId,
+        PERMISSION_POLICY_VERSION,
+        definition.source,
+        definition.confidence,
+        definition.explanation,
+        definition.rejectPath,
+        correlationId,
+      ],
+    );
+  }
+
   async activeActorMembership(client, familyId, subject, { primaryGuardianOnly = false } = {}) {
     const roleClause = primaryGuardianOnly ? `AND membership.role = 'primary_guardian'` : '';
     const { rows } = await client.query(
@@ -449,6 +489,12 @@ export class PostgresFoundationStore {
         eventType: 'family.child_created',
         subjectType: 'family_child',
         subjectId: child.rows[0].id,
+      });
+      await this.appendAiEvent(client, {
+        familyId,
+        childId: child.rows[0].id,
+        eventType: 'family.child.created',
+        correlationId,
       });
       const result = { child: familyChildView(child.rows[0]) };
       await this.completeIdempotencySlot(
@@ -1139,6 +1185,51 @@ export class PostgresFoundationStore {
         [familyId],
       );
       return { events: events.rows.map(auditView) };
+    });
+  }
+
+  /**
+   * Returns the server-owned permission explanation for the acting membership.
+   *
+   * Any active member may read their own snapshot. The role is resolved from the
+   * durable membership on every call, so a client cannot ask for a different
+   * role's explanation and a cached document cannot outlive a role change.
+   */
+  async getFamilyPermissionSnapshot({ principal, familyId }) {
+    return this.withTransaction(async (client) => {
+      const actor = await this.activeActorMembership(client, familyId, principal.subject);
+      return {
+        permissionSnapshot: buildPermissionSnapshot({
+          familyId,
+          role: actor.role,
+        }),
+      };
+    });
+  }
+
+  /**
+   * Reads the bounded AiEvent history the intelligence systems will consume.
+   *
+   * Guardian-scoped, identifier-only and capped: this endpoint exists so the
+   * emitted facts are observable and testable, not so raw family material can
+   * be exported through it.
+   */
+  async listFamilyAiEvents({ principal, familyId }) {
+    return this.withTransaction(async (client) => {
+      const actor = await this.activeActorMembership(client, familyId, principal.subject);
+      if (actor.role === 'child') {
+        throw new HttpError(403, 'ai_events_access_denied', 'Child memberships cannot view family intelligence events.');
+      }
+      const events = await client.query(
+        `SELECT id, schema_version, event_type, family_id, child_id, device_id,
+                policy_version, source, confidence, explanation, reject_path, occurred_at
+         FROM ai_events
+         WHERE family_id = $1
+         ORDER BY occurred_at DESC, id DESC
+         LIMIT 100`,
+        [familyId],
+      );
+      return { events: events.rows.map(aiEventView) };
     });
   }
 }

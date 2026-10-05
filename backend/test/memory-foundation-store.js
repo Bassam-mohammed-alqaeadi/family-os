@@ -1,6 +1,8 @@
 // Test-only fixture. It is never imported by the runtime server and is not a development fallback.
 import { createHash, randomUUID } from 'node:crypto';
+import { AI_EVENT_SCHEMA_VERSION, aiEventDefinition } from '../src/ai-events.js';
 import { HttpError } from '../src/http-error.js';
+import { PERMISSION_POLICY_VERSION, buildPermissionSnapshot } from '../src/permission-policy.js';
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -27,6 +29,7 @@ export class MemoryFoundationStore {
     this.devicePairings = new Map();
     this.audit = [];
     this.outbox = [];
+    this.aiEvents = [];
     this.idempotency = new Map();
     this.guardianTransferTtlHours = guardianTransferTtlHours;
     this.now = now;
@@ -265,6 +268,12 @@ export class MemoryFoundationStore {
       };
       this.children.set(child.id, child);
       this.recordAudit(familyId, actor.id, correlationId, 'family.child_created', 'family_child', child.id);
+      this.recordAiEvent({
+        familyId,
+        childId: child.id,
+        eventType: 'family.child.created',
+        correlationId,
+      });
       return { child: this.familyChildView(child) };
     });
   }
@@ -636,6 +645,28 @@ export class MemoryFoundationStore {
     });
   }
 
+  recordAiEvent({ familyId, childId = null, deviceId = null, eventType, correlationId }) {
+    requireServerCorrelationId(correlationId);
+    const definition = aiEventDefinition(eventType);
+    const event = {
+      id: randomUUID(),
+      schemaVersion: AI_EVENT_SCHEMA_VERSION,
+      eventType,
+      familyId,
+      childId,
+      deviceId,
+      policyVersion: PERMISSION_POLICY_VERSION,
+      source: definition.source,
+      confidence: definition.confidence,
+      explanation: definition.explanation,
+      rejectPath: definition.rejectPath,
+      correlationId,
+      occurredAt: new Date().toISOString(),
+    };
+    this.aiEvents.push(event);
+    return event;
+  }
+
   async listAuditEvents({ principal, familyId }) {
     const actor = this.activeMembership(familyId, principal.subject);
     if (actor.role === 'child') {
@@ -645,6 +676,29 @@ export class MemoryFoundationStore {
       events: this.audit
         .filter((event) => event.familyId === familyId)
         .sort((left, right) => right.occurredAt.localeCompare(left.occurredAt)),
+    };
+  }
+
+  async getFamilyPermissionSnapshot({ principal, familyId }) {
+    const actor = this.activeMembership(familyId, principal.subject);
+    return {
+      permissionSnapshot: buildPermissionSnapshot({ familyId, role: actor.role }),
+    };
+  }
+
+  async listFamilyAiEvents({ principal, familyId }) {
+    const actor = this.activeMembership(familyId, principal.subject);
+    if (actor.role === 'child') {
+      throw new HttpError(403, 'ai_events_access_denied', 'Child memberships cannot view family intelligence events.');
+    }
+    return {
+      events: this.aiEvents
+        .filter((event) => event.familyId === familyId)
+        .sort((left, right) => right.occurredAt.localeCompare(left.occurredAt))
+        .map((event) => {
+          const { correlationId: _correlationId, ...view } = event;
+          return view;
+        }),
     };
   }
 }

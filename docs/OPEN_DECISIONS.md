@@ -56,6 +56,15 @@ The Owner raised a 2028 revenue target and a 19,000-person organization. The mar
 | D4 — Declared 2028 objective | **Awaiting Owner** | The published number changes hiring, cost and launch pressure. |
 | Team scaling curve (1 → 5 → 40 → 400 → 19,000) | Recorded as model | A 19,000-person payroll is ~2.85B$/year and must follow revenue, never precede it. |
 | Agent-operated delivery layer (AGENTS.md + `.verify/` + CI + pinned skills) | **In force now** | This is the current execution capacity; it is not a claim of managing 19,000 employees. |
+| D5 — Child-profile presentation facts (`avatarEmoji`, `themeColor`) in the create request | **Recorded as reconciled; reversible by the owner** | The admission record said name-and-age only, but the shipped server contract (migration `006`, `validation.js`, the typed client) already required both. The amendment in [`real_platform/03` §6](real_platform/03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md) states exactly what is admitted and why the two visual-only facts do not widen data minimization. Reversal is a one-line change in `validation.js` plus its call site. |
+
+### 5.1 Phase 0 contract decisions taken during M0
+
+| Item | Status | Boundary |
+|---|---|---|
+| `AiEvent v1` envelope and emission | Implemented | Registered fact types only; written in the mutation transaction; facts force `confidence = 1` and no reject path. Suggestions stay impossible in v1 by schema. |
+| `PermissionSnapshot v1` | Implemented | Explanation only, `permission.v1`, 300-second window; the role is re-resolved per call and a drift test fails CI if enforcement and explanation disagree. |
+| Flutter consumption of both contracts | Deliberately deferred | A client surface arrives with the system that displays it, not before. |
 
 ## 6. Not decisions to bypass
 

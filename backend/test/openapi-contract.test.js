@@ -30,6 +30,8 @@ const expectedOperations = {
   '/v1/families/{familyId}/guardian-transfers/{transferId}/accept': ['post'],
   '/v1/families/{familyId}/guardian-transfers/{transferId}/cancel': ['post'],
   '/v1/families/{familyId}/audit-events': ['get'],
+  '/v1/families/{familyId}/permission-snapshot': ['get'],
+  '/v1/families/{familyId}/ai-events': ['get'],
 };
 
 test('Foundation OpenAPI contract is valid JSON and enumerates current API operations', async () => {

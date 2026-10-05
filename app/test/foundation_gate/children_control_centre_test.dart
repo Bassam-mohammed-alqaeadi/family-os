@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/foundation_gate/children_control_centre.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
@@ -32,6 +34,7 @@ void main() {
     List<FoundationGateChild> children = const [_child],
     FoundationGateFamily family = _family,
     CreateChildProfile? onCreateChild,
+    bool isCreatingChild = false,
   }) {
     return MediaQuery(
       data: MediaQueryData(
@@ -56,6 +59,7 @@ void main() {
             onSignOut: () async {},
             onRetry: () async {},
             onCreateChild: onCreateChild,
+            isCreatingChild: isCreatingChild,
           ),
         ),
       ),
@@ -191,6 +195,123 @@ void main() {
     expect(find.text('Synthetic family'), findsNothing);
     expect(find.text('Synthetic child'), findsNothing);
   });
+
+  testWidgets(
+    'a failed creation keeps the typed name and retries with the same idempotency key',
+    (tester) async {
+      final submittedKeys = <String>[];
+      const submitKey = Key('foundation_gate_create_child_profile_submit');
+      await tester.pumpWidget(
+        host(
+          status: ChildrenControlCentreStatus.empty,
+          family: _primaryFamily,
+          children: const [],
+          onCreateChild:
+              ({
+                required displayName,
+                required ageYears,
+                required avatarEmoji,
+                required themeColor,
+                required idempotencyKey,
+              }) async {
+                expect(displayName, isNotEmpty);
+                submittedKeys.add(idempotencyKey);
+                return FoundationGateChildCreateResult.networkUnavailable;
+              },
+        ),
+      );
+
+      final addChild = find.byKey(
+        const Key('foundation_gate_add_child_profile'),
+      );
+      await tester.ensureVisible(addChild);
+      await tester.tap(addChild);
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'New child');
+      await tester.tap(find.byKey(submitKey));
+      await tester.pumpAndSettle();
+
+      // The failure is explained without leaking a raw error, the sheet stays
+      // open and the typed name is preserved for a safe retry.
+      expect(
+        find.text(
+          'Could not connect to create the profile. Retry with the same details.',
+        ),
+        findsOneWidget,
+      );
+      expect(tester.widget<TextField>(find.byType(TextField)).controller!.text,
+          'New child');
+
+      await tester.tap(find.byKey(submitKey));
+      await tester.pumpAndSettle();
+
+      // A retry of identical input is the same logical request, so it must
+      // reuse the key the server already saw rather than risking a duplicate.
+      expect(submittedKeys.length, 2);
+      expect(submittedKeys[1], submittedKeys[0]);
+
+      // Changing the name creates a distinct logical request.
+      await tester.enterText(find.byType(TextField), 'Renamed child');
+      await tester.tap(find.byKey(submitKey));
+      await tester.pumpAndSettle();
+
+      expect(submittedKeys.length, 3);
+      expect(submittedKeys[2], isNot(submittedKeys[0]));
+    },
+  );
+
+  testWidgets(
+    'while a creation is pending the sheet cannot submit twice or be cancelled',
+    (tester) async {
+      final completer = Completer<FoundationGateChildCreateResult>();
+      const submitKey = Key('foundation_gate_create_child_profile_submit');
+      await tester.pumpWidget(
+        host(
+          status: ChildrenControlCentreStatus.empty,
+          family: _primaryFamily,
+          children: const [],
+          onCreateChild:
+              ({
+                required displayName,
+                required ageYears,
+                required avatarEmoji,
+                required themeColor,
+                required idempotencyKey,
+              }) {
+                return completer.future;
+              },
+        ),
+      );
+
+      final addChild = find.byKey(
+        const Key('foundation_gate_add_child_profile'),
+      );
+      await tester.ensureVisible(addChild);
+      await tester.tap(addChild);
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'New child');
+      await tester.tap(find.byKey(submitKey));
+      await tester.pump();
+
+      expect(
+        tester.widget<FilledButton>(find.byKey(submitKey)).onPressed,
+        isNull,
+      );
+      expect(
+        tester
+            .widget<OutlinedButton>(find.widgetWithText(OutlinedButton, 'Cancel'))
+            .onPressed,
+        isNull,
+      );
+      expect(find.text('Child profile created and roster refreshed.'),
+          findsNothing);
+
+      completer.complete(FoundationGateChildCreateResult.created);
+      await tester.pumpAndSettle();
+      expect(find.text('Child profile created and roster refreshed.'),
+          findsOneWidget);
+    },
+  );
 
   testWidgets(
     'unavailable state does not show a stale child roster and offers recovery',

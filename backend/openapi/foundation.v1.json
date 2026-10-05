@@ -442,6 +442,42 @@
           "503": { "$ref": "#/components/responses/ServiceNotReady" }
         }
       }
+    },
+    "/v1/families/{familyId}/permission-snapshot": {
+      "get": {
+        "tags": ["Family"],
+        "operationId": "getFamilyPermissionSnapshot",
+        "summary": "Read the server-owned permission explanation for the acting membership",
+        "description": "The snapshot explains permission; it never grants it. The role is re-resolved from the durable membership on every call and each protected route re-checks authorization independently.",
+        "security": [{ "oidcBearer": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/FamilyId" }],
+        "responses": {
+          "200": { "description": "Versioned, expiring capability explanation for the acting membership role.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PermissionSnapshotResponse" } } } },
+          "400": { "$ref": "#/components/responses/InvalidRequest" },
+          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+        }
+      }
+    },
+    "/v1/families/{familyId}/ai-events": {
+      "get": {
+        "tags": ["Intelligence"],
+        "operationId": "listFamilyAiEvents",
+        "summary": "List emitted AiEvent v1 facts for the family",
+        "description": "Append-only, identifier-only facts observed by the server. Suggestions are not part of v1 and no entry can carry a payload, token or provider material.",
+        "security": [{ "oidcBearer": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/FamilyId" }],
+        "responses": {
+          "200": { "description": "Maximum one hundred newest emitted AiEvent v1 facts.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AiEventListResponse" } } } },
+          "400": { "$ref": "#/components/responses/InvalidRequest" },
+          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+        }
+      }
     }
   },
   "components": {
@@ -500,7 +536,12 @@
       "FamilyChildListResponse": { "type": "object", "required": ["children"], "properties": { "children": { "type": "array", "items": { "$ref": "#/components/schemas/FamilyChild" } } }, "additionalProperties": false },
       "MembershipResponse": { "type": "object", "required": ["membership"], "properties": { "membership": { "$ref": "#/components/schemas/Membership" } }, "additionalProperties": false },
       "GuardianTransferResponse": { "type": "object", "required": ["transfer"], "properties": { "transfer": { "$ref": "#/components/schemas/GuardianTransfer" } }, "additionalProperties": false },
-      "AuditEventListResponse": { "type": "object", "required": ["events"], "properties": { "events": { "type": "array", "maxItems": 100, "items": { "$ref": "#/components/schemas/AuditEvent" } } }, "additionalProperties": false }
+      "AuditEventListResponse": { "type": "object", "required": ["events"], "properties": { "events": { "type": "array", "maxItems": 100, "items": { "$ref": "#/components/schemas/AuditEvent" } } }, "additionalProperties": false },
+      "PermissionScope": { "type": "object", "required": ["capability", "allowed", "reason"], "properties": { "capability": { "type": "string", "pattern": "^family\\.[a-z_]+(\\.[a-z_]+)*$" }, "allowed": { "type": "boolean" }, "reason": { "type": "string", "enum": ["active_membership", "guardian_scope", "primary_guardian_scope", "role_not_permitted"] } }, "additionalProperties": false },
+      "PermissionSnapshot": { "type": "object", "required": ["policyVersion", "familyId", "role", "freshness", "issuedAt", "expiresAt", "scopes"], "properties": { "policyVersion": { "type": "string", "enum": ["permission.v1"] }, "familyId": { "$ref": "#/components/schemas/Uuid" }, "role": { "type": "string", "enum": ["primary_guardian", "co_guardian", "child"] }, "freshness": { "type": "string", "enum": ["live"] }, "issuedAt": { "type": "string", "format": "date-time" }, "expiresAt": { "type": "string", "format": "date-time", "description": "Short-lived explanation window. Authority is re-resolved from the server, never extended from this document." }, "scopes": { "type": "array", "items": { "$ref": "#/components/schemas/PermissionScope" } } }, "additionalProperties": false },
+      "PermissionSnapshotResponse": { "type": "object", "required": ["permissionSnapshot"], "properties": { "permissionSnapshot": { "$ref": "#/components/schemas/PermissionSnapshot" } }, "additionalProperties": false },
+      "AiEvent": { "type": "object", "required": ["id", "schemaVersion", "eventType", "familyId", "policyVersion", "source", "confidence", "explanation", "occurredAt"], "properties": { "id": { "$ref": "#/components/schemas/Uuid" }, "schemaVersion": { "type": "string", "enum": ["ai-event.v1"] }, "eventType": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$" }, "familyId": { "$ref": "#/components/schemas/Uuid" }, "childId": { "type": ["string", "null"], "format": "uuid" }, "deviceId": { "type": ["string", "null"], "format": "uuid" }, "policyVersion": { "type": "string" }, "source": { "type": "string", "enum": ["server"] }, "confidence": { "type": "number", "minimum": 0, "maximum": 1, "description": "Observed facts are certain (1). Suggestions, admitted in a later version, must carry their own confidence and a reject path." }, "explanation": { "type": "string", "minLength": 1, "maxLength": 240 }, "rejectPath": { "type": ["string", "null"] }, "occurredAt": { "type": "string", "format": "date-time" } }, "additionalProperties": false },
+      "AiEventListResponse": { "type": "object", "required": ["events"], "properties": { "events": { "type": "array", "maxItems": 100, "items": { "$ref": "#/components/schemas/AiEvent" } } }, "additionalProperties": false }
     }
   }
 }

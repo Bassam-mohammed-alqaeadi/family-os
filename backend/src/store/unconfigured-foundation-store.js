@@ -84,4 +84,12 @@ export class UnconfiguredFoundationStore {
   async listAuditEvents() {
     this.unavailable();
   }
+
+  async getFamilyPermissionSnapshot() {
+    this.unavailable();
+  }
+
+  async listFamilyAiEvents() {
+    this.unavailable();
+  }
 }
