@@ -41,6 +41,10 @@ class NativeChildPairingCopy {
   String pairingExpiresAt(DateTime value) => isArabic
       ? 'ينتهي في ${value.toLocal()}. لا يمكن استخدامه مرة أخرى بعد نجاح ربط جهاز الابن.'
       : 'Expires at ${value.toLocal()}. It cannot be used again after a successful child-device claim.';
+  String get pairingCodeHint => isArabic
+      ? 'ستة أحرف، مثال: ABC DEF'
+      : 'Six characters, for example ABC DEF';
+
   String get copyCode => isArabic ? 'نسخ الرمز' : 'Copy code';
 
   String get childTitle =>

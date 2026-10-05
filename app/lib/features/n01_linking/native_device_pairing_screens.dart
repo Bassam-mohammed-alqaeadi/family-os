@@ -522,7 +522,7 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
           maxLength: 10,
           decoration: InputDecoration(
             labelText: copy.pairingCodeLabel,
-            hintText: 'ABC DEF',
+            hintText: copy.pairingCodeHint,
             border: const OutlineInputBorder(),
             counterText: '',
           ),

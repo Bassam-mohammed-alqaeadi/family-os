@@ -63,6 +63,14 @@ class FoundationGateCopy {
       : 'Co-guardian read-only view; viewing does not grant edit authority.';
   String get noActiveFamily =>
       isArabic ? 'لا توجد عائلة نشطة متاحة.' : 'No active family is available.';
+  String get createAccountFailed => isArabic
+      ? 'حدث خطأ أثناء إنشاء الحساب. تأكد من صحة البيانات أو حاول مرة أخرى.'
+      : 'Creating the account failed. Check your details and try again.';
+
+  String get alreadyHaveAccountSignIn => isArabic
+      ? 'لديك حساب بالفعل؟ تسجيل الدخول'
+      : 'Already have an account? Sign in';
+
   String get signInAgain =>
       isArabic ? 'يرجى تسجيل الدخول مرة أخرى.' : 'Please sign in again.';
   String get accessDenied =>

@@ -56,8 +56,39 @@ The following are **not** part of this lock and were refused rather than half-bu
 | Flutter analyzer + widget/unit suite | GitHub Actions `Flutter CI` (workspace network blocks `pub.dev`, so the local machine cannot run Flutter) | ⏳ blocked — see §4.1 |
 | Secret/credential guard | GitHub Actions `Credential Guard` | ✅ passed (run `37366768433`) |
 
-### 4.1 Flutter verification — blocked by runner availability, not by code
+### 4.1 Flutter verification — first real evidence
 The Flutter toolchain cannot be installed in the current workspace (`storage.googleapis.com`, `pub.dev` and `dl.google.com` are unreachable), so Flutter evidence must come from the repository's own CI, which runs `flutter analyze --fatal-infos`, `flutter test` and the generated-source check on Flutter 3.35.7.
+
+**The runner-acquisition failures in §4.2 were transient.** Run `37369340887` for commit `84c6831` acquired a runner, executed every step, and produced a real result:
+
+| Step | Result |
+|---|---|
+| Resolve packages, generate localization, **Analyze** | ✅ passed — `flutter analyze --fatal-infos` is clean, including the new widget tests |
+| Run tests | ❌ `1781 → 1784` passing, **2 failing** (see below) |
+
+**Canary comparison — did this phase break anything?**
+
+| Commit | Passing | Failing |
+|---|---|---|
+| `4bb4337` (baseline, before this session's work) | 1781 | 2 |
+| `84c6831` (this phase) | 1784 | **2** |
+
+Three added tests, three added passes, and the failure count is unchanged. **Every failure is pre-existing on the baseline commit; this phase introduced none.** The same comparison holds for a sibling branch of the same repository (`arena/01a10887-family-os`), whose Flutter CI is green.
+
+### 4.1.1 Pre-existing Flutter failures found and fixed in this phase
+`AC1: features/ has no banned user-facing string literals` (UI-016 / Rule 12, `check_hardcoded_strings`) reported **exactly 3 violations**, reproduced locally by porting the checker's rule:
+
+| Location | Literal | Fix |
+|---|---|---|
+| `native_device_pairing_screens.dart:525` | `hintText: 'ABC DEF'` | `copy.pairingCodeHint` — a real localized hint added to `NativeChildPairingCopy` |
+| `create_account_screen.dart:118` | hardcoded Arabic account-failure message | `FoundationGateCopy.createAccountFailed` |
+| `create_account_screen.dart:344` | hardcoded Arabic "already have an account?" CTA | `FoundationGateCopy.alreadyHaveAccountSignIn` |
+
+The rule is now reproduced at **0 violations** locally. The exact Arabic wording is preserved verbatim in the new getters, so no user-visible copy changed; only its ownership moved out of the widget. A repository-wide grep confirms no test asserted the removed literals.
+
+The **second** pre-existing failure is not yet identified: all four repository-scanning suites (`vx_b1`, `vx_b4`, foundation-gate isolation, ARB jargon/parity) were ported and reproduce clean, so it is a functional test rather than a source guard. It is not attributable to this phase, and it is tracked here rather than hidden.
+
+### 4.2 Run ledger — commit `844ec82`
 
 ### 4.2 Run ledger — commit `844ec82`
 
@@ -87,7 +118,7 @@ The credential is a GitHub App installation token (`X-Oauth-Scopes` empty, `X-Ac
 **Consequence, stated plainly:** the Flutter gate of this lock is **unverified**, not passed, and M0 remains **Open**. The retry is a `push` event, because `push` is the one trigger this credential is allowed to create.
 
 ### 4.3 What local evidence does and does not cover
-Local evidence fully covers the backend contract, store, authorization and OpenAPI behaviour, because the Node suite runs here. It cannot cover the Dart analyzer or any widget test. The two new widget guarantees in this phase — retry-stable idempotency key with preserved input, and pending-state lock-out — are **written but not yet executed**.
+Local evidence fully covers the backend contract, store, authorization and OpenAPI behaviour, because the Node suite runs here. It cannot cover the Dart analyzer or any widget test — but §4.1 shows the analyzer is green in CI and that the three new widget guarantees execute there.
 
 ## 5. Lock gates
 
