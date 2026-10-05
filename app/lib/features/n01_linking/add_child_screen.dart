@@ -92,7 +92,12 @@ class _AddChildScreenState extends State<AddChildScreen> {
 
   void _onNameChanged() => setState(() {});
 
-  bool get _canContinue => _nameController.text.trim().isNotEmpty;
+  int get _childNameLength => _nameController.text.trim().runes.length;
+
+  // Server contract allows max 120 chars; keep the CTA honest.
+  bool get _canContinue =>
+      _nameController.text.trim().isNotEmpty &&
+      _childNameLength <= 120;
 
   String get _themeColor => switch (_colorIndex) {
     0 => 'purple',
@@ -185,11 +190,12 @@ class _AddChildScreenState extends State<AddChildScreen> {
           childId: ChildId(_alias),
         );
       } on IdentityInvariantViolation {
-        if (mounted)
+        if (mounted) {
           AppToast.show(
             context,
             message: AppLocalizations.of(context).settingsPersistError,
           );
+        }
         return;
       }
       final roster =
@@ -281,6 +287,30 @@ class _AddChildScreenState extends State<AddChildScreen> {
                   key: const Key('add_child_name'),
                   controller: _nameController,
                   textInputAction: TextInputAction.next,
+                  maxLength: 120,
+                  buildCounter: (
+                    context, {
+                    required currentLength,
+                    required isFocused,
+                    maxLength,
+                  }) {
+                    final counterColors = Theme.of(
+                      context,
+                    ).extension<FamilyColors>()!;
+                    return Semantics(
+                      liveRegion: true,
+                      label: '$currentLength / 120',
+                      child: Text(
+                        '$currentLength / 120',
+                        textDirection: TextDirection.ltr,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: counterColors.ink2,
+                        ),
+                      ),
+                    );
+                  },
                   decoration: _inputDecoration(
                     colors: colors,
                     radii: radii,
@@ -340,9 +370,25 @@ class _AddChildScreenState extends State<AddChildScreen> {
                               child: AnimatedScale(
                                 duration: const Duration(milliseconds: 150),
                                 scale: _characterIndex == i ? 1.15 : 1,
-                                child: Text(
-                                  kAddChildCharacters[i],
-                                  style: const TextStyle(fontSize: 30),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 180),
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: _characterIndex == i
+                                        ? colors.surface
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: _characterIndex == i
+                                          ? colors.p400
+                                          : Colors.transparent,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    kAddChildCharacters[i],
+                                    style: const TextStyle(fontSize: 30),
+                                  ),
                                 ),
                               ),
                             ),

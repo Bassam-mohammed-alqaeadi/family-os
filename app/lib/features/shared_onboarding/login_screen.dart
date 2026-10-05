@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'package:go_router/go_router.dart';
 
 import 'package:family_os/core/design/components/tag.dart';
@@ -44,6 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
   var _emailError = false;
   var _passwordError = false;
   var _submitting = false;
+    bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -288,7 +290,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: TextField(
                   key: const Key('login_password'),
                   controller: _passwordController,
-                  obscureText: true,
+                  obscureText: _obscurePassword,
                   autocorrect: false,
                   onChanged: (_) {
                     if (_passwordError) setState(() => _passwordError = false);
@@ -298,7 +300,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     radii: radii,
                     hint: l10n.loginPasswordHint,
                     errorText: _passwordError ? l10n.loginFieldsRequired : null,
-                  ),
+                  ).copyWith(suffixIcon: IconButton(icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility), onPressed: () => setState(() => _obscurePassword = !_obscurePassword)))
                 ),
               ),
             ),

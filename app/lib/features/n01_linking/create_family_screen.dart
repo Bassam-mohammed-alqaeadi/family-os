@@ -16,6 +16,13 @@ enum ChildCountChoice { one, two, three, fourPlus }
 /// Creator becomes OWNER — product note only (one_owner_per_family).
 /// No Firebase / backend on this card. Create failures surface SHR-005
 /// ([AppErrorState]) with Retry — UI-001.
+///
+/// The previously injected draft attempted a direct backend POST from the
+/// widget with an empty bearer token, a path-only URI and a timestamp
+/// idempotency value; that path could never produce a truthful server result.
+/// The production route intentionally stays unavailable until a dedicated
+/// family-creation admission wires this card through the isolated
+/// Foundation Gate typed client, server discovery and explicit error states.
 class CreateFamilyScreen extends StatefulWidget {
   const CreateFamilyScreen({super.key, this.onCreated, this.createFamily});
 
@@ -36,8 +43,8 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
   AppErrorKind? _errorKind;
   bool _submitting = false;
 
-  CreateFamilyFn get _create => widget.createFamily ?? mockCreateFamilySuccess;
-
+  CreateFamilyFn get _create =>
+      widget.createFamily ?? mockCreateFamilySuccess;
   @override
   void initState() {
     super.initState();
@@ -54,7 +61,13 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
 
   void _onNameChanged() => setState(() {});
 
-  bool get _canSubmit => _nameController.text.trim().isNotEmpty && !_submitting;
+  int get _nameLength => _nameController.text.trim().runes.length;
+
+  // Server contract allows max 120 chars; gate submit instead of failing late.
+  bool get _canSubmit =>
+      _nameController.text.trim().isNotEmpty &&
+      _nameLength <= 120 &&
+      !_submitting;
 
   Future<void> _submit() async {
     if (!_canSubmit) return;
@@ -144,6 +157,32 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
                         controller: _nameController,
                         textInputAction: TextInputAction.next,
                         enabled: !_submitting,
+                        maxLength: 120,
+                        buildCounter: (
+                          context, {
+                          required currentLength,
+                          required isFocused,
+                          maxLength,
+                        }) {
+                          final counterColors = Theme.of(
+                            context,
+                          ).extension<FamilyColors>()!;
+                          return Semantics(
+                            liveRegion: true,
+                            label: '$currentLength / 120',
+                            child: Text(
+                              '$currentLength / 120',
+                              textDirection: TextDirection.ltr,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: currentLength > 120
+                                    ? counterColors.coral
+                                    : counterColors.ink2,
+                              ),
+                            ),
+                          );
+                        },
                         decoration: _inputDecoration(
                           colors: colors,
                           radii: radii,
@@ -194,6 +233,7 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
                   const SizedBox(height: 16),
                   if (_submitting)
                     const Padding(
+                      key: Key('create_family_submitting'),
                       padding: EdgeInsets.symmetric(vertical: 12),
                       child: Center(
                         child: CircularProgressIndicator(strokeWidth: 2.5),

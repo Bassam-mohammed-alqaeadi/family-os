@@ -396,8 +396,9 @@ class FamilyDeviceApiClient {
   List<FoundationGateFamilyDevice> _parseDeviceList(String body) {
     try {
       final decoded = jsonDecode(body);
-      if (decoded is! Map<String, Object?> || decoded.keys.length != 1)
+      if (decoded is! Map<String, Object?> || decoded.keys.length != 1) {
         throw const FormatException();
+      }
       final rawDevices = decoded['devices'];
       if (rawDevices is! List<Object?>) throw const FormatException();
       return List.unmodifiable(rawDevices.map(_parseDevice));
@@ -411,11 +412,13 @@ class FamilyDeviceApiClient {
   FoundationGateDevicePairing _parsePairing(String body) {
     try {
       final decoded = jsonDecode(body);
-      if (decoded is! Map<String, Object?> || decoded.keys.length != 1)
+      if (decoded is! Map<String, Object?> || decoded.keys.length != 1) {
         throw const FormatException();
+      }
       final pairing = decoded['pairing'];
-      if (pairing is! Map<String, Object?> || pairing.keys.length != 5)
+      if (pairing is! Map<String, Object?> || pairing.keys.length != 5) {
         throw const FormatException();
+      }
       final id = pairing['id'];
       final childId = pairing['childId'];
       final deviceLabel = pairing['deviceLabel'];
@@ -452,8 +455,9 @@ class FamilyDeviceApiClient {
   FoundationGateClaimedDevice _parseClaimedDevice(String body) {
     try {
       final decoded = jsonDecode(body);
-      if (decoded is! Map<String, Object?> || decoded.keys.length != 2)
+      if (decoded is! Map<String, Object?> || decoded.keys.length != 2) {
         throw const FormatException();
+      }
       final credential = decoded['deviceCredential'];
       if (credential is! String ||
           !RegExp(r'^[A-Za-z0-9_-]{32,128}$').hasMatch(credential)) {
@@ -473,8 +477,9 @@ class FamilyDeviceApiClient {
   FoundationGateFamilyDevice _parseDeviceResponse(String body) {
     try {
       final decoded = jsonDecode(body);
-      if (decoded is! Map<String, Object?> || decoded.keys.length != 1)
+      if (decoded is! Map<String, Object?> || decoded.keys.length != 1) {
         throw const FormatException();
+      }
       return _parseDevice(decoded['device']);
     } catch (_) {
       throw const FoundationGateApiException(
@@ -484,8 +489,9 @@ class FamilyDeviceApiClient {
   }
 
   FoundationGateFamilyDevice _parseDevice(Object? value) {
-    if (value is! Map<String, Object?> || value.keys.length != 11)
+    if (value is! Map<String, Object?> || value.keys.length != 11) {
       throw const FormatException();
+    }
     final id = value['id'];
     final childId = value['childId'];
     final deviceLabel = value['deviceLabel'];

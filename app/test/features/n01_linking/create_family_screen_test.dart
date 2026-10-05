@@ -259,6 +259,62 @@ void main() {
     expect(find.text('يلزم اتصال بالإنترنت'), findsWidgets);
     expect(find.textContaining('لا يمكن حفظ الطلب دون اتصال'), findsOneWidget);
   });
+  testWidgets('name input hard-caps at 120 chars with live counter', (
+    tester,
+  ) async {
+    var created = 0;
+    await _pumpCreateFamily(tester, onCreated: () => created++);
+
+    await tester.enterText(
+      find.byKey(const Key('create_family_name')),
+      'ع' * 121,
+    );
+    await tester.pump();
+
+    // maxLength formatter truncates the input; counter reports the cap.
+    final field = tester.widget<TextField>(
+      find.byKey(const Key('create_family_name')),
+    );
+    expect(field.controller!.text.runes.length, 120);
+    expect(find.text('120 / 120'), findsOneWidget);
+    expect(
+      tester
+          .widget<PrimaryBtn>(find.byKey(const Key('create_family_submit')))
+          .onPressed,
+      isNotNull,
+    );
+    expect(created, 0);
+  });
+
+  testWidgets('defensive gate blocks submit when controller exceeds 120', (
+    tester,
+  ) async {
+    var created = 0;
+    await _pumpCreateFamily(tester, onCreated: () => created++);
+
+    final field = tester.widget<TextField>(
+      find.byKey(const Key('create_family_name')),
+    );
+    field.controller!.value = TextEditingValue(text: 'ع' * 121);
+    await tester.pump();
+
+    expect(
+      tester
+          .widget<PrimaryBtn>(find.byKey(const Key('create_family_submit')))
+          .onPressed,
+      isNull,
+    );
+    expect(created, 0);
+  });
+
+  testWidgets('name field exposes a live length counter', (tester) async {
+    await _pumpCreateFamily(tester);
+
+    await tester.enterText(find.byKey(const Key('create_family_name')), 'نور');
+    await tester.pump();
+
+    expect(find.text('3 / 120'), findsOneWidget);
+  });
 }
 
 Future<void> _pumpCreateFamily(

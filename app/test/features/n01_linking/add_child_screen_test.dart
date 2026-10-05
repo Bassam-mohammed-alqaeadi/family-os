@@ -198,6 +198,72 @@ void main() {
       isTrue,
     );
   });
+
+  testWidgets('child name input hard-caps at 120 chars with live counter', (
+    tester,
+  ) async {
+    var continued = 0;
+    await _pumpAddChild(
+      tester,
+      onContinue: () => continued++,
+      mockAlias: 'child_long',
+    );
+
+    await tester.enterText(
+      find.byKey(const Key('add_child_name')),
+      'ط' * 121,
+    );
+    await tester.pump();
+
+    final field = tester.widget<TextField>(
+      find.byKey(const Key('add_child_name')),
+    );
+    expect(field.controller!.text.runes.length, 120);
+    expect(find.text('120 / 120'), findsOneWidget);
+    expect(
+      tester
+          .widget<PrimaryBtn>(find.byKey(const Key('add_child_continue')))
+          .onPressed,
+      isNotNull,
+    );
+    expect(continued, 0);
+  });
+
+  testWidgets('defensive gate blocks continue when controller exceeds 120', (
+    tester,
+  ) async {
+    var continued = 0;
+    await _pumpAddChild(
+      tester,
+      onContinue: () => continued++,
+      mockAlias: 'child_gate',
+    );
+
+    final field = tester.widget<TextField>(
+      find.byKey(const Key('add_child_name')),
+    );
+    field.controller!.value = TextEditingValue(text: 'ط' * 121);
+    await tester.pump();
+
+    expect(
+      tester
+          .widget<PrimaryBtn>(find.byKey(const Key('add_child_continue')))
+          .onPressed,
+      isNull,
+    );
+    expect(continued, 0);
+  });
+
+  testWidgets('child name field exposes a live length counter', (
+    tester,
+  ) async {
+    await _pumpAddChild(tester, mockAlias: 'child_count');
+
+    await tester.enterText(find.byKey(const Key('add_child_name')), 'سارة');
+    await tester.pump();
+
+    expect(find.text('4 / 120'), findsOneWidget);
+  });
 }
 
 Future<void> _pumpAddChild(

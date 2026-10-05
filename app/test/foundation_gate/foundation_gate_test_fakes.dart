@@ -49,6 +49,12 @@ class FakeIdentity implements FoundationGateIdentity {
   Future<void> signOut() async {
     signOutCalls += 1;
   }
+
+  @override
+  Future<String> signUp({required String email, required String password}) {
+    // TODO: implement signUp
+    throw UnimplementedError();
+  }
 }
 
 class FakeTransport implements FoundationGateHttpTransport {

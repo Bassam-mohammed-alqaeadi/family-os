@@ -76,12 +76,18 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         _agreed;
   }
 
+  bool _obscurePassword = true;
+  bool _obscureConfirm = true;
+
   void _submit() {
     if (!_canSubmit) return;
     if (widget.onCreated != null) {
       widget.onCreated!();
       return;
     }
+    // Remote account creation is not an admitted capability yet, so this card
+    // never fabricates a successful signup. The preview host continues to the
+    // role step; an auth admission must wire a server-verified flow first.
     context.go('/scr-shr-007');
   }
 
@@ -171,13 +177,13 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                     child: TextField(
                       key: const Key('create_account_password'),
                       controller: _passwordController,
-                      obscureText: true,
+                      obscureText: _obscurePassword,
                       autocorrect: false,
                       decoration: _inputDecoration(
                         colors: colors,
                         radii: radii,
                         hint: l10n.createAccountPasswordHint,
-                      ),
+                      ).copyWith(suffixIcon: IconButton(icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility), onPressed: () => setState(() => _obscurePassword = !_obscurePassword)))
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -209,13 +215,13 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 child: TextField(
                   key: const Key('create_account_confirm'),
                   controller: _confirmController,
-                  obscureText: true,
+                  obscureText: _obscureConfirm,
                   autocorrect: false,
                   decoration: _inputDecoration(
                     colors: colors,
                     radii: radii,
                     hint: l10n.createAccountConfirmHint,
-                  ),
+                  ).copyWith(suffixIcon: IconButton(icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility), onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm)))
                 ),
               ),
             ),
@@ -270,6 +276,14 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
               l10n.createAccountNoPhoneNote,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: colors.ink2),
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () => context.pushReplacement('/scr-shr-003'),
+              child: Text(
+                'لديك حساب بالفعل؟ تسجيل الدخول',
+                style: TextStyle(fontSize: 14, color: colors.p400, fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         ),

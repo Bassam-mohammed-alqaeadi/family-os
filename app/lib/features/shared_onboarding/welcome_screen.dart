@@ -58,7 +58,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       widget.onStart!();
       return;
     }
-    context.go('/scr-shr-002');
+    context.push('/scr-shr-002');
   }
 
   void _onLogin() {
@@ -66,7 +66,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       widget.onLogin!();
       return;
     }
-    context.go('/scr-shr-003');
+    context.push('/scr-shr-003');
   }
 
   @override

@@ -334,8 +334,9 @@ final class AdultInvite {
     if (revokedAt != null || replacedByInviteId != null) {
       return InviteLifecycleState.revoked;
     }
-    if (!nowUtc.isBefore(expiresAt.toUtc()))
+    if (!nowUtc.isBefore(expiresAt.toUtc())) {
       return InviteLifecycleState.expired;
+    }
     if (nowUtc.isBefore(createdAt.toUtc())) return InviteLifecycleState.created;
     return InviteLifecycleState.active;
   }

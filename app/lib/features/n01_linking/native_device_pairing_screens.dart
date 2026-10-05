@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -89,6 +90,12 @@ class _NativeParentPairingScreenState
       appBar: AppBar(
         backgroundColor: colors.surface,
         title: Text(copy.parentTitle),
+        leading: ModalRoute.of(context)?.canPop == true 
+            ? const BackButton() 
+            : IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => context.go('/scr-fat-002'), // Go to dashboard safely
+              ),
       ),
       body: SafeArea(
         child: ListView(
@@ -159,7 +166,7 @@ class _NativeParentPairingScreenState
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
+                        color: Colors.black.withValues(alpha: 0.08),
                         blurRadius: 16,
                         offset: const Offset(0, 4),
                       ),
@@ -194,7 +201,7 @@ class _NativeParentPairingScreenState
                     child: Text(
                       copy.orEnterManually,
                       style: TextStyle(
-                        color: colors.ink.withOpacity(0.5),
+                        color: colors.ink.withValues(alpha: 0.5),
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -432,7 +439,7 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
             margin: const EdgeInsets.symmetric(horizontal: 24),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.65),
+              color: Colors.black.withValues(alpha: 0.65),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -478,7 +485,7 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
               child: Text(
                 copy.orEnterManually,
                 style: TextStyle(
-                  color: colors.ink.withOpacity(0.5),
+                  color: colors.ink.withValues(alpha: 0.5),
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
