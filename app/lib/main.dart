@@ -148,7 +148,6 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
   if (apiOrigin.trim().isEmpty) return null;
   try {
     await Firebase.initializeApp();
-    await FirebaseAuth.instance.authStateChanges().first;
     final configuration = FoundationGateConfiguration.fromStagingApiOrigin(
       Uri.parse(apiOrigin),
     );

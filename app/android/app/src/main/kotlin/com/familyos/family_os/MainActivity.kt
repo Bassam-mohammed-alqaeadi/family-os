@@ -95,20 +95,20 @@ class MainActivity : FlutterActivity() {
         val deviceId = call.argument<String>("deviceId")?.trim()
         val credential = call.argument<String>("deviceCredential")?.trim()
         if (!hasFineLocation() || !hasBackgroundLocation()) {
-            result.success(mapOf("started" to false, "reason" to "location_permission_required"))
+            result.success(mapOf<String, Any>("started" to false, "reason" to "location_permission_required"))
             return
         }
         if (!validOrigin(apiOrigin) || !validUuid(deviceId) || credential == null || !Regex("^[A-Za-z0-9_-]{32,128}$").matches(credential)) {
-            result.success(mapOf("started" to false, "reason" to "invalid_native_telemetry_configuration"))
+            result.success(mapOf<String, Any>("started" to false, "reason" to "invalid_native_telemetry_configuration"))
             return
         }
         try {
             TelemetryConfigStore(this).write(TelemetryConfig(apiOrigin!!.trimEnd('/'), deviceId!!, credential))
             val serviceIntent = Intent(this, ChildTelemetryService::class.java)
             ContextCompat.startForegroundService(this, serviceIntent)
-            result.success(mapOf("started" to true, "reason" to "started"))
+            result.success(mapOf<String, Any>("started" to true, "reason" to "started"))
         } catch (_: Exception) {
-            result.success(mapOf("started" to false, "reason" to "native_telemetry_start_failed"))
+            result.success(mapOf<String, Any>("started" to false, "reason" to "native_telemetry_start_failed"))
         }
     }
 

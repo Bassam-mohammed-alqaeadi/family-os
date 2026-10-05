@@ -114,7 +114,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         if (mounted) {
           AppToast.show(
             context,
-            message: 'حدث خطأ أثناء إنشاء الحساب. تأكد من صحة البيانات أو حاول مرة أخرى.',
+            message:
+                'حدث خطأ أثناء إنشاء الحساب. تأكد من صحة البيانات أو حاول مرة أخرى.',
           );
         }
       } finally {
@@ -214,11 +215,23 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       autocorrect: false,
-                      decoration: _inputDecoration(
-                        colors: colors,
-                        radii: radii,
-                        hint: l10n.createAccountPasswordHint,
-                      ).copyWith(suffixIcon: IconButton(icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility), onPressed: () => setState(() => _obscurePassword = !_obscurePassword)))
+                      decoration:
+                          _inputDecoration(
+                            colors: colors,
+                            radii: radii,
+                            hint: l10n.createAccountPasswordHint,
+                          ).copyWith(
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                              ),
+                              onPressed: () => setState(
+                                () => _obscurePassword = !_obscurePassword,
+                              ),
+                            ),
+                          ),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -252,11 +265,23 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                   controller: _confirmController,
                   obscureText: _obscureConfirm,
                   autocorrect: false,
-                  decoration: _inputDecoration(
-                    colors: colors,
-                    radii: radii,
-                    hint: l10n.createAccountConfirmHint,
-                  ).copyWith(suffixIcon: IconButton(icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility), onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm)))
+                  decoration:
+                      _inputDecoration(
+                        colors: colors,
+                        radii: radii,
+                        hint: l10n.createAccountConfirmHint,
+                      ).copyWith(
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscureConfirm
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                          onPressed: () => setState(
+                            () => _obscureConfirm = !_obscureConfirm,
+                          ),
+                        ),
+                      ),
                 ),
               ),
             ),
@@ -317,7 +342,11 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
               onPressed: () => context.pushReplacement('/scr-shr-003'),
               child: Text(
                 'لديك حساب بالفعل؟ تسجيل الدخول',
-                style: TextStyle(fontSize: 14, color: colors.p400, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: colors.p400,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
