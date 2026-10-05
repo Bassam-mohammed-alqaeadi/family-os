@@ -114,7 +114,7 @@ class MainActivity : FlutterActivity() {
 
     private fun stopTelemetry(result: MethodChannel.Result) {
         val stopped = stopService(Intent(this, ChildTelemetryService::class.java))
-        result.success(mapOf("stopped" to stopped || !ChildTelemetryService.isRunning))
+        result.success(mapOf<String, Any>("stopped" to (stopped || !ChildTelemetryService.isRunning)))
     }
 
     private fun telemetryStatus(result: MethodChannel.Result) {
