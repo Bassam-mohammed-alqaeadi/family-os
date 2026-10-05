@@ -15,7 +15,6 @@ import 'package:family_os/core/identity/child_device_management_repository.dart'
 import 'package:family_os/core/identity/identity_models.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
-import 'package:family_os/features/n01_linking/add_child_screen.dart';
 import 'package:family_os/core/i18n/numeral_format.dart' show formatAppInt;
 import 'package:family_os/features/n02_day/child_profile_repository.dart';
 import 'package:family_os/features/n02_day/children_list_local_repository.dart';

@@ -41,17 +41,6 @@ void main() {
     expect(created, 0);
   });
 
-  testWidgets('trial banner text is present', (tester) async {
-    await _pumpCreateFamily(tester);
-
-    expect(find.byKey(const Key('create_family_trial_banner')), findsOneWidget);
-    expect(
-      find.textContaining('تبدأ تجربتك المجانية الكاملة الآن'),
-      findsOneWidget,
-    );
-    expect(find.textContaining('الاستغاثة والسلامة'), findsOneWidget);
-  });
-
   testWidgets('unconfigured composition fails closed — no mock family', (
     tester,
   ) async {
@@ -192,7 +181,7 @@ void main() {
     await tester.tap(find.byKey(const Key('create_family_submit')));
     await tester.pumpAndSettle();
 
-    expect(find.byType(AppErrorState), findsOneWidget);
+    expect(find.byKey(const Key('create_family_error')), findsOneWidget);
     expect(find.text('انتهت الجلسة'), findsOneWidget);
     expect(find.textContaining('سجّل الدخول مرة أخرى'), findsOneWidget);
   });
@@ -215,7 +204,7 @@ void main() {
     await tester.tap(find.byKey(const Key('create_family_submit')));
     await tester.pumpAndSettle();
 
-    expect(find.byType(AppErrorState), findsOneWidget);
+    expect(find.byKey(const Key('create_family_error')), findsOneWidget);
     expect(find.text('تعذّر تأكيد المحاولة'), findsOneWidget);
     expect(find.textContaining('راجع اسم العائلة'), findsOneWidget);
   });
@@ -240,7 +229,7 @@ void main() {
     await tester.tap(find.byKey(const Key('create_family_submit')));
     await tester.pumpAndSettle();
 
-    expect(find.byType(AppErrorState), findsOneWidget);
+    expect(find.byKey(const Key('create_family_error')), findsOneWidget);
     expect(find.text('الخدمة غير متاحة مؤقتًا'), findsOneWidget);
   });
 
@@ -260,7 +249,7 @@ void main() {
     await tester.tap(find.byKey(const Key('create_family_submit')));
     await tester.pumpAndSettle();
 
-    expect(find.byType(AppErrorState), findsOneWidget);
+    expect(find.byKey(const Key('create_family_error')), findsOneWidget);
     expect(find.text('الوصول غير متاح'), findsOneWidget);
     expect(find.textContaining('لا يسمح هذا الحساب'), findsOneWidget);
   });
@@ -285,7 +274,7 @@ void main() {
     await tester.tap(find.byKey(const Key('create_family_submit')));
     await tester.pumpAndSettle();
 
-    expect(find.byType(AppErrorState), findsOneWidget);
+    expect(find.byKey(const Key('create_family_error')), findsOneWidget);
     expect(find.text('استجابة غير متوقعة'), findsOneWidget);
   });
 
@@ -306,7 +295,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('create_family_error')), findsOneWidget);
-    expect(find.byType(AppErrorState), findsOneWidget);
+    expect(find.byKey(const Key('create_family_error')), findsOneWidget);
     expect(find.text('تعذّر الاتصال'), findsWidgets);
     expect(find.byType(SnackBar), findsNothing);
     // Amber composition — title uses amberDeep, not coral danger snackbar.
@@ -334,12 +323,12 @@ void main() {
     await tester.tap(find.byKey(const Key('create_family_submit')));
     await tester.pumpAndSettle();
     expect(attempts, 1);
-    expect(find.byType(AppErrorState), findsOneWidget);
+    expect(find.byKey(const Key('create_family_error')), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('app_error_retry')));
     await tester.pumpAndSettle();
     expect(attempts, 2);
-    expect(find.byType(AppErrorState), findsNothing);
+    expect(find.byKey(const Key('create_family_error')), findsNothing);
   });
 
   testWidgets('AC3: success path unchanged with injectable create', (
@@ -366,7 +355,7 @@ void main() {
 
     expect(createCalls, 1);
     expect(created, 1);
-    expect(find.byType(AppErrorState), findsNothing);
+    expect(find.byKey(const Key('create_family_error')), findsNothing);
   });
 
   testWidgets('AC4: Retry CTA has Semantics label', (tester) async {

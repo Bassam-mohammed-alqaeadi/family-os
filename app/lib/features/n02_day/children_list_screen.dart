@@ -24,7 +24,7 @@ import 'package:family_os/core/runtime/family_policy_source.dart';
 import 'package:family_os/core/runtime/family_roster_source.dart';
 import 'package:family_os/core/runtime/permission_matrix.dart';
 import 'package:family_os/core/runtime/runtime_data_origin.dart';
-import 'package:family_os/features/n01_linking/add_child_screen.dart';
+import 'package:family_os/core/i18n/numeral_format.dart';
 import 'package:family_os/features/n02_day/children_list_local_repository.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';

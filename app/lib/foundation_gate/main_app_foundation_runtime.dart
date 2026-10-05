@@ -91,6 +91,22 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     return _refreshIdentitySnapshot();
   }
 
+  /// Sends a password-reset e-mail. Returns `null` when the provider accepted
+  /// the request (including unknown addresses, which are never revealed) or
+  /// the presentation-safe failure reason otherwise.
+  Future<FoundationGateIdentityFailure?> sendPasswordReset({
+    required String email,
+  }) async {
+    try {
+      await _identity.sendPasswordResetEmail(email: email.trim());
+      return null;
+    } on FoundationGateIdentityException catch (error) {
+      return error.failure;
+    } catch (_) {
+      return FoundationGateIdentityFailure.unknown;
+    }
+  }
+
   Future<void> signOut() async {
     await _controller.signOut();
     _identityValue = const IdentitySnapshot.unavailable();
@@ -511,6 +527,10 @@ final class MainAppFoundationIdentitySource extends ChangeNotifier
     required String email,
     required String password,
   }) => _runtime.signUp(email: email, password: password);
+
+  Future<FoundationGateIdentityFailure?> sendPasswordReset({
+    required String email,
+  }) => _runtime.sendPasswordReset(email: email);
 
   FoundationGatePhase get phase => _runtime.phase;
 

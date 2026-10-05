@@ -51,10 +51,10 @@ token or raw provider text ever reaches the UI or logs).
 
 ### Wave B — Screen polish, one screen at a time (UX = real states)
 For every screen: **empty / loading / success / each failure** + RTL/AR first + ≥48dp targets + keyboard-safe + back-button safe.
-- [ ] B1 `CreateAccountScreen`: inline field errors (e-mail format, password policy identical to Firebase), "email already in use → Sign in" action button, show/hide password, submit disabled while pending, no duplicate submits
-- [ ] B2 `LoginScreen`: remove prototype fingerprint/trial affordances or make them honest (disabled + why); forgot-password → **real** Firebase reset e-mail
-- [ ] B3 `CreateFamilyScreen`: remove `ChildCountChoice` mock or make it a real server field; pending state; conflict/validation copy
-- [ ] B4 `AddChildScreen` ↔ `ChildrenControlCentre`: single real create path (name+age+avatar+colour) with roster refresh and "add another / pair device" next actions
+- [x] B1 `CreateAccountScreen` (2026-10-06, zero-mock pass): inline field errors (e-mail format, password policy identical to Firebase), "email already in use → Sign in" action button, show/hide password, submit disabled while pending, no duplicate submits
+- [x] B2 `LoginScreen` (fingerprint/trial/invite affordances removed; real `sendPasswordResetEmail` sheet; inline notices; `?email=` pre-fill from sign-up): remove prototype fingerprint/trial affordances or make them honest (disabled + why); forgot-password → **real** Firebase reset e-mail
+- [x] B3 `CreateFamilyScreen` (`ChildCountChoice` + trial banner removed; name is the only field; inline error + Retry keeps the form): remove `ChildCountChoice` mock or make it a real server field; pending state; conflict/validation copy
+- [x] B4 `AddChildScreen` (server-only create path, preview seams and mock alias removed, per-draft idempotency key reused on retry, fields locked while saving, live preview card). Remaining for ChildrenControlCentre "add another / pair device" next actions → B7 scope: single real create path (name+age+avatar+colour) with roster refresh and "add another / pair device" next actions
 - [x] B5 `NativeParentPairingScreen`: countdown to `expiresAt`, regenerate on expiry, large QR, manual code fallback, "device connected" live confirmation via `/devices` poll
 - [x] B6 `ChildModePairingScreen` (also: https-origin pre-check before claim, because the native service rejects http origins): permission pre-flight explainer *before* claiming (so a denied permission never burns a code), scan → claim → start progress steps, clear failure reasons per `NativeTelemetryStartResult.reason`
 - [ ] B7 `ChildDayBoardScreen` first-run for a real paired child: show device label/battery/last-seen from server, hide guardian-only chrome
@@ -95,3 +95,11 @@ For every screen: **empty / loading / success / each failure** + RTL/AR first + 
 ## 6. Exit gate for this journey
 
 All of §5 ticked on two physical Android devices · Flutter CI + Foundation Gate CI green · Backend CI green · No open P0/P1 in the GitHub milestone **"Onboarding Real Flow"** · `AGENTS.md` marker updated by Owner.
+
+## Onboarding UI kit (shared by B1–B6)
+
+`app/lib/features/shared_onboarding/onboarding_form.dart` + `onboarding_copy.dart`:
+`OnboardingScaffold`, `OnboardingHeader`, `OnboardingTextField` (inline error under the field),
+`OnboardingNotice` (persistent inline server outcome with optional action), `OnboardingSubmitButton`
+(spinner + lock = double-submit guard), `PasswordVisibilityToggle`, `looksLikeEmail`, `passwordStrength`.
+Rule: no toast for anything the user must act on; no UI element without a real backend action.

@@ -1,228 +1,192 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:family_os/core/design/components/app_toast.dart';
+import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/runtime/app_scope.dart';
 import 'package:family_os/core/runtime/family_child_profile_source.dart';
-import 'package:family_os/core/domain/child_id.dart';
-import 'package:family_os/core/identity/child_device_management_repository.dart';
-import 'package:family_os/core/identity/identity_runtime.dart';
-import 'package:family_os/core/identity/identity_scope.dart';
-import 'package:family_os/core/design/components/primary_btn.dart';
-import 'package:family_os/core/design/tokens.dart';
-import 'package:family_os/core/i18n/app_localizations.dart';
-import 'package:family_os/core/i18n/numeral_format.dart';
-import 'package:family_os/features/n02_day/children_list_repository.dart';
-import 'package:family_os/features/n02_day/day_child_mock.dart';
-import 'package:family_os/foundation_gate/foundation_gate_copy.dart';
+import 'package:family_os/features/shared_onboarding/onboarding_copy.dart';
+import 'package:family_os/features/shared_onboarding/onboarding_form.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
-export 'package:family_os/core/i18n/numeral_format.dart'
-    show toEasternDigits, formatAppInt;
-
-/// Character emoji options (prototype FAT-003 picker).
-const List<String> kAddChildCharacters = ['🦁', '🐱', '🐼', '🦊', '🐰'];
+/// Character emoji options (server stores the chosen emoji as-is).
+const List<String> kAddChildCharacters = ['🦁', '🐱', '🐼', '🦊', '🐰', '🐢'];
 
 /// Ages offered on SCR-FAT-003 (inclusive).
 const List<int> kAddChildAges = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
 
-/// Mock-only anonymous analytics alias: `child_` + 4 hex chars.
-String generateMockChildAlias([Random? random]) {
-  final r = random ?? Random();
-  final hex = List.generate(4, (_) => r.nextInt(16).toRadixString(16)).join();
-  return 'child_$hex';
+/// Theme colour names sent to the server, in picker order.
+const List<String> kAddChildThemeColors = [
+  'purple',
+  'sky',
+  'amber',
+  'coral',
+  'mint',
+  'teal',
+];
+
+/// Widget keys for SCR-FAT-003.
+abstract final class AddChildKeys {
+  static const name = Key('add_child_name');
+  static const age = Key('add_child_age');
+  static const characters = Key('add_child_characters');
+  static const colors = Key('add_child_colors');
+  static const submit = Key('add_child_continue');
+  static const notice = Key('add_child_notice');
+  static const noticeAction = Key('add_child_notice_action');
+  static Key character(int i) => Key('add_child_char_$i');
+  static Key color(int i) => Key('add_child_color_$i');
 }
 
-/// SCR-FAT-003 — server-backed child profile creation.
+/// SCR-FAT-003 — create the child profile on the server.
 ///
-/// The visual onboarding form stays familiar, while the normal application path
-/// sends its values to the server-owned Family Entry source. Explicit injected
-/// local repositories remain test/preview seams only.
+/// The form sends exactly what the server stores: display name, age, avatar
+/// emoji and theme colour. Submission is idempotent: the same draft reuses the
+/// same idempotency key across retries, and the button is locked while a
+/// request is in flight, so a double tap or a flaky network can never produce
+/// two children. There is no local/mock creation path.
 class AddChildScreen extends StatefulWidget {
-  const AddChildScreen({
-    super.key,
-    this.onContinue,
-    this.mockAlias,
-    this.managementRepository,
-    this.childrenListRepository,
-  });
-
-  /// Test seam — when null, navigates to `/scr-fat-004`.
-  final VoidCallback? onContinue;
-
-  /// Optional stable alias for tests; otherwise a local mock is generated.
-  final String? mockAlias;
-  final ChildDeviceManagementRepository? managementRepository;
-
-  /// VX-B6 — display roster write (name/age/emoji/colour). Null → stage1.
-  final ChildrenListRepository? childrenListRepository;
+  const AddChildScreen({super.key});
 
   @override
   State<AddChildScreen> createState() => _AddChildScreenState();
 }
 
 class _AddChildScreenState extends State<AddChildScreen> {
-  final _nameController = TextEditingController();
-  late final String _alias;
-  String? _idempotencyKey;
-  String? _submittedName;
-  int? _submittedAge;
-  var _submitting = false;
+  static const _maxNameLength = 120;
 
-  int _age = 14;
+  final _name = TextEditingController();
+  final _scroll = ScrollController();
+  var _touched = false;
+  var _submitting = false;
+  int _age = 10;
   int _characterIndex = 0;
   int _colorIndex = 0;
+
+  // Idempotency: one key per distinct draft, reused on retry.
+  String? _idempotencyKey;
+  FamilyChildProfileDraft? _submittedDraft;
+
+  FamilyChildProfileCreateFailurePresentation? _failure;
+  var _showNoFamily = false;
 
   @override
   void initState() {
     super.initState();
-    _alias = widget.mockAlias ?? generateMockChildAlias();
-    _nameController.addListener(_onNameChanged);
+    _name.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
-    _nameController
-      ..removeListener(_onNameChanged)
-      ..dispose();
+    _name.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
-  void _onNameChanged() => setState(() {});
+  String get _trimmedName => _name.text.trim();
 
-  int get _childNameLength => _nameController.text.trim().runes.length;
-
-  // Server contract allows max 120 chars; keep the CTA honest.
-  bool get _canContinue =>
-      _nameController.text.trim().isNotEmpty &&
-      _childNameLength <= 120;
-
-  String get _themeColor => switch (_colorIndex) {
-    0 => 'purple',
-    1 => 'sky',
-    2 => 'amber',
-    3 => 'coral',
-    4 => 'mint',
-    _ => 'teal',
-  };
-
-  DayChildSwatch get _previewSwatch => switch (_colorIndex % 3) {
-    0 => DayChildSwatch.purple,
-    1 => DayChildSwatch.sky,
-    _ => DayChildSwatch.amber,
-  };
-
-  Future<void> _continue() async {
-    if (!_canContinue || _submitting) return;
-    final appRuntime = AppScope.maybeOf(context);
-    final familyId = appRuntime?.identity.value.familyId;
-    final hasExplicitPreviewSeam =
-        widget.managementRepository != null ||
-        widget.childrenListRepository != null ||
-        widget.onContinue != null;
-
-    // Preview and unit-test hosts may inject a local seam explicitly. The main
-    // product route never reaches this branch.
-    if (hasExplicitPreviewSeam) {
-      await _continuePreview();
-      return;
+  String? _nameProblem(OnboardingCopy copy) {
+    if (_trimmedName.isEmpty) return copy.childNameRequired;
+    if (_trimmedName.runes.length > _maxNameLength) {
+      return copy.childNameTooLong;
     }
-    if (appRuntime == null ||
+    return null;
+  }
+
+  FamilyChildProfileDraft _draft() => FamilyChildProfileDraft(
+    displayName: _trimmedName,
+    ageYears: _age,
+    avatarEmoji: kAddChildCharacters[_characterIndex],
+    themeColor: kAddChildThemeColors[_colorIndex],
+  );
+
+  bool _sameDraft(FamilyChildProfileDraft a, FamilyChildProfileDraft b) =>
+      a.displayName == b.displayName &&
+      a.ageYears == b.ageYears &&
+      a.avatarEmoji == b.avatarEmoji &&
+      a.themeColor == b.themeColor;
+
+  Future<void> _submit() async {
+    if (_submitting) return;
+    final copy = OnboardingCopy.of(context);
+    setState(() => _touched = true);
+    if (_nameProblem(copy) != null) return;
+
+    final runtime = AppScope.maybeOf(context);
+    final identity = runtime?.identity.value;
+    final familyId = identity?.familyId;
+    if (runtime == null ||
+        identity == null ||
         familyId == null ||
-        !appRuntime.identity.value.isRemoteAuthoritative) {
-      AppToast.show(
-        context,
-        message: AppLocalizations.of(context).settingsPersistError,
-      );
+        !identity.isRemoteAuthoritative) {
+      // No active server family: the only honest outcome is to send the user
+      // back to family creation. Nothing is created locally.
+      setState(() {
+        _failure = null;
+        _showNoFamily = true;
+      });
+      revealOnboardingNotice(_scroll);
       return;
     }
 
-    final name = _nameController.text.trim();
+    FocusScope.of(context).unfocus();
+    final draft = _draft();
     if (_idempotencyKey == null ||
-        _submittedName != name ||
-        _submittedAge != _age) {
+        _submittedDraft == null ||
+        !_sameDraft(_submittedDraft!, draft)) {
       _idempotencyKey = newFoundationGateIdempotencyKey();
-      _submittedName = name;
-      _submittedAge = _age;
+      _submittedDraft = draft;
     }
-    setState(() => _submitting = true);
-    final result = await appRuntime.childProfiles.create(
-      familyId: familyId,
-      idempotencyKey: _idempotencyKey!,
-      draft: FamilyChildProfileDraft(
-        displayName: name,
-        ageYears: _age,
-        avatarEmoji: kAddChildCharacters[_characterIndex],
-        themeColor: _themeColor,
-      ),
-    );
+    setState(() {
+      _submitting = true;
+      _failure = null;
+      _showNoFamily = false;
+    });
+    FamilyChildProfileCreateResult result;
+    try {
+      result = await runtime.childProfiles.create(
+        familyId: familyId,
+        idempotencyKey: _idempotencyKey!,
+        draft: draft,
+      );
+    } catch (_) {
+      result = const FamilyChildProfileCreateResult.failed(
+        FamilyChildProfileCreateFailure.networkUnavailable,
+      );
+    }
     if (!mounted) return;
-    setState(() => _submitting = false);
     final childId = result.childId;
     if (childId == null) {
-      AppToast.show(
-        context,
-        message: AppLocalizations.of(context).settingsPersistError,
-      );
+      setState(() {
+        _submitting = false;
+        _failure = _present(result.failure);
+      });
+      revealOnboardingNotice(_scroll);
       return;
     }
-
-    // A profile exists now; linking stays an explicit pending setup journey.
-    // No device, telemetry or policy result is fabricated by this hand-off.
+    // Keep the button locked while the route transition happens.
     context.go(
       '/scr-fat-004?childId=${Uri.encodeComponent(childId)}&source=server',
     );
   }
 
-  Future<void> _continuePreview() async {
-    final repo =
-        widget.managementRepository ?? stage1ChildDeviceManagementRepository;
-    final IdentityRuntime? runtime =
-        repo is RuntimeChildDeviceManagementRepository
-        ? repo.runtime
-        : CurrentIdentity.maybeOf(context);
-    if (runtime != null) {
-      try {
-        repo.createChild(
-          familyId: runtime.activeFamilyId,
-          childId: ChildId(_alias),
-        );
-      } on IdentityInvariantViolation {
-        if (mounted) {
-          AppToast.show(
-            context,
-            message: AppLocalizations.of(context).settingsPersistError,
-          );
-        }
-        return;
-      }
-      final roster =
-          widget.childrenListRepository ?? stage1ChildrenListRepository;
-      await roster.upsertChild(
-        ChildrenListEntry(
-          id: _alias,
-          displayName: _nameController.text.trim(),
-          emoji: kAddChildCharacters[_characterIndex],
-          swatch: _previewSwatch,
-          ageYears: _age,
-          locationLabel: '',
-          lastSeenLabel: '',
-          batteryLabel: '',
-          timeLeftLabel: '',
-          health: ChildListHealth.excellent,
-        ),
-        familyId: runtime.activeFamilyId,
-      );
-    }
-    if (!mounted) return;
-    if (widget.onContinue != null) {
-      widget.onContinue!();
-      return;
-    }
-    context.go('/scr-fat-004?childId=${Uri.encodeComponent(_alias)}');
-  }
+  static FamilyChildProfileCreateFailurePresentation _present(
+    FamilyChildProfileCreateFailure? failure,
+  ) => switch (failure) {
+    FamilyChildProfileCreateFailure.invalidInput =>
+      FamilyChildProfileCreateFailurePresentation.invalidInput,
+    FamilyChildProfileCreateFailure.conflict =>
+      FamilyChildProfileCreateFailurePresentation.conflict,
+    FamilyChildProfileCreateFailure.accessDenied =>
+      FamilyChildProfileCreateFailurePresentation.accessDenied,
+    FamilyChildProfileCreateFailure.sessionInvalid =>
+      FamilyChildProfileCreateFailurePresentation.sessionInvalid,
+    FamilyChildProfileCreateFailure.networkUnavailable ||
+    FamilyChildProfileCreateFailure.rosterRefreshUnavailable =>
+      FamilyChildProfileCreateFailurePresentation.network,
+    FamilyChildProfileCreateFailure.serviceUnavailable ||
+    FamilyChildProfileCreateFailure.unavailable ||
+    null => FamilyChildProfileCreateFailurePresentation.unavailable,
+  };
 
   List<Color> _kidColors(FamilyColors colors) => [
     colors.p500,
@@ -233,330 +197,343 @@ class _AddChildScreenState extends State<AddChildScreen> {
     colors.teal600,
   ];
 
-  String _ageLabel(AppLocalizations l10n, int age) {
-    // VX-B3 · D5 — Western digits on Arabic screens too.
-    return l10n.addChildAgeYears(formatAppInt(age));
-  }
-
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
+    final copy = OnboardingCopy.of(context);
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final radii = Theme.of(context).extension<FamilyRadii>()!;
     final kidColors = _kidColors(colors);
-    final usesRemoteProfileCreation =
-        AppScope.maybeOf(context)?.identity.value.isRemoteAuthoritative ??
-        false;
+    final busy = _submitting;
+    final failure = _failure;
+    final selectedColor = kidColors[_colorIndex];
 
-    return Scaffold(
-      backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.surface,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.addChildTitle,
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
-                color: colors.ink,
-              ),
-            ),
-            Text(
-              l10n.addChildStep,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: colors.ink2,
-              ),
-            ),
-          ],
+    return OnboardingScaffold(
+      controller: _scroll,
+      appBarTitle: '2 / 3',
+      children: [
+        OnboardingHeader(
+          icon: Icons.child_care_rounded,
+          title: copy.childTitle,
+          subtitle: copy.childSubtitle,
         ),
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 6, 16, 20),
-          children: [
-            _LabeledField(
-              label: l10n.addChildNameLabel,
-              child: Semantics(
-                textField: true,
-                label: l10n.addChildNameLabel,
-                child: TextField(
-                  key: const Key('add_child_name'),
-                  controller: _nameController,
-                  textInputAction: TextInputAction.next,
-                  maxLength: 120,
-                  buildCounter: (
-                    context, {
-                    required currentLength,
-                    required isFocused,
-                    maxLength,
-                  }) {
-                    final counterColors = Theme.of(
-                      context,
-                    ).extension<FamilyColors>()!;
-                    return Semantics(
-                      liveRegion: true,
-                      label: '$currentLength / 120',
-                      child: Text(
-                        '$currentLength / 120',
-                        textDirection: TextDirection.ltr,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: counterColors.ink2,
-                        ),
+        if (_showNoFamily)
+          OnboardingNotice(
+            key: AddChildKeys.notice,
+            tone: OnboardingNoticeTone.warning,
+            title: copy.childNoFamilyTitle,
+            message: copy.childNoFamilyMessage,
+            actionLabel: copy.childGoCreateFamily,
+            actionKey: AddChildKeys.noticeAction,
+            onAction: () => context.go('/scr-fat-001'),
+          )
+        else if (failure != null)
+          OnboardingNotice(
+            key: AddChildKeys.notice,
+            tone: OnboardingNoticeTone.error,
+            title: copy.childCreateFailureTitle(failure),
+            message: copy.childCreateFailureMessage(failure),
+            actionLabel:
+                failure ==
+                        FamilyChildProfileCreateFailurePresentation.network ||
+                    failure ==
+                        FamilyChildProfileCreateFailurePresentation.unavailable
+                ? copy.tryAgain
+                : null,
+            actionKey: AddChildKeys.noticeAction,
+            onAction: busy ? null : _submit,
+          ),
+        // Live preview card: how the child will appear in the parent app.
+        _ChildPreview(
+          name: _trimmedName.isEmpty ? copy.childNameHint : _trimmedName,
+          emoji: kAddChildCharacters[_characterIndex],
+          ageLabel: copy.ageYears(_age),
+          color: selectedColor,
+          colors: colors,
+          radii: radii,
+          placeholder: _trimmedName.isEmpty,
+        ),
+        OnboardingTextField(
+          fieldKey: AddChildKeys.name,
+          label: copy.childNameLabel,
+          controller: _name,
+          hint: copy.childNameHint,
+          enabled: !busy,
+          autofocus: true,
+          maxLength: _maxNameLength,
+          textInputAction: TextInputAction.done,
+          textCapitalization: TextCapitalization.words,
+          autofillHints: const [AutofillHints.givenName],
+          errorText: _touched ? _nameProblem(copy) : null,
+          onChanged: (_) {
+            if (!_touched && _trimmedName.isNotEmpty) _touched = true;
+          },
+          onSubmitted: (_) => _submit(),
+        ),
+        _FieldLabel(copy.childAgeLabel, colors),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: Semantics(
+            label: copy.childAgeLabel,
+            child: Wrap(
+              key: AddChildKeys.age,
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final age in kAddChildAges)
+                  ChoiceChip(
+                    key: Key('add_child_age_$age'),
+                    label: Text(
+                      '$age',
+                      textDirection: TextDirection.ltr,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: _age == age ? Colors.white : colors.ink,
                       ),
-                    );
-                  },
-                  decoration: _inputDecoration(
-                    colors: colors,
-                    radii: radii,
-                    hint: l10n.addChildNameHint,
-                  ),
-                ),
-              ),
-            ),
-            _LabeledField(
-              label: l10n.addChildAgeLabel,
-              child: Semantics(
-                button: true,
-                label: l10n.addChildAgeLabel,
-                child: DropdownButtonFormField<int>(
-                  key: const Key('add_child_age'),
-                  initialValue: _age,
-                  decoration: _inputDecoration(
-                    colors: colors,
-                    radii: radii,
-                    hint: '',
-                  ),
-                  items: kAddChildAges
-                      .map(
-                        (age) => DropdownMenuItem(
-                          value: age,
-                          child: Text(_ageLabel(l10n, age)),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (v) {
-                    if (v == null) return;
-                    setState(() => _age = v);
-                  },
-                ),
-              ),
-            ),
-            _LabeledField(
-              label: l10n.addChildCharacterLabel,
-              child: Semantics(
-                label: l10n.addChildCharacterLabel,
-                child: Row(
-                  key: const Key('add_child_characters'),
-                  children: [
-                    for (var i = 0; i < kAddChildCharacters.length; i++)
-                      Padding(
-                        padding: const EdgeInsetsDirectional.only(end: 10),
-                        child: Semantics(
-                          button: true,
-                          selected: _characterIndex == i,
-                          label: kAddChildCharacters[i],
-                          child: GestureDetector(
-                            key: Key('add_child_char_$i'),
-                            onTap: () => setState(() => _characterIndex = i),
-                            child: AnimatedOpacity(
-                              duration: const Duration(milliseconds: 150),
-                              opacity: _characterIndex == i ? 1 : 0.35,
-                              child: AnimatedScale(
-                                duration: const Duration(milliseconds: 150),
-                                scale: _characterIndex == i ? 1.15 : 1,
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 180),
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: _characterIndex == i
-                                        ? colors.surface
-                                        : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(
-                                      color: _characterIndex == i
-                                          ? colors.p400
-                                          : Colors.transparent,
-                                      width: 1.5,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    kAddChildCharacters[i],
-                                    style: const TextStyle(fontSize: 30),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-            _LabeledField(
-              label: l10n.addChildColorLabel,
-              child: Semantics(
-                label: l10n.addChildColorLabel,
-                child: Row(
-                  key: const Key('add_child_colors'),
-                  children: [
-                    for (var i = 0; i < kidColors.length; i++)
-                      Padding(
-                        padding: const EdgeInsetsDirectional.only(end: 10),
-                        child: Semantics(
-                          button: true,
-                          selected: _colorIndex == i,
-                          label: l10n.addChildColorSwatchSemantics(i + 1),
-                          child: GestureDetector(
-                            key: Key('add_child_color_$i'),
-                            onTap: () => setState(() => _colorIndex = i),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 150),
-                              width: 30,
-                              height: 30,
-                              transform: Matrix4.diagonal3Values(
-                                _colorIndex == i ? 1.1 : 1,
-                                _colorIndex == i ? 1.1 : 1,
-                                1,
-                              ),
-                              transformAlignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: kidColors[i],
-                                shape: BoxShape.circle,
-                                border: _colorIndex == i
-                                    ? Border.all(color: colors.ink, width: 3)
-                                    : null,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 4),
-            PrimaryBtn(
-              key: const Key('add_child_continue'),
-              label: l10n.addChildContinue,
-              onPressed: _canContinue && !_submitting ? _continue : null,
-            ),
-            const SizedBox(height: 10),
-            if (usesRemoteProfileCreation)
-              Semantics(
-                label: FoundationGateCopy.of(
-                  context,
-                ).serverAssignedProfileIdentifier,
-                child: Text(
-                  FoundationGateCopy.of(
-                    context,
-                  ).serverAssignedProfileIdentifier,
-                  key: const Key('add_child_server_assigned_id'),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: colors.ink2,
-                  ),
-                ),
-              )
-            else
-              Semantics(
-                label: l10n.addChildAliasSemantics(_alias),
-                child: Text.rich(
-                  TextSpan(
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: colors.ink2,
                     ),
-                    children: [
-                      TextSpan(text: l10n.addChildAliasPrefix),
-                      WidgetSpan(
-                        alignment: PlaceholderAlignment.baseline,
-                        baseline: TextBaseline.alphabetic,
-                        child: Directionality(
-                          textDirection: TextDirection.ltr,
+                    selected: _age == age,
+                    showCheckmark: false,
+                    selectedColor: colors.p500,
+                    backgroundColor: colors.surface,
+                    side: BorderSide(
+                      color: _age == age ? colors.p500 : colors.border,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(radii.pill),
+                    ),
+                    onSelected: busy ? null : (_) => setState(() => _age = age),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        _FieldLabel(copy.childCharacterLabel, colors),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: Semantics(
+            label: copy.childCharacterLabel,
+            child: Wrap(
+              key: AddChildKeys.characters,
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                for (var i = 0; i < kAddChildCharacters.length; i++)
+                  Semantics(
+                    button: true,
+                    selected: _characterIndex == i,
+                    label: kAddChildCharacters[i],
+                    child: InkWell(
+                      key: AddChildKeys.character(i),
+                      onTap: busy
+                          ? null
+                          : () => setState(() => _characterIndex = i),
+                      borderRadius: BorderRadius.circular(16),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 160),
+                        width: 56,
+                        height: 56,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: _characterIndex == i
+                              ? selectedColor.withValues(alpha: 0.16)
+                              : colors.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: _characterIndex == i
+                                ? selectedColor
+                                : colors.border,
+                            width: _characterIndex == i ? 2 : 1.2,
+                          ),
+                        ),
+                        child: AnimatedScale(
+                          duration: const Duration(milliseconds: 160),
+                          scale: _characterIndex == i ? 1.15 : 1,
                           child: Text(
-                            _alias,
-                            key: const Key('add_child_alias_ltr'),
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                              color: colors.ink,
-                            ),
+                            kAddChildCharacters[i],
+                            style: const TextStyle(fontSize: 28),
                           ),
                         ),
                       ),
-                      TextSpan(text: l10n.addChildAliasSuffix),
-                    ],
+                    ),
                   ),
-                  key: const Key('add_child_alias_footer'),
-                  textAlign: TextAlign.center,
-                  textDirection: TextDirection.rtl,
-                ),
-              ),
-          ],
+              ],
+            ),
+          ),
         ),
-      ),
-    );
-  }
-
-  InputDecoration _inputDecoration({
-    required FamilyColors colors,
-    required FamilyRadii radii,
-    required String hint,
-  }) {
-    final border = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(radii.input),
-      borderSide: BorderSide(color: colors.border, width: 1.5),
-    );
-    return InputDecoration(
-      hintText: hint.isEmpty ? null : hint,
-      hintStyle: TextStyle(color: colors.ink2.withValues(alpha: 0.55)),
-      filled: true,
-      fillColor: colors.surface,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-      border: border,
-      enabledBorder: border,
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(radii.input),
-        borderSide: BorderSide(color: colors.p400, width: 1.5),
-      ),
+        _FieldLabel(copy.childColorLabel, colors),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Semantics(
+            label: copy.childColorLabel,
+            child: Wrap(
+              key: AddChildKeys.colors,
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                for (var i = 0; i < kidColors.length; i++)
+                  Semantics(
+                    button: true,
+                    selected: _colorIndex == i,
+                    label: copy.colorSwatch(i + 1),
+                    child: InkWell(
+                      key: AddChildKeys.color(i),
+                      onTap: busy
+                          ? null
+                          : () => setState(() => _colorIndex = i),
+                      customBorder: const CircleBorder(),
+                      child: SizedBox(
+                        width: 48,
+                        height: 48,
+                        child: Center(
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 160),
+                            width: _colorIndex == i ? 36 : 30,
+                            height: _colorIndex == i ? 36 : 30,
+                            decoration: BoxDecoration(
+                              color: kidColors[i],
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: _colorIndex == i
+                                    ? colors.ink
+                                    : Colors.transparent,
+                                width: 3,
+                              ),
+                            ),
+                            child: _colorIndex == i
+                                ? const Icon(
+                                    Icons.check,
+                                    size: 18,
+                                    color: Colors.white,
+                                  )
+                                : null,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        OnboardingSubmitButton(
+          label: copy.childSubmit,
+          busyLabel: copy.savingChild,
+          busy: busy,
+          onPressed: _nameProblem(copy) == null ? _submit : null,
+          buttonKey: AddChildKeys.submit,
+        ),
+        const SizedBox(height: 10),
+        Text(
+          copy.childSavedToServer,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: colors.ink2,
+          ),
+        ),
+      ],
     );
   }
 }
 
-class _LabeledField extends StatelessWidget {
-  const _LabeledField({required this.label, required this.child});
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel(this.text, this.colors);
 
-  final String label;
-  final Widget child;
+  final String text;
+  final FamilyColors colors;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Text(
+      text,
+      style: TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+        color: colors.ink,
+      ),
+    ),
+  );
+}
+
+class _ChildPreview extends StatelessWidget {
+  const _ChildPreview({
+    required this.name,
+    required this.emoji,
+    required this.ageLabel,
+    required this.color,
+    required this.colors,
+    required this.radii,
+    required this.placeholder,
+  });
+
+  final String name;
+  final String emoji;
+  final String ageLabel;
+  final Color color;
+  final FamilyColors colors;
+  final FamilyRadii radii;
+  final bool placeholder;
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<FamilyColors>()!;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      margin: const EdgeInsets.only(bottom: 18),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(radii.card),
+        border: Border.all(color: color.withValues(alpha: 0.45), width: 1.5),
+      ),
+      child: Row(
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w700,
-              color: colors.ink,
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: 56,
+            height: 56,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.18),
+              shape: BoxShape.circle,
+            ),
+            child: Text(emoji, style: const TextStyle(fontSize: 28)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: placeholder
+                        ? colors.ink2.withValues(alpha: 0.6)
+                        : colors.ink,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  ageLabel,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: colors.ink2,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 6),
-          child,
+          Container(
+            width: 14,
+            height: 14,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
         ],
       ),
     );

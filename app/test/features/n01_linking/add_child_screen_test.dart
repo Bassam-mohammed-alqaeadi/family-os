@@ -1,289 +1,257 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:family_os/app/placeholder_screen.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
-import 'package:family_os/core/design/tokens.dart';
-import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/domain/role.dart';
-import 'package:family_os/core/identity/child_device_management_repository.dart';
-import 'package:family_os/core/identity/identity_models.dart';
-import 'package:family_os/core/identity/identity_runtime.dart';
-import 'package:family_os/core/identity/identity_scope.dart';
-import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/runtime/app_runtime.dart';
+import 'package:family_os/core/runtime/family_child_profile_source.dart';
+import 'package:family_os/core/runtime/identity_source.dart';
 import 'package:family_os/features/n01_linking/add_child_screen.dart';
 
-void main() {
-  testWidgets('empty name disables continue; field starts empty', (
-    tester,
-  ) async {
-    var continued = 0;
-    await _pumpAddChild(
-      tester,
-      onContinue: () => continued++,
-      mockAlias: 'child_a7f3',
-    );
+import '../shared_onboarding/onboarding_test_host.dart';
 
-    final nameField = tester.widget<TextField>(
-      find.byKey(const Key('add_child_name')),
-    );
-    expect(nameField.controller!.text, isEmpty);
+const _childId = '22222222-2222-4222-8222-222222222222';
 
-    final btn = tester.widget<PrimaryBtn>(
-      find.byKey(const Key('add_child_continue')),
-    );
-    expect(btn.onPressed, isNull);
+IdentitySnapshot _remoteSnapshot() => IdentitySnapshot(
+  authority: IdentityAuthority.remoteAuthoritative,
+  accountId: AccountId('acct-1'),
+  familyId: FamilyId(kTestFamilyId),
+  role: AppRole.father,
+  isPrimaryOwner: true,
+);
 
-    await tester.tap(find.byKey(const Key('add_child_continue')));
-    await tester.pump();
-    expect(continued, 0);
-  });
+List<GoRoute> _routes() => [
+  GoRoute(
+    path: '/scr-fat-003',
+    builder: (context, state) => const AddChildScreen(),
+  ),
+  GoRoute(
+    path: '/scr-fat-004',
+    builder: (context, state) =>
+        Scaffold(body: Text('pair:${state.uri.query}')),
+  ),
+  placeholderRoute('/scr-fat-001', 'SCR-FAT-001'),
+];
 
-  testWidgets('filled name → /scr-fat-004', (tester) async {
-    final router = GoRouter(
-      initialLocation: '/scr-fat-003',
-      routes: [
-        GoRoute(
-          path: '/scr-fat-003',
-          builder: (context, state) => AddChildScreen(
-            onContinue: () => context.go('/scr-fat-004?childId=preview-child'),
-          ),
-        ),
-        GoRoute(
-          path: '/scr-fat-004',
-          builder: (context, state) => const PlaceholderScreen(
-            screenId: 'SCR-FAT-004',
-            title: 'رمز الربط',
-          ),
-        ),
-      ],
-    );
-    addTearDown(router.dispose);
-
-    await tester.pumpWidget(
-      MaterialApp.router(
-        theme: buildFamilyTheme(),
-        locale: const Locale('ar'),
-        supportedLocales: AppLocalizations.supportedLocales,
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        routerConfig: router,
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.enterText(find.byKey(const Key('add_child_name')), 'سارة');
-    await tester.pump();
-
-    final btn = tester.widget<PrimaryBtn>(
-      find.byKey(const Key('add_child_continue')),
-    );
-    expect(btn.onPressed, isNotNull);
-
-    await tester.tap(find.byKey(const Key('add_child_continue')));
-    await tester.pumpAndSettle();
-
-    expect(router.state.uri.path, '/scr-fat-004');
-    expect(find.byType(PlaceholderScreen), findsOneWidget);
-    expect(find.text('SCR-FAT-004'), findsWidgets);
-  });
-
-  testWidgets('Rule 23 — no خالد in tree by default', (tester) async {
-    await _pumpAddChild(tester, mockAlias: 'child_abcd');
-
-    expect(find.textContaining('خالد'), findsNothing);
-
-    final nameField = tester.widget<TextField>(
-      find.byKey(const Key('add_child_name')),
-    );
-    expect(nameField.controller!.text, isNot(contains('خالد')));
-    expect(nameField.decoration?.hintText, isNot(contains('خالد')));
-  });
-
-  testWidgets('alias matches child_[a-f0-9]{4}', (tester) async {
-    await _pumpAddChild(tester);
-
-    final aliasText = tester.widget<Text>(
-      find.byKey(const Key('add_child_alias_ltr')),
-    );
-    expect(aliasText.data, matches(RegExp(r'^child_[a-f0-9]{4}$')));
-  });
-
-  testWidgets('renders header, ages, characters, colors', (tester) async {
-    await _pumpAddChild(tester, mockAlias: 'child_a7f3');
-
-    expect(find.text('إضافة ابن'), findsOneWidget);
-    expect(find.text('1 من 3'), findsOneWidget);
-    expect(find.text('متابعة — رمز الربط'), findsOneWidget);
-    expect(find.textContaining('اسمه لا يغادر العائلة'), findsOneWidget);
-    expect(find.text('child_a7f3'), findsOneWidget);
-
-    expect(find.text('🦁'), findsOneWidget);
-    expect(find.text('🐰'), findsOneWidget);
-    expect(find.byKey(const Key('add_child_color_0')), findsOneWidget);
-    expect(find.byKey(const Key('add_child_color_5')), findsOneWidget);
-    expect(find.text('14 سنة'), findsWidgets);
-  });
-
-  testWidgets('creates child through management repository', (tester) async {
-    final runtime = IdentityRuntime(
-      account: Account(id: AccountId('acc')),
-      session: Session(
-        id: SessionId('sess'),
-        accountId: AccountId('acc'),
-        startedAt: DateTime.utc(2026, 1, 1),
-      ),
-      families: [
-        Family(
-          id: FamilyId('fam_a'),
-          name: 'A',
-          ownerMemberId: MemberId('mem'),
-        ),
-      ],
-      memberships: [
-        FamilyMembership(
-          id: MemberId('mem'),
-          accountId: AccountId('acc'),
-          familyId: FamilyId('fam_a'),
-          role: AppRole.father,
-          tier: MembershipTier.primary,
-          isPrimaryOwner: true,
-        ),
-      ],
-      activeFamilyId: FamilyId('fam_a'),
-      activeChildScope: ChildScope(
-        familyId: FamilyId('fam_a'),
-        childId: ChildId('old_child'),
-      ),
-      children: [
-        ChildIdentity(id: ChildId('old_child'), familyId: FamilyId('fam_a')),
-      ],
-    );
-    final management = RuntimeChildDeviceManagementRepository(runtime: runtime);
-    await tester.pumpWidget(
-      CurrentIdentity(
-        runtime: runtime,
-        child: MaterialApp(
-          theme: buildFamilyTheme(),
-          locale: const Locale('ar'),
-          supportedLocales: AppLocalizations.supportedLocales,
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          home: AddChildScreen(
-            managementRepository: management,
-            mockAlias: 'child_new1',
-            onContinue: () {},
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const Key('add_child_name')), 'ولد');
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('add_child_continue')));
-    await tester.pumpAndSettle();
-    expect(
-      runtime.children.any((child) => child.id == ChildId('child_new1')),
-      isTrue,
-    );
-  });
-
-  testWidgets('child name input hard-caps at 120 chars with live counter', (
-    tester,
-  ) async {
-    var continued = 0;
-    await _pumpAddChild(
-      tester,
-      onContinue: () => continued++,
-      mockAlias: 'child_long',
-    );
-
-    await tester.enterText(
-      find.byKey(const Key('add_child_name')),
-      'ط' * 121,
-    );
-    await tester.pump();
-
-    final field = tester.widget<TextField>(
-      find.byKey(const Key('add_child_name')),
-    );
-    expect(field.controller!.text.runes.length, 120);
-    expect(find.text('120 / 120'), findsOneWidget);
-    expect(
-      tester
-          .widget<PrimaryBtn>(find.byKey(const Key('add_child_continue')))
-          .onPressed,
-      isNotNull,
-    );
-    expect(continued, 0);
-  });
-
-  testWidgets('defensive gate blocks continue when controller exceeds 120', (
-    tester,
-  ) async {
-    var continued = 0;
-    await _pumpAddChild(
-      tester,
-      onContinue: () => continued++,
-      mockAlias: 'child_gate',
-    );
-
-    final field = tester.widget<TextField>(
-      find.byKey(const Key('add_child_name')),
-    );
-    field.controller!.value = TextEditingValue(text: 'ط' * 121);
-    await tester.pump();
-
-    expect(
-      tester
-          .widget<PrimaryBtn>(find.byKey(const Key('add_child_continue')))
-          .onPressed,
-      isNull,
-    );
-    expect(continued, 0);
-  });
-
-  testWidgets('child name field exposes a live length counter', (
-    tester,
-  ) async {
-    await _pumpAddChild(tester, mockAlias: 'child_count');
-
-    await tester.enterText(find.byKey(const Key('add_child_name')), 'سارة');
-    await tester.pump();
-
-    expect(find.text('4 / 120'), findsOneWidget);
-  });
+(AppRuntime, RecordingChildProfileSource) _runtime({
+  FamilyChildProfileCreateResult result =
+      const FamilyChildProfileCreateResult.created(childId: _childId),
+  bool manual = false,
+  IdentitySnapshot? snapshot,
+}) {
+  final source = RecordingChildProfileSource(result: result, manual: manual);
+  final identity = StaticIdentitySource(snapshot ?? _remoteSnapshot());
+  final runtime = AppRuntime(identity: identity, childProfiles: source);
+  addTearDown(runtime.dispose);
+  return (runtime, source);
 }
 
-Future<void> _pumpAddChild(
-  WidgetTester tester, {
-  VoidCallback? onContinue,
-  String? mockAlias,
-}) async {
-  await tester.pumpWidget(
-    MaterialApp(
-      theme: buildFamilyTheme(),
-      locale: const Locale('ar'),
-      supportedLocales: AppLocalizations.supportedLocales,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      home: AddChildScreen(onContinue: onContinue, mockAlias: mockAlias),
-    ),
-  );
-  await tester.pumpAndSettle();
+void main() {
+  testWidgets('empty name: submit disabled, inline error after submit tap', (
+    tester,
+  ) async {
+    final (runtime, source) = _runtime();
+    await pumpWithRouter(
+      tester,
+      runtime: runtime,
+      initialLocation: '/scr-fat-003',
+      routes: _routes(),
+    );
+    final btn = tester.widget<PrimaryBtn>(find.byKey(AddChildKeys.submit));
+    expect(btn.onPressed, isNull);
+
+    await tester.enterText(find.byKey(AddChildKeys.name), 'س');
+    await tester.enterText(find.byKey(AddChildKeys.name), '   ');
+    await tester.pump();
+    expect(find.text('أدخل اسم الطفل.'), findsOneWidget);
+    expect(source.calls, isEmpty);
+  });
+
+  testWidgets('saves exactly the chosen draft and routes to pairing', (
+    tester,
+  ) async {
+    final (runtime, source) = _runtime();
+    final router = await pumpWithRouter(
+      tester,
+      runtime: runtime,
+      initialLocation: '/scr-fat-003',
+      routes: _routes(),
+    );
+
+    await tester.enterText(find.byKey(AddChildKeys.name), ' سارة ');
+    await tester.tap(find.byKey(const Key('add_child_age_7')));
+    await tester.tap(find.byKey(AddChildKeys.character(3)));
+    await tester.ensureVisible(find.byKey(AddChildKeys.color(4)));
+    await tester.tap(find.byKey(AddChildKeys.color(4)));
+    await tester.pump();
+
+    // Live preview reflects the draft.
+    expect(find.text('سارة'), findsOneWidget);
+    expect(find.text('7 سنة'), findsOneWidget);
+
+    await scrollAndTap(tester, find.byKey(AddChildKeys.submit));
+    await tester.pumpAndSettle();
+
+    expect(source.calls, hasLength(1));
+    final call = source.calls.single;
+    expect(call.familyId, kTestFamilyId);
+    expect(call.draft.displayName, 'سارة');
+    expect(call.draft.ageYears, 7);
+    expect(call.draft.avatarEmoji, kAddChildCharacters[3]);
+    expect(call.draft.themeColor, 'mint');
+    expect(call.idempotencyKey, isNotEmpty);
+    expect(router.state.uri.path, '/scr-fat-004');
+    expect(find.text('pair:childId=$_childId&source=server'), findsOneWidget);
+  });
+
+  testWidgets('double tap while saving creates exactly one child', (
+    tester,
+  ) async {
+    final (runtime, source) = _runtime(manual: true);
+    await pumpWithRouter(
+      tester,
+      runtime: runtime,
+      initialLocation: '/scr-fat-003',
+      routes: _routes(),
+    );
+    await tester.enterText(find.byKey(AddChildKeys.name), 'عمر');
+    await tester.pump();
+    await scrollAndTap(tester, find.byKey(AddChildKeys.submit));
+    await tester.pump();
+
+    // Busy state: the PrimaryBtn is gone, a progress label is shown.
+    expect(find.byType(PrimaryBtn), findsNothing);
+    expect(find.text('جارٍ الحفظ…'), findsOneWidget);
+    await tester.tap(find.byKey(AddChildKeys.submit), warnIfMissed: false);
+    await tester.tap(find.byKey(AddChildKeys.submit), warnIfMissed: false);
+    await tester.pump();
+    expect(source.calls, hasLength(1));
+
+    // Fields are locked while saving.
+    expect(
+      tester.widget<TextField>(find.byKey(AddChildKeys.name)).enabled,
+      isFalse,
+    );
+
+    source.complete();
+    await tester.pumpAndSettle();
+    expect(source.calls, hasLength(1));
+  });
+
+  testWidgets('network failure: inline notice, retry reuses idempotency key', (
+    tester,
+  ) async {
+    final (runtime, source) = _runtime(
+      result: const FamilyChildProfileCreateResult.failed(
+        FamilyChildProfileCreateFailure.networkUnavailable,
+      ),
+    );
+    final router = await pumpWithRouter(
+      tester,
+      runtime: runtime,
+      initialLocation: '/scr-fat-003',
+      routes: _routes(),
+    );
+    await tester.enterText(find.byKey(AddChildKeys.name), 'ليان');
+    await tester.pump();
+    await scrollAndTap(tester, find.byKey(AddChildKeys.submit));
+    await tester.pumpAndSettle();
+
+    expect(router.state.uri.path, '/scr-fat-003');
+    expect(find.byKey(AddChildKeys.notice), findsOneWidget);
+    expect(find.text('تعذر الاتصال بالخادم'), findsOneWidget);
+    expect(find.byKey(AddChildKeys.noticeAction), findsOneWidget);
+    // The typed name survives the failure.
+    expect(
+      tester.widget<TextField>(find.byKey(AddChildKeys.name)).controller!.text,
+      'ليان',
+    );
+
+    source.result = const FamilyChildProfileCreateResult.created(
+      childId: _childId,
+    );
+    await tester.tap(find.byKey(AddChildKeys.noticeAction));
+    await tester.pumpAndSettle();
+
+    expect(source.calls, hasLength(2));
+    expect(source.calls[0].idempotencyKey, source.calls[1].idempotencyKey);
+    expect(router.state.uri.path, '/scr-fat-004');
+  });
+
+  testWidgets('changing the draft after a failure rotates the key', (
+    tester,
+  ) async {
+    final (runtime, source) = _runtime(
+      result: const FamilyChildProfileCreateResult.failed(
+        FamilyChildProfileCreateFailure.serviceUnavailable,
+      ),
+    );
+    await pumpWithRouter(
+      tester,
+      runtime: runtime,
+      initialLocation: '/scr-fat-003',
+      routes: _routes(),
+    );
+    await tester.enterText(find.byKey(AddChildKeys.name), 'أحمد');
+    await tester.pump();
+    await scrollAndTap(tester, find.byKey(AddChildKeys.submit));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(AddChildKeys.name), 'أحمد علي');
+    await tester.pump();
+    await scrollAndTap(tester, find.byKey(AddChildKeys.submit));
+    await tester.pumpAndSettle();
+    expect(source.calls, hasLength(2));
+    expect(
+      source.calls[0].idempotencyKey,
+      isNot(source.calls[1].idempotencyKey),
+    );
+  });
+
+  testWidgets('access denied has no retry; session expired explains', (
+    tester,
+  ) async {
+    final (runtime, _) = _runtime(
+      result: const FamilyChildProfileCreateResult.failed(
+        FamilyChildProfileCreateFailure.accessDenied,
+      ),
+    );
+    await pumpWithRouter(
+      tester,
+      runtime: runtime,
+      initialLocation: '/scr-fat-003',
+      routes: _routes(),
+    );
+    await tester.enterText(find.byKey(AddChildKeys.name), 'نور');
+    await tester.pump();
+    await scrollAndTap(tester, find.byKey(AddChildKeys.submit));
+    await tester.pumpAndSettle();
+    expect(find.text('غير مسموح'), findsOneWidget);
+    expect(find.byKey(AddChildKeys.noticeAction), findsNothing);
+  });
+
+  testWidgets('no active server family → honest redirect, nothing created', (
+    tester,
+  ) async {
+    final (runtime, source) = _runtime(
+      snapshot: const IdentitySnapshot.unavailable(),
+    );
+    final router = await pumpWithRouter(
+      tester,
+      runtime: runtime,
+      initialLocation: '/scr-fat-003',
+      routes: _routes(),
+    );
+    await tester.enterText(find.byKey(AddChildKeys.name), 'نور');
+    await tester.pump();
+    await scrollAndTap(tester, find.byKey(AddChildKeys.submit));
+    await tester.pumpAndSettle();
+
+    expect(source.calls, isEmpty);
+    expect(find.text('لا توجد عائلة نشطة'), findsOneWidget);
+    await tester.tap(find.byKey(AddChildKeys.noticeAction));
+    await tester.pumpAndSettle();
+    expect(router.state.uri.path, '/scr-fat-001');
+  });
 }

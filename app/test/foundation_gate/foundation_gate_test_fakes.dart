@@ -65,6 +65,16 @@ class FakeIdentity implements FoundationGateIdentity {
     verificationEmailsSent += 1;
   }
 
+  final List<String> passwordResetEmails = [];
+
+  @override
+  Future<void> sendPasswordResetEmail({required String email}) async {
+    if (failure != null) {
+      throw failure!;
+    }
+    passwordResetEmails.add(email);
+  }
+
   @override
   Future<void> signOut() async {
     signOutCalls += 1;

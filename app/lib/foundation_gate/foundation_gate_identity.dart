@@ -20,6 +20,11 @@ abstract interface class FoundationGateIdentity {
   /// Asks the provider to send (or re-send) the verification e-mail.
   Future<void> sendEmailVerification();
 
+  /// Asks the provider to e-mail a password-reset link. Providers that hide
+  /// account existence resolve silently for unknown addresses; callers must
+  /// present a neutral "if an account exists" confirmation either way.
+  Future<void> sendPasswordResetEmail({required String email});
+
   Future<void> signOut();
 }
 
@@ -194,6 +199,30 @@ class FirebaseEmailPasswordIdentity implements FoundationGateIdentity {
       await user.sendEmailVerification();
     } on FirebaseAuthException catch (error) {
       throw FoundationGateIdentityException(_mapCommonCode(error.code));
+    } on FoundationGateIdentityException {
+      rethrow;
+    } catch (_) {
+      throw const FoundationGateIdentityException();
+    }
+  }
+
+  @override
+  Future<void> sendPasswordResetEmail({required String email}) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (error) {
+      switch (error.code) {
+        // Never reveal whether an address has an account.
+        case 'user-not-found':
+          return;
+        case 'invalid-email':
+        case 'missing-email':
+          throw const FoundationGateIdentityException(
+            FoundationGateIdentityFailure.invalidEmail,
+          );
+        default:
+          throw FoundationGateIdentityException(_mapCommonCode(error.code));
+      }
     } on FoundationGateIdentityException {
       rethrow;
     } catch (_) {
