@@ -175,8 +175,18 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
               .map((entry) {
                 final candidates = List<FoundationGateGuardianDevice>.of(entry.value)
                   ..sort((left, right) {
-                    final leftTime = left.lastSeenAt ?? left.linkedAt;
-                    final rightTime = right.lastSeenAt ?? right.linkedAt;
+                    // A device with no timestamp at all sorts last rather than throwing.
+                    // The lifecycle model keeps linkedAt nullable because a device the
+                    // server described without one is still a device the guardian must
+                    // see; dropping the ordering here would have dropped that device.
+                    final leftTime =
+                        left.lastSeenAt ??
+                        left.linkedAt ??
+                        DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+                    final rightTime =
+                        right.lastSeenAt ??
+                        right.linkedAt ??
+                        DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
                     return rightTime.compareTo(leftTime);
                   });
                 final latest = candidates.first;

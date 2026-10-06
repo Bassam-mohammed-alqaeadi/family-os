@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:family_os/foundation_gate/device_lifecycle.dart';
 import 'package:family_os/foundation_gate/family_device_api_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_http.dart';
@@ -22,15 +23,15 @@ const deviceBody =
     '"batteryLevel":78,"batteryStatus":"unplugged","locationLat":38.8646,'
     '"locationLng":-77.2749,"locationLabel":"Soccer Practice",'
     '"lastSeenAt":"2026-10-04T12:00:00.000Z","linkedAt":"2026-10-04T11:00:00.000Z",'
-    '"version":2,"credentialState":"active","capabilities":[...],'
+    '"version":2,"credentialState":"active","capabilities":['
+    '{"id":"telemetry","state":"available","reasonCode":"reporting_now",'
+    '"since":"2026-10-04T12:00:00.000Z"},'
+    '{"id":"location","state":"available","reasonCode":"location_reported",'
+    '"since":"2026-10-04T12:00:00.000Z"},'
+    '{"id":"background_service","state":"available","reasonCode":"reporting_now",'
+    '"since":"2026-10-04T12:00:00.000Z"}],'
     '"health":{"state":"active","reasonCode":"reporting_now",'
-    '"since":"2026-10-04T12:00:00.000Z","needsAttention":false}}'
-        .replaceFirst(
-          '[...]',
-          '[{"id":"telemetry","state":"available","reasonCode":"reporting_now","since":"2026-10-04T12:00:00.000Z"},'
-          '{"id":"location","state":"available","reasonCode":"location_reported","since":"2026-10-04T12:00:00.000Z"},'
-          '{"id":"background_service","state":"available","reasonCode":"reporting_now","since":"2026-10-04T12:00:00.000Z"}]',
-        );
+    '"since":"2026-10-04T12:00:00.000Z","needsAttention":false}}';
 
 void main() {
   FamilyDeviceApiClient clientFor(FakeTransport transport) =>
@@ -239,10 +240,11 @@ void main() {
   test('a field the client does not know is ignored rather than fatal', () async {
     // Forward compatibility is the point of dropping the exact key count. The server must
     // be able to add a fact without an older client calling the device broken.
-    final withExtra = deviceBody.replaceFirst(
-      '"version":2',
-      '"version":2,"aFieldFromALaterRelease":"whatever"',
-    );
+    // The added field is spliced in as text so the fixture above stays one readable
+    // const, and so the test proves the client ignores exactly one unknown key.
+    final withExtra =
+        '${deviceBody.substring(0, deviceBody.length - 1)},'
+        '"aFieldFromALaterRelease":"whatever"}';
     final transport = FakeTransport(
       FoundationGateHttpResponse(statusCode: 200, body: '{"devices":[$withExtra]}'),
     );
