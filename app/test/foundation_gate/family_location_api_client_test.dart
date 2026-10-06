@@ -47,6 +47,16 @@ const crossingFeedBody =
     '"zoneName":"البيت","childId":"$childId","kind":"EXIT","baseline":false,'
     '"zoneVersion":2,"occurredAt":"2026-10-07T08:00:00.000Z"}]}';
 
+const historyBody =
+    '{"visibility":"family_members","childId":"$childId","displayName":"سارة",'
+    '"retentionDays":30,"fixes":['
+    '{"id":"$fixId","acquisition":"located","latitude":15.3694,"longitude":44.191,'
+    '"accuracyMeters":18,"integritySoftWarning":false,'
+    '"recordedAt":"2026-10-07T09:04:00.000Z","receivedAt":"2026-10-07T09:04:01.000Z"},'
+    '{"id":"99999999-9999-4999-8999-999999999999","acquisition":"acquiring",'
+    '"latitude":null,"longitude":null,"accuracyMeters":null,"integritySoftWarning":false,'
+    '"recordedAt":"2026-10-07T09:00:00.000Z","receivedAt":"2026-10-07T09:00:01.000Z"}]}';
+
 const fixReceiptBody =
     '{"fix":{"id":"$fixId","acquisition":"located","latitude":15.3694,'
     '"longitude":44.191,"accuracyMeters":18,"recordedAt":"2026-10-07T09:04:00.000Z",'
@@ -297,6 +307,79 @@ void main() {
           (e) => e.failure,
           'failure',
           FoundationGateApiFailure.invalidResponse,
+        ),
+      ),
+    );
+  });
+
+  test('the trail is read back newest first, with the retention window published', () async {
+    final transport = FakeTransport(
+      const FoundationGateHttpResponse(statusCode: 200, body: historyBody),
+    );
+    final history = await clientFor(transport).locationHistory(
+      familyId: familyId,
+      childId: childId,
+      idToken: 'synthetic-token',
+    );
+
+    expect(
+      transport.requestedUri.toString(),
+      'https://staging.example.test/v1/families/$familyId/children/$childId/location-history',
+    );
+    expect(history.visibility, 'family_members');
+    expect(history.retentionDays, 30);
+    expect(history.displayName, 'سارة');
+    expect(history.fixes, hasLength(2));
+    expect(history.fixes.first.hasPosition, isTrue);
+    expect(history.fixes.first.recordedAt?.isUtc, isTrue);
+    expect(
+      history.fixes.last.hasPosition,
+      isFalse,
+      reason: 'a device that answered without a position keeps its nulls',
+    );
+    expect(history.fixes.last.latitude, isNull);
+    expect(history.fixes.last.acquisition, FoundationGateAcquisition.acquiring);
+  });
+
+  test('a trail row that claims coordinates without a position is refused', () async {
+    const corrupt =
+        '{"visibility":"family_members","childId":"$childId","displayName":"سارة",'
+        '"retentionDays":30,"fixes":[{"id":"$fixId","acquisition":"unavailable",'
+        '"latitude":15.3,"longitude":44.1,"recordedAt":"2026-10-07T09:04:00.000Z"}]}';
+    await expectLater(
+      clientFor(
+        FakeTransport(
+          const FoundationGateHttpResponse(statusCode: 200, body: corrupt),
+        ),
+      ).locationHistory(
+        familyId: familyId,
+        childId: childId,
+        idToken: 'synthetic-token',
+      ),
+      throwsA(
+        isA<FoundationGateApiException>().having(
+          (e) => e.failure,
+          'failure',
+          FoundationGateApiFailure.invalidResponse,
+        ),
+      ),
+    );
+  });
+
+  test('a child the family does not know is not found', () async {
+    await expectLater(
+      clientFor(
+        FakeTransport(const FoundationGateHttpResponse(statusCode: 404, body: '{}')),
+      ).locationHistory(
+        familyId: familyId,
+        childId: childId,
+        idToken: 'synthetic-token',
+      ),
+      throwsA(
+        isA<FoundationGateApiException>().having(
+          (e) => e.failure,
+          'failure',
+          FoundationGateApiFailure.notFound,
         ),
       ),
     );

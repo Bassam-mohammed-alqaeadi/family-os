@@ -1228,6 +1228,72 @@ test('a zone is drawn, a device reports, and the boundary crossing becomes a rec
         );
         assert.equal(provenanceKept.rows[0].n, 4, 'a crossing lost the measurement it points at');
 
+
+        // 13. The trail read back. Same rule as the live picture: one read, one rule for
+        //     every active member, newest first, and a device that answered without a
+        //     position keeps its null coordinates instead of a zero.
+        const historyAsGuardian = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/children/${childId}/location-history`,
+          { headers: authorized('test-primary') },
+        );
+        assert.equal(historyAsGuardian.status, 200);
+        assert.equal(historyAsGuardian.body.visibility, 'family_members');
+        assert.equal(historyAsGuardian.body.retentionDays, 30);
+        assert.equal(historyAsGuardian.body.childId, childId);
+        const trail = historyAsGuardian.body.fixes;
+        assert.ok(trail.length >= 6, `the trail lost fixes: ${trail.length}`);
+        assert.ok(
+          trail.some((row) => row.id === '11111111-1111-4111-8111-111111111111'),
+          'the first fix of the journey is missing from the trail',
+        );
+        for (let i = 1; i < trail.length; i += 1) {
+          assert.ok(
+            new Date(trail[i - 1].recordedAt).getTime() >= new Date(trail[i].recordedAt).getTime(),
+            'the trail is not newest first',
+          );
+        }
+        const acquiringRow = trail.find((row) => row.acquisition === 'acquiring');
+        assert.ok(acquiringRow, 'the honest non-answer was not kept in the trail');
+        assert.equal(acquiringRow.latitude, null, 'a missing position became a coordinate');
+        assert.equal(acquiringRow.longitude, null);
+        assert.ok(
+          trail.every(
+            (row) =>
+              ['located', 'stale_last_known', 'acquiring', 'unavailable'].includes(row.acquisition),
+          ),
+          'the trail carries a state the contract does not declare',
+        );
+        const locatedRow = trail.find((row) => row.acquisition === 'located');
+        assert.ok(locatedRow.latitude !== null && locatedRow.longitude !== null);
+
+        const historyAsChild = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/children/${childId}/location-history`,
+          { headers: authorized('test-child') },
+        );
+        assert.equal(historyAsChild.status, 200);
+        assert.deepEqual(
+          historyAsChild.body.fixes,
+          trail,
+          'the child reads a different history from the guardian, which is the asymmetry '
+            + 'this read exists to prevent',
+        );
+
+        const historyOfAGhost = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/children/${'99999999-9999-4999-8999-999999999999'}/location-history`,
+          { headers: authorized('test-primary') },
+        );
+        assert.equal(historyOfAGhost.status, 404);
+
+        const historyForAStranger = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/children/${childId}/location-history`,
+          { headers: authorized('test-stranger') },
+        );
+        assert.equal(historyForAStranger.status, 403);
+
         // 11. The switch a family reaches for at night. Changing which transitions a zone
         //     announces must not be able to move the boundary, and must not be able to
         //     re-describe a crossing that was already reported.

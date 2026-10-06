@@ -349,6 +349,39 @@ void main() {
     expect(snapshot.zones, isEmpty);
   });
 
+  test('the trail becomes the day list the history screen renders', () async {
+    const history =
+        '{"visibility":"family_members","childId":"$childId","displayName":"سارة",'
+        '"retentionDays":30,"fixes":['
+        '{"id":"$fixId","acquisition":"located","latitude":24.7136,"longitude":46.6753,'
+        '"accuracyMeters":18,"integritySoftWarning":false,'
+        '"recordedAt":"2026-10-07T09:04:00.000Z","receivedAt":"2026-10-07T09:04:01.000Z"},'
+        '{"id":"99999999-9999-4999-8999-999999999999","acquisition":"unavailable",'
+        '"latitude":null,"longitude":null,"recordedAt":"2026-10-06T21:00:00.000Z",'
+        '"receivedAt":"2026-10-06T21:00:01.000Z"}]}';
+    final transport = _RoutedTransport({
+      '/location-history': const FoundationGateHttpResponse(
+        statusCode: 200,
+        body: history,
+      ),
+    });
+    final snapshot = await ServerLocationHistoryRepository(
+      authorityFor(transport),
+    ).load(childId);
+
+    expect(snapshot, isNotNull);
+    expect(snapshot!.displayName, 'سارة');
+    expect(snapshot.days, hasLength(2), reason: 'two fixes on two days');
+    expect(snapshot.days.first.id, '2026-10-07');
+    expect(snapshot.days.first.stops.single.title, '24.7136, 46.6753');
+    expect(snapshot.days.first.stops.single.timeLabel, '09:04');
+    expect(
+      snapshot.days.last.stops.single.title,
+      'UNAVAILABLE',
+      reason: 'an honest non-answer is a row, not a coordinate',
+    );
+  });
+
   test('with no family selected the pack refuses instead of answering for another one', () async {
     final transport = _RoutedTransport(const {});
     final authority = LocationServerAuthority(

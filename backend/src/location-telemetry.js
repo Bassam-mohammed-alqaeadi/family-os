@@ -51,6 +51,10 @@ export const LOCATION_LIVENESS_WINDOW_MS = 30 * 60 * 1000;
 
 const MAX_FEED_EVENTS = 100;
 
+/// How much of a child's trail one read may return. The window is the retention window; the
+/// bound is there so a busy week cannot turn one screen into an unbounded response.
+const MAX_HISTORY_FIXES = 500;
+
 /// The same shape the store requires of an internal trace context.
 const CORRELATION_ID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -242,6 +246,40 @@ export function createLocationSurface({ port, now = () => new Date() }) {
   }
 
   /**
+   * The trail a family can actually read back.
+   *
+   * Same rule as the live picture, for the same reason: one read, one rule for every active
+   * member. A history only the parents can open would be the covert half of the same
+   * surface - the child could see where she is now and not what was kept about her, which
+   * is precisely the asymmetry that turns "safety" into surveillance.
+   *
+   * The newest fix comes first, and a fix with no coordinates is returned with `null`
+   * coordinates rather than a zero: an `acquiring` answer is a fact about the device, and
+   * it must not be drawn as a position in the Gulf of Guinea.
+   */
+  async function locationHistory({ principal, familyId, childId, limit }) {
+    return port.withTransaction(async (tx) => {
+      await port.authorize(tx, { familyId, subject: principal.subject });
+      const child = await port.readChild(tx, { familyId, childId });
+      if (child === null) {
+        throw new HttpError(404, 'family_child_not_found', 'Child was not found in this family.');
+      }
+      const rows = await port.readTrail(tx, {
+        familyId,
+        childId,
+        limit: limit ?? MAX_HISTORY_FIXES,
+      });
+      return {
+        visibility: 'family_members',
+        childId: child.child_id,
+        displayName: child.display_name,
+        retentionDays: LOCATION_RETENTION_DAYS,
+        fixes: rows.map(fixView),
+      };
+    });
+  }
+
+  /**
    * The family's live picture.
    *
    * Readable by EVERY active member of the family, including a child - the same rows, in
@@ -294,7 +332,7 @@ export function createLocationSurface({ port, now = () => new Date() }) {
     });
   }
 
-  return { ingestFix, familyLocation, geofenceEvents };
+  return { ingestFix, familyLocation, geofenceEvents, locationHistory };
 }
 
 /**
@@ -647,6 +685,29 @@ export function postgresLocationPort(store, { credentialMatches }) {
             .sort((left, right) => String(left.name).localeCompare(String(right.name))),
         };
       });
+    },
+
+    async readChild(client, { familyId, childId }) {
+      const { rows } = await client.query(
+        `SELECT id AS child_id, display_name
+           FROM family_children
+          WHERE family_id = $1 AND id = $2`,
+        [familyId, childId],
+      );
+      return rows[0] ?? null;
+    },
+
+    async readTrail(client, { familyId, childId, limit }) {
+      const { rows } = await client.query(
+        `SELECT id, acquisition, location_lat, location_lng, accuracy_meters,
+                integrity_soft_warning, recorded_at, received_at
+           FROM family_child_location_fixes
+          WHERE family_id = $1 AND child_id = $2
+          ORDER BY recorded_at DESC, received_at DESC, id DESC
+          LIMIT $3`,
+        [familyId, childId, limit],
+      );
+      return rows;
     },
 
     async readRecentCrossings(client, { familyId, limit }) {

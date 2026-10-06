@@ -192,6 +192,18 @@ class FoundationGateConfiguration {
     return stagingApiOrigin.replace(path: '/v1/families/$familyId/location');
   }
 
+  /// The trail of one child, under the same one-rule-for-everyone promise as the live read.
+  Uri familyChildLocationHistoryUri(String familyId, String childId) {
+    if (!isFoundationGateUuid(familyId) || !isFoundationGateUuid(childId)) {
+      throw ArgumentError(
+        'Server-returned UUID family and child identifiers are required.',
+      );
+    }
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/children/$childId/location-history',
+    );
+  }
+
   /// The arrival and departure feed, newest first.
   Uri familyGeofenceEventsUri(String familyId) {
     if (!isFoundationGateUuid(familyId)) {

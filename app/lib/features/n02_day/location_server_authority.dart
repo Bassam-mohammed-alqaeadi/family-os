@@ -3,6 +3,7 @@ import 'package:family_os/core/location/zone_geometry.dart';
 import 'package:family_os/foundation_gate/family_location_api_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
+import 'package:family_os/features/n02_day/location_history_repository.dart';
 import 'package:family_os/features/n02_day/location_map_repository.dart';
 import 'package:family_os/features/n02_day/safe_zones_repository.dart';
 
@@ -77,6 +78,15 @@ final class LocationServerAuthority {
   Future<FoundationGateFamilyLocation> livePicture() async {
     final familyId = _requireFamilyId();
     return api.familyLocation(familyId: familyId, idToken: await _idToken());
+  }
+
+  Future<FoundationGateLocationHistory> history(String childId) async {
+    final familyId = _requireFamilyId();
+    return api.locationHistory(
+      familyId: familyId,
+      childId: childId,
+      idToken: await _idToken(),
+    );
   }
 
   Future<List<FoundationGateCrossingRow>> crossings() async {
@@ -391,6 +401,64 @@ final class ServerLocationMapRepository implements LocationMapRepository {
   }
 }
 
+/// The trail read back, shaped as the day-by-day list the history screen renders.
+///
+/// The trail keeps honest non-answers, and so does this: a fix that carries no position
+/// becomes a row that says the device had none, never a row with a plausible-looking
+/// coordinate. The screen can therefore show the difference between "we have not looked"
+/// and "we looked and the device could not say".
+final class ServerLocationHistoryRepository implements LocationHistoryRepository {
+  const ServerLocationHistoryRepository(this.authority);
+
+  final LocationServerAuthority authority;
+
+  @override
+  Future<LocationHistorySnapshot?> load(String childId) async {
+    final trimmed = childId.trim();
+    if (trimmed.isEmpty) return null;
+    final history = await authority.history(trimmed);
+
+    final byDay = <String, List<LocationHistoryStop>>{};
+    for (final fix in history.fixes) {
+      final at = fix.recordedAt;
+      if (at == null) continue;
+      final utc = at.toUtc();
+      final dayKey = utc.toIso8601String().substring(0, 10);
+      byDay
+          .putIfAbsent(dayKey, () => <LocationHistoryStop>[])
+          .add(
+            LocationHistoryStop(
+              title: _fixTitle(fix),
+              timeLabel:
+                  '${utc.hour.toString().padLeft(2, '0')}:'
+                  '${utc.minute.toString().padLeft(2, '0')}',
+            ),
+          );
+    }
+
+    return LocationHistorySnapshot(
+      childId: history.childId,
+      displayName: history.displayName,
+      days: [
+        for (final entry in byDay.entries)
+          LocationHistoryDay(id: entry.key, heading: entry.key, stops: entry.value),
+      ],
+    );
+  }
+
+  static String _fixTitle(FoundationGateTrailFix fix) {
+    final point = fix.hasPosition
+        ? '${fix.latitude!.toStringAsFixed(4)}, ${fix.longitude!.toStringAsFixed(4)}'
+        : '—';
+    return switch (fix.acquisition) {
+      FoundationGateAcquisition.located => point,
+      FoundationGateAcquisition.staleLastKnown => 'STALE · $point',
+      FoundationGateAcquisition.acquiring => 'ACQUIRING',
+      FoundationGateAcquisition.unavailable => 'UNAVAILABLE',
+    };
+  }
+}
+
 /// The decorative frame's origin: the same point the drawing tools project from, so a zone
 /// drawn on this device and a position reported by another land in one picture.
 const GeoPoint kLocationCanvasOrigin = GeoPoint(
@@ -444,4 +512,5 @@ void bindLocationServerAuthority(LocationServerAuthority? authority) {
   activeSafeZoneServerWriter = LocationServerZoneWriter(authority);
   rebindStage1SafeZonesRepository(ServerSafeZonesRepository(authority));
   rebindStage1LocationMapRepository(ServerLocationMapRepository(authority));
+  rebindStage1LocationHistoryRepository(ServerLocationHistoryRepository(authority));
 }

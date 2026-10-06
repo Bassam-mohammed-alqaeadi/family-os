@@ -263,6 +263,51 @@ class FoundationGateCrossing {
   final int zoneVersion;
 }
 
+/// The trail a family can read back.
+class FoundationGateLocationHistory {
+  const FoundationGateLocationHistory({
+    required this.visibility,
+    required this.childId,
+    required this.displayName,
+    required this.retentionDays,
+    required this.fixes,
+  });
+
+  final String visibility;
+  final String childId;
+  final String displayName;
+
+  /// How long a fix survives on the server. The window is published rather than assumed,
+  /// so a screen can say what is kept instead of implying it keeps everything.
+  final int retentionDays;
+  final List<FoundationGateTrailFix> fixes;
+}
+
+/// One stored fix, with `null` coordinates when the device answered without a position.
+class FoundationGateTrailFix {
+  const FoundationGateTrailFix({
+    required this.id,
+    required this.acquisition,
+    this.latitude,
+    this.longitude,
+    this.accuracyMeters,
+    this.integritySoftWarning = false,
+    this.recordedAt,
+    this.receivedAt,
+  });
+
+  final String id;
+  final FoundationGateAcquisition acquisition;
+  final double? latitude;
+  final double? longitude;
+  final double? accuracyMeters;
+  final bool integritySoftWarning;
+  final DateTime? recordedAt;
+  final DateTime? receivedAt;
+
+  bool get hasPosition => latitude != null && longitude != null;
+}
+
 /// The server's answer to a reported position.
 class FoundationGateFixReceipt {
   const FoundationGateFixReceipt({
@@ -410,6 +455,43 @@ class FamilyLocationApiClient {
       idempotencyKey: idempotencyKey,
     );
     return _zoneFromWrite(response);
+  }
+
+  /// The trail of one child, newest first.
+  ///
+  /// Same one-rule-for-everyone promise as the live read, so a child can see what was kept
+  /// about her and not only where she is right now.
+  Future<FoundationGateLocationHistory> locationHistory({
+    required String familyId,
+    required String childId,
+    required String idToken,
+  }) async {
+    final response = await _get(
+      _configuration.familyChildLocationHistoryUri(familyId, childId),
+      idToken,
+      familyId: familyId,
+    );
+    return switch (response.statusCode) {
+      200 => _parseHistory(response.body),
+      400 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.invalidInput,
+      ),
+      401 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.unauthenticated,
+      ),
+      403 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.accessDenied,
+      ),
+      404 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.notFound,
+      ),
+      429 || 503 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.serviceUnavailable,
+      ),
+      _ => throw const FoundationGateApiException(
+        FoundationGateApiFailure.invalidResponse,
+      ),
+    };
   }
 
   /// The live picture: every child, every linked device, and where each child stands
@@ -793,6 +875,75 @@ class FamilyLocationApiClient {
     return FoundationGateGeoPoint(
       latitude: latitude.toDouble(),
       longitude: longitude.toDouble(),
+    );
+  }
+
+  FoundationGateLocationHistory _parseHistory(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is! Map<String, Object?>) throw const FormatException();
+      final visibility = decoded['visibility'];
+      final childId = decoded['childId'];
+      final displayName = decoded['displayName'];
+      final retentionDays = decoded['retentionDays'];
+      final rawFixes = decoded['fixes'];
+      if (visibility is! String ||
+          visibility != 'family_members' ||
+          childId is! String ||
+          !isFoundationGateUuid(childId) ||
+          displayName is! String ||
+          retentionDays is! int ||
+          retentionDays < 1 ||
+          rawFixes is! List<Object?>) {
+        throw const FormatException();
+      }
+      return FoundationGateLocationHistory(
+        visibility: visibility,
+        childId: childId,
+        displayName: displayName,
+        retentionDays: retentionDays,
+        fixes: List.unmodifiable(rawFixes.map(_parseTrailFix)),
+      );
+    } catch (_) {
+      throw const FoundationGateApiException(
+        FoundationGateApiFailure.invalidResponse,
+      );
+    }
+  }
+
+  FoundationGateTrailFix _parseTrailFix(Object? value) {
+    if (value is! Map<String, Object?>) throw const FormatException();
+    final id = value['id'];
+    final acquisition = FoundationGateAcquisition.parse(value['acquisition']);
+    if (id is! String || !isFoundationGateUuid(id) || acquisition == null) {
+      throw const FormatException();
+    }
+    final latitude = value['latitude'];
+    final longitude = value['longitude'];
+    final accuracy = value['accuracyMeters'];
+    final warning = value['integritySoftWarning'];
+    if (latitude != null && (latitude is! num || latitude < -90 || latitude > 90)) {
+      throw const FormatException();
+    }
+    if (longitude != null && (longitude is! num || longitude < -180 || longitude > 180)) {
+      throw const FormatException();
+    }
+    if (acquisition.carriesCoordinates != (latitude != null && longitude != null)) {
+      throw const FormatException();
+    }
+    if (accuracy != null && (accuracy is! num || accuracy <= 0 || accuracy > 100000)) {
+      throw const FormatException();
+    }
+    if (warning != null && warning is! bool) throw const FormatException();
+    return FoundationGateTrailFix(
+      id: id,
+      acquisition: acquisition,
+      latitude: latitude is num ? latitude.toDouble() : null,
+      longitude: longitude is num ? longitude.toDouble() : null,
+      accuracyMeters: accuracy is num ? accuracy.toDouble() : null,
+      integritySoftWarning: warning is bool && warning,
+      recordedAt: _parseTimestamp(value['recordedAt']),
+      receivedAt: _parseTimestamp(value['receivedAt']),
     );
   }
 

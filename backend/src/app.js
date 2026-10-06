@@ -530,6 +530,26 @@ export function createApp({
         }),
     );
 
+    // The trail a family can read back, under the same one-rule-for-everyone promise as the
+    // live picture.
+    app.get(
+        '/v1/families/:familyId/children/:childId/location-history',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            requireNoQueryParameters(request.query);
+            const result = await location.locationHistory({
+                principal: request.principal,
+                familyId,
+                childId,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
     // One reported position from a child's device. The device proves itself with the
     // credential it was issued once; a primary guardian may still report on its behalf
     // while native collection is finished, exactly as the telemetry route allows.
