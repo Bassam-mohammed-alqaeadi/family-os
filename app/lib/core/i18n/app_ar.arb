@@ -766,7 +766,7 @@
   "@permissionsExplainerLocationTitle": {
     "description": "SCR-FAT-005 location permission title"
   },
-  "permissionsExplainerLocationWhy": "ليصلك مكانه وتنبيهات المناطق الآمنة — نطلبه بعد أول قيمة، لا فورًا",
+  "permissionsExplainerLocationWhy": "مثل بوصلة صغيرة تساعد عائلتكم على الاطمئنان ومعرفة الوصول إلى الأماكن الآمنة — ونطلبه في وقته فقط",
   "@permissionsExplainerLocationWhy": {
     "description": "SCR-FAT-005 location WHY (G-3)"
   },
@@ -774,7 +774,7 @@
   "@permissionsExplainerA11yTitle": {
     "description": "SCR-FAT-005 accessibility permission title"
   },
-  "permissionsExplainerA11yWhy": "للحجب الفوري فقط — وقياس الوقت لا يحتاجها أصلًا",
+  "permissionsExplainerA11yWhy": "يساعد الهاتف على إيقاف التطبيق عند انتهاء الوقت المتفق عليه — ولا نستخدمه لقراءة الرسائل أو الصور",
   "@permissionsExplainerA11yWhy": {
     "description": "SCR-FAT-005 accessibility WHY (G-3)"
   },
@@ -782,7 +782,7 @@
   "@permissionsExplainerBatteryTitle": {
     "description": "SCR-FAT-005 battery exemption title"
   },
-  "permissionsExplainerBatteryWhy": "حتى لا يقتل نظام التوفير اتصالنا بجهازه",
+  "permissionsExplainerBatteryWhy": "ليبقى مساعد العائلة مستيقظًا عند الحاجة، من دون أن يقطع موفّر البطارية الاتصال",
   "@permissionsExplainerBatteryWhy": {
     "description": "SCR-FAT-005 battery WHY (Rule 23 — جهازه)"
   },

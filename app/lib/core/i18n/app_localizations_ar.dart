@@ -695,21 +695,21 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get permissionsExplainerLocationWhy =>
-      'ليصلك مكانه وتنبيهات المناطق الآمنة — نطلبه بعد أول قيمة، لا فورًا';
+      'مثل بوصلة صغيرة تساعد عائلتكم على الاطمئنان ومعرفة الوصول إلى الأماكن الآمنة — ونطلبه في وقته فقط';
 
   @override
   String get permissionsExplainerA11yTitle => 'خدمة إمكانية الوصول';
 
   @override
   String get permissionsExplainerA11yWhy =>
-      'للحجب الفوري فقط — وقياس الوقت لا يحتاجها أصلًا';
+      'يساعد الهاتف على إيقاف التطبيق عند انتهاء الوقت المتفق عليه — ولا نستخدمه لقراءة الرسائل أو الصور';
 
   @override
   String get permissionsExplainerBatteryTitle => 'استثناء البطارية';
 
   @override
   String get permissionsExplainerBatteryWhy =>
-      'حتى لا يقتل نظام التوفير اتصالنا بجهازه';
+      'ليبقى مساعد العائلة مستيقظًا عند الحاجة، من دون أن يقطع موفّر البطارية الاتصال';
 
   @override
   String get permissionsExplainerBanner =>

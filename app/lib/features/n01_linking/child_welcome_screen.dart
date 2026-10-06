@@ -16,17 +16,11 @@ abstract final class ChildWelcomeKeys {
   static const parentLean = Key('child_welcome_parent_lean');
 }
 
-/// SCR-CHD-001 — ترحيب الابن (bare child onboarding, mock-first).
-///
-/// Prototype CHD-001 · age-neutral (SHR-007 spirit) · no surveillance copy ·
-/// RoleGuard child · CTA → CHD-002 · Rule 12/23 · no SOS on this bare welcome.
+/// SCR-CHD-001 — a colorful, age-neutral child welcome.
 class ChildWelcomeScreen extends StatelessWidget {
   const ChildWelcomeScreen({super.key, this.roleOverride, this.onContinue});
 
-  /// Test seam — when set, ignores [CurrentRole].
   final AppRole? roleOverride;
-
-  /// Test seam — when null, navigates to `/scr-chd-002`.
   final VoidCallback? onContinue;
 
   AppRole _role(BuildContext context) =>
@@ -39,8 +33,8 @@ class ChildWelcomeScreen extends StatelessWidget {
     if (notifier != null && notifier.value != AppRole.child) {
       notifier.value = AppRole.child;
     }
-    if (onContinue != null) {
-      onContinue!();
+    if (onContinue case final callback?) {
+      callback();
       return;
     }
     context.go('/scr-chd-002');
@@ -54,7 +48,7 @@ class ChildWelcomeScreen extends StatelessWidget {
 
     return Scaffold(
       key: ChildWelcomeKeys.screen,
-      backgroundColor: colors.bg,
+      backgroundColor: colors.childBg,
       appBar: AppBar(
         backgroundColor: colors.surface,
         title: Column(
@@ -79,18 +73,27 @@ class ChildWelcomeScreen extends StatelessWidget {
           ],
         ),
       ),
-      body: SafeArea(
-        child: role == AppRole.child
-            ? _WelcomeBody(
-                l10n: l10n,
-                colors: colors,
-                onContinue: () => _continue(context),
-              )
-            : AppEmptyState(
-                key: ChildWelcomeKeys.parentLean,
-                title: l10n.childWelcomeParentLeanTitle,
-                message: l10n.childWelcomeParentLeanMessage,
-              ),
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: AlignmentDirectional.topStart,
+            end: AlignmentDirectional.bottomEnd,
+            colors: [colors.childBg, colors.teal100, colors.p50],
+          ),
+        ),
+        child: SafeArea(
+          child: role == AppRole.child
+              ? _WelcomeBody(
+                  l10n: l10n,
+                  colors: colors,
+                  onContinue: () => _continue(context),
+                )
+              : AppEmptyState(
+                  key: ChildWelcomeKeys.parentLean,
+                  title: l10n.childWelcomeParentLeanTitle,
+                  message: l10n.childWelcomeParentLeanMessage,
+                ),
+        ),
       ),
     );
   }
@@ -109,51 +112,117 @@ class _WelcomeBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final radii = Theme.of(context).extension<FamilyRadii>()!;
+    final shadows = Theme.of(context).extension<FamilyShadows>()!;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 40, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 22, 16, 24),
       child: Column(
         children: [
           Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Semantics(
-                  label: l10n.childWelcomeHeroSemantics,
-                  child: Text(
-                    key: ChildWelcomeKeys.hero,
-                    l10n.childWelcomeHeroEmoji,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 70, color: colors.ink),
+            child: Center(
+              child: SingleChildScrollView(
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 520),
+                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 30),
+                  decoration: BoxDecoration(
+                    color: colors.surface,
+                    borderRadius: BorderRadius.circular(radii.card + 10),
+                    border: Border.all(color: colors.teal),
+                    boxShadow: [shadows.shCard],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Semantics(
+                        label: l10n.childWelcomeHeroSemantics,
+                        child: SizedBox(
+                          width: 180,
+                          height: 160,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Container(
+                                width: 142,
+                                height: 142,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [colors.teal100, colors.p100],
+                                  ),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              Text(
+                                key: ChildWelcomeKeys.hero,
+                                l10n.childWelcomeHeroEmoji,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 76,
+                                  color: colors.ink,
+                                ),
+                              ),
+                              PositionedDirectional(
+                                top: 4,
+                                start: 4,
+                                child: Icon(
+                                  Icons.auto_awesome_rounded,
+                                  color: colors.amber,
+                                  size: 28,
+                                ),
+                              ),
+                              PositionedDirectional(
+                                end: 0,
+                                bottom: 7,
+                                child: Container(
+                                  width: 45,
+                                  height: 45,
+                                  decoration: BoxDecoration(
+                                    color: colors.coral,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: colors.surface,
+                                      width: 4,
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    Icons.rocket_launch_rounded,
+                                    color: colors.surface,
+                                    size: 23,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        l10n.childWelcomeHeadline,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 27,
+                          fontWeight: FontWeight.w900,
+                          color: colors.ink,
+                          height: 1.3,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        l10n.childWelcomeBody,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          height: 1.7,
+                          fontWeight: FontWeight.w600,
+                          color: colors.ink2,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.childWelcomeHeadline,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: colors.ink,
-                    height: 1.35,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Text(
-                    l10n.childWelcomeBody,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      height: 1.7,
-                      fontWeight: FontWeight.w600,
-                      color: colors.ink2,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
+          const SizedBox(height: 18),
           PrimaryBtn(
             key: ChildWelcomeKeys.continueCta,
             label: l10n.childWelcomeContinue,

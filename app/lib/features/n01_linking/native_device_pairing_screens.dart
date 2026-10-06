@@ -9,10 +9,12 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/banner.dart';
+import 'package:family_os/core/design/components/premium_journey_states.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/app/child_device_mode.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/features/n01_linking/pairing_brightness_session.dart';
 import 'package:family_os/features/n01_linking/pairing_issuance_key.dart';
 import 'package:family_os/features/shared_onboarding/session_recovery.dart';
 import 'package:family_os/core/domain/child_id.dart';
@@ -32,9 +34,16 @@ import 'package:family_os/foundation_gate/native_child_telemetry_bridge.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 class NativeParentPairingScreen extends StatefulWidget {
-  const NativeParentPairingScreen({super.key, this.childId});
+  const NativeParentPairingScreen({
+    super.key,
+    this.childId,
+    this.brightnessSession,
+  });
 
   final String? childId;
+
+  /// Injectable for lifecycle tests; production uses the native window bridge.
+  final PairingBrightnessSession? brightnessSession;
 
   @override
   State<NativeParentPairingScreen> createState() =>
@@ -50,6 +59,8 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
 
   final _label = TextEditingController();
   final _issuanceKey = PairingIssuanceKey();
+  late final PairingBrightnessSession _brightnessSession;
+  var _brightnessMaximized = false;
   FoundationGateDevicePairing? _pairing;
   var _loading = false;
   String? _error;
@@ -70,6 +81,7 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
   @override
   void initState() {
     super.initState();
+    _brightnessSession = widget.brightnessSession ?? PairingBrightnessSession();
     WidgetsBinding.instance.addObserver(this);
     _label.addListener(() => setState(() {}));
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -93,6 +105,7 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
     _devicePoll?.cancel();
     _verificationPoll?.cancel();
     _label.dispose();
+    unawaited(_brightnessSession.restore());
     super.dispose();
   }
 
@@ -286,7 +299,13 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
         FoundationGateDevicePairingCreateFailure.emailVerificationRequired) {
       _startVerificationPoll();
     }
-    if (pairing != null) _startTimers(pairing, source, familyId, childRaw);
+    if (pairing != null) {
+      if (!_brightnessMaximized) {
+        _brightnessMaximized = true;
+        unawaited(_brightnessSession.maximize());
+      }
+      _startTimers(pairing, source, familyId, childRaw);
+    }
   }
 
   String _messageForPairingFailure(
@@ -479,7 +498,7 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
               const Divider(),
               const SizedBox(height: 16),
               if (_childConnected)
-                _connectedCard(colors, copy)
+                _connectedCard(copy)
               else if (_expired)
                 BannerNote(
                   message: copy.pairingExpired,
@@ -609,17 +628,15 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
     }
   }
 
-  Widget _connectedCard(FamilyColors colors, NativeChildPairingCopy copy) {
+  Widget _connectedCard(NativeChildPairingCopy copy) {
     return Column(
       children: [
-        Icon(Icons.check_circle, color: colors.mint, size: 64),
-        const SizedBox(height: 12),
-        Text(
-          copy.childDeviceConnected,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+        PremiumCelebrationPanel(
+          key: const Key('parent_pairing_celebration'),
+          title: copy.childDeviceConnected,
+          body: copy.childDeviceConnectedBody,
+          icon: Icons.phonelink_lock_rounded,
         ),
-        const SizedBox(height: 16),
         PrimaryBtn(
           label: copy.backToChildren,
           onPressed: () => context.go('/scr-fat-002'),
@@ -770,7 +787,7 @@ class ChildModePairingScreen extends StatefulWidget {
 /// controls are enabled; nothing here holds a code or credential.
 enum _ChildStep { permissions, code, activating }
 
-enum _ActivatePhase { idle, verifyingCode, starting }
+enum _ActivatePhase { idle, verifyingCode, starting, success }
 
 class _ChildModePairingScreenState extends State<ChildModePairingScreen>
     with WidgetsBindingObserver {
@@ -974,6 +991,9 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen>
         deviceId: claimed.device.id,
       );
       if (!mounted) return;
+      setState(() => _phase = _ActivatePhase.success);
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+      if (!mounted) return;
       final roleNotifier = CurrentRole.maybeNotifierOf(context);
       if (roleNotifier != null) roleNotifier.value = AppRole.child;
       final onPaired = widget.onPaired;
@@ -1030,10 +1050,19 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen>
             ),
         ],
       ),
-      body: SafeArea(
-        child: _showScanner
-            ? _buildScanner(colors, copy)
-            : _buildSteps(colors, copy),
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: AlignmentDirectional.topStart,
+            end: AlignmentDirectional.bottomEnd,
+            colors: [colors.childBg, colors.teal100, colors.p50],
+          ),
+        ),
+        child: SafeArea(
+          child: _showScanner
+              ? _buildScanner(colors, copy)
+              : _buildSteps(colors, copy),
+        ),
       ),
     );
   }
@@ -1083,6 +1112,8 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen>
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        _ChildPairingHero(title: copy.childTitle),
+        const SizedBox(height: 18),
         _StepHeader(
           current: step,
           labels: [copy.stepPermissions, copy.stepScan, copy.stepActivate],
@@ -1098,7 +1129,7 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen>
           ),
         if (step == _ChildStep.permissions) _permissionsSection(colors, copy),
         if (step == _ChildStep.code) _codeSection(colors, copy),
-        if (step == _ChildStep.activating) _activatingSection(colors, copy),
+        if (step == _ChildStep.activating) _activatingSection(copy),
         if (_message != null) ...[
           const SizedBox(height: 14),
           Text(
@@ -1136,16 +1167,46 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          copy.permissionsIntro,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            height: 1.5,
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colors.surface.withValues(alpha: 0.92),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: colors.teal),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: colors.amber100,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.family_restroom_rounded,
+                  color: colors.amberDeep,
+                  size: 29,
+                ),
+              ),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Text(
+                  copy.permissionsIntro,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    height: 1.55,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 14),
         _PermissionRow(
+          icon: Icons.my_location_rounded,
           label: copy.permissionLocation,
           granted: p?.fineLocationGranted ?? false,
           grantedText: copy.granted,
@@ -1153,6 +1214,7 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen>
         ),
         const SizedBox(height: 8),
         _PermissionRow(
+          icon: Icons.nights_stay_rounded,
           label: copy.permissionBackground,
           granted: p?.backgroundLocationGranted ?? false,
           grantedText: copy.granted,
@@ -1256,7 +1318,15 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen>
     );
   }
 
-  Widget _activatingSection(FamilyColors colors, NativeChildPairingCopy copy) {
+  Widget _activatingSection(NativeChildPairingCopy copy) {
+    if (_phase == _ActivatePhase.success) {
+      return PremiumCelebrationPanel(
+        key: const Key('child_pairing_celebration'),
+        title: copy.childPairingSuccessTitle,
+        body: copy.childPairingSuccessBody,
+        icon: Icons.rocket_launch_rounded,
+      );
+    }
     final label = switch (_phase) {
       _ActivatePhase.starting => copy.activatingProtection,
       _ => copy.verifyingCode,
@@ -1273,6 +1343,83 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen>
             style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ChildPairingHero extends StatelessWidget {
+  const _ChildPairingHero({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<FamilyColors>()!;
+    return Semantics(
+      image: true,
+      label: title,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(colors: [colors.teal600, colors.p500]),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: colors.teal.withValues(alpha: 0.24),
+              blurRadius: 24,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 70,
+              height: 70,
+              decoration: BoxDecoration(
+                color: colors.surface,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: colors.amber100,
+                  width: 4,
+                ),
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Icon(
+                    Icons.sentiment_very_satisfied_rounded,
+                    size: 43,
+                    color: colors.tealDeep,
+                  ),
+                  PositionedDirectional(
+                    end: 1,
+                    top: 1,
+                    child: Icon(
+                      Icons.auto_awesome_rounded,
+                      size: 20,
+                      color: colors.amber,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 15),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  color: colors.surface,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  height: 1.3,
+                ),
+              ),
+            ),
+            Icon(Icons.rocket_launch_rounded, color: colors.amber100, size: 30),
+          ],
+        ),
       ),
     );
   }
@@ -1346,12 +1493,14 @@ class _StepHeader extends StatelessWidget {
 
 class _PermissionRow extends StatelessWidget {
   const _PermissionRow({
+    required this.icon,
     required this.label,
     required this.granted,
     required this.grantedText,
     required this.notGrantedText,
   });
 
+  final IconData icon;
   final String label;
   final bool granted;
   final String grantedText;
@@ -1369,9 +1518,18 @@ class _PermissionRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(
-            granted ? Icons.check_circle : Icons.radio_button_unchecked,
-            color: granted ? colors.mint : colors.ink2,
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: granted ? colors.mint100 : colors.p100,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              size: 21,
+              color: granted ? colors.mintInk : colors.p700,
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(

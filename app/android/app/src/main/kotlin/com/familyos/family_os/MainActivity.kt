@@ -35,6 +35,30 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, BRIGHTNESS_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "maximize" -> maximizePairingBrightness(result)
+                    "restore" -> restorePairingBrightness(call, result)
+                    else -> result.notImplemented()
+                }
+            }
+    }
+
+    private fun maximizePairingBrightness(result: MethodChannel.Result) {
+        val previous = window.attributes.screenBrightness
+        val attributes = window.attributes
+        attributes.screenBrightness = 1.0f
+        window.attributes = attributes
+        result.success(previous.toDouble())
+    }
+
+    private fun restorePairingBrightness(call: MethodCall, result: MethodChannel.Result) {
+        val previous = call.argument<Number>("brightness")?.toFloat() ?: -1.0f
+        val attributes = window.attributes
+        attributes.screenBrightness = previous.coerceIn(-1.0f, 1.0f)
+        window.attributes = attributes
+        result.success(null)
     }
 
     private fun requestLocationPermissions(result: MethodChannel.Result) {
@@ -187,6 +211,7 @@ class MainActivity : FlutterActivity() {
 
     companion object {
         private const val TELEMETRY_CHANNEL = "com.familyos.family_os/native_child_telemetry"
+        private const val BRIGHTNESS_CHANNEL = "com.familyos.family_os/pairing_brightness"
         private const val REQUEST_FOREGROUND_LOCATION = 8101
         private const val REQUEST_BACKGROUND_LOCATION = 8102
         const val EXTRA_FLUTTER_ROUTE = "flutter_route"

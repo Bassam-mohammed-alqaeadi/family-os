@@ -146,6 +146,11 @@ class OnboardingCopy {
   String get familySubmit => isArabic ? 'إنشاء العائلة' : 'Create family';
   String get creatingFamily =>
       isArabic ? 'جارٍ إنشاء العائلة…' : 'Creating the family…';
+  String get familyCreatedTitle =>
+      isArabic ? 'أصبحت عائلتكم جاهزة!' : 'Your family is ready!';
+  String get familyCreatedBody => isArabic
+      ? 'بداية جميلة وآمنة — لنُضف أول طفل الآن.'
+      : 'A safe, joyful start — let’s add your first child.';
   String get familyWhatNextTitle =>
       isArabic ? 'ماذا بعد الإنشاء؟' : 'What happens next?';
   String get familyWhatNext1 => isArabic

@@ -7,6 +7,7 @@ import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/app_error_state.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/banner.dart';
+import 'package:family_os/core/design/components/premium_journey_states.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/components/role_gate.dart';
 import 'package:family_os/core/design/components/tag.dart';
@@ -655,15 +656,11 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
           ? ListView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
               children: [
-                SizedBox(
-                  height: 180,
-                  child: Center(
-                    key: ChildrenListKeys.loading,
-                    child: Semantics(
-                      label: l10n.childrenListLoadingSemantics,
-                      child: const CircularProgressIndicator(),
-                    ),
-                  ),
+                Semantics(
+                  key: ChildrenListKeys.loading,
+                  liveRegion: true,
+                  label: l10n.childrenListLoadingSemantics,
+                  child: const PremiumRosterShimmer(),
                 ),
                 const ShellTabMoreTools(tabId: 'kids'),
               ],
@@ -690,6 +687,7 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
                   message: l10n.childrenListEmptyMessage,
                   actionLabel: l10n.childrenListAddChild,
                   onAction: _goAddChild,
+                  icon: Icons.child_care_rounded,
                 ),
                 const ShellTabMoreTools(tabId: 'kids'),
               ],

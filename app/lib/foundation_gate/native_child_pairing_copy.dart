@@ -172,6 +172,9 @@ class NativeChildPairingCopy {
       : 'Waiting for the child device… scan the code from the child’s phone.';
   String get childDeviceConnected =>
       isArabic ? 'تم ربط جهاز الابن بنجاح' : 'Child device connected';
+  String get childDeviceConnectedBody => isArabic
+      ? 'رائع! أصبح جهاز طفلك داخل مساحة العائلة الآمنة.'
+      : 'Wonderful! Your child’s phone is now part of the safe family space.';
   String get backToChildren =>
       isArabic ? 'العودة إلى الأبناء' : 'Back to children';
   String get codeCopied => isArabic ? 'تم نسخ الرمز' : 'Code copied';
@@ -184,13 +187,13 @@ class NativeChildPairingCopy {
   String get stepScan => isArabic ? 'الرمز' : 'Code';
   String get stepActivate => isArabic ? 'التفعيل' : 'Activate';
   String get permissionsIntro => isArabic
-      ? 'قبل إدخال الرمز، يحتاج التطبيق إذن الموقع «طوال الوقت» حتى يرى الوالد مكان الجهاز وبطاريته. لن يُستهلك الرمز قبل منح الأذونات.'
-      : 'Before entering the code, the app needs location access “all the time” so the parent can see the device’s location and battery. The code is not consumed until permissions are granted.';
+      ? 'هيا نجهّز مساعد العائلة الصغير! يحتاج هاتفك معرفة مكانه كي تطمئن عائلتك عليك، حتى عندما يكون التطبيق مغلقًا. سنطلب موافقتك خطوة بخطوة، ولن نستخدم الرمز قبلها.'
+      : 'Let’s set up your little family helper! Your phone needs its location so your family can know you are safe, even when the app is closed. We will ask step by step, and never use the code first.';
   String get permissionLocation =>
-      isArabic ? 'الموقع الدقيق' : 'Precise location';
+      isArabic ? 'مكاني عندما أستخدم الهاتف' : 'My place while I use my phone';
   String get permissionBackground => isArabic
-      ? 'الموقع في الخلفية (طوال الوقت)'
-      : 'Background location (all the time)';
+      ? 'مكاني عندما يكون التطبيق مغلقًا'
+      : 'My place when the app is closed';
   String get granted => isArabic ? 'ممنوح' : 'Granted';
   String get notGranted => isArabic ? 'غير ممنوح' : 'Not granted';
   String get grantPermissions =>
@@ -208,6 +211,11 @@ class NativeChildPairingCopy {
       isArabic ? 'جارٍ التحقق من الرمز…' : 'Verifying the code…';
   String get activatingProtection =>
       isArabic ? 'جارٍ تفعيل الحماية…' : 'Activating protection…';
+  String get childPairingSuccessTitle =>
+      isArabic ? 'أهلًا بك في عائلتك!' : 'Welcome to your family!';
+  String get childPairingSuccessBody => isArabic
+      ? 'أحسنت! تم ربط هاتفك وأصبح كل شيء جاهزًا بأمان.'
+      : 'You did it! Your phone is paired and everything is safely ready.';
   String get codeConsumedStartFailed => isArabic
       ? 'تم قبول الرمز لكن تعذر تشغيل الحماية على هذا الجهاز. اطلب من الوالد إصدار رمز جديد ثم أعد المحاولة.'
       : 'The code was accepted but protection could not start on this device. Ask the parent to issue a new code and try again.';

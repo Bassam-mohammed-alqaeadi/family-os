@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'package:family_os/core/design/components/premium_journey_states.dart';
 import 'package:family_os/core/design/tokens.dart';
 
 import 'foundation_gate_copy.dart';
@@ -304,7 +305,6 @@ class _RosterLoading extends StatelessWidget {
   Widget build(BuildContext context) {
     final copy = FoundationGateCopy.of(context);
     final colors = Theme.of(context).extension<FamilyColors>()!;
-    final radii = Theme.of(context).extension<FamilyRadii>()!;
     return Semantics(
       label: copy.loadingRoster,
       liveRegion: true,
@@ -318,20 +318,7 @@ class _RosterLoading extends StatelessWidget {
           const SizedBox(height: 8),
           Text(copy.childrenSubtitle, style: TextStyle(color: colors.ink2)),
           const SizedBox(height: 20),
-          for (var index = 0; index < 2; index++)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: colors.surface,
-                  borderRadius: BorderRadius.circular(radii.card),
-                  border: Border.all(color: colors.border),
-                ),
-                child: const SizedBox(height: 92),
-              ),
-            ),
-          const SizedBox(height: 8),
-          const Center(child: CircularProgressIndicator()),
+          const PremiumRosterShimmer(cardCount: 2),
         ],
       ),
     );

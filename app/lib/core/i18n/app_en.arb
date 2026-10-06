@@ -766,7 +766,7 @@
   "@permissionsExplainerLocationTitle": {
     "description": "SCR-FAT-005 location permission title"
   },
-  "permissionsExplainerLocationWhy": "So you get their place and safe-zone alerts — we ask after first value, not immediately",
+  "permissionsExplainerLocationWhy": "Like a little compass that helps your family know you are safe and spot safe-place arrivals — requested only when needed",
   "@permissionsExplainerLocationWhy": {
     "description": "SCR-FAT-005 location WHY (G-3)"
   },
@@ -774,7 +774,7 @@
   "@permissionsExplainerA11yTitle": {
     "description": "SCR-FAT-005 accessibility permission title"
   },
-  "permissionsExplainerA11yWhy": "For instant blocking only — time tracking doesn’t need it at all",
+  "permissionsExplainerA11yWhy": "Helps the phone pause an app when agreed time ends — it is not used to read messages or photos",
   "@permissionsExplainerA11yWhy": {
     "description": "SCR-FAT-005 accessibility WHY (G-3)"
   },
@@ -782,7 +782,7 @@
   "@permissionsExplainerBatteryTitle": {
     "description": "SCR-FAT-005 battery exemption title"
   },
-  "permissionsExplainerBatteryWhy": "So battery saver doesn’t kill our link to their device",
+  "permissionsExplainerBatteryWhy": "Keeps the family helper awake when needed, so battery saver does not cut the connection",
   "@permissionsExplainerBatteryWhy": {
     "description": "SCR-FAT-005 battery WHY (Rule 23 — جهازه)"
   },

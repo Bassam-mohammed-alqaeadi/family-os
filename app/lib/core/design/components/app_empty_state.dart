@@ -17,6 +17,7 @@ class AppEmptyState extends StatelessWidget {
     this.actionLabel,
     this.onAction,
     this.contextName,
+    this.icon = Icons.inbox_outlined,
   });
 
   /// Optional overrides; defaults resolve from ARB (SHR-006).
@@ -29,6 +30,9 @@ class AppEmptyState extends StatelessWidget {
 
   /// Surface name interpolated into default message (e.g. «لوحة يومي»).
   final String? contextName;
+
+  /// Friendly illustration glyph; callers can select one for their context.
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
@@ -67,11 +71,53 @@ class AppEmptyState extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
                     child: Column(
                       children: [
-                        Icon(
-                          Icons.inbox_outlined,
-                          size: 48,
-                          color: colors.teal,
-                          semanticLabel: resolvedTitle,
+                        Semantics(
+                          image: true,
+                          label: resolvedTitle,
+                          child: SizedBox(
+                            width: 112,
+                            height: 88,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                PositionedDirectional(
+                                  start: 4,
+                                  top: 8,
+                                  child: Icon(
+                                    Icons.auto_awesome_rounded,
+                                    size: 22,
+                                    color: colors.amber,
+                                  ),
+                                ),
+                                PositionedDirectional(
+                                  end: 2,
+                                  bottom: 5,
+                                  child: Icon(
+                                    Icons.favorite_rounded,
+                                    size: 21,
+                                    color: colors.coral,
+                                  ),
+                                ),
+                                Container(
+                                  width: 76,
+                                  height: 76,
+                                  decoration: BoxDecoration(
+                                    color: colors.surface,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: colors.mint.withValues(alpha: 0.55),
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    icon,
+                                    size: 40,
+                                    color: colors.tealDeep,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 16),
                         Text(

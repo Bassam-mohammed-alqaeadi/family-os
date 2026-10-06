@@ -703,21 +703,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get permissionsExplainerLocationWhy =>
-      'So you get their place and safe-zone alerts — we ask after first value, not immediately';
+      'Like a little compass that helps your family know you are safe and spot safe-place arrivals — requested only when needed';
 
   @override
   String get permissionsExplainerA11yTitle => 'Accessibility service';
 
   @override
   String get permissionsExplainerA11yWhy =>
-      'For instant blocking only — time tracking doesn’t need it at all';
+      'Helps the phone pause an app when agreed time ends — it is not used to read messages or photos';
 
   @override
   String get permissionsExplainerBatteryTitle => 'Battery exemption';
 
   @override
   String get permissionsExplainerBatteryWhy =>
-      'So battery saver doesn’t kill our link to their device';
+      'Keeps the family helper awake when needed, so battery saver does not cut the connection';
 
   @override
   String get permissionsExplainerBanner =>

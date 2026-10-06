@@ -1391,7 +1391,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-005 location WHY (G-3)
   ///
   /// In ar, this message translates to:
-  /// **'ليصلك مكانه وتنبيهات المناطق الآمنة — نطلبه بعد أول قيمة، لا فورًا'**
+  /// **'مثل بوصلة صغيرة تساعد عائلتكم على الاطمئنان ومعرفة الوصول إلى الأماكن الآمنة — ونطلبه في وقته فقط'**
   String get permissionsExplainerLocationWhy;
 
   /// SCR-FAT-005 accessibility permission title
@@ -1403,7 +1403,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-005 accessibility WHY (G-3)
   ///
   /// In ar, this message translates to:
-  /// **'للحجب الفوري فقط — وقياس الوقت لا يحتاجها أصلًا'**
+  /// **'يساعد الهاتف على إيقاف التطبيق عند انتهاء الوقت المتفق عليه — ولا نستخدمه لقراءة الرسائل أو الصور'**
   String get permissionsExplainerA11yWhy;
 
   /// SCR-FAT-005 battery exemption title
@@ -1415,7 +1415,7 @@ abstract class AppLocalizations {
   /// SCR-FAT-005 battery WHY (Rule 23 — جهازه)
   ///
   /// In ar, this message translates to:
-  /// **'حتى لا يقتل نظام التوفير اتصالنا بجهازه'**
+  /// **'ليبقى مساعد العائلة مستيقظًا عند الحاجة، من دون أن يقطع موفّر البطارية الاتصال'**
   String get permissionsExplainerBatteryWhy;
 
   /// SCR-FAT-005 rule-3 amber banner (refusal never locks)

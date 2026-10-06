@@ -13,6 +13,7 @@ import 'package:family_os/app/sys3_routes.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/shared_onboarding/welcome_screen.dart';
+import 'package:family_os/features/shared_onboarding/premium_launch_screen.dart';
 import 'package:family_os/features/shared_onboarding/create_account_screen.dart';
 import 'package:family_os/features/shared_onboarding/login_screen.dart';
 import 'package:family_os/features/shared_onboarding/device_mode_screen.dart';
@@ -318,6 +319,11 @@ GoRouter createAppRouter({
       return roleGuardRedirect(state, roleListenable.value);
     },
     routes: [
+      GoRoute(
+        path: '/launch',
+        name: 'launch',
+        builder: (context, state) => const PremiumLaunchScreen(),
+      ),
       GoRoute(
         path: '/gallery',
         name: 'gallery',

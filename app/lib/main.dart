@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:family_os/app/audit_population.dart';
 import 'package:family_os/app/dev_screen_gallery.dart';
 import 'package:family_os/app/family_shell.dart';
+import 'package:family_os/app/cold_start_route.dart';
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/app/router.dart';
 import 'package:family_os/app/ux_local_seed.dart';
@@ -54,6 +55,7 @@ import 'package:family_os/foundation_gate/family_discovery_api_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 import 'package:family_os/foundation_gate/foundation_gate_identity.dart';
+import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 import 'package:family_os/foundation_gate/foundation_gate_session_controller.dart';
 import 'package:family_os/foundation_gate/main_app_foundation_runtime.dart';
 
@@ -135,12 +137,21 @@ Future<void> main() async {
   if (familyEntryRuntime != null) {
     await familyEntryRuntime.refreshIdentity();
   }
+  final coldStart = resolveColdStartDestination(
+    pairedChildHomeLocation: childDevice?.homeLocation,
+    identity:
+        familyEntryRuntime?.identityValue ?? const IdentitySnapshot.unavailable(),
+    guardianPhase:
+        familyEntryRuntime?.phase ?? FoundationGatePhase.unconfigured,
+    hasAuthenticatedGuardian:
+        familyEntryRuntime?.hasAuthenticatedPrincipal ?? false,
+  );
   runApp(
     FamilyOsApp(
       localeController: localeController,
       foundationRuntime: familyEntryRuntime,
-      initialRole: childDevice == null ? null : AppRole.child,
-      initialLocationOverride: childDevice?.homeLocation,
+      initialRole: coldStart.role,
+      initialLocationOverride: coldStart.location,
       pairedChildDevice: childDevice != null,
     ),
   );
@@ -191,8 +202,9 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
 }
 
 /// Cold-start route from Android `flutter_route` intent extra (via
-/// [MainActivity.getInitialRoute] → platform defaultRouteName), else father Today.
-String resolveAppInitialLocation({String fallback = '/scr-shr-001'}) {
+/// [MainActivity.getInitialRoute] → platform defaultRouteName), else the
+/// bounded signed-out launch experience.
+String resolveAppInitialLocation({String fallback = '/launch'}) {
   final fromPlatform = auditRoutePath(
     WidgetsBinding.instance.platformDispatcher.defaultRouteName,
   );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:family_os/core/design/components/app_error_state.dart';
+import 'package:family_os/core/design/components/premium_journey_states.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/runtime/app_scope.dart';
@@ -54,6 +55,7 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
   final _scroll = ScrollController();
   var _touched = false;
   var _submitting = false;
+  var _celebrating = false;
   CreateFamilyException? _error;
   String? _idempotencyKey;
   String? _submittedName;
@@ -98,11 +100,17 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
     try {
       await _create(name);
       if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _celebrating = true;
+      });
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+      if (!mounted) return;
       if (widget.onCreated != null) {
         widget.onCreated!();
         return;
       }
-      // The server confirmed the family; continue the onboarding journey.
+      // The server confirmed the family; continue after a bounded celebration.
       context.go('/scr-fat-002');
     } on CreateFamilyException catch (e) {
       if (!mounted) return;
@@ -199,6 +207,20 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
     final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final error = _error;
+
+    if (_celebrating) {
+      return Scaffold(
+        backgroundColor: colors.bg,
+        body: SafeArea(
+          child: PremiumCelebrationPanel(
+            key: const Key('create_family_celebration'),
+            title: copy.familyCreatedTitle,
+            body: copy.familyCreatedBody,
+            icon: Icons.family_restroom_rounded,
+          ),
+        ),
+      );
+    }
 
     return OnboardingScaffold(
       controller: _scroll,
