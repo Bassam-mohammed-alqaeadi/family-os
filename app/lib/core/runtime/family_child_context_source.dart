@@ -86,12 +86,12 @@ final class FamilyChildContext {
 @immutable
 final class FamilyChildContextResult {
   const FamilyChildContextResult.ready(FamilyChildContext context)
-    : context = context,
-      failure = null;
+    : this._(context: context);
 
   const FamilyChildContextResult.failed(FamilyChildContextFailure failure)
-    : context = null,
-      failure = failure;
+    : this._(failure: failure);
+
+  const FamilyChildContextResult._({this.context, this.failure});
 
   final FamilyChildContext? context;
   final FamilyChildContextFailure? failure;
