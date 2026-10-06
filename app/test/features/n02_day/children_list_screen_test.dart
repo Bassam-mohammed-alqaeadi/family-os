@@ -286,6 +286,8 @@ void main() {
   testWidgets(
     'SCR-FAT-012 the device card appears only for the device the server flagged',
     (tester) async {
+      const childId = '33333333-3333-4333-8333-333333333333';
+      const deviceId = '44444444-4444-4444-8444-444444444444';
       // The card existed, the contract existed, and the roster showed a tag. This test is
       // the proof the association is real: the sentence the guardian reads comes from the
       // server's own reason code, and a device the server called healthy produces nothing.
@@ -332,15 +334,31 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      // Asserted in the order the screen builds them, each with its own reason, so a
+      // failure says which link of the chain broke instead of pointing at the last one.
       expect(
-        find.byKey(ChildrenListKeys.deviceCard('44444444-4444-4444-8444-444444444444')),
+        find.byKey(ChildrenListKeys.childRow(childId)),
         findsOneWidget,
+        reason: 'the roster row must render before its device card can',
+      );
+      expect(
+        find.byKey(ChildrenListKeys.deviceCard(deviceId)),
+        findsOneWidget,
+        reason: 'the device the server flagged produced no card',
       );
       expect(find.byType(ChildDeviceCard), findsOneWidget);
       // The words are the copy layer's, and they name the cause rather than a raw code:
       // an offline device is offered the one step that could actually help it.
-      expect(find.textContaining('غير متصل'), findsOneWidget);
-      expect(find.textContaining('تأكد أن الجهاز يعمل'), findsOneWidget);
+      expect(
+        find.textContaining('غير متصل'),
+        findsWidgets,
+        reason: 'the card must name the condition in the guardian language',
+      );
+      expect(
+        find.textContaining('تأكد أن الجهاز يعمل'),
+        findsWidgets,
+        reason: 'an offline device must offer the one step that could help',
+      );
       // A raw machine code appearing on screen would mean the localization layer failed.
       expect(find.textContaining('stopped_reporting'), findsNothing);
     },

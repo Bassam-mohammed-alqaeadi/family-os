@@ -48,7 +48,10 @@ jobs:
         continue-on-error: true
         run: |
           mkdir -p build/ci
-          flutter test --file-reporter=json:build/ci/flutter-test.json
+          # The JSON report carries names and results, and the exception text goes to the
+          # console. Both are kept, because a failure named without its message cannot be
+          # acted on from a machine that can only read annotations.
+          flutter test --file-reporter=json:build/ci/flutter-test.json 2>&1 | tee build/ci/flutter-test.log
       - name: Summarize test result
         if: always()
         env:
@@ -128,6 +131,41 @@ jobs:
                   "Inspect the Run tests log."
               )
           summary_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+          # Surface each failure through the workflow command channel as well. The step
+          # summary lives in the UI, and the log file sits behind a signed link, so a
+          # failure that is only in those two places cannot be read by an agent that
+          # needs to fix it. An annotation is retrievable through the checks API, which
+          # is how the next commit learns what actually broke instead of guessing.
+          for failure in failures:
+              message = failure if isinstance(failure, str) else str(failure)
+              print(f"::error title=Flutter test failed::{message[:900]}")
+          for name, error in errors.items():
+              print(f"::error title=Flutter test error::{name}: {str(error)[:800]}")
+
+          # The exception text itself, which the JSON reporter does not carry.
+          console = Path("build/ci/flutter-test.log")
+          if console.exists():
+              blocks = []
+              current = None
+              for line in console.read_text(encoding="utf-8", errors="replace").splitlines():
+                  stripped = line.strip()
+                  if stripped.startswith("Expected:") or stripped.startswith("Actual:"):
+                      current = (current or [])
+                      current.append(stripped)
+                  elif current and (
+                      stripped.startswith("Which:")
+                      or stripped.startswith("Actual:")
+                      or stripped.startswith("at ")
+                  ):
+                      current.append(stripped)
+                  elif current and not stripped:
+                      blocks.append(" | ".join(current))
+                      current = None
+              if current:
+                  blocks.append(" | ".join(current))
+              for block in blocks[:10]:
+                  print(f"::error title=Flutter expectation::{block[:900]}")
           PY
       - name: Upload Flutter test report
         if: always()

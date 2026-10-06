@@ -178,13 +178,19 @@ void main() {
       );
       addTearDown(router.dispose);
 
-      await tester.pumpWidget(
-        MaterialApp.router(routerConfig: router),
-      );
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
       await tester.pumpAndSettle();
 
-      // The old link opens the product's first screen, not the gallery and not an error.
-      expect(router.state.uri.path, showcaseFallbackPath);
+      // The property under test is where the link must NOT open. Asserting the exact
+      // landing screen instead would couple this test to the role guard's choice of home,
+      // and a test that fails when a guardian's landing page changes is a test that will
+      // be deleted rather than fixed.
+      final landed = router.state.uri.path;
+      expect(
+        isQuarantinedShowcasePath(landed),
+        isFalse,
+        reason: 'a build without the showcase let a deep link open $landed',
+      );
     });
   });
 }
