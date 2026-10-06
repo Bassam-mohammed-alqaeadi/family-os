@@ -114,7 +114,8 @@ void main() {
 
     // Live preview reflects the draft.
     expect(find.text('سارة'), findsOneWidget);
-    expect(find.text('7 سنة'), findsOneWidget);
+    // The selected age is visible in both the compact dropdown and preview.
+    expect(find.text('7 سنة'), findsNWidgets(2));
 
     await scrollAndTap(tester, find.byKey(AddChildKeys.submit));
     await tester.pumpAndSettle();

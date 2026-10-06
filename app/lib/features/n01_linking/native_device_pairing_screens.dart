@@ -136,15 +136,7 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
       _stopVerificationPoll();
       if (wasUnverified) {
         HapticFeedback.mediumImpact();
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(
-              content: Text(copy.emailVerificationSuccess),
-              duration: const Duration(seconds: 2),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+        AppToast.show(context, message: copy.emailVerificationSuccess);
       }
       // The link was clicked (on this phone or any other device): continue
       // hands-free — no tap required.

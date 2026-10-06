@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/features/n01_linking/native_device_pairing_screens.dart';
 import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 
@@ -15,6 +16,8 @@ String _pairingBody() {
 }
 
 void main() {
+  tearDown(AppToast.dismiss);
+
   testWidgets(
     'C1 magic: e-mail verified elsewhere → detected silently → code issued',
     (tester) async {
