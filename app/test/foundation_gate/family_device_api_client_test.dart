@@ -209,10 +209,14 @@ void main() {
     expect(transport.postedUri, isNull);
   });
 
-  test('a device whose condition the client cannot understand is dropped, not guessed', () async {
+  test('a device whose condition the client cannot understand is refused, not guessed', () async {
     // The one failure this client must never have: rendering a state it did not receive.
     // A guardian told "active" about a device the server cut off is a guardian who stops
     // looking.
+    //
+    // The whole list is refused rather than the one device being skipped, and that is the
+    // deliberate choice: a silently skipped device could be the one asking for the
+    // guardian's hand, so a visible error is the smaller of the two failures.
     final transport = FakeTransport(
       const FoundationGateHttpResponse(
         statusCode: 200,

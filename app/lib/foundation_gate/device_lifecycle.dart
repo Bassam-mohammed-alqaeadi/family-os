@@ -261,19 +261,22 @@ DateTime? _parseTimestamp(Object? value) {
   return DateTime.tryParse(value);
 }
 
-/// Group parsed devices by the child they belong to.
+/// Group already-parsed devices by the child they belong to.
 ///
-/// Devices whose payload this client could not fully understand are absent from
-/// the result rather than present with guessed values.
+/// The parsing happens exactly once, at the wire boundary: the API client runs every
+/// payload through [parseFoundationGateGuardianDevice] and refuses the response if any
+/// device cannot be understood. This function used to parse again from raw JSON, and every
+/// caller handed it devices that had already been parsed - so every element failed the
+/// re-parse and the result was an empty map. The roster showed no device at all, in
+/// production and in the widget test that caught it.
+///
+/// Taking the parsed type is what makes that mistake impossible to repeat: there is nothing
+/// here to parse, so there is nothing here to get wrong.
 Map<String, List<FoundationGateGuardianDevice>> groupFoundationGateDevicesByChild(
-  Iterable<Object?> rawDevices,
+  Iterable<FoundationGateGuardianDevice> devices,
 ) {
   final grouped = <String, List<FoundationGateGuardianDevice>>{};
-  for (final raw in rawDevices) {
-    final device = parseFoundationGateGuardianDevice(raw);
-    if (device == null) {
-      continue;
-    }
+  for (final device in devices) {
     grouped.putIfAbsent(device.childId, () => <FoundationGateGuardianDevice>[]).add(device);
   }
   return grouped;

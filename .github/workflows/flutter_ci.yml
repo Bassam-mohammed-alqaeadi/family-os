@@ -143,29 +143,45 @@ jobs:
           for name, error in errors.items():
               print(f"::error title=Flutter test error::{name}: {str(error)[:800]}")
 
-          # The exception text itself, which the JSON reporter does not carry.
+          # The exception text itself, which the JSON reporter does not carry. Flutter
+          # wraps the matcher description over several lines, so a block runs from
+          # "Expected:" until the next line that starts in column zero - collecting one
+          # line per match is how the key name in "Found 0 widgets with key [<...>]" ended
+          # up missing from the previous run's annotation.
           console = Path("build/ci/flutter-test.log")
           if console.exists():
+              raw = console.read_text(encoding="utf-8", errors="replace").splitlines()
               blocks = []
               current = None
-              for line in console.read_text(encoding="utf-8", errors="replace").splitlines():
-                  stripped = line.strip()
-                  if stripped.startswith("Expected:") or stripped.startswith("Actual:"):
-                      current = (current or [])
-                      current.append(stripped)
-                  elif current and (
-                      stripped.startswith("Which:")
-                      or stripped.startswith("Actual:")
-                      or stripped.startswith("at ")
-                  ):
-                      current.append(stripped)
-                  elif current and not stripped:
-                      blocks.append(" | ".join(current))
-                      current = None
+              for line in raw:
+                  if line.startswith("Expected:") or line.strip().startswith("Expected:"):
+                      if current:
+                          blocks.append(" ".join(current))
+                      current = [line.strip()]
+                      continue
+                  if current is not None:
+                      if line.strip() == "":
+                          blocks.append(" ".join(current))
+                          current = None
+                          continue
+                      # A stack frame or a new section ends the block.
+                      if line.startswith("#") or line.startswith("package:") or line.startswith("test/"):
+                          blocks.append(" ".join(current))
+                          current = None
+                          continue
+                      current.append(line.strip())
               if current:
-                  blocks.append(" | ".join(current))
-              for block in blocks[:10]:
-                  print(f"::error title=Flutter expectation::{block[:900]}")
+                  blocks.append(" ".join(current))
+              for block in blocks[:12]:
+                  print(f"::error title=Flutter expectation::{block[:1100]}")
+
+              # A tail as well: if the structured pass misses a shape the reporter uses,
+              # the console still says why it failed. Escaped to one line, because a
+              # workflow command cannot carry a raw newline.
+              tail = " \u23ce ".join(
+                  line.rstrip() for line in raw[-60:] if line.strip()
+              )
+              print(f"::error title=Flutter console tail::{tail[-1200:]}")
           PY
       - name: Upload Flutter test report
         if: always()

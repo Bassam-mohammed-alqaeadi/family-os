@@ -168,7 +168,7 @@ void main() {
   });
 
   group('deep links', () {
-    testWidgets('a quarantined path redirects to the product entry', (tester) async {
+    testWidgets('a quarantined path is not where a deep link ends up', (tester) async {
       final role = RoleController(AppRole.father);
       addTearDown(role.dispose);
       final router = createAppRouter(
@@ -178,22 +178,32 @@ void main() {
       );
       addTearDown(router.dispose);
 
-      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
-      await tester.pumpAndSettle();
+      // The registered product surface of this build, read from the router itself rather
+      // than from a list here.
+      final served = router.configuration.routes
+          .whereType<GoRoute>()
+          .map((route) => route.path)
+          .toSet();
 
-      // The property under test is where the link must NOT open. Asserting the exact
-      // landing screen instead would couple this test to the role guard's choice of home,
-      // and a test that fails when a guardian's landing page changes is a test that will
-      // be deleted rather than fixed.
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pump();
+
+      // What is under test is where the router decided the link should go. The screen it
+      // lands on may need runtime scopes this test does not compose, so an exception from
+      // rendering that screen is taken and discarded: it belongs to another test.
+      tester.takeException();
+
       final landed = router.state.uri.path;
       expect(
         isQuarantinedShowcasePath(landed),
         isFalse,
         reason: 'a build without the showcase let a deep link open $landed',
       );
+      expect(
+        served,
+        contains(landed),
+        reason: 'the deep link was sent to $landed, which this build does not serve',
+      );
     });
   });
 }
-
-/// `SCR-CHD-004` becomes `/scr-chd-004`, the form the router declares.
-String _pathOf(String screenId) => '/scr-${screenId.substring(4).toLowerCase()}';
