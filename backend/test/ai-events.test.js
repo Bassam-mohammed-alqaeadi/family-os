@@ -76,7 +76,12 @@ async function seedFamily(baseUrl, { withChild = true } = {}) {
 }
 
 test('only registered fact types exist and every one is a certain observation', () => {
-  assert.deepEqual(AI_EVENT_TYPES, ['family.child.created']);
+  assert.deepEqual(AI_EVENT_TYPES, [
+    'family.child.created',
+    'device.registered',
+    'device.paired',
+    'device.revoked',
+  ]);
   for (const eventType of AI_EVENT_TYPES) {
     const definition = aiEventDefinition(eventType);
     assert.equal(definition.source, 'server');

@@ -23,6 +23,31 @@ const AI_EVENT_REGISTRY = Object.freeze({
     explanation: 'A primary guardian created a child profile for this family.',
     rejectPath: null,
   }),
+  'device.registered': Object.freeze({
+    source: 'server',
+    confidence: 1,
+    explanation: 'A guardian added a device record for a child in this family.',
+    rejectPath: null,
+  }),
+  'device.paired': Object.freeze({
+    source: 'server',
+    confidence: 1,
+    explanation:
+      'A handset claimed a one-time pairing code, so the device can now report its state.',
+    rejectPath: null,
+  }),
+  'device.revoked': Object.freeze({
+    source: 'server',
+    confidence: 1,
+    explanation:
+      'A guardian cut this device off, and its credential can no longer be used.',
+    rejectPath: null,
+  }),
+  // Telemetry heartbeats are deliberately NOT events. A device reporting every
+  // few minutes would bury the facts that matter under its own pulse, and the
+  // latest reading already lives on the device row. What belongs on a timeline is
+  // a change in condition, which is why pairing and revocation are here and a
+  // heartbeat is not.
 });
 
 export const AI_EVENT_TYPES = Object.freeze(
