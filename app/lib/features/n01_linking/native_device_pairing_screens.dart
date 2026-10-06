@@ -44,6 +44,7 @@ enum _VerificationState { checking, verified, unverified }
 class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
     with WidgetsBindingObserver {
   static const _devicePollInterval = Duration(seconds: 5);
+  static const _verificationPollInterval = Duration(seconds: 3);
 
   final _label = TextEditingController();
   FoundationGateDevicePairing? _pairing;
@@ -56,6 +57,8 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
 
   Timer? _ticker;
   Timer? _devicePoll;
+  Timer? _verificationPoll;
+  var _autoContinuing = false;
   Duration _remaining = Duration.zero;
   int _baselineDeviceCount = 0;
   var _childConnected = false;
@@ -65,7 +68,15 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _label.addListener(() => setState(() {}));
-    WidgetsBinding.instance.addPostFrameCallback((_) => _checkVerification());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      // Sensible default so the flow can continue hands-free after the
+      // e-mail is verified; the guardian may still rename it.
+      if (_label.text.trim().isEmpty) {
+        _label.text = NativeChildPairingCopy.of(context).defaultDeviceLabel;
+      }
+      _checkVerification();
+    });
   }
 
   @override
@@ -73,6 +84,7 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
     WidgetsBinding.instance.removeObserver(this);
     _ticker?.cancel();
     _devicePoll?.cancel();
+    _verificationPoll?.cancel();
     _label.dispose();
     super.dispose();
   }
@@ -107,6 +119,7 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
     if (!silent) setState(() => _verificationBusy = true);
     final verified = await source.isEmailVerified(reload: reload);
     if (!mounted) return;
+    final wasUnverified = _verification == _VerificationState.unverified;
     setState(() {
       _verificationBusy = false;
       _verification = verified
@@ -119,6 +132,38 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
       }
       if (verified) _verificationNote = null;
     });
+    if (verified) {
+      _stopVerificationPoll();
+      // The link was clicked (on this phone or any other device): continue
+      // hands-free — no tap required.
+      if (wasUnverified && _pairing == null && !_loading) {
+        HapticFeedback.mediumImpact();
+        setState(() => _autoContinuing = true);
+        await _create();
+        if (mounted) setState(() => _autoContinuing = false);
+      }
+    } else {
+      _startVerificationPoll();
+    }
+  }
+
+  /// Silent background sensor: reloads the provider user every few seconds
+  /// while the e-mail is unverified and stops the moment it becomes verified.
+  void _startVerificationPoll() {
+    if (_verificationPoll != null) return;
+    _verificationPoll = Timer.periodic(_verificationPollInterval, (_) {
+      if (!mounted || _verification != _VerificationState.unverified) {
+        _stopVerificationPoll();
+        return;
+      }
+      if (_verificationBusy) return;
+      _checkVerification(reload: true, silent: true);
+    });
+  }
+
+  void _stopVerificationPoll() {
+    _verificationPoll?.cancel();
+    _verificationPoll = null;
   }
 
   Future<void> _sendVerification() async {
@@ -345,7 +390,9 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
         );
       case _VerificationState.verified:
         return BannerNote(
-          message: copy.emailVerified,
+          message: _autoContinuing
+              ? copy.verifiedAutoContinue
+              : copy.emailVerified,
           variant: BannerVariant.g,
           leading: Icon(Icons.verified_outlined, color: colors.mintInk),
         );
@@ -396,24 +443,35 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
               const SizedBox(height: 10),
               Row(
                 children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _verificationBusy ? null : _sendVerification,
-                      icon: const Icon(Icons.send_outlined, size: 18),
-                      label: Text(copy.sendVerificationEmail),
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colors.amberDeep,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   Expanded(
-                    child: FilledButton.icon(
-                      onPressed: _verificationBusy
-                          ? null
-                          : () => _checkVerification(reload: true),
-                      icon: const Icon(Icons.refresh, size: 18),
-                      label: Text(copy.iVerified),
+                    child: Text(
+                      copy.waitingForVerification,
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        height: 1.4,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _verificationBusy ? null : _sendVerification,
+                  icon: const Icon(Icons.send_outlined, size: 18),
+                  label: Text(copy.sendVerificationEmail),
+                ),
               ),
             ],
           ),

@@ -38,7 +38,16 @@ class OnboardingHost {
     required this.identity,
     String discoveryBody = kFamiliesBody,
     int discoveryStatus = 200,
-  }) : discovery = FakeTransport(
+    FakeTransport? deviceTransport,
+  }) : devices =
+           deviceTransport ??
+           FakeTransport(
+             const FoundationGateHttpResponse(
+               statusCode: 200,
+               body: '{"devices":[]}',
+             ),
+           ),
+       discovery = FakeTransport(
          FoundationGateHttpResponse(
            statusCode: discoveryStatus,
            body: discoveryBody,
@@ -68,12 +77,7 @@ class OnboardingHost {
       ),
       deviceApi: FamilyDeviceApiClient(
         configuration: configuration,
-        transport: FakeTransport(
-          const FoundationGateHttpResponse(
-            statusCode: 200,
-            body: '{"devices":[]}',
-          ),
-        ),
+        transport: devices,
       ),
       familyCreationApi: FamilyCreationApiClient(
         configuration: configuration,
@@ -83,12 +87,16 @@ class OnboardingHost {
       ),
     );
     identitySource = MainAppFoundationIdentitySource(runtime);
-    appRuntime = AppRuntime(identity: identitySource);
+    appRuntime = AppRuntime(
+      identity: identitySource,
+      devices: RemoteFamilyDeviceSource(runtime),
+    );
   }
 
   final FakeIdentity identity;
   final FakeTransport discovery;
   final FakeTransport roster;
+  final FakeTransport devices;
   late final MainAppFoundationRuntime runtime;
   late final MainAppFoundationIdentitySource identitySource;
   late final AppRuntime appRuntime;
@@ -161,6 +169,7 @@ Future<GoRouter> pumpWithRouter(
   required String initialLocation,
   required List<GoRoute> routes,
   Locale locale = const Locale('ar'),
+  bool settle = true,
 }) async {
   // Tall phone viewport so whole forms are laid out without scrolling.
   tester.view.physicalSize = const Size(1080, 2400);
@@ -183,7 +192,12 @@ Future<GoRouter> pumpWithRouter(
   );
   if (runtime != null) app = AppScope(runtime: runtime, child: app);
   await tester.pumpWidget(app);
-  await tester.pumpAndSettle();
+  if (settle) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump();
+    await tester.pump();
+  }
   return router;
 }
 

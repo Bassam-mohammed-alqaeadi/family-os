@@ -104,8 +104,15 @@ class NativeChildPairingCopy {
   String get sendVerificationEmail =>
       isArabic ? 'إرسال رسالة التأكيد' : 'Send verification e-mail';
   String get verificationEmailSent => isArabic
-      ? 'أُرسلت رسالة التأكيد. افتح الرابط في بريدك ثم اضغط «تحققت».'
-      : 'Verification e-mail sent. Open the link in your inbox, then tap “I verified”.';
+      ? 'أُرسلت رسالة التأكيد. افتح الرابط في بريدك — سنكمل تلقائيًا.'
+      : 'Verification e-mail sent. Open the link in your inbox — we will continue automatically.';
+  String get waitingForVerification => isArabic
+      ? 'بانتظار تأكيدك… افتح الرابط من أي جهاز وسيتابع التطبيق من تلقاء نفسه.'
+      : 'Waiting for your confirmation… open the link on any device and the app will continue by itself.';
+  String get verifiedAutoContinue => isArabic
+      ? 'تم تأكيد بريدك ✓ جارٍ إصدار رمز الربط…'
+      : 'E-mail verified ✓ Issuing the pairing code…';
+  String get defaultDeviceLabel => isArabic ? 'هاتف الطفل' : 'Child’s phone';
   String get verificationEmailSendFailed => isArabic
       ? 'تعذر إرسال رسالة التأكيد الآن. حاول بعد قليل.'
       : 'The verification e-mail could not be sent right now. Try again shortly.';
