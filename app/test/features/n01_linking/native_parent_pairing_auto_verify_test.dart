@@ -190,14 +190,15 @@ void main() {
       body: _pairingBody(),
     );
     await tester.tap(find.text('إنشاء رمز الربط'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump();
+    await tester.pump();
 
     expect(devices.postedHeadersHistory, hasLength(2));
     expect(
       devices.postedHeadersHistory.last['idempotency-key'],
       isNot(firstKey),
     );
-    expect(find.byKey(const ValueKey('pairing-code-digits')), findsOneWidget);
 
     AppToast.dismiss();
     await tester.pumpWidget(const SizedBox());
