@@ -34,7 +34,7 @@ export const FOUNDATION_SCHEMA_MIGRATIONS = Object.freeze([
     sha256: '7685932c64f70e7f5e4e9bf63c728cbb36d56bfc8c3568e00c61283a5d75edb1',
   }),
   Object.freeze({
-    name: '009_ai_events.sql',
+    name: '100_ai_events.sql',
     sha256: '3ce4d797a6903fc4fc565953e37abc667fc31ce6b812cf7dd1bf2f2a39409d81',
   }),
 ]);

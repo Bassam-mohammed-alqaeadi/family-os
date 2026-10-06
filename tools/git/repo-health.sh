@@ -70,9 +70,15 @@ else
     printf '%s\n' "$CHANGES" | grep '^??' | sed 's/^?? /      /'
   fi
 
-  # لكل ملف موجود على القرص، هل محتواه موجود في تاريخ المستودع؟
+  # لكل ملف موجود على القرص، هل محتواه موجود في تاريخ المستودع أو على الريموت؟
   # إن كان نعم، فالمحتوى محفوظ حتى لو لم يُودَع. وإن كان لا، فهو عمل وحيد غير محفوظ.
+  #
+  # مهم: نقارن أيضاً برأس الفرع على الريموت مباشرةً، لا بالتاريخ المحلي وحده.
+  # الاعتماد على `git log --all` وحدها يُنتج **إنذارات كاذبة** حين تكون مراجع
+  # الريموت المتتبَّعة قديمة — وقد رأيناها تطلق 37 إنذاراً كاذباً في جلسة واحدة.
+  # والإنذار الكاذب أخطر من الصمت، لأنه يُبطل الثقة بالأداة فتُتجاهل الإنذارات الصادقة.
   UNIQUE=0
+  REMOTE_TIP="$(git rev-parse --verify --quiet "$UPSTREAM" 2>/dev/null || echo '')"
   while IFS= read -r entry; do
     path="${entry:3}"
     [ -f "$path" ] || continue
@@ -81,9 +87,12 @@ else
     while IFS= read -r commit; do
       [ "$(git rev-parse "$commit:$path" 2>/dev/null)" = "$blob" ] && { hit=1; break; }
     done < <(git log --all --format=%H -- "$path" 2>/dev/null)
+    if [ -z "$hit" ] && [ -n "$REMOTE_TIP" ]; then
+      [ "$(git rev-parse "$REMOTE_TIP:$path" 2>/dev/null)" = "$blob" ] && hit=1
+    fi
     if [ -z "$hit" ]; then
       UNIQUE=$((UNIQUE + 1))
-      BAD "عمل وحيد غير محفوظ في التاريخ: $path"
+      BAD "عمل وحيد غير محفوظ في التاريخ ولا على الريموت: $path"
     fi
   done <<< "$CHANGES"
 
