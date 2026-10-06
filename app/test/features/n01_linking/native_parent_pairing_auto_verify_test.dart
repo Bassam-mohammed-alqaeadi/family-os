@@ -81,7 +81,10 @@ void main() {
       expect(digits.style?.fontSize, greaterThanOrEqualTo(40));
       expect(digits.style?.fontWeight, FontWeight.w900);
 
-      // Let the countdown/device timers settle, then stop them.
+      // Dismiss transient feedback before replacing the overlay, then stop the
+      // countdown/device timers by disposing the screen.
+      AppToast.dismiss();
+      await tester.pump();
       await tester.pump(const Duration(seconds: 1));
       await tester.pumpWidget(const SizedBox());
     },
