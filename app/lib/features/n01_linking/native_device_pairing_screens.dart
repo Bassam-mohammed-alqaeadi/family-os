@@ -14,7 +14,6 @@ import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/app/child_device_mode.dart';
 import 'package:family_os/core/design/tokens.dart';
-import 'package:family_os/features/n01_linking/pairing_brightness_session.dart';
 import 'package:family_os/features/n01_linking/pairing_issuance_key.dart';
 import 'package:family_os/features/shared_onboarding/session_recovery.dart';
 import 'package:family_os/core/domain/child_id.dart';
@@ -37,13 +36,11 @@ class NativeParentPairingScreen extends StatefulWidget {
   const NativeParentPairingScreen({
     super.key,
     this.childId,
-    this.brightnessSession,
+    this.childName,
   });
 
   final String? childId;
-
-  /// Injectable for lifecycle tests; production uses the native window bridge.
-  final PairingBrightnessSession? brightnessSession;
+  final String? childName;
 
   @override
   State<NativeParentPairingScreen> createState() =>
@@ -59,8 +56,6 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
 
   final _label = TextEditingController();
   final _issuanceKey = PairingIssuanceKey();
-  late final PairingBrightnessSession _brightnessSession;
-  var _brightnessMaximized = false;
   FoundationGateDevicePairing? _pairing;
   var _loading = false;
   String? _error;
@@ -81,7 +76,6 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
   @override
   void initState() {
     super.initState();
-    _brightnessSession = widget.brightnessSession ?? PairingBrightnessSession();
     WidgetsBinding.instance.addObserver(this);
     _label.addListener(() => setState(() {}));
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -89,7 +83,11 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
       // Sensible default so the flow can continue hands-free after the
       // e-mail is verified; the guardian may still rename it.
       if (_label.text.trim().isEmpty) {
-        _label.text = NativeChildPairingCopy.of(context).defaultDeviceLabel;
+        if (widget.childName != null && widget.childName!.isNotEmpty) {
+          _label.text = widget.childName!;
+        } else {
+          _label.text = NativeChildPairingCopy.of(context).defaultDeviceLabel;
+        }
       }
       // Do not trust the Firebase user's cached verification bit here. This
       // flow immediately calls a verified-email-only server endpoint, so the
@@ -105,7 +103,6 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
     _devicePoll?.cancel();
     _verificationPoll?.cancel();
     _label.dispose();
-    unawaited(_brightnessSession.restore());
     super.dispose();
   }
 
@@ -300,10 +297,6 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
       _startVerificationPoll();
     }
     if (pairing != null) {
-      if (!_brightnessMaximized) {
-        _brightnessMaximized = true;
-        unawaited(_brightnessSession.maximize());
-      }
       _startTimers(pairing, source, familyId, childRaw);
     }
   }
@@ -431,6 +424,7 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
+
               Text(
                 copy.parentIntro,
                 style: const TextStyle(

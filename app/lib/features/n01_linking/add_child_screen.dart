@@ -166,7 +166,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
     }
     // Keep the button locked while the route transition happens.
     context.go(
-      '/scr-fat-004?childId=${Uri.encodeComponent(childId)}&source=server',
+      '/scr-fat-004?childId=${Uri.encodeComponent(childId)}&childName=${Uri.encodeComponent(_trimmedName)}&source=server',
     );
   }
 
