@@ -18,6 +18,7 @@ class AppEmptyState extends StatelessWidget {
     this.onAction,
     this.contextName,
     this.icon = Icons.inbox_outlined,
+    this.illustrated = false,
   });
 
   /// Optional overrides; defaults resolve from ARB (SHR-006).
@@ -33,6 +34,9 @@ class AppEmptyState extends StatelessWidget {
 
   /// Friendly illustration glyph; callers can select one for their context.
   final IconData icon;
+
+  /// Enables the richer avatar treatment for high-value first-use moments.
+  final bool illustrated;
 
   @override
   Widget build(BuildContext context) {
@@ -71,54 +75,18 @@ class AppEmptyState extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
                     child: Column(
                       children: [
-                        Semantics(
-                          image: true,
-                          label: resolvedTitle,
-                          child: SizedBox(
-                            width: 112,
-                            height: 88,
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                PositionedDirectional(
-                                  start: 4,
-                                  top: 8,
-                                  child: Icon(
-                                    Icons.auto_awesome_rounded,
-                                    size: 22,
-                                    color: colors.amber,
-                                  ),
-                                ),
-                                PositionedDirectional(
-                                  end: 2,
-                                  bottom: 5,
-                                  child: Icon(
-                                    Icons.favorite_rounded,
-                                    size: 21,
-                                    color: colors.coral,
-                                  ),
-                                ),
-                                Container(
-                                  width: 76,
-                                  height: 76,
-                                  decoration: BoxDecoration(
-                                    color: colors.surface,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: colors.mint.withValues(alpha: 0.55),
-                                      width: 2,
-                                    ),
-                                  ),
-                                  child: Icon(
-                                    icon,
-                                    size: 40,
-                                    color: colors.tealDeep,
-                                  ),
-                                ),
-                              ],
-                            ),
+                        if (illustrated)
+                          _EmptyIllustration(
+                            icon: icon,
+                            label: resolvedTitle,
+                          )
+                        else
+                          Icon(
+                            icon,
+                            size: 48,
+                            color: colors.teal,
+                            semanticLabel: resolvedTitle,
                           ),
-                        ),
                         const SizedBox(height: 16),
                         Text(
                           resolvedTitle,
@@ -157,6 +125,62 @@ class AppEmptyState extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyIllustration extends StatelessWidget {
+  const _EmptyIllustration({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<FamilyColors>()!;
+    return Semantics(
+      image: true,
+      label: label,
+      child: SizedBox(
+        width: 112,
+        height: 88,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            PositionedDirectional(
+              start: 4,
+              top: 8,
+              child: Icon(
+                Icons.auto_awesome_rounded,
+                size: 22,
+                color: colors.amber,
+              ),
+            ),
+            PositionedDirectional(
+              end: 2,
+              bottom: 5,
+              child: Icon(
+                Icons.favorite_rounded,
+                size: 21,
+                color: colors.coral,
+              ),
+            ),
+            Container(
+              width: 76,
+              height: 76,
+              decoration: BoxDecoration(
+                color: colors.surface,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: colors.mint.withValues(alpha: 0.55),
+                  width: 2,
+                ),
+              ),
+              child: Icon(icon, size: 40, color: colors.tealDeep),
+            ),
+          ],
         ),
       ),
     );

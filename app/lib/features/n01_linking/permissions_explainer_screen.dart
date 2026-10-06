@@ -67,128 +67,136 @@ class PermissionsExplainerScreen extends StatelessWidget {
           ),
         ),
         child: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+          child: Column(
             children: [
-              Semantics(
-                button: true,
-                label: l10n.permissionsExplainerVideoSemantics,
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    key: const Key('permissions_explainer_video'),
-                    onTap: () => _onVideoTap(context, l10n),
-                    borderRadius: BorderRadius.circular(radii.card + 6),
-                    child: Ink(
-                      decoration: BoxDecoration(
-                        gradient: gradients.grad,
-                        borderRadius: BorderRadius.circular(radii.card + 6),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(18, 20, 18, 22),
-                        child: Column(
-                          children: [
-                            SizedBox(
-                              width: 126,
-                              height: 92,
-                              child: Stack(
-                                alignment: Alignment.center,
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                  children: [
+                    Semantics(
+                      button: true,
+                      label: l10n.permissionsExplainerVideoSemantics,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          key: const Key('permissions_explainer_video'),
+                          onTap: () => _onVideoTap(context, l10n),
+                          borderRadius: BorderRadius.circular(radii.card + 6),
+                          child: Ink(
+                            decoration: BoxDecoration(
+                              gradient: gradients.grad,
+                              borderRadius: BorderRadius.circular(radii.card + 6),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(18, 20, 18, 22),
+                              child: Column(
                                 children: [
-                                  Container(
-                                    width: 86,
-                                    height: 86,
-                                    decoration: BoxDecoration(
-                                      color: colors.surface.withValues(
-                                        alpha: 0.18,
-                                      ),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      Icons.family_restroom_rounded,
-                                      size: 48,
-                                      color: colors.surface,
+                                  SizedBox(
+                                    width: 126,
+                                    height: 92,
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        Container(
+                                          width: 86,
+                                          height: 86,
+                                          decoration: BoxDecoration(
+                                            color: colors.surface.withValues(
+                                              alpha: 0.18,
+                                            ),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(
+                                            Icons.family_restroom_rounded,
+                                            size: 48,
+                                            color: colors.surface,
+                                          ),
+                                        ),
+                                        PositionedDirectional(
+                                          end: 0,
+                                          bottom: 2,
+                                          child: Container(
+                                            width: 42,
+                                            height: 42,
+                                            decoration: BoxDecoration(
+                                              color: colors.amber,
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: colors.surface,
+                                                width: 3,
+                                              ),
+                                            ),
+                                            child: Icon(
+                                              Icons.play_arrow_rounded,
+                                              color: colors.ink,
+                                              size: 27,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  PositionedDirectional(
-                                    end: 0,
-                                    bottom: 2,
-                                    child: Container(
-                                      width: 42,
-                                      height: 42,
-                                      decoration: BoxDecoration(
-                                        color: colors.amber,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: colors.surface,
-                                          width: 3,
-                                        ),
-                                      ),
-                                      child: Icon(
-                                        Icons.play_arrow_rounded,
-                                        color: colors.ink,
-                                        size: 27,
-                                      ),
+                                  const SizedBox(height: 9),
+                                  Text(
+                                    l10n.permissionsExplainerVideoTitle,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w800,
+                                      color: colors.surface,
+                                      height: 1.4,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 9),
-                            Text(
-                              l10n.permissionsExplainerVideoTitle,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
-                                color: colors.surface,
-                                height: 1.4,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 14),
+                    _FriendlyPermissionCard(
+                      key: const Key('permissions_explainer_location'),
+                      icon: Icons.explore_rounded,
+                      iconColor: colors.tealDeep,
+                      iconBackground: colors.teal100,
+                      title: l10n.permissionsExplainerLocationTitle,
+                      body: l10n.permissionsExplainerLocationWhy,
+                    ),
+                    const SizedBox(height: 10),
+                    _FriendlyPermissionCard(
+                      key: const Key('permissions_explainer_a11y'),
+                      icon: Icons.touch_app_rounded,
+                      iconColor: colors.p700,
+                      iconBackground: colors.p100,
+                      title: l10n.permissionsExplainerA11yTitle,
+                      body: l10n.permissionsExplainerA11yWhy,
+                    ),
+                    const SizedBox(height: 10),
+                    _FriendlyPermissionCard(
+                      key: const Key('permissions_explainer_battery'),
+                      icon: Icons.battery_charging_full_rounded,
+                      iconColor: colors.amberDeep,
+                      iconBackground: colors.amber100,
+                      title: l10n.permissionsExplainerBatteryTitle,
+                      body: l10n.permissionsExplainerBatteryWhy,
+                    ),
+                    const SizedBox(height: 14),
+                    BannerNote(
+                      key: const Key('permissions_explainer_banner'),
+                      message: l10n.permissionsExplainerBanner,
+                      variant: BannerVariant.a,
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 14),
-              _FriendlyPermissionCard(
-                key: const Key('permissions_explainer_location'),
-                icon: Icons.explore_rounded,
-                iconColor: colors.tealDeep,
-                iconBackground: colors.teal100,
-                title: l10n.permissionsExplainerLocationTitle,
-                body: l10n.permissionsExplainerLocationWhy,
-              ),
-              const SizedBox(height: 10),
-              _FriendlyPermissionCard(
-                key: const Key('permissions_explainer_a11y'),
-                icon: Icons.touch_app_rounded,
-                iconColor: colors.p700,
-                iconBackground: colors.p100,
-                title: l10n.permissionsExplainerA11yTitle,
-                body: l10n.permissionsExplainerA11yWhy,
-              ),
-              const SizedBox(height: 10),
-              _FriendlyPermissionCard(
-                key: const Key('permissions_explainer_battery'),
-                icon: Icons.battery_charging_full_rounded,
-                iconColor: colors.amberDeep,
-                iconBackground: colors.amber100,
-                title: l10n.permissionsExplainerBatteryTitle,
-                body: l10n.permissionsExplainerBatteryWhy,
-              ),
-              const SizedBox(height: 14),
-              BannerNote(
-                key: const Key('permissions_explainer_banner'),
-                message: l10n.permissionsExplainerBanner,
-                variant: BannerVariant.a,
-              ),
-              const SizedBox(height: 16),
-              PrimaryBtn(
-                key: const Key('permissions_explainer_continue'),
-                label: l10n.permissionsExplainerContinue,
-                onPressed: () => _continue(context),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+                child: PrimaryBtn(
+                  key: const Key('permissions_explainer_continue'),
+                  label: l10n.permissionsExplainerContinue,
+                  onPressed: () => _continue(context),
+                ),
               ),
             ],
           ),

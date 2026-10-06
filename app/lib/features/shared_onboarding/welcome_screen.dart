@@ -105,7 +105,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               children: [
                 Row(
                   children: [
-                    _BrandPill(colors: colors, title: l10n.appTitle),
+                    _BrandPill(colors: colors),
                     const Spacer(),
                     const LaunchLanguageSwitcher(),
                   ],
@@ -212,10 +212,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 }
 
 class _BrandPill extends StatelessWidget {
-  const _BrandPill({required this.colors, required this.title});
+  const _BrandPill({required this.colors});
 
   final FamilyColors colors;
-  final String title;
 
   @override
   Widget build(BuildContext context) {
@@ -230,15 +229,6 @@ class _BrandPill extends StatelessWidget {
             borderRadius: BorderRadius.circular(11),
           ),
           child: Icon(Icons.favorite_rounded, color: colors.surface, size: 19),
-        ),
-        const SizedBox(width: 9),
-        Text(
-          title,
-          style: TextStyle(
-            color: colors.ink,
-            fontWeight: FontWeight.w900,
-            fontSize: 16,
-          ),
         ),
       ],
     );

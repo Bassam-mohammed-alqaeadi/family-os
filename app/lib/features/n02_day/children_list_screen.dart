@@ -688,6 +688,7 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
                   actionLabel: l10n.childrenListAddChild,
                   onAction: _goAddChild,
                   icon: Icons.child_care_rounded,
+                  illustrated: true,
                 ),
                 const ShellTabMoreTools(tabId: 'kids'),
               ],
