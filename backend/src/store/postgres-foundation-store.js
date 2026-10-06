@@ -595,6 +595,15 @@ export class PostgresFoundationStore {
       await client.query(
         'DELETE FROM family_device_pairings WHERE claimed_at IS NULL AND expires_at <= NOW()',
       );
+      // A replacement issuance invalidates any unclaimed code for this child.
+      // Keep its hash through allocation so the replacement cannot accidentally
+      // reuse the capability that the guardian failed to receive.
+      await client.query(
+        `UPDATE family_device_pairings
+         SET expires_at = NOW()
+         WHERE family_id = $1 AND child_id = $2 AND claimed_at IS NULL`,
+        [familyId, childId],
+      );
       let pairingCode = null;
       for (let attempt = 0; attempt < 16 && pairingCode === null; attempt += 1) {
         const candidate = newPairingCode();

@@ -359,7 +359,24 @@ export class MemoryFoundationStore {
       }
       throw new HttpError(409, 'pairing_code_not_replayable', 'A pairing code was already issued. Create a new pairing code.');
     }
-    const pairingCode = String(Math.floor(Math.random() * 1_000_000)).padStart(6, '0');
+    const invalidatedAt = this.now().toISOString();
+    for (const pairing of this.devicePairings.values()) {
+      if (pairing.familyId === familyId && pairing.childId === childId && pairing.claimedAt == null) {
+        pairing.expiresAt = invalidatedAt;
+      }
+    }
+    let pairingCode = null;
+    for (let attempt = 0; attempt < 16 && pairingCode === null; attempt += 1) {
+      const candidate = String(Math.floor(Math.random() * 1_000_000)).padStart(6, '0');
+      const candidateHash = this.capabilityHash(candidate);
+      const used = [...this.devicePairings.values()].some(
+        (pairing) => pairing.claimedAt == null && pairing.pairingCodeHash === candidateHash,
+      );
+      if (!used) pairingCode = candidate;
+    }
+    if (pairingCode === null) {
+      throw new HttpError(503, 'pairing_code_pool_exhausted', 'Could not allocate a pairing code. Try again shortly.');
+    }
     const pairing = {
       id: randomUUID(), familyId, childId, deviceLabel,
       pairingCodeHash: this.capabilityHash(pairingCode),

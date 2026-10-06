@@ -91,7 +91,7 @@ Every API response also carries a server-generated `X-Correlation-Id`. It is dis
 | `GET` | `/v1/families/:familyId/children` | Returns durable roster profiles only to active guardians. Child memberships are denied the parent control-centre surface. Device, location and policy truth are excluded. |
 | `POST` | `/v1/families/:familyId/children` | Primary guardian creates one durable roster profile with a required idempotency key, audit/outbox evidence and server correlation. This does not create a child login or device/policy state. |
 | `GET` | `/v1/families/:familyId/devices` | Active guardians read that family's linked devices and last accepted telemetry. |
-| `POST` | `/v1/families/:familyId/children/:childId/device-pairings` | Verified primary guardian issues a short-lived, single-use pairing code. |
+| `POST` | `/v1/families/:familyId/children/:childId/device-pairings` | Verified primary guardian issues a short-lived, single-use pairing code; a fresh issuance invalidates the child's earlier unclaimed code. |
 | `POST` | `/v1/device-pairings/claim` | A child handset claims a valid code once and receives its device-scoped capability. |
 | `GET` | `/v1/devices/:deviceId` | The exact Device capability reads only its own label, battery state, and last-seen value; no guardian bearer or enumeration behavior. |
 | `POST` | `/v1/devices/:deviceId/telemetry` | The exact Device capability, or a primary guardian bearer for controlled verification, submits genuine battery/location telemetry. |

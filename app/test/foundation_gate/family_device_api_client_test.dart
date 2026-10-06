@@ -174,6 +174,12 @@ void main() {
     (
       status: 409,
       body: '{"error":{"code":"pairing_code_not_replayable"}}',
+      failure:
+          FoundationGateDevicePairingCreateFailure.pairingCodeNotReplayable,
+    ),
+    (
+      status: 409,
+      body: '{"error":{"code":"request_in_progress"}}',
       failure: FoundationGateDevicePairingCreateFailure.conflict,
     ),
     (

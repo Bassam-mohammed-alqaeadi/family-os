@@ -141,6 +141,7 @@ test('native child pairing contract returns only an expiring one-time capability
   const telemetry = specification.paths['/v1/devices/{deviceId}/telemetry'].post;
 
   assert.deepEqual(create.security, [{ oidcBearer: [] }]);
+  assert.match(create.description, /fresh issuance invalidates any previous unclaimed code/);
   assert.equal(claim.security, undefined);
   assert.equal(claim.parameters, undefined);
   assert.deepEqual(selfStatus.security, [{ deviceCredential: [] }]);

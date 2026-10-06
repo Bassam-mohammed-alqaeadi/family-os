@@ -229,10 +229,7 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
       return;
     }
     _stopTimers();
-    final idempotencyKey = _issuanceKey.forRequest(
-      deviceLabel,
-      regenerate: _pairing != null,
-    );
+    final regenerate = _pairing != null;
     setState(() {
       _loading = true;
       _error = null;
@@ -254,11 +251,16 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
       return;
     }
 
-    final result = await source.createPairing(
-      familyId: familyId,
-      childId: ChildId(childRaw),
+    final result = await issuePairingWithNonReplayableRecovery(
+      issuanceKey: _issuanceKey,
       deviceLabel: deviceLabel,
-      idempotencyKey: idempotencyKey,
+      regenerate: regenerate,
+      issue: (idempotencyKey) => source.createPairing(
+        familyId: familyId,
+        childId: ChildId(childRaw),
+        deviceLabel: deviceLabel,
+        idempotencyKey: idempotencyKey,
+      ),
     );
     if (!mounted) return;
     if (result.failure ==
@@ -268,11 +270,6 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
     }
     final pairing = result.pairing;
     final failure = result.failure;
-    if (failure == FoundationGateDevicePairingCreateFailure.conflict) {
-      // The server never replays the raw one-time code for a repeated key.
-      // The next explicit attempt must therefore represent a new issuance.
-      _issuanceKey.markNotReplayable();
-    }
     setState(() {
       _loading = false;
       _pairing = pairing;
@@ -304,6 +301,7 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
       copy.pairingInvalidChild,
     FoundationGateDevicePairingCreateFailure.childNotFound =>
       copy.pairingChildNotFound,
+    FoundationGateDevicePairingCreateFailure.pairingCodeNotReplayable ||
     FoundationGateDevicePairingCreateFailure.conflict =>
       copy.pairingConflict,
     FoundationGateDevicePairingCreateFailure.serviceUnavailable =>

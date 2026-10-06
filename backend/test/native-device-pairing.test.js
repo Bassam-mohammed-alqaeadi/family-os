@@ -65,8 +65,23 @@ test('one-time pairing returns a device-only credential and it can submit real-s
     assert.equal(retryIssue.status, 409);
     assert.equal((await retryIssue.json()).error.code, 'pairing_code_not_replayable');
 
-    const claim = await request(baseUrl, '/v1/device-pairings/claim', {
+    // A fresh logical issuance recovers from the non-replayable response and
+    // revokes the previous unclaimed capability, leaving one live code only.
+    const replacement = await request(baseUrl, `/v1/families/${family.id}/children/${child.id}/device-pairings`, {
+      method: 'POST', authorization: 'Bearer test-primary', idempotencyKey: 'native-pair-two',
+      body: { deviceLabel: 'Amani Android' },
+    });
+    assert.equal(replacement.status, 201);
+    const replacementBody = await replacement.json();
+    assert.notEqual(replacementBody.pairing.pairingCode, pairingBody.pairing.pairingCode);
+
+    const revokedClaim = await request(baseUrl, '/v1/device-pairings/claim', {
       method: 'POST', body: { pairingCode: pairingBody.pairing.pairingCode },
+    });
+    assert.equal(revokedClaim.status, 400);
+
+    const claim = await request(baseUrl, '/v1/device-pairings/claim', {
+      method: 'POST', body: { pairingCode: replacementBody.pairing.pairingCode },
     });
     assert.equal(claim.status, 201);
     const claimed = await claim.json();

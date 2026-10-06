@@ -49,8 +49,8 @@ class NativeChildPairingCopy {
       ? 'لم يعثر الخادم على هذا الطفل في العائلة. ارجع وحدّث قائمة الأطفال ثم حاول مرة أخرى.'
       : 'The server could not find this child in the family. Go back, refresh the child list, and try again.';
   String get pairingConflict => isArabic
-      ? 'ربما أُصدر رمز للمحاولة السابقة، ولا يمكن للخادم عرضه مرة ثانية. اضغط «إنشاء رمز الربط» لإصدار رمز جديد.'
-      : 'The previous attempt may have issued a code that the server cannot display again. Tap “Create pairing code” to issue a new one.';
+      ? 'تعذر إصدار رمز بديل تلقائيًا بعد محاولة سابقة. اضغط «إنشاء رمز الربط» للمحاولة مجددًا.'
+      : 'A replacement code could not be issued automatically after an earlier attempt. Tap “Create pairing code” to try again.';
   String get pairingServiceUnavailable => isArabic
       ? 'خدمة الربط مشغولة أو متوقفة مؤقتًا. انتظر قليلًا ثم حاول مرة أخرى.'
       : 'The pairing service is busy or temporarily unavailable. Wait a moment, then try again.';

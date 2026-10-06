@@ -256,7 +256,7 @@
         "tags": ["Devices"],
         "operationId": "createDevicePairing",
         "summary": "Create an expiring one-time child-device pairing code as the active primary guardian",
-        "description": "The raw pairing code is returned once, while the server retains only its digest. It must be claimed by a child device before expiry. Requires a bearer whose e-mail is verified (`email_verified` claim); otherwise 403 `email_verification_required`.",
+        "description": "The raw pairing code is returned once, while the server retains only its digest. It must be claimed by a child device before expiry. A fresh issuance invalidates any previous unclaimed code for the same child, allowing safe recovery when a successful response was lost. Requires a bearer whose e-mail is verified (`email_verified` claim); otherwise 403 `email_verification_required`.",
         "security": [{ "oidcBearer": [] }],
         "parameters": [{ "$ref": "#/components/parameters/FamilyId" }, { "$ref": "#/components/parameters/ChildId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
         "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateDevicePairingRequest" } } } },

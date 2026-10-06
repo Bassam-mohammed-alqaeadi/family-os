@@ -64,6 +64,7 @@ enum FoundationGateDevicePairingCreateFailure {
   accessDenied,
   invalidInput,
   childNotFound,
+  pairingCodeNotReplayable,
   conflict,
   serviceUnavailable,
   networkUnavailable,
@@ -253,8 +254,11 @@ class FamilyDeviceApiClient {
               : FoundationGateDevicePairingCreateFailure.unavailable,
         );
       case 409:
-        throw const FoundationGateDevicePairingCreateException(
-          FoundationGateDevicePairingCreateFailure.conflict,
+        throw FoundationGateDevicePairingCreateException(
+          _hasErrorCode(response.body, 'pairing_code_not_replayable')
+              ? FoundationGateDevicePairingCreateFailure
+                    .pairingCodeNotReplayable
+              : FoundationGateDevicePairingCreateFailure.conflict,
         );
       case 429:
       case 500:
