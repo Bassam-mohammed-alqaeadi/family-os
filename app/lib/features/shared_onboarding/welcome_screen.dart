@@ -134,7 +134,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 const SizedBox(height: 8),
                 Semantics(
                   button: true,
-                  label: l10n.welcomeDotsSemantics(_page + 1),
+                  label: l10n.welcomeDotsSemantics,
                   hint: _page < slides.length - 1
                       ? l10n.welcomeDotsHint
                       : l10n.welcomeDotsDone,
