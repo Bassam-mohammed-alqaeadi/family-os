@@ -88,7 +88,7 @@ Device/Health/Capability             ─┘         │
 
 | موجة | الأنظمة | ما يُسلَّم حقيقة | المحرك |
 |---|---|---|---|
-| **M0 نشط** | 35 Setup + 36 Family (جزئي) | دخول، إنشاء أسرة، سجل أطفال صادق | `POST /v1/families/{id}/children` PG+Express |
+| **M0 مقفول** ✅ | 35 Setup + 36 Family (جزئي) | دخول، إنشاء أسرة، سجل أطفال صادق، **+ عمود فقري**: `AiEvent v1` + `PermissionSnapshot v1` | `POST /v1/families/{id}/children` PG+Express — مقفول 2026-10-05 على `3d7ff18` |
 | **M1** | 37 Devices + 35 تكملة | ربط QR + صحة/قدرة/إصلاح | DeviceSource + Native Adapter |
 | **M2** | 1 Screen-time + 2 App + 9 Lock | سياسة وقت/تطبيقات + قفل فوري + موافقات | PolicySource + Native Enforcement |
 | **M3** | 3 Web filter + 8 Anti-tamper + 12 School | فلترة + مقاومة عبث + وضع مدرسي | Category Policy Engine |

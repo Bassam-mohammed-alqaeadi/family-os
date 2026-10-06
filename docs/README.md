@@ -20,6 +20,7 @@ Read these in order before significant work:
 | Path | Purpose | Status |
 |---|---|---|
 | [`CURRENT_EXECUTION_PLAN.md`](CURRENT_EXECUTION_PLAN.md) | The single live execution plan | Family Entry & Children Control is the active first system; Cover is in progress. |
+| [`AGENTIC_HARNESS_LOOP.md`](AGENTIC_HARNESS_LOOP.md) | The closed development loop: five gated stages, the absorption method, the five bindings that keep 42 systems one product, and the evidence law | Active; state in [`harness/LOOP_STATE.md`](harness/LOOP_STATE.md), enforced by `tools/harness/harness_check.sh`. |
 | [`GIT_AND_GITHUB_OPERATING_METHOD.md`](GIT_AND_GITHUB_OPERATING_METHOD.md) | How work is persisted and verified on GitHub: the seven laws, the daily loop, recovery, and how to read CI honestly | Active; enforced by `tools/git/repo-health.sh`. |
 | [`AGENT_BOOTSTRAP_PROMPT.md`](AGENT_BOOTSTRAP_PROMPT.md) | A copy-paste order that makes any agent — new or already running — adopt the method above | Paste it into any session before giving a task. |
 | [`PARALLEL_AGENT_ORDER.md`](PARALLEL_AGENT_ORDER.md) | The same discipline as an order for a second agent working in parallel: secure-work-first, the seven laws, scope split, and the migration `009` collision | Paste into the other session; its §1 secures uncommitted work before anything else. |
