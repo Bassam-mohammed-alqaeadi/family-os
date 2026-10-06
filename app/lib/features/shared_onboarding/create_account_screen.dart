@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:family_os/core/design/components/progress_bar.dart';
@@ -186,6 +187,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
           // retry hit "e-mail already in use", so continue — the next screen
           // owns an honest retry against the family server.
           if (remote.hasAuthenticatedPrincipal) {
+            TextInput.finishAutofillContext();
             context.go('/scr-shr-007');
           } else {
             setState(() {
@@ -198,6 +200,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         case FoundationGatePhase.familiesAvailable:
         case FoundationGatePhase.childrenAvailable:
         case FoundationGatePhase.noChildren:
+          TextInput.finishAutofillContext();
           context.go('/scr-shr-007');
         case FoundationGatePhase.unconfigured:
         case FoundationGatePhase.signedOut:
@@ -243,6 +246,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
     return OnboardingScaffold(
       controller: _scroll,
+      autofill: true,
       children: [
         OnboardingHeader(
           icon: Icons.person_add_alt_1_outlined,

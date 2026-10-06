@@ -572,7 +572,12 @@ class OnboardingScaffold extends StatelessWidget {
     required this.children,
     this.appBarTitle,
     this.controller,
+    this.autofill = false,
   });
+
+  /// Wraps the content in an [AutofillGroup] so password managers can offer
+  /// to save / fill credentials for this form.
+  final bool autofill;
 
   final List<Widget> children;
   final String? appBarTitle;
@@ -604,17 +609,21 @@ class OnboardingScaffold extends StatelessWidget {
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 520),
-            child: ListView(
-              controller: controller,
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
-              children: children,
-            ),
+            child: autofill ? AutofillGroup(child: _list()) : _list(),
           ),
         ),
       ),
     );
   }
+}
+
+extension on OnboardingScaffold {
+  Widget _list() => ListView(
+    controller: controller,
+    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+    padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
+    children: children,
+  );
 }
 
 /// Scrolls an onboarding list back to its top so a freshly shown notice is

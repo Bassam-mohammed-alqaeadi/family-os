@@ -217,6 +217,8 @@ void main() {
     await tester.tap(find.byKey(CreateAccountKeys.submit));
     await tester.pumpAndSettle();
     expect(host.identity.signUpCalls, 1);
+    // The verification e-mail is sent proactively right after sign-up.
+    expect(host.identity.verificationEmailsSent, 1);
     expect(router.state.uri.path, '/scr-shr-007');
   });
 

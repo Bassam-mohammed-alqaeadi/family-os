@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:family_os/core/design/tokens.dart';
@@ -148,11 +149,13 @@ class _LoginScreenState extends State<LoginScreen> {
     IdentitySnapshot snapshot,
   ) {
     if (snapshot.isRemoteAuthoritative) {
+      TextInput.finishAutofillContext();
       context.go('/scr-fat-012');
       return;
     }
     if (remote.needsFamilyCreation) {
       // Authenticated, zero families: the normal path for a new guardian.
+      TextInput.finishAutofillContext();
       context.go('/scr-shr-007');
       return;
     }
@@ -243,6 +246,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return OnboardingScaffold(
       controller: _scroll,
+      autofill: true,
       children: [
         OnboardingHeader(
           icon: Icons.lock_person_outlined,

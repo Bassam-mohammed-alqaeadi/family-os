@@ -87,6 +87,14 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     required String password,
   }) async {
     await _controller.signUp(email: email, password: password);
+    if (_controller.hasAuthenticatedPrincipal) {
+      // Competitor-grade onboarding: the verification e-mail is already in
+      // the inbox before the parent reaches the pairing step (C1 gate).
+      // Best effort only; the pairing screen can re-send it.
+      try {
+        await _identity.sendEmailVerification();
+      } catch (_) {}
+    }
     await _selectConfiguredFamily();
     return _refreshIdentitySnapshot();
   }
