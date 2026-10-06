@@ -10,6 +10,22 @@ const MAX_DEVICE_LABEL_LENGTH = 80;
 const MAX_LOCATION_LABEL_LENGTH = 160;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const INVITABLE_ROLES = new Set(['co_guardian', 'child']);
+const ZONE_GEOMETRY_KINDS = new Set(['CIRCLE', 'POLYGON']);
+const MAX_ZONE_NAME_LENGTH = 80;
+const MAX_ZONE_EMOJI_LENGTH = 16;
+// Smallest circle worth drawing is a building; the largest is a small city district. Both
+// bounds are enforced again by migration 102, and the floor here is the courtesy refusal
+// that names the field instead of letting the database answer with a constraint name.
+const MIN_ZONE_RADIUS_METERS = 50;
+const MAX_ZONE_RADIUS_METERS = 50000;
+const MAX_ZONE_VERTICES = 64;
+const MAX_ZONE_CHILDREN = 24;
+const MAX_FIX_ACCURACY_METERS = 100000;
+const LOCATION_ACQUISITIONS = new Set(['located', 'stale_last_known', 'acquiring', 'unavailable']);
+/// How far in the past or future a device clock may be and still be believed. Wider than
+/// it looks on purpose: a handset with a wrong timezone is common, a handset reporting a
+/// crossing that has not happened yet is not, and migration 103 refuses the latter too.
+const MAX_FIX_CLOCK_SKEW_MS = 5 * 60 * 1000;
 
 function bodyObject(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -168,6 +184,207 @@ export function revokeFamilyChildDeviceInput(value) {
     throw new HttpError(400, 'invalid_request', 'reasonCode must be a stable, non-sensitive machine code.');
   }
   return { reasonCode };
+}
+
+/**
+ * A safe zone as the family defines it.
+ *
+ * Two shapes are first-class (circle and polygon), and the wire form carries exactly one
+ * of them. The completeness rule is enforced here and again by migration 102, because a
+ * circle missing its radius is not a zone with a default radius - it is a zone that would
+ * silently never contain anyone.
+ */
+export function createSafeZoneInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(
+    body,
+    new Set([
+      'name',
+      'emoji',
+      'geometry',
+      'childIds',
+      'alertEnter',
+      'alertExit',
+    ]),
+  );
+  const name = requiredText(body.name, 'name', { maxLength: MAX_ZONE_NAME_LENGTH });
+  const emoji = body.emoji === undefined
+    ? '📍'
+    : requiredText(body.emoji, 'emoji', { maxLength: MAX_ZONE_EMOJI_LENGTH });
+
+  const geometryBody = bodyObject(body.geometry);
+  const kind = requiredText(geometryBody.kind, 'geometry.kind', { maxLength: 16 }).toUpperCase();
+  if (!ZONE_GEOMETRY_KINDS.has(kind)) {
+    throw new HttpError(400, 'invalid_request', 'geometry.kind must be CIRCLE or POLYGON.');
+  }
+
+  let geometry;
+  if (kind === 'CIRCLE') {
+    onlyKnownFields(geometryBody, new Set(['kind', 'center', 'radiusMeters']));
+    const center = bodyObject(geometryBody.center);
+    onlyKnownFields(center, new Set(['latitude', 'longitude']));
+    const latitude = coordinate(center.latitude, 'geometry.center.latitude', 90);
+    const longitude = coordinate(center.longitude, 'geometry.center.longitude', 180);
+    const radiusMeters = geometryBody.radiusMeters;
+    if (
+      !Number.isFinite(radiusMeters) ||
+      radiusMeters < MIN_ZONE_RADIUS_METERS ||
+      radiusMeters > MAX_ZONE_RADIUS_METERS
+    ) {
+      throw new HttpError(
+        400,
+        'invalid_request',
+        `geometry.radiusMeters must be between ${MIN_ZONE_RADIUS_METERS} and ${MAX_ZONE_RADIUS_METERS}.`,
+      );
+    }
+    geometry = { kind: 'CIRCLE', center: { latitude, longitude }, radiusMeters };
+  } else {
+    onlyKnownFields(geometryBody, new Set(['kind', 'vertices']));
+    const vertices = geometryBody.vertices;
+    if (!Array.isArray(vertices) || vertices.length < 3 || vertices.length > MAX_ZONE_VERTICES) {
+      throw new HttpError(
+        400,
+        'invalid_request',
+        `geometry.vertices must hold between 3 and ${MAX_ZONE_VERTICES} points.`,
+      );
+    }
+    geometry = {
+      kind: 'POLYGON',
+      vertices: vertices.map((point, index) => {
+        const entry = bodyObject(point);
+        onlyKnownFields(entry, new Set(['latitude', 'longitude']));
+        return {
+          latitude: coordinate(entry.latitude, `geometry.vertices[${index}].latitude`, 90),
+          longitude: coordinate(entry.longitude, `geometry.vertices[${index}].longitude`, 180),
+        };
+      }),
+    };
+  }
+
+  const childIds = body.childIds;
+  if (!Array.isArray(childIds) || childIds.length === 0 || childIds.length > MAX_ZONE_CHILDREN) {
+    // Not a default. A zone assigned to nobody reads like protection and evaluates like
+    // nothing at all, so the caller must say who it is for.
+    throw new HttpError(
+      400,
+      'invalid_request',
+      `childIds must name between 1 and ${MAX_ZONE_CHILDREN} children.`,
+    );
+  }
+  const assigned = childIds.map((childId) => requireUuid(childId, 'childIds'));
+  if (new Set(assigned).size !== assigned.length) {
+    throw new HttpError(400, 'invalid_request', 'childIds must not repeat a child.');
+  }
+
+  return {
+    name,
+    emoji,
+    geometry,
+    childIds: assigned,
+    alertEnter: optionalBoolean(body.alertEnter, 'alertEnter', true),
+    alertExit: optionalBoolean(body.alertExit, 'alertExit', true),
+  };
+}
+
+function coordinate(value, field, limit) {
+  if (!Number.isFinite(value) || value < -limit || value > limit) {
+    throw new HttpError(400, 'invalid_request', `${field} must be between ${-limit} and ${limit}.`);
+  }
+  return value;
+}
+
+function optionalBoolean(value, field, fallback) {
+  if (value === undefined || value === null) return fallback;
+  if (typeof value !== 'boolean') {
+    throw new HttpError(400, 'invalid_request', `${field} must be true or false.`);
+  }
+  return value;
+}
+
+/**
+ * One location fix reported by a child's device.
+ *
+ * The acquisition state is the honesty switch, not a hint: `located` and
+ * `stale_last_known` must carry coordinates, and `acquiring` and `unavailable` must not.
+ * A client that has not got a fix yet says so; it does not send a placeholder, and it
+ * cannot send the last known position under the name of a live one.
+ */
+export function locationFixInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(
+    body,
+    new Set([
+      'fixId',
+      'acquisition',
+      'latitude',
+      'longitude',
+      'accuracyMeters',
+      'integritySoftWarning',
+      'recordedAt',
+    ]),
+  );
+
+  const acquisition = requiredText(body.acquisition, 'acquisition', { maxLength: 32 });
+  if (!LOCATION_ACQUISITIONS.has(acquisition)) {
+    throw new HttpError(
+      400,
+      'invalid_request',
+      `acquisition must be one of: ${[...LOCATION_ACQUISITIONS].join(', ')}.`,
+    );
+  }
+  const carriesCoordinates = acquisition === 'located' || acquisition === 'stale_last_known';
+  const latitude = carriesCoordinates ? coordinate(body.latitude, 'latitude', 90) : null;
+  const longitude = carriesCoordinates ? coordinate(body.longitude, 'longitude', 180) : null;
+  if (
+    !carriesCoordinates &&
+    (body.latitude !== undefined || body.longitude !== undefined)
+  ) {
+    throw new HttpError(
+      400,
+      'invalid_request',
+      'A fix with no usable position must not carry coordinates.',
+    );
+  }
+
+  let accuracyMeters = null;
+  if (body.accuracyMeters !== undefined && body.accuracyMeters !== null) {
+    if (
+      !Number.isFinite(body.accuracyMeters) ||
+      body.accuracyMeters <= 0 ||
+      body.accuracyMeters > MAX_FIX_ACCURACY_METERS
+    ) {
+      throw new HttpError(
+        400,
+        'invalid_request',
+        `accuracyMeters must be between 0 and ${MAX_FIX_ACCURACY_METERS}.`,
+      );
+    }
+    accuracyMeters = body.accuracyMeters;
+  }
+  if (carriesCoordinates && accuracyMeters === null) {
+    // The client's own invariant. A position with no stated accuracy is a position with
+    // an unknown error, and the family would be shown a certainty nobody measured.
+    throw new HttpError(400, 'invalid_request', 'accuracyMeters is required when a fix carries coordinates.');
+  }
+
+  const recordedAtRaw = requiredText(body.recordedAt, 'recordedAt', { maxLength: 40 });
+  const recordedAt = new Date(recordedAtRaw);
+  if (Number.isNaN(recordedAt.getTime())) {
+    throw new HttpError(400, 'invalid_request', 'recordedAt must be an ISO-8601 timestamp.');
+  }
+  if (recordedAt.getTime() > Date.now() + MAX_FIX_CLOCK_SKEW_MS) {
+    throw new HttpError(400, 'invalid_request', 'recordedAt is in the future.');
+  }
+
+  return {
+    fixId: requireUuid(body.fixId, 'fixId'),
+    acquisition,
+    latitude,
+    longitude,
+    accuracyMeters,
+    integritySoftWarning: optionalBoolean(body.integritySoftWarning, 'integritySoftWarning', false),
+    recordedAt: recordedAt.toISOString(),
+  };
 }
 
 export function requireIdempotencyKey(value) {

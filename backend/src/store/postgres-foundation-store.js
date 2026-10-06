@@ -69,7 +69,15 @@ function newCapability() {
   return randomBytes(32).toString('base64url');
 }
 
-function capabilityMatches(expectedHash, rawCapability) {
+/**
+ * A device capability matches the digest the store issued for it.
+ *
+ * Exported because the location surface authorizes a reporting device the same way the
+ * telemetry path does, and a second copy of a security comparison is a second answer to
+ * the same question. The comparison is constant-time and body-independent: it says whether
+ * the two digests match and nothing else.
+ */
+export function capabilityMatches(expectedHash, rawCapability) {
   if (typeof expectedHash !== 'string' || !/^[0-9a-f]{64}$/.test(expectedHash) || typeof rawCapability !== 'string') {
     return false;
   }

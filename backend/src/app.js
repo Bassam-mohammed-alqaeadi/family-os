@@ -4,6 +4,9 @@ import { rateLimit } from 'express-rate-limit';
 import { asHttpError, HttpError } from './http-error.js';
 import { deviceRevocationFor } from './device-revocation.js';
 import { membershipRosterFor } from './membership-roster.js';
+import { safeZonesFor } from './safe-zones.js';
+import { locationSurfaceFor } from './location-telemetry.js';
+import { capabilityMatches } from './store/postgres-foundation-store.js';
 import {
     claimDevicePairingInput,
     createChildInput,
@@ -13,6 +16,8 @@ import {
     registerFamilyChildDeviceInput,
     createGuardianTransferInput,
     createMembershipInput,
+    createSafeZoneInput,
+    locationFixInput,
     revokeMembershipInput,
     requireIdempotencyKey,
     requireNoQueryParameters,
@@ -57,6 +62,11 @@ export function createApp({
     // published transaction and membership helpers, so the read surface costs one
     // route and no edit inside a shared write path.
     membershipRoster = membershipRosterFor(store),
+    // W3. The zone definitions and the location surface reach the database through the
+    // same published store helpers, so both cost route lines here and nothing inside a
+    // file another session is editing.
+    safeZones = safeZonesFor(store),
+    location = locationSurfaceFor(store, { credentialMatches: capabilityMatches }),
     preAuthenticationRateLimit = {},
     protectedRateLimit = {},
 }) {
@@ -404,6 +414,116 @@ export function createApp({
                 correlationId: request.correlationId,
             });
             response.status(200).json(result);
+        }),
+    );
+
+    // ── W3 Location & Safe Zones ────────────────────────────────────────────────
+    //
+    // The zones a family defines. Reading is open to every active member (a child lives
+    // inside the boundary and is entitled to see it); writing is the guardians' act.
+    app.get(
+        '/v1/families/:familyId/safe-zones',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            requireNoQueryParameters(request.query);
+            const result = await safeZones.list({
+                principal: request.principal,
+                familyId,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    app.post(
+        '/v1/families/:familyId/safe-zones',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const input = createSafeZoneInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await safeZones.create({
+                principal: request.principal,
+                familyId,
+                ...input,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'safe_zone.create',
+                    principal: request.principal,
+                    input: { familyId, ...input },
+                }),
+            });
+            response.status(201).json(result);
+        }),
+    );
+
+    // The live picture: every child, every linked device, and where each child stands
+    // relative to each zone. One rule for every member of the family - including the
+    // child - because a surface only the parents can read is where covert tracking grows.
+    app.get(
+        '/v1/families/:familyId/location',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            requireNoQueryParameters(request.query);
+            const result = await location.familyLocation({
+                principal: request.principal,
+                familyId,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // The arrival and departure feed the alerts are read from.
+    app.get(
+        '/v1/families/:familyId/geofence-events',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            requireNoQueryParameters(request.query);
+            const result = await location.geofenceEvents({
+                principal: request.principal,
+                familyId,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // One reported position from a child's device. The device proves itself with the
+    // credential it was issued once; a primary guardian may still report on its behalf
+    // while native collection is finished, exactly as the telemetry route allows.
+    app.post(
+        '/v1/devices/:deviceId/location-fixes',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            const fix = locationFixInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await location.ingestFix({
+                principal: request.principal,
+                deviceCredential: request.deviceCredential,
+                deviceId,
+                fix,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'location.fix',
+                    principal: request.principal ?? { subject: `device:${deviceId}` },
+                    input: { deviceId, ...fix },
+                }),
+            });
+            response.status(201).json(result);
         }),
     );
 

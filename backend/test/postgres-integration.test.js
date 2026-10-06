@@ -837,3 +837,399 @@ test('an invitation is offered, accepted, recognised as self, and revoked', { sk
     }
   });
 });
+/**
+ * W3 on real PostgreSQL: a zone is drawn, a device reports, and the server decides.
+ *
+ * This is the Environment Gate for the location surface. What it proves, in the order that
+ * would hurt most to be wrong:
+ *
+ *   1. A crossing is judged by the server against the zone the child is assigned to, and
+ *      the crossing carries the shape version it was judged against.
+ *   2. The FIRST sighting of a state is recorded as a baseline and announces nothing -
+ *      "we had never looked before" is not "she just arrived".
+ *   3. A replay produces no second row and no second alert; a report that arrives late is
+ *      kept in the trail and never evaluated, so history cannot be replayed backwards.
+ *   4. Every member of the family reads the SAME picture, a child included, which is what
+ *      makes the no-covert-tracking promise checkable rather than a slogan.
+ *   5. Retention bounds the trail and never deletes the sample a crossing points at.
+ */
+test('a zone is drawn, a device reports, and the boundary crossing becomes a recorded fact', { skip }, async () => {
+  await withFreshDatabase(async (client) => {
+    await migrate(client);
+    const store = new PostgresFoundationStore({
+      connectionString: withDatabase(DATABASE_URL, client.database),
+    });
+    const app = createApp({
+      store,
+      authVerifier: new TestAuthVerifier(),
+      readiness: () => ({ ready: true, missing: [] }),
+    });
+    try {
+      await withServer(app, async (baseUrl) => {
+        // 1. A family, a child, and the child's OWN account, invited and accepted through
+        //    the real endpoints - a membership inserted by hand would not prove the child
+        //    can reach this surface at all.
+        const created = await jsonRequest(baseUrl, '/v1/families', {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w3-family' }),
+          body: { displayName: 'عائلة الموقع' },
+        });
+        assert.equal(created.status, 201);
+        const familyId = created.body.family.id;
+
+        const children = await jsonRequest(baseUrl, `/v1/families/${familyId}/children`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w3-child' }),
+          body: { displayName: 'أماني', ageYears: 9, avatarEmoji: '🦁', themeColor: 'sky' },
+        });
+        assert.equal(children.status, 201);
+        const childId = children.body.child.id;
+
+        const invite = await jsonRequest(baseUrl, `/v1/families/${familyId}/memberships`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w3-invite-child' }),
+          body: { role: 'child', targetSubject: 'test-child' },
+        });
+        assert.equal(invite.status, 201);
+        const accepted = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/memberships/${invite.body.membership.id}/accept`,
+          {
+            method: 'POST',
+            headers: authorized('test-child', { 'idempotency-key': 'w3-accept-child' }),
+          },
+        );
+        assert.equal(accepted.status, 200);
+
+        const deviceCredential = 'w3-device-credential-value-000000000001';
+        const device = await client.query(
+          `INSERT INTO family_child_devices
+             (id, family_id, child_id, device_label, credential_hash, credential_issued_at)
+           VALUES (gen_random_uuid(), $1, $2, 'Amani Android', $3, NOW())
+           RETURNING id`,
+          [familyId, childId, createHash('sha256').update(deviceCredential).digest('hex')],
+        );
+        const deviceId = device.rows[0].id;
+        const deviceAuth = { authorization: `Device ${deviceCredential}` };
+
+        const now = Date.now();
+        const at = (offsetMs) => new Date(now + offsetMs).toISOString();
+        const minute = 60 * 1000;
+        const postFix = (fixId, body, key, offsetMs) =>
+          jsonRequest(baseUrl, `/v1/devices/${deviceId}/location-fixes`, {
+            method: 'POST',
+            headers: { ...deviceAuth, 'idempotency-key': key },
+            body: { fixId, recordedAt: at(offsetMs), accuracyMeters: 18, ...body },
+          });
+
+        // 2. A boundary the child cannot see is not a boundary this product ships.
+        const emptyZones = await jsonRequest(baseUrl, `/v1/families/${familyId}/safe-zones`, {
+          headers: authorized('test-child'),
+        });
+        assert.equal(emptyZones.status, 200);
+        assert.deepEqual(emptyZones.body.zones, []);
+
+        const home = { latitude: 15.3694, longitude: 44.191 };
+        const zone = await jsonRequest(baseUrl, `/v1/families/${familyId}/safe-zones`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w3-zone-home' }),
+          body: {
+            name: 'البيت',
+            emoji: '🏠',
+            geometry: { kind: 'CIRCLE', center: home, radiusMeters: 150 },
+            childIds: [childId],
+          },
+        });
+        assert.equal(zone.status, 201);
+        assert.equal(zone.body.zone.version, 1);
+        assert.deepEqual(zone.body.zone.childIds, [childId]);
+        assert.equal(zone.body.zone.geometry.kind, 'CIRCLE');
+        const zoneId = zone.body.zone.id;
+
+        const zoneReplay = await jsonRequest(baseUrl, `/v1/families/${familyId}/safe-zones`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w3-zone-home' }),
+          body: {
+            name: 'البيت',
+            emoji: '🏠',
+            geometry: { kind: 'CIRCLE', center: home, radiusMeters: 150 },
+            childIds: [childId],
+          },
+        });
+        assert.ok([200, 201].includes(zoneReplay.status));
+        assert.equal(zoneReplay.body.zone.id, zoneId);
+        const zoneRows = await client.query(
+          `SELECT count(*)::int AS n FROM family_safe_zones WHERE family_id = $1`,
+          [familyId],
+        );
+        assert.equal(zoneRows.rows[0].n, 1, 'a replayed zone created a second boundary');
+
+        // A zone assigned to nobody reads like protection and evaluates like nothing.
+        const unassigned = await jsonRequest(baseUrl, `/v1/families/${familyId}/safe-zones`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w3-zone-nobody' }),
+          body: {
+            name: 'مكان بلا أحد',
+            geometry: { kind: 'CIRCLE', center: home, radiusMeters: 200 },
+            childIds: [],
+          },
+        });
+        assert.equal(unassigned.status, 400);
+
+        // 3. Ten minutes ago: far from the zone. Stored, judged, and nothing crossed.
+        const farAway = await postFix(
+          '11111111-1111-4111-8111-111111111111',
+          { acquisition: 'located', latitude: 15.5, longitude: 44.3 },
+          'w3-fix-1',
+          -10 * minute,
+        );
+        assert.equal(farAway.status, 201);
+        assert.equal(farAway.body.evaluated, true);
+        assert.deepEqual(farAway.body.crossings, []);
+        assert.equal(farAway.body.replayed, false);
+
+        // 4. Nine minutes ago: the first sighting INSIDE. A baseline: recorded, silent.
+        const arrives = await postFix(
+          '22222222-2222-4222-8222-222222222222',
+          { acquisition: 'located', latitude: home.latitude, longitude: home.longitude },
+          'w3-fix-2',
+          -9 * minute,
+        );
+        assert.equal(arrives.status, 201);
+        assert.deepEqual(arrives.body.crossings, [
+          { zoneId, kind: 'ENTER', baseline: true, notified: false, zoneVersion: 1 },
+        ]);
+        const baselineOutbox = await client.query(
+          `SELECT count(*)::int AS n FROM outbox_events
+            WHERE aggregate_id = $1
+              AND event_type IN ('family.geofence_entered', 'family.geofence_exited')`,
+          [familyId],
+        );
+        assert.equal(
+          baselineOutbox.rows[0].n,
+          0,
+          'a baseline sighting announced an arrival nobody watched happen',
+        );
+
+        // 5. Eight minutes ago: leaving. This one IS a crossing, and it IS announced.
+        const leaves = await postFix(
+          '33333333-3333-4333-8333-333333333333',
+          { acquisition: 'located', latitude: 15.42, longitude: 44.25 },
+          'w3-fix-3',
+          -8 * minute,
+        );
+        assert.deepEqual(leaves.body.crossings, [
+          { zoneId, kind: 'EXIT', baseline: false, notified: true, zoneVersion: 1 },
+        ]);
+        const exitOutbox = await client.query(
+          `SELECT payload FROM outbox_events
+            WHERE aggregate_id = $1 AND event_type = 'family.geofence_exited'`,
+          [familyId],
+        );
+        assert.equal(exitOutbox.rowCount, 1);
+        assert.equal(exitOutbox.rows[0].payload.zoneId, zoneId);
+        assert.equal(exitOutbox.rows[0].payload.kind, 'EXIT');
+        assert.equal(exitOutbox.rows[0].payload.zoneVersion, 1);
+        assert.equal(exitOutbox.rows[0].payload.childId, childId);
+
+        // 6. The same report again under a FRESH key: one fix id is one report. No second
+        //    row, no second crossing, and an answer that says which of the two happened.
+        const replay = await postFix(
+          '33333333-3333-4333-8333-333333333333',
+          { acquisition: 'located', latitude: 15.42, longitude: 44.25 },
+          'w3-fix-3-retry',
+          -8 * minute,
+        );
+        assert.equal(replay.status, 201);
+        assert.equal(replay.body.replayed, true);
+        assert.equal(replay.body.evaluated, false);
+        assert.equal(replay.body.reason, 'duplicate');
+        const trailCount = await client.query(
+          `SELECT count(*)::int AS n FROM family_child_location_fixes WHERE family_id = $1`,
+          [familyId],
+        );
+        assert.equal(trailCount.rows[0].n, 3, 'a replayed fix was stored twice');
+        const crossingCount = await client.query(
+          `SELECT count(*)::int AS n FROM family_geofence_events WHERE family_id = $1`,
+          [familyId],
+        );
+        assert.equal(crossingCount.rows[0].n, 2, 'a replayed fix produced a second crossing');
+
+        // 7. An hour ago, arriving now: kept in the trail and NOT judged. Judging it would
+        //    replay history in the wrong order and invent a state that is not true.
+        const late = await postFix(
+          '44444444-4444-4444-8444-444444444444',
+          { acquisition: 'stale_last_known', latitude: 15.5, longitude: 44.3 },
+          'w3-fix-4',
+          -60 * minute,
+        );
+        assert.equal(late.status, 201);
+        assert.equal(late.body.evaluated, false);
+        assert.equal(late.body.reason, 'stored_out_of_order');
+        assert.deepEqual(late.body.crossings, []);
+        const afterLate = await client.query(
+          `SELECT count(*)::int AS n FROM family_geofence_events WHERE family_id = $1`,
+          [familyId],
+        );
+        assert.equal(afterLate.rows[0].n, 2, 'a late report was judged against newer state');
+
+        // 8. A handset that has no position yet says so, and is believed.
+        const noFix = await postFix(
+          '55555555-5555-4555-8555-555555555555',
+          { acquisition: 'acquiring' },
+          'w3-fix-5',
+          -7 * minute,
+        );
+        assert.equal(noFix.status, 201);
+        assert.equal(noFix.body.reason, 'no_coordinates');
+        assert.equal(noFix.body.fix.latitude, null);
+        assert.equal(noFix.body.fix.longitude, null);
+
+        // A fix that pretends to a position it does not have is refused before storage.
+        const dishonest = await postFix(
+          '55555555-5555-4555-8555-555555555556',
+          { acquisition: 'unavailable', latitude: 15.4, longitude: 44.2 },
+          'w3-fix-dishonest',
+          -7 * minute,
+        );
+        assert.equal(dishonest.status, 400);
+
+        // 9. A second shape, evaluated by the same authority: a polygon school.
+        const school = await jsonRequest(baseUrl, `/v1/families/${familyId}/safe-zones`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w3-zone-school' }),
+          body: {
+            name: 'المدرسة',
+            emoji: '🏫',
+            geometry: {
+              kind: 'POLYGON',
+              vertices: [
+                { latitude: 15.4, longitude: 44.2 },
+                { latitude: 15.4, longitude: 44.21 },
+                { latitude: 15.41, longitude: 44.21 },
+                { latitude: 15.41, longitude: 44.2 },
+              ],
+            },
+            childIds: [childId],
+          },
+        });
+        assert.equal(school.status, 201);
+        assert.equal(school.body.zone.geometry.kind, 'POLYGON');
+        const schoolId = school.body.zone.id;
+        const inSchool = await postFix(
+          '66666666-6666-4666-8666-666666666666',
+          { acquisition: 'located', latitude: 15.405, longitude: 44.205 },
+          'w3-fix-6',
+          -6 * minute,
+        );
+        assert.deepEqual(inSchool.body.crossings, [
+          { zoneId: schoolId, kind: 'ENTER', baseline: true, notified: false, zoneVersion: 1 },
+        ]);
+
+        // 10. The picture a family reads. The guardian and the CHILD get the same rows:
+        //     that is the promise, and it is asserted rather than described.
+        const asGuardian = await jsonRequest(baseUrl, `/v1/families/${familyId}/location`, {
+          headers: authorized('test-primary'),
+        });
+        assert.equal(asGuardian.status, 200);
+        assert.equal(asGuardian.body.visibility, 'family_members');
+        assert.equal(asGuardian.body.children.length, 1);
+        const childRow = asGuardian.body.children[0];
+        assert.equal(childRow.childId, childId);
+        assert.equal(childRow.devices.length, 1);
+        assert.equal(childRow.devices[0].state, 'live');
+        assert.equal(childRow.devices[0].lastFix.acquisition, 'located');
+        assert.equal(childRow.devices[0].lastFix.latitude, 15.405);
+        const schoolState = childRow.zones.find((row) => row.zoneId === schoolId);
+        assert.equal(schoolState.inside, true);
+        assert.equal(schoolState.observedCrossing, false, 'a baseline is not an observed crossing');
+        const homeState = childRow.zones.find((row) => row.zoneId === zoneId);
+        assert.equal(homeState.inside, false);
+
+        const asChild = await jsonRequest(baseUrl, `/v1/families/${familyId}/location`, {
+          headers: authorized('test-child'),
+        });
+        assert.equal(asChild.status, 200);
+        assert.deepEqual(
+          asChild.body.children,
+          asGuardian.body.children,
+          'the child sees a different picture from the guardian, which is the asymmetry this '
+            + 'surface exists to prevent',
+        );
+
+        const outsider = await jsonRequest(baseUrl, `/v1/families/${familyId}/location`, {
+          headers: authorized('test-stranger'),
+        });
+        assert.equal(outsider.status, 403);
+
+        // 11. The feed the alerts are read from: newest first, with its baselines marked.
+        const feed = await jsonRequest(baseUrl, `/v1/families/${familyId}/geofence-events`, {
+          headers: authorized('test-child'),
+        });
+        assert.equal(feed.status, 200);
+        assert.deepEqual(
+          feed.body.events.map((event) => [event.kind, event.baseline, event.zoneId]),
+          [
+            ['ENTER', true, schoolId],
+            ['EXIT', false, zoneId],
+            ['ENTER', true, zoneId],
+          ],
+        );
+
+        // 12. The audit trail: every fix recorded, every crossing named, each in the same
+        //     transaction as the change itself.
+        const audit = await client.query(
+          `SELECT event_type, count(*)::int AS n
+             FROM family_audit_events
+            WHERE family_id = $1
+              AND (event_type LIKE 'family.location%' OR event_type LIKE 'family.geofence%')
+            GROUP BY event_type ORDER BY event_type`,
+          [familyId],
+        );
+        assert.deepEqual(
+          audit.rows.map((row) => [row.event_type, row.n]),
+          [
+            ['family.geofence_entered', 2],
+            ['family.geofence_exited', 1],
+            ['family.location_fix_recorded', 6],
+          ],
+        );
+
+        // 13. Retention: the trail is bounded, and the one sample a crossing points at is
+        //     never deleted - an event whose measurement is gone is an event nobody can
+        //     check, which is worse than a longer trail.
+        const expired = await client.query(
+          `INSERT INTO family_child_location_fixes
+             (id, family_id, child_id, device_id, acquisition, location_lat, location_lng,
+              accuracy_meters, recorded_at)
+           VALUES (gen_random_uuid(), $1, $2, $3, 'located', 15.3, 44.1, 20, NOW() - INTERVAL '40 days')
+           RETURNING id`,
+          [familyId, childId, deviceId],
+        );
+        const newest = await postFix(
+          '77777777-7777-4777-8777-777777777777',
+          { acquisition: 'located', latitude: 15.42, longitude: 44.25 },
+          'w3-fix-7',
+          -5 * minute,
+        );
+        assert.equal(newest.status, 201);
+        assert.ok(newest.body.pruned >= 1, 'an expired trail sample survived a real write');
+        const vanished = await client.query(
+          `SELECT count(*)::int AS n FROM family_child_location_fixes WHERE id = $1`,
+          [expired.rows[0].id],
+        );
+        assert.equal(vanished.rows[0].n, 0, 'the expired sample was not pruned');
+        const provenanceKept = await client.query(
+          `SELECT count(*)::int AS n
+             FROM family_geofence_events AS event
+             JOIN family_child_location_fixes AS fix ON fix.id = event.fix_id
+            WHERE event.family_id = $1`,
+          [familyId],
+        );
+        assert.equal(provenanceKept.rows[0].n, 4, 'a crossing lost the measurement it points at');
+      });
+    } finally {
+      await store.close();
+    }
+  });
+});

@@ -3,7 +3,7 @@
   "info": {
     "title": "Family OS Foundation API",
     "version": "0.1.0-foundation",
-    "description": "Contract for the authorized account, family, membership, guardian-transfer, child roster, device lifecycle, audit and readiness foundation. Every operation declared here is registered by the running server, and a CI drift gate fails the build when this document and app.js disagree in either direction. It still does not authorize deployment, account recovery, support operations, device control beyond the declared lifecycle, billing, AI, realtime or release claims."
+    "description": "Contract for the authorized account, family, membership, guardian-transfer, child roster, device lifecycle, safe zones, location telemetry, audit and readiness foundation. Every operation declared here is registered by the running server, and a CI drift gate fails the build when this document and app.js disagree in either direction. It still does not authorize deployment, account recovery, support operations, device control beyond the declared lifecycle, billing, AI, realtime or release claims."
   },
   "tags": [
     {
@@ -25,6 +25,14 @@
     {
       "name": "Devices",
       "description": "Guardian-authorized linked-device latest telemetry."
+    },
+    {
+      "name": "Safe zones",
+      "description": "Family-defined boundaries, readable by every member they apply to."
+    },
+    {
+      "name": "Location",
+      "description": "Device-reported position, its honest acquisition state, and boundary crossings."
     }
   ],
   "paths": {
@@ -1231,6 +1239,280 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DeviceRevocationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/safe-zones": {
+      "get": {
+        "operationId": "listFamilySafeZones",
+        "summary": "List the family's active safe zones",
+        "description": "Every active zone with its geometry, its alert flags and the children it is assigned to. Readable by EVERY active member of the family, a child included: a boundary a person lives inside is not privileged information about them. Archived zones are not returned - a zone that has been taken out of service is not silently still being evaluated.",
+        "tags": [
+          "Safe zones"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The active safe zones of this family.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SafeZoneListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createFamilySafeZone",
+        "summary": "A guardian defines a safe zone for named children",
+        "description": "Both geometry shapes are first-class: a circle is a centre and a radius, a polygon is an ordered ring of three to sixty-four points. The assignment is explicit and must name at least one child of THIS family, because a zone assigned to nobody reads like protection and evaluates like nothing at all. The zone starts at version 1 and every crossing records the version it was judged against. A child membership may not define a zone.",
+        "tags": [
+          "Safe zones"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSafeZoneRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The zone as it was stored, or the durable idempotent replay of the same request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SafeZoneResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/location": {
+      "get": {
+        "operationId": "getFamilyLocation",
+        "summary": "The live location picture, identical for every member of the family",
+        "description": "Each child, each linked device, the newest reported fix, and where the child stands relative to each zone. THE SAME ROWS FOR EVERY ACTIVE MEMBER, a child included: this surface exists in the shape it does so that tracking can never be covert, and a monitoring state only one person can see is the anti-pattern this product refuses. Per device, `state` is `live`, `silent` or `never` - a device that stopped reporting and a device that has never reported are different answers and are kept different. Coordinates are null, never zero, when a fix carries none.",
+        "tags": [
+          "Location"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The family location snapshot.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyLocationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/geofence-events": {
+      "get": {
+        "operationId": "listFamilyGeofenceEvents",
+        "summary": "Recent safe-zone boundary crossings, newest first",
+        "description": "The arrivals and departures the family is told about, capped at the hundred most recent. A crossing marked `baseline` is the FIRST time that child was ever observed relative to that zone: it is recorded so the next departure is a real crossing, and it triggers no alert, because \"we had never looked before\" is not \"she just arrived\". Same visibility rule as the live read.",
+        "tags": [
+          "Location"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The crossing feed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeofenceEventListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/location-fixes": {
+      "post": {
+        "operationId": "ingestDeviceLocationFix",
+        "summary": "A child's device reports one position, and the server judges it",
+        "description": "The device proves itself with the credential it was issued at pairing; a primary guardian may still report on its behalf while native collection is finished, and the audit record says which of the two happened. The server stores the fix, evaluates it against the zones ASSIGNED TO THAT CHILD, and answers with what it concluded: `evaluated` is false, with a `reason`, when the fix carried no usable position, when it arrived out of order (older than the newest fix already stored for that child - kept in the trail and deliberately NOT evaluated, so a late retry cannot replay history backwards), or when it was a duplicate. A duplicate - the same fix id, under this or a fresh key - produces no second row and no second crossing, which is what makes an arrival alert exactly-once. The `acquisition` state is an honesty switch enforced by both the request schema and the database: `located` and `stale_last_known` must carry coordinates and an accuracy, `acquiring` and `unavailable` must not carry any.",
+        "tags": [
+          "Location"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationFixRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "What the server stored and what it concluded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocationFixResponse"
                 }
               }
             }
@@ -2722,6 +3004,600 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/MembershipRosterEntry"
+            }
+          }
+        }
+      },
+      "GeoCoordinates": {
+        "type": "object",
+        "required": [
+          "latitude",
+          "longitude"
+        ],
+        "additionalProperties": false,
+        "description": "WGS84 degrees. Ranges are validated by the request schema and again by the database.",
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "longitude": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          }
+        }
+      },
+      "CircleGeometry": {
+        "type": "object",
+        "required": [
+          "kind",
+          "version",
+          "center",
+          "radiusMeters"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "CIRCLE"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "center": {
+            "$ref": "#/components/schemas/GeoCoordinates"
+          },
+          "radiusMeters": {
+            "type": "number",
+            "minimum": 50,
+            "maximum": 50000,
+            "description": "Between 50 m and 50 km, enforced by the request schema and by migration 102."
+          }
+        }
+      },
+      "PolygonGeometry": {
+        "type": "object",
+        "required": [
+          "kind",
+          "version",
+          "vertices"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "POLYGON"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "vertices": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 64,
+            "items": {
+              "$ref": "#/components/schemas/GeoCoordinates"
+            },
+            "description": "Ordered ring. The first point is not repeated at the end; containment closes it."
+          }
+        }
+      },
+      "SafeZoneGeometry": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/CircleGeometry"
+          },
+          {
+            "$ref": "#/components/schemas/PolygonGeometry"
+          }
+        ],
+        "description": "Both shapes are first-class, and exactly one is carried. A circle missing its radius is not a circle with a default radius."
+      },
+      "SafeZone": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "emoji",
+          "geometry",
+          "childIds",
+          "alertEnter",
+          "alertExit",
+          "version",
+          "archivedAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "emoji": {
+            "type": "string",
+            "maxLength": 16
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/SafeZoneGeometry"
+          },
+          "childIds": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "description": "The children this zone is evaluated for. Never empty."
+          },
+          "alertEnter": {
+            "type": "boolean",
+            "description": "Whether an arrival is announced. A crossing is still recorded when this is false."
+          },
+          "alertExit": {
+            "type": "boolean",
+            "description": "Whether a departure is announced. A crossing is still recorded when this is false."
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Increases when the shape or its flags change. A crossing records the version it was judged against."
+          },
+          "archivedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateSafeZoneRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "geometry",
+          "childIds"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "emoji": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/SafeZoneGeometry"
+          },
+          "childIds": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 24,
+            "items": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          },
+          "alertEnter": {
+            "type": "boolean",
+            "default": true
+          },
+          "alertExit": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "SafeZoneListResponse": {
+        "type": "object",
+        "required": [
+          "zones"
+        ],
+        "properties": {
+          "zones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SafeZone"
+            }
+          }
+        }
+      },
+      "SafeZoneResponse": {
+        "type": "object",
+        "required": [
+          "zone"
+        ],
+        "properties": {
+          "zone": {
+            "$ref": "#/components/schemas/SafeZone"
+          }
+        }
+      },
+      "LocationFixRequest": {
+        "type": "object",
+        "required": [
+          "fixId",
+          "acquisition",
+          "recordedAt"
+        ],
+        "additionalProperties": false,
+        "description": "The acquisition state is an honesty switch: located and stale_last_known must carry latitude, longitude and accuracyMeters; acquiring and unavailable must carry none of the three. A coordinate of zero is a real place in the Atlantic, so \"no position\" is expressed by absence and never by a placeholder.",
+        "properties": {
+          "fixId": {
+            "$ref": "#/components/schemas/Uuid",
+            "description": "Chosen once by the device for this report. It is the row identity, so the same fix can never be stored twice."
+          },
+          "acquisition": {
+            "type": "string",
+            "enum": [
+              "located",
+              "stale_last_known",
+              "acquiring",
+              "unavailable"
+            ]
+          },
+          "latitude": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "longitude": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "accuracyMeters": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 100000
+          },
+          "integritySoftWarning": {
+            "type": "boolean",
+            "default": false,
+            "description": "A soft signal for a guardian. It is never a score, never a verdict, and never proof of tampering."
+          },
+          "recordedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The device clock. Kept separate from the server clock: a handset with a wrong time is an operational fact, not something to silently rewrite."
+          }
+        }
+      },
+      "LocationFix": {
+        "type": "object",
+        "required": [
+          "id",
+          "acquisition",
+          "accuracyMeters",
+          "integritySoftWarning",
+          "recordedAt",
+          "receivedAt"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "acquisition": {
+            "type": "string",
+            "enum": [
+              "located",
+              "stale_last_known",
+              "acquiring",
+              "unavailable"
+            ]
+          },
+          "latitude": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "longitude": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "accuracyMeters": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "integritySoftWarning": {
+            "type": "boolean"
+          },
+          "recordedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "receivedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "GeofenceCrossing": {
+        "type": "object",
+        "required": [
+          "zoneId",
+          "kind",
+          "baseline",
+          "notified",
+          "zoneVersion"
+        ],
+        "properties": {
+          "zoneId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "ENTER",
+              "EXIT"
+            ]
+          },
+          "baseline": {
+            "type": "boolean",
+            "description": "True when this is the first observation of the state rather than an observed crossing. It is recorded and NOT announced."
+          },
+          "notified": {
+            "type": "boolean",
+            "description": "Whether the zone flags asked for this transition to be announced. False for a baseline crossing even when the flag is on."
+          },
+          "zoneVersion": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "LocationFixResponse": {
+        "type": "object",
+        "required": [
+          "fix",
+          "evaluated",
+          "reason",
+          "crossings",
+          "replayed",
+          "pruned"
+        ],
+        "properties": {
+          "fix": {
+            "$ref": "#/components/schemas/LocationFix"
+          },
+          "evaluated": {
+            "type": "boolean",
+            "description": "False when the fix was stored without being judged against any boundary."
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "evaluated",
+              "duplicate",
+              "no_coordinates",
+              "stored_out_of_order"
+            ],
+            "description": "Why the fix was or was not evaluated. Duplicate also sets replayed, and the crossings listed are the ones already recorded for this fix rather than new ones."
+          },
+          "crossings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GeofenceCrossing"
+            }
+          },
+          "replayed": {
+            "type": "boolean",
+            "description": "True when this fix id had already been stored. No second row and no second crossing exists."
+          },
+          "pruned": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Trail samples deleted by the retention window inside this same transaction."
+          }
+        }
+      },
+      "FamilyLocationDevice": {
+        "type": "object",
+        "required": [
+          "deviceId",
+          "deviceLabel",
+          "state",
+          "lastFix"
+        ],
+        "properties": {
+          "deviceId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "deviceLabel": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "live",
+              "silent",
+              "never"
+            ],
+            "description": "live: reported within the liveness window. silent: reported before and has stopped. never: has not reported since it was linked. A device that stopped reporting and one that never started are different answers."
+          },
+          "lastFix": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/LocationFix"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "FamilyLocationZoneState": {
+        "type": "object",
+        "required": [
+          "zoneId",
+          "name",
+          "inside",
+          "observedCrossing"
+        ],
+        "properties": {
+          "zoneId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "inside": {
+            "type": "boolean"
+          },
+          "observedCrossing": {
+            "type": "boolean",
+            "description": "False when the state comes from a baseline observation rather than from a crossing anybody watched happen."
+          }
+        }
+      },
+      "FamilyLocationChild": {
+        "type": "object",
+        "required": [
+          "childId",
+          "displayName",
+          "devices",
+          "zones"
+        ],
+        "properties": {
+          "childId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "devices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FamilyLocationDevice"
+            }
+          },
+          "zones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FamilyLocationZoneState"
+            }
+          }
+        }
+      },
+      "FamilyLocationResponse": {
+        "type": "object",
+        "required": [
+          "visibility",
+          "observedAt",
+          "children"
+        ],
+        "properties": {
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "family_members"
+            ],
+            "description": "Who may read this surface: every active member of the family, with no privileged viewer."
+          },
+          "observedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FamilyLocationChild"
+            }
+          }
+        }
+      },
+      "GeofenceEvent": {
+        "type": "object",
+        "required": [
+          "id",
+          "zoneId",
+          "zoneName",
+          "childId",
+          "kind",
+          "baseline",
+          "zoneVersion",
+          "occurredAt"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "zoneId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "zoneName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "childId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "ENTER",
+              "EXIT"
+            ]
+          },
+          "baseline": {
+            "type": "boolean"
+          },
+          "zoneVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "GeofenceEventListResponse": {
+        "type": "object",
+        "required": [
+          "visibility",
+          "events"
+        ],
+        "properties": {
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "family_members"
+            ]
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GeofenceEvent"
             }
           }
         }

@@ -151,10 +151,17 @@ test('every protected operation declares OIDC security, rate limiting and idempo
     const operation = specification.paths[path]?.[method.toLowerCase()];
     assert.ok(operation, `${key} must be declared`);
 
-    const expectedSecurity =
-      path === '/v1/devices/{deviceId}/telemetry'
-        ? [{ oidcBearer: [] }, { deviceCredential: [] }]
-        : [{ oidcBearer: [] }];
+    // Two operations accept the device's own credential as well as a bearer token, and
+    // both are device-reporting paths: a handset proves itself with what it was issued at
+    // pairing. The list is named rather than inferred, so a third one cannot appear by
+    // accident.
+    const deviceAuthenticated = new Set([
+      '/v1/devices/{deviceId}/telemetry',
+      '/v1/devices/{deviceId}/location-fixes',
+    ]);
+    const expectedSecurity = deviceAuthenticated.has(path)
+      ? [{ oidcBearer: [] }, { deviceCredential: [] }]
+      : [{ oidcBearer: [] }];
     assert.deepEqual(operation.security, expectedSecurity, `${key} security`);
 
     assert.equal(
@@ -163,7 +170,7 @@ test('every protected operation declares OIDC security, rate limiting and idempo
       `${key} must declare protected rate limiting`,
     );
 
-    if (method === 'POST' && path !== '/v1/devices/{deviceId}/telemetry') {
+    if (method === 'POST' && !deviceAuthenticated.has(path)) {
       assert.ok(
         operation.parameters?.some(
           (parameter) => parameter.$ref === '#/components/parameters/IdempotencyKey',

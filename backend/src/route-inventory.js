@@ -29,6 +29,10 @@ function registrationOnlyStore() {
     // loudly instead of quietly answering from nothing.
     withTransaction: refuse,
     activeActorMembership: refuse,
+    acquireIdempotencySlot: refuse,
+    completeIdempotencySlot: refuse,
+    appendAuditAndOutbox: refuse,
+    appendAiEvent: refuse,
     listMyFamilies: refuse,
     getFamily: refuse,
     listFamilyChildren: refuse,
