@@ -53,6 +53,10 @@ export class UnconfiguredFoundationStore {
     this.unavailable();
   }
 
+  async getDeviceForCapability() {
+    this.unavailable();
+  }
+
   async ingestDeviceTelemetry() {
     this.unavailable();
   }

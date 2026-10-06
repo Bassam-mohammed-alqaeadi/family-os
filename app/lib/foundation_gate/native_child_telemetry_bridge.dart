@@ -37,6 +37,22 @@ class NativeChildTelemetryBridge {
     }
   }
 
+  /// Reads this installation's server record through native code. The Android
+  /// host authenticates with its Keystore credential and returns only a
+  /// sanitized snapshot; the capability never crosses this boundary.
+  static Future<NativeChildDeviceSnapshotResult> loadDeviceSnapshot() async {
+    try {
+      final result = await _channel.invokeMapMethod<String, dynamic>(
+        'getDeviceSnapshot',
+      );
+      return NativeChildDeviceSnapshotResult.fromMap(result);
+    } on MissingPluginException {
+      return const NativeChildDeviceSnapshotResult.unsupported();
+    } on PlatformException {
+      return const NativeChildDeviceSnapshotResult.unavailable();
+    }
+  }
+
   static Future<bool> stop() async {
     try {
       final result = await _channel.invokeMapMethod<String, dynamic>('stop');
@@ -69,6 +85,106 @@ class NativeChildTelemetryBridge {
     } on PlatformException {
       return const NativeTelemetryStartResult.unavailable();
     }
+  }
+}
+
+enum NativeChildDeviceSnapshotState {
+  ready,
+  unconfigured,
+  unavailable,
+  unsupported,
+}
+
+enum NativeChildBatteryStatus { charging, unplugged }
+
+class NativeChildDeviceSnapshot {
+  const NativeChildDeviceSnapshot({
+    required this.deviceId,
+    required this.label,
+    required this.batteryLevel,
+    required this.batteryStatus,
+    required this.lastSeenAt,
+  });
+
+  final String deviceId;
+  final String label;
+  final int? batteryLevel;
+  final NativeChildBatteryStatus? batteryStatus;
+  final DateTime? lastSeenAt;
+
+  static NativeChildDeviceSnapshot? fromMap(Object? value) {
+    if (value is! Map) return null;
+    final id = value['id'];
+    final rawLabel = value['label'];
+    if (id is! String || id.trim().isEmpty || rawLabel is! String) return null;
+    final label = rawLabel.trim();
+    if (label.isEmpty || label.length > 80) return null;
+
+    final rawBatteryLevel = value['batteryLevel'];
+    if (rawBatteryLevel != null && rawBatteryLevel is! int) return null;
+    final batteryLevel = rawBatteryLevel as int?;
+    if (batteryLevel != null && (batteryLevel < 0 || batteryLevel > 100)) {
+      return null;
+    }
+
+    final rawBatteryStatus = value['batteryStatus'];
+    final batteryStatus = switch (rawBatteryStatus) {
+      null => null,
+      'charging' => NativeChildBatteryStatus.charging,
+      'unplugged' => NativeChildBatteryStatus.unplugged,
+      _ => null,
+    };
+    if (rawBatteryStatus != null && batteryStatus == null) return null;
+
+    final rawLastSeenAt = value['lastSeenAt'];
+    final parsedLastSeenAt = rawLastSeenAt is String
+        ? DateTime.tryParse(rawLastSeenAt)?.toLocal()
+        : null;
+    if (rawLastSeenAt != null && parsedLastSeenAt == null) return null;
+
+    return NativeChildDeviceSnapshot(
+      deviceId: id.trim(),
+      label: label,
+      batteryLevel: batteryLevel,
+      batteryStatus: batteryStatus,
+      lastSeenAt: parsedLastSeenAt,
+    );
+  }
+}
+
+class NativeChildDeviceSnapshotResult {
+  const NativeChildDeviceSnapshotResult._(this.state, this.snapshot);
+
+  const NativeChildDeviceSnapshotResult.ready(
+    NativeChildDeviceSnapshot snapshot,
+  ) : this._(NativeChildDeviceSnapshotState.ready, snapshot);
+
+  const NativeChildDeviceSnapshotResult.unconfigured()
+    : this._(NativeChildDeviceSnapshotState.unconfigured, null);
+
+  const NativeChildDeviceSnapshotResult.unavailable()
+    : this._(NativeChildDeviceSnapshotState.unavailable, null);
+
+  const NativeChildDeviceSnapshotResult.unsupported()
+    : this._(NativeChildDeviceSnapshotState.unsupported, null);
+
+  final NativeChildDeviceSnapshotState state;
+  final NativeChildDeviceSnapshot? snapshot;
+
+  factory NativeChildDeviceSnapshotResult.fromMap(
+    Map<String, dynamic>? value,
+  ) {
+    if (value?['status'] == 'ready') {
+      final snapshot = NativeChildDeviceSnapshot.fromMap(value?['device']);
+      return snapshot == null
+          ? const NativeChildDeviceSnapshotResult.unavailable()
+          : NativeChildDeviceSnapshotResult.ready(snapshot);
+    }
+    return switch (value?['status']) {
+      'unconfigured' => const NativeChildDeviceSnapshotResult.unconfigured(),
+      'unavailable' => const NativeChildDeviceSnapshotResult.unavailable(),
+      _ => const NativeChildDeviceSnapshotResult.unavailable(),
+    };
   }
 }
 

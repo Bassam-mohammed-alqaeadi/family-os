@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import test from 'node:test';
 import { FOUNDATION_SCHEMA_MIGRATIONS } from '../src/schema-manifest.js';
 import { PostgresFoundationStore } from '../src/store/postgres-foundation-store.js';
@@ -272,4 +273,63 @@ test('PostgreSQL children roster read is guardian-scoped and performs no evidenc
   const childRead = statements.find((statement) => statement.sql.includes('FROM family_children'));
   assert.deepEqual(childRead.values, ['6dbb6760-f609-4f3e-a29f-4c209dc1d53b']);
   assert.equal(statements.some((statement) => /^\s*(?:INSERT|UPDATE|DELETE)\b/i.test(statement.sql)), false);
+});
+
+test('PostgreSQL device self-read verifies its capability and performs no evidence writes', async () => {
+  const credential = 'c'.repeat(64);
+  const statements = [];
+  const client = {
+    async query(sql, values) {
+      statements.push({ sql, values });
+      if (sql === 'BEGIN' || sql === 'COMMIT' || sql === 'ROLLBACK') {
+        return { rows: [], rowCount: 0 };
+      }
+      if (sql.includes('FROM family_child_devices')) {
+        return {
+          rows: [{
+            id: '76331550-5bab-4bc4-9f56-d98c9d80ef25',
+            child_id: '4a3846da-8f5f-4f2b-b7ea-8a0afcd989fb',
+            device_label: 'Amani Android',
+            battery_level: 62,
+            battery_status: 'charging',
+            location_lat: null,
+            location_lng: null,
+            location_label: null,
+            last_seen_at: '2026-10-06T12:00:00.000Z',
+            linked_at: '2026-10-06T11:00:00.000Z',
+            version: 2,
+            credential_hash: createHash('sha256').update(credential).digest('hex'),
+            credential_revoked_at: null,
+          }],
+          rowCount: 1,
+        };
+      }
+      throw new Error(`Unexpected query: ${sql}`);
+    },
+    release() {},
+  };
+  const store = new PostgresFoundationStore({
+    connectionString: 'postgresql://unused-in-test',
+    pool: { async connect() { return client; }, async end() {} },
+  });
+
+  const result = await store.getDeviceForCapability({
+    deviceCredential: credential,
+    deviceId: '76331550-5bab-4bc4-9f56-d98c9d80ef25',
+  });
+
+  assert.deepEqual(Object.keys(result.device).sort(), [
+    'batteryLevel',
+    'batteryStatus',
+    'deviceLabel',
+    'id',
+    'lastSeenAt',
+  ]);
+  assert.equal(result.device.deviceLabel, 'Amani Android');
+  assert.equal(result.device.batteryLevel, 62);
+  assert.equal(result.device.lastSeenAt, '2026-10-06T12:00:00.000Z');
+  assert.equal(
+    statements.some((statement) => /^\s*(?:INSERT|UPDATE|DELETE)\b/i.test(statement.sql)),
+    false,
+  );
 });

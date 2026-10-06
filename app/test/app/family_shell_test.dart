@@ -123,6 +123,28 @@ void main() {
     expect(find.byKey(FamilyShellKeys.hub), findsOneWidget);
   });
 
+  testWidgets(
+    'genuinely paired child mode suppresses guardian debug role chrome',
+    (tester) async {
+      final role = RoleController(AppRole.child);
+      final router = createAppRouter(
+        roleListenable: role,
+        initialLocation: '/scr-chd-004',
+      );
+      await _pump(
+        tester,
+        role: role,
+        router: router,
+        showDebugRoleSwitch: false,
+      );
+
+      expect(find.byKey(FamilyShellKeys.devRoleSwitch), findsNothing);
+      expect(find.byKey(FamilyShellKeys.tabs), findsOneWidget);
+      expect(find.byKey(FamilyShellKeys.sosFab), findsOneWidget);
+      expect(find.byKey(FamilyShellKeys.aiFab), findsNothing);
+    },
+  );
+
   testWidgets('login go() rebuilds shell tabs on day board', (tester) async {
     final role = RoleController(AppRole.father);
     final router = createAppRouter(
@@ -147,6 +169,7 @@ Future<void> _pump(
   WidgetTester tester, {
   required RoleController role,
   required GoRouter router,
+  bool showDebugRoleSwitch = true,
 }) async {
   await tester.pumpWidget(
     CurrentRole(
@@ -164,6 +187,7 @@ Future<void> _pump(
         routerConfig: router,
         builder: (context, child) => FamilyShellHost(
           router: router,
+          showDebugRoleSwitch: showDebugRoleSwitch,
           child: child ?? const SizedBox.shrink(),
         ),
       ),

@@ -22,6 +22,7 @@ const expectedOperations = {
   '/v1/families/{familyId}/children/{childId}/devices': ['post'],
   '/v1/families/{familyId}/children/{childId}/device-pairings': ['post'],
   '/v1/device-pairings/claim': ['post'],
+  '/v1/devices/{deviceId}': ['get'],
   '/v1/devices/{deviceId}/telemetry': ['post'],
   '/v1/families/{familyId}/memberships': ['post'],
   '/v1/families/{familyId}/memberships/{membershipId}/accept': ['post'],
@@ -42,7 +43,7 @@ test('Foundation OpenAPI contract is valid JSON and enumerates current API opera
   }
 });
 
-test('every protected Foundation API operation declares OIDC security and mutation idempotency', async () => {
+test('every protected Foundation API operation declares exact authentication and mutation idempotency', async () => {
   const specification = JSON.parse(await readFile(specificationPath, 'utf8'));
   for (const [path, methods] of Object.entries(expectedOperations)) {
     if (path.startsWith('/health/') || path === '/v1/device-pairings/claim') {
@@ -52,7 +53,9 @@ test('every protected Foundation API operation declares OIDC security and mutati
       const operation = specification.paths[path][method];
       const expectedSecurity = path === '/v1/devices/{deviceId}/telemetry'
         ? [{ oidcBearer: [] }, { deviceCredential: [] }]
-        : [{ oidcBearer: [] }];
+        : path === '/v1/devices/{deviceId}'
+          ? [{ deviceCredential: [] }]
+          : [{ oidcBearer: [] }];
       assert.deepEqual(operation.security, expectedSecurity, `${method.toUpperCase()} ${path}`);
       assert.equal(
         operation.responses['429']?.$ref,
@@ -134,11 +137,18 @@ test('native child pairing contract returns only an expiring one-time capability
   const specification = JSON.parse(await readFile(specificationPath, 'utf8'));
   const create = specification.paths['/v1/families/{familyId}/children/{childId}/device-pairings'].post;
   const claim = specification.paths['/v1/device-pairings/claim'].post;
+  const selfStatus = specification.paths['/v1/devices/{deviceId}'].get;
   const telemetry = specification.paths['/v1/devices/{deviceId}/telemetry'].post;
 
   assert.deepEqual(create.security, [{ oidcBearer: [] }]);
   assert.equal(claim.security, undefined);
   assert.equal(claim.parameters, undefined);
+  assert.deepEqual(selfStatus.security, [{ deviceCredential: [] }]);
+  assert.match(selfStatus.description, /cannot be enumerated/);
+  assert.deepEqual(
+    Object.keys(specification.components.schemas.PairedDeviceSelfStatus.properties).sort(),
+    ['batteryLevel', 'batteryStatus', 'deviceLabel', 'id', 'lastSeenAt'],
+  );
   assert.deepEqual(telemetry.security, [{ oidcBearer: [] }, { deviceCredential: [] }]);
   assert.deepEqual(specification.components.schemas.DevicePairing.required, [
     'id', 'childId', 'deviceLabel', 'pairingCode', 'expiresAt',

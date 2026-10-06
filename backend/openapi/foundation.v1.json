@@ -287,6 +287,23 @@
         }
       }
     },
+    "/v1/devices/{deviceId}": {
+      "get": {
+        "tags": ["Devices"],
+        "operationId": "getPairedDeviceSelfStatus",
+        "summary": "Read this paired child device's server-confirmed status",
+        "description": "Returns only the device addressed by the matching Device capability. It does not accept a guardian bearer and returns the same credential failure for a missing, mismatched, or revoked device so identifiers cannot be enumerated.",
+        "security": [{ "deviceCredential": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/DeviceId" }],
+        "responses": {
+          "200": { "description": "Server-confirmed status containing only this device's label, battery and last-seen fields.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PairedDeviceSelfStatusResponse" } } } },
+          "400": { "$ref": "#/components/responses/InvalidRequest" },
+          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+        }
+      }
+    },
     "/v1/devices/{deviceId}/telemetry": {
       "post": {
         "tags": ["Devices"],
@@ -479,6 +496,8 @@
       "DeviceTelemetryRequest": {"type": "object","required": ["batteryLevel","batteryStatus","locationLat","locationLng","locationLabel"],"properties": {"batteryLevel": {"type": "integer","minimum": 0,"maximum": 100},"batteryStatus": {"type": "string","enum": ["charging","unplugged"]},"locationLat": {"type": "number","minimum": -90,"maximum": 90},"locationLng": {"type": "number","minimum": -180,"maximum": 180},"locationLabel": {"type": "string","minLength": 1,"maxLength": 160}},"additionalProperties": false},
       "FamilyDevice": {"type": "object","required": ["id","childId","deviceLabel","batteryLevel","batteryStatus","locationLat","locationLng","locationLabel","lastSeenAt","linkedAt","version"],"properties": {"id": {"$ref": "#/components/schemas/Uuid"},"childId": {"$ref": "#/components/schemas/Uuid"},"deviceLabel": {"type": "string","minLength": 1,"maxLength": 80},"batteryLevel": {"type": ["integer","null"],"minimum": 0,"maximum": 100},"batteryStatus": {"type": ["string","null"],"enum": ["charging","unplugged",null]},"locationLat": {"type": ["number","null"],"minimum": -90,"maximum": 90},"locationLng": {"type": ["number","null"],"minimum": -180,"maximum": 180},"locationLabel": {"type": ["string","null"],"maxLength": 160},"lastSeenAt": {"type": ["string","null"],"format": "date-time"},"linkedAt": {"type": "string","format": "date-time"},"version": {"type": "integer","minimum": 1}},"additionalProperties": false},
       "FamilyDeviceResponse": {"type": "object","required": ["device"],"properties": {"device": {"$ref": "#/components/schemas/FamilyDevice"}},"additionalProperties": false},
+      "PairedDeviceSelfStatus": {"type": "object","required": ["id","deviceLabel","batteryLevel","batteryStatus","lastSeenAt"],"properties": {"id": {"$ref": "#/components/schemas/Uuid"},"deviceLabel": {"type": "string","minLength": 1,"maxLength": 80},"batteryLevel": {"type": ["integer","null"],"minimum": 0,"maximum": 100},"batteryStatus": {"type": ["string","null"],"enum": ["charging","unplugged",null]},"lastSeenAt": {"type": ["string","null"],"format": "date-time"}},"additionalProperties": false},
+      "PairedDeviceSelfStatusResponse": {"type": "object","required": ["device"],"properties": {"device": {"$ref": "#/components/schemas/PairedDeviceSelfStatus"}},"additionalProperties": false},
       "FamilyDeviceListResponse": {"type": "object","required": ["devices"],"properties": {"devices": {"type": "array","items": {"$ref": "#/components/schemas/FamilyDevice"}}},"additionalProperties": false},
       "CreateDevicePairingRequest": { "type": "object", "required": ["deviceLabel"], "properties": { "deviceLabel": { "type": "string", "minLength": 1, "maxLength": 80 } }, "additionalProperties": false },
       "ClaimDevicePairingRequest": { "type": "object", "required": ["pairingCode"], "properties": { "pairingCode": { "type": "string", "minLength": 6, "maxLength": 6, "pattern": "^[0-9]{6}$" } }, "additionalProperties": false },

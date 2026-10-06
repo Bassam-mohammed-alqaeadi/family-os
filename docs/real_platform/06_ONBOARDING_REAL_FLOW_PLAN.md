@@ -21,12 +21,12 @@ token or raw provider text ever reaches the UI or logs).
 
 | Layer | State | Evidence |
 |---|---|---|
-| Backend (Node/Express/PG) | **Real & hardened** | 77/77 tests; OIDC/JWKS bearer verify; idempotency; rate limits; `no-store`; hashed one-time pairing codes; `timingSafeEqual` |
-| Native child telemetry (Kotlin) | **Real** | Keystore-backed credential; foreground service; credential never returned to Flutter |
-| Flutter identity/session | **Real, fixed** | `842636b`: first-family creation unblocked; sign-up/sign-in outcomes honest; no account enumeration |
-| Flutter screens UX | **Partially real** | Several screens still carry prototype copy, mock seams (`ChildCountChoice`, "trial mode", fingerprint) and no loading/skeleton states |
-| Child home after pairing | **Fixed this wave** | Pairing success → role=child → `/scr-chd-004?childId=…`; cold start honours the native pairing |
-| CI | Analyze + tests only | **No Android build job** → native changes are unverifiable until added |
+| Backend (Node/Express/PG) | **Real & hardened** | 80/80 tests; OIDC/JWKS bearer verify; idempotency; rate limits; `no-store`; hashed one-time pairing codes; `timingSafeEqual`; non-enumerating device self-status |
+| Native child telemetry (Kotlin) | **Real** | Keystore-backed credential; foreground service; credential never returned to Flutter; self-status request returns only sanitized device fields |
+| Flutter identity/session | **Real, fixed** | First-family creation unblocked; sign-up/sign-in outcomes honest; no account enumeration |
+| Flutter screens UX | **Real for B1–B7** | Account, login, family, child, pairing, and paired-child home use genuine outcomes with named retry states |
+| Child home after pairing | **Fixed this wave** | Pairing success → role=child → `/scr-chd-004?childId=…`; cold start honours native pairing and displays server-backed label/battery/last-seen without guardian chrome |
+| CI | **Flutter + Foundation + Android gates** | Analyzer, tests, generated-source verification, credential guard, and debug APK Kotlin/Gradle compile are enforced |
 
 ## 2. Rules for this journey (binding)
 
@@ -57,7 +57,7 @@ For every screen: **empty / loading / success / each failure** + RTL/AR first + 
 - [x] B4 `AddChildScreen` (server-only create path, preview seams and mock alias removed, per-draft idempotency key reused on retry, fields locked while saving, live preview card). Remaining for ChildrenControlCentre "add another / pair device" next actions → B7 scope: single real create path (name+age+avatar+colour) with roster refresh and "add another / pair device" next actions
 - [x] B5 `NativeParentPairingScreen`: countdown to `expiresAt`, regenerate on expiry, large QR, manual code fallback, "device connected" live confirmation via `/devices` poll
 - [x] B6 `ChildModePairingScreen` (also: https-origin pre-check before claim, because the native service rejects http origins): permission pre-flight explainer *before* claiming (so a denied permission never burns a code), scan → claim → start progress steps, clear failure reasons per `NativeTelemetryStartResult.reason`
-- [ ] B7 `ChildDayBoardScreen` first-run for a real paired child: show device label/battery/last-seen from server, hide guardian-only chrome
+- [x] B7 `ChildDayBoardScreen` first-run for a real paired child: a non-enumerating Device-capability self-read returns only label/battery/last-seen; Android authenticates from Keystore and exposes only a sanitized snapshot; CHD-004 has honest not-reported/unavailable + retry/refresh states; unsupported/unconfigured hosts hide the card; genuine paired-child boot suppresses guardian debug role chrome
 
 ### Wave C — Security hardening around the journey
 - [x] C1 E-mail verification — Owner decision (2026-10-05): family creation and adding children are NOT blocked; only issuing a pairing QR/code requires a verified e-mail. Server enforces it: `POST .../device-pairings` → `403 {error.code:'email_verification_required'}` unless the ID token carries `email_verified:true`. Parent pairing screen sends the verification e-mail on sign-up, then runs a silent 3-second reload poll (plus resume re-check); the moment the link is clicked — on any device — the gate opens and the pairing code is issued hands-free (no "I verified" button).

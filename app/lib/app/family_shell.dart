@@ -38,10 +38,19 @@ abstract final class FamilyShellKeys {
 /// StatefulShellRoute.indexedStack deferred (PRT-2.1) — full router regen of
 /// ~129 routes is high-risk; this host keeps RoleGuard + flat routes intact.
 class FamilyShellHost extends StatefulWidget {
-  const FamilyShellHost({super.key, required this.router, required this.child});
+  const FamilyShellHost({
+    super.key,
+    required this.router,
+    required this.child,
+    this.showDebugRoleSwitch = true,
+  });
 
   final GoRouter router;
   final Widget child;
+
+  /// Development convenience only. A genuinely paired child handset disables
+  /// this so no guardian role/control affordance can appear in a debug APK.
+  final bool showDebugRoleSwitch;
 
   @override
   State<FamilyShellHost> createState() => _FamilyShellHostState();
@@ -93,7 +102,8 @@ class _FamilyShellHostState extends State<FamilyShellHost> {
     // Dev/gallery catalog — no role switch overlay.
     if (path == '/gallery' || path == '/dev-screens') return chrome;
     // Hot-reload phone workflow: jump Father Today ↔ Child / Mother homes.
-    if (!kDebugMode) return chrome;
+    // Never expose it on a genuinely paired child handset, including debug APKs.
+    if (!kDebugMode || !widget.showDebugRoleSwitch) return chrome;
 
     return Stack(
       fit: StackFit.expand,

@@ -3448,6 +3448,44 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get childDeviceCardTitle => 'الجهاز المرتبط';
+
+  @override
+  String childDeviceBatteryPercent(int percent) {
+    return 'البطارية $percent٪';
+  }
+
+  @override
+  String get childDeviceBatteryCharging => 'قيد الشحن';
+
+  @override
+  String get childDeviceBatteryUnplugged => 'يعمل على البطارية';
+
+  @override
+  String get childDeviceBatteryNotReported => 'لم تصل قراءة البطارية بعد';
+
+  @override
+  String childDeviceLastSeenAt(String time) {
+    return 'آخر اتصال بالخادم: $time';
+  }
+
+  @override
+  String get childDeviceLastSeenNotReported => 'لم تُرسل حالة الجهاز بعد';
+
+  @override
+  String get childDeviceUnavailableTitle => 'تعذّر تحديث حالة هذا الجهاز';
+
+  @override
+  String get childDeviceUnavailableBody =>
+      'لا يمكن الوصول إلى الخادم الآن. لن نعرض بطارية أو وقتًا تخمينيًا.';
+
+  @override
+  String get childDeviceRetry => 'إعادة المحاولة';
+
+  @override
+  String get childDeviceRefresh => 'تحديث حالة الجهاز';
+
+  @override
   String get requestInboxTitle => 'طلبات الوقت الإضافي';
 
   @override

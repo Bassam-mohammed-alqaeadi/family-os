@@ -101,6 +101,16 @@ function familyDeviceView(row) {
   };
 }
 
+function pairedDeviceSelfStatusView(row) {
+  return {
+    id: row.id,
+    deviceLabel: row.device_label,
+    batteryLevel: row.battery_level,
+    batteryStatus: row.battery_status,
+    lastSeenAt: row.last_seen_at,
+  };
+}
+
 function guardianTransferView(row) {
   return {
     id: row.id,
@@ -673,6 +683,28 @@ export class PostgresFoundationStore {
         subjectId: device.rows[0].id,
       });
       return { device: familyDeviceView(device.rows[0]), deviceCredential };
+    });
+  }
+
+  async getDeviceForCapability({ deviceCredential, deviceId }) {
+    return this.withTransaction(async (client) => {
+      const device = await client.query(
+        `SELECT id, device_label, battery_level, battery_status, last_seen_at,
+                credential_hash, credential_revoked_at
+         FROM family_child_devices
+         WHERE id = $1`,
+        [deviceId],
+      );
+      const item = device.rows[0];
+      // Do not reveal whether another family's device identifier exists.
+      if (
+        device.rowCount === 0 ||
+        item.credential_revoked_at != null ||
+        !capabilityMatches(item.credential_hash, deviceCredential)
+      ) {
+        throw new HttpError(401, 'invalid_device_credential', 'The device credential is invalid or revoked.');
+      }
+      return { device: pairedDeviceSelfStatusView(item) };
     });
   }
 

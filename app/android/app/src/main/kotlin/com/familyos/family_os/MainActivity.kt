@@ -31,6 +31,7 @@ class MainActivity : FlutterActivity() {
                     "configureAndStart" -> configureAndStart(call, result)
                     "stop" -> stopTelemetry(result)
                     "status" -> telemetryStatus(result)
+                    "getDeviceSnapshot" -> loadDeviceSnapshot(result)
                     else -> result.notImplemented()
                 }
             }
@@ -125,6 +126,25 @@ class MainActivity : FlutterActivity() {
             "fineLocationGranted" to hasFineLocation(),
             "backgroundLocationGranted" to hasBackgroundLocation(),
         ))
+    }
+
+    private fun loadDeviceSnapshot(result: MethodChannel.Result) {
+        // Network and Keystore work stay off the Flutter platform thread. Only
+        // the sanitized server fields are ever returned through MethodChannel.
+        Thread({
+            val response: Map<String, Any?> = try {
+                val config = TelemetryConfigStore(applicationContext).read()
+                if (config == null) {
+                    mapOf("status" to "unconfigured")
+                } else {
+                    val snapshot = ChildDeviceStatusClient().fetch(config)
+                    mapOf("status" to "ready", "device" to snapshot.toChannelMap())
+                }
+            } catch (_: Exception) {
+                mapOf("status" to "unavailable")
+            }
+            runOnUiThread { result.success(response) }
+        }, "family-os-device-status").start()
     }
 
     private fun hasFineLocation(): Boolean =

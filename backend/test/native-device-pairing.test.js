@@ -84,6 +84,45 @@ test('one-time pairing returns a device-only credential and it can submit real-s
     assert.equal(telemetry.status, 200);
     assert.equal((await telemetry.json()).device.batteryLevel, 62);
 
+    const auditCountBeforeRead = store.audit.length;
+    const selfStatus = await request(baseUrl, `/v1/devices/${claimed.device.id}`, {
+      authorization: `Device ${claimed.deviceCredential}`,
+    });
+    assert.equal(selfStatus.status, 200);
+    const selfDevice = (await selfStatus.json()).device;
+    assert.deepEqual(Object.keys(selfDevice).sort(), [
+      'batteryLevel',
+      'batteryStatus',
+      'deviceLabel',
+      'id',
+      'lastSeenAt',
+    ]);
+    assert.equal(selfDevice.id, claimed.device.id);
+    assert.equal(selfDevice.deviceLabel, 'Amani Android');
+    assert.equal(selfDevice.batteryLevel, 62);
+    assert.equal(selfDevice.batteryStatus, 'charging');
+    assert.equal(typeof selfDevice.lastSeenAt, 'string');
+    // A status read is not a mutation and must not manufacture audit/outbox evidence.
+    assert.equal(store.audit.length, auditCountBeforeRead);
+
+    const bearerCannotReadDeviceSelf = await request(baseUrl, `/v1/devices/${claimed.device.id}`, {
+      authorization: 'Bearer test-primary',
+    });
+    assert.equal(bearerCannotReadDeviceSelf.status, 401);
+    assert.equal((await bearerCannotReadDeviceSelf.json()).error.code, 'authentication_required');
+
+    const unrelatedId = '44444444-4444-4444-8444-444444444444';
+    const unrelatedRead = await request(baseUrl, `/v1/devices/${unrelatedId}`, {
+      authorization: `Device ${claimed.deviceCredential}`,
+    });
+    assert.equal(unrelatedRead.status, 401);
+    assert.equal((await unrelatedRead.json()).error.code, 'invalid_device_credential');
+    const mismatchedRead = await request(baseUrl, `/v1/devices/${claimed.device.id}`, {
+      authorization: `Device ${'z'.repeat(64)}`,
+    });
+    assert.equal(mismatchedRead.status, 401);
+    assert.equal((await mismatchedRead.json()).error.code, 'invalid_device_credential');
+
     const replay = await request(baseUrl, '/v1/device-pairings/claim', {
       method: 'POST', body: { pairingCode: pairingBody.pairing.pairingCode },
     });

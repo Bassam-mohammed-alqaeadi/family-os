@@ -6,12 +6,13 @@ This directory is the **Render-first Foundation Wave backend**, not a replacemen
 - family creation and primary-guardian membership;
 - explicit co-guardian/child pending membership acceptance;
 - tenant-scoped authorization;
-- append-only family audit records and a durable outbox record in the same PostgreSQL transaction; and
-- idempotency for mutations.
+- append-only family audit records and a durable outbox record in the same PostgreSQL transaction;
+- idempotency for authority mutations; and
+- guardian-issued one-time device pairing, scoped device capabilities, telemetry ingestion, and a minimal paired-device self-status read.
 
 ## Explicitly not implemented
 
-This slice intentionally does not implement account registration/recovery UX, an identity provider, Firebase/Firebase Admin/Firestore/Cloud Functions/FCM, device pairing, Native enforcement, location, app usage, SOS, chat, calls, media, billing, AI, export/delete execution, realtime transport, Flutter production integration, or release deployment.
+This slice intentionally does not implement account registration/recovery UX, an identity provider, Firebase Admin/Firestore/Cloud Functions/FCM, OS enforcement, location history/geofencing, app usage, SOS, chat, calls, media, billing, AI, export/delete execution, realtime transport, or release deployment. Device pairing and telemetry here are narrow server boundaries; Android permission, Keystore, and foreground-service behavior remains in the Flutter application's native host.
 
 There is no demo identity fallback. When OIDC or PostgreSQL configuration is absent—or the required PostgreSQL migrations are not applied—`/health/ready` returns `503` and every protected endpoint fails closed. Test-only identities and in-memory state live only under `backend/test/`; the runtime server cannot load them. Every response is marked `Cache-Control: no-store` and carries defensive content/referrer/frame headers so family, identity and audit responses are not retained by shared browser/proxy caches.
 
@@ -75,9 +76,9 @@ The synthetic roster release procedure, including its mutating HTTP and optional
 
 ## HTTP contract (foundation-only)
 
-The machine-readable contract is `openapi/foundation.v1.json`. It documents current local Foundation behavior, not a deployed service or Flutter production capability. Contract tests require every documented protected route to declare OIDC security and every mutation to require an idempotency key.
+The machine-readable contract is `openapi/foundation.v1.json`. It documents current local Foundation behavior, not a deployed service. Contract tests require every protected route to declare its exact OIDC and/or device-capability security boundary, and authority mutations to require an idempotency key.
 
-All protected routes require `Authorization: Bearer <OIDC access token>`. All mutation routes also require an `Idempotency-Key` unique to the operation payload.
+Guardian routes require `Authorization: Bearer <OIDC access token>`. A paired handset uses `Authorization: Device <capability>` only on its own status and telemetry routes; that capability is scoped to the exact device and missing/mismatched/revoked credentials do not reveal device existence. Authority mutations also require an `Idempotency-Key` unique to the operation payload.
 
 Every API response also carries a server-generated `X-Correlation-Id`. It is distinct from `X-Request-Id`: an optional client request ID is only a response/logging convenience and can never choose evidence linkage. On a newly committed mutation, the request context, appended audit event, and matching outbox event receive the same server-generated correlation ID in one database transaction. A correctly replayed idempotent request returns its saved response without creating new audit/outbox evidence. Audit records created before correlation support retain `null`; no historical IDs are fabricated.
 
@@ -89,6 +90,11 @@ Every API response also carries a server-generated `X-Correlation-Id`. It is dis
 | `GET` | `/v1/families/:familyId` | Returns only to an active family member. |
 | `GET` | `/v1/families/:familyId/children` | Returns durable roster profiles only to active guardians. Child memberships are denied the parent control-centre surface. Device, location and policy truth are excluded. |
 | `POST` | `/v1/families/:familyId/children` | Primary guardian creates one durable roster profile with a required idempotency key, audit/outbox evidence and server correlation. This does not create a child login or device/policy state. |
+| `GET` | `/v1/families/:familyId/devices` | Active guardians read that family's linked devices and last accepted telemetry. |
+| `POST` | `/v1/families/:familyId/children/:childId/device-pairings` | Verified primary guardian issues a short-lived, single-use pairing code. |
+| `POST` | `/v1/device-pairings/claim` | A child handset claims a valid code once and receives its device-scoped capability. |
+| `GET` | `/v1/devices/:deviceId` | The exact Device capability reads only its own label, battery state, and last-seen value; no guardian bearer or enumeration behavior. |
+| `POST` | `/v1/devices/:deviceId/telemetry` | The exact Device capability, or a primary guardian bearer for controlled verification, submits genuine battery/location telemetry. |
 | `POST` | `/v1/families/:familyId/memberships` | Primary guardian creates a pending `co_guardian` or `child` membership for a known OIDC subject. There is no email/push invitation transport in this wave. |
 | `POST` | `/v1/families/:familyId/memberships/:membershipId/accept` | Only the exact invited OIDC subject can accept. |
 | `POST` | `/v1/families/:familyId/memberships/:membershipId/revoke` | Only the primary guardian can revoke a pending invitation or remove an active non-primary member. Requires an idempotency key and a non-sensitive machine `reasonCode`. The record and audit evidence remain durable. |

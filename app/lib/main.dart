@@ -141,6 +141,7 @@ Future<void> main() async {
       foundationRuntime: familyEntryRuntime,
       initialRole: childDevice == null ? null : AppRole.child,
       initialLocationOverride: childDevice?.homeLocation,
+      pairedChildDevice: childDevice != null,
     ),
   );
 }
@@ -215,6 +216,7 @@ class FamilyOsApp extends StatefulWidget {
     this.foundationRuntime,
     this.initialRole,
     this.initialLocationOverride,
+    this.pairedChildDevice = false,
   });
 
   /// Boot role when no [roleController] is injected (paired child device).
@@ -222,6 +224,10 @@ class FamilyOsApp extends StatefulWidget {
 
   /// Boot location that wins over the platform/default route (child home).
   final String? initialLocationOverride;
+
+  /// True only when native Keystore configuration established that this is a
+  /// genuinely paired child handset. Guardian debug chrome stays disabled.
+  final bool pairedChildDevice;
 
   /// Optional override for tests / gallery role switching.
   final RoleController? roleController;
@@ -339,6 +345,7 @@ class _FamilyOsAppState extends State<FamilyOsApp> {
                   routerConfig: _router,
                   builder: (context, child) => FamilyShellHost(
                     router: _router,
+                    showDebugRoleSwitch: !widget.pairedChildDevice,
                     child: child ?? const SizedBox.shrink(),
                   ),
                   debugShowCheckedModeBanner: false,

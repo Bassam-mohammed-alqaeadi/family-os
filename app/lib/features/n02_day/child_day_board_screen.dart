@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import 'package:family_os/app/role_guard.dart';
 import 'package:family_os/app/shell_tab_more_tools.dart';
@@ -26,6 +27,7 @@ import 'package:family_os/core/screen_time/screen_time_runtime.dart';
 import 'package:family_os/core/screen_time/stage1_time_request_runtime.dart';
 import 'package:family_os/features/n02_day/day_board_motion.dart';
 import 'package:family_os/features/n09_smart_modes/modes_ux_bridge.dart';
+import 'package:family_os/foundation_gate/native_child_telemetry_bridge.dart';
 
 /// Widget keys for SCR-CHD-004 / SET-019 / UI-005 / UI-017 acceptance.
 abstract final class ChildDayBoardKeys {
@@ -42,11 +44,21 @@ abstract final class ChildDayBoardKeys {
   static const emptyState = Key('child_day_board_empty');
   static const offlineBanner = Key('child_day_board_offline_banner');
   static const lastSyncedLine = Key('child_day_board_last_synced');
+  static const deviceCard = Key('child_day_board_device_card');
+  static const deviceLabel = Key('child_day_board_device_label');
+  static const deviceBattery = Key('child_day_board_device_battery');
+  static const deviceLastSeen = Key('child_day_board_device_last_seen');
+  static const deviceUnavailable = Key('child_day_board_device_unavailable');
+  static const deviceRefresh = Key('child_day_board_device_refresh');
+  static const deviceRetry = Key('child_day_board_device_retry');
 
   /// UI-017 — decorative status pulse (reduce-motion gated).
   static const statusMotion = Key('child_day_board_status_motion');
   static const modeDisclosure = Key('child_day_board_mode_disclosure');
 }
+
+typedef ChildDeviceSnapshotLoader =
+    Future<NativeChildDeviceSnapshotResult> Function();
 
 /// SCR-CHD-004 — لوحة يومي (SET-019 + UI-005).
 ///
@@ -63,6 +75,7 @@ class ChildDayBoardScreen extends StatefulWidget {
     this.modes,
     this.timeRequestService,
     this.initialPolicy,
+    this.deviceSnapshotLoader,
     this.emptyDay = false,
     this.showModeNotices = true,
     this.onEmptyAction,
@@ -90,6 +103,10 @@ class ChildDayBoardScreen extends StatefulWidget {
   /// Optional seed before first bus event (tests / hydrate from repo).
   final ScreenTimePolicy? initialPolicy;
 
+  /// Native Keystore-authenticated, server-backed paired-device read. Tests may
+  /// inject it; production defaults to [NativeChildTelemetryBridge].
+  final ChildDeviceSnapshotLoader? deviceSnapshotLoader;
+
   /// When true, body is SHR-006 [AppEmptyState] (no planted day content).
   final bool emptyDay;
 
@@ -116,6 +133,9 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
   BuiltInModeId? _prevModeId;
   var _prevActive = false;
   var _hasExplicitPolicy = false;
+  NativeChildDeviceSnapshotResult? _deviceSnapshotResult;
+  var _deviceSnapshotLoading = false;
+
   bool _isExplicitMirror(ChildPolicyMirror mirror) {
     return mirror.lastAppliedAt != null ||
         mirror.applyCount > 0 ||
@@ -164,6 +184,26 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
     });
     stage1TimeRequestDecisionBus.addListener(_onDecision);
     _bootstrapTimeRequests();
+    _loadDeviceSnapshot();
+  }
+
+  Future<void> _loadDeviceSnapshot() async {
+    if (_deviceSnapshotLoading) return;
+    setState(() => _deviceSnapshotLoading = true);
+    final loader =
+        widget.deviceSnapshotLoader ??
+        NativeChildTelemetryBridge.loadDeviceSnapshot;
+    NativeChildDeviceSnapshotResult next;
+    try {
+      next = await loader();
+    } catch (_) {
+      next = const NativeChildDeviceSnapshotResult.unavailable();
+    }
+    if (!mounted) return;
+    setState(() {
+      _deviceSnapshotResult = next;
+      _deviceSnapshotLoading = false;
+    });
   }
 
   Future<void> _bootstrapTimeRequests() async {
@@ -326,12 +366,199 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
   int get _effectiveRemaining =>
       _mirror.dailyRemaining + _temporaryGrantRemaining;
 
+  String _deviceBatteryText(
+    AppLocalizations l10n,
+    NativeChildDeviceSnapshot snapshot,
+  ) {
+    final parts = <String>[];
+    if (snapshot.batteryLevel != null) {
+      parts.add(l10n.childDeviceBatteryPercent(snapshot.batteryLevel!));
+    }
+    if (snapshot.batteryStatus != null) {
+      parts.add(
+        switch (snapshot.batteryStatus!) {
+          NativeChildBatteryStatus.charging =>
+            l10n.childDeviceBatteryCharging,
+          NativeChildBatteryStatus.unplugged =>
+            l10n.childDeviceBatteryUnplugged,
+        },
+      );
+    }
+    return parts.isEmpty
+        ? l10n.childDeviceBatteryNotReported
+        : parts.join(' · ');
+  }
+
+  String _deviceLastSeenText(
+    AppLocalizations l10n,
+    NativeChildDeviceSnapshot snapshot,
+  ) {
+    final lastSeenAt = snapshot.lastSeenAt;
+    if (lastSeenAt == null) return l10n.childDeviceLastSeenNotReported;
+    final value = DateFormat.yMd(
+      l10n.localeName,
+    ).add_Hm().format(lastSeenAt);
+    return l10n.childDeviceLastSeenAt(value);
+  }
+
+  Widget? _buildDeviceCard(
+    AppLocalizations l10n,
+    FamilyColors colors,
+  ) {
+    final result = _deviceSnapshotResult;
+    if (result == null ||
+        result.state == NativeChildDeviceSnapshotState.unconfigured ||
+        result.state == NativeChildDeviceSnapshotState.unsupported) {
+      return null;
+    }
+
+    if (result.state == NativeChildDeviceSnapshotState.unavailable ||
+        result.snapshot == null) {
+      return Container(
+        key: ChildDayBoardKeys.deviceCard,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: colors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.phone_android_rounded, color: colors.p600),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    key: ChildDayBoardKeys.deviceUnavailable,
+                    l10n.childDeviceUnavailableTitle,
+                    style: TextStyle(
+                      color: colors.ink,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.childDeviceUnavailableBody,
+              style: TextStyle(color: colors.ink2, height: 1.45),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              key: ChildDayBoardKeys.deviceRetry,
+              onPressed: _deviceSnapshotLoading ? null : _loadDeviceSnapshot,
+              icon: _deviceSnapshotLoading
+                  ? const SizedBox.square(
+                      dimension: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.refresh_rounded),
+              label: Text(l10n.childDeviceRetry),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final snapshot = result.snapshot!;
+    return Semantics(
+      container: true,
+      child: Container(
+        key: ChildDayBoardKeys.deviceCard,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: colors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: colors.p50,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.phone_android_rounded, color: colors.p600),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.childDeviceCardTitle,
+                        style: TextStyle(
+                          color: colors.ink2,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        key: ChildDayBoardKeys.deviceLabel,
+                        snapshot.label,
+                        style: TextStyle(
+                          color: colors.ink,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  key: ChildDayBoardKeys.deviceRefresh,
+                  onPressed: _deviceSnapshotLoading ? null : _loadDeviceSnapshot,
+                  tooltip: l10n.childDeviceRefresh,
+                  icon: _deviceSnapshotLoading
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.refresh_rounded),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              key: ChildDayBoardKeys.deviceBattery,
+              _deviceBatteryText(l10n, snapshot),
+              style: TextStyle(
+                color: colors.ink,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              key: ChildDayBoardKeys.deviceLastSeen,
+              _deviceLastSeenText(l10n, snapshot),
+              style: TextStyle(color: colors.ink2, fontSize: 13, height: 1.4),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final active = _activation.active && _activation.modeId != null;
     final modeId = _activation.modeId;
+    final deviceCard = _buildDeviceCard(l10n, colors);
 
     return Scaffold(
       backgroundColor: colors.childBg,
@@ -401,6 +628,10 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
+                  ],
+                  if (deviceCard != null) ...[
+                    const SizedBox(height: 16),
+                    deviceCard,
                   ],
                   if (_showRemaining) ...[
                     const SizedBox(height: 16),

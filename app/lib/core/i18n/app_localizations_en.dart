@@ -3505,6 +3505,47 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get childDeviceCardTitle => 'Paired device';
+
+  @override
+  String childDeviceBatteryPercent(int percent) {
+    return 'Battery $percent%';
+  }
+
+  @override
+  String get childDeviceBatteryCharging => 'Charging';
+
+  @override
+  String get childDeviceBatteryUnplugged => 'On battery';
+
+  @override
+  String get childDeviceBatteryNotReported =>
+      'No battery reading has arrived yet';
+
+  @override
+  String childDeviceLastSeenAt(String time) {
+    return 'Last server contact: $time';
+  }
+
+  @override
+  String get childDeviceLastSeenNotReported =>
+      'This device has not reported yet';
+
+  @override
+  String get childDeviceUnavailableTitle =>
+      'This device\'s status could not update';
+
+  @override
+  String get childDeviceUnavailableBody =>
+      'The server cannot be reached right now. We will not show a guessed battery or time.';
+
+  @override
+  String get childDeviceRetry => 'Try again';
+
+  @override
+  String get childDeviceRefresh => 'Refresh device status';
+
+  @override
   String get requestInboxTitle => 'Extra time requests';
 
   @override

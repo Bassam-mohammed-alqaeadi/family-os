@@ -6212,6 +6212,72 @@ abstract class AppLocalizations {
   /// **'تُعرض آخر لوحة محلية ({time}). مزامنة الأجهزة المتعددة مغلقة — التحديثات على هذا الجهاز فقط.'**
   String childDayBoardOfflineBanner(String time);
 
+  /// B7 paired-child server-backed device card heading
+  ///
+  /// In ar, this message translates to:
+  /// **'الجهاز المرتبط'**
+  String get childDeviceCardTitle;
+
+  /// B7 genuine server-reported child device battery level
+  ///
+  /// In ar, this message translates to:
+  /// **'البطارية {percent}٪'**
+  String childDeviceBatteryPercent(int percent);
+
+  /// B7 genuine server-reported charging state
+  ///
+  /// In ar, this message translates to:
+  /// **'قيد الشحن'**
+  String get childDeviceBatteryCharging;
+
+  /// B7 genuine server-reported unplugged state
+  ///
+  /// In ar, this message translates to:
+  /// **'يعمل على البطارية'**
+  String get childDeviceBatteryUnplugged;
+
+  /// B7 honest empty battery telemetry state
+  ///
+  /// In ar, this message translates to:
+  /// **'لم تصل قراءة البطارية بعد'**
+  String get childDeviceBatteryNotReported;
+
+  /// B7 genuine server-reported last-seen timestamp
+  ///
+  /// In ar, this message translates to:
+  /// **'آخر اتصال بالخادم: {time}'**
+  String childDeviceLastSeenAt(String time);
+
+  /// B7 honest empty last-seen state
+  ///
+  /// In ar, this message translates to:
+  /// **'لم تُرسل حالة الجهاز بعد'**
+  String get childDeviceLastSeenNotReported;
+
+  /// B7 configured paired device status fetch failure title
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر تحديث حالة هذا الجهاز'**
+  String get childDeviceUnavailableTitle;
+
+  /// B7 no fabricated telemetry message
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يمكن الوصول إلى الخادم الآن. لن نعرض بطارية أو وقتًا تخمينيًا.'**
+  String get childDeviceUnavailableBody;
+
+  /// B7 paired device status retry button
+  ///
+  /// In ar, this message translates to:
+  /// **'إعادة المحاولة'**
+  String get childDeviceRetry;
+
+  /// B7 paired device status refresh tooltip
+  ///
+  /// In ar, this message translates to:
+  /// **'تحديث حالة الجهاز'**
+  String get childDeviceRefresh;
+
   /// SCR-FAT-033 / UI-006 app bar title
   ///
   /// In ar, this message translates to:

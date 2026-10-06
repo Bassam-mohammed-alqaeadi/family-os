@@ -4413,6 +4413,60 @@
       }
     }
   },
+  "childDeviceCardTitle": "Paired device",
+  "@childDeviceCardTitle": {
+    "description": "B7 paired-child server-backed device card heading"
+  },
+  "childDeviceBatteryPercent": "Battery {percent}%",
+  "@childDeviceBatteryPercent": {
+    "description": "B7 genuine server-reported child device battery level",
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "childDeviceBatteryCharging": "Charging",
+  "@childDeviceBatteryCharging": {
+    "description": "B7 genuine server-reported charging state"
+  },
+  "childDeviceBatteryUnplugged": "On battery",
+  "@childDeviceBatteryUnplugged": {
+    "description": "B7 genuine server-reported unplugged state"
+  },
+  "childDeviceBatteryNotReported": "No battery reading has arrived yet",
+  "@childDeviceBatteryNotReported": {
+    "description": "B7 honest empty battery telemetry state"
+  },
+  "childDeviceLastSeenAt": "Last server contact: {time}",
+  "@childDeviceLastSeenAt": {
+    "description": "B7 genuine server-reported last-seen timestamp",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "childDeviceLastSeenNotReported": "This device has not reported yet",
+  "@childDeviceLastSeenNotReported": {
+    "description": "B7 honest empty last-seen state"
+  },
+  "childDeviceUnavailableTitle": "This device's status could not update",
+  "@childDeviceUnavailableTitle": {
+    "description": "B7 configured paired device status fetch failure title"
+  },
+  "childDeviceUnavailableBody": "The server cannot be reached right now. We will not show a guessed battery or time.",
+  "@childDeviceUnavailableBody": {
+    "description": "B7 no fabricated telemetry message"
+  },
+  "childDeviceRetry": "Try again",
+  "@childDeviceRetry": {
+    "description": "B7 paired device status retry button"
+  },
+  "childDeviceRefresh": "Refresh device status",
+  "@childDeviceRefresh": {
+    "description": "B7 paired device status refresh tooltip"
+  },
   "requestInboxTitle": "Extra time requests",
   "@requestInboxTitle": {
     "description": "SCR-FAT-033 / UI-006 app bar title"

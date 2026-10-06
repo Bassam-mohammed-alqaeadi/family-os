@@ -88,6 +88,16 @@ export function createApp({
         next();
     });
 
+    const requireDeviceCredential = (request, _response, next) => {
+        const deviceCredential = deviceCredentialFromAuthorization(request.get('Authorization'));
+        if (deviceCredential == null) {
+            next(new HttpError(401, 'authentication_required', 'A device credential is required.'));
+            return;
+        }
+        request.deviceCredential = deviceCredential;
+        next();
+    };
+
     // Issuing a child-device pairing capability is the most consequential
     // guardian action in onboarding: it binds a child's handset to this
     // account. The guardian must therefore own a verified e-mail (account
@@ -126,7 +136,7 @@ export function createApp({
         },
     });
 
-    const deviceTelemetryRateLimit = rateLimit({
+    const deviceCapabilityRateLimit = rateLimit({
         windowMs: protectedRateLimit.windowMs ?? 60_000,
         limit: protectedRateLimit.limit ?? 120,
         standardHeaders: 'draft-7',
@@ -139,7 +149,7 @@ export function createApp({
             return `guardian:${request.principal?.subject ?? 'unauthenticated'}`;
         },
         handler: (_request, _response, next) => {
-            next(new HttpError(429, 'rate_limit_exceeded', 'Too many telemetry updates. Try again later.'));
+            next(new HttpError(429, 'rate_limit_exceeded', 'Too many device requests. Try again later.'));
         },
     });
 
@@ -363,10 +373,26 @@ export function createApp({
         }),
     );
 
+    app.get(
+        '/v1/devices/:deviceId',
+        requireDeviceCredential,
+        deviceCapabilityRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            requireNoQueryParameters(request.query);
+            const result = await store.getDeviceForCapability({
+                deviceCredential: request.deviceCredential,
+                deviceId,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
     app.post(
         '/v1/devices/:deviceId/telemetry',
         requireTelemetryActor,
-        deviceTelemetryRateLimit,
+        deviceCapabilityRateLimit,
         requireRuntimeReady,
         asyncRoute(async(request, response) => {
             const deviceId = requireUuid(request.params.deviceId, 'deviceId');

@@ -131,6 +131,16 @@ export class MemoryFoundationStore {
     };
   }
 
+  pairedDeviceSelfStatusView(device) {
+    return {
+      id: device.id,
+      deviceLabel: device.deviceLabel,
+      batteryLevel: device.batteryLevel,
+      batteryStatus: device.batteryStatus,
+      lastSeenAt: device.lastSeenAt,
+    };
+  }
+
   recordAudit(familyId, actorMembershipId, correlationId, eventType, subjectType, subjectId) {
     requireServerCorrelationId(correlationId);
     const auditEvent = {
@@ -387,6 +397,20 @@ export class MemoryFoundationStore {
     pairing.claimedDeviceId = device.id;
     this.recordAudit(pairing.familyId, null, correlationId, 'family.device_paired', 'family_child_device', device.id);
     return { device: this.familyDeviceView(device), deviceCredential };
+  }
+
+  async getDeviceForCapability({ deviceCredential, deviceId }) {
+    const device = this.devices.get(deviceId);
+    // Keep device existence private: a missing device and a mismatched or
+    // revoked capability have the same presentation-safe result.
+    if (
+      !device ||
+      device.credentialRevokedAt != null ||
+      this.capabilityHash(deviceCredential) !== device.credentialHash
+    ) {
+      throw new HttpError(401, 'invalid_device_credential', 'The device credential is invalid or revoked.');
+    }
+    return { device: this.pairedDeviceSelfStatusView(device) };
   }
 
   async ingestDeviceTelemetry({
