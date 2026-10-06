@@ -3,545 +3,2575 @@
   "info": {
     "title": "Family OS Foundation API",
     "version": "0.1.0-foundation",
-    "description": "Render-first contract for the authorized account, family, membership, guardian-transfer, audit and readiness foundation. This document describes implemented local API behavior only; it does not authorize deployment, Flutter production use, account recovery, support operations, Firebase, device control, billing, AI, realtime or release claims."
+    "description": "Contract for the authorized account, family, membership, guardian-transfer, child roster, device lifecycle, audit and readiness foundation. Every operation declared here is registered by the running server, and a CI drift gate fails the build when this document and app.js disagree in either direction. It still does not authorize deployment, account recovery, support operations, device control beyond the declared lifecycle, billing, AI, realtime or release claims."
   },
   "tags": [
-    { "name": "Health", "description": "Process and dependency truth endpoints." },
-    { "name": "Families", "description": "Server-authorized family and membership operations." },
-    { "name": "Guardian continuity", "description": "Two-party primary-guardian transfer, not lost-account recovery." },
-    { "name": "Audit", "description": "Guardian-scoped minimum audit envelope." },
-    { "name": "Devices", "description": "Guardian-authorized linked-device latest telemetry." }
+    {
+      "name": "Health",
+      "description": "Process and dependency truth endpoints."
+    },
+    {
+      "name": "Families",
+      "description": "Server-authorized family and membership operations."
+    },
+    {
+      "name": "Guardian continuity",
+      "description": "Two-party primary-guardian transfer, not lost-account recovery."
+    },
+    {
+      "name": "Audit",
+      "description": "Guardian-scoped minimum audit envelope."
+    },
+    {
+      "name": "Devices",
+      "description": "Guardian-authorized linked-device latest telemetry."
+    }
   ],
   "paths": {
     "/health/live": {
       "get": {
-        "tags": ["Health"],
+        "tags": [
+          "Health"
+        ],
         "operationId": "getLiveness",
         "summary": "Check process liveness only",
         "responses": {
           "200": {
             "description": "The process is running; this does not prove database, identity or schema readiness.",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LiveStatus" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveStatus"
+                }
+              }
+            }
           }
         }
       }
     },
     "/health/ready": {
       "get": {
-        "tags": ["Health"],
+        "tags": [
+          "Health"
+        ],
         "operationId": "getReadiness",
         "summary": "Check configuration, database and reviewed schema readiness",
         "responses": {
           "200": {
             "description": "Required configuration and PostgreSQL schema are ready.",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReadyStatus" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadyStatus"
+                }
+              }
+            }
           },
           "503": {
             "description": "At least one required dependency or configuration is not ready; no protected capability should be claimed.",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NotReadyStatus" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotReadyStatus"
+                }
+              }
+            }
           }
         }
       }
     },
     "/v1/me/families": {
       "get": {
-        "tags": ["Families"],
+        "tags": [
+          "Families"
+        ],
         "operationId": "listMyFamilies",
         "summary": "Discover only the verified principal's active families",
         "description": "The server derives eligible families from the verified principal. This read accepts no query parameters and returns no partial result when the bounded discovery limit is exceeded.",
-        "security": [{ "oidcBearer": [] }],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
         "responses": {
-          "200": { "description": "Minimal active-family discovery envelope, or an empty envelope when the verified principal has no eligible family.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/FamilyDiscoveryResponse" } } } },
-          "400": { "$ref": "#/components/responses/InvalidRequest" },
-          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
-          "409": { "$ref": "#/components/responses/Conflict" },
-          "429": { "$ref": "#/components/responses/RateLimited" },
-          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+          "200": {
+            "description": "Minimal active-family discovery envelope, or an empty envelope when the verified principal has no eligible family.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyDiscoveryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
         }
       }
     },
     "/v1/families": {
       "post": {
-        "tags": ["Families"],
+        "tags": [
+          "Families"
+        ],
         "operationId": "createFamily",
         "summary": "Create a family with the verified principal as active primary guardian",
-        "security": [{ "oidcBearer": [] }],
-        "parameters": [{ "$ref": "#/components/parameters/IdempotencyKey" }],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateFamilyRequest" } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFamilyRequest"
+              }
+            }
+          }
         },
         "responses": {
-          "201": { "description": "Family created or durable idempotent replay returned.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/FamilyResponse" } } } },
-          "400": { "$ref": "#/components/responses/InvalidRequest" },
-          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
-          "409": { "$ref": "#/components/responses/Conflict" },
-          "429": { "$ref": "#/components/responses/RateLimited" },
-          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+          "201": {
+            "description": "Family created or durable idempotent replay returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
         }
       }
     },
     "/v1/families/{familyId}": {
       "get": {
-        "tags": ["Families"],
+        "tags": [
+          "Families"
+        ],
         "operationId": "getFamily",
         "summary": "Read a family only as an active family member",
-        "security": [{ "oidcBearer": [] }],
-        "parameters": [{ "$ref": "#/components/parameters/FamilyId" }],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          }
+        ],
         "responses": {
-          "200": { "description": "Family membership envelope.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/FamilyResponse" } } } },
-          "400": { "$ref": "#/components/responses/InvalidRequest" },
-          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
-          "403": { "$ref": "#/components/responses/FamilyAccessDenied" },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "429": { "$ref": "#/components/responses/RateLimited" },
-          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+          "200": {
+            "description": "Family membership envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
         }
       }
     },
     "/v1/families/{familyId}/children": {
       "get": {
-        "tags": ["Families"],
+        "tags": [
+          "Families"
+        ],
         "operationId": "listFamilyChildren",
         "summary": "Read the verified guardian's durable children roster",
         "description": "Only active guardian memberships can read this parent control-centre roster. Device, location and policy state are deliberately outside this roster endpoint.",
-        "security": [{ "oidcBearer": [] }],
-        "parameters": [{ "$ref": "#/components/parameters/FamilyId" }],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          }
+        ],
         "responses": {
-          "200": { "description": "Durable child profile roster, including an empty roster.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/FamilyChildListResponse" } } } },
-          "400": { "$ref": "#/components/responses/InvalidRequest" },
-          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
-          "403": { "$ref": "#/components/responses/Forbidden" },
-          "429": { "$ref": "#/components/responses/RateLimited" },
-          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+          "200": {
+            "description": "Durable child profile roster, including an empty roster.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyChildListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
         }
       },
       "post": {
-        "tags": ["Families"],
+        "tags": [
+          "Families"
+        ],
         "operationId": "createFamilyChild",
         "summary": "Create one durable child profile as the active primary guardian",
         "description": "This creates only a durable family roster profile, including its selected avatar emoji and named theme swatch. It does not create a child login, pair a device, report location, or apply a policy.",
-        "security": [{ "oidcBearer": [] }],
-        "parameters": [{ "$ref": "#/components/parameters/FamilyId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateFamilyChildRequest" } } } },
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFamilyChildRequest"
+              }
+            }
+          }
+        },
         "responses": {
-          "201": { "description": "Child profile created or durable idempotent replay returned.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/FamilyChildResponse" } } } },
-          "400": { "$ref": "#/components/responses/InvalidRequest" },
-          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
-          "403": { "$ref": "#/components/responses/FamilyAccessDenied" },
-          "409": { "$ref": "#/components/responses/Conflict" },
-          "429": { "$ref": "#/components/responses/RateLimited" },
-          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+          "201": {
+            "description": "Child profile created or durable idempotent replay returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyChildResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
         }
       }
     },
     "/v1/families/{familyId}/devices": {
       "get": {
-            "tags": [
-                  "Devices"
-            ],
-            "operationId": "listFamilyDevices",
-            "summary": "Read linked family devices and their latest telemetry as an active guardian",
-            "description": "Returns only the latest stored telemetry for linked devices. It is not a location history endpoint and makes no claim about background collection freshness beyond lastSeenAt.",
-            "security": [
-                  {
-                        "oidcBearer": []
-                  }
-            ],
-            "parameters": [
-                  {
-                        "$ref": "#/components/parameters/FamilyId"
-                  }
-            ],
-            "responses": {
-                  "200": {
-                        "description": "Linked devices with their latest authorized telemetry.",
-                        "content": {
-                              "application/json": {
-                                    "schema": {
-                                          "$ref": "#/components/schemas/FamilyDeviceListResponse"
-                                    }
-                              }
-                        }
-                  },
-                  "400": {
-                        "$ref": "#/components/responses/InvalidRequest"
-                  },
-                  "401": {
-                        "$ref": "#/components/responses/AuthenticationRequired"
-                  },
-                  "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                  },
-                  "429": {
-                        "$ref": "#/components/responses/RateLimited"
-                  },
-                  "503": {
-                        "$ref": "#/components/responses/ServiceNotReady"
-                  }
+        "tags": [
+          "Devices"
+        ],
+        "operationId": "listFamilyDevices",
+        "summary": "Read linked family devices and their latest telemetry as an active guardian",
+        "description": "Returns only the latest stored telemetry for linked devices. It is not a location history endpoint and makes no claim about background collection freshness beyond lastSeenAt.",
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Linked devices with their latest authorized telemetry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyDeviceListResponse"
+                }
+              }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
       }
-},
+    },
     "/v1/families/{familyId}/children/{childId}/devices": {
       "post": {
-            "tags": [
-                  "Devices"
-            ],
-            "operationId": "registerFamilyChildDevice",
-            "summary": "Link one device to an existing child profile as the active primary guardian",
-            "description": "Phase 1 registration is guardian-authorized. A device credential or Android background service is not created by this endpoint.",
-            "security": [
-                  {
-                        "oidcBearer": []
-                  }
-            ],
-            "parameters": [
-                  {
-                        "$ref": "#/components/parameters/FamilyId"
-                  },
-                  {
-                        "$ref": "#/components/parameters/ChildId"
-                  },
-                  {
-                        "$ref": "#/components/parameters/IdempotencyKey"
-                  }
-            ],
-            "requestBody": {
-                  "required": true,
-                  "content": {
-                        "application/json": {
-                              "schema": {
-                                    "$ref": "#/components/schemas/RegisterFamilyChildDeviceRequest"
-                              }
-                        }
-                  }
-            },
-            "responses": {
-                  "201": {
-                        "description": "Device linked or durable idempotent replay returned.",
-                        "content": {
-                              "application/json": {
-                                    "schema": {
-                                          "$ref": "#/components/schemas/FamilyDeviceResponse"
-                                    }
-                              }
-                        }
-                  },
-                  "400": {
-                        "$ref": "#/components/responses/InvalidRequest"
-                  },
-                  "401": {
-                        "$ref": "#/components/responses/AuthenticationRequired"
-                  },
-                  "403": {
-                        "$ref": "#/components/responses/FamilyAccessDenied"
-                  },
-                  "404": {
-                        "$ref": "#/components/responses/NotFound"
-                  },
-                  "409": {
-                        "$ref": "#/components/responses/Conflict"
-                  },
-                  "429": {
-                        "$ref": "#/components/responses/RateLimited"
-                  },
-                  "503": {
-                        "$ref": "#/components/responses/ServiceNotReady"
-                  }
+        "tags": [
+          "Devices"
+        ],
+        "operationId": "registerFamilyChildDevice",
+        "summary": "Link one device to an existing child profile as the active primary guardian",
+        "description": "Phase 1 registration is guardian-authorized. A device credential or Android background service is not created by this endpoint.",
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterFamilyChildDeviceRequest"
+              }
             }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Device linked or durable idempotent replay returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyDeviceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
       }
-},
+    },
     "/v1/families/{familyId}/children/{childId}/device-pairings": {
       "post": {
-        "tags": ["Devices"],
+        "tags": [
+          "Devices"
+        ],
         "operationId": "createDevicePairing",
         "summary": "Create an expiring one-time child-device pairing code as the active primary guardian",
         "description": "The raw pairing code is returned once, while the server retains only its digest. It must be claimed by a child device before expiry.",
-        "security": [{ "oidcBearer": [] }],
-        "parameters": [{ "$ref": "#/components/parameters/FamilyId" }, { "$ref": "#/components/parameters/ChildId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateDevicePairingRequest" } } } },
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDevicePairingRequest"
+              }
+            }
+          }
+        },
         "responses": {
-          "201": { "description": "One-time pairing capability created.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DevicePairingResponse" } } } },
-          "400": { "$ref": "#/components/responses/InvalidRequest" },
-          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
-          "403": { "$ref": "#/components/responses/FamilyAccessDenied" },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "409": { "$ref": "#/components/responses/Conflict" },
-          "429": { "$ref": "#/components/responses/RateLimited" },
-          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+          "201": {
+            "description": "One-time pairing capability created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DevicePairingResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
         }
       }
     },
     "/v1/device-pairings/claim": {
       "post": {
-        "tags": ["Devices"],
+        "tags": [
+          "Devices"
+        ],
         "operationId": "claimDevicePairing",
         "summary": "Claim a one-time pairing code from a child device",
         "description": "This unauthenticated bootstrap endpoint is IP-rate-limited. A successful response returns a device credential once; the code cannot be claimed again.",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClaimDevicePairingRequest" } } } },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClaimDevicePairingRequest"
+              }
+            }
+          }
+        },
         "responses": {
-          "201": { "description": "Device paired and device credential issued once.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClaimDevicePairingResponse" } } } },
-          "400": { "$ref": "#/components/responses/InvalidRequest" },
-          "429": { "$ref": "#/components/responses/RateLimited" },
-          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+          "201": {
+            "description": "Device paired and device credential issued once.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimDevicePairingResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
         }
       }
     },
     "/v1/devices/{deviceId}/telemetry": {
       "post": {
-        "tags": ["Devices"],
+        "tags": [
+          "Devices"
+        ],
         "operationId": "ingestDeviceTelemetry",
         "summary": "Store one linked device latest telemetry update",
         "description": "Accepts latest telemetry from an active primary guardian during controlled support operations or from the paired child device using its Device capability. The device capability is not a guardian bearer token.",
-        "security": [{ "oidcBearer": [] }, { "deviceCredential": [] }],
-        "parameters": [{ "$ref": "#/components/parameters/DeviceId" }],
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeviceTelemetryRequest" } } } },
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceTelemetryRequest"
+              }
+            }
+          }
+        },
         "responses": {
-          "200": { "description": "Latest telemetry accepted.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/FamilyDeviceResponse" } } } },
-          "400": { "$ref": "#/components/responses/InvalidRequest" },
-          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
-          "403": { "$ref": "#/components/responses/FamilyAccessDenied" },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "429": { "$ref": "#/components/responses/RateLimited" },
-          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+          "200": {
+            "description": "Latest telemetry accepted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyDeviceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
         }
       }
     },
     "/v1/families/{familyId}/memberships": {
       "post": {
-        "tags": ["Families"],
+        "tags": [
+          "Families"
+        ],
         "operationId": "createMembershipInvitation",
         "summary": "Primary guardian creates a pending co-guardian or child membership for a known OIDC subject",
         "description": "This Foundation endpoint does not send email, push or other invitation delivery. It does not expose a finished consumer invitation experience.",
-        "security": [{ "oidcBearer": [] }],
-        "parameters": [{ "$ref": "#/components/parameters/FamilyId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateMembershipRequest" } } } },
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMembershipRequest"
+              }
+            }
+          }
+        },
         "responses": {
-          "201": { "description": "Pending membership created or durable idempotent replay returned.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MembershipResponse" } } } },
-          "400": { "$ref": "#/components/responses/InvalidRequest" },
-          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
-          "403": { "$ref": "#/components/responses/FamilyAccessDenied" },
-          "409": { "$ref": "#/components/responses/Conflict" },
-          "429": { "$ref": "#/components/responses/RateLimited" },
-          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+          "201": {
+            "description": "Pending membership created or durable idempotent replay returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MembershipResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
         }
       }
     },
     "/v1/families/{familyId}/memberships/{membershipId}/accept": {
       "post": {
-        "tags": ["Families"],
+        "tags": [
+          "Families"
+        ],
         "operationId": "acceptMembershipInvitation",
         "summary": "Accept a pending membership only as the exact nominated verified principal",
-        "security": [{ "oidcBearer": [] }],
-        "parameters": [{ "$ref": "#/components/parameters/FamilyId" }, { "$ref": "#/components/parameters/MembershipId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/MembershipId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
         "responses": {
-          "200": { "description": "Membership activated or durable idempotent replay returned.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MembershipResponse" } } } },
-          "400": { "$ref": "#/components/responses/InvalidRequest" },
-          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
-          "403": { "$ref": "#/components/responses/Forbidden" },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "409": { "$ref": "#/components/responses/Conflict" },
-          "429": { "$ref": "#/components/responses/RateLimited" },
-          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+          "200": {
+            "description": "Membership activated or durable idempotent replay returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MembershipResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
         }
       }
     },
     "/v1/families/{familyId}/memberships/{membershipId}/revoke": {
       "post": {
-        "tags": ["Families"],
+        "tags": [
+          "Families"
+        ],
         "operationId": "revokeMembership",
         "summary": "Revoke a pending invite or remove an active non-primary membership",
         "description": "Only the active primary guardian may perform this operation. Primary guardian removal requires the separate guardian continuity process.",
-        "security": [{ "oidcBearer": [] }],
-        "parameters": [{ "$ref": "#/components/parameters/FamilyId" }, { "$ref": "#/components/parameters/MembershipId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RevokeMembershipRequest" } } } },
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/MembershipId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokeMembershipRequest"
+              }
+            }
+          }
+        },
         "responses": {
-          "200": { "description": "Membership transitioned to revoked or removed; evidence remains durable.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MembershipResponse" } } } },
-          "400": { "$ref": "#/components/responses/InvalidRequest" },
-          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
-          "403": { "$ref": "#/components/responses/FamilyAccessDenied" },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "409": { "$ref": "#/components/responses/Conflict" },
-          "429": { "$ref": "#/components/responses/RateLimited" },
-          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+          "200": {
+            "description": "Membership transitioned to revoked or removed; evidence remains durable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MembershipResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
         }
       }
     },
     "/v1/families/{familyId}/guardian-transfers": {
       "post": {
-        "tags": ["Guardian continuity"],
+        "tags": [
+          "Guardian continuity"
+        ],
         "operationId": "createGuardianTransfer",
         "summary": "Request an expiry-bound transfer from current primary guardian to active co-guardian",
         "description": "This is not lost-account recovery, dispute resolution, custody determination or a generic role edit.",
-        "security": [{ "oidcBearer": [] }],
-        "parameters": [{ "$ref": "#/components/parameters/FamilyId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateGuardianTransferRequest" } } } },
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGuardianTransferRequest"
+              }
+            }
+          }
+        },
         "responses": {
-          "201": { "description": "Pending two-party transfer case created.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GuardianTransferResponse" } } } },
-          "400": { "$ref": "#/components/responses/InvalidRequest" },
-          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
-          "403": { "$ref": "#/components/responses/FamilyAccessDenied" },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "409": { "$ref": "#/components/responses/Conflict" },
-          "429": { "$ref": "#/components/responses/RateLimited" },
-          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+          "201": {
+            "description": "Pending two-party transfer case created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardianTransferResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
         }
       }
     },
     "/v1/families/{familyId}/guardian-transfers/{transferId}/accept": {
       "post": {
-        "tags": ["Guardian continuity"],
+        "tags": [
+          "Guardian continuity"
+        ],
         "operationId": "acceptGuardianTransfer",
         "summary": "Complete an unexpired guardian transfer only as the nominated active co-guardian",
-        "security": [{ "oidcBearer": [] }],
-        "parameters": [{ "$ref": "#/components/parameters/FamilyId" }, { "$ref": "#/components/parameters/TransferId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/TransferId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
         "responses": {
-          "200": { "description": "The family primary reference and both guardian roles changed atomically.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GuardianTransferResponse" } } } },
-          "400": { "$ref": "#/components/responses/InvalidRequest" },
-          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
-          "403": { "$ref": "#/components/responses/Forbidden" },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "409": { "$ref": "#/components/responses/Conflict" },
-          "429": { "$ref": "#/components/responses/RateLimited" },
-          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+          "200": {
+            "description": "The family primary reference and both guardian roles changed atomically.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardianTransferResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
         }
       }
     },
     "/v1/families/{familyId}/guardian-transfers/{transferId}/cancel": {
       "post": {
-        "tags": ["Guardian continuity"],
+        "tags": [
+          "Guardian continuity"
+        ],
         "operationId": "cancelGuardianTransfer",
         "summary": "Cancel a pending guardian transfer only as its initiating current primary guardian",
-        "security": [{ "oidcBearer": [] }],
-        "parameters": [{ "$ref": "#/components/parameters/FamilyId" }, { "$ref": "#/components/parameters/TransferId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/TransferId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
         "responses": {
-          "200": { "description": "Transfer cancelled with durable evidence.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GuardianTransferResponse" } } } },
-          "400": { "$ref": "#/components/responses/InvalidRequest" },
-          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
-          "403": { "$ref": "#/components/responses/Forbidden" },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "409": { "$ref": "#/components/responses/Conflict" },
-          "429": { "$ref": "#/components/responses/RateLimited" },
-          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+          "200": {
+            "description": "Transfer cancelled with durable evidence.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardianTransferResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
         }
       }
     },
     "/v1/families/{familyId}/audit-events": {
       "get": {
-        "tags": ["Audit"],
+        "tags": [
+          "Audit"
+        ],
         "operationId": "listFamilyAuditEvents",
         "summary": "List the current guardian-scoped minimum audit envelope",
-        "security": [{ "oidcBearer": [] }],
-        "parameters": [{ "$ref": "#/components/parameters/FamilyId" }],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          }
+        ],
         "responses": {
-          "200": { "description": "Maximum one hundred newest minimum audit envelope entries.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuditEventListResponse" } } } },
-          "400": { "$ref": "#/components/responses/InvalidRequest" },
-          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
-          "403": { "$ref": "#/components/responses/Forbidden" },
-          "429": { "$ref": "#/components/responses/RateLimited" },
-          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+          "200": {
+            "description": "Maximum one hundred newest minimum audit envelope entries.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditEventListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
         }
       }
     },
     "/v1/families/{familyId}/permission-snapshot": {
       "get": {
-        "tags": ["Family"],
+        "tags": [
+          "Family"
+        ],
         "operationId": "getFamilyPermissionSnapshot",
         "summary": "Read the server-owned permission explanation for the acting membership",
         "description": "The snapshot explains permission; it never grants it. The role is re-resolved from the durable membership on every call and each protected route re-checks authorization independently.",
-        "security": [{ "oidcBearer": [] }],
-        "parameters": [{ "$ref": "#/components/parameters/FamilyId" }],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          }
+        ],
         "responses": {
-          "200": { "description": "Versioned, expiring capability explanation for the acting membership role.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PermissionSnapshotResponse" } } } },
-          "400": { "$ref": "#/components/responses/InvalidRequest" },
-          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
-          "403": { "$ref": "#/components/responses/Forbidden" },
-          "429": { "$ref": "#/components/responses/RateLimited" },
-          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+          "200": {
+            "description": "Versioned, expiring capability explanation for the acting membership role.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionSnapshotResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
         }
       }
     },
     "/v1/families/{familyId}/ai-events": {
       "get": {
-        "tags": ["Intelligence"],
+        "tags": [
+          "Intelligence"
+        ],
         "operationId": "listFamilyAiEvents",
         "summary": "List emitted AiEvent v1 facts for the family",
         "description": "Append-only, identifier-only facts observed by the server. Suggestions are not part of v1 and no entry can carry a payload, token or provider material.",
-        "security": [{ "oidcBearer": [] }],
-        "parameters": [{ "$ref": "#/components/parameters/FamilyId" }],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          }
+        ],
         "responses": {
-          "200": { "description": "Maximum one hundred newest emitted AiEvent v1 facts.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AiEventListResponse" } } } },
-          "400": { "$ref": "#/components/responses/InvalidRequest" },
-          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
-          "403": { "$ref": "#/components/responses/Forbidden" },
-          "429": { "$ref": "#/components/responses/RateLimited" },
-          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+          "200": {
+            "description": "Maximum one hundred newest emitted AiEvent v1 facts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiEventListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/devices/{deviceId}/revocation": {
+      "post": {
+        "tags": [
+          "Devices"
+        ],
+        "operationId": "revokeFamilyChildDevice",
+        "summary": "Cut one child device off as the active primary guardian",
+        "description": "The write half of the device lifecycle. Before this operation existed the server refused telemetry from a revoked credential with 401 but nothing could set the revocation, so a lost or stolen handset stayed trusted indefinitely. Idempotent: a retry with the same Idempotency-Key replays the first answer, and a second revocation under a different key is refused rather than overwriting who revoked the device and when. The response carries the device's derived condition so a guardian screen needs no second request.",
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "description": "The reason is optional on purpose: cutting off a stolen handset is urgent, and a guardian forced to classify the loss first is a guardian who hesitates.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokeFamilyChildDeviceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Device revoked, or the durable idempotent replay of that revocation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceRevocationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
         }
       }
     }
   },
   "components": {
     "securitySchemes": {
-      "oidcBearer": { "type": "http", "scheme": "bearer", "bearerFormat": "OIDC access token", "description": "Issuer, audience, signature and subject are verified server-side. Provider selection is not represented in this contract." },
-      "deviceCredential": { "type": "apiKey", "in": "header", "name": "Authorization", "description": "One-time paired child-device capability in the form Device token. It is stored only in Android Keystore, not as a guardian bearer token." }
+      "oidcBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "OIDC access token",
+        "description": "Issuer, audience, signature and subject are verified server-side. Provider selection is not represented in this contract."
+      },
+      "deviceCredential": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "One-time paired child-device capability in the form Device token. It is stored only in Android Keystore, not as a guardian bearer token."
+      }
     },
     "parameters": {
-      "FamilyId": { "name": "familyId", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/Uuid" } },
-      "ChildId": { "name": "childId", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/Uuid" } },
-      "DeviceId": { "name": "deviceId", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/Uuid" } },
-      "MembershipId": { "name": "membershipId", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/Uuid" } },
-      "TransferId": { "name": "transferId", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/Uuid" } },
-      "IdempotencyKey": { "name": "Idempotency-Key", "in": "header", "required": true, "schema": { "type": "string", "minLength": 1, "maxLength": 128 }, "description": "Unique per operation intent. Reusing it with different intent is rejected." }
+      "FamilyId": {
+        "name": "familyId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/Uuid"
+        }
+      },
+      "ChildId": {
+        "name": "childId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/Uuid"
+        }
+      },
+      "DeviceId": {
+        "name": "deviceId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/Uuid"
+        }
+      },
+      "MembershipId": {
+        "name": "membershipId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/Uuid"
+        }
+      },
+      "TransferId": {
+        "name": "transferId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/Uuid"
+        }
+      },
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "description": "Unique per operation intent. Reusing it with different intent is rejected."
+      }
     },
     "responses": {
-      "InvalidRequest": { "description": "Malformed JSON, identifier or input contract.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
-      "AuthenticationRequired": { "description": "Missing, invalid, expired or otherwise unverifiable OIDC bearer token.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
-      "FamilyAccessDenied": { "description": "No permitted active family membership for the requested action.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
-      "Forbidden": { "description": "Verified principal lacks the exact required authority.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
-      "NotFound": { "description": "Requested resource was not found within the authorized path.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
-      "Conflict": { "description": "State, idempotency, continuity, expiry or lifecycle conflict.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
-      "RateLimited": { "description": "The verified principal exceeded the protected API request allowance. Respect the standard RateLimit response header before retrying.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
-      "ServiceNotReady": { "description": "Configuration, database or reviewed schema is not ready for protected operations.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+      "InvalidRequest": {
+        "description": "Malformed JSON, identifier or input contract.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "AuthenticationRequired": {
+        "description": "Missing, invalid, expired or otherwise unverifiable OIDC bearer token.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "FamilyAccessDenied": {
+        "description": "No permitted active family membership for the requested action.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Verified principal lacks the exact required authority.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Requested resource was not found within the authorized path.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "State, idempotency, continuity, expiry or lifecycle conflict.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "The verified principal exceeded the protected API request allowance. Respect the standard RateLimit response header before retrying.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "ServiceNotReady": {
+        "description": "Configuration, database or reviewed schema is not ready for protected operations.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      }
     },
     "schemas": {
-      "Uuid": { "type": "string", "format": "uuid", "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$" },
-      "LiveStatus": { "type": "object", "required": ["status"], "properties": { "status": { "const": "live" } }, "additionalProperties": false },
-      "ReadyStatus": { "type": "object", "required": ["status"], "properties": { "status": { "const": "ready" } }, "additionalProperties": false },
-      "NotReadyStatus": { "type": "object", "required": ["status", "dependencies"], "properties": { "status": { "const": "not_ready" }, "dependencies": { "type": "object", "required": ["configuration", "database"], "properties": { "configuration": { "type": "string" }, "database": { "type": "string" } }, "additionalProperties": false } }, "additionalProperties": false },
-      "ErrorResponse": { "type": "object", "required": ["error"], "properties": { "error": { "type": "object", "required": ["code", "message"], "properties": { "code": { "type": "string" }, "message": { "type": "string" }, "details": {} }, "additionalProperties": false } }, "additionalProperties": false },
-      "CreateFamilyRequest": { "type": "object", "required": ["displayName"], "properties": { "displayName": { "type": "string", "minLength": 1, "maxLength": 120 } }, "additionalProperties": false },
-      "CreateFamilyChildRequest": { "type": "object", "required": ["displayName", "ageYears", "avatarEmoji", "themeColor"], "properties": { "displayName": { "type": "string", "minLength": 1, "maxLength": 120 }, "ageYears": { "type": "integer", "minimum": 0, "maximum": 25 }, "avatarEmoji": { "type": "string", "minLength": 1, "maxLength": 32, "description": "A selected pictographic avatar emoji." }, "themeColor": { "type": "string", "enum": ["purple", "sky", "amber", "coral", "mint", "teal"] } }, "additionalProperties": false },
-      "RegisterFamilyChildDeviceRequest": {"type": "object","required": ["deviceLabel"],"properties": {"deviceLabel": {"type": "string","minLength": 1,"maxLength": 80}},"additionalProperties": false},
-      "DeviceTelemetryRequest": {"type": "object","required": ["batteryLevel","batteryStatus","locationLat","locationLng","locationLabel"],"properties": {"batteryLevel": {"type": "integer","minimum": 0,"maximum": 100},"batteryStatus": {"type": "string","enum": ["charging","unplugged"]},"locationLat": {"type": "number","minimum": -90,"maximum": 90},"locationLng": {"type": "number","minimum": -180,"maximum": 180},"locationLabel": {"type": "string","minLength": 1,"maxLength": 160}},"additionalProperties": false},
-      "FamilyDevice": {"type": "object","required": ["id","childId","deviceLabel","batteryLevel","batteryStatus","locationLat","locationLng","locationLabel","lastSeenAt","linkedAt","version"],"properties": {"id": {"$ref": "#/components/schemas/Uuid"},"childId": {"$ref": "#/components/schemas/Uuid"},"deviceLabel": {"type": "string","minLength": 1,"maxLength": 80},"batteryLevel": {"type": ["integer","null"],"minimum": 0,"maximum": 100},"batteryStatus": {"type": ["string","null"],"enum": ["charging","unplugged",null]},"locationLat": {"type": ["number","null"],"minimum": -90,"maximum": 90},"locationLng": {"type": ["number","null"],"minimum": -180,"maximum": 180},"locationLabel": {"type": ["string","null"],"maxLength": 160},"lastSeenAt": {"type": ["string","null"],"format": "date-time"},"linkedAt": {"type": "string","format": "date-time"},"version": {"type": "integer","minimum": 1}},"additionalProperties": false},
-      "FamilyDeviceResponse": {"type": "object","required": ["device"],"properties": {"device": {"$ref": "#/components/schemas/FamilyDevice"}},"additionalProperties": false},
-      "FamilyDeviceListResponse": {"type": "object","required": ["devices"],"properties": {"devices": {"type": "array","items": {"$ref": "#/components/schemas/FamilyDevice"}}},"additionalProperties": false},
-      "CreateDevicePairingRequest": { "type": "object", "required": ["deviceLabel"], "properties": { "deviceLabel": { "type": "string", "minLength": 1, "maxLength": 80 } }, "additionalProperties": false },
-      "ClaimDevicePairingRequest": { "type": "object", "required": ["pairingCode"], "properties": { "pairingCode": { "type": "string", "minLength": 32, "maxLength": 128, "pattern": "^[A-Za-z0-9_-]+$" } }, "additionalProperties": false },
-      "DevicePairing": { "type": "object", "required": ["id", "childId", "deviceLabel", "pairingCode", "expiresAt"], "properties": { "id": { "$ref": "#/components/schemas/Uuid" }, "childId": { "$ref": "#/components/schemas/Uuid" }, "deviceLabel": { "type": "string", "minLength": 1, "maxLength": 80 }, "pairingCode": { "type": "string", "minLength": 32, "maxLength": 128 }, "expiresAt": { "type": "string", "format": "date-time" } }, "additionalProperties": false },
-      "DevicePairingResponse": { "type": "object", "required": ["pairing"], "properties": { "pairing": { "$ref": "#/components/schemas/DevicePairing" } }, "additionalProperties": false },
-      "ClaimDevicePairingResponse": { "type": "object", "required": ["device", "deviceCredential"], "properties": { "device": { "$ref": "#/components/schemas/FamilyDevice" }, "deviceCredential": { "type": "string", "minLength": 32, "maxLength": 128 } }, "additionalProperties": false },
-      "CreateMembershipRequest": { "type": "object", "required": ["role", "targetSubject"], "properties": { "role": { "type": "string", "enum": ["co_guardian", "child"] }, "targetSubject": { "type": "string", "minLength": 1, "maxLength": 255 } }, "additionalProperties": false },
-      "RevokeMembershipRequest": { "type": "object", "required": ["reasonCode"], "properties": { "reasonCode": { "type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$" } }, "additionalProperties": false },
-      "CreateGuardianTransferRequest": { "type": "object", "required": ["candidateMembershipId"], "properties": { "candidateMembershipId": { "$ref": "#/components/schemas/Uuid" } }, "additionalProperties": false },
-      "FamilyChild": { "type": "object", "required": ["id", "displayName", "ageYears", "avatarEmoji", "themeColor", "version", "createdAt", "updatedAt"], "properties": { "id": { "$ref": "#/components/schemas/Uuid" }, "displayName": { "type": "string", "minLength": 1, "maxLength": 120 }, "ageYears": { "type": "integer", "minimum": 0, "maximum": 25 }, "avatarEmoji": { "type": "string", "minLength": 1, "maxLength": 32 }, "themeColor": { "type": "string", "enum": ["purple", "sky", "amber", "coral", "mint", "teal"] }, "version": { "type": "integer", "minimum": 1 }, "createdAt": { "type": "string", "format": "date-time" }, "updatedAt": { "type": "string", "format": "date-time" } }, "additionalProperties": false },
-      "Membership": { "type": "object", "required": ["id", "role", "status", "version", "createdAt"], "properties": { "id": { "$ref": "#/components/schemas/Uuid" }, "role": { "type": "string", "enum": ["primary_guardian", "co_guardian", "child"] }, "status": { "type": "string", "enum": ["invited", "active", "revoked", "removed"] }, "statusReasonCode": { "type": ["string", "null"], "maxLength": 64 }, "version": { "type": "integer", "minimum": 1 }, "joinedAt": { "type": ["string", "null"], "format": "date-time" }, "statusChangedAt": { "type": ["string", "null"], "format": "date-time" }, "createdAt": { "type": "string", "format": "date-time" } }, "additionalProperties": false },
-      "Family": { "type": "object", "required": ["id", "displayName", "status", "createdAt", "members"], "properties": { "id": { "$ref": "#/components/schemas/Uuid" }, "displayName": { "type": "string" }, "status": { "type": "string", "enum": ["active", "suspended", "archived"] }, "createdAt": { "type": "string", "format": "date-time" }, "members": { "type": "array", "items": { "$ref": "#/components/schemas/Membership" } } }, "additionalProperties": false },
-      "FamilyDiscoveryItem": { "type": "object", "required": ["id", "displayName", "role"], "properties": { "id": { "$ref": "#/components/schemas/Uuid" }, "displayName": { "type": "string", "minLength": 1, "maxLength": 120 }, "role": { "type": "string", "enum": ["primary_guardian", "co_guardian", "child"], "description": "Display-only current role. The API remains the authorization authority." } }, "additionalProperties": false },
-      "FamilyDiscoveryResponse": { "type": "object", "required": ["families"], "properties": { "families": { "type": "array", "maxItems": 20, "items": { "$ref": "#/components/schemas/FamilyDiscoveryItem" } } }, "additionalProperties": false },
-      "GuardianTransfer":  { "type": "object", "required": ["id", "status", "candidateMembershipId", "expiresAt", "version", "createdAt"], "properties": { "id": { "$ref": "#/components/schemas/Uuid" }, "status": { "type": "string", "enum": ["pending_acceptance", "completed", "cancelled", "expired"] }, "candidateMembershipId": { "$ref": "#/components/schemas/Uuid" }, "expiresAt": { "type": "string", "format": "date-time" }, "completedAt": { "type": ["string", "null"], "format": "date-time" }, "cancelledAt": { "type": ["string", "null"], "format": "date-time" }, "version": { "type": "integer", "minimum": 1 }, "createdAt": { "type": "string", "format": "date-time" } }, "additionalProperties": false },
-      "AuditEvent": { "type": "object", "required": ["id", "eventType", "subjectType", "subjectId", "occurredAt"], "properties": { "id": { "$ref": "#/components/schemas/Uuid" }, "eventType": { "type": "string" }, "actorMembershipId": { "type": ["string", "null"], "format": "uuid" }, "correlationId": { "type": ["string", "null"], "format": "uuid", "description": "Server-generated linkage for newer audit/outbox evidence. Historical entries can be null." }, "subjectType": { "type": "string" }, "subjectId": { "$ref": "#/components/schemas/Uuid" }, "occurredAt": { "type": "string", "format": "date-time" } }, "additionalProperties": false },
-      "FamilyResponse": { "type": "object", "required": ["family"], "properties": { "family": { "$ref": "#/components/schemas/Family" } }, "additionalProperties": false },
-      "FamilyChildResponse": { "type": "object", "required": ["child"], "properties": { "child": { "$ref": "#/components/schemas/FamilyChild" } }, "additionalProperties": false },
-      "FamilyChildListResponse": { "type": "object", "required": ["children"], "properties": { "children": { "type": "array", "items": { "$ref": "#/components/schemas/FamilyChild" } } }, "additionalProperties": false },
-      "MembershipResponse": { "type": "object", "required": ["membership"], "properties": { "membership": { "$ref": "#/components/schemas/Membership" } }, "additionalProperties": false },
-      "GuardianTransferResponse": { "type": "object", "required": ["transfer"], "properties": { "transfer": { "$ref": "#/components/schemas/GuardianTransfer" } }, "additionalProperties": false },
-      "AuditEventListResponse": { "type": "object", "required": ["events"], "properties": { "events": { "type": "array", "maxItems": 100, "items": { "$ref": "#/components/schemas/AuditEvent" } } }, "additionalProperties": false },
-      "PermissionScope": { "type": "object", "required": ["capability", "allowed", "reason"], "properties": { "capability": { "type": "string", "pattern": "^family\\.[a-z_]+(\\.[a-z_]+)*$" }, "allowed": { "type": "boolean" }, "reason": { "type": "string", "enum": ["active_membership", "guardian_scope", "primary_guardian_scope", "role_not_permitted"] } }, "additionalProperties": false },
-      "PermissionSnapshot": { "type": "object", "required": ["policyVersion", "familyId", "role", "freshness", "issuedAt", "expiresAt", "scopes"], "properties": { "policyVersion": { "type": "string", "enum": ["permission.v1"] }, "familyId": { "$ref": "#/components/schemas/Uuid" }, "role": { "type": "string", "enum": ["primary_guardian", "co_guardian", "child"] }, "freshness": { "type": "string", "enum": ["live"] }, "issuedAt": { "type": "string", "format": "date-time" }, "expiresAt": { "type": "string", "format": "date-time", "description": "Short-lived explanation window. Authority is re-resolved from the server, never extended from this document." }, "scopes": { "type": "array", "items": { "$ref": "#/components/schemas/PermissionScope" } } }, "additionalProperties": false },
-      "PermissionSnapshotResponse": { "type": "object", "required": ["permissionSnapshot"], "properties": { "permissionSnapshot": { "$ref": "#/components/schemas/PermissionSnapshot" } }, "additionalProperties": false },
-      "AiEvent": { "type": "object", "required": ["id", "schemaVersion", "eventType", "familyId", "policyVersion", "source", "confidence", "explanation", "occurredAt"], "properties": { "id": { "$ref": "#/components/schemas/Uuid" }, "schemaVersion": { "type": "string", "enum": ["ai-event.v1"] }, "eventType": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$" }, "familyId": { "$ref": "#/components/schemas/Uuid" }, "childId": { "type": ["string", "null"], "format": "uuid" }, "deviceId": { "type": ["string", "null"], "format": "uuid" }, "policyVersion": { "type": "string" }, "source": { "type": "string", "enum": ["server"] }, "confidence": { "type": "number", "minimum": 0, "maximum": 1, "description": "Observed facts are certain (1). Suggestions, admitted in a later version, must carry their own confidence and a reject path." }, "explanation": { "type": "string", "minLength": 1, "maxLength": 240 }, "rejectPath": { "type": ["string", "null"] }, "occurredAt": { "type": "string", "format": "date-time" } }, "additionalProperties": false },
-      "AiEventListResponse": { "type": "object", "required": ["events"], "properties": { "events": { "type": "array", "maxItems": 100, "items": { "$ref": "#/components/schemas/AiEvent" } } }, "additionalProperties": false }
+      "Uuid": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+      },
+      "LiveStatus": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "const": "live"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadyStatus": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "const": "ready"
+          }
+        },
+        "additionalProperties": false
+      },
+      "NotReadyStatus": {
+        "type": "object",
+        "required": [
+          "status",
+          "dependencies"
+        ],
+        "properties": {
+          "status": {
+            "const": "not_ready"
+          },
+          "dependencies": {
+            "type": "object",
+            "required": [
+              "configuration",
+              "database"
+            ],
+            "properties": {
+              "configuration": {
+                "type": "string"
+              },
+              "database": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": [
+              "code",
+              "message"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "details": {}
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateFamilyRequest": {
+        "type": "object",
+        "required": [
+          "displayName"
+        ],
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateFamilyChildRequest": {
+        "type": "object",
+        "required": [
+          "displayName",
+          "ageYears",
+          "avatarEmoji",
+          "themeColor"
+        ],
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "ageYears": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 25
+          },
+          "avatarEmoji": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
+            "description": "A selected pictographic avatar emoji."
+          },
+          "themeColor": {
+            "type": "string",
+            "enum": [
+              "purple",
+              "sky",
+              "amber",
+              "coral",
+              "mint",
+              "teal"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "RegisterFamilyChildDeviceRequest": {
+        "type": "object",
+        "required": [
+          "deviceLabel"
+        ],
+        "properties": {
+          "deviceLabel": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          }
+        },
+        "additionalProperties": false
+      },
+      "DeviceTelemetryRequest": {
+        "type": "object",
+        "required": [
+          "batteryLevel",
+          "batteryStatus",
+          "locationLat",
+          "locationLng",
+          "locationLabel"
+        ],
+        "properties": {
+          "batteryLevel": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "batteryStatus": {
+            "type": "string",
+            "enum": [
+              "charging",
+              "unplugged"
+            ]
+          },
+          "locationLat": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "locationLng": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "locationLabel": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          }
+        },
+        "additionalProperties": false
+      },
+      "FamilyDevice": {
+        "type": "object",
+        "required": [
+          "id",
+          "childId",
+          "deviceLabel",
+          "batteryLevel",
+          "batteryStatus",
+          "locationLat",
+          "locationLng",
+          "locationLabel",
+          "lastSeenAt",
+          "linkedAt",
+          "version"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "childId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "deviceLabel": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "batteryLevel": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100
+          },
+          "batteryStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "charging",
+              "unplugged",
+              null
+            ]
+          },
+          "locationLat": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": -90,
+            "maximum": 90
+          },
+          "locationLng": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": -180,
+            "maximum": 180
+          },
+          "locationLabel": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 160
+          },
+          "lastSeenAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "linkedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "additionalProperties": false
+      },
+      "FamilyDeviceResponse": {
+        "type": "object",
+        "required": [
+          "device"
+        ],
+        "properties": {
+          "device": {
+            "$ref": "#/components/schemas/FamilyDevice"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FamilyDeviceListResponse": {
+        "type": "object",
+        "required": [
+          "devices"
+        ],
+        "properties": {
+          "devices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FamilyDevice"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateDevicePairingRequest": {
+        "type": "object",
+        "required": [
+          "deviceLabel"
+        ],
+        "properties": {
+          "deviceLabel": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClaimDevicePairingRequest": {
+        "type": "object",
+        "required": [
+          "pairingCode"
+        ],
+        "properties": {
+          "pairingCode": {
+            "type": "string",
+            "minLength": 32,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9_-]+$"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DevicePairing": {
+        "type": "object",
+        "required": [
+          "id",
+          "childId",
+          "deviceLabel",
+          "pairingCode",
+          "expiresAt"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "childId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "deviceLabel": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "pairingCode": {
+            "type": "string",
+            "minLength": 32,
+            "maxLength": 128
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DevicePairingResponse": {
+        "type": "object",
+        "required": [
+          "pairing"
+        ],
+        "properties": {
+          "pairing": {
+            "$ref": "#/components/schemas/DevicePairing"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClaimDevicePairingResponse": {
+        "type": "object",
+        "required": [
+          "device",
+          "deviceCredential"
+        ],
+        "properties": {
+          "device": {
+            "$ref": "#/components/schemas/FamilyDevice"
+          },
+          "deviceCredential": {
+            "type": "string",
+            "minLength": 32,
+            "maxLength": 128
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateMembershipRequest": {
+        "type": "object",
+        "required": [
+          "role",
+          "targetSubject"
+        ],
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "co_guardian",
+              "child"
+            ]
+          },
+          "targetSubject": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          }
+        },
+        "additionalProperties": false
+      },
+      "RevokeMembershipRequest": {
+        "type": "object",
+        "required": [
+          "reasonCode"
+        ],
+        "properties": {
+          "reasonCode": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{2,63}$"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateGuardianTransferRequest": {
+        "type": "object",
+        "required": [
+          "candidateMembershipId"
+        ],
+        "properties": {
+          "candidateMembershipId": {
+            "$ref": "#/components/schemas/Uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FamilyChild": {
+        "type": "object",
+        "required": [
+          "id",
+          "displayName",
+          "ageYears",
+          "avatarEmoji",
+          "themeColor",
+          "version",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "ageYears": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 25
+          },
+          "avatarEmoji": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          },
+          "themeColor": {
+            "type": "string",
+            "enum": [
+              "purple",
+              "sky",
+              "amber",
+              "coral",
+              "mint",
+              "teal"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Membership": {
+        "type": "object",
+        "required": [
+          "id",
+          "role",
+          "status",
+          "version",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "primary_guardian",
+              "co_guardian",
+              "child"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "invited",
+              "active",
+              "revoked",
+              "removed"
+            ]
+          },
+          "statusReasonCode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 64
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "joinedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "statusChangedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Family": {
+        "type": "object",
+        "required": [
+          "id",
+          "displayName",
+          "status",
+          "createdAt",
+          "members"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended",
+              "archived"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Membership"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "FamilyDiscoveryItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "displayName",
+          "role"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "primary_guardian",
+              "co_guardian",
+              "child"
+            ],
+            "description": "Display-only current role. The API remains the authorization authority."
+          }
+        },
+        "additionalProperties": false
+      },
+      "FamilyDiscoveryResponse": {
+        "type": "object",
+        "required": [
+          "families"
+        ],
+        "properties": {
+          "families": {
+            "type": "array",
+            "maxItems": 20,
+            "items": {
+              "$ref": "#/components/schemas/FamilyDiscoveryItem"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "GuardianTransfer": {
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "candidateMembershipId",
+          "expiresAt",
+          "version",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending_acceptance",
+              "completed",
+              "cancelled",
+              "expired"
+            ]
+          },
+          "candidateMembershipId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "cancelledAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AuditEvent": {
+        "type": "object",
+        "required": [
+          "id",
+          "eventType",
+          "subjectType",
+          "subjectId",
+          "occurredAt"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "eventType": {
+            "type": "string"
+          },
+          "actorMembershipId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "correlationId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Server-generated linkage for newer audit/outbox evidence. Historical entries can be null."
+          },
+          "subjectType": {
+            "type": "string"
+          },
+          "subjectId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FamilyResponse": {
+        "type": "object",
+        "required": [
+          "family"
+        ],
+        "properties": {
+          "family": {
+            "$ref": "#/components/schemas/Family"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FamilyChildResponse": {
+        "type": "object",
+        "required": [
+          "child"
+        ],
+        "properties": {
+          "child": {
+            "$ref": "#/components/schemas/FamilyChild"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FamilyChildListResponse": {
+        "type": "object",
+        "required": [
+          "children"
+        ],
+        "properties": {
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FamilyChild"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "MembershipResponse": {
+        "type": "object",
+        "required": [
+          "membership"
+        ],
+        "properties": {
+          "membership": {
+            "$ref": "#/components/schemas/Membership"
+          }
+        },
+        "additionalProperties": false
+      },
+      "GuardianTransferResponse": {
+        "type": "object",
+        "required": [
+          "transfer"
+        ],
+        "properties": {
+          "transfer": {
+            "$ref": "#/components/schemas/GuardianTransfer"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AuditEventListResponse": {
+        "type": "object",
+        "required": [
+          "events"
+        ],
+        "properties": {
+          "events": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/AuditEvent"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "PermissionScope": {
+        "type": "object",
+        "required": [
+          "capability",
+          "allowed",
+          "reason"
+        ],
+        "properties": {
+          "capability": {
+            "type": "string",
+            "pattern": "^family\\.[a-z_]+(\\.[a-z_]+)*$"
+          },
+          "allowed": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "active_membership",
+              "guardian_scope",
+              "primary_guardian_scope",
+              "role_not_permitted"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "PermissionSnapshot": {
+        "type": "object",
+        "required": [
+          "policyVersion",
+          "familyId",
+          "role",
+          "freshness",
+          "issuedAt",
+          "expiresAt",
+          "scopes"
+        ],
+        "properties": {
+          "policyVersion": {
+            "type": "string",
+            "enum": [
+              "permission.v1"
+            ]
+          },
+          "familyId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "primary_guardian",
+              "co_guardian",
+              "child"
+            ]
+          },
+          "freshness": {
+            "type": "string",
+            "enum": [
+              "live"
+            ]
+          },
+          "issuedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Short-lived explanation window. Authority is re-resolved from the server, never extended from this document."
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PermissionScope"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "PermissionSnapshotResponse": {
+        "type": "object",
+        "required": [
+          "permissionSnapshot"
+        ],
+        "properties": {
+          "permissionSnapshot": {
+            "$ref": "#/components/schemas/PermissionSnapshot"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AiEvent": {
+        "type": "object",
+        "required": [
+          "id",
+          "schemaVersion",
+          "eventType",
+          "familyId",
+          "policyVersion",
+          "source",
+          "confidence",
+          "explanation",
+          "occurredAt"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "schemaVersion": {
+            "type": "string",
+            "enum": [
+              "ai-event.v1"
+            ]
+          },
+          "eventType": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$"
+          },
+          "familyId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "childId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "deviceId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "policyVersion": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "server"
+            ]
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Observed facts are certain (1). Suggestions, admitted in a later version, must carry their own confidence and a reject path."
+          },
+          "explanation": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 240
+          },
+          "rejectPath": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AiEventListResponse": {
+        "type": "object",
+        "required": [
+          "events"
+        ],
+        "properties": {
+          "events": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/AiEvent"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "RevokeFamilyChildDeviceRequest": {
+        "type": "object",
+        "properties": {
+          "reasonCode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "lost",
+              "stolen",
+              "replaced",
+              "no_longer_used",
+              "other"
+            ],
+            "description": "Closed vocabulary, enforced here, in the operation and by the database. Omitted or null means the guardian did not classify the loss."
+          }
+        },
+        "additionalProperties": false
+      },
+      "DeviceCapability": {
+        "type": "object",
+        "description": "What a device can currently do, decided by the server. The client renders this and never recomputes it, so the two cannot disagree about whether a child is protected.",
+        "required": [
+          "id",
+          "state",
+          "reasonCode",
+          "since"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "telemetry",
+              "location",
+              "background_service"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "available",
+              "stale",
+              "unavailable"
+            ]
+          },
+          "reasonCode": {
+            "type": "string",
+            "description": "A machine reason code. The server ships no prose, so no English can leak into an Arabic screen; the client owns the sentence."
+          },
+          "since": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DeviceHealth": {
+        "type": "object",
+        "required": [
+          "state",
+          "reasonCode",
+          "since",
+          "needsAttention"
+        ],
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "revoked",
+              "awaiting_pairing",
+              "never_reported",
+              "active",
+              "stale",
+              "offline"
+            ]
+          },
+          "reasonCode": {
+            "type": "string"
+          },
+          "since": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "needsAttention": {
+            "type": "boolean",
+            "description": "True only for revoked, never_reported, stale and offline. A healthy device produces nothing on the guardian surface, by construction."
+          }
+        },
+        "additionalProperties": false
+      },
+      "GuardianDeviceLifecycle": {
+        "type": "object",
+        "description": "A device as the guardian is allowed to see it, derived server-side from the stored row. Capability and health are never stored: a stored copy of a derived fact is a second version of the truth waiting to disagree with the first.",
+        "required": [
+          "version",
+          "id",
+          "childId",
+          "deviceLabel",
+          "credentialState",
+          "lastSeenAt",
+          "linkedAt",
+          "capabilities",
+          "health"
+        ],
+        "properties": {
+          "version": {
+            "type": "string",
+            "enum": [
+              "device-lifecycle.v1"
+            ]
+          },
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "childId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "deviceLabel": {
+            "type": "string"
+          },
+          "credentialState": {
+            "type": "string",
+            "enum": [
+              "unclaimed",
+              "active",
+              "revoked"
+            ],
+            "description": "unclaimed means a guardian registered the device but no handset has claimed a pairing."
+          },
+          "batteryLevel": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "batteryStatus": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "locationLat": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "locationLng": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "locationLabel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastSeenAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "linkedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeviceCapability"
+            }
+          },
+          "health": {
+            "$ref": "#/components/schemas/DeviceHealth"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DeviceRevocationResponse": {
+        "type": "object",
+        "required": [
+          "device"
+        ],
+        "properties": {
+          "device": {
+            "$ref": "#/components/schemas/GuardianDeviceLifecycle"
+          }
+        },
+        "additionalProperties": false
+      }
     }
   }
 }
