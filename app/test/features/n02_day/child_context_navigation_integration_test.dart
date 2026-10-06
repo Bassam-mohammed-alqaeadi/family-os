@@ -6,9 +6,11 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/runtime/app_runtime.dart';
 import 'package:family_os/core/runtime/app_scope.dart';
 import 'package:family_os/core/runtime/family_child_context_source.dart';
+import 'package:family_os/core/runtime/family_child_profile_source.dart';
 import 'package:family_os/core/runtime/family_roster_source.dart';
 import 'package:family_os/core/runtime/identity_source.dart';
 import 'package:family_os/core/runtime/runtime_data_origin.dart';
+import 'package:family_os/features/n01_linking/add_child_screen.dart';
 import 'package:family_os/features/n02_day/children_list_screen.dart';
 import 'package:family_os/features/n02_day/remote_child_context_screen.dart';
 import 'package:flutter/material.dart';
@@ -21,50 +23,45 @@ const _childId = '22222222-2222-4222-8222-222222222222';
 
 void main() {
   testWidgets(
-    'server roster card forwards its exact child UUID into the context read',
+    'new child keeps its exact server UUID through roster and context navigation',
     (tester) async {
-      final familyId = FamilyId(_familyId);
-      final childId = ChildId(_childId);
-      final contextSource = _RecordingContextSource();
+      final server = _FlowServer();
+      final contextSource = _RecordingContextSource(server);
       final runtime = AppRuntime(
         identity: _IdentitySource(
           IdentitySnapshot(
             authority: IdentityAuthority.remoteAuthoritative,
             accountId: AccountId('guardian-subject'),
-            familyId: familyId,
+            familyId: FamilyId(_familyId),
             role: AppRole.father,
             isPrimaryOwner: true,
           ),
         ),
-        roster: _RosterSource(
-          FamilyRosterSnapshot(
-            familyId: familyId,
-            origin: RuntimeDataOrigin.remoteAuthoritative,
-            observedAt: DateTime.now().toUtc(),
-            children: [
-              FamilyRosterChild(
-                childId: childId,
-                displayName: 'Amani',
-                ageYears: 8,
-                avatarEmoji: '🦁',
-                themeColor: 'purple',
-              ),
-            ],
-          ),
-        ),
+        childProfiles: _CreateSource(server),
+        roster: _CreatedRosterSource(server),
         childContext: contextSource,
       );
       addTearDown(runtime.dispose);
-      final router = GoRouter(
-        initialLocation: '/scr-fat-012',
+
+      late final GoRouter router;
+      router = GoRouter(
+        initialLocation: '/scr-fat-003',
         routes: [
           GoRoute(
+            path: '/scr-fat-003',
+            builder: (context, state) => const AddChildScreen(),
+          ),
+          GoRoute(
+            path: '/scr-fat-004',
+            builder: (context, state) => const Scaffold(body: Text('pairing')),
+          ),
+          GoRoute(
             path: '/scr-fat-012',
-            builder: (_, _) => const ChildrenListScreen(),
+            builder: (context, state) => const ChildrenListScreen(),
           ),
           GoRoute(
             path: '/scr-fat-013',
-            builder: (_, state) => RemoteChildContextScreen(
+            builder: (context, state) => RemoteChildContextScreen(
               childId: state.uri.queryParameters['childId'],
             ),
           ),
@@ -76,100 +73,186 @@ void main() {
         AppScope(
           runtime: runtime,
           child: MaterialApp.router(
-            theme: buildFamilyTheme(),
-            locale: const Locale('en'),
-            supportedLocales: AppLocalizations.supportedLocales,
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData.light().copyWith(
+              extensions: const [
+                FamilyColors.light,
+                FamilySpacing.standard,
+                FamilyRadii.standard,
+                FamilyMotion.standard,
+                FamilyTypography.light,
+              ],
+            ),
             localizationsDelegates: const [
               AppLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
+            supportedLocales: AppLocalizations.supportedLocales,
             routerConfig: router,
           ),
         ),
       );
       await tester.pumpAndSettle();
 
-      expect(find.byKey(ChildrenListKeys.childRow(_childId)), findsOneWidget);
-      await tester.tap(find.byKey(ChildrenListKeys.childRow(_childId)));
+      await tester.enterText(find.byKey(AddChildKeys.name), ' Amani ');
+      await tester.pump();
+      final submit = find.byKey(AddChildKeys.submit);
+      await tester.ensureVisible(submit);
+      await tester.tap(submit);
+      await tester.pumpAndSettle();
+
+      expect(server.createCalls, 1);
+      expect(server.familyId?.value, _familyId);
+      expect(server.draft?.displayName, 'Amani');
+      expect(router.state.uri.path, '/scr-fat-004');
+      expect(router.state.uri.queryParameters['childId'], _childId);
+
+      // Pairing completion returns to the authoritative roster in the real
+      // flow. The roster source reads the child created immediately above.
+      router.go('/scr-fat-012');
+      await tester.pumpAndSettle();
+
+      final childCard = find.byKey(const ValueKey('child-card-$_childId'));
+      expect(childCard, findsOneWidget);
+      await tester.tap(childCard);
       await tester.pumpAndSettle();
 
       expect(router.state.uri.path, '/scr-fat-013');
       expect(router.state.uri.queryParameters['childId'], _childId);
-      expect(contextSource.requestedFamilyId, familyId);
-      expect(contextSource.requestedChildId, childId);
-      expect(find.byKey(RemoteChildContextKeys.ready), findsOneWidget);
+      expect(contextSource.calls, hasLength(1));
+      expect(contextSource.calls.single.familyId.value, _familyId);
+      expect(contextSource.calls.single.childId.value, _childId);
       expect(find.text('Amani'), findsOneWidget);
     },
   );
 }
 
-final class _IdentitySource extends ChangeNotifier implements IdentitySource {
-  _IdentitySource(this._value);
-
-  final IdentitySnapshot _value;
-
-  @override
-  IdentitySnapshot get value => _value;
-
-  @override
-  Future<IdentitySnapshot> refresh() async => _value;
+final class _FlowServer {
+  int createCalls = 0;
+  FamilyId? familyId;
+  FamilyChildProfileDraft? draft;
 }
 
-final class _RosterSource extends ChangeNotifier
-    implements FamilyRosterSource {
-  _RosterSource(this._value);
+final class _CreateSource implements FamilyChildProfileSource {
+  _CreateSource(this.server);
 
-  final FamilyRosterSnapshot _value;
+  final _FlowServer server;
+
+  @override
+  Future<FamilyChildProfileCreateResult> create({
+    required FamilyId familyId,
+    required FamilyChildProfileDraft draft,
+    required String idempotencyKey,
+  }) async {
+    server
+      ..createCalls += 1
+      ..familyId = familyId
+      ..draft = draft;
+    return const FamilyChildProfileCreateResult.created(childId: _childId);
+  }
+
+  @override
+  void dispose() {}
+}
+
+final class _CreatedRosterSource extends ChangeNotifier
+    implements FamilyRosterSource {
+  _CreatedRosterSource(this.server);
+
+  final _FlowServer server;
+  FamilyRosterSnapshot _value = const FamilyRosterSnapshot.unavailable();
 
   @override
   FamilyRosterSnapshot get value => _value;
 
   @override
-  Future<FamilyRosterSnapshot> load(FamilyId familyId) async => _value;
+  Future<FamilyRosterSnapshot> load(FamilyId familyId) async {
+    final draft = server.draft;
+    if (draft == null || server.familyId != familyId) {
+      _value = const FamilyRosterSnapshot.unavailable();
+    } else {
+      _value = FamilyRosterSnapshot(
+        familyId: familyId,
+        origin: RuntimeDataOrigin.remoteAuthoritative,
+        observedAt: DateTime.utc(2026, 10, 7),
+        children: [
+          FamilyRosterChild(
+            childId: ChildId(_childId),
+            displayName: draft.displayName,
+            ageYears: draft.ageYears,
+            avatarEmoji: draft.avatarEmoji,
+            themeColor: draft.themeColor,
+          ),
+        ],
+      );
+    }
+    notifyListeners();
+    return _value;
+  }
 }
 
 final class _RecordingContextSource implements FamilyChildContextSource {
-  FamilyId? requestedFamilyId;
-  ChildId? requestedChildId;
+  _RecordingContextSource(this.server);
+
+  final _FlowServer server;
+  final List<({FamilyId familyId, ChildId childId})> calls = [];
 
   @override
   Future<FamilyChildContextResult> load({
     required FamilyId familyId,
     required ChildId childId,
   }) async {
-    requestedFamilyId = familyId;
-    requestedChildId = childId;
-    final observedAt = DateTime.now().toUtc();
-    return FamilyChildContextResult.ready(
-      FamilyChildContext(
+    calls.add((familyId: familyId, childId: childId));
+    final draft = server.draft!;
+    return FamilyChildContextResult.available(
+      FamilyChildContextSnapshot(
         familyId: familyId,
         childId: childId,
-        displayName: 'Amani',
-        ageYears: 8,
-        avatarEmoji: '🦁',
-        themeColor: 'purple',
-        version: 1,
-        createdAt: observedAt,
-        updatedAt: observedAt,
-        deviceState: FamilyChildDeviceSetupState.notLinked,
-        deviceCount: 0,
-        observedAt: observedAt,
-        permissionSnapshot: PermissionSnapshotV1(
-          policyVersion: 1,
-          role: FamilyChildContextRole.primaryGuardian,
-          scopes: const {
-            FamilyChildPermissionScope.read,
-            FamilyChildPermissionScope.createDevicePairing,
-          },
-          observedAt: observedAt,
-          expiresAt: observedAt.add(const Duration(minutes: 5)),
+        displayName: draft.displayName,
+        ageYears: draft.ageYears,
+        avatarEmoji: draft.avatarEmoji,
+        themeColor: draft.themeColor,
+        setup: const FamilyChildSetupStatus(
+          hasLinkedDevice: false,
+          linkedDeviceCount: 0,
+          latestDeviceSeenAt: null,
         ),
+        permissions: FamilyChildPermissionSnapshot(
+          scopes: const ['child.profile.read', 'child.setup.read'],
+          canViewContext: true,
+          canManageSetup: true,
+          expiresAt: DateTime.utc(2026, 10, 7, 1),
+        ),
+        observedAt: DateTime.utc(2026, 10, 7),
+        origin: RuntimeDataOrigin.remoteAuthoritative,
       ),
     );
   }
 
   @override
   void dispose() {}
+}
+
+final class _IdentitySource extends ChangeNotifier
+    implements IdentitySource {
+  _IdentitySource(this._value);
+
+  IdentitySnapshot _value;
+
+  @override
+  IdentitySnapshot get value => _value;
+
+  @override
+  Future<IdentitySnapshot> refresh() async => _value;
+
+  @override
+  Future<void> recoverSession() async {}
+
+  @override
+  void setValueForTesting(IdentitySnapshot snapshot) {
+    _value = snapshot;
+    notifyListeners();
+  }
 }
