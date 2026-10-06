@@ -11,15 +11,15 @@
 status: REAL_ENGINE
 active_system: المرحلة صفر — الأساس (الخطة الحقيقية 00_MASTER_PLAN)
 wave: "00_MASTER_PLAN — المرحلة صفر"
-stage: ص٠-أ مُنجَزة (بوابة البيئة حيّة في CI). النشط: ص٠-ب بوابة انحراف العقد، ثم ص٠-ج فصل المعرض وص٠-د حصر الـmock، ثم و٢ ربط سطح الجهاز.
+stage: ص٠-أ مُنجَزة (بوابة البيئة)، ص٠-ب مُنجَزة (بوابة انحراف العقد)، ص٠-ج مُنجَزة (عزل المعرض + ربط سطح الجهاز). النشط: ص٠-د حصر الـmock، ثم و٢ رحلة الجهاز كاملة.
 card: docs/harness/cards/M1-37-002-device-lifecycle-cover.md
 owns: the branch-wide consolidation and purge of 2026-10-06, and the Environment Gate now running on every push
 blocked_by: —
 owner_question: —
 last_tick: 2026-10-06
 last_locked: "SPINE-001 — 2026-10-06, owner-approved; M0 — 2026-10-05 on 3d7ff18"
-next_locked_gate: "ص٠-ب: بوابة انحراف العقد تُسقط البناء بسبب مسار القطع الغائب فعلاً"
-evidence: "dab8ee1: Backend CI job 'Real PostgreSQL migrations and integration' success on postgres:16 — migrations 001-101 executed on every push for the first time; locally 6/6 against PostgreSQL 18 and 138/138 with DATABASE_URL (132 pass + 6 skipped without it); 30b4a81 consolidation: single doc map, 3 archived, 6 dead files deleted with an import-graph proof; honesty measure 2.5/14 functions real, 0 usable families"
+next_locked_gate: "و٢: رحلة الجهاز كاملة — إعادة الإقران بعد القطع، وحالة الجهاز في الكشف على قاعدة حقيقية"
+evidence: "f118fbb: Backend CI ✅ Credential Guard ✅ Foundation Gate CI ✅ Harness Guard ✅ (Flutter CI على نفس الدفعة). ص٠-ب: بوابة الانحراف تقرأ الراوتر الحيّ (22 عملية) وتُسقط البناء على مسار مُعلن بلا وجود أو موجود بلا إعلان — أُثبتت بسقوطها على canary ثم عودتها نظيفة. ص٠-ج: المعرض المعزول اثنان لا 129 — تصحيح فحصٍ خاطئ لعبتي كشف أن الـ129 كلها سطح منتج عبر الصدفة، والحارس يمنع عزل مسار /scr-*. و٢: مسار قراءة الأجهزة يحمل دورة الحياة المشتقّة خادمياً، والعميل نموذج واحد يقرأ العقد ولا يحسبه، وبطاقة الجهاز مرسومة في كشف الأبناء الحقيقي؛ 7/7 على PostgreSQL 18.4 و148 اختبار خادم (141 ناجح/7 متجاوز)"
 ```
 <!-- HARNESS-STATE:END -->
 
