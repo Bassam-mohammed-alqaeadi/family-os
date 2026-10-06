@@ -9,6 +9,7 @@ import 'package:family_os/app/dev_screen_gallery.dart';
 import 'package:family_os/app/family_shell.dart';
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/app/router.dart';
+import 'package:family_os/app/showcase_policy.dart';
 import 'package:family_os/app/ux_local_seed.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
@@ -57,6 +58,10 @@ import 'package:family_os/foundation_gate/main_app_foundation_runtime.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Which build this is, recorded once so the route policy can refuse the design
+  // showcase in a release build. A quarantined showcase must not depend on a
+  // caller remembering to pass a flag.
+  bindReleaseMode(kReleaseMode);
   // Phase 1.5 — shared FS SQLite session (Memory fallback is honest DEGRADED).
   await FsSessionKernel.ensureOpen(preferSqlite: true);
   // DOM-IDENTITY-A — active family context → Local KV when SQLite honest.

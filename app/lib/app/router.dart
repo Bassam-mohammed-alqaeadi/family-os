@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:family_os/app/dev_screen_gallery.dart';
 import 'package:family_os/app/gallery_screen.dart';
 import 'package:family_os/app/role_guard.dart';
+import 'package:family_os/app/showcase_policy.dart';
 import 'package:family_os/app/role_guard_notice.dart';
 import 'package:family_os/app/route_child_context.dart';
 import 'package:family_os/app/sys3_routes.dart';
@@ -304,12 +305,23 @@ const Map<String, String> legacyRedirectPaths = {
 GoRouter createAppRouter({
   required ValueListenable<AppRole> roleListenable,
   String initialLocation = '/scr-shr-001',
+  /// Whether the design showcase may be registered. Defaults to the build's own policy:
+  /// requested at compile time and refused in release mode. Tests pass it explicitly to
+  /// prove both directions.
+  bool? showcaseEnabled,
 }) {
+  final showShowcase = showcaseEnabled ?? showcaseEnabledFor();
   return GoRouter(
     initialLocation: initialLocation,
     refreshListenable: roleListenable,
     redirect: (context, state) {
       final path = state.uri.path;
+      // A build without the showcase must not serve one, even by deep link. This is the
+      // second half of the quarantine: the routes below are not registered at all, and
+      // this redirect means an old link lands on the product rather than on an error.
+      if (!showShowcase && isQuarantinedShowcasePath(path)) {
+        return showcaseFallbackPath;
+      }
       if (tombstonePaths.contains(path)) {
         return tombstoneSchoolRedirectTarget;
       }
@@ -317,7 +329,7 @@ GoRouter createAppRouter({
       if (legacyTarget != null) return legacyTarget;
       return roleGuardRedirect(state, roleListenable.value);
     },
-    routes: [
+    routes: _quarantineIfNeeded([
       GoRoute(
         path: '/gallery',
         name: 'gallery',
@@ -974,8 +986,22 @@ GoRouter createAppRouter({
       name: 'SCR-FAT-086',
       builder: (context, state) => FamilyMomentsScreen(),
     ),
-    ],
+    ], showShowcase),
   );
+}
+
+/// Drops quarantined showcase routes from a build that did not ask for them.
+///
+/// Applied to the declared route list rather than duplicating it, so there is exactly one
+/// place where a route is defined and exactly one place where the quarantine decides
+/// whether it ships. A route added later is covered by the policy without anyone
+/// remembering to gate it.
+List<RouteBase> _quarantineIfNeeded(List<RouteBase> routes, bool showShowcase) {
+  if (showShowcase) return routes;
+  return routes
+      .where((route) =>
+          route is! GoRoute || !isQuarantinedShowcasePath(route.path))
+      .toList(growable: false);
 }
 
 /// Shared localization delegates for [MaterialApp.router].
