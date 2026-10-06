@@ -18,8 +18,8 @@ This admission authorizes implementation of the narrow contract already present 
 
 | Area | Admitted rule |
 |---|---|
-| API | `POST /v1/families/{familyId}/children` with bearer identity, `Idempotency-Key`, and exactly `{ "displayName", "ageYears" }`. A successful request returns `201 { "child": … }`. |
-| Fields | `displayName` and integer `ageYears` only. No avatar, colour, device, health, location, policy, account, provider or local-only profile fact enters this request. |
+| API | `POST /v1/families/{familyId}/children` with bearer identity, `Idempotency-Key`, and exactly `{ "displayName", "ageYears", "avatarEmoji", "themeColor" }`. A successful request returns `201 { "child": … }`. The presentation fields were reconciled in §6; this table now states the contract as shipped. |
+| Fields | `displayName`, integer `ageYears`, and the two server-validated presentation facts `avatarEmoji` and `themeColor` (§6). No device, health, location, policy, account, provider or free-form local-only profile fact enters this request. |
 | Authorization | Node.js/Express verifies the authenticated principal and primary-guardian membership. Flutter role data only determines whether to offer the action and can never grant authority. |
 | Scope | The family ID comes only from the server-discovered selected family context; no manually entered or guessed family scope is accepted. |
 | Idempotency | A UUID-shaped opaque key is kept for retries of unchanged sheet input. Altering the logical request creates a new key. Server replay and changed-payload conflict remain authoritative. |
@@ -33,7 +33,7 @@ This admission authorizes implementation of the narrow contract already present 
 | Pending | Creation submit control is disabled; navigation actions are not allowed to interleave the request. | No success is shown yet. |
 | `201` then roster read succeeds | Child profile confirmation and refreshed roster. | The roster comes from a fresh server `GET`, not client insertion. |
 | `201` then roster read is unavailable or malformed | Explain that saving succeeded but roster refresh is unavailable; provide the existing roster retry route. | Clear roster rather than presenting an older collection as current. |
-| `400` | Keep name/age in the form and request correction. | No local success or raw server message. |
+| `400` | Keep the entered name, age and presentation choices in the form and request correction. | No local success or raw server message. |
 | `401` / invalid session | Clear volatile family/roster context and require sign-in again. | No persisted identity or prior family context. |
 | `403` | Remove roster detail and show server-denied state. | A primary-looking discovery role never overrides the server. |
 | `409` | Keep safe form input and explain that this attempt cannot be confirmed. | The caller may revise the logical request, which obtains a fresh key. |
@@ -70,3 +70,22 @@ A successful implementation changes this capability's status, not the status of 
 **Why the risk is acceptable, stated plainly.** Both facts are non-identifying presentation choices: a single emoji and one of six fixed colour tokens, each server-validated against a closed set (`[purple, sky, amber, coral, mint, teal]`, emoji 1–32 characters containing an Extended_Pictographic). Neither reveals a location, contact, health state, device, school or any other sensitive category, and neither becomes a personal-data expansion under COPPA/GDPR-K data-minimization expectations. The data-minimization intent of the original exclusion is preserved: the request still carries no free-form profile fact beyond a display name and an age band.
 
 **Effect on scope.** Nothing else moves. The exclusion of child detail, edit/delete, device enrollment, policy, location, AI and providers remains exactly as written in §4. A reversal of this amendment is a one-line change in `backend/src/validation.js` plus the client call site, so the owner can still close this door cheaply; the open decision is recorded in [`../OPEN_DECISIONS.md`](../OPEN_DECISIONS.md).
+
+## 7. Amendment — the presentation facts are contract, not display (2026-10-06)
+
+**Second divergence found, wider than the first.** §6 reconciled this record against the shipped contract, but other documents kept describing the capability as *name-and-age only*, and one of them described the presentation facts as *local display-only*. Both statements are false against the code, and each was verified before being corrected:
+
+| Where | It said | The code says |
+|---|---|---|
+| This record §2 | `{ "displayName", "ageYears" }` only | `validation.js` requires all four fields and rejects unknown ones (`onlyKnownFields`) |
+| [`02`](02_FAMILY_ENTRY_AND_CHILDREN_CONTROL_COVER_SPECIFICATION.md) §3 | "narrow `POST /children` foundation for **name and age**" | same |
+| [`../OPEN_DECISIONS.md`](../OPEN_DECISIONS.md) decision area | "the exact **name-and-age-only** contract … are in `03`" | same, and it contradicted the D5 entry in the same file |
+| [`04`](04_FAMILY_ENTRY_AUTO_POLISH.md) | keep emoji/theme "**as local display-only** until backend contract admits them" | the backend admitted them in `006_family_child_presentation.sql`, and **both clients already send them** |
+
+**Why "local display-only" was wrong in both directions.** The facts are not local — `children_roster_api_client.dart` validates them against the closed sets and writes them into the request body, and PostgreSQL stores them under `CHECK` constraints. They are not display-only — they are the persisted identity of the child's card in the roster, which the server returns on every read.
+
+**The one real gap this amendment does identify.** The presentation facts are fully wired everywhere except the real client's form. The prototype screen `features/n01_linking/add_child_screen.dart` has a complete picker — five emoji (`kAddChildCharacters`) and six colours (`_colorIndex`) — and sends the chosen values. The real client's form in `foundation_gate/children_control_centre.dart` passes the constants `'🧒'` and `'purple'` instead. So a guardian using the real path gets a valid, server-persisted profile, but cannot choose how it looks.
+
+This is a **UI gap, not a contract gap**: no server, schema, validation or client-transport change is required to close it, which is why it is recorded here rather than opened as a new capability. The work is bounded to that form and is the next implementation step on this system.
+
+**Effect on the M0 lock.** Gate 5 of [`05`](05_M0_LOCK_RECORD.md) certified that "the admission boundary is reconciled, including presentation facts", and cited §6. That was true for this record and **only** for this record: the reconciliation left `02`, `OPEN_DECISIONS` and `04` carrying the older wording, and this amendment is what closes them. The lock itself is unaffected — no gate's evidence depended on the wording of those three documents — but the scope of gate 5 is recorded honestly here rather than left implied.

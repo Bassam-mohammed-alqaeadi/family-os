@@ -14,7 +14,7 @@ Device/Screen Time, Learning & Minutes, Family Connection, and Safety/Location/S
 
 ## 2. Resolved capability admission — create child profile
 
-The product owner admitted **primary-guardian create child profile** for real implementation on 2026-10-04. The exact name-and-age-only contract, ownership and recovery boundary are in [`real_platform/03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md`](real_platform/03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md).
+The product owner admitted **primary-guardian create child profile** for real implementation on 2026-10-04, originally as name and age. The exact contract, ownership and recovery boundary — reconciled against the shipped server contract, which also carries the two presentation facts — are in [`real_platform/03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md`](real_platform/03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md) §6 and §7.
 
 | Resolved item | Binding boundary |
 |---|---|

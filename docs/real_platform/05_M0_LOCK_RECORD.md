@@ -151,7 +151,7 @@ Local evidence fully covers the backend contract, store, authorization and OpenA
 | 2 | Backend suite green on the locking commit | ✅ `93/93` locally; `npm run check` clean |
 | 3 | Flutter analyze + test green on the locking commit | ✅ Flutter CI `37372946441` — success, every step green, enforcement step **skipped** because no gate failed |
 | 4 | No mock, seed or local-authority fallback on the normal path | ✅ (unchanged from the admitted slice) |
-| 5 | Admission boundary reconciled, including presentation facts | ✅ [`03` §6](03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md) |
+| 5 | Admission boundary reconciled, including presentation facts | ✅ [`03` §6](03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md) — scope corrected on 2026-10-06: §6 reconciled **that record** only, leaving `02`, `OPEN_DECISIONS` and `04` on the older name-and-age wording. [`03` §7](03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md) closes them. No gate evidence depended on those three documents, so the lock is unaffected. |
 | 6 | No secret, credential or real family data introduced | ✅ Credential Guard `37372946422` |
 | 7 | Next wave selectable without reopening M0 | ✅ M1 (system 37, Devices) |
 

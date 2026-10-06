@@ -126,6 +126,8 @@ Entry from a truthful empty/setup roster state
 
 It must deliberately omit device enrollment, child accounts, location, policies, emoji/colour as authoritative profile properties, and a public release claim.
 
+> **Note added 2026-10-06 — this paragraph is a dated recommendation, not the shipped contract.** The admitted capability was later reconciled against the server: `avatar_emoji` and `theme_color` are now durable, server-validated presentation facts carried by both clients, not local decoration. See [`../real_platform/03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md`](../real_platform/03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md) §6 and §7. The omission this audit asked for still holds for the categories that matter — device enrollment, child accounts, location and policy — and for treating appearance as an **authoritative profile property** rather than a bounded presentation fact. The audit itself is left as written because it is a record of 2026-10-04.
+
 ### Step 2 — Define and deliver a child-detail read model
 
 Before a child card can open a real control centre, decide the minimum profile fields, source provenance, freshness, role visibility and repair states. Build its API/read model and UI together; do not navigate from the roster into a local/mock profile.
