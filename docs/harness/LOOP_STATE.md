@@ -11,15 +11,15 @@
 status: REAL_ENGINE
 active_system: 37 — Devices (M1)
 wave: M1
-stage: REAL_ENGINE — G1 closed end to end; G2/G3 shipped as a pure module; G4 partial; G5 partial
+stage: REAL_ENGINE — server half proven; the surface is NOT bound. A full code audit on 2026-10-06 re-measured completion and found three open defects in this very card.
 card: docs/harness/cards/M1-37-002-device-lifecycle-cover.md
-owns: device lifecycle — the derivation, the revocation, and the client's ability to read both. Built entirely inside this branch's own range; the shared store files are untouched.
+owns: device lifecycle — derivation, revocation, and the client's ability to read both. Built inside this branch's range; shared store files untouched.
 blocked_by: —
 owner_question: —
 last_tick: 2026-10-06
 last_locked: "SPINE-001 — 2026-10-06, owner-approved; M0 — 2026-10-05 on 3d7ff18"
-next_locked_gate: "M1 exit — every exit criterion in the card checked with evidence, and the device condition visible in the real roster"
-evidence: "c9def70 guard green; 8ae2103 device-lifecycle.v1 + migration 101; cedd1b7 revocation live with 25 new tests; d07de3d client parses and renders the server verdict; backend 132/132, npm run check clean, migration range guard exit 0, Harness Guard / Backend CI / Credential Guard / Foundation Gate CI / Flutter CI all green on d07de3d (Flutter's enforcement step skipped = true pass)"
+next_locked_gate: "M1 exit — now includes the two new gates from TASK_CARD_TEMPLATE §6.1/6.2: contract + client + reachable surface + journey test, and real SQL execution"
+evidence: "audit docs/FULL_PLATFORM_AUDIT_2026-10-06.md; head 8a5b523; backend 132/132; 2.5 of 42 systems real; 0 sellable; plan self-contradiction 4.6x recorded in MASTER_PLAN §13"
 ```
 <!-- HARNESS-STATE:END -->
 
