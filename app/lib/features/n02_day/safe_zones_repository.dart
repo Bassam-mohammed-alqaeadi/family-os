@@ -166,6 +166,13 @@ final class InMemorySafeZonesRepository implements SafeZonesRepository {
 
   List<SafeZone> _zones;
 
+  /// An in-memory list is this handset's own, and it stores whatever it is handed.
+  @override
+  bool get storesNoShowAlert => true;
+
+  @override
+  bool get isRemoteAuthority => false;
+
   /// Test seam — next [load] throws.
   bool failLoad;
 

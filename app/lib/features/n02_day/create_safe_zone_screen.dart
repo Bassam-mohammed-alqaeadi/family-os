@@ -369,7 +369,7 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
           context,
           message: l10n.errorLocalSaveMessage,
           actionLabel: l10n.errorRetryCta,
-          onAction: _save,
+          onAction: () => _save(l10n),
         );
         return;
       }

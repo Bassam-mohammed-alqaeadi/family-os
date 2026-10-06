@@ -123,6 +123,13 @@ final class DomainSafeZonesRepository implements SafeZonesRepository {
   /// Optional Stage-1 list mirror for legacy UI fields (emoji/description).
   final InMemorySafeZonesRepository? listRepo;
 
+  /// The local Domain store keeps the missed-deadline flag and is not a server.
+  @override
+  bool get storesNoShowAlert => true;
+
+  @override
+  bool get isRemoteAuthority => false;
+
   @override
   Future<SafeZonesSnapshot> load() async {
     final zones = await domain.listZones(familyId);

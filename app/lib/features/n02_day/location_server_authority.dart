@@ -1,6 +1,8 @@
 import 'package:family_os/core/location/geo_point.dart';
 import 'package:family_os/core/location/zone_geometry.dart';
 import 'package:family_os/foundation_gate/family_location_api_client.dart';
+import 'package:family_os/foundation_gate/foundation_gate_models.dart';
+import 'package:family_os/features/n02_day/day_child_mock.dart';
 import 'package:family_os/features/n02_day/location_map_repository.dart';
 import 'package:family_os/features/n02_day/safe_zones_repository.dart';
 
@@ -242,7 +244,7 @@ final class ServerLocationMapRepository implements LocationMapRepository {
           batteryLabel: '—',
           xFraction: _xFraction(point),
           yFraction: _yFraction(point),
-          safeZoneLabel: _containingZoneName(child, zoneNameById),
+          safeZoneLabel: _containingZoneName(child, zoneNameById) ?? '',
           batteryWarn: false,
           networkClass: LocationNetworkClass.unavailable,
         ),

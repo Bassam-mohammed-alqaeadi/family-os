@@ -118,6 +118,12 @@ final class _CountingSafeZones implements SafeZonesRepository {
   var loads = 0;
 
   @override
+  bool get storesNoShowAlert => _inner.storesNoShowAlert;
+
+  @override
+  bool get isRemoteAuthority => _inner.isRemoteAuthority;
+
+  @override
   Future<SafeZonesSnapshot> load() {
     loads += 1;
     return _inner.load();
