@@ -31,6 +31,14 @@ firebase-adminsdk.json
 node_modules/
 **/node_modules/
 
+# Packaged / derived output — never let a generated archive or bundle into history.
+# Tracked files are unaffected; this guards against *future* accidental adds.
+dist/
+out/
+*.zip
+*.tar.gz
+*.tgz
+
 # Python / agent local
 **/__pycache__/
 *.py[cod]

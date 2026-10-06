@@ -20,6 +20,7 @@ Read these in order before significant work:
 | Path | Purpose | Status |
 |---|---|---|
 | [`CURRENT_EXECUTION_PLAN.md`](CURRENT_EXECUTION_PLAN.md) | The single live execution plan | Family Entry & Children Control is the active first system; Cover is in progress. |
+| [`GIT_AND_GITHUB_OPERATING_METHOD.md`](GIT_AND_GITHUB_OPERATING_METHOD.md) | How work is persisted and verified on GitHub: the seven laws, the daily loop, recovery, and how to read CI honestly | Active; enforced by `tools/git/repo-health.sh`. |
 | [`real_platform/02_FAMILY_ENTRY_AND_CHILDREN_CONTROL_COVER_SPECIFICATION.md`](real_platform/02_FAMILY_ENTRY_AND_CHILDREN_CONTROL_COVER_SPECIFICATION.md) | Active Family Entry & Children Control system: Cover-stage experience and contract specification | Cross-discipline review and first-capability admission are next. |
 | [`foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md`](foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md) | Prototype-to-real capability, UX and state audit for the active first system | Completed Compare/Gaps input to the Cover specification. |
 | [`REAL_PLATFORM_TRANSFORMATION_RECORD.md`](REAL_PLATFORM_TRANSFORMATION_RECORD.md) | Real platform vision, shared foundations and system sequencing | Active strategic record. |
