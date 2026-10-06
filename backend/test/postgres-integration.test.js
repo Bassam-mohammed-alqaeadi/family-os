@@ -1227,6 +1227,140 @@ test('a zone is drawn, a device reports, and the boundary crossing becomes a rec
           [familyId],
         );
         assert.equal(provenanceKept.rows[0].n, 4, 'a crossing lost the measurement it points at');
+
+        // 11. The switch a family reaches for at night. Changing which transitions a zone
+        //     announces must not be able to move the boundary, and must not be able to
+        //     re-describe a crossing that was already reported.
+        const patchZone = (subject, key, body) =>
+          jsonRequest(baseUrl, `/v1/families/${familyId}/safe-zones/${schoolId}`, {
+            method: 'PATCH',
+            headers: authorized(subject, { 'idempotency-key': key }),
+            body,
+          });
+
+        const alertsOff = await patchZone('test-primary', 'w3-alerts-off', { alertEnter: false });
+        assert.equal(alertsOff.status, 200);
+        assert.equal(alertsOff.body.zone.alertEnter, false);
+        assert.equal(alertsOff.body.zone.alertExit, true, 'a flag the family did not touch changed');
+        assert.equal(alertsOff.body.zone.version, 2, 'a rule change did not move the version');
+        assert.equal(alertsOff.body.zone.geometry.version, 2, 'the geometry kept the old version');
+        const { version: _changedVersion, ...shapeAfter } = alertsOff.body.zone.geometry;
+        const { version: _firstVersion, ...shapeBefore } = school.body.zone.geometry;
+        assert.deepEqual(shapeAfter, shapeBefore, 'changing the alert flags moved the boundary');
+        assert.deepEqual(alertsOff.body.zone.childIds, [childId], 'the assignment was lost');
+
+        const childPatch = await patchZone('test-child', 'w3-alerts-child', { alertEnter: false });
+        assert.equal(childPatch.status, 403);
+        assert.equal(childPatch.body.error.code, 'safe_zone_guardian_required');
+
+        const nothingToChange = await patchZone('test-primary', 'w3-alerts-empty', {});
+        assert.equal(nothingToChange.status, 400);
+
+        const moveBoundary = await patchZone('test-primary', 'w3-alerts-move', {
+          alertEnter: true,
+          geometry: { kind: 'CIRCLE', center: home, radiusMeters: 400 },
+        });
+        assert.equal(moveBoundary.status, 400, 'the boundary is not editable through the flags switch');
+
+        const unknownZone = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/safe-zones/${'99999999-9999-4999-8999-999999999999'}`,
+          {
+            method: 'PATCH',
+            headers: authorized('test-primary', { 'idempotency-key': 'w3-alerts-ghost' }),
+            body: { alertEnter: true },
+          },
+        );
+        assert.equal(unknownZone.status, 404);
+
+        // 12. A crossing still happens and is still recorded - it is simply not announced,
+        //     because the family said they no longer want to hear about arrivals here. An
+        //     alert switch governs announcements; it must never govern the trail.
+        //
+        //     The child already stepped out of the school during the pruning write above
+        //     (that trail sample was placed away from the school), so this report is outside
+        //     a zone she had left: it must produce nothing at all rather than a crossing
+        //     invented by the flag change.
+        const awayAgain = await postFix(
+          '78787878-7878-4878-8878-787878787878',
+          { acquisition: 'located', latitude: 15.45, longitude: 44.25 },
+          'w3-alert-fix-away',
+          -4 * minute,
+        );
+        assert.equal(awayAgain.status, 201);
+        assert.equal(awayAgain.body.evaluated, true);
+        assert.deepEqual(awayAgain.body.crossings, [], 'flipping a flag produced a crossing');
+
+        // 12a. Walking back in: recorded in the trail, and silent.
+        const backAgain = await postFix(
+          '88888888-8888-4888-8888-888888888888',
+          { acquisition: 'located', latitude: 15.405, longitude: 44.205 },
+          'w3-alert-fix-back',
+          -3 * minute,
+        );
+        assert.equal(backAgain.status, 201);
+        assert.deepEqual(
+          backAgain.body.crossings,
+          [{ zoneId: schoolId, kind: 'ENTER', baseline: false, notified: false, zoneVersion: 2 }],
+          'a silenced arrival was still announced',
+        );
+
+        // 12b. Leaving again: the flag the family left alone still speaks, and it says which
+        //      version of the zone it was judged against.
+        const awayOnceMore = await postFix(
+          '89898989-8989-4989-8989-898989898989',
+          { acquisition: 'located', latitude: 15.45, longitude: 44.25 },
+          'w3-alert-fix-away2',
+          -2 * minute,
+        );
+        assert.equal(awayOnceMore.status, 201);
+        assert.deepEqual(awayOnceMore.body.crossings, [
+          { zoneId: schoolId, kind: 'EXIT', baseline: false, notified: true, zoneVersion: 2 },
+        ]);
+
+        const schoolAnnouncements = await client.query(
+          `SELECT event_type, payload
+             FROM outbox_events
+            WHERE aggregate_id = $1
+              AND event_type IN ('family.geofence_entered', 'family.geofence_exited')
+              AND payload->>'zoneId' = $2
+            ORDER BY created_at ASC, id ASC`,
+          [familyId, schoolId],
+        );
+        assert.deepEqual(
+          schoolAnnouncements.rows.map((row) => row.event_type),
+          ['family.geofence_exited', 'family.geofence_exited'],
+          'the announcement queue disagrees with the switch the family flipped',
+        );
+        assert.equal(schoolAnnouncements.rows[0].payload.zoneVersion, 1);
+        assert.equal(schoolAnnouncements.rows[1].payload.zoneVersion, 2);
+        assert.equal(schoolAnnouncements.rows[1].payload.kind, 'EXIT');
+        assert.equal(schoolAnnouncements.rows[1].payload.childId, childId);
+
+        // The trail keeps every crossing, including the two the family did not want to hear
+        // about, and each one still points at the measurement it was judged from.
+        const schoolTrail = await client.query(
+          `SELECT kind, baseline, zone_version
+             FROM family_geofence_events
+            WHERE family_id = $1 AND zone_id = $2
+            ORDER BY occurred_at ASC`,
+          [familyId, schoolId],
+        );
+        assert.deepEqual(
+          schoolTrail.rows.map((row) => [row.kind, row.baseline, row.zone_version]),
+          [
+            ['ENTER', true, 1],
+            ['EXIT', false, 1],
+            ['ENTER', false, 2],
+            ['EXIT', false, 2],
+          ],
+          'a crossing was dropped from the trail because the family did not want an alert',
+        );
+
+        const toggledBack = await patchZone('test-primary', 'w3-alerts-back', { alertEnter: true });
+        assert.equal(toggledBack.status, 200);
+        assert.equal(toggledBack.body.zone.version, 3);
+        assert.equal(toggledBack.body.zone.alertEnter, true);
       });
     } finally {
       await store.close();

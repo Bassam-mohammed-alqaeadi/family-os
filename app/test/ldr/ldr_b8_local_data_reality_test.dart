@@ -53,17 +53,11 @@ void main() {
 
       await FsSessionKernel.ensureOpen(preferSqlite: false, override: db);
       await Stage1LocationRuntime.ensureOpen();
-      await ensureRealLocalSafeZonesSeeded(
-        domain: Stage1LocationRuntime.store,
-        familyId: familyId,
-      );
-      final zones = await Stage1LocationRuntime.store.listZones(familyId);
-      expect(zones, isNotEmpty);
-      for (final z in zones) {
-        for (final c in z.assignedChildIds) {
-          expect(rosterIds.contains(c.value), isTrue);
-        }
-      }
+
+      // W3: no sample zone is planted any more. A boundary nobody drew is not a boundary,
+      // and this handset would have disagreed with the server about it. The map therefore
+      // starts with the roster's children and whatever zones the family actually owns.
+      expect(await Stage1LocationRuntime.store.listZones(familyId), isEmpty);
 
       final map = DomainLocationMapRepository(
         domain: Stage1LocationRuntime.store,

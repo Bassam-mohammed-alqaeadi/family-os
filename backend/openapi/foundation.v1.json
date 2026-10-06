@@ -1540,6 +1540,75 @@
           }
         }
       }
+    },
+    "/v1/families/{familyId}/safe-zones/{zoneId}": {
+      "patch": {
+        "operationId": "updateFamilySafeZoneAlerts",
+        "summary": "A guardian changes which transitions a zone announces",
+        "description": "Only the two alert flags are writable here, and at least one of them must be sent. The boundary itself, its name and its assignment are deliberately not editable: a boundary that moves is a different boundary to anyone a crossing was already reported about. The zone's version moves with every change, because a crossing records the version it was judged against - turning arrival alerts off tonight must not make last night's announced arrival look like it happened under the new rule.",
+        "tags": [
+          "Safe zones"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/SafeZoneId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSafeZoneAlertsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The zone with its new flags and its new version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SafeZoneResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1608,6 +1677,15 @@
           "maxLength": 128
         },
         "description": "Unique per operation intent. Reusing it with different intent is rejected."
+      },
+      "SafeZoneId": {
+        "name": "zoneId",
+        "in": "path",
+        "required": true,
+        "description": "The safe zone to change.",
+        "schema": {
+          "$ref": "#/components/schemas/Uuid"
+        }
       }
     },
     "responses": {
@@ -3599,6 +3677,19 @@
             "items": {
               "$ref": "#/components/schemas/GeofenceEvent"
             }
+          }
+        }
+      },
+      "UpdateSafeZoneAlertsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "minProperties": 1,
+        "properties": {
+          "alertEnter": {
+            "type": "boolean"
+          },
+          "alertExit": {
+            "type": "boolean"
           }
         }
       }

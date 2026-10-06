@@ -48,7 +48,6 @@ const Set<String> productionReachableMocks = <String>{
   'lib/features/n02_day/day_board_screen.dart',
   'lib/features/n02_day/day_child_mock.dart',
   'lib/features/n02_day/family_chat_local_seed_mock.dart',
-  'lib/features/n02_day/location_real_local_seed_mock.dart',
   'lib/features/n03_screen_time/child_apps_mock.dart',
   'lib/features/n03_screen_time/child_apps_real_local_seed_mock.dart',
   'lib/features/n05_lock/child_mode_lock_service.dart',

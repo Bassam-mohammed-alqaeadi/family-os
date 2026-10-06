@@ -387,6 +387,26 @@ export function locationFixInput(value) {
   };
 }
 
+/**
+ * Changing which transitions a zone announces.
+ *
+ * Only the two flags, and at least one of them. The shape, the name and the assignment are
+ * deliberately not editable here: a boundary that moves is a different boundary to anyone
+ * a crossing was reported about, and editing one in place would silently re-describe an
+ * arrival that already happened.
+ */
+export function updateSafeZoneAlertsInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['alertEnter', 'alertExit']));
+  if (body.alertEnter === undefined && body.alertExit === undefined) {
+    throw new HttpError(400, 'invalid_request', 'alertEnter or alertExit is required.');
+  }
+  return {
+    alertEnter: body.alertEnter === undefined ? undefined : optionalBoolean(body.alertEnter, 'alertEnter', true),
+    alertExit: body.alertExit === undefined ? undefined : optionalBoolean(body.alertExit, 'alertExit', true),
+  };
+}
+
 export function requireIdempotencyKey(value) {
   return requiredText(value, 'Idempotency-Key', { maxLength: 128 });
 }

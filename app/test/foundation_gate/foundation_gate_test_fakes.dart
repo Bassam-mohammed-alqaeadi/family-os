@@ -58,21 +58,33 @@ class FakeIdentity implements FoundationGateIdentity {
 }
 
 class FakeTransport implements FoundationGateHttpTransport {
-  FakeTransport(this.response, {FoundationGateHttpResponse? postResponse})
-    : _postResponse = postResponse;
+  FakeTransport(
+    this.response, {
+    FoundationGateHttpResponse? postResponse,
+    FoundationGateHttpResponse? patchResponse,
+  }) : _postResponse = postResponse,
+       _patchResponse = patchResponse;
 
   FoundationGateHttpResponse response;
   FoundationGateHttpResponse? _postResponse;
+  FoundationGateHttpResponse? _patchResponse;
   Uri? requestedUri;
   Map<String, String>? requestedHeaders;
   Uri? postedUri;
   Map<String, String>? postedHeaders;
   String? postedBody;
+  Uri? patchedUri;
+  Map<String, String>? patchedHeaders;
+  String? patchedBody;
   final List<Map<String, String>> postedHeadersHistory = [];
   Object? failure;
   Object? postFailure;
+  Object? patchFailure;
 
   set postResponse(FoundationGateHttpResponse? value) => _postResponse = value;
+
+  set patchResponse(FoundationGateHttpResponse? value) =>
+      _patchResponse = value;
 
   @override
   Future<FoundationGateHttpResponse> get(
@@ -104,6 +116,24 @@ class FakeTransport implements FoundationGateHttpTransport {
       throw failure!;
     }
     return _postResponse ?? response;
+  }
+
+  @override
+  Future<FoundationGateHttpResponse> patch(
+    Uri uri, {
+    required Map<String, String> headers,
+    required String body,
+  }) async {
+    patchedUri = uri;
+    patchedHeaders = headers;
+    patchedBody = body;
+    if (patchFailure != null) {
+      throw patchFailure!;
+    }
+    if (failure != null) {
+      throw failure!;
+    }
+    return _patchResponse ?? response;
   }
 }
 

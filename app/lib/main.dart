@@ -39,6 +39,7 @@ import 'package:family_os/features/n02_day/alerts_hub_local_projection.dart';
 import 'package:family_os/features/n02_day/child_profile_repository.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/family_chat_local_persistence.dart';
+import 'package:family_os/features/n02_day/location_server_authority.dart';
 import 'package:family_os/features/n02_day/location_ux_bridge.dart';
 import 'package:family_os/features/n03_screen_time/child_apps_local_persistence.dart';
 import 'package:family_os/features/n07_privacy/audit_log_local_persistence.dart';
@@ -52,6 +53,7 @@ import 'package:family_os/features/shared_onboarding/device_user_switch_identity
 import 'package:family_os/features/shared_onboarding/device_user_switch_repository.dart';
 import 'package:family_os/foundation_gate/children_roster_api_client.dart';
 import 'package:family_os/foundation_gate/family_device_api_client.dart';
+import 'package:family_os/foundation_gate/family_location_api_client.dart';
 import 'package:family_os/foundation_gate/family_discovery_api_client.dart';
 import 'package:family_os/foundation_gate/family_membership_api_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
@@ -147,6 +149,20 @@ Future<void> main() async {
     rebindStage1MembershipCommands(
       RemoteFamilyMembershipCommands(familyEntryRuntime),
     );
+    // W3 — safe zones and the live location picture come from the server when a server is
+    // configured. Until this binding existed, a zone the mother drew lived in her own
+    // handset's store: the father could not see the boundary, and no arrival could be
+    // detected, because detection needs one shared answer to "where is the boundary".
+    final locationApi = familyEntryRuntime.locationApi;
+    if (locationApi != null) {
+      bindLocationServerAuthority(
+        LocationServerAuthority(
+          api: locationApi,
+          idToken: familyEntryRuntime.currentIdToken,
+          familyId: () => familyEntryRuntime.selectedFamilyId,
+        ),
+      );
+    }
   }
   runApp(
     FamilyOsApp(
@@ -190,6 +206,10 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
         transport: PackageFoundationGateHttpTransport(),
       ),
       membershipApi: FamilyMembershipApiClient(
+        configuration: configuration,
+        transport: PackageFoundationGateHttpTransport(),
+      ),
+      locationApi: FamilyLocationApiClient(
         configuration: configuration,
         transport: PackageFoundationGateHttpTransport(),
       ),

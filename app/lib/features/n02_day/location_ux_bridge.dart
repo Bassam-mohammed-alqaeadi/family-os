@@ -7,7 +7,6 @@ import 'package:family_os/core/fs_foundation/capability_status.dart';
 import 'package:family_os/core/fs_foundation/fs_session_kernel.dart';
 import 'package:family_os/core/fs_foundation/local_database.dart';
 import 'package:family_os/core/identity/identity_runtime.dart';
-import 'package:family_os/core/identity/roster_children.dart';
 import 'package:family_os/core/location/geo_point.dart';
 import 'package:family_os/core/location/geofence_event.dart';
 import 'package:family_os/core/location/location_fix.dart';
@@ -19,7 +18,6 @@ import 'package:family_os/core/modes/modes_runtime.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/location_history_repository.dart';
 import 'package:family_os/features/n02_day/location_map_repository.dart';
-import 'package:family_os/features/n02_day/location_real_local_seed_mock.dart';
 import 'package:family_os/features/n02_day/safe_zones_repository.dart';
 
 /// Stage-1 composition root for FS-001 UX (shared [FsSessionKernel] DB).
@@ -379,13 +377,18 @@ final class DomainLocationMapRepository implements LocationMapRepository {
 }
 
 /// Boot-once: rebind FAT-014/015/016 stage1 repos to domain adapters (LDR-B1/B2).
+///
+/// This is the local path, and it no longer plants anything: until W3 it seeded two sample
+/// zones into the local store so the map and the zones screen would have something to show.
+/// A boundary nobody drew is not a boundary, and both a family that had drawn one and a
+/// server that judges crossings would have disagreed with this handset about it. When a
+/// server is configured the composition root binds the server authority instead.
 Future<void> tryBindStage1LocationUx() async {
   try {
     await Stage1LocationRuntime.ensureOpen();
     if (FsSessionKernel.sqliteFallbackToMemory) return;
     final domain = Stage1LocationRuntime.store;
     final familyId = stage1IdentityRuntime.activeFamilyId;
-    await ensureRealLocalSafeZonesSeeded(domain: domain, familyId: familyId);
     rebindStage1LocationMapRepository(
       DomainLocationMapRepository(domain: domain, familyId: familyId),
     );
@@ -401,31 +404,6 @@ Future<void> tryBindStage1LocationUx() async {
     );
   } catch (e, st) {
     debugPrint('LDR tryBindStage1LocationUx soft-fail: $e\n$st');
-  }
-}
-
-/// LDR-B2 — zone definitions only (no trail/GPS samples). Idempotent.
-Future<void> ensureRealLocalSafeZonesSeeded({
-  required LocationDomainRepository domain,
-  required FamilyId familyId,
-}) async {
-  final existing = await domain.listZones(familyId);
-  if (existing.isNotEmpty) return;
-  final now = DateTime.now().toUtc();
-  final kids = await stage1ChildrenListRepository.listChildren(
-    familyId: familyId,
-  );
-  final childIds = [for (final k in kids.take(2)) ChildId(k.id)];
-  final assigned = childIds.isNotEmpty
-      ? childIds
-      : activeFamilyRosterChildren().take(2).map((child) => child.id).toList();
-
-  for (final zone in realLocalSafeZoneSeedMock(
-    familyId: familyId,
-    assignedChildIds: assigned,
-    now: now,
-  )) {
-    await domain.saveZone(zone);
   }
 }
 

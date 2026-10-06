@@ -21,6 +21,18 @@ abstract interface class FoundationGateHttpTransport {
     required Map<String, String> headers,
     required String body,
   });
+
+  /// A partial update of one existing record.
+  ///
+  /// PATCH rather than POST for the same reason the contract uses it: the operation names
+  /// the exact row it changes in the path, and sends only the fields it is allowed to
+  /// change. A POST to the same path would have made "which fields may move" a question
+  /// about the body instead of a question about the contract.
+  Future<FoundationGateHttpResponse> patch(
+    Uri uri, {
+    required Map<String, String> headers,
+    required String body,
+  });
 }
 
 class PackageFoundationGateHttpTransport
@@ -49,6 +61,19 @@ class PackageFoundationGateHttpTransport
     required String body,
   }) async {
     final response = await _client.post(uri, headers: headers, body: body);
+    return FoundationGateHttpResponse(
+      statusCode: response.statusCode,
+      body: response.body,
+    );
+  }
+
+  @override
+  Future<FoundationGateHttpResponse> patch(
+    Uri uri, {
+    required Map<String, String> headers,
+    required String body,
+  }) async {
+    final response = await _client.patch(uri, headers: headers, body: body);
     return FoundationGateHttpResponse(
       statusCode: response.statusCode,
       body: response.body,

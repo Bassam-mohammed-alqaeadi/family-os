@@ -19,13 +19,13 @@
 
 | القياس | العدد |
 |---|---|
-| ملفات `lib` تصل مسار الإنتاج | **٢٢** ← الدين المفتوح (نزل واحداً: `family_members_mock` أُزيل في و١) |
+| ملفات `lib` تصل مسار الإنتاج | **٢١** ← الدين المفتوح (نزل اثنان: `family_members_mock` أُزيل في و١، و`location_real_local_seed_mock` أُزيل في و٣) |
 | ملفات mock لا يستوردها إلا اختبار | **١٣** ← وسائط اختبار مشروعة |
 | ملفات mock لا يشير إليها أحد | **٠** ← لا موتى |
 
 ---
 
-## ٢) الدين المفتوح — ٢٢ ملفاً يصلها الإنتاج
+## ٢) الدين المفتوح — ٢١ ملفاً يصلها الإنتاج
 
 مرتّبة بالخطورة. **لا يُحذف صفّ إلا بأن يصير الملف غير واصل — أي بحذفه أو باستبدال الوهمي بحقيقي، لا بتحسين صياغته.**
 
@@ -64,9 +64,8 @@
 | ١٧ | `features/n02_day/alert_detail_mock.dart` | بذرة تفصيل التنبيه | `audit_population` |
 | ١٨ | `features/n02_day/alerts_hub_mock.dart` | بذرة مركز التنبيهات | `audit_population` |
 | ١٩ | `features/n02_day/family_chat_local_seed_mock.dart` | بذرة محادثة العائلة | `family_chat_local_store` |
-| ٢٠ | `features/n02_day/location_real_local_seed_mock.dart` | بذرة موقع | `location_ux_bridge` |
-| ٢١ | `features/n03_screen_time/child_apps_mock.dart` | بذرة تطبيقات الطفل | `child_apps_repository` |
-| ٢٢ | `features/n03_screen_time/child_apps_real_local_seed_mock.dart` | بذرة تطبيقات محلية | `audit_population` · `child_apps_local_persistence` |
+| ٢٠ | `features/n03_screen_time/child_apps_mock.dart` | بذرة تطبيقات الطفل | `child_apps_repository` |
+| ٢١ | `features/n03_screen_time/child_apps_real_local_seed_mock.dart` | بذرة تطبيقات محلية | `audit_population` · `child_apps_local_persistence` |
 
 ---
 
@@ -88,4 +87,5 @@
 
 | التاريخ | الملف | كيف أُغلق | الدليل |
 |---|---|---|---|
+| 2026-10-07 | `features/n02_day/location_real_local_seed_mock.dart` | **أُزيل**: كان يزرع منطقتين وهميتين (المنزل/المدرسة) في مخزن الجهاز عند الإقلاع، فصار السطح يقرأ المناطق من الخادم عبر `ServerSafeZonesRepository` ويكتبها عبر `SafeZoneServerWriter`؛ والحارسان `mock_isolation_test.dart` و`ldr_b2/b8` حُدِّثا معه | `location_server_authority.dart` + `family_location_api_client_test.dart` + رحلة و٣ على PostgreSQL |
 | 2026-10-07 | `features/n12_devices/family_members_mock.dart` | **أُزيل**: وسوم الأدوار انتقلت إلى `family_members_role_labels.dart` (كود إنتاج)، والحمولات صارت وسيط اختبار داخل ملف الاختبار نفسه، وسرد الأعضاء صار من الخادم عبر `family_members_remote_repository.dart` | العدد ٢٢ في الحارس `mock_isolation_test.dart`، والاختبارات الجديدة على الواجهة والخادم |

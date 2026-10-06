@@ -19,6 +19,7 @@ import {
     createSafeZoneInput,
     locationFixInput,
     revokeMembershipInput,
+    updateSafeZoneAlertsInput,
     requireIdempotencyKey,
     requireNoQueryParameters,
     requireUuid,
@@ -459,6 +460,37 @@ export function createApp({
                 }),
             });
             response.status(201).json(result);
+        }),
+    );
+
+    // Which transitions a zone announces. Separate from creation on purpose: this is the
+    // switch a family reaches for at night, and it must not be able to move the boundary
+    // or reassign it while doing so.
+    app.patch(
+        '/v1/families/:familyId/safe-zones/:zoneId',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const zoneId = requireUuid(request.params.zoneId, 'zoneId');
+            requireNoQueryParameters(request.query);
+            const input = updateSafeZoneAlertsInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await safeZones.updateAlerts({
+                principal: request.principal,
+                familyId,
+                zoneId,
+                ...input,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'safe_zone.alerts',
+                    principal: request.principal,
+                    input: { familyId, zoneId, ...input },
+                }),
+            });
+            response.status(200).json(result);
         }),
     );
 

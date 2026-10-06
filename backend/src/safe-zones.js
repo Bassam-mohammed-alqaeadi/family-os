@@ -138,6 +138,67 @@ export function createSafeZoneCreate({ port }) {
 }
 
 /**
+ * Builds the alert-flag write over a data port.
+ *
+ * Port shape adds:
+ *
+ *   readZone(tx, { familyId, zoneId, forUpdate })     -> raw row | null
+ *   updateZoneAlerts(tx, { zoneId, alertEnter, alertExit }) -> raw row | null
+ *
+ * The version moves with every change, because a crossing records the version it was
+ * judged against: a family that turns arrival alerts off tonight must not make last
+ * week's announced arrival look like it happened under the new rule.
+ */
+export function createSafeZoneAlertUpdate({ port }) {
+  return async function updateFamilySafeZoneAlerts({
+    principal,
+    familyId,
+    zoneId,
+    alertEnter,
+    alertExit,
+    idempotencyKey,
+    requestHash,
+    correlationId,
+  }) {
+    return port.idempotent(
+      `safe-zone:alerts:${zoneId}`,
+      idempotencyKey,
+      requestHash,
+      async (tx) => {
+        const actor = await port.authorize(tx, { familyId, subject: principal.subject });
+        if (actor.role === 'child') {
+          throw new HttpError(
+            403,
+            'safe_zone_guardian_required',
+            'A safe zone is defined by a guardian of the family.',
+          );
+        }
+        const zone = await port.readZone(tx, { familyId, zoneId, forUpdate: true });
+        if (zone === null) {
+          throw new HttpError(404, 'safe_zone_not_found', 'Safe zone was not found in this family.');
+        }
+        const updated = await port.updateZoneAlerts(tx, {
+          zoneId,
+          alertEnter: alertEnter ?? zone.alert_enter,
+          alertExit: alertExit ?? zone.alert_exit,
+        });
+        await port.audit(tx, {
+          familyId,
+          actorMembershipId: actor.id,
+          correlationId,
+          subjectId: zoneId,
+          eventType: 'family.safe_zone_alerts_changed',
+        });
+        const children = await port.readZoneChildren(tx, { familyId, zoneIds: [zoneId] });
+        return {
+          zone: safeZoneView(updated, children.map((row) => row.child_id)),
+        };
+      },
+    );
+  };
+}
+
+/**
  * The wire form of a zone.
  *
  * `version` travels with the geometry because a crossing is a fact about the shape as it
@@ -217,15 +278,43 @@ export function postgresSafeZonePort(store) {
       return rows;
     },
 
-    async readZoneChildren(client, { familyId }) {
+    async readZoneChildren(client, { familyId, zoneIds = null }) {
       const { rows } = await client.query(
         `SELECT zone_id, child_id
            FROM family_safe_zone_children
           WHERE family_id = $1
+            AND ($2::uuid[] IS NULL OR zone_id = ANY($2::uuid[]))
           ORDER BY assigned_at ASC, child_id ASC`,
-        [familyId],
+        [familyId, zoneIds],
       );
       return rows;
+    },
+
+    async readZone(client, { familyId, zoneId, forUpdate = false }) {
+      const { rows } = await client.query(
+        `SELECT id, name, emoji, geometry_kind, center_lat, center_lng, radius_meters,
+                vertices, alert_enter, alert_exit, version, created_at, updated_at, archived_at
+           FROM family_safe_zones
+          WHERE family_id = $1 AND id = $2 AND archived_at IS NULL
+          ${forUpdate ? 'FOR UPDATE' : ''}`,
+        [familyId, zoneId],
+      );
+      return rows[0] ?? null;
+    },
+
+    async updateZoneAlerts(client, { zoneId, alertEnter, alertExit }) {
+      const { rows } = await client.query(
+        `UPDATE family_safe_zones
+            SET alert_enter = $2,
+                alert_exit = $3,
+                version = version + 1,
+                updated_at = NOW()
+          WHERE id = $1 AND archived_at IS NULL
+          RETURNING id, name, emoji, geometry_kind, center_lat, center_lng, radius_meters,
+                    vertices, alert_enter, alert_exit, version, created_at, updated_at, archived_at`,
+        [zoneId, alertEnter, alertExit],
+      );
+      return rows[0] ?? null;
     },
 
     async readFamilyChildren(client, { familyId, childIds }) {
@@ -290,5 +379,6 @@ export function safeZonesFor(store) {
   return {
     list: createSafeZoneList({ port }),
     create: createSafeZoneCreate({ port }),
+    updateAlerts: createSafeZoneAlertUpdate({ port }),
   };
 }

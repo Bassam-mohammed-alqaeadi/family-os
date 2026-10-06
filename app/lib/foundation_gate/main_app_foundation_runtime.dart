@@ -12,6 +12,7 @@ import 'package:family_os/core/runtime/runtime_data_origin.dart';
 
 import 'device_lifecycle.dart';
 import 'family_device_api_client.dart';
+import 'family_location_api_client.dart';
 import 'family_membership_api_client.dart';
 import 'foundation_gate_identity.dart';
 import 'foundation_gate_models.dart';
@@ -29,11 +30,13 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     required FoundationGateIdentity identity,
     required FamilyDeviceApiClient deviceApi,
     FamilyMembershipApiClient? membershipApi,
+    FamilyLocationApiClient? locationApi,
     String? preferredFamilyId,
   }) : _controller = controller,
        _identity = identity,
        _deviceApi = deviceApi,
        _membershipApi = membershipApi,
+       _locationApi = locationApi,
        _preferredFamilyId = preferredFamilyId?.trim(),
        _identityValue = const IdentitySnapshot.unavailable(),
        _rosterValue = const FamilyRosterSnapshot.unavailable(),
@@ -45,12 +48,27 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   final FoundationGateIdentity _identity;
   final FamilyDeviceApiClient _deviceApi;
   final FamilyMembershipApiClient? _membershipApi;
+  final FamilyLocationApiClient? _locationApi;
   final String? _preferredFamilyId;
   IdentitySnapshot _identityValue;
   FamilyRosterSnapshot _rosterValue;
   FamilyDeviceSnapshot _deviceValue;
 
   IdentitySnapshot get identityValue => _identityValue;
+
+  /// The location contract's client, or null when this build has no server to ask.
+  ///
+  /// Exposed rather than wrapped: the location pack's repository layer decides what to do
+  /// with the answers (how a zone becomes a list row, when a pin may exist at all), and
+  /// those decisions belong beside the screens that render them, not in the session
+  /// runtime that owns authentication.
+  FamilyLocationApiClient? get locationApi => _locationApi;
+
+  /// The family this device is looking at, or null before one is selected.
+  String? get selectedFamilyId => _controller.selectedFamily?.id;
+
+  /// A fresh bearer token for a request the caller is about to make.
+  Future<String> currentIdToken() => _identity.currentIdToken();
   FamilyRosterSnapshot get rosterValue => _rosterValue;
   FamilyDeviceSnapshot get deviceValue => _deviceValue;
   FoundationGatePhase get phase => _controller.phase;

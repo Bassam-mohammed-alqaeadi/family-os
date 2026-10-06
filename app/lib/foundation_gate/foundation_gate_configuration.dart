@@ -156,6 +156,69 @@ class FoundationGateConfiguration {
     return stagingApiOrigin.replace(path: '/v1/families/$familyId/memberships');
   }
 
+  /// The zones this family defined. Read with GET, draw with POST.
+  Uri familySafeZonesUri(String familyId) {
+    if (!isFoundationGateUuid(familyId)) {
+      throw ArgumentError.value(
+        familyId,
+        'familyId',
+        'A server-returned UUID family identifier is required.',
+      );
+    }
+    return stagingApiOrigin.replace(path: '/v1/families/$familyId/safe-zones');
+  }
+
+  /// One zone: the alert flags move with PATCH, nothing else does.
+  Uri familySafeZoneUri(String familyId, String zoneId) {
+    if (!isFoundationGateUuid(familyId) || !isFoundationGateUuid(zoneId)) {
+      throw ArgumentError(
+        'Server-returned UUID family and zone identifiers are required.',
+      );
+    }
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/safe-zones/$zoneId',
+    );
+  }
+
+  /// The family's live picture. One read, one visibility rule for every member.
+  Uri familyLocationUri(String familyId) {
+    if (!isFoundationGateUuid(familyId)) {
+      throw ArgumentError.value(
+        familyId,
+        'familyId',
+        'A server-returned UUID family identifier is required.',
+      );
+    }
+    return stagingApiOrigin.replace(path: '/v1/families/$familyId/location');
+  }
+
+  /// The arrival and departure feed, newest first.
+  Uri familyGeofenceEventsUri(String familyId) {
+    if (!isFoundationGateUuid(familyId)) {
+      throw ArgumentError.value(
+        familyId,
+        'familyId',
+        'A server-returned UUID family identifier is required.',
+      );
+    }
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/geofence-events',
+    );
+  }
+
+  /// Where a child device reports its own position. The device id is in the path, so the
+  /// device's credential can only ever report for itself.
+  Uri deviceLocationFixesUri(String deviceId) {
+    if (!isFoundationGateUuid(deviceId)) {
+      throw ArgumentError.value(
+        deviceId,
+        'deviceId',
+        'A server-returned UUID device identifier is required.',
+      );
+    }
+    return stagingApiOrigin.replace(path: '/v1/devices/$deviceId/location-fixes');
+  }
+
   /// One command on one membership: `accept` or `revoke`.
   Uri membershipCommandUri(String familyId, String membershipId, String command) {
     if (!isFoundationGateUuid(familyId) || !isFoundationGateUuid(membershipId)) {
