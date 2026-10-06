@@ -315,7 +315,7 @@ class PasswordVisibilityToggle extends StatelessWidget {
       iconSize: 22,
       constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
       icon: Icon(
-        obscured ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+        obscured ? Icons.visibility_off_outlined : Icons.visibility_outlined,
         color: colors.ink2,
       ),
     );
