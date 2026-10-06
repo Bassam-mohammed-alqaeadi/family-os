@@ -413,9 +413,7 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-fat-013',
       name: 'SCR-FAT-013',
-      builder: (context, state) => RemoteChildContextScreen(
-        childId: state.uri.queryParameters['childId'],
-      ),
+      builder: (context, state) => RemoteChildContextScreen(childId: state.uri.queryParameters['childId']),
     ),
     GoRoute(
       path: '/scr-fat-014',

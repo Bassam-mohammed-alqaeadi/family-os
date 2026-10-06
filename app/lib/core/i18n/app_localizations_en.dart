@@ -12389,4 +12389,103 @@ class AppLocalizationsEn extends AppLocalizations {
   ) {
     return '$name, $age, $device';
   }
+
+  @override
+  String get childContextTitle => 'Child profile';
+
+  @override
+  String get childContextLoading => 'Loading child profile';
+
+  @override
+  String childContextAge(int age) {
+    return 'Age $age years';
+  }
+
+  @override
+  String get childContextSetupTitle => 'Device setup';
+
+  @override
+  String get childContextNotLinked => 'No device linked yet';
+
+  @override
+  String get childContextLinkedAwaitingTelemetry =>
+      'Device linked, awaiting its first update';
+
+  @override
+  String get childContextLinked => 'Device linked';
+
+  @override
+  String childContextDeviceCount(int count) {
+    return 'Linked devices: $count';
+  }
+
+  @override
+  String get childContextPairDevice => 'Pair a device';
+
+  @override
+  String get childContextReadOnly =>
+      'You can view this profile. Pairing a device requires owner permission.';
+
+  @override
+  String get childContextAuthorityNote =>
+      'This information is confirmed by the server. Every action is authorized again.';
+
+  @override
+  String get childContextRetry => 'Try again';
+
+  @override
+  String get childContextBackToChildren => 'Back to children';
+
+  @override
+  String get childContextSignInAgain => 'Sign in again';
+
+  @override
+  String get childContextNotFoundTitle => 'Child not found';
+
+  @override
+  String get childContextNotFoundMessage =>
+      'This profile is not available in this family. Return to the children list.';
+
+  @override
+  String get childContextDeniedTitle => 'Access denied';
+
+  @override
+  String get childContextDeniedMessage =>
+      'Your account is not allowed to view this child profile.';
+
+  @override
+  String get childContextSessionTitle => 'Session ended';
+
+  @override
+  String get childContextSessionMessage =>
+      'Sign in again so family access can be verified.';
+
+  @override
+  String get childContextNetworkTitle => 'No connection';
+
+  @override
+  String get childContextNetworkMessage =>
+      'Check your internet connection and try again.';
+
+  @override
+  String get childContextServiceTitle => 'Service temporarily unavailable';
+
+  @override
+  String get childContextServiceMessage =>
+      'We could not confirm the latest information. Try again.';
+
+  @override
+  String get childContextInvalidResponseTitle =>
+      'Information could not be verified';
+
+  @override
+  String get childContextInvalidResponseMessage =>
+      'The response was unexpected, so no unverified data is shown.';
+
+  @override
+  String get childContextUnavailableTitle => 'Child profile unavailable';
+
+  @override
+  String get childContextUnavailableMessage =>
+      'The authoritative data source is not configured right now.';
 }

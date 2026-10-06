@@ -15794,5 +15794,41 @@
         "type": "String"
       }
     }
-  }
+  },
+  "childContextTitle": "ملف الابن",
+  "childContextLoading": "جارٍ تحميل ملف الابن",
+  "childContextAge": "العمر {age} سنوات",
+  "@childContextAge": {
+    "description": "العمر المؤكد في ملف الابن",
+    "placeholders": { "age": { "type": "int" } }
+  },
+  "childContextSetupTitle": "إعداد الجهاز",
+  "childContextNotLinked": "لم يتم ربط جهاز بعد",
+  "childContextLinkedAwaitingTelemetry": "تم ربط الجهاز وينتظر أول تحديث",
+  "childContextLinked": "تم ربط الجهاز",
+  "childContextDeviceCount": "عدد الأجهزة المرتبطة: {count}",
+  "@childContextDeviceCount": {
+    "description": "عدد الأجهزة المرتبطة المؤكد من الخادم",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "childContextPairDevice": "ربط جهاز",
+  "childContextReadOnly": "يمكنك عرض هذا الملف فقط. يتطلب ربط جهاز إذن المالك.",
+  "childContextAuthorityNote": "هذه المعلومات مؤكدة من الخادم. تُراجع الصلاحيات عند تنفيذ كل إجراء.",
+  "childContextRetry": "إعادة المحاولة",
+  "childContextBackToChildren": "العودة إلى الأبناء",
+  "childContextSignInAgain": "تسجيل الدخول مجدداً",
+  "childContextNotFoundTitle": "الابن غير موجود",
+  "childContextNotFoundMessage": "لم يعد هذا الملف متاحاً في هذه العائلة. ارجع إلى قائمة الأبناء.",
+  "childContextDeniedTitle": "لا يمكنك عرض هذا الملف",
+  "childContextDeniedMessage": "لا يملك حسابك صلاحية عرض ملف هذا الابن.",
+  "childContextSessionTitle": "انتهت الجلسة",
+  "childContextSessionMessage": "سجّل الدخول مجدداً للتحقق من صلاحيات العائلة.",
+  "childContextNetworkTitle": "لا يوجد اتصال",
+  "childContextNetworkMessage": "تحقق من اتصالك بالإنترنت ثم حاول مجدداً.",
+  "childContextServiceTitle": "الخدمة غير متاحة مؤقتاً",
+  "childContextServiceMessage": "لم نتمكن من تأكيد أحدث المعلومات الآن. حاول مجدداً.",
+  "childContextInvalidResponseTitle": "تعذر التحقق من المعلومات",
+  "childContextInvalidResponseMessage": "وصلت استجابة غير متوقعة، لذلك لم نعرض بيانات غير مؤكدة.",
+  "childContextUnavailableTitle": "ملف الابن غير متاح",
+  "childContextUnavailableMessage": "مصدر البيانات الموثوق غير مهيأ حالياً."
 }

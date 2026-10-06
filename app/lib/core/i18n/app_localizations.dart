@@ -21680,6 +21680,174 @@ abstract class AppLocalizations {
     String age,
     String device,
   );
+
+  /// No description provided for @childContextTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'ملف الابن'**
+  String get childContextTitle;
+
+  /// No description provided for @childContextLoading.
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ تحميل ملف الابن'**
+  String get childContextLoading;
+
+  /// العمر المؤكد في ملف الابن
+  ///
+  /// In ar, this message translates to:
+  /// **'العمر {age} سنوات'**
+  String childContextAge(int age);
+
+  /// No description provided for @childContextSetupTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'إعداد الجهاز'**
+  String get childContextSetupTitle;
+
+  /// No description provided for @childContextNotLinked.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يتم ربط جهاز بعد'**
+  String get childContextNotLinked;
+
+  /// No description provided for @childContextLinkedAwaitingTelemetry.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم ربط الجهاز وينتظر أول تحديث'**
+  String get childContextLinkedAwaitingTelemetry;
+
+  /// No description provided for @childContextLinked.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم ربط الجهاز'**
+  String get childContextLinked;
+
+  /// عدد الأجهزة المرتبطة المؤكد من الخادم
+  ///
+  /// In ar, this message translates to:
+  /// **'عدد الأجهزة المرتبطة: {count}'**
+  String childContextDeviceCount(int count);
+
+  /// No description provided for @childContextPairDevice.
+  ///
+  /// In ar, this message translates to:
+  /// **'ربط جهاز'**
+  String get childContextPairDevice;
+
+  /// No description provided for @childContextReadOnly.
+  ///
+  /// In ar, this message translates to:
+  /// **'يمكنك عرض هذا الملف فقط. يتطلب ربط جهاز إذن المالك.'**
+  String get childContextReadOnly;
+
+  /// No description provided for @childContextAuthorityNote.
+  ///
+  /// In ar, this message translates to:
+  /// **'هذه المعلومات مؤكدة من الخادم. تُراجع الصلاحيات عند تنفيذ كل إجراء.'**
+  String get childContextAuthorityNote;
+
+  /// No description provided for @childContextRetry.
+  ///
+  /// In ar, this message translates to:
+  /// **'إعادة المحاولة'**
+  String get childContextRetry;
+
+  /// No description provided for @childContextBackToChildren.
+  ///
+  /// In ar, this message translates to:
+  /// **'العودة إلى الأبناء'**
+  String get childContextBackToChildren;
+
+  /// No description provided for @childContextSignInAgain.
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل الدخول مجدداً'**
+  String get childContextSignInAgain;
+
+  /// No description provided for @childContextNotFoundTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن غير موجود'**
+  String get childContextNotFoundTitle;
+
+  /// No description provided for @childContextNotFoundMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يعد هذا الملف متاحاً في هذه العائلة. ارجع إلى قائمة الأبناء.'**
+  String get childContextNotFoundMessage;
+
+  /// No description provided for @childContextDeniedTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يمكنك عرض هذا الملف'**
+  String get childContextDeniedTitle;
+
+  /// No description provided for @childContextDeniedMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يملك حسابك صلاحية عرض ملف هذا الابن.'**
+  String get childContextDeniedMessage;
+
+  /// No description provided for @childContextSessionTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'انتهت الجلسة'**
+  String get childContextSessionTitle;
+
+  /// No description provided for @childContextSessionMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'سجّل الدخول مجدداً للتحقق من صلاحيات العائلة.'**
+  String get childContextSessionMessage;
+
+  /// No description provided for @childContextNetworkTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد اتصال'**
+  String get childContextNetworkTitle;
+
+  /// No description provided for @childContextNetworkMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'تحقق من اتصالك بالإنترنت ثم حاول مجدداً.'**
+  String get childContextNetworkMessage;
+
+  /// No description provided for @childContextServiceTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'الخدمة غير متاحة مؤقتاً'**
+  String get childContextServiceTitle;
+
+  /// No description provided for @childContextServiceMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم نتمكن من تأكيد أحدث المعلومات الآن. حاول مجدداً.'**
+  String get childContextServiceMessage;
+
+  /// No description provided for @childContextInvalidResponseTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر التحقق من المعلومات'**
+  String get childContextInvalidResponseTitle;
+
+  /// No description provided for @childContextInvalidResponseMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'وصلت استجابة غير متوقعة، لذلك لم نعرض بيانات غير مؤكدة.'**
+  String get childContextInvalidResponseMessage;
+
+  /// No description provided for @childContextUnavailableTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'ملف الابن غير متاح'**
+  String get childContextUnavailableTitle;
+
+  /// No description provided for @childContextUnavailableMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'مصدر البيانات الموثوق غير مهيأ حالياً.'**
+  String get childContextUnavailableMessage;
 }
 
 class _AppLocalizationsDelegate

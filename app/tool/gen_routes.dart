@@ -197,7 +197,7 @@ const Map<String, String> screenBuilders = {
   'SCR-FAT-011': 'AdvisorSuggestionsScreen()',
   'SCR-FAT-012': 'ChildrenListScreen()',
   'SCR-FAT-013':
-      "ChildProfileScreen(childId: state.uri.queryParameters['childId'])",
+      "RemoteChildContextScreen(childId: state.uri.queryParameters['childId'])",
   'SCR-FAT-014':
       "LocationMapScreen(childId: state.uri.queryParameters['childId'])",
   'SCR-FAT-015':
@@ -353,7 +353,7 @@ const List<String> screenBuilderImports = [
   "import 'package:family_os/features/n01_linking/transparency_consent_screen.dart';",
   "import 'package:family_os/features/n02_day/day_board_screen.dart';",
   "import 'package:family_os/features/n02_day/children_list_screen.dart';",
-  "import 'package:family_os/features/n02_day/child_profile_screen.dart';",
+  "import 'package:family_os/features/n02_day/remote_child_context_screen.dart';",
   "import 'package:family_os/features/n02_day/location_map_screen.dart';",
   "import 'package:family_os/features/n02_day/location_history_screen.dart';",
   "import 'package:family_os/features/n02_day/safe_zones_screen.dart';",

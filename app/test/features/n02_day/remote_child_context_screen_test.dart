@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/identity_ids.dart';
+import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/runtime/family_child_context_source.dart';
 import 'package:family_os/features/n02_day/remote_child_context_screen.dart';
 import 'package:flutter/material.dart';
@@ -158,6 +159,7 @@ Widget _host({
   locale: locale,
   supportedLocales: const [Locale('ar'), Locale('en')],
   localizationsDelegates: const [
+    AppLocalizations.delegate,
     GlobalMaterialLocalizations.delegate,
     GlobalCupertinoLocalizations.delegate,
     GlobalWidgetsLocalizations.delegate,

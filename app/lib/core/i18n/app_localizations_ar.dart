@@ -12211,4 +12211,102 @@ class AppLocalizationsAr extends AppLocalizations {
   ) {
     return '$name، $age، $device';
   }
+
+  @override
+  String get childContextTitle => 'ملف الابن';
+
+  @override
+  String get childContextLoading => 'جارٍ تحميل ملف الابن';
+
+  @override
+  String childContextAge(int age) {
+    return 'العمر $age سنوات';
+  }
+
+  @override
+  String get childContextSetupTitle => 'إعداد الجهاز';
+
+  @override
+  String get childContextNotLinked => 'لم يتم ربط جهاز بعد';
+
+  @override
+  String get childContextLinkedAwaitingTelemetry =>
+      'تم ربط الجهاز وينتظر أول تحديث';
+
+  @override
+  String get childContextLinked => 'تم ربط الجهاز';
+
+  @override
+  String childContextDeviceCount(int count) {
+    return 'عدد الأجهزة المرتبطة: $count';
+  }
+
+  @override
+  String get childContextPairDevice => 'ربط جهاز';
+
+  @override
+  String get childContextReadOnly =>
+      'يمكنك عرض هذا الملف فقط. يتطلب ربط جهاز إذن المالك.';
+
+  @override
+  String get childContextAuthorityNote =>
+      'هذه المعلومات مؤكدة من الخادم. تُراجع الصلاحيات عند تنفيذ كل إجراء.';
+
+  @override
+  String get childContextRetry => 'إعادة المحاولة';
+
+  @override
+  String get childContextBackToChildren => 'العودة إلى الأبناء';
+
+  @override
+  String get childContextSignInAgain => 'تسجيل الدخول مجدداً';
+
+  @override
+  String get childContextNotFoundTitle => 'الابن غير موجود';
+
+  @override
+  String get childContextNotFoundMessage =>
+      'لم يعد هذا الملف متاحاً في هذه العائلة. ارجع إلى قائمة الأبناء.';
+
+  @override
+  String get childContextDeniedTitle => 'لا يمكنك عرض هذا الملف';
+
+  @override
+  String get childContextDeniedMessage =>
+      'لا يملك حسابك صلاحية عرض ملف هذا الابن.';
+
+  @override
+  String get childContextSessionTitle => 'انتهت الجلسة';
+
+  @override
+  String get childContextSessionMessage =>
+      'سجّل الدخول مجدداً للتحقق من صلاحيات العائلة.';
+
+  @override
+  String get childContextNetworkTitle => 'لا يوجد اتصال';
+
+  @override
+  String get childContextNetworkMessage =>
+      'تحقق من اتصالك بالإنترنت ثم حاول مجدداً.';
+
+  @override
+  String get childContextServiceTitle => 'الخدمة غير متاحة مؤقتاً';
+
+  @override
+  String get childContextServiceMessage =>
+      'لم نتمكن من تأكيد أحدث المعلومات الآن. حاول مجدداً.';
+
+  @override
+  String get childContextInvalidResponseTitle => 'تعذر التحقق من المعلومات';
+
+  @override
+  String get childContextInvalidResponseMessage =>
+      'وصلت استجابة غير متوقعة، لذلك لم نعرض بيانات غير مؤكدة.';
+
+  @override
+  String get childContextUnavailableTitle => 'ملف الابن غير متاح';
+
+  @override
+  String get childContextUnavailableMessage =>
+      'مصدر البيانات الموثوق غير مهيأ حالياً.';
 }

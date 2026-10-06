@@ -15794,5 +15794,41 @@
         "type": "String"
       }
     }
-  }
+  },
+  "childContextTitle": "Child profile",
+  "childContextLoading": "Loading child profile",
+  "childContextAge": "Age {age} years",
+  "@childContextAge": {
+    "description": "Server-confirmed age in the child profile",
+    "placeholders": { "age": { "type": "int" } }
+  },
+  "childContextSetupTitle": "Device setup",
+  "childContextNotLinked": "No device linked yet",
+  "childContextLinkedAwaitingTelemetry": "Device linked, awaiting its first update",
+  "childContextLinked": "Device linked",
+  "childContextDeviceCount": "Linked devices: {count}",
+  "@childContextDeviceCount": {
+    "description": "Server-confirmed linked device count",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "childContextPairDevice": "Pair a device",
+  "childContextReadOnly": "You can view this profile. Pairing a device requires owner permission.",
+  "childContextAuthorityNote": "This information is confirmed by the server. Every action is authorized again.",
+  "childContextRetry": "Try again",
+  "childContextBackToChildren": "Back to children",
+  "childContextSignInAgain": "Sign in again",
+  "childContextNotFoundTitle": "Child not found",
+  "childContextNotFoundMessage": "This profile is not available in this family. Return to the children list.",
+  "childContextDeniedTitle": "Access denied",
+  "childContextDeniedMessage": "Your account is not allowed to view this child profile.",
+  "childContextSessionTitle": "Session ended",
+  "childContextSessionMessage": "Sign in again so family access can be verified.",
+  "childContextNetworkTitle": "No connection",
+  "childContextNetworkMessage": "Check your internet connection and try again.",
+  "childContextServiceTitle": "Service temporarily unavailable",
+  "childContextServiceMessage": "We could not confirm the latest information. Try again.",
+  "childContextInvalidResponseTitle": "Information could not be verified",
+  "childContextInvalidResponseMessage": "The response was unexpected, so no unverified data is shown.",
+  "childContextUnavailableTitle": "Child profile unavailable",
+  "childContextUnavailableMessage": "The authoritative data source is not configured right now."
 }

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/identity_ids.dart';
+import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/runtime/app_scope.dart';
 import 'package:family_os/core/runtime/family_child_context_source.dart';
 
@@ -147,7 +148,7 @@ final class _RemoteChildContextScreenState
 
   @override
   Widget build(BuildContext context) {
-    final copy = _ChildContextCopy.of(context);
+    final copy = AppLocalizations.of(context);
     return PopScope(
       canPop: Navigator.of(context).canPop(),
       onPopInvokedWithResult: (didPop, _) {
@@ -157,19 +158,19 @@ final class _RemoteChildContextScreenState
         key: RemoteChildContextKeys.screen,
         appBar: AppBar(
           leading: BackButton(onPressed: _back),
-          title: Text(copy.title),
+          title: Text(copy.childContextTitle),
         ),
         body: SafeArea(child: _body(copy)),
       ),
     );
   }
 
-  Widget _body(_ChildContextCopy copy) {
+  Widget _body(AppLocalizations copy) {
     if (_loading) {
       return Center(
         key: RemoteChildContextKeys.loading,
         child: Semantics(
-          label: copy.loading,
+          label: copy.childContextLoading,
           liveRegion: true,
           child: const CircularProgressIndicator(),
         ),
@@ -183,7 +184,7 @@ final class _RemoteChildContextScreenState
     );
   }
 
-  Widget _ready(_ChildContextCopy copy, FamilyChildContext value) {
+  Widget _ready(AppLocalizations copy, FamilyChildContext value) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final canPair = value.permissionSnapshot.allows(
@@ -204,7 +205,7 @@ final class _RemoteChildContextScreenState
               children: [
                 Semantics(
                   header: true,
-                  label: '${value.displayName}, ${copy.age(value.ageYears)}',
+                  label: '${value.displayName}, ${copy.childContextAge(value.ageYears)}',
                   child: Card(
                     elevation: 0,
                     color: colors.primaryContainer.withValues(alpha: 0.62),
@@ -241,7 +242,7 @@ final class _RemoteChildContextScreenState
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  copy.age(value.ageYears),
+                                  copy.childContextAge(value.ageYears),
                                   style: theme.textTheme.bodyLarge,
                                 ),
                               ],
@@ -268,13 +269,13 @@ final class _RemoteChildContextScreenState
                       }
                     },
                     icon: const Icon(Icons.add_link_rounded),
-                    label: Text(copy.pairDevice),
+                    label: Text(copy.childContextPairDevice),
                   )
                 else
                   Semantics(
                     key: RemoteChildContextKeys.readOnly,
                     container: true,
-                    label: copy.readOnly,
+                    label: copy.childContextReadOnly,
                     child: Card(
                       elevation: 0,
                       color: colors.surfaceContainerHighest,
@@ -284,7 +285,7 @@ final class _RemoteChildContextScreenState
                           children: [
                             const Icon(Icons.visibility_outlined),
                             const SizedBox(width: 12),
-                            Expanded(child: Text(copy.readOnly)),
+                            Expanded(child: Text(copy.childContextReadOnly)),
                           ],
                         ),
                       ),
@@ -292,7 +293,7 @@ final class _RemoteChildContextScreenState
                   ),
                 const SizedBox(height: 14),
                 Text(
-                  copy.authorityNote,
+                  copy.childContextAuthorityNote,
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
@@ -306,8 +307,8 @@ final class _RemoteChildContextScreenState
     );
   }
 
-  Widget _failure(_ChildContextCopy copy, FamilyChildContextFailure failure) {
-    final presentation = copy.failure(failure);
+  Widget _failure(AppLocalizations copy, FamilyChildContextFailure failure) {
+    final presentation = _failureFor(copy, failure);
     return Center(
       key: RemoteChildContextKeys.error,
       child: SingleChildScrollView(
@@ -340,19 +341,19 @@ final class _RemoteChildContextScreenState
                         failure == FamilyChildContextFailure.accessDenied)
                       OutlinedButton(
                         onPressed: _back,
-                        child: Text(copy.backToChildren),
+                        child: Text(copy.childContextBackToChildren),
                       )
                     else if (failure == FamilyChildContextFailure.sessionInvalid)
                       FilledButton(
                         onPressed: () => context.go('/launch'),
-                        child: Text(copy.signInAgain),
+                        child: Text(copy.childContextSignInAgain),
                       )
                     else
                       FilledButton.icon(
                         key: RemoteChildContextKeys.retry,
                         onPressed: _load,
                         icon: const Icon(Icons.refresh_rounded),
-                        label: Text(copy.retry),
+                        label: Text(copy.childContextRetry),
                       ),
                   ],
                 ),
@@ -368,16 +369,16 @@ final class _RemoteChildContextScreenState
 final class _SetupCard extends StatelessWidget {
   const _SetupCard({required this.copy, required this.value});
 
-  final _ChildContextCopy copy;
+  final AppLocalizations copy;
   final FamilyChildContext value;
 
   @override
   Widget build(BuildContext context) {
     final stateText = switch (value.deviceState) {
-      FamilyChildDeviceSetupState.notLinked => copy.notLinked,
+      FamilyChildDeviceSetupState.notLinked => copy.childContextNotLinked,
       FamilyChildDeviceSetupState.linkedAwaitingTelemetry =>
-        copy.linkedAwaitingTelemetry,
-      FamilyChildDeviceSetupState.linked => copy.linked,
+        copy.childContextLinkedAwaitingTelemetry,
+      FamilyChildDeviceSetupState.linked => copy.childContextLinked,
     };
     final icon = switch (value.deviceState) {
       FamilyChildDeviceSetupState.notLinked => Icons.phonelink_off_rounded,
@@ -393,7 +394,7 @@ final class _SetupCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              copy.setupTitle,
+              copy.childContextSetupTitle,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
               ),
@@ -412,7 +413,7 @@ final class _SetupCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Text(copy.deviceCount(value.deviceCount)),
+            Text(copy.childContextDeviceCount(value.deviceCount)),
           ],
         ),
       ),
@@ -428,91 +429,43 @@ final class _FailurePresentation {
   final IconData icon;
 }
 
-/// Bounded bilingual copy for the authoritative route. Keeping this contract's
-/// states together prevents nearby prototype copy from leaking into production,
-/// while still following the active locale and platform Directionality.
-final class _ChildContextCopy {
-  const _ChildContextCopy(this.arabic);
-
-  factory _ChildContextCopy.of(BuildContext context) => _ChildContextCopy(
-    Localizations.localeOf(context).languageCode.toLowerCase() == 'ar',
-  );
-
-  final bool arabic;
-
-  String get title => arabic ? 'ملف الابن' : 'Child profile';
-  String get loading => arabic ? 'جارٍ تحميل ملف الابن' : 'Loading child profile';
-  String age(int value) => arabic ? 'العمر $value سنوات' : 'Age $value years';
-  String get setupTitle => arabic ? 'إعداد الجهاز' : 'Device setup';
-  String get notLinked => arabic ? 'لم يتم ربط جهاز بعد' : 'No device linked yet';
-  String get linkedAwaitingTelemetry => arabic
-      ? 'تم ربط الجهاز وينتظر أول تحديث'
-      : 'Device linked, awaiting its first update';
-  String get linked => arabic ? 'تم ربط الجهاز' : 'Device linked';
-  String deviceCount(int value) => arabic
-      ? 'عدد الأجهزة المرتبطة: $value'
-      : 'Linked devices: $value';
-  String get pairDevice => arabic ? 'ربط جهاز' : 'Pair a device';
-  String get readOnly => arabic
-      ? 'يمكنك عرض هذا الملف فقط. يتطلب ربط جهاز إذن المالك.'
-      : 'You can view this profile. Pairing a device requires owner permission.';
-  String get authorityNote => arabic
-      ? 'هذه المعلومات مؤكدة من الخادم. تُراجع الصلاحيات عند تنفيذ كل إجراء.'
-      : 'This information is confirmed by the server. Every action is authorized again.';
-  String get retry => arabic ? 'إعادة المحاولة' : 'Try again';
-  String get backToChildren => arabic ? 'العودة إلى الأبناء' : 'Back to children';
-  String get signInAgain => arabic ? 'تسجيل الدخول مجدداً' : 'Sign in again';
-
-  _FailurePresentation failure(FamilyChildContextFailure failure) =>
-      switch (failure) {
-        FamilyChildContextFailure.notFound => _FailurePresentation(
-          arabic ? 'الابن غير موجود' : 'Child not found',
-          arabic
-              ? 'لم يعد هذا الملف متاحاً في هذه العائلة. ارجع إلى قائمة الأبناء.'
-              : 'This profile is not available in this family. Return to the children list.',
-          Icons.person_off_outlined,
-        ),
-        FamilyChildContextFailure.accessDenied => _FailurePresentation(
-          arabic ? 'لا يمكنك عرض هذا الملف' : 'Access denied',
-          arabic
-              ? 'لا يملك حسابك صلاحية عرض ملف هذا الابن.'
-              : 'Your account is not allowed to view this child profile.',
-          Icons.lock_outline_rounded,
-        ),
-        FamilyChildContextFailure.sessionInvalid => _FailurePresentation(
-          arabic ? 'انتهت الجلسة' : 'Session ended',
-          arabic
-              ? 'سجّل الدخول مجدداً للتحقق من صلاحيات العائلة.'
-              : 'Sign in again so family access can be verified.',
-          Icons.logout_rounded,
-        ),
-        FamilyChildContextFailure.networkUnavailable => _FailurePresentation(
-          arabic ? 'لا يوجد اتصال' : 'No connection',
-          arabic
-              ? 'تحقق من اتصالك بالإنترنت ثم حاول مجدداً.'
-              : 'Check your internet connection and try again.',
-          Icons.wifi_off_rounded,
-        ),
-        FamilyChildContextFailure.serviceUnavailable => _FailurePresentation(
-          arabic ? 'الخدمة غير متاحة مؤقتاً' : 'Service temporarily unavailable',
-          arabic
-              ? 'لم نتمكن من تأكيد أحدث المعلومات الآن. حاول مجدداً.'
-              : 'We could not confirm the latest information. Try again.',
-          Icons.cloud_off_outlined,
-        ),
-        FamilyChildContextFailure.invalidResponse => _FailurePresentation(
-          arabic ? 'تعذر التحقق من المعلومات' : 'Information could not be verified',
-          arabic
-              ? 'وصلت استجابة غير متوقعة، لذلك لم نعرض بيانات غير مؤكدة.'
-              : 'The response was unexpected, so no unverified data is shown.',
-          Icons.shield_outlined,
-        ),
-        FamilyChildContextFailure.unavailable => _FailurePresentation(
-          arabic ? 'ملف الابن غير متاح' : 'Child profile unavailable',
-          arabic
-              ? 'مصدر البيانات الموثوق غير مهيأ حالياً.'
-              : 'The authoritative data source is not configured right now.',
-          Icons.sync_problem_rounded,
-        ),
-      };
-}
+_FailurePresentation _failureFor(
+  AppLocalizations copy,
+  FamilyChildContextFailure failure,
+) => switch (failure) {
+  FamilyChildContextFailure.notFound => _FailurePresentation(
+    copy.childContextNotFoundTitle,
+    copy.childContextNotFoundMessage,
+    Icons.person_off_outlined,
+  ),
+  FamilyChildContextFailure.accessDenied => _FailurePresentation(
+    copy.childContextDeniedTitle,
+    copy.childContextDeniedMessage,
+    Icons.lock_outline_rounded,
+  ),
+  FamilyChildContextFailure.sessionInvalid => _FailurePresentation(
+    copy.childContextSessionTitle,
+    copy.childContextSessionMessage,
+    Icons.logout_rounded,
+  ),
+  FamilyChildContextFailure.networkUnavailable => _FailurePresentation(
+    copy.childContextNetworkTitle,
+    copy.childContextNetworkMessage,
+    Icons.wifi_off_rounded,
+  ),
+  FamilyChildContextFailure.serviceUnavailable => _FailurePresentation(
+    copy.childContextServiceTitle,
+    copy.childContextServiceMessage,
+    Icons.cloud_off_outlined,
+  ),
+  FamilyChildContextFailure.invalidResponse => _FailurePresentation(
+    copy.childContextInvalidResponseTitle,
+    copy.childContextInvalidResponseMessage,
+    Icons.shield_outlined,
+  ),
+  FamilyChildContextFailure.unavailable => _FailurePresentation(
+    copy.childContextUnavailableTitle,
+    copy.childContextUnavailableMessage,
+    Icons.sync_problem_rounded,
+  ),
+};

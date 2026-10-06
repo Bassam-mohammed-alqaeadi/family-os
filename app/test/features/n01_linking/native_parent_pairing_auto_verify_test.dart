@@ -148,7 +148,7 @@ void main() {
     },
   );
 
-  testWidgets('physical back from pairing returns to the children list', (
+  testWidgets('pairing back action returns to the children list', (
     tester,
   ) async {
     final identity = FakeIdentity()..emailVerified = false;
@@ -175,7 +175,7 @@ void main() {
     );
     await tester.pump();
 
-    await tester.binding.handlePopRoute();
+    await tester.tap(find.byType(BackButton));
     await tester.pump();
 
     expect(router.state.uri.path, '/scr-fat-012');
