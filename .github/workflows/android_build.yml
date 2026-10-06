@@ -1,0 +1,132 @@
+name: Android Build
+
+# D1/D2 (docs/real_platform/06_ONBOARDING_REAL_FLOW_PLAN.md §3 Wave D)
+#
+# Compiles the real Android app (Kotlin + Gradle + Flutter) on every push to an
+# arena/* branch and publishes the debug APK as a workflow artifact so the
+# owner can install it on a phone without a local build.
+#
+# Required repository configuration (Settings → Secrets and variables → Actions):
+#   secret  GOOGLE_SERVICES_JSON   base64 of app/android/app/google-services.json
+#   variable FAMILY_OS_API_ORIGIN  https origin of the backend, e.g. https://api.example.com
+#
+# The job fails loudly when either is missing: a debug APK without Firebase
+# configuration or without an API origin boots into the offline route and is
+# not a faithful test build (Zero Mocks).
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - "arena/**"
+    paths:
+      - "app/**"
+      - ".github/workflows/android_build.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  assemble-debug:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: app
+    env:
+      FAMILY_OS_API_ORIGIN: ${{ vars.FAMILY_OS_API_ORIGIN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check build configuration is present
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          missing=0
+          if [ -z "$GOOGLE_SERVICES_JSON" ]; then
+            echo "::error title=Missing secret GOOGLE_SERVICES_JSON::Add the base64 content of app/android/app/google-services.json as an Actions secret named GOOGLE_SERVICES_JSON."
+            missing=1
+          fi
+          if [ -z "$FAMILY_OS_API_ORIGIN" ]; then
+            echo "::error title=Missing variable FAMILY_OS_API_ORIGIN::Add an Actions variable FAMILY_OS_API_ORIGIN with the https backend origin."
+            missing=1
+          fi
+          case "$FAMILY_OS_API_ORIGIN" in
+            https://*|"") ;;
+            *) echo "::error title=Invalid FAMILY_OS_API_ORIGIN::Must start with https:// (the child device layer rejects cleartext origins)."; missing=1 ;;
+          esac
+          exit $missing
+
+      - name: Materialize google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          printf '%s' "$GOOGLE_SERVICES_JSON" | base64 -d > android/app/google-services.json
+          python3 -c "import json; d=json.load(open('android/app/google-services.json')); print('project:', d['project_info']['project_id'])"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.35.7"
+          channel: stable
+          cache: true
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('app/android/**/*.gradle.kts', 'app/android/gradle/wrapper/gradle-wrapper.properties', 'app/pubspec.lock') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      - name: Resolve packages
+        run: flutter pub get
+
+      - name: Generate localization source
+        run: flutter gen-l10n
+
+      - name: Build debug APK
+        run: |
+          flutter build apk --debug \
+            --dart-define=FAMILY_OS_API_ORIGIN="$FAMILY_OS_API_ORIGIN" \
+            --build-number="${{ github.run_number }}"
+
+      - name: Name artifact
+        id: name
+        run: |
+          short="${GITHUB_SHA::7}"
+          out="family-os-debug-${short}.apk"
+          cp build/app/outputs/flutter-apk/app-debug.apk "build/app/outputs/flutter-apk/$out"
+          echo "file=$out" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(sha256sum "build/app/outputs/flutter-apk/$out" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.name.outputs.file }}
+          path: app/build/app/outputs/flutter-apk/${{ steps.name.outputs.file }}
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Summary
+        run: |
+          {
+            echo "## Android debug APK"
+            echo
+            echo "- Commit: \`${GITHUB_SHA::7}\` on \`${GITHUB_REF_NAME}\`"
+            echo "- Build number: ${{ github.run_number }}"
+            echo "- API origin: \`$FAMILY_OS_API_ORIGIN\`"
+            echo "- SHA-256: \`${{ steps.name.outputs.sha256 }}\`"
+            echo
+            echo "Download **${{ steps.name.outputs.file }}** from the Artifacts section of this run, unzip, then \`adb install -r\` or open it on the phone."
+          } >> "$GITHUB_STEP_SUMMARY"

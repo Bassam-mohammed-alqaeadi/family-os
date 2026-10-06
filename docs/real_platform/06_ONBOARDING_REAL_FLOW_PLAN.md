@@ -64,11 +64,11 @@ For every screen: **empty / loading / success / each failure** + RTL/AR first + 
 - [ ] C2 Backend: `pairing_code` TTL review (short, e.g. 10 min) and max-claim-attempts per code hash
 - [ ] C3 Child device anti-tamper v1: detect cleared config (native `configured=false` after being true) → guardian alert via `/devices` `lastSeenAt` staleness
 - [ ] C4 Release build: `network_security_config` debug-only (already), signing config, `minifyEnabled`/R8 with keep rules for Firebase
-- [ ] C5 Secrets guard: extend `credential_guard.yml` to fail on `google-services.json`, `*.jks`, `key.properties`
+- [x] C5 Secrets guard: `scripts/verify-no-service-account-keys.mjs` rejects `google-services.json`, `*.jks`/`*.keystore`, `android/key.properties`
 
 ### Wave D — Verification infrastructure
-- [ ] D1 CI: Android `assembleDebug` job (unblocks native changes, re-entry criterion for `BootReceiver`)
-- [ ] D2 CI: upload debug APK artifact per push on `arena/*` for phone testing without a local build
+- [x] D1 CI: `.github/workflows/android_build.yml` builds the debug APK (Kotlin+Gradle compile gate) on `main` and `arena/**`; requires secret `GOOGLE_SERVICES_JSON` (base64) and variable `FAMILY_OS_API_ORIGIN`
+- [x] D2 CI: same workflow uploads `family-os-debug-<sha>.apk` as a 14-day artifact with SHA-256 in the run summary
 - [ ] D3 Owner phone test script (§5) kept in this doc and ticked per wave
 
 ## 4. Error-state matrix (must be true for every step)

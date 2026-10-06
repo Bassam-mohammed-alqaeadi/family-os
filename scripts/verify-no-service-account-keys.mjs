@@ -15,6 +15,9 @@ const prohibitedFilename = [
   /(?:^|\/)GoogleService-Info\.plist$/i,
   /(?:^|\/)firebase_options\.dart$/i,
   /(?:^|\/)foundation_gate_local_configuration\.dart$/i,
+  // Android signing material (C5): upload keystores and their password file.
+  /\.(?:jks|keystore)$/i,
+  /(?:^|\/)android\/key\.properties$/i,
 ];
 const credentialMarkers = [
   new RegExp(`"type"\\s*:\\s*"service${'_'}account"`),
