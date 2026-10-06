@@ -236,20 +236,11 @@ final class _IdentitySource extends ChangeNotifier
     implements IdentitySource {
   _IdentitySource(this._value);
 
-  IdentitySnapshot _value;
+  final IdentitySnapshot _value;
 
   @override
   IdentitySnapshot get value => _value;
 
   @override
   Future<IdentitySnapshot> refresh() async => _value;
-
-  @override
-  Future<void> recoverSession() async {}
-
-  @override
-  void setValueForTesting(IdentitySnapshot snapshot) {
-    _value = snapshot;
-    notifyListeners();
-  }
 }
