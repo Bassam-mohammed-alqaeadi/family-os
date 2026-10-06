@@ -1,12 +1,12 @@
 # Current execution plan — Global Super App, system by system
 
-> **Status:** Live programme authority — 2026-10-04.
+> **Status:** Live programme authority — 2026-10-07.
 >
 > **Direction:** The Global Super-App Constitution in [`../AGENTS.md`](../AGENTS.md) is binding. Family OS preserves the prototype's user promise, then builds the real engine behind it with PostgreSQL, **Node.js/Express**, Native Android services where required, and Flutter.
 >
 > **Global Launch Master Plan:** [`GLOBAL_LAUNCH_MASTER_PLAN.md`](GLOBAL_LAUNCH_MASTER_PLAN.md) is the execution master plan from now to launch (approved 2026-10-05 by Owner + technical partner; **comprehensive 12-section edition completed 2026-10-05**). It fixes: AI last but prepared from day one (on-device light + cloud subscription via gateway), global market from Arabic to worldwide, cloud from temporary Render to full production, pricing deferred, and target ≥$4M ARR in 2028. It now contains the full **42-system map grouped into 11 delivery waves (M0–M10)**, the detailed 2026 Q4 → 2028 Q2 schedule with per-wave exit criteria, the 10-week per-system cadence, a 9-item risk matrix, monthly cost projections, and the 7-point launch gate. This plan (`CURRENT_EXECUTION_PLAN.md`) remains the live pointer for the active system.
 >
-> **Active system:** **Family Entry & Children Control** — selected 2026-10-04; Cover remains governing design authority and the bounded **primary-guardian create child profile** capability is now admitted for real-engine implementation.
+> **Active system:** **Family Entry & Children Control** — selected 2026-10-04; Cover remains governing design authority. The create-child slice is implemented, and the owner admitted the M0-locking **server-authoritative Child Context Read Model + PermissionSnapshot v1** slice on 2026-10-07.
 >
 > **This document:** selects the current system and its stage. Historical Foundation, staging and discovery material remains evidence, not a competing roadmap.
 
@@ -32,7 +32,7 @@ A successful endpoint, mock interaction, screen render or CI run is never the de
 | Global product direction | Global Super App / system-by-system delivery | Governs the product destination and work order. |
 | Prototype | Rich UX promise and comparison baseline | Retain its user value; replace mock engines rather than deleting valuable flows. |
 | Foundation backend | PostgreSQL-backed Node.js/Express family, membership and child-roster foundation | Reusable starting point, not the limit of product scope. |
-| Connected roster and creation vertical slice | Server-authoritative roster foundation plus an admitted name-and-age child creation lifecycle | Real implementation is bounded to this capability; it is not a complete control centre. |
+| Connected roster, creation and Child Context vertical slices | Server-authoritative roster and child creation plus the active narrow Child Context + PermissionSnapshot v1 read model | M0 truth is bounded to identity, durable setup facts and expiring presentation permissions; it is not device health, policy or location authority. |
 | Children parity audit | [`foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md`](foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md) | Completed Compare/Gaps input for the active system. |
 | Cover specification and capability admission | [`real_platform/02_FAMILY_ENTRY_AND_CHILDREN_CONTROL_COVER_SPECIFICATION.md`](real_platform/02_FAMILY_ENTRY_AND_CHILDREN_CONTROL_COVER_SPECIFICATION.md) and [`real_platform/03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md`](real_platform/03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md) | Governing system design plus the exact admitted implementation boundary. |
 | Native/device capabilities | Not yet implemented as real product capability | Added only when the admitted capability needs device evidence. |
@@ -57,15 +57,15 @@ Authorized sign-in
 
 Device telemetry, policy enforcement, location and AI remain separate subsequent capabilities unless their source, consent, authorization and verification lifecycle is explicitly admitted to this system.
 
-## 4. Current stage — Cover with bounded real-engine implementation
+## 4. Current stage — M0 lock with bounded Child Context read implementation
 
 | Stage | Status | Required output |
 |---|---|---|
 | Compare | Complete | Prototype-to-real parity audit and source inventory. |
-| Cover | **Active governing specification** | [`real_platform/02_FAMILY_ENTRY_AND_CHILDREN_CONTROL_COVER_SPECIFICATION.md`](real_platform/02_FAMILY_ENTRY_AND_CHILDREN_CONTROL_COVER_SPECIFICATION.md): role journeys, information architecture, state matrix and source map. |
-| Compete | Follows the bounded vertical slice | Competitor-informed UX additions, one coherent experience grammar and measurable usability acceptance. |
-| Real engine | **Active only for admitted create-child capability** | Node.js/Express/PostgreSQL contract reuse, authorization, persistence, audit/outbox, typed Flutter mutation, refreshed roster and recovery evidence. |
-| Polish and lock | Final system gate | Flutter truth integration, AR/EN, RTL/LTR, accessibility, responsive quality, fault recovery and controlled evidence. |
+| Cover | **Governing specification complete** | [`real_platform/02_FAMILY_ENTRY_AND_CHILDREN_CONTROL_COVER_SPECIFICATION.md`](real_platform/02_FAMILY_ENTRY_AND_CHILDREN_CONTROL_COVER_SPECIFICATION.md): role journeys, information architecture, state matrix and source map. |
+| Compete | Complete for the admitted M0 read surface | One coherent, narrow child identity/setup presentation without prototype claims. |
+| Real engine | **Active for Child Context + PermissionSnapshot v1** | PostgreSQL-backed tenant-isolated Express read, expiring server-derived presentation permissions, typed Flutter source/runtime and strict response validation. |
+| Polish and lock | **Active final M0 gate** | Production SCR-FAT-013 truth integration, AR/EN, RTL/LTR, accessibility, responsive quality, denial/session/network/service/invalid-response recovery and controlled evidence. |
 
 ## 5. Non-negotiable delivery rules
 
@@ -77,13 +77,14 @@ Device telemetry, policy enforcement, location and AI remain separate subsequent
 - Every system ships Arabic and English, RTL and LTR, responsive and accessible experiences as part of the slice—not as a later visual task.
 - Existing Foundation evidence, contracts and archives are retained. New strategy changes their place in the hierarchy, not the truth of what occurred.
 
-## 6. Immediate operation — implement the admitted vertical slice
+## 6. Immediate operation — lock M0 Child Context truth
 
-The product owner admitted **primary-guardian create child profile** on 2026-10-04. Its fixed boundary and state rules are recorded in [`real_platform/03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md`](real_platform/03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md).
+The product owner admitted **Server-authoritative Child Context Read Model + PermissionSnapshot v1** on 2026-10-07 as the final bounded read slice before M1 device completion.
 
-1. Implement and test the typed Flutter mutation against the existing Node.js/Express + PostgreSQL contract: name, age, bearer identity and idempotency key only.
-2. Keep backend authorization, idempotency, audit/outbox and server roster refresh authoritative; never replace the result with local success or client role elevation.
-3. Complete AR/EN, RTL/LTR, accessibility, primary/co-guardian, validation/conflict/session/denial/unavailable/network and refresh-failure evidence for this narrow slice.
-4. Do not connect device, policy, location, provider, child-detail, edit/delete, default-route migration or release functionality in this admission.
+1. Implement `GET /v1/families/{familyId}/children/{childId}/context` as a PostgreSQL-backed, bearer-authorized, tenant-isolated read with primary/co-guardian access and child/unrelated-principal denial.
+2. Derive only durable setup facts and an expiring server-owned PermissionSnapshot v1. Permission presentation never replaces authorization on a later request.
+3. Compose a strict typed remote Flutter source through `AppRuntime`; preserve explicit not-found, denial, invalid-session, service, network, invalid-response and unavailable states with recovery.
+4. Route production `SCR-FAT-013` only to that source. Show child identity and confirmed device setup; omit battery, health, location, policies, tools and all other facts absent from the response.
+5. Complete backend contract/authorization/isolation/store evidence and Flutter parser/runtime/widget/route evidence, including AR/EN, RTL/LTR, accessibility and responsive presentation. Native work is not required for this read model.
 
-The active system may progress, but no further high-risk mutation, Native/device enforcement, provider integration, real-data expansion or public release claim begins without a separate capability-specific contract and evidence.
+M1 Devices may proceed only after this M0 gate is merged and its CI evidence is green. Day Board remains deferred to M8; no public release claim follows from this slice.

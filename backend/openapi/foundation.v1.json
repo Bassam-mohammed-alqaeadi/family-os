@@ -135,6 +135,25 @@
         }
       }
     },
+    "/v1/families/{familyId}/children/{childId}/context": {
+      "get": {
+        "tags": ["Families"],
+        "operationId": "getFamilyChildContext",
+        "summary": "Read one server-authoritative child context and expiring permission snapshot",
+        "description": "Only an active primary or co-guardian may read this tenant-scoped projection. Setup contains linked-device existence only. Battery, location, policy, health and management state are deliberately absent. Permission scopes are presentation hints derived by the server and never replace authorization on later requests.",
+        "security": [{ "oidcBearer": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/FamilyId" }, { "$ref": "#/components/parameters/ChildId" }],
+        "responses": {
+          "200": { "description": "Fresh child context and a five-minute PermissionSnapshot v1.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/FamilyChildContextResponse" } } } },
+          "400": { "$ref": "#/components/responses/InvalidRequest" },
+          "401": { "$ref": "#/components/responses/AuthenticationRequired" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "503": { "$ref": "#/components/responses/ServiceNotReady" }
+        }
+      }
+    },
     "/v1/families/{familyId}/devices": {
       "get": {
             "tags": [
@@ -508,6 +527,9 @@
       "RevokeMembershipRequest": { "type": "object", "required": ["reasonCode"], "properties": { "reasonCode": { "type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$" } }, "additionalProperties": false },
       "CreateGuardianTransferRequest": { "type": "object", "required": ["candidateMembershipId"], "properties": { "candidateMembershipId": { "$ref": "#/components/schemas/Uuid" } }, "additionalProperties": false },
       "FamilyChild": { "type": "object", "required": ["id", "displayName", "ageYears", "avatarEmoji", "themeColor", "version", "createdAt", "updatedAt"], "properties": { "id": { "$ref": "#/components/schemas/Uuid" }, "displayName": { "type": "string", "minLength": 1, "maxLength": 120 }, "ageYears": { "type": "integer", "minimum": 0, "maximum": 25 }, "avatarEmoji": { "type": "string", "minLength": 1, "maxLength": 32 }, "themeColor": { "type": "string", "enum": ["purple", "sky", "amber", "coral", "mint", "teal"] }, "version": { "type": "integer", "minimum": 1 }, "createdAt": { "type": "string", "format": "date-time" }, "updatedAt": { "type": "string", "format": "date-time" } }, "additionalProperties": false },
+      "FamilyChildContextSetup": { "type": "object", "required": ["deviceState", "deviceCount", "observedAt"], "properties": { "deviceState": { "type": "string", "enum": ["not_linked", "linked_awaiting_telemetry", "linked"] }, "deviceCount": { "type": "integer", "minimum": 0 }, "observedAt": { "type": "string", "format": "date-time" } }, "additionalProperties": false },
+      "PermissionSnapshotV1": { "type": "object", "required": ["policyVersion", "role", "scopes", "observedAt", "expiresAt"], "properties": { "policyVersion": { "type": "integer", "minimum": 1 }, "role": { "type": "string", "enum": ["primary_guardian", "co_guardian"] }, "scopes": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "enum": ["child.context.read", "child.device_pairing.create"] } }, "observedAt": { "type": "string", "format": "date-time" }, "expiresAt": { "type": "string", "format": "date-time", "description": "The presentation snapshot expires after five minutes. Mutations are always reauthorized by the server." } }, "additionalProperties": false },
+      "FamilyChildContextResponse": { "type": "object", "required": ["child", "setup", "permissionSnapshot"], "properties": { "child": { "$ref": "#/components/schemas/FamilyChild" }, "setup": { "$ref": "#/components/schemas/FamilyChildContextSetup" }, "permissionSnapshot": { "$ref": "#/components/schemas/PermissionSnapshotV1" } }, "additionalProperties": false },
       "Membership": { "type": "object", "required": ["id", "role", "status", "version", "createdAt"], "properties": { "id": { "$ref": "#/components/schemas/Uuid" }, "role": { "type": "string", "enum": ["primary_guardian", "co_guardian", "child"] }, "status": { "type": "string", "enum": ["invited", "active", "revoked", "removed"] }, "statusReasonCode": { "type": ["string", "null"], "maxLength": 64 }, "version": { "type": "integer", "minimum": 1 }, "joinedAt": { "type": ["string", "null"], "format": "date-time" }, "statusChangedAt": { "type": ["string", "null"], "format": "date-time" }, "createdAt": { "type": "string", "format": "date-time" } }, "additionalProperties": false },
       "Family": { "type": "object", "required": ["id", "displayName", "status", "createdAt", "members"], "properties": { "id": { "$ref": "#/components/schemas/Uuid" }, "displayName": { "type": "string" }, "status": { "type": "string", "enum": ["active", "suspended", "archived"] }, "createdAt": { "type": "string", "format": "date-time" }, "members": { "type": "array", "items": { "$ref": "#/components/schemas/Membership" } } }, "additionalProperties": false },
       "FamilyDiscoveryItem": { "type": "object", "required": ["id", "displayName", "role"], "properties": { "id": { "$ref": "#/components/schemas/Uuid" }, "displayName": { "type": "string", "minLength": 1, "maxLength": 120 }, "role": { "type": "string", "enum": ["primary_guardian", "co_guardian", "child"], "description": "Display-only current role. The API remains the authorization authority." } }, "additionalProperties": false },

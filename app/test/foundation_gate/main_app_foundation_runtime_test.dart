@@ -2,10 +2,12 @@ import 'dart:convert';
 
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/identity_ids.dart';
+import 'package:family_os/core/runtime/family_child_context_source.dart';
 import 'package:family_os/core/runtime/family_child_profile_source.dart';
 import 'package:family_os/core/runtime/family_creation_source.dart';
 import 'package:family_os/core/runtime/identity_source.dart';
 import 'package:family_os/core/runtime/runtime_data_origin.dart';
+import 'package:family_os/foundation_gate/child_context_api_client.dart';
 import 'package:family_os/foundation_gate/children_roster_api_client.dart';
 import 'package:family_os/foundation_gate/family_creation_api_client.dart';
 import 'package:family_os/foundation_gate/family_device_api_client.dart';
@@ -681,6 +683,90 @@ void main() {
       );
     },
   );
+
+  test('remote child context source preserves server failure taxonomy and authority', () async {
+    final identity = FakeIdentity(subject: 'firebase-subject');
+    final configuration = FoundationGateConfiguration.fromStagingApiOrigin(
+      Uri.parse('https://staging.example.test'),
+    );
+    final contextTransport = FakeTransport(
+      const FoundationGateHttpResponse(
+        statusCode: 200,
+        body: '{"child":{"id":"$_childId","displayName":"Synthetic child","ageYears":8,"avatarEmoji":"🧒","themeColor":"teal","version":1,"createdAt":"2026-10-03T10:00:00.000Z","updatedAt":"2026-10-03T10:00:00.000Z"},"setup":{"deviceState":"not_linked","deviceCount":0,"observedAt":"2026-10-07T09:00:00.000Z"},"permissionSnapshot":{"policyVersion":1,"role":"primary_guardian","scopes":["child.context.read","child.device_pairing.create"],"observedAt":"2026-10-07T09:00:00.000Z","expiresAt":"2026-10-07T09:05:00.000Z"}}',
+      ),
+    );
+    final runtime = MainAppFoundationRuntime(
+      identity: identity,
+      controller: FoundationGateSessionController(
+        identity: identity,
+        discoveryApi: FamilyDiscoveryApiClient(
+          configuration: configuration,
+          transport: FakeTransport(
+            const FoundationGateHttpResponse(statusCode: 200, body: _familyBody),
+          ),
+        ),
+        rosterApi: ChildrenRosterApiClient(
+          configuration: configuration,
+          transport: FakeTransport(
+            const FoundationGateHttpResponse(statusCode: 200, body: _rosterBody),
+          ),
+        ),
+      ),
+      deviceApi: FamilyDeviceApiClient(
+        configuration: configuration,
+        transport: FakeTransport(
+          const FoundationGateHttpResponse(statusCode: 200, body: '{"devices":[]}'),
+        ),
+      ),
+      familyCreationApi: FamilyCreationApiClient(
+        configuration: configuration,
+        transport: FakeTransport(
+          const FoundationGateHttpResponse(statusCode: 200, body: '{}'),
+        ),
+      ),
+      childContextApi: ChildContextApiClient(
+        configuration: configuration,
+        transport: contextTransport,
+        clock: () => DateTime.parse('2026-10-07T09:01:00Z'),
+      ),
+    );
+    addTearDown(runtime.dispose);
+    await runtime.signIn(
+      email: 'guardian@example.test',
+      password: 'synthetic-password',
+    );
+    final source = RemoteFamilyChildContextSource(runtime);
+
+    final ready = await source.load(
+      familyId: FamilyId(_familyId),
+      childId: ChildId(_childId),
+    );
+    expect(ready.isReady, isTrue);
+    expect(ready.context?.displayName, 'Synthetic child');
+    expect(ready.context?.permissionSnapshot.role, FamilyChildContextRole.primaryGuardian);
+
+    contextTransport.response = const FoundationGateHttpResponse(
+      statusCode: 403,
+      body: '{}',
+    );
+    final denied = await source.load(
+      familyId: FamilyId(_familyId),
+      childId: ChildId(_childId),
+    );
+    expect(denied.failure, FamilyChildContextFailure.accessDenied);
+
+    contextTransport.response = const FoundationGateHttpResponse(
+      statusCode: 401,
+      body: '{}',
+    );
+    final invalidSession = await source.load(
+      familyId: FamilyId(_familyId),
+      childId: ChildId(_childId),
+    );
+    expect(invalidSession.failure, FamilyChildContextFailure.sessionInvalid);
+    expect(runtime.phase, FoundationGatePhase.sessionInvalid);
+    expect(runtime.identityValue.authority, IdentityAuthority.unavailable);
+  });
 
   test(
     'e-mail verification is surfaced to the pairing UI and can be re-sent (Owner C1)',

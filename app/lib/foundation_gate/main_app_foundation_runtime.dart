@@ -4,6 +4,7 @@ import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/runtime/family_child_context_source.dart';
 import 'package:family_os/core/runtime/family_child_profile_source.dart';
 import 'package:family_os/core/runtime/family_creation_source.dart';
 import 'package:family_os/core/runtime/family_device_source.dart';
@@ -11,6 +12,7 @@ import 'package:family_os/core/runtime/family_roster_source.dart';
 import 'package:family_os/core/runtime/identity_source.dart';
 import 'package:family_os/core/runtime/runtime_data_origin.dart';
 
+import 'child_context_api_client.dart';
 import 'family_creation_api_client.dart';
 import 'family_device_api_client.dart';
 import 'foundation_gate_identity.dart';
@@ -29,11 +31,13 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     required FoundationGateIdentity identity,
     required FamilyDeviceApiClient deviceApi,
     required FamilyCreationApiClient familyCreationApi,
+    ChildContextApiClient? childContextApi,
     String? preferredFamilyId,
   }) : _controller = controller,
        _identity = identity,
        _deviceApi = deviceApi,
        _familyCreationApi = familyCreationApi,
+       _childContextApi = childContextApi,
        _preferredFamilyId = preferredFamilyId?.trim(),
        _identityValue = const IdentitySnapshot.unavailable(),
        _rosterValue = const FamilyRosterSnapshot.unavailable(),
@@ -45,6 +49,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   final FoundationGateIdentity _identity;
   final FamilyDeviceApiClient _deviceApi;
   final FamilyCreationApiClient _familyCreationApi;
+  final ChildContextApiClient? _childContextApi;
   final String? _preferredFamilyId;
   IdentitySnapshot _identityValue;
   FamilyRosterSnapshot _rosterValue;
@@ -216,6 +221,64 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     }
 
     return _publishCurrentRemoteRoster(familyId);
+  }
+
+  /// Loads one narrow child context directly from the authoritative API.
+  /// Identity, setup and permissions are returned as one fresh server snapshot;
+  /// no roster or device projection is merged on the client.
+  Future<FamilyChildContextResult> loadChildContext({
+    required FamilyId familyId,
+    required ChildId childId,
+  }) async {
+    final api = _childContextApi;
+    if (api == null) {
+      return const FamilyChildContextResult.failed(
+        FamilyChildContextFailure.unavailable,
+      );
+    }
+    if (_controller.phase == FoundationGatePhase.sessionInvalid) {
+      return const FamilyChildContextResult.failed(
+        FamilyChildContextFailure.sessionInvalid,
+      );
+    }
+    await refreshIdentity();
+    final selected = _controller.selectedFamily;
+    if (!_identityValue.isRemoteAuthoritative ||
+        selected == null ||
+        selected.id != familyId.value) {
+      return FamilyChildContextResult.failed(
+        _controller.phase == FoundationGatePhase.sessionInvalid
+            ? FamilyChildContextFailure.sessionInvalid
+            : FamilyChildContextFailure.unavailable,
+      );
+    }
+    try {
+      final context = await api.get(
+        familyId: familyId.value,
+        childId: childId.value,
+        idToken: await _identity.currentIdToken(),
+      );
+      return FamilyChildContextResult.ready(context);
+    } on FamilyChildContextApiException catch (error) {
+      if (error.failure == FamilyChildContextFailure.sessionInvalid) {
+        await _invalidateSession();
+      }
+      return FamilyChildContextResult.failed(error.failure);
+    } on FoundationGateIdentityException catch (error) {
+      if (error.failure == FoundationGateIdentityFailure.noSession) {
+        await _invalidateSession();
+        return const FamilyChildContextResult.failed(
+          FamilyChildContextFailure.sessionInvalid,
+        );
+      }
+      return const FamilyChildContextResult.failed(
+        FamilyChildContextFailure.networkUnavailable,
+      );
+    } catch (_) {
+      return const FamilyChildContextResult.failed(
+        FamilyChildContextFailure.unavailable,
+      );
+    }
   }
 
   /// Loads the family-scoped latest device facts from the Node/Express API.
@@ -736,6 +799,24 @@ final class RemoteFamilyDeviceSource extends ChangeNotifier
     _runtime.removeListener(notifyListeners);
     super.dispose();
   }
+}
+
+/// Remote-only child-context port. It carries no cache and cannot outlive or
+/// dispose the shared Foundation runtime owned by the profile-creation port.
+final class RemoteFamilyChildContextSource
+    implements FamilyChildContextSource {
+  const RemoteFamilyChildContextSource(this._runtime);
+
+  final MainAppFoundationRuntime _runtime;
+
+  @override
+  Future<FamilyChildContextResult> load({
+    required FamilyId familyId,
+    required ChildId childId,
+  }) => _runtime.loadChildContext(familyId: familyId, childId: childId);
+
+  @override
+  void dispose() {}
 }
 
 final class RemoteFamilyChildProfileSource implements FamilyChildProfileSource {

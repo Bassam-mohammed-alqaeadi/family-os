@@ -148,6 +148,40 @@ void main() {
     },
   );
 
+  testWidgets('physical back from pairing returns to the children list', (
+    tester,
+  ) async {
+    final identity = FakeIdentity()..emailVerified = false;
+    final host = OnboardingHost(identity: identity);
+    addTearDown(host.dispose);
+    await host.runtime.signIn(email: 'p@example.com', password: 'x1234567');
+    final router = await pumpWithRouter(
+      tester,
+      runtime: host.appRuntime,
+      initialLocation: '/scr-fat-004?childId=$_childId',
+      settle: false,
+      routes: [
+        GoRoute(
+          path: '/scr-fat-004',
+          builder: (context, state) => NativeParentPairingScreen(
+            childId: state.uri.queryParameters['childId'],
+          ),
+        ),
+        GoRoute(
+          path: '/scr-fat-012',
+          builder: (_, _) => const Scaffold(body: Text('children list')),
+        ),
+      ],
+    );
+    await tester.pump();
+
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+
+    expect(router.state.uri.path, '/scr-fat-012');
+    expect(find.text('children list'), findsOneWidget);
+  });
+
   testWidgets('401 hides pairing state and returns to this step after sign-in', (
     tester,
   ) async {

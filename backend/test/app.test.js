@@ -91,6 +91,13 @@ test('unconfigured runtime is live but never claims readiness or identity capabi
   });
 });
 
+test('unconfigured child-context store fails closed instead of returning a fallback profile', async () => {
+  await assert.rejects(
+    new UnconfiguredFoundationStore().getFamilyChildContext(),
+    { status: 503, code: 'database_not_configured' },
+  );
+});
+
 test('pre-authentication API rate limit rejects repeated unauthenticated traffic', async () => {
   await withServer(foundationApp({ preAuthenticationRateLimit: { limit: 2, windowMs: 60_000 } }), async (baseUrl) => {
     const first = await request(baseUrl, '/v1/not-a-route');
@@ -565,6 +572,130 @@ test('server-generated correlation evidence links a mutation to audit/outbox wit
     assert.equal(store.outbox.length, 1);
     assert.equal(store.audit[0].correlationId, correlationId);
     assert.equal(store.outbox[0].correlationId, correlationId);
+  });
+});
+
+test('child context is fresh, tenant-isolated and exposes only server-derived setup and presentation permissions', async () => {
+  let clock = new Date('2026-10-07T09:00:00.000Z');
+  const store = new MemoryFoundationStore({ now: () => new Date(clock) });
+  await withServer(foundationApp({ store }), async (baseUrl) => {
+    const family = await createFamily(baseUrl, 'Context family');
+    const otherFamily = await createFamily(baseUrl, 'Other context family');
+    const createChild = async (familyId, key, name) => {
+      const response = await request(baseUrl, `/v1/families/${familyId}/children`, {
+        method: 'POST',
+        token: 'test-parent-a',
+        idempotencyKey: key,
+        body: { displayName: name, ageYears: 8, avatarEmoji: '🦁', themeColor: 'purple' },
+      });
+      assert.equal(response.status, 201);
+      return (await response.json()).child;
+    };
+    const child = await createChild(family.id, 'context-child', 'Amani');
+    const otherChild = await createChild(otherFamily.id, 'context-other-child', 'Salim');
+    const auditCountBeforeReads = store.audit.length;
+
+    const primaryRead = await request(
+      baseUrl,
+      `/v1/families/${family.id}/children/${child.id}/context`,
+      { token: 'test-parent-a' },
+    );
+    assert.equal(primaryRead.status, 200);
+    const primaryBody = await primaryRead.json();
+    assert.deepEqual(Object.keys(primaryBody).sort(), ['child', 'permissionSnapshot', 'setup']);
+    assert.equal(primaryBody.child.id, child.id);
+    assert.deepEqual(primaryBody.setup, {
+      deviceState: 'not_linked',
+      deviceCount: 0,
+      observedAt: '2026-10-07T09:00:00.000Z',
+    });
+    assert.deepEqual(primaryBody.permissionSnapshot.scopes, [
+      'child.context.read',
+      'child.device_pairing.create',
+    ]);
+    assert.equal(primaryBody.permissionSnapshot.role, 'primary_guardian');
+    assert.equal(primaryBody.permissionSnapshot.observedAt, '2026-10-07T09:00:00.000Z');
+    assert.equal(primaryBody.permissionSnapshot.expiresAt, '2026-10-07T09:05:00.000Z');
+    for (const forbidden of ['batteryLevel', 'locationLabel', 'health', 'tools']) {
+      assert.equal(JSON.stringify(primaryBody).includes(forbidden), false);
+    }
+    assert.equal(store.audit.length, auditCountBeforeReads);
+
+    const crossTenantChild = await request(
+      baseUrl,
+      `/v1/families/${family.id}/children/${otherChild.id}/context`,
+      { token: 'test-parent-a' },
+    );
+    assert.equal(crossTenantChild.status, 404);
+    assert.equal((await crossTenantChild.json()).error.code, 'family_child_not_found');
+
+    const stranger = await request(
+      baseUrl,
+      `/v1/families/${family.id}/children/${child.id}/context`,
+      { token: 'test-stranger' },
+    );
+    assert.equal(stranger.status, 403);
+    assert.equal((await stranger.json()).error.code, 'family_access_denied');
+
+    const guardianMembership = await invite(baseUrl, family.id, {
+      role: 'co_guardian',
+      targetSubject: 'test-guardian-b',
+      idempotencyKey: 'context-co-guardian',
+    });
+    await request(baseUrl, `/v1/families/${family.id}/memberships/${guardianMembership.id}/accept`, {
+      method: 'POST',
+      token: 'test-guardian-b',
+      idempotencyKey: 'context-co-guardian-accept',
+      body: {},
+    });
+    const coGuardianRead = await request(
+      baseUrl,
+      `/v1/families/${family.id}/children/${child.id}/context`,
+      { token: 'test-guardian-b' },
+    );
+    assert.equal(coGuardianRead.status, 200);
+    const coGuardianBody = await coGuardianRead.json();
+    assert.equal(coGuardianBody.permissionSnapshot.role, 'co_guardian');
+    assert.deepEqual(coGuardianBody.permissionSnapshot.scopes, ['child.context.read']);
+
+    const childMembership = await invite(baseUrl, family.id, {
+      role: 'child',
+      targetSubject: 'test-child-a',
+      idempotencyKey: 'context-child-membership',
+    });
+    await request(baseUrl, `/v1/families/${family.id}/memberships/${childMembership.id}/accept`, {
+      method: 'POST',
+      token: 'test-child-a',
+      idempotencyKey: 'context-child-membership-accept',
+      body: {},
+    });
+    const childDenied = await request(
+      baseUrl,
+      `/v1/families/${family.id}/children/${child.id}/context`,
+      { token: 'test-child-a' },
+    );
+    assert.equal(childDenied.status, 403);
+    assert.equal((await childDenied.json()).error.code, 'child_context_access_denied');
+
+    clock = new Date('2026-10-07T09:04:00.000Z');
+    const refreshed = await request(
+      baseUrl,
+      `/v1/families/${family.id}/children/${child.id}/context`,
+      { token: 'test-parent-a' },
+    );
+    assert.equal((await refreshed.json()).permissionSnapshot.expiresAt, '2026-10-07T09:09:00.000Z');
+
+    const queryRejected = await request(
+      baseUrl,
+      `/v1/families/${family.id}/children/${child.id}/context?include=location`,
+      { token: 'test-parent-a' },
+    );
+    assert.equal(queryRejected.status, 400);
+    const unauthenticated = await request(
+      baseUrl,
+      `/v1/families/${family.id}/children/${child.id}/context`,
+    );
+    assert.equal(unauthenticated.status, 401);
   });
 });
 

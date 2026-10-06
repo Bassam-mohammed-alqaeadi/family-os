@@ -76,6 +76,17 @@ class FoundationGateConfiguration {
     return stagingApiOrigin.replace(path: '/v1/families/$familyId/children');
   }
 
+  Uri familyChildContextUri(String familyId, String childId) {
+    if (!isFoundationGateUuid(familyId) || !isFoundationGateUuid(childId)) {
+      throw ArgumentError(
+        'Server-returned UUID family and child identifiers are required.',
+      );
+    }
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/children/$childId/context',
+    );
+  }
+
   Uri familyDevicesUri(String familyId) {
     if (!isFoundationGateUuid(familyId)) {
       throw ArgumentError.value(

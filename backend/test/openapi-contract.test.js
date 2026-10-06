@@ -18,6 +18,7 @@ const expectedOperations = {
   '/v1/families': ['post'],
   '/v1/families/{familyId}': ['get'],
   '/v1/families/{familyId}/children': ['get', 'post'],
+  '/v1/families/{familyId}/children/{childId}/context': ['get'],
   '/v1/families/{familyId}/devices': ['get'],
   '/v1/families/{familyId}/children/{childId}/devices': ['post'],
   '/v1/families/{familyId}/children/{childId}/device-pairings': ['post'],
@@ -112,6 +113,29 @@ test('children roster contract is guardian-scoped, explicit about its narrow tru
     ['purple', 'sky', 'amber', 'coral', 'mint', 'teal'],
   );
   assert.equal(specification.components.schemas.FamilyChild.properties.avatarEmoji.maxLength, 32);
+});
+
+
+test('child context contract is narrow, expiring and explicit that later actions are reauthorized', async () => {
+  const specification = JSON.parse(await readFile(specificationPath, 'utf8'));
+  const operation = specification.paths['/v1/families/{familyId}/children/{childId}/context'].get;
+  const response = specification.components.schemas.FamilyChildContextResponse;
+  const setup = specification.components.schemas.FamilyChildContextSetup;
+  const permissions = specification.components.schemas.PermissionSnapshotV1;
+
+  assert.deepEqual(operation.security, [{ oidcBearer: [] }]);
+  assert.match(operation.description, /Battery, location, policy, health and management state are deliberately absent/);
+  assert.deepEqual(Object.keys(response.properties).sort(), ['child', 'permissionSnapshot', 'setup']);
+  assert.deepEqual(Object.keys(setup.properties).sort(), ['deviceCount', 'deviceState', 'observedAt']);
+  assert.deepEqual(permissions.properties.role.enum, ['primary_guardian', 'co_guardian']);
+  assert.deepEqual(permissions.properties.scopes.items.enum, [
+    'child.context.read',
+    'child.device_pairing.create',
+  ]);
+  assert.match(permissions.properties.expiresAt.description, /Mutations are always reauthorized/);
+  for (const forbidden of ['batteryLevel', 'locationLabel', 'policy', 'health']) {
+    assert.equal(JSON.stringify(response).includes(forbidden), false);
+  }
 });
 
 

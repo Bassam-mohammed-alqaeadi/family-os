@@ -2,7 +2,7 @@
 
 > **System:** Family Entry & Children Control — the first active Global Super-App system, selected 2026-10-04.
 >
-> **Stage:** **Cover** remains the system design authority. On 2026-10-04, the product owner separately admitted the bounded name-and-age primary-guardian create-child capability for real implementation; see [`03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md`](03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md). No broader child, device, policy, location, provider or release capability is admitted.
+> **Stage:** **Cover** remains the system design authority. The bounded create-child capability was admitted on 2026-10-04; see [`03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md`](03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md). On 2026-10-07, the owner separately admitted the M0-locking server-authoritative Child Context Read Model + PermissionSnapshot v1. Device telemetry detail, policy, location, provider and release capabilities remain outside that read admission.
 >
 > **Authority:** [`../../AGENTS.md`](../../AGENTS.md), [`../CURRENT_EXECUTION_PLAN.md`](../CURRENT_EXECUTION_PLAN.md), [`01_CHILDREN_CONTROL_CENTRE_SLICE.md`](01_CHILDREN_CONTROL_CENTRE_SLICE.md), and [`../foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md`](../foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md).
 
@@ -106,7 +106,7 @@ Children
 |---|---|---|---|
 | Family context and roster | Node.js/Express family discovery and `GET /children` foundation exists | Existing server authority, typed Flutter adapter and isolation/migration plan | Reuse; remove normal-route mock fallback when migrated. |
 | Child profile creation | Backend has a narrow primary-guardian `POST /children` foundation for name and age | Node.js/Express contract, idempotency, server role/scope check, audit/result, Flutter typed mutation client and refreshed roster | **Admitted 2026-10-04; implementation is bounded by [`03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md`](03_PRIMARY_GUARDIAN_CREATE_CHILD_PROFILE_ADMISSION.md).** |
-| Child detail/control-centre entry | Prototype route exists | New minimum child-detail read model, source/freshness, authorization and repair state | Define after creation lifecycle shape is accepted. |
+| Child detail/control-centre entry | Server-authoritative child roster and durable device linkage exist | Tenant-isolated child identity/setup projection, source freshness, server authorization and expiring presentation permissions | **Admitted 2026-10-07 as Child Context + PermissionSnapshot v1; production SCR-FAT-013 must use it exclusively.** |
 | Edit/delete profile | Local prototype action only | Lifecycle/safeguarding policy, API contract, conflict/reversal/audit and role matrix | Separate decision; never infer from create. |
 | Device connection | Local/prototype record only | Authorized Native enrollment/capability/repair source and server linkage | Later Native capability slice. |
 | Shared policies | Local UI/projection only | Policy version, scope, delivery, applied/verified receipt and audit | Later policy/enforcement capability slice. |
@@ -139,7 +139,18 @@ Primary guardian sees an honest empty/setup roster
 - **Audit/result:** the system keeps the user-facing outcome understandable without exposing internal IDs, raw payloads or correlation details.
 - **Recovery:** map 400, 401, 403, 409, 429/503 and network/invalid-response states to intentional UI.
 
-## 8. Cover deliverables and exit gate
+## 8. Admitted M0 lock: Child Context + PermissionSnapshot v1
+
+The owner admitted this read-only vertical slice on 2026-10-07. Its authoritative path is `GET /v1/families/{familyId}/children/{childId}/context`.
+
+- **Authorization:** active primary and co-guardians may read; child memberships and unrelated principals are denied by Express. The family and child identifiers are constrained together in PostgreSQL to prevent cross-tenant child enumeration.
+- **Child fact boundary:** return only durable child identity/presentation fields and their version/timestamps.
+- **Setup fact boundary:** return linked-device existence as `not_linked`, `linked_awaiting_telemetry` or `linked`, plus count and observation time. Do not return battery, location, policy, health, device label or management claims.
+- **PermissionSnapshot v1:** return membership-policy version, guardian role, server-derived presentation scopes, `observedAt` and a five-minute `expiresAt`. Flutter may use the snapshot to hide or explain an entry point, but every action is reauthorized by its server endpoint.
+- **Freshness and failure:** no local cache/mock fallback. Loading, not-found, denial, invalid session, network, service, malformed response and unconfigured authority are separate presentation states with explicit recovery.
+- **Flutter production boundary:** `/scr-fat-013` resolves the typed source through `AppRuntime` and displays no fact absent from this response. Native implementation is not required for this bounded read model.
+
+## 9. Cover deliverables and exit gate
 
 Before the system moves beyond this bounded mutation into **Compete**, broader real-engine work or a larger family-control surface, the following must be reviewed together:
 

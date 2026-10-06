@@ -22,7 +22,7 @@ import 'package:family_os/features/n01_linking/accept_mother_invite_screen.dart'
 import 'package:family_os/features/n01_linking/transparency_consent_screen.dart';
 import 'package:family_os/features/n02_day/day_board_screen.dart';
 import 'package:family_os/features/n02_day/children_list_screen.dart';
-import 'package:family_os/features/n02_day/child_profile_screen.dart';
+import 'package:family_os/features/n02_day/remote_child_context_screen.dart';
 import 'package:family_os/features/n02_day/location_map_screen.dart';
 import 'package:family_os/features/n02_day/child_day_board_screen.dart';
 import 'package:family_os/features/n02_day/child_chats_screen.dart';
@@ -245,7 +245,7 @@ void main() {
 
       router.go(screenPath('SCR-FAT-013'));
       await tester.pumpAndSettle();
-      expect(find.byType(ChildProfileScreen), findsOneWidget);
+      expect(find.byType(RemoteChildContextScreen), findsOneWidget);
       expect(find.byType(PlaceholderScreen), findsNothing);
 
       router.go(screenPath('SCR-FAT-014'));

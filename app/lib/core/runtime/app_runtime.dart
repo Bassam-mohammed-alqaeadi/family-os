@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import 'package:family_os/core/runtime/family_child_context_source.dart';
 import 'package:family_os/core/runtime/family_child_profile_source.dart';
 import 'package:family_os/core/runtime/family_creation_source.dart';
 import 'package:family_os/core/runtime/family_device_source.dart';
@@ -17,6 +18,7 @@ final class AppRuntime extends ChangeNotifier {
   AppRuntime({
     required this.identity,
     FamilyRosterSource? roster,
+    FamilyChildContextSource? childContext,
     FamilyChildProfileSource? childProfiles,
     FamilyDeviceSource? devices,
     FamilyPolicySource? policies,
@@ -24,6 +26,7 @@ final class AppRuntime extends ChangeNotifier {
     GuardianSignOut? guardianSignOut,
   }) : _guardianSignOut = guardianSignOut,
        roster = roster ?? UnavailableFamilyRosterSource(),
+       childContext = childContext ?? const UnavailableFamilyChildContextSource(),
        childProfiles = childProfiles ?? UnavailableFamilyChildProfileSource(),
        devices = devices ?? UnavailableFamilyDeviceSource(),
        policies = policies ?? UnavailableFamilyPolicySource(),
@@ -55,6 +58,10 @@ final class AppRuntime extends ChangeNotifier {
   /// local or remote adapter it is allowed to use.
   final FamilyRosterSource roster;
 
+  /// Server-authoritative read model for one child and its short-lived
+  /// presentation permissions. Its default fails closed.
+  final FamilyChildContextSource childContext;
+
   /// The only main-app child-profile creation source. An unavailable source
   /// fails closed rather than delegating to the legacy local roster.
   final FamilyChildProfileSource childProfiles;
@@ -84,6 +91,7 @@ final class AppRuntime extends ChangeNotifier {
     policies.removeListener(notifyListeners);
     identity.dispose();
     if (!identical(roster, identity)) roster.dispose();
+    childContext.dispose();
     if (!identical(childProfiles, identity) &&
         !identical(childProfiles, roster)) {
       childProfiles.dispose();

@@ -265,6 +265,23 @@ export function createApp({
         }),
     );
 
+    app.get(
+        '/v1/families/:familyId/children/:childId/context',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            requireNoQueryParameters(request.query);
+            response.status(200).json(await store.getFamilyChildContext({
+                principal: request.principal,
+                familyId,
+                childId,
+            }));
+        }),
+    );
+
     app.post(
         '/v1/families/:familyId/children',
         requirePrincipal,

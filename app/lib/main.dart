@@ -48,6 +48,7 @@ import 'package:family_os/features/quran/quran_local_bridge.dart';
 import 'package:family_os/features/shared_onboarding/device_user_switch_identity_repository.dart';
 import 'package:family_os/features/shared_onboarding/device_user_switch_repository.dart';
 import 'package:family_os/app/child_device_mode.dart';
+import 'package:family_os/foundation_gate/child_context_api_client.dart';
 import 'package:family_os/foundation_gate/children_roster_api_client.dart';
 import 'package:family_os/foundation_gate/family_creation_api_client.dart';
 import 'package:family_os/foundation_gate/family_device_api_client.dart';
@@ -194,6 +195,10 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
         configuration: configuration,
         transport: PackageFoundationGateHttpTransport(),
       ),
+      childContextApi: ChildContextApiClient(
+        configuration: configuration,
+        transport: PackageFoundationGateHttpTransport(),
+      ),
       preferredFamilyId: preferredFamilyId,
     );
   } on Object {
@@ -278,6 +283,9 @@ class _FamilyOsAppState extends State<FamilyOsApp> {
       roster: foundationRuntime == null
           ? UnavailableFamilyRosterSource()
           : RemoteFamilyRosterSource(foundationRuntime),
+      childContext: foundationRuntime == null
+          ? null
+          : RemoteFamilyChildContextSource(foundationRuntime),
       childProfiles: foundationRuntime == null
           ? null
           : RemoteFamilyChildProfileSource(foundationRuntime),

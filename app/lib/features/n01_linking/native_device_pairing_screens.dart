@@ -415,103 +415,107 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final copy = NativeChildPairingCopy.of(context);
     final pairing = _pairing;
-    return Scaffold(
-      backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.surface,
-        title: Text(copy.parentTitle),
-        leading: ModalRoute.of(context)?.canPop == true
-            ? const BackButton()
-            : BackButton(onPressed: () => context.go('/scr-fat-002')),
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            Text(
-              copy.parentIntro,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                height: 1.5,
-              ),
-            ),
-            if (!_sessionInvalid) ...[
-              const SizedBox(height: 16),
-              _verificationCard(colors, copy),
-            ],
-            const SizedBox(height: 16),
-            TextField(
-              controller: _label,
-              maxLength: 80,
-              enabled: !_loading && !_childConnected,
-              textInputAction: TextInputAction.done,
-              onSubmitted: (_) {
-                if (_canCreate) _create();
-              },
-              decoration: InputDecoration(
-                labelText: copy.deviceNameLabel,
-                hintText: copy.deviceNameHint,
-                border: const OutlineInputBorder(),
-              ),
-            ),
-            if (_sessionInvalid) ...[
-              const SizedBox(height: 8),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) context.go('/scr-fat-012');
+      },
+      child: Scaffold(
+        backgroundColor: colors.bg,
+        appBar: AppBar(
+          backgroundColor: colors.surface,
+          title: Text(copy.parentTitle),
+          leading: BackButton(onPressed: () => context.go('/scr-fat-012')),
+        ),
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
               Text(
-                copy.sessionExpiredBody,
-                style: TextStyle(
-                  color: colors.coral,
-                  fontWeight: FontWeight.w700,
+                copy.parentIntro,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  height: 1.5,
                 ),
               ),
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: TextButton.icon(
-                  key: const ValueKey('parent-pairing-sign-in-again'),
-                  onPressed: _recoverSession,
-                  icon: const Icon(Icons.login_rounded),
-                  label: Text(copy.signInAgain),
-                ),
-              ),
-            ] else if (_error != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                _error!,
-                style: TextStyle(
-                  color: colors.coral,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-            const SizedBox(height: 8),
-            if (!_childConnected)
-              PrimaryBtn(
-                label: _loading
-                    ? copy.creatingPairing
-                    : (pairing == null
-                          ? copy.createPairing
-                          : copy.regenerateCode),
-                onPressed: _canCreate ? _create : null,
-              ),
-            if (pairing != null) ...[
-              const SizedBox(height: 28),
-              const Divider(),
+              if (!_sessionInvalid) ...[
+                const SizedBox(height: 16),
+                _verificationCard(colors, copy),
+              ],
               const SizedBox(height: 16),
-              if (_childConnected)
-                _connectedCard(copy)
-              else if (_expired)
-                BannerNote(
-                  message: copy.pairingExpired,
-                  variant: BannerVariant.a,
-                  leading: Icon(
-                    Icons.timer_off_outlined,
-                    color: colors.amberDeep,
+              TextField(
+                controller: _label,
+                maxLength: 80,
+                enabled: !_loading && !_childConnected,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) {
+                  if (_canCreate) _create();
+                },
+                decoration: InputDecoration(
+                  labelText: copy.deviceNameLabel,
+                  hintText: copy.deviceNameHint,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+              if (_sessionInvalid) ...[
+                const SizedBox(height: 8),
+                Text(
+                  copy.sessionExpiredBody,
+                  style: TextStyle(
+                    color: colors.coral,
+                    fontWeight: FontWeight.w700,
                   ),
-                )
-              else
-                _codeSection(colors, copy, pairing),
+                ),
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: TextButton.icon(
+                    key: const ValueKey('parent-pairing-sign-in-again'),
+                    onPressed: _recoverSession,
+                    icon: const Icon(Icons.login_rounded),
+                    label: Text(copy.signInAgain),
+                  ),
+                ),
+              ] else if (_error != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  _error!,
+                  style: TextStyle(
+                    color: colors.coral,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 8),
+              if (!_childConnected)
+                PrimaryBtn(
+                  label: _loading
+                      ? copy.creatingPairing
+                      : (pairing == null
+                            ? copy.createPairing
+                            : copy.regenerateCode),
+                  onPressed: _canCreate ? _create : null,
+                ),
+              if (pairing != null) ...[
+                const SizedBox(height: 28),
+                const Divider(),
+                const SizedBox(height: 16),
+                if (_childConnected)
+                  _connectedCard(copy)
+                else if (_expired)
+                  BannerNote(
+                    message: copy.pairingExpired,
+                    variant: BannerVariant.a,
+                    leading: Icon(
+                      Icons.timer_off_outlined,
+                      color: colors.amberDeep,
+                    ),
+                  )
+                else
+                  _codeSection(colors, copy, pairing),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -639,7 +643,7 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
         ),
         PrimaryBtn(
           label: copy.backToChildren,
-          onPressed: () => context.go('/scr-fat-002'),
+          onPressed: () => context.go('/scr-fat-012'),
         ),
       ],
     );

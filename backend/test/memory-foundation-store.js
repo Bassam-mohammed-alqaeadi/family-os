@@ -246,6 +246,46 @@ export class MemoryFoundationStore {
     };
   }
 
+  async getFamilyChildContext({ principal, familyId, childId }) {
+    const actor = this.activeMembership(familyId, principal.subject);
+    if (!['primary_guardian', 'co_guardian'].includes(actor.role)) {
+      throw new HttpError(
+        403,
+        'child_context_access_denied',
+        'Only active guardian memberships can access child context.',
+      );
+    }
+    const child = this.children.get(childId);
+    if (!child || child.familyId !== familyId) {
+      throw new HttpError(404, 'family_child_not_found', 'Child was not found in this family.');
+    }
+    const devices = [...this.devices.values()].filter(
+      (device) => device.familyId === familyId && device.childId === childId,
+    );
+    const observedAt = this.now();
+    return {
+      child: this.familyChildView(child),
+      setup: {
+        deviceState: devices.length === 0
+          ? 'not_linked'
+          : devices.some((device) => device.lastSeenAt != null)
+            ? 'linked'
+            : 'linked_awaiting_telemetry',
+        deviceCount: devices.length,
+        observedAt: observedAt.toISOString(),
+      },
+      permissionSnapshot: {
+        policyVersion: actor.version,
+        role: actor.role,
+        scopes: actor.role === 'primary_guardian'
+          ? ['child.context.read', 'child.device_pairing.create']
+          : ['child.context.read'],
+        observedAt: observedAt.toISOString(),
+        expiresAt: new Date(observedAt.getTime() + (5 * 60 * 1000)).toISOString(),
+      },
+    };
+  }
+
   async createFamilyChild({
     principal,
     familyId,

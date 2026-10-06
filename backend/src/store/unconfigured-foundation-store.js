@@ -33,6 +33,10 @@ export class UnconfiguredFoundationStore {
     this.unavailable();
   }
 
+  async getFamilyChildContext() {
+    this.unavailable();
+  }
+
   async createFamilyChild() {
     this.unavailable();
   }

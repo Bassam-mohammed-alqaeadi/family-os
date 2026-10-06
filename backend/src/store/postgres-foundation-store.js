@@ -58,6 +58,40 @@ function familyChildView(row) {
   };
 }
 
+function childContextView(row, actor) {
+  const observedAt = row.observed_at instanceof Date
+    ? row.observed_at.toISOString()
+    : row.observed_at;
+  const expiresAt = row.permissions_expires_at instanceof Date
+    ? row.permissions_expires_at.toISOString()
+    : row.permissions_expires_at;
+  const deviceCount = Number(row.device_count);
+  const deviceState = deviceCount === 0
+    ? 'not_linked'
+    : row.latest_device_seen_at == null
+      ? 'linked_awaiting_telemetry'
+      : 'linked';
+  const scopes = actor.role === 'primary_guardian'
+    ? ['child.context.read', 'child.device_pairing.create']
+    : ['child.context.read'];
+
+  return {
+    child: familyChildView(row),
+    setup: {
+      deviceState,
+      deviceCount,
+      observedAt,
+    },
+    permissionSnapshot: {
+      policyVersion: actor.version,
+      role: actor.role,
+      scopes,
+      observedAt,
+      expiresAt,
+    },
+  };
+}
+
 function capabilityHash(value) {
   return createHash('sha256').update(value).digest('hex');
 }
@@ -296,7 +330,7 @@ export class PostgresFoundationStore {
   async activeActorMembership(client, familyId, subject, { primaryGuardianOnly = false } = {}) {
     const roleClause = primaryGuardianOnly ? `AND membership.role = 'primary_guardian'` : '';
     const { rows } = await client.query(
-      `SELECT membership.id, membership.role
+      `SELECT membership.id, membership.role, membership.version
        FROM family_memberships AS membership
        INNER JOIN accounts AS account ON account.id = membership.account_id
        INNER JOIN families AS family ON family.id = membership.family_id
@@ -428,6 +462,43 @@ export class PostgresFoundationStore {
         [familyId],
       );
       return { children: children.rows.map(familyChildView) };
+    });
+  }
+
+  async getFamilyChildContext({ principal, familyId, childId }) {
+    return this.withTransaction(async (client) => {
+      const actor = await this.activeActorMembership(client, familyId, principal.subject);
+      if (!['primary_guardian', 'co_guardian'].includes(actor.role)) {
+        throw new HttpError(
+          403,
+          'child_context_access_denied',
+          'Only active guardian memberships can access child context.',
+        );
+      }
+      // The family and child identifiers are constrained in the same predicate,
+      // so a valid child UUID from another tenant is indistinguishable from an
+      // unknown child UUID. The aggregate exposes setup facts only; no device
+      // label, battery, location or policy detail crosses this boundary.
+      const result = await client.query(
+        `SELECT child.id, child.display_name, child.age_years,
+                child.avatar_emoji, child.theme_color, child.version,
+                child.created_at, child.updated_at,
+                COUNT(device.id)::integer AS device_count,
+                MAX(device.last_seen_at) AS latest_device_seen_at,
+                NOW() AS observed_at,
+                NOW() + INTERVAL '5 minutes' AS permissions_expires_at
+         FROM family_children AS child
+         LEFT JOIN family_child_devices AS device
+           ON device.family_id = child.family_id
+          AND device.child_id = child.id
+         WHERE child.family_id = $1 AND child.id = $2
+         GROUP BY child.id`,
+        [familyId, childId],
+      );
+      if (result.rowCount === 0) {
+        throw new HttpError(404, 'family_child_not_found', 'Child was not found in this family.');
+      }
+      return childContextView(result.rows[0], actor);
     });
   }
 
