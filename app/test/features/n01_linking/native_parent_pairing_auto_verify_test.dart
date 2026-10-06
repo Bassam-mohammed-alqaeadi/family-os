@@ -132,7 +132,12 @@ void main() {
         ],
       );
       await tester.tap(find.text('إنشاء رمز الربط'));
-      await tester.pumpAndSettle();
+      // The verification-recovery card intentionally contains an animated
+      // progress indicator while its silent poll is active, so this state can
+      // never be observed with pumpAndSettle.
+      await tester.pump();
+      await tester.pump();
+      await tester.pump();
 
       expect(find.textContaining('لم يستلم الخادم تأكيد البريد'), findsWidgets);
       expect(find.textContaining('must not be displayed'), findsNothing);
@@ -185,8 +190,7 @@ void main() {
       body: _pairingBody(),
     );
     await tester.tap(find.text('إنشاء رمز الربط'));
-    await tester.pump();
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(devices.postedHeadersHistory, hasLength(2));
     expect(
