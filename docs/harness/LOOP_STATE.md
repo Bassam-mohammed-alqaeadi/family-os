@@ -12,14 +12,14 @@ status: COVER
 active_system: 37 — Devices (M1)
 wave: M1
 stage: COVER
-card: docs/harness/cards/SPINE-001-experience-bindings.md
-owns: experience-spine bindings (cross-system) — implementation of M1 is owned by the parallel session
+card: docs/harness/cards/M1-37-002-device-lifecycle-cover.md
+owns: device-lifecycle contract (Cover only) — implementation is owned by the parallel session
 blocked_by: —
 owner_question: —
 last_tick: 2026-10-06
-last_locked: "M0 — 2026-10-05 on 3d7ff18"
-next_locked_gate: "M1 exit — Devices paid lifecycle evidenced on CI"
-evidence: "M0 lock: Flutter CI 37372946441 ✅, Credential Guard 37372946422 ✅, backend 93/93"
+last_locked: "SPINE-001 — 2026-10-06, owner-approved; M0 — 2026-10-05 on 3d7ff18"
+next_locked_gate: "M1 exit — revoke proven, capability server-owned, health named with a reason"
+evidence: "SPINE-001 closed with owner approval; harness_check exit 0; card M1-37-002 opened with gaps G1-G5 verified against migration 008 and the declared OpenAPI"
 ```
 <!-- HARNESS-STATE:END -->
 
@@ -28,13 +28,22 @@ evidence: "M0 lock: Flutter CI 37372946441 ✅, Credential Guard 37372946422 ✅
 ## الحالة بالعربية
 
 **النظام النشط:** M1 — الأجهزة (النظام 37)، مصرَّح به بقفل M0.
-**المرحلة:** Cover — كتابة عقد التجربة.
-**البطاقة الجارية:** `SPINE-001` — روابط العمود الفقري الخمسة، وهي عقد عابر للأنظمة يخدم كل موجة قادمة.
+**المرحلة:** Cover — عقد دورة حياة الجهاز.
+**البطاقة الجارية:** `M1-37-002` — من الإقران إلى القطع الآمن.
 
-**لماذا هذه البطاقة أولاً ولماذا لا تتعارض مع الجلسة المتوازية:**
-الجلسة الأخرى على `arena/01a10887-family-os` **تنفّذ** الإقران (كود + `009`). هذه البطاقة **تصف العقد**،
-وهي بالضبط ما تحتاجه مرحلة Cover في نظام الأجهزة لتعرف كيف ترتبط بالتجربة الواحدة.
-لا ملف مشترك: هي كود، وهذا توثيق عقد. وبذلك **لا يُعطَّل طرفٌ طرفاً آخر**.
+**المُقفَل للتوّ:** `SPINE-001` — دستور الروابط الخمسة، أقرّه المالك 2026-10-06.
+**وهو مُلزِم من الآن:** كل بطاقة من M1 إلى M10 تحمل §6 مُجاباً، ونظام لا يجيب **لا يعبر Cover**.
+وهذه البطاقة أول من يخضع له فعلياً.
+
+**الفراغات المرصودة في نظام الأجهزة — متحقَّق منها لا مُفترَضة:**
+- **G1 🔴 لا توجد عملية قطع** — العمود `credential_revoked_at` موجود في المخطط ولا مسار يُستخدمه. **جهاز ضائع لا يمكن قطعه.**
+- **G2 🔴 لا مفهوم «القدرة»** — لا شيء يسجّل ما يستطيع الجهاز فعله. الأب لا يعرف أن الحماية معطّلة.
+- **G3 🟠 لا اشتقاق للحالة** — البطارية و`lastSeenAt` خامّان بلا «غير متصل» أو «بيانات قديمة».
+- **G4 🟠 لا رحلة إصلاح**، **G5 🟠 لا سطح جهاز في العميل الحقيقي**.
+
+**حدّ الملكية (صفر تعارض):** الجلسة المتوازية على `arena/01a10887-family-os` تنفّذ كود الإقران
+(`family_device_api_client.dart`, `native_device_pairing_screens.dart`, `foundation_gate_models.dart`, `009`).
+هذه البطاقة **لا تلمس كوداً** — تكتب العقد الذي يُقاس عليه ذلك التنفيذ. لا ملف مشترك.
 
 **ما يمنع التقدّم:** لا شيء.
 
@@ -44,8 +53,9 @@ evidence: "M0 lock: Flutter CI 37372946441 ✅, Credential Guard 37372946422 ✅
 
 | الموجة | الحالة | الدليل |
 |---|---|---|
+| SPINE | ✅ **مقفول** 2026-10-06 | [`cards/SPINE-001`](cards/SPINE-001-experience-bindings.md) — أقرّه المالك |
 | M0 — Setup + Family | ✅ **مقفولة** 2026-10-05 | [`../real_platform/05_M0_LOCK_RECORD.md`](../real_platform/05_M0_LOCK_RECORD.md) — كل بوابة خضراء على `3d7ff18` |
-| M1 — Devices | 🟢 **مفتوحة** | مصرَّح بها بقفل M0 |
+| M1 — Devices | 🟢 **مفتوحة — Cover** | [`cards/M1-37-002`](cards/M1-37-002-device-lifecycle-cover.md) |
 | M2–M10 | ⬜ مغلقة | تُفتح بقفل الموجة السابقة |
 
 ---
