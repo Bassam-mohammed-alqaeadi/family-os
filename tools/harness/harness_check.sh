@@ -19,11 +19,18 @@ CYAN=$'\033[36m'; GREEN=$'\033[32m'; RED=$'\033[31m'; YELLOW=$'\033[33m'; BOLD=$
 PROBLEMS=0
 OK()   { printf "  ${GREEN}✔${OFF} %s\n" "$*"; }
 WARN() { printf "  ${YELLOW}▲${OFF} %s\n" "$*"; }
-BAD()  { printf "  ${RED}✖${OFF} %s\n" "$*"; PROBLEMS=$((PROBLEMS + 1)); }
+BAD()  { printf "  ${RED}✖${OFF} %s\n" "$*"; PROBLEMS=$((PROBLEMS + 1)); announce "Harness" "$*"; }
 NOTE() { printf "    %s\n" "$*"; }
 HEAD() { printf "\n${BOLD}${CYAN}%s${OFF}\n" "$*"; }
 
 cd "$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "not a git repository"; exit 1; }
+
+# في CI لا تصل سجلات المهمة إلى هنا، لكن واجهة الإعلانات تعمل. فالأداة تُعلن سبب
+# فشلها بنفسها بدل أن تترك قارئاً أعمى يخمّن.
+announce() {
+  [ -n "${GITHUB_ACTIONS:-}" ] || return 0
+  printf '::error title=%s::%s\n' "$1" "$2"
+}
 
 STATE_FILE="docs/harness/LOOP_STATE.md"
 HEALTH="tools/git/repo-health.sh"

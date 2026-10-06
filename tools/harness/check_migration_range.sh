@@ -24,10 +24,17 @@ set -uo pipefail
 GREEN=$'\033[32m'; RED=$'\033[31m'; YELLOW=$'\033[33m'; BOLD=$'\033[1m'; OFF=$'\033[0m'
 PROBLEMS=0
 OK()   { printf "  ${GREEN}✔${OFF} %s\n" "$*"; }
-BAD()  { printf "  ${RED}✖${OFF} %s\n" "$*"; PROBLEMS=$((PROBLEMS + 1)); }
+BAD()  { printf "  ${RED}✖${OFF} %s\n" "$*"; PROBLEMS=$((PROBLEMS + 1)); announce "Migration range" "$*"; }
 WARN() { printf "  ${YELLOW}▲${OFF} %s\n" "$*"; }
 
 cd "$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "not a git repository"; exit 1; }
+
+# في CI لا تصل سجلات المهمة إلى هنا، لكن واجهة الإعلانات تعمل. فالأداة تُعلن سبب
+# فشلها بنفسها بدل أن تترك قارئاً أعمى يخمّن.
+announce() {
+  [ -n "${GITHUB_ACTIONS:-}" ] || return 0
+  printf '::error title=%s::%s\n' "$1" "$2"
+}
 
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 MIGRATIONS_DIR="backend/db/migrations"
@@ -48,12 +55,20 @@ printf "  الفرع: %s\n" "$BRANCH"
 #    الممنوع هو **إضافة** رقم جديد داخل نطاق فرع آخر.
 VIOLATIONS=0
 
-# الأساس = الجذر الفعلي لتاريخ هذا الفرع. ما هو موجود فيه «موروث» ولا نحاسبه على الترقيم؛
-# وما أضفناه بعده هو **لنا** ويجب أن يقع في نطاقنا المحجوز.
+# الموروث مُعلَن صراحةً، لا مُستنتَج من آثار Git.
 #
-# لا نستخدم merge-base مع main: تاريخا المستودع متباعدان بلا سلف مشترك، فيرجع فارغاً.
-# والجذر يعمل في أي نسخة مستنسخة وبلا شبكة.
-BASE="$(git rev-list --max-parents=0 HEAD 2>/dev/null | head -1)"
+# ولماذا: جُرِّب الاستنتاج مرتين وفشل في إحداهما. أولاً بمقارنة الفروع على الريموت،
+# فلم تكن الفروع الأخرى مجلوبة. ثم بجذر التاريخ، فاختلف الجذر بين نسخة محلية
+# ونسخة CI (التي تجلب التاريخ كاملاً) — فنجح الحارس محلياً وفشل في CI.
+# والاستدلال الذي يعتمد على شكل النسخة المستنسخة ليس استدلالاً.
+#
+# فالقائمة المعلنة: الهجرات 001–008 تاريخ مشترك مشترك، ولا نملك ترقيمها.
+# وكل ما عداها يجب أن يقع في نطاقنا المحجوز. والنتيجة واحدة في أي نسخة وفي أي فرع.
+INHERITED_NUMBERS='001 002 003 004 005 006 007 008'
+
+is_inherited() {
+  case " $INHERITED_NUMBERS " in *" $1 "*) return 0 ;; *) return 1 ;; esac
+}
 
 while IFS= read -r file; do
   [ -n "$file" ] || continue
@@ -64,27 +79,19 @@ while IFS= read -r file; do
   esac
   n=$((10#$num))
 
-  # موروثة إن كانت موجودة في جذر الفرع ⇒ لها تاريخ مشترك، وليست مسؤوليتنا.
-  if [ -n "$BASE" ] && git cat-file -e "$BASE:$file" 2>/dev/null; then
+  if is_inherited "$num"; then
     continue
   fi
 
   if [ "$n" -ge "$RANGE_MIN" ] && [ "$n" -le "$RANGE_MAX" ]; then
     OK "$base — داخل النطاق المحجوز ($RANGE_MIN–$RANGE_MAX)"
   else
-    BAD "$base — خارج النطاق المحجوز. فرعنا يحجز $RANGE_MIN–$RANGE_MAX لمنع تصادم صامت مع الفروع المتوازية"
+    BAD "$base — خارج النطاق المحجوز. فرعنا يحجز $RANGE_MIN–$RANGE_MAX لمنع تصادم صامت مع الفروع المتوازية (والنطاق 010–099 مملوك للجلسة المتوازية)"
     VIOLATIONS=$((VIOLATIONS + 1))
   fi
 done < <(find "$MIGRATIONS_DIR" -maxdepth 1 -name '*.sql' | sort)
 
-INHERITED_COUNT=0
-while IFS= read -r file; do
-  [ -n "$file" ] || continue
-  [ -n "$BASE" ] && git cat-file -e "$BASE:$file" 2>/dev/null && INHERITED_COUNT=$((INHERITED_COUNT + 1))
-done < <(find "$MIGRATIONS_DIR" -maxdepth 1 -name '*.sql' | sort)
-if [ "$INHERITED_COUNT" -gt 0 ]; then
-  OK "الهجرات الموروثة من الأساس مستثناة: $INHERITED_COUNT"
-fi
+OK "تاريخ مشترك مُعلَن ومستثنى: $INHERITED_NUMBERS"
 
 # ٣) لا تكرار في الترقيم داخل الفرع نفسه.
 DUPLICATES="$(find "$MIGRATIONS_DIR" -maxdepth 1 -name '*.sql' -printf '%f\n' 2>/dev/null | sed 's/_.*//' | sort | uniq -d)"
