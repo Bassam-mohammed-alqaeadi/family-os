@@ -228,6 +228,8 @@ void main() {
       await tester.tap(addChild);
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), 'New child');
+      await tester.ensureVisible(find.byKey(submitKey));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(submitKey));
       await tester.pumpAndSettle();
 
@@ -244,6 +246,8 @@ void main() {
         'New child',
       );
 
+      await tester.ensureVisible(find.byKey(submitKey));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(submitKey));
       await tester.pumpAndSettle();
 
@@ -254,6 +258,8 @@ void main() {
 
       // Changing the name creates a distinct logical request.
       await tester.enterText(find.byType(TextField), 'Renamed child');
+      await tester.ensureVisible(find.byKey(submitKey));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(submitKey));
       await tester.pumpAndSettle();
 
@@ -292,6 +298,8 @@ void main() {
       await tester.tap(addChild);
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), 'New child');
+      await tester.ensureVisible(find.byKey(submitKey));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(submitKey));
       await tester.pump();
 
@@ -371,6 +379,156 @@ void main() {
       expect(submittedName, 'سارة');
       expect(find.text('تم إنشاء ملف الطفل وتحديث السجل.'), findsOneWidget);
       expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'the roster card shows the avatar and colour the guardian stored',
+    (tester) async {
+      await tester.pumpWidget(
+        host(
+          status: ChildrenControlCentreStatus.ready,
+          children: const [
+            FoundationGateChild(
+              id: '33333333-3333-4333-8333-333333333333',
+              displayName: 'Chosen child',
+              ageYears: 9,
+              avatarEmoji: '🦁',
+              themeColor: 'amber',
+            ),
+          ],
+        ),
+      );
+
+      // The stored facts are rendered, not replaced by the first letter of the
+      // name. Before this, both were persisted and returned but never shown.
+      expect(find.text('🦁'), findsOneWidget);
+      expect(find.text('C'), findsNothing);
+      expect(find.text('Chosen child'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'the create form offers the closed avatar and colour sets',
+    (tester) async {
+      await tester.pumpWidget(
+        host(
+          status: ChildrenControlCentreStatus.empty,
+          family: _primaryFamily,
+          children: const [],
+          onCreateChild:
+              ({
+                required displayName,
+                required ageYears,
+                required avatarEmoji,
+                required themeColor,
+                required idempotencyKey,
+              }) async => FoundationGateChildCreateResult.created,
+        ),
+      );
+
+      final addChild = find.byKey(
+        const Key('foundation_gate_add_child_profile'),
+      );
+      await tester.ensureVisible(addChild);
+      await tester.tap(addChild);
+      await tester.pumpAndSettle();
+
+      // Every offered avatar is inside the range the transport validates, so a
+      // choice can never be rejected by this client's own preflight.
+      for (final emoji in kFoundationGateChildAvatarEmojis) {
+        expect(
+          find.byKey(Key('foundation_gate_child_avatar_$emoji')),
+          findsOneWidget,
+        );
+      }
+      for (final token in kFoundationGateChildThemeColors) {
+        expect(
+          find.byKey(Key('foundation_gate_child_color_$token')),
+          findsOneWidget,
+        );
+      }
+    },
+  );
+
+  testWidgets(
+    'a chosen avatar and colour reach the server, and changing them is a new request',
+    (tester) async {
+      final submitted = <({String emoji, String color, String key})>[];
+      const submitKey = Key('foundation_gate_create_child_profile_submit');
+      await tester.pumpWidget(
+        host(
+          status: ChildrenControlCentreStatus.empty,
+          family: _primaryFamily,
+          children: const [],
+          onCreateChild:
+              ({
+                required displayName,
+                required ageYears,
+                required avatarEmoji,
+                required themeColor,
+                required idempotencyKey,
+              }) async {
+                submitted.add((
+                  emoji: avatarEmoji,
+                  color: themeColor,
+                  key: idempotencyKey,
+                ));
+                return FoundationGateChildCreateResult.networkUnavailable;
+              },
+        ),
+      );
+
+      final addChild = find.byKey(
+        const Key('foundation_gate_add_child_profile'),
+      );
+      await tester.ensureVisible(addChild);
+      await tester.tap(addChild);
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'New child');
+
+      // The untouched form sends the defaults it always sent.
+      await tester.ensureVisible(find.byKey(submitKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(submitKey));
+      await tester.pumpAndSettle();
+      expect(submitted.single.emoji, '🧒');
+      expect(submitted.single.color, 'purple');
+
+      // Choose a different avatar and colour, then retry.
+      await tester.ensureVisible(
+        find.byKey(const Key('foundation_gate_child_avatar_🦊')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const Key('foundation_gate_child_avatar_🦊')),
+      );
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('foundation_gate_child_color_mint')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('foundation_gate_child_color_mint')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(submitKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(submitKey));
+      await tester.pumpAndSettle();
+
+      expect(submitted.length, 2);
+      expect(submitted.last.emoji, '🦊');
+      expect(submitted.last.color, 'mint');
+
+      // Changing a presentation fact is a distinct logical request. Reusing the
+      // first key would let the server answer the old request and silently keep
+      // the avatar the guardian just changed.
+      expect(submitted.last.key, isNot(submitted.first.key));
+
+      // Retrying the *new* input unchanged reuses its key.
+      await tester.ensureVisible(find.byKey(submitKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(submitKey));
+      await tester.pumpAndSettle();
+      expect(submitted.length, 3);
+      expect(submitted.last.key, submitted[1].key);
     },
   );
 

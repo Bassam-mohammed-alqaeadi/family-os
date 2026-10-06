@@ -114,10 +114,23 @@ class FoundationGateCopy {
   String get addChildProfile =>
       isArabic ? 'إضافة ملف طفل' : 'Add child profile';
   String get addChildProfileHint => isArabic
-      ? 'أدخل الاسم والعمر فقط. تُرسل هذه المحاولة إلى الخادم، ثم يُعاد تحميل سجل الأطفال المؤكد.'
-      : 'Enter only a name and age. This attempt is sent to the server, then the confirmed children roster is reloaded.';
+      ? 'أدخل الاسم والعمر، واختر الشكل واللون. تُرسل هذه المحاولة إلى الخادم، ثم يُعاد تحميل سجل الأطفال المؤكد.'
+      : 'Enter a name and age, and choose an avatar and colour. This attempt is sent to the server, then the confirmed children roster is reloaded.';
   String get childDisplayName => isArabic ? 'اسم الطفل' : 'Child name';
   String get childAgeYears => isArabic ? 'العمر بالسنوات' : 'Age in years';
+  String get childAvatarEmoji => isArabic ? 'شكل الطفل' : 'Child avatar';
+  String get childThemeColor => isArabic ? 'لون البطاقة' : 'Card colour';
+
+  /// A colour swatch carries no text, so it needs a spoken name. The raw server
+  /// token is never shown or announced; only these localized names are.
+  String childColorName(String token) => switch (token) {
+    'sky' => isArabic ? 'سماوي' : 'Sky',
+    'amber' => isArabic ? 'عسلي' : 'Amber',
+    'coral' => isArabic ? 'مرجاني' : 'Coral',
+    'mint' => isArabic ? 'نعناعي' : 'Mint',
+    'teal' => isArabic ? 'أزرق مُخضرّ' : 'Teal',
+    _ => isArabic ? 'بنفسجي' : 'Purple',
+  };
   String get createChildProfile =>
       isArabic ? 'إنشاء ملف الطفل' : 'Create child profile';
   String get creatingChildProfile =>

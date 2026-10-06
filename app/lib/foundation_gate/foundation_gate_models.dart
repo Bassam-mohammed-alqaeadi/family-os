@@ -39,6 +39,25 @@ const Set<String> kFoundationGateChildThemeColors = {
   'teal',
 };
 
+/// The avatars the real client offers when a guardian creates a child profile.
+///
+/// Every value sits inside `U+1F000–U+1FAFF`, which is the range
+/// `children_roster_api_client.dart` validates before it writes a request. The
+/// transport stays deliberately more permissive than this list when *reading*
+/// the roster, so a value the server already accepted can never make a whole
+/// roster unreadable; this list governs only what the form offers.
+///
+/// The first entry is the default, so an untouched form sends exactly what it
+/// sent before this list existed.
+const List<String> kFoundationGateChildAvatarEmojis = <String>[
+  '🧒',
+  '🦁',
+  '🐱',
+  '🐼',
+  '🦊',
+  '🐰',
+];
+
 class FoundationGateChild {
   const FoundationGateChild({
     required this.id,

@@ -392,9 +392,16 @@ class _ChildProfileCard extends StatelessWidget {
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final radii = Theme.of(context).extension<FamilyRadii>()!;
     final shadows = Theme.of(context).extension<FamilyShadows>()!;
-    final initial = child.displayName.trim().isEmpty
-        ? '?'
-        : String.fromCharCode(child.displayName.trim().runes.first);
+    // The stored presentation facts are what the guardian chose on the real
+    // path, so the card renders them. Before this, a chosen avatar and colour
+    // were persisted and returned on every read but never shown, which made the
+    // picker a promise the roster did not keep.
+    //
+    // The server's value is rendered as-is rather than checked against the list
+    // the form offers: that list governs what this client proposes, while the
+    // column is NOT NULL and already carries a validated value. Filtering here
+    // would hide a child's real avatar the moment it came from another client.
+    final avatarColor = foundationGateChildColor(colors, child.themeColor);
     return Semantics(
       container: true,
       label: '${child.displayName}, ${copy.age(child.ageYears)}',
@@ -409,12 +416,21 @@ class _ChildProfileCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              CircleAvatar(
-                backgroundColor: colors.p100,
-                foregroundColor: colors.p700,
+              Container(
+                width: 44,
+                height: 44,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: avatarColor.withValues(alpha: 0.18),
+                  shape: BoxShape.circle,
+                ),
                 child: Text(
-                  initial,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+                  child.avatarEmoji,
+                  style: TextStyle(
+                    color: avatarColor,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -451,6 +467,83 @@ class _ChildProfileCard extends StatelessWidget {
     );
   }
 }
+
+/// A visible label for the pickers, which — unlike the text field and the age
+/// dropdown — cannot borrow `InputDecoration.labelText`.
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<FamilyColors>()!;
+    return Text(
+      text,
+      style: TextStyle(color: colors.ink2, fontWeight: FontWeight.w700),
+    );
+  }
+}
+
+/// One colour token as a selectable swatch.
+///
+/// A swatch carries no text, so it announces its localized colour name and its
+/// selected state through semantics rather than relying on colour alone.
+class _ThemeColorChoice extends StatelessWidget {
+  const _ThemeColorChoice({
+    required this.token,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final String token;
+  final bool selected;
+  final VoidCallback? onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final copy = FoundationGateCopy.of(context);
+    final colors = Theme.of(context).extension<FamilyColors>()!;
+    final swatch = foundationGateChildColor(colors, token);
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: copy.childColorName(token),
+      child: InkResponse(
+        key: Key('foundation_gate_child_color_$token'),
+        onTap: onSelected,
+        radius: 24,
+        child: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: swatch,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: selected ? colors.ink : colors.border,
+              width: selected ? 3 : 1,
+            ),
+          ),
+          child: selected
+              ? Icon(Icons.check, size: 22, color: colors.surface)
+              : null,
+        ),
+      ),
+    );
+  }
+}
+
+/// The single mapping from a stored colour token to a colour, shared by the
+/// picker and the roster card so a chosen colour always looks the same in both.
+Color foundationGateChildColor(FamilyColors colors, String? token) =>
+    switch (token) {
+      'sky' => colors.sky,
+      'amber' => colors.amber,
+      'coral' => colors.coral,
+      'mint' => colors.mint,
+      'teal' => colors.teal600,
+      _ => colors.p500,
+    };
 
 class _RosterEmpty extends StatelessWidget {
   const _RosterEmpty();
@@ -703,7 +796,11 @@ class _CreateChildProfileSheetState extends State<_CreateChildProfileSheet> {
   String? _idempotencyKey;
   String? _submittedDisplayName;
   int? _submittedAgeYears;
+  String? _submittedAvatarEmoji;
+  String? _submittedThemeColor;
   int _ageYears = 8;
+  String _avatarEmoji = kFoundationGateChildAvatarEmojis.first;
+  String _themeColor = 'purple';
   bool _submitting = false;
   FoundationGateChildCreateResult? _result;
 
@@ -720,14 +817,21 @@ class _CreateChildProfileSheetState extends State<_CreateChildProfileSheet> {
       return;
     }
 
-    // A retry of identical input uses the same key. Changing either field
-    // creates a distinct logical request, so it receives a fresh key instead.
+    // A retry of identical input uses the same key. Changing any field —
+    // including the avatar or the colour — creates a distinct logical request,
+    // so it receives a fresh key instead. Omitting the presentation choices here
+    // would let a guardian change the avatar after a failure and have the server
+    // treat it as the same request, silently keeping the first answer.
     if (_idempotencyKey == null ||
         _submittedDisplayName != displayName ||
-        _submittedAgeYears != _ageYears) {
+        _submittedAgeYears != _ageYears ||
+        _submittedAvatarEmoji != _avatarEmoji ||
+        _submittedThemeColor != _themeColor) {
       _idempotencyKey = newFoundationGateIdempotencyKey();
       _submittedDisplayName = displayName;
       _submittedAgeYears = _ageYears;
+      _submittedAvatarEmoji = _avatarEmoji;
+      _submittedThemeColor = _themeColor;
     }
     setState(() {
       _submitting = true;
@@ -736,8 +840,8 @@ class _CreateChildProfileSheetState extends State<_CreateChildProfileSheet> {
     final result = await widget.onCreateChild(
       displayName: displayName,
       ageYears: _ageYears,
-      avatarEmoji: '🧒',
-      themeColor: 'purple',
+      avatarEmoji: _avatarEmoji,
+      themeColor: _themeColor,
       idempotencyKey: _idempotencyKey!,
     );
     if (!mounted) {
@@ -808,6 +912,41 @@ class _CreateChildProfileSheetState extends State<_CreateChildProfileSheet> {
                     onChanged: _submitting
                         ? null
                         : (age) => setState(() => _ageYears = age ?? _ageYears),
+                  ),
+                  const SizedBox(height: 16),
+                  _FieldLabel(text: copy.childAvatarEmoji),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final emoji in kFoundationGateChildAvatarEmojis)
+                        ChoiceChip(
+                          key: Key('foundation_gate_child_avatar_$emoji'),
+                          label: Text(emoji),
+                          selected: _avatarEmoji == emoji,
+                          onSelected: _submitting
+                              ? null
+                              : (_) => setState(() => _avatarEmoji = emoji),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _FieldLabel(text: copy.childThemeColor),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      for (final token in kFoundationGateChildThemeColors)
+                        _ThemeColorChoice(
+                          token: token,
+                          selected: _themeColor == token,
+                          onSelected: _submitting
+                              ? null
+                              : () => setState(() => _themeColor = token),
+                        ),
+                    ],
                   ),
                   if (_result != null) ...[
                     const SizedBox(height: 16),
