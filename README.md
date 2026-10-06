@@ -7,7 +7,9 @@ Family OS is a **Global Super App for families**: one coherent Arabic-first and 
 | Read | Why |
 |---|---|
 | [`AGENTS.md`](AGENTS.md) | Global Super-App Constitution: prototype promise, system-by-system delivery and hard guards. |
-| [`docs/CURRENT_EXECUTION_PLAN.md`](docs/CURRENT_EXECUTION_PLAN.md) | The one live plan: selected system, current stage and immediate decision. |
+| [`docs/00_MASTER_PLAN.md`](docs/00_MASTER_PLAN.md) | The binding plan: 14 complete functions, the stages, the honest timing, and the first five tasks. |
+| [`docs/CURRENT_EXECUTION_PLAN.md`](docs/CURRENT_EXECUTION_PLAN.md) | The live pointer: the one active function, its stage and the immediate decision. |
+| [`docs/README.md`](docs/README.md) | The documentation map: what is authoritative, what is evidence, and what is history. |
 | [`docs/REAL_PLATFORM_TRANSFORMATION_RECORD.md`](docs/REAL_PLATFORM_TRANSFORMATION_RECORD.md) | Real-platform direction, system sequencing and durable truth standard. |
 | [`docs/product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md`](docs/product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md) | Runtime-truth policy. |
 | [`docs/real_platform/02_FAMILY_ENTRY_AND_CHILDREN_CONTROL_COVER_SPECIFICATION.md`](docs/real_platform/02_FAMILY_ENTRY_AND_CHILDREN_CONTROL_COVER_SPECIFICATION.md) | Active Family Entry & Children Control system: Cover-stage experience and contract specification. |

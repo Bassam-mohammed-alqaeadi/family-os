@@ -1,50 +1,48 @@
-# Family OS documentation
+# خريطة الوثائق — المرجع الوحيد
 
-> **Current documentation entry point — 2026-10-04**
->
-> Family OS now operates as a Global Super-App programme delivered **system by system**. Preserve historical analysis and evidence, but start from the current constitution and one live execution plan.
+> **قاعدة الحكم:** ما ليس في هذا الجدول **ليس مرجعاً**. كل ملف غير مذكور هنا هو تاريخ أو شاهد، لا سلطة.
+> **آخر توحيد:** 2026-10-06 — بعد الفحص الشامل للأكواد (`02_AUDIT_2026-10-06.md`).
 
-## Authority order
+---
 
-Read these in order before significant work:
+## ١) الوثائق الملزمة — تُقرأ بهذا الترتيب
 
-1. [`../AGENTS.md`](../AGENTS.md) — Global Super-App Constitution: prototype promise, system-by-system execution and hard guards.
-2. [`CURRENT_EXECUTION_PLAN.md`](CURRENT_EXECUTION_PLAN.md) — the active-system selection, current delivery stage and next decision.
-3. [`REAL_PLATFORM_TRANSFORMATION_RECORD.md`](REAL_PLATFORM_TRANSFORMATION_RECORD.md) — real-platform transformation record and long-range system sequence.
-4. [`product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md`](product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md) — non-negotiable runtime truth.
-5. [`product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md`](product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md) — binding experience continuity and refinement standard.
-6. The selected system's product, data, privacy, Native and operational contracts.
+| # | الوثيقة | سلطتها | حالة الصيانة |
+|---|---|---|---|
+| **٠** | [`../AGENTS.md`](../AGENTS.md) | **الدستور**: الرؤية، نموذج التسليم، البوابتان، ومقياس الصدق | تُحدَّث فقط بقرار مالك |
+| **٠** | [`00_MASTER_PLAN.md`](00_MASTER_PLAN.md) | **النطاق والتسلسل**: ١٤ وظيفة، والمراحل، والتوقيت، وأول خمس مهام | المرجع الوحيد للنطاق |
+| **١** | [`CURRENT_EXECUTION_PLAN.md`](CURRENT_EXECUTION_PLAN.md) | **مؤشر حيّ**: الوظيفة النشطة ومرحلتها والسؤال المعلّق | يُحدَّث كل جلسة |
+| **٢** | [`03_HARNESS.md`](AGENTIC_HARNESS_LOOP.md) + [`harness/LOOP_STATE.md`](harness/LOOP_STATE.md) | **منهج التنفيذ**: البطاقات، المراحل، البوابات، والحالة الآلية | يُنفَّذ آلياً بـ`tools/harness/` |
+| **٣** | [`harness/TASK_CARD_TEMPLATE.md`](harness/TASK_CARD_TEMPLATE.md) | **قالب البطاقة**: بوابة الروابط الخمسة + بوابة الربط السطحي + بوابة البيئة | إلزامي لكل بطاقة |
+| **٤** | [`04_GITHUB_METHOD.md`](GIT_AND_GITHUB_OPERATING_METHOD.md) | **منهج العمل**: الالتزامات، الدفع، الاسترجاع، ولاية GitHub | ثابت |
+| **٥** | [`05_EXECUTIVE_MODEL.md`](EXECUTIVE_OPERATING_MODEL.md) | **الحوكمة والإيراد**: سلّم 2028 والقرارات التنفيذية | تُحدَّث بقرار مالك |
+| **٦** | [`06_DECISIONS.md`](OPEN_DECISIONS.md) | **القرارات**: المفتوحة والمحسومة | تُحدَّث عند كل قرار |
 
-## Active delivery material
+## ٢) الأدلّة والشواهد — تُقرأ عند الحاجة، لا تحكم
 
-| Path | Purpose | Status |
+| الوثيقة | ما تشهد عليه |
+|---|---|
+| [`02_AUDIT_2026-10-06.md`](FULL_PLATFORM_AUDIT_2026-10-06.md) | **الفحص الشامل بالأكواد**: عشرة عيوب بالأدلة، وأين نحن من الطموح فعلاً |
+| [`GLOBAL_LAUNCH_MASTER_PLAN.md`](GLOBAL_LAUNCH_MASTER_PLAN.md) | الرؤية، امتصاص المنافسين، الموجات M0–M10، الأقسام §12–§13. **النطاق والتوقيت منها ملغيان لصالح `00_MASTER_PLAN.md`** |
+| [`REAL_PLATFORM_TRANSFORMATION_RECORD.md`](REAL_PLATFORM_TRANSFORMATION_RECORD.md) | سجل التحوّل من النموذج إلى المنصة الحقيقية |
+| [`real_platform/05_M0_LOCK_RECORD.md`](real_platform/05_M0_LOCK_RECORD.md) | دليل قفل M0 بكل بواباته وتشغيلات CI |
+| [`real_platform/`](real_platform/) | عقد ونطاق نظام العائلة والأطفال (الموجة القائمة) |
+| [`reference/frozen-prototype-handoff/`](reference/frozen-prototype-handoff/) | تسليم النموذج المجمّد — وعد تجربة المستخدم |
+| [`product_refinement_v2/`](product_refinement_v2/) | **مرجع تصميمي** من مرحلة الاكتشاف. لا سلطة تنفيذية؛ يُقرأ كمواصفة عند بناء وظيفة |
+| [`foundation/`](foundation/) | أدلة تأسيسية وتدقيقات تكافؤ سابقة |
+
+## ٣) الأرشيف — تاريخ فقط
+
+| المجلد | ماذا فيه | لماذا لا يحكم |
 |---|---|---|
-| [`CURRENT_EXECUTION_PLAN.md`](CURRENT_EXECUTION_PLAN.md) | The single live execution plan | Family Entry & Children Control is the active first system; Cover is in progress. |
-| [`AGENTIC_HARNESS_LOOP.md`](AGENTIC_HARNESS_LOOP.md) | The closed development loop: five gated stages, the absorption method, the five bindings that keep 42 systems one product, and the evidence law | Active; state in [`harness/LOOP_STATE.md`](harness/LOOP_STATE.md), enforced by `tools/harness/harness_check.sh`. |
-| [`GIT_AND_GITHUB_OPERATING_METHOD.md`](GIT_AND_GITHUB_OPERATING_METHOD.md) | How work is persisted and verified on GitHub: the seven laws, the daily loop, recovery, and how to read CI honestly | Active; enforced by `tools/git/repo-health.sh`. |
-| [`AGENT_BOOTSTRAP_PROMPT.md`](AGENT_BOOTSTRAP_PROMPT.md) | A copy-paste order that makes any agent — new or already running — adopt the method above | Paste it into any session before giving a task. |
-| [`INDEPENDENT_DEVELOPMENT_BOUNDARY.md`](INDEPENDENT_DEVELOPMENT_BOUNDARY.md) | This branch as a complete independent line: structural collision prevention, the reserved migration range, and the ownership split | Active; enforced by `tools/harness/check_migration_range.sh`. |
-| [`PARALLEL_AGENT_ORDER.md`](PARALLEL_AGENT_ORDER.md) | The same discipline as an order for a second agent working in parallel: secure-work-first, the seven laws, scope split, and the migration `009` collision | Paste into the other session; its §1 secures uncommitted work before anything else. |
-| [`real_platform/02_FAMILY_ENTRY_AND_CHILDREN_CONTROL_COVER_SPECIFICATION.md`](real_platform/02_FAMILY_ENTRY_AND_CHILDREN_CONTROL_COVER_SPECIFICATION.md) | Active Family Entry & Children Control system: Cover-stage experience and contract specification | Cross-discipline review and first-capability admission are next. |
-| [`foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md`](foundation/22_CHILDREN_CONTROL_CENTRE_PRODUCT_PARITY_AUDIT.md) | Prototype-to-real capability, UX and state audit for the active first system | Completed Compare/Gaps input to the Cover specification. |
-| [`REAL_PLATFORM_TRANSFORMATION_RECORD.md`](REAL_PLATFORM_TRANSFORMATION_RECORD.md) | Real platform vision, shared foundations and system sequencing | Active strategic record. |
-| [`product_refinement_v2/`](product_refinement_v2/) | Product principles, truth policy, system contracts and decision history | Active product authority; Foundation Wave material is retained as historical technical evidence. |
-| [`foundation/`](foundation/) | Node.js/Express/PostgreSQL Foundation contracts, controlled staging and narrow roster evidence | Reusable technical foundation; not the Global Super-App scope ceiling. |
-| [`real_platform/`](real_platform/) | Vertical-slice truth contracts and system migration material | Reused and updated as each system is selected. |
-| [`OPEN_DECISIONS.md`](OPEN_DECISIONS.md) | Current system-selection and high-risk external decisions | Active. |
+| [`archive/2026-10-process/`](archive/2026-10-process/) | إدارة العمل المتوازي، وحدود الاستقلال، وتقرير التوحيد السابق | **أُلغي بقرار المالك 2026-10-06**: كل العمل في هذا الفرع وحده، والمهمل مُؤرشف |
+| [`archive/2026-09-*`](archive/) | مراحل الاكتشاف والتنفيذ السابقة (٥٣٣ وثيقة) | تاريخ؛ يُقرأ للسياق فقط |
 
-## Preserved reference material
+---
 
-| Path | Purpose | How to use it |
-|---|---|---|
-| [`../family-os/`](../family-os/) | Frozen Arabic prototype, registry and historical contracts | Product/UX reference input. Retain valuable journeys; replace mock engines with real ones. |
-| [`../prototype/`](../prototype/) | Frozen registry used by Flutter route-generation tests | Keep stable until a deliberate, tested migration updates its consumers. |
-| [`reference/frozen-prototype-handoff/`](reference/frozen-prototype-handoff/) | Historical policy and UX handoff | Reference only; it cannot override the current constitution and plan. |
-| [`archive/`](archive/) | Dated discovery, prior plans and completed campaign material | Read-only evidence/history; not current authority. |
+## ٤) قواعد الصيانة — تمنع عودة التكرار
 
-## Documentation rules
-
-- Do not create a second roadmap or a shadow authorization source.
-- Preserve evidence of what happened; update its status/role rather than rewriting history.
-- A document that claims a capability is real must link to durable source, authorization and verification evidence.
-- Never record secrets, tokens, configuration values, real family data or raw provider/database responses.
+1. **وثيقة جديدة** لا تُضاف إلا بحذف/أرشفة ما تُلغيه، وإدراجها في الجدول أعلاه **في نفس الالتزام**.
+2. **لا وثيقة تناقض أخرى**: عند التناقض، الأعلى في الترتيب يحكم، والأدنى يُصحَّح فوراً.
+3. **التقارير المؤقتة** تُؤرشف بعد إغلاق مرحلتها؛ لا تبقى في الجذر.
+4. **الأرقام لا تُكتب بلا أمر إنتاجها**، ولا ادّعاء «مكتمل» بلا مقياس ٤/٤.

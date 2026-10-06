@@ -6,10 +6,32 @@ This document sets the product direction. Before significant work, read the live
 
 The authority order is:
 
-1. this Global Super-App Constitution — strategic direction and delivery model;
-2. [`docs/CURRENT_EXECUTION_PLAN.md`](docs/CURRENT_EXECUTION_PLAN.md) — the one active system, its current stage and the next decision;
-3. [`docs/product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md`](docs/product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md) and [`docs/product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md`](docs/product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md) — truth and experience requirements;
-4. system-specific contracts, privacy/security decisions and runbooks — operational detail for the selected system.
+1. this Global Super-App Constitution — strategic direction, delivery model and the gates below;
+2. [`docs/00_MASTER_PLAN.md`](docs/00_MASTER_PLAN.md) — the binding scope and sequence: 14 complete functions, the stages, the honest timing and the first five tasks. It supersedes the scope and schedule of the master plan's sections 6 and 7;
+3. [`docs/CURRENT_EXECUTION_PLAN.md`](docs/CURRENT_EXECUTION_PLAN.md) — the one active function, its current stage and the next decision;
+4. [`docs/product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md`](docs/product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md) and [`docs/product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md`](docs/product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md) — truth and experience requirements;
+5. system-specific contracts, privacy/security decisions and runbooks — operational detail for the selected function.
+
+## 1.1 The two gates, and the one honesty measure
+
+These were added on 2026-10-06, after a full audit of the code measured the platform at
+2.5 of 42 systems sold as complete and zero usable families. They are binding on every
+function from now on, and they are the answer to how that gap happened.
+
+**Surface Wiring Gate.** No function is complete on four pieces of evidence together:
+(1) the contract — every route in `app.js` present in `openapi/foundation.v1.json`, with
+a drift test that fails when they differ; (2) the client — a Dart method that names the
+route and reads its fields; (3) the surface — a screen reachable from a user journey,
+never a file nothing imports; (4) the journey — a test proving a guardian reached the
+outcome and saw a truthful state.
+
+**Environment Gate.** No work touching SQL is complete until it actually runs on real
+PostgreSQL in CI. Written migrations are not evidence; executed migrations are.
+
+**The one honesty measure.** Every function is measured on four columns — table,
+contract, client, screen-and-journey. A function is real at 4/4 or it is not real. No
+report may describe a function as complete while any column is empty, and the measure is
+published in every status report.
 
 Foundation and staging documents preserve real technical evidence. They do not reduce the product destination to the smallest endpoint that has already been implemented.
 

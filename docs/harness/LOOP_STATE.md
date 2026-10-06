@@ -9,17 +9,17 @@
 <!-- HARNESS-STATE:BEGIN -->
 ```yaml
 status: REAL_ENGINE
-active_system: 37 — Devices (M1)
-wave: M1
-stage: REAL_ENGINE — server half proven; the surface is NOT bound. A full code audit on 2026-10-06 re-measured completion and found three open defects in this very card.
+active_system: و٢ — جهاز الطفل محمي فعلاً (المرحلة الأولى) · والمرحلة النشطة: صفر — الأساس
+wave: "الخطة الحقيقية 00_MASTER_PLAN — المرحلة صفر"
+stage: صفر — الأساس. المهمة النشطة: ص٠-أ PostgreSQL حقيقي في CI. لا وظيفة تُفتح قبل المهام الخمس.
 card: docs/harness/cards/M1-37-002-device-lifecycle-cover.md
-owns: device lifecycle — derivation, revocation, and the client's ability to read both. Built inside this branch's range; shared store files untouched.
+owns: device lifecycle on the server (derivation + revocation, proven), and the branch-wide purge and documentation consolidation of 2026-10-06
 blocked_by: —
 owner_question: —
 last_tick: 2026-10-06
 last_locked: "SPINE-001 — 2026-10-06, owner-approved; M0 — 2026-10-05 on 3d7ff18"
-next_locked_gate: "M1 exit — now includes the two new gates from TASK_CARD_TEMPLATE §6.1/6.2: contract + client + reachable surface + journey test, and real SQL execution"
-evidence: "audit docs/FULL_PLATFORM_AUDIT_2026-10-06.md; head 8a5b523; backend 132/132; 2.5 of 42 systems real; 0 sellable; plan self-contradiction 4.6x recorded in MASTER_PLAN §13"
+next_locked_gate: "ص٠-أ: تشغيل الهجرات 001-101 على PostgreSQL حقيقي في CI — بوابة البيئة قبل أي وظيفة"
+evidence: "consolidation 2026-10-06: docs/README.md is the single map, 00_MASTER_PLAN.md is the binding scope (14 functions), 3 obsolete docs archived, 6 dead/empty/mock files deleted with an import-graph proof; audit in docs/FULL_PLATFORM_AUDIT_2026-10-06.md; honesty measure 2.5/14 real, 0 usable families"
 ```
 <!-- HARNESS-STATE:END -->
 
