@@ -12,6 +12,7 @@ class FakeIdentity implements FoundationGateIdentity {
   String token;
   String subject;
   Object? failure;
+  Object? signOutFailure;
   int signInCalls = 0;
   int signUpCalls = 0;
   int currentTokenCalls = 0;
@@ -78,6 +79,7 @@ class FakeIdentity implements FoundationGateIdentity {
   @override
   Future<void> signOut() async {
     signOutCalls += 1;
+    if (signOutFailure != null) throw signOutFailure!;
   }
 
   @override

@@ -91,13 +91,42 @@ void main() {
       expect(controller.children, hasLength(1));
       expect(controller.children.single.displayName, 'Synthetic child');
 
-      await controller.signOut();
+      expect(await controller.signOut(), isTrue);
 
       expect(identity.signOutCalls, 1);
       expect(controller.phase, FoundationGatePhase.signedOut);
       expect(controller.families, isEmpty);
       expect(controller.children, isEmpty);
       expect(controller.selectedFamily, isNull);
+    },
+  );
+
+  test(
+    'provider sign-out failure keeps the authenticated family state for retry',
+    () async {
+      final identity = FakeIdentity();
+      final controller = controllerFor(
+        identity: identity,
+        discoveryTransport: FakeTransport(
+          const FoundationGateHttpResponse(statusCode: 200, body: familyBody),
+        ),
+        rosterTransport: FakeTransport(
+          const FoundationGateHttpResponse(statusCode: 200, body: rosterBody),
+        ),
+      );
+      await controller.signIn(
+        email: 'synthetic@example.test',
+        password: 'synthetic-password',
+      );
+      await controller.selectFamily(controller.families.single);
+      identity.signOutFailure = StateError('synthetic provider failure');
+
+      expect(await controller.signOut(), isFalse);
+
+      expect(identity.signOutCalls, 1);
+      expect(controller.phase, FoundationGatePhase.childrenAvailable);
+      expect(controller.selectedFamily?.id, familyId);
+      expect(controller.children, hasLength(1));
     },
   );
 

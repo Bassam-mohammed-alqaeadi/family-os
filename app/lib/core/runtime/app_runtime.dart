@@ -7,6 +7,8 @@ import 'package:family_os/core/runtime/family_policy_source.dart';
 import 'package:family_os/core/runtime/family_roster_source.dart';
 import 'package:family_os/core/runtime/identity_source.dart';
 
+typedef GuardianSignOut = Future<bool> Function();
+
 /// Application composition boundary for runtime services.
 ///
 /// New ports are added here as typed fields, rather than screens importing
@@ -19,7 +21,9 @@ final class AppRuntime extends ChangeNotifier {
     FamilyDeviceSource? devices,
     FamilyPolicySource? policies,
     FamilyCreationSource? familyCreation,
-  }) : roster = roster ?? UnavailableFamilyRosterSource(),
+    GuardianSignOut? guardianSignOut,
+  }) : _guardianSignOut = guardianSignOut,
+       roster = roster ?? UnavailableFamilyRosterSource(),
        childProfiles = childProfiles ?? UnavailableFamilyChildProfileSource(),
        devices = devices ?? UnavailableFamilyDeviceSource(),
        policies = policies ?? UnavailableFamilyPolicySource(),
@@ -32,6 +36,19 @@ final class AppRuntime extends ChangeNotifier {
   }
 
   final IdentitySource identity;
+  final GuardianSignOut? _guardianSignOut;
+
+  /// Signs out the configured guardian identity provider. An unconfigured host
+  /// fails closed instead of ending only a prototype/local identity session.
+  Future<bool> signOutGuardian() async {
+    final signOut = _guardianSignOut;
+    if (signOut == null) return false;
+    try {
+      return await signOut();
+    } catch (_) {
+      return false;
+    }
+  }
 
   /// Explicit family roster source. Its default is intentionally unavailable,
   /// never a seeded/global fallback; a normal product route must compose the

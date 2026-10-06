@@ -88,6 +88,10 @@ class _FoundationGateSessionScreenState
     await widget.controller.signIn(email: email, password: password);
   }
 
+  Future<void> _signOut() async {
+    await widget.controller.signOut();
+  }
+
   void _clearForm() {
     _emailController.clear();
     _passwordController.clear();
@@ -124,13 +128,13 @@ class _FoundationGateSessionScreenState
                 FoundationGatePhase.familiesAvailable => _FamilySelection(
                   families: widget.controller.families,
                   onSelect: widget.controller.selectFamily,
-                  onSignOut: widget.controller.signOut,
+                  onSignOut: _signOut,
                 ),
                 FoundationGatePhase.loadingRoster => ChildrenControlCentre(
                   status: ChildrenControlCentreStatus.loading,
                   family: widget.controller.selectedFamily,
                   onChooseFamily: widget.controller.returnToFamilySelection,
-                  onSignOut: widget.controller.signOut,
+                  onSignOut: _signOut,
                 ),
                 FoundationGatePhase.childrenAvailable ||
                 FoundationGatePhase.noChildren => ChildrenControlCentre(
@@ -140,7 +144,7 @@ class _FoundationGateSessionScreenState
                   family: widget.controller.selectedFamily,
                   children: widget.controller.children,
                   onChooseFamily: widget.controller.returnToFamilySelection,
-                  onSignOut: widget.controller.signOut,
+                  onSignOut: _signOut,
                   onCreateChild: _mayOfferCreateChild
                       ? widget.controller.createChild
                       : null,
@@ -148,20 +152,20 @@ class _FoundationGateSessionScreenState
                 ),
                 FoundationGatePhase.noActiveFamily => _MessageState(
                   message: copy.noActiveFamily,
-                  onSignOut: widget.controller.signOut,
+                  onSignOut: _signOut,
                 ),
                 FoundationGatePhase.sessionInvalid => _MessageState(
                   message: copy.signInAgain,
-                  onSignOut: widget.controller.signOut,
+                  onSignOut: _signOut,
                 ),
                 FoundationGatePhase.accessDenied => _MessageState(
                   message: copy.accessDenied,
-                  onSignOut: widget.controller.signOut,
+                  onSignOut: _signOut,
                 ),
                 FoundationGatePhase.rosterAccessDenied => ChildrenControlCentre(
                   status: ChildrenControlCentreStatus.accessDenied,
                   onChooseFamily: widget.controller.returnToFamilySelection,
-                  onSignOut: widget.controller.signOut,
+                  onSignOut: _signOut,
                 ),
                 FoundationGatePhase.serviceUnavailable => ChildrenControlCentre(
                   status: ChildrenControlCentreStatus.unavailable,
@@ -172,7 +176,7 @@ class _FoundationGateSessionScreenState
                   onChooseFamily: widget.controller.selectedFamily == null
                       ? null
                       : widget.controller.returnToFamilySelection,
-                  onSignOut: widget.controller.signOut,
+                  onSignOut: _signOut,
                 ),
                 FoundationGatePhase.networkUnavailable => ChildrenControlCentre(
                   status: ChildrenControlCentreStatus.networkUnavailable,
@@ -183,7 +187,7 @@ class _FoundationGateSessionScreenState
                   onChooseFamily: widget.controller.selectedFamily == null
                       ? null
                       : widget.controller.returnToFamilySelection,
-                  onSignOut: widget.controller.signOut,
+                  onSignOut: _signOut,
                 ),
                 FoundationGatePhase.unconfigured =>
                   const _UnconfiguredFoundationGateScreen(),

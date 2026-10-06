@@ -11676,10 +11676,20 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get sys3LogoutBody =>
-      'هل تريد إنهاء جلسة البالغ الحالية على هذا الجهاز؟';
+      'سيؤدي هذا إلى تسجيل خروج حساب ولي الأمر من هذا الجهاز. ستبقى بيانات الأسرة محفوظة بأمان.';
 
   @override
   String get sys3LogoutAction => 'تسجيل الخروج الآن';
+
+  @override
+  String get sys3LogoutPending => 'جارٍ تسجيل الخروج…';
+
+  @override
+  String get sys3LogoutFailure =>
+      'لم يكتمل تسجيل الخروج، لذلك بقيت جلستك الحالية مفتوحة. أعد المحاولة.';
+
+  @override
+  String get sys3LogoutRetry => 'إعادة محاولة تسجيل الخروج';
 
   @override
   String get sys3RecoveryTitle => 'استعادة الحساب';

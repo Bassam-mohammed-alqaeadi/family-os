@@ -115,12 +115,14 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     }
   }
 
-  Future<void> signOut() async {
-    await _controller.signOut();
+  Future<bool> signOut() async {
+    final signedOut = await _controller.signOut();
+    if (!signedOut) return false;
     _identityValue = const IdentitySnapshot.unavailable();
     _rosterValue = const FamilyRosterSnapshot.unavailable();
     _deviceValue = const FamilyDeviceSnapshot.unavailable();
     notifyListeners();
+    return true;
   }
 
   Future<IdentitySnapshot> refreshIdentity() async {

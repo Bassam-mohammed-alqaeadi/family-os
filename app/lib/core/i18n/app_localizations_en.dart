@@ -11844,10 +11844,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sys3LogoutTitle => 'Log out';
 
   @override
-  String get sys3LogoutBody => 'End the current adult session on this device?';
+  String get sys3LogoutBody =>
+      'This will sign the guardian account out on this device. Your family data will remain safely stored.';
 
   @override
   String get sys3LogoutAction => 'Log out now';
+
+  @override
+  String get sys3LogoutPending => 'Logging out…';
+
+  @override
+  String get sys3LogoutFailure =>
+      'Logout did not complete, so your current session remains open. Try again.';
+
+  @override
+  String get sys3LogoutRetry => 'Try logging out again';
 
   @override
   String get sys3RecoveryTitle => 'Account recovery';

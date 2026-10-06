@@ -361,13 +361,21 @@ class FoundationGateSessionController extends ChangeNotifier {
     }
   }
 
-  Future<void> signOut() async {
-    if (_creatingChild) {
-      return;
+  /// Ends the provider session before clearing any visible family state.
+  ///
+  /// A provider failure is retryable: the controller keeps the authenticated
+  /// context instead of claiming a successful logout while Firebase may still
+  /// restore the session on the next launch.
+  Future<bool> signOut() async {
+    if (_creatingChild) return false;
+    try {
+      await _identity.signOut();
+    } catch (_) {
+      return false;
     }
-    await _signOutProviderSilently();
     _clearAllVolatileState();
     _setPhase(FoundationGatePhase.signedOut);
+    return true;
   }
 
   void _clearRoster() {

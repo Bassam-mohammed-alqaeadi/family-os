@@ -134,7 +134,19 @@ void main() {
     await tester.tap(find.byKey(SettingsHubKeys.billingRow));
     await tester.pumpAndSettle();
 
-    expect(opened, containsAll(['SCR-FAT-058', 'SCR-FAT-004', 'SCR-FAT-056']));
+    await tester.ensureVisible(find.byKey(SettingsHubKeys.logoutRow));
+    await tester.tap(find.byKey(SettingsHubKeys.logoutRow));
+    await tester.pumpAndSettle();
+
+    expect(
+      opened,
+      containsAll([
+        'SCR-FAT-058',
+        'SCR-FAT-004',
+        'SCR-FAT-056',
+        '/sys3-logout',
+      ]),
+    );
   });
 
   testWidgets('SCR-FAT-025 UI-012 AC2: hub card greens after FAT-026 repair', (

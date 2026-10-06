@@ -20708,7 +20708,7 @@ abstract class AppLocalizations {
   /// No description provided for @sys3LogoutBody.
   ///
   /// In ar, this message translates to:
-  /// **'هل تريد إنهاء جلسة البالغ الحالية على هذا الجهاز؟'**
+  /// **'سيؤدي هذا إلى تسجيل خروج حساب ولي الأمر من هذا الجهاز. ستبقى بيانات الأسرة محفوظة بأمان.'**
   String get sys3LogoutBody;
 
   /// No description provided for @sys3LogoutAction.
@@ -20716,6 +20716,24 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'تسجيل الخروج الآن'**
   String get sys3LogoutAction;
+
+  /// No description provided for @sys3LogoutPending.
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ تسجيل الخروج…'**
+  String get sys3LogoutPending;
+
+  /// No description provided for @sys3LogoutFailure.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يكتمل تسجيل الخروج، لذلك بقيت جلستك الحالية مفتوحة. أعد المحاولة.'**
+  String get sys3LogoutFailure;
+
+  /// No description provided for @sys3LogoutRetry.
+  ///
+  /// In ar, this message translates to:
+  /// **'إعادة محاولة تسجيل الخروج'**
+  String get sys3LogoutRetry;
 
   /// No description provided for @sys3RecoveryTitle.
   ///

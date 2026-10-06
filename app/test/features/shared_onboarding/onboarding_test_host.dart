@@ -90,6 +90,7 @@ class OnboardingHost {
     appRuntime = AppRuntime(
       identity: identitySource,
       devices: RemoteFamilyDeviceSource(runtime),
+      guardianSignOut: runtime.signOut,
     );
   }
 

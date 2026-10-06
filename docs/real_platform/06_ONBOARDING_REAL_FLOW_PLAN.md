@@ -46,7 +46,7 @@ token or raw provider text ever reaches the UI or logs).
 - [x] A2 Sign-up never advances on failure; never traps after success
 - [x] A3 Sign-in routes "no family yet" to setup
 - [x] A4 Pairing success → child home; cold start into child home when natively paired
-- [ ] A5 Sign-out from guardian shell clears session + returns to welcome (verify end-to-end on phone)
+- [x] A5 Sign-out from guardian shell clears the Firebase provider session and volatile family/roster/device state before returning to welcome; provider failure keeps the session open with an inline Retry state (physical-phone pass remains in §5)
 - [ ] A6 Session expiry mid-journey → `signInAgain` → return to the *same* step after re-auth
 
 ### Wave B — Screen polish, one screen at a time (UX = real states)

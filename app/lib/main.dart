@@ -275,6 +275,7 @@ class _FamilyOsAppState extends State<FamilyOsApp> {
       familyCreation: foundationRuntime == null
           ? null
           : RemoteFamilyCreationSource(foundationRuntime),
+      guardianSignOut: foundationRuntime?.signOut,
       policies: UnavailableFamilyPolicySource(),
     );
     if (widget.roleController != null) {

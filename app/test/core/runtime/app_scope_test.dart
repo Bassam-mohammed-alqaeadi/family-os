@@ -69,6 +69,30 @@ void main() {
     expect(refreshed.familyId, FamilyId('fam_real'));
     expect(refreshed.isRemoteAuthoritative, isTrue);
   });
+
+  test('guardian sign-out fails closed without a configured provider command', () async {
+    final runtime = AppRuntime(
+      identity: _FakeIdentitySource(const IdentitySnapshot.unavailable()),
+    );
+    addTearDown(runtime.dispose);
+
+    expect(await runtime.signOutGuardian(), isFalse);
+  });
+
+  test('guardian sign-out delegates to its provider command', () async {
+    var calls = 0;
+    final runtime = AppRuntime(
+      identity: _FakeIdentitySource(const IdentitySnapshot.unavailable()),
+      guardianSignOut: () async {
+        calls += 1;
+        return true;
+      },
+    );
+    addTearDown(runtime.dispose);
+
+    expect(await runtime.signOutGuardian(), isTrue);
+    expect(calls, 1);
+  });
 }
 
 IdentitySnapshot _remoteFamilySnapshot() {

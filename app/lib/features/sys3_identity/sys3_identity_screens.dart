@@ -9,6 +9,7 @@ import 'package:family_os/core/identity/identity_models.dart';
 import 'package:family_os/core/identity/identity_runtime.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/runtime/app_scope.dart';
 
 abstract final class Sys3Keys {
   static const mockBanner = Key('sys3_mock_honesty');
@@ -46,12 +47,14 @@ class _Sys3Page extends StatelessWidget {
     required this.title,
     required this.body,
     required this.children,
+    this.showMockBanner = true,
   });
 
   final Key screenKey;
   final String title;
   final String body;
   final List<Widget> children;
+  final bool showMockBanner;
 
   @override
   Widget build(BuildContext context) {
@@ -84,12 +87,14 @@ class _Sys3Page extends StatelessWidget {
                 height: 1.45,
               ),
             ),
-            const SizedBox(height: 12),
-            BannerNote(
-              key: Sys3Keys.mockBanner,
-              message: AppLocalizations.of(context).sys3MockHonesty,
-              variant: BannerVariant.a,
-            ),
+            if (showMockBanner) ...[
+              const SizedBox(height: 12),
+              BannerNote(
+                key: Sys3Keys.mockBanner,
+                message: AppLocalizations.of(context).sys3MockHonesty,
+                variant: BannerVariant.a,
+              ),
+            ],
             const SizedBox(height: 14),
             ...children,
           ],
@@ -186,14 +191,74 @@ class SessionExpiredScreen extends StatelessWidget {
 }
 
 class LogoutConfirmScreen extends StatefulWidget {
-  const LogoutConfirmScreen({super.key});
+  const LogoutConfirmScreen({
+    super.key,
+    this.signOut,
+    this.onSignedOut,
+  });
+
+  /// Test seam. Production resolves the configured provider sign-out command
+  /// from [AppScope].
+  final Future<bool> Function()? signOut;
+  final VoidCallback? onSignedOut;
 
   @override
   State<LogoutConfirmScreen> createState() => _LogoutConfirmScreenState();
 }
 
 class _LogoutConfirmScreenState extends State<LogoutConfirmScreen> {
-  bool? _done;
+  var _busy = false;
+  var _failed = false;
+  var _localCompatibilityDone = false;
+
+  Future<void> _signOut() async {
+    if (_busy) return;
+    final appRuntime = AppScope.maybeOf(context);
+    setState(() {
+      _busy = true;
+      _failed = false;
+    });
+
+    var signedOut = false;
+    try {
+      final command = widget.signOut;
+      if (command != null) {
+        signedOut = await command();
+      } else if (appRuntime != null) {
+        signedOut = await appRuntime.signOutGuardian();
+      } else {
+        // Isolated System #3 compatibility host only. The normal application
+        // always has AppScope and can never report this local operation as a
+        // provider logout.
+        signedOut = _runtime(context).logoutCurrentSession();
+      }
+    } catch (_) {
+      signedOut = false;
+    }
+    if (!mounted) return;
+
+    if (!signedOut) {
+      setState(() {
+        _busy = false;
+        _failed = true;
+      });
+      return;
+    }
+
+    final onSignedOut = widget.onSignedOut;
+    if (onSignedOut != null) {
+      onSignedOut();
+      return;
+    }
+    if (appRuntime != null) {
+      context.go('/scr-shr-001');
+      return;
+    }
+    setState(() {
+      _busy = false;
+      _localCompatibilityDone = true;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -202,17 +267,27 @@ class _LogoutConfirmScreenState extends State<LogoutConfirmScreen> {
       screenKey: Sys3Keys.logout,
       title: l10n.sys3LogoutTitle,
       body: l10n.sys3LogoutBody,
+      showMockBanner: false,
       children: [
-        if (_done != null)
-          _result(l10n, success: _done!)
-        else
+        if (_localCompatibilityDone)
+          _result(l10n, success: true)
+        else if (_failed) ...[
+          _result(
+            l10n,
+            success: false,
+            message: l10n.sys3LogoutFailure,
+          ),
+          const SizedBox(height: 12),
+          PrimaryBtn(
+            key: const Key('sys3_logout_retry'),
+            label: l10n.sys3LogoutRetry,
+            onPressed: _signOut,
+          ),
+        ] else
           PrimaryBtn(
             key: const Key('sys3_logout_action'),
-            label: l10n.sys3LogoutAction,
-            onPressed: () {
-              final ok = _runtime(context).logoutCurrentSession();
-              setState(() => _done = ok);
-            },
+            label: _busy ? l10n.sys3LogoutPending : l10n.sys3LogoutAction,
+            onPressed: _busy ? null : _signOut,
           ),
       ],
     );
