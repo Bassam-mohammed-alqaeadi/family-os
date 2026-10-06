@@ -127,6 +127,9 @@ class NativeChildPairingCopy {
       : 'The e-mail is not verified yet. Make sure you opened the link sent to the registered address.';
   String get emailVerified =>
       isArabic ? 'تم تأكيد البريد الإلكتروني' : 'E-mail verified';
+  String get emailVerificationSuccess => isArabic
+      ? 'تم تأكيد الإيميل بنجاح'
+      : 'E-mail verified successfully';
   String get checkingVerification => isArabic ? 'جارٍ التحقق…' : 'Checking…';
   String expiresIn(Duration remaining) {
     final m = remaining.inMinutes;

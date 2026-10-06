@@ -564,14 +564,16 @@ class OnboardingFooterLink extends StatelessWidget {
   }
 }
 
-/// Standard scaffold for onboarding: app bar with back affordance only when
-/// the router can pop, bounded content width on tablets, keyboard-safe list.
+/// Standard scaffold for onboarding: app bar with normal back navigation or
+/// an explicit safe fallback after route replacement, bounded content width on
+/// tablets, and a keyboard-safe list.
 class OnboardingScaffold extends StatelessWidget {
   const OnboardingScaffold({
     super.key,
     required this.children,
     this.appBarTitle,
     this.controller,
+    this.onBackWhenCannotPop,
     this.autofill = false,
   });
 
@@ -585,6 +587,11 @@ class OnboardingScaffold extends StatelessWidget {
   /// Optional controller so screens can bring an inline notice into view.
   final ScrollController? controller;
 
+  /// Fallback used when this route replaced the previous onboarding step and
+  /// therefore cannot be popped. A normal navigator back action still takes
+  /// precedence whenever one is available.
+  final VoidCallback? onBackWhenCannotPop;
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<FamilyColors>()!;
@@ -594,6 +601,11 @@ class OnboardingScaffold extends StatelessWidget {
         backgroundColor: colors.bg,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
+        leading:
+            ModalRoute.of(context)?.canPop == true ||
+                onBackWhenCannotPop == null
+            ? null
+            : BackButton(onPressed: onBackWhenCannotPop),
         title: appBarTitle == null
             ? null
             : Text(

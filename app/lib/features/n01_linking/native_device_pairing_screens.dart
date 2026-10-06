@@ -134,10 +134,21 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
     });
     if (verified) {
       _stopVerificationPoll();
+      if (wasUnverified) {
+        HapticFeedback.mediumImpact();
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(copy.emailVerificationSuccess),
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+      }
       // The link was clicked (on this phone or any other device): continue
       // hands-free — no tap required.
       if (wasUnverified && _pairing == null && !_loading) {
-        HapticFeedback.mediumImpact();
         setState(() => _autoContinuing = true);
         await _create();
         if (mounted) setState(() => _autoContinuing = false);
@@ -303,10 +314,7 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
         title: Text(copy.parentTitle),
         leading: ModalRoute.of(context)?.canPop == true
             ? const BackButton()
-            : IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => context.go('/scr-fat-002'),
-              ),
+            : BackButton(onPressed: () => context.go('/scr-fat-002')),
       ),
       body: SafeArea(
         child: ListView(
@@ -327,6 +335,10 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
               controller: _label,
               maxLength: 80,
               enabled: !_loading && !_childConnected,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) {
+                if (_canCreate) _create();
+              },
               decoration: InputDecoration(
                 labelText: copy.deviceNameLabel,
                 hintText: copy.deviceNameHint,

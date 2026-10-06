@@ -210,6 +210,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
     return OnboardingScaffold(
       controller: _scroll,
       appBarTitle: '2 / 3',
+      onBackWhenCannotPop: () => context.go('/scr-fat-002'),
       children: [
         OnboardingHeader(
           icon: Icons.child_care_rounded,
@@ -272,38 +273,58 @@ class _AddChildScreenState extends State<AddChildScreen> {
         _FieldLabel(copy.childAgeLabel, colors),
         Padding(
           padding: const EdgeInsets.only(bottom: 14),
-          child: Semantics(
-            label: copy.childAgeLabel,
-            child: Wrap(
-              key: AddChildKeys.age,
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final age in kAddChildAges)
-                  ChoiceChip(
-                    key: Key('add_child_age_$age'),
-                    label: Text(
-                      '$age',
-                      textDirection: TextDirection.ltr,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        color: _age == age ? Colors.white : colors.ink,
-                      ),
-                    ),
-                    selected: _age == age,
-                    showCheckmark: false,
-                    selectedColor: colors.p500,
-                    backgroundColor: colors.surface,
-                    side: BorderSide(
-                      color: _age == age ? colors.p500 : colors.border,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(radii.pill),
-                    ),
-                    onSelected: busy ? null : (_) => setState(() => _age = age),
-                  ),
-              ],
+          child: DropdownButtonFormField<int>(
+            key: AddChildKeys.age,
+            initialValue: _age,
+            isExpanded: true,
+            menuMaxHeight: 320,
+            borderRadius: BorderRadius.circular(radii.input),
+            icon: const Icon(Icons.keyboard_arrow_down_rounded),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: busy
+                  ? colors.surface.withValues(alpha: 0.6)
+                  : colors.surface,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 12,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(radii.input),
+                borderSide: BorderSide(color: colors.border, width: 1.5),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(radii.input),
+                borderSide: BorderSide(color: colors.border, width: 1.5),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(radii.input),
+                borderSide: BorderSide(color: colors.p400, width: 2),
+              ),
+              disabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(radii.input),
+                borderSide: BorderSide(color: colors.border, width: 1.5),
+              ),
             ),
+            items: [
+              for (final age in kAddChildAges)
+                DropdownMenuItem<int>(
+                  value: age,
+                  child: Text(
+                    copy.ageYears(age),
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: colors.ink,
+                    ),
+                  ),
+                ),
+            ],
+            onChanged: busy
+                ? null
+                : (age) {
+                    if (age != null) setState(() => _age = age);
+                  },
           ),
         ),
         _FieldLabel(copy.childCharacterLabel, colors),

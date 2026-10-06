@@ -33,6 +33,7 @@ List<GoRoute> _routes() => [
         Scaffold(body: Text('pair:${state.uri.query}')),
   ),
   placeholderRoute('/scr-fat-001', 'SCR-FAT-001'),
+  placeholderRoute('/scr-fat-002', 'SCR-FAT-002'),
 ];
 
 (AppRuntime, RecordingChildProfileSource) _runtime({
@@ -69,6 +70,26 @@ void main() {
     expect(source.calls, isEmpty);
   });
 
+  testWidgets('uses a compact age dropdown and keeps a safe back route', (
+    tester,
+  ) async {
+    final (runtime, _) = _runtime();
+    final router = await pumpWithRouter(
+      tester,
+      runtime: runtime,
+      initialLocation: '/scr-fat-003',
+      routes: _routes(),
+    );
+
+    expect(find.byType(DropdownButtonFormField<int>), findsOneWidget);
+    expect(find.byType(ChoiceChip), findsNothing);
+    expect(find.byType(BackButton), findsOneWidget);
+
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(router.state.uri.path, '/scr-fat-002');
+  });
+
   testWidgets('saves exactly the chosen draft and routes to pairing', (
     tester,
   ) async {
@@ -81,7 +102,11 @@ void main() {
     );
 
     await tester.enterText(find.byKey(AddChildKeys.name), ' سارة ');
-    await tester.tap(find.byKey(const Key('add_child_age_7')));
+    await tester.ensureVisible(find.byKey(AddChildKeys.age));
+    await tester.tap(find.byKey(AddChildKeys.age));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('7 سنة').last);
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(AddChildKeys.character(3)));
     await tester.ensureVisible(find.byKey(AddChildKeys.color(4)));
     await tester.tap(find.byKey(AddChildKeys.color(4)));

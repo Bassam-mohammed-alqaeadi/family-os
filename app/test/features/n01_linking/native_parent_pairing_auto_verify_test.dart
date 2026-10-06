@@ -68,6 +68,7 @@ void main() {
 
       expect(devices.postedUri?.path, contains('/device-pairings'));
       expect(find.textContaining('بانتظار تأكيدك'), findsNothing);
+      expect(find.text('تم تأكيد الإيميل بنجاح'), findsOneWidget);
       // The six digits are shown verbatim (no grouping/spaces) in a large
       // bold style so the guardian can read them aloud.
       final digits = tester.widget<SelectableText>(

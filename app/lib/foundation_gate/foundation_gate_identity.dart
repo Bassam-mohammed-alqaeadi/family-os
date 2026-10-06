@@ -176,6 +176,12 @@ class FirebaseEmailPasswordIdentity implements FoundationGateIdentity {
       if (reload) {
         await user.reload();
         user = _auth.currentUser ?? user;
+        if (user.emailVerified) {
+          // Reload refreshes the user profile, but Firebase can still serve the
+          // previously cached ID token. Force a refresh so the next backend
+          // request carries the updated email_verified claim.
+          await user.getIdToken(true);
+        }
       }
       return user.emailVerified;
     } on FirebaseAuthException catch (error) {
