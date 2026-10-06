@@ -295,10 +295,11 @@ const Map<String, String> legacyRedirectPaths = {
   '/scr-fat-077': '/scr-fat-075',
 };
 
-/// Builds the app [GoRouter] with gallery + every **active** CSV screen route.
+/// Builds the app [GoRouter] with every **active** CSV screen route.
 ///
-/// Product entry is welcome (`/scr-shr-001`); design gallery at `/gallery`;
-/// QA catalog at `/dev-screens` ([DevScreenGallery]).
+/// Product entry is welcome (`/scr-shr-001`). The design showcase - the token gallery at
+/// `/gallery` and the QA catalog at `/dev-screens` ([DevScreenGallery]) - is registered
+/// only when [showcaseEnabled] is true, and never in a release build.
 /// Tombstone deep links (e.g. `/scr-fat-039`) redirect to [tombstoneSchoolRedirectTarget].
 /// Legacy paths in [legacyRedirectPaths] redirect before RoleGuard.
 /// System #3 identity routes (sys3_*) are appended via [sys3IdentityRoutes].
