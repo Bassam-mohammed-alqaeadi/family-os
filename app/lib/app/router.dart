@@ -368,10 +368,7 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-fat-004',
       name: 'SCR-FAT-004',
-      builder: (context, state) => NativeParentPairingScreen(
-        childId: state.uri.queryParameters['childId'],
-        childName: state.uri.queryParameters['childName'],
-      ),
+      builder: (context, state) => NativeParentPairingScreen(childId: state.uri.queryParameters['childId'], childName: state.uri.queryParameters['childName']),
     ),
     GoRoute(
       path: '/scr-fat-005',

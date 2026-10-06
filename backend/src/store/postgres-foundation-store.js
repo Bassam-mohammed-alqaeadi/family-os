@@ -475,27 +475,31 @@ export class PostgresFoundationStore {
           'Only active guardian memberships can access child context.',
         );
       }
-      // The family and child identifiers are constrained in the same predicate,
-      // so a valid child UUID from another tenant is indistinguishable from an
-      // unknown child UUID. The aggregate exposes setup facts only; no device
-      // label, battery, location or policy detail crosses this boundary.
+      // Resolve child existence from the same family-scoped predicate used by
+      // the roster. Optional device setup is read through scalar aggregates;
+      // it must never participate in deciding whether the child exists. This
+      // is especially important for a newly created child, which has no device
+      // row yet. A valid child UUID from another tenant remains
+      // indistinguishable from an unknown child UUID.
       const result = await client.query(
         `SELECT child.id, child.display_name, child.age_years,
                 child.avatar_emoji, child.theme_color, child.version,
                 child.created_at, child.updated_at,
-                COUNT(device.id)::integer AS device_count,
-                MAX(device.last_seen_at) AS latest_device_seen_at,
+                (SELECT COUNT(*)::integer
+                   FROM family_child_devices AS device
+                  WHERE device.family_id = child.family_id
+                    AND device.child_id = child.id) AS device_count,
+                (SELECT MAX(device.last_seen_at)
+                   FROM family_child_devices AS device
+                  WHERE device.family_id = child.family_id
+                    AND device.child_id = child.id) AS latest_device_seen_at,
                 NOW() AS observed_at,
                 NOW() + INTERVAL '5 minutes' AS permissions_expires_at
          FROM family_children AS child
-         LEFT JOIN family_child_devices AS device
-           ON device.family_id = child.family_id
-          AND device.child_id = child.id
-         WHERE child.family_id = $1 AND child.id = $2
-         GROUP BY child.id`,
+         WHERE child.family_id = $1 AND child.id = $2`,
         [familyId, childId],
       );
-      if (result.rowCount === 0) {
+      if (result.rows.length === 0) {
         throw new HttpError(404, 'family_child_not_found', 'Child was not found in this family.');
       }
       return childContextView(result.rows[0], actor);

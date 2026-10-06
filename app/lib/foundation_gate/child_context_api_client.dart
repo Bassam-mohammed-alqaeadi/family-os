@@ -73,8 +73,13 @@ final class ChildContextApiClient {
           FamilyChildContextFailure.accessDenied,
         );
       case 404:
-        throw const FamilyChildContextApiException(
-          FamilyChildContextFailure.notFound,
+        // Only the resource-specific server code proves that the scoped child
+        // does not exist. A proxy/server route miss is not child truth and must
+        // never be rendered as “Child not found”.
+        throw FamilyChildContextApiException(
+          _errorCode(response.body) == 'family_child_not_found'
+              ? FamilyChildContextFailure.notFound
+              : FamilyChildContextFailure.invalidResponse,
         );
       case 429:
       case 503:
@@ -265,6 +270,19 @@ final class ChildContextApiClient {
       }
     }
     return scopes;
+  }
+
+  String? _errorCode(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is! Map<String, Object?>) return null;
+      final error = decoded['error'];
+      if (error is! Map<String, Object?>) return null;
+      final code = error['code'];
+      return code is String ? code : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   FamilyChildContextFailure _mapTransportFailure(

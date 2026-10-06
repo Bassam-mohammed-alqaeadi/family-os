@@ -349,8 +349,64 @@ test('PostgreSQL child context is tenant-bound, fresh, narrow and read-only', as
     '4a3846da-8f5f-4f2b-b7ea-8a0afcd989fb',
   ]);
   assert.match(contextRead.sql, /WHERE child\.family_id = \$1 AND child\.id = \$2/);
+  assert.match(contextRead.sql, /SELECT COUNT\(\*\)::integer/);
+  assert.equal(/LEFT JOIN|GROUP BY/i.test(contextRead.sql), false);
   assert.equal(/battery_level|location_|policy/i.test(contextRead.sql), false);
   assert.equal(statements.some((statement) => /^\s*(?:INSERT|UPDATE|DELETE)\b/i.test(statement.sql)), false);
+});
+
+test('PostgreSQL context returns a newly-created child even when no optional device row exists', async () => {
+  const client = {
+    async query(sql) {
+      if (sql === 'BEGIN' || sql === 'COMMIT' || sql === 'ROLLBACK') {
+        return { rows: [] };
+      }
+      if (sql.includes('FROM family_memberships AS membership')) {
+        return {
+          rows: [{ id: 'member', role: 'primary_guardian', version: 1 }],
+        };
+      }
+      if (sql.includes('FROM family_children AS child')) {
+        return {
+          // Deliberately omit rowCount: child existence is a property of the
+          // returned rows, not optional driver command metadata.
+          rows: [{
+            id: '4a3846da-8f5f-4f2b-b7ea-8a0afcd989fb',
+            display_name: 'New child',
+            age_years: 7,
+            avatar_emoji: '🦁',
+            theme_color: 'purple',
+            version: 1,
+            created_at: '2026-10-07T09:00:00.000Z',
+            updated_at: '2026-10-07T09:00:00.000Z',
+            device_count: 0,
+            latest_device_seen_at: null,
+            observed_at: new Date('2026-10-07T09:01:00.000Z'),
+            permissions_expires_at: new Date('2026-10-07T09:06:00.000Z'),
+          }],
+        };
+      }
+      throw new Error(`Unexpected query: ${sql}`);
+    },
+    release() {},
+  };
+  const store = new PostgresFoundationStore({
+    connectionString: 'postgresql://unused-in-test',
+    pool: { async connect() { return client; }, async end() {} },
+  });
+
+  const result = await store.getFamilyChildContext({
+    principal: { subject: 'guardian-a' },
+    familyId: '6dbb6760-f609-4f3e-a29f-4c209dc1d53b',
+    childId: '4a3846da-8f5f-4f2b-b7ea-8a0afcd989fb',
+  });
+
+  assert.equal(result.child.displayName, 'New child');
+  assert.deepEqual(result.setup, {
+    deviceState: 'not_linked',
+    deviceCount: 0,
+    observedAt: '2026-10-07T09:01:00.000Z',
+  });
 });
 
 test('PostgreSQL child context returns tenant-safe not-found when the scoped child query has no row', async () => {

@@ -58,7 +58,9 @@ void main() {
         _Transport(
           response: FoundationGateHttpResponse(
             statusCode: entry.key,
-            body: '{}',
+            body: entry.key == 404
+                ? '{"error":{"code":"family_child_not_found","message":"Not found"}}'
+                : '{}',
           ),
         ),
       );
@@ -77,6 +79,29 @@ void main() {
         ),
       );
     }
+  });
+
+  test('does not misreport an API route miss as a missing child', () async {
+    final client = _client(
+      _Transport(
+        response: const FoundationGateHttpResponse(
+          statusCode: 404,
+          body:
+              '{"error":{"code":"route_not_found","message":"Route was not found."}}',
+        ),
+      ),
+    );
+
+    await expectLater(
+      client.get(familyId: familyId, childId: childId, idToken: 'token'),
+      throwsA(
+        isA<FamilyChildContextApiException>().having(
+          (error) => error.failure,
+          'failure',
+          FamilyChildContextFailure.invalidResponse,
+        ),
+      ),
+    );
   });
 
   test('fails closed on unknown fields, mismatched ids and stale snapshots', () async {
