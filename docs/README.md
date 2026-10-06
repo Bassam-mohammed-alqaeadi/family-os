@@ -15,6 +15,7 @@
 | **٢** | [`03_HARNESS.md`](AGENTIC_HARNESS_LOOP.md) + [`harness/LOOP_STATE.md`](harness/LOOP_STATE.md) | **منهج التنفيذ**: البطاقات، المراحل، البوابات، والحالة الآلية | يُنفَّذ آلياً بـ`tools/harness/` |
 | **٣** | [`harness/TASK_CARD_TEMPLATE.md`](harness/TASK_CARD_TEMPLATE.md) | **قالب البطاقة**: بوابة الروابط الخمسة + بوابة الربط السطحي + بوابة البيئة | إلزامي لكل بطاقة |
 | **٤** | [`04_GITHUB_METHOD.md`](GIT_AND_GITHUB_OPERATING_METHOD.md) | **منهج العمل**: الالتزامات، الدفع، الاسترجاع، ولاية GitHub | ثابت |
+| **٤٫١** | [`harness/MOCK_INVENTORY.md`](harness/MOCK_INVENTORY.md) | **حدّ الـmock الملزم**: كل وهمي واصل لمسار الإنتاج، بأثره وطريق إغلاقه — يحرسه `mock_isolation_test.dart` | يُحدَّث مع كل تغيّر في العدد، ولا يصعد خفيةً |
 | **٥** | [`05_EXECUTIVE_MODEL.md`](EXECUTIVE_OPERATING_MODEL.md) | **الحوكمة والإيراد**: سلّم 2028 والقرارات التنفيذية | تُحدَّث بقرار مالك |
 | **٦** | [`06_DECISIONS.md`](OPEN_DECISIONS.md) | **القرارات**: المفتوحة والمحسومة | تُحدَّث عند كل قرار |
 
