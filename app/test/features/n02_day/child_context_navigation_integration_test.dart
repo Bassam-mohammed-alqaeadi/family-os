@@ -74,15 +74,8 @@ void main() {
           runtime: runtime,
           child: MaterialApp.router(
             debugShowCheckedModeBanner: false,
-            theme: ThemeData.light().copyWith(
-              extensions: const [
-                FamilyColors.light,
-                FamilySpacing.standard,
-                FamilyRadii.standard,
-                FamilyMotion.standard,
-                FamilyTypography.light,
-              ],
-            ),
+            theme: buildFamilyTheme(),
+            locale: const Locale('en'),
             localizationsDelegates: const [
               AppLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
@@ -114,7 +107,7 @@ void main() {
       router.go('/scr-fat-012');
       await tester.pumpAndSettle();
 
-      final childCard = find.byKey(const ValueKey('child-card-$_childId'));
+      final childCard = find.byKey(ChildrenListKeys.childRow(_childId));
       expect(childCard, findsOneWidget);
       await tester.tap(childCard);
       await tester.pumpAndSettle();
@@ -176,7 +169,7 @@ final class _CreatedRosterSource extends ChangeNotifier
       _value = FamilyRosterSnapshot(
         familyId: familyId,
         origin: RuntimeDataOrigin.remoteAuthoritative,
-        observedAt: DateTime.utc(2026, 10, 7),
+        observedAt: DateTime.now().toUtc(),
         children: [
           FamilyRosterChild(
             childId: ChildId(_childId),
@@ -206,27 +199,31 @@ final class _RecordingContextSource implements FamilyChildContextSource {
   }) async {
     calls.add((familyId: familyId, childId: childId));
     final draft = server.draft!;
-    return FamilyChildContextResult.available(
-      FamilyChildContextSnapshot(
+    final observedAt = DateTime.now().toUtc();
+    return FamilyChildContextResult.ready(
+      FamilyChildContext(
         familyId: familyId,
         childId: childId,
         displayName: draft.displayName,
         ageYears: draft.ageYears,
         avatarEmoji: draft.avatarEmoji,
         themeColor: draft.themeColor,
-        setup: const FamilyChildSetupStatus(
-          hasLinkedDevice: false,
-          linkedDeviceCount: 0,
-          latestDeviceSeenAt: null,
+        version: 1,
+        createdAt: observedAt,
+        updatedAt: observedAt,
+        deviceState: FamilyChildDeviceSetupState.notLinked,
+        deviceCount: 0,
+        observedAt: observedAt,
+        permissionSnapshot: PermissionSnapshotV1(
+          policyVersion: 1,
+          role: FamilyChildContextRole.primaryGuardian,
+          scopes: const {
+            FamilyChildPermissionScope.read,
+            FamilyChildPermissionScope.createDevicePairing,
+          },
+          observedAt: observedAt,
+          expiresAt: observedAt.add(const Duration(minutes: 5)),
         ),
-        permissions: FamilyChildPermissionSnapshot(
-          scopes: const ['child.profile.read', 'child.setup.read'],
-          canViewContext: true,
-          canManageSetup: true,
-          expiresAt: DateTime.utc(2026, 10, 7, 1),
-        ),
-        observedAt: DateTime.utc(2026, 10, 7),
-        origin: RuntimeDataOrigin.remoteAuthoritative,
       ),
     );
   }
