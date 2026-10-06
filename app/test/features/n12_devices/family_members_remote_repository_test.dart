@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:family_os/core/domain/identity_ids.dart';
-import 'package:family_os/features/n02_day/children_list_local_repository.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
 import 'package:family_os/features/n12_devices/family_members_remote_repository.dart';

@@ -23,6 +23,7 @@ import 'package:family_os/features/n12_devices/family_members_role_labels.dart';
 import 'package:family_os/features/n12_devices/family_members_repository.dart';
 import 'package:family_os/features/n12_devices/family_members_screen.dart';
 import 'package:family_os/foundation_gate/family_membership_api_client.dart';
+import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
 void main() {
   testWidgets('SCR-FAT-027 empty → AppEmptyState + owner invite CTA', (
@@ -757,3 +758,93 @@ final List<FamilyMemberEntry> _ownerOnlyFixture = [
     status: FamilyMembershipStatus.active,
   ),
 ];
+
+
+/// The command seam the screen is given, recording exactly what it was asked to do.
+///
+/// A screen that draws its own success is the failure this seam exists to catch, so this
+/// records the three facts that matter: which membership was acted on, which reason code
+/// told the server what kind of change it was, and that every call carried its own
+/// idempotency key. `fail` refuses the way a server refusal arrives.
+final class _RecordingCommands implements FamilyMembershipCommands {
+  _RecordingCommands({this.fail = false});
+
+  final bool fail;
+
+  final List<String> invited = [];
+  final List<String> accepted = [];
+  final List<String> revoked = [];
+  String? lastReasonCode;
+  String? lastIdempotencyKey;
+
+  void _refuseIfAsked() {
+    if (fail) {
+      throw const FoundationGateApiException(
+        FoundationGateApiFailure.serviceUnavailable,
+      );
+    }
+  }
+
+  @override
+  Future<FoundationGateMembership> invite({
+    required FamilyId familyId,
+    required String role,
+    required String targetSubject,
+    required String idempotencyKey,
+  }) async {
+    _refuseIfAsked();
+    invited.add(targetSubject);
+    lastIdempotencyKey = idempotencyKey;
+    return _commandResult(id: 'member_invited', role: role, status: 'invited');
+  }
+
+  @override
+  Future<FoundationGateMembership> accept({
+    required FamilyId familyId,
+    required String membershipId,
+    required String idempotencyKey,
+  }) async {
+    _refuseIfAsked();
+    accepted.add(membershipId);
+    lastIdempotencyKey = idempotencyKey;
+    return _commandResult(
+      id: membershipId,
+      role: 'co_guardian',
+      status: 'active',
+    );
+  }
+
+  @override
+  Future<FoundationGateMembership> revoke({
+    required FamilyId familyId,
+    required String membershipId,
+    required String reasonCode,
+    required String idempotencyKey,
+  }) async {
+    _refuseIfAsked();
+    revoked.add(membershipId);
+    lastReasonCode = reasonCode;
+    lastIdempotencyKey = idempotencyKey;
+    return _commandResult(
+      id: membershipId,
+      role: 'co_guardian',
+      status: reasonCode == 'invitation_withdrawn' ? 'revoked' : 'removed',
+    );
+  }
+
+  FoundationGateMembership _commandResult({
+    required String id,
+    required String role,
+    required String status,
+  }) => FoundationGateMembership(
+    id: id,
+    role: role,
+    status: status,
+    statusReasonCode: null,
+    version: 1,
+    isSelf: false,
+    joinedAt: null,
+    statusChangedAt: null,
+    createdAt: DateTime.utc(2026, 10, 7),
+  );
+}

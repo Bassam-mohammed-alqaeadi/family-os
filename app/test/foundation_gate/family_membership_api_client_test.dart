@@ -177,7 +177,7 @@ void main() {
 
   test('every server refusal maps to a named failure, including 404', () async {
     Future<FoundationGateApiFailure> failureOf(
-      FoundationGateApiFailure Function(FamilyMembershipApiClient client) call,
+      Future<void> Function(FamilyMembershipApiClient client) call,
       int statusCode,
     ) async {
       final transport = FakeTransport(

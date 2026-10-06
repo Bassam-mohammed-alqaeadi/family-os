@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 
+import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/domain/mother_level.dart';
+import 'package:family_os/foundation_gate/family_membership_api_client.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
 
 /// Where a membership stands, in the server's own vocabulary.
@@ -93,6 +95,35 @@ final class FamilyMemberEntry {
 /// Rule 25 seam — family roster for SCR-FAT-027 (Drift later).
 abstract class FamilyMembersRepository {
   Future<List<FamilyMemberEntry>> listMembers({String? familyId});
+}
+
+/// The three writes the members screen performs, as one seam.
+///
+/// It returns the server's membership rather than a bool, so what the screen shows after a
+/// command is what the server said the membership became rather than what the screen hoped.
+/// It lives beside the repository because both are the product's expectations of the
+/// server, and the implementation that talks to the API lives in
+/// `family_members_remote_repository.dart`.
+abstract class FamilyMembershipCommands {
+  Future<FoundationGateMembership> invite({
+    required FamilyId familyId,
+    required String role,
+    required String targetSubject,
+    required String idempotencyKey,
+  });
+
+  Future<FoundationGateMembership> accept({
+    required FamilyId familyId,
+    required String membershipId,
+    required String idempotencyKey,
+  });
+
+  Future<FoundationGateMembership> revoke({
+    required FamilyId familyId,
+    required String membershipId,
+    required String reasonCode,
+    required String idempotencyKey,
+  });
 }
 
 /// A members repository that can also say where its children rows came from.

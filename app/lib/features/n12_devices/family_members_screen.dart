@@ -171,7 +171,10 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
   /// Where the children rows came from. The repository answers when it can; when it does
   /// not, the children list repository still knows, because that is where the rows live.
   Future<String?> _provenanceFor(String familyId) async {
-    final source = _repo;
+    // Typed as Object on purpose: a local typed FamilyMembersRepository would not promote
+    // to FamilyMembersProvenanceSource, because neither interface is a subtype of the
+    // other. Typing the local as Object makes the capability check below decide the type.
+    final Object source = _repo;
     if (source is FamilyMembersProvenanceSource) {
       return source.loadProvenance(familyId: FamilyId(familyId));
     }

@@ -25,33 +25,6 @@ import 'package:family_os/foundation_gate/main_app_foundation_runtime.dart';
 typedef MembershipRosterLoader =
     Future<List<FoundationGateMembership>> Function(FamilyId familyId);
 
-/// The three writes the members screen performs, as one seam.
-///
-/// Returning the server's membership rather than a bool keeps the screen honest: what it
-/// shows after a command is what the server said the membership became, not what the screen
-/// hoped it became.
-abstract class FamilyMembershipCommands {
-  Future<FoundationGateMembership> invite({
-    required FamilyId familyId,
-    required String role,
-    required String targetSubject,
-    required String idempotencyKey,
-  });
-
-  Future<FoundationGateMembership> accept({
-    required FamilyId familyId,
-    required String membershipId,
-    required String idempotencyKey,
-  });
-
-  Future<FoundationGateMembership> revoke({
-    required FamilyId familyId,
-    required String membershipId,
-    required String reasonCode,
-    required String idempotencyKey,
-  });
-}
-
 final class RemoteFamilyMembersRepository
     implements FamilyMembersRepository, FamilyMembersProvenanceSource {
   RemoteFamilyMembersRepository({

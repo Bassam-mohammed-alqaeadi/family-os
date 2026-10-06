@@ -197,6 +197,7 @@ class FoundationGateSessionController extends ChangeNotifier {
           FoundationGateApiFailure.accessDenied =>
             FoundationGateChildCreateResult.accessDenied,
           FoundationGateApiFailure.invalidInput ||
+          FoundationGateApiFailure.notFound ||
           FoundationGateApiFailure.conflict ||
           FoundationGateApiFailure.serviceUnavailable ||
           FoundationGateApiFailure.networkUnavailable ||
@@ -229,9 +230,11 @@ class FoundationGateSessionController extends ChangeNotifier {
           // of presenting it as the current roster while the form retries.
           await _handleRosterFailure(error.failure);
           return FoundationGateChildCreateResult.serviceUnavailable;
+        case FoundationGateApiFailure.notFound:
         case FoundationGateApiFailure.networkUnavailable:
         case FoundationGateApiFailure.invalidResponse:
-          // A malformed or lost response cannot prove that no write happened.
+          // A missing record, a malformed response or a lost one cannot prove that no
+          // write happened, so the roster is re-read rather than assumed.
           await _handleRosterFailure(error.failure);
           return FoundationGateChildCreateResult.networkUnavailable;
       }
@@ -296,6 +299,7 @@ class FoundationGateSessionController extends ChangeNotifier {
         break;
       case FoundationGateApiFailure.invalidInput:
       case FoundationGateApiFailure.conflict:
+      case FoundationGateApiFailure.notFound:
       case FoundationGateApiFailure.networkUnavailable:
       case FoundationGateApiFailure.invalidResponse:
         _setPhase(FoundationGatePhase.networkUnavailable);
@@ -319,6 +323,7 @@ class FoundationGateSessionController extends ChangeNotifier {
         break;
       case FoundationGateApiFailure.invalidInput:
       case FoundationGateApiFailure.conflict:
+      case FoundationGateApiFailure.notFound:
       case FoundationGateApiFailure.networkUnavailable:
       case FoundationGateApiFailure.invalidResponse:
         _setPhase(FoundationGatePhase.networkUnavailable);
