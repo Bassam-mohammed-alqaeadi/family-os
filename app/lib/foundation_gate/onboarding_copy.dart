@@ -75,6 +75,13 @@ class OnboardingCopy {
       ? 'تحقق من الاتصال ثم اضغط «إعادة المحاولة».'
       : 'Check your connection, then tap “Try again”.';
   String get tryAgain => isArabic ? 'إعادة المحاولة' : 'Try again';
+  String get signInAgain =>
+      isArabic ? 'تسجيل الدخول مجددًا' : 'Sign in again';
+  String get sessionRecoveryTitle =>
+      isArabic ? 'انتهت جلستك' : 'Your session ended';
+  String get sessionRecoveryMessage => isArabic
+      ? 'سجّل الدخول وسنعيدك إلى نفس خطوة الإعداد دون ادعاء إكمالها.'
+      : 'Sign in and we will return you to the same setup step without claiming it was completed.';
 
   // ── Password reset sheet ──
   String get resetTitle =>

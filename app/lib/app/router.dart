@@ -342,7 +342,7 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-shr-003',
       name: 'SCR-SHR-003',
-      builder: (context, state) => LoginScreen(initialEmail: state.uri.queryParameters['email']),
+      builder: (context, state) => LoginScreen(initialEmail: state.uri.queryParameters['email'], resumeLocation: state.uri.queryParameters['resume']),
     ),
     GoRoute(
       path: '/scr-fat-001',

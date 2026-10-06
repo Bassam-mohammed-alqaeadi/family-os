@@ -236,11 +236,13 @@ class FoundationGateSessionController extends ChangeNotifier {
             FoundationGateChildCreateResult.createdRosterRefreshUnavailable,
         };
       }
-    } on FoundationGateIdentityException {
-      _clearAllVolatileState();
-      await _signOutProviderSilently();
-      _setPhase(FoundationGatePhase.sessionInvalid);
-      return FoundationGateChildCreateResult.sessionInvalid;
+    } on FoundationGateIdentityException catch (error) {
+      if (error.failure == FoundationGateIdentityFailure.noSession) {
+        await invalidateSession();
+        return FoundationGateChildCreateResult.sessionInvalid;
+      }
+      await _handleRosterFailure(FoundationGateApiFailure.networkUnavailable);
+      return FoundationGateChildCreateResult.networkUnavailable;
     } on FoundationGateApiException catch (error) {
       switch (error.failure) {
         case FoundationGateApiFailure.invalidInput:
@@ -248,9 +250,7 @@ class FoundationGateSessionController extends ChangeNotifier {
         case FoundationGateApiFailure.conflict:
           return FoundationGateChildCreateResult.conflict;
         case FoundationGateApiFailure.unauthenticated:
-          _clearAllVolatileState();
-          await _signOutProviderSilently();
-          _setPhase(FoundationGatePhase.sessionInvalid);
+          await invalidateSession();
           return FoundationGateChildCreateResult.sessionInvalid;
         case FoundationGateApiFailure.accessDenied:
           _clearRoster();
@@ -303,10 +303,12 @@ class FoundationGateSessionController extends ChangeNotifier {
           ? FoundationGatePhase.noChildren
           : FoundationGatePhase.childrenAvailable;
       notifyListeners();
-    } on FoundationGateIdentityException {
-      _clearAllVolatileState();
-      await _signOutProviderSilently();
-      _setPhase(FoundationGatePhase.sessionInvalid);
+    } on FoundationGateIdentityException catch (error) {
+      if (error.failure == FoundationGateIdentityFailure.noSession) {
+        await invalidateSession();
+      } else {
+        await _handleRosterFailure(FoundationGateApiFailure.networkUnavailable);
+      }
     } on FoundationGateApiException catch (error) {
       await _handleRosterFailure(error.failure);
     } finally {
@@ -318,8 +320,7 @@ class FoundationGateSessionController extends ChangeNotifier {
     _clearAllVolatileState();
     switch (failure) {
       case FoundationGateApiFailure.unauthenticated:
-        await _signOutProviderSilently();
-        _setPhase(FoundationGatePhase.sessionInvalid);
+        await invalidateSession();
         break;
       case FoundationGateApiFailure.accessDenied:
         _setPhase(FoundationGatePhase.accessDenied);
@@ -341,9 +342,7 @@ class FoundationGateSessionController extends ChangeNotifier {
     _clearRoster();
     switch (failure) {
       case FoundationGateApiFailure.unauthenticated:
-        _clearAllVolatileState();
-        await _signOutProviderSilently();
-        _setPhase(FoundationGatePhase.sessionInvalid);
+        await invalidateSession();
         break;
       case FoundationGateApiFailure.accessDenied:
         _setPhase(FoundationGatePhase.rosterAccessDenied);
@@ -359,6 +358,15 @@ class FoundationGateSessionController extends ChangeNotifier {
         _setPhase(FoundationGatePhase.networkUnavailable);
         break;
     }
+  }
+
+  /// Invalidates an expired/rejected session and removes all volatile family
+  /// authority before the UI offers re-authentication. Provider sign-out is
+  /// best effort here because the server has already rejected the bearer.
+  Future<void> invalidateSession() async {
+    _clearAllVolatileState();
+    await _signOutProviderSilently();
+    _setPhase(FoundationGatePhase.sessionInvalid);
   }
 
   /// Ends the provider session before clearing any visible family state.

@@ -7,6 +7,7 @@ import 'package:family_os/core/runtime/app_scope.dart';
 import 'package:family_os/core/runtime/identity_source.dart';
 import 'package:family_os/foundation_gate/onboarding_copy.dart';
 import 'package:family_os/features/shared_onboarding/onboarding_form.dart';
+import 'package:family_os/features/shared_onboarding/session_recovery.dart';
 import 'package:family_os/foundation_gate/foundation_gate_copy.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 import 'package:family_os/foundation_gate/main_app_foundation_runtime.dart';
@@ -36,10 +37,14 @@ abstract final class LoginKeys {
 /// Without a configured [MainAppFoundationIdentitySource] the form is shown
 /// disabled with an honest notice; it never simulates a session.
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key, this.initialEmail});
+  const LoginScreen({super.key, this.initialEmail, this.resumeLocation});
 
   /// Pre-filled e-mail (e.g. coming from sign-up's "already registered").
   final String? initialEmail;
+
+  /// A validated guardian-onboarding step to reveal after re-authentication.
+  /// Invalid/external values are ignored by [safeGuardianResumeLocation].
+  final String? resumeLocation;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -59,6 +64,9 @@ class _LoginScreenState extends State<LoginScreen> {
   var _submitting = false;
   var _notice = _NoticeKind.none;
   FoundationGateIdentityFailure? _failure;
+
+  String? get _resumeLocation =>
+      safeGuardianResumeLocation(widget.resumeLocation);
 
   @override
   void initState() {
@@ -148,6 +156,23 @@ class _LoginScreenState extends State<LoginScreen> {
     MainAppFoundationIdentitySource remote,
     IdentitySnapshot snapshot,
   ) {
+    final resume = _resumeLocation;
+    final canResume =
+        resume != null &&
+        (snapshot.isRemoteAuthoritative ||
+            (resume == '/scr-fat-001' && remote.needsFamilyCreation));
+    if (canResume) {
+      TextInput.finishAutofillContext();
+      // Recovery is normally pushed above the interrupted form, so pop keeps
+      // its field values and idempotency key intact. A cold/deep link has no
+      // prior page and safely falls back to the validated local destination.
+      if (context.canPop()) {
+        context.pop(true);
+      } else {
+        context.go(resume);
+      }
+      return;
+    }
     if (snapshot.isRemoteAuthoritative) {
       TextInput.finishAutofillContext();
       context.go('/scr-fat-012');
@@ -260,8 +285,15 @@ class _LoginScreenState extends State<LoginScreen> {
             title: copy.notConfiguredTitle,
             message: copy.notConfiguredMessage,
           )
-        else
+        else ...[
+          if (_resumeLocation != null)
+            OnboardingNotice(
+              tone: OnboardingNoticeTone.info,
+              title: copy.sessionRecoveryTitle,
+              message: copy.sessionRecoveryMessage,
+            ),
           ..._noticeFor(copy),
+        ],
         OnboardingTextField(
           fieldKey: LoginKeys.email,
           label: copy.signInEmailLabel,

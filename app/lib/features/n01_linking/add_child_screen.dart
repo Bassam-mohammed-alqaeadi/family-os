@@ -6,6 +6,7 @@ import 'package:family_os/core/runtime/app_scope.dart';
 import 'package:family_os/core/runtime/family_child_profile_source.dart';
 import 'package:family_os/foundation_gate/onboarding_copy.dart';
 import 'package:family_os/features/shared_onboarding/onboarding_form.dart';
+import 'package:family_os/features/shared_onboarding/session_recovery.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
 /// Character emoji options (server stores the chosen emoji as-is).
@@ -188,6 +189,12 @@ class _AddChildScreenState extends State<AddChildScreen> {
     null => FamilyChildProfileCreateFailurePresentation.unavailable,
   };
 
+  Future<void> _recoverSession() async {
+    final recovered = await pushGuardianSessionRecovery(context);
+    if (!mounted || recovered != true) return;
+    setState(() => _failure = null);
+  }
+
   List<Color> _kidColors(FamilyColors colors) => [
     colors.p500,
     colors.sky,
@@ -233,15 +240,25 @@ class _AddChildScreenState extends State<AddChildScreen> {
             tone: OnboardingNoticeTone.error,
             title: copy.childCreateFailureTitle(failure),
             message: copy.childCreateFailureMessage(failure),
-            actionLabel:
-                failure ==
-                        FamilyChildProfileCreateFailurePresentation.network ||
-                    failure ==
-                        FamilyChildProfileCreateFailurePresentation.unavailable
-                ? copy.tryAgain
-                : null,
+            actionLabel: switch (failure) {
+              FamilyChildProfileCreateFailurePresentation.sessionInvalid =>
+                copy.signInAgain,
+              FamilyChildProfileCreateFailurePresentation.network ||
+              FamilyChildProfileCreateFailurePresentation.unavailable =>
+                copy.tryAgain,
+              _ => null,
+            },
             actionKey: AddChildKeys.noticeAction,
-            onAction: busy ? null : _submit,
+            onAction: busy
+                ? null
+                : switch (failure) {
+                    FamilyChildProfileCreateFailurePresentation
+                        .sessionInvalid => _recoverSession,
+                    FamilyChildProfileCreateFailurePresentation.network ||
+                    FamilyChildProfileCreateFailurePresentation.unavailable =>
+                      _submit,
+                    _ => null,
+                  },
           ),
         // Live preview card: how the child will appear in the parent app.
         _ChildPreview(

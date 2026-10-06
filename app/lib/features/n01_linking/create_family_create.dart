@@ -13,11 +13,17 @@ typedef CreateFamilyFn = Future<void> Function(String name);
 /// server-contract-specific wording (session, conflict, …). They are resolved
 /// from localized copy classes by the caller, never hardcoded in widgets.
 class CreateFamilyException implements Exception {
-  const CreateFamilyException(this.kind, {this.title, this.message});
+  const CreateFamilyException(
+    this.kind, {
+    this.title,
+    this.message,
+    this.requiresSignIn = false,
+  });
 
   final AppErrorKind kind;
   final String? title;
   final String? message;
+  final bool requiresSignIn;
 
   @override
   String toString() => 'CreateFamilyException($kind)';

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/features/n01_linking/native_device_pairing_screens.dart';
 import 'package:family_os/foundation_gate/foundation_gate_http.dart';
+import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
 import '../shared_onboarding/onboarding_test_host.dart';
 
@@ -89,4 +90,66 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     },
   );
+
+  testWidgets('401 hides pairing state and returns to this step after sign-in', (
+    tester,
+  ) async {
+    final identity = FakeIdentity();
+    final devices = FakeTransport(
+      const FoundationGateHttpResponse(
+        statusCode: 200,
+        body: '{"devices":[]}',
+      ),
+      postResponse: const FoundationGateHttpResponse(
+        statusCode: 401,
+        body: '',
+      ),
+    );
+    final host = OnboardingHost(identity: identity, deviceTransport: devices);
+    addTearDown(host.dispose);
+    await host.runtime.signIn(email: 'p@example.com', password: 'x1234567');
+
+    final router = await pumpWithRouter(
+      tester,
+      runtime: host.appRuntime,
+      initialLocation: '/scr-fat-004?childId=$_childId&source=server',
+      routes: [
+        GoRoute(
+          path: '/scr-fat-004',
+          builder: (context, state) => NativeParentPairingScreen(
+            childId: state.uri.queryParameters['childId'],
+          ),
+        ),
+        GoRoute(
+          path: '/scr-shr-003',
+          builder: (context, state) => const Scaffold(
+            body: Text('real sign-in route'),
+          ),
+        ),
+      ],
+    );
+
+    await tester.tap(find.text('إنشاء رمز الربط'));
+    await tester.pumpAndSettle();
+
+    expect(host.runtime.phase, FoundationGatePhase.sessionInvalid);
+    expect(host.appRuntime.identity.value.isRemoteAuthoritative, isFalse);
+    expect(identity.signOutCalls, 1);
+    expect(find.textContaining('انتهت جلسة ولي الأمر'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('parent-pairing-sign-in-again')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('pairing-code-digits')), findsNothing);
+
+    await tester.tap(
+      find.byKey(const ValueKey('parent-pairing-sign-in-again')),
+    );
+    await tester.pumpAndSettle();
+    expect(router.state.uri.path, '/scr-shr-003');
+    expect(
+      router.state.uri.queryParameters['resume'],
+      '/scr-fat-004?childId=$_childId&source=server',
+    );
+  });
 }

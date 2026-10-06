@@ -34,6 +34,7 @@ List<GoRoute> _routes() => [
   ),
   placeholderRoute('/scr-fat-001', 'SCR-FAT-001'),
   placeholderRoute('/scr-fat-002', 'SCR-FAT-002'),
+  placeholderRoute('/scr-shr-003', 'SCR-SHR-003'),
 ];
 
 (AppRuntime, RecordingChildProfileSource) _runtime({
@@ -235,9 +236,7 @@ void main() {
     );
   });
 
-  testWidgets('access denied has no retry; session expired explains', (
-    tester,
-  ) async {
+  testWidgets('access denied has no retry', (tester) async {
     final (runtime, _) = _runtime(
       result: const FamilyChildProfileCreateResult.failed(
         FamilyChildProfileCreateFailure.accessDenied,
@@ -255,6 +254,44 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('غير مسموح'), findsOneWidget);
     expect(find.byKey(AddChildKeys.noticeAction), findsNothing);
+  });
+
+  testWidgets('expired session offers sign-in and keeps the child draft', (
+    tester,
+  ) async {
+    final (runtime, source) = _runtime(
+      result: const FamilyChildProfileCreateResult.failed(
+        FamilyChildProfileCreateFailure.sessionInvalid,
+      ),
+    );
+    final router = await pumpWithRouter(
+      tester,
+      runtime: runtime,
+      initialLocation: '/scr-fat-003',
+      routes: _routes(),
+    );
+    await tester.enterText(find.byKey(AddChildKeys.name), 'نور');
+    await tester.pump();
+    await scrollAndTap(tester, find.byKey(AddChildKeys.submit));
+    await tester.pumpAndSettle();
+
+    expect(source.calls, hasLength(1));
+    expect(find.text('انتهت الجلسة'), findsOneWidget);
+    expect(find.text('تسجيل الدخول مجددًا'), findsOneWidget);
+
+    await tester.tap(find.byKey(AddChildKeys.noticeAction));
+    await tester.pumpAndSettle();
+    expect(router.state.uri.path, '/scr-shr-003');
+    expect(router.state.uri.queryParameters['resume'], '/scr-fat-003');
+
+    router.pop(true);
+    await tester.pumpAndSettle();
+    expect(router.state.uri.path, '/scr-fat-003');
+    expect(
+      tester.widget<TextField>(find.byKey(AddChildKeys.name)).controller!.text,
+      'نور',
+    );
+    expect(find.byKey(AddChildKeys.notice), findsNothing);
   });
 
   testWidgets('no active server family → honest redirect, nothing created', (

@@ -13,6 +13,7 @@ import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/app/child_device_mode.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/features/shared_onboarding/session_recovery.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/runtime/app_scope.dart';
@@ -48,8 +49,11 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
 
   final _label = TextEditingController();
   FoundationGateDevicePairing? _pairing;
+  String? _pairingIdempotencyKey;
+  String? _submittedDeviceLabel;
   var _loading = false;
   String? _error;
+  var _sessionInvalid = false;
 
   _VerificationState _verification = _VerificationState.checking;
   var _verificationBusy = false;
@@ -119,6 +123,10 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
     if (!silent) setState(() => _verificationBusy = true);
     final verified = await source.isEmailVerified(reload: reload);
     if (!mounted) return;
+    if (source.sessionInvalid) {
+      _showSessionExpired();
+      return;
+    }
     final wasUnverified = _verification == _VerificationState.unverified;
     setState(() {
       _verificationBusy = false;
@@ -176,6 +184,10 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
     setState(() => _verificationBusy = true);
     final sent = await source.sendEmailVerification();
     if (!mounted) return;
+    if (source.sessionInvalid) {
+      _showSessionExpired();
+      return;
+    }
     setState(() {
       _verificationBusy = false;
       _verificationNote = sent
@@ -214,9 +226,16 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
       return;
     }
     _stopTimers();
+    if (_pairingIdempotencyKey == null ||
+        _submittedDeviceLabel != deviceLabel ||
+        _pairing != null) {
+      _pairingIdempotencyKey = newFoundationGateIdempotencyKey();
+      _submittedDeviceLabel = deviceLabel;
+    }
     setState(() {
       _loading = true;
       _error = null;
+      _sessionInvalid = false;
       _pairing = null;
       _childConnected = false;
     });
@@ -229,18 +248,29 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
       childRaw,
     );
     if (!mounted) return;
+    if (source.sessionInvalid) {
+      _showSessionExpired();
+      return;
+    }
 
-    final pairing = await source.createPairing(
+    final result = await source.createPairing(
       familyId: familyId,
       childId: ChildId(childRaw),
       deviceLabel: deviceLabel,
-      idempotencyKey: newFoundationGateIdempotencyKey(),
+      idempotencyKey: _pairingIdempotencyKey!,
     );
     if (!mounted) return;
+    if (result.failure ==
+        FoundationGateDevicePairingCreateFailure.sessionInvalid) {
+      _showSessionExpired();
+      return;
+    }
+    final pairing = result.pairing;
     setState(() {
       _loading = false;
       _pairing = pairing;
       _error = pairing == null ? copy.pairingUnavailable : null;
+      _sessionInvalid = false;
     });
     if (pairing != null) _startTimers(pairing, source, familyId, childRaw);
   }
@@ -268,6 +298,10 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
     _devicePoll = Timer.periodic(_devicePollInterval, (_) async {
       final count = await _currentDeviceCount(source, familyId, childId);
       if (!mounted) return;
+      if (source.sessionInvalid) {
+        _showSessionExpired();
+        return;
+      }
       if (count > _baselineDeviceCount) {
         _stopTimers();
         setState(() => _childConnected = true);
@@ -289,6 +323,31 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
     _ticker = null;
     _devicePoll?.cancel();
     _devicePoll = null;
+  }
+
+  void _showSessionExpired() {
+    _stopTimers();
+    _stopVerificationPoll();
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      _verificationBusy = false;
+      _verification = _VerificationState.checking;
+      _pairing = null;
+      _sessionInvalid = true;
+      _error = null;
+    });
+  }
+
+  Future<void> _recoverSession() async {
+    final recovered = await pushGuardianSessionRecovery(context);
+    if (!mounted || recovered != true) return;
+    setState(() {
+      _sessionInvalid = false;
+      _error = null;
+      _verification = _VerificationState.checking;
+    });
+    await _checkVerification(reload: true);
   }
 
   bool get _expired =>
@@ -320,8 +379,10 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
                 height: 1.5,
               ),
             ),
-            const SizedBox(height: 16),
-            _verificationCard(colors, copy),
+            if (!_sessionInvalid) ...[
+              const SizedBox(height: 16),
+              _verificationCard(colors, copy),
+            ],
             const SizedBox(height: 16),
             TextField(
               controller: _label,
@@ -337,7 +398,25 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
                 border: const OutlineInputBorder(),
               ),
             ),
-            if (_error != null) ...[
+            if (_sessionInvalid) ...[
+              const SizedBox(height: 8),
+              Text(
+                copy.sessionExpiredBody,
+                style: TextStyle(
+                  color: colors.coral,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TextButton.icon(
+                  key: const ValueKey('parent-pairing-sign-in-again'),
+                  onPressed: _recoverSession,
+                  icon: const Icon(Icons.login_rounded),
+                  label: Text(copy.signInAgain),
+                ),
+              ),
+            ] else if (_error != null) ...[
               const SizedBox(height: 8),
               Text(
                 _error!,

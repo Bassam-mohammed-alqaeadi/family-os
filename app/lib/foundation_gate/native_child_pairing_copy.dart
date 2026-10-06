@@ -36,6 +36,11 @@ class NativeChildPairingCopy {
   String get pairingUnavailable => isArabic
       ? 'تعذر على الخادم إنشاء رمز ربط.'
       : 'The server could not create a pairing code.';
+  String get sessionExpiredBody => isArabic
+      ? 'انتهت جلسة ولي الأمر. سجّل الدخول مجددًا للعودة إلى خطوة ربط الجهاز.'
+      : 'The guardian session ended. Sign in again to return to device pairing.';
+  String get signInAgain =>
+      isArabic ? 'تسجيل الدخول مجددًا' : 'Sign in again';
   String get oneTimePairingCode =>
       isArabic ? 'رمز ربط الابن لمرة واحدة' : 'One-time child pairing code';
   String pairingExpiresAt(DateTime value) => isArabic

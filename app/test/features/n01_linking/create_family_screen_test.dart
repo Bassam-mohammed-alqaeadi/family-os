@@ -184,6 +184,7 @@ void main() {
     expect(find.byKey(const Key('create_family_error')), findsOneWidget);
     expect(find.text('انتهت الجلسة'), findsOneWidget);
     expect(find.textContaining('سجّل الدخول مرة أخرى'), findsOneWidget);
+    expect(find.text('تسجيل الدخول مجددًا'), findsOneWidget);
   });
 
   testWidgets('idempotency conflict renders explicit conflict error', (

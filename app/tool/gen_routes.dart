@@ -174,7 +174,7 @@ String _escapeDart(String s) {
 const Map<String, String> screenBuilders = {
   'SCR-SHR-001': 'WelcomeScreen()',
   'SCR-SHR-002': 'CreateAccountScreen()',
-  'SCR-SHR-003': "LoginScreen(initialEmail: state.uri.queryParameters['email'])",
+  'SCR-SHR-003': "LoginScreen(initialEmail: state.uri.queryParameters['email'], resumeLocation: state.uri.queryParameters['resume'])",
   'SCR-SHR-005': 'NetworkErrorTemplateScreen()',
   'SCR-SHR-006': 'EmptyStateTemplateScreen()',
   'SCR-SHR-007': 'DeviceModeScreen()',

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/placeholder_screen.dart';
 import 'package:family_os/features/shared_onboarding/login_screen.dart';
+import 'package:family_os/features/shared_onboarding/session_recovery.dart';
 import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
@@ -14,7 +15,12 @@ List<GoRoute> _routes({String? initialEmail}) => [
     path: '/scr-shr-003',
     builder: (context, state) => LoginScreen(
       initialEmail: initialEmail ?? state.uri.queryParameters['email'],
+      resumeLocation: state.uri.queryParameters['resume'],
     ),
+  ),
+  GoRoute(
+    path: '/scr-fat-003',
+    builder: (context, state) => const _ResumeProbe(),
   ),
   placeholderRoute('/scr-fat-012', 'SCR-FAT-012'),
   placeholderRoute('/scr-shr-007', 'SCR-SHR-007'),
@@ -242,6 +248,71 @@ void main() {
     expect(find.byKey(LoginKeys.resetDone), findsNothing);
   });
 
+  testWidgets(
+    'session recovery signs in then reveals the same step with form state intact',
+    (tester) async {
+      final host = OnboardingHost(identity: FakeIdentity());
+      addTearDown(host.dispose);
+      final router = await pumpWithRouter(
+        tester,
+        runtime: host.appRuntime,
+        initialLocation: '/scr-fat-003',
+        routes: _routes(),
+      );
+
+      await tester.enterText(
+        find.byKey(const ValueKey('resume-probe-name')),
+        'ليان',
+      );
+      await tester.tap(find.byKey(const ValueKey('resume-probe-expire')));
+      await tester.pumpAndSettle();
+
+      expect(router.state.uri.path, '/scr-shr-003');
+      expect(
+        router.state.uri.queryParameters['resume'],
+        '/scr-fat-003',
+      );
+      expect(find.text('انتهت جلستك'), findsOneWidget);
+
+      await tester.enterText(
+        find.byKey(LoginKeys.email),
+        'parent@example.com',
+      );
+      await tester.enterText(find.byKey(LoginKeys.password), 'secret-123');
+      await tester.tap(find.byKey(LoginKeys.submit));
+      await tester.pumpAndSettle();
+
+      expect(router.state.uri.path, '/scr-fat-003');
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const ValueKey('resume-probe-name')))
+            .controller!
+            .text,
+        'ليان',
+      );
+    },
+  );
+
+  testWidgets('external resume target is ignored after sign-in', (tester) async {
+    final host = OnboardingHost(identity: FakeIdentity());
+    addTearDown(host.dispose);
+    final router = await pumpWithRouter(
+      tester,
+      runtime: host.appRuntime,
+      initialLocation:
+          '/scr-shr-003?resume=https%3A%2F%2Fevil.example%2Fcapture',
+      routes: _routes(),
+    );
+
+    expect(find.text('انتهت جلستك'), findsNothing);
+    await tester.enterText(find.byKey(LoginKeys.email), 'parent@example.com');
+    await tester.enterText(find.byKey(LoginKeys.password), 'secret-123');
+    await tester.tap(find.byKey(LoginKeys.submit));
+    await tester.pumpAndSettle();
+
+    expect(router.state.uri.path, '/scr-fat-012');
+  });
+
   testWidgets('initial e-mail is pre-filled; create-account link routes', (
     tester,
   ) async {
@@ -263,4 +334,42 @@ void main() {
     await tester.pumpAndSettle();
     expect(router.state.uri.path, '/scr-shr-002');
   });
+}
+
+class _ResumeProbe extends StatefulWidget {
+  const _ResumeProbe();
+
+  @override
+  State<_ResumeProbe> createState() => _ResumeProbeState();
+}
+
+class _ResumeProbeState extends State<_ResumeProbe> {
+  final _name = TextEditingController();
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Column(
+        children: [
+          TextField(
+            key: const ValueKey('resume-probe-name'),
+            controller: _name,
+          ),
+          ElevatedButton(
+            key: const ValueKey('resume-probe-expire'),
+            onPressed: () => context.push<void>(
+              guardianSessionRecoveryLoginLocation('/scr-fat-003'),
+            ),
+            child: const Text('expire'),
+          ),
+        ],
+      ),
+    );
+  }
 }

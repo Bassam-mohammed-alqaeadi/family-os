@@ -127,6 +127,11 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
 
   Future<IdentitySnapshot> refreshIdentity() async {
     final phase = _controller.phase;
+    if (phase == FoundationGatePhase.sessionInvalid) {
+      _identityValue = const IdentitySnapshot.unavailable();
+      notifyListeners();
+      return _identityValue;
+    }
     if (_controller.selectedFamily == null ||
         (phase != FoundationGatePhase.childrenAvailable &&
             phase != FoundationGatePhase.noChildren &&
@@ -266,9 +271,15 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
           observedAt: DateTime.now().toUtc(),
         ),
       );
-    } on FoundationGateIdentityException {
+    } on FoundationGateIdentityException catch (error) {
+      if (error.failure == FoundationGateIdentityFailure.noSession) {
+        await _invalidateSession();
+      }
       return _publishDevices(const FamilyDeviceSnapshot.unavailable());
-    } on FoundationGateApiException {
+    } on FoundationGateApiException catch (error) {
+      if (error.failure == FoundationGateApiFailure.unauthenticated) {
+        await _invalidateSession();
+      }
       return _publishDevices(const FamilyDeviceSnapshot.unavailable());
     }
   }
@@ -283,7 +294,8 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     // A brand-new account has no family yet, so a selected family context
     // cannot be the precondition here. The precondition is an authenticated
     // provider principal; the server enforces everything else on the bearer.
-    if (!_controller.hasAuthenticatedPrincipal) {
+    if (!_controller.hasAuthenticatedPrincipal &&
+        _controller.phase != FoundationGatePhase.sessionInvalid) {
       await _controller.restoreCurrentSession();
       await _selectConfiguredFamily();
       await _refreshIdentitySnapshot();
@@ -313,11 +325,20 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
         familyId: created.id,
         displayName: created.displayName,
       );
-    } on FoundationGateIdentityException {
+    } on FoundationGateIdentityException catch (error) {
+      if (error.failure == FoundationGateIdentityFailure.noSession) {
+        await _invalidateSession();
+        return const FamilyCreationResult.failed(
+          FamilyCreationOutcome.unauthenticated,
+        );
+      }
       return const FamilyCreationResult.failed(
-        FamilyCreationOutcome.unauthenticated,
+        FamilyCreationOutcome.networkUnavailable,
       );
     } on FoundationGateApiException catch (error) {
+      if (error.failure == FoundationGateApiFailure.unauthenticated) {
+        await _invalidateSession();
+      }
       return FamilyCreationResult.failed(_mapFamilyCreationFailure(error));
     }
   }
@@ -348,7 +369,10 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   Future<bool> isEmailVerified({bool reload = false}) async {
     try {
       return await _identity.isEmailVerified(reload: reload);
-    } on FoundationGateIdentityException {
+    } on FoundationGateIdentityException catch (error) {
+      if (error.failure == FoundationGateIdentityFailure.noSession) {
+        await _invalidateSession();
+      }
       return false;
     }
   }
@@ -358,39 +382,84 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     try {
       await _identity.sendEmailVerification();
       return true;
-    } on FoundationGateIdentityException {
+    } on FoundationGateIdentityException catch (error) {
+      if (error.failure == FoundationGateIdentityFailure.noSession) {
+        await _invalidateSession();
+      }
       return false;
     }
   }
 
-  Future<FoundationGateDevicePairing?> createDevicePairing({
+  Future<FoundationGateDevicePairingCreateResult> createDevicePairing({
     required FamilyId familyId,
     required ChildId childId,
     required String deviceLabel,
     required String idempotencyKey,
   }) async {
+    if (_controller.phase == FoundationGatePhase.sessionInvalid) {
+      return const FoundationGateDevicePairingCreateResult.failed(
+        FoundationGateDevicePairingCreateFailure.sessionInvalid,
+      );
+    }
     await refreshIdentity();
     final selected = _controller.selectedFamily;
     if (!_identityValue.isRemoteAuthoritative ||
         !_identityValue.isPrimaryOwner ||
         selected == null ||
         selected.id != familyId.value) {
-      return null;
+      return FoundationGateDevicePairingCreateResult.failed(
+        _controller.phase == FoundationGatePhase.sessionInvalid
+            ? FoundationGateDevicePairingCreateFailure.sessionInvalid
+            : FoundationGateDevicePairingCreateFailure.unavailable,
+      );
     }
     try {
-      return await _deviceApi.createPairing(
+      final pairing = await _deviceApi.createPairing(
         familyId: familyId.value,
         childId: childId.value,
         deviceLabel: deviceLabel,
         idempotencyKey: idempotencyKey,
         idToken: await _identity.currentIdToken(),
       );
-    } on FoundationGateIdentityException {
-      return null;
-    } on FoundationGateApiException {
-      return null;
+      return FoundationGateDevicePairingCreateResult.created(pairing);
+    } on FoundationGateIdentityException catch (error) {
+      if (error.failure == FoundationGateIdentityFailure.noSession) {
+        await _invalidateSession();
+        return const FoundationGateDevicePairingCreateResult.failed(
+          FoundationGateDevicePairingCreateFailure.sessionInvalid,
+        );
+      }
+      return const FoundationGateDevicePairingCreateResult.failed(
+        FoundationGateDevicePairingCreateFailure.networkUnavailable,
+      );
+    } on FoundationGateApiException catch (error) {
+      if (error.failure == FoundationGateApiFailure.unauthenticated) {
+        await _invalidateSession();
+      }
+      return FoundationGateDevicePairingCreateResult.failed(
+        _mapDevicePairingFailure(error.failure),
+      );
     }
   }
+
+  FoundationGateDevicePairingCreateFailure _mapDevicePairingFailure(
+    FoundationGateApiFailure failure,
+  ) => switch (failure) {
+    FoundationGateApiFailure.unauthenticated =>
+      FoundationGateDevicePairingCreateFailure.sessionInvalid,
+    FoundationGateApiFailure.accessDenied =>
+      FoundationGateDevicePairingCreateFailure.accessDenied,
+    FoundationGateApiFailure.invalidInput =>
+      FoundationGateDevicePairingCreateFailure.invalidInput,
+    FoundationGateApiFailure.conflict =>
+      FoundationGateDevicePairingCreateFailure.conflict,
+    FoundationGateApiFailure.serviceUnavailable ||
+    FoundationGateApiFailure.tooManyAttempts =>
+      FoundationGateDevicePairingCreateFailure.serviceUnavailable,
+    FoundationGateApiFailure.networkUnavailable ||
+    FoundationGateApiFailure.invalidResponse =>
+      FoundationGateDevicePairingCreateFailure.networkUnavailable,
+  };
 
   ChildDeviceConnectionState _connectionStateOf(
     FoundationGateFamilyDevice device,
@@ -413,13 +482,20 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     required FamilyChildProfileDraft draft,
     required String idempotencyKey,
   }) async {
+    if (_controller.phase == FoundationGatePhase.sessionInvalid) {
+      return const FamilyChildProfileCreateResult.failed(
+        FamilyChildProfileCreateFailure.sessionInvalid,
+      );
+    }
     await refreshIdentity();
     final selected = _controller.selectedFamily;
     if (!_identityValue.isRemoteAuthoritative ||
         selected == null ||
         selected.id != familyId.value) {
-      return const FamilyChildProfileCreateResult.failed(
-        FamilyChildProfileCreateFailure.unavailable,
+      return FamilyChildProfileCreateResult.failed(
+        _controller.phase == FoundationGatePhase.sessionInvalid
+            ? FamilyChildProfileCreateFailure.sessionInvalid
+            : FamilyChildProfileCreateFailure.unavailable,
       );
     }
 
@@ -501,9 +577,25 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     return value;
   }
 
+  Future<void> _invalidateSession() async {
+    await _controller.invalidateSession();
+    _clearPublishedAuthority();
+    notifyListeners();
+  }
+
+  void _clearPublishedAuthority() {
+    _identityValue = const IdentitySnapshot.unavailable();
+    _rosterValue = const FamilyRosterSnapshot.unavailable();
+    _deviceValue = const FamilyDeviceSnapshot.unavailable();
+  }
+
   void _synchronizeControllerState() {
-    // Explicit refresh/load operations publish source values. This listener only
-    // propagates pending, denied and session-invalid transitions to the shell.
+    // A rejected bearer revokes every visible projection immediately. Explicit
+    // refresh/load operations publish all other source values.
+    if (_controller.phase == FoundationGatePhase.sessionInvalid ||
+        _controller.phase == FoundationGatePhase.signedOut) {
+      _clearPublishedAuthority();
+    }
     notifyListeners();
   }
 
@@ -598,7 +690,7 @@ final class RemoteFamilyDeviceSource extends ChangeNotifier
   Future<FamilyDeviceSnapshot> load(FamilyId familyId) =>
       _runtime.loadDevices(familyId);
 
-  Future<FoundationGateDevicePairing?> createPairing({
+  Future<FoundationGateDevicePairingCreateResult> createPairing({
     required FamilyId familyId,
     required ChildId childId,
     required String deviceLabel,
@@ -609,6 +701,9 @@ final class RemoteFamilyDeviceSource extends ChangeNotifier
     deviceLabel: deviceLabel,
     idempotencyKey: idempotencyKey,
   );
+
+  bool get sessionInvalid =>
+      _runtime.phase == FoundationGatePhase.sessionInvalid;
 
   Future<bool> isEmailVerified({bool reload = false}) =>
       _runtime.isEmailVerified(reload: reload);

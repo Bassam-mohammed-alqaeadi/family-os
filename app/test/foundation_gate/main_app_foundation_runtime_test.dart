@@ -4,6 +4,7 @@ import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/runtime/family_child_profile_source.dart';
 import 'package:family_os/core/runtime/family_creation_source.dart';
 import 'package:family_os/core/runtime/identity_source.dart';
+import 'package:family_os/core/runtime/runtime_data_origin.dart';
 import 'package:family_os/foundation_gate/children_roster_api_client.dart';
 import 'package:family_os/foundation_gate/family_creation_api_client.dart';
 import 'package:family_os/foundation_gate/family_device_api_client.dart';
@@ -289,6 +290,82 @@ void main() {
 
       expect(result.isCreated, isFalse);
       expect(result.outcome, FamilyCreationOutcome.serviceUnavailable);
+    },
+  );
+
+  test(
+    'family-create 401 clears every published authority projection',
+    () async {
+      final identity = FakeIdentity(subject: 'firebase-subject');
+      final configuration = FoundationGateConfiguration.fromStagingApiOrigin(
+        Uri.parse('https://staging.example.test'),
+      );
+      final runtime = MainAppFoundationRuntime(
+        identity: identity,
+        controller: FoundationGateSessionController(
+          identity: identity,
+          discoveryApi: FamilyDiscoveryApiClient(
+            configuration: configuration,
+            transport: FakeTransport(
+              const FoundationGateHttpResponse(
+                statusCode: 200,
+                body: _familyBody,
+              ),
+            ),
+          ),
+          rosterApi: ChildrenRosterApiClient(
+            configuration: configuration,
+            transport: FakeTransport(
+              const FoundationGateHttpResponse(
+                statusCode: 200,
+                body: _emptyRosterBody,
+              ),
+            ),
+          ),
+        ),
+        deviceApi: FamilyDeviceApiClient(
+          configuration: configuration,
+          transport: FakeTransport(
+            const FoundationGateHttpResponse(
+              statusCode: 200,
+              body: '{"devices":[]}',
+            ),
+          ),
+        ),
+        familyCreationApi: FamilyCreationApiClient(
+          configuration: configuration,
+          transport: FakeTransport(
+            const FoundationGateHttpResponse(statusCode: 200, body: '{}'),
+            postResponse: const FoundationGateHttpResponse(
+              statusCode: 401,
+              body: '',
+            ),
+          ),
+        ),
+      );
+      addTearDown(runtime.dispose);
+
+      final signedIn = await runtime.signIn(
+        email: 'guardian@example.test',
+        password: 'synthetic-password',
+      );
+      expect(signedIn.isRemoteAuthoritative, isTrue);
+      await runtime.loadRoster(FamilyId(_familyId));
+      await runtime.loadDevices(FamilyId(_familyId));
+      expect(runtime.rosterValue.isAuthoritative, isTrue);
+      expect(runtime.deviceValue.origin, RuntimeDataOrigin.remoteAuthoritative);
+
+      final result = await runtime.createFamily(
+        displayName: 'Synthetic family',
+        idempotencyKey: _idempotencyKey,
+      );
+
+      expect(result.outcome, FamilyCreationOutcome.unauthenticated);
+      expect(runtime.phase, FoundationGatePhase.sessionInvalid);
+      expect(runtime.identityValue.isRemoteAuthoritative, isFalse);
+      expect(runtime.rosterValue.isAuthoritative, isFalse);
+      expect(runtime.deviceValue.origin, RuntimeDataOrigin.unavailable);
+      expect(identity.signOutCalls, 1);
     },
   );
 

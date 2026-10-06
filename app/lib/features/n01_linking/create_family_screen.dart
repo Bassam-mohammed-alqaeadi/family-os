@@ -9,6 +9,7 @@ import 'package:family_os/core/runtime/family_creation_source.dart';
 import 'package:family_os/features/n01_linking/create_family_create.dart';
 import 'package:family_os/foundation_gate/onboarding_copy.dart';
 import 'package:family_os/features/shared_onboarding/onboarding_form.dart';
+import 'package:family_os/features/shared_onboarding/session_recovery.dart';
 import 'package:family_os/foundation_gate/foundation_gate_copy.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
@@ -54,6 +55,8 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
   var _touched = false;
   var _submitting = false;
   CreateFamilyException? _error;
+  String? _idempotencyKey;
+  String? _submittedName;
 
   CreateFamilyFn get _create => widget.createFamily ?? _createWithSource;
 
@@ -123,9 +126,13 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
     final source =
         AppScope.maybeOf(context)?.familyCreation ??
         const UnavailableFamilyCreationSource();
+    if (_idempotencyKey == null || _submittedName != name) {
+      _idempotencyKey = newFoundationGateIdempotencyKey();
+      _submittedName = name;
+    }
     final result = await source.create(
       displayName: name,
-      idempotencyKey: newFoundationGateIdempotencyKey(),
+      idempotencyKey: _idempotencyKey!,
     );
     final failure = _failureFor(result, copy);
     if (failure != null) throw failure;
@@ -150,6 +157,7 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
         AppErrorKind.network,
         title: copy.familyCreationSessionExpiredTitle,
         message: copy.familyCreationSessionExpiredMessage,
+        requiresSignIn: true,
       ),
       FamilyCreationOutcome.denied => CreateFamilyException(
         AppErrorKind.network,
@@ -179,6 +187,12 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
     };
   }
 
+  Future<void> _recoverSession() async {
+    final recovered = await pushGuardianSessionRecovery(context);
+    if (!mounted || recovered != true) return;
+    setState(() => _error = null);
+  }
+
   @override
   Widget build(BuildContext context) {
     final copy = OnboardingCopy.of(context);
@@ -201,9 +215,13 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
             tone: OnboardingNoticeTone.error,
             title: error.title ?? _kindTitle(l10n, error.kind),
             message: error.message ?? _kindMessage(l10n, error.kind),
-            actionLabel: l10n.errorRetryCta,
+            actionLabel: error.requiresSignIn
+                ? copy.signInAgain
+                : l10n.errorRetryCta,
             actionKey: CreateFamilyKeys.retry,
-            onAction: _submitting ? null : _submit,
+            onAction: _submitting
+                ? null
+                : (error.requiresSignIn ? _recoverSession : _submit),
           ),
         OnboardingTextField(
           fieldKey: CreateFamilyKeys.name,

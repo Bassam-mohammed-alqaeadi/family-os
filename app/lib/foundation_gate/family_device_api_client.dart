@@ -58,6 +58,29 @@ class FoundationGateDevicePairing {
 
 /// Returned once to the child-device hand-off. Flutter passes the credential
 /// straight to Android Keystore storage and does not persist it itself.
+enum FoundationGateDevicePairingCreateFailure {
+  sessionInvalid,
+  accessDenied,
+  invalidInput,
+  conflict,
+  serviceUnavailable,
+  networkUnavailable,
+  unavailable,
+}
+
+class FoundationGateDevicePairingCreateResult {
+  const FoundationGateDevicePairingCreateResult.created(this.pairing)
+    : failure = null;
+
+  const FoundationGateDevicePairingCreateResult.failed(this.failure)
+    : pairing = null;
+
+  final FoundationGateDevicePairing? pairing;
+  final FoundationGateDevicePairingCreateFailure? failure;
+
+  bool get isCreated => pairing != null;
+}
+
 class FoundationGateClaimedDevice {
   const FoundationGateClaimedDevice({
     required this.device,
