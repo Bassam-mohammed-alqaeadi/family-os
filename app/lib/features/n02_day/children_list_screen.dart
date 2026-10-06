@@ -798,6 +798,7 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
                             child: child,
                             device: _deviceSnapshot.forChild(child.childId),
                             onTap: () => _goProfile(child.childId.value),
+                            onRepairDevice: _startDeviceRepair,
                           )
                         else
                           _ProfileRepairCard(
@@ -941,11 +942,17 @@ class _RuntimeChildRosterCard extends StatelessWidget {
     required this.child,
     required this.device,
     required this.onTap,
+    required this.onRepairDevice,
   });
 
   final FamilyRosterChild child;
   final FamilyChildDeviceSummary? device;
   final VoidCallback onTap;
+
+  /// Runs when the guardian accepts a repair step this handset can carry out. The card is
+  /// a separate widget from the screen that owns the route, so the move is handed to it
+  /// rather than performed here.
+  final void Function(String path) onRepairDevice;
 
   @override
   Widget build(BuildContext context) {
@@ -1079,7 +1086,7 @@ class _RuntimeChildRosterCard extends StatelessWidget {
         copy: DeviceLifecycleCopy(
           isArabic: Localizations.localeOf(context).languageCode == 'ar',
         ),
-        onRepair: repairPath == null ? null : () => _startDeviceRepair(repairPath),
+        onRepair: repairPath == null ? null : () => onRepairDevice(repairPath),
       ),
     );
   }
