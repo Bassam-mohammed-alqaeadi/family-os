@@ -227,10 +227,15 @@ class FamilyDeviceApiClient {
     }
   }
 
+  /// Server contract (backend migration 009): pairing codes are exactly six
+  /// decimal digits, single-use, and expire ten minutes after issue.
+  static final RegExp pairingCodePattern = RegExp(r'^[0-9]{6}$');
+  static const int pairingCodeLength = 6;
+
   Future<FoundationGateClaimedDevice> claimPairing({
     required String pairingCode,
   }) async {
-    if (!RegExp(r'^[A-Za-z0-9_-]{32,128}$').hasMatch(pairingCode)) {
+    if (!pairingCodePattern.hasMatch(pairingCode)) {
       throw const FoundationGateApiException(
         FoundationGateApiFailure.invalidInput,
       );
@@ -247,6 +252,10 @@ class FamilyDeviceApiClient {
           FoundationGateApiFailure.invalidInput,
         );
       case 429:
+        // Brute-force guard: 5 failed claims per 10 minutes per peer.
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.tooManyAttempts,
+        );
       case 503:
         throw const FoundationGateApiException(
           FoundationGateApiFailure.serviceUnavailable,
@@ -434,7 +443,7 @@ class FamilyDeviceApiClient {
           deviceLabel is! String ||
           !_validText(deviceLabel, 80) ||
           pairingCode is! String ||
-          !RegExp(r'^[A-Za-z0-9_-]{32,128}$').hasMatch(pairingCode) ||
+          !pairingCodePattern.hasMatch(pairingCode) ||
           parsedExpiry == null) {
         throw const FormatException();
       }

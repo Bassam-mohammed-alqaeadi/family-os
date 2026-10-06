@@ -86,8 +86,8 @@ export function createDevicePairingInput(value) {
 export function claimDevicePairingInput(value) {
   const body = bodyObject(value);
   onlyKnownFields(body, new Set(['pairingCode']));
-  const pairingCode = requiredText(body.pairingCode, 'pairingCode', { maxLength: 128 });
-  if (!/^[A-Za-z0-9_-]{32,128}$/.test(pairingCode)) {
+  const pairingCode = requiredText(body.pairingCode, 'pairingCode', { maxLength: 16 });
+  if (!/^[0-9]{6}$/.test(pairingCode)) {
     throw new HttpError(400, 'invalid_request', 'pairingCode is invalid.');
   }
   return { pairingCode };

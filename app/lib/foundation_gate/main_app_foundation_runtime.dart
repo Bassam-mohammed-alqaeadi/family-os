@@ -329,7 +329,8 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
       FoundationGateApiFailure.accessDenied => FamilyCreationOutcome.denied,
       FoundationGateApiFailure.invalidInput => FamilyCreationOutcome.validation,
       FoundationGateApiFailure.conflict => FamilyCreationOutcome.conflict,
-      FoundationGateApiFailure.serviceUnavailable =>
+      FoundationGateApiFailure.serviceUnavailable ||
+      FoundationGateApiFailure.tooManyAttempts =>
         FamilyCreationOutcome.serviceUnavailable,
       FoundationGateApiFailure.networkUnavailable =>
         FamilyCreationOutcome.networkUnavailable,

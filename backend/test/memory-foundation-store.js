@@ -349,7 +349,7 @@ export class MemoryFoundationStore {
       }
       throw new HttpError(409, 'pairing_code_not_replayable', 'A pairing code was already issued. Create a new pairing code.');
     }
-    const pairingCode = this.newCapability();
+    const pairingCode = String(Math.floor(Math.random() * 1_000_000)).padStart(6, '0');
     const pairing = {
       id: randomUUID(), familyId, childId, deviceLabel,
       pairingCodeHash: this.capabilityHash(pairingCode),

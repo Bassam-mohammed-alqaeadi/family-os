@@ -532,6 +532,39 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
           ),
         ),
         const SizedBox(height: 16),
+        // The six digits are the primary artefact: large, bold, LTR, tabular,
+        // so the guardian can read them aloud and the child can type them.
+        SelectableText(
+          pairing.pairingCode,
+          key: const ValueKey('pairing-code-digits'),
+          textAlign: TextAlign.center,
+          textDirection: TextDirection.ltr,
+          style: TextStyle(
+            fontSize: 48,
+            letterSpacing: 10,
+            height: 1.1,
+            fontWeight: FontWeight.w900,
+            color: colors.tealDeep,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          copy.readCodeAloudHint,
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 12, color: colors.ink2),
+        ),
+        TextButton.icon(
+          onPressed: () async {
+            await Clipboard.setData(ClipboardData(text: pairing.pairingCode));
+            if (!mounted) return;
+            // ignore: use_build_context_synchronously
+            AppToast.show(context, message: copy.codeCopied);
+          },
+          icon: const Icon(Icons.copy_outlined, size: 18),
+          label: Text(copy.copyCode),
+        ),
+        const SizedBox(height: 12),
         Center(
           child: Container(
             decoration: BoxDecoration(
@@ -549,7 +582,7 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
             child: QrImageView(
               data: pairing.pairingCode,
               version: QrVersions.auto,
-              size: 260,
+              size: 220,
               backgroundColor: Colors.white,
               eyeStyle: const QrEyeStyle(
                 eyeShape: QrEyeShape.square,
@@ -588,61 +621,8 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
           copy.keepScreenOpen,
           style: TextStyle(fontSize: 12, color: colors.ink2),
         ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            const Expanded(child: Divider()),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Text(
-                copy.orEnterManually,
-                style: TextStyle(
-                  color: colors.ink.withValues(alpha: 0.5),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            const Expanded(child: Divider()),
-          ],
-        ),
-        const SizedBox(height: 10),
-        SelectableText(
-          _formatPairingCode(pairing.pairingCode),
-          textAlign: TextAlign.center,
-          textDirection: TextDirection.ltr,
-          style: TextStyle(
-            fontSize: 16,
-            letterSpacing: 1.5,
-            height: 1.6,
-            fontWeight: FontWeight.w800,
-            color: colors.tealDeep,
-            fontFeatures: const [FontFeature.tabularFigures()],
-          ),
-        ),
-        const SizedBox(height: 4),
-        TextButton.icon(
-          onPressed: () async {
-            await Clipboard.setData(ClipboardData(text: pairing.pairingCode));
-            if (!mounted) return;
-            // ignore: use_build_context_synchronously
-            AppToast.show(context, message: copy.codeCopied);
-          },
-          icon: const Icon(Icons.copy_outlined, size: 18),
-          label: Text(copy.copyCode),
-        ),
       ],
     );
-  }
-
-  /// Groups the opaque code in blocks of 4 for reading aloud / typing.
-  String _formatPairingCode(String raw) {
-    final buffer = StringBuffer();
-    for (var i = 0; i < raw.length; i += 4) {
-      if (i > 0) buffer.write(' ');
-      buffer.write(raw.substring(i, i + 4 > raw.length ? raw.length : i + 4));
-    }
-    return buffer.toString();
   }
 }
 
@@ -690,7 +670,7 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _code.addListener(() => setState(() {}));
+    _code.addListener(_onCodeChanged);
     _refreshNative();
   }
 
@@ -793,9 +773,23 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen>
   void _onQrDetected(BarcodeCapture capture) {
     final barcode = capture.barcodes.firstOrNull;
     final raw = barcode?.rawValue;
-    if (raw != null && raw.isNotEmpty) {
+    final digits = raw?.trim();
+    if (digits != null &&
+        FamilyDeviceApiClient.pairingCodePattern.hasMatch(digits)) {
       _stopScanner();
-      _code.text = raw.trim();
+      // Setting the text triggers _onCodeChanged, which submits the claim.
+      _code.text = digits;
+    }
+  }
+
+  /// OTP-style: the sixth digit submits automatically — no extra tap for the
+  /// child. Server-side the claim is single-use and brute-force limited, so a
+  /// mistyped code costs one of five attempts, exactly like pressing Submit.
+  void _onCodeChanged() {
+    if (!mounted) return;
+    setState(() {});
+    if (_loading) return;
+    if (FamilyDeviceApiClient.pairingCodePattern.hasMatch(_code.text)) {
       _claimAndStart();
     }
   }
@@ -804,7 +798,11 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen>
 
   Future<void> _claimAndStart() async {
     final copy = NativeChildPairingCopy.of(context);
-    final pairingCode = _code.text.trim().replaceAll(' ', '');
+    final pairingCode = _code.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (!FamilyDeviceApiClient.pairingCodePattern.hasMatch(pairingCode)) {
+      _fail(copy.pairingCodeHint);
+      return;
+    }
     if (widget.apiClient == null && !_originSecure) {
       _fail(copy.secureOriginRequired);
       return;
@@ -865,8 +863,12 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen>
       AppToast.show(context, message: copy.childModeActive);
       context.go('/scr-chd-004?childId=${claimed.device.childId}');
       return;
-    } on FoundationGateApiException {
-      _fail(copy.pairingClaimFailed);
+    } on FoundationGateApiException catch (error) {
+      _fail(
+        error.failure == FoundationGateApiFailure.tooManyAttempts
+            ? copy.pairingAttemptsExceeded
+            : copy.pairingClaimFailed,
+      );
     } on Object {
       _fail(copy.startFailureReason('native_telemetry_start_failed'));
     } finally {
@@ -1052,7 +1054,9 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen>
   }
 
   Widget _codeSection(FamilyColors colors, NativeChildPairingCopy copy) {
-    final canSubmit = _code.text.trim().isNotEmpty && !_loading;
+    final canSubmit =
+        FamilyDeviceApiClient.pairingCodePattern.hasMatch(_code.text) &&
+        !_loading;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1098,16 +1102,22 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen>
           controller: _code,
           autocorrect: false,
           enableSuggestions: false,
-          keyboardType: TextInputType.visiblePassword,
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(
+              FamilyDeviceApiClient.pairingCodeLength,
+            ),
+          ],
           textDirection: TextDirection.ltr,
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 16,
-            letterSpacing: 1.2,
-            fontWeight: FontWeight.w800,
+            fontSize: 32,
+            letterSpacing: 8,
+            fontWeight: FontWeight.w900,
             color: colors.tealDeep,
           ),
-          maxLength: 128,
+          maxLength: FamilyDeviceApiClient.pairingCodeLength,
           decoration: InputDecoration(
             labelText: copy.pairingCodeLabel,
             hintText: copy.pairingCodeHint,

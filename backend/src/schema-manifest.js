@@ -33,4 +33,8 @@ export const FOUNDATION_SCHEMA_MIGRATIONS = Object.freeze([
     name: '008_native_device_pairing.sql',
     sha256: '7685932c64f70e7f5e4e9bf63c728cbb36d56bfc8c3568e00c61283a5d75edb1',
   }),
+  Object.freeze({
+    name: '009_pairing_code_short_numeric.sql',
+    sha256: '6113b42ad153e2ca9ee30fbddf1b907a63d4b8347ce2a74a468644d81aca04ae',
+  }),
 ]);

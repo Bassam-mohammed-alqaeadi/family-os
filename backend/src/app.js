@@ -143,14 +143,20 @@ export function createApp({
         },
     });
 
+    // Pairing codes are 6 digits (migration 009). Brute-force budget per peer:
+    // 5 *failed* claims per 10 minutes (successful claims do not count, so a
+    // household pairing several children in a row is not punished). Combined
+    // with the 10-minute TTL and single use, an attacker gets ~5 guesses per
+    // address against a 1,000,000-value space per live code.
     const pairingClaimRateLimit = rateLimit({
-        windowMs: 60_000,
-        limit: 12,
+        windowMs: 10 * 60_000,
+        limit: 5,
+        skipSuccessfulRequests: true,
         standardHeaders: 'draft-7',
         legacyHeaders: false,
         validate: { xForwardedForHeader: false },
         handler: (_request, _response, next) => {
-            next(new HttpError(429, 'rate_limit_exceeded', 'Too many pairing attempts. Try again later.'));
+            next(new HttpError(429, 'pairing_attempts_exceeded', 'Too many failed pairing attempts. Ask the guardian for a new code and try again in 10 minutes.'));
         },
     });
 

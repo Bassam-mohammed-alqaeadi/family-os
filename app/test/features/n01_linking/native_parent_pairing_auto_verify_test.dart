@@ -11,7 +11,7 @@ const _childId = '22222222-2222-4222-8222-222222222222';
 
 String _pairingBody() {
   final expires = DateTime.now().toUtc().add(const Duration(minutes: 10));
-  return '{"pairing":{"id":"33333333-3333-4333-8333-333333333333","childId":"$_childId","deviceLabel":"هاتف الطفل","pairingCode":"abcdefghijklmnopqrstuvwxyzABCDEF0123456789_-","expiresAt":"${expires.toIso8601String()}"}}';
+  return '{"pairing":{"id":"33333333-3333-4333-8333-333333333333","childId":"$_childId","deviceLabel":"هاتف الطفل","pairingCode":"482910","expiresAt":"${expires.toIso8601String()}"}}';
 }
 
 void main() {
@@ -68,6 +68,14 @@ void main() {
 
       expect(devices.postedUri?.path, contains('/device-pairings'));
       expect(find.textContaining('بانتظار تأكيدك'), findsNothing);
+      // The six digits are shown verbatim (no grouping/spaces) in a large
+      // bold style so the guardian can read them aloud.
+      final digits = tester.widget<SelectableText>(
+        find.byKey(const ValueKey('pairing-code-digits')),
+      );
+      expect(digits.data, '482910');
+      expect(digits.style?.fontSize, greaterThanOrEqualTo(40));
+      expect(digits.style?.fontWeight, FontWeight.w900);
 
       // Let the countdown/device timers settle, then stop them.
       await tester.pump(const Duration(seconds: 1));

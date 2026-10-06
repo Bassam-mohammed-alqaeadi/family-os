@@ -74,6 +74,10 @@ enum FoundationGateApiFailure {
   serviceUnavailable,
   networkUnavailable,
   invalidResponse,
+
+  /// HTTP 429 on a guess-able endpoint (pairing claim): the peer is locked
+  /// for a window after repeated failures. Distinct from a generic outage.
+  tooManyAttempts,
 }
 
 class FoundationGateApiException implements Exception {

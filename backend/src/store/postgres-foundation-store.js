@@ -1,4 +1,4 @@
-import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, randomInt, randomUUID, timingSafeEqual } from 'node:crypto';
 import pg from 'pg';
 import { HttpError } from '../http-error.js';
 import { FOUNDATION_SCHEMA_MIGRATIONS } from '../schema-manifest.js';
@@ -64,6 +64,16 @@ function capabilityHash(value) {
 
 function newCapability() {
   return randomBytes(32).toString('base64url');
+}
+
+// Human-typeable pairing code: exactly 6 decimal digits, CSPRNG-drawn and
+// uniformly distributed (randomInt is rejection-sampled). Brute-force defence
+// lives at the claim endpoint (5 failed attempts / 10 min per peer) together
+// with the 10-minute TTL and single use.
+export const PAIRING_CODE_LENGTH = 6;
+export const PAIRING_CODE_PATTERN = /^[0-9]{6}$/;
+export function newPairingCode() {
+  return String(randomInt(0, 10 ** PAIRING_CODE_LENGTH)).padStart(PAIRING_CODE_LENGTH, '0');
 }
 
 function capabilityMatches(expectedHash, rawCapability) {
@@ -569,7 +579,24 @@ export class PostgresFoundationStore {
       if (child.rowCount === 0) {
         throw new HttpError(404, 'family_child_not_found', 'Child profile was not found in this family.');
       }
-      const pairingCode = newCapability();
+      // Expired, never-claimed codes are purged so their values return to the
+      // 6-digit pool; the unclaimed-only unique index (migration 009) then
+      // guarantees no two live codes collide.
+      await client.query(
+        'DELETE FROM family_device_pairings WHERE claimed_at IS NULL AND expires_at <= NOW()',
+      );
+      let pairingCode = null;
+      for (let attempt = 0; attempt < 16 && pairingCode === null; attempt += 1) {
+        const candidate = newPairingCode();
+        const live = await client.query(
+          'SELECT 1 FROM family_device_pairings WHERE pairing_code_hash = $1 AND claimed_at IS NULL',
+          [capabilityHash(candidate)],
+        );
+        if (live.rowCount === 0) pairingCode = candidate;
+      }
+      if (pairingCode === null) {
+        throw new HttpError(503, 'pairing_code_pool_exhausted', 'Could not allocate a pairing code. Try again shortly.');
+      }
       const pairing = await client.query(
         `INSERT INTO family_device_pairings
          (id, family_id, child_id, pairing_code_hash, device_label, expires_at, created_by_membership_id)

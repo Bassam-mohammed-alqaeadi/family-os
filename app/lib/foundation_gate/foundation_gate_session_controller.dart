@@ -230,6 +230,7 @@ class FoundationGateSessionController extends ChangeNotifier {
           FoundationGateApiFailure.invalidInput ||
           FoundationGateApiFailure.conflict ||
           FoundationGateApiFailure.serviceUnavailable ||
+          FoundationGateApiFailure.tooManyAttempts ||
           FoundationGateApiFailure.networkUnavailable ||
           FoundationGateApiFailure.invalidResponse =>
             FoundationGateChildCreateResult.createdRosterRefreshUnavailable,
@@ -256,6 +257,7 @@ class FoundationGateSessionController extends ChangeNotifier {
           _setPhase(FoundationGatePhase.rosterAccessDenied);
           return FoundationGateChildCreateResult.accessDenied;
         case FoundationGateApiFailure.serviceUnavailable:
+        case FoundationGateApiFailure.tooManyAttempts:
           // The outcome may be ambiguous. Remove the prior collection instead
           // of presenting it as the current roster while the form retries.
           await _handleRosterFailure(error.failure);
@@ -323,6 +325,7 @@ class FoundationGateSessionController extends ChangeNotifier {
         _setPhase(FoundationGatePhase.accessDenied);
         break;
       case FoundationGateApiFailure.serviceUnavailable:
+      case FoundationGateApiFailure.tooManyAttempts:
         _setPhase(FoundationGatePhase.serviceUnavailable);
         break;
       case FoundationGateApiFailure.invalidInput:
@@ -346,6 +349,7 @@ class FoundationGateSessionController extends ChangeNotifier {
         _setPhase(FoundationGatePhase.rosterAccessDenied);
         break;
       case FoundationGateApiFailure.serviceUnavailable:
+      case FoundationGateApiFailure.tooManyAttempts:
         _setPhase(FoundationGatePhase.serviceUnavailable);
         break;
       case FoundationGateApiFailure.invalidInput:

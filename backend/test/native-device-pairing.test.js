@@ -51,11 +51,12 @@ test('one-time pairing returns a device-only credential and it can submit real-s
     });
     assert.equal(pairing.status, 201);
     const pairingBody = await pairing.json();
-    assert.match(pairingBody.pairing.pairingCode, /^[A-Za-z0-9_-]{32,128}$/);
+    assert.match(pairingBody.pairing.pairingCode, /^[0-9]{6}$/);
     assert.equal(pairingBody.pairing.deviceLabel, 'Amani Android');
     // Server/test persistence retains hashes and a non-sensitive issuance
     // marker, never the raw pairing capability that was returned once.
-    assert.equal(JSON.stringify([...store.devicePairings.values(), ...store.idempotency.values()]).includes(pairingBody.pairing.pairingCode), false);
+    assert.equal([...store.devicePairings.values()].some((item) => Object.values(item).includes(pairingBody.pairing.pairingCode)), false);
+    assert.equal(JSON.stringify([...store.idempotency.values()]).includes('pairingCode'), false);
 
     const retryIssue = await request(baseUrl, `/v1/families/${family.id}/children/${child.id}/device-pairings`, {
       method: 'POST', authorization: 'Bearer test-primary', idempotencyKey: 'native-pair-one',
@@ -132,5 +133,37 @@ test('an unverified guardian e-mail can create a family and a child but cannot m
     assert.equal(body.error.code, 'email_verification_required');
     // No capability row, no audit event, nothing claimable was created.
     assert.equal(store.devicePairings.size, 0);
+  });
+});
+
+test('claim endpoint rejects malformed codes and locks a peer after 5 failed guesses while a correct code still works for a fresh peer window', async () => {
+  const store = new MemoryFoundationStore({ now: () => new Date('2026-10-04T13:00:00.000Z') });
+  const app = createApp({ store, authVerifier: new TestAuthVerifier(), readiness: () => ({ ready: true }) });
+  await withServer(app, async (baseUrl) => {
+    const malformed = await request(baseUrl, '/v1/device-pairings/claim', {
+      method: 'POST', body: { pairingCode: 'abc123' },
+    });
+    assert.equal(malformed.status, 400);
+    assert.equal((await malformed.json()).error.code, 'invalid_request');
+
+    const { family, child } = await makeFamilyChild(baseUrl);
+    const pairing = await request(baseUrl, `/v1/families/${family.id}/children/${child.id}/device-pairings`, {
+      method: 'POST', authorization: 'Bearer test-primary', idempotencyKey: 'native-pair-brute',
+      body: { deviceLabel: 'Amani Android' },
+    });
+    const { pairingCode } = (await pairing.json()).pairing;
+    const wrong = String((Number(pairingCode) + 1) % 1_000_000).padStart(6, '0');
+
+    // The malformed request above already consumed one failed attempt.
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      const guess = await request(baseUrl, '/v1/device-pairings/claim', { method: 'POST', body: { pairingCode: wrong } });
+      assert.equal(guess.status, 400);
+      assert.equal((await guess.json()).error.code, 'pairing_not_claimable');
+    }
+    const locked = await request(baseUrl, '/v1/device-pairings/claim', { method: 'POST', body: { pairingCode } });
+    assert.equal(locked.status, 429);
+    assert.equal((await locked.json()).error.code, 'pairing_attempts_exceeded');
+    // The code itself is still unclaimed: the lock is per peer, not per code.
+    assert.equal([...store.devicePairings.values()].every((item) => item.claimedAt == null), true);
   });
 });
