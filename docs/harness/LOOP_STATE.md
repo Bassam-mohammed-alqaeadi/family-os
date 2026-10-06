@@ -21,7 +21,7 @@ last_locked: "SPINE-001 — 2026-10-06, owner-approved; M0 — 2026-10-05 on 3d7
 next_locked_gate: "M1 exit — every exit criterion in the card checked with evidence, and the device condition visible in the real roster"
 evidence: "c9def70 guard green; 8ae2103 device-lifecycle.v1 + migration 101; cedd1b7 revocation live with 25 new tests; d07de3d client parses and renders the server verdict; backend 132/132, npm run check clean, migration range guard exit 0, Harness Guard / Backend CI / Credential Guard / Foundation Gate CI / Flutter CI all green on d07de3d (Flutter's enforcement step skipped = true pass)"
 ```
-<!-- HARNESS-STATE:END --><!-- HARNESS-STATE:END -->
+<!-- HARNESS-STATE:END -->
 
 ---
 
