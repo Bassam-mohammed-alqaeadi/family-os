@@ -70,10 +70,11 @@ class PermissionsExplainerScreen extends StatelessWidget {
           child: Column(
             children: [
               Expanded(
-                child: ListView(
+                child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                  children: [
-                    Semantics(
+                  child: Column(
+                    children: [
+                      Semantics(
                       button: true,
                       label: l10n.permissionsExplainerVideoSemantics,
                       child: Material(
@@ -187,7 +188,8 @@ class PermissionsExplainerScreen extends StatelessWidget {
                       message: l10n.permissionsExplainerBanner,
                       variant: BannerVariant.a,
                     ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               Padding(
