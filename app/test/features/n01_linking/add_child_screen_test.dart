@@ -130,7 +130,11 @@ void main() {
     expect(call.draft.themeColor, 'mint');
     expect(call.idempotencyKey, isNotEmpty);
     expect(router.state.uri.path, '/scr-fat-004');
-    expect(find.text('pair:childId=$_childId&source=server'), findsOneWidget);
+    expect(router.state.uri.queryParameters, {
+      'childId': _childId,
+      'childName': 'سارة',
+      'source': 'server',
+    });
   });
 
   testWidgets('double tap while saving creates exactly one child', (
