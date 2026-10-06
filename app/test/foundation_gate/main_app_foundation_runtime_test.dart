@@ -133,7 +133,11 @@ void main() {
   test(
     'memberships are read for the selected family, changed through the server, and refused without a session',
     () async {
-      final identity = FakeIdentity(subject: 'firebase-subject');
+      // The token is what reaches the server; the subject is what the server makes of it.
+      final identity = FakeIdentity(
+        token: 'synthetic-id-token',
+        subject: 'firebase-subject',
+      );
       final configuration = FoundationGateConfiguration.fromStagingApiOrigin(
         Uri.parse('https://staging.example.test'),
       );
@@ -201,7 +205,8 @@ void main() {
       );
       expect(
         membershipTransport.requestedHeaders?['authorization'],
-        'Bearer firebase-subject',
+        'Bearer synthetic-id-token',
+        reason: 'the server call carries the session token, not the subject it names',
       );
 
       // A different family than the one this session selected is not read at all.

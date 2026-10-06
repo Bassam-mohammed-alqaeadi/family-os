@@ -19,7 +19,6 @@ import 'package:family_os/features/n02_day/children_list_local_repository.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
-import 'package:family_os/features/n12_devices/family_members_remote_repository.dart';
 import 'package:family_os/features/n12_devices/family_members_repository.dart';
 
 /// Widget keys for SCR-FAT-027 acceptance.
