@@ -80,8 +80,8 @@ async function migrate(client) {
   });
 }
 
-/** Creates an account, a family with a primary guardian, a child and a paired device. */
-async function seedPairedDevice(client) {
+/** Creates an account, a family with a primary guardian and a child - and no device yet. */
+async function seedFamily(client) {
   const account = await client.query(
     `INSERT INTO accounts (id, oidc_subject) VALUES (gen_random_uuid(), $1) RETURNING id`,
     ['gate-primary'],
@@ -107,6 +107,16 @@ async function seedPairedDevice(client) {
      VALUES (gen_random_uuid(), $1, 'Amani', 9) RETURNING id`,
     [family.rows[0].id],
   );
+  return {
+    familyId: family.rows[0].id,
+    childId: child.rows[0].id,
+    membershipId: membership.rows[0].id,
+  };
+}
+
+/** The same family, with one device already holding a credential. */
+async function seedPairedDevice(client) {
+  const ids = await seedFamily(client);
   const device = await client.query(
     // A credential and its issue time travel together: migration 008 refuses a device that
     // holds one without the other. The server's own claim path sets both; so does this seed.
@@ -114,14 +124,9 @@ async function seedPairedDevice(client) {
        (id, family_id, child_id, device_label, credential_hash, credential_issued_at)
      VALUES (gen_random_uuid(), $1, $2, 'Amani Android', $3, NOW())
      RETURNING id, family_id, child_id`,
-    [family.rows[0].id, child.rows[0].id, 'a'.repeat(64)],
+    [ids.familyId, ids.childId, 'a'.repeat(64)],
   );
-  return {
-    familyId: family.rows[0].id,
-    childId: child.rows[0].id,
-    deviceId: device.rows[0].id,
-    membershipId: membership.rows[0].id,
-  };
+  return { ...ids, deviceId: device.rows[0].id };
 }
 
 function revokeOn(store, ids) {
@@ -137,6 +142,38 @@ function revokeOn(store, ids) {
     // from the request fingerprint; this is the same shape.
     requestHash: 'b'.repeat(64),
     correlationId: '11111111-2222-4333-8444-555555555555',
+  });
+}
+
+/**
+ * Issues a pairing code the way the guardian's screen does, and returns the one thing that
+ * code is good for: the value the handset will claim with.
+ */
+async function issuePairing(store, { ids, principal, idempotencyKey, requestHash, correlationId }) {
+  const { pairing } = await store.createDevicePairing({
+    principal,
+    familyId: ids.familyId,
+    childId: ids.childId,
+    deviceLabel: 'Amani Android',
+    idempotencyKey,
+    requestHash,
+    correlationId,
+  });
+  return pairing.pairingCode;
+}
+
+/** Cuts one specific device off, so a journey test can hold two devices at once. */
+function revokeWith(store, { ids, deviceId, reasonCode, idempotencyKey, requestHash, correlationId }) {
+  const revoke = deviceRevocationFor(store);
+  return revoke({
+    principal: { subject: 'gate-primary' },
+    familyId: ids.familyId,
+    childId: ids.childId,
+    deviceId,
+    reasonCode,
+    idempotencyKey,
+    requestHash,
+    correlationId,
   });
 }
 
@@ -414,6 +451,142 @@ test('the guardian read surface derives the lifecycle from the real row', { skip
       // The row's own version moved with the revocation, so a client can tell that the
       // record it is holding is the record it just changed.
       assert.equal(revoked.version, 3);
+    } finally {
+      await store.close();
+    }
+  });
+});
+
+test('a cut-off device can be replaced, and what was cut off stays cut off', { skip }, async () => {
+  // The journey in the parent's words: the handset is gone, cut it off, then protect the
+  // child again. The server half of the card's promise is that the second half exists.
+  //
+  // Two rules are under test, and getting either wrong costs the family something real:
+  //
+  //   1. Revocation must not brick the child. If the family could never pair a replacement,
+  //      a guardian facing a lost phone would have to choose between an unprotected child
+  //      and a permanently dead record.
+  //   2. Revocation must not come back to life. The credential that was cut off stays dead
+  //      across the replacement, forever, and the replacement walks the same pairing
+  //      journey - there is no "known device" shortcut that a holder of the old handset
+  //      could step through.
+  await withFreshDatabase(async (client) => {
+    await migrate(client);
+    const ids = await seedFamily(client);
+    const store = new PostgresFoundationStore({
+      connectionString: withDatabase(DATABASE_URL, client.database),
+    });
+    const principal = { subject: 'gate-primary' };
+    const correlationId = '33333333-4444-4555-8666-777777777777';
+    const report = (deviceId, deviceCredential) =>
+      store.ingestDeviceTelemetry({
+        deviceId,
+        deviceCredential,
+        principal: null,
+        batteryLevel: 64,
+        batteryStatus: 'unplugged',
+        locationLat: 15.3694,
+        locationLng: 44.191,
+        locationLabel: 'البيت',
+        correlationId,
+      });
+    try {
+      // The first pairing: a code issued by the guardian, then claimed by the handset.
+      const firstCode = await issuePairing(store, {
+        ids,
+        principal,
+        idempotencyKey: 'pair-1',
+        requestHash: 'e'.repeat(64),
+        correlationId,
+      });
+      const first = await store.claimDevicePairing({ pairingCode: firstCode, correlationId });
+      assert.equal(first.device.health.state, 'never_reported');
+      assert.equal((await report(first.device.id, first.deviceCredential)).device.health.state, 'active');
+
+      // The handset is lost, and the guardian cuts it off.
+      const revoked = await revokeWith(store, {
+        ids,
+        deviceId: first.device.id,
+        reasonCode: 'lost',
+        idempotencyKey: 'revoke-the-lost-one',
+        requestHash: 'f'.repeat(64),
+        correlationId,
+      });
+      assert.equal(revoked.device.health.state, 'revoked');
+
+      // A cut-off credential cannot report, and the refusal is the same one whether the
+      // server compares hashes or reads the revocation - both paths lead to 401.
+      await assert.rejects(
+        () => report(first.device.id, first.deviceCredential),
+        (error) => error.status === 401 && error.code === 'invalid_device_credential',
+        'a revoked credential was accepted for telemetry',
+      );
+
+      // The used code is spent, so the replacement cannot be a replay of the first journey:
+      // a second device has to be paired by a second code the guardian issues.
+      await assert.rejects(
+        () => store.claimDevicePairing({ pairingCode: firstCode, correlationId }),
+        (error) => error.status === 400 && error.code === 'pairing_not_claimable',
+        'a claimed pairing code was claimable a second time',
+      );
+
+      // Same journey, one step at a time. No shortcut exists, and this is the honest cost
+      // of that: the guardian issues a fresh code, and the new handset claims it.
+      const secondCode = await issuePairing(store, {
+        ids,
+        principal,
+        idempotencyKey: 'pair-2',
+        requestHash: '1'.repeat(64),
+        correlationId,
+      });
+      const second = await store.claimDevicePairing({ pairingCode: secondCode, correlationId });
+      assert.notEqual(second.device.id, first.device.id, 'the replacement must be its own device');
+      assert.equal(second.device.health.state, 'never_reported');
+      assert.equal(
+        (await report(second.device.id, second.deviceCredential)).device.health.state,
+        'active',
+        'the replacement device could not report, so the child is still unprotected',
+      );
+
+      // Rule 2. The replacement did not resurrect the old credential: the handset that was
+      // reported lost is still refused with its own credential, next to a working one.
+      await assert.rejects(
+        () => report(first.device.id, first.deviceCredential),
+        (error) => error.status === 401 && error.code === 'invalid_device_credential',
+        'pairing a replacement brought the cut-off credential back to life',
+      );
+
+      // What the guardian sees afterwards: two records, one of them honestly marked as cut
+      // off, and the child protected again by the other.
+      const { devices } = await store.listFamilyDevices({ principal, familyId: ids.familyId });
+      assert.equal(devices.length, 2);
+      const byId = Object.fromEntries(devices.map((device) => [device.id, device]));
+      assert.equal(byId[first.device.id].health.state, 'revoked');
+      assert.equal(byId[first.device.id].credentialState, 'revoked');
+      assert.equal(byId[second.device.id].health.state, 'active');
+      assert.equal(byId[second.device.id].health.needsAttention, false);
+
+      // The database's own account of the two devices, so this test cannot be satisfied by
+      // a view layer that merely says the right thing.
+      const rows = await client.query(
+        `SELECT id, credential_hash, credential_revoked_at, revoked_by_membership_id,
+                revocation_reason, version
+           FROM family_child_devices
+          ORDER BY linked_at ASC, id ASC`,
+      );
+      assert.equal(rows.rowCount, 2);
+      const [oldRow, newRow] = rows.rows;
+      assert.equal(oldRow.id, first.device.id);
+      assert.ok(oldRow.credential_revoked_at instanceof Date);
+      assert.equal(oldRow.revoked_by_membership_id, ids.membershipId);
+      assert.equal(oldRow.revocation_reason, 'lost');
+      assert.equal(newRow.id, second.device.id);
+      assert.equal(newRow.credential_revoked_at, null, 'the replacement was born revoked');
+      assert.notEqual(
+        newRow.credential_hash,
+        oldRow.credential_hash,
+        'the replacement reused the credential of the device that was cut off',
+      );
     } finally {
       await store.close();
     }

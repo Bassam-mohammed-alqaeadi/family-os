@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/tokens.dart';
@@ -413,6 +414,171 @@ void main() {
     expect(find.byType(ChildDeviceCard), findsNothing);
   });
 
+  testWidgets(
+    'SCR-FAT-012 a device that was cut off leads to the pairing journey',
+    (tester) async {
+      // The card told the guardian "pair it again so it can report once more". That
+      // sentence was reachable and the action was not: the screen built the card with no
+      // repair callback at all, so a lost handset produced advice and no way to act on it.
+      // This test walks the whole step, including where it lands and with whose child id.
+      const childId = '77777777-7777-4777-8777-777777777777';
+      const deviceId = '88888888-8888-4888-8888-888888888888';
+      final familyId = FamilyId('fam_device_repair');
+      final runtime = AppRuntime(
+        identity: _StaticIdentitySource(
+          IdentitySnapshot(
+            authority: IdentityAuthority.remoteAuthoritative,
+            accountId: AccountId('parent_device_repair'),
+            familyId: familyId,
+            role: AppRole.father,
+            isPrimaryOwner: true,
+          ),
+        ),
+        roster: _StaticRosterSource(
+          FamilyRosterSnapshot(
+            familyId: familyId,
+            origin: RuntimeDataOrigin.remoteAuthoritative,
+            children: [
+              FamilyRosterChild(
+                childId: ChildId(childId),
+                displayName: 'أمانة',
+                ageYears: 9,
+              ),
+            ],
+          ),
+        ),
+        devices: _StaticDeviceSource(
+          _snapshotWith(familyId, [
+            _device(
+              id: deviceId,
+              childId: childId,
+              state: FoundationGateDeviceHealthState.revoked,
+              reasonCode: 'device_revoked',
+              needsAttention: true,
+            ),
+          ]),
+        ),
+      );
+      addTearDown(runtime.dispose);
+
+      // A real router, not a callback seam: the destination under test is the route the
+      // guardian's tap actually reaches, which is the only thing that proves the repair
+      // journey exists rather than being described.
+      final router = GoRouter(
+        initialLocation: '/scr-fat-012',
+        routes: [
+          GoRoute(
+            path: '/scr-fat-012',
+            builder: (context, state) => const ChildrenListScreen(),
+          ),
+          GoRoute(
+            path: '/scr-fat-004',
+            builder: (context, state) => Scaffold(
+              body: Text('PAIRING:${state.uri.queryParameters['childId']}'),
+            ),
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+
+      await tester.pumpWidget(_routedApp(runtime: runtime, router: router));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.textContaining('أعد الربط'),
+        findsWidgets,
+        reason: 'the card must say what would help a cut-off device',
+      );
+      final action = find.descendant(
+        of: find.byKey(ChildrenListKeys.deviceCard(deviceId)),
+        matching: find.text('إصلاح'),
+      );
+      expect(
+        action,
+        findsOneWidget,
+        reason: 'the repair the card names must be offered, not just suggested',
+      );
+
+      await tester.tap(action);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('PAIRING:$childId'),
+        findsOneWidget,
+        reason: 'the repair step must land on the pairing journey for that child',
+      );
+    },
+  );
+
+  testWidgets(
+    'SCR-FAT-012 a silent device is told about, not sent somewhere useless',
+    (tester) async {
+      // The same card, a different state. "Check that the device is on" is a step on the
+      // child's handset; a button leading to a pairing screen would create a second device
+      // record and leave the silent one silent. So the sentence stands alone.
+      const childId = '99999999-9999-4999-8999-999999999999';
+      const deviceId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+      final familyId = FamilyId('fam_device_silent');
+      final runtime = AppRuntime(
+        identity: _StaticIdentitySource(
+          IdentitySnapshot(
+            authority: IdentityAuthority.remoteAuthoritative,
+            accountId: AccountId('parent_device_silent'),
+            familyId: familyId,
+            role: AppRole.father,
+            isPrimaryOwner: true,
+          ),
+        ),
+        roster: _StaticRosterSource(
+          FamilyRosterSnapshot(
+            familyId: familyId,
+            origin: RuntimeDataOrigin.remoteAuthoritative,
+            children: [
+              FamilyRosterChild(
+                childId: ChildId(childId),
+                displayName: 'أمانة',
+                ageYears: 9,
+              ),
+            ],
+          ),
+        ),
+        devices: _StaticDeviceSource(
+          _snapshotWith(familyId, [
+            _device(
+              id: deviceId,
+              childId: childId,
+              state: FoundationGateDeviceHealthState.offline,
+              reasonCode: 'stopped_reporting',
+              needsAttention: true,
+            ),
+          ]),
+        ),
+      );
+      addTearDown(runtime.dispose);
+
+      await tester.pumpWidget(
+        _app(runtime: runtime, child: const ChildrenListScreen()),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(ChildrenListKeys.deviceCard(deviceId)),
+        findsOneWidget,
+        reason: 'a device the server flagged still has to reach the guardian',
+      );
+      expect(
+        find.textContaining('تأكد أن الجهاز يعمل'),
+        findsWidgets,
+        reason: 'the cause and the step must still be named in words',
+      );
+      expect(
+        find.text('إصلاح'),
+        findsNothing,
+        reason: 'no control may be offered when this handset cannot carry the step out',
+      );
+    },
+  );
+
   testWidgets('SCR-FAT-012 no provenance → no demo BannerNote', (tester) async {
     final repo = InMemoryChildrenListRepository(
       children: ChildrenListMock.manyFixture,
@@ -450,6 +616,25 @@ Widget _app({required Widget child, AppRuntime? runtime}) {
   );
   if (runtime == null) return app;
   return AppScope(runtime: runtime, child: app);
+}
+
+/// The same app, driven by a router so a test can observe where a tap navigates.
+Widget _routedApp({required AppRuntime runtime, required GoRouter router}) {
+  return AppScope(
+    runtime: runtime,
+    child: MaterialApp.router(
+      theme: buildFamilyTheme(),
+      locale: const Locale('ar'),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      routerConfig: router,
+    ),
+  );
 }
 
 final class _StaticIdentitySource extends ChangeNotifier

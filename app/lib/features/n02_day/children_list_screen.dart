@@ -13,6 +13,7 @@ import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/foundation_gate/child_device_card.dart';
 import 'package:family_os/foundation_gate/device_lifecycle_copy.dart';
+import 'package:family_os/foundation_gate/device_repair_route.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/domain/role.dart';
@@ -340,6 +341,18 @@ class ChildrenListScreenState extends State<ChildrenListScreen> {
       return;
     }
     context.push('/scr-fat-013?childId=${Uri.encodeComponent(childId)}');
+  }
+
+  /// Walks the guardian into the repair journey and brings the roster back up to date.
+  ///
+  /// The journey can end with a replacement device actually paired, and returning to a
+  /// roster still showing only the device that was cut off would read as a failed attempt.
+  /// So the screen reloads when the journey returns, rather than asking the guardian to
+  /// pull to refresh to see what their own action produced.
+  Future<void> _startDeviceRepair(String path) async {
+    await context.push(path);
+    if (!mounted) return;
+    await _load();
   }
 
   Future<void> _deleteChild(String childId) async {
@@ -1047,9 +1060,16 @@ class _RuntimeChildRosterCard extends StatelessWidget {
   /// The card's own rules are kept rather than reimplemented: no action is offered unless
   /// the server suggested a next step, and the sentence comes from the copy layer that
   /// owns the words.
+  ///
+  /// The action itself is wired here, and only where this handset can carry it out: a
+  /// device that was cut off is replaced by pairing again, while a late or silent device
+  /// needs something done on the child's own phone. A control that led to a pairing screen
+  /// for those states would produce a second device record and leave the real problem
+  /// untouched, so the sentence stands alone rather than behind a button.
   Widget _deviceCard(BuildContext context, FamilyChildDeviceSummary? device) {
     final attention = device?.attentionDevice;
     if (attention == null) return const SizedBox.shrink();
+    final repairPath = deviceRepairPath(attention);
     return Padding(
       padding: const EdgeInsetsDirectional.only(start: 56, end: 12, bottom: 12),
       child: ChildDeviceCard(
@@ -1059,6 +1079,7 @@ class _RuntimeChildRosterCard extends StatelessWidget {
         copy: DeviceLifecycleCopy(
           isArabic: Localizations.localeOf(context).languageCode == 'ar',
         ),
+        onRepair: repairPath == null ? null : () => _startDeviceRepair(repairPath),
       ),
     );
   }

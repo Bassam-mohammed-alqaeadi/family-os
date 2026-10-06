@@ -9,17 +9,17 @@
 <!-- HARNESS-STATE:BEGIN -->
 ```yaml
 status: REAL_ENGINE
-active_system: المرحلة صفر — الأساس (الخطة الحقيقية 00_MASTER_PLAN)
-wave: "00_MASTER_PLAN — المرحلة صفر"
-stage: المرحلة صفر مكتملة — ص٠-أ ✅ (بيئة) · ص٠-ب ✅ (عقد) · ص٠-ج ✅ (معرض) · ص٠-د ✅ (mock). النشط: و٢ إغلاق رحلة الجهاز ٤/٤ (إعادة الإقران بعد القطع).
+active_system: المرحلة الأولى — الأمانة والهوية (و٢ مُغلقة ٤/٤، والنشط و١)
+wave: "00_MASTER_PLAN — المرحلة الأولى"
+stage: المرحلة صفر مكتملة — ص٠-أ ✅ (بيئة) · ص٠-ب ✅ (عقد) · ص٠-ج ✅ (معرض) · ص٠-د ✅ (mock). و٢ أُغلقت ٤/٤ برحلة إعادة الإقران بعد القطع. النشط: و١ — رحلة الدعوة في التطبيق.
 card: docs/harness/cards/M1-37-002-device-lifecycle-cover.md
-owns: the branch-wide consolidation and purge of 2026-10-06, and the Environment Gate now running on every push
+owns: the M1 device lifecycle (card M1-37-002, now 8/8) - its contract, its server side, its surface, and the re-pair journey proven on real PostgreSQL
 blocked_by: —
 owner_question: —
-last_tick: 2026-10-06
+last_tick: 2026-10-07
 last_locked: "SPINE-001 — 2026-10-06, owner-approved; M0 — 2026-10-05 on 3d7ff18"
-next_locked_gate: "و٢: رحلة الجهاز كاملة — إعادة الإقران بعد القطع على مسار حقيقي، ثم 4/4"
-evidence: "f881c47: الخمس كلها خضراء — Backend CI (analyze-test + Real PostgreSQL) ✅ · Credential Guard ✅ · Foundation Gate ✅ · Harness Guard ✅ · Flutter CI ✅ (Analyze + 1805 اختبار + بوابة المصدر المُولَّد). ص٠-د: ٢٣ وهمياً واصلاً للإنتاج مسجّلة بأثرها، وحارس يمنع الصعود. ص٠-ج: المعرض مسارَان لا ١٢٩، والعزل في المُولِّد لا في اليد. و٢: مسار القراءة يحمل دورة الحياة، والعميل نموذج واحد، والبطاقة في الكشف؛ ٧/٧ على PostgreSQL 18.4 محلياً"
+next_locked_gate: "و١: رحلة الدعوة في التطبيق — العميل ثم الشاشة والرحلة، حتى 4/4"
+evidence: "2026-10-07: و٢ أُغلقت ٤/٤ — اختبار واحد يمشي الرحلة كاملة على PostgreSQL 18.4 (إقران ← قياس ← قطع ← 401 ← كود جديد ← قياس ← اعتماد جديد)، والاعتماد المقطوع يبقى مرفوضاً بعده: ٨/٨، و١٤٩ اختبار خادم (١٤١ ناجح/٨ متجاوز بلا قاعدة، ١٤٩/١٤٩ معها). والعيب الرابع س٤ (زر الإصلاح غير الموصول) مُغلق بدالة قرار خالصة device_repair_route.dart + اختبار بمُوجّه حقيقي. البوابات على f881c47 كانت خضراء جميعها."
 ```
 <!-- HARNESS-STATE:END -->
 
@@ -28,7 +28,7 @@ evidence: "f881c47: الخمس كلها خضراء — Backend CI (analyze-test 
 ## الحالة بالعربية
 
 **النظام النشط:** M1 — الأجهزة (النظام 37)، مصرَّح به بقفل M0.
-**المرحلة:** Cover — عقد دورة حياة الجهاز.
+**المرحلة:** Cover أُغلق ٨/٨ (2026-10-07). النظام التالي عمله: `REAL_ENGINE` بإغلاق رحلة الدعوة (و١).
 **البطاقة الجارية:** `M1-37-002` — من الإقران إلى القطع الآمن.
 
 **المُقفَل للتوّ:** `SPINE-001` — دستور الروابط الخمسة، أقرّه المالك 2026-10-06.
@@ -55,7 +55,7 @@ evidence: "f881c47: الخمس كلها خضراء — Backend CI (analyze-test 
 |---|---|---|
 | SPINE | ✅ **مقفول** 2026-10-06 | [`cards/SPINE-001`](cards/SPINE-001-experience-bindings.md) — أقرّه المالك |
 | M0 — Setup + Family | ✅ **مقفولة** 2026-10-05 | [`../real_platform/05_M0_LOCK_RECORD.md`](../real_platform/05_M0_LOCK_RECORD.md) — كل بوابة خضراء على `3d7ff18` |
-| M1 — Devices | 🟢 **مفتوحة — Cover** | [`cards/M1-37-002`](cards/M1-37-002-device-lifecycle-cover.md) |
+| M1 — Devices | 🟢 **Cover مُغلق ٨/٨** — التالي `REAL_ENGINE` | [`cards/M1-37-002`](cards/M1-37-002-device-lifecycle-cover.md) |
 | M2–M10 | ⬜ مغلقة | تُفتح بقفل الموجة السابقة |
 
 ---
