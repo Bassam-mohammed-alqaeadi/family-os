@@ -12,8 +12,25 @@ const familyId = '11111111-1111-4111-8111-111111111111';
 const childId = '22222222-2222-4222-8222-222222222222';
 const deviceId = '33333333-3333-4333-8333-333333333333';
 const idempotencyKey = '44444444-4444-4444-8444-444444444444';
+/// The device payload as the server now declares it, lifecycle included.
+///
+/// The previous fixture carried eleven keys and the client demanded exactly eleven, so an
+/// additive server change read as a corrupt device. The count is gone and this fixture
+/// carries the contract: the stored facts plus the condition the server decided.
 const deviceBody =
-    '{"id":"$deviceId","childId":"$childId","deviceLabel":"Amani Android","batteryLevel":78,"batteryStatus":"unplugged","locationLat":38.8646,"locationLng":-77.2749,"locationLabel":"Soccer Practice","lastSeenAt":"2026-10-04T12:00:00.000Z","linkedAt":"2026-10-04T11:00:00.000Z","version":2}';
+    '{"id":"$deviceId","childId":"$childId","deviceLabel":"Amani Android",'
+    '"batteryLevel":78,"batteryStatus":"unplugged","locationLat":38.8646,'
+    '"locationLng":-77.2749,"locationLabel":"Soccer Practice",'
+    '"lastSeenAt":"2026-10-04T12:00:00.000Z","linkedAt":"2026-10-04T11:00:00.000Z",'
+    '"version":2,"credentialState":"active","capabilities":[...],'
+    '"health":{"state":"active","reasonCode":"reporting_now",'
+    '"since":"2026-10-04T12:00:00.000Z","needsAttention":false}}'
+        .replaceFirst(
+          '[...]',
+          '[{"id":"telemetry","state":"available","reasonCode":"reporting_now","since":"2026-10-04T12:00:00.000Z"},'
+          '{"id":"location","state":"available","reasonCode":"location_reported","since":"2026-10-04T12:00:00.000Z"},'
+          '{"id":"background_service","state":"available","reasonCode":"reporting_now","since":"2026-10-04T12:00:00.000Z"}]',
+        );
 
 void main() {
   FamilyDeviceApiClient clientFor(FakeTransport transport) =>
@@ -48,6 +65,25 @@ void main() {
       expect(devices.single.locationLabel, 'Soccer Practice');
       expect(devices.single.batteryLevel, 78);
       expect(devices.single.lastSeenAt, DateTime.utc(2026, 10, 4, 12));
+      // The server's condition arrives as data the client renders, not as something the
+      // client works out for itself.
+      expect(
+        devices.single.credentialState,
+        FoundationGateDeviceCredentialState.active,
+      );
+      expect(
+        devices.single.health.state,
+        FoundationGateDeviceHealthState.active,
+      );
+      expect(devices.single.health.reasonCode, 'reporting_now');
+      expect(devices.single.health.needsAttention, isFalse);
+      expect(devices.single.capabilities, hasLength(3));
+      expect(
+        devices.single.capabilities
+            .firstWhere((capability) => capability.id == 'location')
+            .reasonCode,
+        'location_reported',
+      );
     },
   );
 
@@ -170,5 +206,53 @@ void main() {
       ),
     );
     expect(transport.postedUri, isNull);
+  });
+
+  test('a device whose condition the client cannot understand is dropped, not guessed', () async {
+    // The one failure this client must never have: rendering a state it did not receive.
+    // A guardian told "active" about a device the server cut off is a guardian who stops
+    // looking.
+    final transport = FakeTransport(
+      const FoundationGateHttpResponse(
+        statusCode: 200,
+        body:
+            '{"devices":[{"id":"$deviceId","childId":"$childId",'
+            '"deviceLabel":"Amani Android","credentialState":"active",'
+            '"capabilities":[{"id":"telemetry","state":"available",'
+            '"reasonCode":"reporting_now","since":null}],'
+            '"health":{"state":"repaired_itself","reasonCode":"unknown",'
+            '"since":null,"needsAttention":false}}]}',
+      ),
+    );
+    await expectLater(
+      clientFor(transport).list(familyId: familyId, idToken: 'synthetic-token'),
+      throwsA(
+        isA<FoundationGateApiException>().having(
+          (error) => error.failure,
+          'failure',
+          FoundationGateApiFailure.invalidResponse,
+        ),
+      ),
+    );
+  });
+
+  test('a field the client does not know is ignored rather than fatal', () async {
+    // Forward compatibility is the point of dropping the exact key count. The server must
+    // be able to add a fact without an older client calling the device broken.
+    final withExtra = deviceBody.replaceFirst(
+      '"version":2',
+      '"version":2,"aFieldFromALaterRelease":"whatever"',
+    );
+    final transport = FakeTransport(
+      FoundationGateHttpResponse(statusCode: 200, body: '{"devices":[$withExtra]}'),
+    );
+    final devices = await clientFor(
+      transport,
+    ).list(familyId: familyId, idToken: 'synthetic-token');
+    expect(devices.single.deviceLabel, 'Amani Android');
+    expect(
+      devices.single.health.state,
+      FoundationGateDeviceHealthState.active,
+    );
   });
 }

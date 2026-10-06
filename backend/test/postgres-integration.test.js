@@ -338,3 +338,84 @@ test('the migrated schema enforces the device rules the server relies on', { ski
     );
   });
 });
+
+test('the guardian read surface derives the lifecycle from the real row', { skip }, async () => {
+  await withFreshDatabase(async (client) => {
+    await migrate(client);
+    const ids = await seedPairedDevice(client);
+    const store = new PostgresFoundationStore({
+      connectionString: withDatabase(DATABASE_URL, client.database),
+    });
+    try {
+      const principal = { subject: 'gate-primary' };
+
+      // The seed writes a hash, as the schema requires. Telemetry presents the raw
+      // credential, so this test sets the one the hash belongs to rather than a credential
+      // that could never have produced it. Real pairing does this in claimDevicePairing.
+      const RAW_CREDENTIAL = 'gate-device-credential-0000000001';
+      await client.query(`UPDATE family_child_devices SET credential_hash = $2 WHERE id = $1`, [
+        ids.deviceId,
+        createHash('sha256').update(RAW_CREDENTIAL).digest('hex'),
+      ]);
+
+      // Before anything reports: a device that holds a credential nobody has used yet. The
+      // honest description is that it never started, not that its protection is working.
+      const firstRead = await store.listFamilyDevices({ principal, familyId: ids.familyId });
+      assert.equal(firstRead.devices.length, 1);
+      const [waiting] = firstRead.devices;
+      assert.equal(waiting.credentialState, 'active');
+      assert.equal(waiting.health.state, 'never_reported');
+      assert.equal(waiting.health.reasonCode, 'never_reported');
+      assert.equal(waiting.health.needsAttention, true);
+      assert.ok(
+        waiting.capabilities.every((capability) => capability.state === 'unavailable'),
+        'a device that never reported claimed a capability',
+      );
+
+      // One real telemetry write through the store the server uses, then read again. The
+      // columns the derivation needs must actually be selected, which is the failure this
+      // test exists to catch: a correct derivation fed incomplete rows.
+      const telemetry = await store.ingestDeviceTelemetry({
+        deviceId: ids.deviceId,
+        deviceCredential: RAW_CREDENTIAL,
+        principal: null,
+        batteryLevel: 58,
+        batteryStatus: 'unplugged',
+        locationLat: 15.3694,
+        locationLng: 44.191,
+        locationLabel: 'البيت',
+        correlationId: '22222222-3333-4444-8555-666666666666',
+      });
+      assert.equal(telemetry.device.health.state, 'active');
+
+      const [reporting] = (await store.listFamilyDevices({ principal, familyId: ids.familyId })).devices;
+      assert.equal(reporting.health.state, 'active');
+      assert.equal(reporting.health.reasonCode, 'reporting_now');
+      assert.equal(reporting.health.needsAttention, false);
+      assert.equal(reporting.version, 2);
+      const capabilities = Object.fromEntries(
+        reporting.capabilities.map((entry) => [entry.id, entry]),
+      );
+      assert.equal(capabilities.telemetry.state, 'available');
+      assert.equal(capabilities.location.state, 'available');
+      assert.equal(capabilities.location.reasonCode, 'location_reported');
+
+      // Revoke, then read the same surface a guardian would open afterwards. The write
+      // surface and the read surface must not disagree about a lost handset.
+      await revokeOn(store, ids);
+      const [revoked] = (await store.listFamilyDevices({ principal, familyId: ids.familyId })).devices;
+      assert.equal(revoked.credentialState, 'revoked');
+      assert.equal(revoked.health.state, 'revoked');
+      assert.equal(revoked.health.needsAttention, true);
+      assert.ok(
+        revoked.capabilities.every((capability) => capability.reasonCode === 'device_revoked'),
+        'a revoked device reported a capability it cannot have',
+      );
+      // The row's own version moved with the revocation, so a client can tell that the
+      // record it is holding is the record it just changed.
+      assert.equal(revoked.version, 3);
+    } finally {
+      await store.close();
+    }
+  });
+});

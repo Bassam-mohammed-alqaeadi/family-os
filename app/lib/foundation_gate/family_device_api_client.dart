@@ -3,38 +3,7 @@ import 'dart:convert';
 import 'foundation_gate_configuration.dart';
 import 'foundation_gate_http.dart';
 import 'foundation_gate_models.dart';
-
-/// Server representation of one linked child device and its latest known fact.
-///
-/// This is deliberately not a historical location stream. A nullable telemetry
-/// value means the device has not supplied that fact through Phase 1 yet.
-class FoundationGateFamilyDevice {
-  const FoundationGateFamilyDevice({
-    required this.id,
-    required this.childId,
-    required this.deviceLabel,
-    required this.batteryLevel,
-    required this.batteryStatus,
-    required this.locationLat,
-    required this.locationLng,
-    required this.locationLabel,
-    required this.lastSeenAt,
-    required this.linkedAt,
-    required this.version,
-  });
-
-  final String id;
-  final String childId;
-  final String deviceLabel;
-  final int? batteryLevel;
-  final String? batteryStatus;
-  final double? locationLat;
-  final double? locationLng;
-  final String? locationLabel;
-  final DateTime? lastSeenAt;
-  final DateTime linkedAt;
-  final int version;
-}
+import 'device_lifecycle.dart';
 
 /// A one-time server-issued child-device pairing capability.
 ///
@@ -64,7 +33,7 @@ class FoundationGateClaimedDevice {
     required this.deviceCredential,
   });
 
-  final FoundationGateFamilyDevice device;
+  final FoundationGateGuardianDevice device;
   final String deviceCredential;
 }
 
@@ -83,7 +52,7 @@ class FamilyDeviceApiClient {
   final FoundationGateConfiguration _configuration;
   final FoundationGateHttpTransport _transport;
 
-  Future<List<FoundationGateFamilyDevice>> list({
+  Future<List<FoundationGateGuardianDevice>> list({
     required String familyId,
     required String idToken,
   }) async {
@@ -112,7 +81,7 @@ class FamilyDeviceApiClient {
     }
   }
 
-  Future<FoundationGateFamilyDevice> register({
+  Future<FoundationGateGuardianDevice> register({
     required String familyId,
     required String childId,
     required String deviceLabel,
@@ -258,7 +227,7 @@ class FamilyDeviceApiClient {
     }
   }
 
-  Future<FoundationGateFamilyDevice> ingestTelemetry({
+  Future<FoundationGateGuardianDevice> ingestTelemetry({
     required String deviceId,
     required int batteryLevel,
     required String batteryStatus,
@@ -393,7 +362,7 @@ class FamilyDeviceApiClient {
     'authorization': 'Bearer $idToken',
   };
 
-  List<FoundationGateFamilyDevice> _parseDeviceList(String body) {
+  List<FoundationGateGuardianDevice> _parseDeviceList(String body) {
     try {
       final decoded = jsonDecode(body);
       if (decoded is! Map<String, Object?> || decoded.keys.length != 1) {
@@ -474,7 +443,7 @@ class FamilyDeviceApiClient {
     }
   }
 
-  FoundationGateFamilyDevice _parseDeviceResponse(String body) {
+  FoundationGateGuardianDevice _parseDeviceResponse(String body) {
     try {
       final decoded = jsonDecode(body);
       if (decoded is! Map<String, Object?> || decoded.keys.length != 1) {
@@ -488,63 +457,48 @@ class FamilyDeviceApiClient {
     }
   }
 
-  FoundationGateFamilyDevice _parseDevice(Object? value) {
-    if (value is! Map<String, Object?> || value.keys.length != 11) {
+  /// Parse one device from its lifecycle payload.
+  ///
+  /// The contract's own parser reads it, then this client adds the checks that belong to
+  /// the wire rather than to the contract: a uuid identifier, coordinate ranges, and the
+  /// two legal battery statuses. The previous version of this function also required the
+  /// payload to carry exactly eleven keys, which made an additive server change - three
+  /// lifecycle fields - look like a corrupt device. Which is exactly what happened when
+  /// the lifecycle was added, so the key count is gone: a field the parser does not know
+  /// is ignored, while a state it does not understand still drops the device rather than
+  /// being rendered with a guessed meaning.
+  FoundationGateGuardianDevice _parseDevice(Object? value) {
+    final parsed = parseFoundationGateGuardianDevice(value);
+    if (parsed == null) {
       throw const FormatException();
     }
-    final id = value['id'];
-    final childId = value['childId'];
-    final deviceLabel = value['deviceLabel'];
-    final batteryLevel = value['batteryLevel'];
-    final batteryStatus = value['batteryStatus'];
-    final locationLat = value['locationLat'];
-    final locationLng = value['locationLng'];
-    final locationLabel = value['locationLabel'];
-    final lastSeenAt = value['lastSeenAt'];
-    final linkedAt = value['linkedAt'];
-    final version = value['version'];
-    final parsedLastSeen = lastSeenAt is String
-        ? DateTime.tryParse(lastSeenAt)?.toUtc()
-        : null;
-    final parsedLinkedAt = linkedAt is String
-        ? DateTime.tryParse(linkedAt)?.toUtc()
-        : null;
-    final numericLat = locationLat is num ? locationLat.toDouble() : null;
-    final numericLng = locationLng is num ? locationLng.toDouble() : null;
-    if (id is! String ||
-        !isFoundationGateUuid(id) ||
-        childId is! String ||
-        !isFoundationGateUuid(childId) ||
-        deviceLabel is! String ||
-        !_validText(deviceLabel, 80) ||
-        (batteryLevel != null &&
-            (batteryLevel is! int || batteryLevel < 0 || batteryLevel > 100)) ||
-        (batteryStatus != null &&
-            batteryStatus != 'charging' &&
-            batteryStatus != 'unplugged') ||
-        (numericLat != null && (numericLat < -90 || numericLat > 90)) ||
-        (numericLng != null && (numericLng < -180 || numericLng > 180)) ||
-        (locationLabel != null &&
-            (locationLabel is! String || !_validText(locationLabel, 160))) ||
-        (lastSeenAt != null && parsedLastSeen == null) ||
-        parsedLinkedAt == null ||
-        version is! int ||
-        version < 1) {
+    if (!isFoundationGateUuid(parsed.id) || !isFoundationGateUuid(parsed.childId)) {
       throw const FormatException();
     }
-    return FoundationGateFamilyDevice(
-      id: id,
-      childId: childId,
-      deviceLabel: deviceLabel,
-      batteryLevel: batteryLevel as int?,
-      batteryStatus: batteryStatus as String?,
-      locationLat: numericLat,
-      locationLng: numericLng,
-      locationLabel: locationLabel as String?,
-      lastSeenAt: parsedLastSeen,
-      linkedAt: parsedLinkedAt,
-      version: version,
-    );
+    if (parsed.batteryLevel != null &&
+        (parsed.batteryLevel! < 0 || parsed.batteryLevel! > 100)) {
+      throw const FormatException();
+    }
+    if (parsed.batteryStatus != null &&
+        parsed.batteryStatus != 'charging' &&
+        parsed.batteryStatus != 'unplugged') {
+      throw const FormatException();
+    }
+    if (parsed.locationLabel != null && !_validText(parsed.locationLabel!, 160)) {
+      throw const FormatException();
+    }
+    if (value is! Map<String, Object?>) {
+      throw const FormatException();
+    }
+    final lat = value['locationLat'];
+    final lng = value['locationLng'];
+    if (lat is num && (lat < -90 || lat > 90)) {
+      throw const FormatException();
+    }
+    if (lng is num && (lng < -180 || lng > 180)) {
+      throw const FormatException();
+    }
+    return parsed;
   }
 
   bool _validText(String value, int maxLength) =>

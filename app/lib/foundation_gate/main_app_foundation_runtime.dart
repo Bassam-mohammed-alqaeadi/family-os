@@ -10,6 +10,7 @@ import 'package:family_os/core/runtime/family_roster_source.dart';
 import 'package:family_os/core/runtime/identity_source.dart';
 import 'package:family_os/core/runtime/runtime_data_origin.dart';
 
+import 'device_lifecycle.dart';
 import 'family_device_api_client.dart';
 import 'foundation_gate_identity.dart';
 import 'foundation_gate_models.dart';
@@ -168,14 +169,11 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
         familyId: familyId.value,
         idToken: await _identity.currentIdToken(),
       );
-      final byChild = <String, List<FoundationGateFamilyDevice>>{};
-      for (final device in devices) {
-        (byChild[device.childId] ??= []).add(device);
-      }
+      final byChild = groupFoundationGateDevicesByChild(devices);
       final children =
           byChild.entries
               .map((entry) {
-                final candidates = entry.value
+                final candidates = List<FoundationGateGuardianDevice>.of(entry.value)
                   ..sort((left, right) {
                     final leftTime = left.lastSeenAt ?? left.linkedAt;
                     final rightTime = right.lastSeenAt ?? right.linkedAt;
@@ -184,13 +182,19 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
                 final latest = candidates.first;
                 return FamilyChildDeviceSummary(
                   childId: ChildId(entry.key),
-                  connectionState: _connectionStateOf(latest),
+                  // The server's condition decides what the guardian is told. This used
+                  // to be derived here from a battery level and a last-seen timestamp,
+                  // which meant the client could call a device healthy while the server
+                  // was refusing its telemetry.
+                  connectionState: _connectionStateOf(latest.health.state),
                   deviceCount: candidates.length,
                   deviceLabel: latest.deviceLabel,
                   batteryLevel: latest.batteryLevel,
                   batteryStatus: latest.batteryStatus,
                   locationLabel: latest.locationLabel,
                   lastSeenAt: latest.lastSeenAt,
+                  devices: List.unmodifiable(candidates),
+                  needsAttention: attentionDeviceForChild(candidates) != null,
                 );
               })
               .toList(growable: false)
@@ -242,14 +246,27 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     }
   }
 
+  /// The server's health state, expressed in the roster's own vocabulary.
+  ///
+  /// A translation, not a second opinion: every branch is one of the server's states, and
+  /// a state this client does not recognise is reported as unavailable rather than
+  /// smoothed into "active". That failure mode is the one worth being careful about - a
+  /// revoked device shown as active is a guardian told their child is covered when the
+  /// server has already cut the device off.
   ChildDeviceConnectionState _connectionStateOf(
-    FoundationGateFamilyDevice device,
+    FoundationGateDeviceHealthState health,
   ) {
-    if (device.lastSeenAt == null) return ChildDeviceConnectionState.pairing;
-    if (device.batteryLevel != null && device.batteryLevel! <= 15) {
-      return ChildDeviceConnectionState.needsAttention;
-    }
-    return ChildDeviceConnectionState.active;
+    return switch (health) {
+      FoundationGateDeviceHealthState.revoked ||
+      FoundationGateDeviceHealthState.neverReported ||
+      FoundationGateDeviceHealthState.stale ||
+      FoundationGateDeviceHealthState.offline =>
+        ChildDeviceConnectionState.needsAttention,
+      FoundationGateDeviceHealthState.awaitingPairing =>
+        ChildDeviceConnectionState.pairing,
+      FoundationGateDeviceHealthState.active =>
+        ChildDeviceConnectionState.active,
+    };
   }
 
   FamilyDeviceSnapshot _publishDevices(FamilyDeviceSnapshot value) {

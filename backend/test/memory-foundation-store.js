@@ -2,6 +2,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { AI_EVENT_SCHEMA_VERSION, aiEventDefinition } from '../src/ai-events.js';
 import { HttpError } from '../src/http-error.js';
+import { toGuardianDeviceView } from '../src/device-lifecycle.js';
 import { PERMISSION_POLICY_VERSION, buildPermissionSnapshot } from '../src/permission-policy.js';
 
 function clone(value) {
@@ -118,20 +119,11 @@ export class MemoryFoundationStore {
     return `${randomUUID().replaceAll('-', '')}${randomUUID().replaceAll('-', '')}`;
   }
 
+  // The same derivation the real store uses, with this fixture's own clock. A test
+  // double that answered the lifecycle question differently from the server would
+  // let a suite pass while production told a guardian something else.
   familyDeviceView(device) {
-    return {
-      id: device.id,
-      childId: device.childId,
-      deviceLabel: device.deviceLabel,
-      batteryLevel: device.batteryLevel,
-      batteryStatus: device.batteryStatus,
-      locationLat: device.locationLat,
-      locationLng: device.locationLng,
-      locationLabel: device.locationLabel,
-      lastSeenAt: device.lastSeenAt,
-      linkedAt: device.linkedAt,
-      version: device.version,
-    };
+    return { ...toGuardianDeviceView(device, { now: this.now().getTime() }), version: device.version };
   }
 
   recordAudit(familyId, actorMembershipId, correlationId, eventType, subjectType, subjectId) {

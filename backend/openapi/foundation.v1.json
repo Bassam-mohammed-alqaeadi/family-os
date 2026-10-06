@@ -1565,7 +1565,10 @@
           "locationLabel",
           "lastSeenAt",
           "linkedAt",
-          "version"
+          "version",
+          "credentialState",
+          "capabilities",
+          "health"
         ],
         "properties": {
           "id": {
@@ -1635,9 +1638,29 @@
           "version": {
             "type": "integer",
             "minimum": 1
+          },
+          "credentialState": {
+            "type": "string",
+            "enum": [
+              "unclaimed",
+              "active",
+              "revoked"
+            ],
+            "description": "unclaimed means a guardian registered the device but no handset has claimed a pairing yet."
+          },
+          "capabilities": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/DeviceCapability"
+            }
+          },
+          "health": {
+            "$ref": "#/components/schemas/DeviceHealth"
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": "A linked device as the guardian reads it. The flat facts are the stored row; capabilities and health are derived server-side by device-lifecycle.js on every read and never stored, so a client renders the server's answer instead of recomputing whether a child is protected. `version` is the row's own version for optimistic concurrency, which is why it is an integer here while GuardianDeviceLifecycle publishes the contract version as a string."
       },
       "FamilyDeviceResponse": {
         "type": "object",

@@ -11,6 +11,8 @@ import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/components/role_gate.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/foundation_gate/child_device_card.dart';
+import 'package:family_os/foundation_gate/device_lifecycle_copy.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/domain/role.dart';
@@ -51,6 +53,11 @@ abstract final class ChildrenListKeys {
       Key('children_list_profile_repair_$id');
 
   static Key childRow(String id) => Key('children_list_row_$id');
+
+  /// The device card for one device, so a test can find the exact device the guardian
+  /// was shown rather than any card on the screen.
+  static Key deviceCard(String deviceId) =>
+      Key('children_list_device_card_$deviceId');
 }
 
 /// SCR-FAT-012 — قائمة الأبناء (parent kids roster).
@@ -929,6 +936,19 @@ class _RuntimeChildRosterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The row and the card are siblings rather than nested: the row is one big tap
+    // target, and the card carries its own action, so putting the card inside the row's
+    // InkWell would make two different destinations share one gesture.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        _rowCard(context),
+        _deviceCard(context, device),
+      ],
+    );
+  }
+
+  Widget _rowCard(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final radii = Theme.of(context).extension<FamilyRadii>()!;
@@ -1012,6 +1032,32 @@ class _RuntimeChildRosterCard extends StatelessWidget {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  /// The device card for a child whose device is asking for the guardian's hand.
+  ///
+  /// This is the surface the Child Device Card was written for and until now never
+  /// reached: the widget existed, the contract existed, and the roster showed a tag
+  /// instead. It renders only what the server decided needs attention, so a family whose
+  /// devices are working sees the quiet day the roster is for.
+  ///
+  /// The card's own rules are kept rather than reimplemented: no action is offered unless
+  /// the server suggested a next step, and the sentence comes from the copy layer that
+  /// owns the words.
+  Widget _deviceCard(BuildContext context, FamilyChildDeviceSummary? device) {
+    final attention = device?.attentionDevice;
+    if (attention == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(start: 56, end: 12, bottom: 12),
+      child: ChildDeviceCard(
+        key: ChildrenListKeys.deviceCard(attention.id),
+        device: attention,
+        // The copy layer needs the language, and the widget tree already knows it.
+        copy: DeviceLifecycleCopy(
+          isArabic: Localizations.localeOf(context).languageCode == 'ar',
         ),
       ),
     );

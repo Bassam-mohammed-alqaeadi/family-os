@@ -2,6 +2,7 @@ import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypt
 import pg from 'pg';
 import { AI_EVENT_SCHEMA_VERSION, aiEventDefinition, aiEventView } from '../ai-events.js';
 import { HttpError } from '../http-error.js';
+import { toGuardianDeviceView } from '../device-lifecycle.js';
 import { PERMISSION_POLICY_VERSION, buildPermissionSnapshot } from '../permission-policy.js';
 import { FOUNDATION_SCHEMA_MIGRATIONS } from '../schema-manifest.js';
 
@@ -77,20 +78,19 @@ function capabilityMatches(expectedHash, rawCapability) {
   return expected.length === actual.length && timingSafeEqual(expected, actual);
 }
 
+/**
+ * One device as the guardian read surface returns it.
+ *
+ * The meaning of a device - what it can do, whether its protection is working, and
+ * whether it wants the guardian's hand - is derived by `device-lifecycle.js` and not
+ * here. This function only adds the row's own version, because the read surface
+ * publishes it for optimistic concurrency while the lifecycle module publishes the
+ * contract version under a different shape. Deriving the state a second time here
+ * would create two answers to the question a family safety product must never answer
+ * twice: is this child protected right now.
+ */
 function familyDeviceView(row) {
-  return {
-    id: row.id,
-    childId: row.child_id,
-    deviceLabel: row.device_label,
-    batteryLevel: row.battery_level,
-    batteryStatus: row.battery_status,
-    locationLat: row.location_lat,
-    locationLng: row.location_lng,
-    locationLabel: row.location_label,
-    lastSeenAt: row.last_seen_at,
-    linkedAt: row.linked_at,
-    version: row.version,
-  };
+  return { ...toGuardianDeviceView(row), version: row.version };
 }
 
 function guardianTransferView(row) {
@@ -520,7 +520,8 @@ export class PostgresFoundationStore {
       const devices = await client.query(
         `SELECT id, child_id, device_label, battery_level, battery_status,
                 location_lat, location_lng, location_label, last_seen_at,
-                linked_at, version
+                linked_at, version, credential_hash, credential_issued_at,
+                   credential_revoked_at
          FROM family_child_devices
          WHERE family_id = $1
          ORDER BY child_id ASC, last_seen_at DESC NULLS LAST, linked_at ASC, id ASC`,
@@ -564,7 +565,8 @@ export class PostgresFoundationStore {
          VALUES ($1, $2, $3, $4)
          RETURNING id, child_id, device_label, battery_level, battery_status,
                    location_lat, location_lng, location_label, last_seen_at,
-                   linked_at, version`,
+                   linked_at, version, credential_hash, credential_issued_at,
+                   credential_revoked_at`,
         [randomUUID(), familyId, childId, deviceLabel],
       );
       await this.appendAuditAndOutbox(client, {
@@ -672,7 +674,8 @@ export class PostgresFoundationStore {
          VALUES ($1, $2, $3, $4, $5, NOW())
          RETURNING id, child_id, device_label, battery_level, battery_status,
                    location_lat, location_lng, location_label, last_seen_at,
-                   linked_at, version`,
+                   linked_at, version, credential_hash, credential_issued_at,
+                   credential_revoked_at`,
         [randomUUID(), item.family_id, item.child_id, item.device_label, capabilityHash(deviceCredential)],
       );
       await client.query(
@@ -743,7 +746,8 @@ export class PostgresFoundationStore {
          WHERE id = $1
          RETURNING id, child_id, device_label, battery_level, battery_status,
                    location_lat, location_lng, location_label, last_seen_at,
-                   linked_at, version`,
+                   linked_at, version, credential_hash, credential_issued_at,
+                   credential_revoked_at`,
         [deviceId, batteryLevel, batteryStatus, locationLat, locationLng, locationLabel],
       );
       await this.appendAuditAndOutbox(client, {
