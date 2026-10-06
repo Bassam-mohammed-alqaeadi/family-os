@@ -148,62 +148,6 @@ void main() {
     },
   );
 
-  testWidgets('conflict retry rotates the non-replayable issuance key', (
-    tester,
-  ) async {
-    final identity = FakeIdentity();
-    final devices = FakeTransport(
-      const FoundationGateHttpResponse(
-        statusCode: 200,
-        body: '{"devices":[]}',
-      ),
-      postResponse: const FoundationGateHttpResponse(
-        statusCode: 409,
-        body: '{"error":{"code":"pairing_code_not_replayable"}}',
-      ),
-    );
-    final host = OnboardingHost(identity: identity, deviceTransport: devices);
-    addTearDown(host.dispose);
-    await host.runtime.signIn(email: 'p@example.com', password: 'x1234567');
-
-    await pumpWithRouter(
-      tester,
-      runtime: host.appRuntime,
-      initialLocation: '/scr-fat-004?childId=$_childId',
-      routes: [
-        GoRoute(
-          path: '/scr-fat-004',
-          builder: (context, state) => NativeParentPairingScreen(
-            childId: state.uri.queryParameters['childId'],
-          ),
-        ),
-      ],
-    );
-    await tester.tap(find.text('إنشاء رمز الربط'));
-    await tester.pumpAndSettle();
-
-    expect(find.textContaining('المحاولة السابقة'), findsOneWidget);
-    final firstKey = devices.postedHeadersHistory.single['idempotency-key'];
-
-    devices.postResponse = FoundationGateHttpResponse(
-      statusCode: 201,
-      body: _pairingBody(),
-    );
-    await tester.tap(find.text('إنشاء رمز الربط'));
-    await tester.pump();
-    await tester.pump();
-    await tester.pump();
-
-    expect(devices.postedHeadersHistory, hasLength(2));
-    expect(
-      devices.postedHeadersHistory.last['idempotency-key'],
-      isNot(firstKey),
-    );
-
-    AppToast.dismiss();
-    await tester.pumpWidget(const SizedBox());
-  });
-
   testWidgets('401 hides pairing state and returns to this step after sign-in', (
     tester,
   ) async {

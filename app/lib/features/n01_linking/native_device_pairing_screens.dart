@@ -13,6 +13,7 @@ import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/app/child_device_mode.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/features/n01_linking/pairing_issuance_key.dart';
 import 'package:family_os/features/shared_onboarding/session_recovery.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/identity_ids.dart';
@@ -48,9 +49,8 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
   static const _verificationPollInterval = Duration(seconds: 3);
 
   final _label = TextEditingController();
+  final _issuanceKey = PairingIssuanceKey();
   FoundationGateDevicePairing? _pairing;
-  String? _pairingIdempotencyKey;
-  String? _submittedDeviceLabel;
   var _loading = false;
   String? _error;
   var _sessionInvalid = false;
@@ -229,12 +229,10 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
       return;
     }
     _stopTimers();
-    if (_pairingIdempotencyKey == null ||
-        _submittedDeviceLabel != deviceLabel ||
-        _pairing != null) {
-      _pairingIdempotencyKey = newFoundationGateIdempotencyKey();
-      _submittedDeviceLabel = deviceLabel;
-    }
+    final idempotencyKey = _issuanceKey.forRequest(
+      deviceLabel,
+      regenerate: _pairing != null,
+    );
     setState(() {
       _loading = true;
       _error = null;
@@ -260,7 +258,7 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
       familyId: familyId,
       childId: ChildId(childRaw),
       deviceLabel: deviceLabel,
-      idempotencyKey: _pairingIdempotencyKey!,
+      idempotencyKey: idempotencyKey,
     );
     if (!mounted) return;
     if (result.failure ==
@@ -273,7 +271,7 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
     if (failure == FoundationGateDevicePairingCreateFailure.conflict) {
       // The server never replays the raw one-time code for a repeated key.
       // The next explicit attempt must therefore represent a new issuance.
-      _pairingIdempotencyKey = null;
+      _issuanceKey.markNotReplayable();
     }
     setState(() {
       _loading = false;
