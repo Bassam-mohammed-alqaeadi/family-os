@@ -60,12 +60,24 @@ class FoundationGateDevicePairing {
 /// straight to Android Keystore storage and does not persist it itself.
 enum FoundationGateDevicePairingCreateFailure {
   sessionInvalid,
+  emailVerificationRequired,
   accessDenied,
   invalidInput,
+  childNotFound,
   conflict,
   serviceUnavailable,
   networkUnavailable,
   unavailable,
+}
+
+/// A safe, pairing-specific API rejection.
+///
+/// The server's human-readable response is deliberately not retained: only
+/// reviewed machine outcomes may cross into UI control flow.
+class FoundationGateDevicePairingCreateException implements Exception {
+  const FoundationGateDevicePairingCreateException(this.failure);
+
+  final FoundationGateDevicePairingCreateFailure failure;
 }
 
 class FoundationGateDevicePairingCreateResult {
@@ -200,16 +212,16 @@ class FamilyDeviceApiClient {
     if (!isFoundationGateUuid(childId) ||
         !_validText(deviceLabel, 80) ||
         !_validText(idempotencyKey, 128)) {
-      throw const FoundationGateApiException(
-        FoundationGateApiFailure.invalidInput,
+      throw const FoundationGateDevicePairingCreateException(
+        FoundationGateDevicePairingCreateFailure.invalidInput,
       );
     }
     Uri uri;
     try {
       uri = _configuration.familyChildDevicePairingsUri(familyId, childId);
     } on ArgumentError {
-      throw const FoundationGateApiException(
-        FoundationGateApiFailure.invalidInput,
+      throw const FoundationGateDevicePairingCreateException(
+        FoundationGateDevicePairingCreateFailure.invalidInput,
       );
     }
     final response = await _post(uri, idToken, {
@@ -219,33 +231,42 @@ class FamilyDeviceApiClient {
       case 201:
         return _parsePairing(response.body);
       case 400:
-        throw const FoundationGateApiException(
-          FoundationGateApiFailure.invalidInput,
+        throw const FoundationGateDevicePairingCreateException(
+          FoundationGateDevicePairingCreateFailure.invalidInput,
         );
       case 401:
-        throw const FoundationGateApiException(
-          FoundationGateApiFailure.unauthenticated,
+        throw const FoundationGateDevicePairingCreateException(
+          FoundationGateDevicePairingCreateFailure.sessionInvalid,
         );
       case 403:
-        throw const FoundationGateApiException(
-          FoundationGateApiFailure.accessDenied,
+        throw FoundationGateDevicePairingCreateException(
+          _hasErrorCode(response.body, 'email_verification_required')
+              ? FoundationGateDevicePairingCreateFailure
+                    .emailVerificationRequired
+              : FoundationGateDevicePairingCreateFailure.accessDenied,
         );
       case 404:
-        throw const FoundationGateApiException(
-          FoundationGateApiFailure.invalidResponse,
+        throw FoundationGateDevicePairingCreateException(
+          _hasErrorCode(response.body, 'family_child_not_found') ||
+                  _hasErrorCode(response.body, 'family_not_found')
+              ? FoundationGateDevicePairingCreateFailure.childNotFound
+              : FoundationGateDevicePairingCreateFailure.unavailable,
         );
       case 409:
-        throw const FoundationGateApiException(
-          FoundationGateApiFailure.conflict,
+        throw const FoundationGateDevicePairingCreateException(
+          FoundationGateDevicePairingCreateFailure.conflict,
         );
       case 429:
+      case 500:
+      case 502:
       case 503:
-        throw const FoundationGateApiException(
-          FoundationGateApiFailure.serviceUnavailable,
+      case 504:
+        throw const FoundationGateDevicePairingCreateException(
+          FoundationGateDevicePairingCreateFailure.serviceUnavailable,
         );
       default:
-        throw const FoundationGateApiException(
-          FoundationGateApiFailure.invalidResponse,
+        throw const FoundationGateDevicePairingCreateException(
+          FoundationGateDevicePairingCreateFailure.unavailable,
         );
     }
   }
@@ -577,6 +598,17 @@ class FamilyDeviceApiClient {
       linkedAt: parsedLinkedAt,
       version: version,
     );
+  }
+
+  bool _hasErrorCode(String body, String expected) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is! Map<String, Object?>) return false;
+      final error = decoded['error'];
+      return error is Map<String, Object?> && error['code'] == expected;
+    } catch (_) {
+      return false;
+    }
   }
 
   bool _validText(String value, int maxLength) =>

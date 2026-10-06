@@ -605,6 +605,83 @@ void main() {
   );
 
   test(
+    'pairing reloads verification and uses the refreshed ID token claim',
+    () async {
+      final identity = FakeIdentity(
+        subject: 'firebase-subject',
+        token: 'stale-unverified-token',
+      )..tokenAfterVerificationReload = 'fresh-verified-token';
+      final configuration = FoundationGateConfiguration.fromStagingApiOrigin(
+        Uri.parse('https://staging.example.test'),
+      );
+      final deviceTransport = FakeTransport(
+        const FoundationGateHttpResponse(
+          statusCode: 200,
+          body: '{"devices":[]}',
+        ),
+        postResponse: const FoundationGateHttpResponse(
+          statusCode: 201,
+          body:
+              '{"pairing":{"id":"44444444-4444-4444-8444-444444444444","childId":"$_childId","deviceLabel":"Child phone","pairingCode":"482910","expiresAt":"2026-10-06T12:10:00.000Z"}}',
+        ),
+      );
+      final runtime = MainAppFoundationRuntime(
+        identity: identity,
+        controller: FoundationGateSessionController(
+          identity: identity,
+          discoveryApi: FamilyDiscoveryApiClient(
+            configuration: configuration,
+            transport: FakeTransport(
+              const FoundationGateHttpResponse(
+                statusCode: 200,
+                body: _familyBody,
+              ),
+            ),
+          ),
+          rosterApi: ChildrenRosterApiClient(
+            configuration: configuration,
+            transport: FakeTransport(
+              const FoundationGateHttpResponse(
+                statusCode: 200,
+                body: _emptyRosterBody,
+              ),
+            ),
+          ),
+        ),
+        deviceApi: FamilyDeviceApiClient(
+          configuration: configuration,
+          transport: deviceTransport,
+        ),
+        familyCreationApi: FamilyCreationApiClient(
+          configuration: configuration,
+          transport: FakeTransport(
+            const FoundationGateHttpResponse(statusCode: 200, body: '{}'),
+          ),
+        ),
+      );
+      addTearDown(runtime.dispose);
+      await runtime.signIn(
+        email: 'guardian@example.test',
+        password: 'synthetic-password',
+      );
+
+      final result = await runtime.createDevicePairing(
+        familyId: FamilyId(_familyId),
+        childId: ChildId(_childId),
+        deviceLabel: 'Child phone',
+        idempotencyKey: _idempotencyKey,
+      );
+
+      expect(result.isCreated, isTrue);
+      expect(identity.verificationReloads, [true]);
+      expect(
+        deviceTransport.postedHeaders?['authorization'],
+        'Bearer fresh-verified-token',
+      );
+    },
+  );
+
+  test(
     'e-mail verification is surfaced to the pairing UI and can be re-sent (Owner C1)',
     () async {
       final identity = FakeIdentity(subject: 'firebase-subject')

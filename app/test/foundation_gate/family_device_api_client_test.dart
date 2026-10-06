@@ -144,6 +144,73 @@ void main() {
     },
   );
 
+  for (final testCase in <({
+    int status,
+    String body,
+    FoundationGateDevicePairingCreateFailure failure,
+  })>[
+    (
+      status: 403,
+      body:
+          '{"error":{"code":"email_verification_required","message":"not exposed"}}',
+      failure:
+          FoundationGateDevicePairingCreateFailure.emailVerificationRequired,
+    ),
+    (
+      status: 403,
+      body: '{"error":{"code":"forbidden","message":"not exposed"}}',
+      failure: FoundationGateDevicePairingCreateFailure.accessDenied,
+    ),
+    (
+      status: 404,
+      body: '{"error":{"code":"family_child_not_found"}}',
+      failure: FoundationGateDevicePairingCreateFailure.childNotFound,
+    ),
+    (
+      status: 404,
+      body: '{"error":{"code":"route_not_found"}}',
+      failure: FoundationGateDevicePairingCreateFailure.unavailable,
+    ),
+    (
+      status: 409,
+      body: '{"error":{"code":"pairing_code_not_replayable"}}',
+      failure: FoundationGateDevicePairingCreateFailure.conflict,
+    ),
+    (
+      status: 503,
+      body: '{"error":{"code":"service_unavailable"}}',
+      failure: FoundationGateDevicePairingCreateFailure.serviceUnavailable,
+    ),
+  ]) {
+    test(
+      'pairing HTTP ${testCase.status} maps to ${testCase.failure.name}',
+      () async {
+        final transport = FakeTransport(
+          FoundationGateHttpResponse(
+            statusCode: testCase.status,
+            body: testCase.body,
+          ),
+        );
+        await expectLater(
+          clientFor(transport).createPairing(
+            familyId: familyId,
+            childId: childId,
+            deviceLabel: 'Amani Android',
+            idempotencyKey: idempotencyKey,
+            idToken: 'synthetic-token',
+          ),
+          throwsA(
+            isA<FoundationGateDevicePairingCreateException>().having(
+              (error) => error.failure,
+              'failure',
+              testCase.failure,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   test('device client rejects out-of-range telemetry before HTTP', () async {
     final transport = FakeTransport(
       const FoundationGateHttpResponse(

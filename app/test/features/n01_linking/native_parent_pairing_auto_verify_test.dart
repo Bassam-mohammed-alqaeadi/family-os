@@ -22,7 +22,9 @@ void main() {
   testWidgets(
     'C1 magic: e-mail verified elsewhere → detected silently → code issued',
     (tester) async {
-      final identity = FakeIdentity()..emailVerified = false;
+      final identity = FakeIdentity(token: 'stale-unverified-token')
+        ..emailVerified = false
+        ..tokenAfterVerificationReload = 'fresh-verified-token';
       final devices = FakeTransport(
         const FoundationGateHttpResponse(
           statusCode: 200,
@@ -57,6 +59,7 @@ void main() {
       expect(find.textContaining('بانتظار تأكيدك'), findsOneWidget);
       expect(find.text('تحققت'), findsNothing);
       expect(devices.postedUri, isNull);
+      expect(identity.verificationReloads.first, isTrue);
 
       // Two silent polls while still unverified.
       await tester.pump(const Duration(seconds: 3));
@@ -71,6 +74,11 @@ void main() {
       await tester.pump();
 
       expect(devices.postedUri?.path, contains('/device-pairings'));
+      expect(
+        devices.postedHeaders?['authorization'],
+        'Bearer fresh-verified-token',
+      );
+      expect(identity.verificationReloads.every((reload) => reload), isTrue);
       expect(find.textContaining('بانتظار تأكيدك'), findsNothing);
       expect(find.text('تم تأكيد الإيميل بنجاح'), findsOneWidget);
       // The six digits are shown verbatim (no grouping/spaces) in a large
@@ -90,6 +98,106 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     },
   );
+
+  testWidgets(
+    'server verification rejection reopens the gate with actionable copy',
+    (tester) async {
+      final identity = FakeIdentity();
+      final devices = FakeTransport(
+        const FoundationGateHttpResponse(
+          statusCode: 200,
+          body: '{"devices":[]}',
+        ),
+        postResponse: const FoundationGateHttpResponse(
+          statusCode: 403,
+          body:
+              '{"error":{"code":"email_verification_required","message":"must not be displayed"}}',
+        ),
+      );
+      final host = OnboardingHost(identity: identity, deviceTransport: devices);
+      addTearDown(host.dispose);
+      await host.runtime.signIn(email: 'p@example.com', password: 'x1234567');
+
+      await pumpWithRouter(
+        tester,
+        runtime: host.appRuntime,
+        initialLocation: '/scr-fat-004?childId=$_childId',
+        routes: [
+          GoRoute(
+            path: '/scr-fat-004',
+            builder: (context, state) => NativeParentPairingScreen(
+              childId: state.uri.queryParameters['childId'],
+            ),
+          ),
+        ],
+      );
+      await tester.tap(find.text('إنشاء رمز الربط'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('لم يستلم الخادم تأكيد البريد'), findsWidgets);
+      expect(find.textContaining('must not be displayed'), findsNothing);
+      expect(find.text('تعذر على الخادم إنشاء رمز ربط.'), findsNothing);
+      expect(find.textContaining('بانتظار تأكيدك'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  testWidgets('conflict retry rotates the non-replayable issuance key', (
+    tester,
+  ) async {
+    final identity = FakeIdentity();
+    final devices = FakeTransport(
+      const FoundationGateHttpResponse(
+        statusCode: 200,
+        body: '{"devices":[]}',
+      ),
+      postResponse: const FoundationGateHttpResponse(
+        statusCode: 409,
+        body: '{"error":{"code":"pairing_code_not_replayable"}}',
+      ),
+    );
+    final host = OnboardingHost(identity: identity, deviceTransport: devices);
+    addTearDown(host.dispose);
+    await host.runtime.signIn(email: 'p@example.com', password: 'x1234567');
+
+    await pumpWithRouter(
+      tester,
+      runtime: host.appRuntime,
+      initialLocation: '/scr-fat-004?childId=$_childId',
+      routes: [
+        GoRoute(
+          path: '/scr-fat-004',
+          builder: (context, state) => NativeParentPairingScreen(
+            childId: state.uri.queryParameters['childId'],
+          ),
+        ),
+      ],
+    );
+    await tester.tap(find.text('إنشاء رمز الربط'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('المحاولة السابقة'), findsOneWidget);
+    final firstKey = devices.postedHeadersHistory.single['idempotency-key'];
+
+    devices.postResponse = FoundationGateHttpResponse(
+      statusCode: 201,
+      body: _pairingBody(),
+    );
+    await tester.tap(find.text('إنشاء رمز الربط'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(devices.postedHeadersHistory, hasLength(2));
+    expect(
+      devices.postedHeadersHistory.last['idempotency-key'],
+      isNot(firstKey),
+    );
+    expect(find.byKey(const ValueKey('pairing-code-digits')), findsOneWidget);
+
+    AppToast.dismiss();
+    await tester.pumpWidget(const SizedBox());
+  });
 
   testWidgets('401 hides pairing state and returns to this step after sign-in', (
     tester,

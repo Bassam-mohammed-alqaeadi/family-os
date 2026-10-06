@@ -34,8 +34,29 @@ class NativeChildPairingCopy {
   String get createPairing =>
       isArabic ? 'إنشاء رمز الربط' : 'Create pairing code';
   String get pairingUnavailable => isArabic
-      ? 'تعذر على الخادم إنشاء رمز ربط.'
-      : 'The server could not create a pairing code.';
+      ? 'وصل رد غير متوقع من خدمة الربط. حدّث التطبيق ثم حاول مرة أخرى.'
+      : 'The pairing service returned an unexpected response. Update the app, then try again.';
+  String get emailVerificationRefreshRequired => isArabic
+      ? 'لم يستلم الخادم تأكيد البريد بعد. افتح رابط التأكيد للبريد المسجّل؛ وسيعيد التطبيق الفحص تلقائيًا.'
+      : 'The server has not received e-mail verification yet. Open the verification link for the registered address; the app will check again automatically.';
+  String get pairingAccessDenied => isArabic
+      ? 'لا يملك هذا الحساب صلاحية إصدار رمز الربط. استخدم حساب الوصي الأساسي للعائلة.'
+      : 'This account cannot issue pairing codes. Use the family’s primary guardian account.';
+  String get pairingInvalidChild => isArabic
+      ? 'ملف الطفل الحالي غير صالح للربط. ارجع إلى قائمة الأطفال واختر الطفل مرة أخرى.'
+      : 'The current child profile cannot be paired. Return to the child list and select the child again.';
+  String get pairingChildNotFound => isArabic
+      ? 'لم يعثر الخادم على هذا الطفل في العائلة. ارجع وحدّث قائمة الأطفال ثم حاول مرة أخرى.'
+      : 'The server could not find this child in the family. Go back, refresh the child list, and try again.';
+  String get pairingConflict => isArabic
+      ? 'ربما أُصدر رمز للمحاولة السابقة، ولا يمكن للخادم عرضه مرة ثانية. اضغط «إنشاء رمز الربط» لإصدار رمز جديد.'
+      : 'The previous attempt may have issued a code that the server cannot display again. Tap “Create pairing code” to issue a new one.';
+  String get pairingServiceUnavailable => isArabic
+      ? 'خدمة الربط مشغولة أو متوقفة مؤقتًا. انتظر قليلًا ثم حاول مرة أخرى.'
+      : 'The pairing service is busy or temporarily unavailable. Wait a moment, then try again.';
+  String get pairingNetworkUnavailable => isArabic
+      ? 'تعذر الوصول إلى خدمة الربط. تحقق من اتصال الإنترنت ثم حاول مرة أخرى.'
+      : 'The pairing service could not be reached. Check your internet connection, then try again.';
   String get sessionExpiredBody => isArabic
       ? 'انتهت جلسة ولي الأمر. سجّل الدخول مجددًا للعودة إلى خطوة ربط الجهاز.'
       : 'The guardian session ended. Sign in again to return to device pairing.';

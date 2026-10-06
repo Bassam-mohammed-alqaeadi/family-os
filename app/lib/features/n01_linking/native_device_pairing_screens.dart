@@ -79,7 +79,10 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
       if (_label.text.trim().isEmpty) {
         _label.text = NativeChildPairingCopy.of(context).defaultDeviceLabel;
       }
-      _checkVerification();
+      // Do not trust the Firebase user's cached verification bit here. This
+      // flow immediately calls a verified-email-only server endpoint, so the
+      // screen begins with a provider reload and fresh ID-token claim.
+      _checkVerification(reload: true);
     });
   }
 
@@ -266,14 +269,53 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
       return;
     }
     final pairing = result.pairing;
+    final failure = result.failure;
+    if (failure == FoundationGateDevicePairingCreateFailure.conflict) {
+      // The server never replays the raw one-time code for a repeated key.
+      // The next explicit attempt must therefore represent a new issuance.
+      _pairingIdempotencyKey = null;
+    }
     setState(() {
       _loading = false;
       _pairing = pairing;
-      _error = pairing == null ? copy.pairingUnavailable : null;
+      _error = pairing == null ? _messageForPairingFailure(copy, failure) : null;
       _sessionInvalid = false;
+      if (failure ==
+          FoundationGateDevicePairingCreateFailure
+              .emailVerificationRequired) {
+        _verification = _VerificationState.unverified;
+        _verificationNote = copy.emailVerificationRefreshRequired;
+      }
     });
+    if (failure ==
+        FoundationGateDevicePairingCreateFailure.emailVerificationRequired) {
+      _startVerificationPoll();
+    }
     if (pairing != null) _startTimers(pairing, source, familyId, childRaw);
   }
+
+  String _messageForPairingFailure(
+    NativeChildPairingCopy copy,
+    FoundationGateDevicePairingCreateFailure? failure,
+  ) => switch (failure) {
+    FoundationGateDevicePairingCreateFailure.emailVerificationRequired =>
+      copy.emailVerificationRefreshRequired,
+    FoundationGateDevicePairingCreateFailure.accessDenied =>
+      copy.pairingAccessDenied,
+    FoundationGateDevicePairingCreateFailure.invalidInput =>
+      copy.pairingInvalidChild,
+    FoundationGateDevicePairingCreateFailure.childNotFound =>
+      copy.pairingChildNotFound,
+    FoundationGateDevicePairingCreateFailure.conflict =>
+      copy.pairingConflict,
+    FoundationGateDevicePairingCreateFailure.serviceUnavailable =>
+      copy.pairingServiceUnavailable,
+    FoundationGateDevicePairingCreateFailure.networkUnavailable =>
+      copy.pairingNetworkUnavailable,
+    FoundationGateDevicePairingCreateFailure.unavailable ||
+    FoundationGateDevicePairingCreateFailure.sessionInvalid ||
+    null => copy.pairingUnavailable,
+  };
 
   Future<int> _currentDeviceCount(
     RemoteFamilyDeviceSource source,

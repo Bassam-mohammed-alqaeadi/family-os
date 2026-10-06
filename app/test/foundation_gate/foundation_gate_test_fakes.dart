@@ -12,6 +12,7 @@ class FakeIdentity implements FoundationGateIdentity {
   String token;
   String subject;
   Object? failure;
+  String? tokenAfterVerificationReload;
   Object? signOutFailure;
   int signInCalls = 0;
   int signUpCalls = 0;
@@ -49,11 +50,16 @@ class FakeIdentity implements FoundationGateIdentity {
 
   bool emailVerified = true;
   int verificationEmailsSent = 0;
+  final List<bool> verificationReloads = [];
 
   @override
   Future<bool> isEmailVerified({bool reload = false}) async {
+    verificationReloads.add(reload);
     if (failure != null) {
       throw failure!;
+    }
+    if (reload && tokenAfterVerificationReload != null) {
+      token = tokenAfterVerificationReload!;
     }
     return emailVerified;
   }

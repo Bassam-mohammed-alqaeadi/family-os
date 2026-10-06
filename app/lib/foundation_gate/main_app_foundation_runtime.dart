@@ -404,7 +404,6 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     await refreshIdentity();
     final selected = _controller.selectedFamily;
     if (!_identityValue.isRemoteAuthoritative ||
-        !_identityValue.isPrimaryOwner ||
         selected == null ||
         selected.id != familyId.value) {
       return FoundationGateDevicePairingCreateResult.failed(
@@ -413,7 +412,22 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
             : FoundationGateDevicePairingCreateFailure.unavailable,
       );
     }
+    if (!_identityValue.isPrimaryOwner) {
+      return const FoundationGateDevicePairingCreateResult.failed(
+        FoundationGateDevicePairingCreateFailure.accessDenied,
+      );
+    }
     try {
+      // Pairing is a verified-email-only server action. Reloading here is an
+      // authorization boundary, not merely a UI check: Firebase refreshes the
+      // user and forces a fresh ID token so a recently verified e-mail claim
+      // cannot remain stale when the request reaches the API.
+      final verified = await _identity.isEmailVerified(reload: true);
+      if (!verified) {
+        return const FoundationGateDevicePairingCreateResult.failed(
+          FoundationGateDevicePairingCreateFailure.emailVerificationRequired,
+        );
+      }
       final pairing = await _deviceApi.createPairing(
         familyId: familyId.value,
         childId: childId.value,
@@ -422,6 +436,12 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
         idToken: await _identity.currentIdToken(),
       );
       return FoundationGateDevicePairingCreateResult.created(pairing);
+    } on FoundationGateDevicePairingCreateException catch (error) {
+      if (error.failure ==
+          FoundationGateDevicePairingCreateFailure.sessionInvalid) {
+        await _invalidateSession();
+      }
+      return FoundationGateDevicePairingCreateResult.failed(error.failure);
     } on FoundationGateIdentityException catch (error) {
       if (error.failure == FoundationGateIdentityFailure.noSession) {
         await _invalidateSession();
@@ -456,9 +476,10 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     FoundationGateApiFailure.serviceUnavailable ||
     FoundationGateApiFailure.tooManyAttempts =>
       FoundationGateDevicePairingCreateFailure.serviceUnavailable,
-    FoundationGateApiFailure.networkUnavailable ||
-    FoundationGateApiFailure.invalidResponse =>
+    FoundationGateApiFailure.networkUnavailable =>
       FoundationGateDevicePairingCreateFailure.networkUnavailable,
+    FoundationGateApiFailure.invalidResponse =>
+      FoundationGateDevicePairingCreateFailure.unavailable,
   };
 
   ChildDeviceConnectionState _connectionStateOf(
