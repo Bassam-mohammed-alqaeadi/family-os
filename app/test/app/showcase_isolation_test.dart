@@ -207,3 +207,6 @@ void main() {
     });
   });
 }
+
+/// `SCR-CHD-004` becomes `/scr-chd-004`, the form the router declares.
+String _pathOf(String screenId) => '/scr-${screenId.substring(4).toLowerCase()}';
