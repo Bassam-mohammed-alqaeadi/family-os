@@ -625,6 +625,56 @@
       }
     },
     "/v1/families/{familyId}/memberships": {
+      "get": {
+        "operationId": "listFamilyMemberships",
+        "summary": "List the family's memberships as the caller is allowed to see them",
+        "description": "Every membership of the family, ordered by status group then age, with isSelf decided on the server against the authenticated principal. The invitee's subject is deliberately not returned: a guardian does not need a durable identifier for a person to run a family.",
+        "tags": [
+          "Memberships"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "familyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The family membership roster.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MembershipRosterResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      },
       "post": {
         "tags": [
           "Families"
@@ -2594,6 +2644,87 @@
           }
         },
         "additionalProperties": false
+      },
+      "MembershipRosterEntry": {
+        "type": "object",
+        "required": [
+          "id",
+          "role",
+          "status",
+          "version",
+          "createdAt",
+          "isSelf"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "primary_guardian",
+              "co_guardian",
+              "child"
+            ],
+            "description": "Membership role as stored. A caller renders it with its own vocabulary."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "invited",
+              "active",
+              "revoked",
+              "removed"
+            ]
+          },
+          "statusReasonCode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Machine code recorded when the membership stopped being active."
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "joinedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "statusChangedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isSelf": {
+            "type": "boolean",
+            "description": "Decided on the server against the authenticated principal. Never inferred by the client."
+          }
+        }
+      },
+      "MembershipRosterResponse": {
+        "type": "object",
+        "required": [
+          "memberships"
+        ],
+        "properties": {
+          "memberships": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MembershipRosterEntry"
+            }
+          }
+        }
       }
     }
   }

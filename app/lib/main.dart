@@ -43,6 +43,8 @@ import 'package:family_os/features/n02_day/location_ux_bridge.dart';
 import 'package:family_os/features/n03_screen_time/child_apps_local_persistence.dart';
 import 'package:family_os/features/n07_privacy/audit_log_local_persistence.dart';
 import 'package:family_os/features/n12_devices/mother_permission_level_identity_repository.dart';
+import 'package:family_os/features/n12_devices/family_members_remote_repository.dart';
+import 'package:family_os/features/n12_devices/family_members_repository.dart';
 import 'package:family_os/features/n12_devices/mother_permission_level_repository.dart';
 import 'package:family_os/features/n16_tasks/family_tasks_local_persistence.dart';
 import 'package:family_os/features/quran/quran_local_bridge.dart';
@@ -51,6 +53,7 @@ import 'package:family_os/features/shared_onboarding/device_user_switch_reposito
 import 'package:family_os/foundation_gate/children_roster_api_client.dart';
 import 'package:family_os/foundation_gate/family_device_api_client.dart';
 import 'package:family_os/foundation_gate/family_discovery_api_client.dart';
+import 'package:family_os/foundation_gate/family_membership_api_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 import 'package:family_os/foundation_gate/foundation_gate_identity.dart';
@@ -133,6 +136,17 @@ Future<void> main() async {
   // consulted when this remote capability has not been configured.
   if (familyEntryRuntime != null) {
     await familyEntryRuntime.refreshIdentity();
+    // FE-W1-FAT-027 — the members roster and its three commands come from the server when
+    // a server is configured. Without this, the screen keeps the local projection: it can
+    // show who this device recorded and cannot invite, accept or revoke anything.
+    rebindStage1FamilyMembersRepository(
+      RemoteFamilyMembersRepository(
+        loadMemberships: familyEntryRuntime.listMemberships,
+      ),
+    );
+    rebindStage1MembershipCommands(
+      RemoteFamilyMembershipCommands(familyEntryRuntime),
+    );
   }
   runApp(
     FamilyOsApp(
@@ -172,6 +186,10 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
       ),
       identity: identity,
       deviceApi: FamilyDeviceApiClient(
+        configuration: configuration,
+        transport: PackageFoundationGateHttpTransport(),
+      ),
+      membershipApi: FamilyMembershipApiClient(
         configuration: configuration,
         transport: PackageFoundationGateHttpTransport(),
       ),

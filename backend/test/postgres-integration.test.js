@@ -22,10 +22,12 @@ import { dirname, join } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
+import { createApp } from '../src/app.js';
 import { applyMigrations } from '../src/migration-runner.js';
 import { FOUNDATION_SCHEMA_MIGRATIONS } from '../src/schema-manifest.js';
 import { deviceRevocationFor } from '../src/device-revocation.js';
 import { PostgresFoundationStore } from '../src/store/postgres-foundation-store.js';
+import { TestAuthVerifier } from './memory-foundation-store.js';
 
 const { Client } = pg;
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -587,6 +589,249 @@ test('a cut-off device can be replaced, and what was cut off stays cut off', { s
         oldRow.credential_hash,
         'the replacement reused the credential of the device that was cut off',
       );
+    } finally {
+      await store.close();
+    }
+  });
+});
+
+/**
+ * The invitation lifecycle, end to end through the live HTTP surface over real PostgreSQL.
+ *
+ * `postgres-integration` proved the environment and the schema. This proves the journey a
+ * family actually walks, through the routes the server really mounts: the guardian invites,
+ * the invited account accepts, the roster tells each caller which row is theirs, and the
+ * guardian revokes. Nothing is stubbed except identity - `TestAuthVerifier` maps a test
+ * bearer token to a subject, which is the one thing a test cannot obtain from a real
+ * identity provider.
+ *
+ * The two rules worth stating, because both are places a weaker system lies:
+ *   * An invitation is not a membership. Until it is accepted, the invited account is
+ *     refused the roster - the door is not opened by an offer.
+ *   * A revoked membership loses access immediately, and the roster of the family it left
+ *     is no longer its business.
+ */
+async function withServer(app, run) {
+  const server = app.listen(0, '127.0.0.1');
+  await new Promise((resolve) => server.once('listening', resolve));
+  const { port } = server.address();
+  try {
+    await run(`http://127.0.0.1:${port}`);
+  } finally {
+    await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
+  }
+}
+
+function authorized(subject, extra = {}) {
+  return { authorization: `Bearer ${subject}`, ...extra };
+}
+
+async function jsonRequest(baseUrl, path, { method = 'GET', headers = {}, body } = {}) {
+  const response = await fetch(`${baseUrl}${path}`, {
+    method,
+    headers: {
+      accept: 'application/json',
+      ...headers,
+      ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+    },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const text = await response.text();
+  return { status: response.status, body: text.length > 0 ? JSON.parse(text) : null };
+}
+
+test('an invitation is offered, accepted, recognised as self, and revoked', { skip }, async () => {
+  await withFreshDatabase(async (client) => {
+    await migrate(client);
+    const store = new PostgresFoundationStore({
+      connectionString: withDatabase(DATABASE_URL, client.database),
+    });
+    const app = createApp({
+      store,
+      authVerifier: new TestAuthVerifier(),
+      readiness: () => ({ ready: true, missing: [] }),
+    });
+    try {
+      await withServer(app, async (baseUrl) => {
+        // 1. The guardian creates the family. The response already carries the primary
+        //    membership, created in the same transaction.
+        const created = await jsonRequest(baseUrl, '/v1/families', {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'journey-family' }),
+          body: { displayName: 'عائلة البوابة' },
+        });
+        assert.equal(created.status, 201);
+        const familyId = created.body.family.id;
+        assert.equal(created.body.family.members.length, 1);
+        assert.equal(created.body.family.members[0].role, 'primary_guardian');
+
+        // 2. Invite a co-guardian. Role assignment happens here: the invitation carries the
+        //    role the member will hold once accepted.
+        const invite = await jsonRequest(baseUrl, `/v1/families/${familyId}/memberships`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'journey-invite' }),
+          body: { role: 'co_guardian', targetSubject: 'test-co' },
+        });
+        assert.equal(invite.status, 201);
+        const membershipId = invite.body.membership.id;
+        assert.equal(invite.body.membership.status, 'invited');
+        assert.equal(invite.body.membership.role, 'co_guardian');
+
+        // 3. The same request replayed with the same key returns the same membership and,
+        //    in the database, still exactly one invitation. That is the idempotency guard
+        //    doing its job rather than a second row nobody noticed.
+        const replayed = await jsonRequest(baseUrl, `/v1/families/${familyId}/memberships`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'journey-invite' }),
+          body: { role: 'co_guardian', targetSubject: 'test-co' },
+        });
+        assert.ok([200, 201].includes(replayed.status), `replay answered ${replayed.status}`);
+        assert.equal(replayed.body.membership.id, membershipId);
+        const invitationRows = await client.query(
+          `SELECT count(*)::int AS n FROM family_memberships WHERE family_id = $1 AND status = 'invited'`,
+          [familyId],
+        );
+        assert.equal(invitationRows.rows[0].n, 1, 'a replayed invitation created a second row');
+
+        // 4. The roster, as the guardian reads it: the guardian's own row is marked as
+        //    theirs, the invitation is visible and is not.
+        const rosterAsGuardian = await jsonRequest(baseUrl, `/v1/families/${familyId}/memberships`, {
+          headers: authorized('test-primary'),
+        });
+        assert.equal(rosterAsGuardian.status, 200);
+        const guardianRows = rosterAsGuardian.body.memberships;
+        assert.equal(guardianRows.length, 2);
+        const guardianSelf = guardianRows.filter((membership) => membership.isSelf);
+        assert.equal(guardianSelf.length, 1, 'exactly one row may be the caller');
+        assert.equal(guardianSelf[0].role, 'primary_guardian');
+        const pending = guardianRows.find((membership) => membership.id === membershipId);
+        assert.equal(pending.status, 'invited');
+        assert.equal(pending.isSelf, false);
+
+        // 5. An invitation is not a membership: before accepting, the invited account has
+        //    no access to the family it was invited to.
+        const rosterAsInvitee = await jsonRequest(baseUrl, `/v1/families/${familyId}/memberships`, {
+          headers: authorized('test-co'),
+        });
+        assert.equal(rosterAsInvitee.status, 403);
+
+        // 6. Only the invited account may accept. A stranger holding the membership id is
+        //    refused, and the refusal names that specific reason.
+        const stolenAcceptance = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/memberships/${membershipId}/accept`,
+          {
+            method: 'POST',
+            headers: authorized('test-stranger', { 'idempotency-key': 'journey-steal' }),
+          },
+        );
+        assert.equal(stolenAcceptance.status, 403);
+        assert.equal(stolenAcceptance.body.error.code, 'membership_acceptance_denied');
+
+        // 7. The invited account accepts: access is granted.
+        const accepted = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/memberships/${membershipId}/accept`,
+          {
+            method: 'POST',
+            headers: authorized('test-co', { 'idempotency-key': 'journey-accept' }),
+          },
+        );
+        assert.equal(accepted.status, 200);
+        assert.equal(accepted.body.membership.status, 'active');
+        assert.equal(accepted.body.membership.role, 'co_guardian');
+
+        // 8. Now the roster is theirs to read, and their own row is the one marked as self.
+        const rosterAsMember = await jsonRequest(baseUrl, `/v1/families/${familyId}/memberships`, {
+          headers: authorized('test-co'),
+        });
+        assert.equal(rosterAsMember.status, 200);
+        const coRows = rosterAsMember.body.memberships.filter((membership) => membership.isSelf);
+        assert.equal(coRows.length, 1);
+        assert.equal(coRows[0].id, membershipId);
+
+        // 9. Revocation, with its reason. The guardian cuts the membership off.
+        const revoked = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/memberships/${membershipId}/revoke`,
+          {
+            method: 'POST',
+            headers: authorized('test-primary', { 'idempotency-key': 'journey-revoke' }),
+            body: { reasonCode: 'member_left' },
+          },
+        );
+        // The server's own vocabulary, which is finer than "revoked": an ACTIVE member who
+        // leaves is `removed`, and only an invitation that never became a membership is
+        // `revoked`. Step 11 below covers the other branch, so both are asserted.
+        assert.equal(revoked.status, 200);
+        assert.equal(revoked.body.membership.status, 'removed');
+
+        // 10. Access is gone with it. The same account that read the roster a moment ago is
+        //     refused now - which is the whole point of revoking rather than hiding a row.
+        const rosterAfterRevocation = await jsonRequest(baseUrl, `/v1/families/${familyId}/memberships`, {
+          headers: authorized('test-co'),
+        });
+        assert.equal(rosterAfterRevocation.status, 403);
+
+        // 11. The database's own account of the journey: one row, revoked, with its reason
+        //     recorded and its version advanced.
+        const finalRow = await client.query(
+          `SELECT role, status, status_reason_code, version, joined_at, status_changed_at
+             FROM family_memberships WHERE id = $1`,
+          [membershipId],
+        );
+        assert.equal(finalRow.rows[0].status, 'removed');
+        assert.equal(finalRow.rows[0].status_reason_code, 'member_left');
+        assert.ok(finalRow.rows[0].version >= 3, 'invited, accepted and removed are three writes');
+        assert.ok(finalRow.rows[0].joined_at instanceof Date, 'acceptance never recorded its time');
+
+        // 11.b The other branch of cancellation: an invitation nobody accepted yet is
+        //      revoked rather than removed, and it never opens a door on the way out.
+        const secondInvite = await jsonRequest(baseUrl, `/v1/families/${familyId}/memberships`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'journey-invite-2' }),
+          body: { role: 'co_guardian', targetSubject: 'test-guardian' },
+        });
+        assert.equal(secondInvite.status, 201);
+        const cancelled = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/memberships/${secondInvite.body.membership.id}/revoke`,
+          {
+            method: 'POST',
+            headers: authorized('test-primary', { 'idempotency-key': 'journey-cancel' }),
+            body: { reasonCode: 'invitation_withdrawn' },
+          },
+        );
+        assert.equal(cancelled.status, 200);
+        assert.equal(cancelled.body.membership.status, 'revoked');
+        const cancelledRow = await client.query(
+          `SELECT status, status_reason_code FROM family_memberships WHERE id = $1`,
+          [secondInvite.body.membership.id],
+        );
+        assert.deepEqual(cancelledRow.rows[0], {
+          status: 'revoked',
+          status_reason_code: 'invitation_withdrawn',
+        });
+
+        // 12. And the audit trail: one event per membership change, written in the same
+        //     transaction as the change itself.
+        const audit = await client.query(
+          `SELECT event_type FROM family_audit_events
+            WHERE family_id = $1 AND subject_type = 'membership'
+            ORDER BY occurred_at ASC, id ASC`,
+          [familyId],
+        );
+        assert.deepEqual(
+          audit.rows.map((row) => row.event_type),
+          [
+            'family.membership_invited',
+            'family.membership_accepted',
+            'family.membership_removed',
+            'family.membership_invited',
+            'family.membership_invitation_revoked',
+          ],
+        );
+      });
     } finally {
       await store.close();
     }

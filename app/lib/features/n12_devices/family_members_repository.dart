@@ -3,6 +3,39 @@ import 'package:flutter/foundation.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
 
+/// Where a membership stands, in the server's own vocabulary.
+///
+/// `invited` is an offer and not access: the server refuses the family to an invited
+/// account until it accepts. The distinction is kept in the model because the screen must
+/// offer a different step for a pending invitation than for an active member.
+enum FamilyMembershipStatus {
+  invited,
+  active,
+  revoked,
+  removed;
+
+  /// The wire value, so the client never invents its own spelling of a server enum.
+  String get wireName => switch (this) {
+    FamilyMembershipStatus.invited => 'invited',
+    FamilyMembershipStatus.active => 'active',
+    FamilyMembershipStatus.revoked => 'revoked',
+    FamilyMembershipStatus.removed => 'removed',
+  };
+
+  bool get isPending => this == FamilyMembershipStatus.invited;
+  bool get isActive => this == FamilyMembershipStatus.active;
+
+  /// A status this client does not know returns null rather than a guessed meaning: a
+  /// membership rendered under the wrong status is a screen telling a guardian something
+  /// the server did not say.
+  static FamilyMembershipStatus? parse(Object? value) {
+    for (final status in FamilyMembershipStatus.values) {
+      if (status.wireName == value) return status;
+    }
+    return null;
+  }
+}
+
 /// Roster kind on SCR-FAT-027 (prototype FAT-027 · one_owner_per_family).
 enum FamilyMemberKind {
   /// Sole family owner (father) — invite authority.
@@ -31,6 +64,7 @@ final class FamilyMemberEntry {
     this.isSelf = false,
     this.motherLevel,
     this.levelLocked = false,
+    this.membershipStatus,
   });
 
   final String id;
@@ -50,11 +84,24 @@ final class FamilyMemberEntry {
 
   /// Guardians stay مطّلع — cannot open FAT-031.
   final bool levelLocked;
+
+  /// The membership's standing on the server, when this row came from the server. Null for
+  /// a child listed from the children roster, which is not a membership row.
+  final FamilyMembershipStatus? membershipStatus;
 }
 
 /// Rule 25 seam — family roster for SCR-FAT-027 (Drift later).
 abstract class FamilyMembersRepository {
   Future<List<FamilyMemberEntry>> listMembers({String? familyId});
+}
+
+/// A members repository that can also say where its children rows came from.
+///
+/// The screen used to ask that question by testing for one concrete repository type, which
+/// made every new implementation an edit to the screen. Asking through an interface keeps
+/// the screen closed and the answer open.
+abstract class FamilyMembersProvenanceSource {
+  Future<String?> loadProvenance({FamilyId? familyId});
 }
 
 /// In-memory mock — default empty (Rule 23 · never plants person names).
@@ -117,3 +164,22 @@ void resetStage1FamilyMembersRepositoryForTest() {
   _stage1FamilyMembersMemory.seed(const []);
   _stage1FamilyMembersMemory.failLoad = false;
 }
+
+/// The live membership commands, bound once at startup when a server is configured.
+///
+/// Null is a real state, not a defect: a build with no API origin has no server to change
+/// a membership on, and the screen then offers no membership actions at all rather than
+/// buttons that could only fail.
+final _stage1MembershipCommands = <FamilyMembershipCommands>[];
+
+FamilyMembershipCommands? get stage1MembershipCommands =>
+    _stage1MembershipCommands.isEmpty ? null : _stage1MembershipCommands.first;
+
+void rebindStage1MembershipCommands(FamilyMembershipCommands commands) {
+  _stage1MembershipCommands
+    ..clear()
+    ..add(commands);
+}
+
+@visibleForTesting
+void resetStage1MembershipCommandsForTest() => _stage1MembershipCommands.clear();

@@ -3,6 +3,7 @@ import express from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { asHttpError, HttpError } from './http-error.js';
 import { deviceRevocationFor } from './device-revocation.js';
+import { membershipRosterFor } from './membership-roster.js';
 import {
     claimDevicePairingInput,
     createChildInput,
@@ -52,6 +53,10 @@ export function createApp({
     // the server has a working operation without the shared store file being
     // edited. A test injects its own port; production uses this one.
     deviceRevocation = deviceRevocationFor(store),
+    // Same reasoning as revocation: the membership roster reads through the store's
+    // published transaction and membership helpers, so the read surface costs one
+    // route and no edit inside a shared write path.
+    membershipRoster = membershipRosterFor(store),
     preAuthenticationRateLimit = {},
     protectedRateLimit = {},
 }) {
@@ -397,6 +402,24 @@ export function createApp({
                 deviceId,
                 ...input,
                 correlationId: request.correlationId,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // The roster read the Family Members screen is built on. Every membership the caller
+    // is allowed to see, with `isSelf` decided here against the authenticated principal
+    // rather than guessed by the client from an identifier the server never promised.
+    app.get(
+        '/v1/families/:familyId/memberships',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const result = await membershipRoster({
+                principal: request.principal,
+                familyId,
             });
             response.status(200).json(result);
         }),

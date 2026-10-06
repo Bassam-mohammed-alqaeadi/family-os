@@ -24,6 +24,11 @@ function registrationOnlyStore() {
   return {
     configured: false,
     health: refuse,
+    // The helpers the operation modules reach for. They refuse like every method above,
+    // so a route that tries to reach the database while the inventory is being read fails
+    // loudly instead of quietly answering from nothing.
+    withTransaction: refuse,
+    activeActorMembership: refuse,
     listMyFamilies: refuse,
     getFamily: refuse,
     listFamilyChildren: refuse,

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/app_error_state.dart';
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/components/tag.dart';
@@ -17,7 +18,8 @@ import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n02_day/children_list_local_repository.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
-import 'package:family_os/features/n12_devices/family_members_identity_repository.dart';
+import 'package:family_os/foundation_gate/foundation_gate_models.dart';
+import 'package:family_os/features/n12_devices/family_members_remote_repository.dart';
 import 'package:family_os/features/n12_devices/family_members_repository.dart';
 
 /// Widget keys for SCR-FAT-027 acceptance.
@@ -39,7 +41,11 @@ abstract final class FamilyMembersKeys {
   static const localDemoBanner = Key('family_members_local_demo_banner');
 
   static Key memberRow(String id) => Key('family_members_row_$id');
-  static Key removeAdult(String id) => Key('family_members_remove_$id');
+  /// The three membership commands, one key each, so a test taps the exact control the
+  /// guardian taps rather than any button with the same words.
+  static Key acceptInvitation(String id) => Key('family_members_accept_$id');
+  static Key cancelInvitation(String id) => Key('family_members_cancel_$id');
+  static Key removeMember(String id) => Key('family_members_revoke_$id');
 }
 
 /// SCR-FAT-027 — أعضاء العائلة (roles · levels · invite).
@@ -57,6 +63,7 @@ class FamilyMembersScreen extends StatefulWidget {
     this.onSos,
     this.onInvite,
     this.onOpenMotherLevel,
+    this.membershipCommands,
   });
 
   /// Null → [stage1FamilyMembersRepository].
@@ -78,6 +85,11 @@ class FamilyMembersScreen extends StatefulWidget {
 
   /// Test seam — when null, navigates to `/scr-fat-031`.
   final void Function(String memberId)? onOpenMotherLevel;
+
+  /// The three commands that change a membership. Null means this build has no live
+  /// server, and then a membership row offers no action at all: a button that cannot reach
+  /// a server is a promise the product cannot keep.
+  final FamilyMembershipCommands? membershipCommands;
 
   @override
   State<FamilyMembersScreen> createState() => FamilyMembersScreenState();
@@ -110,6 +122,11 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
       fallbackRole: AppRole.father,
     ).canInviteAdults;
   }
+
+  /// The live commands: the screen's own seam first (tests, preview hosts), then the
+  /// binding installed at startup by a build that has a server.
+  FamilyMembershipCommands? get _commands =>
+      widget.membershipCommands ?? stage1MembershipCommands;
 
   bool get _showFamilySelector {
     final runtime = CurrentIdentity.maybeOf(context);
@@ -151,6 +168,16 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
     }
   }
 
+  /// Where the children rows came from. The repository answers when it can; when it does
+  /// not, the children list repository still knows, because that is where the rows live.
+  Future<String?> _provenanceFor(String familyId) async {
+    final source = _repo;
+    if (source is FamilyMembersProvenanceSource) {
+      return source.loadProvenance(familyId: FamilyId(familyId));
+    }
+    return _childrenListRepo.loadProvenance(familyId: FamilyId(familyId));
+  }
+
   /// Soft refresh after Identity notify (same family) — no loading flash.
   Future<void> _refreshMembersQuiet() async {
     final familyId = _loadedFamilyId;
@@ -162,6 +189,89 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
     } catch (_) {
       // Keep last good roster.
     }
+  }
+
+  /// The three membership commands, each one a server call followed by an honest reload.
+  ///
+  /// Nothing is written to the roster from the response body: the screen re-reads what the
+  /// server now says, so a row can never show a state the server did not confirm. A failure
+  /// leaves the roster as it was and says so, rather than optimistically redrawing it.
+  Future<void> _acceptInvitation(FamilyMemberEntry member) async {
+    final familyId = _loadedFamilyId;
+    final commands = _commands;
+    if (familyId == null || commands == null) return;
+    await _runMembershipCommand(
+      () => commands.accept(
+        familyId: FamilyId(familyId),
+        membershipId: member.id,
+        idempotencyKey: newFoundationGateIdempotencyKey(),
+      ),
+    );
+  }
+
+  Future<void> _cancelInvitation(FamilyMemberEntry member) async {
+    final familyId = _loadedFamilyId;
+    final commands = _commands;
+    if (familyId == null || commands == null) return;
+    await _runMembershipCommand(
+      () => commands.revoke(
+        familyId: FamilyId(familyId),
+        membershipId: member.id,
+        reasonCode: 'invitation_withdrawn',
+        idempotencyKey: newFoundationGateIdempotencyKey(),
+      ),
+    );
+  }
+
+  Future<void> _removeMember(FamilyMemberEntry member) async {
+    final familyId = _loadedFamilyId;
+    final commands = _commands;
+    if (familyId == null || commands == null) return;
+    await _runMembershipCommand(
+      () => commands.revoke(
+        familyId: FamilyId(familyId),
+        membershipId: member.id,
+        reasonCode: 'member_left',
+        idempotencyKey: newFoundationGateIdempotencyKey(),
+      ),
+    );
+  }
+
+  /// A pending invitation addressed to the caller is the one thing a person can accept on
+  /// this screen, and the server is the one that must confirm it.
+  VoidCallback? _acceptFor(FamilyMemberEntry member) {
+    if (_commands == null) return null;
+    if (!member.isSelf || member.membershipStatus?.isPending != true) return null;
+    return () => _acceptInvitation(member);
+  }
+
+  /// Withdrawing an invitation that nobody accepted. The owner's call alone.
+  VoidCallback? _cancelFor(FamilyMemberEntry member) {
+    if (_commands == null || !_isOwner) return null;
+    if (member.isSelf || member.membershipStatus?.isPending != true) return null;
+    return () => _cancelInvitation(member);
+  }
+
+  /// Removing an active adult. The primary guardian cannot be removed here: the server
+  /// requires the separate continuity process, and offering a button that must fail is the
+  /// same lie as one that leads nowhere.
+  VoidCallback? _removeFor(FamilyMemberEntry member) {
+    if (_commands == null || !_isOwner) return null;
+    if (member.isSelf || member.membershipStatus?.isActive != true) return null;
+    if (member.kind == FamilyMemberKind.owner) return null;
+    return () => _removeMember(member);
+  }
+
+  Future<void> _runMembershipCommand(Future<void> Function() command) async {
+    try {
+      await command();
+    } catch (_) {
+      if (!mounted) return;
+      AppToast.show(context, message: AppLocalizations.of(context).sys3ErrorTitle);
+      return;
+    }
+    if (!mounted) return;
+    await _load();
   }
 
   @override
@@ -198,17 +308,7 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
         return;
       }
       final members = await _repo.listMembers(familyId: familyId);
-      String? provenance;
-      final identityRepo = _repo;
-      if (identityRepo is IdentityFamilyMembersRepository) {
-        provenance = await identityRepo.loadProvenance(
-          familyId: FamilyId(familyId),
-        );
-      } else {
-        provenance = await _childrenListRepo.loadProvenance(
-          familyId: FamilyId(familyId),
-        );
-      }
+      final provenance = await _provenanceFor(familyId);
       if (!mounted) return;
       setState(() {
         _members = members;
@@ -306,7 +406,14 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
       case FamilyMemberKind.owner:
         return (l10n.familyMembersTagOwner, TagVariant.p);
       case FamilyMemberKind.mother:
-        final level = m.motherLevel ?? MotherLevel.partner;
+        final level = m.motherLevel;
+        // A roster that came from the server carries no permission level: the level is the
+        // owner's choice and the membership endpoint does not publish it. Naming a level
+        // this screen was not told would read as a granted privilege, so an unknown level
+        // is answered with the role itself and an amber tag.
+        if (level == null) {
+          return (l10n.familyMembersRoleMother, TagVariant.a);
+        }
         final base = _levelLabel(l10n, level);
         final variant = level == MotherLevel.observer
             ? TagVariant.a
@@ -469,8 +576,12 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
                   canOpenMotherLevel:
                       _isOwner &&
                       _members[i].kind == FamilyMemberKind.mother &&
-                      !_members[i].levelLocked,
+                      !_members[i].levelLocked &&
+                      _members[i].membershipStatus?.isActive == true,
                   onTap: () => _goMotherLevel(_members[i]),
+                  onAccept: _acceptFor(_members[i]),
+                  onCancelInvitation: _cancelFor(_members[i]),
+                  onRemove: _removeFor(_members[i]),
                 ),
               ],
             ],
@@ -478,21 +589,11 @@ class FamilyMembersScreenState extends State<FamilyMembersScreen> {
         ),
         if (_isOwner) ...[
           const SizedBox(height: 8),
-          for (final membership
-              in CurrentIdentity.maybeOf(context)?.adultMembershipsForFamily(
-                    CurrentIdentity.of(context).activeFamilyId,
-                  ) ??
-                  const [])
-            if (!membership.isPrimaryOwner)
-              TextButton(
-                key: FamilyMembersKeys.removeAdult(membership.id.value),
-                onPressed: () => context.push(
-                  '/sys3-remove-adult?memberId=${Uri.encodeComponent(membership.id.value)}',
-                ),
-                child: Text(
-                  '${l10n.sys3FamilyRemoveCta} · ${l10n.sys3MemberLabel(membership.id.value)}',
-                ),
-              ),
+          // The remove-adult list that used to sit here read the LOCAL identity projection,
+          // so it listed memberships this device had recorded and pushed a screen that
+          // changed the same local copy. Removing a member is a server fact now, and each
+          // membership row above carries its own remove action with its own key - one list
+          // of members, one way to change them.
           PrimaryBtn(
             key: FamilyMembersKeys.transferOwnership,
             label: l10n.sys3FamilyTransferCta,
@@ -574,6 +675,9 @@ class _MemberRow extends StatelessWidget {
     required this.avatarColor,
     required this.canOpenMotherLevel,
     required this.onTap,
+    this.onAccept,
+    this.onCancelInvitation,
+    this.onRemove,
   });
 
   final FamilyMemberEntry member;
@@ -583,6 +687,13 @@ class _MemberRow extends StatelessWidget {
   final Color avatarColor;
   final bool canOpenMotherLevel;
   final VoidCallback onTap;
+
+  /// The membership commands, each null when it is not this caller's to run. A row shows
+  /// only the steps it can actually carry out, which is why they are separate callbacks
+  /// rather than one action slot.
+  final VoidCallback? onAccept;
+  final VoidCallback? onCancelInvitation;
+  final VoidCallback? onRemove;
 
   @override
   Widget build(BuildContext context) {
@@ -638,17 +749,44 @@ class _MemberRow extends StatelessWidget {
       ),
     );
 
+    final hasAction = onAccept != null || onCancelInvitation != null || onRemove != null;
+    final row = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        content,
+        if (onAccept != null)
+          _MemberAction(
+            key: FamilyMembersKeys.acceptInvitation(member.id),
+            label: AppLocalizations.of(context).acceptMotherInviteAccept,
+            onPressed: onAccept!,
+          ),
+        if (onCancelInvitation != null)
+          _MemberAction(
+            key: FamilyMembersKeys.cancelInvitation(member.id),
+            label: AppLocalizations.of(context).sys3RevokeAction,
+            onPressed: onCancelInvitation!,
+          ),
+        if (onRemove != null)
+          _MemberAction(
+            key: FamilyMembersKeys.removeMember(member.id),
+            label: AppLocalizations.of(context).sys3RemoveAdultAction,
+            onPressed: onRemove!,
+          ),
+        if (hasAction) const SizedBox(height: 4),
+      ],
+    );
+
     if (!canOpenMotherLevel) {
       return KeyedSubtree(
         key: FamilyMembersKeys.memberRow(member.id),
-        child: content,
+        child: row,
       );
     }
 
     return Material(
       key: FamilyMembersKeys.memberRow(member.id),
       color: Colors.transparent,
-      child: InkWell(onTap: onTap, child: content),
+      child: InkWell(onTap: onTap, child: row),
     );
   }
 }
@@ -698,6 +836,37 @@ class _FamilySelector extends StatelessWidget {
               if (value == null) return;
               onChanged(value);
             },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One membership command, drawn under the row it belongs to.
+///
+/// Its own widget so the keys, the padding and the touch target are decided once, and so a
+/// test can address the accept button of one invitation without matching on copy that two
+/// rows share.
+class _MemberAction extends StatelessWidget {
+  const _MemberAction({super.key, required this.label, required this.onPressed});
+
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<FamilyColors>()!;
+    return Align(
+      alignment: AlignmentDirectional.centerEnd,
+      child: Padding(
+        padding: const EdgeInsetsDirectional.only(end: 12, bottom: 4),
+        child: TextButton(
+          onPressed: onPressed,
+          style: TextButton.styleFrom(foregroundColor: colors.p600),
+          child: Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.w700),
           ),
         ),
       ),

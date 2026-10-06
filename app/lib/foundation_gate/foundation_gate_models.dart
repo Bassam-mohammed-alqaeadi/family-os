@@ -90,6 +90,10 @@ enum FoundationGateApiFailure {
   accessDenied,
   invalidInput,
   conflict,
+  /// The server answered 404 for a record the caller named. Distinct from an invalid
+  /// response on purpose: a membership that no longer exists is a state a screen can
+  /// explain and recover from, while a malformed body is a defect it must not paper over.
+  notFound,
   serviceUnavailable,
   networkUnavailable,
   invalidResponse,

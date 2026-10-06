@@ -17,6 +17,17 @@ export class UnconfiguredFoundationStore {
     );
   }
 
+  /// The two helpers the operation modules reach for when a store has no database behind
+  /// it. Without them a read would fail as a type error - a 500 where the caller deserves
+  /// to be told the environment is not configured.
+  async withTransaction() {
+    this.unavailable();
+  }
+
+  async activeActorMembership() {
+    this.unavailable();
+  }
+
   async listMyFamilies() {
     this.unavailable();
   }

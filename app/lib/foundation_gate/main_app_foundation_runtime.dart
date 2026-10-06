@@ -12,6 +12,7 @@ import 'package:family_os/core/runtime/runtime_data_origin.dart';
 
 import 'device_lifecycle.dart';
 import 'family_device_api_client.dart';
+import 'family_membership_api_client.dart';
 import 'foundation_gate_identity.dart';
 import 'foundation_gate_models.dart';
 import 'foundation_gate_session_controller.dart';
@@ -27,10 +28,12 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     required FoundationGateSessionController controller,
     required FoundationGateIdentity identity,
     required FamilyDeviceApiClient deviceApi,
+    FamilyMembershipApiClient? membershipApi,
     String? preferredFamilyId,
   }) : _controller = controller,
        _identity = identity,
        _deviceApi = deviceApi,
+       _membershipApi = membershipApi,
        _preferredFamilyId = preferredFamilyId?.trim(),
        _identityValue = const IdentitySnapshot.unavailable(),
        _rosterValue = const FamilyRosterSnapshot.unavailable(),
@@ -41,6 +44,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   final FoundationGateSessionController _controller;
   final FoundationGateIdentity _identity;
   final FamilyDeviceApiClient _deviceApi;
+  final FamilyMembershipApiClient? _membershipApi;
   final String? _preferredFamilyId;
   IdentitySnapshot _identityValue;
   FamilyRosterSnapshot _rosterValue;
@@ -364,6 +368,82 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     };
   }
 
+  /// The family's memberships, as the server describes them to this principal.
+  ///
+  /// Fail closed on every condition the server would refuse anyway: no remote-authoritative
+  /// session, or a family the caller has not selected. An empty list from here means the
+  /// family genuinely has no memberships the caller may see - a failure throws, so the
+  /// screen can say it could not ask rather than claiming an empty family.
+  Future<List<FoundationGateMembership>> listMemberships(FamilyId familyId) async {
+    final api = _membershipApi;
+    final selected = _controller.selectedFamily;
+    if (api == null ||
+        !_identityValue.isRemoteAuthoritative ||
+        selected == null ||
+        selected.id != familyId.value) {
+      return const [];
+    }
+    return api.list(
+      familyId: familyId.value,
+      idToken: await _identity.currentIdToken(),
+    );
+  }
+
+  Future<FoundationGateMembership> inviteMembership({
+    required FamilyId familyId,
+    required String role,
+    required String targetSubject,
+    required String idempotencyKey,
+  }) async {
+    return _requireMembershipApi().invite(
+      familyId: familyId.value,
+      role: role,
+      targetSubject: targetSubject,
+      idempotencyKey: idempotencyKey,
+      idToken: await _identity.currentIdToken(),
+    );
+  }
+
+  Future<FoundationGateMembership> acceptMembership({
+    required FamilyId familyId,
+    required String membershipId,
+    required String idempotencyKey,
+  }) async {
+    return _requireMembershipApi().accept(
+      familyId: familyId.value,
+      membershipId: membershipId,
+      idempotencyKey: idempotencyKey,
+      idToken: await _identity.currentIdToken(),
+    );
+  }
+
+  Future<FoundationGateMembership> revokeMembership({
+    required FamilyId familyId,
+    required String membershipId,
+    required String reasonCode,
+    required String idempotencyKey,
+  }) async {
+    return _requireMembershipApi().revoke(
+      familyId: familyId.value,
+      membershipId: membershipId,
+      reasonCode: reasonCode,
+      idempotencyKey: idempotencyKey,
+      idToken: await _identity.currentIdToken(),
+    );
+  }
+
+  /// A command with no live client is refused rather than silently accepted: a change the
+  /// server never heard about must not look like a change that happened.
+  FamilyMembershipApiClient _requireMembershipApi() {
+    final api = _membershipApi;
+    if (api == null) {
+      throw const FoundationGateApiException(
+        FoundationGateApiFailure.serviceUnavailable,
+      );
+    }
+    return api;
+  }
+
   AppRole _appRole(String role) {
     return switch (role) {
       'primary_guardian' => AppRole.father,
@@ -479,6 +559,54 @@ final class RemoteFamilyDeviceSource extends ChangeNotifier
     _runtime.removeListener(notifyListeners);
     super.dispose();
   }
+}
+
+/// The membership commands as the members screen consumes them: one seam, backed by the
+/// runtime that owns the session and the token.
+///
+/// It exists so the screen depends on three operations rather than on the whole foundation
+/// runtime - a screen that could reach the runtime could reach anything in it.
+final class RemoteFamilyMembershipCommands implements FamilyMembershipCommands {
+  RemoteFamilyMembershipCommands(this._runtime);
+
+  final MainAppFoundationRuntime _runtime;
+
+  @override
+  Future<FoundationGateMembership> invite({
+    required FamilyId familyId,
+    required String role,
+    required String targetSubject,
+    required String idempotencyKey,
+  }) => _runtime.inviteMembership(
+    familyId: familyId,
+    role: role,
+    targetSubject: targetSubject,
+    idempotencyKey: idempotencyKey,
+  );
+
+  @override
+  Future<FoundationGateMembership> accept({
+    required FamilyId familyId,
+    required String membershipId,
+    required String idempotencyKey,
+  }) => _runtime.acceptMembership(
+    familyId: familyId,
+    membershipId: membershipId,
+    idempotencyKey: idempotencyKey,
+  );
+
+  @override
+  Future<FoundationGateMembership> revoke({
+    required FamilyId familyId,
+    required String membershipId,
+    required String reasonCode,
+    required String idempotencyKey,
+  }) => _runtime.revokeMembership(
+    familyId: familyId,
+    membershipId: membershipId,
+    reasonCode: reasonCode,
+    idempotencyKey: idempotencyKey,
+  );
 }
 
 final class RemoteFamilyChildProfileSource implements FamilyChildProfileSource {

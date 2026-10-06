@@ -143,4 +143,31 @@ class FoundationGateConfiguration {
 
   Uri get devicePairingClaimUri =>
       stagingApiOrigin.replace(path: '/v1/device-pairings/claim');
+
+  /// The family membership roster: read with GET, invite with POST.
+  Uri familyMembershipsUri(String familyId) {
+    if (!isFoundationGateUuid(familyId)) {
+      throw ArgumentError.value(
+        familyId,
+        'familyId',
+        'A server-returned UUID family identifier is required.',
+      );
+    }
+    return stagingApiOrigin.replace(path: '/v1/families/$familyId/memberships');
+  }
+
+  /// One command on one membership: `accept` or `revoke`.
+  Uri membershipCommandUri(String familyId, String membershipId, String command) {
+    if (!isFoundationGateUuid(familyId) || !isFoundationGateUuid(membershipId)) {
+      throw ArgumentError(
+        'Server-returned UUID family and membership identifiers are required.',
+      );
+    }
+    if (!const <String>{'accept', 'revoke'}.contains(command)) {
+      throw ArgumentError.value(command, 'command', 'accept or revoke');
+    }
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/memberships/$membershipId/$command',
+    );
+  }
 }

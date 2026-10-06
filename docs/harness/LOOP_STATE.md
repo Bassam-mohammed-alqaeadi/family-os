@@ -9,17 +9,17 @@
 <!-- HARNESS-STATE:BEGIN -->
 ```yaml
 status: REAL_ENGINE
-active_system: المرحلة الأولى — الأمانة والهوية (و٢ مُغلقة ٤/٤، والنشط و١)
+active_system: المرحلة الأولى — الأمانة والهوية (و١ وو٢ ٤/٤، والنشط و٣ في «السلامة»)
 wave: "00_MASTER_PLAN — المرحلة الأولى"
-stage: المرحلة صفر مكتملة — ص٠-أ ✅ (بيئة) · ص٠-ب ✅ (عقد) · ص٠-ج ✅ (معرض) · ص٠-د ✅ (mock). و٢ أُغلقت ٤/٤ برحلة إعادة الإقران بعد القطع. النشط: و١ — رحلة الدعوة في التطبيق.
+stage: المرحلة الأولى — و١ أُغلقت ٤/٤ (دعوة/قبول/إلغاء/إزالة على PostgreSQL حقيقية) وو٢ أُغلقت ٤/٤. النشط: و٣ — الموقع والمناطق الآمنة.
 card: docs/harness/cards/M1-37-002-device-lifecycle-cover.md
-owns: the M1 device lifecycle (card M1-37-002, now 8/8) - its contract, its server side, its surface, and the re-pair journey proven on real PostgreSQL
+owns: the family and identity surface (card-level: memberships read/invite/accept/revoke, wired end to end) and the M1 device lifecycle before it
 blocked_by: —
 owner_question: —
 last_tick: 2026-10-07
 last_locked: "SPINE-001 — 2026-10-06, owner-approved; M0 — 2026-10-05 on 3d7ff18"
-next_locked_gate: "و١: رحلة الدعوة في التطبيق — العميل ثم الشاشة والرحلة، حتى 4/4"
-evidence: "2026-10-07: و٢ أُغلقت ٤/٤ — اختبار واحد يمشي الرحلة كاملة على PostgreSQL 18.4 (إقران ← قياس ← قطع ← 401 ← كود جديد ← قياس ← اعتماد جديد)، والاعتماد المقطوع يبقى مرفوضاً بعده: ٨/٨، و١٤٩ اختبار خادم (١٤١ ناجح/٨ متجاوز بلا قاعدة، ١٤٩/١٤٩ معها). والعيب الرابع س٤ (زر الإصلاح غير الموصول) مُغلق بدالة قرار خالصة device_repair_route.dart + اختبار بمُوجّه حقيقي. والبوابات الست خضراء على b73fc92: Analyze ✅ والاختبارات ✅ وبوابة المصدر المُولَّد ✅، ووظيفة PostgreSQL الحقيقية ✅، وحارس الاعتمادات ✅، وبوابة الأساس ✅، وحارس الحلقة ✅."
+next_locked_gate: "و٣: الموقع الآن — عقد + خادم + عميل + سطح ورحلة، حتى 4/4"
+evidence: "2026-10-07: و١ ٤/٤ — سرد العضوية يُقرأ من الخادم (isSelf قرار خادم)، ورحلة كاملة عبر HTTP على PostgreSQL 18.4 (إسناد ← قبول ← وصول ← إلغاء/إزالة مع تدقيق ومعاملة واحدة لكل تغيير، وإعادة تشغيل الدعوة لا تصنع صفاً ثانياً): ٩/٩، و١٥٦ اختبار خادم (١٤٧/٩ بلا قاعدة، ١٥٦/١٥٦ معها)، وبوابة العقد ١٢/١٢. و`family_members_mock` أُزيل: الدين ٢٣ ← ٢٢."
 ```
 <!-- HARNESS-STATE:END -->
 
@@ -56,6 +56,7 @@ evidence: "2026-10-07: و٢ أُغلقت ٤/٤ — اختبار واحد يمش�
 | SPINE | ✅ **مقفول** 2026-10-06 | [`cards/SPINE-001`](cards/SPINE-001-experience-bindings.md) — أقرّه المالك |
 | M0 — Setup + Family | ✅ **مقفولة** 2026-10-05 | [`../real_platform/05_M0_LOCK_RECORD.md`](../real_platform/05_M0_LOCK_RECORD.md) — كل بوابة خضراء على `3d7ff18` |
 | M1 — Devices | 🟢 **Cover مُغلق ٨/٨** — التالي `REAL_ENGINE` | [`cards/M1-37-002`](cards/M1-37-002-device-lifecycle-cover.md) |
+| و١ — العائلة والهوية | ✅ **٤/٤** 2026-10-07 | `00_MASTER_PLAN.md` §٧.٤ — والدين ٢٣ ← ٢٢ في [`harness/MOCK_INVENTORY.md`](MOCK_INVENTORY.md) |
 | M2–M10 | ⬜ مغلقة | تُفتح بقفل الموجة السابقة |
 
 ---
