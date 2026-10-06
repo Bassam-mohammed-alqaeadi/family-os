@@ -9,17 +9,17 @@
 <!-- HARNESS-STATE:BEGIN -->
 ```yaml
 status: REAL_ENGINE
-active_system: و٢ — جهاز الطفل محمي فعلاً (المرحلة الأولى) · والمرحلة النشطة: صفر — الأساس
-wave: "الخطة الحقيقية 00_MASTER_PLAN — المرحلة صفر"
-stage: صفر — الأساس. المهمة النشطة: ص٠-أ PostgreSQL حقيقي في CI. لا وظيفة تُفتح قبل المهام الخمس.
+active_system: المرحلة صفر — الأساس (الخطة الحقيقية 00_MASTER_PLAN)
+wave: "00_MASTER_PLAN — المرحلة صفر"
+stage: ص٠-أ مُنجَزة (بوابة البيئة حيّة في CI). النشط: ص٠-ب بوابة انحراف العقد، ثم ص٠-ج فصل المعرض وص٠-د حصر الـmock، ثم و٢ ربط سطح الجهاز.
 card: docs/harness/cards/M1-37-002-device-lifecycle-cover.md
-owns: device lifecycle on the server (derivation + revocation, proven), and the branch-wide purge and documentation consolidation of 2026-10-06
+owns: the branch-wide consolidation and purge of 2026-10-06, and the Environment Gate now running on every push
 blocked_by: —
 owner_question: —
 last_tick: 2026-10-06
 last_locked: "SPINE-001 — 2026-10-06, owner-approved; M0 — 2026-10-05 on 3d7ff18"
-next_locked_gate: "ص٠-أ: تشغيل الهجرات 001-101 على PostgreSQL حقيقي في CI — بوابة البيئة قبل أي وظيفة"
-evidence: "consolidation 2026-10-06: docs/README.md is the single map, 00_MASTER_PLAN.md is the binding scope (14 functions), 3 obsolete docs archived, 6 dead/empty/mock files deleted with an import-graph proof; audit in docs/FULL_PLATFORM_AUDIT_2026-10-06.md; honesty measure 2.5/14 real, 0 usable families"
+next_locked_gate: "ص٠-ب: بوابة انحراف العقد تُسقط البناء بسبب مسار القطع الغائب فعلاً"
+evidence: "dab8ee1: Backend CI job 'Real PostgreSQL migrations and integration' success on postgres:16 — migrations 001-101 executed on every push for the first time; locally 6/6 against PostgreSQL 18 and 138/138 with DATABASE_URL (132 pass + 6 skipped without it); 30b4a81 consolidation: single doc map, 3 archived, 6 dead files deleted with an import-graph proof; honesty measure 2.5/14 functions real, 0 usable families"
 ```
 <!-- HARNESS-STATE:END -->
 
