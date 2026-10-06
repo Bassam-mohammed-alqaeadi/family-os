@@ -149,7 +149,9 @@ jobs:
           # line per match is how the key name in "Found 0 widgets with key [<...>]" ended
           # up missing from the previous run's annotation.
           console = Path("build/ci/flutter-test.log")
-          if console.exists():
+          # Only on a real failure. Annotations that fire on green runs train everyone to
+          # ignore them, which is how a real failure gets missed.
+          if console.exists() and failures:
               raw = console.read_text(encoding="utf-8", errors="replace").splitlines()
               blocks = []
               current = None
@@ -195,10 +197,22 @@ jobs:
         id: generated
         if: always()
         run: |
-          git diff --exit-code -- \
+          if git diff --quiet -- \
             lib/app/router.dart \
             lib/app/shell_config.dart \
-            lib/core/i18n
+            lib/core/i18n; then
+            echo "Generated source is committed and current."
+          else
+            # The diff itself is the only thing that says WHAT is stale, and the job log
+            # is not readable from every environment that has to fix it. Truncated to keep
+            # the annotation within the API's limit; the log still has all of it.
+            DIFF="$(git diff -- lib/app/router.dart lib/app/shell_config.dart lib/core/i18n \
+              | head -c 55000)"
+            ESCAPED="$(printf '%s' "$DIFF" | sed -e 's/%/%25/g' -e 's/\r//g' | tr '\n' '\036' | sed -e 's/\036/%0A/g')"
+            echo "::error title=Generated source is stale::${ESCAPED}"
+            git diff --stat -- lib/app/router.dart lib/app/shell_config.dart lib/core/i18n
+            exit 1
+          fi
       - name: Enforce analyzer, test and generated-source gates
         if: always() && (steps.analyze.outcome == 'failure' || steps.tests.outcome == 'failure' || steps.generated.outcome == 'failure')
         run: |
