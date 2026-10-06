@@ -148,6 +148,28 @@ export function revokeMembershipInput(value) {
   return { reasonCode };
 }
 
+/**
+ * Revoking a child device.
+ *
+ * `reasonCode` is optional, and its absence is meaningful rather than a missing
+ * value: a guardian cutting off a stolen handset should not have to classify the
+ * loss before the device stops being trusted. The vocabulary itself is closed and
+ * is enforced at the database by migration 101 as well as by the operation, so a
+ * value that gets past this layer still cannot reach storage.
+ */
+export function revokeFamilyChildDeviceInput(value) {
+  const body = value === undefined ? {} : bodyObject(value);
+  onlyKnownFields(body, new Set(['reasonCode']));
+  if (body.reasonCode === undefined || body.reasonCode === null) {
+    return { reasonCode: null };
+  }
+  const reasonCode = requiredText(body.reasonCode, 'reasonCode', { maxLength: 32 });
+  if (!/^[a-z][a-z0-9_]{2,31}$/.test(reasonCode)) {
+    throw new HttpError(400, 'invalid_request', 'reasonCode must be a stable, non-sensitive machine code.');
+  }
+  return { reasonCode };
+}
+
 export function requireIdempotencyKey(value) {
   return requiredText(value, 'Idempotency-Key', { maxLength: 128 });
 }

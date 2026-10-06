@@ -2,6 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import express from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { asHttpError, HttpError } from './http-error.js';
+import { deviceRevocationFor } from './device-revocation.js';
 import {
     claimDevicePairingInput,
     createChildInput,
@@ -15,6 +16,7 @@ import {
     requireIdempotencyKey,
     requireNoQueryParameters,
     requireUuid,
+    revokeFamilyChildDeviceInput,
 } from './validation.js';
 
 function requestFingerprint({ action, principal, input }) {
@@ -46,6 +48,10 @@ export function createApp({
     store,
     authVerifier,
     readiness,
+    // Revocation is data-accessed through the store's own transaction helpers, so
+    // the server has a working operation without the shared store file being
+    // edited. A test injects its own port; production uses this one.
+    deviceRevocation = deviceRevocationFor(store),
     preAuthenticationRateLimit = {},
     protectedRateLimit = {},
 }) {
@@ -273,6 +279,40 @@ export function createApp({
                 principal: request.principal,
                 familyId,
             }));
+        }),
+    );
+
+    // Revoking a child device. This is the write half of the lifecycle contract:
+    // the read side already refused a revoked credential with 401, but nothing
+    // could set the revocation, so a lost handset stayed trusted forever. The
+    // request is idempotent, primary-guardian-only, and answers with the device's
+    // new condition so the client needs no second round trip.
+    app.post(
+        '/v1/families/:familyId/children/:childId/devices/:deviceId/revocation',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            const input = revokeFamilyChildDeviceInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await deviceRevocation({
+                principal: request.principal,
+                familyId,
+                childId,
+                deviceId,
+                ...input,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'family_child_device.revoke',
+                    principal: request.principal,
+                    input: { familyId, childId, deviceId, ...input },
+                }),
+            });
+            response.status(200).json(result);
         }),
     );
 
