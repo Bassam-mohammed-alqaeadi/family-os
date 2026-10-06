@@ -119,7 +119,10 @@ void main() {
       await tester.ensureVisible(addChild);
       await tester.tap(addChild);
       await tester.pumpAndSettle();
-      expect(find.textContaining('Enter only a name and age.'), findsOneWidget);
+      expect(
+        find.textContaining('Enter a name and age, and choose an avatar'),
+        findsOneWidget,
+      );
       await tester.enterText(find.byType(TextField), 'New child');
       await tester.tap(
         find.byKey(const Key('foundation_gate_create_child_profile_submit')),
@@ -369,11 +372,17 @@ void main() {
       );
       expect(formDirection, TextDirection.rtl);
 
-      // Enlarged text must not clip the submit control out of reach.
+      // Enlarged text must not clip the submit control out of reach. The form is
+      // taller now that it offers an avatar and a colour, so reaching the
+      // control is proven by scrolling to it inside the sheet's own scroll view
+      // — and the no-exception assertion below still proves nothing overflows.
       await tester.enterText(find.byType(TextField), 'سارة');
-      await tester.tap(
-        find.byKey(const Key('foundation_gate_create_child_profile_submit')),
+      final submitKey = find.byKey(
+        const Key('foundation_gate_create_child_profile_submit'),
       );
+      await tester.ensureVisible(submitKey);
+      await tester.pumpAndSettle();
+      await tester.tap(submitKey);
       await tester.pumpAndSettle();
 
       expect(submittedName, 'سارة');
