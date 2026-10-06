@@ -443,14 +443,23 @@ class _NativeParentPairingScreenState extends State<NativeParentPairingScreen>
               const SizedBox(height: 10),
               Row(
                 children: [
-                  SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
+                  // Spinner only while the background sensor is live; an
+                  // unconfigured host shows a static icon (nothing to poll).
+                  if (_verificationPoll != null)
+                    SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: colors.amberDeep,
+                      ),
+                    )
+                  else
+                    Icon(
+                      Icons.mark_email_unread_outlined,
+                      size: 18,
                       color: colors.amberDeep,
                     ),
-                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
