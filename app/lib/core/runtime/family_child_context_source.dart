@@ -37,10 +37,9 @@ final class PermissionSnapshotV1 {
     required this.role,
     required this.scopes,
     required this.observedAt,
-    required DateTime expiresAt,
+    required this.expiresAt,
     DateTime? presentationExpiresAt,
-  }) : expiresAt = expiresAt,
-       presentationExpiresAt = presentationExpiresAt ?? expiresAt;
+  }) : presentationExpiresAt = presentationExpiresAt ?? expiresAt;
 
   final int policyVersion;
   final FamilyChildContextRole role;
