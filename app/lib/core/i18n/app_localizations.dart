@@ -2064,6 +2064,138 @@ abstract class AppLocalizations {
   ///
   /// In ar, this message translates to:
   /// **'حفظ الجداول'**
+  /// SCR: screen-time server panel — no session
+  ///
+  /// In en, this message translates to:
+  /// **'No server session in this build — we do not show numbers we cannot enforce.'**
+  String get screenTimeServerNoSession;
+
+  /// SCR: screen-time server panel — no answer, last state kept
+  ///
+  /// In en, this message translates to:
+  /// **'The server did not answer — what you see is the last true answer, and nothing changed.'**
+  String get screenTimeServerUnreachable;
+
+  /// SCR: screen-time server panel — no answer and nothing stored
+  ///
+  /// In en, this message translates to:
+  /// **'The server did not answer, and there is no earlier answer to show.'**
+  String get screenTimeServerUnreachableNoData;
+
+  /// SCR: screen-time server panel — access denied
+  ///
+  /// In en, this message translates to:
+  /// **'This account may not read this child\'s screen time.'**
+  String get screenTimeServerDenied;
+
+  /// SCR: screen-time server panel — refusal with a reason
+  ///
+  /// In en, this message translates to:
+  /// **'The server refused the request — nothing changed.'**
+  String get screenTimeServerRefused;
+
+  /// SCR: screen-time server panel — cap field
+  ///
+  /// In en, this message translates to:
+  /// **'Daily cap (minutes, 0 = no cap)'**
+  String get screenTimeServerCap;
+
+  /// SCR: screen-time server panel — bedtime window
+  ///
+  /// In en, this message translates to:
+  /// **'Bedtime'**
+  String get screenTimeServerBedtime;
+
+  /// SCR: screen-time server panel — school mode
+  ///
+  /// In en, this message translates to:
+  /// **'School mode'**
+  String get screenTimeServerSchoolMode;
+
+  /// SCR: screen-time server panel — save CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Save to the server'**
+  String get screenTimeServerSave;
+
+  /// SCR: screen-time server panel — save confirmation
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on the server'**
+  String get screenTimeServerSaved;
+
+  /// SCR: screen-time server panel — instant lock CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Turn the screen off now'**
+  String get screenTimeServerLockNow;
+
+  /// SCR: screen-time server panel — release the lock
+  ///
+  /// In en, this message translates to:
+  /// **'Switch it back on'**
+  String get screenTimeServerUnlock;
+
+  /// SCR: screen-time server panel — computed state
+  ///
+  /// In en, this message translates to:
+  /// **'The screen is available'**
+  String get screenTimeServerStateFree;
+
+  /// SCR: screen-time server panel — computed state
+  ///
+  /// In en, this message translates to:
+  /// **'The screen is available, within the cap'**
+  String get screenTimeServerStateLimited;
+
+  /// SCR: screen-time server panel — computed state
+  ///
+  /// In en, this message translates to:
+  /// **'It is bedtime'**
+  String get screenTimeServerStateBedtime;
+
+  /// SCR: screen-time server panel — computed state
+  ///
+  /// In en, this message translates to:
+  /// **'It is the school window now'**
+  String get screenTimeServerStateSchool;
+
+  /// SCR: screen-time server panel — computed state
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s time is up'**
+  String get screenTimeServerStateLimit;
+
+  /// SCR: screen-time server panel — computed state
+  ///
+  /// In en, this message translates to:
+  /// **'The screen is switched off by a guardian'**
+  String get screenTimeServerStateLock;
+
+  /// SCR: screen-time server panel — today usage
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s counted minutes: {minutes}'**
+  String screenTimeServerTodayMinutes(int minutes);
+
+  /// SCR: screen-time server panel — open request
+  ///
+  /// In en, this message translates to:
+  /// **'A question from your child is waiting: {minutes} minutes'**
+  String screenTimeServerOpenRequest(int minutes);
+
+  /// SCR: screen-time server panel — answer a request
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get screenTimeServerApprove;
+
+  /// SCR: screen-time server panel — answer a request
+  ///
+  /// In en, this message translates to:
+  /// **'Deny'**
+  String get screenTimeServerDeny;
+
   String get childScreenTimeSave;
 
   /// SCR-FAT-032 end > start validation

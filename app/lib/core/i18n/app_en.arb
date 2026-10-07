@@ -15737,5 +15737,103 @@
         "type": "String"
       }
     }
+  },
+  "screenTimeServerNoSession": "No server session in this build — we do not show numbers we cannot enforce.",
+  "@screenTimeServerNoSession": {
+      "description": "SCR: screen-time server panel — no session"
+  },
+  "screenTimeServerUnreachable": "The server did not answer — what you see is the last true answer, and nothing changed.",
+  "@screenTimeServerUnreachable": {
+      "description": "SCR: screen-time server panel — no answer, last state kept"
+  },
+  "screenTimeServerUnreachableNoData": "The server did not answer, and there is no earlier answer to show.",
+  "@screenTimeServerUnreachableNoData": {
+      "description": "SCR: screen-time server panel — no answer and nothing stored"
+  },
+  "screenTimeServerDenied": "This account may not read this child's screen time.",
+  "@screenTimeServerDenied": {
+      "description": "SCR: screen-time server panel — access denied"
+  },
+  "screenTimeServerRefused": "The server refused the request — nothing changed.",
+  "@screenTimeServerRefused": {
+      "description": "SCR: screen-time server panel — refusal with a reason"
+  },
+  "screenTimeServerCap": "Daily cap (minutes, 0 = no cap)",
+  "@screenTimeServerCap": {
+      "description": "SCR: screen-time server panel — cap field"
+  },
+  "screenTimeServerBedtime": "Bedtime",
+  "@screenTimeServerBedtime": {
+      "description": "SCR: screen-time server panel — bedtime window"
+  },
+  "screenTimeServerSchoolMode": "School mode",
+  "@screenTimeServerSchoolMode": {
+      "description": "SCR: screen-time server panel — school mode"
+  },
+  "screenTimeServerSave": "Save to the server",
+  "@screenTimeServerSave": {
+      "description": "SCR: screen-time server panel — save CTA"
+  },
+  "screenTimeServerSaved": "Saved on the server",
+  "@screenTimeServerSaved": {
+      "description": "SCR: screen-time server panel — save confirmation"
+  },
+  "screenTimeServerLockNow": "Turn the screen off now",
+  "@screenTimeServerLockNow": {
+      "description": "SCR: screen-time server panel — instant lock CTA"
+  },
+  "screenTimeServerUnlock": "Switch it back on",
+  "@screenTimeServerUnlock": {
+      "description": "SCR: screen-time server panel — release the lock"
+  },
+  "screenTimeServerStateFree": "The screen is available",
+  "@screenTimeServerStateFree": {
+      "description": "SCR: screen-time server panel — computed state"
+  },
+  "screenTimeServerStateLimited": "The screen is available, within the cap",
+  "@screenTimeServerStateLimited": {
+      "description": "SCR: screen-time server panel — computed state"
+  },
+  "screenTimeServerStateBedtime": "It is bedtime",
+  "@screenTimeServerStateBedtime": {
+      "description": "SCR: screen-time server panel — computed state"
+  },
+  "screenTimeServerStateSchool": "It is the school window now",
+  "@screenTimeServerStateSchool": {
+      "description": "SCR: screen-time server panel — computed state"
+  },
+  "screenTimeServerStateLimit": "Today's time is up",
+  "@screenTimeServerStateLimit": {
+      "description": "SCR: screen-time server panel — computed state"
+  },
+  "screenTimeServerStateLock": "The screen is switched off by a guardian",
+  "@screenTimeServerStateLock": {
+      "description": "SCR: screen-time server panel — computed state"
+  },
+  "screenTimeServerTodayMinutes": "Today's counted minutes: {minutes}",
+  "@screenTimeServerTodayMinutes": {
+      "description": "SCR: screen-time server panel — today usage",
+      "placeholders": {
+          "minutes": {
+              "type": "int"
+          }
+      }
+  },
+  "screenTimeServerOpenRequest": "A question from your child is waiting: {minutes} minutes",
+  "@screenTimeServerOpenRequest": {
+      "description": "SCR: screen-time server panel — open request",
+      "placeholders": {
+          "minutes": {
+              "type": "int"
+          }
+      }
+  },
+  "screenTimeServerApprove": "Approve",
+  "@screenTimeServerApprove": {
+      "description": "SCR: screen-time server panel — answer a request"
+  },
+  "screenTimeServerDeny": "Deny",
+  "@screenTimeServerDeny": {
+      "description": "SCR: screen-time server panel — answer a request"
   }
 }

@@ -15,6 +15,8 @@ import 'package:family_os/core/policy/anti_tamper_permission.dart';
 import 'package:family_os/core/policy/anti_tamper_policy.dart';
 import 'package:family_os/core/policy/anti_tamper_repository.dart';
 import 'package:family_os/core/policy/device_lock_service.dart';
+import 'package:family_os/features/n03_screen_time/screen_time_server_authority.dart';
+import 'package:family_os/features/n03_screen_time/screen_time_server_panel.dart';
 import 'package:family_os/core/policy/device_lock_state.dart';
 import 'package:family_os/core/prefs_misc/prefs_misc_runtime.dart';
 
@@ -384,6 +386,30 @@ class InstantLockScreenState extends State<InstantLockScreen> {
     final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final locked = _lockState?.locked ?? false;
+
+    // W5 — same rule as the screen-time screen, for the same reason: a lock a family presses
+    // here must be a decision the server holds and the child's phone obeys. Built without a
+    // local lock service (which is how the router builds it) this screen renders the panel
+    // above, whose lock button writes to the server; built with one, it keeps the local
+    // service that the widget tests inject.
+    final serverAuthority = activeScreenTimeServerAuthority;
+    if (widget.lockService == null && widget.repository == null) {
+      return Scaffold(
+        backgroundColor: colors.bg,
+        appBar: AppBar(
+          title: Text(l10n.instantLockTitle),
+          backgroundColor: colors.surface,
+          foregroundColor: colors.ink,
+        ),
+        body: SafeArea(
+          child: ScreenTimeServerPanel(
+            childId: _childId,
+            authority: serverAuthority,
+            canEdit: _canOfferLock,
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: colors.bg,

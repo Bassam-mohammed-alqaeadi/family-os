@@ -15737,5 +15737,103 @@
         "type": "String"
       }
     }
+  },
+  "screenTimeServerNoSession": "لا توجد جلسة خادم في هذا البناء — لا نعرض أرقامًا لا نفرضها.",
+  "@screenTimeServerNoSession": {
+      "description": "SCR: screen-time server panel — no session"
+  },
+  "screenTimeServerUnreachable": "لم يستجب الخادم — ما تراه آخر جواب صحيح، ولم يتغيّر شيء.",
+  "@screenTimeServerUnreachable": {
+      "description": "SCR: screen-time server panel — no answer, last state kept"
+  },
+  "screenTimeServerUnreachableNoData": "لم يستجب الخادم، ولا يوجد جواب سابق نعرضه.",
+  "@screenTimeServerUnreachableNoData": {
+      "description": "SCR: screen-time server panel — no answer and nothing stored"
+  },
+  "screenTimeServerDenied": "هذا الحساب لا يملك قراءة وقت شاشة هذا الابن.",
+  "@screenTimeServerDenied": {
+      "description": "SCR: screen-time server panel — access denied"
+  },
+  "screenTimeServerRefused": "رفض الخادم الطلب — لم يتغيّر شيء.",
+  "@screenTimeServerRefused": {
+      "description": "SCR: screen-time server panel — refusal with a reason"
+  },
+  "screenTimeServerCap": "الحد اليومي (دقائق، ٠ = بلا حد)",
+  "@screenTimeServerCap": {
+      "description": "SCR: screen-time server panel — cap field"
+  },
+  "screenTimeServerBedtime": "وقت النوم",
+  "@screenTimeServerBedtime": {
+      "description": "SCR: screen-time server panel — bedtime window"
+  },
+  "screenTimeServerSchoolMode": "وضع المدرسة",
+  "@screenTimeServerSchoolMode": {
+      "description": "SCR: screen-time server panel — school mode"
+  },
+  "screenTimeServerSave": "احفظ على الخادم",
+  "@screenTimeServerSave": {
+      "description": "SCR: screen-time server panel — save CTA"
+  },
+  "screenTimeServerSaved": "حُفظ على الخادم",
+  "@screenTimeServerSaved": {
+      "description": "SCR: screen-time server panel — save confirmation"
+  },
+  "screenTimeServerLockNow": "أوقف الشاشة الآن",
+  "@screenTimeServerLockNow": {
+      "description": "SCR: screen-time server panel — instant lock CTA"
+  },
+  "screenTimeServerUnlock": "أعد التشغيل",
+  "@screenTimeServerUnlock": {
+      "description": "SCR: screen-time server panel — release the lock"
+  },
+  "screenTimeServerStateFree": "الشاشة متاحة",
+  "@screenTimeServerStateFree": {
+      "description": "SCR: screen-time server panel — computed state"
+  },
+  "screenTimeServerStateLimited": "الشاشة متاحة ضمن الحد",
+  "@screenTimeServerStateLimited": {
+      "description": "SCR: screen-time server panel — computed state"
+  },
+  "screenTimeServerStateBedtime": "حان وقت النوم",
+  "@screenTimeServerStateBedtime": {
+      "description": "SCR: screen-time server panel — computed state"
+  },
+  "screenTimeServerStateSchool": "وقت المدرسة الآن",
+  "@screenTimeServerStateSchool": {
+      "description": "SCR: screen-time server panel — computed state"
+  },
+  "screenTimeServerStateLimit": "انتهى وقت اليوم",
+  "@screenTimeServerStateLimit": {
+      "description": "SCR: screen-time server panel — computed state"
+  },
+  "screenTimeServerStateLock": "الشاشة موقوفة بقرار ولي أمر",
+  "@screenTimeServerStateLock": {
+      "description": "SCR: screen-time server panel — computed state"
+  },
+  "screenTimeServerTodayMinutes": "دقائق اليوم المحتسبة: {minutes}",
+  "@screenTimeServerTodayMinutes": {
+      "description": "SCR: screen-time server panel — today usage",
+      "placeholders": {
+          "minutes": {
+              "type": "int"
+          }
+      }
+  },
+  "screenTimeServerOpenRequest": "سؤال من الابن بانتظارك: {minutes} دقيقة",
+  "@screenTimeServerOpenRequest": {
+      "description": "SCR: screen-time server panel — open request",
+      "placeholders": {
+          "minutes": {
+              "type": "int"
+          }
+      }
+  },
+  "screenTimeServerApprove": "موافقة",
+  "@screenTimeServerApprove": {
+      "description": "SCR: screen-time server panel — answer a request"
+  },
+  "screenTimeServerDeny": "رفض",
+  "@screenTimeServerDeny": {
+      "description": "SCR: screen-time server panel — answer a request"
   }
 }

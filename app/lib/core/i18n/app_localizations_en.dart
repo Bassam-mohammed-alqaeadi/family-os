@@ -1090,6 +1090,76 @@ class AppLocalizationsEn extends AppLocalizations {
   String get childScreenTimeEnd => 'End';
 
   @override
+  @override
+  String get screenTimeServerNoSession => 'No server session in this build — we do not show numbers we cannot enforce.';
+
+  @override
+  String get screenTimeServerUnreachable => 'The server did not answer — what you see is the last true answer, and nothing changed.';
+
+  @override
+  String get screenTimeServerUnreachableNoData => 'The server did not answer, and there is no earlier answer to show.';
+
+  @override
+  String get screenTimeServerDenied => 'This account may not read this child\'s screen time.';
+
+  @override
+  String get screenTimeServerRefused => 'The server refused the request — nothing changed.';
+
+  @override
+  String get screenTimeServerCap => 'Daily cap (minutes, 0 = no cap)';
+
+  @override
+  String get screenTimeServerBedtime => 'Bedtime';
+
+  @override
+  String get screenTimeServerSchoolMode => 'School mode';
+
+  @override
+  String get screenTimeServerSave => 'Save to the server';
+
+  @override
+  String get screenTimeServerSaved => 'Saved on the server';
+
+  @override
+  String get screenTimeServerLockNow => 'Turn the screen off now';
+
+  @override
+  String get screenTimeServerUnlock => 'Switch it back on';
+
+  @override
+  String get screenTimeServerStateFree => 'The screen is available';
+
+  @override
+  String get screenTimeServerStateLimited => 'The screen is available, within the cap';
+
+  @override
+  String get screenTimeServerStateBedtime => 'It is bedtime';
+
+  @override
+  String get screenTimeServerStateSchool => 'It is the school window now';
+
+  @override
+  String get screenTimeServerStateLimit => 'Today\'s time is up';
+
+  @override
+  String get screenTimeServerStateLock => 'The screen is switched off by a guardian';
+
+  @override
+  String screenTimeServerTodayMinutes(int minutes) {
+    return 'Today\'s counted minutes: $minutes';
+  }
+
+  @override
+  String screenTimeServerOpenRequest(int minutes) {
+    return 'A question from your child is waiting: $minutes minutes';
+  }
+
+  @override
+  String get screenTimeServerApprove => 'Approve';
+
+  @override
+  String get screenTimeServerDeny => 'Deny';
+
   String get childScreenTimeSave => 'Save schedules';
 
   @override
