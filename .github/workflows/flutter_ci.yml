@@ -135,7 +135,18 @@ jobs:
                   if kind == "print":
                       message = str(event.get("message", ""))
                       if message.strip() and any(w in message for w in wanted):
-                          kept.append(message.rstrip())
+                          # Stack frames are dropped line by line: they are 95% of the
+                          # bytes, they carry no reason, and they pushed the actual
+                          # matcher blocks past the annotation budget.
+                          kept.append(
+                              "\n".join(
+                                  line
+                                  for line in message.rstrip().splitlines()
+                                  if not line.lstrip().startswith(("#", "package:", "test/"))
+                                  and "<asynchronous" not in line
+                                  and "(elided" not in line
+                              )
+                          )
                   elif kind == "error":
                       kept.append(
                           "ERROR: "

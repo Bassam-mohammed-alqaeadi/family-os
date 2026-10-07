@@ -394,6 +394,10 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
                 const SizedBox(width: 12),
                 PrimaryBtn(
                   key: const Key('screen_time_server_cap_save'),
+                  // Beside a field, not across the panel: `fullWidth` means
+                  // `width: double.infinity`, and an infinite width inside a Row is a
+                  // layout assertion, not a wide button.
+                  fullWidth: false,
                   label: l10n.screenTimeServerSave,
                   onPressed: editable ? _saveCap : null,
                 ),
@@ -514,6 +518,7 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
               children: [
                 PrimaryBtn(
                   key: const Key('screen_time_server_request_approve'),
+                  fullWidth: false,
                   label: l10n.screenTimeServerApprove,
                   onPressed: editable
                       ? () => _answer(request, approve: true)
