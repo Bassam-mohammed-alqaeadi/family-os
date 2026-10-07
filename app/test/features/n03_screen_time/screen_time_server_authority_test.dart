@@ -178,7 +178,7 @@ void main() {
     expect(
       transport.calls,
       isEmpty,
-      'a screen with no session must not send a request to find that out',
+      reason: 'a screen with no session must not send a request to find that out',
     );
   });
 
