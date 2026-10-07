@@ -117,26 +117,37 @@ jobs:
               ])
               for name, detail in failures:
                   lines.append(f"| `{markdown_cell(name)}` | {markdown_cell(detail)} |")
-          # One budgeted block: every failing test's full message, in order, chunked so
-          # the annotations API does not clip it. The per-failure summary lines and the
-          # console tail used to compete for the same per-step annotation budget and the
-          # useful ones lost - so they are gone. Each entry below carries the name, the
-          # matcher text and the exception line, which is everything a fix needs.
-          error_text_by_name = {}
-          for test_id, messages in errors.items():
-              error_text_by_name[names.get(test_id, test_id)] = " ".join(messages)
-          detail_lines = []
-          for index, (name, detail) in enumerate(failures, start=1):
-              detail_lines.append(f"#{index} {name}")
-              detail_lines.append(error_text_by_name.get(name) or detail)
-              detail_lines.append("")
-          text = "\n".join(detail_lines)
+          # The reporter's own events, dumped raw and filtered. Two lessons are baked in
+          # here: the annotations a step emits are budgeted, so this is the ONLY thing this
+          # step annotates; and a summary that says "see the exception logs above" is not a
+          # reason, so the events that carry the words are dumped verbatim. `print` events
+          # carry what the test wrote to stdout (the matcher block), `error` events carry
+          # the exception line - stack traces are dropped, they are never the point.
+          wanted = ("Expected:", "Which:", "Actual:", "Exception", "════", "Unhandled")
+          kept = []
+          if report.exists():
+              for raw in report.read_text(encoding="utf-8", errors="replace").splitlines():
+                  try:
+                      event = json.loads(raw)
+                  except json.JSONDecodeError:
+                      continue
+                  kind = event.get("type")
+                  if kind == "print":
+                      message = str(event.get("message", ""))
+                      if message.strip() and any(w in message for w in wanted):
+                          kept.append(message.rstrip())
+                  elif kind == "error":
+                      kept.append(
+                          "ERROR: "
+                          + str(event.get("error") or event.get("message") or "").strip()
+                      )
+          text = "\n".join(kept)
           escaped = text.replace("%", "%25").replace("\r", "").replace("\n", "%0A")
           size = 2800
           pieces = [escaped[i : i + size] for i in range(0, len(escaped), size)]
           print(
               f"::warning title=Flutter test result::{len(failures)} failing test(s); "
-              f"{len(pieces)} detail chunk(s)"
+              f"{len(kept)} event(s); {len(pieces)} chunk(s)"
           )
           for index, piece in enumerate(pieces[:8], start=1):
               print(f"::error title=Failure detail {index}/{len(pieces)}::{piece}")
