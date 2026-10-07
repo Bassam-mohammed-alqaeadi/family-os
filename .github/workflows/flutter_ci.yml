@@ -65,6 +65,7 @@ jobs:
           python3 - <<'PY'
           import json
           import os
+          import sys
           from pathlib import Path
 
           report = Path("build/ci/flutter-test.json")
@@ -171,6 +172,20 @@ jobs:
           )
           for index, piece in enumerate(pieces[:8], start=1):
               print(f"::error title=Failure detail {index}/{len(pieces)}::{piece}")
+
+          # A tap that missed is a test that passed for the wrong reason: the assertion
+          # after it ran against a screen nobody touched. `tester.tap` only warns, and a
+          # warning in a passing suite is invisible - so here it is an error, and the job
+          # fails on it. This is the only gate that can see a false green.
+          missed = [event for event in kept if "would not hit test" in event]
+          if missed:
+              for index, event in enumerate(missed[:8], start=1):
+                  first = event.strip().splitlines()[0]
+                  print(
+                      f"::error title=Tap missed its widget {index}/{len(missed)}::"
+                      f"{first.replace('%', '%25')}"
+                  )
+              sys.exit(1)
           PY
       - name: Upload Flutter test report
         if: always()

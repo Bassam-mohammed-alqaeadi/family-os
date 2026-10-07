@@ -70,21 +70,30 @@ void main() {
     );
     await _pump(tester, repository: repo);
 
-    final sw = tester.widget<Switch>(
-      find.byKey(GenerationOutputsKeys.outputSwitch('out-review')),
-    );
+    final review = find.byKey(GenerationOutputsKeys.outputSwitch('out-review'));
+    final sw = tester.widget<Switch>(review);
     expect(sw.value, isFalse);
 
-    await tester.tap(
-      find.byKey(GenerationOutputsKeys.outputSwitch('out-review')),
-    );
+    // The review row is the last in a long page and the test surface is shorter than a
+    // phone. Without revealing it first the tap lands below the fold and misses: the
+    // switch would stay off because nothing was pressed, and this test would pass for the
+    // wrong reason.
+    await tester.ensureVisible(review);
+    await tester.pumpAndSettle();
+    await tester.tap(review);
     await tester.pump();
+
+    // The tap landed: the screen answered it with the reason the switch will not move.
+    expect(
+      find.textContaining('غير قابلة للتحديد'),
+      findsOneWidget,
+      reason: 'the phase lock answers the tap instead of silently ignoring it',
+    );
+
     AppToast.dismiss();
     await tester.pumpAndSettle();
 
-    final swAfter = tester.widget<Switch>(
-      find.byKey(GenerationOutputsKeys.outputSwitch('out-review')),
-    );
+    final swAfter = tester.widget<Switch>(review);
     expect(swAfter.value, isFalse);
     expect(find.textContaining('Generate selected (5)'), findsOneWidget);
   });
