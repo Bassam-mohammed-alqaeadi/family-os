@@ -67,7 +67,7 @@ class _ChildFamilyChallengesScreenState
   void initState() {
     super.initState();
     _repo = widget.repository ?? stage1ChildFamilyChallengesRepository;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _load();

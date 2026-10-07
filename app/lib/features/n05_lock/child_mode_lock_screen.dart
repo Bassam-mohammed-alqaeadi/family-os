@@ -66,7 +66,7 @@ class ChildModeLockScreen extends StatefulWidget {
   /// Rule 25 seam — null → [stage1ChildModeLockService].
   final ChildModeLockService? lockService;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — when set, ignores [CurrentRole].
@@ -225,7 +225,7 @@ class _ChildModeLockScreenState extends State<ChildModeLockScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    final fire = widget.sosFire ?? stage1SosFireService;
+    final fire = widget.sosFire ?? activeSosFireService;
     final sender = childSosSenderOf(
       context,
       explicit: childIdFromParam(widget.childId),

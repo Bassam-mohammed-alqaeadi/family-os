@@ -18,6 +18,7 @@ import 'package:family_os/features/n02_day/day_child_mock.dart';
 import 'package:family_os/features/n02_day/request_inbox_screen.dart';
 import 'package:family_os/features/n03_screen_time/time_expiry_screen.dart';
 import 'package:family_os/features/n05_lock/instant_lock_screen.dart';
+import '../support/recording_sos_fire_service.dart';
 
 /// UI-015 — SOS / lock / approve / grant hit targets ≥48×48 dp (Rule 16).
 void main() {
@@ -61,7 +62,7 @@ void main() {
       wrap(
         TimeExpiryScreen(
           childId: ChildId('ui015-sos'),
-          sosFire: MockSosFireService(),
+          sosFire: RecordingSosFireService(),
           onSos: () {},
         ),
       ),

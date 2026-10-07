@@ -108,7 +108,7 @@ class CreateSafeZoneScreen extends StatefulWidget {
   /// Test seam — when set, overrides role/level edit gate.
   final bool? canEditOverride;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — SOS fire / navigate.
@@ -264,7 +264,7 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    final fire = widget.sosFire ?? stage1SosFireService;
+    final fire = widget.sosFire ?? activeSosFireService;
     final sender = sosSenderForRole(
       context,
       _role,

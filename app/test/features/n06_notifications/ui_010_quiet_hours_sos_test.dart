@@ -13,6 +13,7 @@ import 'package:family_os/core/policy/notification_tier.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n06_notifications/notification_prefs_screen.dart';
 import 'package:family_os/features/n10_emergency/emergency_setup_screen.dart';
+import '../../support/recording_sos_fire_service.dart';
 
 /// UI-010 — SCR-FAT-058 quiet hours: SOS/critical never muted (P-4 / SET-010).
 void main() {
@@ -108,7 +109,7 @@ void main() {
       expect(NotificationPrefs.sosReceiptAlwaysOn, isTrue);
     });
 
-    testWidgets('AC3: quiet hours ON + MockSosFireService still delivers SOS', (
+    testWidgets('AC3: quiet hours ON + a child SOS press still reaches both guardians', (
       tester,
     ) async {
       final quiet = const NotificationPrefs(
@@ -141,7 +142,7 @@ void main() {
       );
       expect(sw.value, isTrue);
 
-      final sos = MockSosFireService(
+      final sos = RecordingSosFireService(
         prefsByMember: {
           'father': await repo.load('father'),
           'mother': await repo.load('mother'),

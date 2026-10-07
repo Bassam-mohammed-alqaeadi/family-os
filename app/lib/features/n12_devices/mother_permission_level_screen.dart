@@ -67,7 +67,7 @@ class MotherPermissionLevelScreen extends StatefulWidget {
   /// From route `?memberId=` (FAT-027 mother row).
   final String? membershipId;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — when set, ignores [CurrentRole].
@@ -100,7 +100,7 @@ class _MotherPermissionLevelScreenState
   void initState() {
     super.initState();
     _repo = widget.repository ?? _defaultRepo();
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     _repo.addListener(_onRepo);
   }
 

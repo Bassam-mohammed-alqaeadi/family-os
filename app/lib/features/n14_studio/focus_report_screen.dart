@@ -58,7 +58,7 @@ class FocusReportScreen extends StatefulWidget {
   /// Rule 25 seam — null → [stage1FocusReportRepository].
   final FocusReportRepository? repository;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — when set, ignores [CurrentRole].
@@ -111,7 +111,7 @@ class _FocusReportScreenState extends State<FocusReportScreen> {
   void initState() {
     super.initState();
     _repo = widget.repository ?? stage1FocusReportRepository;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _load();

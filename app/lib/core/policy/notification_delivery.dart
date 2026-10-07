@@ -59,40 +59,6 @@ abstract final class NotificationDelivery {
     return memberId.isNotEmpty;
   }
 
-  /// Simulates an SOS (critical) alert to [recipients].
-  ///
-  /// Always delivers — quiet hours, prefs, and mother level cannot mute SOS (P-4).
-  /// Typical Stage-1 recipients: `father`, `mother` (any [MotherLevel]).
-  static List<NotificationDeliveryResult> simulateSosAlert(
-    List<String> recipients, {
-    Map<String, NotificationPrefs>? prefsByMember,
-    Map<String, MotherLevel?>? motherLevelByMember,
-    TimeOfDay? now,
-  }) {
-    final clock = now ?? const TimeOfDay(hour: 23, minute: 0);
-    return [
-      for (final id in recipients)
-        NotificationDeliveryResult(
-          recipientId: id,
-          tier: NotificationTier.critical,
-          delivered:
-              guardianReceivesSos(
-                memberId: id,
-                motherLevel: motherLevelByMember?[id],
-              ) &&
-              shouldDeliver(
-                NotificationTier.critical,
-                prefsByMember?[id] ??
-                    NotificationPrefs.defaults(memberId: id).copyWith(
-                      quietHoursEnabled: true,
-                      quietStart: NotificationPrefs.defaultQuietStart,
-                      quietEnd: NotificationPrefs.defaultQuietEnd,
-                    ),
-                clock,
-              ),
-        ),
-    ];
-  }
 
   /// Simulates R-3 / `S-AIC-029` analysis notice to one member (SET-011 lean).
   ///

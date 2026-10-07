@@ -64,7 +64,7 @@ class AddEventScreen extends StatefulWidget {
   /// Rule 25 seam — null → [stage1AddEventRepository].
   final AddEventRepository? repository;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — when set, ignores [CurrentRole].
@@ -120,7 +120,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
   void initState() {
     super.initState();
     _repo = widget.repository ?? stage1AddEventRepository;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     _titleCtrl = TextEditingController();
     _placeCtrl = TextEditingController();
     WidgetsBinding.instance.addPostFrameCallback((_) {

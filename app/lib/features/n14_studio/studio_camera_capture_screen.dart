@@ -55,7 +55,7 @@ class StudioCameraCaptureScreen extends StatefulWidget {
   /// Optional override used before first [CameraPermissionSeam.check].
   final CameraPermissionStatus? initialStatus;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — when set, ignores [CurrentRole].
@@ -111,7 +111,7 @@ class _StudioCameraCaptureScreenState extends State<StudioCameraCaptureScreen> {
   @override
   void initState() {
     super.initState();
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     _seam = widget.permissionSeam ?? FakeCameraPermissionSeam();
     final initial = widget.initialStatus;
     if (initial != null) {

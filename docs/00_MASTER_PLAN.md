@@ -272,7 +272,7 @@
 
 | المُثبَت | النتيجة |
 |---|---|
-| مسار الـSOS في الواجهة | 🔴 `MockSosFireService` في `core/policy/sos_fire.dart`، **يستورده ٩٠ ملفاً**. الزر موجود والخدمة وهمية |
+| مسار الـSOS في الواجهة | ✅ أُغلق في و٤ — حُذف `MockSosFireService` من `lib` وحلّ محله `activeSosFireService` المربوط بالخادم (`sos_server_authority.dart`) عند الإقلاع، ومن لا سيرفر له يقرأ `UnwiredSosFireService` فيقول إن الإطلاق لم يصل (الدين ٢١ ← ٢٠) |
 | صحة الجهاز في نظام الأجهزة | 🔴 `FakeDeviceHealthSeam` تستعمله ٣ شاشات — وقد صار الخادم يُنتج الحكم الحقيقي في هذه الجلسة نفسها |
 | كلمة سر القفل | 🔴 `kChildModeLockMockPassword = 'parent-account'` — ثابت في كود المنتج |
 | صلاحية الكاميرا | 🔴 `FakeCameraPermissionSeam` تُعلن منحاً لم يحدثه النظام |

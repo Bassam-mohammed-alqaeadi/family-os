@@ -63,7 +63,7 @@ class DeviceHealthDetailScreen extends StatefulWidget {
   /// Test seam — when set, ignores [CurrentRole].
   final AppRole? roleOverride;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   final VoidCallback? onSos;
@@ -166,7 +166,7 @@ class _DeviceHealthDetailScreenState extends State<DeviceHealthDetailScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    final fire = widget.sosFire ?? stage1SosFireService;
+    final fire = widget.sosFire ?? activeSosFireService;
     final identity = identityOf(context);
     final viewed =
         childIdForDevice(_snap?.deviceId, runtime: identity) ??

@@ -57,7 +57,7 @@ class CommunityLibraryScreen extends StatefulWidget {
   /// Rule 25 seam — null → [stage1CommunityLibraryRepository].
   final CommunityLibraryRepository? repository;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — when set, ignores [CurrentRole].
@@ -125,7 +125,7 @@ class _CommunityLibraryScreenState extends State<CommunityLibraryScreen> {
   void initState() {
     super.initState();
     _repo = widget.repository ?? stage1CommunityLibraryRepository;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _load();

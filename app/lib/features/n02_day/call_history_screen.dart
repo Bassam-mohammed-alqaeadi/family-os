@@ -50,7 +50,7 @@ class CallHistoryScreen extends StatefulWidget {
   /// Test seam — when set, ignores [CurrentRole].
   final AppRole? roleOverride;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   final VoidCallback? onSos;
@@ -127,7 +127,7 @@ class CallHistoryScreenState extends State<CallHistoryScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    final fire = widget.sosFire ?? stage1SosFireService;
+    final fire = widget.sosFire ?? activeSosFireService;
     await parentSosSenderOf(context).fireThrough(fire);
     if (!mounted) return;
     setState(() => _sosBusy = false);

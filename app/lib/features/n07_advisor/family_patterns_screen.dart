@@ -57,7 +57,7 @@ class FamilyPatternsScreen extends StatefulWidget {
   /// Rule 25 seam — null → [stage1FamilyPatternsRepository].
   final FamilyPatternsRepository? repository;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — when set, ignores [CurrentRole].
@@ -108,7 +108,7 @@ class _FamilyPatternsScreenState extends State<FamilyPatternsScreen> {
   void initState() {
     super.initState();
     _repo = widget.repository ?? stage1FamilyPatternsRepository;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _load();

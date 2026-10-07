@@ -83,7 +83,7 @@ class ChildAppsScreen extends StatefulWidget {
   /// FS-003 domain seam — null skips AC writes (Stage-1 inventory only).
   final AppControlService? appControl;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — when set, ignores [CurrentRole].
@@ -152,7 +152,7 @@ class _ChildAppsScreenState extends State<ChildAppsScreen> {
           : resolveActiveChildId().value,
     );
     _repo = widget.repository ?? stage1ChildAppsRepository;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     _bootstrapping = !(widget.repository != null && widget.appControl != null);
     _bindRepo(_repo);
     if (_bootstrapping) {

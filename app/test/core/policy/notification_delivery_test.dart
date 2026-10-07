@@ -97,7 +97,7 @@ void main() {
         quietStart: const TimeOfDay(hour: 22, minute: 0),
         quietEnd: const TimeOfDay(hour: 7, minute: 0),
       );
-      final results = NotificationDelivery.simulateSosAlert(
+      final results = RecordingSosFireService.simulate(
         const ['father', 'mother'],
         prefsByMember: {'father': quietOn, 'mother': motherQuiet},
         now: const TimeOfDay(hour: 23, minute: 0),
@@ -334,7 +334,7 @@ void main() {
         quietStart: const TimeOfDay(hour: 22, minute: 0),
         quietEnd: const TimeOfDay(hour: 7, minute: 0),
       );
-      final results = NotificationDelivery.simulateSosAlert(
+      final results = RecordingSosFireService.simulate(
         const ['mother'],
         prefsByMember: {'mother': motherQuiet},
         motherLevelByMember: const {'mother': MotherLevel.observer},
@@ -356,7 +356,7 @@ void main() {
 
     test('simulateSosAlert delivers to mother at every level', () {
       for (final level in MotherLevel.values) {
-        final results = NotificationDelivery.simulateSosAlert(
+        final results = RecordingSosFireService.simulate(
           const ['mother'],
           motherLevelByMember: {'mother': level},
           now: const TimeOfDay(hour: 23, minute: 0),

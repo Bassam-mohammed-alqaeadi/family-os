@@ -231,6 +231,108 @@ class FoundationGateConfiguration {
     return stagingApiOrigin.replace(path: '/v1/devices/$deviceId/location-fixes');
   }
 
+  /// The family's emergency incidents. `status` is part of the URL rather than of a body
+  /// because it selects rows: an open incident is the one that needs answering, and that
+  /// is what the default view asks for.
+  Uri familySosAlertsUri(String familyId, {String status = 'open'}) {
+    if (!isFoundationGateUuid(familyId)) {
+      throw ArgumentError(
+        'Server-returned UUID family identifier is required.',
+      );
+    }
+    if (!const <String>{'open', 'resolved', 'all'}.contains(status)) {
+      throw ArgumentError.value(status, 'status', 'open, resolved or all');
+    }
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/sos-alerts',
+      queryParameters: status == 'open' ? null : <String, String>{'status': status},
+    );
+  }
+
+  /// One incident, read by every member of the family - the child included.
+  Uri familySosAlertUri(String familyId, String alertId) {
+    if (!isFoundationGateUuid(familyId) || !isFoundationGateUuid(alertId)) {
+      throw ArgumentError(
+        'Server-returned UUID family and alert identifiers are required.',
+      );
+    }
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/sos-alerts/$alertId',
+    );
+  }
+
+  /// A guardian opening an incident for a child whose handset is not the one in hand.
+  Uri familyChildSosAlertsUri(String familyId, String childId) {
+    if (!isFoundationGateUuid(familyId) || !isFoundationGateUuid(childId)) {
+      throw ArgumentError(
+        'Server-returned UUID family and child identifiers are required.',
+      );
+    }
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/children/$childId/sos-alerts',
+    );
+  }
+
+  /// "I have seen this" - deliberately its own path, because it is not closing anything.
+  Uri familySosAlertAcknowledgeUri(String familyId, String alertId) {
+    if (!isFoundationGateUuid(familyId) || !isFoundationGateUuid(alertId)) {
+      throw ArgumentError(
+        'Server-returned UUID family and alert identifiers are required.',
+      );
+    }
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/sos-alerts/$alertId/acknowledge',
+    );
+  }
+
+  /// Climbing the family's own ladder.
+  Uri familySosAlertEscalateUri(String familyId, String alertId) {
+    if (!isFoundationGateUuid(familyId) || !isFoundationGateUuid(alertId)) {
+      throw ArgumentError(
+        'Server-returned UUID family and alert identifiers are required.',
+      );
+    }
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/sos-alerts/$alertId/escalate',
+    );
+  }
+
+  /// Closing the incident, with the reason stated.
+  Uri familySosAlertResolveUri(String familyId, String alertId) {
+    if (!isFoundationGateUuid(familyId) || !isFoundationGateUuid(alertId)) {
+      throw ArgumentError(
+        'Server-returned UUID family and alert identifiers are required.',
+      );
+    }
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/sos-alerts/$alertId/resolve',
+    );
+  }
+
+  /// The ladder rung 2 and below: the people the family itself trusts.
+  Uri familySosBackupContactsUri(String familyId) {
+    if (!isFoundationGateUuid(familyId)) {
+      throw ArgumentError(
+        'Server-returned UUID family identifier is required.',
+      );
+    }
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/sos-backup-contacts',
+    );
+  }
+
+  /// One rung: verify it, renumber it, switch it off or archive it.
+  Uri familySosBackupContactUri(String familyId, String contactId) {
+    if (!isFoundationGateUuid(familyId) || !isFoundationGateUuid(contactId)) {
+      throw ArgumentError(
+        'Server-returned UUID family and contact identifiers are required.',
+      );
+    }
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/sos-backup-contacts/$contactId',
+    );
+  }
+
   /// One command on one membership: `accept` or `revoke`.
   Uri membershipCommandUri(String familyId, String membershipId, String command) {
     if (!isFoundationGateUuid(familyId) || !isFoundationGateUuid(membershipId)) {

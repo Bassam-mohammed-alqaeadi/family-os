@@ -57,8 +57,8 @@ final class SosAlert {
     this.connectionClass = SosConnectionClass.online,
     this.deliveries = const [],
     this.acknowledgedAt,
-    this.pinFracX = 0.62,
-    this.pinFracY = 0.42,
+    this.pinFracX,
+    this.pinFracY,
     this.panicQuietAtTrigger = false,
     this.raisedByActorId,
   });
@@ -72,9 +72,18 @@ final class SosAlert {
   final String childEmoji;
   final DateTime pressedAt;
   final String locationLabel;
-  final int batteryPercent;
+
+  /// The battery reading at press time, or null when nobody measured one.
+  ///
+  /// Null is a real state and it is not zero: a board that printed "0" for a handset whose
+  /// level it never learned would be describing an empty battery that may not exist.
+  final int? batteryPercent;
+
+  /// Free-text movement note. Empty when the platform has nothing measured to say.
   final String movementLabel;
-  final int accuracyMeters;
+
+  /// The accuracy the position came with, or null when there is no position.
+  final int? accuracyMeters;
   final List<String> recipientLabels;
   final SosAlertStatus status;
   final SosTerminalReason? terminalReason;
@@ -82,8 +91,12 @@ final class SosAlert {
   final SosConnectionClass connectionClass;
   final List<SosDeliveryRow> deliveries;
   final DateTime? acknowledgedAt;
-  final double pinFracX;
-  final double pinFracY;
+
+  /// Where the press happened, as a fraction of the decorative board map - and null when
+  /// there is no measured position, which is the only honest thing to draw. A pin placed
+  /// from a default is a place nobody measured, rendered under a red alarm.
+  final double? pinFracX;
+  final double? pinFracY;
   final bool panicQuietAtTrigger;
 
   bool get isOpen =>
@@ -116,6 +129,7 @@ final class SosAlert {
     bool clearAcknowledgedAt = false,
     double? pinFracX,
     double? pinFracY,
+    bool clearPin = false,
     bool? panicQuietAtTrigger,
     String? raisedByActorId,
   }) {
@@ -140,8 +154,8 @@ final class SosAlert {
       acknowledgedAt: clearAcknowledgedAt
           ? null
           : (acknowledgedAt ?? this.acknowledgedAt),
-      pinFracX: pinFracX ?? this.pinFracX,
-      pinFracY: pinFracY ?? this.pinFracY,
+      pinFracX: clearPin ? null : (pinFracX ?? this.pinFracX),
+      pinFracY: clearPin ? null : (pinFracY ?? this.pinFracY),
       panicQuietAtTrigger: panicQuietAtTrigger ?? this.panicQuietAtTrigger,
       raisedByActorId: raisedByActorId ?? this.raisedByActorId,
     );

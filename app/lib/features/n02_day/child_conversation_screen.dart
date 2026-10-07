@@ -150,7 +150,7 @@ class _ChildConversationScreenState extends State<ChildConversationScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    final fire = widget.sosFire ?? stage1SosFireService;
+    final fire = widget.sosFire ?? activeSosFireService;
     await childSosSenderOf(context).fireThrough(fire);
     if (!mounted) return;
     setState(() => _sosBusy = false);

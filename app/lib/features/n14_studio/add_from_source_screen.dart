@@ -54,7 +54,7 @@ class AddFromSourceScreen extends StatefulWidget {
     this.onNavigate,
   });
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — when set, ignores [CurrentRole].
@@ -105,7 +105,7 @@ class _AddFromSourceScreenState extends State<AddFromSourceScreen> {
   @override
   void initState() {
     super.initState();
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
   }
 
   Future<void> _openSos() async {

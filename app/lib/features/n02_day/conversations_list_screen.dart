@@ -66,7 +66,7 @@ class ConversationsListScreen extends StatefulWidget {
   /// Test seam — when set, ignores [CurrentRole].
   final AppRole? roleOverride;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// UI-007 seam — null → [stage1ChatAvailability] (always usable).
@@ -150,7 +150,7 @@ class ConversationsListScreenState extends State<ConversationsListScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    final fire = widget.sosFire ?? stage1SosFireService;
+    final fire = widget.sosFire ?? activeSosFireService;
     await parentSosSenderOf(context).fireThrough(fire);
     if (!mounted) return;
     setState(() => _sosBusy = false);

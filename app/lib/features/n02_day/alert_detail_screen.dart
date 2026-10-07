@@ -84,7 +84,7 @@ class AlertDetailScreen extends StatefulWidget {
   /// Null → [stage1MotherPermissionLevelRepository.level] (Identity-bound).
   final MotherLevel? motherLevel;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   final VoidCallback? onSos;
@@ -228,7 +228,7 @@ class AlertDetailScreenState extends State<AlertDetailScreen> {
       return;
     }
     setState(() => _busy = true);
-    final fire = widget.sosFire ?? stage1SosFireService;
+    final fire = widget.sosFire ?? activeSosFireService;
     final sender = sosSenderForRole(
       context,
       _role,

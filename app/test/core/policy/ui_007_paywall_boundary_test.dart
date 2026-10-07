@@ -6,6 +6,7 @@ import 'package:family_os/core/policy/chat_availability.dart';
 import 'package:family_os/core/policy/entitlement.dart';
 import 'package:family_os/core/policy/entitlement_service.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
+import '../../support/recording_sos_fire_service.dart';
 
 void main() {
   group('UI-007 entitlement states', () {
@@ -35,7 +36,7 @@ void main() {
       expect(entitlement.current.isExpired, isTrue);
 
       // SosFire has no EntitlementService parameter — boundary by API shape.
-      final sos = MockSosFireService();
+      final sos = RecordingSosFireService();
       final result = await sos.fire(childId: 'child-1');
 
       expect(result.fired, isTrue);
@@ -44,7 +45,7 @@ void main() {
     });
 
     test('active and trial also fire', () async {
-      final sos = MockSosFireService();
+      final sos = RecordingSosFireService();
       for (final _ in [
         Entitlement.activeFamily(),
         Entitlement.trial(),
@@ -104,7 +105,7 @@ void main() {
 
     test('SosFireService API surface has no entitlement parameter', () {
       // Compile-time proof: fire() signature uses only childId/recipients/clock.
-      final sos = MockSosFireService();
+      final sos = RecordingSosFireService();
       expect(sos, isA<SosFireService>());
     });
   });

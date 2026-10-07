@@ -133,6 +133,10 @@ class _ChildSosInProgressScreenState extends State<ChildSosInProgressScreen>
     try {
       if (widget.repository != null) {
         _repo = widget.repository;
+      } else if (activeSosAlertRepository != null) {
+        // A server session is bound: this board reads the family's incident, which is the
+        // one every other phone in the family is looking at.
+        _repo = activeSosAlertRepository;
       } else {
         await Stage1SosFinalRuntime.ensureOpen();
         if (!mounted) return;
@@ -256,6 +260,12 @@ class _ChildSosInProgressScreenState extends State<ChildSosInProgressScreen>
     } on Object {
       if (!mounted) return;
       setState(() => _busy = false);
+      // A cancel that did not reach the authority is said out loud: silence here would
+      // read as "it worked" on the one screen where that mistake matters most.
+      AppToast.show(
+        context,
+        message: AppLocalizations.of(context).childSosInProgressErrorMessage,
+      );
     }
   }
 

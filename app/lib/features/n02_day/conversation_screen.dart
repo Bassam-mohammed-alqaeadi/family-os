@@ -70,7 +70,7 @@ class ConversationScreen extends StatefulWidget {
   /// Test seam — when set, ignores [CurrentRole].
   final AppRole? roleOverride;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// UI-007 seam — null → [stage1ChatAvailability] (always usable).
@@ -178,7 +178,7 @@ class ConversationScreenState extends State<ConversationScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    final fire = widget.sosFire ?? stage1SosFireService;
+    final fire = widget.sosFire ?? activeSosFireService;
     final sender = sosSenderForRole(
       context,
       _role,

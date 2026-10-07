@@ -14,6 +14,7 @@ import 'device_lifecycle.dart';
 import 'family_device_api_client.dart';
 import 'family_location_api_client.dart';
 import 'family_membership_api_client.dart';
+import 'family_sos_api_client.dart';
 import 'foundation_gate_identity.dart';
 import 'foundation_gate_models.dart';
 import 'foundation_gate_session_controller.dart';
@@ -31,12 +32,14 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     required FamilyDeviceApiClient deviceApi,
     FamilyMembershipApiClient? membershipApi,
     FamilyLocationApiClient? locationApi,
+    FamilySosApiClient? sosApi,
     String? preferredFamilyId,
   }) : _controller = controller,
        _identity = identity,
        _deviceApi = deviceApi,
        _membershipApi = membershipApi,
        _locationApi = locationApi,
+       _sosApi = sosApi,
        _preferredFamilyId = preferredFamilyId?.trim(),
        _identityValue = const IdentitySnapshot.unavailable(),
        _rosterValue = const FamilyRosterSnapshot.unavailable(),
@@ -49,6 +52,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   final FamilyDeviceApiClient _deviceApi;
   final FamilyMembershipApiClient? _membershipApi;
   final FamilyLocationApiClient? _locationApi;
+  final FamilySosApiClient? _sosApi;
   final String? _preferredFamilyId;
   IdentitySnapshot _identityValue;
   FamilyRosterSnapshot _rosterValue;
@@ -63,6 +67,13 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   /// those decisions belong beside the screens that render them, not in the session
   /// runtime that owns authentication.
   FamilyLocationApiClient? get locationApi => _locationApi;
+
+  /// The emergency contract's client, or null when this build has no server to ask.
+  ///
+  /// Exposed for the same reason the location client is: what an incident becomes on a
+  /// screen - which picture, which delivery state - belongs beside the screens, and the
+  /// runtime's job is only to say who to ask and with which session.
+  FamilySosApiClient? get sosApi => _sosApi;
 
   /// The family this device is looking at, or null before one is selected.
   String? get selectedFamilyId => _controller.selectedFamily?.id;

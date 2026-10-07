@@ -11,6 +11,7 @@ import 'package:family_os/core/policy/sos_alert.dart';
 import 'package:family_os/core/policy/sos_alert_repository.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n10_emergency/sos_alert_screen.dart';
+import '../../support/recording_sos_fire_service.dart';
 
 void main() {
   tearDown(AppToast.dismiss);
@@ -290,7 +291,7 @@ void main() {
   });
 
   test('SCR-FAT-018 fireAndSeedSosAlert is entitlement-free + P-4', () async {
-    final sos = MockSosFireService();
+    final sos = RecordingSosFireService();
     final alerts = InMemorySosAlertRepository();
     final result = await fireAndSeedSosAlert(
       childId: 'child_a',

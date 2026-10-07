@@ -56,7 +56,7 @@ class ParentSecondKeyScreen extends StatefulWidget {
   /// Rule 25 seam — null → [stage1ChildModeLockService].
   final ChildModeLockService? lockService;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — when set, ignores [CurrentRole].
@@ -91,7 +91,7 @@ class _ParentSecondKeyScreenState extends State<ParentSecondKeyScreen> {
   void initState() {
     super.initState();
     _lock = widget.lockService ?? stage1ChildModeLockService;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     _lock.addListener(_onLock);
     _lock.notifyBus.addListener(_onLock);
   }

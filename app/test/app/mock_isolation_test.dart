@@ -14,7 +14,7 @@
 //
 //   * a file whose name carries a mock word (`_mock`, `mock_`, `_fake`, `_seed`, `_demo`,
 //     `_stub`, `_fixture`), or
-//   * a file that declares an identifier containing Mock or Fake - `MockSosFireService`,
+//   * a file that declares an identifier containing Mock or Fake - `MockEntitlementService`,
 //     `FakeDeviceHealthSeam`, `kChildModeLockMockPassword`, `DayChildMock`.
 //
 // "Production can reach it" means a file under `lib/` imports it. `lib/main.dart` counts as
@@ -27,7 +27,12 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-/// Every mock surface reachable from production code, as of 2026-10-06.
+/// Every mock surface reachable from production code, as of 2026-10-07.
+///
+/// One left this list today: `lib/core/policy/sos_fire.dart` held `MockSosFireService` -
+/// an alarm that always succeeded, reachable from every screen that had a button. What
+/// replaced it is `activeSosFireService`, bound at boot to the server session, and the
+/// buttons now reach a real authority or answer honestly that they did not.
 ///
 /// Each entry is a debt with a named owner in the register. Adding one here without a row
 /// in docs/harness/MOCK_INVENTORY.md is exactly what this test is built to prevent.
@@ -40,7 +45,6 @@ const Set<String> productionReachableMocks = <String>{
   'lib/core/policy/chat_mock_store.dart',
   'lib/core/policy/entitlement_service.dart',
   'lib/core/policy/family_data_lifecycle.dart',
-  'lib/core/policy/sos_fire.dart',
   'lib/features/n01_linking/camera_permission_seam.dart',
   'lib/features/n02_day/alert_detail_mock.dart',
   'lib/features/n02_day/alerts_hub_mock.dart',

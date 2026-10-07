@@ -16,6 +16,7 @@ import 'package:family_os/core/policy/time_request_service.dart';
 import 'package:family_os/features/n02_day/request_inbox_screen.dart';
 import 'package:family_os/features/n03_screen_time/time_expiry_screen.dart';
 import 'package:family_os/features/n05_lock/instant_lock_screen.dart';
+import '../support/recording_sos_fire_service.dart';
 
 /// UI-014 — spine interactive CTAs: Semantics labels (ARB) for SOS / lock /
 /// approve; icon-only edge covered (Rule 16).
@@ -66,7 +67,7 @@ void main() {
           wrap(
             TimeExpiryScreen(
               childId: child,
-              sosFire: MockSosFireService(),
+              sosFire: RecordingSosFireService(),
               onSos: () {},
             ),
           ),
@@ -181,7 +182,7 @@ void main() {
         wrap(
           TimeExpiryScreen(
             childId: child,
-            sosFire: MockSosFireService(),
+            sosFire: RecordingSosFireService(),
             onSos: () {},
           ),
           locale: const Locale('en'),

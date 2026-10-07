@@ -186,6 +186,10 @@ class SosAlertScreenState extends State<SosAlertScreen> {
     try {
       if (widget.repository != null) {
         _repo = widget.repository;
+      } else if (activeSosAlertRepository != null) {
+        // A server session is bound: this board reads the family's incident, which is the
+        // one every other phone in the family is looking at.
+        _repo = activeSosAlertRepository;
       } else {
         await Stage1SosFinalRuntime.ensureOpen();
         if (!mounted) return;
@@ -338,6 +342,10 @@ class SosAlertScreenState extends State<SosAlertScreen> {
     } on Object {
       if (!mounted) return;
       setState(() => _busy = false);
+      AppToast.show(
+        context,
+        message: AppLocalizations.of(context).sosAlertErrorMessage,
+      );
     }
   }
 
@@ -370,6 +378,10 @@ class SosAlertScreenState extends State<SosAlertScreen> {
     } on Object {
       if (!mounted) return;
       setState(() => _busy = false);
+      AppToast.show(
+        context,
+        message: AppLocalizations.of(context).sosAlertErrorMessage,
+      );
     }
   }
 
@@ -767,9 +779,11 @@ class _ActiveBoard extends StatelessWidget {
                 child: Text(
                   l10n.sosAlertMetaLine(
                     alert.locationLabel,
-                    '${alert.batteryPercent}',
+                    // A reading nobody took is a dash, never a zero: "0%" is a claim about
+                    // a handset, and a dash is the truth about not having looked.
+                    '${alert.batteryPercent ?? '—'}',
                     alert.movementLabel,
-                    '${alert.accuracyMeters}',
+                    '${alert.accuracyMeters ?? '—'}',
                   ),
                   style: TextStyle(fontSize: 12.5, height: 1.8, color: onCoral),
                 ),
@@ -886,8 +900,16 @@ class _LiveMap extends StatelessWidget {
             height: 180,
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final pinLeft = (alert.pinFracX * constraints.maxWidth) - 22;
-                final pinTop = (alert.pinFracY * constraints.maxHeight) - 22;
+                // The map is decoration; the pin is a measurement. When there is no
+                // measured position the map is drawn without one, because a pin placed
+                // from a default would point a parent at a door nobody chose.
+                final hasPin = alert.pinFracX != null && alert.pinFracY != null;
+                final pinLeft = hasPin
+                    ? (alert.pinFracX! * constraints.maxWidth) - 22
+                    : 0.0;
+                final pinTop = hasPin
+                    ? (alert.pinFracY! * constraints.maxHeight) - 22
+                    : 0.0;
                 return Stack(
                   children: [
                     Positioned.fill(
@@ -935,39 +957,40 @@ class _LiveMap extends StatelessWidget {
                         ),
                       ),
                     ),
-                    Positioned(
-                      left: pinLeft.clamp(4.0, constraints.maxWidth - 48),
-                      top: pinTop.clamp(4.0, constraints.maxHeight - 48),
-                      child: Semantics(
-                        label: l10n.sosAlertPinSemantics(
-                          alert.childDisplayName,
-                        ),
-                        child: DecoratedBox(
-                          key: SosAlertKeys.pin,
-                          decoration: BoxDecoration(
-                            color: colors.surface,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: colors.ink.withValues(alpha: 0.18),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
+                    if (hasPin)
+                      Positioned(
+                        left: pinLeft.clamp(4.0, constraints.maxWidth - 48),
+                        top: pinTop.clamp(4.0, constraints.maxHeight - 48),
+                        child: Semantics(
+                          label: l10n.sosAlertPinSemantics(
+                            alert.childDisplayName,
                           ),
-                          child: SizedBox(
-                            width: 44,
-                            height: 44,
-                            child: Center(
-                              child: Text(
-                                alert.childEmoji,
-                                style: const TextStyle(fontSize: 22),
+                          child: DecoratedBox(
+                            key: SosAlertKeys.pin,
+                            decoration: BoxDecoration(
+                              color: colors.surface,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: colors.ink.withValues(alpha: 0.18),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: SizedBox(
+                              width: 44,
+                              height: 44,
+                              child: Center(
+                                child: Text(
+                                  alert.childEmoji,
+                                  style: const TextStyle(fontSize: 22),
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
-                    ),
                   ],
                 );
               },

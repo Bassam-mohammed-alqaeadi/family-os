@@ -10,6 +10,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_alert_repository.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n10_emergency/child_sos_button_screen.dart';
+import '../../support/recording_sos_fire_service.dart';
 
 void main() {
   testWidgets('child — hint, hold button, always-on banner', (tester) async {
@@ -24,7 +25,7 @@ void main() {
   });
 
   testWidgets('early release — cancels without fire', (tester) async {
-    final fire = MockSosFireService();
+    final fire = RecordingSosFireService();
     await _pumpSos(
       tester,
       role: AppRole.child,
@@ -43,7 +44,7 @@ void main() {
   });
 
   testWidgets('hold completes → fire + onFired', (tester) async {
-    final fire = MockSosFireService();
+    final fire = RecordingSosFireService();
     var firedNav = false;
     await _pumpSos(
       tester,
@@ -69,7 +70,7 @@ void main() {
   testWidgets('hold completes → route /scr-chd-006 with handoff params', (
     tester,
   ) async {
-    final fire = MockSosFireService();
+    final fire = RecordingSosFireService();
     final alerts = InMemorySosAlertRepository();
     final role = RoleController(AppRole.child);
     final router = GoRouter(

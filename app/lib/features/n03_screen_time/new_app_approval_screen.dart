@@ -80,7 +80,7 @@ class NewAppApprovalScreen extends StatefulWidget {
   /// FS-003 domain seam — install tickets when non-null.
   final AppControlService? appControl;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — when set, ignores [CurrentRole].
@@ -132,7 +132,7 @@ class _NewAppApprovalScreenState extends State<NewAppApprovalScreen> {
     super.initState();
     _childId = _resolveChildId(widget.childId);
     _repo = widget.repository ?? stage1ChildAppsRepository;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     _bindRepo(_repo);
   }
 

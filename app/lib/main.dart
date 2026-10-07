@@ -13,6 +13,8 @@ import 'package:family_os/app/router.dart';
 import 'package:family_os/app/showcase_policy.dart';
 import 'package:family_os/app/ux_local_seed.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/domain/child_id.dart';
+import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/education/education_local_persistence.dart';
 import 'package:family_os/core/events/local_event_policy_bridge.dart';
@@ -40,12 +42,14 @@ import 'package:family_os/features/n02_day/child_profile_repository.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/family_chat_local_persistence.dart';
 import 'package:family_os/features/n02_day/location_server_authority.dart';
+import 'package:family_os/features/n10_emergency/sos_server_authority.dart';
 import 'package:family_os/features/n02_day/location_ux_bridge.dart';
 import 'package:family_os/features/n03_screen_time/child_apps_local_persistence.dart';
 import 'package:family_os/features/n07_privacy/audit_log_local_persistence.dart';
 import 'package:family_os/features/n12_devices/mother_permission_level_identity_repository.dart';
 import 'package:family_os/features/n12_devices/family_members_remote_repository.dart';
 import 'package:family_os/features/n12_devices/family_members_repository.dart';
+import 'package:family_os/features/n12_devices/family_members_role_labels.dart';
 import 'package:family_os/features/n12_devices/mother_permission_level_repository.dart';
 import 'package:family_os/features/n16_tasks/family_tasks_local_persistence.dart';
 import 'package:family_os/features/quran/quran_local_bridge.dart';
@@ -56,6 +60,7 @@ import 'package:family_os/foundation_gate/family_device_api_client.dart';
 import 'package:family_os/foundation_gate/family_location_api_client.dart';
 import 'package:family_os/foundation_gate/family_discovery_api_client.dart';
 import 'package:family_os/foundation_gate/family_membership_api_client.dart';
+import 'package:family_os/foundation_gate/family_sos_api_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 import 'package:family_os/foundation_gate/foundation_gate_identity.dart';
@@ -163,6 +168,23 @@ Future<void> main() async {
         ),
       );
     }
+    // W4 — the child's button, the escalation and the arrival receipt are server facts when
+    // a server is configured. Before this binding, pressing the alarm ran a simulated service
+    // that always succeeded: no guardian was told, and the screen said otherwise. A build
+    // without this binding now says the alarm did not reach anyone rather than pretending.
+    final sosApi = familyEntryRuntime.sosApi;
+    if (sosApi != null) {
+      bindSosServerAuthority(
+        SosServerAuthority(
+          api: sosApi,
+          idToken: familyEntryRuntime.currentIdToken,
+          familyId: () => familyEntryRuntime.selectedFamilyId,
+          memberLabelSource: () => _memberRoleLabels(familyEntryRuntime),
+          childNameOf: (childId) => _rosterChildOf(familyEntryRuntime, childId).displayName ?? '',
+          childEmojiOf: (childId) => _rosterChildOf(familyEntryRuntime, childId).avatarEmoji ?? '',
+        ),
+      );
+    }
   }
   runApp(
     FamilyOsApp(
@@ -170,6 +192,32 @@ Future<void> main() async {
       foundationRuntime: familyEntryRuntime,
     ),
   );
+}
+
+/// The role words for the family's memberships, keyed by membership id.
+///
+/// The membership contract publishes a role and not a person's name, so this is the most a
+/// recipient row may honestly say. An unknown role is left out rather than shown under the
+/// nearest-looking word, and a failed read throws to the caller's own catch.
+Future<Map<String, String>> _memberRoleLabels(
+  MainAppFoundationRuntime runtime,
+) async {
+  final familyId = runtime.selectedFamilyId;
+  if (familyId == null || familyId.isEmpty) return const {};
+  final memberships = await runtime.listMemberships(FamilyId(familyId));
+  return {
+    for (final membership in memberships)
+      if (FamilyMembersRoleLabels.forRole(membership.role) case final label?)
+        membership.id: label.$2,
+  };
+}
+
+/// The roster row for one child, or an empty row when the roster does not have them.
+FamilyRosterChild _rosterChildOf(MainAppFoundationRuntime runtime, String childId) {
+  for (final child in runtime.rosterValue.children) {
+    if (child.childId.value == childId) return child;
+  }
+  return FamilyRosterChild(childId: ChildId(childId));
 }
 
 /// Initializes the real Family Entry port only when the owner provides a
@@ -210,6 +258,10 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
         transport: PackageFoundationGateHttpTransport(),
       ),
       locationApi: FamilyLocationApiClient(
+        configuration: configuration,
+        transport: PackageFoundationGateHttpTransport(),
+      ),
+      sosApi: FamilySosApiClient(
         configuration: configuration,
         transport: PackageFoundationGateHttpTransport(),
       ),

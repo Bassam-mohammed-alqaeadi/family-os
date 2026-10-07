@@ -72,7 +72,7 @@ class _ChildFocusScreenState extends State<ChildFocusScreen> {
   void initState() {
     super.initState();
     _repo = widget.repository ?? stage1ChildFocusRepository;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _load();

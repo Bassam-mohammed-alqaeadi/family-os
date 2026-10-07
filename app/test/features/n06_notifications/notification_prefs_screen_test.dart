@@ -15,6 +15,7 @@ import 'package:family_os/core/policy/notification_prefs_repository.dart';
 import 'package:family_os/core/policy/notification_tier.dart';
 import 'package:family_os/features/n06_notifications/notification_prefs_screen.dart';
 import 'package:family_os/features/n10_emergency/emergency_setup_screen.dart';
+import '../../support/recording_sos_fire_service.dart';
 
 void main() {
   tearDown(AppToast.dismiss);
@@ -53,7 +54,7 @@ void main() {
     expect(father.quietHoursEnabled, isTrue);
     expect(mother.quietHoursEnabled, isTrue);
 
-    final results = NotificationDelivery.simulateSosAlert(
+    final results = RecordingSosFireService.simulate(
       const ['father', 'mother'],
       prefsByMember: {'father': father, 'mother': mother},
       now: const TimeOfDay(hour: 23, minute: 15),

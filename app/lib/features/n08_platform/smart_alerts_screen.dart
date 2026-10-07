@@ -140,7 +140,7 @@ class _SmartAlertsScreenState extends State<SmartAlertsScreen> {
   void initState() {
     super.initState();
     _repo = widget.repository ?? stage1SmartAlertsRepository;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     _sc = widget.screenCamera;
     _ai = widget.offlineAi;
     WidgetsBinding.instance.addPostFrameCallback((_) {

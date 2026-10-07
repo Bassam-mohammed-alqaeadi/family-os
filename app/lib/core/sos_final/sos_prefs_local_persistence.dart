@@ -107,12 +107,20 @@ final class SosPrefsRuntime {
   static var _unavailable = false;
 
   static PrefsSosLadderRepository? _ladder;
+  static SosLadderRepository? _serverLadder;
   static DurableSosSettingsStore? _settings;
   static PrefsWebUnlockRequestRepository? _webUnlockRequests;
 
   static bool get isOpen => _opened;
   static bool get unavailable => _unavailable;
-  static PrefsSosLadderRepository? get ladder => _ladder;
+  /// The ladder the family shares. A bound server ladder wins over this device's copy for
+  /// the same reason the location surface reads the server: one family, one answer.
+  static SosLadderRepository? get ladder => _serverLadder ?? _ladder;
+
+  /// Rebinds rung 2+ to the server session, or back to this device's store.
+  static void bindServerLadder(SosLadderRepository? repository) {
+    _serverLadder = repository;
+  }
   static SosSettingsStore? get settings => _settings;
   static PrefsWebUnlockRequestRepository? get webUnlockRequests =>
       _webUnlockRequests;
@@ -157,6 +165,7 @@ final class SosPrefsRuntime {
     _opened = false;
     _unavailable = false;
     _ladder = null;
+    _serverLadder = null;
     _settings = null;
     _webUnlockRequests = null;
     rebindStage1SosSettingsStore(InMemorySosSettingsStore());

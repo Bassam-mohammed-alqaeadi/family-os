@@ -12,6 +12,7 @@ import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/core/policy/time_engine.dart';
 import 'package:family_os/core/policy/time_expiry_surface.dart';
 import 'package:family_os/features/n03_screen_time/time_expiry_screen.dart';
+import '../../support/recording_sos_fire_service.dart';
 
 /// UI-011 — SCR-CHD-021 time expiry: chat+Quran open; entertainment locked; SOS
 /// reachable (Rules 9/11 · C-1 · S4 walkthrough step).
@@ -153,7 +154,7 @@ void main() {
     testWidgets(
       'AC3: S4 walkthrough — chat+Quran never lock; SOS fires at expiry',
       (tester) async {
-        final sos = MockSosFireService();
+        final sos = RecordingSosFireService();
         var chatTaps = 0;
         var quranTaps = 0;
         var sosTaps = 0;

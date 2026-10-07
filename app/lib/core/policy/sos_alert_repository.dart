@@ -223,6 +223,19 @@ final class InMemorySosAlertRepository implements SosAlertRepository {
 final InMemorySosAlertRepository stage1SosAlertRepository =
     InMemorySosAlertRepository();
 
+SosAlertRepository? _activeSosAlertRepository;
+
+/// The repository the emergency boards read, or null when no server session is bound.
+///
+/// A screen asks this before it falls back to the device's own store: an incident a parent
+/// already acknowledged on another phone must not be shown here as untouched.
+SosAlertRepository? get activeSosAlertRepository => _activeSosAlertRepository;
+
+/// Binds the board's read path to the server session, or clears it.
+void bindActiveSosAlertRepository(SosAlertRepository? repository) {
+  _activeSosAlertRepository = repository;
+}
+
 /// Builds recipient display labels from [SosLadder] + ARB parent names.
 ///
 /// Outside backups: only [SosBackupContact.isEscalationEligible] (hard-skip).
