@@ -85,7 +85,7 @@ void main() {
 
     // The tap landed: the screen answered it with the reason the switch will not move.
     expect(
-      find.textContaining('غير قابلة للتحديد'),
+      find.textContaining('not selectable yet'),
       findsOneWidget,
       reason: 'the phase lock answers the tap instead of silently ignoring it',
     );
