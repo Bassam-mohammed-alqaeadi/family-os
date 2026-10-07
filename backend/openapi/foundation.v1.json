@@ -3046,6 +3046,645 @@
           }
         }
       }
+    },
+    "/v1/families/{familyId}/children/{childId}/web-filter": {
+      "get": {
+        "operationId": "readFamilyWebFilterPolicy",
+        "summary": "The filter a child's phone must apply",
+        "description": "The family's stored filter for one child: the level, the categories they switched on, the allow and block lists, the keyword dictionary, and the temporary allows that are open at this minute. The temporary allows are computed from their own end times rather than stored as open, so nothing has to remember to close them. Guardians only: a child membership cannot be proven to be the subject of this read.",
+        "tags": [
+          "Web filter"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The server's policy, with the allows open right now.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebFilterPolicyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateFamilyWebFilterPolicy",
+        "summary": "Switches categories on or off, and edits the two lists",
+        "description": "Only the fields that are sent change; the rest keep what the family already chose. A category key the server does not know is refused rather than stored, because a switch that does nothing while looking like it does something is the failure this wave exists to prevent. A host cannot be on both lists: the engine resolves the block list first, so an allow entry that is also blocked would be a line on a screen with no effect.",
+        "tags": [
+          "Web filter"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebFilterPolicyUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The policy as stored, after the change.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebFilterPolicyResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The policy changed since this screen read it (`web_filter_stale_version`), or a host was sent on both lists (`web_filter_host_both_lists`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/web-filter/evaluate": {
+      "get": {
+        "operationId": "evaluateFamilyWebRequest",
+        "summary": "What this child would get if they opened this host",
+        "description": "The father's preview, answered by the same decision function the handset applies and in the same order: block list, then an open temporary allow, then the allow list, then the keyword dictionary, then the category, then allow. A preview produced by different rules than the filter would be a screen that disagrees with the phone in a child's hand. It decides nothing and stores nothing.",
+        "tags": [
+          "Web filter"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The decision, its source, and the policy version it came from.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebFilterDecisionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/web-filter/temp-allows": {
+      "get": {
+        "operationId": "listFamilyWebFilterTempAllows",
+        "summary": "The doors that were opened, and whether they are still open",
+        "description": "Every request this child has made or been given, newest first, each carrying its computed state: `pending`, `active`, `expired` or `denied`. An approval is stored with the minute it closes at, so `expired` is an answer about the clock rather than a status somebody has to write.",
+        "tags": [
+          "Web filter"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requests, and the hosts open right now.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebFilterTempAllowListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      },
+      "post": {
+        "operationId": "requestFamilyWebFilterTempAllow",
+        "summary": "A child asks for one host, for a stated number of minutes",
+        "description": "A guardian may ask on a child's behalf - a child who speaks rather than taps still gets a record - and the child's own handset asks through its device credential on the device route. Only one open question per child and host exists at a time; a second one is refused rather than stacked, so the guardians answer a question instead of a queue.",
+        "tags": [
+          "Web filter"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebFilterTempAllowRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The question, open and waiting.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebFilterTempAllowResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "This host is already waiting for an answer (`web_filter_request_pending`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/web-filter/temp-allows/{requestId}/decision": {
+      "post": {
+        "operationId": "decideFamilyWebFilterTempAllow",
+        "summary": "Approve a door or refuse it",
+        "description": "Approve opens the host until a stated minute; the granted minutes are the guardian's decision, may be fewer than the child asked for, and can never exceed the request - quietly widening a question is not answering it. Deny opens nothing. An answered question cannot be answered again: a second answer would either extend a door nobody re-asked for or refuse something already open.",
+        "tags": [
+          "Web filter"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebFilterTempAllowDecisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request as answered.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebFilterTempAllowResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "description": "No such request in this family (`web_filter_request_not_found`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Already answered (`web_filter_request_decided`) or the grant exceeded the request (`web_filter_grant_exceeds_request`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/web-filter/temp-allow-requests": {
+      "post": {
+        "operationId": "requestDeviceWebFilterTempAllow",
+        "summary": "The handset itself asks for one host",
+        "description": "The device credential is the asker, which is why this path carries no child id: the credential proves which child is speaking, and a parameter a client can choose would prove nothing. The question lands in the same inbox the family already answers, through the same operation as a guardian's request.",
+        "tags": [
+          "Web filter"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebFilterTempAllowRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The question, open and waiting.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebFilterTempAllowResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The device credential is not accepted (`device_credential_rejected`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "This host is already waiting for an answer (`web_filter_request_pending`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/web-filter": {
+      "get": {
+        "operationId": "readDeviceWebFilterPolicy",
+        "summary": "The policy this handset must apply, and the doors that are open",
+        "description": "Read through the device credential, so a handset can only ever fetch the policy of the child it was paired with. The same rows a guardian reads, produced by the same functions: the phone in a child's hand and the screen in a parent's hand are never shown two different filters.",
+        "tags": [
+          "Web filter"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The server's policy for this device's child.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebFilterPolicyResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The device credential is not accepted (`device_credential_rejected`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/protection-reports": {
+      "post": {
+        "operationId": "reportDeviceProtection",
+        "summary": "A handset testifies about its own protection plane",
+        "description": "Append-only: every report is kept forever, so a family asking \"when did this start?\" gets an answer instead of the newest row. `observed_at` is kept as the handset's testimony of when it looked, while how old a report is is measured from the moment the SERVER heard it - a device clock is the first thing someone with something to hide would move. The response carries the health the family is shown, computed from this report and the clock.",
+        "tags": [
+          "Web filter"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceProtectionReportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The report as stored, and the computed health.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceProtectionReportResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The device credential is not accepted (`device_credential_rejected`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "An observation this server does not know (`web_filter_observation_unknown`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/protection": {
+      "get": {
+        "operationId": "readFamilyProtection",
+        "summary": "Whether protection is actually on, device by device",
+        "description": "The state a family reads is computed from each device's newest report and the clock, never stored. A device that has never reported, or has not reported within the freshness window, is `unverified` - not `protected`, because nothing recently said so, and not `at_risk`, because nothing said that either. Silence is not health, and this read is where that law is kept.",
+        "tags": [
+          "Web filter"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Every device in the family with its computed state, and the counts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyProtectionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3162,6 +3801,15 @@
         "schema": {
           "$ref": "#/components/schemas/Uuid"
         }
+      },
+      "RequestId": {
+        "name": "requestId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/Uuid"
+        },
+        "description": "The temporary-allow request this decision answers."
       }
     },
     "responses": {
@@ -6732,6 +7380,568 @@
               }
             ],
             "description": "The question this call raised or found, so a phone knows its ask was recorded."
+          }
+        }
+      },
+      "WebFilterCategoryKey": {
+        "type": "string",
+        "enum": [
+          "adults",
+          "gambling",
+          "violence",
+          "social",
+          "games",
+          "streaming"
+        ],
+        "description": "The six categories a family can switch on. The same six are declared in the client's `WebFilterCategories.known`, and a test compares the two lists: a toggle the server does not accept would be a switch that does nothing."
+      },
+      "WebFilterTempAllowState": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "active",
+          "expired",
+          "denied"
+        ],
+        "description": "Computed from the stored status and the clock. `expired` is never stored: an approval carries the minute it closes at, so it closes by itself."
+      },
+      "ProtectionHealthState": {
+        "type": "string",
+        "enum": [
+          "protected",
+          "at_risk",
+          "unverified",
+          "unsupported"
+        ],
+        "description": "`unverified` is a first-class answer: a device that has not reported lately is neither claimed safe nor called broken. `protected` is only ever produced by a recent report that said so."
+      },
+      "WebFilterPolicy": {
+        "type": "object",
+        "required": [
+          "level",
+          "enabledCategories",
+          "allowHosts",
+          "blockHosts",
+          "dictionaryKeywords",
+          "activeTempAllows",
+          "version"
+        ],
+        "properties": {
+          "level": {
+            "type": "string",
+            "enum": [
+              "strict",
+              "balanced",
+              "open"
+            ],
+            "description": "A preset that seeds the categories when chosen; what is enforced afterwards is always `enabledCategories`."
+          },
+          "enabledCategories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebFilterCategoryKey"
+            }
+          },
+          "allowHosts": {
+            "type": "array",
+            "maxItems": 200,
+            "items": {
+              "type": "string",
+              "minLength": 4,
+              "maxLength": 253
+            },
+            "description": "Hosts this child may open even when a category would refuse them."
+          },
+          "blockHosts": {
+            "type": "array",
+            "maxItems": 200,
+            "items": {
+              "type": "string",
+              "minLength": 4,
+              "maxLength": 253
+            },
+            "description": "Hosts refused before anything else, including a temporary allow."
+          },
+          "dictionaryKeywords": {
+            "type": "array",
+            "maxItems": 200,
+            "items": {
+              "type": "string",
+              "maxLength": 64
+            }
+          },
+          "activeTempAllows": {
+            "type": "array",
+            "maxItems": 200,
+            "items": {
+              "type": "string",
+              "minLength": 4,
+              "maxLength": 253
+            },
+            "description": "Hosts a guardian opened for a stated time, computed against the clock at this read."
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Increases with every save. A screen sends the version it read and is refused if the policy moved underneath it."
+          }
+        }
+      },
+      "WebFilterPolicyResponse": {
+        "type": "object",
+        "required": [
+          "policy"
+        ],
+        "properties": {
+          "policy": {
+            "$ref": "#/components/schemas/WebFilterPolicy"
+          }
+        }
+      },
+      "WebFilterPolicyUpdateRequest": {
+        "type": "object",
+        "description": "Every field optional: flipping one switch must not reset the other five. Lists are replaced rather than merged, because removing a host has to be possible.",
+        "properties": {
+          "level": {
+            "type": "string",
+            "enum": [
+              "strict",
+              "balanced",
+              "open"
+            ]
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebFilterCategoryKey"
+            }
+          },
+          "allowHosts": {
+            "type": "array",
+            "maxItems": 200,
+            "items": {
+              "type": "string",
+              "minLength": 4,
+              "maxLength": 253
+            },
+            "description": "Replaces the allow list."
+          },
+          "blockHosts": {
+            "type": "array",
+            "maxItems": 200,
+            "items": {
+              "type": "string",
+              "minLength": 4,
+              "maxLength": 253
+            },
+            "description": "Replaces the block list. A host on both lists is refused."
+          },
+          "dictionaryKeywords": {
+            "type": "array",
+            "maxItems": 200,
+            "items": {
+              "type": "string",
+              "maxLength": 64
+            }
+          },
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The version the screen read. Zero means \"never saved\", and is a real value rather than a sentinel."
+          }
+        }
+      },
+      "WebFilterDecisionResponse": {
+        "type": "object",
+        "required": [
+          "allowed",
+          "denySource",
+          "categoryKey",
+          "policyVersion",
+          "normalizedHost"
+        ],
+        "properties": {
+          "allowed": {
+            "type": "boolean"
+          },
+          "denySource": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "blocklist",
+              "dictionary",
+              "category",
+              null
+            ],
+            "description": "Null when allowed. The source is stated rather than implied, so the child block page and the parent preview describe the same refusal the same way."
+          },
+          "categoryKey": {
+            "type": "string",
+            "nullable": true
+          },
+          "policyVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "normalizedHost": {
+            "type": "string",
+            "description": "The host as the engine read it: lower case, no scheme, no port, no leading `www.`."
+          }
+        }
+      },
+      "WebFilterTempAllow": {
+        "type": "object",
+        "required": [
+          "id",
+          "host",
+          "status",
+          "state",
+          "requestedMinutes",
+          "reason",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "host": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "denied"
+            ],
+            "description": "What was stored. What a screen shows is `state`."
+          },
+          "state": {
+            "$ref": "#/components/schemas/WebFilterTempAllowState"
+          },
+          "requestedMinutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 240
+          },
+          "grantedMinutes": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 120,
+            "description": "The guardian's answer, never more than was asked. Null until answered, and on a denial."
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "requestedByMembershipId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "requestedByDeviceId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "decidedByMembershipId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "decidedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "description": "Always present on an approval, always null on a denial: a denial opens nothing."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "WebFilterTempAllowRequest": {
+        "type": "object",
+        "required": [
+          "host",
+          "minutes"
+        ],
+        "properties": {
+          "host": {
+            "type": "string",
+            "minLength": 4,
+            "maxLength": 253
+          },
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 240
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 300
+          }
+        }
+      },
+      "WebFilterTempAllowDecisionRequest": {
+        "type": "object",
+        "required": [
+          "decision"
+        ],
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approve",
+              "deny"
+            ]
+          },
+          "grantedMinutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 120,
+            "description": "Optional on an approve: fewer minutes than asked is an answer, more is refused."
+          }
+        }
+      },
+      "WebFilterTempAllowResponse": {
+        "type": "object",
+        "required": [
+          "request"
+        ],
+        "properties": {
+          "request": {
+            "$ref": "#/components/schemas/WebFilterTempAllow"
+          }
+        }
+      },
+      "WebFilterTempAllowListResponse": {
+        "type": "object",
+        "required": [
+          "requests",
+          "activeHosts"
+        ],
+        "properties": {
+          "requests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebFilterTempAllow"
+            }
+          },
+          "activeHosts": {
+            "type": "array",
+            "maxItems": 200,
+            "items": {
+              "type": "string",
+              "minLength": 4,
+              "maxLength": 253
+            },
+            "description": "The hosts open at this minute."
+          }
+        }
+      },
+      "DeviceProtectionReportRequest": {
+        "type": "object",
+        "required": [
+          "observedState"
+        ],
+        "properties": {
+          "observedState": {
+            "type": "string",
+            "enum": [
+              "healthy",
+              "vpn_active",
+              "profile_removed",
+              "permission_revoked",
+              "dns_bypassed",
+              "device_admin_removed",
+              "unsupported"
+            ],
+            "description": "What the handset saw. `healthy` is a claim like any other and is stored as the handset's claim; the server decides what the family is told by reading it with the clock in hand."
+          },
+          "signals": {
+            "type": "array",
+            "maxItems": 32,
+            "items": {
+              "type": "string",
+              "maxLength": 64
+            }
+          },
+          "detail": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "observedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The handset's own stamp, kept as testimony. Freshness is measured against the server's receipt time instead."
+          }
+        }
+      },
+      "DeviceProtectionReport": {
+        "type": "object",
+        "required": [
+          "id",
+          "observedState",
+          "signals",
+          "detail",
+          "observedAt",
+          "reportedAt"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "observedState": {
+            "type": "string"
+          },
+          "signals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "detail": {
+            "type": "string"
+          },
+          "observedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reportedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the server heard it. This is the anchor freshness is measured from."
+          }
+        }
+      },
+      "DeviceProtectionHealth": {
+        "type": "object",
+        "required": [
+          "deviceId",
+          "deviceLabel",
+          "childId",
+          "state",
+          "reason",
+          "ageMinutes",
+          "signals"
+        ],
+        "properties": {
+          "deviceId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "deviceLabel": {
+            "type": "string"
+          },
+          "childId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "state": {
+            "$ref": "#/components/schemas/ProtectionHealthState"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "reported_healthy",
+              "stale_report",
+              "never_reported",
+              "platform_unsupported",
+              "unrecognised_observation",
+              "vpn_active",
+              "profile_removed",
+              "permission_revoked",
+              "dns_bypassed",
+              "device_admin_removed"
+            ]
+          },
+          "since": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "ageMinutes": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0
+          },
+          "detail": {
+            "type": "string"
+          },
+          "signals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "DeviceProtectionReportResponse": {
+        "type": "object",
+        "required": [
+          "report",
+          "health"
+        ],
+        "properties": {
+          "report": {
+            "$ref": "#/components/schemas/DeviceProtectionReport"
+          },
+          "health": {
+            "$ref": "#/components/schemas/DeviceProtectionHealth"
+          }
+        }
+      },
+      "FamilyProtectionResponse": {
+        "type": "object",
+        "required": [
+          "devices",
+          "counts",
+          "freshnessMinutes"
+        ],
+        "properties": {
+          "devices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeviceProtectionHealth"
+            }
+          },
+          "counts": {
+            "type": "object",
+            "required": [
+              "protected",
+              "at_risk",
+              "unverified",
+              "unsupported"
+            ],
+            "properties": {
+              "protected": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "at_risk": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "unverified": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "unsupported": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "freshnessMinutes": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "How long a report speaks for. Beyond it a device reads as `unverified`."
           }
         }
       }

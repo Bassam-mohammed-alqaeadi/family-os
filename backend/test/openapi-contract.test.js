@@ -166,6 +166,14 @@ test('every protected operation declares OIDC security, rate limiting and idempo
       '/v1/devices/{deviceId}/sos-alerts',
       '/v1/devices/{deviceId}/sos-alerts/{alertId}/resolve',
       '/v1/devices/{deviceId}/screen-time',
+      // W6 adds three, and each one is the same decision the two above record: the
+      // credential issued at pairing is what proves which child is speaking. The handset
+      // fetches the filter it must apply, asks for one host through its own door, and
+      // testifies about its own protection plane - and none of the three carries a child
+      // id, because a parameter a client supplies proves nothing.
+      '/v1/devices/{deviceId}/web-filter',
+      '/v1/devices/{deviceId}/web-filter/temp-allow-requests',
+      '/v1/devices/{deviceId}/protection-reports',
     ]);
     const expectedSecurity = deviceAuthenticated.has(path)
       ? [{ oidcBearer: [] }, { deviceCredential: [] }]

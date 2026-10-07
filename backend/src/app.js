@@ -8,6 +8,7 @@ import { safeZonesFor } from './safe-zones.js';
 import { locationSurfaceFor } from './location-telemetry.js';
 import { sosEmergencyFor } from './sos-emergency.js';
 import { screenTimeFor } from './screen-time.js';
+import { webFilterFor } from './web-filter.js';
 import { capabilityMatches } from './store/postgres-foundation-store.js';
 import {
     claimDevicePairingInput,
@@ -39,6 +40,11 @@ import {
     requireNoQueryParameters,
     requireUuid,
     revokeFamilyChildDeviceInput,
+    webFilterPolicyInput,
+    tempAllowRequestInput,
+    tempAllowDecisionInput,
+    protectionReportInput,
+    webFilterEvaluateQuery,
 } from './validation.js';
 
 function requestFingerprint({ action, principal, input }) {
@@ -90,6 +96,7 @@ export function createApp({
     // arrangement as the surfaces before it: data access through the store's published
     // helpers, and the one credential check every device route already uses.
     screenTime = screenTimeFor(store, { credentialMatches: capabilityMatches }),
+    webFilter = webFilterFor(store, { credentialMatches: capabilityMatches }),
     preAuthenticationRateLimit = {},
     protectedRateLimit = {},
 }) {
@@ -1150,6 +1157,256 @@ export function createApp({
             const result = await screenTime.readFromDevice({
                 deviceCredential: request.deviceCredential,
                 deviceId,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // ── W6 WEB FILTER ───────────────────────────────────────────────────────────
+    //
+    // Guardians state the policy and answer the questions; the child's handset reads the
+    // policy it must apply and testifies about its own protection plane. The handset
+    // routes carry no child id for the reason screen time's do not: the device credential
+    // is the proof of which child is speaking, and a parameter a client can choose proves
+    // nothing.
+    app.get(
+        '/v1/families/:familyId/children/:childId/web-filter',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            requireNoQueryParameters(request.query);
+            const result = await webFilter.readPolicy({
+                principal: request.principal,
+                familyId,
+                childId,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    app.patch(
+        '/v1/families/:familyId/children/:childId/web-filter',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            requireNoQueryParameters(request.query);
+            const { change, expectedVersion } = webFilterPolicyInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await webFilter.updatePolicy({
+                principal: request.principal,
+                familyId,
+                childId,
+                change,
+                expectedVersion,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'web_filter.policy.update',
+                    principal: request.principal,
+                    input: { familyId, childId, change, expectedVersion },
+                }),
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // The father's preview: "what would my child get if they opened this?" answered by the
+    // same rules the handset applies, so the preview cannot quietly disagree with the
+    // filter. It is a read - it decides nothing and stores nothing.
+    app.get(
+        '/v1/families/:familyId/children/:childId/web-filter/evaluate',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            const { host } = webFilterEvaluateQuery(request.query);
+            const result = await webFilter.evaluate({
+                principal: request.principal,
+                familyId,
+                childId,
+                host,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    app.get(
+        '/v1/families/:familyId/children/:childId/web-filter/temp-allows',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            requireNoQueryParameters(request.query);
+            const result = await webFilter.listTempAllows({
+                principal: request.principal,
+                familyId,
+                childId,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // A question may be asked by a guardian on a child's behalf — a child who speaks rather
+    // than taps still gets a record — and by the handset itself.
+    app.post(
+        '/v1/families/:familyId/children/:childId/web-filter/temp-allows',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            requireNoQueryParameters(request.query);
+            const { host, minutes, reason } = tempAllowRequestInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await webFilter.requestTempAllow({
+                principal: request.principal,
+                familyId,
+                childId,
+                host,
+                minutes,
+                reason,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'web_filter.temp_allow.request',
+                    principal: request.principal,
+                    input: { familyId, childId, host, minutes, reason },
+                }),
+            });
+            response.status(201).json(result);
+        }),
+    );
+
+    app.post(
+        '/v1/families/:familyId/children/:childId/web-filter/temp-allows/:requestId/decision',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            const requestId = requireUuid(request.params.requestId, 'requestId');
+            requireNoQueryParameters(request.query);
+            const { decision, grantedMinutes } = tempAllowDecisionInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await webFilter.decideTempAllow({
+                principal: request.principal,
+                familyId,
+                childId,
+                requestId,
+                decision,
+                grantedMinutes,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'web_filter.temp_allow.decide',
+                    principal: request.principal,
+                    input: { familyId, childId, requestId, decision, grantedMinutes },
+                }),
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // The handset asks for its own door. The device credential is the asker, which is why
+    // there is no child id in this path.
+    app.post(
+        '/v1/devices/:deviceId/web-filter/temp-allow-requests',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            requireNoQueryParameters(request.query);
+            const { host, minutes, reason } = tempAllowRequestInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await webFilter.requestTempAllow({
+                principal: request.principal ?? { subject: `device:${deviceId}` },
+                deviceId,
+                deviceCredential: request.deviceCredential,
+                host,
+                minutes,
+                reason,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'web_filter.temp_allow.device_request',
+                    principal: { subject: `device:${deviceId}` },
+                    input: { deviceId, host, minutes, reason },
+                }),
+            });
+            response.status(201).json(result);
+        }),
+    );
+
+    // The policy the handset must apply. Read through the credential, so a device can only
+    // ever fetch the policy of the child it was paired with.
+    app.get(
+        '/v1/devices/:deviceId/web-filter',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            requireNoQueryParameters(request.query);
+            const result = await webFilter.readPolicyForDevice({
+                deviceId,
+                deviceCredential: request.deviceCredential,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // A handset testifies about its own protection plane. Append-only: the server keeps
+    // every report and derives what the family is told, so "protection was on all along"
+    // is not a sentence this system can say.
+    app.post(
+        '/v1/devices/:deviceId/protection-reports',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            requireNoQueryParameters(request.query);
+            const { observedState, signals, detail, observedAt } = protectionReportInput(request.body);
+            const result = await webFilter.reportProtection({
+                deviceId,
+                deviceCredential: request.deviceCredential,
+                observedState,
+                signals,
+                detail,
+                observedAt,
+                correlationId: request.correlationId,
+            });
+            response.status(201).json(result);
+        }),
+    );
+
+    // What the family is shown. Every device in the family, each one carrying the state
+    // computed from its newest report and the clock - and `unverified` where the honest
+    // answer is that nobody has said anything lately.
+    app.get(
+        '/v1/families/:familyId/protection',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            requireNoQueryParameters(request.query);
+            const result = await webFilter.readProtection({
+                principal: request.principal,
+                familyId,
             });
             response.status(200).json(result);
         }),

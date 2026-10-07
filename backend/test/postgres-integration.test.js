@@ -1948,6 +1948,11 @@ const W5_OFFSET_SAFETY_MARGIN_MINUTES = 5;
  * clock away from midnight and means the occasional minute that ticks past mid-test cannot
  * move the day out from under a usage row.
  */
+/** A stable idempotency hash for the journeys that call an operation directly. */
+function requestFingerprintFor(seed) {
+  return createHash('sha256').update(seed).digest('hex');
+}
+
 async function seedScreenTimeFamily(baseUrl, client, tag) {
   const created = await jsonRequest(baseUrl, '/v1/families', {
     method: 'POST',
@@ -2879,6 +2884,391 @@ test('the lock has an author, the question has an answer, and the credential is 
             `${eventType} must reach the announcement queue`,
           );
         }
+      });
+    } finally {
+      await store.close();
+    }
+  });
+});
+
+// ── W6 — WEB FILTER AND TAMPER RESISTANCE ──────────────────────────────────────────────
+//
+// The journey this wave has to survive, told the way a family would live it:
+//
+//   the father turns the categories on and blocks one host;
+//   a second guardian's stale screen is refused rather than allowed to overwrite;
+//   the child's handset fetches the policy it must apply and gets the same filter;
+//   the child asks for one host, the father opens it for ten minutes, and it closes by
+//   itself without anybody remembering to close it;
+//   the handset reports that a VPN is running - and the family is told that, then told
+//   nothing at all once the reports stop, because silence is not health.
+//
+// Every step runs against real PostgreSQL through the real routes. The two things most
+// worth being wrong about are both asserted directly: that an expired approval needs no
+// writer to expire it, and that a family is never shown `protected` on the strength of a
+// report that stopped coming.
+
+test('the filter a family set is the filter the child’s phone is handed, and a stale screen cannot overwrite it', { skip }, async () => {
+  await withFreshDatabase(async (client) => {
+    await migrate(client);
+    const store = new PostgresFoundationStore({
+      connectionString: withDatabase(DATABASE_URL, client.database),
+    });
+    const app = createApp({
+      store,
+      authVerifier: new TestAuthVerifier(),
+      readiness: () => ({ ready: true, missing: [] }),
+    });
+    try {
+      await withServer(app, async (baseUrl) => {
+        const household = await seedScreenTimeFamily(baseUrl, client, 'w6a');
+        const { familyId, childId, deviceId, deviceAuth } = household;
+
+        // 1. The father states the family's filter.
+        const saved = await jsonRequest(baseUrl, `/v1/families/${familyId}/children/${childId}/web-filter`, {
+          method: 'PATCH',
+          headers: authorized('test-primary', { 'idempotency-key': 'w6a-policy-1' }),
+          body: {
+            level: 'strict',
+            categories: ['adults', 'gambling', 'violence', 'social', 'games', 'streaming'],
+            blockHosts: ['blocked.example.com'],
+            dictionaryKeywords: ['casino'],
+            expectedVersion: 0,
+          },
+        });
+        assert.equal(saved.status, 200, JSON.stringify(saved.body));
+        assert.deepEqual(saved.body.policy.enabledCategories, [
+          'adults', 'gambling', 'violence', 'social', 'games', 'streaming',
+        ]);
+        assert.equal(saved.body.policy.version, 1, 'the first save is version one');
+
+        // 2. A second guardian whose screen still shows version 0 is refused, so two phones
+        //    cannot silently overwrite each other.
+        const stale = await jsonRequest(baseUrl, `/v1/families/${familyId}/children/${childId}/web-filter`, {
+          method: 'PATCH',
+          headers: authorized('test-co', { 'idempotency-key': 'w6a-policy-stale' }),
+          body: { categories: ['games'], expectedVersion: 0 },
+        });
+        assert.equal(stale.status, 409);
+        assert.equal(stale.body.error.code, 'web_filter_stale_version');
+
+        // 3. A category the server does not know is refused where it is named, rather than
+        //    stored as a switch that does nothing.
+        const unknown = await jsonRequest(baseUrl, `/v1/families/${familyId}/children/${childId}/web-filter`, {
+          method: 'PATCH',
+          headers: authorized('test-primary', { 'idempotency-key': 'w6a-policy-bad-key' }),
+          body: { categories: ['crypto'], expectedVersion: 1 },
+        });
+        assert.equal(unknown.status, 422);
+        assert.equal(unknown.body.error.code, 'web_filter_unknown_category');
+
+        // 4. A host on both lists is refused: the block list resolves first, so the allow
+        //    entry would be a line on a screen with no effect.
+        const bothLists = await jsonRequest(baseUrl, `/v1/families/${familyId}/children/${childId}/web-filter`, {
+          method: 'PATCH',
+          headers: authorized('test-primary', { 'idempotency-key': 'w6a-policy-both' }),
+          body: { allowHosts: ['blocked.example.com'], expectedVersion: 1 },
+        });
+        assert.equal(bothLists.status, 409);
+        assert.equal(bothLists.body.error.code, 'web_filter_host_both_lists');
+
+        // 5. The child's handset fetches the policy it must apply - through its credential,
+        //    with no child id anywhere in the request - and gets the same filter.
+        const onDevice = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/web-filter`, {
+          headers: deviceAuth,
+        });
+        assert.equal(onDevice.status, 200, JSON.stringify(onDevice.body));
+        assert.equal(onDevice.body.policy.level, 'strict');
+        assert.deepEqual(onDevice.body.policy.blockHosts, ['blocked.example.com']);
+        assert.equal(onDevice.body.policy.version, 1);
+        assert.deepEqual(onDevice.body.policy.activeTempAllows, [], 'no doors are open yet');
+
+        // 6. The father's preview and the child's filter agree, because both come from the
+        //    same decision function: a blocked host, a category, a dictionary word, and a
+        //    host nobody has an opinion about.
+        const previewOf = async (host) => {
+          const response = await jsonRequest(
+            baseUrl,
+            `/v1/families/${familyId}/children/${childId}/web-filter/evaluate?host=${encodeURIComponent(host)}`,
+            { headers: authorized('test-primary') },
+          );
+          assert.equal(response.status, 200, JSON.stringify(response.body));
+          return response.body;
+        };
+        assert.equal((await previewOf('blocked.example.com')).denySource, 'blocklist');
+        assert.equal((await previewOf('games.example.com')).categoryKey, 'games');
+        assert.equal((await previewOf('my-casino.example.com')).denySource, 'dictionary');
+        assert.equal((await previewOf('school.example.com')).allowed, true);
+
+        // 7. The child asks for one host, through its own door.
+        const asked = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/web-filter/temp-allow-requests`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w6a-ask-1' },
+          body: { host: 'games.example.com', minutes: 15, reason: 'واجب المدرسة' },
+        });
+        assert.equal(asked.status, 201, JSON.stringify(asked.body));
+        const requestId = asked.body.request.id;
+        assert.equal(asked.body.request.status, 'pending');
+        assert.equal(asked.body.request.state, 'pending');
+
+        // A question already waiting is not asked twice: two identical rows would mean the
+        // guardians answer the same question twice and the child gets two doors.
+        const askedAgain = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/web-filter/temp-allow-requests`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w6a-ask-2' },
+          body: { host: 'games.example.com', minutes: 15 },
+        });
+        assert.equal(askedAgain.status, 409);
+        assert.equal(askedAgain.body.error.code, 'web_filter_request_pending');
+
+        // 8. The father opens it for fewer minutes than was asked. The child may not widen
+        //    its own question, and the father may not widen it either.
+        const answered = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/children/${childId}/web-filter/temp-allows/${requestId}/decision`,
+          {
+            method: 'POST',
+            headers: authorized('test-primary', { 'idempotency-key': 'w6a-decide-1' }),
+            body: { decision: 'approve', grantedMinutes: 10 },
+          },
+        );
+        assert.equal(answered.status, 200, JSON.stringify(answered.body));
+        assert.equal(answered.body.request.state, 'active');
+        assert.equal(answered.body.request.grantedMinutes, 10);
+        assert.ok(answered.body.request.expiresAt, 'an approval always carries the minute it closes at');
+
+        const widened = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/web-filter/temp-allow-requests`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w6a-ask-3' },
+          body: { host: 'youtube.com', minutes: 15 },
+        });
+        assert.equal(widened.status, 201);
+        const widenedDecision = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/children/${childId}/web-filter/temp-allows/${widened.body.request.id}/decision`,
+          {
+            method: 'POST',
+            headers: authorized('test-primary', { 'idempotency-key': 'w6a-decide-widen' }),
+            body: { decision: 'approve', grantedMinutes: 60 },
+          },
+        );
+        assert.equal(widenedDecision.status, 409);
+        assert.equal(widenedDecision.body.error.code, 'web_filter_grant_exceeds_request');
+
+        // 9. While the door is open the host is allowed for that child - and the opening is
+        //    visible to the handset in the same read it uses for the policy.
+        const openNow = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/web-filter`, { headers: deviceAuth });
+        assert.deepEqual(openNow.body.policy.activeTempAllows, ['games.example.com']);
+        assert.equal(
+          (await jsonRequest(
+            baseUrl,
+            `/v1/families/${familyId}/children/${childId}/web-filter/evaluate?host=games.example.com`,
+            { headers: authorized('test-primary') },
+          )).body.allowed,
+          true,
+          'an open door is an allow, not a category denial',
+        );
+
+        // 10. And it closes with nobody writing anything: the row is moved into the past and
+        //     the very next read reports `expired`, because the state is computed from the
+        //     clock rather than stored.
+        await client.query('UPDATE family_web_filter_temp_allows SET expires_at = NOW() - INTERVAL \'1 minute\' WHERE id = $1', [requestId]);
+        const afterTheMinute = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/children/${childId}/web-filter/temp-allows`,
+          { headers: authorized('test-primary') },
+        );
+        assert.equal(afterTheMinute.status, 200);
+        const closed = afterTheMinute.body.requests.find((row) => row.id === requestId);
+        assert.equal(closed.status, 'approved', 'nothing rewrote the stored decision');
+        assert.equal(closed.state, 'expired', 'the clock is the only thing that had to move');
+        assert.deepEqual(afterTheMinute.body.activeHosts, []);
+        assert.equal(
+          (await jsonRequest(
+            baseUrl,
+            `/v1/families/${familyId}/children/${childId}/web-filter/evaluate?host=games.example.com`,
+            { headers: authorized('test-primary') },
+          )).body.denySource,
+          'category',
+          'once the door shuts, the category is what answers again',
+        );
+
+        // 11. An answered question cannot be answered again: a second answer would either
+        //     extend a door nobody re-asked for or refuse something already open.
+        const answeredTwice = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/children/${childId}/web-filter/temp-allows/${requestId}/decision`,
+          {
+            method: 'POST',
+            headers: authorized('test-primary', { 'idempotency-key': 'w6a-decide-again' }),
+            body: { decision: 'deny' },
+          },
+        );
+        assert.equal(answeredTwice.status, 409);
+        assert.equal(answeredTwice.body.error.code, 'web_filter_request_decided');
+
+        // 12. A guardian may ask on a child's behalf - a child who speaks rather than taps
+        //     still gets a record - and only a guardian may answer.
+        const onBehalf = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/children/${childId}/web-filter/temp-allows`,
+          {
+            method: 'POST',
+            headers: authorized('test-primary', { 'idempotency-key': 'w6a-ask-by-guardian' }),
+            body: { host: 'streaming.example.com', minutes: 20 },
+          },
+        );
+        assert.equal(onBehalf.status, 201, JSON.stringify(onBehalf.body));
+        const childCannotDecide = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/children/${childId}/web-filter/temp-allows/${onBehalf.body.request.id}/decision`,
+          {
+            method: 'POST',
+            headers: authorized('test-child', { 'idempotency-key': 'w6a-child-decides' }),
+            body: { decision: 'approve' },
+          },
+        );
+        assert.equal(childCannotDecide.status, 403, 'a child cannot open its own door');
+        assert.equal(childCannotDecide.body.error.code, 'web_filter_forbidden');
+
+        // 13. The handset testifies: a VPN is running. The family is told what was seen, and
+        //     told which device saw it.
+        const tamper = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/protection-reports`, {
+          method: 'POST',
+          headers: deviceAuth,
+          body: { observedState: 'vpn_active', signals: ['vpn_active', 'proxy_detected'], detail: 'VPN v2' },
+        });
+        assert.equal(tamper.status, 201, JSON.stringify(tamper.body));
+        assert.equal(tamper.body.health.state, 'at_risk');
+        assert.equal(tamper.body.health.reason, 'vpn_active');
+        assert.deepEqual(tamper.body.health.signals, ['vpn_active', 'proxy_detected']);
+
+        const protection = await jsonRequest(baseUrl, `/v1/families/${familyId}/protection`, {
+          headers: authorized('test-primary'),
+        });
+        assert.equal(protection.status, 200);
+        const deviceView = protection.body.devices.find((row) => row.deviceId === deviceId);
+        assert.equal(deviceView.state, 'at_risk');
+        assert.equal(protection.body.counts.at_risk, 1);
+        assert.equal(protection.body.counts.protected, 0);
+
+        // 14. The handset reports again, healthy. The state follows the newest evidence,
+        //     not the loudest older one.
+        const healed = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/protection-reports`, {
+          method: 'POST',
+          headers: deviceAuth,
+          body: { observedState: 'healthy', signals: [] },
+        });
+        assert.equal(healed.status, 201);
+        assert.equal(healed.body.health.state, 'protected');
+
+        // 15. The evidence is append-only: both reports are still there, so "when did this
+        //     start?" has an answer rather than only the newest row.
+        const history = await client.query(
+          `SELECT observed_state FROM family_device_protection_reports WHERE device_id = $1 ORDER BY reported_at ASC`,
+          [deviceId],
+        );
+        assert.deepEqual(history.rows.map((row) => row.observed_state), ['vpn_active', 'healthy']);
+
+        // 16. Now the reports stop. The newest one is pushed past the freshness window - not
+        //     deleted, not rewritten, just older - and the family is no longer told anything
+        //     is protected. Silence is not health: this is the assertion the whole wave
+        //     exists for.
+        await client.query(
+          `UPDATE family_device_protection_reports
+              SET reported_at = NOW() - INTERVAL '3 hours'
+            WHERE device_id = $1`,
+          [deviceId],
+        );
+        const silent = await jsonRequest(baseUrl, `/v1/families/${familyId}/protection`, {
+          headers: authorized('test-primary'),
+        });
+        assert.equal(silent.status, 200);
+        const silentView = silent.body.devices.find((row) => row.deviceId === deviceId);
+        assert.equal(silentView.state, 'unverified', 'a device that stopped speaking is not protected');
+        assert.equal(silentView.reason, 'stale_report');
+        assert.ok(silentView.ageMinutes >= 179, 'and the family can see how long the silence has lasted');
+        assert.equal(silent.body.counts.protected, 0);
+        assert.equal(silent.body.freshnessMinutes, 90);
+
+        // 17. A revoked credential testifies about nothing at all. The cut goes through the
+        //     real revocation path rather than a hand-written UPDATE, because migration 101
+        //     requires provenance - a reason code and a person - and writing the column
+        //     directly is exactly the shortcut that law exists to refuse.
+        await deviceRevocationFor(store)({
+          principal: { subject: 'test-primary' },
+          familyId,
+          childId,
+          deviceId,
+          reasonCode: 'stolen',
+          idempotencyKey: 'w6a-revoke-device',
+          requestHash: requestFingerprintFor('w6a-revoke-device'),
+          correlationId: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+        });
+        const revoked = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/protection-reports`, {
+          method: 'POST',
+          headers: deviceAuth,
+          body: { observedState: 'healthy', signals: [] },
+        });
+        assert.equal(revoked.status, 403);
+        assert.equal(revoked.body.error.code, 'device_credential_rejected');
+        const revokedRead = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/web-filter`, { headers: deviceAuth });
+        assert.equal(revokedRead.status, 403, 'a cut-off handset cannot even fetch the filter');
+
+        // 18. Everything the family did left a trail: the policy save, both reports, the
+        //     question and the answer, each queued for the family timeline.
+        const outbox = await client.query(
+          `SELECT event_type FROM outbox_events
+            WHERE aggregate_type = 'family' AND aggregate_id = $1`,
+          [familyId],
+        );
+        const events = new Set(outbox.rows.map((row) => row.event_type));
+        for (const eventType of [
+          'family.web_filter_policy_updated',
+          'family.web_filter_temp_allow_requested',
+          'family.web_filter_temp_allow_approved',
+          'family.device_protection_reported',
+        ]) {
+          assert.ok(events.has(eventType), `${eventType} must reach the announcement queue`);
+        }
+        const audit = await client.query(
+          `SELECT count(*)::int AS n FROM family_audit_events
+            WHERE family_id = $1 AND subject_type IN ('web_filter_policy', 'web_filter_temp_allow', 'device_protection')`,
+          [familyId],
+        );
+        assert.ok(audit.rows[0].n >= 6, 'every command left an audit row, including the refusals that were audited');
+
+        // 19. The schema refuses what the module refuses, from the other side: no approval
+        //     without an end, no denial with one - so a row that reads like an open door
+        //     cannot exist even if a future writer forgets.
+        await assert.rejects(
+          () => client.query(
+            `INSERT INTO family_web_filter_temp_allows
+               (id, family_id, child_id, host, status, requested_minutes, granted_minutes,
+                requested_by_membership_id, decided_by_membership_id, decided_at)
+             VALUES (gen_random_uuid(), $1, $2, 'no-end.example.com', 'approved', 30, 10, $3, $3, NOW())`,
+            [familyId, childId, household.primaryMembershipId],
+          ),
+          /approval_has_end/,
+        );
+        await assert.rejects(
+          () => client.query(
+            `INSERT INTO family_web_filter_temp_allows
+               (id, family_id, child_id, host, status, requested_minutes, granted_minutes, expires_at,
+                requested_by_membership_id, decided_by_membership_id, decided_at)
+             VALUES (gen_random_uuid(), $1, $2, 'denied-open.example.com', 'denied', 30, 10, NOW() + INTERVAL '10 minutes', $3, $3, NOW())`,
+            [familyId, childId, household.primaryMembershipId],
+          ),
+          /denial_opens_nothing/,
+        );
+        await assert.rejects(
+          () => client.query(
+            `INSERT INTO family_web_filter_policies (child_id, family_id, level, enabled_categories)
+             VALUES ($1, $2, 'balanced', ARRAY['crypto'])`,
+            [childId, familyId],
+          ),
+          /categories_known/,
+        );
       });
     } finally {
       await store.close();

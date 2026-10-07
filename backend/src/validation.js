@@ -967,3 +967,163 @@ export function deviceScreenTimeReportInput(value) {
   const request = body.request === undefined ? null : timeRequestInput(body.request);
   return { usage, apps, request };
 }
+
+// ── W6 WEB FILTER ──────────────────────────────────────────────────────────────────────
+//
+// The body rules for the filtering surface. Two of them are the whole wave in miniature:
+// a category key the server does not know is refused here rather than stored, because a
+// toggle that does nothing is worse than a toggle that errors; and a temporary-allow
+// request is bounded in the body as well as in the schema, so an absurd number never
+// reaches the database to be refused there.
+
+const MAX_FILTER_HOST_LENGTH = 253;
+const MAX_FILTER_LIST_ENTRIES = 200;
+const MAX_FILTER_KEYWORD_LENGTH = 64;
+const MAX_TEMP_ALLOW_MINUTES = 240;
+const MAX_TEMP_ALLOW_GRANT_MINUTES = 120;
+const WEB_FILTER_LEVELS = new Set(['strict', 'balanced', 'open']);
+const WEB_FILTER_OBSERVED_STATES = new Set([
+  'healthy',
+  'vpn_active',
+  'profile_removed',
+  'permission_revoked',
+  'dns_bypassed',
+  'device_admin_removed',
+  'unsupported',
+]);
+
+function hostList(value, field) {
+  if (!Array.isArray(value)) {
+    throw new HttpError(400, 'invalid_request', `${field} must be a list of hostnames.`);
+  }
+  if (value.length > MAX_FILTER_LIST_ENTRIES) {
+    throw new HttpError(400, 'invalid_request', `${field} must hold at most ${MAX_FILTER_LIST_ENTRIES} entries.`);
+  }
+  return value.map((entry, index) => {
+    if (typeof entry !== 'string') {
+      throw new HttpError(400, 'invalid_request', `${field}[${index}] must be a hostname.`);
+    }
+    const host = entry.trim().toLowerCase();
+    if (host.length > MAX_FILTER_HOST_LENGTH || /[\u0000-\u001F\u007F\s]/.test(host)) {
+      throw new HttpError(400, 'invalid_request', `${field}[${index}] is not a hostname.`);
+    }
+    return host;
+  });
+}
+
+function keywordList(value, field) {
+  if (!Array.isArray(value)) {
+    throw new HttpError(400, 'invalid_request', `${field} must be a list of keywords.`);
+  }
+  if (value.length > MAX_FILTER_LIST_ENTRIES) {
+    throw new HttpError(400, 'invalid_request', `${field} must hold at most ${MAX_FILTER_LIST_ENTRIES} entries.`);
+  }
+  return value.map((entry, index) => {
+    if (typeof entry !== 'string' || entry.trim() === '' || entry.trim().length > MAX_FILTER_KEYWORD_LENGTH) {
+      throw new HttpError(400, 'invalid_request', `${field}[${index}] is not a usable keyword.`);
+    }
+    return entry.trim().toLowerCase();
+  });
+}
+
+/**
+ * A partial statement of the family's filter policy. Every field optional for the same
+ * reason screen time's policy is: flipping one switch must not reset the other five.
+ */
+export function webFilterPolicyInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(
+    body,
+    new Set(['level', 'categories', 'allowHosts', 'blockHosts', 'dictionaryKeywords', 'expectedVersion']),
+  );
+  const change = {};
+  if (body.level !== undefined) {
+    if (typeof body.level !== 'string' || !WEB_FILTER_LEVELS.has(body.level.trim().toLowerCase())) {
+      throw new HttpError(400, 'invalid_request', 'level must be one of strict, balanced, open.');
+    }
+    change.level = body.level.trim().toLowerCase();
+  }
+  if (body.categories !== undefined) {
+    if (!Array.isArray(body.categories)) {
+      throw new HttpError(400, 'invalid_request', 'categories must be a list of category keys.');
+    }
+    change.categories = body.categories.map((entry, index) => {
+      if (typeof entry !== 'string' || entry.trim() === '') {
+        throw new HttpError(400, 'invalid_request', `categories[${index}] must be a category key.`);
+      }
+      return entry.trim().toLowerCase();
+    });
+  }
+  if (body.allowHosts !== undefined) change.allowHosts = hostList(body.allowHosts, 'allowHosts');
+  if (body.blockHosts !== undefined) change.blockHosts = hostList(body.blockHosts, 'blockHosts');
+  if (body.dictionaryKeywords !== undefined) {
+    change.dictionaryKeywords = keywordList(body.dictionaryKeywords, 'dictionaryKeywords');
+  }
+  // Zero is a real value here, not a sentinel: a policy that has never been saved has no
+  // version, and a screen that read `version: 0` must be able to send it back.
+  const expectedVersion = optionalWholeNumber(body.expectedVersion, 'expectedVersion', 0, 1000000);
+  return { change, expectedVersion };
+}
+
+/** A question from a handset or a guardian: one host, a bounded number of minutes. */
+export function tempAllowRequestInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['host', 'minutes', 'reason']));
+  const host = requiredText(body.host, 'host', { maxLength: MAX_FILTER_HOST_LENGTH }).toLowerCase();
+  const minutes = requiredWholeNumber(body.minutes, 'minutes', 1, MAX_TEMP_ALLOW_MINUTES);
+  const reason = body.reason === undefined ? '' : optionalText(body.reason, 'reason', 300);
+  return { host, minutes, reason: reason ?? '' };
+}
+
+/** The answer: approve (optionally for fewer minutes than asked) or deny. */
+export function tempAllowDecisionInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['decision', 'grantedMinutes']));
+  const decision = requiredText(body.decision, 'decision', { maxLength: 16 }).toLowerCase();
+  if (decision !== 'approve' && decision !== 'deny') {
+    throw new HttpError(400, 'invalid_request', 'decision must be approve or deny.');
+  }
+  const grantedMinutes = optionalWholeNumber(
+    body.grantedMinutes,
+    'grantedMinutes',
+    1,
+    MAX_TEMP_ALLOW_GRANT_MINUTES,
+  );
+  return { decision, grantedMinutes };
+}
+
+/** A handset's testimony about its own protection plane. */
+export function protectionReportInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['observedState', 'signals', 'detail', 'observedAt']));
+  const observedState = requiredText(body.observedState, 'observedState', { maxLength: 40 }).toLowerCase();
+  if (!WEB_FILTER_OBSERVED_STATES.has(observedState)) {
+    throw new HttpError(400, 'invalid_request', 'observedState is not a state this server knows.');
+  }
+  const rawSignals = body.signals === undefined ? [] : body.signals;
+  if (!Array.isArray(rawSignals) || rawSignals.length > 32) {
+    throw new HttpError(400, 'invalid_request', 'signals must hold at most 32 entries.');
+  }
+  const signals = rawSignals.map((entry, index) => {
+    if (typeof entry !== 'string' || entry.trim() === '' || entry.trim().length > 64) {
+      throw new HttpError(400, 'invalid_request', `signals[${index}] is not a usable signal.`);
+    }
+    return entry.trim().toLowerCase();
+  });
+  const detail = body.detail === undefined ? '' : (optionalText(body.detail, 'detail', 500) ?? '');
+  let observedAt = null;
+  if (body.observedAt !== undefined) {
+    const parsed = typeof body.observedAt === 'string' ? new Date(body.observedAt) : new Date(NaN);
+    if (Number.isNaN(parsed.getTime())) {
+      throw new HttpError(400, 'invalid_request', 'observedAt must be an ISO-8601 instant.');
+    }
+    observedAt = parsed;
+  }
+  return { observedState, signals, detail, observedAt };
+}
+
+/** The preview query a father uses to see what his child would get. */
+export function webFilterEvaluateQuery(value) {
+  const host = requiredText(value?.host, 'host', { maxLength: MAX_FILTER_HOST_LENGTH });
+  return { host };
+}

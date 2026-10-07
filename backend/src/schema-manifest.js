@@ -57,4 +57,8 @@ export const FOUNDATION_SCHEMA_MIGRATIONS = Object.freeze([
     name: '105_screen_time.sql',
     sha256: 'dc09b4b20804f3d5af37aa9c9742467a607e54c9729834071af74b0f4f72b625',
   }),
+  Object.freeze({
+    name: '106_web_filter.sql',
+    sha256: '7e5ddc587f8b2f34bbf6594e67e9440550d34c388f0ff8ec338d0646494573eb',
+  }),
 ]);
