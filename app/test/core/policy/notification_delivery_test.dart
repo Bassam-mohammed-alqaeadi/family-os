@@ -7,6 +7,8 @@ import 'package:family_os/core/policy/notification_prefs.dart';
 import 'package:family_os/core/policy/notification_prefs_repository.dart';
 import 'package:family_os/core/policy/notification_tier.dart';
 
+import '../../support/recording_sos_fire_service.dart';
+
 void main() {
   group('NotificationDelivery SET-010', () {
     final quietOn = NotificationPrefs(
@@ -90,7 +92,7 @@ void main() {
       );
     });
 
-    test('simulateSosAlert delivers to father and mother with quiet ON', () {
+    test('a critical alert delivers to father and mother with quiet ON', () {
       final motherQuiet = NotificationPrefs(
         memberId: 'mother',
         quietHoursEnabled: true,
@@ -327,7 +329,7 @@ void main() {
   });
 
   group('SET-021 no SOS mute mother/guardian', () {
-    test('simulateSosAlert delivers to mother OBSERVER', () {
+    test('a critical alert delivers to the mother at the OBSERVER level', () {
       final motherQuiet = NotificationPrefs(
         memberId: 'mother',
         quietHoursEnabled: true,
@@ -354,7 +356,7 @@ void main() {
       );
     });
 
-    test('simulateSosAlert delivers to mother at every level', () {
+    test('a critical alert delivers to the mother at every level', () {
       for (final level in MotherLevel.values) {
         final results = RecordingSosFireService.simulate(
           const ['mother'],
