@@ -330,7 +330,12 @@ void main() {
     await _pump(tester, authority: _authority(transport));
 
     expect(find.text('سؤال من الابن بانتظارك: 20 دقيقة'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('screen_time_server_request_approve')));
+    // The question card is the last card in a scrollable panel, and the test surface is
+    // shorter than a phone: without revealing it first, the tap lands below the fold.
+    final approve = find.byKey(const Key('screen_time_server_request_approve'));
+    await tester.ensureVisible(approve);
+    await tester.pumpAndSettle();
+    await tester.tap(approve);
     await tester.pumpAndSettle();
 
     expect(

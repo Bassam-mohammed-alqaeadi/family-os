@@ -251,12 +251,14 @@ void main() {
       );
       expect(accept, findsOneWidget, reason: 'the invitation must be acceptable');
 
-      // The roster is a scrollable, and the row's actions sit below the fold in the test
-      // viewport: `find` sees them (they are inside the cache extent) while a tap aimed at
-      // their off-screen centre lands on nothing. A person scrolls first; so does the test.
+      // The key sits on the action's row, which spans the full width; the thing a person
+      // taps is the button at its end. Tapping the row's centre presses the row instead -
+      // which is how this test used to pass without ever reaching the command.
       await tester.ensureVisible(accept);
       await tester.pumpAndSettle();
-      await tester.tap(accept);
+      await tester.tap(
+        find.descendant(of: accept, matching: find.byType(TextButton)),
+      );
       await tester.pumpAndSettle();
 
       expect(commands.accepted, ['member_invited_self']);
@@ -324,7 +326,9 @@ void main() {
       );
       await tester.ensureVisible(cancel);
       await tester.pumpAndSettle();
-      await tester.tap(cancel);
+      await tester.tap(
+        find.descendant(of: cancel, matching: find.byType(TextButton)),
+      );
       await tester.pumpAndSettle();
       expect(commands.revoked, ['member_pending']);
       expect(commands.lastReasonCode, 'invitation_withdrawn');
@@ -332,7 +336,9 @@ void main() {
       final remove = find.byKey(FamilyMembersKeys.removeMember('member_active'));
       await tester.ensureVisible(remove);
       await tester.pumpAndSettle();
-      await tester.tap(remove);
+      await tester.tap(
+        find.descendant(of: remove, matching: find.byType(TextButton)),
+      );
       await tester.pumpAndSettle();
       expect(commands.revoked, ['member_pending', 'member_active']);
       expect(
@@ -387,7 +393,9 @@ void main() {
     );
     await tester.ensureVisible(cancel);
     await tester.pumpAndSettle();
-    await tester.tap(cancel);
+    await tester.tap(
+      find.descendant(of: cancel, matching: find.byType(TextButton)),
+    );
     await tester.pumpAndSettle();
 
     expect(commands.revoked, ['member_pending']);
