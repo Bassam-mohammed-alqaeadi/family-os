@@ -1077,76 +1077,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get childScreenTimeEnd => 'النهاية';
 
   @override
-  @override
-  String get screenTimeServerNoSession => 'لا توجد جلسة خادم في هذا البناء — لا نعرض أرقامًا لا نفرضها.';
-
-  @override
-  String get screenTimeServerUnreachable => 'لم يستجب الخادم — ما تراه آخر جواب صحيح، ولم يتغيّر شيء.';
-
-  @override
-  String get screenTimeServerUnreachableNoData => 'لم يستجب الخادم، ولا يوجد جواب سابق نعرضه.';
-
-  @override
-  String get screenTimeServerDenied => 'هذا الحساب لا يملك قراءة وقت شاشة هذا الابن.';
-
-  @override
-  String get screenTimeServerRefused => 'رفض الخادم الطلب — لم يتغيّر شيء.';
-
-  @override
-  String get screenTimeServerCap => 'الحد اليومي (دقائق، ٠ = بلا حد)';
-
-  @override
-  String get screenTimeServerBedtime => 'وقت النوم';
-
-  @override
-  String get screenTimeServerSchoolMode => 'وضع المدرسة';
-
-  @override
-  String get screenTimeServerSave => 'احفظ على الخادم';
-
-  @override
-  String get screenTimeServerSaved => 'حُفظ على الخادم';
-
-  @override
-  String get screenTimeServerLockNow => 'أوقف الشاشة الآن';
-
-  @override
-  String get screenTimeServerUnlock => 'أعد التشغيل';
-
-  @override
-  String get screenTimeServerStateFree => 'الشاشة متاحة';
-
-  @override
-  String get screenTimeServerStateLimited => 'الشاشة متاحة ضمن الحد';
-
-  @override
-  String get screenTimeServerStateBedtime => 'حان وقت النوم';
-
-  @override
-  String get screenTimeServerStateSchool => 'وقت المدرسة الآن';
-
-  @override
-  String get screenTimeServerStateLimit => 'انتهى وقت اليوم';
-
-  @override
-  String get screenTimeServerStateLock => 'الشاشة موقوفة بقرار ولي أمر';
-
-  @override
-  String screenTimeServerTodayMinutes(int minutes) {
-    return 'دقائق اليوم المحتسبة: $minutes';
-  }
-
-  @override
-  String screenTimeServerOpenRequest(int minutes) {
-    return 'سؤال من الابن بانتظارك: $minutes دقيقة';
-  }
-
-  @override
-  String get screenTimeServerApprove => 'موافقة';
-
-  @override
-  String get screenTimeServerDeny => 'رفض';
-
   String get childScreenTimeSave => 'حفظ الجداول';
 
   @override
@@ -12233,4 +12163,78 @@ class AppLocalizationsAr extends AppLocalizations {
   ) {
     return '$name، $age، $device';
   }
+
+  @override
+  String get screenTimeServerNoSession =>
+      'لا توجد جلسة خادم في هذا البناء — لا نعرض أرقامًا لا نفرضها.';
+
+  @override
+  String get screenTimeServerUnreachable =>
+      'لم يستجب الخادم — ما تراه آخر جواب صحيح، ولم يتغيّر شيء.';
+
+  @override
+  String get screenTimeServerUnreachableNoData =>
+      'لم يستجب الخادم، ولا يوجد جواب سابق نعرضه.';
+
+  @override
+  String get screenTimeServerDenied =>
+      'هذا الحساب لا يملك قراءة وقت شاشة هذا الابن.';
+
+  @override
+  String get screenTimeServerRefused => 'رفض الخادم الطلب — لم يتغيّر شيء.';
+
+  @override
+  String get screenTimeServerCap => 'الحد اليومي (دقائق، ٠ = بلا حد)';
+
+  @override
+  String get screenTimeServerBedtime => 'وقت النوم';
+
+  @override
+  String get screenTimeServerSchoolMode => 'وضع المدرسة';
+
+  @override
+  String get screenTimeServerSave => 'احفظ على الخادم';
+
+  @override
+  String get screenTimeServerSaved => 'حُفظ على الخادم';
+
+  @override
+  String get screenTimeServerLockNow => 'أوقف الشاشة الآن';
+
+  @override
+  String get screenTimeServerUnlock => 'أعد التشغيل';
+
+  @override
+  String get screenTimeServerStateFree => 'الشاشة متاحة';
+
+  @override
+  String get screenTimeServerStateLimited => 'الشاشة متاحة ضمن الحد';
+
+  @override
+  String get screenTimeServerStateBedtime => 'حان وقت النوم';
+
+  @override
+  String get screenTimeServerStateSchool => 'وقت المدرسة الآن';
+
+  @override
+  String get screenTimeServerStateLimit => 'انتهى وقت اليوم';
+
+  @override
+  String get screenTimeServerStateLock => 'الشاشة موقوفة بقرار ولي أمر';
+
+  @override
+  String screenTimeServerTodayMinutes(int minutes) {
+    return 'دقائق اليوم المحتسبة: $minutes';
+  }
+
+  @override
+  String screenTimeServerOpenRequest(int minutes) {
+    return 'سؤال من الابن بانتظارك: $minutes دقيقة';
+  }
+
+  @override
+  String get screenTimeServerApprove => 'موافقة';
+
+  @override
+  String get screenTimeServerDeny => 'رفض';
 }

@@ -117,134 +117,29 @@ jobs:
               ])
               for name, detail in failures:
                   lines.append(f"| `{markdown_cell(name)}` | {markdown_cell(detail)} |")
-              for start in range(0, len(failures), 5):
-                  end = min(start + 5, len(failures))
-                  annotation = " | ".join(
-                      f"{index}. {name}: {detail}"
-                      for index, (name, detail) in enumerate(
-                          failures[start:end],
-                          start + 1,
-                      )
-                  )
-                  print(
-                      f"::error title=Flutter test failures {start + 1}-{end}::"
-                      f"{annotation}"
-                  )
-          else:
-              lines.append(
-                  "❌ `flutter test` failed, but no structured failure report was produced. "
-                  "Inspect the Run tests log."
-              )
-          summary_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-
-          # Surface each failure through the workflow command channel as well. The step
-          # summary lives in the UI, and the log file sits behind a signed link, so a
-          # failure that is only in those two places cannot be read by an agent that
-          # needs to fix it. An annotation is retrievable through the checks API, which
-          # is how the next commit learns what actually broke instead of guessing.
-          for failure in failures:
-              message = failure if isinstance(failure, str) else str(failure)
-              print(f"::error title=Flutter test failed::{message[:900]}")
-          for name, error in errors.items():
-              print(f"::error title=Flutter test error::{name}: {str(error)[:800]}")
-
-          # The exception text itself, which the JSON reporter does not carry. Flutter
-          # wraps the matcher description over several lines, so a block runs from
-          # "Expected:" until the next line that starts in column zero - collecting one
-          # line per match is how the key name in "Found 0 widgets with key [<...>]" ended
-          # up missing from the previous run's annotation.
-          console = Path("build/ci/flutter-test.log")
-          # Only on a real failure. Annotations that fire on green runs train everyone to
-          # ignore them, which is how a real failure gets missed.
-          if console.exists() and failures:
-              raw = console.read_text(encoding="utf-8", errors="replace").splitlines()
-              blocks = []
-              current = None
-              for line in raw:
-                  if line.startswith("Expected:") or line.strip().startswith("Expected:"):
-                      if current:
-                          blocks.append(" ".join(current))
-                      current = [line.strip()]
-                      continue
-                  if current is not None:
-                      if line.strip() == "":
-                          blocks.append(" ".join(current))
-                          current = None
-                          continue
-                      # A stack frame or a new section ends the block.
-                      if line.startswith("#") or line.startswith("package:") or line.startswith("test/"):
-                          blocks.append(" ".join(current))
-                          current = None
-                          continue
-                      current.append(line.strip())
-              if current:
-                  blocks.append(" ".join(current))
-              for block in blocks[:12]:
-                  print(f"::error title=Flutter expectation::{block[:1100]}")
-
-              # A tail as well: if the structured pass misses a shape the reporter uses,
-              # the console still says why it failed. Escaped to one line, because a
-              # workflow command cannot carry a raw newline.
-              tail = " \u23ce ".join(
-                  line.rstrip() for line in raw[-400:] if line.strip()
-              )
-              # Annotations are truncated, and the reason a widget test failed is exactly
-              # what the next reader needs, so the tail leaves in numbered chunks instead
-              # of one clipped line.
-              escaped = tail.replace("%", "%25").replace("\r", "").replace("\n", "%0A")
-              size = 3000
-              pieces = [escaped[i : i + size] for i in range(0, len(escaped), size)]
-              for index, piece in enumerate(pieces[:8], start=1):
-                  print(
-                      f"::error title=Flutter console tail {index}/{len(pieces)}::{piece}"
-                  )
-          else:
-              # Say it out loud rather than silently reporting less: a diagnostic path that
-              # fails quietly is how this step spent a night reporting nothing.
-              build = Path("build/ci")
-              listing = (
-                  ", ".join(f"{p.name}:{p.stat().st_size}" for p in sorted(build.glob("*")))
-                  if build.exists()
-                  else "build/ci does not exist"
-              )
-              print(
-                  "::warning title=Test console log missing::"
-                  f"console={console.exists()} failures={len(failures)} {listing}"
-              )
-
-          # The reporter's own events are the last word on what each failure carried: the
-          # matcher text and the exception line both live here, and they are readable from
-          # the annotations API even when the console log is not on disk.
-          raw_events = []
-          shapes = {}
-          if report.exists():
-              for raw in report.read_text(encoding="utf-8", errors="replace").splitlines():
-                  try:
-                      event = json.loads(raw)
-                  except json.JSONDecodeError:
-                      continue
-                  shapes[event.get("type", "?")] = shapes.get(event.get("type", "?"), 0) + 1
-                  event.pop("stackTrace", None)
-                  if event.get("type") == "error" or (
-                      event.get("type") == "testDone"
-                      and event.get("result") not in ("success", "skipped")
-                  ):
-                      raw_events.append(event)
-                  if event.get("type") == "print":
-                      message = str(event.get("message", ""))
-                      if any(
-                          token in message
-                          for token in ("Expected:", "Which:", "Exception", "Error", "════")
-                      ):
-                          raw_events.append(event)
-          print(f"::warning title=Test report shapes::{json.dumps(shapes)}")
-          dump = json.dumps(raw_events, ensure_ascii=False)
-          dump = dump.replace("%", "%25").replace("\n", "%0A").replace("\r", "")
+          # One budgeted block: every failing test's full message, in order, chunked so
+          # the annotations API does not clip it. The per-failure summary lines and the
+          # console tail used to compete for the same per-step annotation budget and the
+          # useful ones lost - so they are gone. Each entry below carries the name, the
+          # matcher text and the exception line, which is everything a fix needs.
+          error_text_by_name = {}
+          for test_id, messages in errors.items():
+              error_text_by_name[names.get(test_id, test_id)] = " ".join(messages)
+          detail_lines = []
+          for index, (name, detail) in enumerate(failures, start=1):
+              detail_lines.append(f"#{index} {name}")
+              detail_lines.append(error_text_by_name.get(name) or detail)
+              detail_lines.append("")
+          text = "\n".join(detail_lines)
+          escaped = text.replace("%", "%25").replace("\r", "").replace("\n", "%0A")
           size = 2800
-          pieces = [dump[i : i + size] for i in range(0, len(dump), size)]
-          print(f"::warning title=Test report events::{len(pieces)} chunk(s)")
-          for index, piece in enumerate(pieces[:10], start=1):
-              print(f"::error title=Raw test events {index}/{len(pieces)}::{piece}")
+          pieces = [escaped[i : i + size] for i in range(0, len(escaped), size)]
+          print(
+              f"::warning title=Flutter test result::{len(failures)} failing test(s); "
+              f"{len(pieces)} detail chunk(s)"
+          )
+          for index, piece in enumerate(pieces[:8], start=1):
+              print(f"::error title=Failure detail {index}/{len(pieces)}::{piece}")
           PY
       - name: Upload Flutter test report
         if: always()

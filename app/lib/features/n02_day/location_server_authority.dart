@@ -175,9 +175,15 @@ final class ServerSafeZonesRepository implements SafeZonesRepository {
       authority.updateAlerts(zoneId, alertEnter: enabled, alertExit: enabled);
 
   @override
-  Future<void> add(SafeZone zone) {
+  Future<void> add(SafeZone zone) async {
     // The list DTO carries no geometry, and a boundary without a shape is not a boundary.
     // Creation goes through [LocationServerZoneWriter] with a [SafeZoneDraft] instead.
+    //
+    // `async` is load-bearing: this method is declared to return a Future, and a Future
+    // that throws before it exists is not a Future - a caller writing
+    // `expectLater(repo.add(zone), throwsA(...))` or `repo.add(zone).catchError(...)`
+    // gets an exception where it was promised a handle. The refusal is the same; only the
+    // moment it arrives is honest now.
     throw UnsupportedError(
       'A zone needs its geometry to reach the server; use the create screen.',
     );
