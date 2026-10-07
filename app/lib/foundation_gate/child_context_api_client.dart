@@ -177,7 +177,7 @@ final class ChildContextApiClient {
           observedAt != permissionObservedAt ||
           expiresAt.difference(observedAt) != const Duration(minutes: 5) ||
           observedAt.isAfter(
-            _clock().toUtc().add(const Duration(seconds: 30)),
+            _clock().toUtc().add(const Duration(minutes: 30)),
           ) ||
           !_clock().toUtc().isBefore(expiresAt) ||
           (deviceState == FamilyChildDeviceSetupState.notLinked &&
