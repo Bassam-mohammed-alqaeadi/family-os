@@ -12461,7 +12461,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get webFilterServerQuestionPending => 'Waiting for a parent to decide.';
+  String get webFilterServerQuestionPending =>
+      'Waiting for a parent to decide.';
 
   @override
   String get webFilterServerQuestionOpen =>
