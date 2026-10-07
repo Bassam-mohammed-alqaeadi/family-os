@@ -1433,3 +1433,479 @@ test('a zone is drawn, a device reports, and the boundary crossing becomes a rec
     }
   });
 });
+
+/**
+ * The emergency journey (W4) — and the four things this test would rather fail on than
+ * discover later.
+ *
+ *   1. The child sees exactly what the guardians see. Selective visibility on an incident
+ *      is how a safety product becomes a surveillance product, so the read is compared
+ *      row for row rather than described.
+ *   2. Nothing claims a delivery nobody made. There is no push transport and no SMS
+ *      transport in this repository, so a delivery row may only be `recorded` or
+ *      `not_configured`, and the database itself refuses `delivered`. That refusal is
+ *      asserted by trying to write one.
+ *   3. Escalation climbs only verified rungs, and says how many it skipped. An unverified
+ *      number must not ring, and the family must not be told it did.
+ *   4. An incident's measurement outlives the retention window. A press that points at a
+ *      sample would otherwise be an alarm nobody can check afterwards.
+ *
+ * Identity is the only stubbed part (`TestAuthVerifier`); every other step goes through
+ * the real HTTP surface against real PostgreSQL.
+ */
+test('a child presses the button, the family answers it, and nothing claims a delivery nobody made', { skip }, async () => {
+  await withFreshDatabase(async (client) => {
+    await migrate(client);
+    const store = new PostgresFoundationStore({
+      connectionString: withDatabase(DATABASE_URL, client.database),
+    });
+    const app = createApp({
+      store,
+      authVerifier: new TestAuthVerifier(),
+      readiness: () => ({ ready: true, missing: [] }),
+    });
+    try {
+      await withServer(app, async (baseUrl) => {
+        // 1. A family with two guardians and one child, and the child's OWN account -
+        //    invited and accepted through the real endpoints, because a membership inserted
+        //    by hand would not prove the child can reach this surface at all.
+        const created = await jsonRequest(baseUrl, '/v1/families', {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w4-family' }),
+          body: { displayName: 'عائلة الطوارئ' },
+        });
+        assert.equal(created.status, 201);
+        const familyId = created.body.family.id;
+
+        const coGuardianInvite = await jsonRequest(baseUrl, `/v1/families/${familyId}/memberships`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w4-invite-co' }),
+          body: { role: 'co_guardian', targetSubject: 'test-co' },
+        });
+        assert.equal(coGuardianInvite.status, 201);
+        const coGuardianAccepted = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/memberships/${coGuardianInvite.body.membership.id}/accept`,
+          { method: 'POST', headers: authorized('test-co', { 'idempotency-key': 'w4-accept-co' }) },
+        );
+        assert.equal(coGuardianAccepted.status, 200);
+
+        const children = await jsonRequest(baseUrl, `/v1/families/${familyId}/children`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w4-child' }),
+          body: { displayName: 'أماني', ageYears: 9, avatarEmoji: '🦁', themeColor: 'sky' },
+        });
+        assert.equal(children.status, 201);
+        const childId = children.body.child.id;
+
+        const invite = await jsonRequest(baseUrl, `/v1/families/${familyId}/memberships`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w4-invite-child' }),
+          body: { role: 'child', targetSubject: 'test-child' },
+        });
+        assert.equal(invite.status, 201);
+        const accepted = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/memberships/${invite.body.membership.id}/accept`,
+          { method: 'POST', headers: authorized('test-child', { 'idempotency-key': 'w4-accept-child' }) },
+        );
+        assert.equal(accepted.status, 200);
+
+        const deviceCredential = 'w4-device-credential-value-000000000001';
+        const device = await client.query(
+          `INSERT INTO family_child_devices
+             (id, family_id, child_id, device_label, credential_hash, credential_issued_at)
+           VALUES (gen_random_uuid(), $1, $2, 'Amani Android', $3, NOW())
+           RETURNING id`,
+          [familyId, childId, createHash('sha256').update(deviceCredential).digest('hex')],
+        );
+        const deviceId = device.rows[0].id;
+        const deviceAuth = { authorization: `Device ${deviceCredential}` };
+
+        const now = Date.now();
+        const day = 24 * 60 * 60 * 1000;
+        const at = (offsetMs) => new Date(now + offsetMs).toISOString();
+        const reportFix = (fixId, recordedAt, body = {}) =>
+          jsonRequest(baseUrl, `/v1/devices/${deviceId}/location-fixes`, {
+            method: 'POST',
+            headers: { ...deviceAuth, 'idempotency-key': `w4-fix-${fixId.slice(0, 8)}` },
+            body: {
+              fixId,
+              acquisition: 'located',
+              latitude: 15.3694,
+              longitude: 44.191,
+              accuracyMeters: 12,
+              recordedAt,
+              ...body,
+            },
+          });
+
+        // 2. The sample the press will point at. It is reported while it is still fresh -
+        //    a sample older than the window is pruned inside the very write that stores it,
+        //    which is the correct behaviour and useless for this test - and then AGED by
+        //    the test, because observing a thirty-day window must not mean waiting thirty
+        //    days. Everything after this point is the real surface.
+        const evidenceFixId = 'a1a1a1a1-1111-4111-8111-111111111111';
+        const evidence = await reportFix(evidenceFixId, at(-60 * 1000));
+        assert.equal(evidence.status, 201);
+        assert.equal(evidence.body.fix.id, evidenceFixId);
+        await client.query(
+          `UPDATE family_child_location_fixes
+              SET recorded_at = NOW() - INTERVAL '40 days'
+            WHERE id = $1`,
+          [evidenceFixId],
+        );
+
+        // 3. The button. The handset proves itself with its credential and states the
+        //    picture it had at that moment: a real position, with the accuracy it came with.
+        const press = {
+          locationClass: 'ready',
+          latitude: 15.3701,
+          longitude: 44.1912,
+          accuracyMeters: 9,
+          connectionClass: 'degraded',
+          batteryPercent: 63,
+          placeLabel: 'قرب حديقة الحي',
+          panicQuiet: false,
+          fixId: evidenceFixId,
+          pressedAt: at(-2 * 60 * 1000),
+        };
+        const raised = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/sos-alerts`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w4-sos-1' },
+          body: press,
+        });
+        assert.equal(raised.status, 201);
+        const alertId = raised.body.alert.id;
+        assert.equal(raised.body.alert.raisedByKind, 'child_device');
+        assert.equal(raised.body.alert.status, 'active');
+        assert.equal(raised.body.alert.open, true);
+        assert.equal(raised.body.alert.picture.latitude, press.latitude);
+        assert.equal(raised.body.alert.picture.accuracyMeters, 9);
+        assert.equal(raised.body.alert.picture.fixId, evidenceFixId);
+        assert.equal(raised.body.alert.picture.connectionClass, 'degraded');
+
+        // The first rung is the family's guardians, derived from the roster. Both of them,
+        // on both channels - and the push rows say plainly that this build cannot send one.
+        const firstDeliveries = raised.body.alert.deliveries;
+        assert.equal(firstDeliveries.length, 4, 'two guardians, an in-app row and a push row each');
+        assert.deepEqual(
+          [...new Set(firstDeliveries.map((row) => row.channel))].sort(),
+          ['in_app', 'push'],
+        );
+        for (const row of firstDeliveries) {
+          assert.equal(row.recipientKind, 'guardian');
+          assert.notEqual(row.recipientMembershipId, null);
+          if (row.channel === 'in_app') {
+            assert.equal(row.deliveryState, 'recorded');
+            assert.equal(row.reasonCode, null);
+          } else {
+            assert.equal(row.deliveryState, 'not_configured');
+            assert.equal(row.reasonCode, 'push_transport_absent');
+          }
+        }
+        // Nobody who answers a button press is the child who pressed it: rung 1 is the
+        // people responsible for coming, not a copy of the alarm back to the alarm.
+        assert.equal(
+          new Set(firstDeliveries.map((row) => row.recipientMembershipId)).size,
+          2,
+          'the two guardians are the recipients',
+        );
+
+        // 4. The same press under the same key is the same incident, and a second press
+        //    under a fresh key is refused with the incident that already exists - the
+        //    family's attention is not split across two screens.
+        const replayed = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/sos-alerts`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w4-sos-1' },
+          body: press,
+        });
+        assert.equal(replayed.status, 201);
+        assert.equal(replayed.body.alert.id, alertId);
+
+        const secondPress = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/sos-alerts`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w4-sos-2' },
+          body: press,
+        });
+        assert.equal(secondPress.status, 409);
+        assert.equal(secondPress.body.error.code, 'sos_alert_already_open');
+        assert.equal(secondPress.body.error.details.alertId, alertId);
+
+        // 5. The child reads it. Row for row, the same incident a parent reads: this is the
+        //    promise, and it is the assertion that will fail if selective visibility is ever
+        //    added to the other read.
+        const guardianRead = await jsonRequest(baseUrl, `/v1/families/${familyId}/sos-alerts`, {
+          headers: authorized('test-primary'),
+        });
+        assert.equal(guardianRead.status, 200);
+        const childRead = await jsonRequest(baseUrl, `/v1/families/${familyId}/sos-alerts`, {
+          headers: authorized('test-child'),
+        });
+        assert.equal(childRead.status, 200);
+        assert.deepEqual(childRead.body.alerts, guardianRead.body.alerts);
+
+        // The child cannot acknowledge their own incident, and the refusal is a fact of the
+        // schema: nothing links a child row to a membership row, so the server cannot prove
+        // the incident is that account's. The handset can close it, and only as a false alarm.
+        const childAck = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/sos-alerts/${alertId}/acknowledge`,
+          {
+            method: 'POST',
+            headers: authorized('test-child', { 'idempotency-key': 'w4-child-ack' }),
+          },
+        );
+        assert.equal(childAck.status, 403);
+        assert.equal(childAck.body.error.code, 'sos_acknowledge_forbidden');
+
+        // 6. "I have seen this" is not "this is over". A parent acknowledges, and the second
+        //    parent's acknowledgement reports the incident rather than creating anything.
+        const acknowledged = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/sos-alerts/${alertId}/acknowledge`,
+          {
+            method: 'POST',
+            headers: authorized('test-co', { 'idempotency-key': 'w4-ack-1' }),
+          },
+        );
+        assert.equal(acknowledged.status, 200);
+        assert.equal(acknowledged.body.alert.status, 'acknowledged');
+        assert.notEqual(acknowledged.body.alert.acknowledgedAt, null);
+        const acknowledgedVersion = acknowledged.body.alert.version;
+
+        const secondAck = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/sos-alerts/${alertId}/acknowledge`,
+          {
+            method: 'POST',
+            headers: authorized('test-primary', { 'idempotency-key': 'w4-ack-2' }),
+          },
+        );
+        assert.equal(secondAck.status, 200);
+        assert.equal(secondAck.body.replayed, true);
+        assert.equal(secondAck.body.alert.version, acknowledgedVersion);
+
+        // 7. The ladder. Two contacts are added - and a new rung is created `unverified`
+        //    whatever the caller sends - then one of them is verified in a separate act.
+        const added = await jsonRequest(baseUrl, `/v1/families/${familyId}/sos-backup-contacts`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w4-ladder-1' }),
+          body: { name: 'العم سالم', relation: 'عم', phoneE164: '+967771111111' },
+        });
+        assert.equal(added.status, 201);
+        assert.equal(added.body.contact.verification, 'unverified');
+
+        const second = await jsonRequest(baseUrl, `/v1/families/${familyId}/sos-backup-contacts`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w4-ladder-2' }),
+          body: { name: 'الجار أحمد', relation: 'جار', phoneE164: '+967772222222', priority: 2 },
+        });
+        assert.equal(second.status, 201);
+        const verifiedContactId = second.body.contact.id;
+        const verified = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/sos-backup-contacts/${verifiedContactId}`,
+          {
+            method: 'PATCH',
+            headers: authorized('test-primary', { 'idempotency-key': 'w4-ladder-verify' }),
+            body: { verification: 'verified' },
+          },
+        );
+        assert.equal(verified.status, 200);
+        assert.equal(verified.body.contact.verification, 'verified');
+
+        // Escalating climbs the verified rung only, and says how many it skipped.
+        const escalated = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/sos-alerts/${alertId}/escalate`,
+          {
+            method: 'POST',
+            headers: authorized('test-primary', { 'idempotency-key': 'w4-escalate-1' }),
+          },
+        );
+        assert.equal(escalated.status, 200);
+        assert.equal(escalated.body.alert.status, 'escalating');
+        assert.deepEqual(escalated.body.escalation, { eligibleContacts: 1, skippedUnverified: 1 });
+        const escalatedTo = escalated.body.alert.deliveries.filter(
+          (row) => row.recipientKind === 'backup',
+        );
+        assert.equal(escalatedTo.length, 1, 'only the verified contact is reached');
+        assert.equal(escalatedTo[0].recipientContactId, verifiedContactId);
+        assert.equal(escalatedTo[0].channel, 'sms');
+        assert.equal(escalatedTo[0].deliveryState, 'not_configured');
+        assert.equal(escalatedTo[0].reasonCode, 'sms_transport_absent');
+        assert.equal(
+          escalated.body.alert.deliveries.some((row) => row.deliveryState === 'delivered'),
+          false,
+        );
+
+        // Escalating twice adds nothing: the second answer reports what the first did.
+        const escalatedAgain = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/sos-alerts/${alertId}/escalate`,
+          {
+            method: 'POST',
+            headers: authorized('test-primary', { 'idempotency-key': 'w4-escalate-2' }),
+          },
+        );
+        assert.equal(escalatedAgain.status, 200);
+        assert.equal(escalatedAgain.body.replayed, true);
+        assert.equal(escalatedAgain.body.alert.deliveries.length, firstDeliveries.length + 1);
+
+        // 8. Closing it. A guardian states why; the incident reports the reason and is no
+        //    longer open.
+        const resolved = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/sos-alerts/${alertId}/resolve`,
+          {
+            method: 'POST',
+            headers: authorized('test-primary', { 'idempotency-key': 'w4-resolve-1' }),
+            body: { terminalReason: 'helped' },
+          },
+        );
+        assert.equal(resolved.status, 200);
+        assert.equal(resolved.body.alert.status, 'resolved');
+        assert.equal(resolved.body.alert.terminalReason, 'helped');
+        assert.equal(resolved.body.alert.open, false);
+        assert.notEqual(resolved.body.alert.resolvedAt, null);
+
+        const openAfter = await jsonRequest(baseUrl, `/v1/families/${familyId}/sos-alerts`, {
+          headers: authorized('test-primary'),
+        });
+        assert.equal(openAfter.status, 200);
+        assert.deepEqual(openAfter.body.alerts, []);
+
+        const allAfter = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/sos-alerts?status=all`,
+          { headers: authorized('test-primary') },
+        );
+        assert.equal(allAfter.body.alerts.length, 1);
+
+        // 9. The handset closes its own incident, and only as a false alarm - which is the
+        //    one act a child is allowed to take on their own alarm.
+        const pressedAgain = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/sos-alerts`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w4-sos-3' },
+          body: { ...press, locationClass: 'acquiring', latitude: undefined, longitude: undefined, accuracyMeters: undefined, fixId: undefined },
+        });
+        assert.equal(pressedAgain.status, 201);
+        const falseAlarmId = pressedAgain.body.alert.id;
+        assert.equal(pressedAgain.body.alert.picture.latitude, null);
+        assert.equal(pressedAgain.body.alert.picture.locationClass, 'acquiring');
+
+        const helpedFromHandset = await jsonRequest(
+          baseUrl,
+          `/v1/devices/${deviceId}/sos-alerts/${falseAlarmId}/resolve`,
+          {
+            method: 'POST',
+            headers: deviceAuth,
+            body: { terminalReason: 'helped' },
+          },
+        );
+        assert.equal(helpedFromHandset.status, 400);
+
+        const cancelled = await jsonRequest(
+          baseUrl,
+          `/v1/devices/${deviceId}/sos-alerts/${falseAlarmId}/resolve`,
+          {
+            method: 'POST',
+            headers: deviceAuth,
+            body: { terminalReason: 'false_alarm' },
+          },
+        );
+        assert.equal(cancelled.status, 200);
+        assert.equal(cancelled.body.alert.status, 'resolved');
+        assert.equal(cancelled.body.alert.terminalReason, 'false_alarm');
+
+        // 10. A dishonest press is refused where it is written down: a place with no stated
+        //     accuracy, and a place that claims a position while calling itself absent.
+        const thirdPress = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/sos-alerts`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w4-sos-4' },
+          body: { locationClass: 'ready', latitude: 15.37, longitude: 44.19, connectionClass: 'online' },
+        });
+        assert.equal(thirdPress.status, 400);
+        const fourthPress = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/sos-alerts`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w4-sos-5' },
+          body: {
+            locationClass: 'unavailable',
+            latitude: 15.37,
+            longitude: 44.19,
+            connectionClass: 'offline',
+          },
+        });
+        assert.equal(fourthPress.status, 400);
+
+        // 11. The evidence survives the retention window. A new old sample arrives, the
+        //     prune runs inside that same write, and the sample the incident points at is
+        //     the one thing it does not delete.
+        const secondOldFixId = 'b2b2b2b2-2222-4222-8222-222222222222';
+        const pruned = await reportFix(secondOldFixId, at(-41 * day));
+        assert.equal(pruned.status, 201);
+        assert.equal(pruned.body.reason, 'stored_out_of_order');
+        assert.equal(pruned.body.pruned, 1, 'the unreferenced old sample is deleted');
+        const survivors = await client.query(
+          `SELECT id FROM family_child_location_fixes WHERE family_id = $1`,
+          [familyId],
+        );
+        assert.deepEqual(
+          survivors.rows.map((row) => row.id),
+          [evidenceFixId],
+          'the sample an incident points at must outlive the retention window',
+        );
+
+        // 12. The audit trail and the announcement queue agree with the story, and the
+        //     deliveries table contains only the two states this platform can prove.
+        const audit = await client.query(
+          `SELECT event_type FROM family_audit_events
+            WHERE subject_type = 'sos_alert' AND subject_id = $1
+            ORDER BY occurred_at ASC`,
+          [alertId],
+        );
+        assert.deepEqual(audit.rows.map((row) => row.event_type), [
+          'family.sos_alert_raised',
+          'family.sos_alert_acknowledged',
+          'family.sos_alert_escalated',
+          'family.sos_alert_resolved',
+        ]);
+        const outbox = await client.query(
+          `SELECT event_type FROM outbox_events WHERE aggregate_id = $1 ORDER BY event_type`,
+          [familyId],
+        );
+        for (const eventType of [
+          'family.sos_alert_raised',
+          'family.sos_alert_acknowledged',
+          'family.sos_alert_escalated',
+          'family.sos_alert_resolved',
+        ]) {
+          assert.ok(
+            outbox.rows.some((row) => row.event_type === eventType),
+            `${eventType} must reach the announcement queue`,
+          );
+        }
+
+        const states = await client.query(
+          `SELECT DISTINCT delivery_state FROM family_sos_alert_deliveries`,
+        );
+        assert.deepEqual(
+          states.rows.map((row) => row.delivery_state).sort(),
+          ['not_configured', 'recorded'],
+        );
+        await assert.rejects(
+          () =>
+            client.query(
+              `UPDATE family_sos_alert_deliveries SET delivery_state = 'delivered' WHERE alert_id = $1`,
+              [alertId],
+            ),
+          /violates check constraint/i,
+          'the database must refuse a delivery state this platform cannot prove',
+        );
+      });
+    } finally {
+      await store.close();
+    }
+  });
+});

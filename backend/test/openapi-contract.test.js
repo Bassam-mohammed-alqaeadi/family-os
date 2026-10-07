@@ -151,13 +151,16 @@ test('every protected operation declares OIDC security, rate limiting and idempo
     const operation = specification.paths[path]?.[method.toLowerCase()];
     assert.ok(operation, `${key} must be declared`);
 
-    // Two operations accept the device's own credential as well as a bearer token, and
-    // both are device-reporting paths: a handset proves itself with what it was issued at
-    // pairing. The list is named rather than inferred, so a third one cannot appear by
-    // accident.
+    // Every operation that accepts the device's own credential as well as a bearer token:
+    // a handset proves itself with what it was issued at pairing. The list is named rather
+    // than inferred, so a new one cannot appear by accident - and each addition is a
+    // decision that the route really is a device-reporting path. W4 added two: the
+    // button's own press, and the false-alarm close from the handset that raised it.
     const deviceAuthenticated = new Set([
       '/v1/devices/{deviceId}/telemetry',
       '/v1/devices/{deviceId}/location-fixes',
+      '/v1/devices/{deviceId}/sos-alerts',
+      '/v1/devices/{deviceId}/sos-alerts/{alertId}/resolve',
     ]);
     const expectedSecurity = deviceAuthenticated.has(path)
       ? [{ oidcBearer: [] }, { deviceCredential: [] }]

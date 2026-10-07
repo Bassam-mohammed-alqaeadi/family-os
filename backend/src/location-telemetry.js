@@ -532,12 +532,21 @@ export function postgresLocationPort(store, { credentialMatches }) {
       // stays with it, because the crossing's provenance is the whole reason a family can
       // trust an arrival alert - and deleting the measurement an event points at would
       // leave the event asserting something nobody can check.
+      //
+      // The same rule covers the emergency surface (W4): a press may point at the sample
+      // that was the child's last known position, and an alarm whose measurement has been
+      // pruned is an alarm nobody can check afterwards. The reference is what makes the
+      // fix evidence, so the fix outlives the retention window the moment an incident
+      // names it.
       const { rowCount } = await client.query(
         `DELETE FROM family_child_location_fixes AS fix
           WHERE fix.family_id = $1
             AND fix.recorded_at < $2
             AND NOT EXISTS (
               SELECT 1 FROM family_geofence_events AS event WHERE event.fix_id = fix.id
+            )
+            AND NOT EXISTS (
+              SELECT 1 FROM family_sos_alerts AS alert WHERE alert.fix_id = fix.id
             )`,
         [familyId, before],
       );

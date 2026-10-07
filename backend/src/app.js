@@ -6,6 +6,7 @@ import { deviceRevocationFor } from './device-revocation.js';
 import { membershipRosterFor } from './membership-roster.js';
 import { safeZonesFor } from './safe-zones.js';
 import { locationSurfaceFor } from './location-telemetry.js';
+import { sosEmergencyFor } from './sos-emergency.js';
 import { capabilityMatches } from './store/postgres-foundation-store.js';
 import {
     claimDevicePairingInput,
@@ -18,6 +19,11 @@ import {
     createMembershipInput,
     createSafeZoneInput,
     locationFixInput,
+    sosAlertListQuery,
+    sosBackupContactInput,
+    sosBackupContactUpdateInput,
+    sosFireInput,
+    sosResolveInput,
     revokeMembershipInput,
     updateSafeZoneAlertsInput,
     requireIdempotencyKey,
@@ -68,6 +74,9 @@ export function createApp({
     // file another session is editing.
     safeZones = safeZonesFor(store),
     location = locationSurfaceFor(store, { credentialMatches: capabilityMatches }),
+    // W4. The emergency surface reaches the database through the same published helpers,
+    // and its credential check is the one the device routes already use.
+    sos = sosEmergencyFor(store, { credentialMatches: capabilityMatches }),
     preAuthenticationRateLimit = {},
     protectedRateLimit = {},
 }) {
@@ -576,6 +585,277 @@ export function createApp({
                 }),
             });
             response.status(201).json(result);
+        }),
+    );
+
+    // ── W4 SOS ──────────────────────────────────────────────────────────────────
+    //
+    // The child's button, the ladder it climbs, and what each recipient was actually
+    // told. Reading is open to every active member of the family - the child whose
+    // incident it is sees exactly what a parent sees - and acting is the guardians' part,
+    // except that a handset may close its own child's incident as a false alarm.
+    app.get(
+        '/v1/families/:familyId/sos-alerts',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const status = sosAlertListQuery(request.query);
+            const result = await sos.list({
+                principal: request.principal,
+                familyId,
+                status,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    app.get(
+        '/v1/families/:familyId/sos-alerts/:alertId',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const alertId = requireUuid(request.params.alertId, 'alertId');
+            requireNoQueryParameters(request.query);
+            const result = await sos.read({
+                principal: request.principal,
+                familyId,
+                alertId,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // A guardian raising an incident for a child whose handset is not the one in use.
+    app.post(
+        '/v1/families/:familyId/children/:childId/sos-alerts',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            const input = sosFireInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await sos.fire({
+                principal: request.principal,
+                familyId,
+                childId,
+                ...input,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'sos.fire',
+                    principal: request.principal,
+                    input: { familyId, childId, ...input },
+                }),
+            });
+            response.status(201).json(result);
+        }),
+    );
+
+    // The button on the child's own handset. The device proves itself with the credential
+    // it was issued once; a primary guardian may still report on its behalf while native
+    // collection is finished, exactly as the telemetry and location routes allow.
+    app.post(
+        '/v1/devices/:deviceId/sos-alerts',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            const input = sosFireInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await sos.fire({
+                principal: request.principal,
+                deviceCredential: request.deviceCredential,
+                deviceId,
+                ...input,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'sos.fire',
+                    principal: request.principal ?? { subject: `device:${deviceId}` },
+                    input: { deviceId, ...input },
+                }),
+            });
+            response.status(201).json(result);
+        }),
+    );
+
+    // "I have seen this." Not the same as closing it, and the two are separate acts.
+    app.post(
+        '/v1/families/:familyId/sos-alerts/:alertId/acknowledge',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const alertId = requireUuid(request.params.alertId, 'alertId');
+            requireNoQueryParameters(request.query);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await sos.acknowledge({
+                principal: request.principal,
+                familyId,
+                alertId,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'sos.acknowledge',
+                    principal: request.principal,
+                    input: { familyId, alertId },
+                }),
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // Climbing the family's own ladder. Only verified contacts are used, and the answer
+    // says how many were skipped for being unverified.
+    app.post(
+        '/v1/families/:familyId/sos-alerts/:alertId/escalate',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const alertId = requireUuid(request.params.alertId, 'alertId');
+            requireNoQueryParameters(request.query);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await sos.escalate({
+                principal: request.principal,
+                familyId,
+                alertId,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'sos.escalate',
+                    principal: request.principal,
+                    input: { familyId, alertId },
+                }),
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // Closing it. A guardian states why, from an account.
+    app.post(
+        '/v1/families/:familyId/sos-alerts/:alertId/resolve',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const alertId = requireUuid(request.params.alertId, 'alertId');
+            requireNoQueryParameters(request.query);
+            const input = sosResolveInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await sos.resolve({
+                principal: request.principal,
+                familyId,
+                alertId,
+                ...input,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'sos.resolve',
+                    principal: request.principal,
+                    input: { familyId, alertId, ...input },
+                }),
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // Closing it from the handset that raised it, and only as a false alarm. The device
+    // proves itself with its credential, so "is this your incident?" has an answer that
+    // does not depend on a client being honest about who it is.
+    app.post(
+        '/v1/devices/:deviceId/sos-alerts/:alertId/resolve',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            const alertId = requireUuid(request.params.alertId, 'alertId');
+            const input = sosResolveInput(request.body);
+            const result = await sos.resolve({
+                principal: request.principal,
+                deviceCredential: request.deviceCredential,
+                deviceId,
+                familyId: null,
+                alertId,
+                ...input,
+                correlationId: request.correlationId,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // The ladder the family builds for itself, rung 2 and below. Rung 1 is its guardians
+    // and is derived from the roster, never from a list a client sends.
+    app.get(
+        '/v1/families/:familyId/sos-backup-contacts',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            requireNoQueryParameters(request.query);
+            const result = await sos.listBackupContacts({
+                principal: request.principal,
+                familyId,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    app.post(
+        '/v1/families/:familyId/sos-backup-contacts',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const contact = sosBackupContactInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await sos.createBackupContact({
+                principal: request.principal,
+                familyId,
+                contact,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'sos.backup_contact.create',
+                    principal: request.principal,
+                    input: { familyId, ...contact },
+                }),
+            });
+            response.status(201).json(result);
+        }),
+    );
+
+    app.patch(
+        '/v1/families/:familyId/sos-backup-contacts/:contactId',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const contactId = requireUuid(request.params.contactId, 'contactId');
+            requireNoQueryParameters(request.query);
+            const patch = sosBackupContactUpdateInput(request.body);
+            const result = await sos.updateBackupContact({
+                principal: request.principal,
+                familyId,
+                contactId,
+                patch,
+                correlationId: request.correlationId,
+            });
+            response.status(200).json(result);
         }),
     );
 

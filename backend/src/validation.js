@@ -424,3 +424,253 @@ export function requireUuid(value, field) {
   }
   return id;
 }
+
+// ---------------------------------------------------------------------------------------
+// W4 — the emergency surface's inputs.
+//
+// The honesty switch the fix parser holds is held here too, and in the same direction:
+// `ready` and `stale_last_known` must carry a position AND the accuracy it came with,
+// while `acquiring` and `unavailable` must not carry coordinates at all. An alarm that
+// states a place nobody measured sends a family to the wrong door, and the schema refuses
+// the same shapes a second time.
+// ---------------------------------------------------------------------------------------
+
+const SOS_LOCATION_CLASSES = new Set(['ready', 'acquiring', 'stale_last_known', 'unavailable']);
+const SOS_CONNECTION_CLASSES = new Set(['online', 'degraded', 'offline']);
+const SOS_TERMINAL_REASONS = new Set(['helped', 'false_alarm', 'other']);
+const SOS_VERIFICATIONS = new Set(['unverified', 'verified', 'revoked']);
+const SOS_ALERT_QUERY_STATUSES = new Set(['open', 'resolved', 'all']);
+const MAX_SOS_PLACE_LABEL_LENGTH = 120;
+const MAX_BACKUP_CONTACT_NAME_LENGTH = 80;
+const MAX_BACKUP_CONTACT_RELATION_LENGTH = 40;
+const MAX_BACKUP_CONTACT_PRIORITY = 20;
+const MAX_BATTERY_PERCENT = 100;
+const E164_PATTERN = /^\+[1-9][0-9]{7,14}$/;
+
+function optionalText(value, field, maxLength) {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== 'string') {
+    throw new HttpError(400, 'invalid_request', `${field} must be text.`);
+  }
+  const trimmed = value.trim();
+  if (trimmed.length === 0 || trimmed.length > maxLength) {
+    throw new HttpError(400, 'invalid_request', `${field} must be between 1 and ${maxLength} characters.`);
+  }
+  return trimmed;
+}
+
+function optionalIntegerInRange(value, field, min, max) {
+  if (value === undefined || value === null) return null;
+  if (!Number.isInteger(value) || value < min || value > max) {
+    throw new HttpError(400, 'invalid_request', `${field} must be a whole number between ${min} and ${max}.`);
+  }
+  return value;
+}
+
+/**
+ * One press of the emergency button, as the handset that felt it describes it.
+ *
+ * The picture travels with the press rather than being looked up afterwards, because the
+ * only honest answer to "where was she when she pressed it" is the answer that was true at
+ * that moment. `pressedAt` is optional: a handset that was offline reports the press when
+ * it can, and a press with no stated time is the server's own clock.
+ */
+export function sosFireInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(
+    body,
+    new Set([
+      'locationClass',
+      'latitude',
+      'longitude',
+      'accuracyMeters',
+      'connectionClass',
+      'batteryPercent',
+      'placeLabel',
+      'panicQuiet',
+      'fixId',
+      'pressedAt',
+    ]),
+  );
+
+  const locationClass = requiredText(body.locationClass, 'locationClass', { maxLength: 32 });
+  if (!SOS_LOCATION_CLASSES.has(locationClass)) {
+    throw new HttpError(
+      400,
+      'invalid_request',
+      `locationClass must be one of: ${[...SOS_LOCATION_CLASSES].join(', ')}.`,
+    );
+  }
+  const carriesCoordinates = locationClass === 'ready' || locationClass === 'stale_last_known';
+  const latitude = carriesCoordinates ? coordinate(body.latitude, 'latitude', 90) : null;
+  const longitude = carriesCoordinates ? coordinate(body.longitude, 'longitude', 180) : null;
+  if (!carriesCoordinates && (body.latitude !== undefined || body.longitude !== undefined)) {
+    throw new HttpError(
+      400,
+      'invalid_request',
+      'A press with no usable position must not carry coordinates.',
+    );
+  }
+
+  let accuracyMeters = null;
+  if (body.accuracyMeters !== undefined && body.accuracyMeters !== null) {
+    if (
+      !Number.isFinite(body.accuracyMeters) ||
+      body.accuracyMeters <= 0 ||
+      body.accuracyMeters > MAX_FIX_ACCURACY_METERS
+    ) {
+      throw new HttpError(
+        400,
+        'invalid_request',
+        `accuracyMeters must be between 0 and ${MAX_FIX_ACCURACY_METERS}.`,
+      );
+    }
+    accuracyMeters = body.accuracyMeters;
+  }
+  if (carriesCoordinates && accuracyMeters === null) {
+    throw new HttpError(
+      400,
+      'invalid_request',
+      'accuracyMeters is required when a press carries a position.',
+    );
+  }
+  if (!carriesCoordinates && accuracyMeters !== null) {
+    throw new HttpError(
+      400,
+      'invalid_request',
+      'A press with no usable position must not carry an accuracy.',
+    );
+  }
+
+  const connectionClass = requiredText(body.connectionClass, 'connectionClass', { maxLength: 16 });
+  if (!SOS_CONNECTION_CLASSES.has(connectionClass)) {
+    throw new HttpError(
+      400,
+      'invalid_request',
+      `connectionClass must be one of: ${[...SOS_CONNECTION_CLASSES].join(', ')}.`,
+    );
+  }
+
+  let pressedAt = null;
+  if (body.pressedAt !== undefined && body.pressedAt !== null) {
+    const parsed = new Date(requiredText(body.pressedAt, 'pressedAt', { maxLength: 40 }));
+    if (Number.isNaN(parsed.getTime())) {
+      throw new HttpError(400, 'invalid_request', 'pressedAt must be an ISO-8601 timestamp.');
+    }
+    if (parsed.getTime() > Date.now() + MAX_FIX_CLOCK_SKEW_MS) {
+      throw new HttpError(400, 'invalid_request', 'pressedAt is in the future.');
+    }
+    pressedAt = parsed.toISOString();
+  }
+
+  return {
+    picture: {
+      locationClass,
+      latitude,
+      longitude,
+      accuracyMeters,
+      connectionClass,
+      batteryPercent: optionalIntegerInRange(body.batteryPercent, 'batteryPercent', 0, MAX_BATTERY_PERCENT),
+      placeLabel: optionalText(body.placeLabel, 'placeLabel', MAX_SOS_PLACE_LABEL_LENGTH),
+      panicQuiet: optionalBoolean(body.panicQuiet, 'panicQuiet', false),
+      pressedAt,
+    },
+    fixId: body.fixId === undefined || body.fixId === null ? null : requireUuid(body.fixId, 'fixId'),
+  };
+}
+
+/** How an incident ends. The reason is required: a closed incident with no reason explains nothing. */
+export function sosResolveInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['terminalReason']));
+  const terminalReason = requiredText(body.terminalReason, 'terminalReason', { maxLength: 24 });
+  if (!SOS_TERMINAL_REASONS.has(terminalReason)) {
+    throw new HttpError(
+      400,
+      'invalid_request',
+      `terminalReason must be one of: ${[...SOS_TERMINAL_REASONS].join(', ')}.`,
+    );
+  }
+  return { terminalReason };
+}
+
+/**
+ * A new rung on the family's ladder.
+ *
+ * `verification` is deliberately absent from this parser: a contact is created
+ * `unverified`, and only a separate act marks it verified. A number that verifies itself
+ * on the way in is a number nobody checked.
+ */
+export function sosBackupContactInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['name', 'relation', 'phoneE164', 'priority', 'enabled']));
+  const phoneE164 = requiredText(body.phoneE164, 'phoneE164', { maxLength: 20 }).trim();
+  if (!E164_PATTERN.test(phoneE164)) {
+    throw new HttpError(400, 'invalid_request', 'phoneE164 must be an E.164 number, for example +967771234567.');
+  }
+  return {
+    name: requiredText(body.name, 'name', { maxLength: MAX_BACKUP_CONTACT_NAME_LENGTH }),
+    relation: optionalText(body.relation, 'relation', MAX_BACKUP_CONTACT_RELATION_LENGTH) ?? '',
+    phoneE164,
+    priority: optionalIntegerInRange(body.priority, 'priority', 1, MAX_BACKUP_CONTACT_PRIORITY) ?? 1,
+    enabled: optionalBoolean(body.enabled, 'enabled', true),
+  };
+}
+
+/** Changing one rung: rename it, renumber it, verify it, switch it off or archive it. */
+export function sosBackupContactUpdateInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(
+    body,
+    new Set(['name', 'relation', 'phoneE164', 'verification', 'enabled', 'priority', 'archived']),
+  );
+  if (Object.keys(body).length === 0) {
+    throw new HttpError(400, 'invalid_request', 'At least one field must be provided.');
+  }
+
+  let phoneE164;
+  if (body.phoneE164 !== undefined) {
+    phoneE164 = requiredText(body.phoneE164, 'phoneE164', { maxLength: 20 }).trim();
+    if (!E164_PATTERN.test(phoneE164)) {
+      throw new HttpError(400, 'invalid_request', 'phoneE164 must be an E.164 number, for example +967771234567.');
+    }
+  }
+
+  let verification;
+  if (body.verification !== undefined) {
+    verification = requiredText(body.verification, 'verification', { maxLength: 16 });
+    if (!SOS_VERIFICATIONS.has(verification)) {
+      throw new HttpError(
+        400,
+        'invalid_request',
+        `verification must be one of: ${[...SOS_VERIFICATIONS].join(', ')}.`,
+      );
+    }
+  }
+
+  return {
+    name: body.name === undefined ? undefined : requiredText(body.name, 'name', { maxLength: MAX_BACKUP_CONTACT_NAME_LENGTH }),
+    relation: body.relation === undefined ? undefined : (optionalText(body.relation, 'relation', MAX_BACKUP_CONTACT_RELATION_LENGTH) ?? ''),
+    phoneE164,
+    verification,
+    enabled: body.enabled === undefined ? undefined : optionalBoolean(body.enabled, 'enabled', true),
+    priority: body.priority === undefined ? undefined : optionalIntegerInRange(body.priority, 'priority', 1, MAX_BACKUP_CONTACT_PRIORITY),
+    archived: body.archived === undefined ? undefined : optionalBoolean(body.archived, 'archived', false),
+  };
+}
+
+/** Which incidents a family read is asking for. Defaults to the ones still in flight. */
+export function sosAlertListQuery(value) {
+  const query = bodyObject(value ?? {});
+  onlyKnownFields(query, new Set(['status']));
+  if (query.status === undefined) return 'open';
+  const status = requiredText(query.status, 'status', { maxLength: 16 });
+  if (!SOS_ALERT_QUERY_STATUSES.has(status)) {
+    throw new HttpError(
+      400,
+      'invalid_request',
+      `status must be one of: ${[...SOS_ALERT_QUERY_STATUSES].join(', ')}.`,
+    );
+  }
+  return status;
+}

@@ -1662,6 +1662,710 @@
           }
         }
       }
+    },
+    "/v1/families/{familyId}/sos-alerts": {
+      "get": {
+        "operationId": "listFamilySosAlerts",
+        "summary": "The family's emergency incidents, newest first",
+        "description": "Open to every active member of the family, the child whose incident it is included: the same alert, the same recipients, the same delivery states. Selective visibility on an emergency is how a safety product quietly becomes a surveillance product. Each alert carries the honest delivery states of the press - `recorded` for what the in-app pipe will pick up, `not_configured` for what this build cannot send at all - and there is no state that claims a delivery nobody made.",
+        "tags": [
+          "SOS"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "`open` (default) lists what is still in flight, `resolved` what has ended, `all` everything.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "open",
+                "resolved",
+                "all"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The incidents, with their delivery rows.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SosAlertListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/sos-alerts/{alertId}": {
+      "get": {
+        "operationId": "readFamilySosAlert",
+        "summary": "One incident, as the whole family may read it",
+        "tags": [
+          "SOS"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/AlertId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The incident.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SosAlertResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/sos-alerts": {
+      "post": {
+        "operationId": "raiseFamilySosAlert",
+        "summary": "A guardian opens an incident for a child",
+        "description": "For the case where the handset is not the one in hand. The picture comes from the caller's device and is stored as it was; a second press while an incident is already open is refused with 409 `sos_alert_already_open` and the id of the incident that exists, because two open incidents would split the family's attention across two screens at the moment attention is the product.",
+        "tags": [
+          "SOS"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SosAlertRaiseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The incident that was opened.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SosAlertResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/sos-alerts": {
+      "post": {
+        "operationId": "raiseDeviceSosAlert",
+        "summary": "The child's handset reports that the button was pressed",
+        "description": "The device proves itself with the credential it was issued at pairing; a primary guardian may still report on its behalf while native collection is finished, and the audit record says which of the two happened. The child is the device's own child - a handset cannot speak for another - and the raiser is recorded as the device. The guardians of the family are the first rung, derived from the roster rather than from the request, and each of them gets an in-app delivery row (`recorded`) and a push row (`not_configured`, `push_transport_absent`): this build has no push transport and the row says so instead of claiming a message left the building.",
+        "tags": [
+          "SOS"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SosAlertRaiseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The incident that was opened.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SosAlertResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/sos-alerts/{alertId}/acknowledge": {
+      "post": {
+        "operationId": "acknowledgeFamilySosAlert",
+        "summary": "A guardian says \"I have seen this\"",
+        "description": "Acknowledging is not resolving and the two are separate acts: an incident that has been seen is still open, still escalating, still visible. A second acknowledgement - the other parent's tap, or a retry - reports the incident as it is rather than creating anything.",
+        "tags": [
+          "SOS"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/AlertId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The incident, acknowledged.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SosAlertResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/sos-alerts/{alertId}/escalate": {
+      "post": {
+        "operationId": "escalateFamilySosAlert",
+        "summary": "The incident climbs the family's own ladder",
+        "description": "Rung 2 is the family's own verified contacts, in the family's own priority order. Only a `verified` contact is used - the same hard-skip law the client's escalation resolver enforces - and the answer reports how many were skipped for not being verified, so a parent finds that out now and not on the day it was needed. Escalation to a contact writes an `sms` delivery row in state `not_configured` with reason `sms_transport_absent`: the intent is recorded, and nothing claims a text was sent.",
+        "tags": [
+          "SOS"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/AlertId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The incident and what the ladder did.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SosEscalationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/sos-alerts/{alertId}/resolve": {
+      "post": {
+        "operationId": "resolveFamilySosAlert",
+        "summary": "A guardian closes the incident, stating why",
+        "description": "The reason is required: a closed incident with no reason explains nothing. A child membership cannot close an incident here, and the refusal is a schema fact rather than a policy taste - nothing links a membership row to a child row, so the server cannot prove the incident is that account's. The child's own handset can, through its own route, and only as a false alarm.",
+        "tags": [
+          "SOS"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/AlertId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SosAlertResolveRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The incident, closed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SosAlertResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/sos-alerts/{alertId}/resolve": {
+      "post": {
+        "operationId": "resolveDeviceSosAlert",
+        "summary": "The child's handset closes its own incident as a false alarm",
+        "description": "The handset that raised the incident is the only thing that can prove whose incident it is, and it may close it as `false_alarm` and with nothing else - the client's own cancel-own-SOS rule, held here so a client bug cannot turn \"I pressed it by accident\" into \"my parent says it is over\". A resolved incident answers a second call with the incident as it is, so a retry cannot be mistaken for a new act.",
+        "tags": [
+          "SOS"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          },
+          {
+            "$ref": "#/components/parameters/AlertId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SosAlertResolveRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The incident, closed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SosAlertResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/sos-backup-contacts": {
+      "get": {
+        "operationId": "listFamilySosBackupContacts",
+        "summary": "The family's escalation ladder, in the family's order",
+        "tags": [
+          "SOS"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rung 2 and below.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SosBackupContactListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createFamilySosBackupContact",
+        "summary": "Add a rung to the family's ladder",
+        "description": "The contact is created `unverified` and a ladder is bounded at eight contacts: a ladder longer than that is not a ladder anyone answers.",
+        "tags": [
+          "SOS"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SosBackupContactCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The contact as stored.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SosBackupContactResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/sos-backup-contacts/{contactId}": {
+      "patch": {
+        "operationId": "updateFamilySosBackupContact",
+        "summary": "Verify, switch off, renumber or archive one rung",
+        "description": "Verification is a separate act from creation, and this is where it happens. Archiving takes a contact off the ladder without erasing the fact that it was once on it.",
+        "tags": [
+          "SOS"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/SosBackupContactId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SosBackupContactUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The contact as stored.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SosBackupContactResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1736,6 +2440,24 @@
         "in": "path",
         "required": true,
         "description": "The safe zone to change.",
+        "schema": {
+          "$ref": "#/components/schemas/Uuid"
+        }
+      },
+      "AlertId": {
+        "name": "alertId",
+        "in": "path",
+        "required": true,
+        "description": "The incident to act on.",
+        "schema": {
+          "$ref": "#/components/schemas/Uuid"
+        }
+      },
+      "SosBackupContactId": {
+        "name": "contactId",
+        "in": "path",
+        "required": true,
+        "description": "The ladder contact to change.",
         "schema": {
           "$ref": "#/components/schemas/Uuid"
         }
@@ -3778,6 +4500,574 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/LocationFix"
+            }
+          }
+        }
+      },
+      "SosLocationClass": {
+        "type": "string",
+        "enum": [
+          "ready",
+          "acquiring",
+          "stale_last_known",
+          "unavailable"
+        ],
+        "description": "The honesty switch of the press. `ready` and `stale_last_known` carry a position and the accuracy it came with; `acquiring` and `unavailable` carry no coordinates at all. A press that names a place nobody measured sends a family to the wrong door."
+      },
+      "SosConnectionClass": {
+        "type": "string",
+        "enum": [
+          "online",
+          "degraded",
+          "offline"
+        ],
+        "description": "How the handset could reach the network when the button was pressed."
+      },
+      "SosTerminalReason": {
+        "type": "string",
+        "enum": [
+          "helped",
+          "false_alarm",
+          "other"
+        ],
+        "description": "Why the incident ended. A closed incident with no reason explains nothing."
+      },
+      "SosAlertStatus": {
+        "type": "string",
+        "enum": [
+          "active",
+          "acknowledged",
+          "escalating",
+          "resolved"
+        ]
+      },
+      "SosDeliveryState": {
+        "type": "string",
+        "enum": [
+          "recorded",
+          "not_configured"
+        ],
+        "description": "What the platform can honestly claim it did. `recorded` means a durable payload was written for a transport to pick up; `not_configured` means there was nothing to send it on, and `reasonCode` says why. There is deliberately no `delivered` state: nothing in this repository can send a push or a text message, and a parent told \"sent\" when nobody sent anything stops checking."
+      },
+      "SosAlertPicture": {
+        "type": "object",
+        "required": [
+          "locationClass",
+          "connectionClass",
+          "panicQuiet"
+        ],
+        "description": "The picture as it was at press time, stored rather than recomputed: the only honest answer to \"where was she when she pressed it\" is the answer that was true then.",
+        "properties": {
+          "locationClass": {
+            "$ref": "#/components/schemas/SosLocationClass"
+          },
+          "latitude": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": -90,
+            "maximum": 90
+          },
+          "longitude": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": -180,
+            "maximum": 180
+          },
+          "accuracyMeters": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 100000
+          },
+          "connectionClass": {
+            "$ref": "#/components/schemas/SosConnectionClass"
+          },
+          "batteryPercent": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100
+          },
+          "placeLabel": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 120
+          },
+          "panicQuiet": {
+            "type": "boolean"
+          },
+          "fixId": {
+            "$ref": "#/components/schemas/Uuid",
+            "description": "The trail sample this press points at, when the handset had one. The crossing table and this one keep a fix that an incident refers to from being pruned."
+          }
+        }
+      },
+      "SosDelivery": {
+        "type": "object",
+        "required": [
+          "recipientKind",
+          "channel",
+          "deliveryState",
+          "createdAt"
+        ],
+        "properties": {
+          "recipientKind": {
+            "type": "string",
+            "enum": [
+              "guardian",
+              "backup"
+            ]
+          },
+          "recipientMembershipId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "recipientContactId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "in_app",
+              "push",
+              "sms",
+              "call"
+            ]
+          },
+          "deliveryState": {
+            "$ref": "#/components/schemas/SosDeliveryState"
+          },
+          "reasonCode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Present exactly when the state is not_configured."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SosAlert": {
+        "type": "object",
+        "required": [
+          "id",
+          "familyId",
+          "childId",
+          "raisedByKind",
+          "status",
+          "open",
+          "pressedAt",
+          "receivedAt",
+          "picture",
+          "deliveries",
+          "version",
+          "resolvedByKind"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "familyId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "childId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "raisedByKind": {
+            "type": "string",
+            "enum": [
+              "child_device",
+              "guardian"
+            ],
+            "description": "Which door the press came through. Derived from it, never stated by the caller."
+          },
+          "raisedByMembershipId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SosAlertStatus"
+          },
+          "open": {
+            "type": "boolean",
+            "description": "True while the incident is not resolved. Everything that is still true of it is still visible."
+          },
+          "pressedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "receivedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "acknowledgedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "escalatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "resolvedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "terminalReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "helped",
+              "false_alarm",
+              "other",
+              null
+            ]
+          },
+          "resolvedByKind": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "guardian",
+              "child_device",
+              null
+            ],
+            "description": "Who closed it. A handset may only close its own child's incident, and only as a false alarm, so the difference between the two matters after the fact."
+          },
+          "picture": {
+            "$ref": "#/components/schemas/SosAlertPicture"
+          },
+          "deliveries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SosDelivery"
+            }
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "SosAlertRaiseRequest": {
+        "type": "object",
+        "required": [
+          "locationClass",
+          "connectionClass"
+        ],
+        "additionalProperties": false,
+        "description": "The press, with the picture the handset had at that moment. The picture travels with the press instead of being looked up afterwards, and the same coordinate law as a location fix applies: a place requires its accuracy, and \"no position\" is expressed by absence.",
+        "properties": {
+          "locationClass": {
+            "$ref": "#/components/schemas/SosLocationClass"
+          },
+          "latitude": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "longitude": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "accuracyMeters": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000
+          },
+          "connectionClass": {
+            "$ref": "#/components/schemas/SosConnectionClass"
+          },
+          "batteryPercent": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "placeLabel": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "panicQuiet": {
+            "type": "boolean",
+            "description": "The preference captured at press time, never re-read later."
+          },
+          "fixId": {
+            "$ref": "#/components/schemas/Uuid",
+            "description": "The trail sample the press points at, when the handset had one."
+          },
+          "pressedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Optional: a handset that was offline reports the press when it can. Absent means the server's own clock."
+          }
+        }
+      },
+      "SosAlertResolveRequest": {
+        "type": "object",
+        "required": [
+          "terminalReason"
+        ],
+        "additionalProperties": false,
+        "description": "A handset may only close its own child's incident as a false alarm; a guardian states any of the three reasons.",
+        "properties": {
+          "terminalReason": {
+            "$ref": "#/components/schemas/SosTerminalReason"
+          }
+        }
+      },
+      "SosAlertResponse": {
+        "type": "object",
+        "required": [
+          "alert"
+        ],
+        "properties": {
+          "alert": {
+            "$ref": "#/components/schemas/SosAlert"
+          },
+          "replayed": {
+            "type": "boolean",
+            "description": "True when the answer reports an incident that already was in this state, so a retry cannot be mistaken for a new act."
+          }
+        }
+      },
+      "SosAlertListResponse": {
+        "type": "object",
+        "required": [
+          "alerts"
+        ],
+        "properties": {
+          "alerts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SosAlert"
+            }
+          }
+        }
+      },
+      "SosEscalationSummary": {
+        "type": "object",
+        "required": [
+          "eligibleContacts",
+          "skippedUnverified"
+        ],
+        "properties": {
+          "eligibleContacts": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Verified and enabled contacts the escalation reached."
+          },
+          "skippedUnverified": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Contacts the family added but has not verified. Reported rather than silently dropped: a parent must find this out now, not on the day it was needed."
+          }
+        }
+      },
+      "SosEscalationResponse": {
+        "type": "object",
+        "required": [
+          "alert",
+          "escalation"
+        ],
+        "properties": {
+          "alert": {
+            "$ref": "#/components/schemas/SosAlert"
+          },
+          "escalation": {
+            "$ref": "#/components/schemas/SosEscalationSummary"
+          },
+          "replayed": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SosBackupContact": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "relation",
+          "phoneE164",
+          "verification",
+          "enabled",
+          "priority",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "relation": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "phoneE164": {
+            "type": "string",
+            "description": "E.164, for example +967771234567."
+          },
+          "verification": {
+            "type": "string",
+            "enum": [
+              "unverified",
+              "verified",
+              "revoked"
+            ],
+            "description": "Only a verified contact ever escalates - the same hard-skip law the client's escalation resolver enforces."
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20
+          },
+          "archivedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SosBackupContactCreateRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "phoneE164"
+        ],
+        "additionalProperties": false,
+        "description": "A new rung is always created unverified: a number that verifies itself on the way in is a number nobody checked. Verifying it is a separate act.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "relation": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "phoneE164": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SosBackupContactUpdateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "minProperties": 1,
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "relation": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "phoneE164": {
+            "type": "string"
+          },
+          "verification": {
+            "type": "string",
+            "enum": [
+              "unverified",
+              "verified",
+              "revoked"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20
+          },
+          "archived": {
+            "type": "boolean",
+            "description": "Takes the contact off the ladder without erasing the fact that it was once on it."
+          }
+        }
+      },
+      "SosBackupContactResponse": {
+        "type": "object",
+        "required": [
+          "contact"
+        ],
+        "properties": {
+          "contact": {
+            "$ref": "#/components/schemas/SosBackupContact"
+          }
+        }
+      },
+      "SosBackupContactListResponse": {
+        "type": "object",
+        "required": [
+          "contacts"
+        ],
+        "properties": {
+          "contacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SosBackupContact"
             }
           }
         }
