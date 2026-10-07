@@ -20,6 +20,9 @@ final class FamilyChildContextApiException implements Exception {
 /// parser cannot accidentally promote device telemetry or other prototype facts
 /// into the production child screen.
 final class ChildContextApiClient {
+  static const _permissionLifetime = Duration(minutes: 5);
+  static const _maxServerClockLead = Duration(minutes: 30);
+
   ChildContextApiClient({
     required FoundationGateConfiguration configuration,
     required FoundationGateHttpTransport transport,
@@ -109,6 +112,7 @@ final class ChildContextApiClient {
     required String expectedChildId,
   }) {
     try {
+      final receivedAt = _clock().toUtc();
       final decoded = jsonDecode(body);
       final root = _object(decoded, const {
         'child',
@@ -175,11 +179,9 @@ final class ChildContextApiClient {
           RegExp(r'[\u0000-\u001F\u007F]').hasMatch(displayName) ||
           updatedAt.isBefore(createdAt) ||
           observedAt != permissionObservedAt ||
-          expiresAt.difference(observedAt) != const Duration(minutes: 5) ||
-          observedAt.isAfter(
-            _clock().toUtc().add(const Duration(minutes: 30)),
-          ) ||
-          !_clock().toUtc().isBefore(expiresAt) ||
+          expiresAt.difference(observedAt) != _permissionLifetime ||
+          observedAt.isAfter(receivedAt.add(_maxServerClockLead)) ||
+          !receivedAt.isBefore(expiresAt) ||
           (deviceState == FamilyChildDeviceSetupState.notLinked &&
               deviceCount != 0) ||
           (deviceState != FamilyChildDeviceSetupState.notLinked &&
@@ -189,6 +191,14 @@ final class ChildContextApiClient {
               scopes.contains(FamilyChildPermissionScope.createDevicePairing))) {
         throw const FormatException();
       }
+
+      // The raw snapshot remains server-authored, while local presentation is
+      // capped at the same five-minute lifetime from receipt. Clock-skew
+      // tolerance therefore cannot lengthen a permission hint on this device.
+      final localLifetimeLimit = receivedAt.add(_permissionLifetime);
+      final presentationExpiresAt = expiresAt.isBefore(localLifetimeLimit)
+          ? expiresAt
+          : localLifetimeLimit;
 
       return FamilyChildContext(
         familyId: FamilyId(expectedFamilyId),
@@ -209,6 +219,7 @@ final class ChildContextApiClient {
           scopes: Set.unmodifiable(scopes),
           observedAt: permissionObservedAt,
           expiresAt: expiresAt,
+          presentationExpiresAt: presentationExpiresAt,
         ),
       );
     } on FamilyChildContextApiException {

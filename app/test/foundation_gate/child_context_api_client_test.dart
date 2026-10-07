@@ -45,6 +45,81 @@ void main() {
     );
   });
 
+  test(
+    'tolerates a bounded server clock lead without extending local authority',
+    () async {
+      final client = _client(
+        _Transport(
+          response: FoundationGateHttpResponse(
+            statusCode: 200,
+            body: jsonEncode(
+              _validBody(
+                observedAt: '2026-10-07T09:03:00Z',
+                expiresAt: '2026-10-07T09:08:00Z',
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final context = await client.get(
+        familyId: familyId,
+        childId: childId,
+        idToken: 'token',
+      );
+
+      expect(
+        context.permissionSnapshot.expiresAt,
+        DateTime.parse('2026-10-07T09:08:00Z'),
+      );
+      expect(
+        context.permissionSnapshot.presentationExpiresAt,
+        DateTime.parse('2026-10-07T09:06:00Z'),
+      );
+      expect(
+        context.permissionSnapshot.allows(
+          FamilyChildPermissionScope.read,
+          at: DateTime.parse('2026-10-07T09:05:59Z'),
+        ),
+        isTrue,
+      );
+      expect(
+        context.permissionSnapshot.allows(
+          FamilyChildPermissionScope.read,
+          at: DateTime.parse('2026-10-07T09:06:00Z'),
+        ),
+        isFalse,
+      );
+    },
+  );
+
+  test('rejects a server clock lead beyond the bounded tolerance', () async {
+    final client = _client(
+      _Transport(
+        response: FoundationGateHttpResponse(
+          statusCode: 200,
+          body: jsonEncode(
+            _validBody(
+              observedAt: '2026-10-07T09:31:01Z',
+              expiresAt: '2026-10-07T09:36:01Z',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await expectLater(
+      client.get(familyId: familyId, childId: childId, idToken: 'token'),
+      throwsA(
+        isA<FamilyChildContextApiException>().having(
+          (error) => error.failure,
+          'failure',
+          FamilyChildContextFailure.invalidResponse,
+        ),
+      ),
+    );
+  });
+
   test('maps authorization, lifecycle and availability statuses exactly', () async {
     for (final entry in <int, FamilyChildContextFailure>{
       401: FamilyChildContextFailure.sessionInvalid,

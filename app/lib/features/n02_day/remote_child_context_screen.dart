@@ -115,7 +115,8 @@ final class _RemoteChildContextScreenState
     );
     if (!mounted) return;
     _publish(result);
-    final expiresAt = result.context?.permissionSnapshot.expiresAt;
+    final expiresAt =
+        result.context?.permissionSnapshot.presentationExpiresAt;
     if (expiresAt != null) {
       final untilExpiry = expiresAt.difference(DateTime.now().toUtc());
       if (untilExpiry > Duration.zero) {

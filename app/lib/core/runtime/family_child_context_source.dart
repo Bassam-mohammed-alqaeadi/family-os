@@ -37,17 +37,29 @@ final class PermissionSnapshotV1 {
     required this.role,
     required this.scopes,
     required this.observedAt,
-    required this.expiresAt,
-  });
+    required DateTime expiresAt,
+    DateTime? presentationExpiresAt,
+  }) : expiresAt = expiresAt,
+       presentationExpiresAt = presentationExpiresAt ?? expiresAt;
 
   final int policyVersion;
   final FamilyChildContextRole role;
   final Set<String> scopes;
   final DateTime observedAt;
+
+  /// Raw server-authoritative expiry supplied by PermissionSnapshot v1.
   final DateTime expiresAt;
 
+  /// Local presentation deadline, never later than five minutes after receipt.
+  ///
+  /// A device clock can lag the server without turning the server's five-minute
+  /// snapshot into a longer-lived local permission hint. API actions remain
+  /// independently reauthorized by the server.
+  final DateTime presentationExpiresAt;
+
   bool allows(String scope, {DateTime? at}) =>
-      (at ?? DateTime.now()).toUtc().isBefore(expiresAt) && scopes.contains(scope);
+      (at ?? DateTime.now()).toUtc().isBefore(presentationExpiresAt) &&
+      scopes.contains(scope);
 }
 
 @immutable
