@@ -82,7 +82,7 @@ void main() {
     expect(alert.status, FoundationGateSosAlertStatus.active);
     expect(alert.isOpen, isTrue);
     expect(alert.picture.locationClass, FoundationGateSosLocationClass.ready);
-    expect(alert.picture.carriesCoordinates, isTrue);
+    expect(alert.picture.locationClass.carriesCoordinates, isTrue);
     expect(alert.picture.latitude, 15.3694);
     expect(alert.picture.accuracyMeters, 18);
     expect(alert.picture.batteryPercent, 42);
@@ -162,15 +162,17 @@ void main() {
       throwsApiFailure(FoundationGateApiFailure.invalidResponse),
     );
 
-    final noPosition = FakeTransport(
+    // The opposite lie: a class that says the handset never looked, carrying coordinates
+    // and a precision as if it had.
+    final claimedPosition = FakeTransport(
       FoundationGateHttpResponse(
         statusCode: 200,
         body:
-            '{"alerts":[${openAlertBody.replaceFirst('"locationClass":"ready","latitude":15.3694,"longitude":44.191,', '"locationClass":"acquiring","latitude":null,"longitude":null,').replaceFirst('"accuracyMeters":18', '"accuracyMeters":null')}]}',
+            '{"alerts":[${openAlertBody.replaceFirst('"locationClass":"ready"', '"locationClass":"acquiring"')}]}',
       ),
     );
     await expectLater(
-      clientFor(noPosition).listAlerts(familyId: familyId, idToken: 't'),
+      clientFor(claimedPosition).listAlerts(familyId: familyId, idToken: 't'),
       throwsApiFailure(FoundationGateApiFailure.invalidResponse),
     );
   });

@@ -1,4 +1,8 @@
+import 'package:flutter/material.dart' show TimeOfDay;
+
+import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/policy/notification_delivery.dart';
+import 'package:family_os/core/policy/notification_tier.dart';
 import 'package:family_os/core/policy/sos_alert.dart';
 import 'package:family_os/core/policy/sos_alert_repository.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
@@ -7,6 +11,7 @@ import 'package:family_os/core/policy/sos_ladder_repository.dart';
 import 'package:family_os/core/policy/sos_role_actions.dart';
 import 'package:family_os/core/sos_final/sos_prefs_local_persistence.dart';
 import 'package:family_os/foundation_gate/family_sos_api_client.dart';
+import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
 /// The emergency surface's one server connection.
 ///
@@ -112,7 +117,7 @@ final class SosServerAuthority {
     await _refreshMemberLabels();
     return api.listAlerts(
       familyId: _requireFamilyId(),
-      idToken: _token(),
+      idToken: await idToken(),
     );
   }
 
@@ -120,7 +125,7 @@ final class SosServerAuthority {
     await _refreshMemberLabels();
     return api.listAlerts(
       familyId: _requireFamilyId(),
-      idToken: _token(),
+      idToken: await idToken(),
       status: 'all',
     );
   }
@@ -130,7 +135,7 @@ final class SosServerAuthority {
     return api.readAlert(
       familyId: _requireFamilyId(),
       alertId: alertId,
-      idToken: _token(),
+      idToken: await idToken(),
     );
   }
 
@@ -201,10 +206,10 @@ final class SosServerAuthority {
     );
   }
 
-  Future<List<FoundationGateSosBackupContact>> contacts() {
+  Future<List<FoundationGateSosBackupContact>> contacts() async {
     return api.listBackupContacts(
       familyId: _requireFamilyId(),
-      idToken: _token(),
+      idToken: await idToken(),
     );
   }
 
@@ -261,8 +266,6 @@ final class SosServerAuthority {
     }
     return id;
   }
-
-  Future<String> _token() => idToken();
 
   /// A server incident, in the shape the board renders.
   SosAlert toAlert(FoundationGateSosAlert alert) {

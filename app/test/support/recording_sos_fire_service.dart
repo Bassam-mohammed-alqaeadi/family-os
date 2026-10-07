@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' show TimeOfDay;
 
 import 'package:family_os/core/policy/notification_delivery.dart';
 import 'package:family_os/core/policy/notification_prefs.dart';
+import 'package:family_os/core/policy/notification_tier.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 
 /// A recording stand-in for the SOS authority, for tests only.

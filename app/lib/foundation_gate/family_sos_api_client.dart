@@ -994,13 +994,18 @@ class FamilySosApiClient {
         !isFoundationGateUuid(familyId) ||
         childId is! String ||
         !isFoundationGateUuid(childId) ||
-        (raisedByKind != 'child_device' && raisedByKind != 'guardian') ||
+        raisedByKind is! String ||
         status == null ||
         version is! int ||
         version < 1 ||
         pressedAt == null ||
         receivedAt == null ||
         rawDeliveries is! List<Object?>) {
+      throw const FormatException();
+    }
+    // The role's own vocabulary is checked after its type, because a value test on the
+    // same variable tells the analyzer nothing about the variable's type.
+    if (raisedByKind != 'child_device' && raisedByKind != 'guardian') {
       throw const FormatException();
     }
     final terminalReason = value['terminalReason'];
@@ -1092,6 +1097,7 @@ class FamilySosApiClient {
     final reasonCode = value['reasonCode'];
     final membershipId = value['recipientMembershipId'];
     final contactId = value['recipientContactId'];
+    if (recipientKind is! String) throw const FormatException();
     if (recipientKind != 'guardian' && recipientKind != 'backup') {
       throw const FormatException();
     }

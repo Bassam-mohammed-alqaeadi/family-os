@@ -205,11 +205,13 @@ Future<Map<String, String>> _memberRoleLabels(
   final familyId = runtime.selectedFamilyId;
   if (familyId == null || familyId.isEmpty) return const {};
   final memberships = await runtime.listMemberships(FamilyId(familyId));
-  return {
-    for (final membership in memberships)
-      if (FamilyMembersRoleLabels.forRole(membership.role) case final label?)
-        membership.id: label.$2,
-  };
+  final labels = <String, String>{};
+  for (final membership in memberships) {
+    final label = FamilyMembersRoleLabels.forRole(membership.role);
+    if (label == null) continue;
+    labels[membership.id] = label.$2;
+  }
+  return labels;
 }
 
 /// The roster row for one child, or an empty row when the roster does not have them.
