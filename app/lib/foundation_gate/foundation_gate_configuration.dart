@@ -375,6 +375,39 @@ class FoundationGateConfiguration {
     }
     return stagingApiOrigin.replace(path: '/v1/families/$familyId/protection');
   }
+  // ── W7 — family tasks and points ────────────────────────────────────────────────
+
+  /// What this child has to do, and the cycle open on each task.
+  Uri familyChildTasksUri(String familyId, String childId) =>
+      _familyChildCrumbUri(familyId, childId, 'tasks');
+
+  /// "I did it" for a child who spoke to a guardian instead of tapping their phone.
+  Uri familyChildTaskClaimUri(String familyId, String childId, String taskId) =>
+      _familyChildTaskCrumbUri(familyId, childId, taskId, 'claim');
+
+  /// The guardian's word on a claim.
+  Uri familyChildTaskDecisionUri(String familyId, String childId, String taskId) =>
+      _familyChildTaskCrumbUri(familyId, childId, taskId, 'decision');
+
+  /// The balance and the entries that produced it.
+  Uri familyChildPointsUri(String familyId, String childId) =>
+      _familyChildCrumbUri(familyId, childId, 'points');
+
+  /// One task's sub-path, with the task identifier checked like every other identifier: a
+  /// path built from a value the server never issued is a request to somewhere that does
+  /// not exist, and this class refuses to build it.
+  Uri _familyChildTaskCrumbUri(
+    String familyId,
+    String childId,
+    String taskId,
+    String crumb,
+  ) {
+    if (!isFoundationGateUuid(taskId)) {
+      throw ArgumentError('Server-returned UUID task identifier is required.');
+    }
+    return _familyChildCrumbUri(familyId, childId, 'tasks/$taskId/$crumb');
+  }
+
 
   /// One path under a child, with both identifiers checked the same way every other route
   /// checks them: this class refuses to build a URL out of an identifier the server never

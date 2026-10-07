@@ -18,6 +18,7 @@ import 'family_sos_api_client.dart';
 import 'foundation_gate_identity.dart';
 import 'foundation_gate_models.dart';
 import 'family_screen_time_api_client.dart';
+import 'family_tasks_api_client.dart';
 import 'family_web_filter_api_client.dart';
 import 'foundation_gate_session_controller.dart';
 
@@ -37,6 +38,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     FamilySosApiClient? sosApi,
     FamilyScreenTimeApiClient? screenTimeApi,
     FamilyWebFilterApiClient? webFilterApi,
+    FamilyTasksApiClient? tasksApi,
     String? preferredFamilyId,
   }) : _controller = controller,
        _identity = identity,
@@ -46,6 +48,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
        _sosApi = sosApi,
        _screenTimeApi = screenTimeApi,
        _webFilterApi = webFilterApi,
+       _tasksApi = tasksApi,
        _preferredFamilyId = preferredFamilyId?.trim(),
        _identityValue = const IdentitySnapshot.unavailable(),
        _rosterValue = const FamilyRosterSnapshot.unavailable(),
@@ -61,6 +64,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   final FamilySosApiClient? _sosApi;
   final FamilyScreenTimeApiClient? _screenTimeApi;
   final FamilyWebFilterApiClient? _webFilterApi;
+  final FamilyTasksApiClient? _tasksApi;
   final String? _preferredFamilyId;
   IdentitySnapshot _identityValue;
   FamilyRosterSnapshot _rosterValue;
@@ -93,6 +97,10 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   /// The web filter's connection to the server: the policy, the doors and the honest
   /// protection state. Null when this build has no server session.
   FamilyWebFilterApiClient? get webFilterApi => _webFilterApi;
+
+  /// The tasks and points contract's client: what a child has to do, what a guardian
+  /// confirmed, and what was earned. Null when this build has no server session.
+  FamilyTasksApiClient? get tasksApi => _tasksApi;
 
   /// The family this device is looking at, or null before one is selected.
   String? get selectedFamilyId => _controller.selectedFamily?.id;

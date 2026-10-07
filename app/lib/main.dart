@@ -44,6 +44,7 @@ import 'package:family_os/features/n02_day/family_chat_local_persistence.dart';
 import 'package:family_os/features/n02_day/location_server_authority.dart';
 import 'package:family_os/features/n03_screen_time/screen_time_server_authority.dart';
 import 'package:family_os/features/n04_web_filter/web_filter_server_authority.dart';
+import 'package:family_os/features/n16_tasks/tasks_server_authority.dart';
 import 'package:family_os/features/n10_emergency/sos_server_authority.dart';
 import 'package:family_os/features/n02_day/location_ux_bridge.dart';
 import 'package:family_os/features/n03_screen_time/child_apps_local_persistence.dart';
@@ -63,6 +64,7 @@ import 'package:family_os/foundation_gate/family_location_api_client.dart';
 import 'package:family_os/foundation_gate/family_discovery_api_client.dart';
 import 'package:family_os/foundation_gate/family_membership_api_client.dart';
 import 'package:family_os/foundation_gate/family_screen_time_api_client.dart';
+import 'package:family_os/foundation_gate/family_tasks_api_client.dart';
 import 'package:family_os/foundation_gate/family_web_filter_api_client.dart';
 import 'package:family_os/foundation_gate/family_sos_api_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
@@ -205,6 +207,21 @@ Future<void> main() async {
         ),
       );
     }
+    // W7 — the tasks a child has to do, the word of the guardian who confirms them, and the
+    // points that follow. Before this binding the tasks screens read a local board and a
+    // points number nobody had confirmed: a family could see a reward that only one phone
+    // knew about. A build without this binding now says the server did not answer rather
+    // than counting points locally.
+    final tasksApi = familyEntryRuntime.tasksApi;
+    if (tasksApi != null) {
+      bindTasksServerAuthority(
+        TasksServerAuthority(
+          api: tasksApi,
+          idToken: familyEntryRuntime.currentIdToken,
+          familyId: () => familyEntryRuntime.selectedFamilyId,
+        ),
+      );
+    }
     final sosApi = familyEntryRuntime.sosApi;
     if (sosApi != null) {
       bindSosServerAuthority(
@@ -305,6 +322,10 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
         transport: PackageFoundationGateHttpTransport(),
       ),
       webFilterApi: FamilyWebFilterApiClient(
+        configuration: configuration,
+        transport: PackageFoundationGateHttpTransport(),
+      ),
+      tasksApi: FamilyTasksApiClient(
         configuration: configuration,
         transport: PackageFoundationGateHttpTransport(),
       ),
