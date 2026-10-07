@@ -9,7 +9,6 @@ import 'package:family_os/core/design/components/settings_persist_toggle.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
-import 'package:family_os/core/policy/notification_delivery.dart';
 import 'package:family_os/core/policy/notification_prefs.dart';
 import 'package:family_os/core/policy/notification_prefs_repository.dart';
 import 'package:family_os/core/policy/notification_tier.dart';

@@ -49,6 +49,7 @@ final class RecordingSosFireService implements SosFireService {
       recipientDeliveries: simulate(
         recipients,
         prefsByMember: _prefsByMember,
+        motherLevelByMember: _motherLevelByMember,
         now: clock,
       ),
       childId: childId,

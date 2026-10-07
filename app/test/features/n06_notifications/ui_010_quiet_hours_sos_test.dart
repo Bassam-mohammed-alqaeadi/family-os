@@ -10,7 +10,6 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/notification_prefs.dart';
 import 'package:family_os/core/policy/notification_prefs_repository.dart';
 import 'package:family_os/core/policy/notification_tier.dart';
-import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n06_notifications/notification_prefs_screen.dart';
 import 'package:family_os/features/n10_emergency/emergency_setup_screen.dart';
 import '../../support/recording_sos_fire_service.dart';
