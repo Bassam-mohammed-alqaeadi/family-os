@@ -200,7 +200,7 @@ Future<void> _pump(
       ],
       home: Scaffold(
         body: ScreenTimeServerPanel(
-          childId: const ChildId(_childId),
+          childId: ChildId(_childId),
           authority: authority,
           canEdit: canEdit,
           idempotencyKey: () => 'w5-widget-key',
