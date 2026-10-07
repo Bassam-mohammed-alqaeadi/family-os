@@ -804,6 +804,15 @@ final class _RecordingCommands implements FamilyMembershipCommands {
     }
   }
 
+  /// Records the attempt, then answers. The lists say what the screen ASKED for; `fail`
+  /// models the server refusing, and a refusal that erased the record would make the one
+  /// test that needs it - "a refused command says so and changes nothing" - unable to see
+  /// that the screen asked at all.
+  void _record(void Function() add) {
+    add();
+    _refuseIfAsked();
+  }
+
   @override
   Future<FoundationGateMembership> invite({
     required FamilyId familyId,
@@ -811,8 +820,7 @@ final class _RecordingCommands implements FamilyMembershipCommands {
     required String targetSubject,
     required String idempotencyKey,
   }) async {
-    _refuseIfAsked();
-    invited.add(targetSubject);
+    _record(() => invited.add(targetSubject));
     lastIdempotencyKey = idempotencyKey;
     return _commandResult(id: 'member_invited', role: role, status: 'invited');
   }
@@ -823,8 +831,7 @@ final class _RecordingCommands implements FamilyMembershipCommands {
     required String membershipId,
     required String idempotencyKey,
   }) async {
-    _refuseIfAsked();
-    accepted.add(membershipId);
+    _record(() => accepted.add(membershipId));
     lastIdempotencyKey = idempotencyKey;
     return _commandResult(
       id: membershipId,
@@ -840,8 +847,7 @@ final class _RecordingCommands implements FamilyMembershipCommands {
     required String reasonCode,
     required String idempotencyKey,
   }) async {
-    _refuseIfAsked();
-    revoked.add(membershipId);
+    _record(() => revoked.add(membershipId));
     lastReasonCode = reasonCode;
     lastIdempotencyKey = idempotencyKey;
     return _commandResult(
