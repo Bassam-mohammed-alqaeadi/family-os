@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart' show TimeOfDay;
 
+import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/policy/notification_delivery.dart';
 import 'package:family_os/core/policy/notification_prefs.dart';
 import 'package:family_os/core/policy/notification_tier.dart';
@@ -18,14 +19,14 @@ import 'package:family_os/core/policy/sos_fire.dart';
 final class RecordingSosFireService implements SosFireService {
   RecordingSosFireService({
     Map<String, NotificationPrefs>? prefsByMember,
-    Map<String, int?>? motherLevelByMember,
+    Map<String, MotherLevel?>? motherLevelByMember,
     DateTime Function()? clock,
   }) : _prefsByMember = prefsByMember,
        _motherLevelByMember = motherLevelByMember,
        _clock = clock ?? DateTime.now;
 
   final Map<String, NotificationPrefs>? _prefsByMember;
-  final Map<String, int?>? _motherLevelByMember;
+  final Map<String, MotherLevel?>? _motherLevelByMember;
   final DateTime Function() _clock;
 
   int fireCount = 0;
@@ -67,7 +68,7 @@ final class RecordingSosFireService implements SosFireService {
   static List<NotificationDeliveryResult> simulate(
     List<String> recipients, {
     Map<String, NotificationPrefs>? prefsByMember,
-    Map<String, int?>? motherLevelByMember,
+    Map<String, MotherLevel?>? motherLevelByMember,
     TimeOfDay? now,
   }) {
     final clock = now ?? const TimeOfDay(hour: 23, minute: 0);
@@ -77,7 +78,10 @@ final class RecordingSosFireService implements SosFireService {
           recipientId: id,
           tier: NotificationTier.critical,
           delivered:
-              NotificationDelivery.guardianReceivesSos(memberId: id) &&
+              NotificationDelivery.guardianReceivesSos(
+                memberId: id,
+                motherLevel: motherLevelByMember?[id],
+              ) &&
               NotificationDelivery.shouldDeliver(
                 NotificationTier.critical,
                 prefsByMember?[id] ??
