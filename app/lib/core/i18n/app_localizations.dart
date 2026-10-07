@@ -21728,6 +21728,17 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'رفض'**
   String get screenTimeServerDeny;
+  String get webFilterServerNoSession;
+  String get webFilterServerUnreachable;
+  String get webFilterServerDenied;
+  String get webFilterServerRefused;
+  String get webFilterProtectionHeading;
+  String get webFilterProtectionProtected;
+  String get webFilterProtectionUnverified;
+  String get webFilterProtectionNeverReported;
+  String get webFilterProtectionUnsupported;
+  String get webFilterProtectionAtRisk;
+  String webFilterProtectionSilentMinutes(int minutes);
 }
 
 class _AppLocalizationsDelegate

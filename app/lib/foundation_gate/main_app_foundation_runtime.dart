@@ -18,6 +18,7 @@ import 'family_sos_api_client.dart';
 import 'foundation_gate_identity.dart';
 import 'foundation_gate_models.dart';
 import 'family_screen_time_api_client.dart';
+import 'family_web_filter_api_client.dart';
 import 'foundation_gate_session_controller.dart';
 
 /// Main-app orchestration for the admitted Family Entry capability.
@@ -35,6 +36,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     FamilyLocationApiClient? locationApi,
     FamilySosApiClient? sosApi,
     FamilyScreenTimeApiClient? screenTimeApi,
+    FamilyWebFilterApiClient? webFilterApi,
     String? preferredFamilyId,
   }) : _controller = controller,
        _identity = identity,
@@ -43,6 +45,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
        _locationApi = locationApi,
        _sosApi = sosApi,
        _screenTimeApi = screenTimeApi,
+       _webFilterApi = webFilterApi,
        _preferredFamilyId = preferredFamilyId?.trim(),
        _identityValue = const IdentitySnapshot.unavailable(),
        _rosterValue = const FamilyRosterSnapshot.unavailable(),
@@ -57,6 +60,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   final FamilyLocationApiClient? _locationApi;
   final FamilySosApiClient? _sosApi;
   final FamilyScreenTimeApiClient? _screenTimeApi;
+  final FamilyWebFilterApiClient? _webFilterApi;
   final String? _preferredFamilyId;
   IdentitySnapshot _identityValue;
   FamilyRosterSnapshot _rosterValue;
@@ -85,6 +89,10 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   /// a screen belongs beside the screens that render them, and the runtime's job is only to
   /// say who to ask and with which session.
   FamilyScreenTimeApiClient? get screenTimeApi => _screenTimeApi;
+
+  /// The web filter's connection to the server: the policy, the doors and the honest
+  /// protection state. Null when this build has no server session.
+  FamilyWebFilterApiClient? get webFilterApi => _webFilterApi;
 
   /// The family this device is looking at, or null before one is selected.
   String? get selectedFamilyId => _controller.selectedFamily?.id;

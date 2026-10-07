@@ -12414,4 +12414,39 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get screenTimeServerDeny => 'Deny';
+
+  @override
+  String get webFilterServerNoSession => 'No server session in this build - the filter below is the local copy, and no on-device enforcement is claimed.';
+
+  @override
+  String get webFilterServerUnreachable => 'The server did not answer - what you see is the last true answer, and nothing moved.';
+
+  @override
+  String get webFilterServerDenied => 'This account may not read this child's filter from the server.';
+
+  @override
+  String get webFilterServerRefused => 'The server refused the request - nothing changed.';
+
+  @override
+  String get webFilterProtectionHeading => 'Is the protection actually running?';
+
+  @override
+  String get webFilterProtectionProtected => 'The newest report from the device says the protection is running.';
+
+  @override
+  String get webFilterProtectionUnverified => 'Protection is not claimed: there is no recent report from this device.';
+
+  @override
+  String get webFilterProtectionNeverReported => 'This device has never reported on its protection - nothing can be said about it.';
+
+  @override
+  String get webFilterProtectionUnsupported => 'This platform cannot hold the protection plane - a fact about the phone, not about the child.';
+
+  @override
+  String get webFilterProtectionAtRisk => 'Protection is not what it should be - review what the device observed.';
+
+  @override
+  String webFilterProtectionSilentMinutes(int minutes) {
+    return 'The device has been silent for $minutes minutes.';
+  }
 }

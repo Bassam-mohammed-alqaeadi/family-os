@@ -321,6 +321,61 @@ class FoundationGateConfiguration {
     );
   }
 
+  /// The filter a child's phone must apply, with the doors that are open right now.
+  ///
+  /// The temporary allows travel with the policy because they belong to the same answer: a
+  /// handset that fetched only the stored rules would refuse a host a guardian just opened.
+  Uri familyChildWebFilterUri(String familyId, String childId) =>
+      _familyChildCrumbUri(familyId, childId, 'web-filter');
+
+  /// The father's preview: what this child would get for one host.
+  ///
+  /// The host is a query parameter rather than a path segment, because a host is data a
+  /// person typed and a path segment is a name the server issued.
+  Uri familyChildWebFilterEvaluateUri(
+    String familyId,
+    String childId,
+    String host,
+  ) {
+    final uri = _familyChildCrumbUri(familyId, childId, 'web-filter/evaluate');
+    return uri.replace(queryParameters: <String, String>{'host': host});
+  }
+
+  /// The doors that were opened for this child, and whether they are still open.
+  Uri familyChildWebFilterTempAllowsUri(String familyId, String childId) =>
+      _familyChildCrumbUri(familyId, childId, 'web-filter/temp-allows');
+
+  /// The answer to one request for a host.
+  Uri familyChildWebFilterTempAllowDecisionUri(
+    String familyId,
+    String childId,
+    String requestId,
+  ) {
+    if (!isFoundationGateUuid(requestId)) {
+      throw ArgumentError(
+        'Server-returned UUID request identifier is required.',
+      );
+    }
+    return _familyChildCrumbUri(
+      familyId,
+      childId,
+      'web-filter/temp-allows/$requestId/decision',
+    );
+  }
+
+  /// Whether protection is actually on, device by device, for one family.
+  ///
+  /// This one hangs off the family rather than a child, because the question it answers -
+  /// is the protection really running - is asked about the family's phones as a set.
+  Uri familyProtectionUri(String familyId) {
+    if (!isFoundationGateUuid(familyId)) {
+      throw ArgumentError(
+        'Server-returned UUID family identifier is required.',
+      );
+    }
+    return stagingApiOrigin.replace(path: '/v1/families/$familyId/protection');
+  }
+
   /// One path under a child, with both identifiers checked the same way every other route
   /// checks them: this class refuses to build a URL out of an identifier the server never
   /// issued.

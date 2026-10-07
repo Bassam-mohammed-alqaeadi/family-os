@@ -43,6 +43,7 @@ import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/family_chat_local_persistence.dart';
 import 'package:family_os/features/n02_day/location_server_authority.dart';
 import 'package:family_os/features/n03_screen_time/screen_time_server_authority.dart';
+import 'package:family_os/features/n04_web_filter/web_filter_server_authority.dart';
 import 'package:family_os/features/n10_emergency/sos_server_authority.dart';
 import 'package:family_os/features/n02_day/location_ux_bridge.dart';
 import 'package:family_os/features/n03_screen_time/child_apps_local_persistence.dart';
@@ -62,6 +63,7 @@ import 'package:family_os/foundation_gate/family_location_api_client.dart';
 import 'package:family_os/foundation_gate/family_discovery_api_client.dart';
 import 'package:family_os/foundation_gate/family_membership_api_client.dart';
 import 'package:family_os/foundation_gate/family_screen_time_api_client.dart';
+import 'package:family_os/foundation_gate/family_web_filter_api_client.dart';
 import 'package:family_os/foundation_gate/family_sos_api_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_http.dart';
@@ -188,6 +190,21 @@ Future<void> main() async {
         ),
       );
     }
+    // W6 — the filter a family set, whether it is actually running, and the honest answer
+    // when nobody has said anything lately. Before this binding the filter screens read a
+    // local policy and a shield nobody had checked: a family could see "protected" on a
+    // phone that had last spoken days ago. A build without this binding now says the server
+    // did not answer rather than drawing a green dot.
+    final webFilterApi = familyEntryRuntime.webFilterApi;
+    if (webFilterApi != null) {
+      bindWebFilterServerAuthority(
+        WebFilterServerAuthority(
+          api: webFilterApi,
+          idToken: familyEntryRuntime.currentIdToken,
+          familyId: () => familyEntryRuntime.selectedFamilyId,
+        ),
+      );
+    }
     final sosApi = familyEntryRuntime.sosApi;
     if (sosApi != null) {
       bindSosServerAuthority(
@@ -284,6 +301,10 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
         transport: PackageFoundationGateHttpTransport(),
       ),
       screenTimeApi: FamilyScreenTimeApiClient(
+        configuration: configuration,
+        transport: PackageFoundationGateHttpTransport(),
+      ),
+      webFilterApi: FamilyWebFilterApiClient(
         configuration: configuration,
         transport: PackageFoundationGateHttpTransport(),
       ),

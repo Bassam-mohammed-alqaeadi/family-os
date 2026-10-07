@@ -15835,5 +15835,54 @@
   "screenTimeServerDeny": "Deny",
   "@screenTimeServerDeny": {
       "description": "SCR: screen-time server panel — answer a request"
+  },
+  "webFilterServerNoSession": "No server session in this build - the filter below is the local copy, and no on-device enforcement is claimed.",
+  "@webFilterServerNoSession": {
+      "description": "SCR: web-filter server panel — no session"
+  },
+  "webFilterServerUnreachable": "The server did not answer - what you see is the last true answer, and nothing moved.",
+  "@webFilterServerUnreachable": {
+      "description": "SCR: web-filter server panel — unreachable"
+  },
+  "webFilterServerDenied": "This account may not read this child's filter from the server.",
+  "@webFilterServerDenied": {
+      "description": "SCR: web-filter server panel — access denied"
+  },
+  "webFilterServerRefused": "The server refused the request - nothing changed.",
+  "@webFilterServerRefused": {
+      "description": "SCR: web-filter server panel — refused"
+  },
+  "webFilterProtectionHeading": "Is the protection actually running?",
+  "@webFilterProtectionHeading": {
+      "description": "SCR: web-filter server panel — protection state"
+  },
+  "webFilterProtectionProtected": "The newest report from the device says the protection is running.",
+  "@webFilterProtectionProtected": {
+      "description": "SCR: web-filter server panel — protection state"
+  },
+  "webFilterProtectionUnverified": "Protection is not claimed: there is no recent report from this device.",
+  "@webFilterProtectionUnverified": {
+      "description": "SCR: web-filter server panel — protection state"
+  },
+  "webFilterProtectionNeverReported": "This device has never reported on its protection - nothing can be said about it.",
+  "@webFilterProtectionNeverReported": {
+      "description": "SCR: web-filter server panel — protection state"
+  },
+  "webFilterProtectionUnsupported": "This platform cannot hold the protection plane - a fact about the phone, not about the child.",
+  "@webFilterProtectionUnsupported": {
+      "description": "SCR: web-filter server panel — protection state"
+  },
+  "webFilterProtectionAtRisk": "Protection is not what it should be - review what the device observed.",
+  "@webFilterProtectionAtRisk": {
+      "description": "SCR: web-filter server panel — protection state"
+  },
+  "webFilterProtectionSilentMinutes": "The device has been silent for {minutes} minutes.",
+  "@webFilterProtectionSilentMinutes": {
+      "description": "SCR: web-filter server panel — how long the silence has lasted",
+      "placeholders": {
+          "minutes": {
+              "type": "int"
+          }
+      }
   }
 }

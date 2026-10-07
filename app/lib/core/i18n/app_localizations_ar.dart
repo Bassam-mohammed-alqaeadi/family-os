@@ -12237,4 +12237,39 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get screenTimeServerDeny => 'رفض';
+
+  @override
+  String get webFilterServerNoSession => 'لا توجد جلسة خادم في هذا البناء — الفلترة معروضة من التخزين المحلي، ولا ندّعي فرضًا على الجهاز.';
+
+  @override
+  String get webFilterServerUnreachable => 'لم يستجب الخادم — ما تراه آخر جواب صحيح، ولم يتغيّر شيء.';
+
+  @override
+  String get webFilterServerDenied => 'هذا الحساب لا يملك قراءة فلترة هذا الابن من الخادم.';
+
+  @override
+  String get webFilterServerRefused => 'رفض الخادم الطلب — لم يتغيّر شيء.';
+
+  @override
+  String get webFilterProtectionHeading => 'هل الحماية تعمل فعلًا؟';
+
+  @override
+  String get webFilterProtectionProtected => 'آخر بلاغ حديث من الجهاز يقول إن الحماية تعمل.';
+
+  @override
+  String get webFilterProtectionUnverified => 'لا ندّعي حماية: لا بلاغ حديث من هذا الجهاز.';
+
+  @override
+  String get webFilterProtectionNeverReported => 'لم يبلّغ هذا الجهاز عن حمايته قط — لا شيء يُقال عنها.';
+
+  @override
+  String get webFilterProtectionUnsupported => 'هذه المنصة لا تدعم مستوى الحماية هذا — وهي حقيقة عن الجهاز لا عن الابن.';
+
+  @override
+  String get webFilterProtectionAtRisk => 'الحماية ليست كما ينبغي — راجع ما رصده الجهاز.';
+
+  @override
+  String webFilterProtectionSilentMinutes(int minutes) {
+    return 'صمت الجهاز منذ $minutes دقيقة.';
+  }
 }

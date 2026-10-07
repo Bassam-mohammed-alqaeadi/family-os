@@ -15835,5 +15835,54 @@
   "screenTimeServerDeny": "رفض",
   "@screenTimeServerDeny": {
       "description": "SCR: screen-time server panel — answer a request"
+  },
+  "webFilterServerNoSession": "لا توجد جلسة خادم في هذا البناء — الفلترة معروضة من التخزين المحلي، ولا ندّعي فرضًا على الجهاز.",
+  "@webFilterServerNoSession": {
+      "description": "SCR: web-filter server panel — no session"
+  },
+  "webFilterServerUnreachable": "لم يستجب الخادم — ما تراه آخر جواب صحيح، ولم يتغيّر شيء.",
+  "@webFilterServerUnreachable": {
+      "description": "SCR: web-filter server panel — unreachable"
+  },
+  "webFilterServerDenied": "هذا الحساب لا يملك قراءة فلترة هذا الابن من الخادم.",
+  "@webFilterServerDenied": {
+      "description": "SCR: web-filter server panel — access denied"
+  },
+  "webFilterServerRefused": "رفض الخادم الطلب — لم يتغيّر شيء.",
+  "@webFilterServerRefused": {
+      "description": "SCR: web-filter server panel — refused"
+  },
+  "webFilterProtectionHeading": "هل الحماية تعمل فعلًا؟",
+  "@webFilterProtectionHeading": {
+      "description": "SCR: web-filter server panel — protection state"
+  },
+  "webFilterProtectionProtected": "آخر بلاغ حديث من الجهاز يقول إن الحماية تعمل.",
+  "@webFilterProtectionProtected": {
+      "description": "SCR: web-filter server panel — protection state"
+  },
+  "webFilterProtectionUnverified": "لا ندّعي حماية: لا بلاغ حديث من هذا الجهاز.",
+  "@webFilterProtectionUnverified": {
+      "description": "SCR: web-filter server panel — protection state"
+  },
+  "webFilterProtectionNeverReported": "لم يبلّغ هذا الجهاز عن حمايته قط — لا شيء يُقال عنها.",
+  "@webFilterProtectionNeverReported": {
+      "description": "SCR: web-filter server panel — protection state"
+  },
+  "webFilterProtectionUnsupported": "هذه المنصة لا تدعم مستوى الحماية هذا — وهي حقيقة عن الجهاز لا عن الابن.",
+  "@webFilterProtectionUnsupported": {
+      "description": "SCR: web-filter server panel — protection state"
+  },
+  "webFilterProtectionAtRisk": "الحماية ليست كما ينبغي — راجع ما رصده الجهاز.",
+  "@webFilterProtectionAtRisk": {
+      "description": "SCR: web-filter server panel — protection state"
+  },
+  "webFilterProtectionSilentMinutes": "صمت الجهاز منذ {minutes} دقيقة.",
+  "@webFilterProtectionSilentMinutes": {
+      "description": "SCR: web-filter server panel — how long the silence has lasted",
+      "placeholders": {
+          "minutes": {
+              "type": "int"
+          }
+      }
   }
 }
