@@ -51,6 +51,11 @@ jobs:
           # The JSON report carries names and results, and the exception text goes to the
           # console. Both are kept, because a failure named without its message cannot be
           # acted on from a machine that can only read annotations.
+          #
+          # `pipefail` is not decoration: without it the step's exit code is `tee`'s, so a
+          # run in which half the suite failed was reported as a success and the gate below
+          # never fired. The gate is only a gate if the exit code is the test runner's.
+          set -o pipefail
           flutter test --file-reporter=json:build/ci/flutter-test.json 2>&1 | tee build/ci/flutter-test.log
       - name: Summarize test result
         if: always()
@@ -181,9 +186,18 @@ jobs:
               # the console still says why it failed. Escaped to one line, because a
               # workflow command cannot carry a raw newline.
               tail = " \u23ce ".join(
-                  line.rstrip() for line in raw[-60:] if line.strip()
+                  line.rstrip() for line in raw[-400:] if line.strip()
               )
-              print(f"::error title=Flutter console tail::{tail[-1200:]}")
+              # Annotations are truncated, and the reason a widget test failed is exactly
+              # what the next reader needs, so the tail leaves in numbered chunks instead
+              # of one clipped line.
+              escaped = tail.replace("%", "%25").replace("\r", "").replace("\n", "%0A")
+              size = 3000
+              pieces = [escaped[i : i + size] for i in range(0, len(escaped), size)]
+              for index, piece in enumerate(pieces[:8], start=1):
+                  print(
+                      f"::error title=Flutter console tail {index}/{len(pieces)}::{piece}"
+                  )
           PY
       - name: Upload Flutter test report
         if: always()
@@ -204,12 +218,25 @@ jobs:
             echo "Generated source is committed and current."
           else
             # The diff itself is the only thing that says WHAT is stale, and the job log
-            # is not readable from every environment that has to fix it. Truncated to keep
-            # the annotation within the API's limit; the log still has all of it.
-            DIFF="$(git diff -- lib/app/router.dart lib/app/shell_config.dart lib/core/i18n \
-              | head -c 55000)"
-            ESCAPED="$(printf '%s' "$DIFF" | sed -e 's/%/%25/g' -e 's/\r//g' | tr '\n' '\036' | sed -e 's/\036/%0A/g')"
-            echo "::error title=Generated source is stale::${ESCAPED}"
+            # is not readable from every environment that has to fix it - so it leaves as
+            # numbered annotations rather than one clipped line.
+            mkdir -p build/ci
+            git diff -U1 -- lib/app/router.dart lib/app/shell_config.dart lib/core/i18n \
+              > build/ci/generated.diff || true
+            # The generator's own output is the only thing that says what the committed
+            # files must become, and one clipped annotation is not enough to apply it.
+            # The whole diff leaves in numbered chunks; the log still has all of it.
+            python3 - <<'CHUNKS'
+            from pathlib import Path
+
+            text = Path("build/ci/generated.diff").read_text(encoding="utf-8", errors="replace")
+            escaped = text.replace("%", "%25").replace("\r", "").replace("\n", "%0A")
+            size = 3000
+            pieces = [escaped[i : i + size] for i in range(0, len(escaped), size)]
+            print(f"::error title=Generated source is stale::{len(pieces)} chunk(s) follow; {len(text)} characters")
+            for index, piece in enumerate(pieces[:20], start=1):
+                print(f"::error title=Generated diff {index}/{len(pieces)}::{piece}")
+            CHUNKS
             git diff --stat -- lib/app/router.dart lib/app/shell_config.dart lib/core/i18n
             exit 1
           fi
