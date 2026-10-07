@@ -674,3 +674,296 @@ export function sosAlertListQuery(value) {
   }
   return status;
 }
+
+// ---------------------------------------------------------------------------------------
+// W5 — the screen-time surface's inputs.
+//
+// Every number a family sets is bounded here as well as in the schema, and the bounds are
+// the product's: a day holds 1440 minutes, an extension is asked for in minutes up to four
+// hours, a lock has a reason, and a usage report is a cumulative figure per app rather than
+// a delta - so a handset cannot report "5 minutes" and have the server subtract anything.
+//
+// The one shape worth stating: an app report carries what the handset SAW (name, category)
+// and what it MEASURED (minutes). A report that omits the name is refused rather than
+// stored under the app id, because a family reading "com.unknown.pkg" learns nothing.
+// ---------------------------------------------------------------------------------------
+
+const APP_CATEGORY_VALUES = new Set(['games', 'social', 'edu', 'tools']);
+const APP_RULE_STATUS_VALUES = new Set(['allowed', 'free', 'blocked', 'pending']);
+const LOCK_REASON_VALUES = new Set(['parent_lock', 'check_in', 'task_time', 'other']);
+const TIME_REQUEST_STATUSES = new Set(['pending', 'approved', 'denied', 'expired']);
+const TIME_REQUEST_DECISIONS = new Set(['approve', 'deny']);
+const MAX_APP_ID_LENGTH = 120;
+const MAX_APP_NAME_LENGTH = 120;
+const MAX_AGE_RATING_LENGTH = 16;
+const MAX_REQUESTED_MINUTES = 240;
+const MAX_DAILY_LIMIT_MINUTES = 1440;
+const MAX_APP_REPORTS = 200;
+const MAX_USAGE_MINUTES_PER_APP = 1440;
+const MAX_LOCK_REASON_CODE_LENGTH = 40;
+const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const APP_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$/;
+
+function requiredWholeNumber(value, field, min, max) {
+  if (!Number.isInteger(value) || value < min || value > max) {
+    throw new HttpError(
+      400,
+      'invalid_request',
+      `${field} must be a whole number between ${min} and ${max}.`,
+    );
+  }
+  return value;
+}
+
+function optionalWholeNumber(value, field, min, max) {
+  if (value === undefined || value === null) return null;
+  return requiredWholeNumber(value, field, min, max);
+}
+
+/** One day of the week, 1 = Monday ... 7 = Sunday. */
+function schoolDays(value) {
+  if (!Array.isArray(value) || value.length === 0) {
+    throw new HttpError(400, 'invalid_request', 'schoolMode.days must list at least one weekday.');
+  }
+  const days = value.map((entry, index) =>
+    requiredWholeNumber(entry, `schoolMode.days[${index}]`, 1, 7));
+  return [...new Set(days)].sort((left, right) => left - right);
+}
+
+/**
+ * The family's policy for one child. Every field optional, because a screen that changes
+ * bedtime should not have to resend the daily cap - and the unchanged fields keep their
+ * stored value rather than being reset to a default nobody chose.
+ */
+export function screenTimePolicyInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(
+    body,
+    new Set([
+      'dailyLimitMinutes',
+      'schoolMode',
+      'bedtime',
+      'timezoneOffsetMinutes',
+      'expectedVersion',
+    ]),
+  );
+  const policy = {};
+  if (body.dailyLimitMinutes !== undefined) {
+    policy.dailyLimitMinutes = requiredWholeNumber(
+      body.dailyLimitMinutes,
+      'dailyLimitMinutes',
+      0,
+      MAX_DAILY_LIMIT_MINUTES,
+    );
+  }
+  if (body.schoolMode !== undefined) {
+    const school = bodyObject(body.schoolMode);
+    onlyKnownFields(school, new Set(['enabled', 'days', 'startMinute', 'endMinute']));
+    policy.schoolMode = {
+      enabled: school.enabled === undefined
+        ? undefined
+        : optionalBoolean(school.enabled, 'schoolMode.enabled', false),
+      days: school.days === undefined ? undefined : schoolDays(school.days),
+      startMinute: school.startMinute === undefined
+        ? undefined
+        : requiredWholeNumber(school.startMinute, 'schoolMode.startMinute', 0, 1439),
+      endMinute: school.endMinute === undefined
+        ? undefined
+        : requiredWholeNumber(school.endMinute, 'schoolMode.endMinute', 0, 1439),
+    };
+  }
+  if (body.bedtime !== undefined) {
+    const bedtime = bodyObject(body.bedtime);
+    onlyKnownFields(bedtime, new Set(['startMinute', 'endMinute']));
+    policy.bedtime = {
+      startMinute: bedtime.startMinute === undefined
+        ? undefined
+        : requiredWholeNumber(bedtime.startMinute, 'bedtime.startMinute', 0, 1439),
+      endMinute: bedtime.endMinute === undefined
+        ? undefined
+        : requiredWholeNumber(bedtime.endMinute, 'bedtime.endMinute', 0, 1439),
+    };
+  }
+  if (body.timezoneOffsetMinutes !== undefined) {
+    policy.timezoneOffsetMinutes = requiredWholeNumber(
+      body.timezoneOffsetMinutes,
+      'timezoneOffsetMinutes',
+      -720,
+      840,
+    );
+  }
+  if (Object.keys(policy).length === 0) {
+    throw new HttpError(400, 'invalid_request', 'At least one policy field must be sent.');
+  }
+  const expectedVersion = optionalWholeNumber(body.expectedVersion, 'expectedVersion', 0, 1_000_000);
+  return { policy, expectedVersion };
+}
+
+/**
+ * An app identifier as it appears in a path: a package name, not a UUID.
+ *
+ * It is checked here rather than trusted from the URL for the same reason every other
+ * identifier is: the value ends up in a row keyed by (child, app), and a client that could
+ * put a slash or a space in it could make two different apps collide in a family's screen.
+ */
+export function requireAppId(value) {
+  const appId = requiredText(value, 'appId', { maxLength: MAX_APP_ID_LENGTH });
+  if (!APP_ID_PATTERN.test(appId)) {
+    throw new HttpError(
+      400,
+      'invalid_request',
+      'appId must be a package-style identifier of letters, digits, dot, dash or underscore.',
+    );
+  }
+  return appId;
+}
+
+/** One app's rule. A limit on an app that does not count is refused, as the schema refuses it. */
+export function appRuleInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['status', 'limitMinutes', 'unlimited']));
+  const status = requiredText(body.status, 'status', { maxLength: 16 });
+  if (!APP_RULE_STATUS_VALUES.has(status)) {
+    throw new HttpError(
+      400,
+      'invalid_request',
+      `status must be one of: ${[...APP_RULE_STATUS_VALUES].join(', ')}.`,
+    );
+  }
+  const limitMinutes = optionalWholeNumber(body.limitMinutes, 'limitMinutes', 1, MAX_DAILY_LIMIT_MINUTES);
+  const unlimited = body.unlimited === undefined
+    ? false
+    : optionalBoolean(body.unlimited, 'unlimited', false);
+  if (status !== 'allowed' && limitMinutes != null) {
+    throw new HttpError(400, 'invalid_request', 'Only an allowed app may carry a limit.');
+  }
+  if (status !== 'allowed' && unlimited) {
+    throw new HttpError(400, 'invalid_request', 'Only an allowed app may be unlimited.');
+  }
+  return { status, limitMinutes, unlimited };
+}
+
+/** An instant lock's reason. A lock without one is a lock nobody can explain later. */
+export function lockInput(value) {
+  const body = value === undefined || value === null ? {} : bodyObject(value);
+  onlyKnownFields(body, new Set(['reasonCode']));
+  const reasonCode = body.reasonCode === undefined
+    ? 'parent_lock'
+    : requiredText(body.reasonCode, 'reasonCode', { maxLength: 24 });
+  if (!LOCK_REASON_VALUES.has(reasonCode)) {
+    throw new HttpError(
+      400,
+      'invalid_request',
+      `reasonCode must be one of: ${[...LOCK_REASON_VALUES].join(', ')}.`,
+    );
+  }
+  return { reasonCode };
+}
+
+/** The child's question: how many minutes, and optionally why. */
+export function timeRequestInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['requestedMinutes', 'reasonCode']));
+  return {
+    requestedMinutes: requiredWholeNumber(body.requestedMinutes, 'requestedMinutes', 1, MAX_REQUESTED_MINUTES),
+    reasonCode: body.reasonCode === undefined
+      ? null
+      : requiredText(body.reasonCode, 'reasonCode', { maxLength: MAX_LOCK_REASON_CODE_LENGTH }),
+  };
+}
+
+/** A guardian's answer: approve with minutes, or deny. Nothing else. */
+export function timeRequestDecisionInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['decision', 'grantedMinutes']));
+  const decision = requiredText(body.decision, 'decision', { maxLength: 8 });
+  if (!TIME_REQUEST_DECISIONS.has(decision)) {
+    throw new HttpError(
+      400,
+      'invalid_request',
+      `decision must be one of: ${[...TIME_REQUEST_DECISIONS].join(', ')}.`,
+    );
+  }
+  if (decision === 'deny' && body.grantedMinutes !== undefined) {
+    throw new HttpError(400, 'invalid_request', 'A denied request carries no granted minutes.');
+  }
+  return {
+    decision,
+    grantedMinutes: optionalWholeNumber(body.grantedMinutes, 'grantedMinutes', 1, MAX_REQUESTED_MINUTES),
+  };
+}
+
+/** Which requests a read is asking for. */
+export function timeRequestListQuery(value) {
+  const query = bodyObject(value ?? {});
+  onlyKnownFields(query, new Set(['status']));
+  if (query.status === undefined) return 'all';
+  const status = requiredText(query.status, 'status', { maxLength: 16 });
+  if (!TIME_REQUEST_STATUSES.has(status) && status !== 'all') {
+    throw new HttpError(
+      400,
+      'invalid_request',
+      `status must be one of: ${[...TIME_REQUEST_STATUSES, 'all'].join(', ')}.`,
+    );
+  }
+  return status;
+}
+
+/** One app's usage as the handset measured it: cumulative minutes for a day. */
+function usageEntry(value, index) {
+  const entry = bodyObject(value);
+  onlyKnownFields(entry, new Set(['appId', 'usedMinutes', 'date']));
+  const date = entry.date === undefined ? null : requiredText(entry.date, `usage[${index}].date`, { maxLength: 10 });
+  if (date != null && !DAY_PATTERN.test(date)) {
+    throw new HttpError(400, 'invalid_request', `usage[${index}].date must be YYYY-MM-DD.`);
+  }
+  return {
+    appId: requiredText(entry.appId, `usage[${index}].appId`, { maxLength: MAX_APP_ID_LENGTH }),
+    usedMinutes: requiredWholeNumber(entry.usedMinutes, `usage[${index}].usedMinutes`, 0, MAX_USAGE_MINUTES_PER_APP),
+    date,
+  };
+}
+
+/** One installed app as the handset described it. */
+function appEntry(value, index) {
+  const entry = bodyObject(value);
+  onlyKnownFields(entry, new Set(['appId', 'displayName', 'category', 'ageRating']));
+  const category = requiredText(entry.category, `apps[${index}].category`, { maxLength: 16 });
+  if (!APP_CATEGORY_VALUES.has(category)) {
+    throw new HttpError(
+      400,
+      'invalid_request',
+      `apps[${index}].category must be one of: ${[...APP_CATEGORY_VALUES].join(', ')}.`,
+    );
+  }
+  return {
+    appId: requiredText(entry.appId, `apps[${index}].appId`, { maxLength: MAX_APP_ID_LENGTH }),
+    displayName: requiredText(entry.displayName, `apps[${index}].displayName`, { maxLength: MAX_APP_NAME_LENGTH }),
+    category,
+    ageRating: entry.ageRating === undefined
+      ? ''
+      : requiredText(entry.ageRating, `apps[${index}].ageRating`, { maxLength: MAX_AGE_RATING_LENGTH }),
+  };
+}
+
+/** What a child's handset reports in one call: minutes, inventory, and maybe a question. */
+export function deviceScreenTimeReportInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['usage', 'apps', 'request']));
+  const rawUsage = body.usage === undefined ? [] : body.usage;
+  const rawApps = body.apps === undefined ? [] : body.apps;
+  if (!Array.isArray(rawUsage) || rawUsage.length > MAX_APP_REPORTS) {
+    throw new HttpError(400, 'invalid_request', `usage must hold at most ${MAX_APP_REPORTS} entries.`);
+  }
+  if (!Array.isArray(rawApps) || rawApps.length > MAX_APP_REPORTS) {
+    throw new HttpError(400, 'invalid_request', `apps must hold at most ${MAX_APP_REPORTS} entries.`);
+  }
+  const usage = rawUsage.map(usageEntry);
+  const apps = rawApps.map(appEntry);
+  const seen = new Set(usage.map((entry) => `${entry.date ?? ''}\u0000${entry.appId}`));
+  if (seen.size !== usage.length) {
+    throw new HttpError(400, 'invalid_request', 'usage must name each app once per day.');
+  }
+  const request = body.request === undefined ? null : timeRequestInput(body.request);
+  return { usage, apps, request };
+}

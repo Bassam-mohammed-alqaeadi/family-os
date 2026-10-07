@@ -7,6 +7,7 @@ import { membershipRosterFor } from './membership-roster.js';
 import { safeZonesFor } from './safe-zones.js';
 import { locationSurfaceFor } from './location-telemetry.js';
 import { sosEmergencyFor } from './sos-emergency.js';
+import { screenTimeFor } from './screen-time.js';
 import { capabilityMatches } from './store/postgres-foundation-store.js';
 import {
     claimDevicePairingInput,
@@ -17,8 +18,15 @@ import {
     registerFamilyChildDeviceInput,
     createGuardianTransferInput,
     createMembershipInput,
+    appRuleInput,
     createSafeZoneInput,
+    deviceScreenTimeReportInput,
     locationFixInput,
+    lockInput,
+    screenTimePolicyInput,
+    timeRequestDecisionInput,
+    timeRequestInput,
+    timeRequestListQuery,
     sosAlertListQuery,
     sosBackupContactInput,
     sosBackupContactUpdateInput,
@@ -26,6 +34,7 @@ import {
     sosResolveInput,
     revokeMembershipInput,
     updateSafeZoneAlertsInput,
+    requireAppId,
     requireIdempotencyKey,
     requireNoQueryParameters,
     requireUuid,
@@ -77,6 +86,10 @@ export function createApp({
     // W4. The emergency surface reaches the database through the same published helpers,
     // and its credential check is the one the device routes already use.
     sos = sosEmergencyFor(store, { credentialMatches: capabilityMatches }),
+    // W5. The minutes a child has, the apps they belong to, and the instant lock. Same
+    // arrangement as the surfaces before it: data access through the store's published
+    // helpers, and the one credential check every device route already uses.
+    screenTime = screenTimeFor(store, { credentialMatches: capabilityMatches }),
     preAuthenticationRateLimit = {},
     protectedRateLimit = {},
 }) {
@@ -854,6 +867,289 @@ export function createApp({
                 contactId,
                 patch,
                 correlationId: request.correlationId,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // ── W5 SCREEN TIME ──────────────────────────────────────────────────────────
+    //
+    // Guardians set the policy, the apps, the lock and the answers; the child's own
+    // handset reads and reports through the credential it was issued at pairing, which is
+    // what proves WHICH child it is. There is no child id on the device routes, and there
+    // must never be one: a parameter a client can choose is not proof of anything.
+    app.get(
+        '/v1/families/:familyId/children/:childId/screen-time',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            requireNoQueryParameters(request.query);
+            const result = await screenTime.read({
+                principal: request.principal,
+                familyId,
+                childId,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    app.patch(
+        '/v1/families/:familyId/children/:childId/screen-time',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            requireNoQueryParameters(request.query);
+            const { policy, expectedVersion } = screenTimePolicyInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await screenTime.updatePolicy({
+                principal: request.principal,
+                familyId,
+                childId,
+                policy,
+                expectedVersion,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'screen_time.policy.update',
+                    principal: request.principal,
+                    input: { familyId, childId, policy, expectedVersion },
+                }),
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    app.get(
+        '/v1/families/:familyId/children/:childId/apps',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            requireNoQueryParameters(request.query);
+            const result = await screenTime.listApps({
+                principal: request.principal,
+                familyId,
+                childId,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    app.put(
+        '/v1/families/:familyId/children/:childId/apps/:appId/rule',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            const appId = requireAppId(request.params.appId);
+            requireNoQueryParameters(request.query);
+            const rule = appRuleInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await screenTime.updateAppRule({
+                principal: request.principal,
+                familyId,
+                childId,
+                appId,
+                rule,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'screen_time.app_rule.update',
+                    principal: request.principal,
+                    input: { familyId, childId, appId, rule },
+                }),
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // "This phone is off now." A decision with an author and a reason, not a duration -
+    // the parent who locks it is the one who releases it, and "until 18:00" is a rule the
+    // policy already expresses.
+    app.post(
+        '/v1/families/:familyId/children/:childId/screen-time/lock',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            requireNoQueryParameters(request.query);
+            const { reasonCode } = lockInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await screenTime.lock({
+                principal: request.principal,
+                familyId,
+                childId,
+                reasonCode,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'screen_time.lock',
+                    principal: request.principal,
+                    input: { familyId, childId, reasonCode },
+                }),
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    app.post(
+        '/v1/families/:familyId/children/:childId/screen-time/unlock',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            requireNoQueryParameters(request.query);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await screenTime.unlock({
+                principal: request.principal,
+                familyId,
+                childId,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'screen_time.unlock',
+                    principal: request.principal,
+                    input: { familyId, childId },
+                }),
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    app.get(
+        '/v1/families/:familyId/children/:childId/time-requests',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            const status = timeRequestListQuery(request.query);
+            const result = await screenTime.listTimeRequests({
+                principal: request.principal,
+                familyId,
+                childId,
+                status,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // A guardian asking on a child's behalf: the spoken request, recorded the same way as
+    // the one the child's own handset sends.
+    app.post(
+        '/v1/families/:familyId/children/:childId/time-requests',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            requireNoQueryParameters(request.query);
+            const input = timeRequestInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await screenTime.createTimeRequest({
+                principal: request.principal,
+                familyId,
+                childId,
+                ...input,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'screen_time.request.create',
+                    principal: request.principal,
+                    input: { familyId, childId, ...input },
+                }),
+            });
+            response.status(201).json(result);
+        }),
+    );
+
+    app.post(
+        '/v1/families/:familyId/children/:childId/time-requests/:requestId/decision',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            const requestId = requireUuid(request.params.requestId, 'requestId');
+            requireNoQueryParameters(request.query);
+            const input = timeRequestDecisionInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await screenTime.decideTimeRequest({
+                principal: request.principal,
+                familyId,
+                childId,
+                requestId,
+                ...input,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'screen_time.request.decide',
+                    principal: request.principal,
+                    input: { familyId, childId, requestId, ...input },
+                }),
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // The child's own device: what it measured, what is installed, and what it wants - and
+    // the same state block a guardian reads back, computed from the same rows.
+    app.post(
+        '/v1/devices/:deviceId/screen-time',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            const { usage, apps, request: ask } = deviceScreenTimeReportInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await screenTime.reportFromDevice({
+                deviceCredential: request.deviceCredential,
+                deviceId,
+                usage,
+                apps,
+                requestMinutes: ask?.requestedMinutes ?? null,
+                requestReasonCode: ask?.reasonCode ?? null,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'screen_time.device.report',
+                    principal: request.principal ?? { subject: `device:${deviceId}` },
+                    input: { deviceId, usage, apps, request: ask },
+                }),
+            });
+            response.status(201).json(result);
+        }),
+    );
+
+    app.get(
+        '/v1/devices/:deviceId/screen-time',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            requireNoQueryParameters(request.query);
+            const result = await screenTime.readFromDevice({
+                deviceCredential: request.deviceCredential,
+                deviceId,
             });
             response.status(200).json(result);
         }),

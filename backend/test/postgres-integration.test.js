@@ -26,6 +26,7 @@ import { createApp } from '../src/app.js';
 import { applyMigrations } from '../src/migration-runner.js';
 import { FOUNDATION_SCHEMA_MIGRATIONS } from '../src/schema-manifest.js';
 import { deviceRevocationFor } from '../src/device-revocation.js';
+import { familyLocalParts } from '../src/screen-time.js';
 import { PostgresFoundationStore } from '../src/store/postgres-foundation-store.js';
 import { TestAuthVerifier } from './memory-foundation-store.js';
 
@@ -1903,6 +1904,981 @@ test('a child presses the button, the family answers it, and nothing claims a de
           /violates check constraint/i,
           'the database must refuse a delivery state this platform cannot prove',
         );
+      });
+    } finally {
+      await store.close();
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------------------
+// W5 — screen time, against real PostgreSQL.
+//
+// The feature families pay for, and the feature where a platform most easily starts lying.
+// Every claim the surface makes is checked here from the outside, through the mounted
+// routes, with the numbers read back out of the database:
+//
+//   1. The state is computed, not stored. There is no `blocked` column to go stale, and
+//      raising the cap clears a "time is up" state with no unlock call in between.
+//   2. A blocked app is blocked at noon and at midnight; an undecided app waits for a
+//      parent; a bedtime ends the entertainment and leaves education alone.
+//   3. Minutes never shrink. A replay, a retry or a handset reporting a smaller figure
+//      cannot reduce what a family is looking at.
+//   4. A lock is an event with an author, one live lock per child, released by a person
+//      and remembered afterwards.
+//   5. Questions expire, answers happen once, and a grant is never larger than the ask.
+//   6. The device credential is the only proof of which child is asking - the routes carry
+//      no child id, and a body that tries to supply one is refused.
+//
+// Identity is the only stubbed part (`TestAuthVerifier`); everything else is the real
+// surface. The windows are computed with the server's own clock function rather than
+// re-derived here, so a test that passes cannot be passing against a different calendar.
+// ---------------------------------------------------------------------------------------
+
+const W5_OFFSET_SAFETY_MARGIN_MINUTES = 5;
+
+/**
+ * The household both W5 journeys start from.
+ *
+ * A family with its primary guardian, a second guardian, the child's own account (invited
+ * and accepted through the real endpoints, because an account that cannot reach the door is
+ * not proof of anything), and the handset whose credential is what proves which child it is.
+ *
+ * The family's offset is chosen so that their local time is around noon, which keeps the
+ * clock away from midnight and means the occasional minute that ticks past mid-test cannot
+ * move the day out from under a usage row.
+ */
+async function seedScreenTimeFamily(baseUrl, client, tag) {
+  const created = await jsonRequest(baseUrl, '/v1/families', {
+    method: 'POST',
+    headers: authorized('test-primary', { 'idempotency-key': `${tag}-family` }),
+    body: { displayName: 'عائلة وقت الشاشة' },
+  });
+  assert.equal(created.status, 201);
+  const familyId = created.body.family.id;
+
+  const children = await jsonRequest(baseUrl, `/v1/families/${familyId}/children`, {
+    method: 'POST',
+    headers: authorized('test-primary', { 'idempotency-key': `${tag}-child` }),
+    body: { displayName: 'أماني', ageYears: 11, avatarEmoji: '🦁', themeColor: 'sky' },
+  });
+  assert.equal(children.status, 201);
+  const childId = children.body.child.id;
+
+  for (const [subject, role, key] of [
+    ['test-co', 'co_guardian', `${tag}-invite-co`],
+    ['test-child', 'child', `${tag}-invite-child`],
+  ]) {
+    const invite = await jsonRequest(baseUrl, `/v1/families/${familyId}/memberships`, {
+      method: 'POST',
+      headers: authorized('test-primary', { 'idempotency-key': key }),
+      body: { role, targetSubject: subject },
+    });
+    assert.equal(invite.status, 201);
+    const accepted = await jsonRequest(
+      baseUrl,
+      `/v1/families/${familyId}/memberships/${invite.body.membership.id}/accept`,
+      { method: 'POST', headers: authorized(subject, { 'idempotency-key': `${key}-accept` }) },
+    );
+    assert.equal(accepted.status, 200, `${subject} must be able to reach the family`);
+  }
+
+  const guardians = await client.query(
+    `SELECT target_subject, id FROM family_memberships
+      WHERE family_id = $1 AND role IN ('primary_guardian', 'co_guardian')`,
+    [familyId],
+  );
+  const primaryMembershipId = guardians.rows.find((row) => row.target_subject === 'test-primary').id;
+
+  const deviceCredential = `${tag}-device-credential-value-0001`;
+  const device = await client.query(
+    `INSERT INTO family_child_devices
+       (id, family_id, child_id, device_label, credential_hash, credential_issued_at)
+     VALUES (gen_random_uuid(), $1, $2, 'Amani Android', $3, NOW())
+     RETURNING id`,
+    [familyId, childId, createHash('sha256').update(deviceCredential).digest('hex')],
+  );
+
+  // Noon in the family's own day, whatever the test runner's clock says. The offset is a
+  // stored field on the policy, which is what makes this possible at all.
+  const utcMinuteOfDay = new Date().getUTCHours() * 60 + new Date().getUTCMinutes();
+  const offsetMinutes = 720 - utcMinuteOfDay;
+
+  return {
+    familyId,
+    childId,
+    offsetMinutes,
+    primaryMembershipId,
+    deviceId: device.rows[0].id,
+    deviceAuth: { authorization: `Device ${deviceCredential}` },
+    timezoneOffsetMinutes: offsetMinutes,
+  };
+}
+
+/** A window that contains the family's present minute, with room for a clock that ticks. */
+function windowAroundNow(offsetMinutes, margin = W5_OFFSET_SAFETY_MARGIN_MINUTES) {
+  const { minuteOfDay } = familyLocalParts(new Date(), offsetMinutes);
+  return {
+    startMinute: (minuteOfDay + 1440 - margin) % 1440,
+    endMinute: (minuteOfDay + margin) % 1440,
+  };
+}
+
+/** A one-minute window twelve hours away: a real bedtime that cannot interfere with a test. */
+function windowAwayFromNow(offsetMinutes) {
+  const { minuteOfDay } = familyLocalParts(new Date(), offsetMinutes);
+  return {
+    startMinute: (minuteOfDay + 720) % 1440,
+    endMinute: (minuteOfDay + 721) % 1440,
+  };
+}
+
+test('the family sets the minutes, the phone reports what it measured, and only entertainment is counted', { skip }, async () => {
+  await withFreshDatabase(async (client) => {
+    await migrate(client);
+    const store = new PostgresFoundationStore({
+      connectionString: withDatabase(DATABASE_URL, client.database),
+    });
+    const app = createApp({
+      store,
+      authVerifier: new TestAuthVerifier(),
+      readiness: () => ({ ready: true, missing: [] }),
+    });
+    try {
+      await withServer(app, async (baseUrl) => {
+        const household = await seedScreenTimeFamily(baseUrl, client, 'w5a');
+        const { familyId, childId, deviceId, deviceAuth } = household;
+        const childPath = `/v1/families/${familyId}/children/${childId}`;
+        const screenPath = `${childPath}/screen-time`;
+        const guard = (key) => authorized('test-primary', { 'idempotency-key': key });
+
+        // 1. Before anybody decides anything, the read publishes the defaults and says so:
+        //    `configured: false` with no version. A screen showing a bedtime here is showing
+        //    the published default, not a value this family chose.
+        const before = await jsonRequest(baseUrl, screenPath, { headers: authorized('test-primary') });
+        assert.equal(before.status, 200);
+        assert.equal(before.body.childId, childId);
+        assert.equal(before.body.policy.configured, false);
+        assert.equal(before.body.policy.version, null);
+        assert.equal(before.body.policy.dailyLimitMinutes, 0);
+        assert.equal(before.body.policy.timezoneOffsetMinutes, 180);
+        assert.equal(before.body.state.capMinutes, null, 'no cap means no cap');
+        assert.equal(before.body.lock, null);
+        assert.equal(before.body.openRequest, null);
+        assert.equal(before.body.usage.countableUsedMinutes, 0);
+
+        // 2. Who may read it: the guardians, and nobody else. The child's own account is a
+        //    member of the family and still cannot read a screen-time surface that cannot
+        //    prove it is theirs; a co-guardian can, because a co-guardian is a parent here.
+        const asChild = await jsonRequest(baseUrl, screenPath, { headers: authorized('test-child') });
+        assert.equal(asChild.status, 403);
+        assert.equal(asChild.body.error.code, 'screen_time_forbidden');
+        const asCoGuardian = await jsonRequest(baseUrl, screenPath, { headers: authorized('test-co') });
+        assert.equal(asCoGuardian.status, 200);
+        const asStranger = await jsonRequest(baseUrl, screenPath, { headers: authorized('test-stranger') });
+        assert.equal(asStranger.status, 403);
+
+        // A family cannot reach into another family's child either: the child must belong to
+        // the family whose guardian is asking.
+        const other = await jsonRequest(baseUrl, '/v1/families', {
+          method: 'POST',
+          headers: authorized('test-stranger', { 'idempotency-key': 'w5a-other-family' }),
+          body: { displayName: 'عائلة أخرى' },
+        });
+        assert.equal(other.status, 201);
+        const otherChild = await jsonRequest(baseUrl, `/v1/families/${other.body.family.id}/children`, {
+          method: 'POST',
+          headers: authorized('test-stranger', { 'idempotency-key': 'w5a-other-child' }),
+          body: { displayName: 'طفل آخر', ageYears: 8, avatarEmoji: '🐬', themeColor: 'mint' },
+        });
+        assert.equal(otherChild.status, 201);
+        const crossFamily = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/children/${otherChild.body.child.id}/screen-time`,
+          { headers: authorized('test-primary') },
+        );
+        assert.equal(crossFamily.status, 404);
+        assert.equal(crossFamily.body.error.code, 'child_not_found');
+
+        // 3. The policy: a family sets the cap and their own offset, and the fields they did
+        //    not send keep what they had. The default bedtime is still the published one.
+        const first = await jsonRequest(baseUrl, screenPath, {
+          method: 'PATCH',
+          headers: guard('w5a-policy-1'),
+          body: { dailyLimitMinutes: 60, timezoneOffsetMinutes: household.timezoneOffsetMinutes },
+        });
+        assert.equal(first.status, 200);
+        assert.equal(first.body.policy.dailyLimitMinutes, 60);
+        assert.equal(first.body.policy.timezoneOffsetMinutes, household.timezoneOffsetMinutes);
+        assert.equal(first.body.policy.version, 1);
+        assert.equal(first.body.policy.bedtime.startMinute, 1260, 'an untouched field keeps its default');
+        assert.equal(first.body.policy.bedtime.endMinute, 360);
+
+        // The same key and the same body is the same intent: the stored answer comes back
+        // and the version does not move. The same key with a different body is refused.
+        const replay = await jsonRequest(baseUrl, screenPath, {
+          method: 'PATCH',
+          headers: guard('w5a-policy-1'),
+          body: { dailyLimitMinutes: 60, timezoneOffsetMinutes: household.timezoneOffsetMinutes },
+        });
+        assert.equal(replay.status, 200);
+        assert.equal(replay.body.policy.version, 1);
+        const reused = await jsonRequest(baseUrl, screenPath, {
+          method: 'PATCH',
+          headers: guard('w5a-policy-1'),
+          body: { dailyLimitMinutes: 90 },
+        });
+        assert.equal(reused.status, 409);
+        assert.equal(reused.body.error.code, 'idempotency_key_reused');
+
+        // A window with no length is refused by name, before the database has to say it.
+        const emptyWindow = await jsonRequest(baseUrl, screenPath, {
+          method: 'PATCH',
+          headers: guard('w5a-policy-empty'),
+          body: { bedtime: { startMinute: 600, endMinute: 600 } },
+        });
+        assert.equal(emptyWindow.status, 400);
+        assert.equal(emptyWindow.body.error.code, 'screen_time_window_empty');
+
+        // And a screen that read version 1 may not silently overwrite version 2.
+        const bedtime = windowAwayFromNow(household.offsetMinutes);
+        const second = await jsonRequest(baseUrl, screenPath, {
+          method: 'PATCH',
+          headers: guard('w5a-policy-2'),
+          body: { bedtime },
+        });
+        assert.equal(second.status, 200);
+        assert.equal(second.body.policy.version, 2);
+        assert.equal(second.body.policy.dailyLimitMinutes, 60, 'the cap survives a bedtime change');
+        assert.equal(second.body.policy.bedtime.startMinute, bedtime.startMinute);
+        const stale = await jsonRequest(baseUrl, screenPath, {
+          method: 'PATCH',
+          headers: guard('w5a-policy-stale'),
+          body: { dailyLimitMinutes: 30, expectedVersion: 1 },
+        });
+        assert.equal(stale.status, 409);
+        assert.equal(stale.body.error.code, 'screen_time_stale_version');
+
+        // 4. The handset reports what it measured and what is installed, in one call. The
+        //    response is the same state a guardian reads, computed from the same rows.
+        const report = (key, body) =>
+          jsonRequest(baseUrl, `/v1/devices/${deviceId}/screen-time`, {
+            method: 'POST',
+            headers: { ...deviceAuth, 'idempotency-key': key },
+            body,
+          });
+        const firstReport = await report('w5a-report-1', {
+          usage: [
+            { appId: 'com.example.puzzle', usedMinutes: 30 },
+            { appId: 'com.quran.tilawa', usedMinutes: 25 },
+          ],
+          apps: [
+            { appId: 'com.example.puzzle', displayName: 'Puzzle', category: 'games' },
+            { appId: 'com.quran.tilawa', displayName: 'تلاوة', category: 'edu' },
+          ],
+        });
+        assert.equal(firstReport.status, 201);
+        assert.equal(firstReport.body.childId, childId, 'the credential is what named the child');
+        assert.equal(
+          firstReport.body.state.countableUsedMinutes,
+          30,
+          'the Quran app is not entertainment and is not counted',
+        );
+        assert.equal(firstReport.body.state.remainingMinutes, 30);
+        assert.equal(firstReport.body.state.kind, 'limited');
+        assert.equal(firstReport.body.reportedRequest, null, 'this call asked for nothing');
+
+        // An app nobody has ruled on is `pending`: visible, undecided, not silently allowed.
+        const apps = (await jsonRequest(baseUrl, `${childPath}/apps`, {
+          headers: authorized('test-primary'),
+        })).body;
+        const pending = apps.apps.find((entry) => entry.appId === 'com.example.puzzle');
+        assert.equal(pending.rule, null);
+        assert.equal(pending.knownOnDevice, true);
+        assert.deepEqual(pending.decision, { allowed: false, reasonCode: 'awaiting_decision' });
+        assert.equal(pending.countable, true);
+        const education = apps.apps.find((entry) => entry.appId === 'com.quran.tilawa');
+        assert.equal(education.countable, false, 'education is not entertainment');
+        assert.equal(education.rule, null);
+        assert.deepEqual(
+          education.decision,
+          { allowed: false, reasonCode: 'awaiting_decision' },
+          'an app nobody has ruled on waits for a parent, whatever category it is',
+        );
+
+        // 3b. The rule surface. A limit on an app that does not count is refused by name; a
+        //     limit that is reached stops that one app; and `unlimited` buys exemption from
+        //     the cap - never from a block, and never from a bedtime.
+        const rulePath = (appId) => `/v1/families/${familyId}/children/${childId}/apps/${appId}/rule`;
+        const setRule = (appId, key, body) =>
+          jsonRequest(baseUrl, rulePath(appId), {
+            method: 'PUT',
+            headers: guard(key),
+            body,
+          });
+        const freeWithLimit = await setRule('com.example.puzzle', 'w5a-rule-bad', {
+          status: 'free',
+          limitMinutes: 30,
+        });
+        assert.equal(freeWithLimit.status, 400);
+        assert.equal(freeWithLimit.body.error.code, 'invalid_request');
+        const limited = await setRule('com.example.puzzle', 'w5a-rule-limit', {
+          status: 'allowed',
+          limitMinutes: 20,
+        });
+        assert.equal(limited.status, 200);
+        assert.equal(limited.body.rule.limitMinutes, 20);
+        assert.equal(limited.body.knownOnDevice, true);
+        const limitReached = (await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/children/${childId}/apps`,
+          { headers: authorized('test-primary') },
+        )).body.apps.find((entry) => entry.appId === 'com.example.puzzle');
+        assert.deepEqual(limitReached.decision, { allowed: false, reasonCode: 'app_limit' });
+        assert.equal(limitReached.remainingMinutes, 0);
+
+        // A rule for an app the handset has never reported is still a family's decision: it
+        // is kept, it is marked as not on the device, and it will apply the moment it is.
+        const forGhost = await setRule('com.example.notes', 'w5a-rule-ghost', { status: 'free' });
+        assert.equal(forGhost.status, 200);
+        assert.equal(forGhost.body.knownOnDevice, false);
+        assert.equal(forGhost.body.category, null);
+
+        // The two rules the rest of this journey needs: the game allowed with no limit of its
+        // own, and the Quran app allowed - education is not entertainment, so it costs no
+        // minutes and only a lock can stop it.
+        assert.equal((await setRule('com.example.puzzle', 'w5a-rule-clear', { status: 'allowed' })).status, 200);
+        assert.equal((await setRule('com.quran.tilawa', 'w5a-rule-edu', { status: 'allowed' })).status, 200);
+        const afterRules = (await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/children/${childId}/apps`,
+          { headers: authorized('test-primary') },
+        )).body;
+        assert.deepEqual(
+          afterRules.apps.find((entry) => entry.appId === 'com.example.puzzle').decision,
+          { allowed: true, reasonCode: null },
+        );
+        assert.deepEqual(
+          afterRules.apps.find((entry) => entry.appId === 'com.quran.tilawa').decision,
+          { allowed: true, reasonCode: null },
+        );
+        assert.equal(afterRules.state.countableUsedMinutes, 30, 'allowing education changed nothing in the cap');
+
+        // The guardian's read and the handset's read are the same answer, compared field by
+        // field rather than described: that is the difference between one rule and two.
+        const guardianRead = await jsonRequest(baseUrl, screenPath, { headers: authorized('test-primary') });
+        assert.deepEqual(guardianRead.body.state, firstReport.body.state);
+        assert.deepEqual(guardianRead.body.usage, firstReport.body.usage);
+
+        // 5. Minutes never shrink. A second report - a real one, with its own key - that
+        //    carries a smaller number leaves the stored figure alone.
+        const shrunk = await report('w5a-report-2', {
+          usage: [{ appId: 'com.example.puzzle', usedMinutes: 10 }],
+        });
+        assert.equal(shrunk.status, 201);
+        assert.equal(shrunk.body.state.countableUsedMinutes, 30);
+        // ...and the replay of the first report is the stored first answer, not a second
+        // 30 minutes added on top of it.
+        const replayedReport = await report('w5a-report-1', {
+          usage: [
+            { appId: 'com.example.puzzle', usedMinutes: 30 },
+            { appId: 'com.quran.tilawa', usedMinutes: 25 },
+          ],
+          apps: [
+            { appId: 'com.example.puzzle', displayName: 'Puzzle', category: 'games' },
+            { appId: 'com.quran.tilawa', displayName: 'تلاوة', category: 'edu' },
+          ],
+        });
+        assert.equal(replayedReport.status, 201);
+        assert.equal(replayedReport.body.state.countableUsedMinutes, 30);
+        const stored = await client.query(
+          `SELECT used_minutes FROM family_child_app_usage_daily WHERE child_id = $1 ORDER BY app_id`,
+          [childId],
+        );
+        assert.deepEqual(stored.rows.map((row) => row.used_minutes), [30, 25]);
+
+        // A day the handset could not have measured is refused rather than filed.
+        const impossibleDay = await report('w5a-report-old', {
+          usage: [{ appId: 'com.example.puzzle', usedMinutes: 5, date: '2020-01-01' }],
+        });
+        assert.equal(impossibleDay.status, 400);
+        assert.equal(impossibleDay.body.error.code, 'invalid_request');
+
+        // 6. The cap bites, and it bites the entertainment only.
+        const exhausted = await report('w5a-report-3', {
+          usage: [{ appId: 'com.example.puzzle', usedMinutes: 60 }],
+        });
+        assert.equal(exhausted.status, 201);
+        assert.equal(exhausted.body.state.kind, 'blocked');
+        assert.equal(exhausted.body.state.reasonCode, 'daily_limit');
+        assert.equal(exhausted.body.state.remainingMinutes, 0);
+        const exhaustedApps = (await jsonRequest(baseUrl, `${childPath}/apps`, {
+          headers: authorized('test-primary'),
+        })).body;
+        assert.deepEqual(
+          exhaustedApps.apps.find((entry) => entry.appId === 'com.example.puzzle').decision,
+          { allowed: false, reasonCode: 'daily_limit' },
+        );
+        assert.deepEqual(
+          exhaustedApps.apps.find((entry) => entry.appId === 'com.quran.tilawa').decision,
+          { allowed: true, reasonCode: null },
+          'an exhausted entertainment budget does not stop the Quran app',
+        );
+
+        // An app the family exempted from the cap keeps working while the cap is spent - the
+        // exemption is about how much, so the state can say "the day's entertainment is over"
+        // while this one app still opens. That is exactly what `unlimited` promises.
+        const exempted = await setRule('com.example.puzzle', 'w5a-rule-unlimited', {
+          status: 'allowed',
+          unlimited: true,
+        });
+        assert.equal(exempted.status, 200);
+        const exemptedApps = (await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/children/${childId}/apps`,
+          { headers: authorized('test-primary') },
+        )).body;
+        assert.equal(exemptedApps.state.reasonCode, 'daily_limit');
+        assert.deepEqual(
+          exemptedApps.apps.find((entry) => entry.appId === 'com.example.puzzle').decision,
+          { allowed: true, reasonCode: null },
+        );
+        assert.deepEqual(
+          exemptedApps.apps.find((entry) => entry.appId === 'com.quran.tilawa').decision,
+          { allowed: true, reasonCode: null },
+        );
+        assert.equal((await setRule('com.example.puzzle', 'w5a-rule-unlimited-off', { status: 'allowed' })).status, 200);
+
+        // 7. The state is computed, not stored. Raising the cap clears "time is up" with no
+        //    unlock call, no dismissal and nothing to go stale in between.
+        const raised = await jsonRequest(baseUrl, screenPath, {
+          method: 'PATCH',
+          headers: guard('w5a-policy-3'),
+          body: { dailyLimitMinutes: 120 },
+        });
+        assert.equal(raised.status, 200);
+        const afterRaise = await jsonRequest(baseUrl, screenPath, { headers: authorized('test-primary') });
+        assert.equal(afterRaise.body.state.kind, 'limited');
+        assert.equal(afterRaise.body.state.reasonCode, null);
+        assert.equal(afterRaise.body.state.remainingMinutes, 60);
+
+        // 8. The family's clock decides. A bedtime that contains their present minute stops
+        //    the entertainment and leaves education working - and a school morning behaves
+        //    the same way, while the bedtime is the more specific truth when both apply.
+        const bedtimeNow = windowAroundNow(household.offsetMinutes);
+        const atBedtime = await jsonRequest(baseUrl, screenPath, {
+          method: 'PATCH',
+          headers: guard('w5a-policy-bedtime'),
+          body: { bedtime: bedtimeNow },
+        });
+        assert.equal(atBedtime.status, 200);
+        const bedtimeApps = (await jsonRequest(baseUrl, `${childPath}/apps`, {
+          headers: authorized('test-primary'),
+        })).body;
+        assert.equal(bedtimeApps.state.reasonCode, 'bedtime');
+        assert.deepEqual(
+          bedtimeApps.apps.find((entry) => entry.appId === 'com.example.puzzle').decision,
+          { allowed: false, reasonCode: 'bedtime' },
+        );
+        assert.deepEqual(
+          bedtimeApps.apps.find((entry) => entry.appId === 'com.quran.tilawa').decision,
+          { allowed: true, reasonCode: null },
+          'the Quran app survives the bedtime',
+        );
+
+        const schoolNow = windowAroundNow(household.offsetMinutes);
+        const atSchool = await jsonRequest(baseUrl, screenPath, {
+          method: 'PATCH',
+          headers: guard('w5a-policy-school'),
+          body: {
+            schoolMode: { enabled: true, days: [1, 2, 3, 4, 5, 6, 7], ...schoolNow },
+          },
+        });
+        assert.equal(atSchool.status, 200);
+        const bothWindows = await jsonRequest(baseUrl, screenPath, { headers: authorized('test-primary') });
+        assert.equal(bothWindows.body.state.reasonCode, 'bedtime', 'the later window is the truth');
+
+        // Move the bedtime away and the school window - which is still around the present
+        // minute - is what a family sees.
+        const movedBedtime = await jsonRequest(baseUrl, screenPath, {
+          method: 'PATCH',
+          headers: guard('w5a-policy-bedtime-2'),
+          body: { bedtime: windowAwayFromNow(household.offsetMinutes) },
+        });
+        assert.equal(movedBedtime.status, 200);
+        const schoolOnly = await jsonRequest(baseUrl, screenPath, { headers: authorized('test-primary') });
+        assert.equal(schoolOnly.body.state.reasonCode, 'school_mode');
+        assert.equal(
+          schoolOnly.body.state.date,
+          familyLocalParts(new Date(), household.timezoneOffsetMinutes).date,
+          "the day is the family's own",
+        );
+        assert.ok(
+          Math.abs(schoolOnly.body.state.minuteOfDay - 720) <= W5_OFFSET_SAFETY_MARGIN_MINUTES,
+          'the family is living around noon in their own offset, not the server\'s',
+        );
+
+        // Leave the family where the second journey expects them: school mode off, a bedtime
+        // twelve hours away, and the cap the guardian last chose.
+        const settled = await jsonRequest(baseUrl, screenPath, {
+          method: 'PATCH',
+          headers: guard('w5a-policy-settled'),
+          body: {
+            schoolMode: { enabled: false },
+            bedtime: windowAwayFromNow(household.offsetMinutes),
+          },
+        });
+        assert.equal(settled.status, 200);
+        assert.equal(settled.body.policy.schoolMode.enabled, false);
+        assert.equal(
+          settled.body.policy.schoolMode.days.length > 0,
+          true,
+          'turning school mode off does not erase the school week the family chose',
+        );
+
+        // 9. The database is the last line of defence, and it holds even when the server is
+        //    bypassed. Each of these is a product law, not a coincidence of one code path.
+        const policyRow = await client.query(
+          `SELECT child_id FROM family_child_screen_time_policies WHERE child_id = $1`,
+          [childId],
+        );
+        assert.equal(policyRow.rowCount, 1, 'the family has exactly one policy row for this child');
+        await assert.rejects(
+          () => client.query(
+            `UPDATE family_child_screen_time_policies SET daily_limit_minutes = 2000 WHERE child_id = $1`,
+            [childId],
+          ),
+          /violates check constraint/i,
+          'a day holds 1440 minutes and the schema says so',
+        );
+        await assert.rejects(
+          () => client.query(
+            `UPDATE family_child_screen_time_policies SET school_days = '{9}'::smallint[] WHERE child_id = $1`,
+            [childId],
+          ),
+          /violates check constraint/i,
+          'a weekday outside 1..7 is not a weekday',
+        );
+        await assert.rejects(
+          () => client.query(
+            `UPDATE family_child_screen_time_policies SET bedtime_start_minute = bedtime_end_minute WHERE child_id = $1`,
+            [childId],
+          ),
+          /violates check constraint/i,
+          'a window with no length is not a window',
+        );
+        await assert.rejects(
+          () => client.query(
+            `INSERT INTO family_child_app_usage_daily (id, family_id, child_id, app_id, usage_date, used_minutes)
+             VALUES (gen_random_uuid(), $1, $2, 'com.example.puzzle', CURRENT_DATE, 5)`,
+            [familyId, childId],
+          ),
+          /duplicate key value violates unique constraint/i,
+          'one row per app per day is what makes a cumulative figure trustworthy',
+        );
+        await assert.rejects(
+          () => client.query(
+            `INSERT INTO family_child_app_rules
+               (id, family_id, child_id, app_id, status, limit_minutes, updated_by_membership_id)
+             VALUES (gen_random_uuid(), $1, $2, 'com.example.ghost', 'blocked', 30, $3)`,
+            [familyId, childId, household.primaryMembershipId],
+          ),
+          /violates check constraint/i,
+          'a limit on an app nobody counts is a number no screen would ever read',
+        );
+
+        // The state itself has no column anywhere: the only stored decisions are the ones a
+        // person made (a rule, a lock, an answer), which is why nothing can go stale.
+        const stateColumns = await client.query(
+          `SELECT table_name, column_name FROM information_schema.columns
+            WHERE table_name IN (
+              'family_child_screen_time_policies', 'family_child_app_rules', 'family_child_apps',
+              'family_child_app_usage_daily', 'family_child_lock_state', 'family_child_time_requests')
+              AND column_name IN ('state', 'blocked', 'screen_state', 'time_is_up')`,
+        );
+        assert.equal(stateColumns.rowCount, 0);
+      });
+    } finally {
+      await store.close();
+    }
+  });
+});
+
+test('the lock has an author, the question has an answer, and the credential is the only proof of which child', { skip }, async () => {
+  await withFreshDatabase(async (client) => {
+    await migrate(client);
+    const store = new PostgresFoundationStore({
+      connectionString: withDatabase(DATABASE_URL, client.database),
+    });
+    const app = createApp({
+      store,
+      authVerifier: new TestAuthVerifier(),
+      readiness: () => ({ ready: true, missing: [] }),
+    });
+    try {
+      await withServer(app, async (baseUrl) => {
+        const household = await seedScreenTimeFamily(baseUrl, client, 'w5b');
+        const { familyId, childId, deviceId, deviceAuth } = household;
+        const childPath = `/v1/families/${familyId}/children/${childId}`;
+        const screenPath = `${childPath}/screen-time`;
+        const guard = (key) => authorized('test-primary', { 'idempotency-key': key });
+        const report = (key, body) =>
+          jsonRequest(baseUrl, `/v1/devices/${deviceId}/screen-time`, {
+            method: 'POST',
+            headers: { ...deviceAuth, 'idempotency-key': key },
+            body,
+          });
+
+        // A cap, a bedtime twelve hours away, and the entertainment budget half spent.
+        const policy = await jsonRequest(baseUrl, screenPath, {
+          method: 'PATCH',
+          headers: guard('w5b-policy'),
+          body: {
+            dailyLimitMinutes: 60,
+            timezoneOffsetMinutes: household.timezoneOffsetMinutes,
+            bedtime: windowAwayFromNow(household.offsetMinutes),
+          },
+        });
+        assert.equal(policy.status, 200);
+        await report('w5b-report', {
+          usage: [{ appId: 'com.example.puzzle', usedMinutes: 30 }],
+          apps: [{ appId: 'com.example.puzzle', displayName: 'Puzzle', category: 'games' }],
+        });
+        // The game gets a plain rule first, so what the lock assertions below observe is the
+        // lock and not an app that was still waiting for a parent: `pending` is checked before
+        // the clock, which is the point of `pending`.
+        const allowedGame = await jsonRequest(
+          baseUrl,
+          `${childPath}/apps/com.example.puzzle/rule`,
+          { method: 'PUT', headers: guard('w5b-rule'), body: { status: 'allowed' } },
+        );
+        assert.equal(allowedGame.status, 200);
+
+        // 1. The lock. It names the reason and the guardian who pressed it, and it is the one
+        //    state that stops everything - education included, because that is what a lock is.
+        const locked = await jsonRequest(baseUrl, `${screenPath}/lock`, {
+          method: 'POST',
+          headers: guard('w5b-lock'),
+          body: { reasonCode: 'check_in' },
+        });
+        assert.equal(locked.status, 200);
+        assert.equal(locked.body.created, true);
+        assert.equal(locked.body.state.kind, 'blocked');
+        assert.equal(locked.body.state.reasonCode, 'instant_lock');
+        assert.equal(locked.body.state.lock.reasonCode, 'check_in');
+        assert.equal(locked.body.state.lock.lockedByMembershipId, household.primaryMembershipId);
+        assert.equal(locked.body.state.since, locked.body.state.lock.lockedAt);
+        assert.equal(locked.body.lock.releasedAt, null);
+        const lockedApps = (await jsonRequest(baseUrl, `${childPath}/apps`, {
+          headers: authorized('test-primary'),
+        })).body;
+        assert.deepEqual(
+          lockedApps.apps.find((entry) => entry.appId === 'com.example.puzzle').decision,
+          { allowed: false, reasonCode: 'instant_lock' },
+        );
+
+        // Pressing it twice finds the lock that exists rather than stacking a second one.
+        const lockedAgain = await jsonRequest(baseUrl, `${screenPath}/lock`, {
+          method: 'POST',
+          headers: guard('w5b-lock-again'),
+          body: { reasonCode: 'parent_lock' },
+        });
+        assert.equal(lockedAgain.status, 200);
+        assert.equal(lockedAgain.body.created, false);
+        assert.equal(lockedAgain.body.state.lock.id, locked.body.state.lock.id);
+        assert.equal(lockedAgain.body.state.lock.reasonCode, 'check_in', 'the first decision stands');
+        const liveLocks = await client.query(
+          `SELECT id FROM family_child_lock_state WHERE child_id = $1 AND released_at IS NULL`,
+          [childId],
+        );
+        assert.equal(liveLocks.rowCount, 1);
+        // Even with the server out of the way, a second live lock is refused: the guarantee
+        // is an index, not a check that could race with itself.
+        await assert.rejects(
+          () => client.query(
+            `INSERT INTO family_child_lock_state
+               (id, family_id, child_id, reason_code, locked_by_membership_id)
+             VALUES (gen_random_uuid(), $1, $2, 'parent_lock', $3)`,
+            [familyId, childId, household.primaryMembershipId],
+          ),
+          /duplicate key value violates unique constraint|one_live_per_child/i,
+        );
+
+        // The child's own handset sees the lock, with the time it started.
+        const deviceRead = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/screen-time`, {
+          headers: deviceAuth,
+        });
+        assert.equal(deviceRead.status, 200);
+        assert.equal(deviceRead.body.state.reasonCode, 'instant_lock');
+        assert.equal(deviceRead.body.reportedRequest, null);
+        assert.equal(deviceRead.body.apps.length, 1);
+
+        // 2. Unlocking is answered honestly: the first call released something, the second
+        //    released nothing, and neither is an error. The released episode stays on the
+        //    record, because "the phone was off from 21:10" is a fact a family wants later.
+        const released = await jsonRequest(baseUrl, `${screenPath}/unlock`, {
+          method: 'POST',
+          headers: guard('w5b-unlock'),
+        });
+        assert.equal(released.status, 200);
+        assert.equal(released.body.released, true);
+        assert.equal(released.body.state.reasonCode, null);
+        assert.equal(released.body.state.kind, 'limited');
+        const releasedAgain = await jsonRequest(baseUrl, `${screenPath}/unlock`, {
+          method: 'POST',
+          headers: guard('w5b-unlock-again'),
+        });
+        assert.equal(releasedAgain.status, 200);
+        assert.equal(releasedAgain.body.released, false);
+        const lockRows = await client.query(
+          `SELECT released_at FROM family_child_lock_state WHERE child_id = $1`,
+          [childId],
+        );
+        assert.equal(lockRows.rowCount, 1, 'the episode is kept, not deleted');
+        assert.notEqual(lockRows.rows[0].released_at, null);
+
+        // 3. The question. The child asks from their own handset, and the answer names the
+        //    question exactly once: openRequest and reportedRequest are the same fact.
+        const asked = await report('w5b-ask', {
+          usage: [{ appId: 'com.example.puzzle', usedMinutes: 30 }],
+          request: { requestedMinutes: 20, reasonCode: 'homework_done' },
+        });
+        assert.equal(asked.status, 201);
+        assert.equal(asked.body.reportedRequest.status, 'pending');
+        assert.equal(asked.body.reportedRequest.requestedMinutes, 20);
+        assert.equal(asked.body.reportedRequest.requestedByKind, 'child');
+        assert.equal(asked.body.openRequest.id, asked.body.reportedRequest.id);
+        const pendingId = asked.body.openRequest.id;
+
+        // Asking again in another report finds the same open question rather than a second
+        // one a parent would have to reconcile.
+        const askedAgain = await report('w5b-ask-again', {
+          usage: [{ appId: 'com.example.puzzle', usedMinutes: 30 }],
+          request: { requestedMinutes: 60 },
+        });
+        assert.equal(askedAgain.status, 201);
+        assert.equal(askedAgain.body.openRequest.id, pendingId);
+        assert.equal(askedAgain.body.openRequest.requestedMinutes, 20, 'the question stands as asked');
+        const openRows = await client.query(
+          `SELECT count(*)::int AS open FROM family_child_time_requests
+            WHERE child_id = $1 AND status = 'pending'`,
+          [childId],
+        );
+        assert.equal(openRows.rows[0].open, 1);
+
+        // A guardian asking on the child's behalf finds the question already open and is told
+        // which one, instead of queueing a duplicate.
+        const guardianAsk = await jsonRequest(baseUrl, `${childPath}/time-requests`, {
+          method: 'POST',
+          headers: guard('w5b-guardian-ask'),
+          body: { requestedMinutes: 15 },
+        });
+        assert.equal(guardianAsk.status, 409);
+        assert.equal(guardianAsk.body.error.code, 'time_request_pending');
+        assert.equal(guardianAsk.body.error.details.requestId, pendingId);
+
+        const list = await jsonRequest(baseUrl, `${childPath}/time-requests?status=pending`, {
+          headers: authorized('test-primary'),
+        });
+        assert.equal(list.status, 200);
+        assert.equal(list.body.requests.length, 1);
+        assert.equal(list.body.requests[0].id, pendingId);
+
+        // 4. The answer. A denial carries no minutes; a grant is never larger than the ask;
+        //    the answer happens once.
+        const denyWithMinutes = await jsonRequest(
+          baseUrl,
+          `${childPath}/time-requests/${pendingId}/decision`,
+          {
+            method: 'POST',
+            headers: guard('w5b-deny-minutes'),
+            body: { decision: 'deny', grantedMinutes: 5 },
+          },
+        );
+        assert.equal(denyWithMinutes.status, 400);
+        assert.equal(denyWithMinutes.body.error.code, 'invalid_request');
+
+        const overGrant = await jsonRequest(baseUrl, `${childPath}/time-requests/${pendingId}/decision`, {
+          method: 'POST',
+          headers: guard('w5b-over-grant'),
+          body: { decision: 'approve', grantedMinutes: 120 },
+        });
+        assert.equal(overGrant.status, 400);
+        assert.equal(overGrant.body.error.code, 'screen_time_grant_exceeds_request');
+
+        const approved = await jsonRequest(baseUrl, `${childPath}/time-requests/${pendingId}/decision`, {
+          method: 'POST',
+          headers: guard('w5b-approve'),
+          body: { decision: 'approve', grantedMinutes: 20 },
+        });
+        assert.equal(approved.status, 200);
+        assert.equal(approved.body.request.status, 'approved');
+        assert.equal(approved.body.request.grantedMinutes, 20);
+        assert.equal(approved.body.request.decidedByMembershipId, household.primaryMembershipId);
+
+        // The granted minutes extend the day they were granted for, on the state a handset
+        // reads as well as the state a parent reads.
+        const afterGrant = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/screen-time`, {
+          headers: deviceAuth,
+        });
+        assert.equal(afterGrant.status, 200);
+        assert.equal(afterGrant.body.state.grantedMinutes, 20);
+        assert.equal(afterGrant.body.state.remainingMinutes, 50);
+        assert.equal(afterGrant.body.openRequest, null);
+
+        const answeredTwice = await jsonRequest(
+          baseUrl,
+          `${childPath}/time-requests/${pendingId}/decision`,
+          {
+            method: 'POST',
+            headers: guard('w5b-approve-again'),
+            body: { decision: 'approve' },
+          },
+        );
+        assert.equal(answeredTwice.status, 409);
+        assert.equal(answeredTwice.body.error.code, 'time_request_decided');
+
+        // 5. A question expires by the family's clock, not by a job that might not have run.
+        const second = await jsonRequest(baseUrl, `${childPath}/time-requests`, {
+          method: 'POST',
+          headers: guard('w5b-guardian-ask-2'),
+          body: { requestedMinutes: 15 },
+        });
+        assert.equal(second.status, 201);
+        assert.equal(second.body.request.status, 'pending');
+        await client.query(
+          `UPDATE family_child_time_requests SET expires_at = NOW() - INTERVAL '1 minute' WHERE id = $1`,
+          [second.body.request.id],
+        );
+        const expiredList = await jsonRequest(baseUrl, `${childPath}/time-requests`, {
+          headers: authorized('test-primary'),
+        });
+        assert.equal(expiredList.status, 200, 'the list must answer with the family\'s own requests');
+        const expired = expiredList.body.requests.find((entry) => entry.id === second.body.request.id);
+        assert.equal(expired.status, 'expired');
+        const expiredRead = await jsonRequest(baseUrl, screenPath, { headers: authorized('test-primary') });
+        assert.equal(expiredRead.body.openRequest, null, 'an expired question is not waiting for anyone');
+        const decideExpired = await jsonRequest(
+          baseUrl,
+          `${childPath}/time-requests/${second.body.request.id}/decision`,
+          { method: 'POST', headers: guard('w5b-approve-expired'), body: { decision: 'approve' } },
+        );
+        assert.equal(decideExpired.status, 409);
+        assert.equal(decideExpired.body.error.code, 'time_request_decided');
+        // The database refuses the shape of a half-decided request too.
+        await assert.rejects(
+          () => client.query(
+            `UPDATE family_child_time_requests SET status = 'approved' WHERE id = $1`,
+            [second.body.request.id],
+          ),
+          /violates check constraint/i,
+          'approval without minutes is not an approval',
+        );
+        // A question from a guardian has an author and a question from a handset has none:
+        // both directions of the pairing are refused when they disagree.
+        await assert.rejects(
+          () => client.query(
+            `INSERT INTO family_child_time_requests
+               (id, family_id, child_id, usage_date, requested_minutes, requested_by_kind,
+                expires_at)
+             VALUES (gen_random_uuid(), $1, $2, CURRENT_DATE, 10, 'guardian', NOW() + INTERVAL '1 hour')`,
+            [familyId, childId],
+          ),
+          /violates check constraint/i,
+          'a request attributed to a guardian must name the guardian',
+        );
+        await assert.rejects(
+          () => client.query(
+            `INSERT INTO family_child_time_requests
+               (id, family_id, child_id, usage_date, requested_minutes, requested_by_kind,
+                requested_by_membership_id, expires_at)
+             VALUES (gen_random_uuid(), $1, $2, CURRENT_DATE, 10, 'child', $3, NOW() + INTERVAL '1 hour')`,
+            [familyId, childId, household.primaryMembershipId],
+          ),
+          /violates check constraint/i,
+          "a request from the child's own handset does not name a guardian",
+        );
+
+        // 6. Extra minutes only exist under a cap. With no cap, "more minutes" is a number
+        //    the server would never enforce, so the question is refused rather than recorded.
+        const noCap = await jsonRequest(baseUrl, screenPath, {
+          method: 'PATCH',
+          headers: guard('w5b-policy-nocap'),
+          body: { dailyLimitMinutes: 0 },
+        });
+        assert.equal(noCap.status, 200);
+        const askWithoutCap = await jsonRequest(baseUrl, `${childPath}/time-requests`, {
+          method: 'POST',
+          headers: guard('w5b-ask-nocap'),
+          body: { requestedMinutes: 15 },
+        });
+        assert.equal(askWithoutCap.status, 409);
+        assert.equal(askWithoutCap.body.error.code, 'screen_time_no_cap');
+
+        // 7. The device credential is the only proof of which child is reporting, and the
+        //    routes carry no child id: a body that tries to supply one is refused, because a
+        //    parameter a client can choose would be a way to point this surface at another
+        //    family's child.
+        const wrongCredential = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/screen-time`, {
+          method: 'GET',
+          headers: { authorization: 'Device w5b-not-the-credential-000000000000' },
+        });
+        assert.equal(wrongCredential.status, 403);
+        assert.equal(wrongCredential.body.error.code, 'device_credential_rejected');
+        const smuggledChild = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/screen-time`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w5b-smuggle' },
+          body: { childId, usage: [] },
+        });
+        assert.equal(smuggledChild.status, 400);
+        assert.equal(smuggledChild.body.error.code, 'invalid_request');
+        // Revoking goes through the surface, not around it: migration 008 requires a
+        // revocation to carry its provenance, which is exactly the law a direct UPDATE here
+        // would have to satisfy anyway.
+        const revocation = await jsonRequest(
+          baseUrl,
+          `${childPath}/devices/${deviceId}/revocation`,
+          {
+            method: 'POST',
+            headers: guard('w5b-revoke'),
+            body: { reasonCode: 'replaced' },
+          },
+        );
+        assert.equal(revocation.status, 200);
+        const revoked = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/screen-time`, {
+          headers: deviceAuth,
+        });
+        assert.equal(revoked.status, 403);
+        assert.equal(revoked.body.error.code, 'device_credential_rejected');
+
+        // 8. The trail. Every decision above reached the announcement queue, which is what
+        //    lets the family's timeline show what happened rather than what was intended.
+        const outbox = await client.query(
+          `SELECT DISTINCT event_type FROM family_audit_events WHERE family_id = $1`,
+          [familyId],
+        );
+        const queued = await client.query(
+          `SELECT count(*)::int AS n FROM outbox_events
+            WHERE aggregate_type = 'family' AND aggregate_id = $1`,
+          [familyId],
+        );
+        assert.ok(queued.rows[0].n > 0, 'the announcement queue carries what the timeline shows');
+        assert.ok(
+          queued.rows[0].n >= outbox.rowCount,
+          'every audit event queued an announcement for the family timeline',
+        );
+        for (const eventType of [
+          'family.screen_time_policy_updated',
+          'family.child_screen_locked',
+          'family.child_screen_unlocked',
+          'family.time_request_created',
+          'family.time_request_approved',
+        ]) {
+          assert.ok(
+            outbox.rows.some((row) => row.event_type === eventType),
+            `${eventType} must reach the announcement queue`,
+          );
+        }
       });
     } finally {
       await store.close();

@@ -155,12 +155,17 @@ test('every protected operation declares OIDC security, rate limiting and idempo
     // a handset proves itself with what it was issued at pairing. The list is named rather
     // than inferred, so a new one cannot appear by accident - and each addition is a
     // decision that the route really is a device-reporting path. W4 added two: the
-    // button's own press, and the false-alarm close from the handset that raised it.
+    // button's own press, and the false-alarm close from the handset that raised it. W5
+    // added two more, and they are the same decision twice: the child's own phone reads
+    // its screen-time state and reports the minutes it measured. The credential issued at
+    // pairing is what proves which child it is - neither route takes a child id, because a
+    // parameter a client supplies is not proof of anything.
     const deviceAuthenticated = new Set([
       '/v1/devices/{deviceId}/telemetry',
       '/v1/devices/{deviceId}/location-fixes',
       '/v1/devices/{deviceId}/sos-alerts',
       '/v1/devices/{deviceId}/sos-alerts/{alertId}/resolve',
+      '/v1/devices/{deviceId}/screen-time',
     ]);
     const expectedSecurity = deviceAuthenticated.has(path)
       ? [{ oidcBearer: [] }, { deviceCredential: [] }]

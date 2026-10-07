@@ -2366,6 +2366,686 @@
           }
         }
       }
+    },
+    "/v1/families/{familyId}/children/{childId}/screen-time": {
+      "get": {
+        "operationId": "readFamilyScreenTime",
+        "summary": "What a child's phone may do right now, and why",
+        "description": "The whole screen-time state in one read: the family's stored policy, today's countable minutes, the granted extension, the live instant lock, and the decision that follows - `free`, `limited` or `blocked` with a reason. The state is computed at the moment of the read from the policy, the usage rows and the family's own clock; nothing stores \"blocked\", so nothing can go stale. Guardians only: a child membership cannot be proven to be the subject of this read.",
+        "tags": [
+          "Screen time"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The server's answer, computed from the stored policy, today's minutes and the clock.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenTimeReadResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateFamilyScreenTimePolicy",
+        "summary": "Sets a child's daily cap, school window and bedtime",
+        "description": "Only the fields that are sent change; the rest keep what the family already chose. Times are minutes east of UTC in the family's own offset, which is stored data rather than an assumption: a bedtime evaluated in the server's timezone would lock a child's phone in the middle of their afternoon. `expectedVersion` makes the write optimistic - a screen that read an older policy is refused with 409 instead of silently overwriting a decision someone else just made.",
+        "tags": [
+          "Screen time"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScreenTimePolicyUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The server's answer, computed from the stored policy, today's minutes and the clock.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenTimePolicyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/apps": {
+      "get": {
+        "operationId": "listFamilyChildApps",
+        "summary": "The apps on a child's phone, each with the family's decision",
+        "description": "The union of what the handset reported and what the family decided. An app the handset has and nobody has ruled on is `pending` - visible and undecided, never allowed by default. Each row carries today's minutes, whether it counts against the entertainment cap (education and free apps do not) and the same decision the state read would produce for it.",
+        "tags": [
+          "Screen time"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The server's answer, computed from the stored policy, today's minutes and the clock.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildAppsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/apps/{appId}/rule": {
+      "put": {
+        "operationId": "updateFamilyChildAppRule",
+        "summary": "Allows, frees, blocks or reopens one app",
+        "description": "`allowed` counts against the daily cap and may carry its own limit; `free` is not counted at all; `blocked` is not usable whatever the clock says; `pending` puts the app back in front of a parent. A limit on an app that does not count is refused here and by the schema, because it would be a number no screen ever reads.",
+        "tags": [
+          "Screen time"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/AppId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppRuleUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The server's answer, computed from the stored policy, today's minutes and the clock.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppRuleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/screen-time/lock": {
+      "post": {
+        "operationId": "lockFamilyChildScreen",
+        "summary": "Turns a child's phone off now, with a reason and an author",
+        "description": "An instant lock is the one screen-time state that is stored rather than computed, because it is a decision a person made: it names the guardian and the reason, and it is released by another call. Pressing it twice finds the lock that exists instead of stacking a second one - one live lock per child is a partial unique index, not a check that races.",
+        "tags": [
+          "Screen time"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScreenTimeLockRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The server's answer, computed from the stored policy, today's minutes and the clock.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenTimeReadResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/screen-time/unlock": {
+      "post": {
+        "operationId": "unlockFamilyChildScreen",
+        "summary": "Releases the live lock, and says whether there was one",
+        "description": "Unlocking nothing is not an error: `released` reports honestly whether a lock was released, and the state that follows is computed as always. The released episode stays in the table, because \"the phone was off from 21:10 to 07:00\" is a fact a family will want tomorrow.",
+        "tags": [
+          "Screen time"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The server's answer, computed from the stored policy, today's minutes and the clock.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenTimeReadResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/time-requests": {
+      "get": {
+        "operationId": "listFamilyTimeRequests",
+        "summary": "The minutes a child asked for, and what the family answered",
+        "description": "Newest first, with the family's clock settling what expired: a question nobody answered is reported as `expired` rather than as waiting for a parent three days later.",
+        "tags": [
+          "Screen time"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "`all` (default), or one of `pending`, `approved`, `denied`, `expired`.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "pending",
+                "approved",
+                "denied",
+                "expired"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The server's answer, computed from the stored policy, today's minutes and the clock.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimeRequestListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createFamilyTimeRequest",
+        "summary": "A guardian asks for extra minutes on a child's behalf",
+        "description": "The spoken version of the child's own request, recorded the same way - so a family that grants minutes over dinner has the same trail as one that approves them in the app. Requires a daily cap to extend: with no cap, \"more minutes\" is a number the server would never enforce.",
+        "tags": [
+          "Screen time"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TimeRequestCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The server's answer, computed from the stored policy, today's minutes and the clock.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimeRequestResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/time-requests/{requestId}/decision": {
+      "post": {
+        "operationId": "decideFamilyTimeRequest",
+        "summary": "Approves minutes or denies the request, once",
+        "description": "A guardian answers a question that is still open. Approving grants minutes that belong to the day the request named - the day's allowance is the sum of that day's approvals, so there is no wallet to drift. A request already decided or expired is a 409 rather than a silent second answer.",
+        "tags": [
+          "Screen time"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/TimeRequestId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TimeRequestDecisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The server's answer, computed from the stored policy, today's minutes and the clock.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimeRequestResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/screen-time": {
+      "get": {
+        "operationId": "readDeviceScreenTime",
+        "summary": "The child's own phone asks what it may do",
+        "description": "The same state block a guardian reads, computed by the same function from the same rows. The device credential proves which child this is, so this route takes no child id and never will: a parameter a client can choose is not proof of anything.",
+        "tags": [
+          "Screen time"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The server's answer, computed from the stored policy, today's minutes and the clock.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceScreenTimeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      },
+      "post": {
+        "operationId": "reportDeviceScreenTime",
+        "summary": "The phone reports what it measured and what is installed, and may ask for more",
+        "description": "Usage is cumulative for the day and the server keeps the greater of what is stored and what arrived, so a replay, a retry or a handset that reconnects after a day offline can neither reduce nor inflate the minutes a family is looking at. The inventory travels in the same call - an app nobody has ruled on becomes `pending` rather than silently allowed - and the request, when there is one, is recorded against the same clock and answered in the same response.",
+        "tags": [
+          "Screen time"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceScreenTimeReportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The server's answer, computed from the stored policy, today's minutes and the clock.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceScreenTimeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2458,6 +3138,27 @@
         "in": "path",
         "required": true,
         "description": "The ladder contact to change.",
+        "schema": {
+          "$ref": "#/components/schemas/Uuid"
+        }
+      },
+      "AppId": {
+        "name": "appId",
+        "in": "path",
+        "required": true,
+        "description": "The app as the handset names it: a package-style identifier such as `com.example.game`.",
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$"
+        }
+      },
+      "TimeRequestId": {
+        "name": "requestId",
+        "in": "path",
+        "required": true,
+        "description": "The question being answered.",
         "schema": {
           "$ref": "#/components/schemas/Uuid"
         }
@@ -5069,6 +5770,968 @@
             "items": {
               "$ref": "#/components/schemas/SosBackupContact"
             }
+          }
+        }
+      },
+      "ScreenState": {
+        "type": "object",
+        "required": [
+          "kind",
+          "reasonCode",
+          "date",
+          "minuteOfDay",
+          "weekday",
+          "capMinutes",
+          "grantedMinutes",
+          "countableUsedMinutes",
+          "remainingMinutes"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "free",
+              "limited",
+              "blocked"
+            ]
+          },
+          "reasonCode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "instant_lock",
+              "bedtime",
+              "school_mode",
+              "daily_limit",
+              "app_blocked",
+              "app_limit",
+              "awaiting_decision",
+              null
+            ],
+            "description": "Why the answer is what it is. Null means nothing is in the way. The vocabulary is closed and shared by the state and every app decision, so a screen never has to interpret a free-form string."
+          },
+          "since": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "Today, in the family's own offset."
+          },
+          "minuteOfDay": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1439
+          },
+          "weekday": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7,
+            "description": "ISO weekday, 1 = Monday in the family's own offset."
+          },
+          "capMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "The daily cap, or null when the family set none."
+          },
+          "grantedMinutes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "countableUsedMinutes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "remainingMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "lock": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ChildLock"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "ChildLock": {
+        "type": "object",
+        "required": [
+          "id",
+          "reasonCode",
+          "lockedAt",
+          "lockedByMembershipId",
+          "releasedAt",
+          "version"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "reasonCode": {
+            "type": "string",
+            "enum": [
+              "parent_lock",
+              "check_in",
+              "task_time",
+              "other"
+            ]
+          },
+          "lockedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lockedByMembershipId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "releasedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "ScreenTimePolicy": {
+        "type": "object",
+        "required": [
+          "childId",
+          "configured",
+          "dailyLimitMinutes",
+          "schoolMode",
+          "bedtime",
+          "timezoneOffsetMinutes",
+          "version",
+          "updatedAt"
+        ],
+        "properties": {
+          "childId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "configured": {
+            "type": "boolean",
+            "description": "False until a guardian saves a policy. The defaults are published either way, so a screen never invents them."
+          },
+          "dailyLimitMinutes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1440,
+            "description": "0 means no cap for the day."
+          },
+          "schoolMode": {
+            "type": "object",
+            "required": [
+              "enabled",
+              "days",
+              "startMinute",
+              "endMinute"
+            ],
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "days": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 7
+                }
+              },
+              "startMinute": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1439
+              },
+              "endMinute": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1439
+              }
+            }
+          },
+          "bedtime": {
+            "type": "object",
+            "required": [
+              "startMinute",
+              "endMinute"
+            ],
+            "properties": {
+              "startMinute": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1439
+              },
+              "endMinute": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1439
+              }
+            }
+          },
+          "timezoneOffsetMinutes": {
+            "type": "integer",
+            "minimum": -720,
+            "maximum": 840
+          },
+          "version": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "updatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "ScreenTimePolicyUpdateRequest": {
+        "type": "object",
+        "minProperties": 1,
+        "properties": {
+          "dailyLimitMinutes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1440
+          },
+          "schoolMode": {
+            "type": "object",
+            "minProperties": 1,
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "days": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 7
+                }
+              },
+              "startMinute": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1439
+              },
+              "endMinute": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1439
+              }
+            }
+          },
+          "bedtime": {
+            "type": "object",
+            "minProperties": 1,
+            "properties": {
+              "startMinute": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1439
+              },
+              "endMinute": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1439
+              }
+            }
+          },
+          "timezoneOffsetMinutes": {
+            "type": "integer",
+            "minimum": -720,
+            "maximum": 840
+          },
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The version this screen read. A mismatch is a 409, never a silent overwrite."
+          }
+        }
+      },
+      "ScreenTimePolicyResponse": {
+        "type": "object",
+        "required": [
+          "policy"
+        ],
+        "properties": {
+          "policy": {
+            "$ref": "#/components/schemas/ScreenTimePolicy"
+          }
+        }
+      },
+      "ScreenTimeReadResponse": {
+        "type": "object",
+        "required": [
+          "childId",
+          "date",
+          "policy",
+          "state",
+          "lock",
+          "usage",
+          "openRequest"
+        ],
+        "properties": {
+          "childId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/ScreenTimePolicy"
+          },
+          "state": {
+            "$ref": "#/components/schemas/ScreenState"
+          },
+          "lock": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ChildLock"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "usage": {
+            "type": "object",
+            "required": [
+              "date",
+              "countableUsedMinutes",
+              "grantedMinutes",
+              "remainingMinutes",
+              "byApp"
+            ],
+            "properties": {
+              "date": {
+                "type": "string",
+                "format": "date"
+              },
+              "countableUsedMinutes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "grantedMinutes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "remainingMinutes": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "byApp": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "appId",
+                    "usedMinutes"
+                  ],
+                  "properties": {
+                    "appId": {
+                      "type": "string"
+                    },
+                    "usedMinutes": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "openRequest": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TimeRequest"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The question waiting for a parent right now, if there is one."
+          }
+        }
+      },
+      "AppRule": {
+        "type": "object",
+        "required": [
+          "status",
+          "limitMinutes",
+          "unlimited",
+          "version",
+          "updatedAt"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "allowed",
+              "free",
+              "blocked",
+              "pending"
+            ]
+          },
+          "limitMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 1440
+          },
+          "unlimited": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "updatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "AppDecision": {
+        "type": "object",
+        "required": [
+          "allowed",
+          "reasonCode"
+        ],
+        "properties": {
+          "allowed": {
+            "type": "boolean"
+          },
+          "reasonCode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "instant_lock",
+              "bedtime",
+              "school_mode",
+              "daily_limit",
+              "app_blocked",
+              "app_limit",
+              "awaiting_decision",
+              null
+            ],
+            "description": "Why the answer is what it is. Null means nothing is in the way. The vocabulary is closed and shared by the state and every app decision, so a screen never has to interpret a free-form string."
+          }
+        }
+      },
+      "ChildApp": {
+        "type": "object",
+        "required": [
+          "appId",
+          "displayName",
+          "category",
+          "ageRating",
+          "knownOnDevice",
+          "countable",
+          "usedMinutes",
+          "remainingMinutes",
+          "rule",
+          "decision"
+        ],
+        "properties": {
+          "appId": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "games",
+              "social",
+              "edu",
+              "tools"
+            ]
+          },
+          "ageRating": {
+            "type": "string"
+          },
+          "knownOnDevice": {
+            "type": "boolean",
+            "description": "True when a handset reported it. A rule for an app nobody has is still a family's decision."
+          },
+          "countable": {
+            "type": "boolean",
+            "description": "Whether its minutes count against the daily cap."
+          },
+          "usedMinutes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "remainingMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "rule": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AppRule"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null means nobody has decided: the app is pending."
+          },
+          "decision": {
+            "$ref": "#/components/schemas/AppDecision"
+          }
+        }
+      },
+      "ChildAppsResponse": {
+        "type": "object",
+        "required": [
+          "childId",
+          "date",
+          "state",
+          "apps"
+        ],
+        "properties": {
+          "childId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "state": {
+            "$ref": "#/components/schemas/ScreenState"
+          },
+          "apps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChildApp"
+            }
+          }
+        }
+      },
+      "AppRuleUpdateRequest": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "allowed",
+              "free",
+              "blocked",
+              "pending"
+            ]
+          },
+          "limitMinutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1440,
+            "description": "Only with `allowed`."
+          },
+          "unlimited": {
+            "type": "boolean",
+            "description": "Only with `allowed`. Lets an app bypass the daily cap without unblocking it."
+          }
+        }
+      },
+      "AppRuleResponse": {
+        "type": "object",
+        "required": [
+          "appId",
+          "knownOnDevice",
+          "rule"
+        ],
+        "properties": {
+          "appId": {
+            "type": "string"
+          },
+          "knownOnDevice": {
+            "type": "boolean"
+          },
+          "category": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "games",
+              "social",
+              "edu",
+              "tools",
+              null
+            ]
+          },
+          "rule": {
+            "$ref": "#/components/schemas/AppRule"
+          }
+        }
+      },
+      "ScreenTimeLockRequest": {
+        "type": "object",
+        "properties": {
+          "reasonCode": {
+            "type": "string",
+            "enum": [
+              "parent_lock",
+              "check_in",
+              "task_time",
+              "other"
+            ],
+            "default": "parent_lock"
+          }
+        }
+      },
+      "TimeRequest": {
+        "type": "object",
+        "required": [
+          "id",
+          "childId",
+          "usageDate",
+          "requestedMinutes",
+          "requestedByKind",
+          "status",
+          "grantedMinutes",
+          "expiresAt",
+          "decidedAt",
+          "decidedByMembershipId",
+          "version",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "childId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "usageDate": {
+            "type": "string",
+            "format": "date",
+            "description": "The day the granted minutes belong to."
+          },
+          "requestedMinutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 240
+          },
+          "requestedByKind": {
+            "type": "string",
+            "enum": [
+              "child",
+              "guardian"
+            ]
+          },
+          "reasonCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "denied",
+              "expired"
+            ]
+          },
+          "grantedMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 240
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "decidedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "decidedByMembershipId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TimeRequestCreateRequest": {
+        "type": "object",
+        "required": [
+          "requestedMinutes"
+        ],
+        "properties": {
+          "requestedMinutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 240
+          },
+          "reasonCode": {
+            "type": "string",
+            "maxLength": 40
+          }
+        }
+      },
+      "TimeRequestDecisionRequest": {
+        "type": "object",
+        "required": [
+          "decision"
+        ],
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approve",
+              "deny"
+            ]
+          },
+          "grantedMinutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 240,
+            "description": "Approval only, and never more than the child asked for. Defaults to the amount requested."
+          }
+        }
+      },
+      "TimeRequestResponse": {
+        "type": "object",
+        "required": [
+          "request"
+        ],
+        "properties": {
+          "request": {
+            "$ref": "#/components/schemas/TimeRequest"
+          }
+        }
+      },
+      "TimeRequestListResponse": {
+        "type": "object",
+        "required": [
+          "childId",
+          "requests"
+        ],
+        "properties": {
+          "childId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "requests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TimeRequest"
+            }
+          }
+        }
+      },
+      "DeviceScreenTimeReportRequest": {
+        "type": "object",
+        "properties": {
+          "usage": {
+            "type": "array",
+            "maxItems": 200,
+            "description": "Cumulative minutes per app for a day. The server keeps the greater of this and what it stored.",
+            "items": {
+              "type": "object",
+              "required": [
+                "appId",
+                "usedMinutes"
+              ],
+              "properties": {
+                "appId": {
+                  "type": "string",
+                  "maxLength": 120
+                },
+                "usedMinutes": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 1440
+                },
+                "date": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "Today or the day before, in the family's own clock."
+                }
+              }
+            }
+          },
+          "apps": {
+            "type": "array",
+            "maxItems": 200,
+            "description": "What is installed, as the handset names it. An app nobody has ruled on becomes pending.",
+            "items": {
+              "type": "object",
+              "required": [
+                "appId",
+                "displayName",
+                "category"
+              ],
+              "properties": {
+                "appId": {
+                  "type": "string",
+                  "maxLength": 120
+                },
+                "displayName": {
+                  "type": "string",
+                  "maxLength": 120
+                },
+                "category": {
+                  "type": "string",
+                  "enum": [
+                    "games",
+                    "social",
+                    "edu",
+                    "tools"
+                  ]
+                },
+                "ageRating": {
+                  "type": "string",
+                  "maxLength": 16
+                }
+              }
+            }
+          },
+          "request": {
+            "type": "object",
+            "description": "The child's question, if the phone is asking for more minutes in this same call.",
+            "required": [
+              "requestedMinutes"
+            ],
+            "properties": {
+              "requestedMinutes": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 240
+              },
+              "reasonCode": {
+                "type": "string",
+                "maxLength": 40
+              }
+            }
+          }
+        }
+      },
+      "DeviceScreenTimeResponse": {
+        "type": "object",
+        "required": [
+          "childId",
+          "date",
+          "state",
+          "apps",
+          "reportedRequest"
+        ],
+        "properties": {
+          "childId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/ScreenTimePolicy"
+          },
+          "state": {
+            "$ref": "#/components/schemas/ScreenState"
+          },
+          "lock": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ChildLock"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "usage": {
+            "$ref": "#/components/schemas/ScreenTimeReadResponse/properties/usage"
+          },
+          "openRequest": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TimeRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "apps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChildApp"
+            }
+          },
+          "reportedRequest": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TimeRequest"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The question this call raised or found, so a phone knows its ask was recorded."
           }
         }
       }
