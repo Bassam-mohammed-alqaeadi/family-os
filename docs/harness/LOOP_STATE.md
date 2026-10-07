@@ -9,7 +9,7 @@
 <!-- HARNESS-STATE:BEGIN -->
 ```yaml
 status: REAL_ENGINE
-active_system: المرحلة الثانية — السلامة (و١ وو٢ ٤/٤، والنشط و٣ الموقع والمناطق الآمنة)
+active_system: المرحلة الثانية — السلامة (و١ وو٢ وو٣ ٤/٤؛ ٣ من ١٤ وظيفة حقيقية). التالية: و٤ الطوارئ SOS
 wave: "00_MASTER_PLAN — المرحلة الأولى"
 stage: المرحلة الثانية — و٣ الموقع والمناطق الآمنة أُغلقت ٤/٤ (مخطط + خادم + عقد + عميل + سطح + رحلة). التالية: و٤ الطوارئ SOS.
 card: docs/harness/cards/M1-37-002-device-lifecycle-cover.md
