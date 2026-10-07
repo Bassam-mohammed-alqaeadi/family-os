@@ -8,12 +8,13 @@ import 'package:family_os/features/n12_devices/family_members_repository.dart';
 /// previous home for these constants was a `*mock*.dart` file, which meant production code
 /// could not name a role without importing a fixture module - the tail wagging the dog.
 abstract final class FamilyMembersRoleLabels {
-  static const owner = 'وليّ الأمر';
-  static const mother = 'وليّة أمر';
-  static const guardian = 'وصيّ إضافي';
-  static const ownerMonogram = 'و';
-  static const motherMonogram = 'أ';
-  static const guardianMonogram = 'و';
+  static const owner = 'وليّ الأمر'; // rule12-allow: a role word, resolved before any BuildContext exists
+  static const mother = 'وليّة أمر'; // rule12-allow: a role word, resolved before any BuildContext exists
+  static const guardian = 'وصيّ إضافي'; // rule12-allow: a role word, resolved before any BuildContext exists
+  static const child = 'ابن'; // rule12-allow: a row label for an invitation with no profile yet
+  static const ownerMonogram = 'و'; // rule12-allow: a monogram, one letter drawn in a swatch
+  static const motherMonogram = 'أ'; // rule12-allow: a monogram, one letter drawn in a swatch
+  static const guardianMonogram = 'و'; // rule12-allow: a monogram, one letter drawn in a swatch
 
   /// The swatch and monogram a role is drawn with, so two callers cannot disagree about
   /// what the mother's row looks like.
@@ -31,7 +32,10 @@ abstract final class FamilyMembersRoleLabels {
   static (FamilyMemberKind, String)? forRole(String role) => switch (role) {
     'primary_guardian' => (FamilyMemberKind.owner, owner),
     'co_guardian' => (FamilyMemberKind.mother, mother),
-    'child' => (FamilyMemberKind.child, mother),
+    // A child is not a co-parent. An active child's row is drawn from the children roster
+    // and never uses this label; a pending child invitation has no profile yet, and the one
+    // honest thing to write beside it is that it is a child's invitation.
+    'child' => (FamilyMemberKind.child, child),
     _ => null,
   };
 }

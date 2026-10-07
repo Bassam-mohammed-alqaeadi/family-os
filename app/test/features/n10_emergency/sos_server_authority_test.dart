@@ -173,7 +173,7 @@ void main() {
 
   test('the board never reports a delivery nobody made', () async {
     final transport = FakeTransport(
-      const FoundationGateHttpResponse(statusCode: 200, body: '{"alert":$locatedAlertBody}'),
+      const FoundationGateHttpResponse(statusCode: 200, body: '{"alerts":[$locatedAlertBody]}'),
     );
 
     final alert = (await authorityFor(transport).openAlerts()).single;
@@ -190,7 +190,7 @@ void main() {
 
   test('a pin exists only where the server stored a position', () async {
     final located = FakeTransport(
-      const FoundationGateHttpResponse(statusCode: 200, body: '{"alert":$locatedAlertBody}'),
+      const FoundationGateHttpResponse(statusCode: 200, body: '{"alerts":[$locatedAlertBody]}'),
     );
     final locatedBoard = authorityFor(
       located,
@@ -202,7 +202,7 @@ void main() {
     expect(locatedBoard.pinFracY, inInclusiveRange(0, 1));
 
     final unlocated = FakeTransport(
-      const FoundationGateHttpResponse(statusCode: 200, body: '{"alert":$unlocatedAlertBody}'),
+      const FoundationGateHttpResponse(statusCode: 200, body: '{"alerts":[$unlocatedAlertBody]}'),
     );
     final board = authorityFor(
       unlocated,
@@ -220,7 +220,7 @@ void main() {
 
   test('the footer names the members the roster named, and invents nobody', () async {
     final transport = FakeTransport(
-      const FoundationGateHttpResponse(statusCode: 200, body: '{"alert":$locatedAlertBody}'),
+      const FoundationGateHttpResponse(statusCode: 200, body: '{"alerts":[$locatedAlertBody]}'),
     );
     final authority = authorityFor(
       transport,
@@ -244,7 +244,7 @@ void main() {
 
   test('a roster read that fails does not blank the recipients', () async {
     final transport = FakeTransport(
-      const FoundationGateHttpResponse(statusCode: 200, body: '{"alert":$locatedAlertBody}'),
+      const FoundationGateHttpResponse(statusCode: 200, body: '{"alerts":[$locatedAlertBody]}'),
     );
     var reads = 0;
     final authority = authorityFor(

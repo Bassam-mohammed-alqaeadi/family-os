@@ -198,6 +198,53 @@ jobs:
                   print(
                       f"::error title=Flutter console tail {index}/{len(pieces)}::{piece}"
                   )
+          else:
+              # Say it out loud rather than silently reporting less: a diagnostic path that
+              # fails quietly is how this step spent a night reporting nothing.
+              build = Path("build/ci")
+              listing = (
+                  ", ".join(f"{p.name}:{p.stat().st_size}" for p in sorted(build.glob("*")))
+                  if build.exists()
+                  else "build/ci does not exist"
+              )
+              print(
+                  "::warning title=Test console log missing::"
+                  f"console={console.exists()} failures={len(failures)} {listing}"
+              )
+
+          # The reporter's own events are the last word on what each failure carried: the
+          # matcher text and the exception line both live here, and they are readable from
+          # the annotations API even when the console log is not on disk.
+          raw_events = []
+          shapes = {}
+          if report.exists():
+              for raw in report.read_text(encoding="utf-8", errors="replace").splitlines():
+                  try:
+                      event = json.loads(raw)
+                  except json.JSONDecodeError:
+                      continue
+                  shapes[event.get("type", "?")] = shapes.get(event.get("type", "?"), 0) + 1
+                  event.pop("stackTrace", None)
+                  if event.get("type") == "error" or (
+                      event.get("type") == "testDone"
+                      and event.get("result") not in ("success", "skipped")
+                  ):
+                      raw_events.append(event)
+                  if event.get("type") == "print":
+                      message = str(event.get("message", ""))
+                      if any(
+                          token in message
+                          for token in ("Expected:", "Which:", "Exception", "Error", "════")
+                      ):
+                          raw_events.append(event)
+          print(f"::warning title=Test report shapes::{json.dumps(shapes)}")
+          dump = json.dumps(raw_events, ensure_ascii=False)
+          dump = dump.replace("%", "%25").replace("\n", "%0A").replace("\r", "")
+          size = 2800
+          pieces = [dump[i : i + size] for i in range(0, len(dump), size)]
+          print(f"::warning title=Test report events::{len(pieces)} chunk(s)")
+          for index, piece in enumerate(pieces[:10], start=1):
+              print(f"::error title=Raw test events {index}/{len(pieces)}::{piece}")
           PY
       - name: Upload Flutter test report
         if: always()
@@ -224,19 +271,19 @@ jobs:
             git diff -U1 -- lib/app/router.dart lib/app/shell_config.dart lib/core/i18n \
               > build/ci/generated.diff || true
             # The generator's own output is the only thing that says what the committed
-            # files must become, and one clipped annotation is not enough to apply it.
-            # The whole diff leaves in numbered chunks; the log still has all of it.
-            python3 - <<'CHUNKS'
-            from pathlib import Path
-
-            text = Path("build/ci/generated.diff").read_text(encoding="utf-8", errors="replace")
-            escaped = text.replace("%", "%25").replace("\r", "").replace("\n", "%0A")
-            size = 3000
-            pieces = [escaped[i : i + size] for i in range(0, len(escaped), size)]
-            print(f"::error title=Generated source is stale::{len(pieces)} chunk(s) follow; {len(text)} characters")
-            for index, piece in enumerate(pieces[:20], start=1):
-                print(f"::error title=Generated diff {index}/{len(pieces)}::{piece}")
-            CHUNKS
+            # files must become, and one clipped annotation is not enough to apply it - so
+            # the whole diff leaves as numbered annotations. Escaped and chunked in the
+            # shell, because a heredoc nested this deep is one indentation away from being
+            # a silent no-op.
+            ESCAPED="$(sed -e 's/%/%25/g' -e 's/\r//g' build/ci/generated.diff | tr '\n' '\036' | sed -e 's/\036/%0A/g')"
+            TOTAL=$(( (${#ESCAPED} + 2999) / 3000 ))
+            echo "::error title=Generated source is stale::${TOTAL} chunk(s) follow; $(wc -c < build/ci/generated.diff) characters"
+            INDEX=0
+            while [ -n "$ESCAPED" ] && [ "$INDEX" -lt 30 ]; do
+              INDEX=$((INDEX + 1))
+              echo "::error title=Generated diff ${INDEX}/${TOTAL}::${ESCAPED:0:3000}"
+              ESCAPED="${ESCAPED:3000}"
+            done
             git diff --stat -- lib/app/router.dart lib/app/shell_config.dart lib/core/i18n
             exit 1
           fi

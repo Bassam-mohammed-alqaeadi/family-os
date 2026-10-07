@@ -116,20 +116,24 @@ void main() {
         ),
       ],
       children: InMemoryChildrenListRepository(
-        children: const [
-          ChildrenListEntry(
-            id: 'child-1',
-            displayName: 'أمانة',
-            ageYears: 9,
-            emoji: '🧒',
-            swatch: DayChildSwatch.sky,
-            locationLabel: 'البيت',
-            lastSeenLabel: 'الآن',
-            batteryLabel: '٨٠٪',
-            timeLeftLabel: '١٤٠ د',
-            health: ChildListHealth.excellent,
-          ),
-        ],
+        // Scoped to the family that is asked about, the way the screen seeds it: an
+        // unscoped list is the stage-1 shim, and a scoped read must not see it.
+        byFamily: const {
+          familyId: [
+            ChildrenListEntry(
+              id: 'child-1',
+              displayName: 'أمانة',
+              ageYears: 9,
+              emoji: '🧒',
+              swatch: DayChildSwatch.sky,
+              locationLabel: 'البيت',
+              lastSeenLabel: 'الآن',
+              batteryLabel: '٨٠٪',
+              timeLeftLabel: '١٤٠ د',
+              health: ChildListHealth.excellent,
+            ),
+          ],
+        },
       ),
     );
 
