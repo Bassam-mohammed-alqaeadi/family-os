@@ -12470,4 +12470,92 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get webFilterServerQuestionDenied => 'The request was denied.';
+
+  @override
+  String get tasksServerNoSession =>
+      'No server session in this build - tasks are shown from local storage, and no points are counted on the server.';
+
+  @override
+  String get tasksServerUnreachable =>
+      'The server did not answer - what you see is the last true answer, and nothing changed.';
+
+  @override
+  String get tasksServerDenied =>
+      'This account may not read this child\'s tasks from the server.';
+
+  @override
+  String get tasksServerRefused =>
+      'The server refused the request - nothing changed.';
+
+  @override
+  String get tasksServerBalanceHeading => 'Points';
+
+  @override
+  String get tasksServerBalanceNote =>
+      'The balance is the sum of the ledger, not a stored number: every line below says who confirmed it and when.';
+
+  @override
+  String get tasksServerBalanceEmpty =>
+      'No points yet - points are earned when a parent confirms a finished task.';
+
+  @override
+  String tasksServerBalanceEntry(int points) {
+    return '+$points points, confirmed by a parent.';
+  }
+
+  @override
+  String get tasksServerTasksHeading => 'Tasks';
+
+  @override
+  String tasksServerTaskPoints(int points) {
+    return '$points points when it is done';
+  }
+
+  @override
+  String get tasksServerTaskWaiting => 'Your child has not said anything yet.';
+
+  @override
+  String get tasksServerTaskClaimed =>
+      'Your child says it is done - waiting for your word.';
+
+  @override
+  String tasksServerTaskConfirmed(int points) {
+    return 'You confirmed it - $points points were added to their balance.';
+  }
+
+  @override
+  String get tasksServerTaskDeclined =>
+      'Not confirmed yet - and they can try again.';
+
+  @override
+  String get tasksServerTaskArchived =>
+      'This task was withdrawn, and no points were counted for it.';
+
+  @override
+  String get tasksServerRecordClaim => 'Record that it is done';
+
+  @override
+  String get tasksServerConfirm => 'Confirm it is done';
+
+  @override
+  String get tasksServerDecline => 'Not done yet';
+
+  @override
+  String get tasksServerNoteHint => 'A note your child reads if you decline';
+
+  @override
+  String get tasksServerCreateHeading => 'A new task';
+
+  @override
+  String get tasksServerCreateTitle => 'What is asked?';
+
+  @override
+  String get tasksServerCreatePoints => 'Points';
+
+  @override
+  String get tasksServerCreateNote => 'What does \"done\" mean?';
+
+  @override
+  String get tasksServerCreateButton => 'Add the task';
+
 }

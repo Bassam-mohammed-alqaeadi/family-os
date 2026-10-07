@@ -12289,4 +12289,90 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get webFilterServerQuestionDenied => 'رُفض الطلب.';
+
+  @override
+  String get tasksServerNoSession =>
+      'لا توجد جلسة خادم في هذا البناء — المهام معروضة من التخزين المحلي، ولا تُحتسب نقاط على الخادم.';
+
+  @override
+  String get tasksServerUnreachable =>
+      'لم يستجب الخادم — ما تراه آخر جواب صحيح، ولم يتغيّر شيء.';
+
+  @override
+  String get tasksServerDenied =>
+      'هذا الحساب لا يملك قراءة مهام هذا الابن من الخادم.';
+
+  @override
+  String get tasksServerRefused => 'رفض الخادم الطلب — لم يتغيّر شيء.';
+
+  @override
+  String get tasksServerBalanceHeading => 'النقاط';
+
+  @override
+  String get tasksServerBalanceNote =>
+      'الرصيد مجموع السجل، لا رقم محفوظ: كل سطر أدناه هو من أكّده ومتى.';
+
+  @override
+  String get tasksServerBalanceEmpty =>
+      'لا نقاط بعد — تُكتسب النقاط بتأكيد أحد الوالدين لإنجاز مهمة.';
+
+  @override
+  String tasksServerBalanceEntry(int points) {
+    return '‏+$points نقطة — أكّدها أحد الوالدين.';
+  }
+
+  @override
+  String get tasksServerTasksHeading => 'المهام';
+
+  @override
+  String tasksServerTaskPoints(int points) {
+    return '‏$points نقطة عند الإنجاز';
+  }
+
+  @override
+  String get tasksServerTaskWaiting => 'لم يقل الابن شيئًا بعد.';
+
+  @override
+  String get tasksServerTaskClaimed => 'قال الابن إنه أنجزها — بانتظار كلمتك.';
+
+  @override
+  String tasksServerTaskConfirmed(int points) {
+    return 'أكّدت الإنجاز — أُضيفت $points نقطة إلى رصيده.';
+  }
+
+  @override
+  String get tasksServerTaskDeclined =>
+      'لم تُؤكَّد بعد — ويمكنه المحاولة مرة أخرى.';
+
+  @override
+  String get tasksServerTaskArchived =>
+      'هذه المهمة مسحوبة، ولم تُحتسب لها نقاط.';
+
+  @override
+  String get tasksServerRecordClaim => 'سجّل أنه أنجز';
+
+  @override
+  String get tasksServerConfirm => 'تأكيد الإنجاز';
+
+  @override
+  String get tasksServerDecline => 'لم يُنجز بعد';
+
+  @override
+  String get tasksServerNoteHint => 'ملاحظة تُقرأ للابن عند الرفض';
+
+  @override
+  String get tasksServerCreateHeading => 'مهمة جديدة';
+
+  @override
+  String get tasksServerCreateTitle => 'ما المطلوب؟';
+
+  @override
+  String get tasksServerCreatePoints => 'النقاط';
+
+  @override
+  String get tasksServerCreateNote => 'ما معنى «أُنجزت»؟';
+
+  @override
+  String get tasksServerCreateButton => 'أضف المهمة';
+
 }

@@ -14,8 +14,12 @@ import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
+import 'package:family_os/core/domain/child_id.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
 import 'package:family_os/features/n16_tasks/family_tasks_models.dart';
 import 'package:family_os/features/n16_tasks/family_tasks_repository.dart';
+import 'package:family_os/features/n16_tasks/tasks_server_authority.dart';
+import 'package:family_os/features/n16_tasks/tasks_server_panel.dart';
 
 /// Widget keys for SCR-FAT-054 acceptance.
 abstract final class FamilyTasksKeys {
@@ -82,6 +86,14 @@ class _FamilyTasksScreenState extends State<FamilyTasksScreen> {
   var _sosBusy = false;
   var _loading = true;
   FamilyTasksSnapshot _snap = const FamilyTasksSnapshot();
+
+  /// The child whose tasks this screen is about.
+  ///
+  /// The server panel needs one child, and the screen already knows how to choose: the same
+  /// resolver every other guardian surface uses. It is read here rather than passed down from
+  /// the route, so a route that forgot the parameter cannot make the panel talk about the
+  /// wrong child - or about none.
+  ChildId? _serverChildId;
 
   AppRole get _role {
     final override = widget.roleOverride;
@@ -338,6 +350,7 @@ class _FamilyTasksScreenState extends State<FamilyTasksScreen> {
     }
 
     final radii = Theme.of(context).extension<FamilyRadii>()!;
+    _serverChildId ??= resolveActiveChildIdOf(context);
     final pending = _snap.childTasks
         .where((t) => t.status == FamilyTaskStatus.pendingApproval)
         .toList(growable: false);
@@ -348,6 +361,16 @@ class _FamilyTasksScreenState extends State<FamilyTasksScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // W7 — the server's tasks and points, when this build has a session. Rendering it
+          // first is the point: a family should read what is actually counted before reading
+          // anything this build keeps locally.
+          if (activeTasksServerAuthority != null && _serverChildId != null) ...[
+            TasksServerPanel(
+              childId: _serverChildId!,
+              canEdit: _canAct,
+            ),
+            const SizedBox(height: 12),
+          ],
           if (_isObserverMother) ...[
             BannerNote(
               key: FamilyTasksKeys.observerHint,

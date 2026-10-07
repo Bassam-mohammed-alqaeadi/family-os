@@ -15896,6 +15896,117 @@
   "webFilterServerQuestionDenied": "رُفض الطلب.",
   "@webFilterServerQuestionDenied": {
       "description": "SCR: web-filter server panel — a question's state"
+  },
+  "tasksServerNoSession": "لا توجد جلسة خادم في هذا البناء — المهام معروضة من التخزين المحلي، ولا تُحتسب نقاط على الخادم.",
+  "@tasksServerNoSession": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerUnreachable": "لم يستجب الخادم — ما تراه آخر جواب صحيح، ولم يتغيّر شيء.",
+  "@tasksServerUnreachable": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerDenied": "هذا الحساب لا يملك قراءة مهام هذا الابن من الخادم.",
+  "@tasksServerDenied": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerRefused": "رفض الخادم الطلب — لم يتغيّر شيء.",
+  "@tasksServerRefused": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerBalanceHeading": "النقاط",
+  "@tasksServerBalanceHeading": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerBalanceNote": "الرصيد مجموع السجل، لا رقم محفوظ: كل سطر أدناه هو من أكّده ومتى.",
+  "@tasksServerBalanceNote": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerBalanceEmpty": "لا نقاط بعد — تُكتسب النقاط بتأكيد أحد الوالدين لإنجاز مهمة.",
+  "@tasksServerBalanceEmpty": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerBalanceEntry": "‏+{points} نقطة — أكّدها أحد الوالدين.",
+  "@tasksServerBalanceEntry": {
+      "description": "SCR: tasks server panel",
+      "placeholders": {
+          "points": {
+              "type": "int"
+          }
+      }
+  },
+  "tasksServerTasksHeading": "المهام",
+  "@tasksServerTasksHeading": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerTaskPoints": "‏{points} نقطة عند الإنجاز",
+  "@tasksServerTaskPoints": {
+      "description": "SCR: tasks server panel",
+      "placeholders": {
+          "points": {
+              "type": "int"
+          }
+      }
+  },
+  "tasksServerTaskWaiting": "لم يقل الابن شيئًا بعد.",
+  "@tasksServerTaskWaiting": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerTaskClaimed": "قال الابن إنه أنجزها — بانتظار كلمتك.",
+  "@tasksServerTaskClaimed": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerTaskConfirmed": "أكّدت الإنجاز — أُضيفت {points} نقطة إلى رصيده.",
+  "@tasksServerTaskConfirmed": {
+      "description": "SCR: tasks server panel",
+      "placeholders": {
+          "points": {
+              "type": "int"
+          }
+      }
+  },
+  "tasksServerTaskDeclined": "لم تُؤكَّد بعد — ويمكنه المحاولة مرة أخرى.",
+  "@tasksServerTaskDeclined": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerTaskArchived": "هذه المهمة مسحوبة، ولم تُحتسب لها نقاط.",
+  "@tasksServerTaskArchived": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerRecordClaim": "سجّل أنه أنجز",
+  "@tasksServerRecordClaim": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerConfirm": "تأكيد الإنجاز",
+  "@tasksServerConfirm": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerDecline": "لم يُنجز بعد",
+  "@tasksServerDecline": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerNoteHint": "ملاحظة تُقرأ للابن عند الرفض",
+  "@tasksServerNoteHint": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerCreateHeading": "مهمة جديدة",
+  "@tasksServerCreateHeading": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerCreateTitle": "ما المطلوب؟",
+  "@tasksServerCreateTitle": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerCreatePoints": "النقاط",
+  "@tasksServerCreatePoints": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerCreateNote": "ما معنى «أُنجزت»؟",
+  "@tasksServerCreateNote": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerCreateButton": "أضف المهمة",
+  "@tasksServerCreateButton": {
+      "description": "SCR: tasks server panel"
   }
 }
 

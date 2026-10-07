@@ -15896,6 +15896,102 @@
   "webFilterServerQuestionDenied": "The request was denied.",
   "@webFilterServerQuestionDenied": {
       "description": "SCR: web-filter server panel — a question's state"
+  },
+  "tasksServerNoSession": "No server session in this build - tasks are shown from local storage, and no points are counted on the server.",
+  "@tasksServerNoSession": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerUnreachable": "The server did not answer - what you see is the last true answer, and nothing changed.",
+  "@tasksServerUnreachable": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerDenied": "This account may not read this child's tasks from the server.",
+  "@tasksServerDenied": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerRefused": "The server refused the request - nothing changed.",
+  "@tasksServerRefused": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerBalanceHeading": "Points",
+  "@tasksServerBalanceHeading": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerBalanceNote": "The balance is the sum of the ledger, not a stored number: every line below says who confirmed it and when.",
+  "@tasksServerBalanceNote": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerBalanceEmpty": "No points yet - points are earned when a parent confirms a finished task.",
+  "@tasksServerBalanceEmpty": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerBalanceEntry": "+{points} points, confirmed by a parent.",
+  "@tasksServerBalanceEntry": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerTasksHeading": "Tasks",
+  "@tasksServerTasksHeading": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerTaskPoints": "{points} points when it is done",
+  "@tasksServerTaskPoints": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerTaskWaiting": "Your child has not said anything yet.",
+  "@tasksServerTaskWaiting": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerTaskClaimed": "Your child says it is done - waiting for your word.",
+  "@tasksServerTaskClaimed": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerTaskConfirmed": "You confirmed it - {points} points were added to their balance.",
+  "@tasksServerTaskConfirmed": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerTaskDeclined": "Not confirmed yet - and they can try again.",
+  "@tasksServerTaskDeclined": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerTaskArchived": "This task was withdrawn, and no points were counted for it.",
+  "@tasksServerTaskArchived": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerRecordClaim": "Record that it is done",
+  "@tasksServerRecordClaim": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerConfirm": "Confirm it is done",
+  "@tasksServerConfirm": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerDecline": "Not done yet",
+  "@tasksServerDecline": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerNoteHint": "A note your child reads if you decline",
+  "@tasksServerNoteHint": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerCreateHeading": "A new task",
+  "@tasksServerCreateHeading": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerCreateTitle": "What is asked?",
+  "@tasksServerCreateTitle": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerCreatePoints": "Points",
+  "@tasksServerCreatePoints": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerCreateNote": "What does \"done\" mean?",
+  "@tasksServerCreateNote": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerCreateButton": "Add the task",
+  "@tasksServerCreateButton": {
+      "description": "SCR: tasks server panel"
   }
 }
 

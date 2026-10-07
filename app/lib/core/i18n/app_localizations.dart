@@ -21846,4 +21846,148 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
     'on GitHub with a reproducible sample app and the gen-l10n configuration '
     'that was used.',
   );
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد جلسة خادم في هذا البناء — المهام معروضة من التخزين المحلي، ولا تُحتسب نقاط على الخادم.'**
+  String get tasksServerNoSession;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يستجب الخادم — ما تراه آخر جواب صحيح، ولم يتغيّر شيء.'**
+  String get tasksServerUnreachable;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا الحساب لا يملك قراءة مهام هذا الابن من الخادم.'**
+  String get tasksServerDenied;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'رفض الخادم الطلب — لم يتغيّر شيء.'**
+  String get tasksServerRefused;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'النقاط'**
+  String get tasksServerBalanceHeading;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'الرصيد مجموع السجل، لا رقم محفوظ: كل سطر أدناه هو من أكّده ومتى.'**
+  String get tasksServerBalanceNote;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لا نقاط بعد — تُكتسب النقاط بتأكيد أحد الوالدين لإنجاز مهمة.'**
+  String get tasksServerBalanceEmpty;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'‏+{points} نقطة — أكّدها أحد الوالدين.'**
+  String tasksServerBalanceEntry(int points);
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'المهام'**
+  String get tasksServerTasksHeading;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'‏{points} نقطة عند الإنجاز'**
+  String tasksServerTaskPoints(int points);
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يقل الابن شيئًا بعد.'**
+  String get tasksServerTaskWaiting;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'قال الابن إنه أنجزها — بانتظار كلمتك.'**
+  String get tasksServerTaskClaimed;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'أكّدت الإنجاز — أُضيفت {points} نقطة إلى رصيده.'**
+  String tasksServerTaskConfirmed(int points);
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لم تُؤكَّد بعد — ويمكنه المحاولة مرة أخرى.'**
+  String get tasksServerTaskDeclined;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'هذه المهمة مسحوبة، ولم تُحتسب لها نقاط.'**
+  String get tasksServerTaskArchived;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'سجّل أنه أنجز'**
+  String get tasksServerRecordClaim;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'تأكيد الإنجاز'**
+  String get tasksServerConfirm;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يُنجز بعد'**
+  String get tasksServerDecline;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'ملاحظة تُقرأ للابن عند الرفض'**
+  String get tasksServerNoteHint;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'مهمة جديدة'**
+  String get tasksServerCreateHeading;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'ما المطلوب؟'**
+  String get tasksServerCreateTitle;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'النقاط'**
+  String get tasksServerCreatePoints;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'ما معنى «أُنجزت»؟'**
+  String get tasksServerCreateNote;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف المهمة'**
+  String get tasksServerCreateButton;
+
 }
