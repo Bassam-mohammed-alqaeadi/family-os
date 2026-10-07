@@ -123,7 +123,16 @@ jobs:
           # reason, so the events that carry the words are dumped verbatim. `print` events
           # carry what the test wrote to stdout (the matcher block), `error` events carry
           # the exception line - stack traces are dropped, they are never the point.
-          wanted = ("Expected:", "Which:", "Actual:", "Exception", "════", "Unhandled")
+          wanted = (
+              "Expected:",
+              "Which:",
+              "Actual:",
+              "Exception",
+              "════",
+              "Unhandled",
+              "would not hit test",
+              "Warning:",
+          )
           kept = []
           if report.exists():
               for raw in report.read_text(encoding="utf-8", errors="replace").splitlines():

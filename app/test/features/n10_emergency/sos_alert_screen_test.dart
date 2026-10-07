@@ -19,8 +19,15 @@ void main() {
   testWidgets('SCR-FAT-018 father sees active coral board + CTAs', (
     tester,
   ) async {
+    // A pin is a measurement, not decoration: the board draws one only where the alert
+    // carries a position, which is the wave-4 rule this suite proves on the server path.
+    // The demo incident is `acquiring` (no reading), so the fixture that wants to see a pin
+    // has to say where the child's phone was.
     final repo = InMemorySosAlertRepository(
-      initialActive: InMemorySosAlertRepository.demoActive(),
+      initialActive: InMemorySosAlertRepository.demoActive().copyWith(
+        pinFracX: 0.42,
+        pinFracY: 0.38,
+      ),
     );
 
     await tester.pumpWidget(

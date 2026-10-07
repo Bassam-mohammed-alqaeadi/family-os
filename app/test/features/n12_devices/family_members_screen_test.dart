@@ -251,6 +251,11 @@ void main() {
       );
       expect(accept, findsOneWidget, reason: 'the invitation must be acceptable');
 
+      // The roster is a scrollable, and the row's actions sit below the fold in the test
+      // viewport: `find` sees them (they are inside the cache extent) while a tap aimed at
+      // their off-screen centre lands on nothing. A person scrolls first; so does the test.
+      await tester.ensureVisible(accept);
+      await tester.pumpAndSettle();
       await tester.tap(accept);
       await tester.pumpAndSettle();
 
@@ -314,16 +319,20 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(
-        find.byKey(FamilyMembersKeys.cancelInvitation('member_pending')),
+      final cancel = find.byKey(
+        FamilyMembersKeys.cancelInvitation('member_pending'),
       );
+      await tester.ensureVisible(cancel);
+      await tester.pumpAndSettle();
+      await tester.tap(cancel);
       await tester.pumpAndSettle();
       expect(commands.revoked, ['member_pending']);
       expect(commands.lastReasonCode, 'invitation_withdrawn');
 
-      await tester.tap(
-        find.byKey(FamilyMembersKeys.removeMember('member_active')),
-      );
+      final remove = find.byKey(FamilyMembersKeys.removeMember('member_active'));
+      await tester.ensureVisible(remove);
+      await tester.pumpAndSettle();
+      await tester.tap(remove);
       await tester.pumpAndSettle();
       expect(commands.revoked, ['member_pending', 'member_active']);
       expect(
@@ -373,9 +382,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(
-      find.byKey(FamilyMembersKeys.cancelInvitation('member_pending')),
+    final cancel = find.byKey(
+      FamilyMembersKeys.cancelInvitation('member_pending'),
     );
+    await tester.ensureVisible(cancel);
+    await tester.pumpAndSettle();
+    await tester.tap(cancel);
     await tester.pumpAndSettle();
 
     expect(commands.revoked, ['member_pending']);
