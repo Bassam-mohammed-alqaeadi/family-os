@@ -59,6 +59,17 @@ final class _RoutedTransport implements FoundationGateHttpTransport {
     return _match(uri);
   }
 
+  @override
+  Future<FoundationGateHttpResponse> put(
+    Uri uri, {
+    required Map<String, String> headers,
+    required String body,
+  }) async {
+    requests.add(uri);
+    requestHeaders.add(Map.unmodifiable(headers));
+    return _match(uri);
+  }
+
   FoundationGateHttpResponse _match(Uri uri) {
     for (final entry in responses.entries) {
       if (uri.path.endsWith(entry.key)) return entry.value;

@@ -33,6 +33,17 @@ abstract interface class FoundationGateHttpTransport {
     required Map<String, String> headers,
     required String body,
   });
+
+  /// A replacement of one resource that the contract addresses by its own path.
+  ///
+  /// PUT rather than PATCH where the operation IS the whole record: an app's rule is
+  /// allowed/free/blocked/pending and nothing else, so "here is the rule" is a truer
+  /// statement than "here is a change to a rule".
+  Future<FoundationGateHttpResponse> put(
+    Uri uri, {
+    required Map<String, String> headers,
+    required String body,
+  });
 }
 
 class PackageFoundationGateHttpTransport
@@ -74,6 +85,19 @@ class PackageFoundationGateHttpTransport
     required String body,
   }) async {
     final response = await _client.patch(uri, headers: headers, body: body);
+    return FoundationGateHttpResponse(
+      statusCode: response.statusCode,
+      body: response.body,
+    );
+  }
+
+  @override
+  Future<FoundationGateHttpResponse> put(
+    Uri uri, {
+    required Map<String, String> headers,
+    required String body,
+  }) async {
+    final response = await _client.put(uri, headers: headers, body: body);
     return FoundationGateHttpResponse(
       statusCode: response.statusCode,
       body: response.body,

@@ -100,9 +100,16 @@ enum FoundationGateApiFailure {
 }
 
 class FoundationGateApiException implements Exception {
-  const FoundationGateApiException(this.failure);
+  const FoundationGateApiException(this.failure, {this.details});
 
   final FoundationGateApiFailure failure;
+
+  /// The structured details the server attached to its error, when it sent any.
+  ///
+  /// A conflict is not always a failure a family caused: "a question is already waiting" is
+  /// answered with the open question's identifier so a screen can show it instead of an
+  /// error. Absent means the server sent none, never an empty map invented here.
+  final Map<String, Object?>? details;
 }
 
 class FoundationGateIdentityException implements Exception {

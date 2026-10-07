@@ -249,6 +249,92 @@ class FoundationGateConfiguration {
     );
   }
 
+  /// A child's screen-time state: the policy, today's minutes and the reason the answer is
+  /// what it is. The server computes the state at the moment of the read, so the URL carries
+  /// no instant - a screen that asked "is it bedtime at 21:00" would be asking a question the
+  /// server can no longer answer by the time the answer arrives.
+  Uri familyChildScreenTimeUri(String familyId, String childId) =>
+      _familyChildCrumbUri(familyId, childId, 'screen-time');
+
+  /// The instant lock. A URL of its own because it is an act of its own: a lock is a
+  /// decision somebody made now, not a rule the family set.
+  Uri familyChildScreenLockUri(String familyId, String childId) =>
+      _familyChildCrumbUri(familyId, childId, 'screen-time/lock');
+
+  /// Releasing a lock. The answer says whether there was one to release.
+  Uri familyChildScreenUnlockUri(String familyId, String childId) =>
+      _familyChildCrumbUri(familyId, childId, 'screen-time/unlock');
+
+  /// The apps on the child's phone, each with the family's decision about it.
+  Uri familyChildAppsUri(String familyId, String childId) =>
+      _familyChildCrumbUri(familyId, childId, 'apps');
+
+  /// One app's rule.
+  ///
+  /// The app id is a package name, not a UUID, so it is checked against the same shape the
+  /// server accepts instead of being pasted into a path and hoped for.
+  Uri familyChildAppRuleUri(String familyId, String childId, String appId) {
+    if (!RegExp(r'^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$').hasMatch(appId)) {
+      throw ArgumentError.value(appId, 'appId', 'package-style identifier');
+    }
+    return _familyChildCrumbUri(familyId, childId, 'apps/$appId/rule');
+  }
+
+  /// The minutes a child asked for and what the family answered.
+  ///
+  /// `status` selects rows, so it belongs in the URL rather than in a body - and `all` is
+  /// the default because a family opening this list wants the history, not only what waits.
+  Uri familyChildTimeRequestsUri(
+    String familyId,
+    String childId, {
+    String status = 'all',
+  }) {
+    if (!const <String>{'all', 'pending', 'approved', 'denied', 'expired'}
+        .contains(status)) {
+      throw ArgumentError.value(
+        status,
+        'status',
+        'all, pending, approved, denied or expired',
+      );
+    }
+    final uri = _familyChildCrumbUri(familyId, childId, 'time-requests');
+    return status == 'all'
+        ? uri
+        : uri.replace(queryParameters: <String, String>{'status': status});
+  }
+
+  /// The answer to one question.
+  Uri familyChildTimeRequestDecisionUri(
+    String familyId,
+    String childId,
+    String requestId,
+  ) {
+    if (!isFoundationGateUuid(requestId)) {
+      throw ArgumentError(
+        'Server-returned UUID request identifier is required.',
+      );
+    }
+    return _familyChildCrumbUri(
+      familyId,
+      childId,
+      'time-requests/$requestId/decision',
+    );
+  }
+
+  /// One path under a child, with both identifiers checked the same way every other route
+  /// checks them: this class refuses to build a URL out of an identifier the server never
+  /// issued.
+  Uri _familyChildCrumbUri(String familyId, String childId, String crumb) {
+    if (!isFoundationGateUuid(familyId) || !isFoundationGateUuid(childId)) {
+      throw ArgumentError(
+        'Server-returned UUID family and child identifiers are required.',
+      );
+    }
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/children/$childId/$crumb',
+    );
+  }
+
   /// One incident, read by every member of the family - the child included.
   Uri familySosAlertUri(String familyId, String alertId) {
     if (!isFoundationGateUuid(familyId) || !isFoundationGateUuid(alertId)) {

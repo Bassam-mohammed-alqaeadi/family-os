@@ -42,6 +42,7 @@ import 'package:family_os/features/n02_day/child_profile_repository.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/family_chat_local_persistence.dart';
 import 'package:family_os/features/n02_day/location_server_authority.dart';
+import 'package:family_os/features/n03_screen_time/screen_time_server_authority.dart';
 import 'package:family_os/features/n10_emergency/sos_server_authority.dart';
 import 'package:family_os/features/n02_day/location_ux_bridge.dart';
 import 'package:family_os/features/n03_screen_time/child_apps_local_persistence.dart';
@@ -60,6 +61,7 @@ import 'package:family_os/foundation_gate/family_device_api_client.dart';
 import 'package:family_os/foundation_gate/family_location_api_client.dart';
 import 'package:family_os/foundation_gate/family_discovery_api_client.dart';
 import 'package:family_os/foundation_gate/family_membership_api_client.dart';
+import 'package:family_os/foundation_gate/family_screen_time_api_client.dart';
 import 'package:family_os/foundation_gate/family_sos_api_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_http.dart';
@@ -172,6 +174,20 @@ Future<void> main() async {
     // a server is configured. Before this binding, pressing the alarm ran a simulated service
     // that always succeeded: no guardian was told, and the screen said otherwise. A build
     // without this binding now says the alarm did not reach anyone rather than pretending.
+    // W5 - the minutes a child has, the apps they belong to and the instant lock are server
+    // facts when a server is configured. Before this binding the screen-time screens read a
+    // local sample: a bedtime nobody enforced and a cap the phone could forget. A build
+    // without this binding now says the server did not answer rather than drawing a clock.
+    final screenTimeApi = familyEntryRuntime.screenTimeApi;
+    if (screenTimeApi != null) {
+      bindScreenTimeServerAuthority(
+        ScreenTimeServerAuthority(
+          api: screenTimeApi,
+          idToken: familyEntryRuntime.currentIdToken,
+          familyId: () => familyEntryRuntime.selectedFamilyId,
+        ),
+      );
+    }
     final sosApi = familyEntryRuntime.sosApi;
     if (sosApi != null) {
       bindSosServerAuthority(
@@ -264,6 +280,10 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
         transport: PackageFoundationGateHttpTransport(),
       ),
       sosApi: FamilySosApiClient(
+        configuration: configuration,
+        transport: PackageFoundationGateHttpTransport(),
+      ),
+      screenTimeApi: FamilyScreenTimeApiClient(
         configuration: configuration,
         transport: PackageFoundationGateHttpTransport(),
       ),
