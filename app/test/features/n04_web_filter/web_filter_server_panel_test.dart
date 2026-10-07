@@ -221,6 +221,20 @@ Future<void> _pump(
   await tester.pumpAndSettle();
 }
 
+/// Taps a widget the way a person does: after scrolling it into view.
+///
+/// The scroll is part of the test, not a convenience. The panel is a column taller than a
+/// phone viewport, and a tap whose centre lands outside it hits whatever is under the
+/// finger instead - so a run that warned about a missed tap would be a run that proved
+/// nothing about the button it named.
+Future<void> _tapKey(WidgetTester tester, Key key) async {
+  final finder = find.byKey(key);
+  await tester.ensureVisible(finder);
+  await tester.pumpAndSettle();
+  await tester.tap(finder);
+  await tester.pumpAndSettle();
+}
+
 _Transport _healthyTransport({
   List<String> categories = const ['adults', 'gambling', 'violence'],
   String protectionState = 'protected',
@@ -305,8 +319,7 @@ void main() {
     });
     await _pump(tester, authority: _authority(transport));
 
-    await tester.tap(find.byKey(const Key('web_filter_server_category_social')));
-    await tester.pumpAndSettle();
+    await _tapKey(tester, const Key('web_filter_server_category_social'));
 
     final sent = jsonDecode(transport.bodies.last) as Map<String, Object?>;
     expect(sent['categories'], containsAll(<String>['adults', 'gambling', 'violence', 'social']));
@@ -335,8 +348,7 @@ void main() {
     );
     await _pump(tester, authority: _authority(transport));
 
-    await tester.tap(find.byKey(const Key('web_filter_server_category_social')));
-    await tester.pumpAndSettle();
+    await _tapKey(tester, const Key('web_filter_server_category_social'));
 
     expect(find.byKey(const Key('web_filter_server_refused')), findsOneWidget);
     expect(
@@ -352,8 +364,7 @@ void main() {
     expect(find.byKey(const Key('web_filter_server_policy_card')), findsOneWidget);
 
     transport.failure = StateError('socket closed');
-    await tester.tap(find.byKey(const Key('web_filter_server_category_social')));
-    await tester.pumpAndSettle();
+    await _tapKey(tester, const Key('web_filter_server_category_social'));
 
     expect(find.byKey(const Key('web_filter_server_unreachable')), findsOneWidget);
     expect(find.byKey(const Key('web_filter_server_policy_card')), findsOneWidget);
@@ -383,11 +394,16 @@ void main() {
     });
     await _pump(tester, authority: _authority(transport));
 
-    await tester.tap(find.byKey(const Key('web_filter_server_preview_button')));
-    await tester.pumpAndSettle();
+    await _tapKey(tester, const Key('web_filter_server_preview_button'));
 
     expect(find.byKey(const Key('web_filter_server_preview_verdict')), findsOneWidget);
-    expect(find.textContaining('ألعاب الإنترنت محجوبة'), findsOneWidget);
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('web_filter_server_preview_verdict')))
+          .data,
+      'المصدر: ألعاب',
+      reason: 'the denial is named by the category the server chose, not by this screen',
+    );
   });
 
   testWidgets('a device that stopped reporting is unverified, with the silence measured', (tester) async {
@@ -437,10 +453,7 @@ void main() {
     await _pump(tester, authority: _authority(transport));
 
     expect(find.byKey(const Key('web_filter_server_questions_card')), findsOneWidget);
-    await tester.ensureVisible(find.byKey(const Key('web_filter_server_approve_$_requestId')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('web_filter_server_approve_$_requestId')));
-    await tester.pumpAndSettle();
+    await _tapKey(tester, const Key('web_filter_server_approve_$_requestId'));
 
     expect(
       transport.calls.any((call) => call.startsWith('POST /v1/families/$_familyId/children/$_childId/web-filter/temp-allows/$_requestId/decision')),

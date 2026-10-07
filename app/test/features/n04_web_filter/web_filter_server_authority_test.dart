@@ -21,7 +21,6 @@ import 'package:family_os/features/n04_web_filter/web_filter_server_authority.da
 import 'package:family_os/foundation_gate/family_web_filter_api_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_http.dart';
-import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
 const _familyId = '11111111-1111-4111-8111-111111111111';
 const _childId = '22222222-2222-4222-8222-222222222222';
@@ -126,27 +125,58 @@ String policyBody({
   },
 });
 
+Map<String, Object?> _tempAllowRequest({
+  String state = 'active',
+  String status = 'approved',
+  int? grantedMinutes = 10,
+  String host = 'games.example.com',
+}) => <String, Object?>{
+  'id': _requestId,
+  'host': host,
+  'status': status,
+  'state': state,
+  'requestedMinutes': 15,
+  'grantedMinutes': grantedMinutes,
+  'reason': 'واجب المدرسة',
+  'requestedByMembershipId': null,
+  'requestedByDeviceId': '66666666-6666-4666-8666-666666666666',
+  'decidedByMembershipId': '77777777-7777-4777-8777-777777777777',
+  'decidedAt': '2026-10-08T09:00:00.000Z',
+  'expiresAt': '2026-10-08T09:10:00.000Z',
+  'createdAt': '2026-10-08T08:55:00.000Z',
+};
+
+/// One question as the decision route answers it: `request`, singular, because one row moved.
 String tempAllowBody({
   String state = 'active',
   String status = 'approved',
   int? grantedMinutes = 10,
   String host = 'games.example.com',
 }) => jsonEncode(<String, Object?>{
-  'request': <String, Object?>{
-    'id': _requestId,
-    'host': host,
-    'status': status,
-    'state': state,
-    'requestedMinutes': 15,
-    'grantedMinutes': grantedMinutes,
-    'reason': 'واجب المدرسة',
-    'requestedByMembershipId': null,
-    'requestedByDeviceId': '66666666-6666-4666-8666-666666666666',
-    'decidedByMembershipId': '77777777-7777-4777-8777-777777777777',
-    'decidedAt': '2026-10-08T09:00:00.000Z',
-    'expiresAt': '2026-10-08T09:10:00.000Z',
-    'createdAt': '2026-10-08T08:55:00.000Z',
-  },
+  'request': _tempAllowRequest(
+    state: state,
+    status: status,
+    grantedMinutes: grantedMinutes,
+    host: host,
+  ),
+});
+
+/// The inbox as the list route answers it: `requests`, plural, because a child may have asked
+/// more than once and the screen is meant to show every open door, not the newest one.
+String tempAllowListBody({
+  String state = 'active',
+  String status = 'approved',
+  int? grantedMinutes = 10,
+  String host = 'games.example.com',
+}) => jsonEncode(<String, Object?>{
+  'requests': <Object?>[
+    _tempAllowRequest(
+      state: state,
+      status: status,
+      grantedMinutes: grantedMinutes,
+      host: host,
+    ),
+  ],
 });
 
 void main() {
@@ -207,20 +237,12 @@ void main() {
 
   test('an empty change is refused here rather than sent as a request that means nothing', () async {
     final transport = _Transport(response: _ok(policyBody()));
-    await expectLater(
-      _authorityFor(transport).writePolicy(
-        _childId,
-        idempotencyKey: () => 'key-empty',
-      ),
-      throwsA(
-        isA<FoundationGateApiException>().having(
-          (exception) => exception.failure,
-          'failure',
-          FoundationGateApiFailure.invalidInput,
-        ),
-      ),
-    );
-    expect(transport.calls, isEmpty);
+    final answer = await _authorityFor(
+      transport,
+    ).writePolicy(_childId, idempotencyKey: () => 'key-empty');
+    expect(answer.status, WebFilterAuthorityStatus.refused);
+    expect(answer.value, isNull);
+    expect(transport.calls, isEmpty, reason: 'there was nothing to ask');
   });
 
   test('the change that is sent carries exactly the field that was chosen', () async {
@@ -389,7 +411,9 @@ void main() {
     expect(openAnswer.value!.state, FoundationGateTempAllowState.active);
     expect(openAnswer.value!.grantedMinutes, 10);
 
-    final expired = _Transport(response: _ok(tempAllowBody(state: 'expired')));
+    final expired = _Transport(
+      response: _ok(tempAllowListBody(state: 'expired')),
+    );
     final expiredAnswer = await _authorityFor(expired).openQuestions(_childId);
     expect(expiredAnswer.value!.single.state, FoundationGateTempAllowState.expired);
     expect(

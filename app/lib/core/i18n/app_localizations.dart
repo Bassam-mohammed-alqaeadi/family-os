@@ -21728,16 +21728,71 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'رفض'**
   String get screenTimeServerDeny;
+
+  /// SCR: web-filter server panel — no session
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد جلسة خادم في هذا البناء — الفلترة معروضة من التخزين المحلي، ولا ندّعي فرضًا على الجهاز.'**
   String get webFilterServerNoSession;
+
+  /// SCR: web-filter server panel — unreachable
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يستجب الخادم — ما تراه آخر جواب صحيح، ولم يتغيّر شيء.'**
   String get webFilterServerUnreachable;
+
+  /// SCR: web-filter server panel — access denied
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا الحساب لا يملك قراءة فلترة هذا الابن من الخادم.'**
   String get webFilterServerDenied;
+
+  /// SCR: web-filter server panel — refused
+  ///
+  /// In ar, this message translates to:
+  /// **'رفض الخادم الطلب — لم يتغيّر شيء.'**
   String get webFilterServerRefused;
+
+  /// SCR: web-filter server panel — protection state
+  ///
+  /// In ar, this message translates to:
+  /// **'هل الحماية تعمل فعلًا؟'**
   String get webFilterProtectionHeading;
+
+  /// SCR: web-filter server panel — protection state
+  ///
+  /// In ar, this message translates to:
+  /// **'آخر بلاغ حديث من الجهاز يقول إن الحماية تعمل.'**
   String get webFilterProtectionProtected;
+
+  /// SCR: web-filter server panel — protection state
+  ///
+  /// In ar, this message translates to:
+  /// **'لا ندّعي حماية: لا بلاغ حديث من هذا الجهاز.'**
   String get webFilterProtectionUnverified;
+
+  /// SCR: web-filter server panel — protection state
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يبلّغ هذا الجهاز عن حمايته قط — لا شيء يُقال عنها.'**
   String get webFilterProtectionNeverReported;
+
+  /// SCR: web-filter server panel — protection state
+  ///
+  /// In ar, this message translates to:
+  /// **'هذه المنصة لا تدعم مستوى الحماية هذا — وهي حقيقة عن الجهاز لا عن الابن.'**
   String get webFilterProtectionUnsupported;
+
+  /// SCR: web-filter server panel — protection state
+  ///
+  /// In ar, this message translates to:
+  /// **'الحماية ليست كما ينبغي — راجع ما رصده الجهاز.'**
   String get webFilterProtectionAtRisk;
+
+  /// SCR: web-filter server panel — how long the silence has lasted
+  ///
+  /// In ar, this message translates to:
+  /// **'صمت الجهاز منذ {minutes} دقيقة.'**
   String webFilterProtectionSilentMinutes(int minutes);
 }
 

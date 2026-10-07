@@ -298,11 +298,12 @@ class _WebFilterServerPanelState extends State<WebFilterServerPanel> {
   }
 
   Widget _hostLine(String label, List<String> hosts, FamilyColors colors) {
-    final empty = AppLocalizations.of(context).webFilterListEmpty;
+    final l10n = AppLocalizations.of(context);
+    final body = hosts.isEmpty ? l10n.webFilterListEmpty : hosts.join(' · ');
     return Padding(
       padding: const EdgeInsets.only(bottom: 2),
       child: Text(
-        hosts.isEmpty ? '$label: $empty' : '$label: ${hosts.join(' · ')}',
+        '$label: $body',
         style: TextStyle(fontSize: 12, color: colors.ink),
       ),
     );
