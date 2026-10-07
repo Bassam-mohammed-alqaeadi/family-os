@@ -977,6 +977,13 @@ export function deviceScreenTimeReportInput(value) {
 // reaches the database to be refused there.
 
 const MAX_FILTER_HOST_LENGTH = 253;
+
+// W7 bounds. They live here rather than in two files so a route and a validator cannot
+// disagree about what a task may say.
+const MAX_TASK_TITLE_LENGTH = 120;
+const MAX_TASK_NOTE_LENGTH = 300;
+const TASK_POINTS_MIN = 1;
+const TASK_POINTS_MAX = 200;
 const MAX_FILTER_LIST_ENTRIES = 200;
 const MAX_FILTER_KEYWORD_LENGTH = 64;
 const MAX_TEMP_ALLOW_MINUTES = 240;
@@ -1126,4 +1133,39 @@ export function protectionReportInput(value) {
 export function webFilterEvaluateQuery(value) {
   const host = requiredText(value?.host, 'host', { maxLength: MAX_FILTER_HOST_LENGTH });
   return { host };
+}
+
+// ── W7 — family tasks and points ───────────────────────────────────────────────────────
+
+/** A guardian states a task: what it is, what "done" means, and what it pays. */
+export function taskCreateInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['title', 'note', 'points']));
+  const title = requiredText(body.title, 'title', { maxLength: MAX_TASK_TITLE_LENGTH });
+  const note = body.note === undefined ? '' : (optionalText(body.note, 'note', MAX_TASK_NOTE_LENGTH) ?? '');
+  // Whole numbers only, and bounded on both sides: a screen may not round a guardian's
+  // decision, and it may not turn a chore into pocket money beyond what one task can state.
+  const points = requiredWholeNumber(body.points, 'points', TASK_POINTS_MIN, TASK_POINTS_MAX);
+  return { title, note, points };
+}
+
+/** "I did it" - said by a handset or by a guardian for a child who spoke instead. */
+export function taskClaimInput(value) {
+  const body = value === undefined || value === null ? {} : bodyObject(value);
+  onlyKnownFields(body, new Set(['note']));
+  const note = body.note === undefined ? '' : (optionalText(body.note, 'note', MAX_TASK_NOTE_LENGTH) ?? '');
+  return { note };
+}
+
+/** The guardian's word on a claim. Note what is absent: no number of points, because the
+ *  task states the reward and this request may not restate it. */
+export function taskDecisionInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['decision', 'note']));
+  const decision = requiredText(body.decision, 'decision', { maxLength: 16 }).toLowerCase();
+  if (decision !== 'confirm' && decision !== 'decline') {
+    throw new HttpError(400, 'invalid_request', 'decision must be confirm or decline.');
+  }
+  const note = body.note === undefined ? '' : (optionalText(body.note, 'note', MAX_TASK_NOTE_LENGTH) ?? '');
+  return { decision, note };
 }

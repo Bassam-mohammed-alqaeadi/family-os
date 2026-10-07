@@ -3275,3 +3275,209 @@ test('the filter a family set is the filter the child’s phone is handed, and a
     }
   });
 });
+
+test('a chore is claimed by a child, confirmed by a guardian, and the points can never be paid twice', { skip }, async () => {
+  await withFreshDatabase(async (client) => {
+    await migrate(client);
+    const store = new PostgresFoundationStore({
+      connectionString: withDatabase(DATABASE_URL, client.database),
+    });
+    const app = createApp({
+      store,
+      authVerifier: new TestAuthVerifier(),
+      readiness: () => ({ ready: true, missing: [] }),
+    });
+    try {
+      await withServer(app, async (baseUrl) => {
+        const household = await seedScreenTimeFamily(baseUrl, client, 'w7a');
+        const { familyId, childId, deviceId, deviceAuth, primaryMembershipId } = household;
+        const tasksPath = `/v1/families/${familyId}/children/${childId}/tasks`;
+
+        // 1. A guardian states the task and what it pays. From this moment the number lives
+        //    on the task, and nothing that follows may restate it.
+        const created = await jsonRequest(baseUrl, tasksPath, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w7a-task-1' }),
+          body: { title: 'ترتيب الغرفة', note: 'الملابس في الخزانة', points: 15 },
+        });
+        assert.equal(created.status, 201, JSON.stringify(created.body));
+        const taskId = created.body.task.id;
+        assert.equal(created.body.task.points, 15);
+        assert.equal(created.body.task.claim, null, 'nobody has said anything about it yet');
+
+        // 2. The child's own handset reads what it has to do and what it has earned - one
+        //    read, no child id anywhere, and a balance that starts at a real zero.
+        const before = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/tasks`, { headers: deviceAuth });
+        assert.equal(before.status, 200, JSON.stringify(before.body));
+        assert.equal(before.body.tasks.length, 1);
+        assert.equal(before.body.points, 0);
+        assert.deepEqual(before.body.entries, []);
+
+        // 3. "I did it" - and nothing moves, because a claim is not an achievement.
+        const claimed = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/tasks/${taskId}/claim`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w7a-claim-1' },
+          body: { note: 'خلصت' },
+        });
+        assert.equal(claimed.status, 201, JSON.stringify(claimed.body));
+        assert.equal(claimed.body.claim.status, 'pending');
+        assert.equal(claimed.body.claim.claimedByDeviceId, deviceId, 'the handset is the author');
+        assert.equal(claimed.body.claim.pointsAwarded, null, 'a pending claim has awarded nothing');
+
+        const afterClaim = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/tasks`, { headers: deviceAuth });
+        assert.equal(afterClaim.body.points, 0, 'the child pressing the button earned nothing yet');
+
+        const ledgerAfterClaim = await client.query(
+          `SELECT COUNT(*)::int AS entries FROM family_point_ledger WHERE family_id = $1 AND child_id = $2`,
+          [familyId, childId],
+        );
+        assert.equal(ledgerAfterClaim.rows[0].entries, 0, 'the ledger is untouched by a claim');
+
+        // 4. A second claim while one is open is refused rather than queued. The partial
+        //    unique index is what makes this true even if two presses arrive together.
+        const second = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/tasks/${taskId}/claim`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w7a-claim-2' },
+        });
+        assert.equal(second.status, 409);
+        assert.equal(second.body.error.code, 'task_claim_pending');
+
+        // 5. The guardian's word. Note the body: a decision and a note, and no number.
+        const confirmed = await jsonRequest(baseUrl, `${tasksPath}/${taskId}/decision`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w7a-decide-1' }),
+          body: { decision: 'confirm' },
+        });
+        assert.equal(confirmed.status, 200, JSON.stringify(confirmed.body));
+        assert.equal(confirmed.body.task.claim.status, 'confirmed');
+        assert.equal(confirmed.body.task.claim.pointsAwarded, 15, 'copied from the task');
+        assert.equal(confirmed.body.awarded.points, 15);
+        assert.equal(confirmed.body.points.points, 15);
+
+        const afterConfirm = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/tasks`, { headers: deviceAuth });
+        assert.equal(afterConfirm.body.points, 15, 'the child sees the points the guardian confirmed');
+        assert.equal(afterConfirm.body.entries.length, 1);
+        assert.equal(afterConfirm.body.entries[0].claimId, confirmed.body.task.claim.id);
+
+        // 6. Answering again is refused, so a guardian who taps twice on a slow phone does
+        //    not pay twice - and a fresh idempotency key does not open a second door.
+        const again = await jsonRequest(baseUrl, `${tasksPath}/${taskId}/decision`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w7a-decide-2' }),
+          body: { decision: 'confirm' },
+        });
+        assert.equal(again.status, 409);
+        assert.equal(again.body.error.code, 'task_claim_not_pending');
+
+        // 7. And the storage layer refuses it too, which is what makes the refusal a rule
+        //    rather than a code path: the same claim cannot produce a second entry.
+        await assert.rejects(
+          () => client.query(
+            `INSERT INTO family_point_ledger (id, family_id, child_id, points, reason, claim_id, awarded_by_membership_id)
+             VALUES (gen_random_uuid(), $1, $2, 15, 'task_confirmed', $3, $4)`,
+            [familyId, childId, confirmed.body.task.claim.id, primaryMembershipId],
+          ),
+          /one_entry_per_claim/,
+        );
+
+        // 8. A number the client tries to send is refused as an unknown field: the reward is
+        //    not something a caller may restate, and pretending otherwise would be the whole
+        //    failure this wave exists to prevent.
+        const deniedByWhom = await jsonRequest(baseUrl, `${tasksPath}/${taskId}/decision`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w7a-decide-points' }),
+          body: { decision: 'confirm', points: 200 },
+        });
+        assert.equal(deniedByWhom.status, 400);
+        assert.equal(deniedByWhom.body.error.code, 'invalid_request');
+
+        // 9. The second cycle: the child claims again, and this time the guardian declines.
+        //    Nothing is awarded, nothing is subtracted, and the task stays open.
+        const claimedAgain = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/tasks/${taskId}/claim`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w7a-claim-3' },
+          body: { note: 'الثانية' },
+        });
+        assert.equal(claimedAgain.status, 201, 'a declined task can be claimed again');
+        const declined = await jsonRequest(baseUrl, `${tasksPath}/${taskId}/decision`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w7a-decide-3' }),
+          body: { decision: 'decline', note: 'الملابس ما زالت على الأرض' },
+        });
+        assert.equal(declined.status, 200, JSON.stringify(declined.body));
+        assert.equal(declined.body.awarded, null, 'a decline awards nothing at all');
+        assert.equal(declined.body.task.claim.status, 'declined');
+        assert.equal(declined.body.task.claim.pointsAwarded, null);
+        assert.equal(declined.body.points.points, 15, 'the balance is exactly what was earned');
+
+        const afterDecline = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/tasks`, { headers: deviceAuth });
+        assert.equal(afterDecline.body.points, 15);
+        assert.equal(afterDecline.body.entries.length, 1, 'a refusal wrote no entry');
+
+        const taskRow = await client.query(
+          `SELECT t.status AS task_status, c.status AS claim_status
+             FROM family_tasks t
+             JOIN family_task_claims c ON c.task_id = t.id AND c.status = 'declined'
+            WHERE t.id = $1`,
+          [taskId],
+        );
+        assert.equal(taskRow.rows[0].task_status, 'open', 'the child can try again tomorrow');
+
+        // 10. The schema itself refuses half a decision. A pending claim cannot carry a
+        //     number and a decision time, and a declined one cannot carry a number at all -
+        //     so a future code path that tried either is refused by the database rather than
+        //     by a convention someone has to remember.
+        const openCycle = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/tasks/${taskId}/claim`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w7a-claim-4' },
+        });
+        assert.equal(openCycle.status, 201, 'the task is still open for this child');
+        await assert.rejects(
+          () => client.query(
+            `UPDATE family_task_claims SET points_awarded = 15 WHERE id = $1`,
+            [openCycle.body.claim.id],
+          ),
+          /pending_unanswered/,
+        );
+        await assert.rejects(
+          () => client.query(
+            `UPDATE family_task_claims SET status = 'declined', decided_by_membership_id = $2,
+                    decided_at = NOW(), points_awarded = 3 WHERE id = $1`,
+            [openCycle.body.claim.id, primaryMembershipId],
+          ),
+          /declined_awards_nothing/,
+        );
+
+        // 11. The device credential is the only proof of which child is asking.
+        const wrongCredential = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/tasks`, {
+          headers: { authorization: `Device ${'z'.repeat(32)}` },
+        });
+        assert.equal(wrongCredential.status, 403);
+        assert.equal(wrongCredential.body.error.code, 'device_credential_rejected');
+
+        // 12. A child may not read the family's tasks as a guardian, and may not answer them.
+        const childReading = await jsonRequest(baseUrl, tasksPath, { headers: authorized('test-child') });
+        assert.equal(childReading.status, 403);
+        assert.equal(childReading.body.error.code, 'task_forbidden');
+        const childAnswering = await jsonRequest(baseUrl, `${tasksPath}/${taskId}/decision`, {
+          method: 'POST',
+          headers: authorized('test-child', { 'idempotency-key': 'w7a-child-decide' }),
+          body: { decision: 'confirm' },
+        });
+        assert.equal(childAnswering.status, 403);
+        assert.equal(childAnswering.body.error.code, 'task_forbidden');
+
+        // 13. And what the family reads is what the ledger holds: one entry, fifteen points,
+        //     attributed to the guardian who confirmed it.
+        const points = await jsonRequest(baseUrl, `/v1/families/${familyId}/children/${childId}/points`, {
+          headers: authorized('test-primary'),
+        });
+        assert.equal(points.status, 200);
+        assert.equal(points.body.points, 15);
+        assert.equal(points.body.entries[0].awardedByMembershipId, primaryMembershipId);
+      });
+    } finally {
+      await store.close();
+    }
+  });
+});

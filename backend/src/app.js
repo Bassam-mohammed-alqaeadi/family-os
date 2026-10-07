@@ -9,6 +9,7 @@ import { locationSurfaceFor } from './location-telemetry.js';
 import { sosEmergencyFor } from './sos-emergency.js';
 import { screenTimeFor } from './screen-time.js';
 import { webFilterFor } from './web-filter.js';
+import { tasksFor } from './tasks.js';
 import { capabilityMatches } from './store/postgres-foundation-store.js';
 import {
     claimDevicePairingInput,
@@ -45,6 +46,9 @@ import {
     tempAllowDecisionInput,
     protectionReportInput,
     webFilterEvaluateQuery,
+    taskCreateInput,
+    taskClaimInput,
+    taskDecisionInput,
 } from './validation.js';
 
 function requestFingerprint({ action, principal, input }) {
@@ -97,6 +101,10 @@ export function createApp({
     // helpers, and the one credential check every device route already uses.
     screenTime = screenTimeFor(store, { credentialMatches: capabilityMatches }),
     webFilter = webFilterFor(store, { credentialMatches: capabilityMatches }),
+    // W7. Family tasks and points: the junction of protection and upbringing. Same
+    // arrangement as every wave before it - one credential check, data access through the
+    // store's published helpers, and no decision in the route layer.
+    tasks = tasksFor(store, { credentialMatches: capabilityMatches }),
     preAuthenticationRateLimit = {},
     protectedRateLimit = {},
 }) {
@@ -1409,6 +1417,195 @@ export function createApp({
                 familyId,
             });
             response.status(200).json(result);
+        }),
+    );
+
+    // ── W7 — family tasks and points ───────────────────────────────────────────────────
+    //
+    // The junction of protection and upbringing. These routes carry the one law a reward
+    // system exists or dies by: a claim is not an achievement, and between the two stands a
+    // person. No request body here can name a number of points, and no read here returns a
+    // stored balance - the balance is a sum over an append-only ledger.
+
+    // What this child has to do, each task with the cycle currently open on it.
+    app.get(
+        '/v1/families/:familyId/children/:childId/tasks',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            requireNoQueryParameters(request.query);
+            const result = await tasks.listTasks({
+                principal: request.principal,
+                familyId,
+                childId,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // A guardian states a task. The points live on the task from this moment on, so the
+    // confirmation later can only copy a number that was already agreed.
+    app.post(
+        '/v1/families/:familyId/children/:childId/tasks',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            requireNoQueryParameters(request.query);
+            const { title, note, points } = taskCreateInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await tasks.createTask({
+                principal: request.principal,
+                familyId,
+                childId,
+                title,
+                note,
+                points,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'task.create',
+                    principal: request.principal,
+                    input: { familyId, childId, title, note, points },
+                }),
+            });
+            response.status(201).json(result);
+        }),
+    );
+
+    // "I did it" for a child who spoke to a guardian instead of tapping their own phone.
+    app.post(
+        '/v1/families/:familyId/children/:childId/tasks/:taskId/claim',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            const taskId = requireUuid(request.params.taskId, 'taskId');
+            requireNoQueryParameters(request.query);
+            const { note } = taskClaimInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await tasks.claimTask({
+                principal: request.principal,
+                familyId,
+                childId,
+                taskId,
+                note,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'task.claim',
+                    principal: request.principal,
+                    input: { familyId, childId, taskId, note },
+                }),
+            });
+            response.status(201).json(result);
+        }),
+    );
+
+    // The guardian's word. `confirm` makes the points real; `decline` awards nothing at all
+    // and leaves the task open, so a child can try again rather than be closed out.
+    app.post(
+        '/v1/families/:familyId/children/:childId/tasks/:taskId/decision',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            const taskId = requireUuid(request.params.taskId, 'taskId');
+            requireNoQueryParameters(request.query);
+            const { decision, note } = taskDecisionInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await tasks.decideTask({
+                principal: request.principal,
+                familyId,
+                childId,
+                taskId,
+                decision,
+                note,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'task.decision',
+                    principal: request.principal,
+                    input: { familyId, childId, taskId, decision, note },
+                }),
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // The balance and the entries that produced it. Never a stored number.
+    app.get(
+        '/v1/families/:familyId/children/:childId/points',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            requireNoQueryParameters(request.query);
+            const result = await tasks.readPoints({
+                principal: request.principal,
+                familyId,
+                childId,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // The child's own handset: its tasks, its balance, and the cycles on them - one read,
+    // because on that phone it is one screen. No child id in the URL: the credential issued
+    // at pairing is what proves which child is asking.
+    app.get(
+        '/v1/devices/:deviceId/tasks',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            requireNoQueryParameters(request.query);
+            const result = await tasks.readTasksForDevice({
+                deviceId,
+                deviceCredential: request.deviceCredential,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // "I did it", from the handset itself.
+    app.post(
+        '/v1/devices/:deviceId/tasks/:taskId/claim',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            const taskId = requireUuid(request.params.taskId, 'taskId');
+            requireNoQueryParameters(request.query);
+            const { note } = taskClaimInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await tasks.claimTask({
+                deviceId,
+                deviceCredential: request.deviceCredential,
+                taskId,
+                note,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'task.claim.device',
+                    principal: request.principal ?? { subject: deviceId },
+                    input: { deviceId, taskId, note },
+                }),
+            });
+            response.status(201).json(result);
         }),
     );
 

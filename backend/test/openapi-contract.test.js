@@ -174,6 +174,12 @@ test('every protected operation declares OIDC security, rate limiting and idempo
       '/v1/devices/{deviceId}/web-filter',
       '/v1/devices/{deviceId}/web-filter/temp-allow-requests',
       '/v1/devices/{deviceId}/protection-reports',
+      // W7 adds two, and they are the same decision once more: the child's own tasks and
+      // balance are read by the handset that was issued a credential at pairing, and the
+      // child says "I did it" with that credential rather than with a child id it could
+      // have typed. Neither path carries a child id, for that reason.
+      '/v1/devices/{deviceId}/tasks',
+      '/v1/devices/{deviceId}/tasks/{taskId}/claim',
     ]);
     const expectedSecurity = deviceAuthenticated.has(path)
       ? [{ oidcBearer: [] }, { deviceCredential: [] }]

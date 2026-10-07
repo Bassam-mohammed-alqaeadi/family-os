@@ -3685,6 +3685,475 @@
           }
         }
       }
+    },
+    "/v1/families/{familyId}/children/{childId}/tasks": {
+      "get": {
+        "operationId": "listFamilyTasks",
+        "summary": "What this child has to do, each task with its open cycle",
+        "description": "The tasks a guardian stated for one child, newest first, each carrying the claim currently open on it. A task nobody has said anything about returns `claim: null` rather than a default, because \"not claimed yet\" and \"claimed\" are different sentences and a screen must be able to say which.",
+        "tags": [
+          "Family tasks"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "This child's tasks.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createFamilyTask",
+        "summary": "States a task and the points it is worth",
+        "description": "The number of points is stated here, once, by a guardian. It becomes a property of the task rather than of the confirmation that follows, so the party being rewarded can never name the size of the reward. A task is archived rather than deleted when it is withdrawn: the ledger entries it produced keep pointing at the statement that produced them.",
+        "tags": [
+          "Family tasks"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The task as stored.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The title is empty or too long, or the points are outside 1-200 or not whole.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/tasks/{taskId}/claim": {
+      "post": {
+        "operationId": "claimFamilyTask",
+        "summary": "Marks a task as done on the child's behalf",
+        "description": "For a child who spoke to a guardian instead of tapping their own handset. The claim is recorded with its author, and it is not an achievement: no points move until a guardian confirms. Exactly one claim may be open on a task at a time - the second press is refused rather than queued.",
+        "tags": [
+          "Family tasks"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/TaskId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskClaimRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The claim as recorded, waiting for a guardian.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskClaimResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The task does not exist, or it is not this child's task.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A claim is already waiting on this task (`task_claim_pending`), or the task was withdrawn (`task_archived`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/tasks/{taskId}/decision": {
+      "post": {
+        "operationId": "decideFamilyTask",
+        "summary": "Confirms a claim, and the points become real - or declines it, and nothing does",
+        "description": "The guardian's word is what turns a claim into points. There is deliberately no `points` field in this request: the reward was stated on the task, and this call copies it. A confirmation writes exactly one append-only ledger entry, and the database refuses a second entry for the same claim, so a retried request cannot pay twice. A decline awards nothing - not less, not a negative - and leaves the task open so the child can try again.",
+        "tags": [
+          "Family tasks"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/TaskId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskDecisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The task with its answered cycle, and the balance as a sum over the ledger.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskDecisionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The task does not exist, or it is not this child's task.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "No claim is waiting (`task_claim_not_pending`), the claim was already answered (`task_claim_already_answered`), or this claim already produced its entry (`task_already_confirmed`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/points": {
+      "get": {
+        "operationId": "readChildPoints",
+        "summary": "The child's balance, and the entries that produced it",
+        "description": "A balance is a sum, computed on every read from an append-only ledger - there is no stored counter to drift away from the record. The entries travel with the number so that \"40 points\" can always be answered with \"confirmed by whom, and when\".",
+        "tags": [
+          "Family tasks"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The balance and its entries.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PointsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/tasks": {
+      "get": {
+        "operationId": "readDeviceTasks",
+        "summary": "The child's own tasks and balance, read by their handset",
+        "description": "One read, because on that phone it is one screen: what I have to do, what is waiting for a parent, and what I have earned. There is no child id in the path - the credential issued at pairing is what proves which child is asking.",
+        "tags": [
+          "Family tasks"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "This handset's tasks and points.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceTasksResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/tasks/{taskId}/claim": {
+      "post": {
+        "operationId": "claimDeviceTask",
+        "summary": "\"I did it\", from the handset itself",
+        "description": "The child marks their own task as done. The claim waits for a guardian exactly as a spoken one does - the same table, the same rules, and the same single pending claim per task. Nothing about pressing this button awards points.",
+        "tags": [
+          "Family tasks"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          },
+          {
+            "$ref": "#/components/parameters/TaskId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskClaimRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The claim as recorded, waiting for a guardian.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskClaimResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A claim is already waiting on this task (`task_claim_pending`), or the task was withdrawn (`task_archived`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3810,6 +4279,16 @@
           "$ref": "#/components/schemas/Uuid"
         },
         "description": "The temporary-allow request this decision answers."
+      },
+      "TaskId": {
+        "name": "taskId",
+        "in": "path",
+        "required": true,
+        "description": "The task a guardian stated.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
       }
     },
     "responses": {
@@ -7942,6 +8421,350 @@
             "type": "integer",
             "minimum": 1,
             "description": "How long a report speaks for. Beyond it a device reads as `unverified`."
+          }
+        }
+      },
+      "TaskCreateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "title",
+          "points"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "What the child is asked to do."
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 300,
+            "description": "What \"done\" means, if a word is needed."
+          },
+          "points": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200,
+            "description": "What this task is worth. Stated once, by a guardian."
+          }
+        }
+      },
+      "TaskClaimRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "type": "string",
+            "maxLength": 300,
+            "description": "What the child says they did. Nothing is required here: a claim is a claim."
+          }
+        }
+      },
+      "TaskDecisionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "decision"
+        ],
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "confirm",
+              "decline"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 300,
+            "description": "Why. For a decline this is read by a child, so it is worth a sentence."
+          }
+        },
+        "description": "Note what is absent: no number of points. The reward is a property of the task, and this request cannot restate it."
+      },
+      "TaskClaim": {
+        "type": "object",
+        "required": [
+          "id",
+          "taskId",
+          "status",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "taskId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "confirmed",
+              "declined"
+            ]
+          },
+          "note": {
+            "type": "string"
+          },
+          "claimedByDeviceId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Set when the child's own handset spoke."
+          },
+          "claimedByMembershipId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Set when a guardian spoke for the child."
+          },
+          "decidedByMembershipId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "decidedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "decisionNote": {
+            "type": "string"
+          },
+          "pointsAwarded": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Copied from the task at the moment of confirmation. Null on a decline, always."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Task": {
+        "type": "object",
+        "required": [
+          "id",
+          "childId",
+          "title",
+          "note",
+          "points",
+          "status",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "childId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "points": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "archived"
+            ]
+          },
+          "createdByMembershipId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "claim": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TaskClaim"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The cycle currently open on this task, or null when nobody has said anything."
+          }
+        }
+      },
+      "PointEntry": {
+        "type": "object",
+        "required": [
+          "id",
+          "points",
+          "reason",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "points": {
+            "type": "integer",
+            "description": "Positive in this wave. A spending reason will arrive as its own named entry, not as a negative award."
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "task_confirmed"
+            ]
+          },
+          "claimId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "awardedByMembershipId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TaskListResponse": {
+        "type": "object",
+        "required": [
+          "tasks"
+        ],
+        "properties": {
+          "tasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Task"
+            }
+          }
+        }
+      },
+      "TaskResponse": {
+        "type": "object",
+        "required": [
+          "task"
+        ],
+        "properties": {
+          "task": {
+            "$ref": "#/components/schemas/Task"
+          }
+        }
+      },
+      "TaskClaimResponse": {
+        "type": "object",
+        "required": [
+          "claim"
+        ],
+        "properties": {
+          "claim": {
+            "$ref": "#/components/schemas/TaskClaim"
+          }
+        }
+      },
+      "PointsResponse": {
+        "type": "object",
+        "required": [
+          "points",
+          "entries"
+        ],
+        "properties": {
+          "points": {
+            "type": "integer",
+            "description": "A sum over the ledger, computed on every read."
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PointEntry"
+            }
+          }
+        }
+      },
+      "TaskDecisionResponse": {
+        "type": "object",
+        "required": [
+          "task",
+          "points",
+          "awarded"
+        ],
+        "properties": {
+          "task": {
+            "$ref": "#/components/schemas/Task"
+          },
+          "points": {
+            "$ref": "#/components/schemas/PointsResponse"
+          },
+          "awarded": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PointEntry"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The entry this confirmation wrote, or null on a decline."
+          }
+        }
+      },
+      "DeviceTasksResponse": {
+        "type": "object",
+        "required": [
+          "tasks",
+          "points",
+          "entries"
+        ],
+        "properties": {
+          "tasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Task"
+            }
+          },
+          "points": {
+            "type": "integer"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PointEntry"
+            }
           }
         }
       }
