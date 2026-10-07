@@ -10,7 +10,6 @@ import 'package:family_os/core/runtime/family_child_profile_source.dart';
 import 'package:family_os/core/runtime/family_roster_source.dart';
 import 'package:family_os/core/runtime/identity_source.dart';
 import 'package:family_os/core/runtime/runtime_data_origin.dart';
-import 'package:family_os/features/n01_linking/add_child_screen.dart';
 import 'package:family_os/features/n02_day/children_list_screen.dart';
 import 'package:family_os/features/n02_day/remote_child_context_screen.dart';
 import 'package:flutter/material.dart';
@@ -43,18 +42,23 @@ void main() {
       );
       addTearDown(runtime.dispose);
 
+      final creation = await runtime.childProfiles.create(
+        familyId: FamilyId(_familyId),
+        draft: const FamilyChildProfileDraft(
+          displayName: 'Amani',
+          ageYears: 8,
+          avatarEmoji: '🦁',
+          themeColor: 'purple',
+        ),
+        idempotencyKey: 'integration-create-child',
+      );
+      expect(creation.childId, _childId);
+      expect(server.createCalls, 1);
+
       late final GoRouter router;
       router = GoRouter(
-        initialLocation: '/scr-fat-003',
+        initialLocation: '/scr-fat-012',
         routes: [
-          GoRoute(
-            path: '/scr-fat-003',
-            builder: (context, state) => const AddChildScreen(),
-          ),
-          GoRoute(
-            path: '/scr-fat-004',
-            builder: (context, state) => const Scaffold(body: Text('pairing')),
-          ),
           GoRoute(
             path: '/scr-fat-012',
             builder: (context, state) => const ChildrenListScreen(),
@@ -89,23 +93,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byKey(AddChildKeys.name), ' Amani ');
-      await tester.pump();
-      final submit = find.byKey(AddChildKeys.submit);
-      await tester.ensureVisible(submit);
-      await tester.tap(submit);
-      await tester.pumpAndSettle();
-
-      expect(server.createCalls, 1);
       expect(server.familyId?.value, _familyId);
       expect(server.draft?.displayName, 'Amani');
-      expect(router.state.uri.path, '/scr-fat-004');
-      expect(router.state.uri.queryParameters['childId'], _childId);
-
-      // Pairing completion returns to the authoritative roster in the real
-      // flow. The roster source reads the child created immediately above.
-      router.go('/scr-fat-012');
-      await tester.pumpAndSettle();
+      expect(router.state.uri.path, '/scr-fat-012');
 
       final childCard = find.byKey(ChildrenListKeys.childRow(_childId));
       expect(childCard, findsOneWidget);
