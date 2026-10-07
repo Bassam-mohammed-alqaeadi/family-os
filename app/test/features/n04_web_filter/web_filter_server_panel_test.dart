@@ -487,5 +487,29 @@ void main() {
     );
     expect(social.onChanged, isNull);
     expect(find.byKey(const Key('web_filter_server_approve_$_requestId')), findsNothing);
+    expect(
+      find.byKey(const Key('web_filter_server_question_state_$_requestId')),
+      findsOneWidget,
+      reason: 'a question is still shown to someone who cannot answer it',
+    );
+  });
+
+  testWidgets('the panel fits a phone in Arabic - nothing runs off the edge', (tester) async {
+    // The width that matters is the one a child holds: 360 logical pixels, right to left,
+    // with the longest Arabic sentences on the surface - a question waiting for a parent and
+    // two actions that used to sit beside it on one line. They ran 196 pixels past the edge,
+    // which is a button a father cannot reach. An overflow throws during layout, so this test
+    // is the edge itself rather than a comment about it.
+    tester.view.physicalSize = const Size(360, 780);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await _pump(tester, authority: _authority(_healthyTransport()));
+
+    expect(tester.takeException(), isNull);
+    expect(find.byKey(const Key('web_filter_server_approve_$_requestId')), findsOneWidget);
+    expect(find.byKey(const Key('web_filter_server_question_state_$_requestId')), findsNothing);
+    expect(find.byKey(const Key('web_filter_server_policy_card')), findsOneWidget);
   });
 }

@@ -21794,6 +21794,24 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'صمت الجهاز منذ {minutes} دقيقة.'**
   String webFilterProtectionSilentMinutes(int minutes);
+
+  /// SCR: web-filter server panel — a question's state
+  ///
+  /// In ar, this message translates to:
+  /// **'بانتظار قرار أحد الوالدين.'**
+  String get webFilterServerQuestionPending;
+
+  /// SCR: web-filter server panel — a question's state
+  ///
+  /// In ar, this message translates to:
+  /// **'الفتح المؤقت سارٍ الآن.'**
+  String get webFilterServerQuestionOpen;
+
+  /// SCR: web-filter server panel — a question's state
+  ///
+  /// In ar, this message translates to:
+  /// **'رُفض الطلب.'**
+  String get webFilterServerQuestionDenied;
 }
 
 class _AppLocalizationsDelegate

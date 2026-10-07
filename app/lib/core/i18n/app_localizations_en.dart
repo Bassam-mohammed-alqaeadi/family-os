@@ -12459,4 +12459,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String webFilterProtectionSilentMinutes(int minutes) {
     return 'The device has been silent for $minutes minutes.';
   }
+
+  @override
+  String get webFilterServerQuestionPending => 'Waiting for a parent to decide.';
+
+  @override
+  String get webFilterServerQuestionOpen =>
+      'The temporary open is in effect now.';
+
+  @override
+  String get webFilterServerQuestionDenied => 'The request was denied.';
 }

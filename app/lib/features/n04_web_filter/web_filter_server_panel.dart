@@ -425,33 +425,47 @@ class _WebFilterServerPanelState extends State<WebFilterServerPanel> {
     final open = request.state == FoundationGateTempAllowState.pending;
     return Padding(
       key: Key('web_filter_server_question_${request.id}'),
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      // A column of lines, not a row. The host and the state are each a whole line, and the
+      // two actions sit in a Wrap - because these are the longest strings on the surface in
+      // Arabic, and a Row holding them beside a flexible text ran 196 pixels off the edge of
+      // a phone. An overflow is not a cosmetic warning: it is a button a father cannot reach.
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Text(
-              '${request.host} · ${request.requestedMinutes}',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: colors.ink,
-              ),
+          // The host and the minutes, composed rather than translated: both are data.
+          Text(
+            '${request.host} · ${request.requestedMinutes}',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: colors.ink,
             ),
           ),
-          if (open && widget.canEdit) ...[
-            TextButton(
-              key: Key('web_filter_server_approve_${request.id}'),
-              onPressed: _busy ? null : () => _decide(request, approve: true),
-              child: Text(l10n.webUnlockApprove),
-            ),
-            TextButton(
-              key: Key('web_filter_server_deny_${request.id}'),
-              onPressed: _busy ? null : () => _decide(request, approve: false),
-              child: Text(l10n.webUnlockDeny),
-            ),
-          ] else
+          const SizedBox(height: 2),
+          if (open && widget.canEdit)
+            Wrap(
+              spacing: 8,
+              children: [
+                TextButton(
+                  key: Key('web_filter_server_approve_${request.id}'),
+                  onPressed: _busy ? null : () => _decide(request, approve: true),
+                  child: Text(l10n.webUnlockApprove),
+                ),
+                TextButton(
+                  key: Key('web_filter_server_deny_${request.id}'),
+                  onPressed: _busy ? null : () => _decide(request, approve: false),
+                  child: Text(l10n.webUnlockDeny),
+                ),
+              ],
+            )
+          else
             // An answered question shows the clock's answer, not the stored status: an
             // approval whose minute has passed reads expired because the server computed it.
+            //
+            // The words are this panel's own. A guardian is not the child who asked, so the
+            // child-facing sentences ("waiting for a parent", "try again soon") say the wrong
+            // thing here even when they are grammatically true.
             Text(
               _stateLabel(l10n, request.state),
               key: Key('web_filter_server_question_state_${request.id}'),
@@ -466,10 +480,10 @@ class _WebFilterServerPanelState extends State<WebFilterServerPanel> {
     AppLocalizations l10n,
     FoundationGateTempAllowState state,
   ) => switch (state) {
-    FoundationGateTempAllowState.pending => l10n.webUnlockInboxSubtitle,
-    FoundationGateTempAllowState.active => l10n.webBlockFeedbackApproved,
+    FoundationGateTempAllowState.pending => l10n.webFilterServerQuestionPending,
+    FoundationGateTempAllowState.active => l10n.webFilterServerQuestionOpen,
     FoundationGateTempAllowState.expired => l10n.webBlockFeedbackExpired,
-    FoundationGateTempAllowState.denied => l10n.webUnlockDeniedToast,
+    FoundationGateTempAllowState.denied => l10n.webFilterServerQuestionDenied,
   };
 
   Widget _protectionCard(

@@ -15884,5 +15884,18 @@
               "type": "int"
           }
       }
+  },
+  "webFilterServerQuestionPending": "Waiting for a parent to decide.",
+  "@webFilterServerQuestionPending": {
+      "description": "SCR: web-filter server panel — a question's state"
+  },
+  "webFilterServerQuestionOpen": "The temporary open is in effect now.",
+  "@webFilterServerQuestionOpen": {
+      "description": "SCR: web-filter server panel — a question's state"
+  },
+  "webFilterServerQuestionDenied": "The request was denied.",
+  "@webFilterServerQuestionDenied": {
+      "description": "SCR: web-filter server panel — a question's state"
   }
 }
+

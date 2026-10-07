@@ -15884,5 +15884,18 @@
               "type": "int"
           }
       }
+  },
+  "webFilterServerQuestionPending": "بانتظار قرار أحد الوالدين.",
+  "@webFilterServerQuestionPending": {
+      "description": "SCR: web-filter server panel — a question's state"
+  },
+  "webFilterServerQuestionOpen": "الفتح المؤقت سارٍ الآن.",
+  "@webFilterServerQuestionOpen": {
+      "description": "SCR: web-filter server panel — a question's state"
+  },
+  "webFilterServerQuestionDenied": "رُفض الطلب.",
+  "@webFilterServerQuestionDenied": {
+      "description": "SCR: web-filter server panel — a question's state"
   }
 }
+

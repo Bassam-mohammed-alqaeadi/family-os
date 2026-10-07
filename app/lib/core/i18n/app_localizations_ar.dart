@@ -12280,4 +12280,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String webFilterProtectionSilentMinutes(int minutes) {
     return 'صمت الجهاز منذ $minutes دقيقة.';
   }
+
+  @override
+  String get webFilterServerQuestionPending => 'بانتظار قرار أحد الوالدين.';
+
+  @override
+  String get webFilterServerQuestionOpen => 'الفتح المؤقت سارٍ الآن.';
+
+  @override
+  String get webFilterServerQuestionDenied => 'رُفض الطلب.';
 }
