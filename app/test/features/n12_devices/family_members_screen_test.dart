@@ -5,6 +5,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:family_os/core/design/components/app_empty_state.dart';
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/mother_level.dart';
@@ -409,6 +410,11 @@ void main() {
       findsWidgets,
       reason: 'the guardian is told the change did not happen',
     );
+
+    // The refusal arrives as a toast, and a toast's auto-dismiss is a real timer. The
+    // framework checks for pending timers when the tree is disposed, so the test lets the
+    // toast it asked for finish its own life instead of leaving a timer behind.
+    await tester.pump(AppToast.duration + const Duration(milliseconds: 100));
   });
 
   testWidgets(
