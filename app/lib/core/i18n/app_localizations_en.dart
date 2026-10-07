@@ -12557,5 +12557,4 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tasksServerCreateButton => 'Add the task';
-
 }

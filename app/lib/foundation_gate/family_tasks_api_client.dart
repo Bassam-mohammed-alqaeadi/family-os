@@ -549,14 +549,24 @@ class FamilyTasksApiClient {
     return headers;
   }
 
-  static Object? _decode(String body) {
+  /// A body that is not a JSON object is refused here rather than at each call site: every
+  /// answer in this contract is an object, so a list or a bare string is a server this build
+  /// cannot read, not a shape to be tolerated.
+  static Map<String, Object?> _decode(String body) {
+    final Object? decoded;
     try {
-      return jsonDecode(body);
+      decoded = jsonDecode(body);
     } on FormatException {
       throw const FoundationGateApiException(
         FoundationGateApiFailure.invalidResponse,
       );
     }
+    if (decoded is! Map) {
+      throw const FoundationGateApiException(
+        FoundationGateApiFailure.invalidResponse,
+      );
+    }
+    return decoded.map((key, value) => MapEntry(key.toString(), value));
   }
 
   static Map<String, Object?> _object(Object? value, String field) {

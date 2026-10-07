@@ -12374,5 +12374,4 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get tasksServerCreateButton => 'أضف المهمة';
-
 }

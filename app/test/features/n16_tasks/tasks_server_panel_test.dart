@@ -159,7 +159,11 @@ void main() {
     final sent = jsonDecode(server.bodies.last) as Map<String, Object?>;
     expect(sent['decision'], 'decline');
     expect(server.claimStatus, 'declined');
-    expect(server.points, 15, 'a refusal awards nothing and takes nothing');
+    expect(
+      server.points,
+      15,
+      reason: 'a refusal awards nothing and takes nothing',
+    );
     expect(find.text('لم تُؤكَّد بعد — ويمكنه المحاولة مرة أخرى.'), findsOneWidget);
     expect(find.text('الملابس ما زالت على الأرض'), findsOneWidget);
     expect(_total(tester), '15');

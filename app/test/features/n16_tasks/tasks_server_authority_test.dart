@@ -278,7 +278,11 @@ void main() {
       reason: 'the reward is a property of the task; this request cannot restate it',
     );
     expect(answer.value!.awarded!.points, 15);
-    expect(answer.value!.points.points, 15, 'the balance travels with the decision');
+    expect(
+      answer.value!.points.points,
+      15,
+      reason: 'the balance travels with the decision',
+    );
   });
 
   test('a declined claim reports no award, and the balance does not move', () async {
@@ -305,7 +309,11 @@ void main() {
     expect(answer.value!.awarded, isNull);
     expect(answer.value!.task.claim!.status, FoundationGateTaskClaimStatus.declined);
     expect(answer.value!.task.claim!.pointsAwarded, isNull);
-    expect(answer.value!.points.points, 15, 'a refusal awards nothing and takes nothing');
+    expect(
+      answer.value!.points.points,
+      15,
+      reason: 'a refusal awards nothing and takes nothing',
+    );
   });
 
   test('a refusal with a reason arrives as a refusal, and nothing is invented', () async {
