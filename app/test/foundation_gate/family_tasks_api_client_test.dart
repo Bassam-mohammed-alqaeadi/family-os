@@ -36,7 +36,7 @@ final class _Transport implements FoundationGateHttpTransport {
 
   FoundationGateHttpResponse Function(Uri uri, String? body) answer;
   final List<String> calls = <String>[];
-  final List<Map<String, String>> headers = <String, String>[];
+  final List<Map<String, String>> headers = <Map<String, String>>[];
   final List<String> bodies = <String>[];
 
   FoundationGateHttpResponse _reply(Uri uri, String? body) {
