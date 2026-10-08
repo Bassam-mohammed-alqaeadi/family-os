@@ -4,6 +4,7 @@ import 'package:family_os/features/n02_day/conversations_list_repository.dart';
 import 'package:family_os/features/n02_day/live_conversation_repository.dart';
 import 'package:family_os/features/n02_day/family_chat_server_authority.dart';
 import 'package:family_os/foundation_gate/family_chat_api_client.dart';
+import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
 /// A surface may speak as the signed-in guardian or the paired device's child.
@@ -43,7 +44,9 @@ final class FamilyChatThreadListRepository
     };
     final threads = _requireReady(answer);
     return ConversationsListSnapshot(
-      threads: threads.threads.map(_conversationThread).toList(growable: false),
+      threads: threads.threads
+          .map(FamilyChatServerConversationRepository._conversationThread)
+          .toList(growable: false),
     );
   }
 
@@ -82,7 +85,7 @@ final class FamilyChatThreadListRepository
     );
     final thread = _requireReady(answer);
     _pendingCreateKeys.remove(requestKey);
-    return _conversationThread(thread);
+    return FamilyChatServerConversationRepository._conversationThread(thread);
   }
 }
 
@@ -122,7 +125,7 @@ final class FamilyChatServerConversationRepository
     final existing = _cache[chatWith];
     if (existing != null) return refresh(chatWith);
 
-    final threadList = _requireReady(await _listThreads());
+    final threadList = await _listThreads();
     FamilyChatThread? thread;
     for (final candidate in threadList.threads) {
       if (candidate.id == chatWith) {
@@ -136,8 +139,10 @@ final class FamilyChatServerConversationRepository
     final afterSeq = lastKnownSequence > pageSize
         ? lastKnownSequence - pageSize
         : 0;
-    final page = _requireReady(
-      await _listMessages(thread.id, afterSeq: afterSeq, limit: pageSize),
+    final page = await _listMessages(
+      thread.id,
+      afterSeq: afterSeq,
+      limit: pageSize,
     );
     final newestListedSequence = thread.lastMessage?.seq ?? 0;
     final newestFetchedSequence =
@@ -160,12 +165,10 @@ final class FamilyChatServerConversationRepository
     // recent bubbles without a push transport; responses merge by server id and sequence.
     final cursor =
         (_lastSeq(cache) - pageSize).clamp(0, 0x7fffffffffffffff).toInt();
-    final page = _requireReady(
-      await _listMessages(
-        chatWith,
-        afterSeq: cursor,
-        limit: (pageSize * 2).clamp(1, 200).toInt(),
-      ),
+    final page = await _listMessages(
+      chatWith,
+      afterSeq: cursor,
+      limit: (pageSize * 2).clamp(1, 200).toInt(),
     );
     cache
       ..readState = page.readState
@@ -180,8 +183,10 @@ final class FamilyChatServerConversationRepository
     final cache = _cache[chatWith];
     if (cache == null) return load(chatWith);
     if (!cache.hasMore) return _detail(cache);
-    final page = _requireReady(
-      await _listMessages(chatWith, afterSeq: _lastSeq(cache), limit: pageSize),
+    final page = await _listMessages(
+      chatWith,
+      afterSeq: _lastSeq(cache),
+      limit: pageSize,
     );
     cache
       ..readState = page.readState
@@ -603,8 +608,9 @@ final class _UnconfiguredConversationRepository
 }
 
 T _requireReady<T>(FamilyChatAuthorityAnswer<T> answer) {
-  if (!answer.isReady) throw _failure(answer);
-  return answer.value!;
+  final value = answer.value;
+  if (!answer.isReady || value == null) throw _failure(answer);
+  return value;
 }
 
 FamilyChatRepositoryFailure _failure<T>(
