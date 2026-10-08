@@ -44,6 +44,7 @@ import 'package:family_os/features/n02_day/family_chat_local_persistence.dart';
 import 'package:family_os/features/n02_day/location_server_authority.dart';
 import 'package:family_os/features/n03_screen_time/screen_time_server_authority.dart';
 import 'package:family_os/features/n04_web_filter/web_filter_server_authority.dart';
+import 'package:family_os/features/n15_calendar/calendar_server_authority.dart';
 import 'package:family_os/features/n16_tasks/tasks_server_authority.dart';
 import 'package:family_os/features/n10_emergency/sos_server_authority.dart';
 import 'package:family_os/features/n02_day/location_ux_bridge.dart';
@@ -63,6 +64,7 @@ import 'package:family_os/foundation_gate/family_device_api_client.dart';
 import 'package:family_os/foundation_gate/family_location_api_client.dart';
 import 'package:family_os/foundation_gate/family_discovery_api_client.dart';
 import 'package:family_os/foundation_gate/family_membership_api_client.dart';
+import 'package:family_os/foundation_gate/family_calendar_api_client.dart';
 import 'package:family_os/foundation_gate/family_screen_time_api_client.dart';
 import 'package:family_os/foundation_gate/family_tasks_api_client.dart';
 import 'package:family_os/foundation_gate/family_web_filter_api_client.dart';
@@ -222,6 +224,20 @@ Future<void> main() async {
         ),
       );
     }
+    // W8 - the family's week: what was agreed to, what was called off and why, who said
+    // they are coming and what actually happened. Before this binding the calendar screen
+    // planned against a board only this device knew about. A build without this binding now
+    // reads nothing as the server's and offers no form that would write locally.
+    final calendarApi = familyEntryRuntime.calendarApi;
+    if (calendarApi != null) {
+      bindCalendarServerAuthority(
+        CalendarServerAuthority(
+          api: calendarApi,
+          idToken: familyEntryRuntime.currentIdToken,
+          familyId: () => familyEntryRuntime.selectedFamilyId,
+        ),
+      );
+    }
     final sosApi = familyEntryRuntime.sosApi;
     if (sosApi != null) {
       bindSosServerAuthority(
@@ -326,6 +342,10 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
         transport: PackageFoundationGateHttpTransport(),
       ),
       tasksApi: FamilyTasksApiClient(
+        configuration: configuration,
+        transport: PackageFoundationGateHttpTransport(),
+      ),
+      calendarApi: FamilyCalendarApiClient(
         configuration: configuration,
         transport: PackageFoundationGateHttpTransport(),
       ),

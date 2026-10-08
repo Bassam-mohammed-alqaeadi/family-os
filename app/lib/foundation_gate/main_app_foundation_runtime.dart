@@ -11,6 +11,7 @@ import 'package:family_os/core/runtime/identity_source.dart';
 import 'package:family_os/core/runtime/runtime_data_origin.dart';
 
 import 'device_lifecycle.dart';
+import 'family_calendar_api_client.dart';
 import 'family_device_api_client.dart';
 import 'family_location_api_client.dart';
 import 'family_membership_api_client.dart';
@@ -39,6 +40,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     FamilyScreenTimeApiClient? screenTimeApi,
     FamilyWebFilterApiClient? webFilterApi,
     FamilyTasksApiClient? tasksApi,
+    FamilyCalendarApiClient? calendarApi,
     String? preferredFamilyId,
   }) : _controller = controller,
        _identity = identity,
@@ -49,6 +51,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
        _screenTimeApi = screenTimeApi,
        _webFilterApi = webFilterApi,
        _tasksApi = tasksApi,
+       _calendarApi = calendarApi,
        _preferredFamilyId = preferredFamilyId?.trim(),
        _identityValue = const IdentitySnapshot.unavailable(),
        _rosterValue = const FamilyRosterSnapshot.unavailable(),
@@ -65,6 +68,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   final FamilyScreenTimeApiClient? _screenTimeApi;
   final FamilyWebFilterApiClient? _webFilterApi;
   final FamilyTasksApiClient? _tasksApi;
+  final FamilyCalendarApiClient? _calendarApi;
   final String? _preferredFamilyId;
   IdentitySnapshot _identityValue;
   FamilyRosterSnapshot _rosterValue;
@@ -101,6 +105,11 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   /// The tasks and points contract's client: what a child has to do, what a guardian
   /// confirmed, and what was earned. Null when this build has no server session.
   FamilyTasksApiClient? get tasksApi => _tasksApi;
+
+  /// The family calendar's contract: what the family agreed to do, who was invited, what
+  /// each of them said, and what actually happened. Null when this build has no server
+  /// session - and a calendar screen with no session says so rather than planning locally.
+  FamilyCalendarApiClient? get calendarApi => _calendarApi;
 
   /// The family this device is looking at, or null before one is selected.
   String? get selectedFamilyId => _controller.selectedFamily?.id;
