@@ -60,7 +60,9 @@ void main() {
   testWidgets('a bound session puts the server policy on the screen the guardian opens', (tester) async {
     final transport = WebFilterFakeTransport({
       '/web-filter/temp-allows': webFilterOk(webFilterQuestionJson()),
-      '/web-filter/protection': webFilterOk(webFilterProtectionJson(state: 'at_risk', reason: 'no_reports')),
+      '/protection': webFilterOk(
+        webFilterProtectionJson(state: 'protected', reason: 'reported_healthy', ageMinutes: 2),
+      ),
       '/web-filter': webFilterOk(webFilterPolicyJson()),
     });
     bindWebFilterServerAuthority(webFilterAuthorityFor(transport));
@@ -77,7 +79,12 @@ void main() {
     expect(
       find.byKey(const Key('web_filter_server_protection_card')),
       findsOneWidget,
-      reason: 'and the protection line on it is the server\'s, not a green dot this build drew',
+      reason: 'the protection state the server computed is on the screen, not a green dot this build drew',
+    );
+    expect(
+      find.text('آخر بلاغ حديث من الجهاز يقول إن الحماية تعمل.'),
+      findsOneWidget,
+      reason: 'and the line itself is the server\'s sentence, so silence can never read as health',
     );
     expect(
       transport.calls,
