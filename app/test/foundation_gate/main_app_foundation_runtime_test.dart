@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:family_os/core/domain/identity_ids.dart';
+import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/runtime/family_child_profile_source.dart';
 import 'package:family_os/core/runtime/identity_source.dart';
 import 'package:family_os/foundation_gate/children_roster_api_client.dart';
@@ -20,6 +21,8 @@ const _childId = '22222222-2222-4222-8222-222222222222';
 const _idempotencyKey = '33333333-3333-4333-8333-333333333333';
 const _familyBody =
     '{"families":[{"id":"$_familyId","displayName":"Synthetic family","role":"primary_guardian"}]}';
+const _coGuardianFamilyBody =
+    '{"families":[{"id":"$_familyId","displayName":"Synthetic family","role":"co_guardian"}]}';
 const _emptyRosterBody = '{"children":[]}';
 const _rosterBody =
     '{"children":[{"id":"$_childId","displayName":"Synthetic child","ageYears":8,"avatarEmoji":"🧒","themeColor":"teal","version":1,"createdAt":"2026-10-03T10:00:00.000Z","updatedAt":"2026-10-03T10:00:00.000Z"}]}';
@@ -227,6 +230,57 @@ void main() {
         'https://staging.example.test/v1/families/$_familyId/memberships/$_membershipId/accept',
       );
       expect(membershipTransport.postedHeaders?['idempotency-key'], _idempotencyKey);
+    },
+  );
+
+  test(
+    'remote co-guardian identity is never promoted to full mother level by default',
+    () async {
+      final identity = FakeIdentity(subject: 'firebase-subject');
+      final configuration = FoundationGateConfiguration.fromStagingApiOrigin(
+        Uri.parse('https://staging.example.test'),
+      );
+      final runtime = MainAppFoundationRuntime(
+        identity: identity,
+        controller: FoundationGateSessionController(
+          identity: identity,
+          discoveryApi: FamilyDiscoveryApiClient(
+            configuration: configuration,
+            transport: FakeTransport(
+              const FoundationGateHttpResponse(
+                statusCode: 200,
+                body: _coGuardianFamilyBody,
+              ),
+            ),
+          ),
+          rosterApi: ChildrenRosterApiClient(
+            configuration: configuration,
+            transport: FakeTransport(
+              const FoundationGateHttpResponse(
+                statusCode: 200,
+                body: _emptyRosterBody,
+              ),
+            ),
+          ),
+        ),
+        deviceApi: FamilyDeviceApiClient(
+          configuration: configuration,
+          transport: FakeTransport(
+            const FoundationGateHttpResponse(statusCode: 200, body: '{"devices":[]}'),
+          ),
+        ),
+      );
+      addTearDown(runtime.dispose);
+      final identitySource = MainAppFoundationIdentitySource(runtime);
+      addTearDown(identitySource.dispose);
+
+      final snapshot = await identitySource.signIn(
+        email: 'guardian@example.test',
+        password: 'synthetic-password',
+      );
+      expect(snapshot.authority, IdentityAuthority.remoteAuthoritative);
+      expect(snapshot.motherLevel, MotherLevel.observer);
+      expect(snapshot.motherLevel, isNot(MotherLevel.full));
     },
   );
 }

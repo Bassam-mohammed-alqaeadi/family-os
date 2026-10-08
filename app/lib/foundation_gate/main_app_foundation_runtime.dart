@@ -195,7 +195,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
         accountId: AccountId(subject),
         familyId: FamilyId(family.id),
         role: _appRole(family.role),
-        motherLevel: MotherLevel.full,
+        motherLevel: _remoteMotherLevel(family.role),
         isPrimaryOwner: family.role == 'primary_guardian',
       );
     } on FoundationGateIdentityException {
@@ -514,6 +514,13 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
       'primary_guardian' => AppRole.father,
       'co_guardian' => AppRole.mother,
       _ => AppRole.child,
+    };
+  }
+
+  MotherLevel _remoteMotherLevel(String role) {
+    return switch (role) {
+      'co_guardian' => MotherLevel.observer,
+      _ => MotherLevel.full,
     };
   }
 

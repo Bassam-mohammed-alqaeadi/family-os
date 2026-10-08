@@ -30,6 +30,8 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import org.json.JSONObject
+import java.io.InputStream
 
 /**
  * Real Android foreground service for an already-paired child device.
@@ -52,10 +54,11 @@ class ChildTelemetryService : Service(), LocationListener {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val config = configStore.read()
-        if (config == null || !hasFineLocationPermission()) {
+        if (config == null || !hasFineLocationPermission() || (!BuildConfig.DEBUG && !config.apiOrigin.startsWith("https://"))) {
             stopSelf(startId)
             return START_NOT_STICKY
         }
+        telemetryRevoked = false
         startForeground(NOTIFICATION_ID, foregroundNotification())
         isRunning = true
         try {
@@ -81,6 +84,7 @@ class ChildTelemetryService : Service(), LocationListener {
     }
 
     override fun onLocationChanged(location: Location) {
+        if (telemetryRevoked) return
         if (!location.hasAccuracy() || location.accuracy > MAX_LOCATION_ACCURACY_METERS) return
         val config = configStore.read() ?: return
         val battery = readBattery() ?: return
@@ -150,16 +154,38 @@ class ChildTelemetryService : Service(), LocationListener {
             connection.setRequestProperty("Content-Type", "application/json")
             connection.setRequestProperty("Accept", "application/json")
             connection.setRequestProperty("Authorization", "Device ${config.deviceCredential}")
-            val body = """{"batteryLevel":${battery.level},"batteryStatus":"${battery.status}","locationLat":$latitude,"locationLng":$longitude,"locationLabel":"$locationLabel"}"""
+            val body = JSONObject()
+                .put("batteryLevel", battery.level)
+                .put("batteryStatus", battery.status)
+                .put("locationLat", latitude)
+                .put("locationLng", longitude)
+                .put("locationLabel", locationLabel)
+                .toString()
             connection.outputStream.bufferedWriter(Charsets.UTF_8).use { it.write(body) }
-            // Consume the response to release the connection. Coordinates and
-            // credential are intentionally never logged.
-            connection.inputStream?.close()
+            // Consume the response stream to release the connection.
+            val statusCode = connection.responseCode
+            if (statusCode in 200..299) {
+                consumeAndClose(connection.inputStream)
+            } else {
+                consumeAndClose(connection.errorStream)
+                if (statusCode == 401 || statusCode == 403) {
+                    telemetryRevoked = true
+                    stopSelf()
+                }
+            }
         } catch (_: Exception) {
             // Connectivity failures are retried by the next genuine location
             // callback. No fabricated cached observation is transmitted.
         } finally {
             connection?.disconnect()
+        }
+    }
+
+    private fun consumeAndClose(stream: InputStream?) {
+        stream ?: return
+        val buffer = ByteArray(1024)
+        stream.use {
+            while (it.read(buffer) != -1) {}
         }
     }
 
@@ -190,6 +216,7 @@ class ChildTelemetryService : Service(), LocationListener {
         const val CHANNEL_ID = "child_telemetry"
         const val NOTIFICATION_ID = 91201
         @Volatile var isRunning: Boolean = false
+        @Volatile private var telemetryRevoked: Boolean = false
         private const val UPDATE_INTERVAL_MILLIS = 5 * 60 * 1000L
         private const val UPDATE_DISTANCE_METERS = 50f
         private const val MAX_LOCATION_ACCURACY_METERS = 200f

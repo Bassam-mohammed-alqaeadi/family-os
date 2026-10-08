@@ -81,6 +81,7 @@ void main() {
       final cases = {
         400: FoundationGateApiFailure.invalidInput,
         401: FoundationGateApiFailure.unauthenticated,
+        403: FoundationGateApiFailure.accessDenied,
         409: FoundationGateApiFailure.conflict,
         429: FoundationGateApiFailure.serviceUnavailable,
         503: FoundationGateApiFailure.serviceUnavailable,

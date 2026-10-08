@@ -3,6 +3,9 @@
 > **Authority:** [`docs/00_MASTER_PLAN.md`](docs/00_MASTER_PLAN.md) fixes the scope and sequence; [`docs/CURRENT_EXECUTION_PLAN.md`](docs/CURRENT_EXECUTION_PLAN.md) is the live pointer to the active function. This root file is intentionally concise so it cannot become a competing roadmap.
 >
 > **Strategic constitution:** [`AGENTS.md`](AGENTS.md).
+>
+> **Readiness/claim authority:** [`docs/RELEASE_READINESS.md`](docs/RELEASE_READINESS.md).
+> **Next-agent handoff:** [`docs/NEXT_AGENT_RUNBOOK.md`](docs/NEXT_AGENT_RUNBOOK.md).
 
 ## Delivery model
 

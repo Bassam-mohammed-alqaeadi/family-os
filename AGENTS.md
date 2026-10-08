@@ -72,3 +72,11 @@ A system does not require Native work merely because another system will. Conver
 - **Deliberate high-risk decisions:** production/public release, real-data expansion, invasive device capability, provider use and irreversible policy changes require explicit system-level decisions and evidence.
 
 > **Historical note:** earlier Foundation Wave documents remain evidence of the base that was built. They are no longer the global product ceiling. The Global Super-App strategy builds truthful real engines to fulfil the user experience promised by the prototype.
+
+## 6. Readiness pointer for execution honesty
+
+Operational readiness classification and claim boundaries are maintained in
+[`docs/RELEASE_READINESS.md`](docs/RELEASE_READINESS.md), and the concise handoff
+for the next coding session is [`docs/NEXT_AGENT_RUNBOOK.md`](docs/NEXT_AGENT_RUNBOOK.md).
+Use those files to avoid contradictory “complete / not authorized” wording when the
+branch already contains real Foundation backend slices.

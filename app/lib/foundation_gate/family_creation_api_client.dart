@@ -74,6 +74,10 @@ class FamilyCreationApiClient {
         throw const FoundationGateApiException(
           FoundationGateApiFailure.unauthenticated,
         );
+      case 403:
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.accessDenied,
+        );
       case 409:
         throw const FoundationGateApiException(
           FoundationGateApiFailure.conflict,
