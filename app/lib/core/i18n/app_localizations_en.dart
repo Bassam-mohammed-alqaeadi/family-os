@@ -12668,8 +12668,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'This build cannot address the server\'s children yet - the calendar reads and nothing is written.';
 
   @override
-  String get familyChatConnecting =>
-      'Connecting to the family chat…';
+  String get familyChatConnecting => 'Connecting to the family chat…';
 
   @override
   String get familyChatReconnecting =>
@@ -12692,8 +12691,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'The server rejected this chat action. Check family membership and try again.';
 
   @override
-  String get familyChatRetry =>
-      'Retry';
+  String get familyChatRetry => 'Retry';
 
   @override
   String get familyChatServerPollingNotice =>
@@ -12704,68 +12702,54 @@ class AppLocalizationsEn extends AppLocalizations {
       'Messages refresh from the server while this screen is open. Instant updates are not available.';
 
   @override
-  String get familyChatCreateHeading =>
-      'Start a family chat';
+  String get familyChatCreateHeading => 'Start a family chat';
 
   @override
-  String get familyChatCreateTypeLabel =>
-      'Conversation type';
+  String get familyChatCreateTypeLabel => 'Conversation type';
 
   @override
-  String get familyChatFamilyThread =>
-      'Guardian family chat';
+  String get familyChatFamilyThread => 'Guardian family chat';
 
   @override
-  String get familyChatChildThread =>
-      'Conversation with one child';
+  String get familyChatChildThread => 'Conversation with one child';
 
   @override
-  String get familyChatCreateChildLabel =>
-      'Child';
+  String get familyChatCreateChildLabel => 'Child';
 
   @override
   String get familyChatNoChildrenAvailable =>
       'No server-confirmed children are available for a child conversation.';
 
   @override
-  String get familyChatChildFallback =>
-      'Child';
+  String get familyChatChildFallback => 'Child';
 
   @override
-  String get familyChatCreateTitleLabel =>
-      'Title (optional)';
+  String get familyChatCreateTitleLabel => 'Title (optional)';
 
   @override
-  String get familyChatCreateTitleHint =>
-      'Leave blank to use the server title';
+  String get familyChatCreateTitleHint => 'Leave blank to use the server title';
 
   @override
-  String get familyChatCreateButton =>
-      'Create chat';
+  String get familyChatCreateButton => 'Create chat';
 
   @override
-  String get familyChatCancel =>
-      'Cancel';
+  String get familyChatCancel => 'Cancel';
 
   @override
   String get familyChatCreateFailed =>
       'The chat could not be created. Your request was not confirmed.';
 
   @override
-  String get familyChatLoadOlder =>
-      'Load older messages';
+  String get familyChatLoadOlder => 'Load older messages';
 
   @override
-  String get familyChatRefresh =>
-      'Refresh messages';
+  String get familyChatRefresh => 'Refresh messages';
 
   @override
-  String get familyChatMessageDeleted =>
-      'Message deleted';
+  String get familyChatMessageDeleted => 'Message deleted';
 
   @override
-  String get familyChatEdited =>
-      'Edited';
+  String get familyChatEdited => 'Edited';
 
   @override
   String get familyChatMediaUnavailable =>
@@ -12776,31 +12760,27 @@ class AppLocalizationsEn extends AppLocalizations {
       'Attachments and voice messages unavailable';
 
   @override
-  String get familyChatEdit =>
-      'Edit';
+  String get familyChatEdit => 'Edit';
 
   @override
-  String get familyChatDelete =>
-      'Delete';
+  String get familyChatDelete => 'Delete';
 
   @override
-  String get familyChatEditHeading =>
-      'Edit message';
+  String get familyChatEditHeading => 'Edit message';
 
   @override
-  String get familyChatEditSave =>
-      'Save changes';
+  String get familyChatEditSave => 'Save changes';
 
   @override
-  String get familyChatDeleteHeading =>
-      'Delete this message?';
+  String get familyChatDeleteHeading => 'Delete this message?';
 
   @override
   String get familyChatDeleteBody =>
       'The message text will be removed, but its place in the conversation remains.';
 
   @override
-  String get familyChatStorageNotice => 'Messages are stored by the family server; this chat is not end-to-end encrypted.';
+  String get familyChatStorageNotice =>
+      'Messages are stored by the family server; this chat is not end-to-end encrypted.';
 
   @override
   String get familyChatServerStoredTag => 'Server-stored text';
@@ -12812,8 +12792,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get familyChatMessageActionsSemantics => 'Message actions';
 
   @override
-  String get familyChatListPollingNotice => 'This conversation list and its previews come from the family server. The list checks again every 30 seconds; instant push updates are not available.';
+  String get familyChatListPollingNotice =>
+      'This conversation list and its previews come from the family server. The list checks again every 30 seconds; instant push updates are not available.';
 
   @override
-  String get familyChatNeverLocks => 'Family chat stays available after play time ends.';
+  String get familyChatNeverLocks =>
+      'Family chat stays available after play time ends.';
 }

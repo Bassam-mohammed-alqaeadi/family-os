@@ -739,7 +739,7 @@ final class FamilyChatApiClient {
     if (idempotencyKey != null) 'idempotency-key': idempotencyKey,
   };
 
-  static Object _expect(
+  static Map<String, Object?> _expect(
     FoundationGateHttpResponse response, {
     required int successStatus,
   }) {

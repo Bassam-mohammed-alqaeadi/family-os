@@ -22161,47 +22161,238 @@ abstract class AppLocalizations {
   /// **'لا يمكن لهذه النسخة مخاطبة أبناء الخادم بعد — يُقرأ التقويم ولا يُكتب فيه.'**
   String get calendarServerNoAddressableChildren;
 
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ الاتصال بدردشة الأسرة…'**
   String get familyChatConnecting;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'انقطع الاتصال. نتحقق من دردشة الأسرة مجددًا…'**
   String get familyChatReconnecting;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد اتصال الآن. تبقى الرسائل التي سبق تحميلها ظاهرة؛ أعد المحاولة عند عودة الاتصال.'**
   String get familyChatOffline;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'الدردشة غير مُعدّة في هذا الإصدار؛ لا تُستخدم محادثة محلية بديلة.'**
   String get familyChatUnavailable;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يملك هذا الحساب أو الجهاز صلاحية فتح هذه المحادثة. الخادم هو من يحدد الوصول.'**
   String get familyChatPermissionDenied;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'رفض الخادم إجراء الدردشة. تحقّق من عضوية الأسرة ثم حاول مجددًا.'**
   String get familyChatRequestRejected;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'إعادة المحاولة'**
   String get familyChatRetry;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'تُحدّث الرسائل من الخادم كل 15 ثانية أثناء فتح هذه الشاشة. لا تتوفر إشعارات فورية أو مزامنة لحظية.'**
   String get familyChatServerPollingNotice;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'تُحدّث الرسائل من الخادم أثناء فتح هذه الشاشة. لا تتوفر تحديثات فورية.'**
   String get childFamilyChatServerPollingNotice;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ دردشة أسرية'**
   String get familyChatCreateHeading;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'نوع المحادثة'**
   String get familyChatCreateTypeLabel;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'دردشة أولياء الأسرة'**
   String get familyChatFamilyThread;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'محادثة مع طفل واحد'**
   String get familyChatChildThread;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'الطفل'**
   String get familyChatCreateChildLabel;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد طفل مؤكّد من الخادم لإنشاء محادثة معه.'**
   String get familyChatNoChildrenAvailable;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'طفل'**
   String get familyChatChildFallback;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'العنوان (اختياري)'**
   String get familyChatCreateTitleLabel;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'اتركه فارغًا لاستخدام عنوان الخادم'**
   String get familyChatCreateTitleHint;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'إنشاء الدردشة'**
   String get familyChatCreateButton;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء'**
   String get familyChatCancel;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر إنشاء الدردشة. لم يتأكد قبول الطلب.'**
   String get familyChatCreateFailed;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'تحميل رسائل أقدم'**
   String get familyChatLoadOlder;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'تحديث الرسائل'**
   String get familyChatRefresh;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'حُذفت الرسالة'**
   String get familyChatMessageDeleted;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'عُدّلت'**
   String get familyChatEdited;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'المرفقات والرسائل الصوتية غير متاحة: واجهة الدردشة الحالية تدعم النص فقط.'**
   String get familyChatMediaUnavailable;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'المرفقات والرسائل الصوتية غير متاحة'**
   String get familyChatMediaUnavailableSemantics;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل'**
   String get familyChatEdit;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف'**
   String get familyChatDelete;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل الرسالة'**
   String get familyChatEditHeading;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظ التعديل'**
   String get familyChatEditSave;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف هذه الرسالة؟'**
   String get familyChatDeleteHeading;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'سيُزال نص الرسالة، لكن موضعها في المحادثة سيبقى ظاهرًا.'**
   String get familyChatDeleteBody;
 
+  /// W9 family chat storage transparency
+  ///
+  /// In ar, this message translates to:
+  /// **'تُحفظ الرسائل لدى خادم الأسرة؛ هذه الدردشة غير مشفّرة من طرف إلى طرف.'**
   String get familyChatStorageNotice;
+
+  /// W9 family chat storage transparency
+  ///
+  /// In ar, this message translates to:
+  /// **'نص محفوظ في خادم الأسرة'**
   String get familyChatServerStoredTag;
 
+  /// W9 chat pagination and message controls
+  ///
+  /// In ar, this message translates to:
+  /// **'تحميل المزيد من الرسائل'**
   String get familyChatLoadMore;
+
+  /// W9 chat pagination and message controls
+  ///
+  /// In ar, this message translates to:
+  /// **'إجراءات الرسالة'**
   String get familyChatMessageActionsSemantics;
 
+  /// W9 chat source and child availability honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'تأتي قائمة المحادثات ومعايناتها من خادم الأسرة. تُحدّث القائمة كل 30 ثانية؛ لا تتوفر إشعارات فورية.'**
   String get familyChatListPollingNotice;
+
+  /// W9 chat source and child availability honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'تبقى دردشة الأسرة متاحة بعد انتهاء وقت اللعب.'**
   String get familyChatNeverLocks;
 }
 

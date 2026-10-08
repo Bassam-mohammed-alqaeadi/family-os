@@ -402,12 +402,12 @@ final class FamilyChatServerAuthority {
   );
 
   static FamilyChatAuthorityAnswer<T> _notConfigured<T>() =>
-      const FamilyChatAuthorityAnswer<T>.unavailable(
+      FamilyChatAuthorityAnswer<T>.unavailable(
         FamilyChatAuthorityStatus.notConfigured,
       );
 
   static FamilyChatAuthorityAnswer<T> _refused<T>() =>
-      const FamilyChatAuthorityAnswer<T>.unavailable(
+      FamilyChatAuthorityAnswer<T>.unavailable(
         FamilyChatAuthorityStatus.refused,
       );
 }

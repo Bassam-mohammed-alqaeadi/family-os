@@ -299,7 +299,7 @@ class ConversationsListScreenState extends State<ConversationsListScreen> {
                   children: [
                     DropdownButtonFormField<FamilyChatThreadKind>(
                       key: ConversationsListKeys.createChatType,
-                      value: kind,
+                      initialValue: kind,
                       decoration: InputDecoration(
                         labelText: l10n.familyChatCreateTypeLabel,
                       ),
@@ -380,9 +380,10 @@ class ConversationsListScreenState extends State<ConversationsListScreen> {
 
                           return DropdownButtonFormField<String>(
                             key: ConversationsListKeys.createChatChild,
-                            value: children.any((child) => child.id == childId)
-                                ? childId
-                                : null,
+                            initialValue:
+                                children.any((child) => child.id == childId)
+                                    ? childId
+                                    : null,
                             decoration: InputDecoration(
                               labelText: l10n.familyChatCreateChildLabel,
                             ),
@@ -643,6 +644,7 @@ class ConversationsListScreenState extends State<ConversationsListScreen> {
               ),
             ),
             const ShellTabMoreTools(tabId: 'family'),
+          ],
         ),
       ),
     );

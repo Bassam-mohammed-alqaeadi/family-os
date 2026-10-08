@@ -12483,8 +12483,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'لا يمكن لهذه النسخة مخاطبة أبناء الخادم بعد — يُقرأ التقويم ولا يُكتب فيه.';
 
   @override
-  String get familyChatConnecting =>
-      'جارٍ الاتصال بدردشة الأسرة…';
+  String get familyChatConnecting => 'جارٍ الاتصال بدردشة الأسرة…';
 
   @override
   String get familyChatReconnecting =>
@@ -12507,8 +12506,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'رفض الخادم إجراء الدردشة. تحقّق من عضوية الأسرة ثم حاول مجددًا.';
 
   @override
-  String get familyChatRetry =>
-      'إعادة المحاولة';
+  String get familyChatRetry => 'إعادة المحاولة';
 
   @override
   String get familyChatServerPollingNotice =>
@@ -12519,68 +12517,54 @@ class AppLocalizationsAr extends AppLocalizations {
       'تُحدّث الرسائل من الخادم أثناء فتح هذه الشاشة. لا تتوفر تحديثات فورية.';
 
   @override
-  String get familyChatCreateHeading =>
-      'ابدأ دردشة أسرية';
+  String get familyChatCreateHeading => 'ابدأ دردشة أسرية';
 
   @override
-  String get familyChatCreateTypeLabel =>
-      'نوع المحادثة';
+  String get familyChatCreateTypeLabel => 'نوع المحادثة';
 
   @override
-  String get familyChatFamilyThread =>
-      'دردشة أولياء الأسرة';
+  String get familyChatFamilyThread => 'دردشة أولياء الأسرة';
 
   @override
-  String get familyChatChildThread =>
-      'محادثة مع طفل واحد';
+  String get familyChatChildThread => 'محادثة مع طفل واحد';
 
   @override
-  String get familyChatCreateChildLabel =>
-      'الطفل';
+  String get familyChatCreateChildLabel => 'الطفل';
 
   @override
   String get familyChatNoChildrenAvailable =>
       'لا يوجد طفل مؤكّد من الخادم لإنشاء محادثة معه.';
 
   @override
-  String get familyChatChildFallback =>
-      'طفل';
+  String get familyChatChildFallback => 'طفل';
 
   @override
-  String get familyChatCreateTitleLabel =>
-      'العنوان (اختياري)';
+  String get familyChatCreateTitleLabel => 'العنوان (اختياري)';
 
   @override
-  String get familyChatCreateTitleHint =>
-      'اتركه فارغًا لاستخدام عنوان الخادم';
+  String get familyChatCreateTitleHint => 'اتركه فارغًا لاستخدام عنوان الخادم';
 
   @override
-  String get familyChatCreateButton =>
-      'إنشاء الدردشة';
+  String get familyChatCreateButton => 'إنشاء الدردشة';
 
   @override
-  String get familyChatCancel =>
-      'إلغاء';
+  String get familyChatCancel => 'إلغاء';
 
   @override
   String get familyChatCreateFailed =>
       'تعذّر إنشاء الدردشة. لم يتأكد قبول الطلب.';
 
   @override
-  String get familyChatLoadOlder =>
-      'تحميل رسائل أقدم';
+  String get familyChatLoadOlder => 'تحميل رسائل أقدم';
 
   @override
-  String get familyChatRefresh =>
-      'تحديث الرسائل';
+  String get familyChatRefresh => 'تحديث الرسائل';
 
   @override
-  String get familyChatMessageDeleted =>
-      'حُذفت الرسالة';
+  String get familyChatMessageDeleted => 'حُذفت الرسالة';
 
   @override
-  String get familyChatEdited =>
-      'عُدّلت';
+  String get familyChatEdited => 'عُدّلت';
 
   @override
   String get familyChatMediaUnavailable =>
@@ -12591,31 +12575,27 @@ class AppLocalizationsAr extends AppLocalizations {
       'المرفقات والرسائل الصوتية غير متاحة';
 
   @override
-  String get familyChatEdit =>
-      'تعديل';
+  String get familyChatEdit => 'تعديل';
 
   @override
-  String get familyChatDelete =>
-      'حذف';
+  String get familyChatDelete => 'حذف';
 
   @override
-  String get familyChatEditHeading =>
-      'تعديل الرسالة';
+  String get familyChatEditHeading => 'تعديل الرسالة';
 
   @override
-  String get familyChatEditSave =>
-      'حفظ التعديل';
+  String get familyChatEditSave => 'حفظ التعديل';
 
   @override
-  String get familyChatDeleteHeading =>
-      'حذف هذه الرسالة؟';
+  String get familyChatDeleteHeading => 'حذف هذه الرسالة؟';
 
   @override
   String get familyChatDeleteBody =>
       'سيُزال نص الرسالة، لكن موضعها في المحادثة سيبقى ظاهرًا.';
 
   @override
-  String get familyChatStorageNotice => 'تُحفظ الرسائل لدى خادم الأسرة؛ هذه الدردشة غير مشفّرة من طرف إلى طرف.';
+  String get familyChatStorageNotice =>
+      'تُحفظ الرسائل لدى خادم الأسرة؛ هذه الدردشة غير مشفّرة من طرف إلى طرف.';
 
   @override
   String get familyChatServerStoredTag => 'نص محفوظ في خادم الأسرة';
@@ -12627,8 +12607,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get familyChatMessageActionsSemantics => 'إجراءات الرسالة';
 
   @override
-  String get familyChatListPollingNotice => 'تأتي قائمة المحادثات ومعايناتها من خادم الأسرة. تُحدّث القائمة كل 30 ثانية؛ لا تتوفر إشعارات فورية.';
+  String get familyChatListPollingNotice =>
+      'تأتي قائمة المحادثات ومعايناتها من خادم الأسرة. تُحدّث القائمة كل 30 ثانية؛ لا تتوفر إشعارات فورية.';
 
   @override
-  String get familyChatNeverLocks => 'تبقى دردشة الأسرة متاحة بعد انتهاء وقت اللعب.';
+  String get familyChatNeverLocks =>
+      'تبقى دردشة الأسرة متاحة بعد انتهاء وقت اللعب.';
 }

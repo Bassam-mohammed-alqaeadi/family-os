@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/features/n02_day/family_chat_server_authority.dart';
 import 'package:family_os/features/n02_day/family_chat_server_repository.dart';
 
 /// Explicit connection/permission states for the chat screens. Access remains server-authoritative.
