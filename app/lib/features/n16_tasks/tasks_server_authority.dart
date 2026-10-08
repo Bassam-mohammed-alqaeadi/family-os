@@ -161,6 +161,13 @@ final class TasksServerAuthority {
     }
     try {
       return TasksAuthorityAnswer.ready(await run(family, token));
+    } on ArgumentError {
+      // The route refused to be built: this child is not one the server was told about, so
+      // nothing was asked. Reading that as `unreachable` would blame the network for a gap in
+      // this build's own identity, and a family would be told to check their connection.
+      return const TasksAuthorityAnswer.unavailable(
+        TasksAuthorityStatus.notConfigured,
+      );
     } on FoundationGateApiException catch (exception) {
       return TasksAuthorityAnswer.unavailable(
         switch (exception.failure) {

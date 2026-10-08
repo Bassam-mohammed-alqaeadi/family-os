@@ -70,6 +70,18 @@ class _TasksServerPanelState extends State<TasksServerPanel> {
   }
 
   @override
+  void didUpdateWidget(covariant TasksServerPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // The screen this panel lives in can stay open while the family switches child. Reading
+    // again is the only honest reaction: the previous child's tasks must not remain on screen
+    // under the new child's name, not even for the frame it takes to ask.
+    if (oldWidget.childId != widget.childId ||
+        oldWidget.authority != widget.authority) {
+      _load();
+    }
+  }
+
+  @override
   void dispose() {
     _titleCtrl.dispose();
     _pointsCtrl.dispose();
