@@ -4133,6 +4133,19 @@ test('a family talks in a room it was added to, the child answers from their own
         assert.equal(afterRead.body.messages[0].readCount, 1);
         assert.equal(afterRead.body.threads, undefined);
 
+        // The list a guardian opens shows the room, its unread count and the preview of what was
+        // last said - read from the message's own columns, not from the thread row's identity.
+        const primaryRooms = await jsonRequest(baseUrl, threadsPath, { headers: authorized('test-primary') });
+        assert.equal(primaryRooms.status, 200);
+        const householdPreview = primaryRooms.body.threads.find((thread) => thread.id === householdThreadId);
+        assert.equal(householdPreview.lastMessage.id, firstMessage.body.message.id);
+        assert.equal(householdPreview.lastMessage.seq, 1);
+        assert.equal(householdPreview.lastMessage.body, 'السلام عليكم');
+        assert.equal(householdPreview.lastMessage.authorId, primaryMembershipId);
+        // One reader: the co-guardian marked themselves read, and the author is not counted among
+        // the readers of their own words.
+        assert.equal(householdPreview.lastMessage.readCount, 1);
+
         // A read mark cannot pass the newest message: the server refuses rather than clamps.
         const readAhead = await jsonRequest(baseUrl, `${threadsPath}/${householdThreadId}/reads`, {
           method: 'POST',

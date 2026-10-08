@@ -129,6 +129,30 @@ export function messageView(row, { readCount = 0 } = {}) {
   };
 }
 
+/// The newest message of a thread list row. The columns there are prefixed (`last_body`) because
+/// the row is a thread row with a lateral message attached, so the mapping is stated once here
+/// rather than passed to `messageView` as if it were a message row - which would have read the
+/// thread's own `id` and produced a preview of nothing.
+export function threadLastMessage(row) {
+  if (row.last_id == null) return null;
+  return messageView(
+    {
+      id: row.last_id,
+      seq: row.last_seq,
+      author_kind: row.last_author_kind,
+      author_id: row.last_author_id,
+      body: row.last_body,
+      revision: row.last_revision,
+      edited_at: row.last_edited_at,
+      deleted_at: row.last_deleted_at,
+      deleted_by_kind: row.last_deleted_by_kind,
+      deleted_by_id: row.last_deleted_by_id,
+      created_at: row.last_created_at,
+    },
+    { readCount: Number(row.last_read_count ?? 0) },
+  );
+}
+
 export function threadView(row, { participants = [], lastMessage = null, unreadCount = 0, selfMembershipId = null } = {}) {
   return {
     id: row.id,
@@ -404,7 +428,7 @@ export function createThreadList({ port }) {
           threadView(row, {
             participants: participants.filter((entry) => entry.thread_id === row.id),
             unreadCount: Number(row.unread_count ?? 0),
-            lastMessage: row.last_id == null ? null : messageView(row, { readCount: Number(row.last_read_count ?? 0) }),
+            lastMessage: threadLastMessage(row),
             selfMembershipId: actor.id,
           }),
         ),
@@ -431,7 +455,7 @@ export function createDeviceThreadList({ port }) {
           threadView(row, {
             participants: participants.filter((entry) => entry.thread_id === row.id),
             unreadCount: Number(row.unread_count ?? 0),
-            lastMessage: row.last_id == null ? null : messageView(row, { readCount: Number(row.last_read_count ?? 0) }),
+            lastMessage: threadLastMessage(row),
           }),
         ),
       };
@@ -535,9 +559,12 @@ export function createMessageSend({ port }) {
         });
         if (replay != null) {
           // The same client message arriving twice is one message. It is NOT an error: a phone
-          // that lost the answer must be able to ask again and get the sequence it was given.
+          // that lost the answer must be able to ask again and get the sequence it was given -
+          // and the receipt it is answered with is the receipt that is true NOW, not a zero
+          // that would quietly un-tell a reader somebody had already read it.
+          const counts = await port.readCountsForMessages(tx, { threadId, messageIds: [replay.id] });
           return {
-            message: messageView(replay, { readCount: 0 }),
+            message: messageView(replay, { readCount: Number(counts[0]?.read_count ?? 0) }),
             replayed: true,
           };
         }

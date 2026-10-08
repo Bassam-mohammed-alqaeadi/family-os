@@ -45,6 +45,7 @@ import {
   normalizeMessageQuery,
   participantView,
   requireReadableSeq,
+  threadLastMessage,
   threadView,
 } from '../src/family-chat.js';
 
@@ -463,6 +464,33 @@ test('a thread carries its participants and the caller\'s own read state', () =>
   assert.equal(view.participants[0].isSelf, true);
 });
 
+test('the preview of a thread list is the message, not the thread row wearing its name', () => {
+  const row = {
+    id: THREAD,
+    last_id: 'message-7',
+    last_seq: 7,
+    last_author_kind: 'child',
+    last_author_id: CHILD,
+    last_body: 'وصلتُ إلى البيت',
+    last_revision: 1,
+    last_edited_at: null,
+    last_deleted_at: null,
+    last_deleted_by_kind: null,
+    last_deleted_by_id: null,
+    last_created_at: new Date('2026-10-08T11:00:00.000Z'),
+    last_read_count: 2,
+  };
+  const preview = threadLastMessage(row);
+  assert.equal(preview.id, 'message-7');
+  assert.equal(preview.seq, 7);
+  assert.equal(preview.authorKind, 'child');
+  assert.equal(preview.body, 'وصلتُ إلى البيت');
+  assert.equal(preview.readCount, 2);
+  assert.notEqual(preview.id, THREAD);
+  // An empty room has no preview at all, rather than a thread row pretending to be a message.
+  assert.equal(threadLastMessage({ id: THREAD, last_id: null }), null);
+});
+
 // ── opening rooms: the laws that decide who can reach a child ─────────────────────────────
 
 test('a child conversation names exactly one child, and the household room names none', async () => {
@@ -643,6 +671,25 @@ test('a resend of the same client message is the same message, with the sequence
   assert.equal(port.state.sequencesAllocated, 1);
   assert.equal(port.state.messages.length, 1);
   assert.equal(port.state.audits.length, 1);
+});
+
+test('a resend is answered with the receipt that is true now, not a fixed zero', async () => {
+  const port = memoryPort({
+    members: [
+      { thread_id: THREAD, family_id: FAMILY, participant_kind: 'membership', participant_id: PRIMARY,
+        membership_id: PRIMARY, child_id: null, last_read_seq: 0 },
+      { thread_id: THREAD, family_id: FAMILY, participant_kind: 'membership', participant_id: CO_GUARDIAN,
+        membership_id: CO_GUARDIAN, child_id: null, last_read_seq: 0 },
+    ],
+    memberships: [membershipRow(), membershipRow({ id: CO_GUARDIAN, target_subject: 'test-co', role: 'co_guardian' })],
+  });
+  const first = await send(port)(sendArgs(port));
+  await markRead(port)({ principal: coPrincipal, familyId: FAMILY, threadId: THREAD, readSeq: 1,
+                         idempotencyKey: 'r1', requestHash: 'h', correlationId: 'c' });
+  const resent = await send(port)(sendArgs(port, { idempotencyKey: 'key-2', requestHash: 'b'.repeat(64) }));
+  assert.equal(resent.replayed, true);
+  assert.equal(resent.message.id, first.message.id);
+  assert.equal(resent.message.readCount, 1);
 });
 
 test('a handset with a valid credential still cannot write in a room its child is not in', async () => {
