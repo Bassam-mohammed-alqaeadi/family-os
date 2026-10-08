@@ -12557,4 +12557,111 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tasksServerCreateButton => 'Add the task';
+  @override
+  String get calendarServerNoSession =>
+      'No server session in this build - no calendar is built locally.';
+
+  @override
+  String get calendarServerDenied =>
+      'This account may not read the family calendar at all.';
+
+  @override
+  String get calendarServerUnreachable =>
+      'The server did not answer - what you see is the last true reading.';
+
+  @override
+  String get calendarServerRefused =>
+      'The request was refused - what you see is the last true reading.';
+
+  @override
+  String get calendarServerEventsHeading => 'What the family agreed to';
+
+  @override
+  String get calendarServerEventsEmpty => 'No events in this window.';
+
+  @override
+  String get calendarServerEventCancelled => 'Cancelled';
+
+  @override
+  String get calendarServerEventCancelReason => 'Why it was called off';
+
+  @override
+  String get calendarServerEventAudienceHeading => 'Who was invited';
+
+  @override
+  String get calendarServerAudienceWaiting => 'No answer yet';
+
+  @override
+  String get calendarServerAudienceAccepted => 'Coming';
+
+  @override
+  String get calendarServerAudienceDeclined => 'Not coming';
+
+  @override
+  String get calendarServerAudienceAttended => 'Attended';
+
+  @override
+  String get calendarServerAudienceAbsent => 'Did not attend';
+
+  @override
+  String get calendarServerReminderNote =>
+      'A reminder is a recorded preference; nothing here says a notification arrived.';
+
+  @override
+  String get calendarServerCancelHeading => 'Call an event off';
+
+  @override
+  String get calendarServerCancelReasonHint => 'Why the change?';
+
+  @override
+  String get calendarServerCancelButton => 'Call it off';
+
+  @override
+  String get calendarServerAnswerHeading => 'What your child said';
+
+  @override
+  String get calendarServerAnswerNoteHint => 'In their words';
+
+  @override
+  String get calendarServerAttendanceHeading => 'What happened';
+
+  @override
+  String get calendarServerAttendanceNoteHint => 'A note (optional)';
+
+  @override
+  String get calendarServerAttendanceRecordButton => 'Record it';
+
+  @override
+  String get calendarServerCreateHeading => 'A new event';
+
+  @override
+  String get calendarServerCreateTitle => 'What is it?';
+
+  @override
+  String get calendarServerCreateLocation => 'Where?';
+
+  @override
+  String get calendarServerCreateNoteHint => 'Details for the family';
+
+  @override
+  String get calendarServerCreateReminder => 'Remind before (minutes)';
+
+  @override
+  String get calendarServerCreateChildren => 'Who is invited?';
+
+  @override
+  String get calendarServerCreatePickStart => 'Choose the start';
+
+  @override
+  String get calendarServerCreatePickEnd => 'Choose the end';
+
+  @override
+  String get calendarServerCreateButton => 'Add the event';
+
+  @override
+  String get calendarServerPanelNote =>
+      'Everything here is what the server said: no event, answer or attendance is invented locally.';
+  @override
+  String get calendarServerNoAddressableChildren =>
+      'This build cannot address the server\'s children yet - the calendar reads and nothing is written.';
 }

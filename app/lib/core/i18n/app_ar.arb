@@ -16007,6 +16007,142 @@
   "tasksServerCreateButton": "أضف المهمة",
   "@tasksServerCreateButton": {
       "description": "SCR: tasks server panel"
+  },
+  "calendarServerNoSession": "لا توجد جلسة خادم في هذا البناء — لا يُبنى تقويم محلياً.",
+  "@calendarServerNoSession": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerDenied": "لا يُسمح لهذا الحساب بقراءة التقويم.",
+  "@calendarServerDenied": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerUnreachable": "لم يجب الخادم — هذا آخر قراءة صحيحة.",
+  "@calendarServerUnreachable": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerRefused": "رُفض الطلب — هذا آخر قراءة صحيحة.",
+  "@calendarServerRefused": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerEventsHeading": "ما اتفقت عليه العائلة",
+  "@calendarServerEventsHeading": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerEventsEmpty": "لا مناسبات في هذه المدة.",
+  "@calendarServerEventsEmpty": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerEventCancelled": "أُلغيت",
+  "@calendarServerEventCancelled": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerEventCancelReason": "سبب الإلغاء",
+  "@calendarServerEventCancelReason": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerEventAudienceHeading": "من دُعي",
+  "@calendarServerEventAudienceHeading": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAudienceWaiting": "لم يجب بعد",
+  "@calendarServerAudienceWaiting": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAudienceAccepted": "سيأتي",
+  "@calendarServerAudienceAccepted": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAudienceDeclined": "لن يأتي",
+  "@calendarServerAudienceDeclined": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAudienceAttended": "حضر",
+  "@calendarServerAudienceAttended": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAudienceAbsent": "لم يحضر",
+  "@calendarServerAudienceAbsent": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerReminderNote": "التذكير تفضيل مسجَّل، ولا نقول إن إشعاراً وصل.",
+  "@calendarServerReminderNote": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCancelHeading": "إلغاء مناسبة",
+  "@calendarServerCancelHeading": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCancelReasonHint": "لماذا تغيّرت الخطة؟",
+  "@calendarServerCancelReasonHint": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCancelButton": "ألغِ المناسبة",
+  "@calendarServerCancelButton": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAnswerHeading": "سجّل جواب الابن",
+  "@calendarServerAnswerHeading": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAnswerNoteHint": "ما قاله الابن",
+  "@calendarServerAnswerNoteHint": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAttendanceHeading": "ما حدث فعلاً",
+  "@calendarServerAttendanceHeading": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAttendanceNoteHint": "ملاحظة (اختياري)",
+  "@calendarServerAttendanceNoteHint": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAttendanceRecordButton": "سجّل الحضور",
+  "@calendarServerAttendanceRecordButton": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCreateHeading": "مناسبة جديدة",
+  "@calendarServerCreateHeading": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCreateTitle": "ما المناسبة؟",
+  "@calendarServerCreateTitle": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCreateLocation": "أين؟",
+  "@calendarServerCreateLocation": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCreateNoteHint": "تفاصيل للعائلة",
+  "@calendarServerCreateNoteHint": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCreateReminder": "تذكير قبل (دقائق)",
+  "@calendarServerCreateReminder": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCreateChildren": "من تُدعى؟",
+  "@calendarServerCreateChildren": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCreatePickStart": "اختر البداية",
+  "@calendarServerCreatePickStart": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCreatePickEnd": "اختر النهاية",
+  "@calendarServerCreatePickEnd": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCreateButton": "أضف المناسبة",
+  "@calendarServerCreateButton": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerPanelNote": "كل ما هنا قاله الخادم: لا مناسبة ولا جواب ولا حضور يُخترع محلياً.",
+  "@calendarServerPanelNote": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerNoAddressableChildren": "لا يمكن لهذه النسخة مخاطبة أبناء الخادم بعد — يُقرأ التقويم ولا يُكتب فيه.",
+  "@calendarServerNoAddressableChildren": {
+      "description": "SCR: calendar server panel"
   }
 }
 

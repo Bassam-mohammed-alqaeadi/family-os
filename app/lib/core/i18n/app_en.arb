@@ -15992,6 +15992,142 @@
   "tasksServerCreateButton": "Add the task",
   "@tasksServerCreateButton": {
       "description": "SCR: tasks server panel"
+  },
+  "calendarServerNoSession": "No server session in this build - no calendar is built locally.",
+  "@calendarServerNoSession": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerDenied": "This account may not read the family calendar at all.",
+  "@calendarServerDenied": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerUnreachable": "The server did not answer - what you see is the last true reading.",
+  "@calendarServerUnreachable": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerRefused": "The request was refused - what you see is the last true reading.",
+  "@calendarServerRefused": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerEventsHeading": "What the family agreed to",
+  "@calendarServerEventsHeading": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerEventsEmpty": "No events in this window.",
+  "@calendarServerEventsEmpty": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerEventCancelled": "Cancelled",
+  "@calendarServerEventCancelled": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerEventCancelReason": "Why it was called off",
+  "@calendarServerEventCancelReason": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerEventAudienceHeading": "Who was invited",
+  "@calendarServerEventAudienceHeading": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAudienceWaiting": "No answer yet",
+  "@calendarServerAudienceWaiting": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAudienceAccepted": "Coming",
+  "@calendarServerAudienceAccepted": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAudienceDeclined": "Not coming",
+  "@calendarServerAudienceDeclined": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAudienceAttended": "Attended",
+  "@calendarServerAudienceAttended": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAudienceAbsent": "Did not attend",
+  "@calendarServerAudienceAbsent": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerReminderNote": "A reminder is a recorded preference; nothing here says a notification arrived.",
+  "@calendarServerReminderNote": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCancelHeading": "Call an event off",
+  "@calendarServerCancelHeading": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCancelReasonHint": "Why the change?",
+  "@calendarServerCancelReasonHint": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCancelButton": "Call it off",
+  "@calendarServerCancelButton": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAnswerHeading": "What your child said",
+  "@calendarServerAnswerHeading": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAnswerNoteHint": "In their words",
+  "@calendarServerAnswerNoteHint": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAttendanceHeading": "What happened",
+  "@calendarServerAttendanceHeading": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAttendanceNoteHint": "A note (optional)",
+  "@calendarServerAttendanceNoteHint": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAttendanceRecordButton": "Record it",
+  "@calendarServerAttendanceRecordButton": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCreateHeading": "A new event",
+  "@calendarServerCreateHeading": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCreateTitle": "What is it?",
+  "@calendarServerCreateTitle": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCreateLocation": "Where?",
+  "@calendarServerCreateLocation": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCreateNoteHint": "Details for the family",
+  "@calendarServerCreateNoteHint": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCreateReminder": "Remind before (minutes)",
+  "@calendarServerCreateReminder": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCreateChildren": "Who is invited?",
+  "@calendarServerCreateChildren": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCreatePickStart": "Choose the start",
+  "@calendarServerCreatePickStart": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCreatePickEnd": "Choose the end",
+  "@calendarServerCreatePickEnd": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCreateButton": "Add the event",
+  "@calendarServerCreateButton": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerPanelNote": "Everything here is what the server said: no event, answer or attendance is invented locally.",
+  "@calendarServerPanelNote": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerNoAddressableChildren": "This build cannot address the server's children yet - the calendar reads and nothing is written.",
+  "@calendarServerNoAddressableChildren": {
+      "description": "SCR: calendar server panel"
   }
 }
 

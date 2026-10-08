@@ -12374,4 +12374,109 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get tasksServerCreateButton => 'أضف المهمة';
+  @override
+  String get calendarServerNoSession =>
+      'لا توجد جلسة خادم في هذا البناء — لا يُبنى تقويم محلياً.';
+
+  @override
+  String get calendarServerDenied => 'لا يُسمح لهذا الحساب بقراءة التقويم.';
+
+  @override
+  String get calendarServerUnreachable =>
+      'لم يجب الخادم — هذا آخر قراءة صحيحة.';
+
+  @override
+  String get calendarServerRefused => 'رُفض الطلب — هذا آخر قراءة صحيحة.';
+
+  @override
+  String get calendarServerEventsHeading => 'ما اتفقت عليه العائلة';
+
+  @override
+  String get calendarServerEventsEmpty => 'لا مناسبات في هذه المدة.';
+
+  @override
+  String get calendarServerEventCancelled => 'أُلغيت';
+
+  @override
+  String get calendarServerEventCancelReason => 'سبب الإلغاء';
+
+  @override
+  String get calendarServerEventAudienceHeading => 'من دُعي';
+
+  @override
+  String get calendarServerAudienceWaiting => 'لم يجب بعد';
+
+  @override
+  String get calendarServerAudienceAccepted => 'سيأتي';
+
+  @override
+  String get calendarServerAudienceDeclined => 'لن يأتي';
+
+  @override
+  String get calendarServerAudienceAttended => 'حضر';
+
+  @override
+  String get calendarServerAudienceAbsent => 'لم يحضر';
+
+  @override
+  String get calendarServerReminderNote =>
+      'التذكير تفضيل مسجَّل، ولا نقول إن إشعاراً وصل.';
+
+  @override
+  String get calendarServerCancelHeading => 'إلغاء مناسبة';
+
+  @override
+  String get calendarServerCancelReasonHint => 'لماذا تغيّرت الخطة؟';
+
+  @override
+  String get calendarServerCancelButton => 'ألغِ المناسبة';
+
+  @override
+  String get calendarServerAnswerHeading => 'سجّل جواب الابن';
+
+  @override
+  String get calendarServerAnswerNoteHint => 'ما قاله الابن';
+
+  @override
+  String get calendarServerAttendanceHeading => 'ما حدث فعلاً';
+
+  @override
+  String get calendarServerAttendanceNoteHint => 'ملاحظة (اختياري)';
+
+  @override
+  String get calendarServerAttendanceRecordButton => 'سجّل الحضور';
+
+  @override
+  String get calendarServerCreateHeading => 'مناسبة جديدة';
+
+  @override
+  String get calendarServerCreateTitle => 'ما المناسبة؟';
+
+  @override
+  String get calendarServerCreateLocation => 'أين؟';
+
+  @override
+  String get calendarServerCreateNoteHint => 'تفاصيل للعائلة';
+
+  @override
+  String get calendarServerCreateReminder => 'تذكير قبل (دقائق)';
+
+  @override
+  String get calendarServerCreateChildren => 'من تُدعى؟';
+
+  @override
+  String get calendarServerCreatePickStart => 'اختر البداية';
+
+  @override
+  String get calendarServerCreatePickEnd => 'اختر النهاية';
+
+  @override
+  String get calendarServerCreateButton => 'أضف المناسبة';
+
+  @override
+  String get calendarServerPanelNote =>
+      'كل ما هنا قاله الخادم: لا مناسبة ولا جواب ولا حضور يُخترع محلياً.';
+  @override
+  String get calendarServerNoAddressableChildren =>
+      'لا يمكن لهذه النسخة مخاطبة أبناء الخادم بعد — يُقرأ التقويم ولا يُكتب فيه.';
 }

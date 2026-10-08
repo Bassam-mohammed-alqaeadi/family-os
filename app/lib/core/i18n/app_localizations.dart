@@ -21956,6 +21956,210 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'أضف المهمة'**
   String get tasksServerCreateButton;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد جلسة خادم في هذا البناء — لا يُبنى تقويم محلياً.'**
+  String get calendarServerNoSession;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يُسمح لهذا الحساب بقراءة التقويم.'**
+  String get calendarServerDenied;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يجب الخادم — هذا آخر قراءة صحيحة.'**
+  String get calendarServerUnreachable;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'رُفض الطلب — هذا آخر قراءة صحيحة.'**
+  String get calendarServerRefused;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'ما اتفقت عليه العائلة'**
+  String get calendarServerEventsHeading;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لا مناسبات في هذه المدة.'**
+  String get calendarServerEventsEmpty;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'أُلغيت'**
+  String get calendarServerEventCancelled;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'سبب الإلغاء'**
+  String get calendarServerEventCancelReason;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'من دُعي'**
+  String get calendarServerEventAudienceHeading;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يجب بعد'**
+  String get calendarServerAudienceWaiting;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'سيأتي'**
+  String get calendarServerAudienceAccepted;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لن يأتي'**
+  String get calendarServerAudienceDeclined;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'حضر'**
+  String get calendarServerAudienceAttended;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يحضر'**
+  String get calendarServerAudienceAbsent;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'التذكير تفضيل مسجَّل، ولا نقول إن إشعاراً وصل.'**
+  String get calendarServerReminderNote;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء مناسبة'**
+  String get calendarServerCancelHeading;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لماذا تغيّرت الخطة؟'**
+  String get calendarServerCancelReasonHint;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'ألغِ المناسبة'**
+  String get calendarServerCancelButton;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'سجّل جواب الابن'**
+  String get calendarServerAnswerHeading;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'ما قاله الابن'**
+  String get calendarServerAnswerNoteHint;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'ما حدث فعلاً'**
+  String get calendarServerAttendanceHeading;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'ملاحظة (اختياري)'**
+  String get calendarServerAttendanceNoteHint;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'سجّل الحضور'**
+  String get calendarServerAttendanceRecordButton;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'مناسبة جديدة'**
+  String get calendarServerCreateHeading;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'ما المناسبة؟'**
+  String get calendarServerCreateTitle;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'أين؟'**
+  String get calendarServerCreateLocation;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'تفاصيل للعائلة'**
+  String get calendarServerCreateNoteHint;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'تذكير قبل (دقائق)'**
+  String get calendarServerCreateReminder;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'من تُدعى؟'**
+  String get calendarServerCreateChildren;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر البداية'**
+  String get calendarServerCreatePickStart;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر النهاية'**
+  String get calendarServerCreatePickEnd;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف المناسبة'**
+  String get calendarServerCreateButton;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'كل ما هنا قاله الخادم: لا مناسبة ولا جواب ولا حضور يُخترع محلياً.'**
+  String get calendarServerPanelNote;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يمكن لهذه النسخة مخاطبة أبناء الخادم بعد — يُقرأ التقويم ولا يُكتب فيه.'**
+  String get calendarServerNoAddressableChildren;
 }
 
 class _AppLocalizationsDelegate
