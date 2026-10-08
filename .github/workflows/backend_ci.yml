@@ -86,7 +86,15 @@ jobs:
           test_status=${PIPESTATUS[0]}
           set -e
           if [ "$test_status" -ne 0 ]; then
-            summary="$(tail -n 100 "$log_file" | sed -e 's/%/%25/g' -e 's/\r//g' | tr '\n' '\036' | sed -e 's/\036/%0A/g')"
-            echo "::error title=PostgreSQL integration failure::${summary:0:2800}"
+            # A raw tail can spend its entire annotation budget on passing TAP cases and
+            # hide the one failure. Keep the failing TAP block, where the test name and
+            # PostgreSQL error are adjacent; fall back to the tail only if the reporter
+            # emitted no `not ok` block at all.
+            failure_block="$(grep -A80 -E '^not ok[[:space:]]' "$log_file" || true)"
+            if [ -z "$failure_block" ]; then
+              failure_block="$(tail -n 60 "$log_file")"
+            fi
+            summary="$(printf '%s' "$failure_block" | sed -e 's/%/%25/g' -e 's/\r//g' | tr '\n' '\036' | sed -e 's/\036/%0A/g')"
+            echo "::error title=PostgreSQL integration failure::${summary:0:5000}"
             exit "$test_status"
           fi

@@ -105,6 +105,19 @@ Map<String, Object?> _childReadState(int seq) => <String, Object?>{
   'lastReadSeq': seq,
 };
 
+Map<String, Object?> _capabilities() => <String, Object?>{
+  'transport': 'polling',
+  'listPollSeconds': 30,
+  'threadPollSeconds': 15,
+  'contentTypes': <String>['text/plain'],
+  'attachments': false,
+  'audio': false,
+  'presence': false,
+  'richReactions': false,
+  'webSockets': false,
+  'serverSentEvents': false,
+};
+
 FoundationGateHttpResponse _response(int status, Object body) =>
     FoundationGateHttpResponse(statusCode: status, body: jsonEncode(body));
 
@@ -177,7 +190,10 @@ void main() {
           : _message(seq);
     });
     transport.responses
-      ..add(_response(200, <String, Object?>{'threads': [_thread(80)]}))
+      ..add(_response(200, <String, Object?>{
+        'threads': [_thread(80)],
+        'capabilities': _capabilities(),
+      }))
       ..add(
         _response(200, <String, Object?>{
           'messages': initialMessages,
@@ -351,7 +367,10 @@ void main() {
   ) async {
     final siblingId = '55555555-5555-4555-8555-555555555555';
     final transport = _QueueTransport()
-      ..responses.add(_response(200, <String, Object?>{'threads': <Object?>[]}))
+      ..responses.add(_response(200, <String, Object?>{
+        'threads': <Object?>[],
+        'capabilities': _capabilities(),
+      }))
       ..responses.add(_response(200, <String, Object?>{
         'participants': <Object?>[
           <String, Object?>{
@@ -474,7 +493,10 @@ void main() {
   ) async {
     final transport = _QueueTransport();
     transport.responses
-      ..add(_response(200, <String, Object?>{'threads': [_thread(1)]}))
+      ..add(_response(200, <String, Object?>{
+        'threads': [_thread(1)],
+        'capabilities': _capabilities(),
+      }))
       ..add(
         _response(200, <String, Object?>{
           'messages': [_message(1)],
@@ -552,7 +574,10 @@ void main() {
       ..add(
         _response(
           200,
-          <String, Object?>{'threads': [_childThread(1, title: '')]},
+          <String, Object?>{
+            'threads': [_childThread(1, title: '')],
+            'capabilities': _capabilities(),
+          },
         ),
       )
       ..add(
@@ -630,7 +655,10 @@ void main() {
   });
 
   test('device surface preserves native-only auth and does not ask Firebase for a family', () async {
-    final reply = _response(200, <String, Object?>{'threads': <Object?>[]});
+    final reply = _response(200, <String, Object?>{
+      'threads': <Object?>[],
+      'capabilities': _capabilities(),
+    });
     final requests = <FamilyChatDeviceRequest>[];
     final api = FamilyChatApiClient(
       configuration: FoundationGateConfiguration.fromStagingApiOrigin(

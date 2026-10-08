@@ -890,6 +890,7 @@ class _CalendarServerPanelState extends State<CalendarServerPanel> {
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               key: const Key('calendar_server_create_audience_thread'),
+              isExpanded: true,
               initialValue: _createAudienceThreadId ?? '',
               decoration: InputDecoration(
                 labelText: l10n.calendarServerAudienceScopeLabel,

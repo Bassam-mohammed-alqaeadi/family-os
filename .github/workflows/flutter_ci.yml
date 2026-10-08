@@ -120,6 +120,7 @@ jobs:
               ])
               for name, detail in failures:
                   lines.append(f"| `{markdown_cell(name)}` | {markdown_cell(detail)} |")
+          summary_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
           # The reporter's own events, dumped raw and filtered. Two lessons are baked in
           # here: the annotations a step emits are budgeted, so this is the ONLY thing this
           # step annotates; and a summary that says "see the exception logs above" is not a
@@ -172,6 +173,17 @@ jobs:
               f"::warning title=Flutter test result::{len(failures)} failing test(s); "
               f"{len(kept)} event(s); {len(pieces)} chunk(s)"
           )
+          for index, (name, detail) in enumerate(failures[:8], start=1):
+              summary = f"{name}: {detail}"
+              escaped_summary = (
+                  summary.replace("%", "%25")
+                  .replace("\r", "%0D")
+                  .replace("\n", "%0A")
+              )
+              print(
+                  f"::error title=Flutter failing test {index}/{len(failures)}::"
+                  f"{escaped_summary}"
+              )
           for index, piece in enumerate(pieces[:8], start=1):
               print(f"::error title=Failure detail {index}/{len(pieces)}::{piece}")
 
@@ -194,7 +206,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: flutter-test-report-${{ github.run_id }}
-          path: app/build/ci/flutter-test.json
+          path: build/ci/flutter-test.json
           if-no-files-found: warn
           retention-days: 7
       - name: Verify generated source is committed
