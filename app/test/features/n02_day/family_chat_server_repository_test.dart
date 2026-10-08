@@ -384,7 +384,7 @@ void main() {
     await tester.tap(find.byKey(ConversationsListKeys.newChatCta));
     await tester.pumpAndSettle();
     expect(find.byKey(ConversationsListKeys.createChatDialog), findsOneWidget);
-    expect(find.byType(DropdownButtonFormField), findsOneWidget);
+    expect(find.byKey(ConversationsListKeys.createChatType), findsOneWidget);
     expect(
       tester.widget<FilledButton>(
         find.byKey(ConversationsListKeys.createChatConfirm),
@@ -420,7 +420,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(ConversationsListKeys.createChatRosterLoading), findsNothing);
-    expect(find.byType(DropdownButtonFormField), findsNWidgets(2));
+    expect(find.byKey(ConversationsListKeys.createChatType), findsOneWidget);
     expect(find.byKey(ConversationsListKeys.createChatChild), findsOneWidget);
     expect(find.text('Amani'), findsNothing);
     expect(

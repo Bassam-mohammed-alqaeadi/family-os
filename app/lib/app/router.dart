@@ -466,17 +466,12 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-fat-021',
       name: 'SCR-FAT-021',
-      builder: (context, state) => ConversationsListScreen(
-        repository: familyChatGuardianListRepository(),
-      ),
+      builder: (context, state) => ConversationsListScreen(repository: familyChatGuardianListRepository()),
     ),
     GoRoute(
       path: '/scr-fat-022',
       name: 'SCR-FAT-022',
-      builder: (context, state) => ConversationScreen(
-        chatWith: state.uri.queryParameters['chatWith'],
-        repository: familyChatGuardianConversationRepository(),
-      ),
+      builder: (context, state) => ConversationScreen(chatWith: state.uri.queryParameters['chatWith'], repository: familyChatGuardianConversationRepository()),
     ),
     GoRoute(
       path: '/scr-fat-023',
@@ -541,17 +536,12 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-chd-007',
       name: 'SCR-CHD-007',
-      builder: (context, state) => ChildChatsScreen(
-        repository: familyChatChildListRepository(),
-      ),
+      builder: (context, state) => ChildChatsScreen(repository: familyChatChildListRepository()),
     ),
     GoRoute(
       path: '/scr-chd-008',
       name: 'SCR-CHD-008',
-      builder: (context, state) => ChildConversationScreen(
-        chatWith: state.uri.queryParameters['chatWith'],
-        repository: familyChatChildConversationRepository(),
-      ),
+      builder: (context, state) => ChildConversationScreen(chatWith: state.uri.queryParameters['chatWith'], repository: familyChatChildConversationRepository()),
     ),
     GoRoute(
       path: '/scr-chd-009',

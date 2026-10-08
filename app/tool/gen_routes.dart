@@ -211,9 +211,10 @@ const Map<String, String> screenBuilders = {
   'SCR-FAT-019': 'AlertsHubScreen()',
   'SCR-FAT-020':
       "AlertDetailScreen(alertId: state.uri.queryParameters['alertId'], alertKind: state.uri.queryParameters['alertKind'] ?? state.uri.queryParameters['kind'])",
-  'SCR-FAT-021': 'ConversationsListScreen()',
+  'SCR-FAT-021':
+      'ConversationsListScreen(repository: familyChatGuardianListRepository())',
   'SCR-FAT-022':
-      "ConversationScreen(chatWith: state.uri.queryParameters['chatWith'])",
+      "ConversationScreen(chatWith: state.uri.queryParameters['chatWith'], repository: familyChatGuardianConversationRepository())",
   'SCR-FAT-023':
       "ActiveCallScreen(callId: state.uri.queryParameters['callId'])",
   'SCR-FAT-024': 'CallHistoryScreen()',
@@ -288,9 +289,10 @@ const Map<String, String> screenBuilders = {
       'ChildSosButtonScreen(childId: routeChildId(context, state).value)',
   'SCR-CHD-006':
       "ChildSosInProgressScreen(alertId: state.uri.queryParameters['alertId'], childId: state.uri.queryParameters['childId'])",
-  'SCR-CHD-007': 'ChildChatsScreen()',
+  'SCR-CHD-007':
+      'ChildChatsScreen(repository: familyChatChildListRepository())',
   'SCR-CHD-008':
-      "ChildConversationScreen(chatWith: state.uri.queryParameters['chatWith'])",
+      "ChildConversationScreen(chatWith: state.uri.queryParameters['chatWith'], repository: familyChatChildConversationRepository())",
   'SCR-CHD-009':
       "ChildActiveCallScreen(callId: state.uri.queryParameters['callId'])",
   'SCR-CHD-010':
@@ -360,6 +362,7 @@ const List<String> screenBuilderImports = [
   "import 'package:family_os/features/n02_day/alerts_hub_screen.dart';",
   "import 'package:family_os/features/n02_day/alert_detail_screen.dart';",
   "import 'package:family_os/features/n02_day/conversations_list_screen.dart';",
+  "import 'package:family_os/features/n02_day/family_chat_server_repository.dart';",
   "import 'package:family_os/features/n02_day/child_chats_screen.dart';",
   "import 'package:family_os/features/n02_day/child_conversation_screen.dart';",
   "import 'package:family_os/features/n02_day/child_active_call_screen.dart';",
