@@ -106,7 +106,7 @@ FakeCalendarEvent _event({
   String answerNote = '',
 }) {
   final start = DateTime.now().toUtc().add(startsIn);
-  return FakeCalendarEvent(
+  final event = FakeCalendarEvent(
     id: id,
     title: title,
     startsAt: start,
@@ -123,6 +123,14 @@ FakeCalendarEvent _event({
           ..respondedByMembershipId = child == answeredBy ? membershipId : null,
     ],
   );
+  if (status == 'cancelled') {
+    // A cancellation without its author and its moment is a half-written fact: the database
+    // refuses to hold one and the client refuses to believe one, so a fixture that stated a
+    // cancellation without them would be testing a state the product cannot be in.
+    event.cancelledByMembershipId = membershipId;
+    event.cancelledAt = '2026-10-07T20:00:00.000Z';
+  }
+  return event;
 }
 
 void main() {
@@ -147,6 +155,7 @@ void main() {
         _event(
           id: swimEventId,
           title: 'تدريب السباحة',
+          location: 'المسبح',
           startsIn: const Duration(hours: 50),
           children: const [siblingId],
         ),

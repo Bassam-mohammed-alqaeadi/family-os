@@ -237,9 +237,12 @@ final class CalendarFakeServer implements FoundationGateHttpTransport {
       return _ok(<String, Object?>{'response': entry.toJson()['response']});
     }
 
-    if (path.contains('/attendance')) {
-      final child = path.split('/children/')[1].split('/').first;
+    if (path.contains('/events/') && path.endsWith('/attendance')) {
+      // What happened is recorded under the event, with the child stated in the body: the
+      // route names one event, and the person recording says who it was about. Reading a child
+      // out of this path would have been reading it out of nothing.
       final id = path.split('/events/')[1].split('/').first;
+      final child = post!['childId'] as String;
       final event = _byId(id)!;
       final entry = event.audienceFor(child);
       if (entry == null || event.isCancelled) {

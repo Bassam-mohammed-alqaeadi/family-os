@@ -12557,6 +12557,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tasksServerCreateButton => 'Add the task';
+
   @override
   String get calendarServerNoSession =>
       'No server session in this build - no calendar is built locally.';
@@ -12661,6 +12662,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get calendarServerPanelNote =>
       'Everything here is what the server said: no event, answer or attendance is invented locally.';
+
   @override
   String get calendarServerNoAddressableChildren =>
       'This build cannot address the server\'s children yet - the calendar reads and nothing is written.';

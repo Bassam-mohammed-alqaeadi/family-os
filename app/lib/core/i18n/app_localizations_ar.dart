@@ -12374,6 +12374,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get tasksServerCreateButton => 'أضف المهمة';
+
   @override
   String get calendarServerNoSession =>
       'لا توجد جلسة خادم في هذا البناء — لا يُبنى تقويم محلياً.';
@@ -12476,6 +12477,7 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get calendarServerPanelNote =>
       'كل ما هنا قاله الخادم: لا مناسبة ولا جواب ولا حضور يُخترع محلياً.';
+
   @override
   String get calendarServerNoAddressableChildren =>
       'لا يمكن لهذه النسخة مخاطبة أبناء الخادم بعد — يُقرأ التقويم ولا يُكتب فيه.';
