@@ -244,10 +244,10 @@ test('thread-scoped tasks and calendar events are visible only to their active c
     );
     await client.query(
       `INSERT INTO family_chat_thread_members
-         (thread_id, family_id, participant_kind, participant_id, membership_id)
-       VALUES ($1, $2, 'membership', $3, $3),
-              ($1, $2, 'child', $4, $4),
-              ($1, $2, 'child', $5, $5)`,
+         (thread_id, family_id, participant_kind, participant_id, membership_id, child_id)
+       VALUES ($1, $2, 'membership', $3, $3, NULL),
+              ($1, $2, 'child', $4, NULL, $4),
+              ($1, $2, 'child', $5, NULL, $5)`,
       [thread.rows[0].id, ids.familyId, ids.membershipId, ids.childId, siblingId],
     );
 

@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 const _familyId = '11111111-1111-4111-8111-111111111111';
 const _threadId = '22222222-2222-4222-8222-222222222222';
+const _groupThreadId = '99999999-9999-4999-8999-999999999999';
 const _childId = '33333333-3333-4333-8333-333333333333';
 const _membershipId = '44444444-4444-4444-8444-444444444444';
 const _otherMembershipId = '55555555-5555-4555-8555-555555555555';
@@ -80,6 +81,36 @@ Map<String, Object?> _readState({int seq = 1}) => <String, Object?>{
   'participantKind': 'membership',
   'participantId': _membershipId,
   'lastReadSeq': seq,
+};
+
+Map<String, Object?> _capabilities() => <String, Object?>{
+  'transport': 'polling',
+  'listPollSeconds': 30,
+  'threadPollSeconds': 15,
+  'contentTypes': <String>['text/plain'],
+  'attachments': false,
+  'audio': false,
+  'presence': false,
+  'richReactions': false,
+  'webSockets': false,
+  'serverSentEvents': false,
+};
+
+Map<String, Object?> _groupThreadWithAddedMember() => <String, Object?>{
+  ..._thread(),
+  'id': _groupThreadId,
+  'kind': 'group',
+  'title': 'Study group',
+  'participants': <Object?>[
+    ...((_thread()['participants']! as List).cast<Object?>()),
+    <String, Object?>{
+      'kind': 'membership',
+      'id': _otherMembershipId,
+      'role': 'co_guardian',
+      'displayName': 'Co-guardian',
+      'isSelf': false,
+    },
+  ],
 };
 
 FoundationGateHttpResponse _response(int status, Object value) =>
@@ -183,7 +214,7 @@ void main() {
         transport: transport,
       );
 
-  test('all eight guardian operations match the typed W9 contract', () async {
+  test('the eight guardian message operations use the typed chat contract', () async {
     final http = _RecordingHttpTransport();
     final client = guardianClient(http);
     final thread = _thread();
@@ -198,9 +229,12 @@ void main() {
     );
 
     http
-      ..addResponse(_response(200, <String, Object?>{'threads': [thread]}))
+      ..addResponse(_response(200, <String, Object?>{
+        'threads': [thread],
+        'capabilities': _capabilities(),
+      }))
       ..addResponse(_response(201, <String, Object?>{'thread': thread}))
-      ..addResponse(_response(200, <String, Object?>{'thread': thread}))
+      ..addResponse(_response(200, <String, Object?>{'thread': _groupThreadWithAddedMember()}))
       ..addResponse(_response(200, _page()))
       ..addResponse(
         _response(201, <String, Object?>{
@@ -234,13 +268,13 @@ void main() {
     expect(
       (await client.addFamilyThreadMember(
         familyId: _familyId,
-        threadId: _threadId,
+        threadId: _groupThreadId,
         participantKind: FamilyChatParticipantKind.membership,
         participantId: _otherMembershipId,
         idempotencyKey: _idempotencyKey,
         idToken: 'fresh-token-3',
       )).participants,
-      hasLength(2),
+      hasLength(3),
     );
     expect(
       (await client.listFamilyMessages(
@@ -330,9 +364,12 @@ void main() {
     });
   });
 
-  test('all six paired-device operations use native transport without exposing a secret', () async {
+  test('the six paired-device message operations stay on native transport', () async {
     final replies = Queue<FoundationGateHttpResponse>()
-      ..add(_response(200, <String, Object?>{'threads': [_thread()]}))
+      ..add(_response(200, <String, Object?>{
+        'threads': [_thread()],
+        'capabilities': _capabilities(),
+      }))
       ..add(_response(200, _page()))
       ..add(
         _response(201, <String, Object?>{
@@ -442,6 +479,7 @@ void main() {
               },
             },
           ],
+          'capabilities': _capabilities(),
         }),
       );
     final client = guardianClient(http);

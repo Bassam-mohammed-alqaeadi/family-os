@@ -461,8 +461,8 @@ abstract interface class FamilyChatDeviceTransport {
   Future<FoundationGateHttpResponse> send(FamilyChatDeviceRequest request);
 }
 
-/// Typed client for the complete W9 HTTP contract: eight guardian operations and six paired-
-/// device operations. The routes choose the author from the credential, never from a body.
+/// Typed client for server-owned chat, participant, and collaboration-policy routes.
+/// The routes choose the author from the credential, never from a body.
 final class FamilyChatApiClient {
   FamilyChatApiClient({
     required FoundationGateConfiguration configuration,

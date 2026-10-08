@@ -24,6 +24,7 @@ import 'package:family_os/features/n02_day/conversations_list_repository.dart';
 import 'package:family_os/features/n02_day/family_chat_connection_banner.dart';
 import 'package:family_os/features/n02_day/family_chat_server_repository.dart';
 import 'package:family_os/features/n02_day/family_chat_labels.dart';
+import 'package:family_os/foundation_gate/family_chat_api_client.dart';
 
 Color _swatchColor(ConversationSwatch swatch, FamilyColors colors) =>
     switch (swatch) {

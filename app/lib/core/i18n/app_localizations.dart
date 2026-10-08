@@ -21951,10 +21951,16 @@ abstract class AppLocalizations {
   /// **'ما معنى «أُنجزت»؟'**
   String get tasksServerCreateNote;
 
-  /// Choose a direct or group conversation as task visibility scope.
+  /// Choose a direct or group conversation as task visibility scope
+  ///
+  /// In ar, this message translates to:
+  /// **'مرئية لهذه المحادثة (اختياري)'**
   String get tasksServerAudienceScopeLabel;
 
-  /// Task remains visible only to the designated child and guardians.
+  /// Task remains visible only to the designated child and guardians
+  ///
+  /// In ar, this message translates to:
+  /// **'للطفل المكلّف فقط'**
   String get tasksServerAudienceScopeChildOnly;
 
   /// SCR: tasks server panel
@@ -22137,10 +22143,16 @@ abstract class AppLocalizations {
   /// **'من تُدعى؟'**
   String get calendarServerCreateChildren;
 
-  /// Optional direct or group audience scope for calendar routing.
+  /// Optional direct or group audience scope for calendar routing
+  ///
+  /// In ar, this message translates to:
+  /// **'اربط المناسبة بمحادثة (اختياري)'**
   String get calendarServerAudienceScopeLabel;
 
-  /// No chat-thread routing scope selected.
+  /// No chat-thread routing scope selected
+  ///
+  /// In ar, this message translates to:
+  /// **'الأطفال المحددون فقط'**
   String get calendarServerAudienceScopeChildrenOnly;
 
   /// SCR: calendar server panel
@@ -22239,16 +22251,28 @@ abstract class AppLocalizations {
   /// **'نوع المحادثة'**
   String get familyChatCreateTypeLabel;
 
-  /// Direct family chat type.
+  /// Direct family chat type
+  ///
+  /// In ar, this message translates to:
+  /// **'محادثة مباشرة'**
   String get familyChatDirectThread;
 
-  /// User-created family chat group type.
+  /// User-created family chat group type
+  ///
+  /// In ar, this message translates to:
+  /// **'محادثة جماعية'**
   String get familyChatGroupThread;
 
-  /// Participant picker for direct and group chats.
+  /// Participant picker for direct and group chats
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر المشاركين'**
   String get familyChatSelectParticipants;
 
-  /// Empty state for the server-owned family chat roster.
+  /// Empty state for the server-owned family chat roster
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد مشاركون نشطون آخرون في الأسرة.'**
   String get familyChatNoParticipantsAvailable;
 
   /// W9 family chat client state and controls
@@ -22311,23 +22335,112 @@ abstract class AppLocalizations {
   /// **'تعذّر إنشاء الدردشة. لم يتأكد قبول الطلب.'**
   String get familyChatCreateFailed;
 
+  /// Family collaboration policy settings
+  ///
+  /// In ar, this message translates to:
+  /// **'التعاون والأمان'**
   String get familyChatPolicyTitle;
+
+  /// Server authorization and child safety notice
+  ///
+  /// In ar, this message translates to:
+  /// **'يستطيع الوصي الأساسي وحده حفظ هذه القواعد التي يطبقها الخادم، وتبقى له دائمًا صلاحيات حماية الأسرة.'**
   String get familyChatPolicyPrimaryGuardianNotice;
+
+  /// Delegated guardian role permission
+  ///
+  /// In ar, this message translates to:
+  /// **'السماح للوصي المشارك بإنشاء المحادثات'**
   String get familyChatPolicyCoGuardianChat;
+
+  /// Delegated guardian role permission
+  ///
+  /// In ar, this message translates to:
+  /// **'السماح للوصي المشارك بإضافة أشخاص إلى المجموعات'**
   String get familyChatPolicyCoGuardianManageChat;
+
+  /// Delegated guardian role permission
+  ///
+  /// In ar, this message translates to:
+  /// **'السماح للوصي المشارك بإدارة المهام'**
   String get familyChatPolicyCoGuardianTasks;
+
+  /// Delegated guardian role permission
+  ///
+  /// In ar, this message translates to:
+  /// **'السماح للوصي المشارك بإدارة التقويم'**
   String get familyChatPolicyCoGuardianCalendar;
+
+  /// Child chat safety setting
+  ///
+  /// In ar, this message translates to:
+  /// **'السماح للأطفال ببدء محادثات مباشرة'**
   String get familyChatPolicyChildDirect;
+
+  /// Child chat safety setting
+  ///
+  /// In ar, this message translates to:
+  /// **'السماح للأطفال بإنشاء مجموعات'**
   String get familyChatPolicyChildGroups;
+
+  /// Child chat safety setting
+  ///
+  /// In ar, this message translates to:
+  /// **'السماح للأطفال بإضافة مشاركين إلى مجموعاتهم'**
   String get familyChatPolicyChildManageGroups;
+
+  /// Server-enforced safety inclusion rule
+  ///
+  /// In ar, this message translates to:
+  /// **'متى يجب أن ينضم الأوصياء إلى محادثات الأطفال؟'**
   String get familyChatPolicyGuardianInclusion;
+
+  /// No automatic guardian inclusion
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يُضافون تلقائيًا افتراضيًا'**
   String get familyChatPolicyInclusionNone;
+
+  /// Include active guardians when any child is in a new conversation
+  ///
+  /// In ar, this message translates to:
+  /// **'كل محادثات الأطفال'**
   String get familyChatPolicyInclusionAllChildChats;
+
+  /// Include active guardians when multiple children are in a conversation
+  ///
+  /// In ar, this message translates to:
+  /// **'محادثات الأطفال بعضهم مع بعض فقط'**
   String get familyChatPolicyInclusionChildToChild;
+
+  /// Maximum active participants in a group
+  ///
+  /// In ar, this message translates to:
+  /// **'الحد الأقصى لأعضاء المجموعة'**
   String get familyChatPolicyMaxGroupSize;
+
+  /// Save collaboration policy
+  ///
+  /// In ar, this message translates to:
+  /// **'احفظ القواعد'**
   String get familyChatPolicySave;
+
+  /// Policy update confirmation
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظ الخادم قواعد التعاون.'**
   String get familyChatPolicySaved;
+
+  /// Policy read failure
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذرت قراءة سياسة الخادم.'**
   String get familyChatPolicyLoadFailed;
+
+  /// Policy update failure
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يقبل الخادم تغيير السياسة.'**
   String get familyChatPolicySaveFailed;
 
   /// W9 family chat client state and controls
