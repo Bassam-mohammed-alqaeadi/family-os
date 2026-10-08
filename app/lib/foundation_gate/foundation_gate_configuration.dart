@@ -393,6 +393,72 @@ class FoundationGateConfiguration {
   Uri familyChildPointsUri(String familyId, String childId) =>
       _familyChildCrumbUri(familyId, childId, 'points');
 
+  // ── W8 — family calendar ───────────────────────────────────────────────────────────
+
+  /// The family's events. A POST here states one; the read of them carries a window.
+  Uri familyEventsUri(String familyId) => _familyCrumbUri(familyId, 'events');
+
+  /// What the family agreed to do together, inside a window.
+  ///
+  /// The window is not optional decoration: the server refuses a read without `from` and
+  /// `to`, because "everything" is not a question a calendar screen gets to ask. A window
+  /// of a week is passed in here and stated in the URL - and it is a separate method from
+  /// the collection itself, because the write refuses query parameters outright and a
+  /// shared builder would have sent them.
+  Uri familyEventsWindowUri(
+    String familyId, {
+    required String from,
+    required String to,
+  }) =>
+      familyEventsUri(familyId).replace(
+        queryParameters: <String, String>{'from': from, 'to': to},
+      );
+
+  /// One event: where an edit lands, and what an edit must name the version of.
+  Uri familyEventUri(String familyId, String eventId) =>
+      _familyEventCrumbUri(familyId, eventId, '');
+
+  /// Calling an event off. An act of its own, because a cancellation has an author and a
+  /// reason and is not a row that quietly changed shape.
+  Uri familyEventCancelUri(String familyId, String eventId) =>
+      _familyEventCrumbUri(familyId, eventId, 'cancel');
+
+  /// What actually happened, recorded by a guardian after the event started.
+  Uri familyEventAttendanceUri(String familyId, String eventId) =>
+      _familyEventCrumbUri(familyId, eventId, 'attendance');
+
+  /// The answer of one child, recorded by a guardian who heard it in words. The child's own
+  /// handset has its own route, and that credential is not kept in this class.
+  Uri familyChildEventResponseUri(
+    String familyId,
+    String childId,
+    String eventId,
+  ) =>
+      _familyChildCrumbUri(familyId, childId, 'events/$eventId/response');
+
+  /// One path under the family, with the family identifier checked the way every other
+  /// route checks it.
+  Uri _familyCrumbUri(String familyId, String crumb) {
+    if (!isFoundationGateUuid(familyId)) {
+      throw ArgumentError('Server-returned UUID family identifier is required.');
+    }
+    return stagingApiOrigin.replace(path: '/v1/families/$familyId/$crumb');
+  }
+
+  /// One event's sub-path. An empty crumb is the event itself rather than a trailing
+  /// slash, so the same helper serves the read, the edit, the cancellation and the record.
+  Uri _familyEventCrumbUri(String familyId, String eventId, String crumb) {
+    if (!isFoundationGateUuid(familyId) || !isFoundationGateUuid(eventId)) {
+      throw ArgumentError(
+        'Server-returned UUID family and event identifiers are required.',
+      );
+    }
+    final path = crumb.isEmpty
+        ? '/v1/families/$familyId/events/$eventId'
+        : '/v1/families/$familyId/events/$eventId/$crumb';
+    return stagingApiOrigin.replace(path: path);
+  }
+
   /// One task's sub-path, with the task identifier checked like every other identifier: a
   /// path built from a value the server never issued is a request to somewhere that does
   /// not exist, and this class refuses to build it.
