@@ -19,7 +19,6 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/web_filter_policy_repository.dart';
 import 'package:family_os/features/n04_web_filter/web_filter_screen.dart';
 import 'package:family_os/features/n04_web_filter/web_filter_server_authority.dart';
-import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 
 import 'support/web_filter_fake_server.dart';
 
