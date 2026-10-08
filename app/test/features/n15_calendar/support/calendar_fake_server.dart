@@ -183,11 +183,12 @@ final class CalendarFakeServer implements FoundationGateHttpTransport {
     return _ok(<String, Object?>{'events': inside});
   }
 
-  FoundationGateHttpResponse _write(Uri uri, Map<String, Object?>? post) {
+  FoundationGateHttpResponse _write(Uri uri, Map<String, Object?> post) {
     if (refuseWriteWith != null) return _refused();
     final path = uri.path;
 
-    if (path.endsWith('/events') && post != null) {
+    if (path.endsWith('/events')) {
+      // No read reaches this method: the window is a GET, and its path is answered above.
       final childIds = (post['childIds']! as List).cast<String>();
       final created = FakeCalendarEvent(
         id: 'abcdefab-cdef-4abc-8def-abcdefabcdef',
@@ -211,7 +212,7 @@ final class CalendarFakeServer implements FoundationGateHttpTransport {
         return FoundationGateHttpResponse(statusCode: 409, body: '{}');
       }
       event.status = 'cancelled';
-      event.cancelReason = post!['reason']! as String;
+      event.cancelReason = post['reason']! as String;
       event.cancelledByMembershipId = membershipId;
       event.cancelledAt = '2026-10-08T08:00:00.000Z';
       event.version += 1;
@@ -231,7 +232,7 @@ final class CalendarFakeServer implements FoundationGateHttpTransport {
         // refuses rather than storing an answer nobody could act on.
         return FoundationGateHttpResponse(statusCode: 409, body: '{}');
       }
-      entry.answer = post!['response']! as String;
+      entry.answer = post['response']! as String;
       entry.answerNote = post['note'] as String? ?? '';
       entry.respondedByMembershipId = membershipId;
       return _ok(<String, Object?>{'response': entry.toJson()['response']});
@@ -242,7 +243,7 @@ final class CalendarFakeServer implements FoundationGateHttpTransport {
       // route names one event, and the person recording says who it was about. Reading a child
       // out of this path would have been reading it out of nothing.
       final id = path.split('/events/')[1].split('/').first;
-      final child = post!['childId'] as String;
+      final child = post['childId'] as String;
       final event = _byId(id)!;
       final entry = event.audienceFor(child);
       if (entry == null || event.isCancelled) {
@@ -251,7 +252,7 @@ final class CalendarFakeServer implements FoundationGateHttpTransport {
       if (event.startsAt.isAfter(now)) {
         return FoundationGateHttpResponse(statusCode: 409, body: '{}');
       }
-      entry.attended = post!['attended']! as bool;
+      entry.attended = post['attended']! as bool;
       entry.attendanceNote = post['note'] as String? ?? '';
       return _ok(<String, Object?>{'attendance': entry.toJson()['attendance']});
     }
