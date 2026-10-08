@@ -69,4 +69,8 @@ export const FOUNDATION_SCHEMA_MIGRATIONS = Object.freeze([
     name: '108_family_calendar.sql',
     sha256: '875fb31c1886c39c73d9d6d28a8c0dd7747e306fe07d179d8f4aae5941e7aa8a',
   }),
+  Object.freeze({
+    name: '109_family_chat.sql',
+    sha256: 'e08b2672b3b9bb98849c93662d68fb05d65dc03000acdac476ba2e0aaf1a1c2e',
+  }),
 ]);
