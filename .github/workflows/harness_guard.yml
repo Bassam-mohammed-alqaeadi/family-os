@@ -29,3 +29,8 @@ jobs:
         run: |
           chmod +x tools/harness/check_migration_range.sh
           tools/harness/check_migration_range.sh
+
+      # يعمل هنا بلا Flutter: `unused_import` أسقط بوابة analyze-test مرّتين، والكشف
+      # كان يأتي بعد دفع وبعد سبع دقائق. القراءة المتحفّظة نفسها في الأداة.
+      - name: Verify no Dart import is dead
+        run: node tools/harness/check_dart_imports.mjs .

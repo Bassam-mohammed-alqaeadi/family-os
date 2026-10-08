@@ -145,6 +145,8 @@
 3. **الكناري قبل وبعد:** سجّل أرقام الأساس، وقارن بعد عملك. فشل موروث ≠ فشل أدخلته.
 4. **«لم يُحجز رُندر» ليس فشلاً.** بنية تحتية. سجّلها كذلك.
 5. **الحالة عند التعذّر = «لم يُتحقَّق»**، لا «ناجح».
+6. **العطب الذي يتكرر يصبح بوابة.** `unused_import` أسقط `analyze-test` مرّتين — والمرّتان في ملف اختبار جديد، لأن Flutter غير متاح محلياً فالسقوط يُكتشف بعد الدفع. فصار له فحص يُشغَّل مع حارس الحلقة:
+   `node tools/harness/check_dart_imports.mjs` — يقرأ كل استيراد في `app/lib` و`app/test` و`app/tool`، ويتخطّى ما قد يكون استعماله ضمنياً (extension/getter/`export`)، فلا يُنبّه إلا على ما سيُسقط المحلّل فعلاً. قاعدة عامة: **إن أخطأتَ مرّتين في الشيء نفسه، فالأداة ناقصة لا المهارة.**
 
 التفصيل في [`GIT_AND_GITHUB_OPERATING_METHOD.md`](GIT_AND_GITHUB_OPERATING_METHOD.md) §٤ و§٧.
 
@@ -215,6 +217,9 @@
 ```bash
 # حالة الحلقة + صحة المستودع في أمر واحد
 tools/harness/harness_check.sh
+
+# استيرادات Dart الميتة — نفس قاعدة المحلّل، بلا Flutter
+node tools/harness/check_dart_imports.mjs .
 
 # ابدأ بطاقة: انسخ القالب
 cp docs/harness/TASK_CARD_TEMPLATE.md docs/harness/cards/<ID>-<slug>.md
