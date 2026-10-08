@@ -79,4 +79,14 @@ jobs:
       - name: Apply every migration to the real database
         run: npm run migrate
       - name: Verify the schema, the constraints and the revocation path
-        run: node --test test/postgres-integration.test.js
+        run: |
+          log_file=$(mktemp)
+          set +e
+          node --test test/postgres-integration.test.js 2>&1 | tee "$log_file"
+          test_status=${PIPESTATUS[0]}
+          set -e
+          if [ "$test_status" -ne 0 ]; then
+            summary="$(tail -n 100 "$log_file" | sed -e 's/%/%25/g' -e 's/\r//g' | tr '\n' '\036' | sed -e 's/\036/%0A/g')"
+            echo "::error title=PostgreSQL integration failure::${summary:0:2800}"
+            exit "$test_status"
+          fi
