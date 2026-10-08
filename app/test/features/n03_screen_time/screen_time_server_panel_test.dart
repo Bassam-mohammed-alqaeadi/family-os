@@ -22,165 +22,9 @@ import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n03_screen_time/screen_time_server_authority.dart';
 import 'package:family_os/features/n03_screen_time/screen_time_server_panel.dart';
-import 'package:family_os/foundation_gate/family_screen_time_api_client.dart';
-import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 
-const _familyId = '11111111-1111-4111-8111-111111111111';
-const _childId = '22222222-2222-4222-8222-222222222222';
-const _requestId = '55555555-5555-4555-8555-555555555555';
-
-/// A transport that answers per path and remembers every request it was handed.
-final class _Transport implements FoundationGateHttpTransport {
-  _Transport(this.responses);
-
-  final Map<String, FoundationGateHttpResponse> responses;
-  final List<String> calls = <String>[];
-  final List<String> bodies = <String>[];
-  Object? failure;
-
-  @override
-  Future<FoundationGateHttpResponse> get(
-    Uri uri, {
-    required Map<String, String> headers,
-  }) async {
-    calls.add('GET ${uri.path}');
-    if (failure != null) throw failure!;
-    return _match(uri);
-  }
-
-  @override
-  Future<FoundationGateHttpResponse> post(
-    Uri uri, {
-    required Map<String, String> headers,
-    required String body,
-  }) async {
-    calls.add('POST ${uri.path}');
-    bodies.add(body);
-    if (failure != null) throw failure!;
-    return _match(uri);
-  }
-
-  @override
-  Future<FoundationGateHttpResponse> patch(
-    Uri uri, {
-    required Map<String, String> headers,
-    required String body,
-  }) async {
-    calls.add('PATCH ${uri.path}');
-    bodies.add(body);
-    if (failure != null) throw failure!;
-    return _match(uri);
-  }
-
-  @override
-  Future<FoundationGateHttpResponse> put(
-    Uri uri, {
-    required Map<String, String> headers,
-    required String body,
-  }) async {
-    calls.add('PUT ${uri.path}');
-    bodies.add(body);
-    if (failure != null) throw failure!;
-    return _match(uri);
-  }
-
-  FoundationGateHttpResponse _match(Uri uri) {
-    for (final entry in responses.entries) {
-      if (uri.path.endsWith(entry.key)) return entry.value;
-    }
-    throw StateError('No canned answer for ${uri.path}');
-  }
-}
-
-String _snapshotJson({
-  String kind = 'limited',
-  Object? reason,
-  Object? lock,
-  String? openRequest,
-  int usedMinutes = 30,
-  int? remaining = 30,
-  int cap = 60,
-}) => jsonEncode(<String, Object?>{
-  'childId': _childId,
-  'date': '2026-10-07',
-  'policy': <String, Object?>{
-    'childId': _childId,
-    'configured': true,
-    'dailyLimitMinutes': cap,
-    'schoolMode': <String, Object?>{
-      'enabled': false,
-      'days': <int>[7, 1, 2, 3, 4],
-      'startMinute': 420,
-      'endMinute': 840,
-    },
-    'bedtime': <String, Object?>{'startMinute': 1260, 'endMinute': 360},
-    'timezoneOffsetMinutes': 180,
-    'version': 4,
-    'updatedAt': '2026-10-07T09:00:00.000Z',
-  },
-  'state': <String, Object?>{
-    'kind': kind,
-    'reasonCode': reason,
-    'since': lock == null ? null : '2026-10-07T12:00:00.000Z',
-    'date': '2026-10-07',
-    'minuteOfDay': 720,
-    'weekday': 3,
-    'capMinutes': cap,
-    'grantedMinutes': 0,
-    'countableUsedMinutes': usedMinutes,
-    'remainingMinutes': remaining,
-    'lock': lock,
-  },
-  'lock': lock,
-  'usage': <String, Object?>{
-    'date': '2026-10-07',
-    'countableUsedMinutes': usedMinutes,
-    'grantedMinutes': 0,
-    'remainingMinutes': remaining,
-    'byApp': <Object?>[
-      <String, Object?>{'appId': 'com.example.puzzle', 'usedMinutes': usedMinutes},
-    ],
-  },
-  'openRequest': openRequest == null ? null : jsonDecode(openRequest),
-});
-
-String _lockJson() => jsonEncode(<String, Object?>{
-  'id': '33333333-3333-4333-8333-333333333333',
-  'reasonCode': 'parent_lock',
-  'lockedAt': '2026-10-07T12:00:00.000Z',
-  'lockedByMembershipId': '44444444-4444-4444-8444-444444444444',
-  'releasedAt': null,
-  'version': 1,
-});
-
-String _requestJson() => jsonEncode(<String, Object?>{
-  'id': _requestId,
-  'childId': _childId,
-  'usageDate': '2026-10-07',
-  'requestedMinutes': 20,
-  'requestedByKind': 'child',
-  'reasonCode': null,
-  'status': 'pending',
-  'grantedMinutes': null,
-  'expiresAt': '2026-10-07T21:00:00.000Z',
-  'decidedAt': null,
-  'decidedByMembershipId': null,
-  'version': 1,
-  'createdAt': '2026-10-07T15:00:00.000Z',
-});
-
-ScreenTimeServerAuthority _authority(_Transport transport) =>
-    ScreenTimeServerAuthority(
-      api: FamilyScreenTimeApiClient(
-        configuration: FoundationGateConfiguration.fromStagingApiOrigin(
-          Uri.parse('https://staging.example.test'),
-        ),
-        transport: transport,
-      ),
-      idToken: () async => 'test-token',
-      familyId: () => _familyId,
-    );
+import 'support/screen_time_fake_server.dart';
 
 Future<void> _pump(
   WidgetTester tester, {
@@ -200,7 +44,7 @@ Future<void> _pump(
       ],
       home: Scaffold(
         body: ScreenTimeServerPanel(
-          childId: ChildId(_childId),
+          childId: ChildId(screenTimeChildId),
           authority: authority,
           canEdit: canEdit,
           idempotencyKey: () => 'w5-widget-key',
@@ -227,13 +71,13 @@ void main() {
   });
 
   testWidgets('the state, the minutes and the cap are the server\'s answer', (tester) async {
-    final transport = _Transport({
+    final transport = ScreenTimeFakeTransport({
       '/screen-time': FoundationGateHttpResponse(
         statusCode: 200,
-        body: _snapshotJson(reason: 'bedtime', kind: 'blocked'),
+        body: screenTimeSnapshotJson(reason: 'bedtime', kind: 'blocked'),
       ),
     });
-    await _pump(tester, authority: _authority(transport));
+    await _pump(tester, authority: screenTimeAuthorityFor(transport));
 
     expect(find.text('حان وقت النوم'), findsOneWidget);
     expect(find.text('دقائق اليوم المحتسبة: 30'), findsOneWidget);
@@ -244,18 +88,18 @@ void main() {
     expect(field.controller?.text, '60');
     expect(
       transport.calls,
-      <String>['GET /v1/families/$_familyId/children/$_childId/screen-time'],
+      <String>['GET /v1/families/$screenTimeFamilyId/children/$screenTimeChildId/screen-time'],
     );
   });
 
   testWidgets('a reason this build does not know shows the refusal, not freedom', (tester) async {
-    final transport = _Transport({
+    final transport = ScreenTimeFakeTransport({
       '/screen-time': FoundationGateHttpResponse(
         statusCode: 200,
-        body: _snapshotJson(kind: 'blocked', reason: 'someday_mode'),
+        body: screenTimeSnapshotJson(kind: 'blocked', reason: 'someday_mode'),
       ),
     });
-    await _pump(tester, authority: _authority(transport));
+    await _pump(tester, authority: screenTimeAuthorityFor(transport));
 
     expect(find.byKey(const Key('screen_time_server_refused')), findsOneWidget);
     expect(find.byKey(const Key('screen_time_server_state_card')), findsNothing);
@@ -263,17 +107,17 @@ void main() {
   });
 
   testWidgets('pressing the lock writes to the server and draws the server\'s answer', (tester) async {
-    final transport = _Transport({
+    final transport = ScreenTimeFakeTransport({
       '/screen-time/lock': FoundationGateHttpResponse(
         statusCode: 200,
-        body: _snapshotJson(kind: 'blocked', reason: 'instant_lock', lock: jsonDecode(_lockJson())),
+        body: screenTimeSnapshotJson(kind: 'blocked', reason: 'instant_lock', lock: jsonDecode(screenTimeLockJson())),
       ),
       '/screen-time': FoundationGateHttpResponse(
         statusCode: 200,
-        body: _snapshotJson(kind: 'limited', reason: null),
+        body: screenTimeSnapshotJson(kind: 'limited', reason: null),
       ),
     });
-    await _pump(tester, authority: _authority(transport));
+    await _pump(tester, authority: screenTimeAuthorityFor(transport));
 
     expect(find.text('الشاشة متاحة ضمن الحد'), findsOneWidget);
     await tester.tap(find.byKey(const Key('screen_time_server_lock_button')));
@@ -281,11 +125,11 @@ void main() {
 
     expect(
       transport.calls.first,
-      'GET /v1/families/$_familyId/children/$_childId/screen-time',
+      'GET /v1/families/$screenTimeFamilyId/children/$screenTimeChildId/screen-time',
     );
     expect(
       transport.calls[1],
-      'POST /v1/families/$_familyId/children/$_childId/screen-time/lock',
+      'POST /v1/families/$screenTimeFamilyId/children/$screenTimeChildId/screen-time/lock',
     );
     expect(
       transport.calls.length,
@@ -296,17 +140,17 @@ void main() {
   });
 
   testWidgets('a lock the server refused never appears as locked', (tester) async {
-    final transport = _Transport({
+    final transport = ScreenTimeFakeTransport({
       '/screen-time/lock': const FoundationGateHttpResponse(
         statusCode: 409,
         body: '{"error":{"code":"screen_time_stale_version"}}',
       ),
       '/screen-time': FoundationGateHttpResponse(
         statusCode: 200,
-        body: _snapshotJson(kind: 'limited', reason: null),
+        body: screenTimeSnapshotJson(kind: 'limited', reason: null),
       ),
     });
-    await _pump(tester, authority: _authority(transport));
+    await _pump(tester, authority: screenTimeAuthorityFor(transport));
 
     await tester.tap(find.byKey(const Key('screen_time_server_lock_button')));
     await tester.pumpAndSettle();
@@ -317,17 +161,17 @@ void main() {
   });
 
   testWidgets('the child\'s open question can be answered from this screen', (tester) async {
-    final transport = _Transport({
+    final transport = ScreenTimeFakeTransport({
       '/decision': FoundationGateHttpResponse(
         statusCode: 200,
-        body: jsonEncode(<String, Object?>{'request': jsonDecode(_requestJson())}),
+        body: jsonEncode(<String, Object?>{'request': jsonDecode(screenTimeRequestJson())}),
       ),
       '/screen-time': FoundationGateHttpResponse(
         statusCode: 200,
-        body: _snapshotJson(openRequest: _requestJson()),
+        body: screenTimeSnapshotJson(openRequest: screenTimeRequestJson()),
       ),
     });
-    await _pump(tester, authority: _authority(transport));
+    await _pump(tester, authority: screenTimeAuthorityFor(transport));
 
     expect(find.text('سؤال من الابن بانتظارك: 20 دقيقة'), findsOneWidget);
     // The question card is the last card in a scrollable panel, and the test surface is
@@ -341,7 +185,7 @@ void main() {
     expect(
       transport.calls.any(
         (call) => call ==
-            'POST /v1/families/$_familyId/children/$_childId/time-requests/$_requestId/decision',
+            'POST /v1/families/$screenTimeFamilyId/children/$screenTimeChildId/time-requests/$screenTimeRequestId/decision',
       ),
       isTrue,
     );
@@ -349,13 +193,13 @@ void main() {
   });
 
   testWidgets('a silent server keeps the last true answer and says that it is the last one', (tester) async {
-    final transport = _Transport({
+    final transport = ScreenTimeFakeTransport({
       '/screen-time': FoundationGateHttpResponse(
         statusCode: 200,
-        body: _snapshotJson(reason: 'daily_limit', kind: 'blocked'),
+        body: screenTimeSnapshotJson(reason: 'daily_limit', kind: 'blocked'),
       ),
     });
-    await _pump(tester, authority: _authority(transport));
+    await _pump(tester, authority: screenTimeAuthorityFor(transport));
     expect(find.text('انتهى وقت اليوم'), findsOneWidget);
 
     transport.failure = StateError('socket closed');
@@ -367,13 +211,13 @@ void main() {
   });
 
   testWidgets('a read-only viewer sees the numbers and no controls', (tester) async {
-    final transport = _Transport({
+    final transport = ScreenTimeFakeTransport({
       '/screen-time': FoundationGateHttpResponse(
         statusCode: 200,
-        body: _snapshotJson(reason: 'daily_limit', kind: 'blocked'),
+        body: screenTimeSnapshotJson(reason: 'daily_limit', kind: 'blocked'),
       ),
     });
-    await _pump(tester, authority: _authority(transport), canEdit: false);
+    await _pump(tester, authority: screenTimeAuthorityFor(transport), canEdit: false);
 
     expect(find.text('انتهى وقت اليوم'), findsOneWidget);
     final lock = tester.widget<PrimaryBtn>(

@@ -22,173 +22,9 @@ import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n04_web_filter/web_filter_server_authority.dart';
 import 'package:family_os/features/n04_web_filter/web_filter_server_panel.dart';
-import 'package:family_os/foundation_gate/family_web_filter_api_client.dart';
-import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 
-const _familyId = '11111111-1111-4111-8111-111111111111';
-const _childId = '22222222-2222-4222-8222-222222222222';
-const _requestId = '55555555-5555-4555-8555-555555555555';
-const _deviceId = '88888888-8888-4888-8888-888888888888';
-
-/// A transport that answers per path and remembers every request it was handed.
-final class _Transport implements FoundationGateHttpTransport {
-  _Transport(this.responses, {this.patchResponses = const <String, FoundationGateHttpResponse>{}});
-
-  final Map<String, FoundationGateHttpResponse> responses;
-
-  /// Answers for PATCH only, because a real server says different things about the same URL
-  /// depending on the verb - a read succeeds while a write is refused, and a test that could
-  /// not express that could not test a refusal at all.
-  final Map<String, FoundationGateHttpResponse> patchResponses;
-  final List<String> calls = <String>[];
-  final List<String> bodies = <String>[];
-  Object? failure;
-
-  @override
-  Future<FoundationGateHttpResponse> get(
-    Uri uri, {
-    required Map<String, String> headers,
-  }) async {
-    calls.add('GET ${uri.path}');
-    if (failure != null) throw failure!;
-    return _match(uri);
-  }
-
-  @override
-  Future<FoundationGateHttpResponse> post(
-    Uri uri, {
-    required Map<String, String> headers,
-    required String body,
-  }) async {
-    calls.add('POST ${uri.path}');
-    bodies.add(body);
-    if (failure != null) throw failure!;
-    return _match(uri);
-  }
-
-  @override
-  Future<FoundationGateHttpResponse> patch(
-    Uri uri, {
-    required Map<String, String> headers,
-    required String body,
-  }) async {
-    calls.add('PATCH ${uri.path}');
-    bodies.add(body);
-    if (failure != null) throw failure!;
-    return _match(uri, extra: patchResponses);
-  }
-
-  @override
-  Future<FoundationGateHttpResponse> put(
-    Uri uri, {
-    required Map<String, String> headers,
-    required String body,
-  }) async {
-    calls.add('PUT ${uri.path}');
-    bodies.add(body);
-    if (failure != null) throw failure!;
-    return _match(uri);
-  }
-
-  /// The most specific registered path wins, so `/web-filter/temp-allows` is never answered
-  /// by the `/web-filter` entry.
-  FoundationGateHttpResponse _match(
-    Uri uri, {
-    Map<String, FoundationGateHttpResponse> extra = const <String, FoundationGateHttpResponse>{},
-  }) {
-    final keys = <String>[...extra.keys, ...responses.keys].toList()
-      ..sort((left, right) => right.length.compareTo(left.length));
-    for (final key in keys) {
-      if (uri.path.endsWith(key)) return (extra[key] ?? responses[key])!;
-    }
-    throw StateError('no response registered for ${uri.path}');
-  }
-}
-
-String _policyJson({
-  List<String> categories = const ['adults', 'gambling', 'violence'],
-  List<String> activeAllows = const [],
-  int version = 3,
-}) => jsonEncode(<String, Object?>{
-  'policy': <String, Object?>{
-    'level': 'balanced',
-    'enabledCategories': categories,
-    'allowHosts': <String>['school.example.com'],
-    'blockHosts': <String>['blocked.example.com'],
-    'dictionaryKeywords': <String>['casino'],
-    'activeTempAllows': activeAllows,
-    'version': version,
-  },
-});
-
-String _questionJson({
-  String state = 'pending',
-  String status = 'pending',
-  int? grantedMinutes,
-}) => jsonEncode(<String, Object?>{
-  'requests': <Object?>[
-    <String, Object?>{
-      'id': _requestId,
-      'host': 'games.example.com',
-      'status': status,
-      'state': state,
-      'requestedMinutes': 15,
-      'grantedMinutes': grantedMinutes,
-      'reason': 'واجب المدرسة',
-      'requestedByMembershipId': null,
-      'requestedByDeviceId': _deviceId,
-      'decidedByMembershipId': null,
-      'decidedAt': null,
-      'expiresAt': null,
-      'createdAt': '2026-10-08T08:55:00.000Z',
-    },
-  ],
-});
-
-String _protectionJson({
-  required String state,
-  required String reason,
-  int? ageMinutes,
-  List<String> signals = const [],
-  String since = '2026-10-08T06:00:00.000Z',
-}) => jsonEncode(<String, Object?>{
-  'devices': <Object?>[
-    <String, Object?>{
-      'deviceId': _deviceId,
-      'deviceLabel': 'Amani Android',
-      'childId': _childId,
-      'state': state,
-      'reason': reason,
-      'since': since,
-      'ageMinutes': ageMinutes,
-      'detail': '',
-      'signals': signals,
-    },
-  ],
-  'counts': <String, Object?>{
-    'protected': state == 'protected' ? 1 : 0,
-    'at_risk': state == 'at_risk' ? 1 : 0,
-    'unverified': state == 'unverified' ? 1 : 0,
-    'unsupported': state == 'unsupported' ? 1 : 0,
-  },
-  'freshnessMinutes': 90,
-});
-
-FoundationGateHttpResponse _ok(String body) =>
-    FoundationGateHttpResponse(statusCode: 200, body: body);
-
-WebFilterServerAuthority _authority(_Transport transport) =>
-    WebFilterServerAuthority(
-      api: FamilyWebFilterApiClient(
-        configuration: FoundationGateConfiguration.fromStagingApiOrigin(
-          Uri.parse('https://staging.example.test'),
-        ),
-        transport: transport,
-      ),
-      idToken: () async => 'test-token',
-      familyId: () => _familyId,
-    );
+import 'support/web_filter_fake_server.dart';
 
 Future<void> _pump(
   WidgetTester tester, {
@@ -209,7 +45,7 @@ Future<void> _pump(
       home: Scaffold(
         body: SingleChildScrollView(
           child: WebFilterServerPanel(
-            childId: ChildId(_childId),
+            childId: ChildId(webFilterChildId),
             authority: authority,
             canEdit: canEdit,
             idempotencyKey: () => 'w6-widget-key',
@@ -235,7 +71,7 @@ Future<void> _tapKey(WidgetTester tester, Key key) async {
   await tester.pumpAndSettle();
 }
 
-_Transport _healthyTransport({
+WebFilterFakeTransport _healthyTransport({
   List<String> categories = const ['adults', 'gambling', 'violence'],
   String protectionState = 'protected',
   String protectionReason = 'reported_healthy',
@@ -244,10 +80,10 @@ _Transport _healthyTransport({
   String questionState = 'pending',
   String questionStatus = 'pending',
   int? grantedMinutes,
-}) => _Transport(<String, FoundationGateHttpResponse>{
-  '/decision': _ok(jsonEncode(<String, Object?>{
+}) => WebFilterFakeTransport(<String, FoundationGateHttpResponse>{
+  '/decision': webFilterOk(jsonEncode(<String, Object?>{
     'request': <String, Object?>{
-      'id': _requestId,
+      'id': webFilterRequestId,
       'host': 'games.example.com',
       'status': 'approved',
       'state': 'active',
@@ -255,20 +91,20 @@ _Transport _healthyTransport({
       'grantedMinutes': 15,
       'reason': '',
       'requestedByMembershipId': null,
-      'requestedByDeviceId': _deviceId,
+      'requestedByDeviceId': webFilterDeviceId,
       'decidedByMembershipId': '99999999-9999-4999-8999-999999999999',
       'decidedAt': '2026-10-08T09:00:00.000Z',
       'expiresAt': '2026-10-08T09:15:00.000Z',
       'createdAt': '2026-10-08T08:55:00.000Z',
     },
   })),
-  '/web-filter/temp-allows': _ok(_questionJson(
+  '/web-filter/temp-allows': webFilterOk(webFilterQuestionJson(
     state: questionState,
     status: questionStatus,
     grantedMinutes: grantedMinutes,
   )),
-  '/web-filter': _ok(_policyJson(categories: categories)),
-  '/protection': _ok(_protectionJson(
+  '/web-filter': webFilterOk(webFilterPolicyJson(categories: categories)),
+  '/protection': webFilterOk(webFilterProtectionJson(
     state: protectionState,
     reason: protectionReason,
     ageMinutes: ageMinutes,
@@ -293,7 +129,7 @@ void main() {
 
   testWidgets('the filter drawn is the server\'s policy', (tester) async {
     final transport = _healthyTransport();
-    await _pump(tester, authority: _authority(transport));
+    await _pump(tester, authority: webFilterAuthorityFor(transport));
 
     expect(find.byKey(const Key('web_filter_server_policy_card')), findsOneWidget);
     expect(find.text('محتوى للبالغين'), findsOneWidget);
@@ -308,16 +144,16 @@ void main() {
       findsOneWidget,
       reason: 'the block list the server holds is shown as it is',
     );
-    expect(transport.calls, contains('GET /v1/families/$_familyId/children/$_childId/web-filter'));
+    expect(transport.calls, contains('GET /v1/families/$webFilterFamilyId/children/$webFilterChildId/web-filter'));
   });
 
   testWidgets('flipping a switch sends the field that changed with the version it read', (tester) async {
-    final transport = _Transport(<String, FoundationGateHttpResponse>{
-      '/web-filter/temp-allows': _ok(_questionJson()),
-      '/web-filter': _ok(_policyJson()),
-      '/protection': _ok(_protectionJson(state: 'protected', reason: 'reported_healthy', ageMinutes: 1)),
+    final transport = WebFilterFakeTransport(<String, FoundationGateHttpResponse>{
+      '/web-filter/temp-allows': webFilterOk(webFilterQuestionJson()),
+      '/web-filter': webFilterOk(webFilterPolicyJson()),
+      '/protection': webFilterOk(webFilterProtectionJson(state: 'protected', reason: 'reported_healthy', ageMinutes: 1)),
     });
-    await _pump(tester, authority: _authority(transport));
+    await _pump(tester, authority: webFilterAuthorityFor(transport));
 
     await _tapKey(tester, const Key('web_filter_server_category_social'));
 
@@ -336,17 +172,17 @@ void main() {
   });
 
   testWidgets('a refused write keeps the last true policy on screen and says so', (tester) async {
-    final transport = _Transport(
+    final transport = WebFilterFakeTransport(
       <String, FoundationGateHttpResponse>{
-        '/web-filter/temp-allows': _ok(_questionJson()),
-        '/web-filter': _ok(_policyJson()),
-        '/protection': _ok(_protectionJson(state: 'protected', reason: 'reported_healthy', ageMinutes: 1)),
+        '/web-filter/temp-allows': webFilterOk(webFilterQuestionJson()),
+        '/web-filter': webFilterOk(webFilterPolicyJson()),
+        '/protection': webFilterOk(webFilterProtectionJson(state: 'protected', reason: 'reported_healthy', ageMinutes: 1)),
       },
       patchResponses: <String, FoundationGateHttpResponse>{
         '/web-filter': FoundationGateHttpResponse(statusCode: 409, body: '{}'),
       },
     );
-    await _pump(tester, authority: _authority(transport));
+    await _pump(tester, authority: webFilterAuthorityFor(transport));
 
     await _tapKey(tester, const Key('web_filter_server_category_social'));
 
@@ -360,7 +196,7 @@ void main() {
 
   testWidgets('an unreachable server moves nothing, and a silent one claims nothing', (tester) async {
     final transport = _healthyTransport();
-    await _pump(tester, authority: _authority(transport));
+    await _pump(tester, authority: webFilterAuthorityFor(transport));
     expect(find.byKey(const Key('web_filter_server_policy_card')), findsOneWidget);
 
     transport.failure = StateError('socket closed');
@@ -380,19 +216,19 @@ void main() {
   });
 
   testWidgets('the preview shows the server\'s decision and the source of denial', (tester) async {
-    final transport = _Transport(<String, FoundationGateHttpResponse>{
-      '/web-filter/temp-allows': _ok(_questionJson()),
-      '/web-filter/evaluate': _ok(jsonEncode(<String, Object?>{
+    final transport = WebFilterFakeTransport(<String, FoundationGateHttpResponse>{
+      '/web-filter/temp-allows': webFilterOk(webFilterQuestionJson()),
+      '/web-filter/evaluate': webFilterOk(jsonEncode(<String, Object?>{
         'allowed': false,
         'denySource': 'category',
         'categoryKey': 'games',
         'policyVersion': 3,
         'normalizedHost': 'games.example.com',
       })),
-      '/web-filter': _ok(_policyJson()),
-      '/protection': _ok(_protectionJson(state: 'protected', reason: 'reported_healthy', ageMinutes: 1)),
+      '/web-filter': webFilterOk(webFilterPolicyJson()),
+      '/protection': webFilterOk(webFilterProtectionJson(state: 'protected', reason: 'reported_healthy', ageMinutes: 1)),
     });
-    await _pump(tester, authority: _authority(transport));
+    await _pump(tester, authority: webFilterAuthorityFor(transport));
 
     await _tapKey(tester, const Key('web_filter_server_preview_button'));
 
@@ -412,7 +248,7 @@ void main() {
       protectionReason: 'stale_report',
       ageMinutes: 180,
     );
-    await _pump(tester, authority: _authority(transport));
+    await _pump(tester, authority: webFilterAuthorityFor(transport));
 
     expect(
       find.text('لا ندّعي حماية: لا بلاغ حديث من هذا الجهاز.'),
@@ -438,7 +274,7 @@ void main() {
       ageMinutes: 1,
       signals: const ['vpn_active'],
     );
-    await _pump(tester, authority: _authority(transport));
+    await _pump(tester, authority: webFilterAuthorityFor(transport));
 
     expect(find.text('الحماية ليست كما ينبغي — راجع ما رصده الجهاز.'), findsOneWidget);
     expect(
@@ -450,13 +286,13 @@ void main() {
 
   testWidgets('the child\'s question is answered through the server, and the answer shown is the server\'s', (tester) async {
     final transport = _healthyTransport();
-    await _pump(tester, authority: _authority(transport));
+    await _pump(tester, authority: webFilterAuthorityFor(transport));
 
     expect(find.byKey(const Key('web_filter_server_questions_card')), findsOneWidget);
-    await _tapKey(tester, const Key('web_filter_server_approve_$_requestId'));
+    await _tapKey(tester, const Key('web_filter_server_approve_$webFilterRequestId'));
 
     expect(
-      transport.calls.any((call) => call.startsWith('POST /v1/families/$_familyId/children/$_childId/web-filter/temp-allows/$_requestId/decision')),
+      transport.calls.any((call) => call.startsWith('POST /v1/families/$webFilterFamilyId/children/$webFilterChildId/web-filter/temp-allows/$webFilterRequestId/decision')),
       isTrue,
       reason: 'the answer is a server command, not a local flag',
     );
@@ -468,27 +304,27 @@ void main() {
       questionStatus: 'approved',
       grantedMinutes: 10,
     );
-    await _pump(tester, authority: _authority(transport));
+    await _pump(tester, authority: webFilterAuthorityFor(transport));
 
     expect(
-      find.byKey(const Key('web_filter_server_question_state_$_requestId')),
+      find.byKey(const Key('web_filter_server_question_state_$webFilterRequestId')),
       findsOneWidget,
       reason: 'an answered question shows its state instead of two buttons',
     );
-    expect(find.byKey(const Key('web_filter_server_approve_$_requestId')), findsNothing);
+    expect(find.byKey(const Key('web_filter_server_approve_$webFilterRequestId')), findsNothing);
   });
 
   testWidgets('a reader without edit rights is offered no switch to flip', (tester) async {
     final transport = _healthyTransport();
-    await _pump(tester, authority: _authority(transport), canEdit: false);
+    await _pump(tester, authority: webFilterAuthorityFor(transport), canEdit: false);
 
     final social = tester.widget<SwitchListTile>(
       find.byKey(const Key('web_filter_server_category_social')),
     );
     expect(social.onChanged, isNull);
-    expect(find.byKey(const Key('web_filter_server_approve_$_requestId')), findsNothing);
+    expect(find.byKey(const Key('web_filter_server_approve_$webFilterRequestId')), findsNothing);
     expect(
-      find.byKey(const Key('web_filter_server_question_state_$_requestId')),
+      find.byKey(const Key('web_filter_server_question_state_$webFilterRequestId')),
       findsOneWidget,
       reason: 'a question is still shown to someone who cannot answer it',
     );
@@ -505,11 +341,11 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await _pump(tester, authority: _authority(_healthyTransport()));
+    await _pump(tester, authority: webFilterAuthorityFor(_healthyTransport()));
 
     expect(tester.takeException(), isNull);
-    expect(find.byKey(const Key('web_filter_server_approve_$_requestId')), findsOneWidget);
-    expect(find.byKey(const Key('web_filter_server_question_state_$_requestId')), findsNothing);
+    expect(find.byKey(const Key('web_filter_server_approve_$webFilterRequestId')), findsOneWidget);
+    expect(find.byKey(const Key('web_filter_server_question_state_$webFilterRequestId')), findsNothing);
     expect(find.byKey(const Key('web_filter_server_policy_card')), findsOneWidget);
   });
 }
