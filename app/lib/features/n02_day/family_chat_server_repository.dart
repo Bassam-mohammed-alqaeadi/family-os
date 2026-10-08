@@ -50,6 +50,14 @@ final class FamilyChatThreadListRepository
     );
   }
 
+  Future<List<FamilyChatParticipant>> loadParticipants() async {
+    final answer = switch (surface) {
+      FamilyChatSurface.guardian => await authority.listGuardianParticipants(),
+      FamilyChatSurface.child => await authority.listChildParticipants(),
+    };
+    return _requireReady(answer).participants;
+  }
+
   Future<List<FamilyChatChildOption>> loadChildOptions() async {
     if (surface != FamilyChatSurface.guardian) {
       throw const FamilyChatRepositoryFailure(
@@ -62,27 +70,37 @@ final class FamilyChatThreadListRepository
   Future<ConversationThread> createThread({
     required FamilyChatThreadKind kind,
     required String title,
-    required List<String> childIds,
+    required List<FamilyChatParticipantReference> participants,
   }) async {
-    if (surface != FamilyChatSurface.guardian) {
-      throw const FamilyChatRepositoryFailure(
-        status: FamilyChatAuthorityStatus.accessDenied,
-      );
-    }
     final normalizedTitle = title.trim();
-    final normalizedChildIds = List<String>.of(childIds)..sort();
-    final requestKey =
-        '${kind.wireValue}\\n$normalizedTitle\\n${normalizedChildIds.join(',')}';
+    final normalizedParticipants = List<FamilyChatParticipantReference>.of(participants)
+      ..sort((left, right) {
+        final leftKey = '${left.kind.wireValue}:${left.id}';
+        final rightKey = '${right.kind.wireValue}:${right.id}';
+        return leftKey.compareTo(rightKey);
+      });
+    final participantKey = normalizedParticipants
+        .map((entry) => '${entry.kind.wireValue}:${entry.id}')
+        .join(',');
+    final requestKey = '${kind.wireValue}\\n$normalizedTitle\\n$participantKey';
     final idempotencyKey = _pendingCreateKeys.putIfAbsent(
       requestKey,
       newFoundationGateIdempotencyKey,
     );
-    final answer = await authority.createGuardianThread(
-      kind: kind,
-      title: normalizedTitle,
-      childIds: normalizedChildIds,
-      idempotencyKey: () => idempotencyKey,
-    );
+    final answer = switch (surface) {
+      FamilyChatSurface.guardian => await authority.createGuardianThread(
+        kind: kind,
+        title: normalizedTitle,
+        participants: normalizedParticipants,
+        idempotencyKey: () => idempotencyKey,
+      ),
+      FamilyChatSurface.child => await authority.createChildThread(
+        kind: kind,
+        title: normalizedTitle,
+        participants: normalizedParticipants,
+        idempotencyKey: () => idempotencyKey,
+      ),
+    };
     final thread = _requireReady(answer);
     _pendingCreateKeys.remove(requestKey);
     return FamilyChatServerConversationRepository._conversationThread(thread);
@@ -412,6 +430,7 @@ final class FamilyChatServerConversationRepository
     title: _threadTitle(cache.thread),
     subtitle: '',
     emoji: cache.thread.kind == FamilyChatThreadKind.family ? '👨‍👩‍👧‍👦' : '👥',
+    threadKind: cache.thread.kind.wireValue,
     messages: List<ConversationMessage>.unmodifiable(
       cache.messages.map(
         (message) => _conversationMessage(
@@ -430,6 +449,14 @@ final class FamilyChatServerConversationRepository
   static String _threadTitle(FamilyChatThread thread) {
     final title = thread.title.trim();
     if (title.isNotEmpty) return thread.title;
+    if (thread.kind == FamilyChatThreadKind.direct) {
+      for (final participant in thread.participants) {
+        if (!participant.isSelf) {
+          final peerName = participant.displayName?.trim();
+          if (peerName != null && peerName.isNotEmpty) return peerName;
+        }
+      }
+    }
     if (thread.kind == FamilyChatThreadKind.child) {
       for (final participant in thread.participants) {
         if (participant.kind == FamilyChatParticipantKind.child) {

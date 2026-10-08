@@ -949,11 +949,11 @@
           },
           {
             "$ref": "#/components/parameters/EventId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
           }
-        ,
-            {
-              "$ref": "#/components/parameters/IdempotencyKey"
-            }],
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -4803,8 +4803,8 @@
       },
       "post": {
         "operationId": "createFamilyChatThread",
-        "summary": "Opens a family or one-child conversation",
-        "description": "The room and its participants are written in the same transaction. The server adds every active guardian of the selected family; callers cannot choose guardian participants. `kind` decides the room shape: `family` has no child, while `child` names exactly one child from this family. A child is never a participant of a room that does not name them.",
+        "summary": "Creates a direct conversation or a user-created group",
+        "description": "The creator names each peer explicitly from the server-owned family participant roster. No guardian is added automatically unless the active server collaboration policy requires it. Direct conversations name exactly one peer; groups name at least two. The server validates every participant against the same family and applies the configured group-size and child-safety rules.",
         "tags": [
           "Family chat"
         ],
@@ -4852,7 +4852,7 @@
             "$ref": "#/components/responses/Conflict"
           },
           "422": {
-            "$ref": "#/components/responses/Forbidden"
+            "$ref": "#/components/responses/InvalidRequest"
           },
           "400": {
             "$ref": "#/components/responses/InvalidRequest"
@@ -4873,7 +4873,7 @@
       "post": {
         "operationId": "addFamilyChatThreadMember",
         "summary": "Adds one participant to a conversation",
-        "description": "New rooms already include every active guardian. This operation is for a guardian who becomes active later or for naming the one child in a child room. The guardian making the change must already be in the room, and only an active guardian or a child of this family can be added.",
+        "description": "Adds a same-family active guardian or child to a group. Direct conversations remain pairs, and only a caller already in the group may manage its membership. If the active safety policy requires guardian inclusion when a child is added, the server applies that rule before committing.",
         "tags": [
           "Family chat"
         ],
@@ -5332,6 +5332,73 @@
             "$ref": "#/components/responses/ServiceNotReady"
           }
         }
+      },
+      "post": {
+        "operationId": "createDeviceChatThread",
+        "summary": "Creates a direct conversation or user-created group from a paired child device",
+        "description": "The creator is the child identified by the protected device credential. Every selected peer is validated against the same family roster. The active server policy decides whether the child may create this kind and whether guardians must be included; the client cannot override those rules.",
+        "tags": [
+          "Family chat"
+        ],
+        "security": [
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatThreadCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The created conversation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatThreadResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
       }
     },
     "/v1/devices/{deviceId}/chat/threads/{threadId}/messages": {
@@ -5655,6 +5722,277 @@
           }
         }
       }
+    },
+    "/v1/families/{familyId}/chat/participants": {
+      "get": {
+        "operationId": "listFamilyChatParticipants",
+        "summary": "The active participants available for a family conversation",
+        "description": "Returns only same-family active guardian memberships and children, with safe display fields. Account subjects, contact details and device credentials are never included.",
+        "tags": [
+          "Family chat"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The server-owned participant roster.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatParticipantListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/collaboration-policy": {
+      "get": {
+        "operationId": "readFamilyCollaborationPolicy",
+        "summary": "Reads server-enforced family collaboration rules",
+        "description": "Returns the persisted policy or the safe default. The defaults do not add guardians automatically. Roles and child-safety controls are enforced by server operations, not trusted from the client.",
+        "tags": [
+          "Family collaboration policy"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The active collaboration policy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyCollaborationPolicyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateFamilyCollaborationPolicy",
+        "summary": "Updates collaboration rules as the primary guardian",
+        "description": "Applies one or more collaboration controls with optimistic version checking. Only the primary guardian may change policy; role delegation is restricted to guardian roles, and the server continues to protect child, device, identity, location and emergency capabilities.",
+        "tags": [
+          "Family collaboration policy"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FamilyCollaborationPolicyUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated policy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyCollaborationPolicyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/chat/participants": {
+      "get": {
+        "operationId": "listDeviceChatParticipants",
+        "summary": "The active family participants available to this child device",
+        "description": "The paired device identity is derived from its credential. The returned roster is family-bound and omits account subjects, contact details and device secrets.",
+        "tags": [
+          "Family chat"
+        ],
+        "security": [
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The server-owned participant roster.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatParticipantListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/chat/threads/{threadId}/members": {
+      "post": {
+        "operationId": "addDeviceChatGroupMember",
+        "summary": "Adds a peer to a group from the paired child device",
+        "description": "The child may manage group membership only when the primary guardian enabled that server policy. Direct conversations cannot be expanded. The new participant reads from the next message sequence and cannot see earlier conversation history.",
+        "tags": [
+          "Family chat"
+        ],
+        "security": [
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          },
+          {
+            "$ref": "#/components/parameters/ThreadId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatThreadMemberRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The group with its active participants.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatThreadResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5781,17 +6119,17 @@
         },
         "description": "The temporary-allow request this decision answers."
       },
-    "EventId": {
-      "name": "eventId",
-      "in": "path",
-      "required": true,
-      "description": "The event a guardian stated for the family.",
-      "schema": {
-        "type": "string",
-        "format": "uuid"
-      }
-    },
-    "TaskId": {
+      "EventId": {
+        "name": "eventId",
+        "in": "path",
+        "required": true,
+        "description": "The event a guardian stated for the family.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "TaskId": {
         "name": "taskId",
         "in": "path",
         "required": true,
@@ -5801,26 +6139,26 @@
           "format": "uuid"
         }
       },
-    "ThreadId": {
-      "name": "threadId",
-      "in": "path",
-      "required": true,
-      "description": "The conversation.",
-      "schema": {
-        "type": "string",
-        "format": "uuid"
+      "ThreadId": {
+        "name": "threadId",
+        "in": "path",
+        "required": true,
+        "description": "The conversation.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "MessageId": {
+        "name": "messageId",
+        "in": "path",
+        "required": true,
+        "description": "The message.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
       }
-    },
-    "MessageId": {
-      "name": "messageId",
-      "in": "path",
-      "required": true,
-      "description": "The message.",
-      "schema": {
-        "type": "string",
-        "format": "uuid"
-      }
-    }
     },
     "responses": {
       "InvalidRequest": {
@@ -9979,6 +10317,11 @@
             "minimum": 1,
             "maximum": 200,
             "description": "What this task is worth. Stated once, by a guardian."
+          },
+          "audienceThreadId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Optional direct/group conversation. The creator and beneficiary must be active members; other child members can see the task but only the designated child can claim it."
           }
         }
       },
@@ -10094,6 +10437,7 @@
         "required": [
           "id",
           "childId",
+          "audienceThreadId",
           "title",
           "note",
           "points",
@@ -10149,6 +10493,14 @@
               }
             ],
             "description": "The cycle currently open on this task, or null when nobody has said anything."
+          },
+          "audienceThreadId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Optional direct/group conversation used as the server-enforced visibility and notification-routing scope."
           }
         }
       },
@@ -10299,928 +10651,1262 @@
           }
         }
       },
-    "FamilyEventResponseRecord": {
-      "type": "object",
-      "description": "One child's answer, with the author who gave it. Exactly one of the two author fields is present: a handset cannot answer for a family member, and a guardian cannot hide behind a handset.",
-      "required": [
-        "childId",
-        "response",
-        "respondedAt"
-      ],
-      "properties": {
-        "childId": {
-          "type": "string",
-          "format": "uuid"
-        },
-        "response": {
-          "type": "string",
-          "enum": [
-            "accepted",
-            "declined"
-          ]
-        },
-        "note": {
-          "type": "string"
-        },
-        "respondedByDeviceId": {
-          "type": "string",
-          "format": "uuid",
-          "nullable": true
-        },
-        "respondedByMembershipId": {
-          "type": "string",
-          "format": "uuid",
-          "nullable": true
-        },
-        "respondedAt": {
-          "type": "string",
-          "format": "date-time"
-        }
-      }
-    },
-    "FamilyEventAttendanceRecord": {
-      "type": "object",
-      "description": "What a person recorded about what happened, and who recorded it. Never inferred from a device.",
-      "required": [
-        "childId",
-        "attended",
-        "recordedByMembershipId",
-        "recordedAt"
-      ],
-      "properties": {
-        "childId": {
-          "type": "string",
-          "format": "uuid"
-        },
-        "attended": {
-          "type": "boolean"
-        },
-        "note": {
-          "type": "string"
-        },
-        "recordedByMembershipId": {
-          "type": "string",
-          "format": "uuid"
-        },
-        "recordedAt": {
-          "type": "string",
-          "format": "date-time"
-        }
-      }
-    },
-    "FamilyEventAudienceEntry": {
-      "type": "object",
-      "description": "One invited child, with their answer and what was recorded about their attendance. Both are absent until they exist - never defaulted.",
-      "required": [
-        "childId"
-      ],
-      "properties": {
-        "childId": {
-          "type": "string",
-          "format": "uuid"
-        },
-        "response": {
-          "oneOf": [
-            {
-              "$ref": "#/components/schemas/FamilyEventResponseRecord"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "attendance": {
-          "oneOf": [
-            {
-              "$ref": "#/components/schemas/FamilyEventAttendanceRecord"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
-      }
-    },
-    "FamilyEvent": {
-      "type": "object",
-      "description": "A family event. `version` rises on every change: an edit must state the version it read, so two guardians editing the same evening collide loudly instead of silently overwriting each other. A cancelled event keeps its times, its audience and its answers, and gains the author, the reason and the moment of the cancellation.",
-      "required": [
-        "id",
-        "title",
-        "note",
-        "location",
-        "startsAt",
-        "endsAt",
-        "allDay",
-        "status",
-        "version",
-        "createdByMembershipId",
-        "createdAt",
-        "updatedAt",
-        "audience"
-      ],
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uuid"
-        },
-        "title": {
-          "type": "string"
-        },
-        "note": {
-          "type": "string"
-        },
-        "location": {
-          "type": "string"
-        },
-        "startsAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "endsAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "allDay": {
-          "type": "boolean"
-        },
-        "reminderMinutes": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 10080,
-          "nullable": true,
-          "description": "A recorded preference. This contract does not claim a notification was delivered."
-        },
-        "status": {
-          "type": "string",
-          "enum": [
-            "scheduled",
-            "cancelled"
-          ]
-        },
-        "version": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "createdByMembershipId": {
-          "type": "string",
-          "format": "uuid"
-        },
-        "cancelledByMembershipId": {
-          "type": "string",
-          "format": "uuid",
-          "nullable": true
-        },
-        "cancelledAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true
-        },
-        "cancelReason": {
-          "type": "string"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "audience": {
-          "type": "array",
-          "items": {
-            "$ref": "#/components/schemas/FamilyEventAudienceEntry"
-          }
-        }
-      }
-    },
-    "FamilyEventListResponse": {
-      "type": "object",
-      "required": [
-        "events"
-      ],
-      "properties": {
-        "events": {
-          "type": "array",
-          "items": {
-            "$ref": "#/components/schemas/FamilyEvent"
-          }
-        }
-      }
-    },
-    "FamilyEventResponse": {
-      "type": "object",
-      "required": [
-        "event"
-      ],
-      "properties": {
-        "event": {
-          "$ref": "#/components/schemas/FamilyEvent"
-        }
-      }
-    },
-    "FamilyEventResponseRecordResponse": {
-      "type": "object",
-      "required": [
-        "response"
-      ],
-      "properties": {
-        "response": {
-          "$ref": "#/components/schemas/FamilyEventResponseRecord"
-        }
-      }
-    },
-    "FamilyEventAttendanceResponse": {
-      "type": "object",
-      "required": [
-        "attendance"
-      ],
-      "properties": {
-        "attendance": {
-          "$ref": "#/components/schemas/FamilyEventAttendanceRecord"
-        }
-      }
-    },
-    "FamilyEventCreateRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "title",
-        "startsAt",
-        "endsAt",
-        "childIds"
-      ],
-      "properties": {
-        "title": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 120
-        },
-        "note": {
-          "type": "string",
-          "maxLength": 300
-        },
-        "location": {
-          "type": "string",
-          "maxLength": 160
-        },
-        "startsAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "endsAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Must be after `startsAt`, and no more than a month after it."
-        },
-        "allDay": {
-          "type": "boolean"
-        },
-        "reminderMinutes": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 10080,
-          "nullable": true
-        },
-        "childIds": {
-          "type": "array",
-          "minItems": 1,
-          "maxItems": 24,
-          "items": {
+      "FamilyEventResponseRecord": {
+        "type": "object",
+        "description": "One child's answer, with the author who gave it. Exactly one of the two author fields is present: a handset cannot answer for a family member, and a guardian cannot hide behind a handset.",
+        "required": [
+          "childId",
+          "response",
+          "respondedAt"
+        ],
+        "properties": {
+          "childId": {
             "type": "string",
             "format": "uuid"
           },
-          "description": "At least one child: an event nobody is invited to is a note, not a plan."
+          "response": {
+            "type": "string",
+            "enum": [
+              "accepted",
+              "declined"
+            ]
+          },
+          "note": {
+            "type": "string"
+          },
+          "respondedByDeviceId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "respondedByMembershipId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "respondedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
-      }
-    },
-    "FamilyEventUpdateRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "version"
-      ],
-      "properties": {
-        "version": {
-          "type": "integer",
-          "minimum": 1,
-          "description": "The version the client read. A mismatch is a 409, not a merge."
-        },
-        "title": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 120
-        },
-        "note": {
-          "type": "string",
-          "maxLength": 300
-        },
-        "location": {
-          "type": "string",
-          "maxLength": 160
-        },
-        "startsAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "endsAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "allDay": {
-          "type": "boolean"
-        },
-        "reminderMinutes": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 10080,
-          "nullable": true
-        },
-        "childIds": {
-          "type": "array",
-          "minItems": 1,
-          "maxItems": 24,
-          "items": {
+      },
+      "FamilyEventAttendanceRecord": {
+        "type": "object",
+        "description": "What a person recorded about what happened, and who recorded it. Never inferred from a device.",
+        "required": [
+          "childId",
+          "attended",
+          "recordedByMembershipId",
+          "recordedAt"
+        ],
+        "properties": {
+          "childId": {
             "type": "string",
             "format": "uuid"
+          },
+          "attended": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string"
+          },
+          "recordedByMembershipId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "recordedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
-      }
-    },
-    "FamilyEventCancelRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "reason"
-      ],
-      "properties": {
-        "reason": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 200,
-          "description": "Why the plan changed. A cancellation a child cannot understand is worse than the cancellation itself."
-        }
-      }
-    },
-    "FamilyEventResponseRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "response"
-      ],
-      "properties": {
-        "response": {
-          "type": "string",
-          "enum": [
-            "accepted",
-            "declined"
-          ]
-        },
-        "note": {
-          "type": "string",
-          "maxLength": 300
-        }
-      }
-    },
-    "FamilyEventAttendanceRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "childId",
-        "attended"
-      ],
-      "properties": {
-        "childId": {
-          "type": "string",
-          "format": "uuid"
-        },
-        "attended": {
-          "type": "boolean"
-        },
-        "note": {
-          "type": "string",
-          "maxLength": 300
-        }
-      }
-    },
-    "DeviceEvent": {
-      "type": "object",
-      "description": "One child's own view: the event they are invited to, their own answer, and what was recorded about their attendance. Deliberately without any sibling's answer.",
-      "required": [
-        "id",
-        "title",
-        "note",
-        "location",
-        "startsAt",
-        "endsAt",
-        "allDay",
-        "status"
-      ],
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uuid"
-        },
-        "title": {
-          "type": "string"
-        },
-        "note": {
-          "type": "string"
-        },
-        "location": {
-          "type": "string"
-        },
-        "startsAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "endsAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "allDay": {
-          "type": "boolean"
-        },
-        "status": {
-          "type": "string",
-          "enum": [
-            "scheduled",
-            "cancelled"
-          ]
-        },
-        "cancelReason": {
-          "type": "string"
-        },
-        "response": {
-          "oneOf": [
-            {
-              "$ref": "#/components/schemas/FamilyEventResponseRecord"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "attendance": {
-          "oneOf": [
-            {
-              "$ref": "#/components/schemas/FamilyEventAttendanceRecord"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
-      }
-    },
-    "DeviceEventListResponse": {
-      "type": "object",
-      "required": [
-        "events"
-      ],
-      "properties": {
-        "events": {
-          "type": "array",
-          "items": {
-            "$ref": "#/components/schemas/DeviceEvent"
+      },
+      "FamilyEventAudienceEntry": {
+        "type": "object",
+        "description": "One invited child, with their answer and what was recorded about their attendance. Both are absent until they exist - never defaulted.",
+        "required": [
+          "childId"
+        ],
+        "properties": {
+          "childId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "response": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FamilyEventResponseRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "attendance": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FamilyEventAttendanceRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
-      }
-    },
-    "ChatParticipant": {
-      "type": "object",
-      "description": "One participant of a conversation. A guardian is identified by their membership and role; a child by their name. The OIDC subject of a membership is deliberately absent: a chat list has no use for a durable identifier for a person.",
-      "required": [
-        "kind",
-        "id",
-        "role",
-        "displayName",
-        "isSelf"
-      ],
-      "properties": {
-        "kind": {
-          "type": "string",
-          "enum": [
-            "membership",
-            "child"
-          ]
-        },
-        "id": {
-          "type": "string",
-          "format": "uuid"
-        },
-        "role": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "enum": [
-            "primary_guardian",
-            "co_guardian",
-            "child",
-            null
-          ]
-        },
-        "displayName": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "The child's name, for a child participant."
-        },
-        "isSelf": {
-          "type": "boolean",
-          "description": "True for the caller's own membership row; decided on the server, never guessed by a client."
-        }
-      }
-    },
-    "ChatMessage": {
-      "type": "object",
-      "description": "One message in a conversation. A deleted message keeps its sequence number and its trace while its text is gone, so the numbering stays trustworthy and the family knows something was said and removed.",
-      "required": [
-        "id",
-        "seq",
-        "authorKind",
-        "authorId",
-        "body",
-        "revision",
-        "editedAt",
-        "deleted",
-        "deletedAt",
-        "deletedByKind",
-        "deletedById",
-        "createdAt",
-        "readCount"
-      ],
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uuid"
-        },
-        "seq": {
-          "type": "integer",
-          "minimum": 1,
-          "description": "Allocated by the server from the thread's own counter inside the sending transaction; never supplied by a client."
-        },
-        "authorKind": {
-          "type": "string",
-          "enum": [
-            "membership",
-            "child"
-          ]
-        },
-        "authorId": {
-          "type": "string",
-          "format": "uuid"
-        },
-        "body": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "maxLength": 2000,
-          "description": "The text, or null for a deleted message."
-        },
-        "revision": {
-          "type": "integer",
-          "minimum": 1,
-          "description": "1 until the message is edited; every edit moves it and `editedAt` together."
-        },
-        "editedAt": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
-        "deleted": {
-          "type": "boolean"
-        },
-        "deletedAt": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
-        "deletedByKind": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "enum": [
-            "membership",
-            "child",
-            null
-          ]
-        },
-        "deletedById": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "uuid"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "readCount": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "How many OTHER participants have marked themselves read up to this message. The author is never counted, and nothing here claims a delivery."
-        }
-      }
-    },
-    "ChatThread": {
-      "type": "object",
-      "description": "A conversation, with the participants the caller may see and the newest message. `lastReadSeq` and `unreadCount` are the CALLER's own state, computed from their member row.",
-      "required": [
-        "id",
-        "kind",
-        "title",
-        "createdAt",
-        "lastReadSeq",
-        "unreadCount",
-        "participants",
-        "lastMessage"
-      ],
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uuid"
-        },
-        "kind": {
-          "type": "string",
-          "enum": [
-            "family",
-            "child"
-          ],
-          "description": "`family` is the household room of guardians; `child` names exactly one child."
-        },
-        "title": {
-          "type": "string",
-          "maxLength": 120
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "lastReadSeq": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "How far the CALLER has read; a participant's own statement, which only ever moves forward."
-        },
-        "unreadCount": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Messages after the caller's read mark that somebody else wrote."
-        },
-        "participants": {
-          "type": "array",
-          "items": {
-            "$ref": "#/components/schemas/ChatParticipant"
-          }
-        },
-        "lastMessage": {
-          "oneOf": [
-            {
-              "$ref": "#/components/schemas/ChatMessage"
-            },
-            {
-              "type": "null"
+      },
+      "FamilyEvent": {
+        "type": "object",
+        "description": "A family event. `version` rises on every change: an edit must state the version it read, so two guardians editing the same evening collide loudly instead of silently overwriting each other. A cancelled event keeps its times, its audience and its answers, and gains the author, the reason and the moment of the cancellation.",
+        "required": [
+          "id",
+          "audienceThreadId",
+          "title",
+          "note",
+          "location",
+          "startsAt",
+          "endsAt",
+          "allDay",
+          "status",
+          "version",
+          "createdByMembershipId",
+          "createdAt",
+          "updatedAt",
+          "audience"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "allDay": {
+            "type": "boolean"
+          },
+          "reminderMinutes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10080,
+            "nullable": true,
+            "description": "A recorded preference. This contract does not claim a notification was delivered."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "scheduled",
+              "cancelled"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "createdByMembershipId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "cancelledByMembershipId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "cancelledAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "cancelReason": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "audience": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FamilyEventAudienceEntry"
             }
-          ]
+          },
+          "audienceThreadId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Optional direct/group conversation used as the routing scope. Child invitees remain explicit event-audience records."
+          }
         }
-      }
-    },
-    "ChatReadState": {
-      "type": "object",
-      "description": "One participant's own read mark. There is no endpoint that states it for somebody else, and no read mark is inferred from a device being online.",
-      "required": [
-        "threadId",
-        "participantKind",
-        "participantId",
-        "lastReadSeq"
-      ],
-      "properties": {
-        "threadId": {
-          "type": "string",
-          "format": "uuid"
-        },
-        "participantKind": {
-          "type": "string",
-          "enum": [
-            "membership",
-            "child"
-          ]
-        },
-        "participantId": {
-          "type": "string",
-          "format": "uuid"
-        },
-        "lastReadSeq": {
-          "type": "integer",
-          "minimum": 0
+      },
+      "FamilyEventListResponse": {
+        "type": "object",
+        "required": [
+          "events"
+        ],
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FamilyEvent"
+            }
+          }
         }
-      }
-    },
-    "ChatThreadListResponse": {
-      "type": "object",
-      "required": [
-        "threads"
-      ],
-      "properties": {
-        "threads": {
-          "type": "array",
-          "maxItems": 200,
-          "items": {
+      },
+      "FamilyEventResponse": {
+        "type": "object",
+        "required": [
+          "event"
+        ],
+        "properties": {
+          "event": {
+            "$ref": "#/components/schemas/FamilyEvent"
+          }
+        }
+      },
+      "FamilyEventResponseRecordResponse": {
+        "type": "object",
+        "required": [
+          "response"
+        ],
+        "properties": {
+          "response": {
+            "$ref": "#/components/schemas/FamilyEventResponseRecord"
+          }
+        }
+      },
+      "FamilyEventAttendanceResponse": {
+        "type": "object",
+        "required": [
+          "attendance"
+        ],
+        "properties": {
+          "attendance": {
+            "$ref": "#/components/schemas/FamilyEventAttendanceRecord"
+          }
+        }
+      },
+      "FamilyEventCreateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "title",
+          "startsAt",
+          "endsAt"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "location": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Must be after `startsAt`, and no more than a month after it."
+          },
+          "allDay": {
+            "type": "boolean"
+          },
+          "reminderMinutes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10080,
+            "nullable": true
+          },
+          "childIds": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 24,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Optional explicit child audience. If omitted or empty, audienceThreadId must name a direct/group conversation; its current child participants are snapshotted as invitees."
+          },
+          "audienceThreadId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Optional same-family direct/group conversation; must be paired with active creator membership. If childIds is empty, current child participants become invitees."
+          }
+        }
+      },
+      "FamilyEventUpdateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "version"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The version the client read. A mismatch is a 409, not a merge."
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "location": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "allDay": {
+            "type": "boolean"
+          },
+          "reminderMinutes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10080,
+            "nullable": true
+          },
+          "childIds": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Optional replacement audience. If omitted with audienceThreadId, the group’s current child participants are used."
+          },
+          "audienceThreadId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Replace or clear the event’s direct/group routing scope. Setting null keeps the explicit child audience unless childIds is also supplied."
+          }
+        }
+      },
+      "FamilyEventCancelRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Why the plan changed. A cancellation a child cannot understand is worse than the cancellation itself."
+          }
+        }
+      },
+      "FamilyEventResponseRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "response"
+        ],
+        "properties": {
+          "response": {
+            "type": "string",
+            "enum": [
+              "accepted",
+              "declined"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 300
+          }
+        }
+      },
+      "FamilyEventAttendanceRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "childId",
+          "attended"
+        ],
+        "properties": {
+          "childId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "attended": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 300
+          }
+        }
+      },
+      "DeviceEvent": {
+        "type": "object",
+        "description": "One child's own view: the event they are invited to, their own answer, and what was recorded about their attendance. Deliberately without any sibling's answer.",
+        "required": [
+          "id",
+          "title",
+          "note",
+          "location",
+          "startsAt",
+          "endsAt",
+          "allDay",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "allDay": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "scheduled",
+              "cancelled"
+            ]
+          },
+          "cancelReason": {
+            "type": "string"
+          },
+          "response": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FamilyEventResponseRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "attendance": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FamilyEventAttendanceRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "DeviceEventListResponse": {
+        "type": "object",
+        "required": [
+          "events"
+        ],
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeviceEvent"
+            }
+          }
+        }
+      },
+      "ChatParticipant": {
+        "type": "object",
+        "description": "One participant of a conversation. A guardian is identified by their membership and role; a child by their name. The OIDC subject of a membership is deliberately absent: a chat list has no use for a durable identifier for a person.",
+        "required": [
+          "kind",
+          "id",
+          "role",
+          "displayName",
+          "isSelf"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "membership",
+              "child"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "primary_guardian",
+              "co_guardian",
+              "child",
+              null
+            ]
+          },
+          "displayName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The child's name, for a child participant."
+          },
+          "isSelf": {
+            "type": "boolean",
+            "description": "True for the caller's own membership row; decided on the server, never guessed by a client."
+          }
+        }
+      },
+      "ChatMessage": {
+        "type": "object",
+        "description": "One message in a conversation. A deleted message keeps its sequence number and its trace while its text is gone, so the numbering stays trustworthy and the family knows something was said and removed.",
+        "required": [
+          "id",
+          "seq",
+          "authorKind",
+          "authorId",
+          "body",
+          "revision",
+          "editedAt",
+          "deleted",
+          "deletedAt",
+          "deletedByKind",
+          "deletedById",
+          "createdAt",
+          "readCount"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "seq": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Allocated by the server from the thread's own counter inside the sending transaction; never supplied by a client."
+          },
+          "authorKind": {
+            "type": "string",
+            "enum": [
+              "membership",
+              "child"
+            ]
+          },
+          "authorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "body": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000,
+            "description": "The text, or null for a deleted message."
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "1 until the message is edited; every edit moves it and `editedAt` together."
+          },
+          "editedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "deleted": {
+            "type": "boolean"
+          },
+          "deletedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "deletedByKind": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "membership",
+              "child",
+              null
+            ]
+          },
+          "deletedById": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "readCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "How many OTHER participants have marked themselves read up to this message. The author is never counted, and nothing here claims a delivery."
+          }
+        }
+      },
+      "ChatThread": {
+        "type": "object",
+        "description": "A conversation, with only participants the caller may see and the newest message. `lastReadSeq` and `unreadCount` are the caller’s own state.",
+        "required": [
+          "id",
+          "kind",
+          "title",
+          "createdAt",
+          "lastReadSeq",
+          "unreadCount",
+          "participants",
+          "lastMessage"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "family",
+              "child",
+              "direct",
+              "group"
+            ],
+            "description": "New conversations are direct or user-created groups; family/child remain readable legacy kinds."
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastReadSeq": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "How far the CALLER has read; a participant's own statement, which only ever moves forward."
+          },
+          "unreadCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Messages after the caller's read mark that somebody else wrote."
+          },
+          "participants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChatParticipant"
+            }
+          },
+          "lastMessage": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ChatMessage"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "ChatReadState": {
+        "type": "object",
+        "description": "One participant's own read mark. There is no endpoint that states it for somebody else, and no read mark is inferred from a device being online.",
+        "required": [
+          "threadId",
+          "participantKind",
+          "participantId",
+          "lastReadSeq"
+        ],
+        "properties": {
+          "threadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "participantKind": {
+            "type": "string",
+            "enum": [
+              "membership",
+              "child"
+            ]
+          },
+          "participantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lastReadSeq": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "ChatThreadListResponse": {
+        "type": "object",
+        "required": [
+          "threads",
+          "capabilities"
+        ],
+        "properties": {
+          "threads": {
+            "type": "array",
+            "maxItems": 200,
+            "items": {
+              "$ref": "#/components/schemas/ChatThread"
+            }
+          },
+          "capabilities": {
+            "$ref": "#/components/schemas/ChatCapabilities"
+          }
+        }
+      },
+      "ChatThreadResponse": {
+        "type": "object",
+        "required": [
+          "thread"
+        ],
+        "properties": {
+          "thread": {
             "$ref": "#/components/schemas/ChatThread"
           }
         }
-      }
-    },
-    "ChatThreadResponse": {
-      "type": "object",
-      "required": [
-        "thread"
-      ],
-      "properties": {
-        "thread": {
-          "$ref": "#/components/schemas/ChatThread"
+      },
+      "ChatMessageListResponse": {
+        "type": "object",
+        "required": [
+          "messages",
+          "readState",
+          "hasMore"
+        ],
+        "properties": {
+          "messages": {
+            "type": "array",
+            "maxItems": 200,
+            "items": {
+              "$ref": "#/components/schemas/ChatMessage"
+            }
+          },
+          "readState": {
+            "$ref": "#/components/schemas/ChatReadState"
+          },
+          "hasMore": {
+            "type": "boolean",
+            "description": "True when the page was full, so the caller can ask for what follows with `afterSeq`."
+          }
         }
-      }
-    },
-    "ChatMessageListResponse": {
-      "type": "object",
-      "required": [
-        "messages",
-        "readState",
-        "hasMore"
-      ],
-      "properties": {
-        "messages": {
-          "type": "array",
-          "maxItems": 200,
-          "items": {
+      },
+      "ChatMessageResponse": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
             "$ref": "#/components/schemas/ChatMessage"
           }
-        },
-        "readState": {
-          "$ref": "#/components/schemas/ChatReadState"
-        },
-        "hasMore": {
-          "type": "boolean",
-          "description": "True when the page was full, so the caller can ask for what follows with `afterSeq`."
         }
-      }
-    },
-    "ChatMessageResponse": {
-      "type": "object",
-      "required": [
-        "message"
-      ],
-      "properties": {
-        "message": {
-          "$ref": "#/components/schemas/ChatMessage"
+      },
+      "ChatMessageSendResponse": {
+        "type": "object",
+        "required": [
+          "message",
+          "replayed"
+        ],
+        "description": "A send, and whether it was a resend: the same `clientMessageId` from the same author returns the message that already exists, with the sequence it already has, rather than a second copy.",
+        "properties": {
+          "message": {
+            "$ref": "#/components/schemas/ChatMessage"
+          },
+          "replayed": {
+            "type": "boolean"
+          }
         }
-      }
-    },
-    "ChatMessageSendResponse": {
-      "type": "object",
-      "required": [
-        "message",
-        "replayed"
-      ],
-      "description": "A send, and whether it was a resend: the same `clientMessageId` from the same author returns the message that already exists, with the sequence it already has, rather than a second copy.",
-      "properties": {
-        "message": {
-          "$ref": "#/components/schemas/ChatMessage"
-        },
-        "replayed": {
-          "type": "boolean"
+      },
+      "ChatReadMarkResponse": {
+        "type": "object",
+        "required": [
+          "readState"
+        ],
+        "properties": {
+          "readState": {
+            "$ref": "#/components/schemas/ChatReadState"
+          }
         }
-      }
-    },
-    "ChatReadMarkResponse": {
-      "type": "object",
-      "required": [
-        "readState"
-      ],
-      "properties": {
-        "readState": {
-          "$ref": "#/components/schemas/ChatReadState"
-        }
-      }
-    },
-    "ChatThreadCreateRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "kind"
-      ],
-      "description": "Opening a room. The server includes every active guardian in this family automatically. `family` refuses a child id; `child` names exactly one child from this family. Guardian membership IDs are never supplied by the caller.",
-      "properties": {
-        "kind": {
-          "type": "string",
-          "enum": [
-            "family",
-            "child"
-          ]
+      },
+      "ChatThreadCreateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "participants"
+        ],
+        "description": "A new direct or group conversation. `participants` contains explicit other family-member references; the server adds the creator and only adds guardians if an active safety policy requires it.",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "direct",
+              "group"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "participants": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 23,
+            "items": {
+              "$ref": "#/components/schemas/ChatParticipantReference"
+            },
+            "description": "For direct, exactly one peer. For group, two or more peers. All IDs are checked against the server-owned family roster."
+          }
         },
-        "title": {
-          "type": "string",
-          "maxLength": 120
-        },
-        "childIds": {
-          "type": "array",
-          "maxItems": 1,
-          "items": {
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "direct"
+                }
+              },
+              "required": [
+                "kind"
+              ]
+            },
+            "then": {
+              "properties": {
+                "participants": {
+                  "minItems": 1,
+                  "maxItems": 1
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "group"
+                }
+              },
+              "required": [
+                "kind"
+              ]
+            },
+            "then": {
+              "properties": {
+                "participants": {
+                  "minItems": 2
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ChatThreadMemberRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "participantKind",
+          "participantId"
+        ],
+        "description": "One active family participant to add to a group. Direct conversations remain a pair; legacy thread kinds remain readable but are not expanded to new child conversations.",
+        "properties": {
+          "participantKind": {
+            "type": "string",
+            "enum": [
+              "membership",
+              "child"
+            ]
+          },
+          "participantId": {
             "type": "string",
             "format": "uuid"
           }
         }
-      }
-    },
-    "ChatThreadMemberRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "participantKind",
-        "participantId"
-      ],
-      "description": "One participant to add after room creation: an active guardian of this family, or the one child in a child room.",
-      "properties": {
-        "participantKind": {
+      },
+      "ChatMessageSendRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "body",
+          "clientMessageId"
+        ],
+        "description": "What was said. There is no author field: the author is decided by how the request arrived - a paired handset writes as its own child, an authenticated person as their membership.",
+        "properties": {
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "clientMessageId": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 64,
+            "description": "The sender's own name for this message. A resend with the same value returns the same message instead of a second one."
+          }
+        }
+      },
+      "ChatMessageEditRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "body",
+          "revision"
+        ],
+        "properties": {
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The revision the author read. A mismatch is refused rather than silently overwriting words somebody else already saw."
+          }
+        }
+      },
+      "ChatReadRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "readSeq"
+        ],
+        "properties": {
+          "readSeq": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "How far this participant has read. It cannot pass the newest message in the thread, and it only ever moves forward."
+          }
+        }
+      },
+      "ChatCapabilities": {
+        "type": "object",
+        "required": [
+          "transport",
+          "listPollSeconds",
+          "threadPollSeconds",
+          "contentTypes",
+          "serverSentEvents",
+          "webSockets",
+          "attachments",
+          "audio",
+          "presence",
+          "richReactions"
+        ],
+        "properties": {
+          "transport": {
+            "type": "string",
+            "enum": [
+              "polling",
+              "server_sent_events",
+              "websocket"
+            ],
+            "description": "The active delivery transport. The current service uses polling; SSE and WebSockets are reserved for a future verified implementation."
+          },
+          "listPollSeconds": {
+            "type": "integer",
+            "const": 30
+          },
+          "threadPollSeconds": {
+            "type": "integer",
+            "const": 15
+          },
+          "contentTypes": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 16,
+            "uniqueItems": true,
+            "description": "Message media types the active server implementation accepts. The current service advertises text/plain only; adding media types requires a verified server and client implementation.",
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+*-]+$"
+            }
+          },
+          "serverSentEvents": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether server-sent event streaming is implemented and available. The current service returns false; a future implementation may advertise true only after its safety and delivery behavior are verified."
+          },
+          "webSockets": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether websocket transport is implemented and available. The current service returns false; a future implementation may advertise true only after its safety and delivery behavior are verified."
+          },
+          "attachments": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether file attachments is implemented and available. The current service returns false; a future implementation may advertise true only after its safety and delivery behavior are verified."
+          },
+          "audio": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether voice and audio messages is implemented and available. The current service returns false; a future implementation may advertise true only after its safety and delivery behavior are verified."
+          },
+          "presence": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether participant presence states is implemented and available. The current service returns false; a future implementation may advertise true only after its safety and delivery behavior are verified."
+          },
+          "richReactions": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether rich reactions and message-state interactions is implemented and available. The current service returns false; a future implementation may advertise true only after its safety and delivery behavior are verified."
+          }
+        }
+      },
+      "ChatParticipantReference": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "id"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "membership",
+              "child"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "ChatParticipantListResponse": {
+        "type": "object",
+        "required": [
+          "participants"
+        ],
+        "properties": {
+          "participants": {
+            "type": "array",
+            "maxItems": 200,
+            "items": {
+              "$ref": "#/components/schemas/ChatParticipant"
+            }
+          }
+        }
+      },
+      "GuardianRoleList": {
+        "type": "array",
+        "maxItems": 2,
+        "uniqueItems": true,
+        "items": {
           "type": "string",
           "enum": [
-            "membership",
-            "child"
+            "primary_guardian",
+            "co_guardian"
           ]
-        },
-        "participantId": {
-          "type": "string",
-          "format": "uuid"
+        }
+      },
+      "FamilyCollaborationPolicy": {
+        "type": "object",
+        "required": [
+          "version",
+          "chatCreateRoles",
+          "chatManageRoles",
+          "taskRoles",
+          "calendarRoles",
+          "childDirectEnabled",
+          "childGroupsEnabled",
+          "childGroupMemberManagementEnabled",
+          "guardianInclusionMode",
+          "maximumGroupSize",
+          "updatedAt",
+          "updatedByMembershipId",
+          "source"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "chatCreateRoles": {
+            "$ref": "#/components/schemas/GuardianRoleList"
+          },
+          "chatManageRoles": {
+            "$ref": "#/components/schemas/GuardianRoleList"
+          },
+          "taskRoles": {
+            "$ref": "#/components/schemas/GuardianRoleList"
+          },
+          "calendarRoles": {
+            "$ref": "#/components/schemas/GuardianRoleList"
+          },
+          "childDirectEnabled": {
+            "type": "boolean"
+          },
+          "childGroupsEnabled": {
+            "type": "boolean"
+          },
+          "childGroupMemberManagementEnabled": {
+            "type": "boolean"
+          },
+          "guardianInclusionMode": {
+            "type": "string",
+            "enum": [
+              "none",
+              "all_child_chats",
+              "child_to_child"
+            ]
+          },
+          "maximumGroupSize": {
+            "type": "integer",
+            "minimum": 3,
+            "maximum": 24
+          },
+          "updatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "updatedByMembershipId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "default",
+              "family"
+            ]
+          }
+        }
+      },
+      "FamilyCollaborationPolicyResponse": {
+        "type": "object",
+        "required": [
+          "policy"
+        ],
+        "properties": {
+          "policy": {
+            "$ref": "#/components/schemas/FamilyCollaborationPolicy"
+          }
+        }
+      },
+      "FamilyCollaborationPolicyUpdateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "expectedVersion"
+        ],
+        "description": "Partial policy update. Only the primary guardian may write; child and protected capabilities cannot be delegated.",
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "chatCreateRoles": {
+            "$ref": "#/components/schemas/GuardianRoleList"
+          },
+          "chatManageRoles": {
+            "$ref": "#/components/schemas/GuardianRoleList"
+          },
+          "taskRoles": {
+            "$ref": "#/components/schemas/GuardianRoleList"
+          },
+          "calendarRoles": {
+            "$ref": "#/components/schemas/GuardianRoleList"
+          },
+          "childDirectEnabled": {
+            "type": "boolean"
+          },
+          "childGroupsEnabled": {
+            "type": "boolean"
+          },
+          "childGroupMemberManagementEnabled": {
+            "type": "boolean"
+          },
+          "guardianInclusionMode": {
+            "type": "string",
+            "enum": [
+              "none",
+              "all_child_chats",
+              "child_to_child"
+            ]
+          },
+          "maximumGroupSize": {
+            "type": "integer",
+            "minimum": 3,
+            "maximum": 24
+          }
         }
       }
-    },
-    "ChatMessageSendRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "body",
-        "clientMessageId"
-      ],
-      "description": "What was said. There is no author field: the author is decided by how the request arrived - a paired handset writes as its own child, an authenticated person as their membership.",
-      "properties": {
-        "body": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 2000
-        },
-        "clientMessageId": {
-          "type": "string",
-          "minLength": 8,
-          "maxLength": 64,
-          "description": "The sender's own name for this message. A resend with the same value returns the same message instead of a second one."
-        }
-      }
-    },
-    "ChatMessageEditRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "body",
-        "revision"
-      ],
-      "properties": {
-        "body": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 2000
-        },
-        "revision": {
-          "type": "integer",
-          "minimum": 1,
-          "description": "The revision the author read. A mismatch is refused rather than silently overwriting words somebody else already saw."
-        }
-      }
-    },
-    "ChatReadRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "readSeq"
-      ],
-      "properties": {
-        "readSeq": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "How far this participant has read. It cannot pass the newest message in the thread, and it only ever moves forward."
-        }
-      }
-    }
     }
   }
 }

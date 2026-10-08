@@ -17,9 +17,11 @@ String localizedConversationThreadTitle(
   if (isFamilyThread == true || threadKind == 'family') {
     return l10n.familyChatFamilyThread;
   }
-  if (isFamilyThread == false || threadKind == 'child') {
+  if (threadKind == 'child' || (isFamilyThread == false && threadKind == null)) {
     return l10n.familyChatChildThread;
   }
+  if (threadKind == 'direct') return l10n.familyChatDirectThread;
+  if (threadKind == 'group') return l10n.familyChatGroupThread;
   return storedTitle;
 }
 

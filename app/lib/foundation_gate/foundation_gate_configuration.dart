@@ -401,6 +401,20 @@ class FoundationGateConfiguration {
     );
   }
 
+  Uri familyChatParticipantsUri(String familyId) {
+    _requireChatUuids(familyId);
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/chat/participants',
+    );
+  }
+
+  Uri familyCollaborationPolicyUri(String familyId) {
+    _requireChatUuids(familyId);
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/collaboration-policy',
+    );
+  }
+
   Uri familyChatThreadMembersUri(String familyId, String threadId) {
     _requireChatUuids(familyId, threadId);
     return stagingApiOrigin.replace(
@@ -458,6 +472,18 @@ class FoundationGateConfiguration {
   Uri deviceChatThreadsUri(String deviceId) {
     _requireChatUuids(deviceId);
     return stagingApiOrigin.replace(path: '/v1/devices/$deviceId/chat/threads');
+  }
+
+  Uri deviceChatParticipantsUri(String deviceId) {
+    _requireChatUuids(deviceId);
+    return stagingApiOrigin.replace(path: '/v1/devices/$deviceId/chat/participants');
+  }
+
+  Uri deviceChatThreadMembersUri(String deviceId, String threadId) {
+    _requireChatUuids(deviceId, threadId);
+    return stagingApiOrigin.replace(
+      path: '/v1/devices/$deviceId/chat/threads/$threadId/members',
+    );
   }
 
   Uri deviceChatMessagesUri(

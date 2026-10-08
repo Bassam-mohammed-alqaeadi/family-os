@@ -29,6 +29,11 @@
 import { randomUUID } from 'node:crypto';
 
 import { HttpError } from './http-error.js';
+import {
+  COLLABORATION_POLICY_DEFAULTS,
+  collaborationRoleAllowed,
+  readCollaborationPolicy as readServerCollaborationPolicy,
+} from './collaboration-policy.js';
 
 export const TASK_STATUSES = Object.freeze(['open', 'archived']);
 export const CLAIM_STATUSES = Object.freeze(['pending', 'confirmed', 'declined']);
@@ -47,8 +52,6 @@ export const CHILD_POINTS_CEILING = 100000;
 /// likely to be a bug in a loop than a household with that many chores.
 export const MAX_OPEN_TASKS_PER_CHILD = 50;
 
-const GUARDIAN_ROLES = new Set(['primary_guardian', 'co_guardian']);
-
 export class TaskError extends HttpError {
   constructor(status, code, message) {
     super(status, code, message);
@@ -57,7 +60,8 @@ export class TaskError extends HttpError {
 }
 
 function requireGuardian(actor, code, message) {
-  if (actor == null || !GUARDIAN_ROLES.has(actor.role)) {
+  const policy = actor?.collaborationPolicy ?? COLLABORATION_POLICY_DEFAULTS;
+  if (actor == null || !collaborationRoleAllowed(actor, policy, 'task')) {
     throw new TaskError(403, code, message);
   }
 }
@@ -103,10 +107,12 @@ export function taskStatusOf(row) {
 }
 
 /// The task as a family reads it, with the cycle that is open on it.
-export function taskView(row, latestClaim = null) {
+export function taskView(row, latestClaim = null, { viewerChildId = null } = {}) {
   return {
     id: row.id,
     childId: row.child_id,
+    audienceThreadId: row.audience_thread_id ?? null,
+    canClaim: viewerChildId == null ? null : row.child_id === viewerChildId,
     title: row.title,
     note: row.note,
     points: row.points,
@@ -161,6 +167,31 @@ export function pointsView(rows) {
   return { points: pointsFromEntries(entries), entries };
 }
 
+async function requireTaskThreadMember(port, tx, {
+  familyId,
+  task,
+  childId,
+  viewerKind,
+  viewerId,
+}) {
+  const threadId = task.audience_thread_id;
+  if (threadId == null) return;
+  const thread = await port.readChatThread(tx, { familyId, threadId });
+  if (thread == null || !['direct', 'group'].includes(thread.kind)) {
+    throw new TaskError(404, 'task_not_found', 'This task is not available.');
+  }
+  const members = await port.listChatThreadMembers(tx, { threadId });
+  const childIsMember = members.some(
+    (member) => member.participant_kind === 'child' && member.participant_id === childId,
+  );
+  const viewerIsMember = members.some(
+    (member) => member.participant_kind === viewerKind && member.participant_id === viewerId,
+  );
+  if (!childIsMember || !viewerIsMember) {
+    throw new TaskError(404, 'task_not_found', 'This task is not available.');
+  }
+}
+
 function instant(value) {
   return value instanceof Date ? value.toISOString() : value;
 }
@@ -174,6 +205,7 @@ export function createTaskCreate({ port }) {
     title,
     note = '',
     points,
+    audienceThreadId = null,
     idempotencyKey,
     requestHash,
     correlationId,
@@ -189,6 +221,22 @@ export function createTaskCreate({ port }) {
         if (child == null) {
           throw new TaskError(404, 'child_not_found', 'This child is not part of the family.');
         }
+        if (audienceThreadId != null) {
+          const targetThread = await port.readChatThread(tx, { familyId, threadId: audienceThreadId });
+          if (targetThread == null || !['direct', 'group'].includes(targetThread.kind)) {
+            throw new TaskError(404, 'task_audience_not_found', 'This collaboration group is not available.');
+          }
+          const threadMembers = await port.listChatThreadMembers(tx, { threadId: audienceThreadId });
+          const isCreatorMember = threadMembers.some(
+            (member) => member.participant_kind === 'membership' && member.participant_id === actor.id,
+          );
+          const beneficiaryIncluded = threadMembers.some(
+            (member) => member.participant_kind === 'child' && member.participant_id === childId,
+          );
+          if (!isCreatorMember || !beneficiaryIncluded) {
+            throw new TaskError(404, 'task_audience_not_found', 'This collaboration group is not available.');
+          }
+        }
         const openCount = await port.countOpenTasks(tx, { familyId, childId });
         if (openCount >= MAX_OPEN_TASKS_PER_CHILD) {
           throw new TaskError(422, 'task_too_many_open', 'This child has more open tasks than a family can keep track of.');
@@ -199,6 +247,7 @@ export function createTaskCreate({ port }) {
           title: normalizeTaskTitle(title),
           note: normalizeTaskNote(note),
           points: normalizeTaskPoints(points),
+          audienceThreadId,
           createdByMembershipId: actor.id,
         });
         await port.audit(tx, {
@@ -208,6 +257,7 @@ export function createTaskCreate({ port }) {
           subjectId: childId,
           subjectType: 'family_task',
           eventType: 'family.task_created',
+          payload: { childId, audienceThreadId: row.audience_thread_id ?? null },
         });
         return { task: taskView(row, null) };
       },
@@ -216,15 +266,27 @@ export function createTaskCreate({ port }) {
 }
 
 /// Everything this child has to do, newest first, each with the cycle that is open on it.
-async function readTasksFor(port, tx, { familyId, childId }) {
-  const tasks = await port.listTasks(tx, { familyId, childId });
+async function readTasksFor(port, tx, {
+  familyId,
+  childId,
+  viewerKind,
+  viewerId,
+}) {
+  const tasks = await port.listTasks(tx, {
+    familyId,
+    childId,
+    viewerKind,
+    viewerId,
+  });
   const claims = await port.listClaims(tx, { familyId, childId });
   const latestByTask = new Map();
   // listClaims returns newest first, so the first claim seen for a task is its current cycle.
   for (const claim of claims) {
     if (!latestByTask.has(claim.task_id)) latestByTask.set(claim.task_id, claim);
   }
-  return tasks.map((task) => taskView(task, latestByTask.get(task.id) ?? null));
+  return tasks.map((task) => taskView(task, latestByTask.get(task.id) ?? null, {
+    viewerChildId: viewerKind === 'child' ? viewerId : null,
+  }));
 }
 
 export function createTaskList({ port }) {
@@ -236,7 +298,14 @@ export function createTaskList({ port }) {
       if (child == null) {
         throw new TaskError(404, 'child_not_found', 'This child is not part of the family.');
       }
-      return { tasks: await readTasksFor(port, tx, { familyId, childId }) };
+      return {
+        tasks: await readTasksFor(port, tx, {
+          familyId,
+          childId,
+          viewerKind: 'membership',
+          viewerId: actor.id,
+        }),
+      };
     });
   };
 }
@@ -247,7 +316,12 @@ export function createDeviceTaskRead({ port }) {
   return async function readTasksForDevice({ deviceId, deviceCredential }) {
     return port.read(async (tx) => {
       const device = await requireDevice(port, tx, { deviceId, deviceCredential });
-      const tasks = await readTasksFor(port, tx, { familyId: device.family_id, childId: device.child_id });
+      const tasks = await readTasksFor(port, tx, {
+        familyId: device.family_id,
+        childId: device.child_id,
+        viewerKind: 'child',
+        viewerId: device.child_id,
+      });
       const ledger = await port.readLedger(tx, { familyId: device.family_id, childId: device.child_id });
       return { tasks, ...pointsView(ledger) };
     });
@@ -298,20 +372,33 @@ export function createTaskClaim({ port }) {
         let effectiveChildId = childId;
         let claimerMembershipId = null;
         let claimerDeviceId = null;
+        let claimerParticipantKind;
+        let claimerParticipantId;
         if (deviceId != null) {
           const device = await requireDevice(port, tx, { deviceId, deviceCredential });
           effectiveFamilyId = device.family_id;
           effectiveChildId = device.child_id;
           claimerDeviceId = device.id;
+          claimerParticipantKind = 'child';
+          claimerParticipantId = device.child_id;
         } else {
           const actor = await port.authorize(tx, { familyId, subject: principal.subject });
           requireGuardian(actor, 'task_forbidden', "Only a guardian may claim on a child's behalf.");
           claimerMembershipId = actor.id;
+          claimerParticipantKind = 'membership';
+          claimerParticipantId = actor.id;
         }
         const task = await port.readTask(tx, { familyId: effectiveFamilyId, taskId }, { forUpdate: true });
         if (task == null || task.child_id !== effectiveChildId) {
           throw new TaskError(404, 'task_not_found', 'This task is not for this child.');
         }
+        await requireTaskThreadMember(port, tx, {
+          familyId: effectiveFamilyId,
+          task,
+          childId: effectiveChildId,
+          viewerKind: claimerParticipantKind,
+          viewerId: claimerParticipantId,
+        });
         if (taskStatusOf(task) !== 'open') {
           throw new TaskError(409, 'task_archived', 'This task was withdrawn.');
         }
@@ -336,6 +423,7 @@ export function createTaskClaim({ port }) {
           subjectId: effectiveChildId,
           subjectType: 'family_task_claim',
           eventType: 'family.task_claimed',
+          payload: { childId: effectiveChildId, audienceThreadId: task.audience_thread_id ?? null }
         });
         return { claim: claimView(row) };
       },
@@ -371,6 +459,13 @@ export function createTaskDecision({ port }) {
         if (task == null || task.child_id !== childId) {
           throw new TaskError(404, 'task_not_found', 'This task is not for this child.');
         }
+        await requireTaskThreadMember(port, tx, {
+          familyId,
+          task,
+          childId,
+          viewerKind: 'membership',
+          viewerId: actor.id,
+        });
         const pending = await port.readPendingClaim(tx, { taskId });
         if (pending == null) {
           throw new TaskError(409, 'task_claim_not_pending', 'There is no claim waiting on this task.');
@@ -406,6 +501,7 @@ export function createTaskDecision({ port }) {
           subjectId: childId,
           subjectType: 'family_task_claim',
           eventType: confirmed ? 'family.task_confirmed' : 'family.task_declined',
+          payload: { childId, audienceThreadId: task.audience_thread_id ?? null }
         });
         const ledger = await port.readLedger(tx, { familyId, childId });
         return {
@@ -443,7 +539,7 @@ export function tasksFor(store, { credentialMatches }) {
   };
 }
 
-const TASK_COLUMNS = `id, family_id, child_id, title, note, points, status,
+const TASK_COLUMNS = `id, family_id, child_id, audience_thread_id, title, note, points, status,
                       created_by_membership_id, created_at, updated_at`;
 
 const CLAIM_COLUMNS = `id, family_id, task_id, child_id, status, note,
@@ -477,7 +573,13 @@ export function postgresTasksPort(store, { credentialMatches }) {
     },
 
     async authorize(client, { familyId, subject }) {
-      return store.activeActorMembership(client, familyId, subject);
+      const actor = await store.activeActorMembership(client, familyId, subject);
+      actor.collaborationPolicy = await readServerCollaborationPolicy(client, { familyId });
+      return actor;
+    },
+
+    async readCollaborationPolicy(client, { familyId, forUpdate = false } = {}) {
+      return readServerCollaborationPolicy(client, { familyId, forUpdate });
     },
 
     async readChild(client, { familyId, childId }) {
@@ -486,6 +588,27 @@ export function postgresTasksPort(store, { credentialMatches }) {
         [familyId, childId],
       );
       return rows[0] ?? null;
+    },
+
+    async readChatThread(client, { familyId, threadId }) {
+      const { rows } = await client.query(
+        `SELECT id, family_id, kind, next_seq FROM family_chat_threads
+          WHERE family_id = $1 AND id = $2`,
+        [familyId, threadId],
+      );
+      return rows[0] ?? null;
+    },
+
+    async listChatThreadMembers(client, { threadId }) {
+      const { rows } = await client.query(
+        `SELECT mem.participant_kind, mem.participant_id
+           FROM family_chat_thread_members mem
+           LEFT JOIN family_memberships membership ON membership.id = mem.membership_id
+          WHERE mem.thread_id = $1 AND mem.left_at IS NULL
+            AND (mem.participant_kind = 'child' OR membership.status = 'active')`,
+        [threadId],
+      );
+      return rows;
     },
 
     async readDevice(client, { deviceId }) {
@@ -506,13 +629,13 @@ export function postgresTasksPort(store, { credentialMatches }) {
       return rows[0]?.open ?? 0;
     },
 
-    async insertTask(client, { familyId, childId, title, note, points, createdByMembershipId }) {
+    async insertTask(client, { familyId, childId, audienceThreadId, title, note, points, createdByMembershipId }) {
       const { rows } = await client.query(
         `INSERT INTO family_tasks
-           (id, family_id, child_id, title, note, points, created_by_membership_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+           (id, family_id, child_id, audience_thread_id, title, note, points, created_by_membership_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING ${TASK_COLUMNS}`,
-        [randomUUID(), familyId, childId, title, note, points, createdByMembershipId],
+        [randomUUID(), familyId, childId, audienceThreadId, title, note, points, createdByMembershipId],
       );
       return rows[0];
     },
@@ -527,12 +650,39 @@ export function postgresTasksPort(store, { credentialMatches }) {
       return rows[0] ?? null;
     },
 
-    async listTasks(client, { familyId, childId }) {
+    async listTasks(client, { familyId, childId, viewerKind, viewerId }) {
       const { rows } = await client.query(
-        `SELECT ${TASK_COLUMNS} FROM family_tasks
-          WHERE family_id = $1 AND child_id = $2
-          ORDER BY created_at DESC, id DESC`,
-        [familyId, childId],
+        `SELECT task.* FROM family_tasks task
+          WHERE task.family_id = $1
+            AND (
+              (task.audience_thread_id IS NULL AND task.child_id = $2)
+              OR (
+                task.audience_thread_id IS NOT NULL
+                AND task.child_id = $2
+                AND EXISTS (
+                  SELECT 1 FROM family_chat_thread_members target_child
+                   WHERE target_child.thread_id = task.audience_thread_id
+                     AND target_child.family_id = task.family_id
+                     AND target_child.participant_kind = 'child'
+                     AND target_child.participant_id = $2
+                     AND target_child.left_at IS NULL
+                )
+                AND EXISTS (
+                  SELECT 1
+                    FROM family_chat_thread_members viewer
+                    LEFT JOIN family_memberships viewer_membership
+                      ON viewer_membership.id = viewer.membership_id
+                   WHERE viewer.thread_id = task.audience_thread_id
+                     AND viewer.family_id = task.family_id
+                     AND viewer.participant_kind = $3
+                     AND viewer.participant_id = $4
+                     AND viewer.left_at IS NULL
+                     AND (viewer.participant_kind = 'child' OR viewer_membership.status = 'active')
+                )
+              )
+            )
+          ORDER BY task.created_at DESC, task.id DESC`,
+        [familyId, childId, viewerKind, viewerId],
       );
       return rows;
     },
@@ -624,6 +774,7 @@ export function postgresTasksPort(store, { credentialMatches }) {
       subjectId,
       subjectType,
       eventType,
+      payload = {},
     }) {
       await store.appendAuditAndOutbox(client, {
         familyId,
@@ -632,6 +783,7 @@ export function postgresTasksPort(store, { credentialMatches }) {
         subjectId,
         subjectType,
         eventType,
+        payload,
       });
     },
   };

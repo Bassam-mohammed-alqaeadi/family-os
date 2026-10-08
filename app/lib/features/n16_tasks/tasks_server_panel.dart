@@ -5,6 +5,8 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n16_tasks/tasks_server_authority.dart';
+import 'package:family_os/features/n02_day/family_chat_server_authority.dart';
+import 'package:family_os/foundation_gate/family_chat_api_client.dart';
 import 'package:family_os/foundation_gate/family_tasks_api_client.dart';
 
 /// W7 — the server's tasks and points, rendered for the guardian who is responsible for them.
@@ -52,6 +54,8 @@ class TasksServerPanel extends StatefulWidget {
 class _TasksServerPanelState extends State<TasksServerPanel> {
   TasksAuthorityStatus? _status;
   List<FoundationGateTask> _tasks = const <FoundationGateTask>[];
+  List<FamilyChatThread> _collaborationThreads = const <FamilyChatThread>[];
+  String? _createAudienceThreadId;
   FoundationGateChildPoints? _points;
   bool _busy = false;
 
@@ -67,6 +71,7 @@ class _TasksServerPanelState extends State<TasksServerPanel> {
   void initState() {
     super.initState();
     _load();
+    _loadCollaborationThreads();
   }
 
   @override
@@ -78,6 +83,7 @@ class _TasksServerPanelState extends State<TasksServerPanel> {
     if (oldWidget.childId != widget.childId ||
         oldWidget.authority != widget.authority) {
       _load();
+      _loadCollaborationThreads();
     }
   }
 
@@ -114,6 +120,26 @@ class _TasksServerPanelState extends State<TasksServerPanel> {
     });
   }
 
+  Future<void> _loadCollaborationThreads() async {
+    final chatAuthority = activeFamilyChatServerAuthority;
+    if (chatAuthority == null) return;
+    final answer = await chatAuthority.listGuardianThreads();
+    if (!mounted || !answer.isReady) return;
+    setState(() {
+      _collaborationThreads = answer.value!.threads.where((thread) {
+        final supportedKind = thread.kind == FamilyChatThreadKind.direct ||
+            thread.kind == FamilyChatThreadKind.group;
+        final childIsParticipant = thread.participants.any((participant) =>
+            participant.kind == FamilyChatParticipantKind.child &&
+            participant.id == widget.childId.value);
+        return supportedKind && childIsParticipant;
+      }).toList(growable: false);
+      if (!_collaborationThreads.any((thread) => thread.id == _createAudienceThreadId)) {
+        _createAudienceThreadId = null;
+      }
+    });
+  }
+
   Future<void> _create() async {
     final authority = _authority;
     if (authority == null || !widget.canEdit) return;
@@ -126,13 +152,17 @@ class _TasksServerPanelState extends State<TasksServerPanel> {
       title: title,
       note: _noteCtrl.text.trim(),
       points: points,
+      audienceThreadId: _createAudienceThreadId,
       idempotencyKey: () => _key('create'),
     );
     if (!mounted) return;
     setState(() {
       _busy = false;
       _status = answer.status;
-      if (answer.isReady) _titleCtrl.clear();
+      if (answer.isReady) {
+        _titleCtrl.clear();
+        _createAudienceThreadId = null;
+      }
     });
     if (answer.isReady) await _load();
   }
@@ -472,6 +502,38 @@ class _TasksServerPanelState extends State<TasksServerPanel> {
               decoration: InputDecoration(
                 labelText: l10n.tasksServerCreateNote,
               ),
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              key: const Key('tasks_server_create_audience_thread'),
+              initialValue: _createAudienceThreadId ?? '',
+              decoration: InputDecoration(
+                labelText: l10n.tasksServerAudienceScopeLabel,
+              ),
+              items: <DropdownMenuItem<String>>[
+                DropdownMenuItem<String>(
+                  value: '',
+                  child: Text(l10n.tasksServerAudienceScopeChildOnly),
+                ),
+                for (final thread in _collaborationThreads)
+                  DropdownMenuItem<String>(
+                    value: thread.id,
+                    child: Text(
+                      thread.title.trim().isNotEmpty
+                          ? thread.title
+                          : thread.kind == FamilyChatThreadKind.direct
+                              ? l10n.familyChatDirectThread
+                              : l10n.familyChatGroupThread,
+                    ),
+                  ),
+              ],
+              onChanged: _busy
+                  ? null
+                  : (value) => setState(() {
+                      _createAudienceThreadId = value == null || value.isEmpty
+                          ? null
+                          : value;
+                    }),
             ),
             const SizedBox(height: 8),
             Align(

@@ -128,6 +128,7 @@ class FoundationGateEventAudienceEntry {
 class FoundationGateFamilyEvent {
   const FoundationGateFamilyEvent({
     required this.id,
+    required this.audienceThreadId,
     required this.title,
     required this.note,
     required this.location,
@@ -147,6 +148,7 @@ class FoundationGateFamilyEvent {
   });
 
   final String id;
+  final String? audienceThreadId;
   final String title;
   final String note;
   final String location;
@@ -255,7 +257,8 @@ class FamilyCalendarApiClient {
     required String title,
     required DateTime startsAt,
     required DateTime endsAt,
-    required List<String> childIds,
+    List<String> childIds = const <String>[],
+    String? audienceThreadId,
     required String idempotencyKey,
     required String idToken,
     String note = '',
@@ -263,14 +266,15 @@ class FamilyCalendarApiClient {
     bool allDay = false,
     int? reminderMinutes,
   }) async {
-    if (childIds.isEmpty) {
-      throw ArgumentError.value(childIds, 'childIds', 'at least one child');
+    if (childIds.isEmpty && audienceThreadId == null) {
+      throw ArgumentError.value(childIds, 'childIds', 'select children or a collaboration group');
     }
-    final body = <String, Object>{
+    final body = <String, Object?>{
       'title': title,
       'startsAt': startsAt.toUtc().toIso8601String(),
       'endsAt': endsAt.toUtc().toIso8601String(),
       'childIds': childIds,
+      if (audienceThreadId != null) 'audienceThreadId': audienceThreadId,
       if (note.isNotEmpty) 'note': note,
       if (location.isNotEmpty) 'location': location,
       if (allDay) 'allDay': true,
@@ -327,7 +331,12 @@ class FamilyCalendarApiClient {
     bool? allDay,
     int? reminderMinutes,
     List<String>? childIds,
+    String? audienceThreadId,
+    bool clearAudienceThreadId = false,
   }) async {
+    if (clearAudienceThreadId && audienceThreadId != null) {
+      throw ArgumentError('Specify a target thread or clear it, not both.');
+    }
     if (title == null &&
         note == null &&
         location == null &&
@@ -335,15 +344,17 @@ class FamilyCalendarApiClient {
         endsAt == null &&
         allDay == null &&
         reminderMinutes == null &&
-        childIds == null) {
+        childIds == null &&
+        audienceThreadId == null &&
+        !clearAudienceThreadId) {
       throw ArgumentError(
         'An update must change at least one field; the server refuses an empty edit.',
       );
     }
-    if (childIds != null && childIds.isEmpty) {
-      throw ArgumentError.value(childIds, 'childIds', 'at least one child');
+    if (childIds != null && childIds.isEmpty && audienceThreadId == null) {
+      throw ArgumentError.value(childIds, 'childIds', 'select at least one child or a collaboration group');
     }
-    final body = <String, Object>{
+    final body = <String, Object?>{
       'version': version,
       if (title != null) 'title': title,
       if (note != null) 'note': note,
@@ -353,6 +364,8 @@ class FamilyCalendarApiClient {
       if (allDay != null) 'allDay': allDay,
       if (reminderMinutes != null) 'reminderMinutes': reminderMinutes,
       if (childIds != null) 'childIds': childIds,
+      if (audienceThreadId != null) 'audienceThreadId': audienceThreadId,
+      if (clearAudienceThreadId) 'audienceThreadId': null,
     };
     final response = await _patch(
       _configuration.familyEventUri(familyId, eventId),
@@ -570,6 +583,12 @@ class FamilyCalendarApiClient {
         FoundationGateApiFailure.invalidResponse,
       );
     }
+    final audienceThreadId = event['audienceThreadId'];
+    if (audienceThreadId != null && audienceThreadId is! String) {
+      throw const FoundationGateApiException(
+        FoundationGateApiFailure.invalidResponse,
+      );
+    }
     final rawAudience = event['audience'];
     if (rawAudience is! List) {
       throw const FoundationGateApiException(
@@ -578,6 +597,7 @@ class FamilyCalendarApiClient {
     }
     return FoundationGateFamilyEvent(
       id: _string(event['id'], 'id'),
+      audienceThreadId: audienceThreadId as String?,
       title: _string(event['title'], 'title'),
       note: event['note'] is String ? event['note']! as String : '',
       location: event['location'] is String ? event['location']! as String : '',
@@ -684,7 +704,7 @@ class FamilyCalendarApiClient {
   Future<FoundationGateHttpResponse> _post(
     Uri uri,
     String idToken,
-    Map<String, Object> body, {
+    Map<String, Object?> body, {
     required String idempotencyKey,
   }) async {
     try {
@@ -705,7 +725,7 @@ class FamilyCalendarApiClient {
   Future<FoundationGateHttpResponse> _patch(
     Uri uri,
     String idToken,
-    Map<String, Object> body,
+    Map<String, Object?> body,
   ) async {
     try {
       return await _transport.patch(

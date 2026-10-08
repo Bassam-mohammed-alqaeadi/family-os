@@ -44,8 +44,13 @@
 import { randomUUID } from 'node:crypto';
 
 import { HttpError } from './http-error.js';
+import {
+  collaborationRoleAllowed,
+  readCollaborationPolicy as readServerCollaborationPolicy,
+} from './collaboration-policy.js';
 
-export const CHAT_THREAD_KINDS = Object.freeze(['family', 'child']);
+export const CHAT_THREAD_KINDS = Object.freeze(['family', 'child', 'direct', 'group']);
+export const CHAT_CREATABLE_THREAD_KINDS = Object.freeze(['direct', 'group']);
 export const CHAT_PARTICIPANT_KINDS = Object.freeze(['membership', 'child']);
 
 export const CHAT_TITLE_MAX = 120;
@@ -55,6 +60,19 @@ export const CHAT_CLIENT_MESSAGE_ID_MAX = 64;
 export const CHAT_PARTICIPANTS_MAX = 24;
 export const CHAT_PAGE_MAX = 200;
 export const CHAT_PAGE_DEFAULT = 50;
+
+export const CHAT_CURRENT_CAPABILITIES = Object.freeze({
+  transport: 'polling',
+  listPollSeconds: 30,
+  threadPollSeconds: 15,
+  contentTypes: Object.freeze(['text/plain']),
+  serverSentEvents: false,
+  webSockets: false,
+  attachments: false,
+  audio: false,
+  presence: false,
+  richReactions: false,
+});
 
 const GUARDIAN_ROLES = new Set(['primary_guardian', 'co_guardian']);
 
@@ -74,13 +92,6 @@ function optionalInstant(value) {
   return value == null ? null : instant(value);
 }
 
-function requireGuardian(actor, code, message) {
-  if (!GUARDIAN_ROLES.has(actor?.role)) {
-    throw new ChatError(403, code, message);
-  }
-  return actor;
-}
-
 /// The participant the caller speaks as. Exactly one of the two shapes is given: a membership
 /// for an authenticated person, a child for a paired handset. This function is the ONLY place
 /// an author is decided, which is why no request body can contain one.
@@ -96,13 +107,16 @@ function participantOf({ actor, device }) {
 /// A participant as a screen may see them. Deliberately absent: the OIDC subject of a
 /// membership. The roster module already decided that a guardian does not need a durable
 /// identifier for a person to run a family, and a chat list has even less use for one.
-export function participantView(row, { selfMembershipId = null } = {}) {
+export function participantView(row, { selfParticipant = null, selfMembershipId = null } = {}) {
+  const self = selfParticipant == null
+    ? row.participant_kind === 'membership' && row.participant_id === selfMembershipId
+    : row.participant_kind === selfParticipant.kind && row.participant_id === selfParticipant.id;
   return {
     kind: row.participant_kind,
     id: row.participant_id,
     role: row.membership_role ?? null,
     displayName: row.child_display_name ?? null,
-    isSelf: row.participant_kind === 'membership' && row.participant_id === selfMembershipId,
+    isSelf: self,
   };
 }
 
@@ -153,7 +167,13 @@ export function threadLastMessage(row) {
   );
 }
 
-export function threadView(row, { participants = [], lastMessage = null, unreadCount = 0, selfMembershipId = null } = {}) {
+export function threadView(row, {
+  participants = [],
+  lastMessage = null,
+  unreadCount = 0,
+  selfMembershipId = null,
+  selfParticipant = null,
+} = {}) {
   return {
     id: row.id,
     kind: row.kind,
@@ -161,7 +181,7 @@ export function threadView(row, { participants = [], lastMessage = null, unreadC
     createdAt: instant(row.created_at),
     lastReadSeq: Number(row.last_read_seq ?? 0),
     unreadCount,
-    participants: participants.map((entry) => participantView(entry, { selfMembershipId })),
+    participants: participants.map((entry) => participantView(entry, { selfMembershipId, selfParticipant })),
     lastMessage,
   };
 }
@@ -197,7 +217,14 @@ export function normalizeMessageQuery({ afterSeq, limit }) {
 /// A read mark is a statement about what THIS participant has seen, so it may not run ahead of
 /// the thread: a client that claims to have read sequence 900 of a thread that ends at 12 is
 /// either confused or trying to make somebody else's receipt meaningless.
-export function requireReadableSeq({ readSeq, highestSeq }) {
+export function requireReadableSeq({ readSeq, highestSeq, minimumSeq = 0 }) {
+  if (readSeq < minimumSeq) {
+    throw new ChatError(
+      409,
+      'chat_read_before_join',
+      'A new participant cannot mark conversation history from before they joined as read.',
+    );
+  }
   if (readSeq > highestSeq) {
     throw new ChatError(
       409,
@@ -223,21 +250,153 @@ export function expectedRevision(value) {
 
 // ── operations ────────────────────────────────────────────────────────────────────────────
 
-/// A guardian opens a room. The participants are written in the same transaction as the room,
-/// so no reader can ever observe a thread that exists with nobody in it.
-///
-/// Two shapes are allowed, and only two: `family` is the household room and holds every active
-/// guardian; `child` holds exactly one child of this family plus every active guardian. The
-/// guardian roster is read here from the server, never selected by a client. A child is never a
-/// member of a room that does not name them, which makes "who can reach this child" a question
-/// storage can answer rather than a question a reviewer has to hope about.
+function participantKey(participant) {
+  return `${participant.kind}:${participant.id}`;
+}
+
+function directPairKey(left, right) {
+  return [participantKey(left), participantKey(right)].sort().join('|');
+}
+
+async function createThreadInTransaction({
+  port,
+  tx,
+  familyId,
+  actor,
+  creator,
+  kind,
+  title,
+  requestedParticipants,
+  correlationId,
+}) {
+  if (!CHAT_CREATABLE_THREAD_KINDS.includes(kind)) {
+    throw new ChatError(
+      422,
+      'chat_legacy_thread_kind_retired',
+      'New conversations must be direct or user-created groups; existing legacy rooms remain readable.',
+    );
+  }
+  if (!Array.isArray(requestedParticipants)) {
+    throw new ChatError(422, 'chat_participants_required', 'Name the other participants explicitly.');
+  }
+
+  const policy = await port.readCollaborationPolicy(tx, { familyId });
+  if (creator.kind === 'child') {
+    const allowed = kind === 'direct' ? policy.childDirectEnabled : policy.childGroupsEnabled;
+    if (!allowed) {
+      throw new ChatError(403, 'chat_child_creation_disabled', 'The family safety policy does not allow this child to start this conversation.');
+    }
+  } else if (!collaborationRoleAllowed(actor, policy, 'chatCreate')) {
+    throw new ChatError(403, 'chat_forbidden', 'This guardian role cannot open a conversation under the family policy.');
+  }
+
+  const expectedTargets = kind === 'direct' ? 1 : null;
+  if ((expectedTargets != null && requestedParticipants.length !== expectedTargets) ||
+      (kind === 'group' && requestedParticipants.length < 2)) {
+    throw new ChatError(
+      422,
+      'chat_participant_count_invalid',
+      kind === 'direct'
+        ? 'A direct conversation needs exactly one other family member.'
+        : 'A user-created group needs at least two other family members.',
+    );
+  }
+
+  const baseParticipants = [creator];
+  const seen = new Set([participantKey(creator)]);
+  for (const requested of requestedParticipants) {
+    const kind_ = requested?.kind;
+    const id = requested?.id;
+    if (!CHAT_PARTICIPANT_KINDS.includes(kind_) || typeof id !== 'string' || id.length === 0) {
+      throw new ChatError(422, 'chat_participant_invalid', 'Each participant must be a family membership or child.');
+    }
+    const key = participantKey({ kind: kind_, id });
+    if (seen.has(key)) {
+      throw new ChatError(422, 'chat_participant_repeated', 'A person may appear only once in a conversation.');
+    }
+    seen.add(key);
+    if (kind_ === 'membership') {
+      const membership = await port.readMembership(tx, { familyId, membershipId: id });
+      if (membership == null || membership.status !== 'active' || !GUARDIAN_ROLES.has(membership.role)) {
+        throw new ChatError(404, 'chat_participant_not_found', 'One of these active family participants is not available.');
+      }
+    } else {
+      const child = await port.readChild(tx, { familyId, childId: id });
+      if (child == null) {
+        throw new ChatError(404, 'chat_participant_not_found', 'One of these active family participants is not available.');
+      }
+    }
+    baseParticipants.push({ kind: kind_, id });
+  }
+
+  if (kind === 'group' && baseParticipants.length < 3) {
+    throw new ChatError(422, 'chat_participant_count_invalid', 'A group needs at least three participants including its creator.');
+  }
+
+  const childCount = baseParticipants.filter((entry) => entry.kind === 'child').length;
+  const guardianInclusionRequired = childCount > 0 && (
+    policy.guardianInclusionMode === 'all_child_chats' ||
+    (policy.guardianInclusionMode === 'child_to_child' && childCount > 1)
+  );
+  const participants = [...baseParticipants];
+  if (guardianInclusionRequired) {
+    const guardians = await port.listActiveGuardianMemberships(tx, { familyId });
+    for (const membership of guardians) {
+      if (membership.status !== 'active' || !GUARDIAN_ROLES.has(membership.role)) continue;
+      const candidate = { kind: 'membership', id: membership.id };
+      if (!seen.has(participantKey(candidate))) {
+        seen.add(participantKey(candidate));
+        participants.push(candidate);
+      }
+    }
+  }
+
+  const maximum = policy.maximumGroupSize;
+  if (participants.length > maximum) {
+    throw new ChatError(422, 'chat_group_too_large', `This conversation exceeds the family policy limit of ${maximum} participants.`);
+  }
+  const membershipIds = participants.filter((entry) => entry.kind === 'membership').map((entry) => entry.id).sort();
+  const childIds = participants.filter((entry) => entry.kind === 'child').map((entry) => entry.id).sort();
+  const pairKey = kind === 'direct' ? directPairKey(baseParticipants[0], baseParticipants[1]) : null;
+  const row = await port.insertThread(tx, {
+    familyId,
+    kind,
+    title,
+    directPairKey: pairKey,
+    createdByMembershipId: creator.kind === 'membership' ? creator.id : null,
+    createdByChildId: creator.kind === 'child' ? creator.id : null,
+    createdByKind: creator.kind,
+    createdById: creator.id,
+  });
+  const inserted = await port.insertThreadMembers(tx, {
+    familyId,
+    threadId: row.id,
+    membershipIds,
+    childIds,
+    joinedSeq: 1,
+  });
+  await port.audit(tx, {
+    familyId,
+    actorMembershipId: actor?.id ?? null,
+    correlationId,
+    subjectId: row.id,
+    subjectType: 'family_chat_thread',
+    eventType: 'family.chat_thread_created',
+  });
+  return {
+    thread: threadView(row, { participants: inserted, selfParticipant: creator }),
+  };
+}
+
+/// A new conversation names its participants explicitly. No guardian is added unless the
+/// family's persisted collaboration policy activates a guardian-inclusion rule.
 export function createThreadCreate({ port }) {
   return async function createChatThread({
     principal,
     familyId,
     kind,
     title = '',
-    childIds = [],
+    participants = [],
     idempotencyKey,
     requestHash,
     correlationId,
@@ -248,85 +407,61 @@ export function createThreadCreate({ port }) {
       requestHash,
       async (tx) => {
         const actor = await port.authorize(tx, { familyId, subject: principal.subject });
-        requireGuardian(actor, 'chat_forbidden', 'Only a guardian may open a family conversation.');
-
-        if (kind === 'child') {
-          if (childIds.length !== 1) {
-            throw new ChatError(
-              422,
-              'chat_child_thread_needs_one_child',
-              'A child conversation is about one child, and names exactly them.',
-            );
-          }
-        } else if (childIds.length !== 0) {
-          throw new ChatError(
-            422,
-            'chat_family_thread_is_guardians',
-            'The household conversation is between guardians; a child has their own conversation.',
-          );
-        }
-
-        const guardianRows = await port.listActiveGuardianMemberships(tx, { familyId });
-        const membershipRows = [
-          ...new Set(
-            guardianRows
-              .filter(
-                (membership) =>
-                  membership.status === 'active' && GUARDIAN_ROLES.has(membership.role),
-              )
-              .map((membership) => membership.id),
-          ),
-        ].sort();
-        if (!membershipRows.includes(actor.id)) {
-          // Authorization and the active roster are read in one transaction. If the creator
-          // disappeared from that roster between the checks, refuse rather than creating a
-          // room for a guardian whose membership is no longer active.
-          throw new ChatError(
-            409,
-            'chat_guardian_roster_changed',
-            'Active guardians changed while the conversation was being opened. Try again.',
-          );
-        }
-
-        for (const childId of childIds) {
-          const child = await port.readChild(tx, { familyId, childId });
-          if (child == null) {
-            throw new ChatError(404, 'chat_child_not_found', 'One of these children is not part of the family.');
-          }
-        }
-
-        const row = await port.insertThread(tx, {
+        return createThreadInTransaction({
+          port,
+          tx,
           familyId,
+          actor,
+          creator: { kind: 'membership', id: actor.id },
           kind,
           title,
-          createdByMembershipId: actor.id,
-        });
-        const participants = await port.insertThreadMembers(tx, {
-          familyId,
-          threadId: row.id,
-          membershipIds: membershipRows,
-          childIds,
-        });
-        await port.audit(tx, {
-          familyId,
-          actorMembershipId: actor.id,
+          requestedParticipants: participants,
           correlationId,
-          subjectId: row.id,
-          subjectType: 'family_chat_thread',
-          eventType: 'family.chat_thread_created',
         });
-        return {
-          thread: threadView(row, { participants, selfMembershipId: actor.id }),
-        };
       },
     );
   };
 }
 
-/// A guardian may add a participant after room creation. New rooms already include every active
-/// guardian from the server roster; this operation supports a guardian who became active later.
-/// A child conversation keeps its one-child law, no outsider can be added, and the guardian
-/// making a change must already be in the room.
+/// The paired child's own handset may start a direct channel or user-created group. Its own
+/// identity is derived only from the verified device credential, and all selected participants
+/// are checked against the same family's live server roster.
+export function createDeviceThreadCreate({ port }) {
+  return async function createChatThreadForDevice({
+    deviceId,
+    deviceCredential,
+    kind,
+    title = '',
+    participants = [],
+    idempotencyKey,
+    requestHash,
+    correlationId,
+  }) {
+    return port.idempotent(
+      `chat:device-thread:${deviceId}`,
+      idempotencyKey,
+      requestHash,
+      async (tx) => {
+        const device = await port.requireDevice(tx, { deviceId, deviceCredential });
+        return createThreadInTransaction({
+          port,
+          tx,
+          familyId: device.family_id,
+          actor: null,
+          creator: { kind: 'child', id: device.child_id },
+          kind,
+          title,
+          requestedParticipants: participants,
+          correlationId,
+        });
+      },
+    );
+  };
+}
+
+/// A guardian may add a participant to a user-created group. Direct channels remain exactly two
+/// peers (unless a safety policy explicitly added guardians at creation); use a new group when
+/// the audience needs to grow. A join starts at the current sequence, never at old history.
 export function createThreadMemberAdd({ port }) {
   return async function addChatThreadMember({
     principal,
@@ -344,13 +479,14 @@ export function createThreadMemberAdd({ port }) {
       requestHash,
       async (tx) => {
         const actor = await port.authorize(tx, { familyId, subject: principal.subject });
-        requireGuardian(actor, 'chat_forbidden', 'Only a guardian may change who is in a conversation.');
+        const policy = await port.readCollaborationPolicy(tx, { familyId });
+        if (!collaborationRoleAllowed(actor, policy, 'chatManage')) {
+          throw new ChatError(403, 'chat_forbidden', 'This guardian role cannot manage conversation membership under the family policy.');
+        }
         const thread = await port.readThread(tx, { familyId, threadId }, { forUpdate: true });
         if (thread == null) {
           throw new ChatError(404, 'chat_thread_not_found', 'This conversation is not part of the family.');
         }
-        // The guardian changing the room must be in it: an outsider rearranging somebody else's
-        // conversation is the exact shape of the abuse this wave is built around.
         const asMember = await port.readThreadMember(tx, {
           threadId,
           participantKind: 'membership',
@@ -359,41 +495,64 @@ export function createThreadMemberAdd({ port }) {
         if (asMember == null) {
           throw new ChatError(404, 'chat_thread_not_found', 'This conversation is not part of the family.');
         }
+        if (thread.kind === 'direct') {
+          throw new ChatError(409, 'chat_direct_is_pair', 'A direct conversation stays a pair; create a group to expand the audience.');
+        }
 
         if (participantKind === 'membership') {
           const membership = await port.readMembership(tx, { familyId, membershipId: participantId });
-          if (membership == null || membership.status !== 'active') {
-            throw new ChatError(404, 'chat_membership_not_found', 'This active guardian is not part of the family.');
+          if (membership == null || membership.status !== 'active' || !GUARDIAN_ROLES.has(membership.role)) {
+            throw new ChatError(404, 'chat_participant_not_found', 'This active guardian is not part of the family.');
           }
-          requireGuardian(membership, 'chat_participant_not_guardian', 'Only a guardian joins a room here.');
-        } else {
+        } else if (participantKind === 'child') {
           const child = await port.readChild(tx, { familyId, childId: participantId });
           if (child == null) {
-            throw new ChatError(404, 'chat_child_not_found', 'This child is not part of the family.');
+            throw new ChatError(404, 'chat_participant_not_found', 'This child is not part of the family.');
+          }
+          if (thread.kind !== 'group' && thread.kind !== 'child') {
+            throw new ChatError(422, 'chat_legacy_room_shape', 'This legacy room cannot be expanded to include a child.');
           }
           const existingChildren = await port.listThreadChildren(tx, { threadId });
-          if (thread.kind !== 'child' || existingChildren.length > 0) {
-            throw new ChatError(
-              422,
-              'chat_child_belongs_to_one_thread',
-              'A child conversation names one child, and a child is named by their own conversation.',
-            );
+          if (thread.kind === 'child' && existingChildren.length > 0) {
+            throw new ChatError(409, 'chat_legacy_child_room_full', 'This legacy child conversation already has its named child.');
           }
+        } else {
+          throw new ChatError(400, 'chat_participant_invalid', 'participantKind must be membership or child.');
         }
 
-        const existing = await port.readThreadMember(tx, {
-          threadId,
-          participantKind,
-          participantId,
-        });
+        const existing = await port.readThreadMember(tx, { threadId, participantKind, participantId });
         if (existing != null) {
           throw new ChatError(409, 'chat_member_already_present', 'They are already in this conversation.');
+        }
+
+        const currentMembers = await port.listThreadMembers(tx, { threadIds: [threadId] });
+        const membershipIds = participantKind === 'membership' ? [participantId] : [];
+        const childIds = participantKind === 'child' ? [participantId] : [];
+        if (participantKind === 'child' && thread.kind === 'group') {
+          const currentChildCount = currentMembers.filter((entry) => entry.participant_kind === 'child').length;
+          const inclusionRequired = policy.guardianInclusionMode === 'all_child_chats' ||
+            (policy.guardianInclusionMode === 'child_to_child' && currentChildCount > 0);
+          if (inclusionRequired) {
+            const guardians = await port.listActiveGuardianMemberships(tx, { familyId });
+            const currentIds = new Set(currentMembers
+              .filter((entry) => entry.participant_kind === 'membership')
+              .map((entry) => entry.participant_id));
+            for (const guardian of guardians) {
+              if (guardian.status === 'active' && GUARDIAN_ROLES.has(guardian.role) && !currentIds.has(guardian.id)) {
+                membershipIds.push(guardian.id);
+              }
+            }
+          }
+        }
+        if (thread.kind === 'group' && currentMembers.length + membershipIds.length + childIds.length > policy.maximumGroupSize) {
+          throw new ChatError(422, 'chat_group_too_large', `This conversation exceeds the family policy limit of ${policy.maximumGroupSize} participants.`);
         }
         const participants = await port.insertThreadMembers(tx, {
           familyId,
           threadId,
-          membershipIds: participantKind === 'membership' ? [participantId] : [],
-          childIds: participantKind === 'child' ? [participantId] : [],
+          membershipIds,
+          childIds,
+          joinedSeq: Number(thread.next_seq),
         });
         await port.audit(tx, {
           familyId,
@@ -404,7 +563,115 @@ export function createThreadMemberAdd({ port }) {
           eventType: 'family.chat_member_added',
         });
         return {
-          thread: threadView(thread, { participants, selfMembershipId: actor.id }),
+          thread: threadView(thread, {
+            participants,
+            selfParticipant: { kind: 'membership', id: actor.id },
+          }),
+        };
+      },
+    );
+  };
+}
+
+/// A child may add peers to a group only when the primary guardian explicitly enables that
+/// server policy. Direct conversations remain pairs, and every new member starts reading at
+/// the next sequence so a group invite never exposes old messages.
+export function createDeviceThreadMemberAdd({ port }) {
+  return async function addChatThreadMemberForDevice({
+    deviceId,
+    deviceCredential,
+    threadId,
+    participantKind,
+    participantId,
+    idempotencyKey,
+    requestHash,
+    correlationId,
+  }) {
+    return port.idempotent(
+      `chat:device-member:${deviceId}:${threadId}`,
+      idempotencyKey,
+      requestHash,
+      async (tx) => {
+        const device = await port.requireDevice(tx, { deviceId, deviceCredential });
+        const familyId = device.family_id;
+        const policy = await port.readCollaborationPolicy(tx, { familyId });
+        if (!policy.childGroupMemberManagementEnabled) {
+          throw new ChatError(403, 'chat_group_management_disabled', 'The family safety policy does not allow this child to change group membership.');
+        }
+        if (!CHAT_PARTICIPANT_KINDS.includes(participantKind) || typeof participantId !== 'string') {
+          throw new ChatError(400, 'chat_participant_invalid', 'participantKind and participantId must identify a family participant.');
+        }
+        const thread = await port.readThread(tx, { familyId, threadId }, { forUpdate: true });
+        if (thread == null) {
+          throw new ChatError(404, 'chat_thread_not_found', 'This conversation is not part of the family.');
+        }
+        if (thread.kind !== 'group') {
+          throw new ChatError(409, 'chat_direct_is_pair', 'A direct conversation stays a pair; create a group to expand the audience.');
+        }
+        const actorMember = await port.readThreadMember(tx, {
+          threadId,
+          participantKind: 'child',
+          participantId: device.child_id,
+        });
+        if (actorMember == null) {
+          throw new ChatError(404, 'chat_thread_not_found', 'This conversation is not available to this child.');
+        }
+        if (participantKind === 'membership') {
+          const membership = await port.readMembership(tx, { familyId, membershipId: participantId });
+          if (membership == null || membership.status !== 'active' || !GUARDIAN_ROLES.has(membership.role)) {
+            throw new ChatError(404, 'chat_participant_not_found', 'This active guardian is not part of the family.');
+          }
+        } else {
+          const child = await port.readChild(tx, { familyId, childId: participantId });
+          if (child == null) {
+            throw new ChatError(404, 'chat_participant_not_found', 'This child is not part of the family.');
+          }
+        }
+        if (await port.readThreadMember(tx, { threadId, participantKind, participantId }) != null) {
+          throw new ChatError(409, 'chat_member_already_present', 'They are already in this conversation.');
+        }
+        const currentMembers = await port.listThreadMembers(tx, { threadIds: [threadId] });
+        const membershipIds = participantKind === 'membership' ? [participantId] : [];
+        const childIds = participantKind === 'child' ? [participantId] : [];
+        if (participantKind === 'child') {
+          const currentChildCount = currentMembers.filter((entry) => entry.participant_kind === 'child').length;
+          const inclusionRequired = policy.guardianInclusionMode === 'all_child_chats' ||
+            (policy.guardianInclusionMode === 'child_to_child' && currentChildCount > 0);
+          if (inclusionRequired) {
+            const currentMembershipIds = new Set(currentMembers
+              .filter((entry) => entry.participant_kind === 'membership')
+              .map((entry) => entry.participant_id));
+            const guardians = await port.listActiveGuardianMemberships(tx, { familyId });
+            for (const guardian of guardians) {
+              if (guardian.status === 'active' && GUARDIAN_ROLES.has(guardian.role) && !currentMembershipIds.has(guardian.id)) {
+                membershipIds.push(guardian.id);
+              }
+            }
+          }
+        }
+        if (currentMembers.length + membershipIds.length + childIds.length > policy.maximumGroupSize) {
+          throw new ChatError(422, 'chat_group_too_large', `This conversation exceeds the family policy limit of ${policy.maximumGroupSize} participants.`);
+        }
+        const participants = await port.insertThreadMembers(tx, {
+          familyId,
+          threadId,
+          membershipIds,
+          childIds,
+          joinedSeq: Number(thread.next_seq),
+        });
+        await port.audit(tx, {
+          familyId,
+          actorMembershipId: null,
+          correlationId,
+          subjectId: threadId,
+          subjectType: 'family_chat_thread',
+          eventType: 'family.chat_member_added',
+        });
+        return {
+          thread: threadView(thread, {
+            participants,
+            selfParticipant: { kind: 'child', id: device.child_id },
+          }),
         };
       },
     );
@@ -425,12 +692,13 @@ export function createThreadList({ port }) {
       });
       const participants = await port.listThreadMembers(tx, { threadIds: rows.map((row) => row.id) });
       return {
+        capabilities: CHAT_CURRENT_CAPABILITIES,
         threads: rows.map((row) =>
           threadView(row, {
             participants: participants.filter((entry) => entry.thread_id === row.id),
             unreadCount: Number(row.unread_count ?? 0),
             lastMessage: threadLastMessage(row),
-            selfMembershipId: actor.id,
+            selfParticipant: { kind: 'membership', id: actor.id },
           }),
         ),
       };
@@ -452,11 +720,13 @@ export function createDeviceThreadList({ port }) {
       });
       const participants = await port.listThreadMembers(tx, { threadIds: rows.map((row) => row.id) });
       return {
+        capabilities: CHAT_CURRENT_CAPABILITIES,
         threads: rows.map((row) =>
           threadView(row, {
             participants: participants.filter((entry) => entry.thread_id === row.id),
             unreadCount: Number(row.unread_count ?? 0),
             lastMessage: threadLastMessage(row),
+            selfParticipant: { kind: 'child', id: device.child_id },
           }),
         ),
       };
@@ -464,9 +734,34 @@ export function createDeviceThreadList({ port }) {
   };
 }
 
-/// Reading a thread's messages, from either surface, through one law: a participant row must
-/// exist for the caller. Everything else - the child's own room, the household room, the
-/// co-guardian's room - is the same read with a different caller.
+/// Roster candidates are server-owned and family-bound. Only safe display fields leave this
+/// read: no OIDC subject, contact detail, device identifier, or credential is returned.
+export function createParticipantList({ port }) {
+  return async function listChatParticipants({ principal, familyId }) {
+    return port.read(async (tx) => {
+      const actor = await port.authorize(tx, { familyId, subject: principal.subject });
+      const selfParticipant = { kind: 'membership', id: actor.id };
+      const rows = await port.listFamilyChatParticipants(tx, { familyId });
+      return { participants: rows.map((row) => participantView(row, { selfParticipant })) };
+    });
+  };
+}
+
+/// A paired handset sees only the addressable participant roster of its own family.
+export function createDeviceParticipantList({ port }) {
+  return async function listChatParticipantsForDevice({ deviceId, deviceCredential }) {
+    return port.read(async (tx) => {
+      const device = await port.requireDevice(tx, { deviceId, deviceCredential });
+      const selfParticipant = { kind: 'child', id: device.child_id };
+      const rows = await port.listFamilyChatParticipants(tx, { familyId: device.family_id });
+      return { participants: rows.map((row) => participantView(row, { selfParticipant })) };
+    });
+  };
+}
+
+/// Reading a thread's messages, from either surface, through one law: an active participant row
+/// must exist for the caller. The lower bound is that row's joined sequence, so a newly-added
+/// member cannot page backwards into conversation history from before they joined.
 export function createMessageList({ port }) {
   return async function listChatMessages({
     principal,
@@ -498,8 +793,10 @@ export function createMessageList({ port }) {
         // room they were never told about, which is a fact leaking through an error code.
         throw new ChatError(404, 'chat_thread_not_found', 'This conversation is not part of the family.');
       }
-      const { afterSeq: from, limit: size } = normalizeMessageQuery({ afterSeq, limit });
-      const rows = await port.listMessages(tx, { threadId, afterSeq: from, limit: size });
+      const { afterSeq: requestedAfter, limit: size } = normalizeMessageQuery({ afterSeq, limit });
+      const joinedSeq = Number(member.joined_seq ?? 1);
+      const from = Math.max(requestedAfter, joinedSeq - 1);
+      const rows = await port.listMessages(tx, { threadId, afterSeq: from, minimumSeq: joinedSeq, limit: size });
       const readCounts = await port.readCountsForMessages(tx, { threadId, messageIds: rows.map((row) => row.id) });
       const byId = new Map(readCounts.map((entry) => [entry.message_id, Number(entry.read_count)]));
       return {
@@ -744,7 +1041,11 @@ export function createReadMark({ port }) {
           throw new ChatError(404, 'chat_thread_not_found', 'This conversation is not part of the family.');
         }
         const highestSeq = await port.readHighestSeq(tx, { threadId });
-        requireReadableSeq({ readSeq, highestSeq });
+        requireReadableSeq({
+          readSeq,
+          highestSeq,
+          minimumSeq: Number(member.joined_seq ?? 1) - 1,
+        });
         const row = await port.advanceLastReadSeq(tx, {
           threadId,
           participantKind: participant.kind,
@@ -771,7 +1072,11 @@ export function familyChatFor(store, { credentialMatches }) {
   return {
     listThreads: createThreadList({ port }),
     createThread: createThreadCreate({ port }),
+    createThreadForDevice: createDeviceThreadCreate({ port }),
     addThreadMember: createThreadMemberAdd({ port }),
+    addThreadMemberForDevice: createDeviceThreadMemberAdd({ port }),
+    listParticipants: createParticipantList({ port }),
+    listParticipantsForDevice: createDeviceParticipantList({ port }),
     listThreadsForDevice: createDeviceThreadList({ port }),
     listMessages: createMessageList({ port }),
     sendMessage: createMessageSend({ port }),
@@ -795,10 +1100,12 @@ const columns = (list, prefix = '') =>
 const MESSAGE_COLUMNS = columns(MESSAGE_COLUMN_LIST);
 const MESSAGES_PREFIXED = columns(MESSAGE_COLUMN_LIST, 'm');
 
-const THREAD_COLUMNS = 'id, family_id, kind, title, next_seq, created_by_membership_id, created_at';
+const THREAD_COLUMNS = `id, family_id, kind, title, next_seq, direct_pair_key,
+                        created_by_membership_id, created_by_child_id,
+                        created_by_participant_kind, created_by_participant_id, created_at`;
 
 const THREAD_MEMBER_COLUMNS = `thread_id, family_id, participant_kind, participant_id,
-                               membership_id, child_id, last_read_seq, joined_at`;
+                               membership_id, child_id, last_read_seq, joined_seq, left_at, joined_at`;
 
 export function postgresFamilyChatPort(store, { credentialMatches }) {
   /// The device credential check, stated once for every read and write in this port.
@@ -823,11 +1130,14 @@ export function postgresFamilyChatPort(store, { credentialMatches }) {
     if (threadIds.length === 0) return [];
     const { rows } = await client.query(
       `SELECT mem.thread_id, mem.participant_kind, mem.participant_id, mem.membership_id, mem.child_id,
+              mem.last_read_seq, mem.joined_seq, mem.left_at,
               memb.role AS membership_role, child.display_name AS child_display_name
          FROM family_chat_thread_members mem
          LEFT JOIN family_memberships memb ON memb.id = mem.membership_id
          LEFT JOIN family_children child ON child.id = mem.child_id
         WHERE mem.thread_id = ANY($1::uuid[])
+          AND mem.left_at IS NULL
+          AND (mem.participant_kind = 'child' OR memb.status = 'active')
         ORDER BY mem.thread_id, mem.participant_kind, mem.participant_id`,
       [threadIds],
     );
@@ -877,10 +1187,10 @@ export function postgresFamilyChatPort(store, { credentialMatches }) {
 
     requireDevice,
 
-    /// Participant membership is not caller-selected: every room starts with the active
-    /// guardians the server recognizes for this family. Stable ordering makes the result
-    /// deterministic for audit/debug output, and the transaction lock keeps a guardian from
-    /// being revoked between this snapshot and the member rows being inserted.
+    /// Guardian candidates are read only when an active safety rule requires inclusion or a
+    /// group-membership operation needs to verify a guardian. Stable ordering makes the result
+    /// deterministic, and the transaction lock prevents revocation between this snapshot and
+    /// the member rows being inserted.
     async listActiveGuardianMemberships(client, { familyId }) {
       const { rows } = await client.query(
         `SELECT id, role, status
@@ -911,35 +1221,65 @@ export function postgresFamilyChatPort(store, { credentialMatches }) {
       return rows[0] ?? null;
     },
 
-    async insertThread(client, { familyId, kind, title, createdByMembershipId }) {
+    async readCollaborationPolicy(client, { familyId, forUpdate = false } = {}) {
+      return readServerCollaborationPolicy(client, { familyId, forUpdate });
+    },
+
+    async listFamilyChatParticipants(client, { familyId }) {
       const { rows } = await client.query(
-        `INSERT INTO family_chat_threads (id, family_id, kind, title, created_by_membership_id)
-         VALUES ($1, $2, $3, $4, $5)
+        `SELECT 'membership'::text AS participant_kind, membership.id AS participant_id,
+                membership.role AS membership_role, NULL::text AS child_display_name
+           FROM family_memberships membership
+          WHERE membership.family_id = $1
+            AND membership.status = 'active'
+            AND membership.role IN ('primary_guardian', 'co_guardian')
+         UNION ALL
+         SELECT 'child'::text AS participant_kind, child.id AS participant_id,
+                'child'::text AS membership_role, child.display_name AS child_display_name
+           FROM family_children child
+          WHERE child.family_id = $1
+          ORDER BY participant_kind, participant_id`,
+        [familyId],
+      );
+      return rows;
+    },
+
+    async insertThread(client, {
+      familyId, kind, title, directPairKey,
+      createdByMembershipId, createdByChildId, createdByKind, createdById,
+    }) {
+      const { rows } = await client.query(
+        `INSERT INTO family_chat_threads
+           (id, family_id, kind, title, direct_pair_key, created_by_membership_id,
+            created_by_child_id, created_by_participant_kind, created_by_participant_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          RETURNING ${THREAD_COLUMNS}`,
-        [randomUUID(), familyId, kind, title, createdByMembershipId],
+        [
+          randomUUID(), familyId, kind, title, directPairKey ?? null,
+          createdByMembershipId ?? null, createdByChildId ?? null, createdByKind, createdById,
+        ],
       );
       return rows[0];
     },
 
-    async insertThreadMembers(client, { familyId, threadId, membershipIds, childIds }) {
-      for (const membershipId of membershipIds) {
+    async insertThreadMembers(client, { familyId, threadId, membershipIds, childIds, joinedSeq = 1 }) {
+      const insertMember = async (kind, id, identityColumn) => {
         await client.query(
           `INSERT INTO family_chat_thread_members
-             (thread_id, family_id, participant_kind, participant_id, membership_id)
-           VALUES ($1, $2, 'membership', $3, $3)
-           ON CONFLICT (thread_id, participant_kind, participant_id) DO NOTHING`,
-          [threadId, familyId, membershipId],
+             (thread_id, family_id, participant_kind, participant_id, ${identityColumn},
+              last_read_seq, joined_seq)
+           VALUES ($1, $2, $3, $4, $4, $5, $6)
+           ON CONFLICT (thread_id, participant_kind, participant_id) DO UPDATE
+             SET last_read_seq = EXCLUDED.last_read_seq,
+                 joined_seq = EXCLUDED.joined_seq,
+                 left_at = NULL,
+                 joined_at = NOW()
+           WHERE family_chat_thread_members.left_at IS NOT NULL`,
+          [threadId, familyId, kind, id, joinedSeq - 1, joinedSeq],
         );
-      }
-      for (const childId of childIds) {
-        await client.query(
-          `INSERT INTO family_chat_thread_members
-             (thread_id, family_id, participant_kind, participant_id, child_id)
-           VALUES ($1, $2, 'child', $3, $3)
-           ON CONFLICT (thread_id, participant_kind, participant_id) DO NOTHING`,
-          [threadId, familyId, childId],
-        );
-      }
+      };
+      for (const membershipId of membershipIds) await insertMember('membership', membershipId, 'membership_id');
+      for (const childId of childIds) await insertMember('child', childId, 'child_id');
       return listThreadMembers(client, { threadIds: [threadId] });
     },
 
@@ -959,7 +1299,8 @@ export function postgresFamilyChatPort(store, { credentialMatches }) {
       const { rows } = await client.query(
         `SELECT ${THREAD_MEMBER_COLUMNS}
            FROM family_chat_thread_members
-          WHERE thread_id = $1 AND participant_kind = $2 AND participant_id = $3`,
+          WHERE thread_id = $1 AND participant_kind = $2 AND participant_id = $3
+            AND left_at IS NULL`,
         [threadId, participantKind, participantId],
       );
       return rows[0] ?? null;
@@ -969,7 +1310,7 @@ export function postgresFamilyChatPort(store, { credentialMatches }) {
     async listThreadChildren(client, { threadId }) {
       const { rows } = await client.query(
         `SELECT child_id FROM family_chat_thread_members
-          WHERE thread_id = $1 AND participant_kind = 'child'`,
+          WHERE thread_id = $1 AND participant_kind = 'child' AND left_at IS NULL`,
         [threadId],
       );
       return rows;
@@ -994,21 +1335,24 @@ export function postgresFamilyChatPort(store, { credentialMatches }) {
              ON me.thread_id = t.id
             AND me.participant_kind = $2
             AND me.participant_id = $3
+            AND me.left_at IS NULL
            LEFT JOIN LATERAL (
              SELECT ${MESSAGES_PREFIXED} FROM family_chat_messages m
-              WHERE m.thread_id = t.id
+              WHERE m.thread_id = t.id AND m.seq >= me.joined_seq
               ORDER BY m.seq DESC
               LIMIT 1
            ) last ON TRUE
            LEFT JOIN LATERAL (
              SELECT COUNT(*)::int AS unread_count FROM family_chat_messages m
               WHERE m.thread_id = t.id
-                AND m.seq > me.last_read_seq
+                AND m.seq > GREATEST(me.last_read_seq, me.joined_seq - 1)
                 AND NOT (m.author_kind = me.participant_kind AND m.author_id = me.participant_id)
            ) unread ON TRUE
            LEFT JOIN LATERAL (
              SELECT COUNT(*)::int AS reader_count FROM family_chat_thread_members other
               WHERE other.thread_id = t.id
+                AND other.left_at IS NULL
+                AND other.joined_seq <= last.seq
                 AND other.last_read_seq >= last.seq
                 AND NOT (other.participant_kind = last.author_kind AND other.participant_id = last.author_id)
            ) readers ON TRUE
@@ -1074,13 +1418,13 @@ export function postgresFamilyChatPort(store, { credentialMatches }) {
       return rows[0] ?? null;
     },
 
-    async listMessages(client, { threadId, afterSeq, limit }) {
+    async listMessages(client, { threadId, afterSeq, minimumSeq = 1, limit }) {
       const { rows } = await client.query(
         `SELECT ${MESSAGE_COLUMNS} FROM family_chat_messages
-          WHERE thread_id = $1 AND seq > $2
+          WHERE thread_id = $1 AND seq > $2 AND seq >= $3
           ORDER BY seq ASC
-          LIMIT $3`,
-        [threadId, afterSeq, limit],
+          LIMIT $4`,
+        [threadId, afterSeq, minimumSeq, limit],
       );
       return rows;
     },
@@ -1094,6 +1438,8 @@ export function postgresFamilyChatPort(store, { credentialMatches }) {
            FROM family_chat_messages m
            LEFT JOIN family_chat_thread_members reader
              ON reader.thread_id = m.thread_id
+            AND reader.left_at IS NULL
+            AND reader.joined_seq <= m.seq
             AND reader.last_read_seq >= m.seq
             AND NOT (reader.participant_kind = m.author_kind AND reader.participant_id = m.author_id)
           WHERE m.thread_id = $1 AND m.id = ANY($2::uuid[])
@@ -1148,6 +1494,7 @@ export function postgresFamilyChatPort(store, { credentialMatches }) {
         `UPDATE family_chat_thread_members
             SET last_read_seq = GREATEST(last_read_seq, $4)
           WHERE thread_id = $1 AND participant_kind = $2 AND participant_id = $3
+            AND left_at IS NULL
           RETURNING thread_id, participant_kind, participant_id, last_read_seq`,
         [threadId, participantKind, participantId, readSeq],
       );

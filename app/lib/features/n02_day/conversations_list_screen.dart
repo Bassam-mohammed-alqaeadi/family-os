@@ -109,6 +109,7 @@ class ConversationsListScreenState extends State<ConversationsListScreen> {
   var _refreshing = false;
   var _sosBusy = false;
   var _creatingThread = false;
+  var _policyBusy = false;
   var _requestInFlight = false;
   FamilyChatConnectionState _connectionState =
       FamilyChatConnectionState.checking;
@@ -228,6 +229,145 @@ class ConversationsListScreenState extends State<ConversationsListScreen> {
     );
   }
 
+  Future<void> _openCollaborationPolicy() async {
+    final l10n = AppLocalizations.of(context);
+    final authority = activeFamilyChatServerAuthority;
+    if (authority == null || _policyBusy) {
+      AppToast.show(context, message: l10n.familyChatUnavailable);
+      return;
+    }
+    setState(() => _policyBusy = true);
+    final answer = await authority.readCollaborationPolicy();
+    if (!mounted) return;
+    setState(() => _policyBusy = false);
+    if (!answer.isReady) {
+      AppToast.show(context, message: l10n.familyChatPolicyLoadFailed);
+      return;
+    }
+    final policy = answer.value!;
+    var coChat = policy.chatCreateRoles.contains('co_guardian');
+    var coManageChat = policy.chatManageRoles.contains('co_guardian');
+    var coTasks = policy.taskRoles.contains('co_guardian');
+    var coCalendar = policy.calendarRoles.contains('co_guardian');
+    var childDirect = policy.childDirectEnabled;
+    var childGroups = policy.childGroupsEnabled;
+    var childManageGroups = policy.childGroupMemberManagementEnabled;
+    var inclusion = policy.guardianInclusionMode;
+    var maximumGroupSize = policy.maximumGroupSize;
+    final changes = await showDialog<Map<String, Object?>>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(l10n.familyChatPolicyTitle),
+          content: SizedBox(
+            width: 460,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(l10n.familyChatPolicyPrimaryGuardianNotice),
+                  ),
+                  CheckboxListTile(
+                    value: coChat,
+                    title: Text(l10n.familyChatPolicyCoGuardianChat),
+                    onChanged: (value) => setDialogState(() => coChat = value == true),
+                  ),
+                  CheckboxListTile(
+                    value: coManageChat,
+                    title: Text(l10n.familyChatPolicyCoGuardianManageChat),
+                    onChanged: (value) => setDialogState(() => coManageChat = value == true),
+                  ),
+                  CheckboxListTile(
+                    value: coTasks,
+                    title: Text(l10n.familyChatPolicyCoGuardianTasks),
+                    onChanged: (value) => setDialogState(() => coTasks = value == true),
+                  ),
+                  CheckboxListTile(
+                    value: coCalendar,
+                    title: Text(l10n.familyChatPolicyCoGuardianCalendar),
+                    onChanged: (value) => setDialogState(() => coCalendar = value == true),
+                  ),
+                  const Divider(),
+                  CheckboxListTile(
+                    value: childDirect,
+                    title: Text(l10n.familyChatPolicyChildDirect),
+                    onChanged: (value) => setDialogState(() => childDirect = value == true),
+                  ),
+                  CheckboxListTile(
+                    value: childGroups,
+                    title: Text(l10n.familyChatPolicyChildGroups),
+                    onChanged: (value) => setDialogState(() => childGroups = value == true),
+                  ),
+                  CheckboxListTile(
+                    value: childManageGroups,
+                    title: Text(l10n.familyChatPolicyChildManageGroups),
+                    onChanged: (value) => setDialogState(() => childManageGroups = value == true),
+                  ),
+                  DropdownButtonFormField<String>(
+                    initialValue: inclusion,
+                    decoration: InputDecoration(labelText: l10n.familyChatPolicyGuardianInclusion),
+                    items: <DropdownMenuItem<String>>[
+                      DropdownMenuItem(value: 'none', child: Text(l10n.familyChatPolicyInclusionNone)),
+                      DropdownMenuItem(value: 'all_child_chats', child: Text(l10n.familyChatPolicyInclusionAllChildChats)),
+                      DropdownMenuItem(value: 'child_to_child', child: Text(l10n.familyChatPolicyInclusionChildToChild)),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) setDialogState(() => inclusion = value);
+                    },
+                  ),
+                  DropdownButtonFormField<int>(
+                    initialValue: maximumGroupSize,
+                    decoration: InputDecoration(labelText: l10n.familyChatPolicyMaxGroupSize),
+                    items: <DropdownMenuItem<int>>[
+                      for (var size = 3; size <= 24; size++)
+                        DropdownMenuItem(value: size, child: Text('$size')),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) setDialogState(() => maximumGroupSize = value);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: Text(l10n.familyChatCancel)),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(<String, Object?>{
+                'chatCreateRoles': <String>['primary_guardian', if (coChat) 'co_guardian'],
+                'chatManageRoles': <String>['primary_guardian', if (coManageChat) 'co_guardian'],
+                'taskRoles': <String>['primary_guardian', if (coTasks) 'co_guardian'],
+                'calendarRoles': <String>['primary_guardian', if (coCalendar) 'co_guardian'],
+                'childDirectEnabled': childDirect,
+                'childGroupsEnabled': childGroups,
+                'childGroupMemberManagementEnabled': childManageGroups,
+                'guardianInclusionMode': inclusion,
+                'maximumGroupSize': maximumGroupSize,
+              }),
+              child: Text(l10n.familyChatPolicySave),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (changes == null || !mounted) return;
+    setState(() => _policyBusy = true);
+    final updated = await authority.updateCollaborationPolicy(
+      expectedVersion: policy.version,
+      changes: changes,
+    );
+    if (!mounted) return;
+    setState(() => _policyBusy = false);
+    AppToast.show(
+      context,
+      message: updated.isReady
+          ? l10n.familyChatPolicySaved
+          : l10n.familyChatPolicySaveFailed,
+    );
+  }
+
   Future<void> _onNewChat() async {
     if (!_chat.isUsable || _creatingThread) return;
     if (widget.onNewChat != null) {
@@ -249,7 +389,7 @@ class ConversationsListScreenState extends State<ConversationsListScreen> {
       final thread = await repository.createThread(
         kind: request.kind,
         title: request.title,
-        childIds: request.childId == null ? const <String>[] : <String>[request.childId!],
+        participants: request.participants,
       );
       if (!mounted) return;
       await _load();
@@ -277,19 +417,35 @@ class ConversationsListScreenState extends State<ConversationsListScreen> {
     FamilyChatThreadListRepository repository,
   ) async {
     final l10n = AppLocalizations.of(context);
-    var childOptionsFuture = repository.loadChildOptions();
+    var participantsFuture = repository.loadParticipants();
     final titleController = TextEditingController();
-    var kind = FamilyChatThreadKind.family;
-    String? childId;
-    var availableChildIds = <String>{};
+    var kind = FamilyChatThreadKind.direct;
+    final selectedKeys = <String>{};
+    List<FamilyChatParticipant> roster = const <FamilyChatParticipant>[];
+
+    String keyFor(FamilyChatParticipant participant) =>
+        '${participant.kind.wireValue}:${participant.id}';
+
+    String displayName(FamilyChatParticipant participant) {
+      final name = participant.displayName?.trim();
+      if (name != null && name.isNotEmpty) return name;
+      if (participant.kind == FamilyChatParticipantKind.child) {
+        return l10n.familyChatChildFallback;
+      }
+      return l10n.dayBoardGuardianFallback;
+    }
 
     try {
       return await showDialog<_CreateChatRequest>(
         context: context,
         builder: (dialogContext) => StatefulBuilder(
           builder: (context, setDialogState) {
-            final canCreate = kind == FamilyChatThreadKind.family ||
-                (childId != null && availableChildIds.contains(childId));
+            final selected = roster
+                .where((participant) => selectedKeys.contains(keyFor(participant)))
+                .toList(growable: false);
+            final canCreate = kind == FamilyChatThreadKind.direct
+                ? selected.length == 1
+                : selected.length >= 2 && selected.length <= 23;
             return AlertDialog(
               key: ConversationsListKeys.createChatDialog,
               title: Text(l10n.familyChatCreateHeading),
@@ -305,108 +461,111 @@ class ConversationsListScreenState extends State<ConversationsListScreen> {
                       ),
                       items: <DropdownMenuItem<FamilyChatThreadKind>>[
                         DropdownMenuItem(
-                          value: FamilyChatThreadKind.family,
-                          child: Text(l10n.familyChatFamilyThread),
+                          value: FamilyChatThreadKind.direct,
+                          child: Text(l10n.familyChatDirectThread),
                         ),
                         DropdownMenuItem(
-                          value: FamilyChatThreadKind.child,
-                          child: Text(l10n.familyChatChildThread),
+                          value: FamilyChatThreadKind.group,
+                          child: Text(l10n.familyChatGroupThread),
                         ),
                       ],
                       onChanged: (value) {
-                        if (value != null) {
-                          setDialogState(() {
-                            kind = value;
-                            childId = null;
-                          });
-                        }
+                        if (value == null) return;
+                        setDialogState(() {
+                          kind = value;
+                          if (kind == FamilyChatThreadKind.direct &&
+                              selectedKeys.length > 1) {
+                            final keep = selectedKeys.first;
+                            selectedKeys
+                              ..clear()
+                              ..add(keep);
+                          }
+                        });
                       },
                     ),
-                    if (kind == FamilyChatThreadKind.child) ...[
-                      const SizedBox(height: 12),
-                      FutureBuilder<List<FamilyChatChildOption>>(
-                        future: childOptionsFuture,
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState !=
-                              ConnectionState.done) {
-                            return Padding(
-                              key: ConversationsListKeys
-                                  .createChatRosterLoading,
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              child: Row(
-                                children: [
-                                  const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(l10n.familyChatConnecting),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
-                          if (snapshot.hasError) {
-                            return FamilyChatConnectionBanner(
-                              key: ConversationsListKeys
-                                  .createChatRosterFailure,
-                              state: familyChatConnectionStateFor(
-                                snapshot.error!,
-                              ),
-                              onRetry: () => setDialogState(() {
-                                childId = null;
-                                availableChildIds = <String>{};
-                                childOptionsFuture =
-                                    repository.loadChildOptions();
-                              }),
-                            );
-                          }
-
-                          final children = snapshot.data ??
-                              const <FamilyChatChildOption>[];
-                          availableChildIds = children
-                              .map((child) => child.id)
-                              .toSet();
-                          if (children.isEmpty) {
-                            return Align(
-                              alignment: AlignmentDirectional.centerStart,
-                              child: Text(l10n.familyChatNoChildrenAvailable),
-                            );
-                          }
-
-                          return DropdownButtonFormField<String>(
-                            key: ConversationsListKeys.createChatChild,
-                            initialValue:
-                                children.any((child) => child.id == childId)
-                                    ? childId
-                                    : null,
-                            decoration: InputDecoration(
-                              labelText: l10n.familyChatCreateChildLabel,
+                    const SizedBox(height: 12),
+                    FutureBuilder<List<FamilyChatParticipant>>(
+                      future: participantsFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState != ConnectionState.done) {
+                          return Padding(
+                            key: ConversationsListKeys.createChatRosterLoading,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Row(
+                              children: [
+                                const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(child: Text(l10n.familyChatConnecting)),
+                              ],
                             ),
-                            hint: Text(l10n.familyChatCreateChildLabel),
-                            items: children
-                                .map(
-                                  (child) => DropdownMenuItem<String>(
-                                    value: child.id,
-                                    child: Text(
-                                      child.displayName?.trim().isNotEmpty ==
-                                              true
-                                          ? child.displayName!.trim()
-                                          : l10n.familyChatChildFallback,
-                                    ),
-                                  ),
-                                )
-                                .toList(growable: false),
-                            onChanged: (value) =>
-                                setDialogState(() => childId = value),
                           );
-                        },
-                      ),
-                    ],
+                        }
+                        if (snapshot.hasError) {
+                          return FamilyChatConnectionBanner(
+                            key: ConversationsListKeys.createChatRosterFailure,
+                            state: familyChatConnectionStateFor(snapshot.error!),
+                            onRetry: () => setDialogState(() {
+                              selectedKeys.clear();
+                              participantsFuture = repository.loadParticipants();
+                            }),
+                          );
+                        }
+                        roster = snapshot.data ?? const <FamilyChatParticipant>[];
+                        final choices = roster
+                            .where((participant) => !participant.isSelf)
+                            .toList(growable: false);
+                        if (choices.isEmpty) {
+                          return Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text(l10n.familyChatNoParticipantsAvailable),
+                          );
+                        }
+                        return ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 280),
+                          child: ListView(
+                            shrinkWrap: true,
+                            children: [
+                              Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(bottom: 6),
+                                  child: Text(l10n.familyChatSelectParticipants),
+                                ),
+                              ),
+                              for (final participant in choices)
+                                CheckboxListTile(
+                                  key: ValueKey('family_chat_participant_${keyFor(participant)}'),
+                                  dense: true,
+                                  contentPadding: EdgeInsets.zero,
+                                  controlAffinity: ListTileControlAffinity.leading,
+                                  title: Text(displayName(participant)),
+                                  subtitle: participant.kind == FamilyChatParticipantKind.child
+                                      ? Text(l10n.familyChatChildFallback)
+                                      : Text(l10n.dayBoardGuardianFallback),
+                                  value: selectedKeys.contains(keyFor(participant)),
+                                  onChanged: (checked) {
+                                    setDialogState(() {
+                                      final key = keyFor(participant);
+                                      if (checked == true) {
+                                        if (kind == FamilyChatThreadKind.direct) {
+                                          selectedKeys.clear();
+                                        }
+                                        selectedKeys.add(key);
+                                      } else {
+                                        selectedKeys.remove(key);
+                                      }
+                                    });
+                                  },
+                                ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                     const SizedBox(height: 12),
                     TextField(
                       key: ConversationsListKeys.createChatTitle,
@@ -433,9 +592,12 @@ class ConversationsListScreenState extends State<ConversationsListScreen> {
                             _CreateChatRequest(
                               kind: kind,
                               title: titleController.text.trim(),
-                              childId: kind == FamilyChatThreadKind.child
-                                  ? childId
-                                  : null,
+                              participants: selected
+                                  .map((participant) => FamilyChatParticipantReference(
+                                        kind: participant.kind,
+                                        id: participant.id,
+                                      ))
+                                  .toList(growable: false),
                             ),
                           )
                       : null,
@@ -483,6 +645,15 @@ class ConversationsListScreenState extends State<ConversationsListScreen> {
             ),
             icon: Icon(Icons.sos, color: colors.coral),
           ),
+          if (_isParent && _repo is FamilyChatThreadListRepository)
+            IconButton(
+              key: const Key('family_chat_collaboration_policy'),
+              tooltip: l10n.familyChatPolicyTitle,
+              onPressed: _policyBusy ? null : _openCollaborationPolicy,
+              icon: _policyBusy
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.tune),
+            ),
         ],
       ),
       body: SafeArea(child: _buildBody(context, l10n, colors)),
@@ -655,12 +826,12 @@ final class _CreateChatRequest {
   const _CreateChatRequest({
     required this.kind,
     required this.title,
-    required this.childId,
+    required this.participants,
   });
 
   final FamilyChatThreadKind kind;
   final String title;
-  final String? childId;
+  final List<FamilyChatParticipantReference> participants;
 }
 
 class _ConversationRow extends StatelessWidget {

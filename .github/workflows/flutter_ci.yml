@@ -35,6 +35,8 @@ jobs:
         run: flutter pub get
       - name: Generate localization source
         run: flutter gen-l10n
+      - name: Generate route and shell source
+        run: dart run tool/gen_routes.dart
       - name: Analyze
         id: analyze
         continue-on-error: true
@@ -228,6 +230,14 @@ jobs:
             git diff --stat -- lib/app/router.dart lib/app/shell_config.dart lib/core/i18n
             exit 1
           fi
+      - name: Upload regenerated localization sources when drift is found
+        if: always() && steps.generated.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: regenerated-localizations-${{ github.run_id }}
+          path: lib/core/i18n/app_localizations*.dart
+          if-no-files-found: error
+          retention-days: 3
       - name: Enforce analyzer, test and generated-source gates
         if: always() && (steps.analyze.outcome == 'failure' || steps.tests.outcome == 'failure' || steps.generated.outcome == 'failure')
         run: |

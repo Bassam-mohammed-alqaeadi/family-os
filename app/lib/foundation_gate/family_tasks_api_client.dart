@@ -109,6 +109,7 @@ class FoundationGateTask {
   const FoundationGateTask({
     required this.id,
     required this.childId,
+    required this.audienceThreadId,
     required this.title,
     required this.note,
     required this.points,
@@ -119,6 +120,7 @@ class FoundationGateTask {
 
   final String id;
   final String childId;
+  final String? audienceThreadId;
   final String title;
   final String note;
   final int points;
@@ -223,11 +225,13 @@ class FamilyTasksApiClient {
     required String idempotencyKey,
     required String idToken,
     String note = '',
+    String? audienceThreadId,
   }) async {
     final body = <String, Object>{
       'title': title,
       'points': points,
       if (note.isNotEmpty) 'note': note,
+      if (audienceThreadId != null) 'audienceThreadId': audienceThreadId,
     };
     final response = await _post(
       _configuration.familyChildTasksUri(familyId, childId),
@@ -408,9 +412,16 @@ class FamilyTasksApiClient {
       );
     }
     final rawClaim = task['claim'];
+    final audienceThreadId = task['audienceThreadId'];
+    if (audienceThreadId != null && audienceThreadId is! String) {
+      throw const FoundationGateApiException(
+        FoundationGateApiFailure.invalidResponse,
+      );
+    }
     return FoundationGateTask(
       id: _string(task['id'], 'id'),
       childId: _string(task['childId'], 'childId'),
+      audienceThreadId: audienceThreadId as String?,
       title: _string(task['title'], 'title'),
       note: task['note'] is String ? task['note']! as String : '',
       points: _integer(task['points'], 'points'),

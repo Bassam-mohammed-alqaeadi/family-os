@@ -73,4 +73,12 @@ export const FOUNDATION_SCHEMA_MIGRATIONS = Object.freeze([
     name: '109_family_chat.sql',
     sha256: 'e08b2672b3b9bb98849c93662d68fb05d65dc03000acdac476ba2e0aaf1a1c2e',
   }),
+  Object.freeze({
+    name: '110_collaboration_flexibility.sql',
+    sha256: '9ee7e4a5023703a6acb35b48771d97693766b8de96b776fdf5bff748cecd6c2b',
+  }),
+  Object.freeze({
+    name: '111_collaboration_audiences.sql',
+    sha256: '0a75b5153954bd6523c544bb3f0df0bd3e51041afaa263b93b90bfcc60dfa88d',
+  }),
 ]);

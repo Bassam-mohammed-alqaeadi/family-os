@@ -101,6 +101,7 @@ final class ConversationDetail {
     required this.title,
     required this.subtitle,
     required this.emoji,
+    this.threadKind,
     this.messages = const [],
     this.familyPinnedNote = false,
     this.toneChips = const [],
@@ -115,6 +116,7 @@ final class ConversationDetail {
   final String title;
   final String subtitle;
   final String emoji;
+  final String? threadKind;
   final List<ConversationMessage> messages;
 
   /// Show pinned-family honesty line (prototype family branch).
@@ -135,6 +137,7 @@ final class ConversationDetail {
     String? title,
     String? subtitle,
     String? emoji,
+    String? threadKind,
     List<ConversationMessage>? messages,
     bool? familyPinnedNote,
     List<String>? toneChips,
@@ -147,6 +150,7 @@ final class ConversationDetail {
       title: title ?? this.title,
       subtitle: subtitle ?? this.subtitle,
       emoji: emoji ?? this.emoji,
+      threadKind: threadKind ?? this.threadKind,
       messages: messages ?? this.messages,
       familyPinnedNote: familyPinnedNote ?? this.familyPinnedNote,
       toneChips: toneChips ?? this.toneChips,

@@ -21,6 +21,7 @@ const _familyId = '11111111-1111-4111-8111-111111111111';
 const _threadId = '22222222-2222-4222-8222-222222222222';
 const _childId = '33333333-3333-4333-8333-333333333333';
 const _membershipId = '44444444-4444-4444-8444-444444444444';
+const _siblingId = '55555555-5555-4555-8555-555555555555';
 const _deviceId = '77777777-7777-4777-8777-777777777777';
 const _messageTime = '2026-10-08T08:30:00.000Z';
 
@@ -72,13 +73,13 @@ Map<String, Object?> _thread(
 };
 
 Map<String, Object?> _childThread(int lastSeq, {String? title}) => <String, Object?>{
-  ..._thread(lastSeq, title: title),
+  ..._thread(lastSeq, kind: 'direct', title: title ?? ''),
   'participants': <Object?>[
     <String, Object?>{
       'kind': 'membership',
       'id': _membershipId,
       'role': 'primary_guardian',
-      'displayName': null,
+      'displayName': 'Father',
       'isSelf': false,
     },
     <String, Object?>{
@@ -246,11 +247,11 @@ void main() {
     ]);
   });
 
-  test('new family and child rooms leave guardian participation to the server', () async {
+  test('direct and group conversations send explicit peers without forcing guardians into them', () async {
     final transport = _QueueTransport();
     transport.responses
-      ..add(_response(201, <String, Object?>{'thread': _thread(0, kind: 'family')}))
-      ..add(_response(201, <String, Object?>{'thread': _thread(0)}));
+      ..add(_response(201, <String, Object?>{'thread': _thread(0, kind: 'direct')}))
+      ..add(_response(201, <String, Object?>{'thread': _thread(0, kind: 'group')}));
     final authority = FamilyChatServerAuthority(
       api: FamilyChatApiClient(
         configuration: FoundationGateConfiguration.fromStagingApiOrigin(
@@ -272,23 +273,34 @@ void main() {
     );
 
     await repository.createThread(
-      kind: FamilyChatThreadKind.family,
+      kind: FamilyChatThreadKind.direct,
       title: '',
-      childIds: const <String>[],
+      participants: const <FamilyChatParticipantReference>[
+        FamilyChatParticipantReference(kind: FamilyChatParticipantKind.child, id: _childId),
+      ],
     );
     await repository.createThread(
-      kind: FamilyChatThreadKind.child,
-      title: 'Amani',
-      childIds: const <String>[_childId],
+      kind: FamilyChatThreadKind.group,
+      title: 'Amani and sibling',
+      participants: const <FamilyChatParticipantReference>[
+        FamilyChatParticipantReference(kind: FamilyChatParticipantKind.child, id: _childId),
+        FamilyChatParticipantReference(kind: FamilyChatParticipantKind.child, id: _siblingId),
+      ],
     );
 
     expect(jsonDecode(transport.calls[0].body!), <String, Object?>{
-      'kind': 'family',
+      'kind': 'direct',
+      'participants': <Object?>[
+        <String, Object?>{'kind': 'child', 'id': _childId},
+      ],
     });
     expect(jsonDecode(transport.calls[1].body!), <String, Object?>{
-      'kind': 'child',
-      'title': 'Amani',
-      'childIds': <String>[_childId],
+      'kind': 'group',
+      'title': 'Amani and sibling',
+      'participants': <Object?>[
+        <String, Object?>{'kind': 'child', 'id': _childId},
+        <String, Object?>{'kind': 'child', 'id': _siblingId},
+      ],
     });
     expect(
       transport.calls.every((call) {
@@ -335,13 +347,37 @@ void main() {
     );
   });
 
-  testWidgets('new chat offers family or one child from the server roster only', (
+  testWidgets('new chat lets a guardian choose a direct peer or a group from the server roster', (
     tester,
   ) async {
+    final siblingId = '55555555-5555-4555-8555-555555555555';
     final transport = _QueueTransport()
-      ..responses.add(_response(200, <String, Object?>{'threads': <Object?>[]}));
-    final childRoster =
-        Completer<FamilyChatAuthorityAnswer<List<FamilyChatChildOption>>>();
+      ..responses.add(_response(200, <String, Object?>{'threads': <Object?>[]}))
+      ..responses.add(_response(200, <String, Object?>{
+        'participants': <Object?>[
+          <String, Object?>{
+            'kind': 'membership',
+            'id': _membershipId,
+            'role': 'primary_guardian',
+            'displayName': 'Father',
+            'isSelf': true,
+          },
+          <String, Object?>{
+            'kind': 'child',
+            'id': _childId,
+            'role': 'child',
+            'displayName': 'Amani',
+            'isSelf': false,
+          },
+          <String, Object?>{
+            'kind': 'child',
+            'id': siblingId,
+            'role': 'child',
+            'displayName': 'Bashir',
+            'isSelf': false,
+          },
+        ],
+      }));
     final authority = FamilyChatServerAuthority(
       api: FamilyChatApiClient(
         configuration: FoundationGateConfiguration.fromStagingApiOrigin(
@@ -351,7 +387,6 @@ void main() {
       ),
       idToken: () async => 'guardian-token',
       familyId: () => _familyId,
-      childOptions: () => childRoster.future,
     );
     final repository = FamilyChatThreadListRepository(
       authority: authority,
@@ -385,63 +420,51 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(ConversationsListKeys.createChatDialog), findsOneWidget);
     expect(find.byKey(ConversationsListKeys.createChatType), findsOneWidget);
+    expect(find.text('Amani'), findsOneWidget);
+    expect(find.text('Bashir'), findsOneWidget);
+    expect(find.textContaining('guardian'), findsNothing);
     expect(
       tester.widget<FilledButton>(
         find.byKey(ConversationsListKeys.createChatConfirm),
       ).onPressed,
-      isNotNull,
-      reason: 'a family conversation does not wait on the child roster',
+      isNull,
+      reason: 'the server roster is required and a direct chat names exactly one peer',
     );
 
     await tester.tap(find.byKey(ConversationsListKeys.createChatType));
     await tester.pumpAndSettle();
-    expect(find.text(l10n.familyChatFamilyThread), findsWidgets);
-    expect(find.text(l10n.familyChatChildThread), findsWidgets);
-    await tester.tap(find.text(l10n.familyChatChildThread).last);
-    await tester.pump();
-    expect(find.byKey(ConversationsListKeys.createChatRosterLoading), findsOneWidget);
+    expect(find.text(l10n.familyChatDirectThread), findsWidgets);
+    expect(find.text(l10n.familyChatGroupThread), findsOneWidget);
+    await tester.tap(find.text(l10n.familyChatGroupThread));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(ValueKey('family_chat_participant_child:$_childId')));
+    await tester.pumpAndSettle();
     expect(
       tester.widget<FilledButton>(
         find.byKey(ConversationsListKeys.createChatConfirm),
       ).onPressed,
       isNull,
+      reason: 'a user-created group needs at least two selected peers',
     );
-    childRoster.complete(
-      FamilyChatAuthorityAnswer.ready(
-        const <FamilyChatChildOption>[
-          FamilyChatChildOption(id: _childId, displayName: 'Amani'),
-          FamilyChatChildOption(
-            id: '55555555-5555-4555-8555-555555555555',
-            displayName: 'Bashir',
-          ),
-        ],
-      ),
-    );
+    await tester.tap(find.byKey(ValueKey('family_chat_participant_child:$siblingId')));
     await tester.pumpAndSettle();
-
-    expect(find.byKey(ConversationsListKeys.createChatRosterLoading), findsNothing);
-    expect(find.byKey(ConversationsListKeys.createChatType), findsOneWidget);
-    expect(find.byKey(ConversationsListKeys.createChatChild), findsOneWidget);
-    expect(find.text('Amani'), findsNothing);
-    expect(
-      tester.widget<FilledButton>(
-        find.byKey(ConversationsListKeys.createChatConfirm),
-      ).onPressed,
-      isNull,
-    );
-    expect(find.textContaining('guardian'), findsNothing);
-    await tester.tap(find.byKey(ConversationsListKeys.createChatChild));
-    await tester.pumpAndSettle();
-    expect(find.text('Amani'), findsOneWidget);
-    expect(find.text('Bashir'), findsOneWidget);
-    await tester.tap(find.text('Amani').last);
-    await tester.pumpAndSettle();
-    expect(find.text('Amani'), findsOneWidget);
     expect(
       tester.widget<FilledButton>(
         find.byKey(ConversationsListKeys.createChatConfirm),
       ).onPressed,
       isNotNull,
+    );
+
+    await tester.tap(find.byKey(ConversationsListKeys.createChatType));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.familyChatDirectThread).last);
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<FilledButton>(
+        find.byKey(ConversationsListKeys.createChatConfirm),
+      ).onPressed,
+      isNotNull,
+      reason: 'switching back to direct keeps only one explicitly selected peer',
     );
     await tester.tap(find.text(l10n.familyChatCancel).last);
     await tester.pumpAndSettle();
@@ -586,8 +609,8 @@ void main() {
     expect(find.byKey(ChildConversationKeys.body), findsOneWidget);
     expect(
       tester.widget<Text>(find.byKey(ChildConversationKeys.title)).data,
-      'Amani',
-      reason: 'an untitled child room uses the name from its server participant roster',
+      'Father',
+      reason: 'an untitled direct room uses its server-disclosed peer name',
     );
     expect(find.byKey(ChildConversationKeys.serverStorageNotice), findsOneWidget);
     expect(find.byKey(ChildConversationKeys.mediaUnavailable), findsOneWidget);

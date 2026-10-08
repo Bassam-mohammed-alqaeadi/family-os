@@ -46,6 +46,8 @@ const FAMILY = '11111111-1111-4111-8111-111111111111';
 const CHILD = '22222222-2222-4222-8222-222222222222';
 const SIBLING = '33333333-3333-4333-8333-333333333333';
 const EVENT = '44444444-4444-4444-8444-444444444444';
+const CHAT_THREAD = '55555555-5555-4555-8555-555555555555';
+const SCOPED_EVENT = '99999999-9999-4999-8999-999999999999';
 const GUARDIAN_MEMBERSHIP = '66666666-6666-4666-8666-666666666666';
 const CO_GUARDIAN_MEMBERSHIP = '77777777-7777-4777-8777-777777777777';
 const DEVICE = '88888888-8888-4888-8888-888888888888';
@@ -62,6 +64,7 @@ function eventRow(overrides = {}) {
   return {
     id: EVENT,
     family_id: FAMILY,
+    audience_thread_id: null,
     title: 'زيارة الجدّ',
     note: 'نأخذ الكيك',
     location: 'بيت الجدّ',
@@ -136,6 +139,8 @@ function recordingPort({
   device = pairedDevice(),
   answeredChildren = new Set(),
   childExists = true,
+  chatThread = null,
+  chatMembers = [],
 } = {}) {
   const calls = {
     events: [],
@@ -146,6 +151,7 @@ function recordingPort({
     cancellations: [],
     audits: [],
     idempotency: [],
+    eventListQueries: [],
   };
   // The audience in the fake behaves the way the table does: an edit replaces it, a deletion
   // empties it. A mock that kept returning the old rows would let a broken update pass.
@@ -188,17 +194,49 @@ function recordingPort({
       },
       async insertEvent(_client, input) {
         calls.events.push(input);
-        return eventRow({ ...input, id: EVENT, version: 1 });
+        return eventRow({
+          ...input,
+          id: EVENT,
+          audience_thread_id: input.audienceThreadId ?? null,
+          version: 1,
+        });
+      },
+      async readChatThread(_client, { familyId, threadId }) {
+        return chatThread?.family_id === familyId && chatThread?.id === threadId
+          ? chatThread
+          : null;
+      },
+      async listChatThreadMembers() {
+        return chatMembers;
       },
       async readEvent() {
         return event;
       },
-      async listEvents() {
-        return events ?? [event];
+      async listEvents(_client, input) {
+        calls.eventListQueries.push(input);
+        return (events ?? [event]).filter((row) =>
+          row.audience_thread_id == null || (
+            chatThread?.id === row.audience_thread_id
+            && chatMembers.some(
+              (member) => member.participant_kind === 'membership'
+                && member.participant_id === input.viewerMembershipId,
+            )
+            && currentAudience.some((entry) =>
+              entry.event_id === row.id && chatMembers.some(
+                (member) => member.participant_kind === 'child'
+                  && member.participant_id === entry.child_id,
+              ),
+            )
+          ),
+        );
       },
       async updateEvent(_client, input) {
         calls.events.push(input);
-        return eventRow({ ...input, version: Number(event.version) + 1 });
+        return eventRow({
+          ...input,
+          audience_thread_id: input.audienceThreadId ?? null,
+          version: Number(event.version) + 1,
+        });
       },
       async cancelEvent(_client, input) {
         calls.cancellations.push(input);
@@ -216,8 +254,21 @@ function recordingPort({
         currentAudience = event == null ? currentAudience : [...currentAudience.filter((entry) => entry.event_id !== input.eventId), ...rows];
         return rows;
       },
-      async listAudience() {
-        return currentAudience;
+      async listAudience(_client, { viewerMembershipId = null } = {}) {
+        if (viewerMembershipId == null) return currentAudience;
+        return currentAudience.filter((entry) => {
+          const row = (events ?? [event]).find((candidate) => candidate.id === entry.event_id);
+          if (row?.audience_thread_id == null) return true;
+          return chatThread?.id === row.audience_thread_id
+            && chatMembers.some((member) =>
+              member.participant_kind === 'membership'
+              && member.participant_id === viewerMembershipId,
+            )
+            && chatMembers.some((member) =>
+              member.participant_kind === 'child'
+              && member.participant_id === entry.child_id,
+            );
+        });
       },
       async readAudience(_client, { eventId, childId }) {
         return currentAudience.some((entry) => entry.event_id === eventId && entry.child_id === childId)
@@ -262,8 +313,19 @@ function recordingPort({
           recorded_by_membership_id: input.recordedByMembershipId,
         });
       },
-      async listEventsForChild() {
-        return events ?? [event];
+      async listEventsForChild(_client, { childId }) {
+        return (events ?? [event]).filter((row) =>
+          currentAudience.some((entry) => entry.event_id === row.id && entry.child_id === childId)
+          && (
+            row.audience_thread_id == null || (
+              chatThread?.id === row.audience_thread_id
+              && chatMembers.some(
+                (member) => member.participant_kind === 'child'
+                  && member.participant_id === childId,
+              )
+            )
+          ),
+        );
       },
       async audit(_client, input) {
         calls.audits.push(input);
@@ -395,6 +457,183 @@ test('a guardian states an event and names who it is for in the same transaction
   assert.equal(calls.audits[0].eventType, 'family.event_created');
   assert.equal(calls.audits[0].actorMembershipId, GUARDIAN_MEMBERSHIP);
   assert.equal(calls.idempotency[0].scope, `calendar:create:${FAMILY}`);
+});
+
+test('calendar events can target a same-family chat group and carry the selected audience into the outbox', async () => {
+  const fixture = recordingPort({
+    audience: [],
+    chatThread: { id: CHAT_THREAD, family_id: FAMILY, kind: 'group' },
+    chatMembers: [
+      { participant_kind: 'membership', participant_id: GUARDIAN_MEMBERSHIP },
+      { participant_kind: 'child', participant_id: CHILD },
+      { participant_kind: 'child', participant_id: SIBLING },
+    ],
+  });
+  const createEvent = createEventCreate({ port: fixture.port });
+  const result = await createEvent({
+    principal: { subject: 'test-primary' },
+    familyId: FAMILY,
+    title: 'A shared outing',
+    startsAt: STARTS,
+    endsAt: ENDS,
+    childIds: [CHILD],
+    audienceThreadId: CHAT_THREAD,
+    idempotencyKey: 'calendar-thread-audience',
+    requestHash: 'b'.repeat(64),
+    correlationId: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+    now: () => NOW,
+  });
+  assert.equal(result.event.audienceThreadId, CHAT_THREAD);
+  assert.deepEqual(result.event.audience.map((entry) => entry.childId), [CHILD]);
+  assert.equal(fixture.calls.events[0].audienceThreadId, CHAT_THREAD);
+  assert.deepEqual(fixture.calls.audits[0].payload, {
+    audienceThreadId: CHAT_THREAD,
+    childIds: [CHILD],
+  });
+
+  const outside = recordingPort({
+    audience: [],
+    chatThread: { id: CHAT_THREAD, family_id: FAMILY, kind: 'group' },
+    chatMembers: [
+      { participant_kind: 'membership', participant_id: GUARDIAN_MEMBERSHIP },
+      { participant_kind: 'child', participant_id: CHILD },
+    ],
+  });
+  await assert.rejects(
+    createEventCreate({ port: outside.port })({
+      principal: { subject: 'test-primary' },
+      familyId: FAMILY,
+      title: 'Outside the selected group',
+      startsAt: STARTS,
+      endsAt: ENDS,
+      childIds: [SIBLING],
+      audienceThreadId: CHAT_THREAD,
+      idempotencyKey: 'calendar-thread-outside',
+      requestHash: 'c'.repeat(64),
+      now: () => NOW,
+    }),
+    (error) => error.status === 422 && error.code === 'event_audience_not_in_group',
+  );
+  assert.equal(outside.calls.events.length, 0);
+});
+
+test('group-scoped event writes also require active thread membership', async () => {
+  const scopedEvent = eventRow({ audience_thread_id: CHAT_THREAD });
+  const removedChild = recordingPort({
+    event: scopedEvent,
+    chatThread: { id: CHAT_THREAD, family_id: FAMILY, kind: 'group' },
+    chatMembers: [{ participant_kind: 'membership', participant_id: GUARDIAN_MEMBERSHIP }],
+  });
+  await assert.rejects(
+    createEventResponseRecord({ port: removedChild.port })({
+      deviceId: DEVICE,
+      deviceCredential: DEVICE_CREDENTIAL,
+      eventId: EVENT,
+      response: 'accepted',
+      idempotencyKey: 'scoped-removed-child-response',
+      requestHash: 'd'.repeat(64),
+      now: () => NOW,
+    }),
+    (error) => error.status === 404 && error.code === 'event_not_found',
+  );
+  assert.equal(removedChild.calls.responses.length, 0);
+
+  const outsider = recordingPort({
+    event: scopedEvent,
+    actor: coGuardianActor,
+    chatThread: { id: CHAT_THREAD, family_id: FAMILY, kind: 'group' },
+    chatMembers: [
+      { participant_kind: 'membership', participant_id: GUARDIAN_MEMBERSHIP },
+      { participant_kind: 'child', participant_id: CHILD },
+    ],
+  });
+  const isHidden = (error) => error.status === 404 && error.code === 'event_not_found';
+  await assert.rejects(
+    createEventUpdate({ port: outsider.port })({
+      principal: { subject: 'test-co' },
+      familyId: FAMILY,
+      eventId: EVENT,
+      version: 1,
+      changes: { title: 'Should stay private' },
+      correlationId: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+    }),
+    isHidden,
+  );
+  await assert.rejects(
+    createEventCancel({ port: outsider.port })({
+      principal: { subject: 'test-co' },
+      familyId: FAMILY,
+      eventId: EVENT,
+      reason: 'Should stay private',
+      idempotencyKey: 'scoped-outsider-cancel',
+      requestHash: 'e'.repeat(64),
+      correlationId: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+    }),
+    isHidden,
+  );
+  await assert.rejects(
+    createAttendanceRecord({ port: outsider.port })({
+      principal: { subject: 'test-co' },
+      familyId: FAMILY,
+      eventId: EVENT,
+      childId: CHILD,
+      attended: true,
+      idempotencyKey: 'scoped-outsider-attendance',
+      requestHash: 'f'.repeat(64),
+      now: () => NOW,
+    }),
+    isHidden,
+  );
+  assert.equal(outsider.calls.events.length, 0);
+  assert.equal(outsider.calls.cancellations.length, 0);
+  assert.equal(outsider.calls.attendance.length, 0);
+});
+
+test('calendar reads hide group-scoped events from guardians outside that conversation', async () => {
+  const rows = [
+    eventRow({ id: EVENT, audience_thread_id: null }),
+    eventRow({ id: SCOPED_EVENT, audience_thread_id: CHAT_THREAD }),
+  ];
+  const audience = [
+    { family_id: FAMILY, event_id: EVENT, child_id: CHILD },
+    { family_id: FAMILY, event_id: SCOPED_EVENT, child_id: CHILD },
+  ];
+  const member = recordingPort({
+    events: rows,
+    audience,
+    chatThread: { id: CHAT_THREAD, family_id: FAMILY, kind: 'group' },
+    chatMembers: [
+      { participant_kind: 'membership', participant_id: GUARDIAN_MEMBERSHIP },
+      { participant_kind: 'child', participant_id: CHILD },
+    ],
+  });
+  const visibleToMember = await createEventList({ port: member.port })({
+    principal: { subject: 'test-primary' },
+    familyId: FAMILY,
+    from: '2026-10-01T00:00:00.000Z',
+    to: '2026-11-01T00:00:00.000Z',
+  });
+  assert.deepEqual(visibleToMember.events.map((entry) => entry.id), [EVENT, SCOPED_EVENT]);
+  assert.equal(member.calls.eventListQueries[0].viewerMembershipId, GUARDIAN_MEMBERSHIP);
+
+  const outsider = recordingPort({
+    events: rows,
+    audience,
+    actor: coGuardianActor,
+    chatThread: { id: CHAT_THREAD, family_id: FAMILY, kind: 'group' },
+    chatMembers: [
+      { participant_kind: 'membership', participant_id: GUARDIAN_MEMBERSHIP },
+      { participant_kind: 'child', participant_id: CHILD },
+    ],
+  });
+  const hiddenFromOutsider = await createEventList({ port: outsider.port })({
+    principal: { subject: 'test-co' },
+    familyId: FAMILY,
+    from: '2026-10-01T00:00:00.000Z',
+    to: '2026-11-01T00:00:00.000Z',
+  });
+  assert.deepEqual(hiddenFromOutsider.events.map((entry) => entry.id), [EVENT]);
+  assert.equal(outsider.calls.eventListQueries[0].viewerMembershipId, CO_GUARDIAN_MEMBERSHIP);
 });
 
 test('an event in the past, or one that reaches past a month, is refused by name', async () => {
@@ -810,6 +1049,44 @@ test('the port compares the digest it stored against what the handset presented'
       `${attempt[0]} must prove nothing`,
     );
   }
+});
+
+test('a child calendar hides group-scoped events after the child leaves that conversation', async () => {
+  const rows = [
+    eventRow({ id: EVENT }),
+    eventRow({ id: SCOPED_EVENT, audience_thread_id: CHAT_THREAD }),
+  ];
+  const audience = [
+    { family_id: FAMILY, event_id: EVENT, child_id: CHILD },
+    { family_id: FAMILY, event_id: SCOPED_EVENT, child_id: CHILD },
+  ];
+  const active = recordingPort({
+    events: rows,
+    audience,
+    chatThread: { id: CHAT_THREAD, family_id: FAMILY, kind: 'group' },
+    chatMembers: [{ participant_kind: 'child', participant_id: CHILD }],
+  });
+  const activeEvents = await createDeviceEventRead({ port: active.port })({
+    deviceId: DEVICE,
+    deviceCredential: DEVICE_CREDENTIAL,
+    from: '2026-10-08T00:00:00.000Z',
+    to: '2026-10-10T00:00:00.000Z',
+  });
+  assert.deepEqual(activeEvents.events.map((entry) => entry.id), [EVENT, SCOPED_EVENT]);
+
+  const removed = recordingPort({
+    events: rows,
+    audience,
+    chatThread: { id: CHAT_THREAD, family_id: FAMILY, kind: 'group' },
+    chatMembers: [],
+  });
+  const afterLeaving = await createDeviceEventRead({ port: removed.port })({
+    deviceId: DEVICE,
+    deviceCredential: DEVICE_CREDENTIAL,
+    from: '2026-10-08T00:00:00.000Z',
+    to: '2026-10-10T00:00:00.000Z',
+  });
+  assert.deepEqual(afterLeaving.events.map((entry) => entry.id), [EVENT]);
 });
 
 test('a handset reads the events its own child is invited to, and nothing else', async () => {

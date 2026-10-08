@@ -92,14 +92,18 @@ final class CalendarServerAuthority {
     required String title,
     required DateTime startsAt,
     required DateTime endsAt,
-    required List<String> childIds,
+    List<String> childIds = const <String>[],
+    String? audienceThreadId,
     String note = '',
     String location = '',
     bool allDay = false,
     int? reminderMinutes,
     required String Function() idempotencyKey,
   }) async {
-    if (!childIds.every(_addressable)) return _noSession();
+    if (!childIds.every(_addressable) ||
+        (audienceThreadId != null && !_addressable(audienceThreadId))) {
+      return _noSession();
+    }
     return _ask(
       (family, token) => api.createEvent(
         familyId: family,
@@ -111,6 +115,7 @@ final class CalendarServerAuthority {
         allDay: allDay,
         reminderMinutes: reminderMinutes,
         childIds: childIds,
+        audienceThreadId: audienceThreadId,
         idempotencyKey: idempotencyKey(),
         idToken: token,
       ),
@@ -130,8 +135,14 @@ final class CalendarServerAuthority {
     bool? allDay,
     int? reminderMinutes,
     List<String>? childIds,
+    String? audienceThreadId,
+    bool clearAudienceThreadId = false,
   }) async {
-    if (!_addressable(eventId)) return _noSession();
+    if (!_addressable(eventId) ||
+        (audienceThreadId != null && !_addressable(audienceThreadId)) ||
+        !((childIds ?? const <String>[]).every(_addressable))) {
+      return _noSession();
+    }
     return _ask(
       (family, token) => api.updateEvent(
         familyId: family,
@@ -145,6 +156,8 @@ final class CalendarServerAuthority {
         allDay: allDay,
         reminderMinutes: reminderMinutes,
         childIds: childIds,
+        audienceThreadId: audienceThreadId,
+        clearAudienceThreadId: clearAudienceThreadId,
         idToken: token,
       ),
     );

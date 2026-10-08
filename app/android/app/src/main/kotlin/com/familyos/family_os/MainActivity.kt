@@ -222,6 +222,15 @@ class MainActivity : FlutterActivity() {
             "listThreads" -> if (threadId == null && messageId == null && body == null && query.isEmpty()) {
                 ChatRequestSpec("GET", "$base/threads", null, null)
             } else null
+            "listParticipants" -> if (threadId == null && messageId == null && body == null && query.isEmpty()) {
+                ChatRequestSpec("GET", "$base/participants", null, null)
+            } else null
+            "createThread" -> if (threadId == null && messageId == null && validJsonObject(body) && validIdempotencyKey(idempotencyKey) && query.isEmpty()) {
+                ChatRequestSpec("POST", "$base/threads", body, idempotencyKey)
+            } else null
+            "addThreadMember" -> if (validUuid(threadId) && messageId == null && validJsonObject(body) && validIdempotencyKey(idempotencyKey) && query.isEmpty()) {
+                ChatRequestSpec("POST", "$base/threads/$threadId/members", body, idempotencyKey)
+            } else null
             "listMessages" -> {
                 if (!validUuid(threadId) || messageId != null || body != null) return null
                 val afterRaw = query["afterSeq"] as? String

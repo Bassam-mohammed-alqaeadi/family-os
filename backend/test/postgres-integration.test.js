@@ -27,6 +27,8 @@ import { applyMigrations } from '../src/migration-runner.js';
 import { FOUNDATION_SCHEMA_MIGRATIONS } from '../src/schema-manifest.js';
 import { deviceRevocationFor } from '../src/device-revocation.js';
 import { familyLocalParts } from '../src/screen-time.js';
+import { postgresCalendarPort } from '../src/calendar.js';
+import { postgresTasksPort } from '../src/tasks.js';
 import { PostgresFoundationStore } from '../src/store/postgres-foundation-store.js';
 import { TestAuthVerifier } from './memory-foundation-store.js';
 
@@ -209,6 +211,176 @@ test('every migration applies to an empty database', { skip }, async () => {
     ]) {
       assert.ok(present.has(table), `${table} must exist after migrating`);
     }
+  });
+});
+
+test('thread-scoped tasks and calendar events are visible only to their active conversation members', { skip }, async () => {
+  await withFreshDatabase(async (client) => {
+    await migrate(client);
+    const ids = await seedFamily(client);
+    const sibling = await client.query(
+      `INSERT INTO family_children (id, family_id, display_name, age_years)
+       VALUES (gen_random_uuid(), $1, 'Bashir', 10) RETURNING id`,
+      [ids.familyId],
+    );
+    const siblingId = sibling.rows[0].id;
+    const coAccount = await client.query(
+      `INSERT INTO accounts (id, oidc_subject) VALUES (gen_random_uuid(), 'gate-co') RETURNING id`,
+    );
+    const coMembership = await client.query(
+      `INSERT INTO family_memberships
+         (id, family_id, account_id, target_subject, role, status, joined_at)
+       VALUES (gen_random_uuid(), $1, $2, 'gate-co', 'co_guardian', 'active', NOW())
+       RETURNING id`,
+      [ids.familyId, coAccount.rows[0].id],
+    );
+    const thread = await client.query(
+      `INSERT INTO family_chat_threads
+         (id, family_id, kind, title, created_by_membership_id,
+          created_by_participant_kind, created_by_participant_id)
+       VALUES (gen_random_uuid(), $1, 'group', 'Amani and primary', $2, 'membership', $2)
+       RETURNING id`,
+      [ids.familyId, ids.membershipId],
+    );
+    await client.query(
+      `INSERT INTO family_chat_thread_members
+         (thread_id, family_id, participant_kind, participant_id, membership_id)
+       VALUES ($1, $2, 'membership', $3, $3),
+              ($1, $2, 'child', $4, $4),
+              ($1, $2, 'child', $5, $5)`,
+      [thread.rows[0].id, ids.familyId, ids.membershipId, ids.childId, siblingId],
+    );
+
+    const scopedTask = await client.query(
+      `INSERT INTO family_tasks
+         (id, family_id, child_id, audience_thread_id, title, points, created_by_membership_id)
+       VALUES (gen_random_uuid(), $1, $2, $3, 'Group task', 10, $4)
+       RETURNING id`,
+      [ids.familyId, ids.childId, thread.rows[0].id, ids.membershipId],
+    );
+    const privateTask = await client.query(
+      `INSERT INTO family_tasks
+         (id, family_id, child_id, title, points, created_by_membership_id)
+       VALUES (gen_random_uuid(), $1, $2, 'Family task', 5, $3)
+       RETURNING id`,
+      [ids.familyId, ids.childId, ids.membershipId],
+    );
+
+    const scopedEvent = await client.query(
+      `INSERT INTO family_events
+         (id, family_id, audience_thread_id, title, starts_at, ends_at, created_by_membership_id)
+       VALUES (gen_random_uuid(), $1, $2, 'Group event', '2026-10-10T10:00:00Z',
+               '2026-10-10T11:00:00Z', $3)
+       RETURNING id`,
+      [ids.familyId, thread.rows[0].id, ids.membershipId],
+    );
+    const privateEvent = await client.query(
+      `INSERT INTO family_events
+         (id, family_id, title, starts_at, ends_at, created_by_membership_id)
+       VALUES (gen_random_uuid(), $1, 'Family event', '2026-10-11T10:00:00Z',
+               '2026-10-11T11:00:00Z', $2)
+       RETURNING id`,
+      [ids.familyId, ids.membershipId],
+    );
+    await client.query(
+      `INSERT INTO family_event_audience (family_id, event_id, child_id)
+       VALUES ($1, $2, $3), ($1, $4, $3)`,
+      [ids.familyId, scopedEvent.rows[0].id, ids.childId, privateEvent.rows[0].id],
+    );
+
+    const tasks = postgresTasksPort({}, { credentialMatches: () => true });
+    const calendar = postgresCalendarPort({}, { credentialMatches: () => true });
+    const primaryTasks = await tasks.listTasks(client, {
+      familyId: ids.familyId,
+      childId: ids.childId,
+      viewerKind: 'membership',
+      viewerId: ids.membershipId,
+    });
+    const coGuardianTasks = await tasks.listTasks(client, {
+      familyId: ids.familyId,
+      childId: ids.childId,
+      viewerKind: 'membership',
+      viewerId: coMembership.rows[0].id,
+    });
+    const childTasks = await tasks.listTasks(client, {
+      familyId: ids.familyId,
+      childId: ids.childId,
+      viewerKind: 'child',
+      viewerId: ids.childId,
+    });
+    const siblingTasks = await tasks.listTasks(client, {
+      familyId: ids.familyId,
+      childId: siblingId,
+      viewerKind: 'child',
+      viewerId: siblingId,
+    });
+    assert.deepEqual(new Set(primaryTasks.map((row) => row.id)), new Set([scopedTask.rows[0].id, privateTask.rows[0].id]));
+    assert.deepEqual(new Set(coGuardianTasks.map((row) => row.id)), new Set([privateTask.rows[0].id]));
+    assert.deepEqual(new Set(childTasks.map((row) => row.id)), new Set([scopedTask.rows[0].id, privateTask.rows[0].id]));
+    assert.deepEqual(siblingTasks, [], 'a sibling in the same group cannot see another child\'s task');
+
+    const primaryEvents = await calendar.listEvents(client, {
+      familyId: ids.familyId,
+      from: '2026-10-01T00:00:00Z',
+      to: '2026-11-01T00:00:00Z',
+      viewerMembershipId: ids.membershipId,
+    });
+    const coGuardianEvents = await calendar.listEvents(client, {
+      familyId: ids.familyId,
+      from: '2026-10-01T00:00:00Z',
+      to: '2026-11-01T00:00:00Z',
+      viewerMembershipId: coMembership.rows[0].id,
+    });
+    assert.deepEqual(new Set(primaryEvents.map((row) => row.id)), new Set([scopedEvent.rows[0].id, privateEvent.rows[0].id]));
+    assert.deepEqual(new Set(coGuardianEvents.map((row) => row.id)), new Set([privateEvent.rows[0].id]));
+
+    const childEvents = await calendar.listEventsForChild(client, {
+      familyId: ids.familyId,
+      childId: ids.childId,
+      from: '2026-10-01T00:00:00Z',
+      to: '2026-11-01T00:00:00Z',
+    });
+    const siblingEvents = await calendar.listEventsForChild(client, {
+      familyId: ids.familyId,
+      childId: siblingId,
+      from: '2026-10-01T00:00:00Z',
+      to: '2026-11-01T00:00:00Z',
+    });
+    assert.deepEqual(new Set(childEvents.map((row) => row.id)), new Set([scopedEvent.rows[0].id, privateEvent.rows[0].id]));
+    assert.deepEqual(siblingEvents, [], 'a sibling in the same chat does not inherit this event invitation');
+
+    await client.query(
+      `UPDATE family_chat_thread_members SET left_at = NOW()
+        WHERE thread_id = $1 AND participant_kind = 'child' AND participant_id = $2`,
+      [thread.rows[0].id, ids.childId],
+    );
+    const removedChildTasks = await tasks.listTasks(client, {
+      familyId: ids.familyId,
+      childId: ids.childId,
+      viewerKind: 'child',
+      viewerId: ids.childId,
+    });
+    const removedChildEvents = await calendar.listEventsForChild(client, {
+      familyId: ids.familyId,
+      childId: ids.childId,
+      from: '2026-10-01T00:00:00Z',
+      to: '2026-11-01T00:00:00Z',
+    });
+    const primaryEventsAfterRemoval = await calendar.listEvents(client, {
+      familyId: ids.familyId,
+      from: '2026-10-01T00:00:00Z',
+      to: '2026-11-01T00:00:00Z',
+      viewerMembershipId: ids.membershipId,
+    });
+    const groupAudienceAfterRemoval = await calendar.listAudience(client, {
+      familyId: ids.familyId,
+      eventIds: [scopedEvent.rows[0].id],
+      viewerMembershipId: ids.membershipId,
+    });
+    assert.deepEqual(new Set(removedChildTasks.map((row) => row.id)), new Set([privateTask.rows[0].id]));
+    assert.deepEqual(new Set(removedChildEvents.map((row) => row.id)), new Set([privateEvent.rows[0].id]));
+    assert.deepEqual(new Set(primaryEventsAfterRemoval.map((row) => row.id)), new Set([privateEvent.rows[0].id]));
+    assert.deepEqual(groupAudienceAfterRemoval, []);
   });
 });
 

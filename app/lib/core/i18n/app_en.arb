@@ -15989,6 +15989,14 @@
   "@tasksServerCreateNote": {
       "description": "SCR: tasks server panel"
   },
+  "tasksServerAudienceScopeLabel": "Visible to this conversation (optional)",
+  "@tasksServerAudienceScopeLabel": {
+      "description": "Choose a direct or group conversation as task visibility scope"
+  },
+  "tasksServerAudienceScopeChildOnly": "Only the assigned child",
+  "@tasksServerAudienceScopeChildOnly": {
+      "description": "Task remains visible only to the designated child and guardians"
+  },
   "tasksServerCreateButton": "Add the task",
   "@tasksServerCreateButton": {
       "description": "SCR: tasks server panel"
@@ -16109,6 +16117,14 @@
   "@calendarServerCreateChildren": {
       "description": "SCR: calendar server panel"
   },
+  "calendarServerAudienceScopeLabel": "Also route through a conversation (optional)",
+  "@calendarServerAudienceScopeLabel": {
+      "description": "Optional direct or group audience scope for calendar routing"
+  },
+  "calendarServerAudienceScopeChildrenOnly": "Selected children only",
+  "@calendarServerAudienceScopeChildrenOnly": {
+      "description": "No chat-thread routing scope selected"
+  },
   "calendarServerCreatePickStart": "Choose the start",
   "@calendarServerCreatePickStart": {
       "description": "SCR: calendar server panel"
@@ -16173,6 +16189,22 @@
   "@familyChatCreateTypeLabel": {
       "description": "W9 family chat client state and controls"
   },
+  "familyChatDirectThread": "Direct conversation",
+  "@familyChatDirectThread": {
+      "description": "Direct family chat type"
+  },
+  "familyChatGroupThread": "Group conversation",
+  "@familyChatGroupThread": {
+      "description": "User-created family chat group type"
+  },
+  "familyChatSelectParticipants": "Choose who can join",
+  "@familyChatSelectParticipants": {
+      "description": "Participant picker for direct and group chats"
+  },
+  "familyChatNoParticipantsAvailable": "No other active family participants are available.",
+  "@familyChatNoParticipantsAvailable": {
+      "description": "Empty state for the server-owned family chat roster"
+  },
   "familyChatFamilyThread": "Guardian family chat",
   "@familyChatFamilyThread": {
       "description": "W9 family chat client state and controls"
@@ -16213,6 +16245,42 @@
   "@familyChatCreateFailed": {
       "description": "W9 family chat client state and controls"
   },
+  "familyChatPolicyTitle": "Collaboration and safety",
+  "@familyChatPolicyTitle": { "description": "Family collaboration policy settings" },
+  "familyChatPolicyPrimaryGuardianNotice": "Only the primary guardian can save these server-enforced rules. The primary guardian always retains protected family permissions.",
+  "@familyChatPolicyPrimaryGuardianNotice": { "description": "Server authorization and child safety notice" },
+  "familyChatPolicyCoGuardianChat": "Allow the co-guardian to create conversations",
+  "@familyChatPolicyCoGuardianChat": { "description": "Delegated guardian role permission" },
+  "familyChatPolicyCoGuardianManageChat": "Allow the co-guardian to add people to groups",
+  "@familyChatPolicyCoGuardianManageChat": { "description": "Delegated guardian role permission" },
+  "familyChatPolicyCoGuardianTasks": "Allow the co-guardian to manage tasks",
+  "@familyChatPolicyCoGuardianTasks": { "description": "Delegated guardian role permission" },
+  "familyChatPolicyCoGuardianCalendar": "Allow the co-guardian to manage the calendar",
+  "@familyChatPolicyCoGuardianCalendar": { "description": "Delegated guardian role permission" },
+  "familyChatPolicyChildDirect": "Allow children to start direct conversations",
+  "@familyChatPolicyChildDirect": { "description": "Child chat safety setting" },
+  "familyChatPolicyChildGroups": "Allow children to create groups",
+  "@familyChatPolicyChildGroups": { "description": "Child chat safety setting" },
+  "familyChatPolicyChildManageGroups": "Allow children to add participants to their groups",
+  "@familyChatPolicyChildManageGroups": { "description": "Child chat safety setting" },
+  "familyChatPolicyGuardianInclusion": "When must guardians join child conversations?",
+  "@familyChatPolicyGuardianInclusion": { "description": "Server-enforced safety inclusion rule" },
+  "familyChatPolicyInclusionNone": "Never by default",
+  "@familyChatPolicyInclusionNone": { "description": "No automatic guardian inclusion" },
+  "familyChatPolicyInclusionAllChildChats": "Every child conversation",
+  "@familyChatPolicyInclusionAllChildChats": { "description": "Include active guardians when any child is in a new conversation" },
+  "familyChatPolicyInclusionChildToChild": "Only child-to-child conversations",
+  "@familyChatPolicyInclusionChildToChild": { "description": "Include active guardians when multiple children are in a conversation" },
+  "familyChatPolicyMaxGroupSize": "Maximum group size",
+  "@familyChatPolicyMaxGroupSize": { "description": "Maximum active participants in a group" },
+  "familyChatPolicySave": "Save rules",
+  "@familyChatPolicySave": { "description": "Save collaboration policy" },
+  "familyChatPolicySaved": "The server saved the collaboration rules.",
+  "@familyChatPolicySaved": { "description": "Policy update confirmation" },
+  "familyChatPolicyLoadFailed": "The server policy could not be loaded.",
+  "@familyChatPolicyLoadFailed": { "description": "Policy read failure" },
+  "familyChatPolicySaveFailed": "The server did not accept the policy change.",
+  "@familyChatPolicySaveFailed": { "description": "Policy update failure" },
   "familyChatLoadOlder": "Load older messages",
   "@familyChatLoadOlder": {
       "description": "W9 family chat client state and controls"

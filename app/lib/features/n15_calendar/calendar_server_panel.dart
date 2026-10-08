@@ -6,6 +6,8 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n15_calendar/calendar_server_authority.dart';
+import 'package:family_os/features/n02_day/family_chat_server_authority.dart';
+import 'package:family_os/foundation_gate/family_chat_api_client.dart';
 import 'package:family_os/foundation_gate/family_calendar_api_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 
@@ -81,6 +83,8 @@ class _CalendarServerPanelState extends State<CalendarServerPanel> {
   String? _attendanceEventId;
   String? _attendanceChildId;
   final Set<String> _createChildIds = <String>{};
+  List<FamilyChatThread> _collaborationThreads = const <FamilyChatThread>[];
+  String? _createAudienceThreadId;
 
   final TextEditingController _answerNoteCtrl = TextEditingController();
   final TextEditingController _attendanceNoteCtrl = TextEditingController();
@@ -113,6 +117,7 @@ class _CalendarServerPanelState extends State<CalendarServerPanel> {
   void initState() {
     super.initState();
     _load();
+    _loadCollaborationThreads();
   }
 
   @override
@@ -164,6 +169,23 @@ class _CalendarServerPanelState extends State<CalendarServerPanel> {
       _busy = false;
       _status = answer.status;
       if (answer.isReady) _calendar = answer.value;
+    });
+  }
+
+  Future<void> _loadCollaborationThreads() async {
+    final chatAuthority = activeFamilyChatServerAuthority;
+    if (chatAuthority == null) return;
+    final answer = await chatAuthority.listGuardianThreads();
+    if (!mounted || !answer.isReady) return;
+    setState(() {
+      _collaborationThreads = answer.value!.threads
+          .where((thread) =>
+              thread.kind == FamilyChatThreadKind.direct ||
+              thread.kind == FamilyChatThreadKind.group)
+          .toList(growable: false);
+      if (!_collaborationThreads.any((thread) => thread.id == _createAudienceThreadId)) {
+        _createAudienceThreadId = null;
+      }
     });
   }
 
@@ -289,10 +311,11 @@ class _CalendarServerPanelState extends State<CalendarServerPanel> {
     final start = _createStart;
     final end = _createEnd;
     if (title.isEmpty || start == null || end == null) return;
-    if (_createChildIds.isEmpty) return;
-    if (!_addressableChildren.any(
-      (child) => _createChildIds.contains(child.id.value),
-    )) {
+    if (_createChildIds.isEmpty && _createAudienceThreadId == null) return;
+    if (_createChildIds.isNotEmpty &&
+        !_addressableChildren.any(
+          (child) => _createChildIds.contains(child.id.value),
+        )) {
       return;
     }
     if (!end.isAfter(start)) return;
@@ -305,6 +328,7 @@ class _CalendarServerPanelState extends State<CalendarServerPanel> {
       endsAt: end,
       reminderMinutes: int.tryParse(_createReminderCtrl.text.trim()),
       childIds: _createChildIds.toList(growable: false),
+      audienceThreadId: _createAudienceThreadId,
       idempotencyKey: () => _key('create'),
     );
     if (!mounted) return;
@@ -316,6 +340,7 @@ class _CalendarServerPanelState extends State<CalendarServerPanel> {
         _createLocationCtrl.clear();
         _createNoteCtrl.clear();
         _createChildIds.clear();
+        _createAudienceThreadId = null;
         _createStart = null;
         _createEnd = null;
       }
@@ -861,6 +886,41 @@ class _CalendarServerPanelState extends State<CalendarServerPanel> {
               decoration: InputDecoration(
                 hintText: l10n.calendarServerCreateReminder,
               ),
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              key: const Key('calendar_server_create_audience_thread'),
+              initialValue: _createAudienceThreadId ?? '',
+              decoration: InputDecoration(
+                labelText: l10n.calendarServerAudienceScopeLabel,
+              ),
+              items: <DropdownMenuItem<String>>[
+                DropdownMenuItem<String>(
+                  value: '',
+                  child: Text(l10n.calendarServerAudienceScopeChildrenOnly),
+                ),
+                for (final thread in _collaborationThreads)
+                  DropdownMenuItem<String>(
+                    value: thread.id,
+                    child: Text(
+                      thread.title.trim().isNotEmpty
+                          ? thread.title
+                          : thread.kind == FamilyChatThreadKind.direct
+                              ? l10n.familyChatDirectThread
+                              : l10n.familyChatGroupThread,
+                    ),
+                  ),
+              ],
+              onChanged: _busy
+                  ? null
+                  : (value) => setState(() {
+                      _createAudienceThreadId = value == null || value.isEmpty
+                          ? null
+                          : value;
+                      if (_createAudienceThreadId != null) {
+                        _createChildIds.clear();
+                      }
+                    }),
             ),
             const SizedBox(height: 8),
             Text(

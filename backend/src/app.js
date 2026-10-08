@@ -12,6 +12,7 @@ import { webFilterFor } from './web-filter.js';
 import { tasksFor } from './tasks.js';
 import { calendarFor } from './calendar.js';
 import { familyChatFor } from './family-chat.js';
+import { collaborationPolicyFor } from './collaboration-policy.js';
 import { capabilityMatches } from './store/postgres-foundation-store.js';
 import {
     claimDevicePairingInput,
@@ -58,6 +59,7 @@ import {
     eventAttendanceInput,
     eventRangeQuery,
     chatThreadCreateInput,
+    collaborationPolicyInput,
     chatThreadMemberInput,
     chatMessageInput,
     chatMessageEditInput,
@@ -129,6 +131,7 @@ export function createApp({
     // wave has: the room is the permission. Nothing in this file decides who may read a
     // thread; a caller with no member row reads `chat_thread_not_found`, from the module.
     familyChat = familyChatFor(store, { credentialMatches: capabilityMatches }),
+    collaborationPolicy = collaborationPolicyFor(store),
     preAuthenticationRateLimit = {},
     protectedRateLimit = {},
 }) {
@@ -1481,7 +1484,7 @@ export function createApp({
             const familyId = requireUuid(request.params.familyId, 'familyId');
             const childId = requireUuid(request.params.childId, 'childId');
             requireNoQueryParameters(request.query);
-            const { title, note, points } = taskCreateInput(request.body);
+            const { title, note, points, audienceThreadId } = taskCreateInput(request.body);
             const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
             const result = await tasks.createTask({
                 principal: request.principal,
@@ -1490,12 +1493,13 @@ export function createApp({
                 title,
                 note,
                 points,
+                audienceThreadId,
                 idempotencyKey,
                 correlationId: request.correlationId,
                 requestHash: requestFingerprint({
                     action: 'task.create',
                     principal: request.principal,
-                    input: { familyId, childId, title, note, points },
+                    input: { familyId, childId, title, note, points, audienceThreadId },
                 }),
             });
             response.status(201).json(result);
@@ -1872,9 +1876,61 @@ export function createApp({
     // losing the text. The only receipt stated here is `readCount`, computed from participants'
     // own read marks - there is no delivery claim, because there is no transport to prove one.
 
-    // The rooms the caller is in. A guardian sees the conversations they were added to and no
-    // others: the module joins on the member row, so "not in the room" is not a filter that
-    // could be forgotten - it is a row that does not exist.
+    // Family-configured collaboration controls. The primary guardian delegates only within the
+    // immutable guardian role boundary; child contact and guardian inclusion are evaluated from
+    // this server-owned policy, never from a client snapshot.
+    app.get(
+        '/v1/families/:familyId/collaboration-policy',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            requireNoQueryParameters(request.query);
+            const result = await collaborationPolicy.read({ principal: request.principal, familyId });
+            response.status(200).json(result);
+        }),
+    );
+
+    app.patch(
+        '/v1/families/:familyId/collaboration-policy',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            requireNoQueryParameters(request.query);
+            const { change, expectedVersion } = collaborationPolicyInput(request.body);
+            const result = await collaborationPolicy.update({
+                principal: request.principal,
+                familyId,
+                change,
+                expectedVersion,
+                correlationId: request.correlationId,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // The server-owned address book used to create direct conversations and groups. It returns
+    // only family participant ids, roles and child display names; no contact identity or device
+    // secret is disclosed to another family member.
+    app.get(
+        '/v1/families/:familyId/chat/participants',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            requireNoQueryParameters(request.query);
+            const result = await familyChat.listParticipants({ principal: request.principal, familyId });
+            response.status(200).json(result);
+        }),
+    );
+
+    // The rooms the caller is in. A participant sees conversations they were added to and no
+    // others: the module joins on the active member row, so "not in the room" is not a filter
+    // that could be forgotten - it is a row that does not exist.
     app.get(
         '/v1/families/:familyId/chat/threads',
         requirePrincipal,
@@ -1891,8 +1947,9 @@ export function createApp({
         }),
     );
 
-    // Opening a conversation. Guardian participants come from the server's active family roster,
-    // never from a client-selected list, and are written by the same transaction as the room.
+    // Opening a conversation. The caller names direct peers or an explicit group; the server
+    // checks each identity against its live family roster and only adds guardians when an active
+    // collaboration safety policy requires it.
     app.post(
         '/v1/families/:familyId/chat/threads',
         requirePrincipal,
@@ -2105,6 +2162,77 @@ export function createApp({
             const deviceId = requireUuid(request.params.deviceId, 'deviceId');
             requireNoQueryParameters(request.query);
             const result = await familyChat.listThreadsForDevice({
+                deviceId,
+                deviceCredential: request.deviceCredential,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    app.post(
+        '/v1/devices/:deviceId/chat/threads',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            requireNoQueryParameters(request.query);
+            const input = chatThreadCreateInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await familyChat.createThreadForDevice({
+                deviceId,
+                deviceCredential: request.deviceCredential,
+                ...input,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'family.chat.thread.create.device',
+                    principal: request.principal ?? { subject: deviceId },
+                    input: { deviceId, ...input },
+                }),
+            });
+            response.status(201).json(result);
+        }),
+    );
+
+    app.post(
+        '/v1/devices/:deviceId/chat/threads/:threadId/members',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            const threadId = requireUuid(request.params.threadId, 'threadId');
+            requireNoQueryParameters(request.query);
+            const { participantKind, participantId } = chatThreadMemberInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await familyChat.addThreadMemberForDevice({
+                deviceId,
+                deviceCredential: request.deviceCredential,
+                threadId,
+                participantKind,
+                participantId,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'family.chat.thread.member.add.device',
+                    principal: request.principal ?? { subject: deviceId },
+                    input: { deviceId, threadId, participantKind, participantId },
+                }),
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    app.get(
+        '/v1/devices/:deviceId/chat/participants',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            requireNoQueryParameters(request.query);
+            const result = await familyChat.listParticipantsForDevice({
                 deviceId,
                 deviceCredential: request.deviceCredential,
             });

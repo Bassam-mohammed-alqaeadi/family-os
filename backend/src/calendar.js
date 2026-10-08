@@ -30,6 +30,11 @@
 import { randomUUID } from 'node:crypto';
 
 import { HttpError } from './http-error.js';
+import {
+  COLLABORATION_POLICY_DEFAULTS,
+  collaborationRoleAllowed,
+  readCollaborationPolicy as readServerCollaborationPolicy,
+} from './collaboration-policy.js';
 
 export const EVENT_STATUSES = Object.freeze(['scheduled', 'cancelled']);
 export const EVENT_RESPONSES = Object.freeze(['accepted', 'declined']);
@@ -46,8 +51,6 @@ export const EVENT_HORIZON_DAYS = 1095;
 export const EVENT_LENGTH_MAX_HOURS = 24 * 30;
 export const EVENT_REMINDER_MAX_MINUTES = 10080;
 
-const GUARDIAN_ROLES = new Set(['primary_guardian', 'co_guardian']);
-
 export class CalendarError extends HttpError {
   constructor(status, code, message) {
     super(status, code, message);
@@ -56,7 +59,8 @@ export class CalendarError extends HttpError {
 }
 
 function requireGuardian(actor, code, message) {
-  if (!GUARDIAN_ROLES.has(actor?.role)) {
+  const policy = actor?.collaborationPolicy ?? COLLABORATION_POLICY_DEFAULTS;
+  if (!collaborationRoleAllowed(actor, policy, 'calendar')) {
     throw new CalendarError(403, code, message);
   }
   return actor;
@@ -83,6 +87,7 @@ export function eventView(row, { audience = [], responses = [], attendance = [] 
   const attendanceByChild = new Map(attendance.map((a) => [a.child_id, a]));
   return {
     id: row.id,
+    audienceThreadId: row.audience_thread_id ?? null,
     title: row.title,
     note: row.note,
     location: row.location,
@@ -201,6 +206,31 @@ export function requireRecordableAt(row, now) {
   return row;
 }
 
+async function requireEventThreadMember(port, tx, {
+  familyId,
+  event,
+  viewerKind,
+  viewerId,
+  childId = null,
+}) {
+  const threadId = event.audience_thread_id;
+  if (threadId == null) return;
+  const thread = await port.readChatThread(tx, { familyId, threadId });
+  if (thread == null || !['direct', 'group'].includes(thread.kind)) {
+    throw new CalendarError(404, 'event_not_found', 'This event is not available.');
+  }
+  const members = await port.listChatThreadMembers(tx, { threadId });
+  const viewerIsMember = members.some(
+    (member) => member.participant_kind === viewerKind && member.participant_id === viewerId,
+  );
+  const childIsMember = childId == null || members.some(
+    (member) => member.participant_kind === 'child' && member.participant_id === childId,
+  );
+  if (!viewerIsMember || !childIsMember) {
+    throw new CalendarError(404, 'event_not_found', 'This event is not available.');
+  }
+}
+
 // ── operations ────────────────────────────────────────────────────────────────────────────
 
 /// A guardian states an event, and names who it is for. The audience is part of the same
@@ -218,6 +248,7 @@ export function createEventCreate({ port }) {
     allDay = false,
     reminderMinutes = null,
     childIds,
+    audienceThreadId = null,
     idempotencyKey,
     requestHash,
     correlationId,
@@ -240,16 +271,36 @@ export function createEventCreate({ port }) {
         if (end.getTime() - start.getTime() > EVENT_LENGTH_MAX_HOURS * 3600 * 1000) {
           throw new CalendarError(422, 'event_too_long', 'That is longer than a month - check the dates.');
         }
-        const children = [];
-        for (const childId of childIds) {
+        let children = [...childIds];
+        if (audienceThreadId != null) {
+          const targetThread = await port.readChatThread(tx, { familyId, threadId: audienceThreadId });
+          if (targetThread == null || !['direct', 'group'].includes(targetThread.kind)) {
+            throw new CalendarError(404, 'event_audience_not_found', 'This collaboration group is not available.');
+          }
+          const threadMembers = await port.listChatThreadMembers(tx, { threadId: audienceThreadId });
+          const actorIsMember = threadMembers.some(
+            (entry) => entry.participant_kind === 'membership' && entry.participant_id === actor.id,
+          );
+          if (!actorIsMember) {
+            throw new CalendarError(404, 'event_audience_not_found', 'This collaboration group is not available.');
+          }
+          const groupChildren = threadMembers
+            .filter((entry) => entry.participant_kind === 'child')
+            .map((entry) => entry.participant_id);
+          if (children.length === 0) children = groupChildren;
+          if (children.some((childId) => !groupChildren.includes(childId))) {
+            throw new CalendarError(422, 'event_audience_not_in_group', 'Every selected child must be a member of the selected collaboration group.');
+          }
+        }
+        for (const childId of children) {
           const child = await port.readChild(tx, { familyId, childId });
           if (child == null) {
             throw new CalendarError(404, 'child_not_found', 'One of these children is not part of the family.');
           }
-          children.push(childId);
         }
         const row = await port.insertEvent(tx, {
           familyId,
+          audienceThreadId,
           title,
           note,
           location,
@@ -267,6 +318,7 @@ export function createEventCreate({ port }) {
           subjectId: row.id,
           subjectType: 'family_event',
           eventType: 'family.event_created',
+          payload: { audienceThreadId: row.audience_thread_id ?? null, childIds: children }
         });
         return { event: eventView(row, { audience }) };
       },
@@ -282,8 +334,17 @@ export function createEventList({ port }) {
     return port.read(async (tx) => {
       const actor = await port.authorize(tx, { familyId, subject: principal.subject });
       requireGuardian(actor, 'event_forbidden', 'Only a guardian may read the family calendar.');
-      const rows = await port.listEvents(tx, { familyId, from, to });
-      const audience = await port.listAudience(tx, { familyId, eventIds: rows.map((row) => row.id) });
+      const rows = await port.listEvents(tx, {
+        familyId,
+        from,
+        to,
+        viewerMembershipId: actor.id,
+      });
+      const audience = await port.listAudience(tx, {
+        familyId,
+        eventIds: rows.map((row) => row.id),
+        viewerMembershipId: actor.id,
+      });
       const responses = await port.listResponses(tx, { familyId, eventIds: rows.map((row) => row.id) });
       const attendance = await port.listAttendance(tx, { familyId, eventIds: rows.map((row) => row.id) });
       return {
@@ -373,6 +434,13 @@ export function createEventResponseRecord({ port }) {
         if (event == null) {
           throw new CalendarError(404, 'event_not_found', 'This event is not part of the family.');
         }
+        await requireEventThreadMember(port, tx, {
+          familyId: effectiveFamilyId,
+          event,
+          viewerKind: deviceId != null ? 'child' : 'membership',
+          viewerId: deviceId != null ? effectiveChildId : authorMembershipId,
+          childId: effectiveChildId,
+        });
         if (event.status !== 'scheduled') {
           throw new CalendarError(409, 'event_cancelled', 'This event was cancelled; there is nothing to answer.');
         }
@@ -406,6 +474,7 @@ export function createEventResponseRecord({ port }) {
           subjectId: eventId,
           subjectType: 'family_event',
           eventType: 'family.event_responded',
+          payload: { audienceThreadId: event.audience_thread_id ?? null, childId: effectiveChildId }
         });
         return { response: responseView(row) };
       },
@@ -442,6 +511,13 @@ export function createAttendanceRecord({ port }) {
         if (event == null) {
           throw new CalendarError(404, 'event_not_found', 'This event is not part of the family.');
         }
+        await requireEventThreadMember(port, tx, {
+          familyId,
+          event,
+          viewerKind: 'membership',
+          viewerId: actor.id,
+          childId,
+        });
         requireRecordableAt(event, now());
         const invited = await port.readAudience(tx, { familyId, eventId, childId });
         if (invited == null) {
@@ -462,6 +538,7 @@ export function createAttendanceRecord({ port }) {
           subjectId: eventId,
           subjectType: 'family_event',
           eventType: 'family.event_attendance_recorded',
+          payload: { audienceThreadId: event.audience_thread_id ?? null, childId }
         });
         return { attendance: attendanceView(row) };
       },
@@ -487,6 +564,12 @@ export function createEventUpdate({ port }) {
       if (current == null) {
         throw new CalendarError(404, 'event_not_found', 'This event is not part of the family.');
       }
+      await requireEventThreadMember(port, tx, {
+        familyId,
+        event: current,
+        viewerKind: 'membership',
+        viewerId: actor.id,
+      });
       if (current.status !== 'scheduled') {
         throw new CalendarError(409, 'event_cancelled', 'This event was cancelled and is not edited.');
       }
@@ -502,32 +585,45 @@ export function createEventUpdate({ port }) {
       if (new Date(endsAt) <= new Date(startsAt)) {
         throw new CalendarError(422, 'event_instant_ordered', 'The end must be after the start.');
       }
-      const row = await port.updateEvent(tx, {
-        familyId,
-        eventId,
-        title: changes.title ?? current.title,
-        note: changes.note ?? current.note,
-        location: changes.location ?? current.location,
-        startsAt,
-        endsAt,
-        allDay: changes.allDay ?? current.all_day,
-        reminderMinutes: changes.reminderMinutes === undefined ? current.reminder_minutes : changes.reminderMinutes,
-      });
-      if (changes.childIds != null) {
-        // The audience is replaced rather than merged, because a guardian who unticks a name
-        // means it: merged audiences are how a child stays invited to something they were
-        // removed from. But an answer and an attendance record are facts with authors, and
-        // this path may not delete them - so a child who already answered cannot be removed
-        // silently; the guardian is told why, and the history keeps its author.
-        const current_ = await port.listAudience(tx, { familyId, eventIds: [eventId] });
-        const kept = new Set(changes.childIds);
-        for (const entry of current_) {
+      const audienceThreadId = changes.audienceThreadId === undefined
+        ? current.audience_thread_id ?? null
+        : changes.audienceThreadId;
+      const replaceAudience = changes.childIds !== undefined || changes.audienceThreadId !== undefined;
+      let nextChildIds = null;
+      if (replaceAudience) {
+        const currentAudience = await port.listAudience(tx, { familyId, eventIds: [eventId] });
+        let groupChildren = null;
+        if (audienceThreadId != null) {
+          const targetThread = await port.readChatThread(tx, { familyId, threadId: audienceThreadId });
+          if (targetThread == null || !['direct', 'group'].includes(targetThread.kind)) {
+            throw new CalendarError(404, 'event_audience_not_found', 'This collaboration group is not available.');
+          }
+          const members = await port.listChatThreadMembers(tx, { threadId: audienceThreadId });
+          if (!members.some((entry) => entry.participant_kind === 'membership' && entry.participant_id === actor.id)) {
+            throw new CalendarError(404, 'event_audience_not_found', 'This collaboration group is not available.');
+          }
+          groupChildren = members
+            .filter((entry) => entry.participant_kind === 'child')
+            .map((entry) => entry.participant_id);
+        }
+        nextChildIds = changes.childIds === undefined
+          ? (groupChildren ?? currentAudience.map((entry) => entry.child_id))
+          : [...changes.childIds];
+        if (audienceThreadId == null && nextChildIds.length === 0) {
+          throw new CalendarError(422, 'event_audience_required', 'An event needs at least one child or a collaboration group.');
+        }
+        if (groupChildren != null && nextChildIds.some((childId) => !groupChildren.includes(childId))) {
+          throw new CalendarError(422, 'event_audience_not_in_group', 'Every selected child must be a member of the selected collaboration group.');
+        }
+        for (const childId of nextChildIds) {
+          if (await port.readChild(tx, { familyId, childId }) == null) {
+            throw new CalendarError(404, 'child_not_found', 'One of these children is not part of the family.');
+          }
+        }
+        const kept = new Set(nextChildIds);
+        for (const entry of currentAudience) {
           if (kept.has(entry.child_id)) continue;
-          const answers = await port.audienceAnswerCount(tx, {
-            familyId,
-            eventId,
-            childId: entry.child_id,
-          });
+          const answers = await port.audienceAnswerCount(tx, { familyId, eventId, childId: entry.child_id });
           if (answers > 0) {
             throw new CalendarError(
               409,
@@ -536,10 +632,28 @@ export function createEventUpdate({ port }) {
             );
           }
         }
-        await port.deleteAudience(tx, { familyId, eventId });
-        await port.insertAudience(tx, { familyId, eventId, childIds: changes.childIds });
       }
-      const audience = await port.listAudience(tx, { familyId, eventIds: [eventId] });
+      const row = await port.updateEvent(tx, {
+        familyId,
+        eventId,
+        audienceThreadId,
+        title: changes.title ?? current.title,
+        note: changes.note ?? current.note,
+        location: changes.location ?? current.location,
+        startsAt,
+        endsAt,
+        allDay: changes.allDay ?? current.all_day,
+        reminderMinutes: changes.reminderMinutes === undefined ? current.reminder_minutes : changes.reminderMinutes,
+      });
+      if (replaceAudience) {
+        await port.deleteAudience(tx, { familyId, eventId });
+        await port.insertAudience(tx, { familyId, eventId, childIds: nextChildIds });
+      }
+      const audience = await port.listAudience(tx, {
+        familyId,
+        eventIds: [eventId],
+        viewerMembershipId: actor.id,
+      });
       const responses = await port.listResponses(tx, { familyId, eventIds: [eventId] });
       const attendance = await port.listAttendance(tx, { familyId, eventIds: [eventId] });
       await port.audit(tx, {
@@ -549,6 +663,7 @@ export function createEventUpdate({ port }) {
         subjectId: eventId,
         subjectType: 'family_event',
         eventType: 'family.event_updated',
+        payload: { audienceThreadId: row.audience_thread_id ?? null, childIds: audience.map((entry) => entry.child_id) }
       });
       return { event: eventView(row, { audience, responses, attendance }) };
     });
@@ -580,6 +695,12 @@ export function createEventCancel({ port }) {
         if (current == null) {
           throw new CalendarError(404, 'event_not_found', 'This event is not part of the family.');
         }
+        await requireEventThreadMember(port, tx, {
+          familyId,
+          event: current,
+          viewerKind: 'membership',
+          viewerId: actor.id,
+        });
         if (current.status === 'cancelled') {
           throw new CalendarError(409, 'event_already_cancelled', 'This event was already cancelled.');
         }
@@ -596,8 +717,13 @@ export function createEventCancel({ port }) {
           subjectId: eventId,
           subjectType: 'family_event',
           eventType: 'family.event_cancelled',
+          payload: { audienceThreadId: row.audience_thread_id ?? null }
         });
-        const audience = await port.listAudience(tx, { familyId, eventIds: [eventId] });
+        const audience = await port.listAudience(tx, {
+          familyId,
+          eventIds: [eventId],
+          viewerMembershipId: actor.id,
+        });
         const responses = await port.listResponses(tx, { familyId, eventIds: [eventId] });
         const attendance = await port.listAttendance(tx, { familyId, eventIds: [eventId] });
         return { event: eventView(row, { audience, responses, attendance }) };
@@ -622,7 +748,7 @@ export function calendarFor(store, { credentialMatches }) {
 /// The columns are stated once, as lists, because one read needs them prefixed (`e.title`)
 /// and a template string cannot be both flat and prefixed without becoming a parser's job.
 const EVENT_COLUMN_LIST = Object.freeze([
-  'id', 'family_id', 'title', 'note', 'location', 'starts_at', 'ends_at', 'all_day',
+  'id', 'family_id', 'audience_thread_id', 'title', 'note', 'location', 'starts_at', 'ends_at', 'all_day',
   'reminder_minutes', 'status', 'version', 'created_by_membership_id',
   'cancelled_by_membership_id', 'cancelled_at', 'cancel_reason', 'created_at', 'updated_at',
 ]);
@@ -660,7 +786,13 @@ export function postgresCalendarPort(store, { credentialMatches }) {
     },
 
     async authorize(client, { familyId, subject }) {
-      return store.activeActorMembership(client, familyId, subject);
+      const actor = await store.activeActorMembership(client, familyId, subject);
+      actor.collaborationPolicy = await readServerCollaborationPolicy(client, { familyId });
+      return actor;
+    },
+
+    async readCollaborationPolicy(client, { familyId, forUpdate = false } = {}) {
+      return readServerCollaborationPolicy(client, { familyId, forUpdate });
     },
 
     async readChild(client, { familyId, childId }) {
@@ -669,6 +801,27 @@ export function postgresCalendarPort(store, { credentialMatches }) {
         [familyId, childId],
       );
       return rows[0] ?? null;
+    },
+
+    async readChatThread(client, { familyId, threadId }) {
+      const { rows } = await client.query(
+        `SELECT id, family_id, kind, next_seq FROM family_chat_threads
+          WHERE family_id = $1 AND id = $2`,
+        [familyId, threadId],
+      );
+      return rows[0] ?? null;
+    },
+
+    async listChatThreadMembers(client, { threadId }) {
+      const { rows } = await client.query(
+        `SELECT mem.participant_kind, mem.participant_id
+           FROM family_chat_thread_members mem
+           LEFT JOIN family_memberships membership ON membership.id = mem.membership_id
+          WHERE mem.thread_id = $1 AND mem.left_at IS NULL
+            AND (mem.participant_kind = 'child' OR membership.status = 'active')`,
+        [threadId],
+      );
+      return rows;
     },
 
     async requireDevice(client, { deviceId, deviceCredential }) {
@@ -688,14 +841,14 @@ export function postgresCalendarPort(store, { credentialMatches }) {
       return device;
     },
 
-    async insertEvent(client, { familyId, title, note, location, startsAt, endsAt, allDay, reminderMinutes, createdByMembershipId }) {
+    async insertEvent(client, { familyId, audienceThreadId = null, title, note, location, startsAt, endsAt, allDay, reminderMinutes, createdByMembershipId }) {
       const { rows } = await client.query(
         `INSERT INTO family_events
-           (id, family_id, title, note, location, starts_at, ends_at, all_day,
+           (id, family_id, audience_thread_id, title, note, location, starts_at, ends_at, all_day,
             reminder_minutes, created_by_membership_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
          RETURNING ${EVENT_COLUMNS}`,
-        [randomUUID(), familyId, title, note, location, startsAt, endsAt, allDay, reminderMinutes, createdByMembershipId],
+        [randomUUID(), familyId, audienceThreadId, title, note, location, startsAt, endsAt, allDay, reminderMinutes, createdByMembershipId],
       );
       return rows[0];
     },
@@ -749,12 +902,40 @@ export function postgresCalendarPort(store, { credentialMatches }) {
       return rows[0] ?? null;
     },
 
-    async listEvents(client, { familyId, from, to }) {
+    async listEvents(client, { familyId, from, to, viewerMembershipId }) {
       const { rows } = await client.query(
-        `SELECT ${EVENT_COLUMNS} FROM family_events
-          WHERE family_id = $1 AND starts_at >= $2 AND starts_at < $3
-          ORDER BY starts_at ASC, id ASC`,
-        [familyId, from, to],
+        `SELECT ${EVENT_COLUMNS} FROM family_events event
+          WHERE event.family_id = $1
+            AND event.starts_at >= $2 AND event.starts_at < $3
+            AND (
+              event.audience_thread_id IS NULL
+              OR EXISTS (
+                SELECT 1
+                  FROM family_chat_thread_members member
+                  JOIN family_memberships membership
+                    ON membership.id = member.membership_id
+                 WHERE member.thread_id = event.audience_thread_id
+                   AND member.family_id = event.family_id
+                   AND member.participant_kind = 'membership'
+                   AND member.participant_id = $4
+                   AND member.left_at IS NULL
+                   AND membership.status = 'active'
+              )
+              AND EXISTS (
+                SELECT 1
+                  FROM family_event_audience audience
+                  JOIN family_chat_thread_members child_member
+                    ON child_member.thread_id = event.audience_thread_id
+                   AND child_member.family_id = event.family_id
+                   AND child_member.participant_kind = 'child'
+                   AND child_member.participant_id = audience.child_id
+                   AND child_member.left_at IS NULL
+                 WHERE audience.family_id = event.family_id
+                   AND audience.event_id = event.id
+              )
+            )
+          ORDER BY event.starts_at ASC, event.id ASC`,
+        [familyId, from, to, viewerMembershipId],
       );
       return rows;
     },
@@ -767,19 +948,61 @@ export function postgresCalendarPort(store, { credentialMatches }) {
            JOIN family_event_audience aura
              ON aura.family_id = e.family_id AND aura.event_id = e.id AND aura.child_id = $3
           WHERE e.family_id = $1 AND e.starts_at >= $2 AND e.starts_at < $4
+            AND (
+              e.audience_thread_id IS NULL
+              OR EXISTS (
+                SELECT 1
+                  FROM family_chat_thread_members member
+                 WHERE member.thread_id = e.audience_thread_id
+                   AND member.family_id = e.family_id
+                   AND member.participant_kind = 'child'
+                   AND member.participant_id = $3
+                   AND member.left_at IS NULL
+              )
+            )
           ORDER BY e.starts_at ASC, e.id ASC`,
         [familyId, from, childId, to],
       );
       return rows;
     },
 
-    async listAudience(client, { familyId, eventIds }) {
+    async listAudience(client, { familyId, eventIds, viewerMembershipId = null }) {
       if (eventIds.length === 0) return [];
       const { rows } = await client.query(
-        `SELECT family_id, event_id, child_id FROM family_event_audience
-          WHERE family_id = $1 AND event_id = ANY($2::uuid[])
-          ORDER BY event_id, child_id`,
-        [familyId, eventIds],
+        `SELECT audience.family_id, audience.event_id, audience.child_id
+           FROM family_event_audience audience
+           JOIN family_events event
+             ON event.family_id = audience.family_id AND event.id = audience.event_id
+          WHERE audience.family_id = $1 AND audience.event_id = ANY($2::uuid[])
+            AND (
+              $3::uuid IS NULL
+              OR event.audience_thread_id IS NULL
+              OR (
+                EXISTS (
+                  SELECT 1
+                    FROM family_chat_thread_members guardian_member
+                    JOIN family_memberships guardian_membership
+                      ON guardian_membership.id = guardian_member.membership_id
+                   WHERE guardian_member.thread_id = event.audience_thread_id
+                     AND guardian_member.family_id = event.family_id
+                     AND guardian_member.participant_kind = 'membership'
+                     AND guardian_member.participant_id = $3
+                     AND guardian_member.left_at IS NULL
+                     AND guardian_membership.status = 'active'
+                )
+                AND EXISTS (
+                  SELECT 1
+                    FROM family_chat_thread_members child_member
+                   WHERE child_member.thread_id = event.audience_thread_id
+                     AND child_member.family_id = event.family_id
+                     AND child_member.participant_kind = 'child'
+                     AND child_member.participant_id = audience.child_id
+                     AND child_member.left_at IS NULL
+                )
+              )
+            )
+          ORDER BY audience.event_id, audience.child_id`,
+        [familyId, eventIds, viewerMembershipId],
       );
       return rows;
     },
@@ -867,15 +1090,15 @@ export function postgresCalendarPort(store, { credentialMatches }) {
       return rows[0];
     },
 
-    async updateEvent(client, { familyId, eventId, title, note, location, startsAt, endsAt, allDay, reminderMinutes }) {
+    async updateEvent(client, { familyId, eventId, audienceThreadId = null, title, note, location, startsAt, endsAt, allDay, reminderMinutes }) {
       const { rows } = await client.query(
         `UPDATE family_events
-            SET title = $3, note = $4, location = $5, starts_at = $6, ends_at = $7,
-                all_day = $8, reminder_minutes = $9,
+            SET audience_thread_id = $3, title = $4, note = $5, location = $6,
+                starts_at = $7, ends_at = $8, all_day = $9, reminder_minutes = $10,
                 version = version + 1, updated_at = NOW()
           WHERE id = $1 AND family_id = $2
           RETURNING ${EVENT_COLUMNS}`,
-        [eventId, familyId, title, note, location, startsAt, endsAt, allDay, reminderMinutes],
+        [eventId, familyId, audienceThreadId, title, note, location, startsAt, endsAt, allDay, reminderMinutes],
       );
       return rows[0];
     },
@@ -903,6 +1126,7 @@ export function postgresCalendarPort(store, { credentialMatches }) {
       subjectId,
       subjectType,
       eventType,
+      payload = {},
     }) {
       await store.appendAuditAndOutbox(client, {
         familyId,
@@ -911,6 +1135,7 @@ export function postgresCalendarPort(store, { credentialMatches }) {
         subjectId,
         subjectType,
         eventType,
+        payload,
       });
     },
   };

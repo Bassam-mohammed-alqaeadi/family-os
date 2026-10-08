@@ -1140,13 +1140,16 @@ export function webFilterEvaluateQuery(value) {
 /** A guardian states a task: what it is, what "done" means, and what it pays. */
 export function taskCreateInput(value) {
   const body = bodyObject(value);
-  onlyKnownFields(body, new Set(['title', 'note', 'points']));
+  onlyKnownFields(body, new Set(['title', 'note', 'points', 'audienceThreadId']));
   const title = requiredText(body.title, 'title', { maxLength: MAX_TASK_TITLE_LENGTH });
   const note = body.note === undefined ? '' : (optionalText(body.note, 'note', MAX_TASK_NOTE_LENGTH) ?? '');
   // Whole numbers only, and bounded on both sides: a screen may not round a guardian's
   // decision, and it may not turn a chore into pocket money beyond what one task can state.
   const points = requiredWholeNumber(body.points, 'points', TASK_POINTS_MIN, TASK_POINTS_MAX);
-  return { title, note, points };
+  const audienceThreadId = body.audienceThreadId == null
+    ? null
+    : requireUuid(body.audienceThreadId, 'audienceThreadId');
+  return { title, note, points, audienceThreadId };
 }
 
 /** "I did it" - said by a handset or by a guardian for a child who spoke instead. */
@@ -1202,8 +1205,8 @@ function optionalInstant(value, field) {
 }
 
 /** The audience: at least one child, at most the bound the schema also enforces. */
-function eventAudience(value) {
-  if (!Array.isArray(value) || value.length === 0) {
+function eventAudience(value, { allowEmpty = false } = {}) {
+  if (!Array.isArray(value) || (!allowEmpty && value.length === 0)) {
     throw new HttpError(400, 'invalid_request', 'childIds must name at least one child.');
   }
   if (value.length > MAX_EVENT_AUDIENCE) {
@@ -1230,7 +1233,7 @@ export function eventCreateInput(value, { now = new Date() } = {}) {
   const body = bodyObject(value);
   onlyKnownFields(
     body,
-    new Set(['title', 'note', 'location', 'startsAt', 'endsAt', 'allDay', 'reminderMinutes', 'childIds']),
+    new Set(['title', 'note', 'location', 'startsAt', 'endsAt', 'allDay', 'reminderMinutes', 'childIds', 'audienceThreadId']),
   );
   const title = requiredText(body.title, 'title', { maxLength: MAX_EVENT_TITLE_LENGTH });
   const note = body.note === undefined ? '' : (optionalText(body.note, 'note', MAX_EVENT_NOTE_LENGTH) ?? '');
@@ -1250,6 +1253,12 @@ export function eventCreateInput(value, { now = new Date() } = {}) {
     body.reminderMinutes === undefined || body.reminderMinutes === null
       ? null
       : requiredWholeNumber(body.reminderMinutes, 'reminderMinutes', 0, EVENT_REMINDER_MAX_MINUTES);
+  const audienceThreadId = body.audienceThreadId == null
+    ? null
+    : requireUuid(body.audienceThreadId, 'audienceThreadId');
+  if (audienceThreadId == null && (!Array.isArray(body.childIds) || body.childIds.length === 0)) {
+    throw new HttpError(400, 'invalid_request', 'childIds or an audienceThreadId is required.');
+  }
   return {
     title,
     note,
@@ -1258,7 +1267,8 @@ export function eventCreateInput(value, { now = new Date() } = {}) {
     endsAt,
     allDay: body.allDay === true,
     reminderMinutes,
-    childIds: eventAudience(body.childIds),
+    childIds: eventAudience(body.childIds ?? [], { allowEmpty: audienceThreadId != null }),
+    audienceThreadId,
   };
 }
 
@@ -1268,7 +1278,7 @@ export function eventUpdateInput(value) {
   const body = bodyObject(value);
   onlyKnownFields(
     body,
-    new Set(['version', 'title', 'note', 'location', 'startsAt', 'endsAt', 'allDay', 'reminderMinutes', 'childIds']),
+    new Set(['version', 'title', 'note', 'location', 'startsAt', 'endsAt', 'allDay', 'reminderMinutes', 'childIds', 'audienceThreadId']),
   );
   const version = requiredWholeNumber(body.version, 'version', 1, 1000000);
   const changes = {};
@@ -1289,7 +1299,12 @@ export function eventUpdateInput(value) {
         ? null
         : requiredWholeNumber(body.reminderMinutes, 'reminderMinutes', 0, EVENT_REMINDER_MAX_MINUTES);
   }
-  if (body.childIds !== undefined) changes.childIds = eventAudience(body.childIds);
+  if (body.childIds !== undefined) changes.childIds = eventAudience(body.childIds, { allowEmpty: true });
+  if (body.audienceThreadId !== undefined) {
+    changes.audienceThreadId = body.audienceThreadId === null
+      ? null
+      : requireUuid(body.audienceThreadId, 'audienceThreadId');
+  }
   if (Object.keys(changes).length === 0) {
     // An edit that changes nothing would still bump the version and wake every reader; a
     // request with no fields is a client bug, and refusing it keeps the version meaningful.
@@ -1362,8 +1377,10 @@ const MAX_CHAT_TITLE_LENGTH = 120;
 const MAX_CHAT_BODY_LENGTH = 2000;
 const MAX_CHAT_PARTICIPANTS = 24;
 const MAX_CHAT_PAGE = 200;
-const CHAT_THREAD_KINDS = new Set(['family', 'child']);
+const CHAT_THREAD_KINDS = new Set(['direct', 'group']);
 const CHAT_PARTICIPANT_KINDS = new Set(['membership', 'child']);
+const COLLABORATION_GUARDIAN_ROLES = new Set(['primary_guardian', 'co_guardian']);
+const GUARDIAN_INCLUSION_MODES = new Set(['none', 'all_child_chats', 'child_to_child']);
 /// A client-generated identifier for the sender's own message: long enough to be unique and
 /// short enough to be stored. It is the field that makes a resend the same message.
 const CLIENT_MESSAGE_ID_PATTERN = /^[A-Za-z0-9_.:-]{8,64}$/;
@@ -1422,22 +1439,108 @@ function uuidList(value, field, { maxItems }) {
   return ids;
 }
 
-/** Opening a conversation: what kind of room, what to call it, and (for a child room) which
- *  single child it is about. Every active guardian is added by the server, not selected here. */
+/** Opening a conversation: explicit same-family participants, never an implicit household roster. */
 export function chatThreadCreateInput(value) {
   const body = bodyObject(value);
-  onlyKnownFields(body, new Set(['kind', 'title', 'childIds']));
+  onlyKnownFields(body, new Set(['kind', 'title', 'participants']));
   const kind = requiredText(body.kind, 'kind', { maxLength: 16 }).toLowerCase();
   if (!CHAT_THREAD_KINDS.has(kind)) {
-    throw new HttpError(400, 'invalid_request', 'kind must be family or child.');
+    throw new HttpError(400, 'invalid_request', 'kind must be direct or group.');
   }
   const title =
     body.title === undefined || body.title === null ? '' : optionalText(body.title, 'title', MAX_CHAT_TITLE_LENGTH) ?? '';
-  return {
-    kind,
-    title,
-    childIds: uuidList(body.childIds, 'childIds', { maxItems: MAX_CHAT_PARTICIPANTS }),
-  };
+  const rawParticipants = body.participants;
+  if (!Array.isArray(rawParticipants)) {
+    throw new HttpError(400, 'invalid_request', 'participants must be a list of family participant references.');
+  }
+  const maxTargets = kind === 'direct' ? 1 : MAX_CHAT_PARTICIPANTS - 1;
+  const minTargets = kind === 'direct' ? 1 : 2;
+  if (rawParticipants.length < minTargets || rawParticipants.length > maxTargets) {
+    throw new HttpError(
+      400,
+      'invalid_request',
+      kind === 'direct'
+        ? 'A direct conversation must name exactly one other participant.'
+        : `A group must name between 2 and ${maxTargets} other participants.`,
+    );
+  }
+  const participants = rawParticipants.map((entry, index) => {
+    const participant = bodyObject(entry);
+    onlyKnownFields(participant, new Set(['kind', 'id']));
+    const participantKind = requiredText(participant.kind, `participants[${index}].kind`, { maxLength: 16 }).toLowerCase();
+    if (!CHAT_PARTICIPANT_KINDS.has(participantKind)) {
+      throw new HttpError(400, 'invalid_request', `participants[${index}].kind must be membership or child.`);
+    }
+    return {
+      kind: participantKind,
+      id: requireUuid(participant.id, `participants[${index}].id`),
+    };
+  });
+  const participantKeys = participants.map((entry) => `${entry.kind}:${entry.id.toLowerCase()}`);
+  if (new Set(participantKeys).size !== participantKeys.length) {
+    throw new HttpError(400, 'invalid_request', 'participants must not repeat a person.');
+  }
+  return { kind, title, participants };
+}
+
+/** The policy changes only guardian collaboration capabilities and child-chat safety controls. */
+export function collaborationPolicyInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set([
+    'chatCreateRoles', 'chatManageRoles', 'taskRoles', 'calendarRoles',
+    'childDirectEnabled', 'childGroupsEnabled', 'childGroupMemberManagementEnabled',
+    'guardianInclusionMode', 'maximumGroupSize', 'expectedVersion',
+  ]));
+  const change = {};
+  for (const [wire, internal] of [
+    ['chatCreateRoles', 'chatCreateRoles'],
+    ['chatManageRoles', 'chatManageRoles'],
+    ['taskRoles', 'taskRoles'],
+    ['calendarRoles', 'calendarRoles'],
+  ]) {
+    if (body[wire] === undefined) continue;
+    if (!Array.isArray(body[wire]) || body[wire].length > 2) {
+      throw new HttpError(400, 'invalid_request', `${wire} must be a list of guardian role keys.`);
+    }
+    const roles = body[wire].map((role, index) => {
+      if (typeof role !== 'string' || !COLLABORATION_GUARDIAN_ROLES.has(role)) {
+        throw new HttpError(400, 'invalid_request', `${wire}[${index}] must be primary_guardian or co_guardian.`);
+      }
+      return role;
+    });
+    if (new Set(roles).size !== roles.length) {
+      throw new HttpError(400, 'invalid_request', `${wire} must not repeat a role.`);
+    }
+    change[internal] = roles;
+  }
+  for (const field of ['childDirectEnabled', 'childGroupsEnabled', 'childGroupMemberManagementEnabled']) {
+    if (body[field] !== undefined) {
+      if (typeof body[field] !== 'boolean') {
+        throw new HttpError(400, 'invalid_request', `${field} must be true or false.`);
+      }
+      change[field] = body[field];
+    }
+  }
+  if (body.guardianInclusionMode !== undefined) {
+    if (typeof body.guardianInclusionMode !== 'string' || !GUARDIAN_INCLUSION_MODES.has(body.guardianInclusionMode)) {
+      throw new HttpError(400, 'invalid_request', 'guardianInclusionMode must be none, all_child_chats, or child_to_child.');
+    }
+    change.guardianInclusionMode = body.guardianInclusionMode;
+  }
+  if (body.maximumGroupSize !== undefined) {
+    if (!Number.isInteger(body.maximumGroupSize) || body.maximumGroupSize < 3 || body.maximumGroupSize > MAX_CHAT_PARTICIPANTS) {
+      throw new HttpError(400, 'invalid_request', `maximumGroupSize must be between 3 and ${MAX_CHAT_PARTICIPANTS}.`);
+    }
+    change.maximumGroupSize = body.maximumGroupSize;
+  }
+  const expectedVersion = body.expectedVersion;
+  if (!Number.isInteger(expectedVersion) || expectedVersion < 0 || expectedVersion > 1000000) {
+    throw new HttpError(400, 'invalid_request', 'expectedVersion must be a non-negative whole number.');
+  }
+  if (Object.keys(change).length === 0) {
+    throw new HttpError(400, 'invalid_request', 'At least one collaboration policy field is required.');
+  }
+  return { change, expectedVersion };
 }
 
 /** Adding one participant to an existing room. */

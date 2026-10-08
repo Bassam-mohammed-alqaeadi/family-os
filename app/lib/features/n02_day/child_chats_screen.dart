@@ -101,6 +101,7 @@ class ChildChatsScreenState extends State<ChildChatsScreen> {
   var _loadFailed = false;
   var _refreshing = false;
   var _sosBusy = false;
+  var _creatingThread = false;
   var _requestInFlight = false;
   FamilyChatConnectionState _connectionState =
       FamilyChatConnectionState.checking;
@@ -227,6 +228,162 @@ class ChildChatsScreenState extends State<ChildChatsScreen> {
     AppToast.show(context, message: l10n.childChatsCallContactsToast);
   }
 
+  Future<void> _onNewChat() async {
+    final l10n = AppLocalizations.of(context);
+    final repository = _repo;
+    if (!_isChild || _creatingThread || repository is! FamilyChatThreadListRepository) {
+      return;
+    }
+    final List<FamilyChatParticipant> roster;
+    try {
+      roster = await repository.loadParticipants();
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() => _connectionState = familyChatConnectionStateFor(error));
+      AppToast.show(
+        context,
+        message: familyChatConnectionMessage(l10n, _connectionState) ?? l10n.familyChatUnavailable,
+      );
+      return;
+    }
+    if (!mounted) return;
+    final available = roster.where((participant) => !participant.isSelf).toList(growable: false);
+    if (available.isEmpty) {
+      AppToast.show(context, message: l10n.familyChatNoParticipantsAvailable);
+      return;
+    }
+    final titleController = TextEditingController();
+    var kind = FamilyChatThreadKind.direct;
+    final selectedKeys = <String>{};
+    String participantKey(FamilyChatParticipant participant) =>
+        '${participant.kind.wireValue}:${participant.id}';
+    final choice = await showDialog<_ChildCreateChatChoice>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final selected = available
+              .where((participant) => selectedKeys.contains(participantKey(participant)))
+              .toList(growable: false);
+          final canCreate = kind == FamilyChatThreadKind.direct
+              ? selected.length == 1
+              : selected.length >= 2 && selected.length <= 23;
+          return AlertDialog(
+            title: Text(l10n.familyChatCreateHeading),
+            content: SizedBox(
+              width: 420,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DropdownButtonFormField<FamilyChatThreadKind>(
+                      initialValue: kind,
+                      decoration: InputDecoration(labelText: l10n.familyChatCreateTypeLabel),
+                      items: <DropdownMenuItem<FamilyChatThreadKind>>[
+                        DropdownMenuItem(value: FamilyChatThreadKind.direct, child: Text(l10n.familyChatDirectThread)),
+                        DropdownMenuItem(value: FamilyChatThreadKind.group, child: Text(l10n.familyChatGroupThread)),
+                      ],
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setDialogState(() {
+                          kind = value;
+                          if (kind == FamilyChatThreadKind.direct && selectedKeys.length > 1) {
+                            final keep = selectedKeys.first;
+                            selectedKeys..clear()..add(keep);
+                          }
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    Text(l10n.familyChatSelectParticipants),
+                    for (final participant in available)
+                      CheckboxListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        title: Text(
+                          participant.displayName?.trim().isNotEmpty == true
+                              ? participant.displayName!.trim()
+                              : participant.kind == FamilyChatParticipantKind.child
+                                  ? l10n.familyChatChildFallback
+                                  : l10n.dayBoardGuardianFallback,
+                        ),
+                        value: selectedKeys.contains(participantKey(participant)),
+                        onChanged: (checked) => setDialogState(() {
+                          final key = participantKey(participant);
+                          if (checked == true) {
+                            if (kind == FamilyChatThreadKind.direct) selectedKeys.clear();
+                            selectedKeys.add(key);
+                          } else {
+                            selectedKeys.remove(key);
+                          }
+                        }),
+                      ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: titleController,
+                      maxLength: 120,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: InputDecoration(
+                        labelText: l10n.familyChatCreateTitleLabel,
+                        hintText: l10n.familyChatCreateTitleHint,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: Text(l10n.familyChatCancel)),
+              FilledButton(
+                onPressed: canCreate
+                    ? () => Navigator.of(dialogContext).pop(
+                          _ChildCreateChatChoice(
+                            kind: kind,
+                            title: titleController.text.trim(),
+                            participants: selected
+                                .map((participant) => FamilyChatParticipantReference(
+                                      kind: participant.kind,
+                                      id: participant.id,
+                                    ))
+                                .toList(growable: false),
+                          ),
+                        )
+                    : null,
+                child: Text(l10n.familyChatCreateButton),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+    titleController.dispose();
+    if (choice == null || !mounted) return;
+    setState(() => _creatingThread = true);
+    try {
+      final thread = await repository.createThread(
+        kind: choice.kind,
+        title: choice.title,
+        participants: choice.participants,
+      );
+      if (!mounted) return;
+      await _load();
+      if (!mounted) return;
+      // The conversation route resolves the newly created room through the server on open.
+      context.push(
+        Uri(path: '/scr-chd-008', queryParameters: <String, String>{'chatWith': thread.chatWith}).toString(),
+      );
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() => _connectionState = familyChatConnectionStateFor(error));
+      AppToast.show(
+        context,
+        message: familyChatConnectionMessage(l10n, _connectionState) ?? l10n.familyChatCreateFailed,
+      );
+    } finally {
+      if (mounted) setState(() => _creatingThread = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -259,6 +416,15 @@ class ChildChatsScreenState extends State<ChildChatsScreen> {
             ),
             icon: Icon(Icons.sos, color: colors.coral),
           ),
+          if (_isChild && _repo is FamilyChatThreadListRepository)
+            IconButton(
+              key: const Key('child_chats_new_chat'),
+              tooltip: l10n.familyChatCreateHeading,
+              onPressed: _creatingThread ? null : _onNewChat,
+              icon: _creatingThread
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.add_comment_outlined),
+            ),
         ],
       ),
       body: SafeArea(child: _buildBody(context, l10n, colors)),
@@ -408,6 +574,18 @@ class ChildChatsScreenState extends State<ChildChatsScreen> {
       ),
     );
   }
+}
+
+final class _ChildCreateChatChoice {
+  const _ChildCreateChatChoice({
+    required this.kind,
+    required this.title,
+    required this.participants,
+  });
+
+  final FamilyChatThreadKind kind;
+  final String title;
+  final List<FamilyChatParticipantReference> participants;
 }
 
 class _ChildChatRow extends StatelessWidget {

@@ -74,6 +74,7 @@ final class TasksServerAuthority {
     required String title,
     required int points,
     String note = '',
+    String? audienceThreadId,
     required String Function() idempotencyKey,
   }) => _ask(
     (family, token) => api.createTask(
@@ -82,6 +83,7 @@ final class TasksServerAuthority {
       title: title,
       note: note,
       points: points,
+      audienceThreadId: audienceThreadId,
       idempotencyKey: idempotencyKey(),
       idToken: token,
     ),

@@ -4,8 +4,10 @@ import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
-/// The two room shapes the W9 contract makes distinct.
+/// New direct/group channel shapes plus read-only legacy thread kinds.
 enum FamilyChatThreadKind {
+  direct('direct'),
+  group('group'),
   family('family'),
   child('child');
 
@@ -14,6 +16,8 @@ enum FamilyChatThreadKind {
   final String wireValue;
 
   static FamilyChatThreadKind parse(Object? value) => switch (value) {
+    'direct' => FamilyChatThreadKind.direct,
+    'group' => FamilyChatThreadKind.group,
     'family' => FamilyChatThreadKind.family,
     'child' => FamilyChatThreadKind.child,
     _ => throw _invalidField('kind'),
@@ -65,6 +69,78 @@ final class FamilyChatParticipant {
       role: role,
       displayName: FamilyChatApiClient._nullableString(json['displayName'], 'displayName'),
       isSelf: FamilyChatApiClient._boolean(json['isSelf'], 'isSelf'),
+    );
+  }
+}
+
+/// Explicit peer selection for a direct room or a user-created group.
+final class FamilyChatParticipantReference {
+  const FamilyChatParticipantReference({required this.kind, required this.id});
+
+  final FamilyChatParticipantKind kind;
+  final String id;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'kind': kind.wireValue,
+    'id': id,
+  };
+}
+
+/// The current transport contract is polling and text-only. Other fields are capability
+/// placeholders for a future server upgrade; false means those features are not implemented.
+final class FamilyChatCapabilities {
+  const FamilyChatCapabilities({
+    required this.transport,
+    required this.listPollSeconds,
+    required this.threadPollSeconds,
+    required this.contentTypes,
+    required this.supportsAttachments,
+    required this.supportsVoice,
+    required this.supportsPresence,
+    required this.supportsReactions,
+    required this.supportsWebSockets,
+    required this.supportsServerSentEvents,
+  });
+
+  final String transport;
+  final int listPollSeconds;
+  final int threadPollSeconds;
+  final List<String> contentTypes;
+  final bool supportsAttachments;
+  final bool supportsVoice;
+  final bool supportsPresence;
+  final bool supportsReactions;
+  final bool supportsWebSockets;
+  final bool supportsServerSentEvents;
+
+  factory FamilyChatCapabilities.fromJson(Object? value) {
+    final json = FamilyChatApiClient._object(value, 'capabilities');
+    final rawTypes = json['contentTypes'];
+    if (rawTypes is! List || rawTypes.any((entry) => entry is! String)) {
+      throw _invalidField('capabilities.contentTypes');
+    }
+    final parsed = List<String>.unmodifiable(rawTypes.cast<String>());
+    if (parsed.isEmpty || parsed.any((type) => type != 'text/plain')) {
+      throw _invalidField('capabilities.contentTypes');
+    }
+    final transport = FamilyChatApiClient._string(json['transport'], 'capabilities.transport');
+    if (transport != 'polling') throw _invalidField('capabilities.transport');
+    final listPollSeconds = FamilyChatApiClient._positiveInteger(json['listPollSeconds'], 'capabilities.listPollSeconds');
+    final threadPollSeconds = FamilyChatApiClient._positiveInteger(json['threadPollSeconds'], 'capabilities.threadPollSeconds');
+    if (listPollSeconds != 30 || threadPollSeconds != 15) {
+      throw _invalidField('capabilities.pollIntervals');
+    }
+    return FamilyChatCapabilities(
+      transport: transport,
+      listPollSeconds: listPollSeconds,
+      threadPollSeconds: threadPollSeconds,
+      contentTypes: parsed,
+      supportsAttachments: FamilyChatApiClient._boolean(json['attachments'], 'capabilities.attachments'),
+      supportsVoice: FamilyChatApiClient._boolean(json['audio'], 'capabilities.audio'),
+      supportsPresence: FamilyChatApiClient._boolean(json['presence'], 'capabilities.presence'),
+      supportsReactions: FamilyChatApiClient._boolean(json['richReactions'], 'capabilities.richReactions'),
+      supportsWebSockets: FamilyChatApiClient._boolean(json['webSockets'], 'capabilities.webSockets'),
+      supportsServerSentEvents: FamilyChatApiClient._boolean(json['serverSentEvents'], 'capabilities.serverSentEvents'),
     );
   }
 }
@@ -205,9 +281,10 @@ final class FamilyChatThread {
 }
 
 final class FamilyChatThreadList {
-  const FamilyChatThreadList({required this.threads});
+  const FamilyChatThreadList({required this.threads, required this.capabilities});
 
   final List<FamilyChatThread> threads;
+  final FamilyChatCapabilities capabilities;
 
   factory FamilyChatThreadList.fromJson(Object? value) {
     final json = FamilyChatApiClient._object(value, 'threadList');
@@ -219,6 +296,94 @@ final class FamilyChatThreadList {
       threads: List<FamilyChatThread>.unmodifiable(
         threads.map(FamilyChatThread.fromJson),
       ),
+      capabilities: FamilyChatCapabilities.fromJson(json['capabilities']),
+    );
+  }
+}
+
+final class FamilyChatParticipantList {
+  const FamilyChatParticipantList({required this.participants});
+
+  final List<FamilyChatParticipant> participants;
+
+  factory FamilyChatParticipantList.fromJson(Object? value) {
+    final json = FamilyChatApiClient._object(value, 'participantList');
+    final participants = json['participants'];
+    if (participants is! List || participants.length > 200) {
+      throw _invalidField('participants');
+    }
+    return FamilyChatParticipantList(
+      participants: List<FamilyChatParticipant>.unmodifiable(
+        participants.map(FamilyChatParticipant.fromJson),
+      ),
+    );
+  }
+}
+
+final class FamilyCollaborationPolicy {
+  const FamilyCollaborationPolicy({
+    required this.version,
+    required this.chatCreateRoles,
+    required this.chatManageRoles,
+    required this.taskRoles,
+    required this.calendarRoles,
+    required this.childDirectEnabled,
+    required this.childGroupsEnabled,
+    required this.childGroupMemberManagementEnabled,
+    required this.guardianInclusionMode,
+    required this.maximumGroupSize,
+    required this.updatedAt,
+    required this.updatedByMembershipId,
+    required this.source,
+  });
+
+  final int version;
+  final List<String> chatCreateRoles;
+  final List<String> chatManageRoles;
+  final List<String> taskRoles;
+  final List<String> calendarRoles;
+  final bool childDirectEnabled;
+  final bool childGroupsEnabled;
+  final bool childGroupMemberManagementEnabled;
+  final String guardianInclusionMode;
+  final int maximumGroupSize;
+  final DateTime? updatedAt;
+  final String? updatedByMembershipId;
+  final String source;
+
+  factory FamilyCollaborationPolicy.fromJson(Object? value) {
+    final json = FamilyChatApiClient._object(value, 'policy');
+    List<String> roles(String key) {
+      final raw = json[key];
+      const allowed = <String>{'primary_guardian', 'co_guardian'};
+      if (raw is! List || raw.any((entry) => entry is! String || !allowed.contains(entry))) {
+        throw _invalidField(key);
+      }
+      return List<String>.unmodifiable(raw.cast<String>());
+    }
+
+    final mode = FamilyChatApiClient._string(json['guardianInclusionMode'], 'guardianInclusionMode');
+    if (!const <String>{'none', 'all_child_chats', 'child_to_child'}.contains(mode)) {
+      throw _invalidField('guardianInclusionMode');
+    }
+    final source = FamilyChatApiClient._string(json['source'], 'source');
+    if (source != 'default' && source != 'family') throw _invalidField('source');
+    return FamilyCollaborationPolicy(
+      version: FamilyChatApiClient._nonNegativeInteger(json['version'], 'version'),
+      chatCreateRoles: roles('chatCreateRoles'),
+      chatManageRoles: roles('chatManageRoles'),
+      taskRoles: roles('taskRoles'),
+      calendarRoles: roles('calendarRoles'),
+      childDirectEnabled: FamilyChatApiClient._boolean(json['childDirectEnabled'], 'childDirectEnabled'),
+      childGroupsEnabled: FamilyChatApiClient._boolean(json['childGroupsEnabled'], 'childGroupsEnabled'),
+      childGroupMemberManagementEnabled: FamilyChatApiClient._boolean(json['childGroupMemberManagementEnabled'], 'childGroupMemberManagementEnabled'),
+      guardianInclusionMode: mode,
+      maximumGroupSize: FamilyChatApiClient._positiveInteger(json['maximumGroupSize'], 'maximumGroupSize'),
+      updatedAt: FamilyChatApiClient._nullableInstant(json['updatedAt'], 'updatedAt'),
+      updatedByMembershipId: json['updatedByMembershipId'] == null
+          ? null
+          : FamilyChatApiClient._uuid(json['updatedByMembershipId'], 'updatedByMembershipId'),
+      source: source,
     );
   }
 }
@@ -316,7 +481,50 @@ final class FamilyChatApiClient {
   Future<String?> configuredDeviceId() async =>
       _deviceTransport?.configuredDeviceId();
 
+  Future<FamilyCollaborationPolicy> getFamilyCollaborationPolicy({
+    required String familyId,
+    required String idToken,
+  }) async {
+    final response = await _guardianRequest(
+      'GET',
+      _configuration.familyCollaborationPolicyUri(familyId),
+      idToken: idToken,
+    );
+    final json = _expect(response, successStatus: 200);
+    return FamilyCollaborationPolicy.fromJson(json['policy']);
+  }
+
+  Future<FamilyCollaborationPolicy> updateFamilyCollaborationPolicy({
+    required String familyId,
+    required String idToken,
+    required int expectedVersion,
+    required Map<String, Object?> changes,
+  }) async {
+    if (expectedVersion < 0 || changes.isEmpty) throw _invalidInput();
+    final allowedFields = <String>{
+      'chatCreateRoles',
+      'chatManageRoles',
+      'taskRoles',
+      'calendarRoles',
+      'childDirectEnabled',
+      'childGroupsEnabled',
+      'childGroupMemberManagementEnabled',
+      'guardianInclusionMode',
+      'maximumGroupSize',
+    };
+    if (changes.keys.any((key) => !allowedFields.contains(key))) throw _invalidInput();
+    final response = await _guardianRequest(
+      'PATCH',
+      _configuration.familyCollaborationPolicyUri(familyId),
+      idToken: idToken,
+      body: <String, Object?>{...changes, 'expectedVersion': expectedVersion},
+    );
+    final json = _expect(response, successStatus: 200);
+    return FamilyCollaborationPolicy.fromJson(json['policy']);
+  }
+
   Future<FamilyChatThreadList> listFamilyThreads({
+
     required String familyId,
     required String idToken,
   }) async {
@@ -330,32 +538,39 @@ final class FamilyChatApiClient {
     );
   }
 
+  Future<FamilyChatParticipantList> listFamilyParticipants({
+    required String familyId,
+    required String idToken,
+  }) async {
+    final response = await _guardianRequest(
+      'GET',
+      _configuration.familyChatParticipantsUri(familyId),
+      idToken: idToken,
+    );
+    return FamilyChatParticipantList.fromJson(_expect(response, successStatus: 200));
+  }
+
   Future<FamilyChatThread> createFamilyThread({
     required String familyId,
     required FamilyChatThreadKind kind,
-    required List<String> childIds,
+    required List<FamilyChatParticipantReference> participants,
     required String idempotencyKey,
     required String idToken,
     String title = '',
   }) async {
     _validateIdempotencyKey(idempotencyKey);
-    _validateUuidList(childIds, 'childIds', max: 1);
-    if ((kind == FamilyChatThreadKind.family && childIds.isNotEmpty) ||
-        (kind == FamilyChatThreadKind.child && childIds.length != 1) ||
-        title.trim().length > 120) {
-      throw _invalidInput();
-    }
-    final body = <String, Object?>{
-      'kind': kind.wireValue,
-      if (title.trim().isNotEmpty) 'title': title.trim(),
-      if (childIds.isNotEmpty) 'childIds': childIds,
-    };
+    _validateParticipantReferences(participants, kind);
+    if (title.trim().length > 120) throw _invalidInput('title');
     final response = await _guardianRequest(
       'POST',
       _configuration.familyChatThreadsUri(familyId),
       idToken: idToken,
       idempotencyKey: idempotencyKey,
-      body: body,
+      body: <String, Object?>{
+        'kind': kind.wireValue,
+        'participants': participants.map((entry) => entry.toJson()).toList(growable: false),
+        if (title.trim().isNotEmpty) 'title': title.trim(),
+      },
     );
     final json = _expect(response, successStatus: 201);
     return FamilyChatThread.fromJson(_object(json['thread'], 'thread'));
@@ -502,6 +717,76 @@ final class FamilyChatApiClient {
       deviceCredential: deviceCredential,
     );
     return FamilyChatThreadList.fromJson(_expect(response, successStatus: 200));
+  }
+
+  Future<FamilyChatParticipantList> listDeviceParticipants({
+    required String deviceId,
+    String? deviceCredential,
+  }) async {
+    final response = await _deviceRequest(
+      operation: 'listParticipants',
+      method: 'GET',
+      uri: _configuration.deviceChatParticipantsUri(deviceId),
+      deviceId: deviceId,
+      deviceCredential: deviceCredential,
+    );
+    return FamilyChatParticipantList.fromJson(_expect(response, successStatus: 200));
+  }
+
+  Future<FamilyChatThread> createDeviceThread({
+    required String deviceId,
+    required FamilyChatThreadKind kind,
+    required List<FamilyChatParticipantReference> participants,
+    required String idempotencyKey,
+    String title = '',
+    String? deviceCredential,
+  }) async {
+    _validateIdempotencyKey(idempotencyKey);
+    _validateParticipantReferences(participants, kind);
+    if (title.trim().length > 120) throw _invalidInput('title');
+    final body = <String, Object?>{
+      'kind': kind.wireValue,
+      'participants': participants.map((entry) => entry.toJson()).toList(growable: false),
+      if (title.trim().isNotEmpty) 'title': title.trim(),
+    };
+    final response = await _deviceRequest(
+      operation: 'createThread',
+      method: 'POST',
+      uri: _configuration.deviceChatThreadsUri(deviceId),
+      deviceId: deviceId,
+      deviceCredential: deviceCredential,
+      idempotencyKey: idempotencyKey,
+      body: body,
+    );
+    final json = _expect(response, successStatus: 201);
+    return FamilyChatThread.fromJson(_object(json['thread'], 'thread'));
+  }
+
+  Future<FamilyChatThread> addDeviceThreadMember({
+    required String deviceId,
+    required String threadId,
+    required FamilyChatParticipantKind participantKind,
+    required String participantId,
+    required String idempotencyKey,
+    String? deviceCredential,
+  }) async {
+    _validateUuid(participantId, 'participantId');
+    _validateIdempotencyKey(idempotencyKey);
+    final response = await _deviceRequest(
+      operation: 'addThreadMember',
+      method: 'POST',
+      uri: _configuration.deviceChatThreadMembersUri(deviceId, threadId),
+      deviceId: deviceId,
+      threadId: threadId,
+      deviceCredential: deviceCredential,
+      idempotencyKey: idempotencyKey,
+      body: <String, Object?>{
+        'participantKind': participantKind.wireValue,
+        'participantId': participantId,
+      },
+    );
+    final json = _expect(response, successStatus: 200);
+    return FamilyChatThread.fromJson(_object(json['thread'], 'thread'));
   }
 
   Future<FamilyChatMessagePage> listDeviceMessages({
@@ -864,15 +1149,23 @@ final class FamilyChatApiClient {
     if (!isFoundationGateUuid(value)) throw _invalidInput(field);
   }
 
-  static void _validateUuidList(
-    List<String> values,
-    String field, {
-    required int max,
-  }) {
-    if (values.length > max ||
-        values.any((value) => !isFoundationGateUuid(value)) ||
-        values.toSet().length != values.length) {
-      throw _invalidInput(field);
+  static void _validateParticipantReferences(
+    List<FamilyChatParticipantReference> participants,
+    FamilyChatThreadKind kind,
+  ) {
+    if (kind != FamilyChatThreadKind.direct && kind != FamilyChatThreadKind.group) {
+      throw _invalidInput('kind');
+    }
+    final minimum = kind == FamilyChatThreadKind.direct ? 1 : 2;
+    final maximum = kind == FamilyChatThreadKind.direct ? 1 : 23;
+    if (participants.length < minimum || participants.length > maximum) {
+      throw _invalidInput('participants');
+    }
+    final seen = <String>{};
+    for (final participant in participants) {
+      _validateUuid(participant.id, 'participants.id');
+      final key = '${participant.kind.wireValue}:${participant.id}';
+      if (!seen.add(key)) throw _invalidInput('participants');
     }
   }
 

@@ -260,6 +260,7 @@ export class PostgresFoundationStore {
     eventType,
     subjectType,
     subjectId,
+    payload = {},
   }) {
     requireServerCorrelationId(correlationId);
     const auditId = randomUUID();
@@ -278,7 +279,45 @@ export class PostgresFoundationStore {
         familyId,
         correlationId,
         eventType,
-        JSON.stringify({ auditEventId: auditId, subjectType, subjectId }),
+        JSON.stringify({ ...payload, auditEventId: auditId, subjectType, subjectId }),
+      ],
+    );
+  }
+
+  /**
+   * Appends one AiEvent v1 fact inside the caller's transaction.
+   *
+   * It joins the same transaction as the mutation it describes, so a recorded
+   * fact can never outlive a rolled-back change and a committed change is never
+   * missing its event.
+   */
+  async appendAiEvent(client, {
+    familyId,
+    childId = null,
+    deviceId = null,
+    eventType,
+    correlationId,
+  }) {
+    const definition = aiEventDefinition(eventType);
+    requireServerCorrelationId(correlationId);
+    await client.query(
+      `INSERT INTO ai_events
+       (id, schema_version, event_type, family_id, child_id, device_id,
+        policy_version, source, confidence, explanation, reject_path, correlation_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      [
+        randomUUID(),
+        AI_EVENT_SCHEMA_VERSION,
+        eventType,
+        familyId,
+        childId,
+        deviceId,
+        PERMISSION_POLICY_VERSION,
+        definition.source,
+        definition.confidence,
+        definition.explanation,
+        definition.rejectPath,
+        correlationId,
       ],
     );
   }

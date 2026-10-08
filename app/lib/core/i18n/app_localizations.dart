@@ -21951,6 +21951,12 @@ abstract class AppLocalizations {
   /// **'ما معنى «أُنجزت»؟'**
   String get tasksServerCreateNote;
 
+  /// Choose a direct or group conversation as task visibility scope.
+  String get tasksServerAudienceScopeLabel;
+
+  /// Task remains visible only to the designated child and guardians.
+  String get tasksServerAudienceScopeChildOnly;
+
   /// SCR: tasks server panel
   ///
   /// In ar, this message translates to:
@@ -22131,6 +22137,12 @@ abstract class AppLocalizations {
   /// **'من تُدعى؟'**
   String get calendarServerCreateChildren;
 
+  /// Optional direct or group audience scope for calendar routing.
+  String get calendarServerAudienceScopeLabel;
+
+  /// No chat-thread routing scope selected.
+  String get calendarServerAudienceScopeChildrenOnly;
+
   /// SCR: calendar server panel
   ///
   /// In ar, this message translates to:
@@ -22227,6 +22239,18 @@ abstract class AppLocalizations {
   /// **'نوع المحادثة'**
   String get familyChatCreateTypeLabel;
 
+  /// Direct family chat type.
+  String get familyChatDirectThread;
+
+  /// User-created family chat group type.
+  String get familyChatGroupThread;
+
+  /// Participant picker for direct and group chats.
+  String get familyChatSelectParticipants;
+
+  /// Empty state for the server-owned family chat roster.
+  String get familyChatNoParticipantsAvailable;
+
   /// W9 family chat client state and controls
   ///
   /// In ar, this message translates to:
@@ -22286,6 +22310,25 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'تعذّر إنشاء الدردشة. لم يتأكد قبول الطلب.'**
   String get familyChatCreateFailed;
+
+  String get familyChatPolicyTitle;
+  String get familyChatPolicyPrimaryGuardianNotice;
+  String get familyChatPolicyCoGuardianChat;
+  String get familyChatPolicyCoGuardianManageChat;
+  String get familyChatPolicyCoGuardianTasks;
+  String get familyChatPolicyCoGuardianCalendar;
+  String get familyChatPolicyChildDirect;
+  String get familyChatPolicyChildGroups;
+  String get familyChatPolicyChildManageGroups;
+  String get familyChatPolicyGuardianInclusion;
+  String get familyChatPolicyInclusionNone;
+  String get familyChatPolicyInclusionAllChildChats;
+  String get familyChatPolicyInclusionChildToChild;
+  String get familyChatPolicyMaxGroupSize;
+  String get familyChatPolicySave;
+  String get familyChatPolicySaved;
+  String get familyChatPolicyLoadFailed;
+  String get familyChatPolicySaveFailed;
 
   /// W9 family chat client state and controls
   ///

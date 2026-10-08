@@ -12556,6 +12556,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tasksServerCreateNote => 'What does \"done\" mean?';
 
   @override
+  String get tasksServerAudienceScopeLabel => 'Visible to this conversation (optional)';
+
+  @override
+  String get tasksServerAudienceScopeChildOnly => 'Only the assigned child';
+
+  @override
   String get tasksServerCreateButton => 'Add the task';
 
   @override
@@ -12651,6 +12657,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get calendarServerCreateChildren => 'Who is invited?';
 
   @override
+  String get calendarServerAudienceScopeLabel => 'Also route through a conversation (optional)';
+
+  @override
+  String get calendarServerAudienceScopeChildrenOnly => 'Selected children only';
+
+  @override
   String get calendarServerCreatePickStart => 'Choose the start';
 
   @override
@@ -12708,6 +12720,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get familyChatCreateTypeLabel => 'Conversation type';
 
   @override
+  String get familyChatDirectThread => 'Direct conversation';
+
+  @override
+  String get familyChatGroupThread => 'Group conversation';
+
+  @override
+  String get familyChatSelectParticipants => 'Choose who can join';
+
+  @override
+  String get familyChatNoParticipantsAvailable => 'No other active family participants are available.';
+
+  @override
   String get familyChatFamilyThread => 'Guardian family chat';
 
   @override
@@ -12738,6 +12762,60 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get familyChatCreateFailed =>
       'The chat could not be created. Your request was not confirmed.';
+
+  @override
+  String get familyChatPolicyTitle => 'Collaboration and safety';
+
+  @override
+  String get familyChatPolicyPrimaryGuardianNotice => 'Only the primary guardian can save these server-enforced rules. The primary guardian always retains protected family permissions.';
+
+  @override
+  String get familyChatPolicyCoGuardianChat => 'Allow the co-guardian to create conversations';
+
+  @override
+  String get familyChatPolicyCoGuardianManageChat => 'Allow the co-guardian to add people to groups';
+
+  @override
+  String get familyChatPolicyCoGuardianTasks => 'Allow the co-guardian to manage tasks';
+
+  @override
+  String get familyChatPolicyCoGuardianCalendar => 'Allow the co-guardian to manage the calendar';
+
+  @override
+  String get familyChatPolicyChildDirect => 'Allow children to start direct conversations';
+
+  @override
+  String get familyChatPolicyChildGroups => 'Allow children to create groups';
+
+  @override
+  String get familyChatPolicyChildManageGroups => 'Allow children to add participants to their groups';
+
+  @override
+  String get familyChatPolicyGuardianInclusion => 'When must guardians join child conversations?';
+
+  @override
+  String get familyChatPolicyInclusionNone => 'Never by default';
+
+  @override
+  String get familyChatPolicyInclusionAllChildChats => 'Every child conversation';
+
+  @override
+  String get familyChatPolicyInclusionChildToChild => 'Only child-to-child conversations';
+
+  @override
+  String get familyChatPolicyMaxGroupSize => 'Maximum group size';
+
+  @override
+  String get familyChatPolicySave => 'Save rules';
+
+  @override
+  String get familyChatPolicySaved => 'The server saved the collaboration rules.';
+
+  @override
+  String get familyChatPolicyLoadFailed => 'The server policy could not be loaded.';
+
+  @override
+  String get familyChatPolicySaveFailed => 'The server did not accept the policy change.';
 
   @override
   String get familyChatLoadOlder => 'Load older messages';

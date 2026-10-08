@@ -6,10 +6,10 @@
 // product starts writing down what people said to each other. What is defended here, one line
 // each:
 //
-//   * a room names exactly one child, or no child at all - a child is never a participant of a
-//     conversation that does not name them;
-//   * only a guardian opens a room, adds a participant, or changes who is in one - and the
-//     guardian changing a room must be in it;
+//   * new conversations are direct pairs or user-created groups with explicit same-family peers;
+//     legacy family/child rooms remain readable but cannot be created by the current API;
+//   * guardians and paired children may create or manage conversations only under server policy,
+//     and a child sees only the roster the server authorized for the family;
 //   * a message's author comes from HOW the request arrived, never from a field in the body;
 //   * only a member of a room can read or write in it, and a caller outside it is answered as
 //     if the room did not exist;
@@ -31,12 +31,15 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  CHAT_CURRENT_CAPABILITIES,
   ChatError,
   createMessageDelete,
   createMessageEdit,
   createMessageList,
   createMessageSend,
   createReadMark,
+  createDeviceThreadCreate,
+  createDeviceThreadMemberAdd,
   createThreadCreate,
   createThreadList,
   createThreadMemberAdd,
@@ -64,6 +67,18 @@ const principal = { subject: 'test-primary' };
 const coPrincipal = { subject: 'test-co' };
 const childPrincipal = { subject: 'test-child' };
 const DEVICE_CREDENTIAL = 'device-credential-value';
+const DEFAULT_CHAT_POLICY = Object.freeze({
+  version: 0,
+  chatCreateRoles: Object.freeze(['primary_guardian', 'co_guardian']),
+  chatManageRoles: Object.freeze(['primary_guardian', 'co_guardian']),
+  taskRoles: Object.freeze(['primary_guardian', 'co_guardian']),
+  calendarRoles: Object.freeze(['primary_guardian', 'co_guardian']),
+  childDirectEnabled: true,
+  childGroupsEnabled: true,
+  childGroupMemberManagementEnabled: true,
+  guardianInclusionMode: 'none',
+  maximumGroupSize: 24,
+});
 
 function membershipRow(overrides = {}) {
   return {
@@ -109,9 +124,18 @@ function memoryPort({
       membership_id: PRIMARY, child_id: null, last_read_seq: 0 },
   ],
   messages = [],
+  collaborationPolicy = DEFAULT_CHAT_POLICY,
 } = {}) {
   const state = {
     memberships: memberships.map((row) => ({ ...row })),
+    collaborationPolicy: {
+      ...collaborationPolicy,
+      chatCreateRoles: [...collaborationPolicy.chatCreateRoles],
+      chatManageRoles: [...collaborationPolicy.chatManageRoles],
+      taskRoles: [...collaborationPolicy.taskRoles],
+      calendarRoles: [...collaborationPolicy.calendarRoles],
+    },
+    generatedThreadId: 0,
     devices: devices.map((row) => ({ ...row })),
     threads: threads.map((row) => ({ ...row })),
     members: members.map((row) => ({ ...row })),
@@ -151,6 +175,16 @@ function memoryPort({
       return row;
     },
 
+    async readCollaborationPolicy() {
+      return {
+        ...state.collaborationPolicy,
+        chatCreateRoles: [...state.collaborationPolicy.chatCreateRoles],
+        chatManageRoles: [...state.collaborationPolicy.chatManageRoles],
+        taskRoles: [...state.collaborationPolicy.taskRoles],
+        calendarRoles: [...state.collaborationPolicy.calendarRoles],
+      };
+    },
+
     async resolveParticipant(_tx, { principal: caller, deviceId, deviceCredential, familyId }) {
       if (deviceId != null) {
         const device = await port.requireDevice(_tx, { deviceId, deviceCredential });
@@ -187,32 +221,46 @@ function memoryPort({
       return [CHILD, SIBLING].includes(childId) ? { id: childId } : null;
     },
 
-    async insertThread(_tx, { familyId, kind, title, createdByMembershipId }) {
+    async insertThread(_tx, {
+      familyId,
+      kind,
+      title,
+      directPairKey,
+      createdByMembershipId,
+      createdByChildId,
+      createdByKind,
+      createdById,
+    }) {
+      state.generatedThreadId += 1;
       const row = {
-        id: kind === 'child' ? CHILD_THREAD : THREAD,
+        id: `a0000000-0000-4000-8000-${String(state.generatedThreadId).padStart(12, '0')}`,
         family_id: familyId,
         kind,
         title,
+        direct_pair_key: directPairKey,
         next_seq: 1,
         created_by_membership_id: createdByMembershipId,
+        created_by_child_id: createdByChildId,
+        created_by_participant_kind: createdByKind,
+        created_by_participant_id: createdById,
         created_at: new Date('2026-10-08T10:00:00.000Z'),
       };
       state.threads.push(row);
       return { ...row };
     },
 
-    async insertThreadMembers(_tx, { familyId, threadId, membershipIds, childIds }) {
+    async insertThreadMembers(_tx, { familyId, threadId, membershipIds, childIds, joinedSeq = 1 }) {
       for (const membershipId of membershipIds) {
         if (findMember(threadId, 'membership', membershipId) != null) continue;
         state.members.push({ thread_id: threadId, family_id: familyId, participant_kind: 'membership',
                              participant_id: membershipId, membership_id: membershipId, child_id: null,
-                             last_read_seq: 0 });
+                             joined_seq: joinedSeq, last_read_seq: 0 });
       }
       for (const childId of childIds) {
         if (findMember(threadId, 'child', childId) != null) continue;
         state.members.push({ thread_id: threadId, family_id: familyId, participant_kind: 'child',
                              participant_id: childId, membership_id: null, child_id: childId,
-                             last_read_seq: 0 });
+                             joined_seq: joinedSeq, last_read_seq: 0 });
       }
       return port.listThreadMembers(_tx, { threadIds: [threadId] });
     },
@@ -399,6 +447,23 @@ const sendArgs = (port, overrides = {}) => ({
 
 // ── the shapes a screen reads ─────────────────────────────────────────────────────────────
 
+test('the current chat advertises polling and text only while reserving future capability flags', () => {
+  assert.equal(CHAT_CURRENT_CAPABILITIES.transport, 'polling');
+  assert.equal(CHAT_CURRENT_CAPABILITIES.listPollSeconds, 30);
+  assert.equal(CHAT_CURRENT_CAPABILITIES.threadPollSeconds, 15);
+  assert.deepEqual(CHAT_CURRENT_CAPABILITIES.contentTypes, ['text/plain']);
+  for (const feature of [
+    'serverSentEvents',
+    'webSockets',
+    'attachments',
+    'audio',
+    'presence',
+    'richReactions',
+  ]) {
+    assert.equal(CHAT_CURRENT_CAPABILITIES[feature], false, `${feature} is not implemented yet`);
+  }
+});
+
 test('a read mark or a page that runs backwards is refused before any query is made', () => {
   assert.deepEqual(normalizeMessageQuery({}), { afterSeq: 0, limit: 50 });
   assert.deepEqual(normalizeMessageQuery({ afterSeq: 7, limit: 200 }), { afterSeq: 7, limit: 200 });
@@ -503,32 +568,42 @@ test('the preview of a thread list is the message, not the thread row wearing it
 
 // ── opening rooms: the laws that decide who can reach a child ─────────────────────────────
 
-test('a child conversation names exactly one child, and the household room names none', async () => {
+test('direct conversations are pairs and groups name at least two other family participants', async () => {
   const port = memoryPort();
-  await createThreadCreate({ port })({
-    principal, familyId: FAMILY, kind: 'child', title: '', childIds: [CHILD, SIBLING],
-    idempotencyKey: 'k', requestHash: 'h', correlationId: 'c',
-  }).catch((error) => assert.equal(error.code, 'chat_child_thread_needs_one_child'));
-  await createThreadCreate({ port })({
-    principal, familyId: FAMILY, kind: 'child', title: '', childIds: [],
-    idempotencyKey: 'k2', requestHash: 'h', correlationId: 'c',
-  }).catch((error) => assert.equal(error.code, 'chat_child_thread_needs_one_child'));
-  await createThreadCreate({ port })({
-    principal, familyId: FAMILY, kind: 'family', title: '', childIds: [CHILD],
-    idempotencyKey: 'k3', requestHash: 'h', correlationId: 'c',
-  }).catch((error) => assert.equal(error.code, 'chat_family_thread_is_guardians'));
-  // Nothing was written by any of the three refusals.
+  const create = createThreadCreate({ port });
+  await assert.rejects(
+    create({
+      principal, familyId: FAMILY, kind: 'direct', participants: [],
+      idempotencyKey: 'direct-none', requestHash: 'h', correlationId: 'c',
+    }),
+    (error) => error.status === 422 && error.code === 'chat_participant_count_invalid',
+  );
+  await assert.rejects(
+    create({
+      principal, familyId: FAMILY, kind: 'direct',
+      participants: [{ kind: 'child', id: CHILD }, { kind: 'child', id: SIBLING }],
+      idempotencyKey: 'direct-many', requestHash: 'h', correlationId: 'c',
+    }),
+    (error) => error.status === 422 && error.code === 'chat_participant_count_invalid',
+  );
+  await assert.rejects(
+    create({
+      principal, familyId: FAMILY, kind: 'group', participants: [{ kind: 'child', id: CHILD }],
+      idempotencyKey: 'group-small', requestHash: 'h', correlationId: 'c',
+    }),
+    (error) => error.status === 422 && error.code === 'chat_participant_count_invalid',
+  );
   assert.equal(port.state.threads.length, 1);
   assert.equal(port.state.audits.length, 0);
 });
 
-test('a child conversation gets the server roster of active guardians and exactly one child', async () => {
+test('guardians explicitly choose direct pairs and groups from the live roster; default policy adds no guardian', async () => {
   const port = memoryPort({
     memberships: [
       membershipRow(),
       membershipRow({ id: CO_GUARDIAN, target_subject: 'test-co', role: 'co_guardian' }),
       membershipRow({
-        id: '99999999-9999-4999-8999-999999999999',
+        id: PENDING_GUARDIAN,
         target_subject: 'invited-co',
         role: 'co_guardian',
         status: 'invited',
@@ -540,70 +615,233 @@ test('a child conversation gets the server roster of active guardians and exactl
       }),
     ],
   });
-  const result = await createThreadCreate({ port })({
-    principal, familyId: FAMILY, kind: 'child', title: 'أماني', childIds: [CHILD],
-    idempotencyKey: 'k', requestHash: 'h', correlationId: 'c',
+  const create = createThreadCreate({ port });
+  const direct = await create({
+    principal,
+    familyId: FAMILY,
+    kind: 'direct',
+    title: 'Amani',
+    participants: [{ kind: 'child', id: CHILD }],
+    idempotencyKey: 'direct-child',
+    requestHash: 'h1',
+    correlationId: 'c',
   });
-  assert.equal(result.thread.kind, 'child');
-  const participants = result.thread.participants.map((entry) => `${entry.kind}:${entry.id}`).sort();
-  assert.deepEqual(participants, [
-    `child:${CHILD}`,
-    `membership:${CO_GUARDIAN}`,
-    `membership:${PRIMARY}`,
-  ].sort());
-  // The room and its members were written before anybody could read it; inactive guardians and
-  // active child memberships cannot be smuggled into the guardian participant set.
-  assert.equal(port.state.threads.length, 2);
-  assert.equal(port.state.members.filter((row) => row.thread_id === CHILD_THREAD).length, 3);
+  assert.equal(direct.thread.kind, 'direct');
+  assert.deepEqual(
+    direct.thread.participants.map((entry) => `${entry.kind}:${entry.id}`).sort(),
+    [`child:${CHILD}`, `membership:${PRIMARY}`].sort(),
+  );
+
+  const group = await create({
+    principal,
+    familyId: FAMILY,
+    kind: 'group',
+    title: 'The children',
+    participants: [{ kind: 'child', id: CHILD }, { kind: 'child', id: SIBLING }],
+    idempotencyKey: 'group-children',
+    requestHash: 'h2',
+    correlationId: 'c',
+  });
+  assert.equal(group.thread.kind, 'group');
+  assert.deepEqual(
+    group.thread.participants.map((entry) => `${entry.kind}:${entry.id}`).sort(),
+    [`child:${CHILD}`, `child:${SIBLING}`, `membership:${PRIMARY}`].sort(),
+  );
+
+  await assert.rejects(
+    create({
+      principal, familyId: FAMILY, kind: 'direct', participants: [{ kind: 'child', id: '00000000-0000-4000-8000-000000000000' }],
+      idempotencyKey: 'foreign-child', requestHash: 'h3', correlationId: 'c',
+    }),
+    (error) => error.status === 404 && error.code === 'chat_participant_not_found',
+  );
+  assert.equal(port.state.threads.length, 3);
+  assert.equal(port.state.audits.length, 2);
+});
+
+test('active server safety policy, and only that policy, adds guardians to child conversations', async () => {
+  const memberships = [
+    membershipRow(),
+    membershipRow({ id: CO_GUARDIAN, target_subject: 'test-co', role: 'co_guardian' }),
+    membershipRow({ id: PENDING_GUARDIAN, target_subject: 'pending-co', role: 'co_guardian', status: 'invited' }),
+    membershipRow({ id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', target_subject: 'test-child', role: 'child' }),
+  ];
+  const port = memoryPort({
+    memberships,
+    collaborationPolicy: { ...DEFAULT_CHAT_POLICY, guardianInclusionMode: 'all_child_chats' },
+  });
+  const result = await createThreadCreate({ port })({
+    principal,
+    familyId: FAMILY,
+    kind: 'direct',
+    title: '',
+    participants: [{ kind: 'child', id: CHILD }],
+    idempotencyKey: 'policy-inclusion',
+    requestHash: 'h',
+    correlationId: 'c',
+  });
+  assert.deepEqual(
+    result.thread.participants.map((entry) => `${entry.kind}:${entry.id}`).sort(),
+    [`child:${CHILD}`, `membership:${PRIMARY}`, `membership:${CO_GUARDIAN}`].sort(),
+  );
   assert.equal(port.state.audits[0].eventType, 'family.chat_thread_created');
 });
 
-test('a family room also includes all active guardians without a client-selected roster', async () => {
+test('a paired child can create direct or group chats only under the server-owned child policy', async () => {
+  const createDisabled = createDeviceThreadCreate({
+    port: memoryPort({
+      collaborationPolicy: {
+        ...DEFAULT_CHAT_POLICY,
+        childDirectEnabled: false,
+        childGroupsEnabled: false,
+      },
+    }),
+  });
+  await assert.rejects(
+    createDisabled({
+      deviceId: DEVICE,
+      deviceCredential: DEVICE_CREDENTIAL,
+      kind: 'direct',
+      participants: [{ kind: 'membership', id: PRIMARY }],
+      idempotencyKey: 'child-disabled',
+      requestHash: 'h',
+      correlationId: 'c',
+    }),
+    (error) => error.status === 403 && error.code === 'chat_child_creation_disabled',
+  );
+
   const port = memoryPort({
     memberships: [
       membershipRow(),
       membershipRow({ id: CO_GUARDIAN, target_subject: 'test-co', role: 'co_guardian' }),
     ],
   });
-  const result = await createThreadCreate({ port })({
-    principal, familyId: FAMILY, kind: 'family', title: '', childIds: [],
-    idempotencyKey: 'family-room', requestHash: 'h', correlationId: 'c',
+  const create = createDeviceThreadCreate({ port });
+  const direct = await create({
+    deviceId: DEVICE,
+    deviceCredential: DEVICE_CREDENTIAL,
+    kind: 'direct',
+    participants: [{ kind: 'membership', id: PRIMARY }],
+    idempotencyKey: 'child-direct',
+    requestHash: 'h1',
+    correlationId: 'c',
   });
   assert.deepEqual(
-    result.thread.participants.map((entry) => entry.id).sort(),
-    [PRIMARY, CO_GUARDIAN].sort(),
+    direct.thread.participants.map((entry) => `${entry.kind}:${entry.id}`).sort(),
+    [`child:${CHILD}`, `membership:${PRIMARY}`].sort(),
   );
-  assert.ok(result.thread.participants.every((entry) => entry.kind === 'membership'));
+  const group = await create({
+    deviceId: DEVICE,
+    deviceCredential: DEVICE_CREDENTIAL,
+    kind: 'group',
+    participants: [{ kind: 'membership', id: CO_GUARDIAN }, { kind: 'child', id: SIBLING }],
+    idempotencyKey: 'child-group',
+    requestHash: 'h2',
+    correlationId: 'c',
+  });
+  assert.equal(group.thread.kind, 'group');
+  assert.deepEqual(
+    group.thread.participants.map((entry) => `${entry.kind}:${entry.id}`).sort(),
+    [`child:${CHILD}`, `child:${SIBLING}`, `membership:${CO_GUARDIAN}`].sort(),
+  );
 });
 
-test('only a guardian opens a room, and only a child of this family may be named', async () => {
+test('a child manages only groups enabled by server policy; new members start at the next sequence', async () => {
+  const room = [{
+    id: CHILD_THREAD,
+    family_id: FAMILY,
+    kind: 'group',
+    title: 'The children',
+    next_seq: 9,
+    created_by_membership_id: null,
+    created_by_child_id: CHILD,
+    created_by_participant_kind: 'child',
+    created_by_participant_id: CHILD,
+    created_at: new Date('2026-10-08T08:00:00.000Z'),
+  }];
+  const members = [{
+    thread_id: CHILD_THREAD,
+    family_id: FAMILY,
+    participant_kind: 'child',
+    participant_id: CHILD,
+    membership_id: null,
+    child_id: CHILD,
+    joined_seq: 1,
+    last_read_seq: 0,
+  }];
+  const memberships = [
+    membershipRow(),
+    membershipRow({ id: CO_GUARDIAN, target_subject: 'test-co', role: 'co_guardian' }),
+  ];
+  const disabled = memoryPort({
+    memberships,
+    threads: room,
+    members,
+    collaborationPolicy: { ...DEFAULT_CHAT_POLICY, childGroupMemberManagementEnabled: false },
+  });
+  await assert.rejects(
+    createDeviceThreadMemberAdd({ port: disabled })({
+      deviceId: DEVICE,
+      deviceCredential: DEVICE_CREDENTIAL,
+      threadId: CHILD_THREAD,
+      participantKind: 'child',
+      participantId: SIBLING,
+      idempotencyKey: 'child-manage-disabled',
+      requestHash: 'h',
+      correlationId: 'c',
+    }),
+    (error) => error.status === 403 && error.code === 'chat_group_management_disabled',
+  );
+  assert.equal(disabled.state.members.length, 1);
+
+  const port = memoryPort({
+    memberships,
+    threads: room,
+    members,
+    collaborationPolicy: {
+      ...DEFAULT_CHAT_POLICY,
+      guardianInclusionMode: 'child_to_child',
+    },
+  });
+  const result = await createDeviceThreadMemberAdd({ port })({
+    deviceId: DEVICE,
+    deviceCredential: DEVICE_CREDENTIAL,
+    threadId: CHILD_THREAD,
+    participantKind: 'child',
+    participantId: SIBLING,
+    idempotencyKey: 'child-add-sibling',
+    requestHash: 'h',
+    correlationId: 'c',
+  });
+  assert.equal(result.thread.participants.length, 4);
+  assert.deepEqual(
+    result.thread.participants.map((entry) => `${entry.kind}:${entry.id}`).sort(),
+    [`child:${CHILD}`, `child:${SIBLING}`, `membership:${PRIMARY}`, `membership:${CO_GUARDIAN}`].sort(),
+  );
+  for (const member of port.state.members.filter((entry) => entry.thread_id === CHILD_THREAD && entry.participant_id !== CHILD)) {
+    assert.equal(member.joined_seq, 9);
+  }
+  assert.equal(port.state.audits[0].actorMembershipId, null);
+});
+
+test('a child guardian-role membership cannot use the guardian conversation-creation route', async () => {
   const childMembership = membershipRow({
     id: CO_GUARDIAN,
     target_subject: 'test-child',
     role: 'child',
   });
-  const asChild = memoryPort({ memberships: [membershipRow(), childMembership] });
-  await assert.rejects(
-    createThreadCreate({ port: asChild })({
-      principal: childPrincipal, familyId: FAMILY, kind: 'family', title: '', childIds: [],
-      idempotencyKey: 'k', requestHash: 'h', correlationId: 'c',
-    }),
-    (error) => error.status === 403 && error.code === 'chat_forbidden',
-  );
-
   const port = memoryPort({ memberships: [membershipRow(), childMembership] });
-  const room = await createThreadCreate({ port })({
-    principal, familyId: FAMILY, kind: 'family', title: '', childIds: [],
-    idempotencyKey: 'k2', requestHash: 'h', correlationId: 'c',
-  });
-  assert.deepEqual(room.thread.participants.map((entry) => entry.id), [PRIMARY]);
   await assert.rejects(
     createThreadCreate({ port })({
-      principal, familyId: FAMILY, kind: 'child', title: '',
-      childIds: ['00000000-0000-4000-8000-000000000000'],
-      idempotencyKey: 'k3', requestHash: 'h', correlationId: 'c',
+      principal: childPrincipal,
+      familyId: FAMILY,
+      kind: 'direct',
+      participants: [{ kind: 'membership', id: PRIMARY }],
+      idempotencyKey: 'child-via-guardian-route',
+      requestHash: 'h',
+      correlationId: 'c',
     }),
-    (error) => error.code === 'chat_child_not_found',
+    (error) => error.status === 403 && error.code === 'chat_forbidden',
   );
 });
 
@@ -625,7 +863,7 @@ test('a guardian who is not in a room is answered as if the room did not exist',
   assert.equal(ownList.threads.length, 1);
 });
 
-test('adding a participant requires the guardian to be in the room, and a child belongs to one room', async () => {
+test('guardian group membership changes require room membership and legacy child rooms remain single-child', async () => {
   const room = [{ id: CHILD_THREAD, family_id: FAMILY, kind: 'child', title: 'أماني', next_seq: 1,
                   created_by_membership_id: PRIMARY, created_at: new Date('2026-10-08T08:00:00.000Z') }];
   const members = [
@@ -664,7 +902,7 @@ test('adding a participant requires the guardian to be in the room, and a child 
     add({ principal, familyId: FAMILY, threadId: CHILD_THREAD,
           participantKind: 'membership', participantId: PENDING_GUARDIAN,
           idempotencyKey: 'k-pending', requestHash: 'h', correlationId: 'c' }),
-    (error) => error.status === 404 && error.code === 'chat_membership_not_found',
+    (error) => error.status === 404 && error.code === 'chat_participant_not_found',
   );
 
   // The guardian who IS in the room may add a guardian who became active after room creation.
@@ -681,12 +919,12 @@ test('adding a participant requires the guardian to be in the room, and a child 
     (error) => error.status === 409 && error.code === 'chat_member_already_present',
   );
 
-  // A second child cannot be added: a child is named by their own conversation.
+  // Legacy child-only rooms are retained but cannot be expanded into new group conversations.
   await assert.rejects(
     add({ principal, familyId: FAMILY, threadId: CHILD_THREAD,
           participantKind: 'child', participantId: SIBLING,
           idempotencyKey: 'k4', requestHash: 'h', correlationId: 'c' }),
-    (error) => error.code === 'chat_child_belongs_to_one_thread',
+    (error) => error.status === 409 && error.code === 'chat_legacy_child_room_full',
   );
 });
 

@@ -486,6 +486,7 @@ class _ChildConversationScreenState extends State<ChildConversationScreen> {
             l10n,
             _detail!.chatWith,
             _detail!.title,
+            threadKind: _detail!.threadKind,
             isFamilyThread: _detail!.familyPinnedNote,
           );
 

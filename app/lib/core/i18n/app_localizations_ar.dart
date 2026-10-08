@@ -12373,6 +12373,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tasksServerCreateNote => 'ما معنى «أُنجزت»؟';
 
   @override
+  String get tasksServerAudienceScopeLabel => 'مرئية لهذه المحادثة (اختياري)';
+
+  @override
+  String get tasksServerAudienceScopeChildOnly => 'للطفل المكلّف فقط';
+
+  @override
   String get tasksServerCreateButton => 'أضف المهمة';
 
   @override
@@ -12466,6 +12472,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get calendarServerCreateChildren => 'من تُدعى؟';
 
   @override
+  String get calendarServerAudienceScopeLabel => 'اربط المناسبة بمحادثة (اختياري)';
+
+  @override
+  String get calendarServerAudienceScopeChildrenOnly => 'الأطفال المحددون فقط';
+
+  @override
   String get calendarServerCreatePickStart => 'اختر البداية';
 
   @override
@@ -12523,6 +12535,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get familyChatCreateTypeLabel => 'نوع المحادثة';
 
   @override
+  String get familyChatDirectThread => 'محادثة مباشرة';
+
+  @override
+  String get familyChatGroupThread => 'محادثة جماعية';
+
+  @override
+  String get familyChatSelectParticipants => 'اختر المشاركين';
+
+  @override
+  String get familyChatNoParticipantsAvailable => 'لا يوجد مشاركون نشطون آخرون في الأسرة.';
+
+  @override
   String get familyChatFamilyThread => 'دردشة أولياء الأسرة';
 
   @override
@@ -12553,6 +12577,60 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get familyChatCreateFailed =>
       'تعذّر إنشاء الدردشة. لم يتأكد قبول الطلب.';
+
+  @override
+  String get familyChatPolicyTitle => 'التعاون والأمان';
+
+  @override
+  String get familyChatPolicyPrimaryGuardianNotice => 'يستطيع الوصي الأساسي وحده حفظ هذه القواعد التي يطبقها الخادم، وتبقى له دائمًا صلاحيات حماية الأسرة.';
+
+  @override
+  String get familyChatPolicyCoGuardianChat => 'السماح للوصي المشارك بإنشاء المحادثات';
+
+  @override
+  String get familyChatPolicyCoGuardianManageChat => 'السماح للوصي المشارك بإضافة أشخاص إلى المجموعات';
+
+  @override
+  String get familyChatPolicyCoGuardianTasks => 'السماح للوصي المشارك بإدارة المهام';
+
+  @override
+  String get familyChatPolicyCoGuardianCalendar => 'السماح للوصي المشارك بإدارة التقويم';
+
+  @override
+  String get familyChatPolicyChildDirect => 'السماح للأطفال ببدء محادثات مباشرة';
+
+  @override
+  String get familyChatPolicyChildGroups => 'السماح للأطفال بإنشاء مجموعات';
+
+  @override
+  String get familyChatPolicyChildManageGroups => 'السماح للأطفال بإضافة مشاركين إلى مجموعاتهم';
+
+  @override
+  String get familyChatPolicyGuardianInclusion => 'متى يجب أن ينضم الأوصياء إلى محادثات الأطفال؟';
+
+  @override
+  String get familyChatPolicyInclusionNone => 'لا يُضافون تلقائيًا افتراضيًا';
+
+  @override
+  String get familyChatPolicyInclusionAllChildChats => 'كل محادثات الأطفال';
+
+  @override
+  String get familyChatPolicyInclusionChildToChild => 'محادثات الأطفال بعضهم مع بعض فقط';
+
+  @override
+  String get familyChatPolicyMaxGroupSize => 'الحد الأقصى لأعضاء المجموعة';
+
+  @override
+  String get familyChatPolicySave => 'احفظ القواعد';
+
+  @override
+  String get familyChatPolicySaved => 'حفظ الخادم قواعد التعاون.';
+
+  @override
+  String get familyChatPolicyLoadFailed => 'تعذرت قراءة سياسة الخادم.';
+
+  @override
+  String get familyChatPolicySaveFailed => 'لم يقبل الخادم تغيير السياسة.';
 
   @override
   String get familyChatLoadOlder => 'تحميل رسائل أقدم';

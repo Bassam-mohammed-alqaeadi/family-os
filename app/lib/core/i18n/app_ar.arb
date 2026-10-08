@@ -16004,6 +16004,14 @@
   "@tasksServerCreateNote": {
       "description": "SCR: tasks server panel"
   },
+  "tasksServerAudienceScopeLabel": "مرئية لهذه المحادثة (اختياري)",
+  "@tasksServerAudienceScopeLabel": {
+      "description": "Choose a direct or group conversation as task visibility scope"
+  },
+  "tasksServerAudienceScopeChildOnly": "للطفل المكلّف فقط",
+  "@tasksServerAudienceScopeChildOnly": {
+      "description": "Task remains visible only to the designated child and guardians"
+  },
   "tasksServerCreateButton": "أضف المهمة",
   "@tasksServerCreateButton": {
       "description": "SCR: tasks server panel"
@@ -16124,6 +16132,14 @@
   "@calendarServerCreateChildren": {
       "description": "SCR: calendar server panel"
   },
+  "calendarServerAudienceScopeLabel": "اربط المناسبة بمحادثة (اختياري)",
+  "@calendarServerAudienceScopeLabel": {
+      "description": "Optional direct or group audience scope for calendar routing"
+  },
+  "calendarServerAudienceScopeChildrenOnly": "الأطفال المحددون فقط",
+  "@calendarServerAudienceScopeChildrenOnly": {
+      "description": "No chat-thread routing scope selected"
+  },
   "calendarServerCreatePickStart": "اختر البداية",
   "@calendarServerCreatePickStart": {
       "description": "SCR: calendar server panel"
@@ -16188,6 +16204,22 @@
   "@familyChatCreateTypeLabel": {
       "description": "W9 family chat client state and controls"
   },
+  "familyChatDirectThread": "محادثة مباشرة",
+  "@familyChatDirectThread": {
+      "description": "Direct family chat type"
+  },
+  "familyChatGroupThread": "محادثة جماعية",
+  "@familyChatGroupThread": {
+      "description": "User-created family chat group type"
+  },
+  "familyChatSelectParticipants": "اختر المشاركين",
+  "@familyChatSelectParticipants": {
+      "description": "Participant picker for direct and group chats"
+  },
+  "familyChatNoParticipantsAvailable": "لا يوجد مشاركون نشطون آخرون في الأسرة.",
+  "@familyChatNoParticipantsAvailable": {
+      "description": "Empty state for the server-owned family chat roster"
+  },
   "familyChatFamilyThread": "دردشة أولياء الأسرة",
   "@familyChatFamilyThread": {
       "description": "W9 family chat client state and controls"
@@ -16228,6 +16260,42 @@
   "@familyChatCreateFailed": {
       "description": "W9 family chat client state and controls"
   },
+  "familyChatPolicyTitle": "التعاون والأمان",
+  "@familyChatPolicyTitle": { "description": "Family collaboration policy settings" },
+  "familyChatPolicyPrimaryGuardianNotice": "يستطيع الوصي الأساسي وحده حفظ هذه القواعد التي يطبقها الخادم، وتبقى له دائمًا صلاحيات حماية الأسرة.",
+  "@familyChatPolicyPrimaryGuardianNotice": { "description": "Server authorization and child safety notice" },
+  "familyChatPolicyCoGuardianChat": "السماح للوصي المشارك بإنشاء المحادثات",
+  "@familyChatPolicyCoGuardianChat": { "description": "Delegated guardian role permission" },
+  "familyChatPolicyCoGuardianManageChat": "السماح للوصي المشارك بإضافة أشخاص إلى المجموعات",
+  "@familyChatPolicyCoGuardianManageChat": { "description": "Delegated guardian role permission" },
+  "familyChatPolicyCoGuardianTasks": "السماح للوصي المشارك بإدارة المهام",
+  "@familyChatPolicyCoGuardianTasks": { "description": "Delegated guardian role permission" },
+  "familyChatPolicyCoGuardianCalendar": "السماح للوصي المشارك بإدارة التقويم",
+  "@familyChatPolicyCoGuardianCalendar": { "description": "Delegated guardian role permission" },
+  "familyChatPolicyChildDirect": "السماح للأطفال ببدء محادثات مباشرة",
+  "@familyChatPolicyChildDirect": { "description": "Child chat safety setting" },
+  "familyChatPolicyChildGroups": "السماح للأطفال بإنشاء مجموعات",
+  "@familyChatPolicyChildGroups": { "description": "Child chat safety setting" },
+  "familyChatPolicyChildManageGroups": "السماح للأطفال بإضافة مشاركين إلى مجموعاتهم",
+  "@familyChatPolicyChildManageGroups": { "description": "Child chat safety setting" },
+  "familyChatPolicyGuardianInclusion": "متى يجب أن ينضم الأوصياء إلى محادثات الأطفال؟",
+  "@familyChatPolicyGuardianInclusion": { "description": "Server-enforced safety inclusion rule" },
+  "familyChatPolicyInclusionNone": "لا يُضافون تلقائيًا افتراضيًا",
+  "@familyChatPolicyInclusionNone": { "description": "No automatic guardian inclusion" },
+  "familyChatPolicyInclusionAllChildChats": "كل محادثات الأطفال",
+  "@familyChatPolicyInclusionAllChildChats": { "description": "Include active guardians when any child is in a new conversation" },
+  "familyChatPolicyInclusionChildToChild": "محادثات الأطفال بعضهم مع بعض فقط",
+  "@familyChatPolicyInclusionChildToChild": { "description": "Include active guardians when multiple children are in a conversation" },
+  "familyChatPolicyMaxGroupSize": "الحد الأقصى لأعضاء المجموعة",
+  "@familyChatPolicyMaxGroupSize": { "description": "Maximum active participants in a group" },
+  "familyChatPolicySave": "احفظ القواعد",
+  "@familyChatPolicySave": { "description": "Save collaboration policy" },
+  "familyChatPolicySaved": "حفظ الخادم قواعد التعاون.",
+  "@familyChatPolicySaved": { "description": "Policy update confirmation" },
+  "familyChatPolicyLoadFailed": "تعذرت قراءة سياسة الخادم.",
+  "@familyChatPolicyLoadFailed": { "description": "Policy read failure" },
+  "familyChatPolicySaveFailed": "لم يقبل الخادم تغيير السياسة.",
+  "@familyChatPolicySaveFailed": { "description": "Policy update failure" },
   "familyChatLoadOlder": "تحميل رسائل أقدم",
   "@familyChatLoadOlder": {
       "description": "W9 family chat client state and controls"

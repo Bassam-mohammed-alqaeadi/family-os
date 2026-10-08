@@ -71,9 +71,8 @@ final class FamilyChatServerAuthority {
   final Future<String> Function() idToken;
   final String? Function() familyId;
 
-  /// Loads children from the selected, remote-authoritative family roster. Guardian
-  /// participants are deliberately not a client input: the server adds every active guardian
-  /// to a new room. The answer distinguishes an authoritative empty roster from a failed read.
+  /// Kept as a compatibility seam for older child-picker consumers. New direct/group creation
+  /// uses the full participant roster returned by the server instead.
   final Future<FamilyChatAuthorityAnswer<List<FamilyChatChildOption>>> Function()?
   childOptions;
 
@@ -108,6 +107,26 @@ final class FamilyChatServerAuthority {
 
   static bool _addressable(String value) => isFoundationGateUuid(value.trim());
 
+  Future<FamilyChatAuthorityAnswer<FamilyCollaborationPolicy>> readCollaborationPolicy() =>
+      _guardianCall(
+        (family, token) => api.getFamilyCollaborationPolicy(
+          familyId: family,
+          idToken: token,
+        ),
+      );
+
+  Future<FamilyChatAuthorityAnswer<FamilyCollaborationPolicy>> updateCollaborationPolicy({
+    required int expectedVersion,
+    required Map<String, Object?> changes,
+  }) => _guardianCall(
+    (family, token) => api.updateFamilyCollaborationPolicy(
+      familyId: family,
+      idToken: token,
+      expectedVersion: expectedVersion,
+      changes: changes,
+    ),
+  );
+
   Future<FamilyChatAuthorityAnswer<FamilyChatThreadList>> listGuardianThreads() =>
       _guardianCall(
         (family, token) => api.listFamilyThreads(
@@ -116,9 +135,17 @@ final class FamilyChatServerAuthority {
         ),
       );
 
+  Future<FamilyChatAuthorityAnswer<FamilyChatParticipantList>> listGuardianParticipants() =>
+      _guardianCall(
+        (family, token) => api.listFamilyParticipants(
+          familyId: family,
+          idToken: token,
+        ),
+      );
+
   Future<FamilyChatAuthorityAnswer<FamilyChatThread>> createGuardianThread({
     required FamilyChatThreadKind kind,
-    required List<String> childIds,
+    required List<FamilyChatParticipantReference> participants,
     required String title,
     required String Function() idempotencyKey,
   }) => _guardianCall(
@@ -126,9 +153,24 @@ final class FamilyChatServerAuthority {
       familyId: family,
       kind: kind,
       title: title,
-      childIds: childIds,
+      participants: participants,
       idempotencyKey: idempotencyKey(),
       idToken: token,
+    ),
+  );
+
+  Future<FamilyChatAuthorityAnswer<FamilyChatThread>> createChildThread({
+    required FamilyChatThreadKind kind,
+    required List<FamilyChatParticipantReference> participants,
+    required String title,
+    required String Function() idempotencyKey,
+  }) => _deviceCall(
+    (deviceId) => api.createDeviceThread(
+      deviceId: deviceId,
+      kind: kind,
+      title: title,
+      participants: participants,
+      idempotencyKey: idempotencyKey(),
     ),
   );
 
@@ -151,6 +193,24 @@ final class FamilyChatServerAuthority {
         participantId: participantId,
         idempotencyKey: idempotencyKey(),
         idToken: token,
+      ),
+    );
+  }
+
+  Future<FamilyChatAuthorityAnswer<FamilyChatThread>> addChildThreadMember({
+    required String threadId,
+    required FamilyChatParticipantKind participantKind,
+    required String participantId,
+    required String Function() idempotencyKey,
+  }) async {
+    if (!_addressable(threadId) || !_addressable(participantId)) return _refused();
+    return _deviceCall(
+      (deviceId) => api.addDeviceThreadMember(
+        deviceId: deviceId,
+        threadId: threadId,
+        participantKind: participantKind,
+        participantId: participantId,
+        idempotencyKey: idempotencyKey(),
       ),
     );
   }
@@ -247,6 +307,11 @@ final class FamilyChatServerAuthority {
   Future<FamilyChatAuthorityAnswer<FamilyChatThreadList>> listChildThreads() =>
       _deviceCall(
         (deviceId) => api.listDeviceThreads(deviceId: deviceId),
+      );
+
+  Future<FamilyChatAuthorityAnswer<FamilyChatParticipantList>> listChildParticipants() =>
+      _deviceCall(
+        (deviceId) => api.listDeviceParticipants(deviceId: deviceId),
       );
 
   Future<FamilyChatAuthorityAnswer<FamilyChatMessagePage>> listChildMessages({

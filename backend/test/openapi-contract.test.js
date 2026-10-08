@@ -17,6 +17,7 @@ import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { CHAT_CURRENT_CAPABILITIES } from '../src/family-chat.js';
 import {
   declaredRouteKeys,
   liveRouteKeys,
@@ -200,9 +201,20 @@ test('every protected operation declares OIDC security, rate limiting and idempo
       '/v1/devices/{deviceId}/chat/threads/{threadId}/messages/{messageId}/deletion',
       '/v1/devices/{deviceId}/chat/threads/{threadId}/reads',
     ]);
-    const expectedSecurity = deviceAuthenticated.has(path)
-      ? [{ oidcBearer: [] }, { deviceCredential: [] }]
-      : [{ oidcBearer: [] }];
+    // Roster reads and child-created/child-managed conversations use only the paired-device
+    // credential. List/read/message routes that also support a guardian bearer token remain
+    // explicitly dual-authenticated.
+    const deviceOnlyOperations = new Set([
+      'POST /v1/devices/{deviceId}/chat/threads',
+      'GET /v1/devices/{deviceId}/chat/participants',
+      'POST /v1/devices/{deviceId}/chat/threads/{threadId}/members',
+    ]);
+    const operationKey = `${method} ${path}`;
+    const expectedSecurity = deviceOnlyOperations.has(operationKey)
+      ? [{ deviceCredential: [] }]
+      : deviceAuthenticated.has(path)
+        ? [{ oidcBearer: [] }, { deviceCredential: [] }]
+        : [{ oidcBearer: [] }];
     assert.deepEqual(operation.security, expectedSecurity, `${key} security`);
 
     assert.equal(
@@ -211,7 +223,11 @@ test('every protected operation declares OIDC security, rate limiting and idempo
       `${key} must declare protected rate limiting`,
     );
 
-    if (method === 'POST' && !deviceAuthenticated.has(path)) {
+    const deviceChatMutations = new Set([
+      'POST /v1/devices/{deviceId}/chat/threads',
+      'POST /v1/devices/{deviceId}/chat/threads/{threadId}/members',
+    ]);
+    if (method === 'POST' && (!deviceAuthenticated.has(path) || deviceChatMutations.has(operationKey))) {
       assert.ok(
         operation.parameters?.some(
           (parameter) => parameter.$ref === '#/components/parameters/IdempotencyKey',
@@ -219,6 +235,41 @@ test('every protected operation declares OIDC security, rate limiting and idempo
         `${key} must require an Idempotency-Key`,
       );
     }
+  }
+});
+
+test('chat v1 publishes pair/group and future capability extension points without claiming them today', async () => {
+  const specification = await readSpecification();
+  const schemas = specification.components.schemas;
+  const create = schemas.ChatThreadCreateRequest;
+  const capabilities = schemas.ChatCapabilities.properties;
+
+  assert.deepEqual(create.properties.kind.enum, ['direct', 'group']);
+  assert.equal(create.properties.participants.minItems, 1);
+  assert.equal(create.properties.participants.maxItems, 23);
+  assert.equal(create.allOf[0].if.properties.kind.const, 'direct');
+  assert.equal(create.allOf[0].then.properties.participants.maxItems, 1);
+  assert.equal(create.allOf[1].if.properties.kind.const, 'group');
+  assert.equal(create.allOf[1].then.properties.participants.minItems, 2);
+  assert.deepEqual(CHAT_CURRENT_CAPABILITIES.contentTypes, ['text/plain']);
+  assert.equal(CHAT_CURRENT_CAPABILITIES.transport, 'polling');
+  assert.equal(CHAT_CURRENT_CAPABILITIES.listPollSeconds, 30);
+  assert.equal(CHAT_CURRENT_CAPABILITIES.threadPollSeconds, 15);
+  for (const flag of [
+    'serverSentEvents', 'webSockets', 'attachments', 'audio', 'presence', 'richReactions',
+  ]) {
+    assert.equal(CHAT_CURRENT_CAPABILITIES[flag], false);
+    assert.equal(capabilities[flag].type, 'boolean');
+    assert.equal(Object.hasOwn(capabilities[flag], 'const'), false);
+    assert.match(capabilities[flag].description, /current service returns false/i);
+  }
+  assert.ok(capabilities.transport.enum.includes('server_sent_events'));
+  assert.ok(capabilities.transport.enum.includes('websocket'));
+  assert.match(capabilities.contentTypes.items.pattern, /\//);
+  assert.match(capabilities.contentTypes.description, /text\/plain only/i);
+
+  for (const schemaName of ['TaskCreateRequest', 'FamilyEventCreateRequest', 'FamilyEventUpdateRequest']) {
+    assert.ok(schemas[schemaName].properties.audienceThreadId, `${schemaName} exposes a thread scope`);
   }
 });
 

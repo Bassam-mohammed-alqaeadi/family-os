@@ -45,7 +45,7 @@ Map<String, Object?> _message({
 
 Map<String, Object?> _thread() => <String, Object?>{
   'id': _threadId,
-  'kind': 'child',
+  'kind': 'direct',
   'title': 'Family chat',
   'createdAt': _createdAt,
   'lastReadSeq': 0,
@@ -222,8 +222,10 @@ void main() {
     expect(
       (await client.createFamilyThread(
         familyId: _familyId,
-        kind: FamilyChatThreadKind.child,
-        childIds: const <String>[_childId],
+        kind: FamilyChatThreadKind.direct,
+        participants: const <FamilyChatParticipantReference>[
+          FamilyChatParticipantReference(kind: FamilyChatParticipantKind.child, id: _childId),
+        ],
         idempotencyKey: _idempotencyKey,
         idToken: 'fresh-token-2',
       )).id,
@@ -307,8 +309,10 @@ void main() {
     expect(http.calls[0].uri.path, '/v1/families/$_familyId/chat/threads');
     expect(http.calls[1].headers['idempotency-key'], _idempotencyKey);
     expect(jsonDecode(http.calls[1].body!), <String, Object?>{
-      'kind': 'child',
-      'childIds': <String>[_childId],
+      'kind': 'direct',
+      'participants': <Object?>[
+        <String, Object?>{'kind': 'child', 'id': _childId},
+      ],
     });
     expect(http.calls[3].uri.queryParameters, <String, String>{
       'afterSeq': '7',
@@ -462,6 +466,25 @@ void main() {
         threadId: _threadId,
         body: '  ',
         clientMessageId: _clientMessageId,
+        idempotencyKey: _idempotencyKey,
+        idToken: 'fresh-token',
+      ),
+      throwsA(
+        isA<FoundationGateApiException>().having(
+          (error) => error.failure,
+          'failure',
+          FoundationGateApiFailure.invalidInput,
+        ),
+      ),
+    );
+    await expectLater(
+      client.createFamilyThread(
+        familyId: _familyId,
+        kind: FamilyChatThreadKind.direct,
+        participants: const <FamilyChatParticipantReference>[
+          FamilyChatParticipantReference(kind: FamilyChatParticipantKind.child, id: _childId),
+          FamilyChatParticipantReference(kind: FamilyChatParticipantKind.membership, id: _otherMembershipId),
+        ],
         idempotencyKey: _idempotencyKey,
         idToken: 'fresh-token',
       ),

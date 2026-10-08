@@ -21,6 +21,8 @@ import {
   createTaskClaim,
   createTaskCreate,
   createTaskDecision,
+  createTaskList,
+  createDeviceTaskRead,
   normalizeTaskPoints,
   normalizeTaskTitle,
   pointEntryView,
@@ -34,6 +36,7 @@ const CHILD = '22222222-2222-4222-8222-222222222222';
 const OTHER_CHILD = '33333333-3333-4333-8333-333333333333';
 const TASK = '44444444-4444-4444-8444-444444444444';
 const CLAIM = '55555555-5555-4555-8555-555555555555';
+const CHAT_THREAD = '99999999-9999-4999-8999-999999999999';
 const GUARDIAN_MEMBERSHIP = '66666666-6666-4666-8666-666666666666';
 const DEVICE = '77777777-7777-4777-8777-777777777777';
 const CO_GUARDIAN = '88888888-8888-4888-8888-888888888888';
@@ -46,6 +49,7 @@ function taskRow(overrides = {}) {
     id: TASK,
     family_id: FAMILY,
     child_id: CHILD,
+    audience_thread_id: null,
     title: 'ترتيب الغرفة',
     note: 'الملابس في الخزانة',
     points: 15,
@@ -89,8 +93,18 @@ const pairedDevice = () => ({
   credential_revoked_at: null,
 });
 
-function recordingPort({ task = taskRow(), pendingClaim = null, actor = guardianActor, device = pairedDevice(), ledger = [] } = {}) {
-  const calls = { ledger: [], audit: [], decided: [], claims: [] };
+function recordingPort({
+  task = taskRow(),
+  pendingClaim = null,
+  actor = guardianActor,
+  device = pairedDevice(),
+  ledger = [],
+  chatThread = null,
+  chatMembers = [],
+} = {}) {
+  const calls = {
+    ledger: [], audit: [], decided: [], claims: [], taskCreates: [], taskListQueries: [],
+  };
   return {
     calls,
     port: {
@@ -110,6 +124,14 @@ function recordingPort({ task = taskRow(), pendingClaim = null, actor = guardian
       async readChild() {
         return { id: CHILD };
       },
+      async readChatThread(_client, { familyId, threadId }) {
+        return chatThread?.family_id === familyId && chatThread?.id === threadId
+          ? chatThread
+          : null;
+      },
+      async listChatThreadMembers() {
+        return chatMembers;
+      },
       async readDevice() {
         return device;
       },
@@ -117,12 +139,20 @@ function recordingPort({ task = taskRow(), pendingClaim = null, actor = guardian
         return 0;
       },
       async insertTask(_client, input) {
-        return taskRow({ ...input, id: TASK });
+        calls.taskCreates.push(input);
+        return taskRow({
+          ...input,
+          id: TASK,
+          child_id: input.childId,
+          audience_thread_id: input.audienceThreadId ?? null,
+          created_by_membership_id: input.createdByMembershipId,
+        });
       },
       async readTask() {
         return task;
       },
-      async listTasks() {
+      async listTasks(_client, input) {
+        calls.taskListQueries.push(input);
         return [task];
       },
       async listClaims() {
@@ -395,6 +425,166 @@ test('a guardian states a task, and the stored row is exactly what was stated', 
   assert.equal(result.task.note, 'الملابس في الخزانة');
   assert.equal(result.task.points, 15);
   assert.equal(calls.audit.at(-1).eventType, 'family.task_created');
+});
+
+test('a task audience must be the creator\'s group and include its assigned child; routing stays in the outbox payload', async () => {
+  const { port, calls } = recordingPort({
+    chatThread: { id: CHAT_THREAD, family_id: FAMILY, kind: 'group' },
+    chatMembers: [
+      { participant_kind: 'membership', participant_id: GUARDIAN_MEMBERSHIP },
+      { participant_kind: 'child', participant_id: CHILD },
+      { participant_kind: 'child', participant_id: OTHER_CHILD },
+    ],
+  });
+  const create = createTaskCreate({ port });
+  const result = await create({
+    principal: { subject: 'test-primary' },
+    familyId: FAMILY,
+    childId: CHILD,
+    title: 'Shared task',
+    points: 10,
+    audienceThreadId: CHAT_THREAD,
+    idempotencyKey: 'task-thread-audience',
+    requestHash: 'a'.repeat(64),
+    correlationId: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+  });
+
+  assert.equal(result.task.audienceThreadId, CHAT_THREAD);
+  assert.equal(calls.taskCreates[0].audienceThreadId, CHAT_THREAD);
+  assert.deepEqual(calls.audit.at(-1).payload, {
+    childId: CHILD,
+    audienceThreadId: CHAT_THREAD,
+  });
+
+  const inaccessible = recordingPort({
+    chatThread: { id: CHAT_THREAD, family_id: FAMILY, kind: 'group' },
+    chatMembers: [{ participant_kind: 'membership', participant_id: GUARDIAN_MEMBERSHIP }],
+  });
+  await assert.rejects(
+    createTaskCreate({ port: inaccessible.port })({
+      principal: { subject: 'test-primary' },
+      familyId: FAMILY,
+      childId: CHILD,
+      title: 'Private task',
+      points: 5,
+      audienceThreadId: CHAT_THREAD,
+      idempotencyKey: 'task-thread-missing-child',
+      requestHash: 'b'.repeat(64),
+    }),
+    (error) => error.status === 404 && error.code === 'task_audience_not_found',
+  );
+  assert.equal(inaccessible.calls.taskCreates.length, 0);
+});
+
+test('a scoped task can be claimed or decided only by active participants in its conversation', async () => {
+  const members = [
+    { participant_kind: 'membership', participant_id: GUARDIAN_MEMBERSHIP },
+    { participant_kind: 'child', participant_id: CHILD },
+  ];
+  const task = taskRow({ audience_thread_id: CHAT_THREAD });
+  const memberFixture = recordingPort({
+    task,
+    pendingClaim: null,
+    chatThread: { id: CHAT_THREAD, family_id: FAMILY, kind: 'group' },
+    chatMembers: members,
+  });
+  const childClaim = await createTaskClaim({ port: memberFixture.port })({
+    deviceId: DEVICE,
+    deviceCredential: 'device-credential-value',
+    taskId: TASK,
+    idempotencyKey: 'scoped-child-claim',
+    requestHash: 'd'.repeat(64),
+  });
+  assert.equal(childClaim.claim.status, 'pending');
+  assert.equal(memberFixture.calls.claims.length, 1);
+
+  const memberDecision = recordingPort({
+    task,
+    pendingClaim: claimRow(),
+    chatThread: { id: CHAT_THREAD, family_id: FAMILY, kind: 'group' },
+    chatMembers: members,
+  });
+  const confirmed = await createTaskDecision({ port: memberDecision.port })({
+    principal: { subject: 'test-primary' },
+    familyId: FAMILY,
+    childId: CHILD,
+    taskId: TASK,
+    decision: 'confirm',
+    idempotencyKey: 'scoped-member-decision',
+    requestHash: 'a'.repeat(64),
+  });
+  assert.equal(confirmed.task.claim.status, 'confirmed');
+  assert.equal(memberDecision.calls.ledger[0].points, task.points);
+
+  const removedChild = recordingPort({
+    task,
+    pendingClaim: null,
+    chatThread: { id: CHAT_THREAD, family_id: FAMILY, kind: 'group' },
+    chatMembers: [{ participant_kind: 'membership', participant_id: GUARDIAN_MEMBERSHIP }],
+  });
+  await assert.rejects(
+    createTaskClaim({ port: removedChild.port })({
+      deviceId: DEVICE,
+      deviceCredential: 'device-credential-value',
+      taskId: TASK,
+      idempotencyKey: 'scoped-removed-child',
+      requestHash: 'f'.repeat(64),
+    }),
+    (error) => error.status === 404 && error.code === 'task_not_found',
+  );
+  assert.equal(removedChild.calls.claims.length, 0);
+
+  const outsider = recordingPort({
+    task,
+    actor: { id: CO_GUARDIAN, role: 'co_guardian' },
+    pendingClaim: claimRow(),
+    chatThread: { id: CHAT_THREAD, family_id: FAMILY, kind: 'group' },
+    chatMembers: members,
+  });
+  await assert.rejects(
+    createTaskDecision({ port: outsider.port })({
+      principal: { subject: 'test-co' },
+      familyId: FAMILY,
+      childId: CHILD,
+      taskId: TASK,
+      decision: 'confirm',
+      idempotencyKey: 'scoped-outsider-decision',
+      requestHash: 'e'.repeat(64),
+    }),
+    (error) => error.status === 404 && error.code === 'task_not_found',
+  );
+  assert.equal(outsider.calls.decided.length, 0);
+});
+
+test('a shared group task remains unclaimable by a child who is not its beneficiary', () => {
+  const task = taskView(taskRow({ audience_thread_id: CHAT_THREAD }), null, {
+    viewerChildId: OTHER_CHILD,
+  });
+  assert.equal(task.audienceThreadId, CHAT_THREAD);
+  assert.equal(task.childId, CHILD);
+  assert.equal(task.canClaim, false);
+});
+
+test('task visibility queries are scoped to the requesting guardian membership or paired child', async () => {
+  const { port, calls } = recordingPort({
+    task: taskRow({ audience_thread_id: CHAT_THREAD }),
+  });
+  const guardianResult = await createTaskList({ port })({
+    principal: { subject: 'test-primary' },
+    familyId: FAMILY,
+    childId: CHILD,
+  });
+  const deviceResult = await createDeviceTaskRead({ port })({
+    deviceId: DEVICE,
+    deviceCredential: 'device-credential-value',
+  });
+
+  assert.deepEqual(calls.taskListQueries, [
+    { familyId: FAMILY, childId: CHILD, viewerKind: 'membership', viewerId: GUARDIAN_MEMBERSHIP },
+    { familyId: FAMILY, childId: CHILD, viewerKind: 'child', viewerId: CHILD },
+  ]);
+  assert.equal(guardianResult.tasks[0].canClaim, null);
+  assert.equal(deviceResult.tasks[0].canClaim, true);
 });
 
 test('the bound on open tasks is a refusal, not a silent trim', async () => {

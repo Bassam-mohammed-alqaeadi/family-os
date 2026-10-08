@@ -3,6 +3,7 @@ import test from 'node:test';
 import { validatedOidcSubject } from '../src/auth/oidc-verifier.js';
 import {
   chatThreadCreateInput,
+  collaborationPolicyInput,
   createChildInput,
   createGuardianTransferInput,
   requireNoQueryParameters,
@@ -35,23 +36,103 @@ test('OIDC subjects are bounded before becoming durable account identifiers', ()
   assert.throws(() => validatedOidcSubject('x'.repeat(256)), { code: 'invalid_token' });
 });
 
-test('chat room creation accepts one child identifier but never a client-selected guardian roster', () => {
+test('chat creation accepts explicit direct pairs and groups, not legacy one-child or family-room shapes', () => {
   const childId = '11111111-1111-4111-8111-111111111111';
-  assert.deepEqual(chatThreadCreateInput({ kind: 'family' }), {
-    kind: 'family',
+  const guardianId = '22222222-2222-4222-8222-222222222222';
+  assert.deepEqual(chatThreadCreateInput({
+    kind: 'direct',
+    participants: [{ kind: 'child', id: childId }],
+  }), {
+    kind: 'direct',
     title: '',
-    childIds: [],
+    participants: [{ kind: 'child', id: childId }],
   });
-  assert.deepEqual(chatThreadCreateInput({ kind: 'child', childIds: [childId] }), {
-    kind: 'child',
-    title: '',
-    childIds: [childId],
+  assert.deepEqual(chatThreadCreateInput({
+    kind: 'group',
+    title: 'The family group',
+    participants: [
+      { kind: 'child', id: childId },
+      { kind: 'membership', id: guardianId },
+    ],
+  }), {
+    kind: 'group',
+    title: 'The family group',
+    participants: [
+      { kind: 'child', id: childId },
+      { kind: 'membership', id: guardianId },
+    ],
   });
   assert.throws(
+    () => chatThreadCreateInput({ kind: 'family', participants: [] }),
+    { code: 'invalid_request' },
+  );
+  assert.throws(
+    () => chatThreadCreateInput({ kind: 'direct', participants: [], childIds: [childId] }),
+    { code: 'invalid_request' },
+  );
+  assert.throws(
     () => chatThreadCreateInput({
-      kind: 'family',
-      participantMembershipIds: [childId],
+      kind: 'direct',
+      participants: [
+        { kind: 'child', id: childId },
+        { kind: 'membership', id: guardianId },
+      ],
     }),
+    { code: 'invalid_request' },
+  );
+  assert.throws(
+    () => chatThreadCreateInput({
+      kind: 'group',
+      participants: [{ kind: 'child', id: childId }],
+    }),
+    { code: 'invalid_request' },
+  );
+});
+
+test('collaboration policy permits only bounded guardian-role delegation and explicit safety controls', () => {
+  assert.deepEqual(collaborationPolicyInput({
+    chatCreateRoles: ['primary_guardian'],
+    chatManageRoles: ['primary_guardian', 'co_guardian'],
+    taskRoles: [],
+    calendarRoles: ['co_guardian'],
+    childDirectEnabled: true,
+    childGroupsEnabled: false,
+    childGroupMemberManagementEnabled: false,
+    guardianInclusionMode: 'child_to_child',
+    maximumGroupSize: 8,
+    expectedVersion: 3,
+  }), {
+    change: {
+      chatCreateRoles: ['primary_guardian'],
+      chatManageRoles: ['primary_guardian', 'co_guardian'],
+      taskRoles: [],
+      calendarRoles: ['co_guardian'],
+      childDirectEnabled: true,
+      childGroupsEnabled: false,
+      childGroupMemberManagementEnabled: false,
+      guardianInclusionMode: 'child_to_child',
+      maximumGroupSize: 8,
+    },
+    expectedVersion: 3,
+  });
+  assert.throws(
+    () => collaborationPolicyInput({ chatCreateRoles: ['child'], expectedVersion: 3 }),
+    { code: 'invalid_request' },
+  );
+  assert.throws(
+    () => collaborationPolicyInput({ taskRoles: ['co_guardian', 'co_guardian'], expectedVersion: 3 }),
+    { code: 'invalid_request' },
+  );
+  assert.throws(
+    () => collaborationPolicyInput({ guardianInclusionMode: 'all_family_members', expectedVersion: 3 }),
+    { code: 'invalid_request' },
+  );
+  assert.throws(
+    () => collaborationPolicyInput({ maximumGroupSize: 2, expectedVersion: 3 }),
+    { code: 'invalid_request' },
+  );
+  assert.throws(
+    () => collaborationPolicyInput({ childDirectEnabled: true, expectedVersion: 3, primaryCanLoseAccess: true }),
     { code: 'invalid_request' },
   );
 });
