@@ -12481,4 +12481,154 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get calendarServerNoAddressableChildren =>
       'لا يمكن لهذه النسخة مخاطبة أبناء الخادم بعد — يُقرأ التقويم ولا يُكتب فيه.';
+
+  @override
+  String get familyChatConnecting =>
+      'جارٍ الاتصال بدردشة الأسرة…';
+
+  @override
+  String get familyChatReconnecting =>
+      'انقطع الاتصال. نتحقق من دردشة الأسرة مجددًا…';
+
+  @override
+  String get familyChatOffline =>
+      'لا يوجد اتصال الآن. تبقى الرسائل التي سبق تحميلها ظاهرة؛ أعد المحاولة عند عودة الاتصال.';
+
+  @override
+  String get familyChatUnavailable =>
+      'الدردشة غير مُعدّة في هذا الإصدار؛ لا تُستخدم محادثة محلية بديلة.';
+
+  @override
+  String get familyChatPermissionDenied =>
+      'لا يملك هذا الحساب أو الجهاز صلاحية فتح هذه المحادثة. الخادم هو من يحدد الوصول.';
+
+  @override
+  String get familyChatRequestRejected =>
+      'رفض الخادم إجراء الدردشة. تحقّق من عضوية الأسرة ثم حاول مجددًا.';
+
+  @override
+  String get familyChatRetry =>
+      'إعادة المحاولة';
+
+  @override
+  String get familyChatServerPollingNotice =>
+      'تُحدّث الرسائل من الخادم كل 15 ثانية أثناء فتح هذه الشاشة. لا تتوفر إشعارات فورية أو مزامنة لحظية.';
+
+  @override
+  String get childFamilyChatServerPollingNotice =>
+      'تُحدّث الرسائل من الخادم أثناء فتح هذه الشاشة. لا تتوفر تحديثات فورية.';
+
+  @override
+  String get familyChatCreateHeading =>
+      'ابدأ دردشة أسرية';
+
+  @override
+  String get familyChatCreateTypeLabel =>
+      'نوع المحادثة';
+
+  @override
+  String get familyChatFamilyThread =>
+      'دردشة أولياء الأسرة';
+
+  @override
+  String get familyChatChildThread =>
+      'محادثة مع طفل واحد';
+
+  @override
+  String get familyChatCreateChildLabel =>
+      'الطفل';
+
+  @override
+  String get familyChatNoChildrenAvailable =>
+      'لا يوجد طفل مؤكّد من الخادم لإنشاء محادثة معه.';
+
+  @override
+  String get familyChatChildFallback =>
+      'طفل';
+
+  @override
+  String get familyChatCreateTitleLabel =>
+      'العنوان (اختياري)';
+
+  @override
+  String get familyChatCreateTitleHint =>
+      'اتركه فارغًا لاستخدام عنوان الخادم';
+
+  @override
+  String get familyChatCreateButton =>
+      'إنشاء الدردشة';
+
+  @override
+  String get familyChatCancel =>
+      'إلغاء';
+
+  @override
+  String get familyChatCreateFailed =>
+      'تعذّر إنشاء الدردشة. لم يتأكد قبول الطلب.';
+
+  @override
+  String get familyChatLoadOlder =>
+      'تحميل رسائل أقدم';
+
+  @override
+  String get familyChatRefresh =>
+      'تحديث الرسائل';
+
+  @override
+  String get familyChatMessageDeleted =>
+      'حُذفت الرسالة';
+
+  @override
+  String get familyChatEdited =>
+      'عُدّلت';
+
+  @override
+  String get familyChatMediaUnavailable =>
+      'المرفقات والرسائل الصوتية غير متاحة: واجهة الدردشة الحالية تدعم النص فقط.';
+
+  @override
+  String get familyChatMediaUnavailableSemantics =>
+      'المرفقات والرسائل الصوتية غير متاحة';
+
+  @override
+  String get familyChatEdit =>
+      'تعديل';
+
+  @override
+  String get familyChatDelete =>
+      'حذف';
+
+  @override
+  String get familyChatEditHeading =>
+      'تعديل الرسالة';
+
+  @override
+  String get familyChatEditSave =>
+      'حفظ التعديل';
+
+  @override
+  String get familyChatDeleteHeading =>
+      'حذف هذه الرسالة؟';
+
+  @override
+  String get familyChatDeleteBody =>
+      'سيُزال نص الرسالة، لكن موضعها في المحادثة سيبقى ظاهرًا.';
+
+  @override
+  String get familyChatStorageNotice => 'تُحفظ الرسائل لدى خادم الأسرة؛ هذه الدردشة غير مشفّرة من طرف إلى طرف.';
+
+  @override
+  String get familyChatServerStoredTag => 'نص محفوظ في خادم الأسرة';
+
+  @override
+  String get familyChatLoadMore => 'تحميل المزيد من الرسائل';
+
+  @override
+  String get familyChatMessageActionsSemantics => 'إجراءات الرسالة';
+
+  @override
+  String get familyChatListPollingNotice => 'تأتي قائمة المحادثات ومعايناتها من خادم الأسرة. تُحدّث القائمة كل 30 ثانية؛ لا تتوفر إشعارات فورية.';
+
+  @override
+  String get familyChatNeverLocks => 'تبقى دردشة الأسرة متاحة بعد انتهاء وقت اللعب.';
 }

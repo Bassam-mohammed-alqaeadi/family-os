@@ -63,6 +63,9 @@ class NativeChildPairingCopy {
   String get childModeActive => isArabic
       ? 'وضع الابن نشط. يرسل هذا الجهاز الآن قياسات البطارية والموقع الحقيقية.'
       : 'Child Mode is active. This device now sends real battery and location telemetry.';
+  String get childChatReadyWithoutLocation => isArabic
+      ? 'تم ربط الجهاز للمحادثات. جمع الموقع متوقف حتى تمنح أذوناته.'
+      : 'This device is paired for chat. Location collection stays off until its permissions are granted.';
   String childModeStartFailed(String reason) => isArabic
       ? 'تعذر بدء وضع الابن: $reason'
       : 'Child Mode could not start: $reason';

@@ -1891,9 +1891,8 @@ export function createApp({
         }),
     );
 
-    // Opening a conversation. The participants are written by the same transaction as the room,
-    // because a room that exists for a moment with nobody in it is not something any reader
-    // should ever be able to observe.
+    // Opening a conversation. Guardian participants come from the server's active family roster,
+    // never from a client-selected list, and are written by the same transaction as the room.
     app.post(
         '/v1/families/:familyId/chat/threads',
         requirePrincipal,

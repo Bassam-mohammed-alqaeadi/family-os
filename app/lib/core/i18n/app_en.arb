@@ -16128,6 +16128,161 @@
   "calendarServerNoAddressableChildren": "This build cannot address the server's children yet - the calendar reads and nothing is written.",
   "@calendarServerNoAddressableChildren": {
       "description": "SCR: calendar server panel"
+  },
+  "familyChatConnecting": "Connecting to the family chat…",
+  "@familyChatConnecting": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatReconnecting": "Connection interrupted. Checking the family chat again…",
+  "@familyChatReconnecting": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatOffline": "Offline. Messages already loaded remain visible; retry when the connection returns.",
+  "@familyChatOffline": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatUnavailable": "Family chat is not configured on this build; no local chat is used as a substitute.",
+  "@familyChatUnavailable": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatPermissionDenied": "This account or device is not allowed to open this conversation. The server controls access.",
+  "@familyChatPermissionDenied": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatRequestRejected": "The server rejected this chat action. Check family membership and try again.",
+  "@familyChatRequestRejected": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatRetry": "Retry",
+  "@familyChatRetry": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatServerPollingNotice": "Messages refresh from the server every 15 seconds while this screen is open. Instant push updates are not available.",
+  "@familyChatServerPollingNotice": {
+      "description": "W9 family chat client state and controls"
+  },
+  "childFamilyChatServerPollingNotice": "Messages refresh from the server while this screen is open. Instant updates are not available.",
+  "@childFamilyChatServerPollingNotice": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatCreateHeading": "Start a family chat",
+  "@familyChatCreateHeading": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatCreateTypeLabel": "Conversation type",
+  "@familyChatCreateTypeLabel": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatFamilyThread": "Guardian family chat",
+  "@familyChatFamilyThread": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatChildThread": "Conversation with one child",
+  "@familyChatChildThread": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatCreateChildLabel": "Child",
+  "@familyChatCreateChildLabel": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatNoChildrenAvailable": "No server-confirmed children are available for a child conversation.",
+  "@familyChatNoChildrenAvailable": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatChildFallback": "Child",
+  "@familyChatChildFallback": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatCreateTitleLabel": "Title (optional)",
+  "@familyChatCreateTitleLabel": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatCreateTitleHint": "Leave blank to use the server title",
+  "@familyChatCreateTitleHint": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatCreateButton": "Create chat",
+  "@familyChatCreateButton": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatCancel": "Cancel",
+  "@familyChatCancel": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatCreateFailed": "The chat could not be created. Your request was not confirmed.",
+  "@familyChatCreateFailed": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatLoadOlder": "Load older messages",
+  "@familyChatLoadOlder": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatRefresh": "Refresh messages",
+  "@familyChatRefresh": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatMessageDeleted": "Message deleted",
+  "@familyChatMessageDeleted": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatEdited": "Edited",
+  "@familyChatEdited": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatMediaUnavailable": "Attachments and voice messages are unavailable: this chat API supports text only.",
+  "@familyChatMediaUnavailable": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatMediaUnavailableSemantics": "Attachments and voice messages unavailable",
+  "@familyChatMediaUnavailableSemantics": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatEdit": "Edit",
+  "@familyChatEdit": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatDelete": "Delete",
+  "@familyChatDelete": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatEditHeading": "Edit message",
+  "@familyChatEditHeading": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatEditSave": "Save changes",
+  "@familyChatEditSave": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatDeleteHeading": "Delete this message?",
+  "@familyChatDeleteHeading": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatDeleteBody": "The message text will be removed, but its place in the conversation remains.",
+  "@familyChatDeleteBody": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatStorageNotice": "Messages are stored by the family server; this chat is not end-to-end encrypted.",
+  "@familyChatStorageNotice": {
+      "description": "W9 family chat storage transparency"
+  },
+  "familyChatServerStoredTag": "Server-stored text",
+  "@familyChatServerStoredTag": {
+      "description": "W9 family chat storage transparency"
+  },
+  "familyChatLoadMore": "Load more messages",
+  "@familyChatLoadMore": {
+      "description": "W9 chat pagination and message controls"
+  },
+  "familyChatMessageActionsSemantics": "Message actions",
+  "@familyChatMessageActionsSemantics": {
+      "description": "W9 chat pagination and message controls"
+  },
+  "familyChatListPollingNotice": "This conversation list and its previews come from the family server. The list checks again every 30 seconds; instant push updates are not available.",
+  "@familyChatListPollingNotice": {
+      "description": "W9 chat source and child availability honesty"
+  },
+  "familyChatNeverLocks": "Family chat stays available after play time ends.",
+  "@familyChatNeverLocks": {
+      "description": "W9 chat source and child availability honesty"
   }
 }
-

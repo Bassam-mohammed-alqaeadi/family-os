@@ -16143,6 +16143,161 @@
   "calendarServerNoAddressableChildren": "لا يمكن لهذه النسخة مخاطبة أبناء الخادم بعد — يُقرأ التقويم ولا يُكتب فيه.",
   "@calendarServerNoAddressableChildren": {
       "description": "SCR: calendar server panel"
+  },
+  "familyChatConnecting": "جارٍ الاتصال بدردشة الأسرة…",
+  "@familyChatConnecting": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatReconnecting": "انقطع الاتصال. نتحقق من دردشة الأسرة مجددًا…",
+  "@familyChatReconnecting": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatOffline": "لا يوجد اتصال الآن. تبقى الرسائل التي سبق تحميلها ظاهرة؛ أعد المحاولة عند عودة الاتصال.",
+  "@familyChatOffline": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatUnavailable": "الدردشة غير مُعدّة في هذا الإصدار؛ لا تُستخدم محادثة محلية بديلة.",
+  "@familyChatUnavailable": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatPermissionDenied": "لا يملك هذا الحساب أو الجهاز صلاحية فتح هذه المحادثة. الخادم هو من يحدد الوصول.",
+  "@familyChatPermissionDenied": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatRequestRejected": "رفض الخادم إجراء الدردشة. تحقّق من عضوية الأسرة ثم حاول مجددًا.",
+  "@familyChatRequestRejected": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatRetry": "إعادة المحاولة",
+  "@familyChatRetry": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatServerPollingNotice": "تُحدّث الرسائل من الخادم كل 15 ثانية أثناء فتح هذه الشاشة. لا تتوفر إشعارات فورية أو مزامنة لحظية.",
+  "@familyChatServerPollingNotice": {
+      "description": "W9 family chat client state and controls"
+  },
+  "childFamilyChatServerPollingNotice": "تُحدّث الرسائل من الخادم أثناء فتح هذه الشاشة. لا تتوفر تحديثات فورية.",
+  "@childFamilyChatServerPollingNotice": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatCreateHeading": "ابدأ دردشة أسرية",
+  "@familyChatCreateHeading": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatCreateTypeLabel": "نوع المحادثة",
+  "@familyChatCreateTypeLabel": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatFamilyThread": "دردشة أولياء الأسرة",
+  "@familyChatFamilyThread": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatChildThread": "محادثة مع طفل واحد",
+  "@familyChatChildThread": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatCreateChildLabel": "الطفل",
+  "@familyChatCreateChildLabel": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatNoChildrenAvailable": "لا يوجد طفل مؤكّد من الخادم لإنشاء محادثة معه.",
+  "@familyChatNoChildrenAvailable": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatChildFallback": "طفل",
+  "@familyChatChildFallback": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatCreateTitleLabel": "العنوان (اختياري)",
+  "@familyChatCreateTitleLabel": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatCreateTitleHint": "اتركه فارغًا لاستخدام عنوان الخادم",
+  "@familyChatCreateTitleHint": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatCreateButton": "إنشاء الدردشة",
+  "@familyChatCreateButton": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatCancel": "إلغاء",
+  "@familyChatCancel": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatCreateFailed": "تعذّر إنشاء الدردشة. لم يتأكد قبول الطلب.",
+  "@familyChatCreateFailed": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatLoadOlder": "تحميل رسائل أقدم",
+  "@familyChatLoadOlder": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatRefresh": "تحديث الرسائل",
+  "@familyChatRefresh": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatMessageDeleted": "حُذفت الرسالة",
+  "@familyChatMessageDeleted": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatEdited": "عُدّلت",
+  "@familyChatEdited": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatMediaUnavailable": "المرفقات والرسائل الصوتية غير متاحة: واجهة الدردشة الحالية تدعم النص فقط.",
+  "@familyChatMediaUnavailable": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatMediaUnavailableSemantics": "المرفقات والرسائل الصوتية غير متاحة",
+  "@familyChatMediaUnavailableSemantics": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatEdit": "تعديل",
+  "@familyChatEdit": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatDelete": "حذف",
+  "@familyChatDelete": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatEditHeading": "تعديل الرسالة",
+  "@familyChatEditHeading": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatEditSave": "حفظ التعديل",
+  "@familyChatEditSave": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatDeleteHeading": "حذف هذه الرسالة؟",
+  "@familyChatDeleteHeading": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatDeleteBody": "سيُزال نص الرسالة، لكن موضعها في المحادثة سيبقى ظاهرًا.",
+  "@familyChatDeleteBody": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatStorageNotice": "تُحفظ الرسائل لدى خادم الأسرة؛ هذه الدردشة غير مشفّرة من طرف إلى طرف.",
+  "@familyChatStorageNotice": {
+      "description": "W9 family chat storage transparency"
+  },
+  "familyChatServerStoredTag": "نص محفوظ في خادم الأسرة",
+  "@familyChatServerStoredTag": {
+      "description": "W9 family chat storage transparency"
+  },
+  "familyChatLoadMore": "تحميل المزيد من الرسائل",
+  "@familyChatLoadMore": {
+      "description": "W9 chat pagination and message controls"
+  },
+  "familyChatMessageActionsSemantics": "إجراءات الرسالة",
+  "@familyChatMessageActionsSemantics": {
+      "description": "W9 chat pagination and message controls"
+  },
+  "familyChatListPollingNotice": "تأتي قائمة المحادثات ومعايناتها من خادم الأسرة. تُحدّث القائمة كل 30 ثانية؛ لا تتوفر إشعارات فورية.",
+  "@familyChatListPollingNotice": {
+      "description": "W9 chat source and child availability honesty"
+  },
+  "familyChatNeverLocks": "تبقى دردشة الأسرة متاحة بعد انتهاء وقت اللعب.",
+  "@familyChatNeverLocks": {
+      "description": "W9 chat source and child availability honesty"
   }
 }
-

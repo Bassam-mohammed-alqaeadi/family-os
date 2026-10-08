@@ -226,17 +226,17 @@ export function expectedRevision(value) {
 /// A guardian opens a room. The participants are written in the same transaction as the room,
 /// so no reader can ever observe a thread that exists with nobody in it.
 ///
-/// Two shapes are allowed, and only two: `family` is the household room and holds guardians;
-/// `child` holds exactly one child of this family plus at least one guardian. A child is never
-/// a member of a room that does not name them, which is what makes "who can reach this child"
-/// a question storage can answer rather than a question a reviewer has to hope about.
+/// Two shapes are allowed, and only two: `family` is the household room and holds every active
+/// guardian; `child` holds exactly one child of this family plus every active guardian. The
+/// guardian roster is read here from the server, never selected by a client. A child is never a
+/// member of a room that does not name them, which makes "who can reach this child" a question
+/// storage can answer rather than a question a reviewer has to hope about.
 export function createThreadCreate({ port }) {
   return async function createChatThread({
     principal,
     familyId,
     kind,
     title = '',
-    participantMembershipIds = [],
     childIds = [],
     idempotencyKey,
     requestHash,
@@ -266,25 +266,27 @@ export function createThreadCreate({ port }) {
           );
         }
 
-        const membershipRows = [];
-        const seen = new Set();
-        for (const membershipId of participantMembershipIds) {
-          if (seen.has(membershipId)) continue;
-          seen.add(membershipId);
-          const membership = await port.readMembership(tx, { familyId, membershipId });
-          if (membership == null) {
-            throw new ChatError(
-              404,
-              'chat_membership_not_found',
-              'One of these guardians is not part of the family.',
-            );
-          }
-          // Only a guardian is ever a participant: a child participates as a child, through
-          // the child foreign key, so that every room naming a child can be listed for them.
-          requireGuardian(membership, 'chat_participant_not_guardian', 'Only a guardian joins a room here.');
-          membershipRows.push(membershipId);
+        const guardianRows = await port.listActiveGuardianMemberships(tx, { familyId });
+        const membershipRows = [
+          ...new Set(
+            guardianRows
+              .filter(
+                (membership) =>
+                  membership.status === 'active' && GUARDIAN_ROLES.has(membership.role),
+              )
+              .map((membership) => membership.id),
+          ),
+        ].sort();
+        if (!membershipRows.includes(actor.id)) {
+          // Authorization and the active roster are read in one transaction. If the creator
+          // disappeared from that roster between the checks, refuse rather than creating a
+          // room for a guardian whose membership is no longer active.
+          throw new ChatError(
+            409,
+            'chat_guardian_roster_changed',
+            'Active guardians changed while the conversation was being opened. Try again.',
+          );
         }
-        if (!membershipRows.includes(actor.id)) membershipRows.push(actor.id);
 
         for (const childId of childIds) {
           const child = await port.readChild(tx, { familyId, childId });
@@ -321,11 +323,10 @@ export function createThreadCreate({ port }) {
   };
 }
 
-/// A guardian adds a participant. Two laws meet here: a child conversation is the place its one
-/// child is named - so a second child is refused and a child cannot join the household room -
-/// while guardians may join a room they are being invited into, one at a time, which is how a
-/// co-guardian ends up in the room about the child they co-parent. Nothing here can add a person
-/// who is not in this family, and the guardian making the change must already be in the room.
+/// A guardian may add a participant after room creation. New rooms already include every active
+/// guardian from the server roster; this operation supports a guardian who became active later.
+/// A child conversation keeps its one-child law, no outsider can be added, and the guardian
+/// making a change must already be in the room.
 export function createThreadMemberAdd({ port }) {
   return async function addChatThreadMember({
     principal,
@@ -361,8 +362,8 @@ export function createThreadMemberAdd({ port }) {
 
         if (participantKind === 'membership') {
           const membership = await port.readMembership(tx, { familyId, membershipId: participantId });
-          if (membership == null) {
-            throw new ChatError(404, 'chat_membership_not_found', 'This guardian is not part of the family.');
+          if (membership == null || membership.status !== 'active') {
+            throw new ChatError(404, 'chat_membership_not_found', 'This active guardian is not part of the family.');
           }
           requireGuardian(membership, 'chat_participant_not_guardian', 'Only a guardian joins a room here.');
         } else {
@@ -875,6 +876,24 @@ export function postgresFamilyChatPort(store, { credentialMatches }) {
     },
 
     requireDevice,
+
+    /// Participant membership is not caller-selected: every room starts with the active
+    /// guardians the server recognizes for this family. Stable ordering makes the result
+    /// deterministic for audit/debug output, and the transaction lock keeps a guardian from
+    /// being revoked between this snapshot and the member rows being inserted.
+    async listActiveGuardianMemberships(client, { familyId }) {
+      const { rows } = await client.query(
+        `SELECT id, role, status
+           FROM family_memberships
+          WHERE family_id = $1
+            AND status = 'active'
+            AND role IN ('primary_guardian', 'co_guardian')
+          ORDER BY joined_at ASC, id ASC
+          FOR SHARE`,
+        [familyId],
+      );
+      return rows;
+    },
 
     async readChild(client, { familyId, childId }) {
       const { rows } = await client.query(

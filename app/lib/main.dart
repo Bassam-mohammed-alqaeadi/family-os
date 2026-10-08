@@ -40,7 +40,7 @@ import 'package:family_os/features/n02_day/alert_detail_local_projection.dart';
 import 'package:family_os/features/n02_day/alerts_hub_local_projection.dart';
 import 'package:family_os/features/n02_day/child_profile_repository.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
-import 'package:family_os/features/n02_day/family_chat_local_persistence.dart';
+import 'package:family_os/features/n02_day/family_chat_server_authority.dart';
 import 'package:family_os/features/n02_day/location_server_authority.dart';
 import 'package:family_os/features/n03_screen_time/screen_time_server_authority.dart';
 import 'package:family_os/features/n04_web_filter/web_filter_server_authority.dart';
@@ -65,6 +65,8 @@ import 'package:family_os/foundation_gate/family_location_api_client.dart';
 import 'package:family_os/foundation_gate/family_discovery_api_client.dart';
 import 'package:family_os/foundation_gate/family_membership_api_client.dart';
 import 'package:family_os/foundation_gate/family_calendar_api_client.dart';
+import 'package:family_os/foundation_gate/family_chat_api_client.dart';
+import 'package:family_os/foundation_gate/native_family_chat_device_transport.dart';
 import 'package:family_os/foundation_gate/family_screen_time_api_client.dart';
 import 'package:family_os/foundation_gate/family_tasks_api_client.dart';
 import 'package:family_os/foundation_gate/family_web_filter_api_client.dart';
@@ -114,7 +116,8 @@ Future<void> main() async {
   // CE-B1 — Calendar / Outer Circle / Media / Arrival / Focus Local KV.
   await FamilyOpsLocalPersistence.tryBindStage1();
   // VX-B6 / OD-09 — Family chat Local KV (seed family thread, no messages).
-  await FamilyChatLocalPersistence.tryBindStage1();
+  // W9 chat deliberately does not bind the local preview store in production. Routes are
+  // bound to the server authority below, or show not-configured truth without a local fallback.
   // DOM-SOS-SETTINGS / LADDER + AUTH-FS002-UNLOCK-B residual Local KV.
   await SosPrefsRuntime.tryBind();
   // DOM-AUDIT-LOCAL — FAT-060 AuditLog → Local KV (append-only).
@@ -252,6 +255,56 @@ Future<void> main() async {
       );
     }
   }
+  // A paired child device can use chat without a Firebase guardian session: its credential
+  // remains in native protected storage. A guardian still fails closed until a bearer session
+  // and selected family exist.
+  final chatApi =
+      familyEntryRuntime?.chatApi ?? _tryCreateFamilyChatApiClient();
+  if (chatApi != null) {
+    final chatRuntime = familyEntryRuntime;
+    bindFamilyChatServerAuthority(
+      FamilyChatServerAuthority(
+        api: chatApi,
+        idToken: chatRuntime == null
+            ? _noFamilyChatToken
+            : chatRuntime.currentIdToken,
+        familyId: () => chatRuntime?.selectedFamilyId,
+        childOptions: chatRuntime == null
+            ? null
+            : () async {
+                final familyId = chatRuntime.selectedFamilyId;
+                if (familyId == null || !isFoundationGateUuid(familyId)) {
+                  return const FamilyChatAuthorityAnswer<
+                    List<FamilyChatChildOption>
+                  >.unavailable(FamilyChatAuthorityStatus.notConfigured);
+                }
+                final roster = await chatRuntime.loadRoster(FamilyId(familyId));
+                if (!roster.isAuthoritative ||
+                    roster.familyId?.value != familyId) {
+                  return const FamilyChatAuthorityAnswer<
+                    List<FamilyChatChildOption>
+                  >.unavailable(FamilyChatAuthorityStatus.unreachable);
+                }
+                final children = roster.children
+                    .where(
+                      (child) => isFoundationGateUuid(child.childId.value),
+                    )
+                    .map(
+                      (child) => FamilyChatChildOption(
+                        id: child.childId.value,
+                        displayName: child.displayName,
+                      ),
+                    )
+                    .toList(growable: false);
+                return FamilyChatAuthorityAnswer<
+                  List<FamilyChatChildOption>
+                >.ready(children);
+              },
+      ),
+    );
+  } else {
+    bindFamilyChatServerAuthority(null);
+  }
   runApp(
     FamilyOsApp(
       localeController: localeController,
@@ -286,6 +339,27 @@ FamilyRosterChild _rosterChildOf(MainAppFoundationRuntime runtime, String childI
     if (child.childId.value == childId) return child;
   }
   return FamilyRosterChild(childId: ChildId(childId));
+}
+
+Future<String> _noFamilyChatToken() async => '';
+
+FamilyChatApiClient _familyChatApi(FoundationGateConfiguration configuration) =>
+    FamilyChatApiClient(
+      configuration: configuration,
+      transport: PackageFoundationGateHttpTransport(),
+      deviceTransport: NativeFamilyChatDeviceTransport(),
+    );
+
+FamilyChatApiClient? _tryCreateFamilyChatApiClient() {
+  const apiOrigin = String.fromEnvironment('FAMILY_OS_API_ORIGIN');
+  if (apiOrigin.trim().isEmpty) return null;
+  try {
+    return _familyChatApi(
+      FoundationGateConfiguration.fromStagingApiOrigin(Uri.parse(apiOrigin)),
+    );
+  } on Object {
+    return null;
+  }
 }
 
 /// Initializes the real Family Entry port only when the owner provides a
@@ -349,6 +423,7 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
         configuration: configuration,
         transport: PackageFoundationGateHttpTransport(),
       ),
+      chatApi: _familyChatApi(configuration),
       preferredFamilyId: preferredFamilyId,
     );
   } on Object {

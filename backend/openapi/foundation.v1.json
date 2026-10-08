@@ -4803,8 +4803,8 @@
       },
       "post": {
         "operationId": "createFamilyChatThread",
-        "summary": "Opens a conversation and names who is in it",
-        "description": "The participants are written in the same transaction as the room, so no reader can observe a room that exists with nobody in it. `kind` decides the law: a `family` room holds guardians, a `child` room names exactly one child of this family plus at least one guardian. A child is never a participant of a room that does not name them.",
+        "summary": "Opens a family or one-child conversation",
+        "description": "The room and its participants are written in the same transaction. The server adds every active guardian of the selected family; callers cannot choose guardian participants. `kind` decides the room shape: `family` has no child, while `child` names exactly one child from this family. A child is never a participant of a room that does not name them.",
         "tags": [
           "Family chat"
         ],
@@ -4873,7 +4873,7 @@
       "post": {
         "operationId": "addFamilyChatThreadMember",
         "summary": "Adds one participant to a conversation",
-        "description": "The guardian making the change must be in the room, and only a guardian or a child of this family can be added - there is no way to reach a person outside the family. Adding a child is how a child conversation is created and is allowed exactly once per room: a child is named by their own conversation and no other.",
+        "description": "New rooms already include every active guardian. This operation is for a guardian who becomes active later or for naming the one child in a child room. The guardian making the change must already be in the room, and only an active guardian or a child of this family can be added.",
         "tags": [
           "Family chat"
         ],
@@ -11120,7 +11120,7 @@
       "required": [
         "kind"
       ],
-      "description": "Opening a room. `family` holds guardians and refuses a child id; `child` names exactly one child of this family and at least one guardian - the creator is always a participant.",
+      "description": "Opening a room. The server includes every active guardian in this family automatically. `family` refuses a child id; `child` names exactly one child from this family. Guardian membership IDs are never supplied by the caller.",
       "properties": {
         "kind": {
           "type": "string",
@@ -11132,14 +11132,6 @@
         "title": {
           "type": "string",
           "maxLength": 120
-        },
-        "participantMembershipIds": {
-          "type": "array",
-          "maxItems": 24,
-          "items": {
-            "type": "string",
-            "format": "uuid"
-          }
         },
         "childIds": {
           "type": "array",
@@ -11158,7 +11150,7 @@
         "participantKind",
         "participantId"
       ],
-      "description": "One participant to add: a guardian of this family by membership, or a child of this family.",
+      "description": "One participant to add after room creation: an active guardian of this family, or the one child in a child room.",
       "properties": {
         "participantKind": {
           "type": "string",

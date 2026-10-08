@@ -348,13 +348,14 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
     try {
       final permissions =
           await NativeChildTelemetryBridge.requestLocationPermissions();
-      if (!permissions.available ||
-          !permissions.fineLocationGranted ||
-          !permissions.backgroundLocationGranted) {
+      if (!permissions.available) {
         if (!mounted) return;
         setState(() => _message = copy.locationPermissionNotGranted);
         return;
       }
+      // Pairing grants the chat capability independently from location collection. If
+      // location is declined, the device credential is still stored natively and telemetry
+      // remains stopped; chat never borrows location permission as an access requirement.
       final claimed = await client.claimPairing(pairingCode: pairingCode);
       const origin = String.fromEnvironment('FAMILY_OS_API_ORIGIN');
       final result = await NativeChildTelemetryBridge.configureAndStart(
@@ -366,6 +367,8 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
       setState(
         () => _message = result.started
             ? copy.childModeActive
+            : result.reason == 'location_permission_required'
+            ? copy.childChatReadyWithoutLocation
             : copy.childModeStartFailed(result.reason),
       );
       await _refreshServiceStatus();

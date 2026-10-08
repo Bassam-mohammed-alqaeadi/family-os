@@ -393,6 +393,134 @@ class FoundationGateConfiguration {
   Uri familyChildPointsUri(String familyId, String childId) =>
       _familyChildCrumbUri(familyId, childId, 'points');
 
+  // W9 — chat resources are only addressable by UUIDs the server issued.
+  Uri familyChatThreadsUri(String familyId) {
+    _requireChatUuids(familyId);
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/chat/threads',
+    );
+  }
+
+  Uri familyChatThreadMembersUri(String familyId, String threadId) {
+    _requireChatUuids(familyId, threadId);
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/chat/threads/$threadId/members',
+    );
+  }
+
+  Uri familyChatMessagesUri(
+    String familyId,
+    String threadId, {
+    int? afterSeq,
+    int? limit,
+  }) {
+    _requireChatUuids(familyId, threadId);
+    if (afterSeq == null && limit == null) {
+      return stagingApiOrigin.replace(
+        path: '/v1/families/$familyId/chat/threads/$threadId/messages',
+      );
+    }
+    final sequence = afterSeq ?? 0;
+    final pageSize = limit ?? 50;
+    _requireChatPage(sequence, pageSize);
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/chat/threads/$threadId/messages',
+      queryParameters: <String, String>{
+        'afterSeq': '$sequence',
+        'limit': '$pageSize',
+      },
+    );
+  }
+
+  Uri familyChatMessageUri(String familyId, String threadId, String messageId) {
+    _requireChatUuids(familyId, threadId, messageId);
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/chat/threads/$threadId/messages/$messageId',
+    );
+  }
+
+  Uri familyChatMessageDeletionUri(
+    String familyId,
+    String threadId,
+    String messageId,
+  ) {
+    final base = familyChatMessageUri(familyId, threadId, messageId);
+    return base.replace(path: '${base.path}/deletion');
+  }
+
+  Uri familyChatReadsUri(String familyId, String threadId) {
+    _requireChatUuids(familyId, threadId);
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/chat/threads/$threadId/reads',
+    );
+  }
+
+  Uri deviceChatThreadsUri(String deviceId) {
+    _requireChatUuids(deviceId);
+    return stagingApiOrigin.replace(path: '/v1/devices/$deviceId/chat/threads');
+  }
+
+  Uri deviceChatMessagesUri(
+    String deviceId,
+    String threadId, {
+    int? afterSeq,
+    int? limit,
+  }) {
+    _requireChatUuids(deviceId, threadId);
+    if (afterSeq == null && limit == null) {
+      return stagingApiOrigin.replace(
+        path: '/v1/devices/$deviceId/chat/threads/$threadId/messages',
+      );
+    }
+    final sequence = afterSeq ?? 0;
+    final pageSize = limit ?? 50;
+    _requireChatPage(sequence, pageSize);
+    return stagingApiOrigin.replace(
+      path: '/v1/devices/$deviceId/chat/threads/$threadId/messages',
+      queryParameters: <String, String>{
+        'afterSeq': '$sequence',
+        'limit': '$pageSize',
+      },
+    );
+  }
+
+  Uri deviceChatMessageUri(String deviceId, String threadId, String messageId) {
+    _requireChatUuids(deviceId, threadId, messageId);
+    return stagingApiOrigin.replace(
+      path: '/v1/devices/$deviceId/chat/threads/$threadId/messages/$messageId',
+    );
+  }
+
+  Uri deviceChatMessageDeletionUri(
+    String deviceId,
+    String threadId,
+    String messageId,
+  ) {
+    final base = deviceChatMessageUri(deviceId, threadId, messageId);
+    return base.replace(path: '${base.path}/deletion');
+  }
+
+  Uri deviceChatReadsUri(String deviceId, String threadId) {
+    _requireChatUuids(deviceId, threadId);
+    return stagingApiOrigin.replace(
+      path: '/v1/devices/$deviceId/chat/threads/$threadId/reads',
+    );
+  }
+
+  void _requireChatUuids(String first, [String? second, String? third]) {
+    if (!isFoundationGateUuid(first) ||
+        (second != null && !isFoundationGateUuid(second)) ||
+        (third != null && !isFoundationGateUuid(third))) {
+      throw ArgumentError('Server-issued chat UUIDs are required.');
+    }
+  }
+
+  void _requireChatPage(int afterSeq, int limit) {
+    if (afterSeq < 0 || limit < 1 || limit > 200) {
+      throw ArgumentError('Chat paging must use afterSeq >= 0 and limit 1..200.');
+    }
+  }
+
   // ── W8 — family calendar ───────────────────────────────────────────────────────────
 
   /// The family's events. A POST here states one; the read of them carries a window.

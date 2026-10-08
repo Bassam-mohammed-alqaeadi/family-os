@@ -12,6 +12,7 @@ import 'package:family_os/core/runtime/runtime_data_origin.dart';
 
 import 'device_lifecycle.dart';
 import 'family_calendar_api_client.dart';
+import 'family_chat_api_client.dart';
 import 'family_device_api_client.dart';
 import 'family_location_api_client.dart';
 import 'family_membership_api_client.dart';
@@ -41,6 +42,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     FamilyWebFilterApiClient? webFilterApi,
     FamilyTasksApiClient? tasksApi,
     FamilyCalendarApiClient? calendarApi,
+    FamilyChatApiClient? chatApi,
     String? preferredFamilyId,
   }) : _controller = controller,
        _identity = identity,
@@ -52,6 +54,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
        _webFilterApi = webFilterApi,
        _tasksApi = tasksApi,
        _calendarApi = calendarApi,
+       _chatApi = chatApi,
        _preferredFamilyId = preferredFamilyId?.trim(),
        _identityValue = const IdentitySnapshot.unavailable(),
        _rosterValue = const FamilyRosterSnapshot.unavailable(),
@@ -69,6 +72,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   final FamilyWebFilterApiClient? _webFilterApi;
   final FamilyTasksApiClient? _tasksApi;
   final FamilyCalendarApiClient? _calendarApi;
+  final FamilyChatApiClient? _chatApi;
   final String? _preferredFamilyId;
   IdentitySnapshot _identityValue;
   FamilyRosterSnapshot _rosterValue;
@@ -110,6 +114,10 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   /// each of them said, and what actually happened. Null when this build has no server
   /// session - and a calendar screen with no session says so rather than planning locally.
   FamilyCalendarApiClient? get calendarApi => _calendarApi;
+
+  /// The licensed family-chat contract. Device-scoped calls keep their credential in native
+  /// protected storage; this runtime exposes only the typed client, never the secret.
+  FamilyChatApiClient? get chatApi => _chatApi;
 
   /// The family this device is looking at, or null before one is selected.
   String? get selectedFamilyId => _controller.selectedFamily?.id;

@@ -31,6 +31,9 @@ final class ConversationThread {
     required this.swatch,
     this.pinned = false,
     this.unreadCount = 0,
+    this.threadKind,
+    this.lastMessageAt,
+    this.lastMessageDeleted = false,
   });
 
   final String id;
@@ -49,6 +52,13 @@ final class ConversationThread {
 
   final int unreadCount;
 
+  /// Server discriminator used only to localize an untitled room.
+  final String? threadKind;
+
+  /// The actual timestamp of the latest server message, when the room has one.
+  final DateTime? lastMessageAt;
+  final bool lastMessageDeleted;
+
   bool get hasUnread => unreadCount > 0;
 
   ConversationThread copyWith({
@@ -61,6 +71,9 @@ final class ConversationThread {
     ConversationSwatch? swatch,
     bool? pinned,
     int? unreadCount,
+    String? threadKind,
+    DateTime? lastMessageAt,
+    bool? lastMessageDeleted,
   }) {
     return ConversationThread(
       id: id ?? this.id,
@@ -72,6 +85,9 @@ final class ConversationThread {
       swatch: swatch ?? this.swatch,
       pinned: pinned ?? this.pinned,
       unreadCount: unreadCount ?? this.unreadCount,
+      threadKind: threadKind ?? this.threadKind,
+      lastMessageAt: lastMessageAt ?? this.lastMessageAt,
+      lastMessageDeleted: lastMessageDeleted ?? this.lastMessageDeleted,
     );
   }
 }

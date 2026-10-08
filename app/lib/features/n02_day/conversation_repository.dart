@@ -1,9 +1,10 @@
 import 'package:flutter/foundation.dart';
 
-/// Local outbound status for chat bubbles (CE-B0 / Q-CEX-001).
+/// Display status for chat bubbles.
 ///
-/// Multi-device relay is REMOTE CLOSED — do not treat [delivered]/[read] as
-/// proven remote delivery. UI maps those legacy values to local-sent ticks.
+/// W9 confirms that a message was accepted by the family server. The contract has no delivery
+/// receipt or push channel, so [delivered] and [read] remain legacy UI aliases and must never be
+/// presented as proof that a recipient device received or read the message.
 enum ConversationDeliveryStatus {
   sending,
   sent,
@@ -25,6 +26,14 @@ final class ConversationMessage {
     required this.isMine,
     this.senderLabel,
     this.status = ConversationDeliveryStatus.sent,
+    this.createdAt,
+    this.seq,
+    this.revision,
+    this.readCount = 0,
+    this.authorKind,
+    this.authorId,
+    this.deleted = false,
+    this.editedAt,
   });
 
   final String id;
@@ -39,6 +48,16 @@ final class ConversationMessage {
 
   final ConversationDeliveryStatus status;
 
+  /// Present only for a server-authoritative message; local preview messages have no sequence.
+  final DateTime? createdAt;
+  final int? seq;
+  final int? revision;
+  final int readCount;
+  final String? authorKind;
+  final String? authorId;
+  final bool deleted;
+  final DateTime? editedAt;
+
   ConversationMessage copyWith({
     String? id,
     String? body,
@@ -46,6 +65,14 @@ final class ConversationMessage {
     bool? isMine,
     String? senderLabel,
     ConversationDeliveryStatus? status,
+    DateTime? createdAt,
+    int? seq,
+    int? revision,
+    int? readCount,
+    String? authorKind,
+    String? authorId,
+    bool? deleted,
+    DateTime? editedAt,
   }) {
     return ConversationMessage(
       id: id ?? this.id,
@@ -54,6 +81,14 @@ final class ConversationMessage {
       isMine: isMine ?? this.isMine,
       senderLabel: senderLabel ?? this.senderLabel,
       status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      seq: seq ?? this.seq,
+      revision: revision ?? this.revision,
+      readCount: readCount ?? this.readCount,
+      authorKind: authorKind ?? this.authorKind,
+      authorId: authorId ?? this.authorId,
+      deleted: deleted ?? this.deleted,
+      editedAt: editedAt ?? this.editedAt,
     );
   }
 }
@@ -69,6 +104,9 @@ final class ConversationDetail {
     this.messages = const [],
     this.familyPinnedNote = false,
     this.toneChips = const [],
+    this.serverAuthoritative = false,
+    this.hasMoreMessages = false,
+    this.lastReadSeq = 0,
   });
 
   /// Peer / thread id — same wire values as FAT-021 (`family` / `mother` / `child_*`).
@@ -85,6 +123,11 @@ final class ConversationDetail {
   /// Optional calm quick-replies (tone bridge) — content from repo.
   final List<String> toneChips;
 
+  /// True only when every visible message came from the family chat API.
+  final bool serverAuthoritative;
+  final bool hasMoreMessages;
+  final int lastReadSeq;
+
   bool get isEmpty => messages.isEmpty;
 
   ConversationDetail copyWith({
@@ -95,6 +138,9 @@ final class ConversationDetail {
     List<ConversationMessage>? messages,
     bool? familyPinnedNote,
     List<String>? toneChips,
+    bool? serverAuthoritative,
+    bool? hasMoreMessages,
+    int? lastReadSeq,
   }) {
     return ConversationDetail(
       chatWith: chatWith ?? this.chatWith,
@@ -104,6 +150,9 @@ final class ConversationDetail {
       messages: messages ?? this.messages,
       familyPinnedNote: familyPinnedNote ?? this.familyPinnedNote,
       toneChips: toneChips ?? this.toneChips,
+      serverAuthoritative: serverAuthoritative ?? this.serverAuthoritative,
+      hasMoreMessages: hasMoreMessages ?? this.hasMoreMessages,
+      lastReadSeq: lastReadSeq ?? this.lastReadSeq,
     );
   }
 }

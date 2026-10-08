@@ -1,7 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { validatedOidcSubject } from '../src/auth/oidc-verifier.js';
-import { createChildInput, createGuardianTransferInput, requireNoQueryParameters, requireUuid } from '../src/validation.js';
+import {
+  chatThreadCreateInput,
+  createChildInput,
+  createGuardianTransferInput,
+  requireNoQueryParameters,
+  requireUuid,
+} from '../src/validation.js';
 
 const VALID_UUID = '00000000-0000-4000-8000-000000000000';
 
@@ -27,6 +33,27 @@ test('OIDC subjects are bounded before becoming durable account identifiers', ()
   assert.throws(() => validatedOidcSubject(''), { code: 'invalid_token' });
   assert.throws(() => validatedOidcSubject('subject\u0000injection'), { code: 'invalid_token' });
   assert.throws(() => validatedOidcSubject('x'.repeat(256)), { code: 'invalid_token' });
+});
+
+test('chat room creation accepts one child identifier but never a client-selected guardian roster', () => {
+  const childId = '11111111-1111-4111-8111-111111111111';
+  assert.deepEqual(chatThreadCreateInput({ kind: 'family' }), {
+    kind: 'family',
+    title: '',
+    childIds: [],
+  });
+  assert.deepEqual(chatThreadCreateInput({ kind: 'child', childIds: [childId] }), {
+    kind: 'child',
+    title: '',
+    childIds: [childId],
+  });
+  assert.throws(
+    () => chatThreadCreateInput({
+      kind: 'family',
+      participantMembershipIds: [childId],
+    }),
+    { code: 'invalid_request' },
+  );
 });
 
 test('children roster request rejects fields outside its published contract', () => {

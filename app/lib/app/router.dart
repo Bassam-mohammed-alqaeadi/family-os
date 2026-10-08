@@ -43,6 +43,7 @@ import 'package:family_os/features/n02_day/create_safe_zone_screen.dart';
 import 'package:family_os/features/n02_day/alerts_hub_screen.dart';
 import 'package:family_os/features/n02_day/alert_detail_screen.dart';
 import 'package:family_os/features/n02_day/conversations_list_screen.dart';
+import 'package:family_os/features/n02_day/family_chat_server_repository.dart';
 import 'package:family_os/features/n02_day/child_chats_screen.dart';
 import 'package:family_os/features/n02_day/child_conversation_screen.dart';
 import 'package:family_os/features/n02_day/child_active_call_screen.dart';
@@ -465,12 +466,17 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-fat-021',
       name: 'SCR-FAT-021',
-      builder: (context, state) => ConversationsListScreen(),
+      builder: (context, state) => ConversationsListScreen(
+        repository: familyChatGuardianListRepository(),
+      ),
     ),
     GoRoute(
       path: '/scr-fat-022',
       name: 'SCR-FAT-022',
-      builder: (context, state) => ConversationScreen(chatWith: state.uri.queryParameters['chatWith']),
+      builder: (context, state) => ConversationScreen(
+        chatWith: state.uri.queryParameters['chatWith'],
+        repository: familyChatGuardianConversationRepository(),
+      ),
     ),
     GoRoute(
       path: '/scr-fat-023',
@@ -535,12 +541,17 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-chd-007',
       name: 'SCR-CHD-007',
-      builder: (context, state) => ChildChatsScreen(),
+      builder: (context, state) => ChildChatsScreen(
+        repository: familyChatChildListRepository(),
+      ),
     ),
     GoRoute(
       path: '/scr-chd-008',
       name: 'SCR-CHD-008',
-      builder: (context, state) => ChildConversationScreen(chatWith: state.uri.queryParameters['chatWith']),
+      builder: (context, state) => ChildConversationScreen(
+        chatWith: state.uri.queryParameters['chatWith'],
+        repository: familyChatChildConversationRepository(),
+      ),
     ),
     GoRoute(
       path: '/scr-chd-009',

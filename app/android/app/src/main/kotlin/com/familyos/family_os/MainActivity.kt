@@ -11,16 +11,29 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 /**
  * Flutter host plus the native Child Mode telemetry bridge.
  *
  * Pairing credentials are never returned to Flutter after setup: configure
- * writes them to Android Keystore-backed storage and starts the foreground
- * service only after real Android permissions are granted.
+ * writes them to Android Keystore-backed storage. Location collection starts
+ * only after real Android permissions are granted; chat uses a scoped native
+ * request proxy without exposing the credential.
  */
 class MainActivity : FlutterActivity() {
     private var pendingPermissionResult: MethodChannel.Result? = null
+    private val chatExecutor = Executors.newSingleThreadExecutor()
+    private val chatHttpClient = OkHttpClient.Builder()
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(15, TimeUnit.SECONDS)
+        .writeTimeout(15, TimeUnit.SECONDS)
+        .build()
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -29,6 +42,7 @@ class MainActivity : FlutterActivity() {
                 when (call.method) {
                     "requestLocationPermissions" -> requestLocationPermissions(result)
                     "configureAndStart" -> configureAndStart(call, result)
+                    "chatRequest" -> proxyFamilyChatRequest(call, result)
                     "stop" -> stopTelemetry(result)
                     "status" -> telemetryStatus(result)
                     else -> result.notImplemented()
@@ -94,16 +108,18 @@ class MainActivity : FlutterActivity() {
         val apiOrigin = call.argument<String>("apiOrigin")?.trim()
         val deviceId = call.argument<String>("deviceId")?.trim()
         val credential = call.argument<String>("deviceCredential")?.trim()
-        if (!hasFineLocation() || !hasBackgroundLocation()) {
-            result.success(mapOf<String, Any>("started" to false, "reason" to "location_permission_required"))
-            return
-        }
         if (!validOrigin(apiOrigin) || !validUuid(deviceId) || credential == null || !Regex("^[A-Za-z0-9_-]{32,128}$").matches(credential)) {
             result.success(mapOf<String, Any>("started" to false, "reason" to "invalid_native_telemetry_configuration"))
             return
         }
         try {
+            // Pairing is a chat capability too: retain the credential securely even if the
+            // guardian or child declines location permission. Location collection remains off.
             TelemetryConfigStore(this).write(TelemetryConfig(apiOrigin!!.trimEnd('/'), deviceId!!, credential))
+            if (!hasFineLocation() || !hasBackgroundLocation()) {
+                result.success(mapOf<String, Any>("started" to false, "reason" to "location_permission_required"))
+                return
+            }
             val serviceIntent = Intent(this, ChildTelemetryService::class.java)
             ContextCompat.startForegroundService(this, serviceIntent)
             result.success(mapOf<String, Any>("started" to true, "reason" to "started"))
@@ -118,14 +134,143 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun telemetryStatus(result: MethodChannel.Result) {
+        val config = TelemetryConfigStore(this).read()
         result.success(mapOf(
             "available" to true,
             "running" to ChildTelemetryService.isRunning,
-            "configured" to (TelemetryConfigStore(this).read() != null),
+            "configured" to (config != null),
+            "deviceId" to (config?.deviceId ?: ""),
             "fineLocationGranted" to hasFineLocation(),
             "backgroundLocationGranted" to hasBackgroundLocation(),
         ))
     }
+
+    /**
+     * Runs one of the six allow-listed child chat operations without returning the device
+     * credential to Dart. IDs, verbs and request paths are reconstructed here from operation
+     * names; a Flutter caller cannot turn this bridge into an arbitrary authenticated proxy.
+     */
+    private fun proxyFamilyChatRequest(call: MethodCall, result: MethodChannel.Result) {
+        val config = TelemetryConfigStore(this).read()
+        if (config == null) {
+            result.error("device_chat_not_configured", "No paired device session is available.", null)
+            return
+        }
+        val requestedDeviceId = call.argument<String>("deviceId")?.trim()
+        if (requestedDeviceId != config.deviceId) {
+            result.error("device_chat_scope_mismatch", "The device scope does not match this paired handset.", null)
+            return
+        }
+        val operation = call.argument<String>("operation") ?: ""
+        val threadId = call.argument<String>("threadId")?.trim()
+        val messageId = call.argument<String>("messageId")?.trim()
+        val body = call.argument<String>("body")
+        val idempotencyKey = call.argument<String>("idempotencyKey")?.trim()
+        val query = call.argument<Map<*, *>>("queryParameters") ?: emptyMap<Any, Any>()
+        val spec = familyChatRequestSpec(
+            operation = operation,
+            deviceId = config.deviceId,
+            threadId = threadId,
+            messageId = messageId,
+            query = query,
+            body = body,
+            idempotencyKey = idempotencyKey,
+        )
+        if (spec == null) {
+            result.error("invalid_device_chat_request", "The chat operation is not valid for this route.", null)
+            return
+        }
+        chatExecutor.execute {
+            try {
+                val requestBuilder = Request.Builder()
+                    .url("${config.apiOrigin}${spec.path}")
+                    .header("Authorization", "Device ${config.deviceCredential}")
+                    .header("Accept", "application/json")
+                if (spec.idempotencyKey != null) {
+                    requestBuilder.header("Idempotency-Key", spec.idempotencyKey)
+                }
+                val requestBody = spec.body?.toRequestBody(JSON_MEDIA_TYPE)
+                val request = requestBuilder.method(spec.method, requestBody).build()
+                val answer = chatHttpClient.newCall(request).execute().use { response ->
+                    mapOf(
+                        "statusCode" to response.code,
+                        "body" to (response.body?.string() ?: ""),
+                    )
+                }
+                runOnUiThread { result.success(answer) }
+            } catch (_: Exception) {
+                // Credentials, message bodies and server response text are never logged.
+                runOnUiThread {
+                    result.error("device_chat_unreachable", "The family chat service did not answer.", null)
+                }
+            }
+        }
+    }
+
+    private fun familyChatRequestSpec(
+        operation: String,
+        deviceId: String,
+        threadId: String?,
+        messageId: String?,
+        query: Map<*, *>,
+        body: String?,
+        idempotencyKey: String?,
+    ): ChatRequestSpec? {
+        if (query.keys.any { it !in setOf("afterSeq", "limit") }) return null
+        val base = "/v1/devices/$deviceId/chat"
+        return when (operation) {
+            "listThreads" -> if (threadId == null && messageId == null && body == null && query.isEmpty()) {
+                ChatRequestSpec("GET", "$base/threads", null, null)
+            } else null
+            "listMessages" -> {
+                if (!validUuid(threadId) || messageId != null || body != null) return null
+                val afterRaw = query["afterSeq"] as? String
+                val limitRaw = query["limit"] as? String
+                val afterSeq = if (afterRaw == null) 0L else afterRaw.toLongOrNull() ?: return null
+                val limit = if (limitRaw == null) 50 else limitRaw.toIntOrNull() ?: return null
+                if (afterSeq < 0 || afterSeq > 9007199254740991L || limit !in 1..200) return null
+                val uri = Uri.parse("$base/threads/$threadId/messages").buildUpon()
+                    .appendQueryParameter("afterSeq", afterSeq.toString())
+                    .appendQueryParameter("limit", limit.toString())
+                    .build()
+                ChatRequestSpec("GET", uri.toString(), null, null)
+            }
+            "sendMessage" -> if (validUuid(threadId) && messageId == null && validJsonObject(body) && validIdempotencyKey(idempotencyKey) && query.isEmpty()) {
+                ChatRequestSpec("POST", "$base/threads/$threadId/messages", body, idempotencyKey)
+            } else null
+            "editMessage" -> if (validUuid(threadId) && validUuid(messageId) && validJsonObject(body) && idempotencyKey == null && query.isEmpty()) {
+                ChatRequestSpec("PATCH", "$base/threads/$threadId/messages/$messageId", body, null)
+            } else null
+            "deleteMessage" -> if (validUuid(threadId) && validUuid(messageId) && body == "{}" && validIdempotencyKey(idempotencyKey) && query.isEmpty()) {
+                ChatRequestSpec("POST", "$base/threads/$threadId/messages/$messageId/deletion", body, idempotencyKey)
+            } else null
+            "markRead" -> if (validUuid(threadId) && messageId == null && validJsonObject(body) && validIdempotencyKey(idempotencyKey) && query.isEmpty()) {
+                ChatRequestSpec("POST", "$base/threads/$threadId/reads", body, idempotencyKey)
+            } else null
+            else -> null
+        }
+    }
+
+    private fun validJsonObject(value: String?): Boolean = try {
+        value != null && value.length <= 4096 && org.json.JSONObject(value).length() >= 0
+    } catch (_: Exception) {
+        false
+    }
+
+    private fun validIdempotencyKey(value: String?): Boolean =
+        !value.isNullOrBlank() && value.length <= 128
+
+    override fun onDestroy() {
+        chatExecutor.shutdownNow()
+        super.onDestroy()
+    }
+
+    private data class ChatRequestSpec(
+        val method: String,
+        val path: String,
+        val body: String?,
+        val idempotencyKey: String?,
+    )
 
     private fun hasFineLocation(): Boolean =
         ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
@@ -166,6 +311,7 @@ class MainActivity : FlutterActivity() {
     }
 
     companion object {
+        private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
         private const val TELEMETRY_CHANNEL = "com.familyos.family_os/native_child_telemetry"
         private const val REQUEST_FOREGROUND_LOCATION = 8101
         private const val REQUEST_BACKGROUND_LOCATION = 8102

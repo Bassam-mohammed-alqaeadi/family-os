@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart' as intl;
 
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
@@ -14,6 +17,8 @@ import 'package:family_os/core/identity/active_child_resolver.dart';
 import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n02_day/conversation_repository.dart';
+import 'package:family_os/features/n02_day/family_chat_connection_banner.dart';
+import 'package:family_os/features/n02_day/live_conversation_repository.dart';
 import 'package:family_os/features/n02_day/family_chat_labels.dart';
 
 /// Widget keys for SCR-FAT-022 acceptance.
@@ -26,6 +31,7 @@ abstract final class ConversationKeys {
   static const error = Key('conversation_error');
   static const body = Key('conversation_body');
   static const encryptedTag = Key('conversation_encrypted');
+  static const serverStoredTag = Key('conversation_server_stored');
   static const settingsTag = Key('conversation_settings');
   static const familyPinNote = Key('conversation_family_pin');
   static const honestyBanner = Key('conversation_honesty');
@@ -37,6 +43,9 @@ abstract final class ConversationKeys {
   static const sosCta = Key('conversation_sos');
   static const childLean = Key('conversation_child_lean');
   static const title = Key('conversation_title');
+  static const connection = Key('conversation_connection');
+  static const loadOlder = Key('conversation_load_older');
+  static const mediaUnavailable = Key('conversation_media_unavailable');
 
   static Key bubble(String id) => Key('conversation_bubble_$id');
   static Key toneChip(int i) => Key('conversation_tone_$i');
@@ -44,9 +53,8 @@ abstract final class ConversationKeys {
 
 /// SCR-FAT-022 — المحادثة (parent conversation thread).
 ///
-/// Opened from FAT-021 with `?chatWith=`. UI-007 / ChatAvailability — never
-/// gated by billing. Send mock seam via [ConversationRepository.send].
-/// P-4 SOS ungated. Mother OK; child lean. Mock-first — Rule 23 empty default.
+/// Opened from FAT-021 with `?chatWith=`. Server membership owns access; visible messages
+/// refresh by polling because the W9 contract has no push channel. P-4 SOS remains ungated.
 class ConversationScreen extends StatefulWidget {
   const ConversationScreen({
     super.key,
@@ -89,12 +97,18 @@ class ConversationScreen extends StatefulWidget {
 }
 
 class ConversationScreenState extends State<ConversationScreen> {
-  late final ConversationRepository _repo;
+  late ConversationRepository _repo;
   final _inputCtrl = TextEditingController();
+  Timer? _pollTimer;
   var _loading = true;
   var _loadFailed = false;
   var _sosBusy = false;
   var _sending = false;
+  var _refreshing = false;
+  var _loadingOlder = false;
+  var _connectionIssue = false;
+  FamilyChatConnectionState _connectionState =
+      FamilyChatConnectionState.checking;
   ConversationDetail? _detail;
 
   AppRole get _role =>
@@ -127,6 +141,7 @@ class ConversationScreenState extends State<ConversationScreen> {
 
   @override
   void dispose() {
+    _pollTimer?.cancel();
     _inputCtrl.dispose();
     super.dispose();
   }
@@ -136,8 +151,19 @@ class ConversationScreenState extends State<ConversationScreen> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.chatWith != widget.chatWith ||
         oldWidget.repository != widget.repository) {
-      _load();
+      _repo = widget.repository ?? stage1ConversationRepository;
+      _pollTimer?.cancel();
+      _detail = null;
+      unawaited(_load());
     }
+  }
+
+  void _schedulePolling() {
+    if (_repo is! LiveConversationRepository) return;
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      unawaited(_refresh());
+    });
   }
 
   Future<void> _load() async {
@@ -146,12 +172,16 @@ class ConversationScreenState extends State<ConversationScreen> {
         _detail = null;
         _loading = false;
         _loadFailed = false;
+        _connectionIssue = false;
       });
       return;
     }
     setState(() {
-      _loading = true;
+      _loading = _detail == null;
       _loadFailed = false;
+      if (_connectionState != FamilyChatConnectionState.connected) {
+        _connectionState = FamilyChatConnectionState.checking;
+      }
     });
     try {
       final detail = await _repo.load(_resolvedPeer!);
@@ -160,13 +190,89 @@ class ConversationScreenState extends State<ConversationScreen> {
         _detail = detail;
         _loading = false;
         _loadFailed = false;
+        _connectionIssue = false;
+        _connectionState = FamilyChatConnectionState.connected;
       });
-    } on Object {
+      if (detail != null) _schedulePolling();
+    } on Object catch (error) {
+      if (!mounted) return;
+      final discard = familyChatFailureRequiresDiscard(error);
+      setState(() {
+        _loading = false;
+        if (discard) _detail = null;
+        _loadFailed = discard || _detail == null;
+        _connectionIssue = true;
+        _connectionState = familyChatConnectionStateFor(error);
+      });
+    }
+  }
+
+  Future<void> _refresh() async {
+    final peer = _resolvedPeer;
+    final repository = _repo;
+    if (peer == null ||
+        repository is! LiveConversationRepository ||
+        _refreshing ||
+        _loadingOlder ||
+        _sending) {
+      return;
+    }
+    setState(() => _refreshing = true);
+    try {
+      final updated = await repository.refresh(peer);
       if (!mounted) return;
       setState(() {
-        _detail = null;
-        _loading = false;
-        _loadFailed = true;
+        _detail = updated ?? _detail;
+        _refreshing = false;
+        _connectionIssue = false;
+        _connectionState = FamilyChatConnectionState.connected;
+        _loadFailed = false;
+      });
+    } on Object catch (error) {
+      if (!mounted) return;
+      final discard = familyChatFailureRequiresDiscard(error);
+      setState(() {
+        _refreshing = false;
+        if (discard) {
+          _detail = null;
+          _loadFailed = true;
+        }
+        _connectionIssue = true;
+        _connectionState = familyChatConnectionStateFor(error);
+      });
+    }
+  }
+
+  Future<void> _loadOlder() async {
+    final peer = _resolvedPeer;
+    final repository = _repo;
+    if (peer == null ||
+        repository is! LiveConversationRepository ||
+        _loadingOlder ||
+        !repository.hasMore(peer)) {
+      return;
+    }
+    setState(() => _loadingOlder = true);
+    try {
+      final updated = await repository.loadNextPage(peer);
+      if (!mounted) return;
+      setState(() {
+        _detail = updated ?? _detail;
+        _loadingOlder = false;
+        _connectionIssue = false;
+        _connectionState = FamilyChatConnectionState.connected;
+      });
+    } on Object catch (error) {
+      if (!mounted) return;
+      final discard = familyChatFailureRequiresDiscard(error);
+      setState(() {
+        _loadingOlder = false;
+        if (discard) {
+          _detail = null;
+          _loadFailed = true;
+        }
+        _connectionIssue = true;
+        _connectionState = familyChatConnectionStateFor(error);
       });
     }
   }
@@ -203,18 +309,187 @@ class ConversationScreenState extends State<ConversationScreen> {
     setState(() => _sending = true);
     try {
       final l10n = AppLocalizations.of(context);
-      await _repo.send(peer, text, timeLabel: l10n.conversationSentNow);
-      final refreshed = await _repo.load(peer);
+      final sent = await _repo.send(
+        peer,
+        text,
+        timeLabel: l10n.conversationSentNow,
+      );
       if (!mounted) return;
       setState(() {
-        _detail = refreshed;
+        final detail = _detail;
+        if (detail != null) _detail = _upsertDetail(detail, sent);
         _sending = false;
+        _connectionIssue = false;
+        _connectionState = FamilyChatConnectionState.connected;
         if (preset == null) _inputCtrl.clear();
       });
       widget.onSend?.call(text);
-    } on Object {
+      if (_repo is LiveConversationRepository) {
+        unawaited(_refresh());
+      } else {
+        final refreshed = await _repo.load(peer);
+        if (!mounted) return;
+        if (refreshed != null) {
+          setState(() => _detail = _mergeDetails(_detail, refreshed));
+        }
+      }
+    } on Object catch (error) {
       if (!mounted) return;
-      setState(() => _sending = false);
+      final discard = familyChatFailureRequiresDiscard(error);
+      setState(() {
+        _sending = false;
+        if (discard) {
+          _detail = null;
+          _loadFailed = true;
+        }
+        _connectionIssue = true;
+        _connectionState = familyChatConnectionStateFor(error);
+      });
+    }
+  }
+
+  ConversationDetail _upsertDetail(
+    ConversationDetail detail,
+    ConversationMessage message,
+  ) {
+    final messages = List<ConversationMessage>.of(detail.messages);
+    final index = messages.indexWhere((existing) => existing.id == message.id);
+    if (index == -1) {
+      messages.add(message);
+    } else {
+      messages[index] = message;
+    }
+    if (messages.every((item) => item.seq != null)) {
+      messages.sort((left, right) => left.seq!.compareTo(right.seq!));
+    }
+    return detail.copyWith(messages: messages);
+  }
+
+  ConversationDetail _mergeDetails(
+    ConversationDetail? current,
+    ConversationDetail refreshed,
+  ) {
+    var result = refreshed;
+    if (current == null) return result;
+    for (final message in current.messages) {
+      result = _upsertDetail(result, message);
+    }
+    return result;
+  }
+
+  Future<void> _editMessage(ConversationMessage message) async {
+    final peer = _resolvedPeer;
+    final repository = _repo;
+    if (peer == null ||
+        repository is! LiveConversationRepository ||
+        !message.isMine ||
+        message.deleted) {
+      return;
+    }
+    final controller = TextEditingController(text: message.body);
+    final l10n = AppLocalizations.of(context);
+    final editedBody = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(l10n.familyChatEditHeading),
+          content: TextField(
+            controller: controller,
+            maxLength: 2000,
+            minLines: 1,
+            maxLines: 6,
+            textInputAction: TextInputAction.newline,
+            onChanged: (_) => setDialogState(() {}),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(l10n.familyChatCancel),
+            ),
+            FilledButton(
+              onPressed: controller.text.trim().isEmpty
+                  ? null
+                  : () => Navigator.of(dialogContext).pop(controller.text.trim()),
+              child: Text(l10n.familyChatEditSave),
+            ),
+          ],
+        ),
+      ),
+    ).whenComplete(controller.dispose);
+    if (editedBody == null || !mounted) return;
+
+    try {
+      final updated = await repository.editMessage(peer, message, editedBody);
+      if (!mounted) return;
+      setState(() {
+        final detail = _detail;
+        if (detail != null) _detail = _upsertDetail(detail, updated);
+        _connectionIssue = false;
+        _connectionState = FamilyChatConnectionState.connected;
+      });
+    } on Object catch (error) {
+      if (!mounted) return;
+      final discard = familyChatFailureRequiresDiscard(error);
+      setState(() {
+        if (discard) {
+          _detail = null;
+          _loadFailed = true;
+        }
+        _connectionIssue = true;
+        _connectionState = familyChatConnectionStateFor(error);
+      });
+    }
+  }
+
+  Future<void> _deleteMessage(ConversationMessage message) async {
+    final peer = _resolvedPeer;
+    final repository = _repo;
+    if (peer == null ||
+        repository is! LiveConversationRepository ||
+        !message.isMine ||
+        message.deleted) {
+      return;
+    }
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.familyChatDeleteHeading),
+        content: Text(l10n.familyChatDeleteBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l10n.familyChatCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l10n.familyChatDelete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      final deleted = await repository.deleteMessage(peer, message);
+      if (!mounted) return;
+      setState(() {
+        final detail = _detail;
+        if (detail != null) _detail = _upsertDetail(detail, deleted);
+        _connectionIssue = false;
+        _connectionState = FamilyChatConnectionState.connected;
+      });
+    } on Object catch (error) {
+      if (!mounted) return;
+      final discard = familyChatFailureRequiresDiscard(error);
+      setState(() {
+        if (discard) {
+          _detail = null;
+          _loadFailed = true;
+        }
+        _connectionIssue = true;
+        _connectionState = familyChatConnectionStateFor(error);
+      });
     }
   }
 
@@ -247,6 +522,7 @@ class ConversationScreenState extends State<ConversationScreen> {
             l10n,
             _detail!.chatWith,
             _detail!.title,
+            isFamilyThread: _detail!.familyPinnedNote,
           );
 
     return Scaffold(
@@ -305,10 +581,21 @@ class ConversationScreenState extends State<ConversationScreen> {
     }
 
     if (_loadFailed) {
-      return AppErrorState(
-        key: ConversationKeys.error,
-        kind: AppErrorKind.network,
-        onRetry: _load,
+      return Column(
+        children: [
+          FamilyChatConnectionBanner(
+            key: ConversationKeys.connection,
+            state: _connectionState,
+            onRetry: _load,
+          ),
+          Expanded(
+            child: AppErrorState(
+              key: ConversationKeys.error,
+              kind: AppErrorKind.network,
+              onRetry: _load,
+            ),
+          ),
+        ],
       );
     }
 
@@ -333,6 +620,25 @@ class ConversationScreenState extends State<ConversationScreen> {
       key: ConversationKeys.body,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (_connectionIssue)
+          FamilyChatConnectionBanner(
+            key: ConversationKeys.connection,
+            state: _connectionState,
+            onRetry: _refresh,
+          ),
+        if (_refreshing) const LinearProgressIndicator(minHeight: 2),
+        if (detail.serverAuthoritative)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+            child: Text(
+              l10n.familyChatServerPollingNotice,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: colors.ink2,
+              ),
+            ),
+          ),
         if (detail.subtitle.isNotEmpty)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
@@ -378,18 +684,38 @@ class ConversationScreenState extends State<ConversationScreen> {
                   detail: detail,
                   l10n: l10n,
                   onSettings: _onSettings,
+                  onRefresh: _refresh,
+                  onLoadOlder: _loadOlder,
+                  loadingOlder: _loadingOlder,
+                  onEdit: _editMessage,
+                  onDelete: _deleteMessage,
                 ),
         ),
         if (detail.toneChips.isNotEmpty)
           _ToneChips(chips: detail.toneChips, onTap: (text) => _send(text)),
         _Composer(
           controller: _inputCtrl,
-          enabled: _chat.canSend && !_sending,
+          enabled: _chat.canSend && !_sending && !_connectionIssue,
+          mediaEnabled: !detail.serverAuthoritative,
           sending: _sending,
           onAttach: _onAttach,
           onSend: () => _send(),
           l10n: l10n,
         ),
+        if (detail.serverAuthoritative)
+          Padding(
+            key: ConversationKeys.mediaUnavailable,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Text(
+              l10n.familyChatMediaUnavailable,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: colors.ink2,
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -400,26 +726,62 @@ class _ThreadScroll extends StatelessWidget {
     required this.detail,
     required this.l10n,
     required this.onSettings,
+    required this.onRefresh,
+    required this.onLoadOlder,
+    required this.loadingOlder,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   final ConversationDetail detail;
   final AppLocalizations l10n;
   final VoidCallback onSettings;
+  final Future<void> Function() onRefresh;
+  final Future<void> Function() onLoadOlder;
+  final bool loadingOlder;
+  final void Function(ConversationMessage message) onEdit;
+  final void Function(ConversationMessage message) onDelete;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<FamilyColors>()!;
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-      children: [
-        Row(
-          children: [
-            Tag(
-              key: ConversationKeys.encryptedTag,
-              label: l10n.conversationEncryptedTag,
-              variant: TagVariant.p,
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+        children: [
+          if (detail.hasMoreMessages)
+            Align(
+              alignment: AlignmentDirectional.center,
+              child: TextButton.icon(
+                key: ConversationKeys.loadOlder,
+                onPressed: loadingOlder ? null : onLoadOlder,
+                icon: loadingOlder
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.history),
+                label: Text(l10n.familyChatLoadMore),
+              ),
             ),
+          Row(
+          children: [
+            if (detail.serverAuthoritative)
+              Tag(
+                key: ConversationKeys.serverStoredTag,
+                label: l10n.familyChatServerStoredTag,
+                variant: TagVariant.p,
+              )
+            else
+              Tag(
+                key: ConversationKeys.encryptedTag,
+                label: l10n.conversationEncryptedTag,
+                variant: TagVariant.p,
+              ),
             const Spacer(),
             TextButton(
               key: ConversationKeys.settingsTag,
@@ -442,7 +804,13 @@ class _ThreadScroll extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         for (final m in detail.messages) ...[
-          _Bubble(message: m, colors: colors),
+          _Bubble(
+            message: m,
+            colors: colors,
+            serverAuthoritative: detail.serverAuthoritative,
+            onEdit: () => onEdit(m),
+            onDelete: () => onDelete(m),
+          ),
           const SizedBox(height: 8),
         ],
         Padding(
@@ -451,7 +819,9 @@ class _ThreadScroll extends StatelessWidget {
             key: detail.familyPinnedNote
                 ? ConversationKeys.familyPinNote
                 : ConversationKeys.honestyBanner,
-            detail.familyPinnedNote
+            detail.serverAuthoritative
+                ? l10n.familyChatStorageNotice
+                : detail.familyPinnedNote
                 ? l10n.conversationFamilyPinNote
                 : l10n.conversationLocalHonestyBanner,
             style: TextStyle(
@@ -461,19 +831,30 @@ class _ThreadScroll extends StatelessWidget {
             ),
           ),
         ),
-      ],
+        ],
+      ),
     );
   }
 }
 
 class _Bubble extends StatelessWidget {
-  const _Bubble({required this.message, required this.colors});
+  const _Bubble({
+    required this.message,
+    required this.colors,
+    required this.serverAuthoritative,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   final ConversationMessage message;
   final FamilyColors colors;
+  final bool serverAuthoritative;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isMine = message.isMine;
     final bg = isMine ? colors.p500 : colors.surface;
     final fg = isMine ? Colors.white : colors.ink;
@@ -488,6 +869,10 @@ class _Bubble extends StatelessWidget {
     );
 
     final statusSuffix = isMine ? _statusTicks(message.status) : '';
+    final senderLabel = localizedFamilyChatSenderLabel(
+      l10n,
+      message.senderLabel,
+    );
 
     return Align(
       alignment: align,
@@ -512,9 +897,9 @@ class _Bubble extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (message.senderLabel != null) ...[
+                if (senderLabel != null) ...[
                   Text(
-                    message.senderLabel!,
+                    senderLabel,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
@@ -524,22 +909,64 @@ class _Bubble extends StatelessWidget {
                   const SizedBox(height: 2),
                 ],
                 Text(
-                  message.body,
+                  message.deleted
+                      ? l10n.familyChatMessageDeleted
+                      : message.body,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: fg,
+                    color: message.deleted ? colors.ink2 : fg,
                     height: 1.35,
+                    fontStyle: message.deleted ? FontStyle.italic : FontStyle.normal,
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  '${message.timeLabel}$statusSuffix',
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w600,
-                    color: isMine ? Colors.white70 : colors.ink2,
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        <String>[
+                          if (message.editedAt != null) l10n.familyChatEdited,
+                          if (message.createdAt != null)
+                            intl.DateFormat.Hm(l10n.localeName)
+                                .format(message.createdAt!.toLocal())
+                          else if (message.timeLabel.isNotEmpty)
+                            message.timeLabel,
+                          if (statusSuffix.isNotEmpty) statusSuffix.trim(),
+                        ].join(' · '),
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          color: isMine ? Colors.white70 : colors.ink2,
+                        ),
+                      ),
+                    ),
+                    if (serverAuthoritative && isMine && !message.deleted)
+                      PopupMenuButton<String>(
+                        tooltip: l10n.familyChatMessageActionsSemantics,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 40,
+                          minHeight: 40,
+                        ),
+                        iconSize: 17,
+                        onSelected: (action) {
+                          if (action == 'edit') onEdit();
+                          if (action == 'delete') onDelete();
+                        },
+                        itemBuilder: (context) => <PopupMenuEntry<String>>[
+                          PopupMenuItem<String>(
+                            value: 'edit',
+                            child: Text(l10n.familyChatEdit),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'delete',
+                            child: Text(l10n.familyChatDelete),
+                          ),
+                        ],
+                      ),
+                  ],
                 ),
               ],
             ),
@@ -549,8 +976,8 @@ class _Bubble extends StatelessWidget {
     );
   }
 
-  /// Q-CEX-001 — single ✓ = saved locally / sent on this device.
-  /// Never ✓✓ (would imply remote delivered/read while relay is CLOSED).
+  /// One tick records the send state only; this contract has no per-device delivery receipt.
+  /// Never draw ✓✓ from aggregate read counts or the legacy delivered/read aliases.
   String _statusTicks(ConversationDeliveryStatus status) => switch (status) {
     ConversationDeliveryStatus.sending => ' · …',
     ConversationDeliveryStatus.sent ||
@@ -621,6 +1048,7 @@ class _Composer extends StatelessWidget {
   const _Composer({
     required this.controller,
     required this.enabled,
+    required this.mediaEnabled,
     required this.sending,
     required this.onAttach,
     required this.onSend,
@@ -629,6 +1057,7 @@ class _Composer extends StatelessWidget {
 
   final TextEditingController controller;
   final bool enabled;
+  final bool mediaEnabled;
   final bool sending;
   final VoidCallback onAttach;
   final VoidCallback onSend;
@@ -645,8 +1074,10 @@ class _Composer extends StatelessWidget {
         children: [
           IconButton(
             key: ConversationKeys.attach,
-            tooltip: l10n.conversationAttachSemantics,
-            onPressed: enabled ? onAttach : null,
+            tooltip: mediaEnabled
+                ? l10n.conversationAttachSemantics
+                : l10n.familyChatMediaUnavailableSemantics,
+            onPressed: enabled && mediaEnabled ? onAttach : null,
             constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
             style: const ButtonStyle(
               tapTargetSize: MaterialTapTargetSize.padded,

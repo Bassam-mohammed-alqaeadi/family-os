@@ -1422,12 +1422,11 @@ function uuidList(value, field, { maxItems }) {
   return ids;
 }
 
-/** Opening a conversation: what kind of room, what to call it, and who is in it from the first
- *  moment. `kind` is required because the two rooms have different laws - the household room is
- *  guardians, a child's room names exactly one child. */
+/** Opening a conversation: what kind of room, what to call it, and (for a child room) which
+ *  single child it is about. Every active guardian is added by the server, not selected here. */
 export function chatThreadCreateInput(value) {
   const body = bodyObject(value);
-  onlyKnownFields(body, new Set(['kind', 'title', 'participantMembershipIds', 'childIds']));
+  onlyKnownFields(body, new Set(['kind', 'title', 'childIds']));
   const kind = requiredText(body.kind, 'kind', { maxLength: 16 }).toLowerCase();
   if (!CHAT_THREAD_KINDS.has(kind)) {
     throw new HttpError(400, 'invalid_request', 'kind must be family or child.');
@@ -1437,9 +1436,6 @@ export function chatThreadCreateInput(value) {
   return {
     kind,
     title,
-    participantMembershipIds: uuidList(body.participantMembershipIds, 'participantMembershipIds', {
-      maxItems: MAX_CHAT_PARTICIPANTS,
-    }),
     childIds: uuidList(body.childIds, 'childIds', { maxItems: MAX_CHAT_PARTICIPANTS }),
   };
 }

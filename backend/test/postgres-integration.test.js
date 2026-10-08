@@ -3992,19 +3992,42 @@ test('a family talks in a room it was added to, the child answers from their own
         const household = await seedScreenTimeFamily(baseUrl, client, 'w9a');
         const { familyId, childId, primaryMembershipId, deviceId, deviceAuth } = household;
         const threadsPath = `/v1/families/${familyId}/chat/threads`;
+        const invitedGuardian = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/memberships`,
+          {
+            method: 'POST',
+            headers: authorized('test-primary', {
+              'idempotency-key': 'w9a-invite-pending-guardian',
+            }),
+            body: { role: 'co_guardian', targetSubject: 'test-pending-guardian' },
+          },
+        );
+        assert.equal(invitedGuardian.status, 201);
+        assert.equal(invitedGuardian.body.membership.status, 'invited');
+        const pendingMembershipId = invitedGuardian.body.membership.id;
         const guardians = await client.query(
-          `SELECT id, target_subject FROM family_memberships
+          `SELECT id, target_subject, status FROM family_memberships
             WHERE family_id = $1 AND role IN ('primary_guardian', 'co_guardian')`,
           [familyId],
         );
         const coMembershipId = guardians.rows.find((row) => row.target_subject === 'test-co').id;
+        const selectedGuardians = await jsonRequest(baseUrl, threadsPath, {
+          method: 'POST',
+          headers: authorized('test-primary', {
+            'idempotency-key': 'w9a-client-selected-guardians',
+          }),
+          body: { kind: 'family', participantMembershipIds: [coMembershipId] },
+        });
+        assert.equal(selectedGuardians.status, 400);
+        assert.equal(selectedGuardians.body.error.code, 'invalid_request');
 
-        // 1. The household room is opened with both guardians in the same transaction: a room
-        //    that existed for a moment with nobody in it is not something a reader can observe.
+        // 1. The household room is opened with every active guardian in the same transaction,
+        //    while the unaccepted invitation is excluded by the server-side active roster.
         const householdRoom = await jsonRequest(baseUrl, threadsPath, {
           method: 'POST',
           headers: authorized('test-primary', { 'idempotency-key': 'w9a-household' }),
-          body: { kind: 'family', title: 'العائلة', participantMembershipIds: [coMembershipId] },
+          body: { kind: 'family', title: 'العائلة' },
         });
         assert.equal(householdRoom.status, 201, JSON.stringify(householdRoom.body));
         const householdThreadId = householdRoom.body.thread.id;
@@ -4013,11 +4036,17 @@ test('a family talks in a room it was added to, the child answers from their own
           householdRoom.body.thread.participants.map((entry) => entry.id).sort(),
           [primaryMembershipId, coMembershipId].sort(),
         );
+        assert.equal(
+          householdRoom.body.thread.participants.some(
+            (entry) => entry.id === pendingMembershipId,
+          ),
+          false,
+        );
         assert.equal(householdRoom.body.thread.participants.every((entry) => entry.isSelf === (entry.id === primaryMembershipId)), true);
 
-        // 2. The child's own room names exactly that child, and the guardian who opens it is in
-        //    it. A room that names no child cannot be a child conversation, and one that names
-        //    two is refused - the schema's law and the module's.
+        // 2. The child's own room names exactly that child, and the server adds every active
+        //    guardian in the family without asking the client to choose members. A room that
+        //    names no child cannot be a child conversation, and one that names two is refused.
         const twoChildren = await jsonRequest(baseUrl, `/v1/families/${familyId}/children`, {
           method: 'POST',
           headers: authorized('test-primary', { 'idempotency-key': 'w9a-sibling' }),
@@ -4042,21 +4071,28 @@ test('a family talks in a room it was added to, the child answers from their own
         const childThreadId = childRoom.body.thread.id;
         assert.deepEqual(
           childRoom.body.thread.participants.map((entry) => `${entry.kind}:${entry.id}`).sort(),
-          [`child:${childId}`, `membership:${primaryMembershipId}`].sort(),
+          [
+            `child:${childId}`,
+            `membership:${primaryMembershipId}`,
+            `membership:${coMembershipId}`,
+          ].sort(),
         );
 
-        // 3. THE ROOM IS THE PERMISSION. The co-guardian sees the household room and only it:
-        //    the child's room is not hidden by a filter, it is simply not joined.
+        // 3. THE ROOM IS THE PERMISSION. The active co-guardian sees both rooms because the
+        //    server added them to each room at creation, not because a client selected them.
         const coRooms = await jsonRequest(baseUrl, threadsPath, { headers: authorized('test-co') });
         assert.equal(coRooms.status, 200);
-        assert.deepEqual(coRooms.body.threads.map((thread) => thread.id), [householdThreadId]);
+        assert.deepEqual(
+          coRooms.body.threads.map((thread) => thread.id).sort(),
+          [householdThreadId, childThreadId].sort(),
+        );
         const coReadsChildRoom = await jsonRequest(
           baseUrl,
           `${threadsPath}/${childThreadId}/messages`,
           { headers: authorized('test-co') },
         );
-        assert.equal(coReadsChildRoom.status, 404);
-        assert.equal(coReadsChildRoom.body.error.code, 'chat_thread_not_found');
+        assert.equal(coReadsChildRoom.status, 200, JSON.stringify(coReadsChildRoom.body));
+        assert.deepEqual(coReadsChildRoom.body.messages, []);
 
         // 4. The child's handset cannot reach the household room either. It is a member of its
         //    own room and of nothing else.
@@ -4273,7 +4309,7 @@ test('a family talks in a room it was added to, the child answers from their own
             `INSERT INTO family_chat_messages
                (id, family_id, thread_id, seq, author_kind, author_id, body, client_message_id)
              VALUES (gen_random_uuid(), $1, $2, 2, 'membership', $3, 'من خارج الغرفة', 'outside-message-1')`,
-            [familyId, childThreadId, coMembershipId],
+            [familyId, childThreadId, pendingMembershipId],
           ),
           (error) => error.code === '23503' && /family_chat_messages_author_fk/.test(error.constraint),
         );

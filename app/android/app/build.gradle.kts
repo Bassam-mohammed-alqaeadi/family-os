@@ -40,6 +40,12 @@ android {
     }
 }
 
+dependencies {
+    // W9 paired-device chat uses the credential from Android's protected store. OkHttp supports
+    // the contract's PATCH verb without exposing that credential back to the Flutter layer.
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+}
+
 flutter {
     source = "../.."
 }

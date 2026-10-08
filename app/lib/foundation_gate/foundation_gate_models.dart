@@ -100,7 +100,13 @@ enum FoundationGateApiFailure {
 }
 
 class FoundationGateApiException implements Exception {
-  const FoundationGateApiException(this.failure, {this.details});
+  const FoundationGateApiException(
+    this.failure, {
+    this.details,
+    this.statusCode,
+    this.serverCode,
+    this.serverMessage,
+  });
 
   final FoundationGateApiFailure failure;
 
@@ -110,6 +116,13 @@ class FoundationGateApiException implements Exception {
   /// answered with the open question's identifier so a screen can show it instead of an
   /// error. Absent means the server sent none, never an empty map invented here.
   final Map<String, Object?>? details;
+
+  /// HTTP status and the safe error envelope values, when a typed client parsed them.
+  /// These are intentionally separate from [failure]: callers can show a stable localized
+  /// message while retaining the backend's machine code for diagnostics and recovery.
+  final int? statusCode;
+  final String? serverCode;
+  final String? serverMessage;
 }
 
 class FoundationGateIdentityException implements Exception {

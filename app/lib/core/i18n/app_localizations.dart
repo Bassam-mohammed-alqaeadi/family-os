@@ -22160,6 +22160,49 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'لا يمكن لهذه النسخة مخاطبة أبناء الخادم بعد — يُقرأ التقويم ولا يُكتب فيه.'**
   String get calendarServerNoAddressableChildren;
+
+  String get familyChatConnecting;
+  String get familyChatReconnecting;
+  String get familyChatOffline;
+  String get familyChatUnavailable;
+  String get familyChatPermissionDenied;
+  String get familyChatRequestRejected;
+  String get familyChatRetry;
+  String get familyChatServerPollingNotice;
+  String get childFamilyChatServerPollingNotice;
+  String get familyChatCreateHeading;
+  String get familyChatCreateTypeLabel;
+  String get familyChatFamilyThread;
+  String get familyChatChildThread;
+  String get familyChatCreateChildLabel;
+  String get familyChatNoChildrenAvailable;
+  String get familyChatChildFallback;
+  String get familyChatCreateTitleLabel;
+  String get familyChatCreateTitleHint;
+  String get familyChatCreateButton;
+  String get familyChatCancel;
+  String get familyChatCreateFailed;
+  String get familyChatLoadOlder;
+  String get familyChatRefresh;
+  String get familyChatMessageDeleted;
+  String get familyChatEdited;
+  String get familyChatMediaUnavailable;
+  String get familyChatMediaUnavailableSemantics;
+  String get familyChatEdit;
+  String get familyChatDelete;
+  String get familyChatEditHeading;
+  String get familyChatEditSave;
+  String get familyChatDeleteHeading;
+  String get familyChatDeleteBody;
+
+  String get familyChatStorageNotice;
+  String get familyChatServerStoredTag;
+
+  String get familyChatLoadMore;
+  String get familyChatMessageActionsSemantics;
+
+  String get familyChatListPollingNotice;
+  String get familyChatNeverLocks;
 }
 
 class _AppLocalizationsDelegate

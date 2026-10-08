@@ -58,6 +58,7 @@ const CHILD_THREAD = '45444444-4444-4444-8444-444444444444';
 const PRIMARY = '66666666-6666-4666-8666-666666666666';
 const CO_GUARDIAN = '77777777-7777-4777-8777-777777777777';
 const DEVICE = '88888888-8888-4888-8888-888888888888';
+const PENDING_GUARDIAN = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 
 const principal = { subject: 'test-primary' };
 const coPrincipal = { subject: 'test-co' };
@@ -170,6 +171,15 @@ function memoryPort({
     async readMembership(_tx, { familyId, membershipId }) {
       const row = state.memberships.find((membership) => membership.family_id === familyId && membership.id === membershipId);
       return row ?? null;
+    },
+
+    async listActiveGuardianMemberships(_tx, { familyId }) {
+      return state.memberships.filter(
+        (membership) =>
+          membership.family_id === familyId &&
+          membership.status === 'active' &&
+          ['primary_guardian', 'co_guardian'].includes(membership.role),
+      );
     },
 
     async readChild(_tx, { familyId, childId }) {
@@ -512,28 +522,67 @@ test('a child conversation names exactly one child, and the household room names
   assert.equal(port.state.audits.length, 0);
 });
 
-test('a child conversation is created with its child and its guardian, in one transaction', async () => {
+test('a child conversation gets the server roster of active guardians and exactly one child', async () => {
   const port = memoryPort({
-    memberships: [membershipRow(), membershipRow({ id: CO_GUARDIAN, target_subject: 'test-co', role: 'co_guardian' })],
+    memberships: [
+      membershipRow(),
+      membershipRow({ id: CO_GUARDIAN, target_subject: 'test-co', role: 'co_guardian' }),
+      membershipRow({
+        id: '99999999-9999-4999-8999-999999999999',
+        target_subject: 'invited-co',
+        role: 'co_guardian',
+        status: 'invited',
+      }),
+      membershipRow({
+        id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+        target_subject: 'test-child',
+        role: 'child',
+      }),
+    ],
   });
   const result = await createThreadCreate({ port })({
-    principal, familyId: FAMILY, kind: 'child', title: 'أماني',
-    participantMembershipIds: [PRIMARY, CO_GUARDIAN], childIds: [CHILD],
+    principal, familyId: FAMILY, kind: 'child', title: 'أماني', childIds: [CHILD],
     idempotencyKey: 'k', requestHash: 'h', correlationId: 'c',
   });
   assert.equal(result.thread.kind, 'child');
   const participants = result.thread.participants.map((entry) => `${entry.kind}:${entry.id}`).sort();
-  assert.deepEqual(participants, [`child:${CHILD}`, `membership:${CO_GUARDIAN}`, `membership:${PRIMARY}`].sort());
-  // The room and its members were written before anybody could read it.
+  assert.deepEqual(participants, [
+    `child:${CHILD}`,
+    `membership:${CO_GUARDIAN}`,
+    `membership:${PRIMARY}`,
+  ].sort());
+  // The room and its members were written before anybody could read it; inactive guardians and
+  // active child memberships cannot be smuggled into the guardian participant set.
   assert.equal(port.state.threads.length, 2);
   assert.equal(port.state.members.filter((row) => row.thread_id === CHILD_THREAD).length, 3);
   assert.equal(port.state.audits[0].eventType, 'family.chat_thread_created');
 });
 
-test('only a guardian opens a room, and only a guardian or a child of this family is a participant', async () => {
-  const asChild = memoryPort({
-    memberships: [membershipRow(), membershipRow({ id: CO_GUARDIAN, target_subject: 'test-child', role: 'child' })],
+test('a family room also includes all active guardians without a client-selected roster', async () => {
+  const port = memoryPort({
+    memberships: [
+      membershipRow(),
+      membershipRow({ id: CO_GUARDIAN, target_subject: 'test-co', role: 'co_guardian' }),
+    ],
   });
+  const result = await createThreadCreate({ port })({
+    principal, familyId: FAMILY, kind: 'family', title: '', childIds: [],
+    idempotencyKey: 'family-room', requestHash: 'h', correlationId: 'c',
+  });
+  assert.deepEqual(
+    result.thread.participants.map((entry) => entry.id).sort(),
+    [PRIMARY, CO_GUARDIAN].sort(),
+  );
+  assert.ok(result.thread.participants.every((entry) => entry.kind === 'membership'));
+});
+
+test('only a guardian opens a room, and only a child of this family may be named', async () => {
+  const childMembership = membershipRow({
+    id: CO_GUARDIAN,
+    target_subject: 'test-child',
+    role: 'child',
+  });
+  const asChild = memoryPort({ memberships: [membershipRow(), childMembership] });
   await assert.rejects(
     createThreadCreate({ port: asChild })({
       principal: childPrincipal, familyId: FAMILY, kind: 'family', title: '', childIds: [],
@@ -542,23 +591,18 @@ test('only a guardian opens a room, and only a guardian or a child of this famil
     (error) => error.status === 403 && error.code === 'chat_forbidden',
   );
 
-  const port = memoryPort({ memberships: [membershipRow(), membershipRow({ id: CO_GUARDIAN, target_subject: 'test-child', role: 'child' })] });
+  const port = memoryPort({ memberships: [membershipRow(), childMembership] });
+  const room = await createThreadCreate({ port })({
+    principal, familyId: FAMILY, kind: 'family', title: '', childIds: [],
+    idempotencyKey: 'k2', requestHash: 'h', correlationId: 'c',
+  });
+  assert.deepEqual(room.thread.participants.map((entry) => entry.id), [PRIMARY]);
   await assert.rejects(
     createThreadCreate({ port })({
-      principal, familyId: FAMILY, kind: 'family', title: '', participantMembershipIds: [CO_GUARDIAN],
-      childIds: [], idempotencyKey: 'k', requestHash: 'h', correlationId: 'c',
-    }),
-    (error) => error.code === 'chat_participant_not_guardian',
-  );
-  await assert.rejects(
-    createThreadCreate({ port })({
-      principal, familyId: FAMILY, kind: 'family', title: '', participantMembershipIds: [],
-      childIds: [], idempotencyKey: 'k9', requestHash: 'h', correlationId: 'c',
-    }).then(() => createThreadCreate({ port })({
-      principal, familyId: FAMILY, kind: 'child', title: '', participantMembershipIds: [],
+      principal, familyId: FAMILY, kind: 'child', title: '',
       childIds: ['00000000-0000-4000-8000-000000000000'],
-      idempotencyKey: 'k10', requestHash: 'h', correlationId: 'c',
-    })),
+      idempotencyKey: 'k3', requestHash: 'h', correlationId: 'c',
+    }),
     (error) => error.code === 'chat_child_not_found',
   );
 });
@@ -591,7 +635,16 @@ test('adding a participant requires the guardian to be in the room, and a child 
       participant_id: PRIMARY, membership_id: PRIMARY, child_id: null, last_read_seq: 0 },
   ];
   const options = {
-    memberships: [membershipRow(), membershipRow({ id: CO_GUARDIAN, target_subject: 'test-co', role: 'co_guardian' })],
+    memberships: [
+      membershipRow(),
+      membershipRow({ id: CO_GUARDIAN, target_subject: 'test-co', role: 'co_guardian' }),
+      membershipRow({
+        id: PENDING_GUARDIAN,
+        target_subject: 'test-pending',
+        role: 'co_guardian',
+        status: 'invited',
+      }),
+    ],
     threads: room,
     members,
   };
@@ -606,8 +659,15 @@ test('adding a participant requires the guardian to be in the room, and a child 
     (error) => error.status === 404 && error.code === 'chat_thread_not_found',
   );
 
-  // The guardian who IS in the room may add another guardian to a child's room; that is what a
-  // child conversation with two guardians is.
+  // A pending guardian is not part of the server's active roster and cannot be added yet.
+  await assert.rejects(
+    add({ principal, familyId: FAMILY, threadId: CHILD_THREAD,
+          participantKind: 'membership', participantId: PENDING_GUARDIAN,
+          idempotencyKey: 'k-pending', requestHash: 'h', correlationId: 'c' }),
+    (error) => error.status === 404 && error.code === 'chat_membership_not_found',
+  );
+
+  // The guardian who IS in the room may add a guardian who became active after room creation.
   await add({ principal, familyId: FAMILY, threadId: CHILD_THREAD,
               participantKind: 'membership', participantId: CO_GUARDIAN,
               idempotencyKey: 'k2', requestHash: 'h', correlationId: 'c' });
