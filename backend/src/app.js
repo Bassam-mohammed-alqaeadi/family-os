@@ -10,6 +10,7 @@ import { sosEmergencyFor } from './sos-emergency.js';
 import { screenTimeFor } from './screen-time.js';
 import { webFilterFor } from './web-filter.js';
 import { tasksFor } from './tasks.js';
+import { calendarFor } from './calendar.js';
 import { capabilityMatches } from './store/postgres-foundation-store.js';
 import {
     claimDevicePairingInput,
@@ -49,6 +50,12 @@ import {
     taskCreateInput,
     taskClaimInput,
     taskDecisionInput,
+    eventCreateInput,
+    eventUpdateInput,
+    eventCancelInput,
+    eventResponseInput,
+    eventAttendanceInput,
+    eventRangeQuery,
 } from './validation.js';
 
 function requestFingerprint({ action, principal, input }) {
@@ -105,6 +112,10 @@ export function createApp({
     // arrangement as every wave before it - one credential check, data access through the
     // store's published helpers, and no decision in the route layer.
     tasks = tasksFor(store, { credentialMatches: capabilityMatches }),
+    // W8. The family calendar. Same arrangement as every wave before it, and the same one
+    // law that matters here: what a phone may claim about a person is decided in the module,
+    // not in a route - attendance is recorded by a guardian after the fact, never inferred.
+    calendar = calendarFor(store, { credentialMatches: capabilityMatches }),
     preAuthenticationRateLimit = {},
     protectedRateLimit = {},
 }) {
@@ -1606,6 +1617,236 @@ export function createApp({
                 }),
             });
             response.status(201).json(result);
+        }),
+    );
+
+
+    // ── W8 — the family calendar ────────────────────────────────────────────────────────
+    //
+    // The first wave whose subject is not protection but attendance, and therefore the first
+    // one where the product could start recording people instead of devices. Three rules are
+    // visible in the routes themselves: events are cancelled rather than deleted, an edit
+    // states the version it read, and attendance is written by a guardian rather than
+    // inferred from a device. A reminder here is a preference a family recorded; nothing in
+    // this surface claims a notification was delivered.
+
+    // What the family agreed to do together, inside a window. Cancelled events are included
+    // with their reason: a calendar that hid them would leave a child waiting.
+    app.get(
+        '/v1/families/:familyId/events',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const { from, to } = eventRangeQuery(request.query);
+            const result = await calendar.listEvents({
+                principal: request.principal,
+                familyId,
+                from,
+                to,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // A guardian states an event. The audience is part of the same request, because an event
+    // nobody is invited to is a note rather than a plan.
+    app.post(
+        '/v1/families/:familyId/events',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            requireNoQueryParameters(request.query);
+            const input = eventCreateInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await calendar.createEvent({
+                principal: request.principal,
+                familyId,
+                ...input,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'family.event.create',
+                    principal: request.principal,
+                    input: { familyId, ...input },
+                }),
+            });
+            response.status(201).json(result);
+        }),
+    );
+
+    // A guardian changes a plan - and states the version they read, so two guardians editing
+    // the same evening collide loudly instead of silently overwriting each other.
+    app.patch(
+        '/v1/families/:familyId/events/:eventId',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const eventId = requireUuid(request.params.eventId, 'eventId');
+            requireNoQueryParameters(request.query);
+            const { version, changes } = eventUpdateInput(request.body);
+            const result = await calendar.updateEvent({
+                principal: request.principal,
+                familyId,
+                eventId,
+                version,
+                changes,
+                correlationId: request.correlationId,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // Calling an event off. A cancellation is an act with an author and a reason, not a row
+    // that disappeared: the plan, its audience and its answers all remain readable.
+    app.post(
+        '/v1/families/:familyId/events/:eventId/cancel',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const eventId = requireUuid(request.params.eventId, 'eventId');
+            requireNoQueryParameters(request.query);
+            const { reason } = eventCancelInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await calendar.cancelEvent({
+                principal: request.principal,
+                familyId,
+                eventId,
+                reason,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'family.event.cancel',
+                    principal: request.principal,
+                    input: { familyId, eventId, reason },
+                }),
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // What actually happened, recorded by a guardian after the event started. Before it has
+    // started there is nothing to record - only something to promise, and this surface does
+    // not store promises about people.
+    app.post(
+        '/v1/families/:familyId/events/:eventId/attendance',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const eventId = requireUuid(request.params.eventId, 'eventId');
+            requireNoQueryParameters(request.query);
+            const { childId, attended, note } = eventAttendanceInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await calendar.recordAttendance({
+                principal: request.principal,
+                familyId,
+                eventId,
+                childId,
+                attended,
+                note,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'family.event.attendance',
+                    principal: request.principal,
+                    input: { familyId, eventId, childId, attended, note },
+                }),
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // A guardian records the answer a child gave in words. The author of this row is the
+    // guardian, and the response body cannot say otherwise - the schema holds exactly one
+    // author per answer.
+    app.post(
+        '/v1/families/:familyId/children/:childId/events/:eventId/response',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            const eventId = requireUuid(request.params.eventId, 'eventId');
+            requireNoQueryParameters(request.query);
+            const { response: answer, note } = eventResponseInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await calendar.respondToEvent({
+                principal: request.principal,
+                familyId,
+                childId,
+                eventId,
+                response: answer,
+                note,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'family.event.response',
+                    principal: request.principal,
+                    input: { familyId, childId, eventId, response: answer, note },
+                }),
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // The child's own handset: what they are invited to. No child id in the URL - the
+    // credential issued at pairing is what proves which child is asking.
+    app.get(
+        '/v1/devices/:deviceId/events',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            const { from, to } = eventRangeQuery(request.query);
+            const result = await calendar.readEventsForDevice({
+                deviceId,
+                deviceCredential: request.deviceCredential,
+                from,
+                to,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // The child's own answer, from their own handset. It cannot answer for a sibling: the
+    // child is read from the device row, and the audience row must exist for that child.
+    app.post(
+        '/v1/devices/:deviceId/events/:eventId/response',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            const eventId = requireUuid(request.params.eventId, 'eventId');
+            requireNoQueryParameters(request.query);
+            const { response: answer, note } = eventResponseInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await calendar.respondToEvent({
+                deviceId,
+                deviceCredential: request.deviceCredential,
+                eventId,
+                response: answer,
+                note,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'family.event.response.device',
+                    principal: request.principal ?? { subject: deviceId },
+                    input: { deviceId, eventId, response: answer, note },
+                }),
+            });
+            response.status(200).json(result);
         }),
     );
 

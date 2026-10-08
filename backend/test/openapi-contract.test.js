@@ -180,6 +180,14 @@ test('every protected operation declares OIDC security, rate limiting and idempo
       // have typed. Neither path carries a child id, for that reason.
       '/v1/devices/{deviceId}/tasks',
       '/v1/devices/{deviceId}/tasks/{taskId}/claim',
+      // W8 adds two, and they are the same decision again - with one addition worth naming,
+      // because this wave is about people rather than devices: the handset reads the events
+      // its child is invited to, and answers for that child and no other. The child comes
+      // from the device row, and the audience row must exist, so the phone cannot answer on
+      // a sibling's behalf - not because a check says so, but because storage will not hold
+      // a response to an invitation that was never issued.
+      '/v1/devices/{deviceId}/events',
+      '/v1/devices/{deviceId}/events/{eventId}/response',
     ]);
     const expectedSecurity = deviceAuthenticated.has(path)
       ? [{ oidcBearer: [] }, { deviceCredential: [] }]

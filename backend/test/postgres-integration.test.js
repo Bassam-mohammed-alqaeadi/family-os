@@ -3481,3 +3481,478 @@ test('a chore is claimed by a child, confirmed by a guardian, and the points can
     }
   });
 });
+
+// ── W8 — THE FAMILY CALENDAR, AGAINST REAL POSTGRESQL ─────────────────────────────────────
+//
+// The wave's subject is not protection but attendance, and that is where a family product can
+// start inventing facts. This journey drives the real HTTP surface against the real schema and
+// checks the four claims a calendar app has to be able to make without flinching:
+//
+//   1. What the family agreed to is what every reader sees - the same audience, the same
+//      answer, the same cancellation - because there is one row and no second copy of a fact.
+//   2. An answer has exactly one author, and a handset answers only for its own child. The
+//      sibling test here is not decorative: it is the difference between a family app and a
+//      surveillance tool.
+//   3. What happened is recorded after it happened, by a person, and a retry of that tap
+//      cannot move the moment it was recorded.
+//   4. The schema refuses from below what the module refuses from above, so a future code path
+//      that forgets a rule is stopped by the database rather than by a convention.
+
+test('a family states an evening, a child answers from their own handset, and what happened is recorded after it did', { skip }, async () => {
+  await withFreshDatabase(async (client) => {
+    await migrate(client);
+    const store = new PostgresFoundationStore({
+      connectionString: withDatabase(DATABASE_URL, client.database),
+    });
+    const app = createApp({
+      store,
+      authVerifier: new TestAuthVerifier(),
+      readiness: () => ({ ready: true, missing: [] }),
+    });
+    try {
+      await withServer(app, async (baseUrl) => {
+        const household = await seedScreenTimeFamily(baseUrl, client, 'w8a');
+        const { familyId, childId, deviceId, deviceAuth, primaryMembershipId } = household;
+        const eventsPath = `/v1/families/${familyId}/events`;
+        const now = Date.now();
+        const windowQuery = `?from=${new Date(now - 24 * 3600 * 1000).toISOString()}&to=${new Date(now + 72 * 3600 * 1000).toISOString()}`;
+
+        // A second child, so this journey can prove the handset cannot answer for a sibling.
+        const sibling = await jsonRequest(baseUrl, `/v1/families/${familyId}/children`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w8a-sibling' }),
+          body: { displayName: 'بشير', ageYears: 13, avatarEmoji: '🐯', themeColor: 'teal' },
+        });
+        assert.equal(sibling.status, 201, JSON.stringify(sibling.body));
+        const siblingId = sibling.body.child.id;
+        const guardians = await client.query(
+          `SELECT target_subject, id FROM family_memberships
+            WHERE family_id = $1 AND role IN ('primary_guardian', 'co_guardian')`,
+          [familyId],
+        );
+        const coMembershipId = guardians.rows.find((row) => row.target_subject === 'test-co').id;
+
+        // 1. A guardian states the evening and names who it is for, in one request. The
+        //    audience is written by the same transaction as the plan, so no reader can ever
+        //    observe an event that nobody was invited to.
+        const startsAt = new Date(now + 26 * 3600 * 1000).toISOString();
+        const endsAt = new Date(now + 28 * 3600 * 1000).toISOString();
+        const createBody = {
+          title: 'زيارة الجدّ',
+          note: 'نأخذ الكيك',
+          location: 'بيت الجدّ',
+          startsAt,
+          endsAt,
+          allDay: false,
+          reminderMinutes: 60,
+          childIds: [childId, siblingId],
+        };
+        const created = await jsonRequest(baseUrl, eventsPath, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w8a-event' }),
+          body: createBody,
+        });
+        assert.equal(created.status, 201, JSON.stringify(created.body));
+        const eventId = created.body.event.id;
+        assert.equal(created.body.event.version, 1);
+        assert.equal(created.body.event.status, 'scheduled');
+        assert.equal(created.body.event.audience.length, 2, 'both children were invited');
+        assert.equal(created.body.event.createdByMembershipId, primaryMembershipId);
+        assert.equal(created.body.event.reminderMinutes, 60, 'a recorded preference');
+        // The reminder is a preference, not a delivery: nothing in the payload says a phone
+        // was told anything, because this wave has no way to know.
+        assert.equal(
+          /notif|deliver|sent|push|seen/i.test(JSON.stringify(created.body.event)),
+          false,
+          'an event payload that mentioned delivery would be claiming something nobody measured',
+        );
+
+        // 2. Replaying the request with the same key is the same evening, not a second one.
+        const replayed = await jsonRequest(baseUrl, eventsPath, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w8a-event' }),
+          body: createBody,
+        });
+        assert.ok([200, 201].includes(replayed.status), `replay answered ${replayed.status}`);
+        assert.equal(replayed.body.event.id, eventId);
+        const eventCount = await client.query(
+          `SELECT COUNT(*)::int AS n FROM family_events WHERE family_id = $1`,
+          [familyId],
+        );
+        assert.equal(eventCount.rows[0].n, 1, 'a replayed event created a second plan');
+
+        // 3. The guardian's calendar for the week shows the plan with its invitations - the
+        //    family asks "what is on, and who is coming", which is one question.
+        const listed = await jsonRequest(baseUrl, `${eventsPath}${windowQuery}`, {
+          headers: authorized('test-primary'),
+        });
+        assert.equal(listed.status, 200, JSON.stringify(listed.body));
+        assert.equal(listed.body.events.length, 1);
+        assert.equal(listed.body.events[0].audience.length, 2);
+        assert.equal(listed.body.events[0].audience[0].response, null, 'nobody has answered yet');
+
+        // 4. The child's own handset sees the invitation - and sees no list of siblings.
+        const deviceRead = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/events${windowQuery}`, {
+          headers: deviceAuth,
+        });
+        assert.equal(deviceRead.status, 200, JSON.stringify(deviceRead.body));
+        assert.equal(deviceRead.body.events.length, 1);
+        assert.equal(deviceRead.body.events[0].id, eventId);
+        assert.equal('audience' in deviceRead.body.events[0], false);
+        assert.equal(
+          JSON.stringify(deviceRead.body).includes(siblingId),
+          false,
+          "the child's own payload must not name their sibling",
+        );
+
+        // 5. The child answers "no" from their own handset. A no is stored as completely as a
+        //    yes: same row, same author, same moment, note and all.
+        const declined = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/events/${eventId}/response`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w8a-answer-1' },
+          body: { response: 'declined', note: 'عندي تدريب' },
+        });
+        assert.equal(declined.status, 200, JSON.stringify(declined.body));
+        assert.equal(declined.body.response.response, 'declined');
+        assert.equal(declined.body.response.note, 'عندي تدريب');
+        assert.equal(declined.body.response.respondedByDeviceId, deviceId);
+        assert.equal(declined.body.response.respondedByMembershipId, null, 'exactly one author');
+
+        // 6. A second answer is a change of mind on the same row, not a second voice.
+        const accepted = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/events/${eventId}/response`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w8a-answer-2' },
+          body: { response: 'accepted' },
+        });
+        assert.equal(accepted.status, 200, JSON.stringify(accepted.body));
+        assert.equal(accepted.body.response.response, 'accepted');
+        const answerRows = await client.query(
+          `SELECT COUNT(*)::int AS n FROM family_event_responses
+            WHERE event_id = $1 AND child_id = $2`,
+          [eventId, childId],
+        );
+        assert.equal(answerRows.rows[0].n, 1, 'one child, one answer, however many times they changed it');
+
+        // 7. An event the sibling alone is invited to. The handset of the other child cannot
+        //    answer it, and could not even if a future code path let the request through: the
+        //    response table's foreign key points at the invitation row.
+        const siblingEvent = await jsonRequest(baseUrl, eventsPath, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w8a-sibling-event' }),
+          body: {
+            title: 'تدريب بشير',
+            startsAt,
+            endsAt,
+            childIds: [siblingId],
+          },
+        });
+        assert.equal(siblingEvent.status, 201, JSON.stringify(siblingEvent.body));
+        const siblingEventId = siblingEvent.body.event.id;
+        const stolen = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/events/${siblingEventId}/response`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w8a-steal' },
+          body: { response: 'declined' },
+        });
+        assert.equal(stolen.status, 403, JSON.stringify(stolen.body));
+        assert.equal(stolen.body.error.code, 'event_not_invited');
+        await assert.rejects(
+          () => client.query(
+            `INSERT INTO family_event_responses
+               (id, family_id, event_id, child_id, response, note, responded_by_device_id)
+             VALUES (gen_random_uuid(), $1, $2, $3, 'declined', '', $4)`,
+            [familyId, siblingEventId, childId, deviceId],
+          ),
+          /family_event_responses_invited_fk/,
+          'storage must refuse an answer to an invitation that was never issued',
+        );
+
+        // 8. The guardian records the answer the sibling gave in words. The author of that row
+        //    is the guardian, and no field in the request can say otherwise.
+        const forSibling = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/children/${siblingId}/events/${siblingEventId}/response`,
+          {
+            method: 'POST',
+            headers: authorized('test-co', { 'idempotency-key': 'w8a-sibling-answer' }),
+            body: { response: 'accepted', note: 'قال إنه سيأتي' },
+          },
+        );
+        assert.equal(forSibling.status, 200, JSON.stringify(forSibling.body));
+        assert.equal(forSibling.body.response.respondedByMembershipId, coMembershipId);
+        assert.equal(forSibling.body.response.respondedByDeviceId, null);
+
+        // 9. An edit states the version it read. The first one lands; the second guardian's
+        //    stale screen collides loudly instead of silently rewriting the evening.
+        const moved = await jsonRequest(baseUrl, `${eventsPath}/${eventId}`, {
+          method: 'PATCH',
+          headers: authorized('test-co'),
+          body: { version: 1, location: 'بيت العمّ' },
+        });
+        assert.equal(moved.status, 200, JSON.stringify(moved.body));
+        assert.equal(moved.body.event.version, 2);
+        assert.equal(moved.body.event.location, 'بيت العمّ');
+        const stale = await jsonRequest(baseUrl, `${eventsPath}/${eventId}`, {
+          method: 'PATCH',
+          headers: authorized('test-primary'),
+          body: { version: 1, location: 'مكان آخر' },
+        });
+        assert.equal(stale.status, 409, JSON.stringify(stale.body));
+        assert.equal(stale.body.error.code, 'event_stale_version');
+
+        // 10. A child who already answered cannot be unticked out of the plan - an answer is a
+        //     fact with an author, and an edit may not delete it by deleting its row. And the
+        //     refusal undoes the whole edit, version bump included, because it is one
+        //     transaction and not a series of hopeful statements.
+        const uninvite = await jsonRequest(baseUrl, `${eventsPath}/${eventId}`, {
+          method: 'PATCH',
+          headers: authorized('test-primary'),
+          body: { version: 2, childIds: [siblingId] },
+        });
+        assert.equal(uninvite.status, 409, JSON.stringify(uninvite.body));
+        assert.equal(uninvite.body.error.code, 'event_audience_answered');
+        const survived = await client.query(
+          `SELECT version, location FROM family_events WHERE id = $1`,
+          [eventId],
+        );
+        assert.equal(survived.rows[0].version, 2, 'the refused edit must not have moved the version');
+        assert.equal(survived.rows[0].location, 'بيت العمّ');
+        const audienceAfter = await client.query(
+          `SELECT COUNT(*)::int AS n FROM family_event_audience WHERE event_id = $1`,
+          [eventId],
+        );
+        assert.equal(audienceAfter.rows[0].n, 2, 'nobody was quietly removed');
+
+        // 11. Attendance before the event starts: there is nothing to record yet, only
+        //     something to promise - and this surface does not store promises about people.
+        const early = await jsonRequest(baseUrl, `${eventsPath}/${eventId}/attendance`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w8a-early' }),
+          body: { childId, attended: true },
+        });
+        assert.equal(early.status, 409, JSON.stringify(early.body));
+        assert.equal(early.body.error.code, 'event_not_started');
+
+        // 12. An event that has just begun may have what happened recorded - by a person.
+        const beganStarts = new Date(now - 2 * 60 * 1000).toISOString();
+        const beganEnds = new Date(now + 60 * 60 * 1000).toISOString();
+        const beganEvent = await jsonRequest(baseUrl, eventsPath, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w8a-began' }),
+          body: { title: 'العشاء العائلي', startsAt: beganStarts, endsAt: beganEnds, childIds: [childId, siblingId] },
+        });
+        assert.equal(beganEvent.status, 201, JSON.stringify(beganEvent.body));
+        const beganId = beganEvent.body.event.id;
+        const attended = await jsonRequest(baseUrl, `${eventsPath}/${beganId}/attendance`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w8a-attend' }),
+          body: { childId, attended: true },
+        });
+        assert.equal(attended.status, 200, JSON.stringify(attended.body));
+        assert.equal(attended.body.attendance.attended, true);
+        assert.equal(attended.body.attendance.recordedByMembershipId, primaryMembershipId);
+
+        // A flaky tap replayed: the same fact, and the moment it was recorded cannot move,
+        // because `recorded_at` is part of what the family said happened.
+        const retried = await jsonRequest(baseUrl, `${eventsPath}/${beganId}/attendance`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w8a-attend' }),
+          body: { childId, attended: true },
+        });
+        assert.equal(retried.body.attendance.recordedAt, attended.body.attendance.recordedAt);
+        const attendanceRows = await client.query(
+          `SELECT COUNT(*)::int AS n FROM family_event_attendance WHERE event_id = $1`,
+          [beganId],
+        );
+        assert.equal(attendanceRows.rows[0].n, 1, 'one child, one attendance record');
+
+        // And the child who did not come is recorded as fully as the one who did: an absence
+        // is not the absence of a record.
+        const absent = await jsonRequest(baseUrl, `${eventsPath}/${beganId}/attendance`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w8a-attend-absent' }),
+          body: { childId: siblingId, attended: false, note: 'كان مريضاً' },
+        });
+        assert.equal(absent.status, 200, JSON.stringify(absent.body));
+        assert.equal(absent.body.attendance.attended, false);
+        assert.equal(absent.body.attendance.note, 'كان مريضاً');
+
+        // A child may not record what happened, even about themselves: presence stated by a
+        // guardian is a family's record, presence inferred from a phone is surveillance.
+        const childRecording = await jsonRequest(baseUrl, `${eventsPath}/${beganId}/attendance`, {
+          method: 'POST',
+          headers: authorized('test-child', { 'idempotency-key': 'w8a-child-attend' }),
+          body: { childId, attended: true },
+        });
+        assert.equal(childRecording.status, 403, JSON.stringify(childRecording.body));
+        assert.equal(childRecording.body.error.code, 'event_forbidden');
+
+        // 13. The handset reads what was recorded about its own child, and nothing about the
+        //     sibling whose absence was recorded in the same event.
+        const afterFacts = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/events${windowQuery}`, {
+          headers: deviceAuth,
+        });
+        const ownEvent = afterFacts.body.events.find((entry) => entry.id === eventId);
+        assert.equal(ownEvent.response.response, 'accepted', 'the change of mind is what the child sees');
+        const ownAttendance = afterFacts.body.events.find((entry) => entry.id === beganId);
+        assert.equal(ownAttendance.attendance.attended, true);
+        assert.equal(
+          JSON.stringify(afterFacts.body).includes('كان مريضاً'),
+          false,
+          "the sibling's absence is not this child's business",
+        );
+
+        // 14. Calling the training off: an act with an author, a reason and a moment - once.
+        const cancelled = await jsonRequest(baseUrl, `${eventsPath}/${siblingEventId}/cancel`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w8a-cancel' }),
+          body: { reason: 'المدرّب مريض' },
+        });
+        assert.equal(cancelled.status, 200, JSON.stringify(cancelled.body));
+        assert.equal(cancelled.body.event.status, 'cancelled');
+        assert.equal(cancelled.body.event.cancelReason, 'المدرّب مريض');
+        assert.equal(cancelled.body.event.cancelledByMembershipId, primaryMembershipId);
+        assert.ok(cancelled.body.event.cancelledAt, 'a cancellation has a moment');
+        assert.equal(cancelled.body.event.audience.length, 1, 'the invitation survives the cancellation');
+        assert.equal(
+          cancelled.body.event.audience[0].response.response,
+          'accepted',
+          'and so does the answer that was given before it was called off',
+        );
+        const cancellingAgain = await jsonRequest(baseUrl, `${eventsPath}/${siblingEventId}/cancel`, {
+          method: 'POST',
+          headers: authorized('test-co', { 'idempotency-key': 'w8a-cancel-2' }),
+          body: { reason: 'وأيضاً' },
+        });
+        assert.equal(cancellingAgain.status, 409, JSON.stringify(cancellingAgain.body));
+        assert.equal(cancellingAgain.body.error.code, 'event_already_cancelled');
+
+        // A cancelled event is not edited, and nothing is recorded about it.
+        const editCancelled = await jsonRequest(baseUrl, `${eventsPath}/${siblingEventId}`, {
+          method: 'PATCH',
+          headers: authorized('test-primary'),
+          body: { version: 1, title: 'شيء آخر' },
+        });
+        assert.equal(editCancelled.status, 409, JSON.stringify(editCancelled.body));
+        assert.equal(editCancelled.body.error.code, 'event_cancelled');
+        const attendanceOnCancelled = await jsonRequest(baseUrl, `${eventsPath}/${siblingEventId}/attendance`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w8a-cancelled-attend' }),
+          body: { childId: siblingId, attended: true },
+        });
+        assert.equal(attendanceOnCancelled.status, 409, JSON.stringify(attendanceOnCancelled.body));
+        assert.equal(attendanceOnCancelled.body.error.code, 'event_cancelled');
+
+        // 15. The calendar still shows what was called off, with the reason - a hidden
+        //     cancellation is a child standing at the door.
+        const afterCancel = await jsonRequest(baseUrl, `${eventsPath}${windowQuery}`, {
+          headers: authorized('test-primary'),
+        });
+        assert.equal(afterCancel.body.events.length, 3);
+        const shown = afterCancel.body.events.find((entry) => entry.id === siblingEventId);
+        assert.equal(shown.status, 'cancelled');
+        assert.equal(shown.cancelReason, 'المدرّب مريض');
+
+        // 16. The child cannot read the family calendar as a guardian, and a handset that
+        //     cannot prove its credential proves nothing at all.
+        const childReading = await jsonRequest(baseUrl, `${eventsPath}${windowQuery}`, {
+          headers: authorized('test-child'),
+        });
+        assert.equal(childReading.status, 403, JSON.stringify(childReading.body));
+        assert.equal(childReading.body.error.code, 'event_forbidden');
+        const wrongCredential = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/events${windowQuery}`, {
+          headers: { authorization: `Device ${'z'.repeat(32)}` },
+        });
+        assert.equal(wrongCredential.status, 403, JSON.stringify(wrongCredential.body));
+        assert.equal(wrongCredential.body.error.code, 'device_credential_rejected');
+
+        // 17. The schema refuses from below what the module refuses from above.
+        //   a. An event that ends before it starts is a typo wearing a schedule's clothes.
+        await assert.rejects(
+          () => client.query(
+            `INSERT INTO family_events (id, family_id, title, starts_at, ends_at, created_by_membership_id)
+             VALUES (gen_random_uuid(), $1, 'قلب الساعة', NOW() + INTERVAL '2 hours', NOW() + INTERVAL '1 hour', $2)`,
+            [familyId, primaryMembershipId],
+          ),
+          /family_events_instant_ordered/,
+        );
+        //   b. A cancellation that is missing its author, its reason or its moment is not a
+        //      cancellation: the three arrive together or not at all.
+        await assert.rejects(
+          () => client.query(`UPDATE family_events SET status = 'cancelled' WHERE id = $1`, [eventId]),
+          /family_events_cancellation_complete/,
+        );
+        //   c. An answer with two authors cannot exist, whoever writes it.
+        await assert.rejects(
+          () => client.query(
+            `UPDATE family_event_responses SET responded_by_membership_id = $1
+              WHERE event_id = $2 AND child_id = $3`,
+            [primaryMembershipId, eventId, childId],
+          ),
+          /family_event_responses_one_author/,
+        );
+        //   d. A reminder outside what a day can hold is refused by the column itself.
+        await assert.rejects(
+          () => client.query(`UPDATE family_events SET reminder_minutes = 99999 WHERE id = $1`, [eventId]),
+          /reminder_minutes/,
+        );
+        //   e. Attendance always has an author: a claim about the past without a person who
+        //      made it is exactly the kind of row this product refuses to hold.
+        await assert.rejects(
+          () => client.query(
+            `UPDATE family_event_attendance SET recorded_by_membership_id = NULL WHERE event_id = $1`,
+            [beganId],
+          ),
+          /not-null/,
+        );
+        //   f. And there is no table of reminders sent, no notification log and no "seen"
+        //      receipt: the wave that can honestly claim delivery will store delivery.
+        const noNotificationTable = await client.query(
+          `SELECT to_regclass('public.family_event_notifications') AS name`,
+        );
+        assert.equal(noNotificationTable.rows[0].name, null);
+
+        // 18. What the family reads last is what storage holds: three plans, one of them
+        //     cancelled with its author, two answers each with exactly one author, and the
+        //     attendance that was actually recorded - by a person, after the fact.
+        const final = await client.query(
+          `SELECT e.status,
+                  (SELECT COUNT(*)::int FROM family_event_responses r WHERE r.event_id = e.id) AS answers,
+                  (SELECT COUNT(*)::int FROM family_event_attendance a WHERE a.event_id = e.id) AS attendance
+             FROM family_events e
+            WHERE e.family_id = $1
+            ORDER BY e.title`,
+          [familyId],
+        );
+        assert.equal(final.rows.length, 3);
+        assert.equal(final.rows.filter((row) => row.status === 'cancelled').length, 1);
+        // The evening carries one answer - the child's own, from their handset - and no
+        // attendance, because it has not happened yet. The began dinner carries two
+        // attendance records and no answers: nobody answers what is already over. And the
+        // cancelled training keeps the one answer it received before it was called off.
+        // Each fact landed on the event it belongs to and nowhere else.
+        assert.deepEqual(
+          final.rows.map((row) => [row.answers, row.attendance]).sort((left, right) => left[0] - right[0]),
+          [[0, 2], [1, 0], [1, 0]],
+          'answers and attendance are per event, and each lands where it was recorded',
+        );
+        const authors = await client.query(
+          `SELECT r.child_id, r.responded_by_device_id, r.responded_by_membership_id
+             FROM family_event_responses r
+            WHERE r.family_id = $1
+            ORDER BY r.child_id`,
+          [familyId],
+        );
+        assert.equal(authors.rows.length, 2);
+        for (const row of authors.rows) {
+          assert.equal(
+            (row.responded_by_device_id == null) !== (row.responded_by_membership_id == null),
+            true,
+            'exactly one author per answer, in storage and not only in the module',
+          );
+        }
+      });
+    } finally {
+      await store.close();
+    }
+  });
+});

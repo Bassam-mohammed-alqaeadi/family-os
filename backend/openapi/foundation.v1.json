@@ -632,6 +632,602 @@
         }
       }
     },
+    "/v1/families/{familyId}/events": {
+      "get": {
+        "operationId": "listFamilyEvents",
+        "summary": "What the family agreed to do together, inside a window",
+        "description": "The events whose start falls inside [from, to), with their audience, the answers given and what has been recorded as attended. Cancelled events are included with their reason and their author: the plan changed, and a child is owed the reason rather than a gap in the calendar.",
+        "tags": [
+          "Family calendar"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "The first instant of the window, inclusive."
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "The end of the window, exclusive. At most 400 days after `from`."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The events in the window.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyEventListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createFamilyEvent",
+        "summary": "States an event and who it is for",
+        "description": "The audience is stated here, in the same request, because an event nobody is invited to is a note rather than a plan. `reminderMinutes` records what the family asked for; this contract never claims a notification was delivered, because nothing here can know that.",
+        "tags": [
+          "Family calendar"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FamilyEventCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The event as stored, with its audience.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyEventResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The event is stated in the past, or longer than a month.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/events/{eventId}": {
+      "patch": {
+        "operationId": "updateFamilyEvent",
+        "summary": "Changes a plan, stating the version that was read",
+        "description": "Two guardians editing the same evening must collide loudly rather than silently overwrite each other, so the body carries the `version` the client read and a mismatch is a 409. A child who has already answered or attended cannot be removed from the audience: their answer is a record with an author, and this route will not delete it silently.",
+        "tags": [
+          "Family calendar"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/EventId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FamilyEventUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The event after the change.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyEventResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "The version is stale, the event was cancelled, or a name being removed has already answered.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The change would end the event before it starts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/events/{eventId}/cancel": {
+      "post": {
+        "operationId": "cancelFamilyEvent",
+        "summary": "Calls an event off, with a reason and an author",
+        "description": "A cancellation is not a deletion: the row keeps its times, its audience and its answers, and gains the membership that called it off, the reason they gave and the moment they gave it. Cancelling twice is refused rather than ignored, because silence would let two guardians each believe they were the one who called it off.",
+        "tags": [
+          "Family calendar"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/EventId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FamilyEventCancelRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The cancelled event.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyEventResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "The event was already cancelled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/events/{eventId}/attendance": {
+      "post": {
+        "operationId": "recordFamilyEventAttendance",
+        "summary": "Records what actually happened, after the event started",
+        "description": "Attendance is a fact with an author and a moment, written by a guardian. Recording it before the event has started is refused (`event_not_started`) because that would be storing a promise about a person, and recording it on a cancelled event is refused because there is nothing to have attended. Nothing in this route infers attendance from a device.",
+        "tags": [
+          "Family calendar"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/EventId"
+          }
+        ,
+            {
+              "$ref": "#/components/parameters/IdempotencyKey"
+            }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FamilyEventAttendanceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The attendance record as stored.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyEventAttendanceResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "The event has not started yet, or it was cancelled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/events/{eventId}/response": {
+      "post": {
+        "operationId": "respondToFamilyEventForChild",
+        "summary": "Records the answer a child gave in words",
+        "description": "For a child who spoke to a guardian instead of tapping their own phone. The author of the stored answer is the guardian who recorded it, and the request cannot say otherwise: exactly one author per answer is a database constraint, not a convention. A `declined` answer is stored with the same weight as an `accepted` one - a calendar that counts only yes is a scoreboard.",
+        "tags": [
+          "Family calendar"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/EventId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FamilyEventResponseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The answer as stored.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyEventResponseRecordResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "The event was cancelled or has already started.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/events": {
+      "get": {
+        "operationId": "listDeviceEvents",
+        "summary": "The child's own invitations, from their own handset",
+        "description": "The events this child is invited to, with their own answer and what has been recorded about their attendance - and deliberately without any sibling's answer, because a child's phone has no business knowing whether their brother said no. No child id appears in the path: the credential issued at pairing is what proves which child is asking.",
+        "tags": [
+          "Family calendar"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "This child's invitations in the window.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceEventListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/events/{eventId}/response": {
+      "post": {
+        "operationId": "respondToDeviceEvent",
+        "summary": "The child's own answer",
+        "description": "A handset answers for the child it is paired with and for nobody else: the child is read from the device row, and the audience row must exist for that child, so answering on a sibling's behalf is refused by storage rather than by a check somebody could remove. The answer window closes when the event starts, at which point the question becomes what attendance records are for.",
+        "tags": [
+          "Family calendar"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          },
+          {
+            "$ref": "#/components/parameters/EventId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FamilyEventResponseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The answer as stored.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyEventResponseRecordResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "The event was cancelled or has already started.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
     "/v1/families/{familyId}/memberships": {
       "get": {
         "operationId": "listFamilyMemberships",
@@ -4280,7 +4876,17 @@
         },
         "description": "The temporary-allow request this decision answers."
       },
-      "TaskId": {
+    "EventId": {
+      "name": "eventId",
+      "in": "path",
+      "required": true,
+      "description": "The event a guardian stated for the family.",
+      "schema": {
+        "type": "string",
+        "format": "uuid"
+      }
+    },
+    "TaskId": {
         "name": "taskId",
         "in": "path",
         "required": true,
@@ -8767,7 +9373,496 @@
             }
           }
         }
+      },
+    "FamilyEventResponseRecord": {
+      "type": "object",
+      "description": "One child's answer, with the author who gave it. Exactly one of the two author fields is present: a handset cannot answer for a family member, and a guardian cannot hide behind a handset.",
+      "required": [
+        "childId",
+        "response",
+        "respondedAt"
+      ],
+      "properties": {
+        "childId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "response": {
+          "type": "string",
+          "enum": [
+            "accepted",
+            "declined"
+          ]
+        },
+        "note": {
+          "type": "string"
+        },
+        "respondedByDeviceId": {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        },
+        "respondedByMembershipId": {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        },
+        "respondedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
       }
+    },
+    "FamilyEventAttendanceRecord": {
+      "type": "object",
+      "description": "What a person recorded about what happened, and who recorded it. Never inferred from a device.",
+      "required": [
+        "childId",
+        "attended",
+        "recordedByMembershipId",
+        "recordedAt"
+      ],
+      "properties": {
+        "childId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "attended": {
+          "type": "boolean"
+        },
+        "note": {
+          "type": "string"
+        },
+        "recordedByMembershipId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "recordedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "FamilyEventAudienceEntry": {
+      "type": "object",
+      "description": "One invited child, with their answer and what was recorded about their attendance. Both are absent until they exist - never defaulted.",
+      "required": [
+        "childId"
+      ],
+      "properties": {
+        "childId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "response": {
+          "oneOf": [
+            {
+              "$ref": "#/components/schemas/FamilyEventResponseRecord"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "attendance": {
+          "oneOf": [
+            {
+              "$ref": "#/components/schemas/FamilyEventAttendanceRecord"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "FamilyEvent": {
+      "type": "object",
+      "description": "A family event. `version` rises on every change: an edit must state the version it read, so two guardians editing the same evening collide loudly instead of silently overwriting each other. A cancelled event keeps its times, its audience and its answers, and gains the author, the reason and the moment of the cancellation.",
+      "required": [
+        "id",
+        "title",
+        "note",
+        "location",
+        "startsAt",
+        "endsAt",
+        "allDay",
+        "status",
+        "version",
+        "createdByMembershipId",
+        "createdAt",
+        "updatedAt",
+        "audience"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "title": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        },
+        "startsAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "endsAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "allDay": {
+          "type": "boolean"
+        },
+        "reminderMinutes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10080,
+          "nullable": true,
+          "description": "A recorded preference. This contract does not claim a notification was delivered."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "scheduled",
+            "cancelled"
+          ]
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "createdByMembershipId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "cancelledByMembershipId": {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        },
+        "cancelledAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+        },
+        "cancelReason": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "audience": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/FamilyEventAudienceEntry"
+          }
+        }
+      }
+    },
+    "FamilyEventListResponse": {
+      "type": "object",
+      "required": [
+        "events"
+      ],
+      "properties": {
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/FamilyEvent"
+          }
+        }
+      }
+    },
+    "FamilyEventResponse": {
+      "type": "object",
+      "required": [
+        "event"
+      ],
+      "properties": {
+        "event": {
+          "$ref": "#/components/schemas/FamilyEvent"
+        }
+      }
+    },
+    "FamilyEventResponseRecordResponse": {
+      "type": "object",
+      "required": [
+        "response"
+      ],
+      "properties": {
+        "response": {
+          "$ref": "#/components/schemas/FamilyEventResponseRecord"
+        }
+      }
+    },
+    "FamilyEventAttendanceResponse": {
+      "type": "object",
+      "required": [
+        "attendance"
+      ],
+      "properties": {
+        "attendance": {
+          "$ref": "#/components/schemas/FamilyEventAttendanceRecord"
+        }
+      }
+    },
+    "FamilyEventCreateRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "startsAt",
+        "endsAt",
+        "childIds"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "location": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "startsAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "endsAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Must be after `startsAt`, and no more than a month after it."
+        },
+        "allDay": {
+          "type": "boolean"
+        },
+        "reminderMinutes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10080,
+          "nullable": true
+        },
+        "childIds": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 24,
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": "At least one child: an event nobody is invited to is a note, not a plan."
+        }
+      }
+    },
+    "FamilyEventUpdateRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version"
+      ],
+      "properties": {
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The version the client read. A mismatch is a 409, not a merge."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "location": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "startsAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "endsAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "allDay": {
+          "type": "boolean"
+        },
+        "reminderMinutes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10080,
+          "nullable": true
+        },
+        "childIds": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 24,
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      }
+    },
+    "FamilyEventCancelRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reason"
+      ],
+      "properties": {
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Why the plan changed. A cancellation a child cannot understand is worse than the cancellation itself."
+        }
+      }
+    },
+    "FamilyEventResponseRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "response"
+      ],
+      "properties": {
+        "response": {
+          "type": "string",
+          "enum": [
+            "accepted",
+            "declined"
+          ]
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 300
+        }
+      }
+    },
+    "FamilyEventAttendanceRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "childId",
+        "attended"
+      ],
+      "properties": {
+        "childId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "attended": {
+          "type": "boolean"
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 300
+        }
+      }
+    },
+    "DeviceEvent": {
+      "type": "object",
+      "description": "One child's own view: the event they are invited to, their own answer, and what was recorded about their attendance. Deliberately without any sibling's answer.",
+      "required": [
+        "id",
+        "title",
+        "note",
+        "location",
+        "startsAt",
+        "endsAt",
+        "allDay",
+        "status"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "title": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        },
+        "startsAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "endsAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "allDay": {
+          "type": "boolean"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "scheduled",
+            "cancelled"
+          ]
+        },
+        "cancelReason": {
+          "type": "string"
+        },
+        "response": {
+          "oneOf": [
+            {
+              "$ref": "#/components/schemas/FamilyEventResponseRecord"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "attendance": {
+          "oneOf": [
+            {
+              "$ref": "#/components/schemas/FamilyEventAttendanceRecord"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "DeviceEventListResponse": {
+      "type": "object",
+      "required": [
+        "events"
+      ],
+      "properties": {
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/DeviceEvent"
+          }
+        }
+      }
+    }
     }
   }
 }

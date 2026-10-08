@@ -1169,3 +1169,182 @@ export function taskDecisionInput(value) {
   const note = body.note === undefined ? '' : (optionalText(body.note, 'note', MAX_TASK_NOTE_LENGTH) ?? '');
   return { decision, note };
 }
+
+// ── W8 — the family calendar ────────────────────────────────────────────────────────────
+
+const MAX_EVENT_TITLE_LENGTH = 120;
+const MAX_EVENT_NOTE_LENGTH = 300;
+const MAX_EVENT_LOCATION_LENGTH = 160;
+const MAX_EVENT_CANCEL_REASON_LENGTH = 200;
+const MAX_EVENT_AUDIENCE = 24;
+const EVENT_REMINDER_MAX_MINUTES = 10080;
+/// How far ahead a family may state an event. A bound, not a policy: it exists so a wrong year
+/// is a refusal naming the field instead of a row that will never be looked at again.
+const MAX_EVENT_HORIZON_MS = 1095 * 24 * 3600 * 1000;
+const EVENT_RESPONSE_VALUES = new Set(['accepted', 'declined']);
+
+/** One instant, as ISO-8601. The parser refuses a date-only value on purpose: "2026-10-08"
+ *  is a day, and an event is at a moment. */
+function requiredInstant(value, field) {
+  if (typeof value !== 'string' || value.trim() === '') {
+    throw new HttpError(400, 'invalid_request', `${field} must be an ISO-8601 instant.`);
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new HttpError(400, 'invalid_request', `${field} must be an ISO-8601 instant.`);
+  }
+  return parsed.toISOString();
+}
+
+function optionalInstant(value, field) {
+  if (value === undefined || value === null) return null;
+  return requiredInstant(value, field);
+}
+
+/** The audience: at least one child, at most the bound the schema also enforces. */
+function eventAudience(value) {
+  if (!Array.isArray(value) || value.length === 0) {
+    throw new HttpError(400, 'invalid_request', 'childIds must name at least one child.');
+  }
+  if (value.length > MAX_EVENT_AUDIENCE) {
+    throw new HttpError(400, 'invalid_request', `childIds may name at most ${MAX_EVENT_AUDIENCE} children.`);
+  }
+  const seen = new Set();
+  const childIds = [];
+  for (const entry of value) {
+    if (typeof entry !== 'string' || !UUID_PATTERN.test(entry)) {
+      throw new HttpError(400, 'invalid_request', 'childIds must contain uuids.');
+    }
+    // A duplicate is a client bug, not a bigger audience; collapsing it keeps the stored
+    // audience equal to what the guardian actually ticked.
+    if (seen.has(entry.toLowerCase())) continue;
+    seen.add(entry.toLowerCase());
+    childIds.push(entry);
+  }
+  return childIds;
+}
+
+/** A guardian states an event: when, what, where, who it is for, and what reminder they want.
+ *  Note what is absent: any notion of who was notified, because this request cannot know. */
+export function eventCreateInput(value, { now = new Date() } = {}) {
+  const body = bodyObject(value);
+  onlyKnownFields(
+    body,
+    new Set(['title', 'note', 'location', 'startsAt', 'endsAt', 'allDay', 'reminderMinutes', 'childIds']),
+  );
+  const title = requiredText(body.title, 'title', { maxLength: MAX_EVENT_TITLE_LENGTH });
+  const note = body.note === undefined ? '' : (optionalText(body.note, 'note', MAX_EVENT_NOTE_LENGTH) ?? '');
+  const location = body.location === undefined ? '' : (optionalText(body.location, 'location', MAX_EVENT_LOCATION_LENGTH) ?? '');
+  const startsAt = requiredInstant(body.startsAt, 'startsAt');
+  const endsAt = requiredInstant(body.endsAt, 'endsAt');
+  if (new Date(endsAt) <= new Date(startsAt)) {
+    throw new HttpError(400, 'invalid_request', 'endsAt must be after startsAt.');
+  }
+  if (new Date(startsAt).getTime() > now.getTime() + MAX_EVENT_HORIZON_MS) {
+    throw new HttpError(400, 'invalid_request', 'startsAt is further away than a calendar should hold.');
+  }
+  if (body.allDay !== undefined && typeof body.allDay !== 'boolean') {
+    throw new HttpError(400, 'invalid_request', 'allDay must be true or false.');
+  }
+  const reminderMinutes =
+    body.reminderMinutes === undefined || body.reminderMinutes === null
+      ? null
+      : requiredWholeNumber(body.reminderMinutes, 'reminderMinutes', 0, EVENT_REMINDER_MAX_MINUTES);
+  return {
+    title,
+    note,
+    location,
+    startsAt,
+    endsAt,
+    allDay: body.allDay === true,
+    reminderMinutes,
+    childIds: eventAudience(body.childIds),
+  };
+}
+
+/** An edit states the version it read. `childIds` is optional: absent means the audience is
+ *  not part of this edit, and present means it is replaced. */
+export function eventUpdateInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(
+    body,
+    new Set(['version', 'title', 'note', 'location', 'startsAt', 'endsAt', 'allDay', 'reminderMinutes', 'childIds']),
+  );
+  const version = requiredWholeNumber(body.version, 'version', 1, 1000000);
+  const changes = {};
+  if (body.title !== undefined) changes.title = requiredText(body.title, 'title', { maxLength: MAX_EVENT_TITLE_LENGTH });
+  if (body.note !== undefined) changes.note = optionalText(body.note, 'note', MAX_EVENT_NOTE_LENGTH) ?? '';
+  if (body.location !== undefined) changes.location = optionalText(body.location, 'location', MAX_EVENT_LOCATION_LENGTH) ?? '';
+  if (body.startsAt !== undefined) changes.startsAt = requiredInstant(body.startsAt, 'startsAt');
+  if (body.endsAt !== undefined) changes.endsAt = requiredInstant(body.endsAt, 'endsAt');
+  if (body.allDay !== undefined) {
+    if (typeof body.allDay !== 'boolean') {
+      throw new HttpError(400, 'invalid_request', 'allDay must be true or false.');
+    }
+    changes.allDay = body.allDay;
+  }
+  if (body.reminderMinutes !== undefined) {
+    changes.reminderMinutes =
+      body.reminderMinutes === null
+        ? null
+        : requiredWholeNumber(body.reminderMinutes, 'reminderMinutes', 0, EVENT_REMINDER_MAX_MINUTES);
+  }
+  if (body.childIds !== undefined) changes.childIds = eventAudience(body.childIds);
+  if (Object.keys(changes).length === 0) {
+    // An edit that changes nothing would still bump the version and wake every reader; a
+    // request with no fields is a client bug, and refusing it keeps the version meaningful.
+    throw new HttpError(400, 'invalid_request', 'An update must change at least one field.');
+  }
+  return { version, changes };
+}
+
+/** Calling an event off: a reason is required, because a cancellation a child cannot
+ *  understand is worse than the cancellation itself. */
+export function eventCancelInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['reason']));
+  const reason = requiredText(body.reason, 'reason', { maxLength: MAX_EVENT_CANCEL_REASON_LENGTH });
+  return { reason };
+}
+
+/** The child's answer - or the guardian's record of it. */
+export function eventResponseInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['response', 'note']));
+  const response = requiredText(body.response, 'response', { maxLength: 16 }).toLowerCase();
+  if (!EVENT_RESPONSE_VALUES.has(response)) {
+    throw new HttpError(400, 'invalid_request', 'response must be accepted or declined.');
+  }
+  const note = body.note === undefined ? '' : (optionalText(body.note, 'note', MAX_EVENT_NOTE_LENGTH) ?? '');
+  return { response, note };
+}
+
+/** What happened, recorded after the fact. */
+export function eventAttendanceInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['childId', 'attended', 'note']));
+  const childId = requiredText(body.childId, 'childId', { maxLength: 64 });
+  if (!UUID_PATTERN.test(childId)) {
+    throw new HttpError(400, 'invalid_request', 'childId must be a uuid.');
+  }
+  if (typeof body.attended !== 'boolean') {
+    throw new HttpError(400, 'invalid_request', 'attended must be true or false.');
+  }
+  const note = body.note === undefined ? '' : (optionalText(body.note, 'note', MAX_EVENT_NOTE_LENGTH) ?? '');
+  return { childId, attended: body.attended, note };
+}
+
+/** The window a calendar read asks for. `from` and `to` are required and bounded: a read
+ *  without a window would ask the server for a family's whole history to draw one week. */
+export function eventRangeQuery(value) {
+  const from = requiredInstant(value?.from, 'from');
+  const to = requiredInstant(value?.to, 'to');
+  if (new Date(to) <= new Date(from)) {
+    throw new HttpError(400, 'invalid_request', 'to must be after from.');
+  }
+  const days = (new Date(to).getTime() - new Date(from).getTime()) / (24 * 3600 * 1000);
+  if (days > 400) {
+    throw new HttpError(400, 'invalid_request', 'A calendar window may span at most 400 days.');
+  }
+  return { from, to };
+}
