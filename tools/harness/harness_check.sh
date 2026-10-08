@@ -65,6 +65,16 @@ BLOCKED="$(field blocked_by)"
 TICK="$(field last_tick)"
 EVIDENCE="$(field evidence)"
 
+# ٠) كل حقل نصّي في الكتلة مُقتبَس إقفالاً صحيحاً — عطب صامت واحد كافٍ ليجعل حالة الآلة غير قابلة للقراءة.
+QUOTED="$(field evidence)"
+if [ -n "$QUOTED" ]; then
+  LAST_RAW="$(printf '%s\n' "$BLOCK" | grep -E '^[[:space:]]*evidence:' | head -1 | sed -e 's/[[:space:]]*$//')"
+  case "$LAST_RAW" in
+    *\") : ;;
+    *) BAD "حقل evidence في كتلة HARNESS-STATE لا يُقتبَس إقفالاً (ينتهي بدون \")." ;;
+  esac
+fi
+
 # ١) الحالة معروفة؟
 if [ -z "$STATUS" ]; then
   BAD "حقل status فارغ."
