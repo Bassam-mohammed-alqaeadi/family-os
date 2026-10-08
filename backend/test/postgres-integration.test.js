@@ -3956,3 +3956,339 @@ test('a family states an evening, a child answers from their own handset, and wh
     }
   });
 });
+
+// ── W9 — THE FAMILY CHAT, AGAINST REAL POSTGRESQL ─────────────────────────────────────────
+//
+// The wave whose subject is the one thing a family writes down about each other. This journey
+// drives the real HTTP surface against the real schema and checks the five claims a family chat
+// has to be able to make without flinching:
+//
+//   1. The room is the permission. A guardian in the household room reads it; the same guardian
+//      is answered as if a room they were not added to did not exist - and a child's handset
+//      cannot reach the household room at all.
+//   2. An author comes from how the request arrived. The handset writes as its own child, the
+//      person as their membership, and neither can write in a room that does not name them.
+//   3. Ordering is the server's, and a resend is the same message: one row, one sequence number,
+//      `replayed: true` - not a second copy of what somebody said.
+//   4. An edit is visible and deletion is a right: the author edits and the old body survives in
+//      the revisions table; only the author deletes, and the deleted row keeps its sequence and
+//      its trace while the text is gone.
+//   5. The schema refuses from below what the module refuses from above - a message from outside
+//      the room and a live message with no text are both stopped by the database itself.
+
+test('a family talks in a room it was added to, the child answers from their own handset, and the trace outlives the text', { skip }, async () => {
+  await withFreshDatabase(async (client) => {
+    await migrate(client);
+    const store = new PostgresFoundationStore({
+      connectionString: withDatabase(DATABASE_URL, client.database),
+    });
+    const app = createApp({
+      store,
+      authVerifier: new TestAuthVerifier(),
+      readiness: () => ({ ready: true, missing: [] }),
+    });
+    try {
+      await withServer(app, async (baseUrl) => {
+        const household = await seedScreenTimeFamily(baseUrl, client, 'w9a');
+        const { familyId, childId, primaryMembershipId, deviceId, deviceAuth } = household;
+        const threadsPath = `/v1/families/${familyId}/chat/threads`;
+        const guardians = await client.query(
+          `SELECT id, target_subject FROM family_memberships
+            WHERE family_id = $1 AND role IN ('primary_guardian', 'co_guardian')`,
+          [familyId],
+        );
+        const coMembershipId = guardians.rows.find((row) => row.target_subject === 'test-co').id;
+
+        // 1. The household room is opened with both guardians in the same transaction: a room
+        //    that existed for a moment with nobody in it is not something a reader can observe.
+        const householdRoom = await jsonRequest(baseUrl, threadsPath, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w9a-household' }),
+          body: { kind: 'family', title: 'العائلة', participantMembershipIds: [coMembershipId] },
+        });
+        assert.equal(householdRoom.status, 201, JSON.stringify(householdRoom.body));
+        const householdThreadId = householdRoom.body.thread.id;
+        assert.equal(householdRoom.body.thread.kind, 'family');
+        assert.deepEqual(
+          householdRoom.body.thread.participants.map((entry) => entry.id).sort(),
+          [primaryMembershipId, coMembershipId].sort(),
+        );
+        assert.equal(householdRoom.body.thread.participants.every((entry) => entry.isSelf === (entry.id === primaryMembershipId)), true);
+
+        // 2. The child's own room names exactly that child, and the guardian who opens it is in
+        //    it. A room that names no child cannot be a child conversation, and one that names
+        //    two is refused - the schema's law and the module's.
+        const twoChildren = await jsonRequest(baseUrl, `/v1/families/${familyId}/children`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w9a-sibling' }),
+          body: { displayName: 'بشير', ageYears: 13, avatarEmoji: '🐯', themeColor: 'teal' },
+        });
+        assert.equal(twoChildren.status, 201);
+        const siblingId = twoChildren.body.child.id;
+        const tooManyChildren = await jsonRequest(baseUrl, threadsPath, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w9a-two-children' }),
+          body: { kind: 'child', title: 'الأولاد', childIds: [childId, siblingId] },
+        });
+        assert.equal(tooManyChildren.status, 422, JSON.stringify(tooManyChildren.body));
+        assert.equal(tooManyChildren.body.error.code, 'chat_child_thread_needs_one_child');
+
+        const childRoom = await jsonRequest(baseUrl, threadsPath, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w9a-child-room' }),
+          body: { kind: 'child', title: 'أماني', childIds: [childId] },
+        });
+        assert.equal(childRoom.status, 201, JSON.stringify(childRoom.body));
+        const childThreadId = childRoom.body.thread.id;
+        assert.deepEqual(
+          childRoom.body.thread.participants.map((entry) => `${entry.kind}:${entry.id}`).sort(),
+          [`child:${childId}`, `membership:${primaryMembershipId}`].sort(),
+        );
+
+        // 3. THE ROOM IS THE PERMISSION. The co-guardian sees the household room and only it:
+        //    the child's room is not hidden by a filter, it is simply not joined.
+        const coRooms = await jsonRequest(baseUrl, threadsPath, { headers: authorized('test-co') });
+        assert.equal(coRooms.status, 200);
+        assert.deepEqual(coRooms.body.threads.map((thread) => thread.id), [householdThreadId]);
+        const coReadsChildRoom = await jsonRequest(
+          baseUrl,
+          `${threadsPath}/${childThreadId}/messages`,
+          { headers: authorized('test-co') },
+        );
+        assert.equal(coReadsChildRoom.status, 404);
+        assert.equal(coReadsChildRoom.body.error.code, 'chat_thread_not_found');
+
+        // 4. The child's handset cannot reach the household room either. It is a member of its
+        //    own room and of nothing else.
+        const deviceRooms = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/chat/threads`, {
+          headers: deviceAuth,
+        });
+        assert.equal(deviceRooms.status, 200);
+        assert.deepEqual(deviceRooms.body.threads.map((thread) => thread.id), [childThreadId]);
+        const deviceReadsHousehold = await jsonRequest(
+          baseUrl,
+          `/v1/devices/${deviceId}/chat/threads/${householdThreadId}/messages`,
+          { headers: deviceAuth },
+        );
+        assert.equal(deviceReadsHousehold.status, 404);
+        const deviceWritesHousehold = await jsonRequest(
+          baseUrl,
+          `/v1/devices/${deviceId}/chat/threads/${householdThreadId}/messages`,
+          {
+            method: 'POST',
+            headers: { ...deviceAuth, 'idempotency-key': 'w9a-device-household' },
+            body: { body: 'مرحباً', clientMessageId: 'device-msg-0001' },
+          },
+        );
+        assert.equal(deviceWritesHousehold.status, 404);
+
+        // 5. The server owns the order, and a resend is the same message: one row, one sequence
+        //    number, `replayed: true`.
+        const firstMessage = await jsonRequest(baseUrl, `${threadsPath}/${householdThreadId}/messages`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w9a-message-1' }),
+          body: { body: 'السلام عليكم', clientMessageId: 'client-message-0001' },
+        });
+        assert.equal(firstMessage.status, 201, JSON.stringify(firstMessage.body));
+        assert.equal(firstMessage.body.message.seq, 1);
+        assert.equal(firstMessage.body.message.authorKind, 'membership');
+        assert.equal(firstMessage.body.message.authorId, primaryMembershipId);
+        assert.equal(firstMessage.body.replayed, false);
+        assert.equal(firstMessage.body.message.readCount, 0);
+
+        const resend = await jsonRequest(baseUrl, `${threadsPath}/${householdThreadId}/messages`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w9a-message-1-retry' }),
+          body: { body: 'السلام عليكم', clientMessageId: 'client-message-0001' },
+        });
+        assert.equal(resend.status, 201);
+        assert.equal(resend.body.replayed, true);
+        assert.equal(resend.body.message.id, firstMessage.body.message.id);
+        assert.equal(resend.body.message.seq, 1);
+        const storedCount = await client.query(
+          `SELECT COUNT(*)::int AS total FROM family_chat_messages WHERE thread_id = $1`,
+          [householdThreadId],
+        );
+        assert.equal(storedCount.rows[0].total, 1, 'a resend must not store a second message');
+
+        // 6. A receipt is aggregate and excludes the author. The co-guardian reads, marks
+        //    themselves read, and the message's readCount becomes 1 - the author never counts.
+        const coReads = await jsonRequest(baseUrl, `${threadsPath}/${householdThreadId}/messages`, {
+          headers: authorized('test-co'),
+        });
+        assert.equal(coReads.status, 200);
+        assert.equal(coReads.body.messages.length, 1);
+        assert.equal(coReads.body.messages[0].readCount, 0);
+        assert.equal(coReads.body.readState.lastReadSeq, 0);
+        const coMarksRead = await jsonRequest(baseUrl, `${threadsPath}/${householdThreadId}/reads`, {
+          method: 'POST',
+          headers: authorized('test-co', { 'idempotency-key': 'w9a-read-1' }),
+          body: { readSeq: 1 },
+        });
+        assert.equal(coMarksRead.status, 200);
+        assert.equal(coMarksRead.body.readState.lastReadSeq, 1);
+        const afterRead = await jsonRequest(baseUrl, `${threadsPath}/${householdThreadId}/messages`, {
+          headers: authorized('test-primary'),
+        });
+        assert.equal(afterRead.body.messages[0].readCount, 1);
+        assert.equal(afterRead.body.threads, undefined);
+
+        // A read mark cannot pass the newest message: the server refuses rather than clamps.
+        const readAhead = await jsonRequest(baseUrl, `${threadsPath}/${householdThreadId}/reads`, {
+          method: 'POST',
+          headers: authorized('test-co', { 'idempotency-key': 'w9a-read-ahead' }),
+          body: { readSeq: 900 },
+        });
+        assert.equal(readAhead.status, 409);
+        assert.equal(readAhead.body.error.code, 'chat_read_ahead');
+        const unchanged = await client.query(
+          `SELECT last_read_seq FROM family_chat_thread_members
+            WHERE thread_id = $1 AND participant_id = $2`,
+          [householdThreadId, coMembershipId],
+        );
+        assert.equal(Number(unchanged.rows[0].last_read_seq), 1);
+
+        // 7. Only the author edits, and the edit states the revision it read. The co-guardian is
+        //    in the room and is still refused - membership is not authorship.
+        const foreignEdit = await jsonRequest(
+          baseUrl,
+          `${threadsPath}/${householdThreadId}/messages/${firstMessage.body.message.id}`,
+          {
+            method: 'PATCH',
+            headers: authorized('test-co'),
+            body: { body: 'شيء آخر', revision: 1 },
+          },
+        );
+        assert.equal(foreignEdit.status, 403);
+        assert.equal(foreignEdit.body.error.code, 'chat_not_author');
+
+        const staleEdit = await jsonRequest(
+          baseUrl,
+          `${threadsPath}/${householdThreadId}/messages/${firstMessage.body.message.id}`,
+          {
+            method: 'PATCH',
+            headers: authorized('test-primary'),
+            body: { body: 'وعليكم السلام ورحمة الله', revision: 2 },
+          },
+        );
+        assert.equal(staleEdit.status, 409);
+        assert.equal(staleEdit.body.error.code, 'chat_message_stale_revision');
+
+        const edited = await jsonRequest(
+          baseUrl,
+          `${threadsPath}/${householdThreadId}/messages/${firstMessage.body.message.id}`,
+          {
+            method: 'PATCH',
+            headers: authorized('test-primary'),
+            body: { body: 'وعليكم السلام ورحمة الله', revision: 1 },
+          },
+        );
+        assert.equal(edited.status, 200, JSON.stringify(edited.body));
+        assert.equal(edited.body.message.revision, 2);
+        assert.equal(edited.body.message.body, 'وعليكم السلام ورحمة الله');
+        assert.notEqual(edited.body.message.editedAt, null);
+        // The body it replaced is kept, so the edit is provable rather than a silent rewrite.
+        const revisions = await client.query(
+          `SELECT revision, body, edited_by_kind, edited_by_id
+             FROM family_chat_message_revisions WHERE message_id = $1 ORDER BY revision`,
+          [firstMessage.body.message.id],
+        );
+        assert.deepEqual(revisions.rows.map((row) => [row.revision, row.body, row.edited_by_kind, row.edited_by_id]), [
+          [1, 'السلام عليكم', 'membership', primaryMembershipId],
+        ]);
+
+        // 8. The child speaks in their own room, from the handset that proves which child it is.
+        const childMessage = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/chat/threads/${childThreadId}/messages`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w9a-child-message' },
+          body: { body: 'وصلتُ إلى البيت', clientMessageId: 'child-message-0001' },
+        });
+        assert.equal(childMessage.status, 201, JSON.stringify(childMessage.body));
+        assert.equal(childMessage.body.message.authorKind, 'child');
+        assert.equal(childMessage.body.message.authorId, childId);
+        assert.equal(childMessage.body.message.seq, 1);
+
+        // 9. Only the author deletes their own words - and the guardian who is in the room is
+        //    still refused. This is the refusal that makes this product different.
+        const guardianDeletesChildWords = await jsonRequest(
+          baseUrl,
+          `${threadsPath}/${childThreadId}/messages/${childMessage.body.message.id}/deletion`,
+          {
+            method: 'POST',
+            headers: authorized('test-primary', { 'idempotency-key': 'w9a-guardian-delete' }),
+          },
+        );
+        assert.equal(guardianDeletesChildWords.status, 403);
+        assert.equal(guardianDeletesChildWords.body.error.code, 'chat_not_author');
+
+        const childDeletesOwn = await jsonRequest(
+          baseUrl,
+          `/v1/devices/${deviceId}/chat/threads/${childThreadId}/messages/${childMessage.body.message.id}/deletion`,
+          {
+            method: 'POST',
+            headers: { ...deviceAuth, 'idempotency-key': 'w9a-child-delete' },
+          },
+        );
+        assert.equal(childDeletesOwn.status, 200, JSON.stringify(childDeletesOwn.body));
+        assert.equal(childDeletesOwn.body.message.body, null);
+        assert.equal(childDeletesOwn.body.message.seq, 1);
+        assert.equal(childDeletesOwn.body.message.deletedByKind, 'child');
+        assert.equal(childDeletesOwn.body.message.deletedById, childId);
+        // The text is gone from the row itself, and the trace is what remains.
+        const deletedRow = await client.query(
+          `SELECT body, seq, deleted_at, deleted_by_id FROM family_chat_messages WHERE id = $1`,
+          [childMessage.body.message.id],
+        );
+        assert.equal(deletedRow.rows[0].body, '');
+        assert.equal(Number(deletedRow.rows[0].seq), 1);
+        assert.notEqual(deletedRow.rows[0].deleted_at, null);
+        assert.equal(deletedRow.rows[0].deleted_by_id, childId);
+        // And the room still shows the shape of the conversation, with the text gone.
+        const childRoomAfter = await jsonRequest(
+          baseUrl,
+          `/v1/devices/${deviceId}/chat/threads/${childThreadId}/messages`,
+          { headers: deviceAuth },
+        );
+        assert.equal(childRoomAfter.body.messages.length, 1);
+        assert.equal(childRoomAfter.body.messages[0].deleted, true);
+        assert.equal(childRoomAfter.body.messages[0].body, null);
+
+        // 10. The schema refuses from below what the module refuses from above: a message whose
+        //     author is not a member of the thread, and a live message with no text.
+        await assert.rejects(
+          client.query(
+            `INSERT INTO family_chat_messages
+               (id, family_id, thread_id, seq, author_kind, author_id, body, client_message_id)
+             VALUES (gen_random_uuid(), $1, $2, 2, 'membership', $3, 'من خارج الغرفة', 'outside-message-1')`,
+            [familyId, childThreadId, coMembershipId],
+          ),
+          (error) => error.code === '23503' && /family_chat_messages_author_fk/.test(error.constraint),
+        );
+        await assert.rejects(
+          client.query(
+            `UPDATE family_chat_messages SET body = '' WHERE id = $1`,
+            [firstMessage.body.message.id],
+          ),
+          (error) => error.code === '23514' && /family_chat_messages_lifecycle_complete/.test(error.constraint),
+        );
+
+        // 11. Every act left a trace in the audit envelope, including the deletion - a family
+        //     that cannot see that something was removed has not been told the truth.
+        const audited = await client.query(
+          `SELECT event_type, COUNT(*)::int AS total FROM family_audit_events
+            WHERE family_id = $1 AND event_type LIKE 'family.chat_%'
+            GROUP BY event_type ORDER BY event_type`,
+          [familyId],
+        );
+        const byType = new Map(audited.rows.map((row) => [row.event_type, row.total]));
+        assert.ok((byType.get('family.chat_thread_created') ?? 0) >= 2);
+        assert.ok((byType.get('family.chat_message_sent') ?? 0) >= 2);
+        assert.equal(byType.get('family.chat_message_edited') ?? 0, 1);
+        assert.equal(byType.get('family.chat_message_deleted') ?? 0, 1);
+        assert.equal(byType.get('family.chat_read_marked') ?? 0, 1);
+      });
+    } finally {
+      await store.close();
+    }
+  });
+});

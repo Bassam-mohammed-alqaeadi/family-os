@@ -1348,3 +1348,154 @@ export function eventRangeQuery(value) {
   }
   return { from, to };
 }
+
+// ── W9 — the family chat ────────────────────────────────────────────────────────────────
+//
+// The inputs here hold the two honesty rules this wave cannot afford to lose at the door:
+// a message body is text the family wrote (so control characters are refused but lines and
+// tabs are kept), and a client message id is a name the CLIENT gives its own message - which
+// is why it has a shape the server can trust to be an identifier and not a fragment of
+// content. Everything else about authorship is decided by how the request arrived, never by
+// a field in these bodies.
+
+const MAX_CHAT_TITLE_LENGTH = 120;
+const MAX_CHAT_BODY_LENGTH = 2000;
+const MAX_CHAT_PARTICIPANTS = 24;
+const MAX_CHAT_PAGE = 200;
+const CHAT_THREAD_KINDS = new Set(['family', 'child']);
+const CHAT_PARTICIPANT_KINDS = new Set(['membership', 'child']);
+/// A client-generated identifier for the sender's own message: long enough to be unique and
+/// short enough to be stored. It is the field that makes a resend the same message.
+const CLIENT_MESSAGE_ID_PATTERN = /^[A-Za-z0-9_.:-]{8,64}$/;
+
+/** Text a person wrote, with its lines intact. Tabs, newlines and carriage returns survive;
+ *  every other control character is refused, because a message that can carry them can carry
+ *  a screen's worth of invisible damage into a family's history. */
+function chatBody(value, field) {
+  if (typeof value !== 'string') {
+    throw new HttpError(400, 'invalid_request', `${field} is required.`);
+  }
+  const normalized = value.replace(/\r\n?/g, '\n').trim();
+  if (!normalized || normalized.length > MAX_CHAT_BODY_LENGTH) {
+    throw new HttpError(
+      400,
+      'invalid_request',
+      `${field} must be between 1 and ${MAX_CHAT_BODY_LENGTH} characters.`,
+    );
+  }
+  if (/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/.test(normalized)) {
+    throw new HttpError(400, 'invalid_request', `${field} contains characters a message cannot carry.`);
+  }
+  return normalized;
+}
+
+function clientMessageId(value) {
+  if (typeof value !== 'string' || !CLIENT_MESSAGE_ID_PATTERN.test(value)) {
+    throw new HttpError(
+      400,
+      'invalid_request',
+      'clientMessageId must be 8 to 64 characters of letters, digits, dot, colon, dash or underscore.',
+    );
+  }
+  return value;
+}
+
+/** A list of uuids, deduplicated, bounded. A duplicate is a client bug, not a bigger audience. */
+function uuidList(value, field, { maxItems }) {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value)) {
+    throw new HttpError(400, 'invalid_request', `${field} must be a list.`);
+  }
+  if (value.length > maxItems) {
+    throw new HttpError(400, 'invalid_request', `${field} may name at most ${maxItems} people.`);
+  }
+  const seen = new Set();
+  const ids = [];
+  for (const entry of value) {
+    if (typeof entry !== 'string' || !UUID_PATTERN.test(entry)) {
+      throw new HttpError(400, 'invalid_request', `${field} must contain uuids.`);
+    }
+    if (seen.has(entry.toLowerCase())) continue;
+    seen.add(entry.toLowerCase());
+    ids.push(entry);
+  }
+  return ids;
+}
+
+/** Opening a conversation: what kind of room, what to call it, and who is in it from the first
+ *  moment. `kind` is required because the two rooms have different laws - the household room is
+ *  guardians, a child's room names exactly one child. */
+export function chatThreadCreateInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['kind', 'title', 'participantMembershipIds', 'childIds']));
+  const kind = requiredText(body.kind, 'kind', { maxLength: 16 }).toLowerCase();
+  if (!CHAT_THREAD_KINDS.has(kind)) {
+    throw new HttpError(400, 'invalid_request', 'kind must be family or child.');
+  }
+  const title =
+    body.title === undefined || body.title === null ? '' : optionalText(body.title, 'title', MAX_CHAT_TITLE_LENGTH) ?? '';
+  return {
+    kind,
+    title,
+    participantMembershipIds: uuidList(body.participantMembershipIds, 'participantMembershipIds', {
+      maxItems: MAX_CHAT_PARTICIPANTS,
+    }),
+    childIds: uuidList(body.childIds, 'childIds', { maxItems: MAX_CHAT_PARTICIPANTS }),
+  };
+}
+
+/** Adding one participant to an existing room. */
+export function chatThreadMemberInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['participantKind', 'participantId']));
+  const participantKind = requiredText(body.participantKind, 'participantKind', { maxLength: 16 }).toLowerCase();
+  if (!CHAT_PARTICIPANT_KINDS.has(participantKind)) {
+    throw new HttpError(400, 'invalid_request', 'participantKind must be membership or child.');
+  }
+  const participantId = requireUuid(body.participantId, 'participantId');
+  return { participantKind, participantId };
+}
+
+/** What a person wrote, and the client's own name for this message. */
+export function chatMessageInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['body', 'clientMessageId']));
+  return {
+    body: chatBody(body.body, 'body'),
+    clientMessageId: clientMessageId(body.clientMessageId),
+  };
+}
+
+/** An edit states the revision it read, so two editors collide loudly instead of one silently
+ *  replacing the other's words. */
+export function chatMessageEditInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['body', 'revision']));
+  return {
+    body: chatBody(body.body, 'body'),
+    revision: requiredWholeNumber(body.revision, 'revision', 1, 1000000),
+  };
+}
+
+/** How far the caller has read. It is their own statement, and the module refuses one that
+ *  runs past the newest message in the thread. */
+export function chatReadInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['readSeq']));
+  return { readSeq: requiredWholeNumber(body.readSeq, 'readSeq', 0, Number.MAX_SAFE_INTEGER) };
+}
+
+/** The page a message read asks for. `afterSeq` is what makes an incremental read possible
+ *  without a push transport; the bound is what keeps one screen from asking for a family's
+ *  entire history. */
+export function chatMessageQuery(value) {
+  const afterSeq =
+    value?.afterSeq === undefined || value?.afterSeq === ''
+      ? 0
+      : requiredWholeNumber(Number(value.afterSeq), 'afterSeq', 0, Number.MAX_SAFE_INTEGER);
+  const limit =
+    value?.limit === undefined || value?.limit === ''
+      ? undefined
+      : requiredWholeNumber(Number(value.limit), 'limit', 1, MAX_CHAT_PAGE);
+  return { afterSeq, limit };
+}

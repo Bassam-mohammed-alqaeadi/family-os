@@ -11,6 +11,7 @@ import { screenTimeFor } from './screen-time.js';
 import { webFilterFor } from './web-filter.js';
 import { tasksFor } from './tasks.js';
 import { calendarFor } from './calendar.js';
+import { familyChatFor } from './family-chat.js';
 import { capabilityMatches } from './store/postgres-foundation-store.js';
 import {
     claimDevicePairingInput,
@@ -56,6 +57,12 @@ import {
     eventResponseInput,
     eventAttendanceInput,
     eventRangeQuery,
+    chatThreadCreateInput,
+    chatThreadMemberInput,
+    chatMessageInput,
+    chatMessageEditInput,
+    chatReadInput,
+    chatMessageQuery,
 } from './validation.js';
 
 function requestFingerprint({ action, principal, input }) {
@@ -116,6 +123,12 @@ export function createApp({
     // law that matters here: what a phone may claim about a person is decided in the module,
     // not in a route - attendance is recorded by a guardian after the fact, never inferred.
     calendar = calendarFor(store, { credentialMatches: capabilityMatches }),
+    // W9. The family chat - the one surface where a family writes things down. Same
+    // arrangement as every wave before it (one credential check, data access through the
+    // store's published helpers, no decision in the route layer), and one law that only this
+    // wave has: the room is the permission. Nothing in this file decides who may read a
+    // thread; a caller with no member row reads `chat_thread_not_found`, from the module.
+    familyChat = familyChatFor(store, { credentialMatches: capabilityMatches }),
     preAuthenticationRateLimit = {},
     protectedRateLimit = {},
 }) {
@@ -1844,6 +1857,393 @@ export function createApp({
                     action: 'family.event.response.device',
                     principal: request.principal ?? { subject: deviceId },
                     input: { deviceId, eventId, response: answer, note },
+                }),
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // ── W9 — the family chat ────────────────────────────────────────────────────────────
+    //
+    // The wave the master plan calls the biggest security risk in the domain, and every route
+    // below shows why the risk is not the text: the room is the permission, the author comes
+    // from how the request arrived rather than from a field in it, the sequence number is the
+    // server's, an edit states the revision it read, and a deletion keeps the trace while
+    // losing the text. The only receipt stated here is `readCount`, computed from participants'
+    // own read marks - there is no delivery claim, because there is no transport to prove one.
+
+    // The rooms the caller is in. A guardian sees the conversations they were added to and no
+    // others: the module joins on the member row, so "not in the room" is not a filter that
+    // could be forgotten - it is a row that does not exist.
+    app.get(
+        '/v1/families/:familyId/chat/threads',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            requireNoQueryParameters(request.query);
+            const result = await familyChat.listThreads({
+                principal: request.principal,
+                familyId,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // Opening a conversation. The participants are written by the same transaction as the room,
+    // because a room that exists for a moment with nobody in it is not something any reader
+    // should ever be able to observe.
+    app.post(
+        '/v1/families/:familyId/chat/threads',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            requireNoQueryParameters(request.query);
+            const input = chatThreadCreateInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await familyChat.createThread({
+                principal: request.principal,
+                familyId,
+                ...input,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'family.chat.thread.create',
+                    principal: request.principal,
+                    input: { familyId, ...input },
+                }),
+            });
+            response.status(201).json(result);
+        }),
+    );
+
+    // Adding one participant - the act that decides who can be reached. The guardian changing a
+    // room must be in it, and only people of this family can be added: a chat that can reach
+    // outside the family is the thing doc 40 forbids by name.
+    app.post(
+        '/v1/families/:familyId/chat/threads/:threadId/members',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const threadId = requireUuid(request.params.threadId, 'threadId');
+            requireNoQueryParameters(request.query);
+            const input = chatThreadMemberInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await familyChat.addThreadMember({
+                principal: request.principal,
+                familyId,
+                threadId,
+                ...input,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'family.chat.member.add',
+                    principal: request.principal,
+                    input: { familyId, threadId, ...input },
+                }),
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // What was said, from the caller's own point of view. `afterSeq` is the incremental read:
+    // without a push transport, a client asks for what it has not seen. A caller with no member
+    // row on this thread is answered exactly as if the thread did not exist.
+    app.get(
+        '/v1/families/:familyId/chat/threads/:threadId/messages',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const threadId = requireUuid(request.params.threadId, 'threadId');
+            const { afterSeq, limit } = chatMessageQuery(request.query);
+            const result = await familyChat.listMessages({
+                principal: request.principal,
+                familyId,
+                threadId,
+                afterSeq,
+                limit,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // Saying something. The author is the caller's own membership - no field in the body can
+    // name anybody - and the sequence is taken from the thread's own counter inside this
+    // transaction, so ordering belongs to the server.
+    app.post(
+        '/v1/families/:familyId/chat/threads/:threadId/messages',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const threadId = requireUuid(request.params.threadId, 'threadId');
+            requireNoQueryParameters(request.query);
+            const { body, clientMessageId } = chatMessageInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await familyChat.sendMessage({
+                principal: request.principal,
+                familyId,
+                threadId,
+                body,
+                clientMessageId,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'family.chat.message.send',
+                    principal: request.principal,
+                    input: { familyId, threadId, body, clientMessageId },
+                }),
+            });
+            response.status(201).json(result);
+        }),
+    );
+
+    // An edit states the revision it read and keeps the body it replaced, so a message that
+    // changed is visible as changed. Only the author edits their own words.
+    app.patch(
+        '/v1/families/:familyId/chat/threads/:threadId/messages/:messageId',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const threadId = requireUuid(request.params.threadId, 'threadId');
+            const messageId = requireUuid(request.params.messageId, 'messageId');
+            requireNoQueryParameters(request.query);
+            const { body, revision } = chatMessageEditInput(request.body);
+            const result = await familyChat.editMessage({
+                principal: request.principal,
+                familyId,
+                threadId,
+                messageId,
+                body,
+                revision,
+                correlationId: request.correlationId,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // Deleting your own message: the text and the stored earlier versions go, the row, the
+    // sequence and the trace stay. Nobody deletes somebody else's words here - not even a
+    // guardian, which is the whole point.
+    app.post(
+        '/v1/families/:familyId/chat/threads/:threadId/messages/:messageId/deletion',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const threadId = requireUuid(request.params.threadId, 'threadId');
+            const messageId = requireUuid(request.params.messageId, 'messageId');
+            requireNoQueryParameters(request.query);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await familyChat.deleteMessage({
+                principal: request.principal,
+                familyId,
+                threadId,
+                messageId,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'family.chat.message.delete',
+                    principal: request.principal,
+                    input: { familyId, threadId, messageId },
+                }),
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // "I have read up to here" - the participant's own statement about themselves, which is the
+    // only kind of receipt this surface accepts. It cannot run past the newest message, and it
+    // only ever moves forward.
+    app.post(
+        '/v1/families/:familyId/chat/threads/:threadId/reads',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const threadId = requireUuid(request.params.threadId, 'threadId');
+            requireNoQueryParameters(request.query);
+            const { readSeq } = chatReadInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await familyChat.markThreadRead({
+                principal: request.principal,
+                familyId,
+                threadId,
+                readSeq,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'family.chat.read',
+                    principal: request.principal,
+                    input: { familyId, threadId, readSeq },
+                }),
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // The child's own handset: the rooms their child is in. No child id in the URL - the
+    // credential issued at pairing is what proves which child is asking, the same decision
+    // W5, W6, W7 and W8 each recorded for their own surface.
+    app.get(
+        '/v1/devices/:deviceId/chat/threads',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            requireNoQueryParameters(request.query);
+            const result = await familyChat.listThreadsForDevice({
+                deviceId,
+                deviceCredential: request.deviceCredential,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // The child reads their own conversation. The member row that must exist is the child's own,
+    // so a handset cannot read a sibling's room even if it guessed the thread id.
+    app.get(
+        '/v1/devices/:deviceId/chat/threads/:threadId/messages',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            const threadId = requireUuid(request.params.threadId, 'threadId');
+            const { afterSeq, limit } = chatMessageQuery(request.query);
+            const result = await familyChat.listMessages({
+                deviceId,
+                deviceCredential: request.deviceCredential,
+                threadId,
+                afterSeq,
+                limit,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // The child speaks. The author is the child the credential proves, never a child id typed
+    // into a body, and the room must already name them.
+    app.post(
+        '/v1/devices/:deviceId/chat/threads/:threadId/messages',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            const threadId = requireUuid(request.params.threadId, 'threadId');
+            requireNoQueryParameters(request.query);
+            const { body, clientMessageId } = chatMessageInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await familyChat.sendMessage({
+                deviceId,
+                deviceCredential: request.deviceCredential,
+                threadId,
+                body,
+                clientMessageId,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'family.chat.message.send.device',
+                    principal: request.principal ?? { subject: deviceId },
+                    input: { deviceId, threadId, body, clientMessageId },
+                }),
+            });
+            response.status(201).json(result);
+        }),
+    );
+
+    // The child changes or removes their OWN words, from their own handset. Same law as the
+    // guardian surface and the same author check: the handset writes as its child, so a message
+    // somebody else wrote is refused with `chat_not_author` however the request arrives.
+    app.patch(
+        '/v1/devices/:deviceId/chat/threads/:threadId/messages/:messageId',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            const threadId = requireUuid(request.params.threadId, 'threadId');
+            const messageId = requireUuid(request.params.messageId, 'messageId');
+            requireNoQueryParameters(request.query);
+            const { body, revision } = chatMessageEditInput(request.body);
+            const result = await familyChat.editMessage({
+                deviceId,
+                deviceCredential: request.deviceCredential,
+                threadId,
+                messageId,
+                body,
+                revision,
+                correlationId: request.correlationId,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    app.post(
+        '/v1/devices/:deviceId/chat/threads/:threadId/messages/:messageId/deletion',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            const threadId = requireUuid(request.params.threadId, 'threadId');
+            const messageId = requireUuid(request.params.messageId, 'messageId');
+            requireNoQueryParameters(request.query);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await familyChat.deleteMessage({
+                deviceId,
+                deviceCredential: request.deviceCredential,
+                threadId,
+                messageId,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'family.chat.message.delete.device',
+                    principal: request.principal ?? { subject: deviceId },
+                    input: { deviceId, threadId, messageId },
+                }),
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // The child's own read mark, from their own handset.
+    app.post(
+        '/v1/devices/:deviceId/chat/threads/:threadId/reads',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            const threadId = requireUuid(request.params.threadId, 'threadId');
+            requireNoQueryParameters(request.query);
+            const { readSeq } = chatReadInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await familyChat.markThreadRead({
+                deviceId,
+                deviceCredential: request.deviceCredential,
+                threadId,
+                readSeq,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'family.chat.read.device',
+                    principal: request.principal ?? { subject: deviceId },
+                    input: { deviceId, threadId, readSeq },
                 }),
             });
             response.status(200).json(result);

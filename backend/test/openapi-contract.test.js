@@ -188,6 +188,17 @@ test('every protected operation declares OIDC security, rate limiting and idempo
       // a response to an invitation that was never issued.
       '/v1/devices/{deviceId}/events',
       '/v1/devices/{deviceId}/events/{eventId}/response',
+      // W9 adds four, and they are the same decision a fifth time - with the one distinction
+      // this wave is built on, which is that the subject is now a room rather than a child.
+      // The handset lists the conversations its child is in, reads one, writes in one, and
+      // states how far it has read. None of the four takes a child id, because the credential
+      // issued at pairing is what proves which child is speaking; and none of them can reach a
+      // room the child is not a member of, because the member row is what the read joins on.
+      '/v1/devices/{deviceId}/chat/threads',
+      '/v1/devices/{deviceId}/chat/threads/{threadId}/messages',
+      '/v1/devices/{deviceId}/chat/threads/{threadId}/messages/{messageId}',
+      '/v1/devices/{deviceId}/chat/threads/{threadId}/messages/{messageId}/deletion',
+      '/v1/devices/{deviceId}/chat/threads/{threadId}/reads',
     ]);
     const expectedSecurity = deviceAuthenticated.has(path)
       ? [{ oidcBearer: [] }, { deviceCredential: [] }]

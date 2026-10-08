@@ -33,6 +33,10 @@
     {
       "name": "Location",
       "description": "Device-reported position, its honest acquisition state, and boundary crossings."
+    },
+    {
+      "name": "Family chat",
+      "description": "Rooms as permissions: who is in a conversation is what decides who can read it, a message always has an author, and the only receipt stated is how many other participants have read up to a message."
     }
   ],
   "paths": {
@@ -4750,6 +4754,907 @@
           }
         }
       }
+    },
+    "/v1/families/{familyId}/chat/threads": {
+      "get": {
+        "operationId": "listFamilyChatThreads",
+        "summary": "The conversations this guardian is in",
+        "description": "Every room the caller is a participant of, with its participants, its newest message, how many unread messages it holds and how many other participants have read that newest message. A guardian is not shown a room they are not in: the read joins on the caller's own member row, so \"not in the room\" is not a filter that could be forgotten.",
+        "tags": [
+          "Family chat"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The rooms this participant is in, most recently active first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatThreadListResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createFamilyChatThread",
+        "summary": "Opens a conversation and names who is in it",
+        "description": "The participants are written in the same transaction as the room, so no reader can observe a room that exists with nobody in it. `kind` decides the law: a `family` room holds guardians, a `child` room names exactly one child of this family plus at least one guardian. A child is never a participant of a room that does not name them.",
+        "tags": [
+          "Family chat"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatThreadCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The room as stored, with its participants.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatThreadResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/chat/threads/{threadId}/members": {
+      "post": {
+        "operationId": "addFamilyChatThreadMember",
+        "summary": "Adds one participant to a conversation",
+        "description": "The guardian making the change must be in the room, and only a guardian or a child of this family can be added - there is no way to reach a person outside the family. Adding a child is how a child conversation is created and is allowed exactly once per room: a child is named by their own conversation and no other.",
+        "tags": [
+          "Family chat"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ThreadId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatThreadMemberRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The room with its participants after the addition.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatThreadResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/chat/threads/{threadId}/messages": {
+      "get": {
+        "operationId": "listFamilyChatMessages",
+        "summary": "What was said in a conversation, from after a sequence number",
+        "description": "Messages are ordered by the server's own sequence number, never by a client clock. A deleted message is returned as a tombstone: its sequence and the trace of who deleted it survive while the text does not. `readCount` counts other participants who have marked themselves read up to a message - the author is never counted, and no delivery is ever claimed.",
+        "tags": [
+          "Family chat"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ThreadId"
+          },
+          {
+            "name": "afterSeq",
+            "in": "query",
+            "required": false,
+            "description": "Return messages after this sequence number. The incremental read: without a push transport a client asks for what it has not seen.",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "How many messages to return, oldest first after `afterSeq`. At most 200.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of messages, oldest first, with the caller's own read state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatMessageListResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      },
+      "post": {
+        "operationId": "sendFamilyChatMessage",
+        "summary": "Says something in a conversation",
+        "description": "The author is the caller's own membership; no field in this request names an author, so no request can speak as somebody else. The sequence number is allocated from the thread's own counter inside this transaction. A resend carrying the same `clientMessageId` returns the message that already exists, with the sequence it already has, and is not an error.",
+        "tags": [
+          "Family chat"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ThreadId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatMessageSendRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The stored message, and whether this was a resend.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatMessageSendResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/chat/threads/{threadId}/messages/{messageId}": {
+      "patch": {
+        "operationId": "editFamilyChatMessage",
+        "summary": "Changes a message you wrote, stating the revision you read",
+        "description": "Only the author edits their own words. The edit states the revision it read, the body it replaced is kept in the revisions table, and `revision` and `editedAt` move together - a reader can always see that a message changed and when. A deleted message is not edited.",
+        "tags": [
+          "Family chat"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ThreadId"
+          },
+          {
+            "$ref": "#/components/parameters/MessageId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatMessageEditRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The message as it now stands.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatMessageResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/chat/threads/{threadId}/messages/{messageId}/deletion": {
+      "post": {
+        "operationId": "deleteFamilyChatMessage",
+        "summary": "Deletes a message you wrote, keeping the trace",
+        "description": "Only the author deletes their own words - a guardian deleting a child's message would be rewriting the child. The body and the stored earlier versions are removed, while the row, its sequence and who deleted it when remain: a hole in the numbering would make the thread untrustworthy, and a product that keeps the text has not deleted anything.",
+        "tags": [
+          "Family chat"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ThreadId"
+          },
+          {
+            "$ref": "#/components/parameters/MessageId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The deleted message: its sequence and its trace, without its text.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatMessageResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/chat/threads/{threadId}/reads": {
+      "post": {
+        "operationId": "markFamilyChatThreadRead",
+        "summary": "States how far you have read",
+        "description": "A participant's own statement about themselves, which is the only kind of receipt this surface accepts. The mark cannot pass the newest message in the thread, and it only ever moves forward, so a stale client cannot un-read anything.",
+        "tags": [
+          "Family chat"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ThreadId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatReadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The caller's read state after the mark.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatReadMarkResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/chat/threads": {
+      "get": {
+        "operationId": "readDeviceChatThreads",
+        "summary": "The conversations this child is in, from their own handset",
+        "description": "No child id is taken from the request: the credential issued at pairing is what proves which child is asking, so a handset cannot list a sibling's rooms even by guessing. The rooms are the ones whose member rows name this child.",
+        "tags": [
+          "Family chat"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The rooms this child is in, most recently active first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatThreadListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/chat/threads/{threadId}/messages": {
+      "get": {
+        "operationId": "readDeviceChatMessages",
+        "summary": "What was said in a room, from the child's own handset",
+        "description": "The member row that must exist is the child's own, so a handset reads only the conversations that name its child. Messages are ordered by the server's sequence and a deleted message keeps its place as a tombstone.",
+        "tags": [
+          "Family chat"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          },
+          {
+            "$ref": "#/components/parameters/ThreadId"
+          },
+          {
+            "name": "afterSeq",
+            "in": "query",
+            "required": false,
+            "description": "Return messages after this sequence number. The incremental read: without a push transport a client asks for what it has not seen.",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "How many messages to return, oldest first after `afterSeq`. At most 200.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of messages, oldest first, with the child's own read state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatMessageListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      },
+      "post": {
+        "operationId": "sendDeviceChatMessage",
+        "summary": "The child says something, from their own handset",
+        "description": "The author is the child the credential proves, never a child id typed into a body, and the room must already name that child. The sequence is the server's, and a resend of the same `clientMessageId` is the same message.",
+        "tags": [
+          "Family chat"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          },
+          {
+            "$ref": "#/components/parameters/ThreadId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatMessageSendRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The stored message, and whether this was a resend.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatMessageSendResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/chat/threads/{threadId}/reads": {
+      "post": {
+        "operationId": "markDeviceChatThreadRead",
+        "summary": "The child states how far they have read",
+        "description": "The child's own read mark, from the handset that proves which child they are. It cannot pass the newest message and it only moves forward.",
+        "tags": [
+          "Family chat"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          },
+          {
+            "$ref": "#/components/parameters/ThreadId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatReadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The child's read state after the mark.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatReadMarkResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/chat/threads/{threadId}/messages/{messageId}": {
+      "patch": {
+        "operationId": "editDeviceChatMessage",
+        "summary": "The child changes a message they wrote",
+        "description": "Same law as the guardian surface and the same author check: the handset writes as its own child, so a message somebody else wrote is refused with `chat_not_author`. The edit states the revision it read and keeps the body it replaced.",
+        "tags": [
+          "Family chat"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          },
+          {
+            "$ref": "#/components/parameters/ThreadId"
+          },
+          {
+            "$ref": "#/components/parameters/MessageId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatMessageEditRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The message as it now stands.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatMessageResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/chat/threads/{threadId}/messages/{messageId}/deletion": {
+      "post": {
+        "operationId": "deleteDeviceChatMessage",
+        "summary": "The child deletes a message they wrote",
+        "description": "Only the author deletes their own words, on this surface too: the handset proves which child it is, and a message that child did not write is refused. The trace survives the text and the sequence keeps its place.",
+        "tags": [
+          "Family chat"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          },
+          {
+            "$ref": "#/components/parameters/ThreadId"
+          },
+          {
+            "$ref": "#/components/parameters/MessageId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The deleted message: its sequence and its trace, without its text.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatMessageResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4895,7 +5800,27 @@
           "type": "string",
           "format": "uuid"
         }
+      },
+    "ThreadId": {
+      "name": "threadId",
+      "in": "path",
+      "required": true,
+      "description": "The conversation.",
+      "schema": {
+        "type": "string",
+        "format": "uuid"
       }
+    },
+    "MessageId": {
+      "name": "messageId",
+      "in": "path",
+      "required": true,
+      "description": "The message.",
+      "schema": {
+        "type": "string",
+        "format": "uuid"
+      }
+    }
     },
     "responses": {
       "InvalidRequest": {
@@ -9860,6 +10785,447 @@
           "items": {
             "$ref": "#/components/schemas/DeviceEvent"
           }
+        }
+      }
+    },
+    "ChatParticipant": {
+      "type": "object",
+      "description": "One participant of a conversation. A guardian is identified by their membership and role; a child by their name. The OIDC subject of a membership is deliberately absent: a chat list has no use for a durable identifier for a person.",
+      "required": [
+        "kind",
+        "id",
+        "role",
+        "displayName",
+        "isSelf"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "membership",
+            "child"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "role": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "primary_guardian",
+            "co_guardian",
+            "child",
+            null
+          ]
+        },
+        "displayName": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The child's name, for a child participant."
+        },
+        "isSelf": {
+          "type": "boolean",
+          "description": "True for the caller's own membership row; decided on the server, never guessed by a client."
+        }
+      }
+    },
+    "ChatMessage": {
+      "type": "object",
+      "description": "One message in a conversation. A deleted message keeps its sequence number and its trace while its text is gone, so the numbering stays trustworthy and the family knows something was said and removed.",
+      "required": [
+        "id",
+        "seq",
+        "authorKind",
+        "authorId",
+        "body",
+        "revision",
+        "editedAt",
+        "deleted",
+        "deletedAt",
+        "deletedByKind",
+        "deletedById",
+        "createdAt",
+        "readCount"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Allocated by the server from the thread's own counter inside the sending transaction; never supplied by a client."
+        },
+        "authorKind": {
+          "type": "string",
+          "enum": [
+            "membership",
+            "child"
+          ]
+        },
+        "authorId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "body": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 2000,
+          "description": "The text, or null for a deleted message."
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "1 until the message is edited; every edit moves it and `editedAt` together."
+        },
+        "editedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "deleted": {
+          "type": "boolean"
+        },
+        "deletedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "deletedByKind": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "membership",
+            "child",
+            null
+          ]
+        },
+        "deletedById": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "readCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many OTHER participants have marked themselves read up to this message. The author is never counted, and nothing here claims a delivery."
+        }
+      }
+    },
+    "ChatThread": {
+      "type": "object",
+      "description": "A conversation, with the participants the caller may see and the newest message. `lastReadSeq` and `unreadCount` are the CALLER's own state, computed from their member row.",
+      "required": [
+        "id",
+        "kind",
+        "title",
+        "createdAt",
+        "lastReadSeq",
+        "unreadCount",
+        "participants",
+        "lastMessage"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "family",
+            "child"
+          ],
+          "description": "`family` is the household room of guardians; `child` names exactly one child."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastReadSeq": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How far the CALLER has read; a participant's own statement, which only ever moves forward."
+        },
+        "unreadCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Messages after the caller's read mark that somebody else wrote."
+        },
+        "participants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ChatParticipant"
+          }
+        },
+        "lastMessage": {
+          "oneOf": [
+            {
+              "$ref": "#/components/schemas/ChatMessage"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "ChatReadState": {
+      "type": "object",
+      "description": "One participant's own read mark. There is no endpoint that states it for somebody else, and no read mark is inferred from a device being online.",
+      "required": [
+        "threadId",
+        "participantKind",
+        "participantId",
+        "lastReadSeq"
+      ],
+      "properties": {
+        "threadId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "participantKind": {
+          "type": "string",
+          "enum": [
+            "membership",
+            "child"
+          ]
+        },
+        "participantId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "lastReadSeq": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "ChatThreadListResponse": {
+      "type": "object",
+      "required": [
+        "threads"
+      ],
+      "properties": {
+        "threads": {
+          "type": "array",
+          "maxItems": 200,
+          "items": {
+            "$ref": "#/components/schemas/ChatThread"
+          }
+        }
+      }
+    },
+    "ChatThreadResponse": {
+      "type": "object",
+      "required": [
+        "thread"
+      ],
+      "properties": {
+        "thread": {
+          "$ref": "#/components/schemas/ChatThread"
+        }
+      }
+    },
+    "ChatMessageListResponse": {
+      "type": "object",
+      "required": [
+        "messages",
+        "readState",
+        "hasMore"
+      ],
+      "properties": {
+        "messages": {
+          "type": "array",
+          "maxItems": 200,
+          "items": {
+            "$ref": "#/components/schemas/ChatMessage"
+          }
+        },
+        "readState": {
+          "$ref": "#/components/schemas/ChatReadState"
+        },
+        "hasMore": {
+          "type": "boolean",
+          "description": "True when the page was full, so the caller can ask for what follows with `afterSeq`."
+        }
+      }
+    },
+    "ChatMessageResponse": {
+      "type": "object",
+      "required": [
+        "message"
+      ],
+      "properties": {
+        "message": {
+          "$ref": "#/components/schemas/ChatMessage"
+        }
+      }
+    },
+    "ChatMessageSendResponse": {
+      "type": "object",
+      "required": [
+        "message",
+        "replayed"
+      ],
+      "description": "A send, and whether it was a resend: the same `clientMessageId` from the same author returns the message that already exists, with the sequence it already has, rather than a second copy.",
+      "properties": {
+        "message": {
+          "$ref": "#/components/schemas/ChatMessage"
+        },
+        "replayed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ChatReadMarkResponse": {
+      "type": "object",
+      "required": [
+        "readState"
+      ],
+      "properties": {
+        "readState": {
+          "$ref": "#/components/schemas/ChatReadState"
+        }
+      }
+    },
+    "ChatThreadCreateRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind"
+      ],
+      "description": "Opening a room. `family` holds guardians and refuses a child id; `child` names exactly one child of this family and at least one guardian - the creator is always a participant.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "family",
+            "child"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "participantMembershipIds": {
+          "type": "array",
+          "maxItems": 24,
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "childIds": {
+          "type": "array",
+          "maxItems": 1,
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      }
+    },
+    "ChatThreadMemberRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "participantKind",
+        "participantId"
+      ],
+      "description": "One participant to add: a guardian of this family by membership, or a child of this family.",
+      "properties": {
+        "participantKind": {
+          "type": "string",
+          "enum": [
+            "membership",
+            "child"
+          ]
+        },
+        "participantId": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "ChatMessageSendRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "body",
+        "clientMessageId"
+      ],
+      "description": "What was said. There is no author field: the author is decided by how the request arrived - a paired handset writes as its own child, an authenticated person as their membership.",
+      "properties": {
+        "body": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "clientMessageId": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 64,
+          "description": "The sender's own name for this message. A resend with the same value returns the same message instead of a second one."
+        }
+      }
+    },
+    "ChatMessageEditRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "body",
+        "revision"
+      ],
+      "properties": {
+        "body": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The revision the author read. A mismatch is refused rather than silently overwriting words somebody else already saw."
+        }
+      }
+    },
+    "ChatReadRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "readSeq"
+      ],
+      "properties": {
+        "readSeq": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How far this participant has read. It cannot pass the newest message in the thread, and it only ever moves forward."
         }
       }
     }
