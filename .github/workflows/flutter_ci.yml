@@ -19,6 +19,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Temporary, branch-scoped migration helper: commit generated files and lock from the pinned SDK.
+  # Remove this job after its one-time output is committed and verified.
+  sync-arena-generated:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/arena/integration-20261009'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.35.7"
+          channel: stable
+          cache: true
+      - name: Regenerate pinned-SDK lock and source
+        run: |
+          cd app
+          flutter pub get
+          flutter gen-l10n
+          dart run tool/gen_routes.dart
+      - name: Commit generated sources on isolated arena branch
+        run: |
+          git add app/pubspec.lock app/lib/app/router.dart app/lib/app/shell_config.dart app/lib/core/i18n
+          if git diff --cached --quiet; then
+            echo "Pinned-SDK generated source is already current."
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "chore(arena): sync pinned-SDK generated files"
+          git push origin HEAD:refs/heads/arena/integration-20261009
+
   analyze-test:
     runs-on: ubuntu-latest
     defaults:
@@ -257,7 +287,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: regenerated-localizations-${{ github.run_id }}
-          path: lib/core/i18n/app_localizations*.dart
+          path: app/lib/core/i18n/app_localizations*.dart
           if-no-files-found: error
           retention-days: 3
       - name: Enforce analyzer, test and generated-source gates
