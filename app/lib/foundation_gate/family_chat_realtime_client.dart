@@ -89,6 +89,7 @@ final class FamilyChatRealtimeClient {
   FamilyChatRealtimeState _state = FamilyChatRealtimeState.stopped;
   WebSocket? _socket;
   String? _watchedThreadId;
+  String? _watchedFamilyId;
   Timer? _retryTimer;
   int _failures = 0;
   bool _running = false;
@@ -97,15 +98,24 @@ final class FamilyChatRealtimeClient {
   Stream<FamilyChatRealtimeState> get states => _states.stream;
   FamilyChatRealtimeState get state => _state;
 
-  /// Starts (or re-targets) the channel on one room. Calling it again only changes the room.
-  Future<void> watch(String threadId) async {
+  /// Starts (or re-targets) the channel on one room. The server needs the family too, because a
+  /// person may belong to several. Calling it again only changes the room.
+  Future<void> watch({required String familyId, required String threadId}) async {
+    _watchedFamilyId = familyId;
     _watchedThreadId = threadId;
     if (!_running) {
       _running = true;
       await _connect();
     } else if (_state == FamilyChatRealtimeState.live) {
-      _send(<String, Object?>{'type': 'subscribe', 'threadId': threadId});
+      _subscribe();
     }
+  }
+
+  void _subscribe() {
+    final threadId = _watchedThreadId;
+    final familyId = _watchedFamilyId;
+    if (threadId == null || familyId == null) return;
+    _send(<String, Object?>{'type': 'subscribe', 'threadId': threadId, 'familyId': familyId});
   }
 
   Future<void> _connect() async {
@@ -128,10 +138,7 @@ final class FamilyChatRealtimeClient {
         onError: (Object _) => _onLost(),
         cancelOnError: true,
       );
-      final threadId = _watchedThreadId;
-      if (threadId != null) {
-        _send(<String, Object?>{'type': 'subscribe', 'threadId': threadId});
-      }
+      _subscribe();
     } on Object {
       _scheduleRetry();
     }

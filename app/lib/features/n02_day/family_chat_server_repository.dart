@@ -161,7 +161,9 @@ final class FamilyChatServerConversationRepository
     // The child handset's credential lives in native storage and cannot open this socket, so the
     // child surface stays on polling and says so.
     if (surface != FamilyChatSurface.guardian || !isFoundationGateUuid(chatWith)) return;
-    await _realtimeClient.watch(chatWith);
+    final family = authority.familyId()?.trim();
+    if (family == null || !isFoundationGateUuid(family)) return;
+    await _realtimeClient.watch(familyId: family, threadId: chatWith);
   }
 
   @override
