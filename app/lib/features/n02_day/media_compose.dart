@@ -1,16 +1,14 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/media/temporary_media_files.dart';
 import 'package:family_os/features/n02_day/conversation_repository.dart';
 import 'package:family_os/features/n02_day/live_conversation_repository.dart';
 import 'package:family_os/foundation_gate/family_chat_media_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 
 /// Why a photo or recording could not be prepared for sending.
@@ -91,16 +89,18 @@ final class VoiceNoteRecording {
 /// Records one voice note as AAC in an MP4 container (`audio/mp4`), which every supported
 /// platform can play back. Recording stops by itself at the server's five-minute limit.
 final class VoiceNoteRecorder {
-  VoiceNoteRecorder({AudioRecorder? recorder}) : _recorder = recorder ?? AudioRecorder();
+  VoiceNoteRecorder({AudioRecorder? recorder, TemporaryMediaFileStore? files})
+    : _recorder = recorder ?? AudioRecorder(),
+      _files = files ?? temporaryMediaFiles;
 
   final AudioRecorder _recorder;
+  final TemporaryMediaFileStore _files;
   final Stopwatch _clock = Stopwatch();
 
   /// Starts the microphone. False means the person did not grant access.
   Future<bool> start() async {
     if (!await _recorder.hasPermission()) return false;
-    final directory = await getTemporaryDirectory();
-    final path = p.join(directory.path, 'voice-${newFoundationGateIdempotencyKey()}.m4a');
+    final path = await _files.newPath('voice-${newFoundationGateIdempotencyKey()}.m4a');
     await _recorder.start(const RecordConfig(encoder: AudioEncoder.aacLc), path: path);
     _clock
       ..reset()
@@ -116,9 +116,8 @@ final class VoiceNoteRecorder {
     _clock.stop();
     final elapsed = _clock.elapsedMilliseconds;
     if (path == null) return null;
-    final file = File(path);
     try {
-      final bytes = await file.readAsBytes();
+      final bytes = await _files.read(path);
       if (bytes.isEmpty) throw const MediaComposeException(MediaComposeProblem.empty);
       if (bytes.length > FamilyChatMediaClient.maxUploadBytes) {
         throw const MediaComposeException(MediaComposeProblem.tooLarge);
@@ -130,11 +129,7 @@ final class VoiceNoteRecorder {
                 : elapsed);
       return VoiceNoteRecording(bytes: bytes, durationMs: durationMs);
     } finally {
-      try {
-        await file.delete();
-      } on FileSystemException {
-        // The temporary file is ours; a failed delete leaves nothing that is shared.
-      }
+      await _files.deleteIfPresent(path);
     }
   }
 
