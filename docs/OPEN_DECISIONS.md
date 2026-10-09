@@ -1,6 +1,6 @@
 # Open decisions and external blockers
 
-> **Status:** Current only — 2026-10-04.
+> **Status:** Current only — 2026-10-10 (§7 added; §1–§6 unchanged from 2026-10-04/05).
 >
 > **Authority:** [`../AGENTS.md`](../AGENTS.md) and [`CURRENT_EXECUTION_PLAN.md`](CURRENT_EXECUTION_PLAN.md). Historical Foundation decisions remain evidence, but do not replace the active system plan.
 
@@ -72,3 +72,14 @@ The Owner raised a 2028 revenue target and a 19,000-person organization. The mar
 - Do not start unrelated systems while Family Entry & Children Control is incomplete.
 - Do not treat a narrow backend endpoint as permission to expose the entire prototype as connected.
 - Do not expose or request secrets, raw family data or sensitive diagnostic payloads.
+
+## 7. Owner decisions recorded 2026-10-10 — unification on `main`
+
+| Decision | Status | Boundary |
+|---|---|---|
+| U1 — `main` is the only long-lived branch | **Approved by the Owner and executed** | All `arena/6233f1a1-family-os` work (M0, SPINE, W1–W9) merged into `main` via #30 with a merge commit (no squash/rebase, so commit hashes cited as evidence stay valid); resulting tree identical to `50c3d78`. Every former branch head is preserved as an annotated `archive/*` tag; the old branches were then deleted. Branch policy: `README.md` and `GIT_AND_GITHUB_OPERATING_METHOD.md` Rule 5. |
+| U2 — Phase adoption on `main` | **Approved by the Owner** (part of the same explicit approval) | The merge replaced the older `AGENTS.md` on `main` (which said "BACKEND NOT YET AUTHORIZED") with the arena constitution and the Real-Engine phase. This is recorded here as the Owner's explicit phase adoption, not a silent phase change. |
+| U3 — Drafts #26, #7, #6 | **Closed; preserved in tags** | #26 → `archive/copilot-arena6233f1a1`, #7 → `archive/cursor-sync-harness-state`, #6 → `archive/feat-real-flutter-build`. Rescue work is tracked as `docs/harness/cards/RESCUE-001…004`; the Drift local-database route (#6) is **not** migrated (`RESCUE-000`). |
+| U4 — Migration numbering | **In force** | Sequential on `main`; next is `114`. Any migration carried from an archived branch (e.g. `009_pairing_code_short_numeric.sql`) must be renumbered. |
+| U5 — `main` protection and auto-delete of head branches | **Awaiting Owner (GitHub UI)** | The agent integration cannot read or set branch protection (403). Owner sets: require PR, required checks (Backend CI, Flutter CI, Foundation Gate, Credential Guard, Harness Guard), block force-push and deletion; and enable "Automatically delete head branches". |
+| W9 live verification | **Awaiting Owner** | No real-device, live FCM or real S3 run has happened. Needs `google-services.json`, `FAMILY_PUSH_FCM_*`, `FAMILY_CHAT_MEDIA_S3_BUCKET`. |

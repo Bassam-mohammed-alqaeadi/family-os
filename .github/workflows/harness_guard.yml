@@ -1,10 +1,11 @@
-# Family OS — حارس الحلقة. يعمل على فرعنا فقط ولا يعتمد على أي workflow آخر.
+# Family OS — حارس الحلقة. يعمل على main وعلى كل طلب دمج، ولا يعتمد على أي workflow آخر.
 name: Harness Guard
 
 on:
   push:
     branches:
-      - 'arena/6233f1a1-family-os'
+      - main
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -25,7 +26,7 @@ jobs:
           chmod +x tools/harness/harness_check.sh tools/git/repo-health.sh
           tools/harness/harness_check.sh
 
-      - name: Verify migration numbering stays inside this branch's reserved range
+      - name: Verify migration numbering is sequential on main (100+)
         run: |
           chmod +x tools/harness/check_migration_range.sh
           tools/harness/check_migration_range.sh
