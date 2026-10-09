@@ -78,11 +78,11 @@ jobs:
       - run: npm ci
       - name: Apply every migration to the real database
         run: npm run migrate
-      - name: Verify the schema, the constraints and the revocation path
+      - name: Verify the schema, the constraints, the revocation path, and W9 media, realtime and push
         run: |
           log_file=$(mktemp)
           set +e
-          node --test test/postgres-integration.test.js 2>&1 | tee "$log_file"
+          node --test test/postgres-integration.test.js test/postgres-chat-realtime-media.test.js test/postgres-push-registrations.test.js 2>&1 | tee "$log_file"
           test_status=${PIPESTATUS[0]}
           set -e
           if [ "$test_status" -ne 0 ]; then

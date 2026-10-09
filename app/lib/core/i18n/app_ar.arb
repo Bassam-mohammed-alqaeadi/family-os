@@ -16324,6 +16324,58 @@
   "@familyChatEdit": {
       "description": "W9 family chat client state and controls"
   },
+  "familyChatMediaPhoto": "صورة",
+  "@familyChatMediaPhoto": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatMediaVoiceNote": "رسالة صوتية",
+  "@familyChatMediaVoiceNote": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatMediaItemUnavailable": "هذا المرفق لم يعد متاحًا",
+  "@familyChatMediaItemUnavailable": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatMediaLoading": "جارٍ تحميل المرفق…",
+  "@familyChatMediaLoading": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatMediaNoPlayback": "تشغيل الرسائل الصوتية غير متاح في هذه النسخة",
+  "@familyChatMediaNoPlayback": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatMediaNotOnThisDevice": "المرفقات تظهر على جهاز الوالد في هذه النسخة",
+  "@familyChatMediaNotOnThisDevice": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatReceiptDelivered": "وصلت إلى {count} من {total}",
+  "@familyChatReceiptDelivered": {
+      "placeholders": {
+        "count": {"type": "int"},
+        "total": {"type": "int"}
+      },
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatReceiptRead": "قرأها {count} من {total}",
+  "@familyChatReceiptRead": {
+      "placeholders": {
+        "count": {"type": "int"},
+        "total": {"type": "int"}
+      },
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatRealtimeLive": "التحديث الفوري مفعّل",
+  "@familyChatRealtimeLive": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatRealtimeRetrying": "التحديث الفوري غير متصل؛ يتم التحقق كل ١٥ ثانية",
+  "@familyChatRealtimeRetrying": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatRealtimePolling": "يتم التحقق من الرسائل كل ١٥ ثانية",
+  "@familyChatRealtimePolling": {
+      "description": "W9 realtime, media and receipt copy"
+  },
   "familyChatDelete": "حذف",
   "@familyChatDelete": {
       "description": "W9 family chat client state and controls"
@@ -16367,5 +16419,19 @@
   "familyChatNeverLocks": "تبقى دردشة الأسرة متاحة بعد انتهاء وقت اللعب.",
   "@familyChatNeverLocks": {
       "description": "W9 chat source and child availability honesty"
-  }
+  },
+  "conversationAttachPhotoGallery": "صورة من المعرض",
+  "conversationAttachPhotoCamera": "التقاط صورة",
+  "conversationAttachVoice": "تسجيل رسالة صوتية",
+  "mediaPhotoPendingLabel": "الصورة جاهزة. أضف تعليقًا إن أردت، ثم أرسل.",
+  "mediaPhotoRemove": "إزالة الصورة",
+  "mediaComposeUnsupportedType": "نوع الملف غير مدعوم. اختر صورة بصيغة JPEG أو PNG أو WebP.",
+  "mediaComposeTooLarge": "حجم الملف كبير جدًا للإرسال.",
+  "mediaComposeMicrophoneDenied": "يلزم السماح بالوصول إلى الميكروفون لتسجيل رسالة صوتية. فعّله في الإعدادات ثم حاول مجددًا.",
+  "mediaComposeFailed": "تعذّر تجهيز الصورة أو التسجيل. حاول مرة أخرى.",
+  "voiceRecordingTitle": "رسالة صوتية",
+  "voiceRecordingSend": "إرسال",
+  "voiceRecordingCancel": "إلغاء",
+  "voicePlaySemantics": "تشغيل الرسالة الصوتية",
+  "voicePauseSemantics": "إيقاف الرسالة الصوتية مؤقتًا"
 }

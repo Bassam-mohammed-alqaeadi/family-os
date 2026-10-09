@@ -12858,6 +12858,103 @@ class AppLocalizationsEn extends AppLocalizations {
   String get familyChatEdit => 'Edit';
 
   @override
+  String get familyChatMediaPhoto => 'Photo';
+
+  @override
+  String get familyChatMediaVoiceNote => 'Voice note';
+
+  @override
+  String get familyChatMediaItemUnavailable =>
+      'This attachment is no longer available';
+
+  @override
+  String get familyChatMediaLoading => 'Loading attachment…';
+
+  @override
+  String get familyChatMediaNoPlayback =>
+      'Voice-note playback is not available in this version';
+  @override
+  String get conversationAttachPhotoGallery =>
+      'Photo from gallery';
+
+  @override
+  String get conversationAttachPhotoCamera =>
+      'Take a photo';
+
+  @override
+  String get conversationAttachVoice =>
+      'Record a voice note';
+
+  @override
+  String get mediaPhotoPendingLabel =>
+      'Photo ready. Add a caption if you like, then send.';
+
+  @override
+  String get mediaPhotoRemove =>
+      'Remove photo';
+
+  @override
+  String get mediaComposeUnsupportedType =>
+      'This file type is not supported. Choose a JPEG, PNG or WebP photo.';
+
+  @override
+  String get mediaComposeTooLarge =>
+      'This file is too large to send.';
+
+  @override
+  String get mediaComposeMicrophoneDenied =>
+      'Microphone access is needed to record a voice note. Allow it in settings and try again.';
+
+  @override
+  String get mediaComposeFailed =>
+      'The photo or recording could not be prepared. Try again.';
+
+  @override
+  String get voiceRecordingTitle =>
+      'Voice note';
+
+  @override
+  String get voiceRecordingSend =>
+      'Send';
+
+  @override
+  String get voiceRecordingCancel =>
+      'Cancel';
+
+  @override
+  String get voicePlaySemantics =>
+      'Play voice note';
+
+  @override
+  String get voicePauseSemantics =>
+      'Pause voice note';
+
+  @override
+  String get familyChatMediaNotOnThisDevice =>
+      'In this version, attachments show on a guardian\'s device';
+
+  @override
+  String familyChatReceiptDelivered(int count, int total) {
+    return 'Delivered to $count of $total';
+  }
+
+  @override
+  String familyChatReceiptRead(int count, int total) {
+    return 'Read by $count of $total';
+  }
+
+  @override
+  String get familyChatRealtimeLive => 'Live updates on';
+
+  @override
+  String get familyChatRealtimeRetrying =>
+      'Live updates are off; checking every 15 seconds';
+
+  @override
+  String get familyChatRealtimePolling =>
+      'Checking for messages every 15 seconds';
+
+  @override
   String get familyChatDelete => 'Delete';
 
   @override

@@ -22485,6 +22485,113 @@ abstract class AppLocalizations {
   /// **'تعديل'**
   String get familyChatEdit;
 
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'صورة'**
+  String get familyChatMediaPhoto;
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'رسالة صوتية'**
+  String get familyChatMediaVoiceNote;
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا المرفق لم يعد متاحًا'**
+  String get familyChatMediaItemUnavailable;
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ تحميل المرفق…'**
+  String get familyChatMediaLoading;
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'تشغيل الرسائل الصوتية غير متاح في هذه النسخة'**
+  String get familyChatMediaNoPlayback;
+  /// conversationAttachPhotoGallery
+  String get conversationAttachPhotoGallery;
+
+  /// conversationAttachPhotoCamera
+  String get conversationAttachPhotoCamera;
+
+  /// conversationAttachVoice
+  String get conversationAttachVoice;
+
+  /// mediaPhotoPendingLabel
+  String get mediaPhotoPendingLabel;
+
+  /// mediaPhotoRemove
+  String get mediaPhotoRemove;
+
+  /// mediaComposeUnsupportedType
+  String get mediaComposeUnsupportedType;
+
+  /// mediaComposeTooLarge
+  String get mediaComposeTooLarge;
+
+  /// mediaComposeMicrophoneDenied
+  String get mediaComposeMicrophoneDenied;
+
+  /// mediaComposeFailed
+  String get mediaComposeFailed;
+
+  /// voiceRecordingTitle
+  String get voiceRecordingTitle;
+
+  /// voiceRecordingSend
+  String get voiceRecordingSend;
+
+  /// voiceRecordingCancel
+  String get voiceRecordingCancel;
+
+  /// voicePlaySemantics
+  String get voicePlaySemantics;
+
+  /// voicePauseSemantics
+  String get voicePauseSemantics;
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'المرفقات تظهر على جهاز الوالد في هذه النسخة'**
+  String get familyChatMediaNotOnThisDevice;
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'وصلت إلى {count} من {total}'**
+  String familyChatReceiptDelivered(int count, int total);
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'قرأها {count} من {total}'**
+  String familyChatReceiptRead(int count, int total);
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'التحديث الفوري مفعّل'**
+  String get familyChatRealtimeLive;
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'التحديث الفوري غير متصل؛ يتم التحقق كل ١٥ ثانية'**
+  String get familyChatRealtimeRetrying;
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'يتم التحقق من الرسائل كل ١٥ ثانية'**
+  String get familyChatRealtimePolling;
+
   /// W9 family chat client state and controls
   ///
   /// In ar, this message translates to:

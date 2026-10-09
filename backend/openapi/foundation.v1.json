@@ -37,6 +37,10 @@
     {
       "name": "Family chat",
       "description": "Rooms as permissions: who is in a conversation is what decides who can read it, a message always has an author, and the only receipt stated is how many other participants have read up to a message."
+    },
+    {
+      "name": "Push notifications",
+      "description": "Guardian handsets register for content-free nudges. A nudge says a room changed; the message is read through the authenticated connection."
     }
   ],
   "paths": {
@@ -5019,7 +5023,7 @@
       "post": {
         "operationId": "sendFamilyChatMessage",
         "summary": "Says something in a conversation",
-        "description": "The author is the caller's own membership; no field in this request names an author, so no request can speak as somebody else. The sequence number is allocated from the thread's own counter inside this transaction. A resend carrying the same `clientMessageId` returns the message that already exists, with the sequence it already has, and is not an error.",
+        "description": "The author is the caller's own membership; no field in this request names an author, so no request can speak as somebody else. The sequence number is allocated from the thread's own counter inside this transaction. A resend carrying the same `clientMessageId` returns the message that already exists, with the sequence it already has, and is not an error. With a mediaId the message carries that media; the body is then an optional caption.",
         "tags": [
           "Family chat"
         ],
@@ -5993,6 +5997,745 @@
           }
         }
       }
+    },
+    "/v1/families/{familyId}/chat/threads/{threadId}/media": {
+      "post": {
+        "operationId": "uploadFamilyChatMedia",
+        "summary": "Uploads a photo or voice note into a room",
+        "description": "Stores the file after checking that its bytes are the type it declares, stripping metadata that would reveal where it was taken, and hashing what is stored. Nothing is visible to the room until a message carries it. Only a participant of the room can upload into it.",
+        "tags": [
+          "Family chat"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ThreadId"
+          },
+          {
+            "$ref": "#/components/parameters/ClientMediaId"
+          },
+          {
+            "$ref": "#/components/parameters/DurationMs"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The media was stored. It is visible to the room only once a message carries it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatMediaResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "The same upload id had already produced this media; nothing was stored again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatMediaResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/MediaUnavailable"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "description": "The file itself, as raw bytes. Its Content-Type must be the type it really is (JPEG, PNG, WebP, Ogg, MP4/M4A or MP3).",
+          "content": {
+            "image/jpeg": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "image/png": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "image/webp": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "audio/ogg": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "audio/mp4": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "audio/mpeg": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/chat/threads/{threadId}/media/{mediaId}/content": {
+      "get": {
+        "operationId": "readFamilyChatMediaContent",
+        "summary": "Reads the bytes of one media item in a room",
+        "description": "Authorized on every request: the caller must be a participant of the room now, and the media must be live. Sent media is visible from the caller's joining point onward; unsent media only to the person who uploaded it. Everyone else receives the same 404.",
+        "tags": [
+          "Family chat"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ThreadId"
+          },
+          {
+            "$ref": "#/components/parameters/MediaId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The bytes, with the sniffed type, served with no-sniff, a sandbox policy and no cache.",
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/webp": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "audio/mp4": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "audio/ogg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "audio/mpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "description": "The stored media is missing or fails its integrity check. It is not served.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/chat/threads/{threadId}/delivered": {
+      "post": {
+        "operationId": "markFamilyChatThreadDelivered",
+        "summary": "States how far you have received",
+        "description": "The caller's own delivery acknowledgement: every message up to this sequence has reached their client and been stored. It cannot pass the newest message, cannot go below the point the caller joined at, and only moves forward.",
+        "tags": [
+          "Family chat"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ThreadId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The caller's delivery and read marks after the acknowledgement.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatDeliveryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatDeliveryRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/chat/threads/{threadId}/media": {
+      "post": {
+        "operationId": "uploadDeviceChatMedia",
+        "summary": "Uploads a photo or voice note from a child's handset",
+        "description": "The same law as the guardian upload, under the child identity the device credential proves. The child must be a participant of the room.",
+        "tags": [
+          "Family chat"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          },
+          {
+            "$ref": "#/components/parameters/ThreadId"
+          },
+          {
+            "$ref": "#/components/parameters/ClientMediaId"
+          },
+          {
+            "$ref": "#/components/parameters/DurationMs"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The media was stored. It is visible to the room only once a message carries it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatMediaResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "The same upload id had already produced this media; nothing was stored again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatMediaResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/MediaUnavailable"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "description": "The file itself, as raw bytes. Its Content-Type must be the type it really is (JPEG, PNG, WebP, Ogg, MP4/M4A or MP3).",
+          "content": {
+            "image/jpeg": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "image/png": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "image/webp": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "audio/ogg": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "audio/mp4": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "audio/mpeg": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/chat/threads/{threadId}/media/{mediaId}/content": {
+      "get": {
+        "operationId": "readDeviceChatMediaContent",
+        "summary": "Reads the bytes of one media item from a child's handset",
+        "description": "The same per-request room check as the guardian route, for the child the handset belongs to.",
+        "tags": [
+          "Family chat"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          },
+          {
+            "$ref": "#/components/parameters/ThreadId"
+          },
+          {
+            "$ref": "#/components/parameters/MediaId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The bytes, with the sniffed type, served with no-sniff, a sandbox policy and no cache.",
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/webp": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "audio/mp4": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "audio/ogg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "audio/mpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "description": "The stored media is missing or fails its integrity check. It is not served.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/chat/threads/{threadId}/delivered": {
+      "post": {
+        "operationId": "markDeviceChatThreadDelivered",
+        "summary": "States how far the child's handset has received",
+        "description": "The child's own delivery acknowledgement, under the same bounds as the guardian route.",
+        "tags": [
+          "Family chat"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          },
+          {
+            "$ref": "#/components/parameters/ThreadId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The caller's delivery and read marks after the acknowledgement.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatDeliveryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatDeliveryRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/realtime": {
+      "get": {
+        "operationId": "openFamilyChatRealtime",
+        "summary": "Opens the realtime hint socket",
+        "description": "A WebSocket upgrade on this path. The Authorization header carries the bearer token of a person, or the Device credential of a paired handset; a handset also passes its deviceId in the query. Nothing secret is placed in the URL. Subscriptions are checked against the room on every hint. A plain request without the upgrade is answered 426. Frames are described by ChatRealtimeFrame.",
+        "tags": [
+          "Family chat"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "query",
+            "required": false,
+            "description": "Required only for a handset connection: the handset's id. Not a secret.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "101": {
+            "description": "Switching protocols. Frames are JSON text."
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "426": {
+            "description": "This path requires a WebSocket upgrade.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/push/registrations": {
+      "post": {
+        "operationId": "registerFamilyPushDevice",
+        "summary": "Registers this guardian handset for chat nudges",
+        "description": "Guardians only. The token is the one Firebase issued to the app. A token that was registered before moves to the caller, so a handset is only ever nudged for its latest guardian. Registration is idempotent by token, so no Idempotency-Key is taken. Answers 503 push_not_configured when the server has no FCM sender.",
+        "tags": [
+          "Push notifications"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushRegistrationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The token was already registered; it is now this caller's.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushRegistrationResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Registered.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushRegistrationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/push/registrations/{registrationId}": {
+      "delete": {
+        "operationId": "unregisterFamilyPushDevice",
+        "summary": "Removes one of the caller's push registrations",
+        "description": "Sign-out on this handset. Another guardian's registration id reads as not found.",
+        "tags": [
+          "Push notifications"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/PushRegistrationId"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed."
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -6158,6 +6901,48 @@
           "type": "string",
           "format": "uuid"
         }
+      },
+      "MediaId": {
+        "name": "mediaId",
+        "in": "path",
+        "required": true,
+        "description": "The media item, as the message that carries it states it.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "ClientMediaId": {
+        "name": "clientMediaId",
+        "in": "query",
+        "required": true,
+        "description": "The uploader's own name for this upload. The same id from the same person returns the same media; the same id with a different file is refused.",
+        "schema": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z0-9._:-]{8,64}$"
+        }
+      },
+      "DurationMs": {
+        "name": "durationMs",
+        "in": "query",
+        "required": false,
+        "description": "Required for a voice note: the duration the phone declares, in milliseconds. It is recorded as declared, not measured by the server.",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 300000
+        }
+      },
+      "PushRegistrationId": {
+        "name": "registrationId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
       }
     },
     "responses": {
@@ -6233,6 +7018,36 @@
       },
       "ServiceNotReady": {
         "description": "Configuration, database or reviewed schema is not ready for protected operations.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "UnsupportedMediaType": {
+        "description": "The declared type is not accepted, or the file content does not match its declared type.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "PayloadTooLarge": {
+        "description": "The upload is larger than the family chat allows for its kind.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "MediaUnavailable": {
+        "description": "Media storage is not configured on this server. Nothing is stored by default.",
         "content": {
           "application/json": {
             "schema": {
@@ -11227,7 +12042,10 @@
           "deletedByKind",
           "deletedById",
           "createdAt",
-          "readCount"
+          "readCount",
+          "kind",
+          "media",
+          "receipt"
         ],
         "properties": {
           "id": {
@@ -11256,7 +12074,7 @@
               "null"
             ],
             "maxLength": 2000,
-            "description": "The text, or null for a deleted message."
+            "description": "The text (a caption, for media), or null for a deleted message."
           },
           "revision": {
             "type": "integer",
@@ -11305,7 +12123,30 @@
           "readCount": {
             "type": "integer",
             "minimum": 0,
-            "description": "How many OTHER participants have marked themselves read up to this message. The author is never counted, and nothing here claims a delivery."
+            "description": "How many OTHER participants have marked themselves read up to this message. Kept at the top level for existing clients; the same number is in `receipt.readCount`."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "text",
+              "image",
+              "audio"
+            ],
+            "description": "text for a message of words; image or audio when the message carries media."
+          },
+          "media": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ChatMedia"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The media this message carries. Null for text and for a deleted message, whose media is removed with its text."
+          },
+          "receipt": {
+            "$ref": "#/components/schemas/ChatReceipt"
           }
         }
       },
@@ -11594,23 +12435,74 @@
         "type": "object",
         "additionalProperties": false,
         "required": [
-          "body",
           "clientMessageId"
         ],
         "description": "What was said. There is no author field: the author is decided by how the request arrived - a paired handset writes as its own child, an authenticated person as their membership.",
         "properties": {
           "body": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 2000
+            "minLength": 0,
+            "maxLength": 2000,
+            "description": "Required for a text message. Optional caption when mediaId is given."
           },
           "clientMessageId": {
             "type": "string",
             "minLength": 8,
             "maxLength": 64,
             "description": "The sender's own name for this message. A resend with the same value returns the same message instead of a second one."
+          },
+          "mediaId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "A media item the caller uploaded to this room and has not sent before."
           }
-        }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "mediaId": {
+                  "type": "null"
+                }
+              },
+              "required": [
+                "mediaId"
+              ]
+            },
+            "then": {
+              "required": [
+                "body"
+              ],
+              "properties": {
+                "body": {
+                  "minLength": 1
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "not": {
+                "required": [
+                  "mediaId"
+                ]
+              }
+            },
+            "then": {
+              "required": [
+                "body"
+              ],
+              "properties": {
+                "body": {
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        ]
       },
       "ChatMessageEditRequest": {
         "type": "object",
@@ -11668,7 +12560,7 @@
               "server_sent_events",
               "websocket"
             ],
-            "description": "The active delivery transport. The current service uses polling; SSE and WebSockets are reserved for a future verified implementation."
+            "description": "The query transport the shipped client uses. The current service still reports polling; the realtime hint socket is advertised separately by webSockets."
           },
           "listPollSeconds": {
             "type": "integer",
@@ -11692,32 +12584,32 @@
           "serverSentEvents": {
             "type": "boolean",
             "default": false,
-            "description": "Whether server-sent event streaming is implemented and available. The current service returns false; a future implementation may advertise true only after its safety and delivery behavior are verified."
+            "description": "Whether server-sent event streaming is implemented. The current service returns false."
           },
           "webSockets": {
             "type": "boolean",
             "default": false,
-            "description": "Whether websocket transport is implemented and available. The current service returns false; a future implementation may advertise true only after its safety and delivery behavior are verified."
+            "description": "Whether the realtime hint socket at /v1/realtime is available. The current service returns true. Hints only: content is always read from the REST API."
           },
           "attachments": {
             "type": "boolean",
             "default": false,
-            "description": "Whether file attachments is implemented and available. The current service returns false; a future implementation may advertise true only after its safety and delivery behavior are verified."
+            "description": "Whether photos can be sent in a room. The current service returns true, with server-side type sniffing and metadata stripping."
           },
           "audio": {
             "type": "boolean",
             "default": false,
-            "description": "Whether voice and audio messages is implemented and available. The current service returns false; a future implementation may advertise true only after its safety and delivery behavior are verified."
+            "description": "Whether voice notes can be sent. The current service returns true; the duration is declared by the sender, not measured."
           },
           "presence": {
             "type": "boolean",
             "default": false,
-            "description": "Whether participant presence states is implemented and available. The current service returns false; a future implementation may advertise true only after its safety and delivery behavior are verified."
+            "description": "Whether presence is implemented. The current service returns false."
           },
           "richReactions": {
             "type": "boolean",
             "default": false,
-            "description": "Whether rich reactions and message-state interactions is implemented and available. The current service returns false; a future implementation may advertise true only after its safety and delivery behavior are verified."
+            "description": "Whether rich reactions are implemented. The current service returns false."
           }
         }
       },
@@ -11904,6 +12796,296 @@
             "type": "integer",
             "minimum": 3,
             "maximum": 24
+          }
+        }
+      },
+      "ChatMedia": {
+        "type": "object",
+        "description": "One photo or voice note. Its bytes are never inlined: fetch them from `contentPath` with the caller's own credential, and only while the caller is in the room.",
+        "required": [
+          "id",
+          "kind",
+          "mimeType",
+          "byteSize",
+          "durationMs",
+          "sha256",
+          "status",
+          "contentPath"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "image",
+              "audio"
+            ]
+          },
+          "mimeType": {
+            "type": "string",
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "image/webp",
+              "audio/mp4",
+              "audio/ogg",
+              "audio/mpeg"
+            ],
+            "description": "The type the server sniffed from the bytes, never the type the phone declared."
+          },
+          "byteSize": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Size of the stored bytes, after metadata has been stripped."
+          },
+          "durationMs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 300000,
+            "description": "The duration the uploader declared for a voice note; null for an image. Declared, not measured."
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "Hash of the stored bytes."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "available",
+              "removed"
+            ],
+            "description": "Removed when the message that carried it was deleted; the bytes are then gone."
+          },
+          "contentPath": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Where the bytes are fetched, relative to the API origin. Null once removed. A path is not a credential."
+          }
+        }
+      },
+      "ChatMediaResponse": {
+        "type": "object",
+        "required": [
+          "media",
+          "replayed"
+        ],
+        "properties": {
+          "media": {
+            "$ref": "#/components/schemas/ChatMedia"
+          },
+          "replayed": {
+            "type": "boolean",
+            "description": "True when this upload id had already produced this media."
+          }
+        }
+      },
+      "ChatReceipt": {
+        "type": "object",
+        "description": "Aggregate receipts for one message, counted over OTHER participants who were in the room when it was sent. Names are never listed. The author is not counted.",
+        "required": [
+          "deliveredCount",
+          "readCount",
+          "otherParticipantCount"
+        ],
+        "properties": {
+          "deliveredCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "How many other participants' clients acknowledged receiving this message."
+          },
+          "readCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "How many other participants have marked themselves read up to this message."
+          },
+          "otherParticipantCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "How many other participants were in the room when this message was sent."
+          }
+        }
+      },
+      "ChatDeliveryRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "deliveredSeq"
+        ],
+        "description": "The highest sequence this client has received and stored. Only the caller's own statement.",
+        "properties": {
+          "deliveredSeq": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "ChatDeliveryState": {
+        "type": "object",
+        "required": [
+          "threadId",
+          "participantKind",
+          "participantId",
+          "lastDeliveredSeq",
+          "lastReadSeq"
+        ],
+        "description": "The caller's own delivery and read marks. A read is always also a delivery.",
+        "properties": {
+          "threadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "participantKind": {
+            "type": "string",
+            "enum": [
+              "membership",
+              "child"
+            ]
+          },
+          "participantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lastDeliveredSeq": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "lastReadSeq": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "ChatDeliveryResponse": {
+        "type": "object",
+        "required": [
+          "deliveryState"
+        ],
+        "properties": {
+          "deliveryState": {
+            "$ref": "#/components/schemas/ChatDeliveryState"
+          }
+        }
+      },
+      "ChatRealtimeFrame": {
+        "type": "object",
+        "description": "One frame on the realtime socket (JSON text). Hints carry NO message text, names or media: a hint says that a room changed and at which sequence, and the client then reads the room from the REST API with its afterSeq cursor. Client frames: {\"type\":\"subscribe\",\"threadId\",\"familyId\"} (familyId is required for a person, implied for a handset), {\"type\":\"unsubscribe\",\"threadId\"}, {\"type\":\"ping\"}. A closed socket is not replayed: reconnect and refetch.",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "subscribed",
+              "unsubscribed",
+              "pong",
+              "error",
+              "chat.message",
+              "chat.receipt"
+            ]
+          },
+          "threadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "seq": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "For chat.message and chat.receipt: the sequence the change is at."
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "invalid_frame",
+              "chat_thread_not_found",
+              "chat_subscription_limit"
+            ]
+          },
+          "heartbeatMs": {
+            "type": "integer",
+            "minimum": 1000,
+            "description": "For ready: the server pings this often; a socket that stops answering is closed."
+          }
+        }
+      },
+      "PushRegistrationRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "token",
+          "platform",
+          "locale"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 32,
+            "maxLength": 4096,
+            "pattern": "^[A-Za-z0-9:_-]+$",
+            "description": "The Firebase registration token of this handset."
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "android",
+              "ios"
+            ]
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "ar",
+              "en"
+            ],
+            "description": "The language of the nudge text."
+          }
+        }
+      },
+      "PushRegistrationResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "registration"
+        ],
+        "properties": {
+          "registration": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "platform",
+              "locale"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "platform": {
+                "type": "string",
+                "enum": [
+                  "android",
+                  "ios"
+                ]
+              },
+              "locale": {
+                "type": "string",
+                "enum": [
+                  "ar",
+                  "en"
+                ]
+              }
+            }
           }
         }
       }

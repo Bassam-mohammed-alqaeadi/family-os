@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart' as intl;
 
 import 'package:family_os/app/role_controller.dart';
@@ -19,7 +21,10 @@ import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n02_day/conversation_repository.dart';
 import 'package:family_os/features/n02_day/family_chat_connection_banner.dart';
 import 'package:family_os/features/n02_day/live_conversation_repository.dart';
+import 'package:family_os/features/n02_day/media_compose.dart';
+import 'package:family_os/features/n02_day/voice_note_player.dart';
 import 'package:family_os/features/n02_day/family_chat_labels.dart';
+import 'package:family_os/foundation_gate/family_chat_realtime_client.dart';
 
 /// Widget keys for SCR-FAT-022 acceptance.
 abstract final class ConversationKeys {
@@ -35,11 +40,19 @@ abstract final class ConversationKeys {
   static const settingsTag = Key('conversation_settings');
   static const familyPinNote = Key('conversation_family_pin');
   static const honestyBanner = Key('conversation_honesty');
+  static const realtimeStatus = Key('conversation_realtime_status');
+
+  static Key mediaView(String messageId) => Key('conversation_media_$messageId');
   static const toneBridge = Key('conversation_tone_bridge');
   static const composer = Key('conversation_composer');
   static const input = Key('conversation_input');
   static const send = Key('conversation_send');
   static const attach = Key('conversation_attach');
+  static const attachGallery = Key('conversation_attach_gallery');
+  static const attachCamera = Key('conversation_attach_camera');
+  static const attachVoice = Key('conversation_attach_voice');
+  static const pendingMedia = Key('conversation_pending_media');
+  static const pendingMediaRemove = Key('conversation_pending_media_remove');
   static const sosCta = Key('conversation_sos');
   static const childLean = Key('conversation_child_lean');
   static const title = Key('conversation_title');
@@ -48,6 +61,7 @@ abstract final class ConversationKeys {
   static const mediaUnavailable = Key('conversation_media_unavailable');
 
   static Key bubble(String id) => Key('conversation_bubble_$id');
+  static Key voicePlay(String id) => Key('conversation_voice_play_$id');
   static Key toneChip(int i) => Key('conversation_tone_$i');
 }
 
@@ -100,6 +114,12 @@ class ConversationScreenState extends State<ConversationScreen> {
   late ConversationRepository _repo;
   final _inputCtrl = TextEditingController();
   Timer? _pollTimer;
+  LiveHintConversationRepository? _hintRepo;
+  /// A photo the person has chosen and is captioning. It is sent only by the send button.
+  ConversationMediaDraft? _pendingMedia;
+  StreamSubscription<FamilyChatRealtimeHint>? _hintSub;
+  StreamSubscription<FamilyChatRealtimeState>? _realtimeSub;
+  var _realtimeState = FamilyChatRealtimeState.stopped;
   var _loading = true;
   var _loadFailed = false;
   var _sosBusy = false;
@@ -142,6 +162,7 @@ class ConversationScreenState extends State<ConversationScreen> {
   @override
   void dispose() {
     _pollTimer?.cancel();
+    _detachRealtime();
     _inputCtrl.dispose();
     super.dispose();
   }
@@ -151,6 +172,7 @@ class ConversationScreenState extends State<ConversationScreen> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.chatWith != widget.chatWith ||
         oldWidget.repository != widget.repository) {
+      _detachRealtime();
       _repo = widget.repository ?? stage1ConversationRepository;
       _pollTimer?.cancel();
       _detail = null;
@@ -164,7 +186,48 @@ class ConversationScreenState extends State<ConversationScreen> {
     _pollTimer = Timer.periodic(const Duration(seconds: 15), (_) {
       unawaited(_refresh());
     });
+    _startRealtime();
   }
+
+  /// The socket is an accelerator, never the source of truth. A hint asks the REST API again; the
+  /// 15-second poll above stays on as the fallback for when the socket is down or refused.
+  void _startRealtime() {
+    final repo = _repo;
+    final peer = _resolvedPeer;
+    if (repo is! LiveHintConversationRepository || peer == null) return;
+    if (_hintRepo != repo) {
+      _detachRealtime();
+      _hintRepo = repo;
+      _hintSub = repo.hints.listen(_onRealtimeHint);
+      _realtimeSub = repo.realtimeStates.listen((state) {
+        if (!mounted) return;
+        setState(() => _realtimeState = state);
+      });
+    }
+    unawaited(repo.watchRealtime(peer));
+  }
+
+  void _onRealtimeHint(FamilyChatRealtimeHint hint) {
+    if (!mounted || hint.threadId != _resolvedPeer) return;
+    unawaited(_refresh());
+  }
+
+  void _detachRealtime() {
+    final repo = _hintRepo;
+    _hintSub?.cancel();
+    _realtimeSub?.cancel();
+    _hintSub = null;
+    _realtimeSub = null;
+    _hintRepo = null;
+    if (repo != null) unawaited(repo.stopRealtime());
+  }
+
+  String _realtimeLabel(AppLocalizations l10n) => switch (_realtimeState) {
+    FamilyChatRealtimeState.live => l10n.familyChatRealtimeLive,
+    FamilyChatRealtimeState.retrying => l10n.familyChatRealtimeRetrying,
+    FamilyChatRealtimeState.connecting ||
+    FamilyChatRealtimeState.stopped => l10n.familyChatRealtimePolling,
+  };
 
   Future<void> _load() async {
     if (!_hasPeer) {
@@ -304,7 +367,15 @@ class ConversationScreenState extends State<ConversationScreen> {
     final peer = _resolvedPeer;
     if (peer == null || _detail == null) return;
     final text = (preset ?? _inputCtrl.text).trim();
-    if (text.isEmpty) return;
+    final photo = preset == null ? _pendingMedia : null;
+    if (text.isEmpty && photo == null) return;
+
+    if (photo != null) {
+      // The typed text is the photo's caption. The input clears only when the send succeeded.
+      await _deliverMedia(photo.withCaption(text));
+      if (mounted && _pendingMedia == null) _inputCtrl.clear();
+      return;
+    }
 
     setState(() => _sending = true);
     try {
@@ -493,14 +564,97 @@ class ConversationScreenState extends State<ConversationScreen> {
     }
   }
 
-  void _onAttach() {
+  /// The live media repository, when this surface may send photos and voice notes.
+  LiveMediaConversationRepository? get _mediaRepo {
+    final repo = _repo;
+    return repo is LiveMediaConversationRepository && repo.canSendMedia ? repo : null;
+  }
+
+  Future<void> _onAttach() async {
     if (!_chat.isUsable) return;
     if (widget.onAttach != null) {
       widget.onAttach!();
       return;
     }
+    if (_mediaRepo == null) {
+      final l10n = AppLocalizations.of(context);
+      AppToast.show(context, message: l10n.conversationAttachToast);
+      return;
+    }
+    final choice = await showModalBottomSheet<_AttachChoice>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => _AttachSheet(l10n: AppLocalizations.of(context)),
+    );
+    if (!mounted || choice == null) return;
+    await _compose(choice);
+  }
+
+  Future<void> _compose(_AttachChoice choice) async {
     final l10n = AppLocalizations.of(context);
-    AppToast.show(context, message: l10n.conversationAttachToast);
+    try {
+      switch (choice) {
+        case _AttachChoice.gallery:
+          final draft = await pickConversationPhoto(ImageSource.gallery);
+          if (draft != null && mounted) setState(() => _pendingMedia = draft);
+        case _AttachChoice.camera:
+          final draft = await pickConversationPhoto(ImageSource.camera);
+          if (draft != null && mounted) setState(() => _pendingMedia = draft);
+        case _AttachChoice.voice:
+          final recording = await showVoiceNoteRecorder(context);
+          if (recording == null || !mounted) return;
+          await _deliverMedia(
+            newConversationMediaDraft(
+              kind: ConversationMediaKind.audio,
+              bytes: recording.bytes,
+              mimeType: 'audio/mp4',
+              durationMs: recording.durationMs,
+            ),
+          );
+      }
+    } on MediaComposeException catch (error) {
+      if (mounted) AppToast.show(context, message: mediaComposeMessage(l10n, error.problem));
+    } on Object {
+      if (mounted) AppToast.show(context, message: l10n.mediaComposeFailed);
+    }
+  }
+
+  /// Uploads one composed photo or voice note and posts the message that carries it.
+  Future<void> _deliverMedia(ConversationMediaDraft draft) async {
+    final peer = _resolvedPeer;
+    final media = _mediaRepo;
+    if (peer == null || media == null || _detail == null || _sending) return;
+    setState(() => _sending = true);
+    try {
+      final l10n = AppLocalizations.of(context);
+      final sent = await media.sendMedia(
+        peer,
+        draft,
+        timeLabel: l10n.conversationSentNow,
+      );
+      if (!mounted) return;
+      setState(() {
+        final detail = _detail;
+        if (detail != null) _detail = _upsertDetail(detail, sent);
+        _sending = false;
+        _connectionIssue = false;
+        _connectionState = FamilyChatConnectionState.connected;
+        if (_pendingMedia?.clientMediaId == draft.clientMediaId) _pendingMedia = null;
+      });
+      unawaited(_refresh());
+    } on Object catch (error) {
+      if (!mounted) return;
+      final discard = familyChatFailureRequiresDiscard(error);
+      setState(() {
+        _sending = false;
+        if (discard) {
+          _detail = null;
+          _loadFailed = true;
+        }
+        _connectionIssue = true;
+        _connectionState = familyChatConnectionStateFor(error);
+      });
+    }
   }
 
   void _onSettings() {
@@ -630,6 +784,19 @@ class ConversationScreenState extends State<ConversationScreen> {
         if (_refreshing) const LinearProgressIndicator(minHeight: 2),
         if (detail.serverAuthoritative)
           Padding(
+            key: ConversationKeys.realtimeStatus,
+            padding: const EdgeInsets.fromLTRB(16, 2, 16, 0),
+            child: Text(
+              _realtimeLabel(l10n),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: colors.ink2,
+              ),
+            ),
+          ),
+        if (detail.serverAuthoritative)
+          Padding(
             padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
             child: Text(
               l10n.familyChatServerPollingNotice,
@@ -697,13 +864,15 @@ class ConversationScreenState extends State<ConversationScreen> {
         _Composer(
           controller: _inputCtrl,
           enabled: _chat.canSend && !_sending && !_connectionIssue,
-          mediaEnabled: !detail.serverAuthoritative,
+          mediaEnabled: _mediaRepo != null,
+          pendingMedia: _pendingMedia,
+          onRemovePending: () => setState(() => _pendingMedia = null),
           sending: _sending,
           onAttach: _onAttach,
           onSend: () => _send(),
           l10n: l10n,
         ),
-        if (detail.serverAuthoritative)
+        if (detail.serverAuthoritative && _mediaRepo == null)
           Padding(
             key: ConversationKeys.mediaUnavailable,
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -870,6 +1039,7 @@ class _Bubble extends StatelessWidget {
     );
 
     final statusSuffix = isMine ? _statusTicks(message.status) : '';
+    final receiptLine = isMine ? _receiptLabel(l10n, message.receipt) : null;
     final senderLabel = localizedFamilyChatSenderLabel(
       l10n,
       message.senderLabel,
@@ -909,6 +1079,16 @@ class _Bubble extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                 ],
+                if (message.media != null && !message.deleted) ...[
+                  _MediaView(
+                    key: ConversationKeys.mediaView(message.id),
+                    media: message.media!,
+                    foreground: fg,
+                    surface: colors.surface,
+                  ),
+                  const SizedBox(height: 6),
+                ],
+                if (message.deleted || message.body.isNotEmpty)
                 Text(
                   message.deleted
                       ? l10n.familyChatMessageDeleted
@@ -934,6 +1114,7 @@ class _Bubble extends StatelessWidget {
                                 .format(message.createdAt!.toLocal())
                           else if (message.timeLabel.isNotEmpty)
                             message.timeLabel,
+                          if (receiptLine != null) receiptLine,
                           if (statusSuffix.isNotEmpty) statusSuffix.trim(),
                         ].join(' · '),
                         style: TextStyle(
@@ -977,8 +1158,26 @@ class _Bubble extends StatelessWidget {
     );
   }
 
-  /// One tick records the send state only; this contract has no per-device delivery receipt.
-  /// Never draw ✓✓ from aggregate read counts or the legacy delivered/read aliases.
+  /// "N of M" for my message, from aggregate counts only. Never names, never per-person ticks.
+  String? _receiptLabel(AppLocalizations l10n, ConversationReceipt? receipt) {
+    if (receipt == null || receipt.otherParticipantCount <= 0) return null;
+    if (receipt.readCount > 0) {
+      return l10n.familyChatReceiptRead(
+        receipt.readCount,
+        receipt.otherParticipantCount,
+      );
+    }
+    if (receipt.deliveredCount > 0) {
+      return l10n.familyChatReceiptDelivered(
+        receipt.deliveredCount,
+        receipt.otherParticipantCount,
+      );
+    }
+    return null;
+  }
+
+  /// One tick records only this device's send state. Other people's receipts are the counts above,
+  /// never ✓✓: the legacy delivered/read aliases are not drawn as ticks.
   String _statusTicks(ConversationDeliveryStatus status) => switch (status) {
     ConversationDeliveryStatus.sending => ' · …',
     ConversationDeliveryStatus.sent ||
@@ -1050,6 +1249,8 @@ class _Composer extends StatelessWidget {
     required this.controller,
     required this.enabled,
     required this.mediaEnabled,
+    required this.pendingMedia,
+    required this.onRemovePending,
     required this.sending,
     required this.onAttach,
     required this.onSend,
@@ -1059,6 +1260,8 @@ class _Composer extends StatelessWidget {
   final TextEditingController controller;
   final bool enabled;
   final bool mediaEnabled;
+  final ConversationMediaDraft? pendingMedia;
+  final VoidCallback onRemovePending;
   final bool sending;
   final VoidCallback onAttach;
   final VoidCallback onSend;
@@ -1067,11 +1270,59 @@ class _Composer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<FamilyColors>()!;
+    final photo = pendingMedia;
 
-    return Padding(
+    return Column(
       key: ConversationKeys.composer,
-      padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-      child: Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (photo != null)
+          Padding(
+            key: ConversationKeys.pendingMedia,
+            padding: const EdgeInsets.fromLTRB(16, 0, 12, 6),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.all(Radius.circular(10)),
+                  child: Image.memory(
+                    photo.bytes,
+                    width: 56,
+                    height: 56,
+                    fit: BoxFit.cover,
+                    gaplessPlayback: true,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    l10n.mediaPhotoPendingLabel,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: colors.ink2,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  key: ConversationKeys.pendingMediaRemove,
+                  tooltip: l10n.mediaPhotoRemove,
+                  onPressed: sending ? null : onRemovePending,
+                  icon: Icon(Icons.close, color: colors.ink2),
+                ),
+              ],
+            ),
+          ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+          child: _composerRow(context, colors),
+        ),
+      ],
+    );
+  }
+
+  Widget _composerRow(BuildContext context, FamilyColors colors) {
+    return Row(
         children: [
           IconButton(
             key: ConversationKeys.attach,
@@ -1141,7 +1392,144 @@ class _Composer extends StatelessWidget {
                 : const Icon(Icons.send),
           ),
         ],
+    );
+  }
+}
+
+enum _AttachChoice { gallery, camera, voice }
+
+/// The three ways to add to a message. Photos become a draft to caption; a voice note is recorded
+/// and sent as its own message.
+class _AttachSheet extends StatelessWidget {
+  const _AttachSheet({required this.l10n});
+
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            key: ConversationKeys.attachGallery,
+            leading: const Icon(Icons.photo_library_outlined),
+            title: Text(l10n.conversationAttachPhotoGallery),
+            onTap: () => Navigator.of(context).pop(_AttachChoice.gallery),
+          ),
+          ListTile(
+            key: ConversationKeys.attachCamera,
+            leading: const Icon(Icons.photo_camera_outlined),
+            title: Text(l10n.conversationAttachPhotoCamera),
+            onTap: () => Navigator.of(context).pop(_AttachChoice.camera),
+          ),
+          ListTile(
+            key: ConversationKeys.attachVoice,
+            leading: const Icon(Icons.mic_none),
+            title: Text(l10n.conversationAttachVoice),
+            onTap: () => Navigator.of(context).pop(_AttachChoice.voice),
+          ),
+        ],
       ),
     );
   }
+}
+
+/// A photo or voice note. Photos are fetched when the bubble first appears, and any failure shows
+/// as unavailable. Voice notes play in place: the bytes are fetched and verified on first play.
+class _MediaView extends StatefulWidget {
+  const _MediaView({
+    super.key,
+    required this.media,
+    required this.foreground,
+    required this.surface,
+  });
+
+  final ConversationMedia media;
+  final Color foreground;
+  final Color surface;
+
+  @override
+  State<_MediaView> createState() => _MediaViewState();
+}
+
+class _MediaViewState extends State<_MediaView> {
+  Future<Uint8List?>? _bytes;
+
+  @override
+  void initState() {
+    super.initState();
+    _start();
+  }
+
+  @override
+  void didUpdateWidget(covariant _MediaView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.media.id != widget.media.id) _start();
+  }
+
+  void _start() {
+    final media = widget.media;
+    final load = media.loadBytes;
+    _bytes = media.available &&
+            media.kind == ConversationMediaKind.image &&
+            load != null
+        ? load()
+        : null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final media = widget.media;
+    if (!media.available) return _note(l10n.familyChatMediaItemUnavailable);
+
+    if (media.kind == ConversationMediaKind.audio) {
+      return VoiceNotePlayer(
+        media: media,
+        foreground: widget.foreground,
+        surface: widget.surface,
+        buttonKey: ConversationKeys.voicePlay(media.id),
+      );
+    }
+
+    if (_bytes == null) return _note(l10n.familyChatMediaNotOnThisDevice);
+    return FutureBuilder<Uint8List?>(
+      future: _bytes,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return _note(l10n.familyChatMediaLoading);
+        }
+        final bytes = snapshot.data;
+        if (bytes == null) return _note(l10n.familyChatMediaItemUnavailable);
+        return ClipRRect(
+          borderRadius: const BorderRadius.all(Radius.circular(12)),
+          child: Image.memory(
+            bytes,
+            fit: BoxFit.contain,
+            gaplessPlayback: true,
+            errorBuilder: (context, error, stackTrace) =>
+                _note(l10n.familyChatMediaItemUnavailable),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _note(String text) => Container(
+    padding: const EdgeInsets.all(10),
+    decoration: BoxDecoration(
+      color: widget.surface.withValues(alpha: 0.18),
+      borderRadius: const BorderRadius.all(Radius.circular(12)),
+    ),
+    child: Text(
+      text,
+      style: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        color: widget.foreground,
+        height: 1.35,
+      ),
+    ),
+  );
 }

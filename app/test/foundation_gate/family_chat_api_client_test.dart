@@ -42,6 +42,13 @@ Map<String, Object?> _message({
   'deletedById': deletedById,
   'createdAt': _createdAt,
   'readCount': 1,
+  'kind': 'text',
+  'media': null,
+  'receipt': <String, Object?>{
+    'deliveredCount': 1,
+    'readCount': 1,
+    'otherParticipantCount': 1,
+  },
 };
 
 Map<String, Object?> _thread() => <String, Object?>{

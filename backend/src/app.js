@@ -12,6 +12,10 @@ import { webFilterFor } from './web-filter.js';
 import { tasksFor } from './tasks.js';
 import { calendarFor } from './calendar.js';
 import { familyChatFor } from './family-chat.js';
+import { chatMediaFor } from './family-chat-media.js';
+import { pushRegistrationsFor } from './push-registrations.js';
+import { createChatEventBus } from './chat-realtime.js';
+import { CHAT_CURRENT_CAPABILITIES } from './family-chat.js';
 import { collaborationPolicyFor } from './collaboration-policy.js';
 import { capabilityMatches } from './store/postgres-foundation-store.js';
 import {
@@ -65,7 +69,57 @@ import {
     chatMessageEditInput,
     chatReadInput,
     chatMessageQuery,
+    chatDeliveredInput,
+    chatMediaUploadQuery,
 } from './validation.js';
+
+/// Upper bound for one raw upload, the largest allowed kind plus framing. Each kind is checked
+/// against its own limit inside the media module; this only stops a request from streaming
+/// unbounded bytes into memory before that check runs.
+const CHAT_MEDIA_UPLOAD_LIMIT = '8mb';
+
+/// The hint that follows each committed change. A hint is sent after the database commits, and
+/// it names only the room and the sequence - never the text, the receipt names or the media.
+/// Wrapping the operations here keeps the routes free of publication details, and it means no
+/// route can forget to publish.
+function withChatHints(chat, { bus, mediaStore, notifyNewMessage = null }) {
+    const hinted = {
+        sendMessage: ['chat.message', (result) => result.message.seq],
+        editMessage: ['chat.message', (result) => result.message.seq],
+        deleteMessage: ['chat.message', (result) => result.message.seq],
+        markThreadRead: ['chat.receipt', (result) => result.readState.lastReadSeq],
+        markThreadDelivered: ['chat.receipt', (result) => result.deliveryState.lastDeliveredSeq],
+    };
+    const wrapped = { ...chat };
+    for (const [name, [type, seqOf]] of Object.entries(hinted)) {
+        wrapped[name] = async (input) => {
+            const result = await chat[name](input);
+            // A deleted message's bytes leave the object store only now that the deletion has
+            // committed, and the keys are removed from the response: they are internal handles.
+            if (Array.isArray(result.purgeStorageKeys)) {
+                for (const key of result.purgeStorageKeys) {
+                    await mediaStore?.delete(key);
+                }
+                delete result.purgeStorageKeys;
+            }
+            bus.publish({ type, threadId: input.threadId, seq: seqOf(result) });
+            // A replayed send is claimed by its message id, so it is not nudged a second time.
+            if (name === 'sendMessage' && notifyNewMessage) {
+                notifyNewMessage({
+                    messageId: result.message.id,
+                    threadId: input.threadId,
+                    authorKind: result.message.authorKind,
+                    authorId: result.message.authorId,
+                }).catch((error) => {
+                    // A failed nudge never fails the send. Class only: nothing from the message.
+                    console.error(JSON.stringify({ severity: 'error', event: 'push_nudge_failed', errorName: error?.name ?? 'Error' }));
+                });
+            }
+            return result;
+        };
+    }
+    return wrapped;
+}
 
 function requestFingerprint({ action, principal, input }) {
     return createHash('sha256')
@@ -131,11 +185,28 @@ export function createApp({
     // wave has: the room is the permission. Nothing in this file decides who may read a
     // thread; a caller with no member row reads `chat_thread_not_found`, from the module.
     familyChat = familyChatFor(store, { credentialMatches: capabilityMatches }),
+    // W9 realtime and media. `chatMediaStore` is the object-store port (null means media is
+    // unavailable, never a silent default location). `chatBus` carries the hints the realtime
+    // gateway forwards; the server attaches the gateway to the same bus.
+    chatMediaStore = null,
+    // Firebase push sender. Null means push is not configured: registration answers 503.
+    pushSender = null,
+    chatBus = createChatEventBus(),
     collaborationPolicy = collaborationPolicyFor(store),
     preAuthenticationRateLimit = {},
     protectedRateLimit = {},
 }) {
     const app = express();
+    const chatMedia = chatMediaFor(store, { credentialMatches: capabilityMatches, mediaStore: chatMediaStore });
+    const pushRegistrations = pushRegistrationsFor(store, { credentialMatches: capabilityMatches, sender: pushSender });
+    familyChat = withChatHints(familyChat, {
+        bus: chatBus,
+        mediaStore: chatMediaStore,
+        notifyNewMessage: pushSender ? (input) => pushRegistrations.notifyNewMessage(input) : null,
+    });
+    // The realtime gateway reads these from the application; nothing else is exposed this way.
+    app.locals.chatBus = chatBus;
+    app.locals.familyChat = familyChat;
 
     app.set('trust proxy', 1);
     app.disable('x-powered-by');
@@ -157,6 +228,8 @@ export function createApp({
         next();
     });
     app.use(express.json({ limit: '64kb', strict: true }));
+    // Raw media bodies are parsed only by the upload routes, after authentication.
+    const rawMediaBody = express.raw({ type: () => true, limit: CHAT_MEDIA_UPLOAD_LIMIT });
 
     const requirePrincipal = asyncRoute(async(request, _response, next) => {
         request.principal ??= await authVerifier.verify(request.get('Authorization'));
@@ -2042,20 +2115,21 @@ export function createApp({
             const familyId = requireUuid(request.params.familyId, 'familyId');
             const threadId = requireUuid(request.params.threadId, 'threadId');
             requireNoQueryParameters(request.query);
-            const { body, clientMessageId } = chatMessageInput(request.body);
+            const { body, mediaId, clientMessageId } = chatMessageInput(request.body);
             const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
             const result = await familyChat.sendMessage({
                 principal: request.principal,
                 familyId,
                 threadId,
                 body,
+                mediaId,
                 clientMessageId,
                 idempotencyKey,
                 correlationId: request.correlationId,
                 requestHash: requestFingerprint({
                     action: 'family.chat.message.send',
                     principal: request.principal,
-                    input: { familyId, threadId, body, clientMessageId },
+                    input: { familyId, threadId, body, mediaId, clientMessageId },
                 }),
             });
             response.status(201).json(result);
@@ -2149,6 +2223,139 @@ export function createApp({
             response.status(200).json(result);
         }),
     );
+
+    // W9 media. A person uploads a photo or a voice note into a room they are in. The bytes are
+    // sniffed, stripped of metadata and stored; nothing is visible to the room until a message
+    // carries it. The raw body is parsed only after the caller has been authenticated.
+    app.post(
+        '/v1/families/:familyId/chat/threads/:threadId/media',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        rawMediaBody,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const threadId = requireUuid(request.params.threadId, 'threadId');
+            const { clientMediaId, durationMs } = chatMediaUploadQuery(request.query);
+            const result = await chatMedia.upload({
+                principal: request.principal,
+                familyId,
+                threadId,
+                clientMediaId,
+                declaredContentType: request.get('Content-Type'),
+                declaredDurationMs: durationMs,
+                bytes: request.body,
+                correlationId: request.correlationId,
+            });
+            response.status(result.replayed ? 200 : 201).json(result);
+        }),
+    );
+
+    // A guardian's handset registers for nudges. Registration is idempotent by its token (the same
+    // token again changes nothing), so it takes no Idempotency-Key.
+    app.post(
+        '/v1/families/:familyId/push/registrations',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            if (!pushSender) {
+                throw new HttpError(503, 'push_not_configured', 'Push notifications are not configured on this server.');
+            }
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const result = await pushRegistrations.register({
+                principal: request.principal,
+                familyId,
+                body: request.body,
+            });
+            response.status(result.created ? 201 : 200).json({ registration: result.registration });
+        }),
+    );
+
+    // Removes one of the caller's own registrations (sign-out on this handset).
+    app.delete(
+        '/v1/families/:familyId/push/registrations/:registrationId',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            if (!pushSender) {
+                throw new HttpError(503, 'push_not_configured', 'Push notifications are not configured on this server.');
+            }
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const registrationId = requireUuid(request.params.registrationId, 'registrationId');
+            await pushRegistrations.unregister({ principal: request.principal, familyId, registrationId });
+            response.status(204).end();
+        }),
+    );
+
+    // The bytes of one media item, after the room check every time. Served with a sniffed type,
+    // no-sniff, a sandbox policy, and no cache: a shared device must not keep a family's photos.
+    app.get(
+        '/v1/families/:familyId/chat/threads/:threadId/media/:mediaId/content',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const threadId = requireUuid(request.params.threadId, 'threadId');
+            const mediaId = requireUuid(request.params.mediaId, 'mediaId');
+            requireNoQueryParameters(request.query);
+            const { mimeType, bytes } = await chatMedia.content({
+                principal: request.principal,
+                familyId,
+                threadId,
+                mediaId,
+            });
+            response.status(200);
+            response.set({
+                'Content-Type': mimeType,
+                'Content-Length': String(bytes.length),
+                'Content-Disposition': 'inline',
+                'Content-Security-Policy': "default-src 'none'; sandbox",
+                'Cache-Control': 'private, no-store',
+            });
+            response.send(bytes);
+        }),
+    );
+
+    // "I have received everything up to here" - the delivery receipt. Only the participant's own
+    // high-water mark; it cannot pass the newest message, and it only moves forward.
+    app.post(
+        '/v1/families/:familyId/chat/threads/:threadId/delivered',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const threadId = requireUuid(request.params.threadId, 'threadId');
+            requireNoQueryParameters(request.query);
+            const { deliveredSeq } = chatDeliveredInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await familyChat.markThreadDelivered({
+                principal: request.principal,
+                familyId,
+                threadId,
+                deliveredSeq,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'family.chat.delivered',
+                    principal: request.principal,
+                    input: { familyId, threadId, deliveredSeq },
+                }),
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // The realtime socket is an upgrade on this path, handled by the gateway on the HTTP server.
+    // A plain request here is told how to connect, rather than being left to fail obscurely.
+    app.get('/v1/realtime', (_request, response) => {
+        response.status(426).set('Upgrade', 'websocket').json({
+            error: { code: 'upgrade_required', message: 'Connect to this path with a WebSocket upgrade.' },
+        });
+    });
 
     // The child's own handset: the rooms their child is in. No child id in the URL - the
     // credential issued at pairing is what proves which child is asking, the same decision
@@ -2273,20 +2480,21 @@ export function createApp({
             const deviceId = requireUuid(request.params.deviceId, 'deviceId');
             const threadId = requireUuid(request.params.threadId, 'threadId');
             requireNoQueryParameters(request.query);
-            const { body, clientMessageId } = chatMessageInput(request.body);
+            const { body, mediaId, clientMessageId } = chatMessageInput(request.body);
             const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
             const result = await familyChat.sendMessage({
                 deviceId,
                 deviceCredential: request.deviceCredential,
                 threadId,
                 body,
+                mediaId,
                 clientMessageId,
                 idempotencyKey,
                 correlationId: request.correlationId,
                 requestHash: requestFingerprint({
                     action: 'family.chat.message.send.device',
                     principal: request.principal ?? { subject: deviceId },
-                    input: { deviceId, threadId, body, clientMessageId },
+                    input: { deviceId, threadId, body, mediaId, clientMessageId },
                 }),
             });
             response.status(201).json(result);
@@ -2371,6 +2579,89 @@ export function createApp({
                     action: 'family.chat.read.device',
                     principal: request.principal ?? { subject: deviceId },
                     input: { deviceId, threadId, readSeq },
+                }),
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // The handset's own media: the same law as the guardian surface. A voice note from a child
+    // is stored under that child's own participant identity, and a handset can read only what
+    // its child is allowed to read.
+    app.post(
+        '/v1/devices/:deviceId/chat/threads/:threadId/media',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        rawMediaBody,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            const threadId = requireUuid(request.params.threadId, 'threadId');
+            const { clientMediaId, durationMs } = chatMediaUploadQuery(request.query);
+            const result = await chatMedia.upload({
+                deviceId,
+                deviceCredential: request.deviceCredential,
+                threadId,
+                clientMediaId,
+                declaredContentType: request.get('Content-Type'),
+                declaredDurationMs: durationMs,
+                bytes: request.body,
+                correlationId: request.correlationId,
+            });
+            response.status(result.replayed ? 200 : 201).json(result);
+        }),
+    );
+
+    app.get(
+        '/v1/devices/:deviceId/chat/threads/:threadId/media/:mediaId/content',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            const threadId = requireUuid(request.params.threadId, 'threadId');
+            const mediaId = requireUuid(request.params.mediaId, 'mediaId');
+            requireNoQueryParameters(request.query);
+            const { mimeType, bytes } = await chatMedia.content({
+                deviceId,
+                deviceCredential: request.deviceCredential,
+                threadId,
+                mediaId,
+            });
+            response.status(200);
+            response.set({
+                'Content-Type': mimeType,
+                'Content-Length': String(bytes.length),
+                'Content-Disposition': 'inline',
+                'Content-Security-Policy': "default-src 'none'; sandbox",
+                'Cache-Control': 'private, no-store',
+            });
+            response.send(bytes);
+        }),
+    );
+
+    app.post(
+        '/v1/devices/:deviceId/chat/threads/:threadId/delivered',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            const threadId = requireUuid(request.params.threadId, 'threadId');
+            requireNoQueryParameters(request.query);
+            const { deliveredSeq } = chatDeliveredInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await familyChat.markThreadDelivered({
+                deviceId,
+                deviceCredential: request.deviceCredential,
+                threadId,
+                deliveredSeq,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'family.chat.delivered.device',
+                    principal: request.principal ?? { subject: deviceId },
+                    input: { deviceId, threadId, deliveredSeq },
                 }),
             });
             response.status(200).json(result);
@@ -2603,7 +2894,9 @@ export function createApp({
     app.use((error, request, response, _next) => {
         const normalized = error ?.type === 'entity.parse.failed' ?
             new HttpError(400, 'invalid_json', 'Request body must contain valid JSON.') :
-            asHttpError(error);
+            error ?.type === 'entity.too.large' ?
+                new HttpError(413, 'payload_too_large', 'The request body is larger than this route accepts.') :
+                asHttpError(error);
         const expectedUnavailableState = new Set([
             'identity_provider_not_configured',
             'database_not_configured',
