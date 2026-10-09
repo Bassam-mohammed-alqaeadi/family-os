@@ -165,6 +165,7 @@ jobs:
                           "ERROR: "
                           + str(event.get("error") or event.get("message") or "").strip()
                       )
+          kept = list(dict.fromkeys(kept))
           text = "\n".join(kept)
           escaped = text.replace("%", "%25").replace("\r", "").replace("\n", "%0A")
           size = 2800
@@ -206,7 +207,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: flutter-test-report-${{ github.run_id }}
-          path: build/ci/flutter-test.json
+          path: app/build/ci/flutter-test.json
           if-no-files-found: warn
           retention-days: 7
       - name: Verify generated source is committed

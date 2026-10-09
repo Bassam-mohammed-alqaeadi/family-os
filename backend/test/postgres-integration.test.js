@@ -4132,23 +4132,24 @@ test('a family states an evening, a child answers from their own handset, and wh
 // ── W9 — THE FAMILY CHAT, AGAINST REAL POSTGRESQL ─────────────────────────────────────────
 //
 // The wave whose subject is the one thing a family writes down about each other. This journey
-// drives the real HTTP surface against the real schema and checks the five claims a family chat
+// drives the real HTTP surface against the real schema and checks the six claims a family chat
 // has to be able to make without flinching:
 //
-//   1. The room is the permission. A guardian in the household room reads it; the same guardian
-//      is answered as if a room they were not added to did not exist - and a child's handset
-//      cannot reach the household room at all.
-//   2. An author comes from how the request arrived. The handset writes as its own child, the
+//   1. A direct or group roster is the permission: each guardian sees only named rooms, and a
+//      child's handset sees only the rooms its child identity joined.
+//   2. The default safety policy adds no guardian automatically; a persisted child-to-child
+//      safety rule can require their inclusion, while pending invitations remain excluded.
+//   3. An author comes from how the request arrived. The handset writes as its own child, the
 //      person as their membership, and neither can write in a room that does not name them.
-//   3. Ordering is the server's, and a resend is the same message: one row, one sequence number,
+//   4. Ordering is the server's, and a resend is the same message: one row, one sequence number,
 //      `replayed: true` - not a second copy of what somebody said.
-//   4. An edit is visible and deletion is a right: the author edits and the old body survives in
+//   5. An edit is visible and deletion is a right: the author edits and the old body survives in
 //      the revisions table; only the author deletes, and the deleted row keeps its sequence and
 //      its trace while the text is gone.
-//   5. The schema refuses from below what the module refuses from above - a message from outside
+//   6. The schema refuses from below what the module refuses from above - a message from outside
 //      the room and a live message with no text are both stopped by the database itself.
 
-test('a family talks in a room it was added to, the child answers from their own handset, and the trace outlives the text', { skip }, async () => {
+test('explicit direct and group rooms enforce their rosters across real PostgreSQL', { skip }, async () => {
   await withFreshDatabase(async (client) => {
     await migrate(client);
     const store = new PostgresFoundationStore({
@@ -4184,41 +4185,50 @@ test('a family talks in a room it was added to, the child answers from their own
           [familyId],
         );
         const coMembershipId = guardians.rows.find((row) => row.target_subject === 'test-co').id;
-        const selectedGuardians = await jsonRequest(baseUrl, threadsPath, {
+        // A pending invitation is not a participant. The live roster, not a user-supplied
+        // membership ID, decides who may be named in a conversation.
+        const pendingInviteRoom = await jsonRequest(baseUrl, threadsPath, {
           method: 'POST',
           headers: authorized('test-primary', {
-            'idempotency-key': 'w9a-client-selected-guardians',
+            'idempotency-key': 'w9a-pending-invite-room',
           }),
-          body: { kind: 'family', participantMembershipIds: [coMembershipId] },
+          body: {
+            kind: 'direct',
+            participants: [{ kind: 'membership', id: pendingMembershipId }],
+          },
         });
-        assert.equal(selectedGuardians.status, 400);
-        assert.equal(selectedGuardians.body.error.code, 'invalid_request');
+        assert.equal(pendingInviteRoom.status, 404);
+        assert.equal(pendingInviteRoom.body.error.code, 'chat_participant_not_found');
 
-        // 1. The household room is opened with every active guardian in the same transaction,
-        //    while the unaccepted invitation is excluded by the server-side active roster.
-        const householdRoom = await jsonRequest(baseUrl, threadsPath, {
+        // 1. A direct room contains the guardian who opened it and the one peer they named.
+        //    The active co-guardian is included because they were selected, not because the
+        //    server silently turned this into a household-wide conversation.
+        const guardianRoom = await jsonRequest(baseUrl, threadsPath, {
           method: 'POST',
-          headers: authorized('test-primary', { 'idempotency-key': 'w9a-household' }),
-          body: { kind: 'family', title: 'العائلة' },
+          headers: authorized('test-primary', { 'idempotency-key': 'w9a-guardian-direct' }),
+          body: {
+            kind: 'direct',
+            title: 'حديث بين الأبوين',
+            participants: [{ kind: 'membership', id: coMembershipId }],
+          },
         });
-        assert.equal(householdRoom.status, 201, JSON.stringify(householdRoom.body));
-        const householdThreadId = householdRoom.body.thread.id;
-        assert.equal(householdRoom.body.thread.kind, 'family');
+        assert.equal(guardianRoom.status, 201, JSON.stringify(guardianRoom.body));
+        const guardianThreadId = guardianRoom.body.thread.id;
+        assert.equal(guardianRoom.body.thread.kind, 'direct');
         assert.deepEqual(
-          householdRoom.body.thread.participants.map((entry) => entry.id).sort(),
-          [primaryMembershipId, coMembershipId].sort(),
+          guardianRoom.body.thread.participants.map((entry) => `${entry.kind}:${entry.id}`).sort(),
+          [`membership:${primaryMembershipId}`, `membership:${coMembershipId}`].sort(),
         );
         assert.equal(
-          householdRoom.body.thread.participants.some(
-            (entry) => entry.id === pendingMembershipId,
+          guardianRoom.body.thread.participants.every(
+            (entry) => entry.isSelf === (entry.id === primaryMembershipId),
           ),
-          false,
+          true,
         );
-        assert.equal(householdRoom.body.thread.participants.every((entry) => entry.isSelf === (entry.id === primaryMembershipId)), true);
 
-        // 2. The child's own room names exactly that child, and the server adds every active
-        //    guardian in the family without asking the client to choose members. A room that
-        //    names no child cannot be a child conversation, and one that names two is refused.
+        // 2. A child can open an explicit group from their paired handset. The primary guardian
+        //    and sibling below are the chosen peers; with the default safety policy of `none`,
+        //    the active co-guardian and pending invitation are not silently added.
         const twoChildren = await jsonRequest(baseUrl, `/v1/families/${familyId}/children`, {
           method: 'POST',
           headers: authorized('test-primary', { 'idempotency-key': 'w9a-sibling' }),
@@ -4226,73 +4236,148 @@ test('a family talks in a room it was added to, the child answers from their own
         });
         assert.equal(twoChildren.status, 201);
         const siblingId = twoChildren.body.child.id;
-        const tooManyChildren = await jsonRequest(baseUrl, threadsPath, {
-          method: 'POST',
-          headers: authorized('test-primary', { 'idempotency-key': 'w9a-two-children' }),
-          body: { kind: 'child', title: 'الأولاد', childIds: [childId, siblingId] },
-        });
-        assert.equal(tooManyChildren.status, 422, JSON.stringify(tooManyChildren.body));
-        assert.equal(tooManyChildren.body.error.code, 'chat_child_thread_needs_one_child');
-
-        const childRoom = await jsonRequest(baseUrl, threadsPath, {
-          method: 'POST',
-          headers: authorized('test-primary', { 'idempotency-key': 'w9a-child-room' }),
-          body: { kind: 'child', title: 'أماني', childIds: [childId] },
-        });
+        const childRoom = await jsonRequest(
+          baseUrl,
+          `/v1/devices/${deviceId}/chat/threads`,
+          {
+            method: 'POST',
+            headers: { ...deviceAuth, 'idempotency-key': 'w9a-child-group' },
+            body: {
+              kind: 'group',
+              title: 'أصدقاء البيت',
+              participants: [
+                { kind: 'membership', id: primaryMembershipId },
+                { kind: 'child', id: siblingId },
+              ],
+            },
+          },
+        );
         assert.equal(childRoom.status, 201, JSON.stringify(childRoom.body));
         const childThreadId = childRoom.body.thread.id;
         assert.deepEqual(
           childRoom.body.thread.participants.map((entry) => `${entry.kind}:${entry.id}`).sort(),
           [
             `child:${childId}`,
+            `child:${siblingId}`,
+            `membership:${primaryMembershipId}`,
+          ].sort(),
+        );
+        assert.equal(
+          childRoom.body.thread.participants.some((entry) => entry.id === coMembershipId),
+          false,
+        );
+        assert.equal(
+          childRoom.body.thread.participants.some((entry) => entry.id === pendingMembershipId),
+          false,
+        );
+
+        const policyPath = `/v1/families/${familyId}/collaboration-policy`;
+        const defaultPolicy = await jsonRequest(baseUrl, policyPath, {
+          headers: authorized('test-primary'),
+        });
+        assert.equal(defaultPolicy.status, 200);
+        assert.equal(defaultPolicy.body.policy.version, 0);
+        assert.equal(defaultPolicy.body.policy.guardianInclusionMode, 'none');
+        const activeSafetyPolicy = await jsonRequest(baseUrl, policyPath, {
+          method: 'PATCH',
+          headers: authorized('test-primary'),
+          body: { expectedVersion: 0, guardianInclusionMode: 'child_to_child' },
+        });
+        assert.equal(activeSafetyPolicy.status, 200, JSON.stringify(activeSafetyPolicy.body));
+        assert.equal(activeSafetyPolicy.body.policy.version, 1);
+        assert.equal(activeSafetyPolicy.body.policy.guardianInclusionMode, 'child_to_child');
+
+        // The same child-to-child direct conversation now activates the persisted safety rule.
+        // Active guardians are added only by that server-owned rule; the pending invite remains
+        // excluded from the resulting thread.
+        const safetyChildRoom = await jsonRequest(
+          baseUrl,
+          `/v1/devices/${deviceId}/chat/threads`,
+          {
+            method: 'POST',
+            headers: { ...deviceAuth, 'idempotency-key': 'w9a-policy-child-direct' },
+            body: {
+              kind: 'direct',
+              title: 'حديث بين الأخوين',
+              participants: [{ kind: 'child', id: siblingId }],
+            },
+          },
+        );
+        assert.equal(safetyChildRoom.status, 201, JSON.stringify(safetyChildRoom.body));
+        const safetyChildThreadId = safetyChildRoom.body.thread.id;
+        assert.deepEqual(
+          safetyChildRoom.body.thread.participants.map((entry) => `${entry.kind}:${entry.id}`).sort(),
+          [
+            `child:${childId}`,
+            `child:${siblingId}`,
             `membership:${primaryMembershipId}`,
             `membership:${coMembershipId}`,
           ].sort(),
         );
+        assert.equal(
+          safetyChildRoom.body.thread.participants.some((entry) => entry.id === pendingMembershipId),
+          false,
+        );
 
-        // 3. THE ROOM IS THE PERMISSION. The active co-guardian sees both rooms because the
-        //    server added them to each room at creation, not because a client selected them.
+        // 3. THE ROOM IS THE PERMISSION. The co-guardian sees the direct room they were named
+        //    in, but not the child's separate group; the server does not broaden either roster.
         const coRooms = await jsonRequest(baseUrl, threadsPath, { headers: authorized('test-co') });
         assert.equal(coRooms.status, 200);
         assert.deepEqual(
           coRooms.body.threads.map((thread) => thread.id).sort(),
-          [householdThreadId, childThreadId].sort(),
+          [guardianThreadId, safetyChildThreadId].sort(),
         );
+        const coReadsGuardianRoom = await jsonRequest(
+          baseUrl,
+          `${threadsPath}/${guardianThreadId}/messages`,
+          { headers: authorized('test-co') },
+        );
+        assert.equal(coReadsGuardianRoom.status, 200, JSON.stringify(coReadsGuardianRoom.body));
+        assert.deepEqual(coReadsGuardianRoom.body.messages, []);
         const coReadsChildRoom = await jsonRequest(
           baseUrl,
           `${threadsPath}/${childThreadId}/messages`,
           { headers: authorized('test-co') },
         );
-        assert.equal(coReadsChildRoom.status, 200, JSON.stringify(coReadsChildRoom.body));
-        assert.deepEqual(coReadsChildRoom.body.messages, []);
+        assert.equal(coReadsChildRoom.status, 404);
+        const coReadsSafetyChildRoom = await jsonRequest(
+          baseUrl,
+          `${threadsPath}/${safetyChildThreadId}/messages`,
+          { headers: authorized('test-co') },
+        );
+        assert.equal(coReadsSafetyChildRoom.status, 200);
+        assert.deepEqual(coReadsSafetyChildRoom.body.messages, []);
 
-        // 4. The child's handset cannot reach the household room either. It is a member of its
-        //    own room and of nothing else.
+        // 4. The child's handset cannot reach the guardian-only direct room. It sees only the
+        //    rooms its child identity joined: the selected group and the policy-governed direct.
         const deviceRooms = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/chat/threads`, {
           headers: deviceAuth,
         });
         assert.equal(deviceRooms.status, 200);
-        assert.deepEqual(deviceRooms.body.threads.map((thread) => thread.id), [childThreadId]);
-        const deviceReadsHousehold = await jsonRequest(
+        assert.deepEqual(
+          deviceRooms.body.threads.map((thread) => thread.id).sort(),
+          [childThreadId, safetyChildThreadId].sort(),
+        );
+        const deviceReadsGuardianRoom = await jsonRequest(
           baseUrl,
-          `/v1/devices/${deviceId}/chat/threads/${householdThreadId}/messages`,
+          `/v1/devices/${deviceId}/chat/threads/${guardianThreadId}/messages`,
           { headers: deviceAuth },
         );
-        assert.equal(deviceReadsHousehold.status, 404);
-        const deviceWritesHousehold = await jsonRequest(
+        assert.equal(deviceReadsGuardianRoom.status, 404);
+        const deviceWritesGuardianRoom = await jsonRequest(
           baseUrl,
-          `/v1/devices/${deviceId}/chat/threads/${householdThreadId}/messages`,
+          `/v1/devices/${deviceId}/chat/threads/${guardianThreadId}/messages`,
           {
             method: 'POST',
-            headers: { ...deviceAuth, 'idempotency-key': 'w9a-device-household' },
+            headers: { ...deviceAuth, 'idempotency-key': 'w9a-device-guardian-room' },
             body: { body: 'مرحباً', clientMessageId: 'device-msg-0001' },
           },
         );
-        assert.equal(deviceWritesHousehold.status, 404);
+        assert.equal(deviceWritesGuardianRoom.status, 404);
 
         // 5. The server owns the order, and a resend is the same message: one row, one sequence
         //    number, `replayed: true`.
-        const firstMessage = await jsonRequest(baseUrl, `${threadsPath}/${householdThreadId}/messages`, {
+        const firstMessage = await jsonRequest(baseUrl, `${threadsPath}/${guardianThreadId}/messages`, {
           method: 'POST',
           headers: authorized('test-primary', { 'idempotency-key': 'w9a-message-1' }),
           body: { body: 'السلام عليكم', clientMessageId: 'client-message-0001' },
@@ -4304,7 +4389,7 @@ test('a family talks in a room it was added to, the child answers from their own
         assert.equal(firstMessage.body.replayed, false);
         assert.equal(firstMessage.body.message.readCount, 0);
 
-        const resend = await jsonRequest(baseUrl, `${threadsPath}/${householdThreadId}/messages`, {
+        const resend = await jsonRequest(baseUrl, `${threadsPath}/${guardianThreadId}/messages`, {
           method: 'POST',
           headers: authorized('test-primary', { 'idempotency-key': 'w9a-message-1-retry' }),
           body: { body: 'السلام عليكم', clientMessageId: 'client-message-0001' },
@@ -4315,47 +4400,47 @@ test('a family talks in a room it was added to, the child answers from their own
         assert.equal(resend.body.message.seq, 1);
         const storedCount = await client.query(
           `SELECT COUNT(*)::int AS total FROM family_chat_messages WHERE thread_id = $1`,
-          [householdThreadId],
+          [guardianThreadId],
         );
         assert.equal(storedCount.rows[0].total, 1, 'a resend must not store a second message');
 
         // 6. A receipt is aggregate and excludes the author. The co-guardian reads, marks
         //    themselves read, and the message's readCount becomes 1 - the author never counts.
-        const coReads = await jsonRequest(baseUrl, `${threadsPath}/${householdThreadId}/messages`, {
+        const coReads = await jsonRequest(baseUrl, `${threadsPath}/${guardianThreadId}/messages`, {
           headers: authorized('test-co'),
         });
         assert.equal(coReads.status, 200);
         assert.equal(coReads.body.messages.length, 1);
         assert.equal(coReads.body.messages[0].readCount, 0);
         assert.equal(coReads.body.readState.lastReadSeq, 0);
-        const coMarksRead = await jsonRequest(baseUrl, `${threadsPath}/${householdThreadId}/reads`, {
+        const coMarksRead = await jsonRequest(baseUrl, `${threadsPath}/${guardianThreadId}/reads`, {
           method: 'POST',
           headers: authorized('test-co', { 'idempotency-key': 'w9a-read-1' }),
           body: { readSeq: 1 },
         });
         assert.equal(coMarksRead.status, 200);
         assert.equal(coMarksRead.body.readState.lastReadSeq, 1);
-        const afterRead = await jsonRequest(baseUrl, `${threadsPath}/${householdThreadId}/messages`, {
+        const afterRead = await jsonRequest(baseUrl, `${threadsPath}/${guardianThreadId}/messages`, {
           headers: authorized('test-primary'),
         });
         assert.equal(afterRead.body.messages[0].readCount, 1);
         assert.equal(afterRead.body.threads, undefined);
 
-        // The list a guardian opens shows the room, its unread count and the preview of what was
+        // The list a guardian opens shows the direct room, its unread count and the preview of what was
         // last said - read from the message's own columns, not from the thread row's identity.
         const primaryRooms = await jsonRequest(baseUrl, threadsPath, { headers: authorized('test-primary') });
         assert.equal(primaryRooms.status, 200);
-        const householdPreview = primaryRooms.body.threads.find((thread) => thread.id === householdThreadId);
-        assert.equal(householdPreview.lastMessage.id, firstMessage.body.message.id);
-        assert.equal(householdPreview.lastMessage.seq, 1);
-        assert.equal(householdPreview.lastMessage.body, 'السلام عليكم');
-        assert.equal(householdPreview.lastMessage.authorId, primaryMembershipId);
+        const guardianPreview = primaryRooms.body.threads.find((thread) => thread.id === guardianThreadId);
+        assert.equal(guardianPreview.lastMessage.id, firstMessage.body.message.id);
+        assert.equal(guardianPreview.lastMessage.seq, 1);
+        assert.equal(guardianPreview.lastMessage.body, 'السلام عليكم');
+        assert.equal(guardianPreview.lastMessage.authorId, primaryMembershipId);
         // One reader: the co-guardian marked themselves read, and the author is not counted among
         // the readers of their own words.
-        assert.equal(householdPreview.lastMessage.readCount, 1);
+        assert.equal(guardianPreview.lastMessage.readCount, 1);
 
         // A read mark cannot pass the newest message: the server refuses rather than clamps.
-        const readAhead = await jsonRequest(baseUrl, `${threadsPath}/${householdThreadId}/reads`, {
+        const readAhead = await jsonRequest(baseUrl, `${threadsPath}/${guardianThreadId}/reads`, {
           method: 'POST',
           headers: authorized('test-co', { 'idempotency-key': 'w9a-read-ahead' }),
           body: { readSeq: 900 },
@@ -4365,7 +4450,7 @@ test('a family talks in a room it was added to, the child answers from their own
         const unchanged = await client.query(
           `SELECT last_read_seq FROM family_chat_thread_members
             WHERE thread_id = $1 AND participant_id = $2`,
-          [householdThreadId, coMembershipId],
+          [guardianThreadId, coMembershipId],
         );
         assert.equal(Number(unchanged.rows[0].last_read_seq), 1);
 
@@ -4373,7 +4458,7 @@ test('a family talks in a room it was added to, the child answers from their own
         //    in the room and is still refused - membership is not authorship.
         const foreignEdit = await jsonRequest(
           baseUrl,
-          `${threadsPath}/${householdThreadId}/messages/${firstMessage.body.message.id}`,
+          `${threadsPath}/${guardianThreadId}/messages/${firstMessage.body.message.id}`,
           {
             method: 'PATCH',
             headers: authorized('test-co'),
@@ -4385,7 +4470,7 @@ test('a family talks in a room it was added to, the child answers from their own
 
         const staleEdit = await jsonRequest(
           baseUrl,
-          `${threadsPath}/${householdThreadId}/messages/${firstMessage.body.message.id}`,
+          `${threadsPath}/${guardianThreadId}/messages/${firstMessage.body.message.id}`,
           {
             method: 'PATCH',
             headers: authorized('test-primary'),
@@ -4397,7 +4482,7 @@ test('a family talks in a room it was added to, the child answers from their own
 
         const edited = await jsonRequest(
           baseUrl,
-          `${threadsPath}/${householdThreadId}/messages/${firstMessage.body.message.id}`,
+          `${threadsPath}/${guardianThreadId}/messages/${firstMessage.body.message.id}`,
           {
             method: 'PATCH',
             headers: authorized('test-primary'),
