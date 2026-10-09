@@ -210,17 +210,16 @@ test('every protected operation declares OIDC security, rate limiting and idempo
       '/v1/devices/{deviceId}/chat/threads/{threadId}/delivered',
       '/v1/realtime',
     ]);
-    // Each of these is idempotent by its own key, so it does not take the platform's header.
     // A media upload is idempotent by its own `clientMediaId` (same id, same file, same media;
     // a different file under that id is refused), so it does not take the platform's
     // Idempotency-Key header. Named here, not inferred, so no other POST can slip in unnoticed.
-    const idempotentWithoutHeader = new Set([
+    const idempotentByClientMediaId = new Set([
       '/v1/families/{familyId}/chat/threads/{threadId}/media',
       '/v1/devices/{deviceId}/chat/threads/{threadId}/media',
     ]);
     // A push registration is idempotent by its device token: the same token again changes nothing
     // but its owner, so it does not take the platform's Idempotency-Key header either.
-    idempotentWithoutHeader.add('/v1/families/{familyId}/push/registrations');
+    idempotentByClientMediaId.add('/v1/families/{familyId}/push/registrations');
     // Roster reads and child-created/child-managed conversations use only the paired-device
     // credential. List/read/message routes that also support a guardian bearer token remain
     // explicitly dual-authenticated.
@@ -250,7 +249,7 @@ test('every protected operation declares OIDC security, rate limiting and idempo
     if (
       method === 'POST'
       && (!deviceAuthenticated.has(path) || deviceChatMutations.has(operationKey))
-      && !idempotentWithoutHeader.has(path)
+      && !idempotentByClientMediaId.has(path)
     ) {
       assert.ok(
         operation.parameters?.some(
