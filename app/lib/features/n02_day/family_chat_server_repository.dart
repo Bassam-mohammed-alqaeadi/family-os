@@ -358,6 +358,7 @@ final class FamilyChatServerConversationRepository
       updated,
       cache.readState,
       cache.thread.participants,
+      threadId: cache.thread.id,
     );
   }
 
@@ -396,6 +397,7 @@ final class FamilyChatServerConversationRepository
       deleted,
       cache.readState,
       cache.thread.participants,
+      threadId: cache.thread.id,
     );
   }
 

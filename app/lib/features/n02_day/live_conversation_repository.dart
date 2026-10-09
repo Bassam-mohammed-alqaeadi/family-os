@@ -27,7 +27,8 @@ abstract interface class LiveConversationRepository
 /// The hint channel for a server conversation. Hints say a room changed; the screen answers by
 /// asking the REST API again. A repository that cannot open the channel reports `stopped`, and the
 /// screen keeps its polling interval, so degradation is explicit rather than silent.
-abstract interface class LiveHintConversationRepository {
+abstract interface class LiveHintConversationRepository
+    implements LiveConversationRepository {
   Stream<FamilyChatRealtimeHint> get hints;
 
   Stream<FamilyChatRealtimeState> get realtimeStates;
