@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -20,6 +21,7 @@ import 'package:family_os/features/n02_day/conversation_repository.dart';
 import 'package:family_os/features/n02_day/family_chat_connection_banner.dart';
 import 'package:family_os/features/n02_day/live_conversation_repository.dart';
 import 'package:family_os/features/n02_day/family_chat_labels.dart';
+import 'package:family_os/foundation_gate/family_chat_realtime_client.dart';
 
 /// Widget keys for SCR-FAT-022 acceptance.
 abstract final class ConversationKeys {
@@ -35,6 +37,9 @@ abstract final class ConversationKeys {
   static const settingsTag = Key('conversation_settings');
   static const familyPinNote = Key('conversation_family_pin');
   static const honestyBanner = Key('conversation_honesty');
+  static const realtimeStatus = Key('conversation_realtime_status');
+
+  static Key mediaView(String messageId) => Key('conversation_media_$messageId');
   static const toneBridge = Key('conversation_tone_bridge');
   static const composer = Key('conversation_composer');
   static const input = Key('conversation_input');
@@ -100,6 +105,10 @@ class ConversationScreenState extends State<ConversationScreen> {
   late ConversationRepository _repo;
   final _inputCtrl = TextEditingController();
   Timer? _pollTimer;
+  LiveHintConversationRepository? _hintRepo;
+  StreamSubscription<FamilyChatRealtimeHint>? _hintSub;
+  StreamSubscription<FamilyChatRealtimeState>? _realtimeSub;
+  var _realtimeState = FamilyChatRealtimeState.stopped;
   var _loading = true;
   var _loadFailed = false;
   var _sosBusy = false;
@@ -142,6 +151,7 @@ class ConversationScreenState extends State<ConversationScreen> {
   @override
   void dispose() {
     _pollTimer?.cancel();
+    _detachRealtime();
     _inputCtrl.dispose();
     super.dispose();
   }
@@ -151,6 +161,7 @@ class ConversationScreenState extends State<ConversationScreen> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.chatWith != widget.chatWith ||
         oldWidget.repository != widget.repository) {
+      _detachRealtime();
       _repo = widget.repository ?? stage1ConversationRepository;
       _pollTimer?.cancel();
       _detail = null;
@@ -164,7 +175,48 @@ class ConversationScreenState extends State<ConversationScreen> {
     _pollTimer = Timer.periodic(const Duration(seconds: 15), (_) {
       unawaited(_refresh());
     });
+    _startRealtime();
   }
+
+  /// The socket is an accelerator, never the source of truth. A hint asks the REST API again; the
+  /// 15-second poll above stays on as the fallback for when the socket is down or refused.
+  void _startRealtime() {
+    final repo = _repo;
+    final peer = _resolvedPeer;
+    if (repo is! LiveHintConversationRepository || peer == null) return;
+    if (_hintRepo != repo) {
+      _detachRealtime();
+      _hintRepo = repo;
+      _hintSub = repo.hints.listen(_onRealtimeHint);
+      _realtimeSub = repo.realtimeStates.listen((state) {
+        if (!mounted) return;
+        setState(() => _realtimeState = state);
+      });
+    }
+    unawaited(repo.watchRealtime(peer));
+  }
+
+  void _onRealtimeHint(FamilyChatRealtimeHint hint) {
+    if (!mounted || hint.threadId != _resolvedPeer) return;
+    unawaited(_refresh());
+  }
+
+  void _detachRealtime() {
+    final repo = _hintRepo;
+    _hintSub?.cancel();
+    _realtimeSub?.cancel();
+    _hintSub = null;
+    _realtimeSub = null;
+    _hintRepo = null;
+    if (repo != null) unawaited(repo.stopRealtime());
+  }
+
+  String _realtimeLabel(AppLocalizations l10n) => switch (_realtimeState) {
+    FamilyChatRealtimeState.live => l10n.familyChatRealtimeLive,
+    FamilyChatRealtimeState.retrying => l10n.familyChatRealtimeRetrying,
+    FamilyChatRealtimeState.connecting ||
+    FamilyChatRealtimeState.stopped => l10n.familyChatRealtimePolling,
+  };
 
   Future<void> _load() async {
     if (!_hasPeer) {
@@ -630,6 +682,19 @@ class ConversationScreenState extends State<ConversationScreen> {
         if (_refreshing) const LinearProgressIndicator(minHeight: 2),
         if (detail.serverAuthoritative)
           Padding(
+            key: ConversationKeys.realtimeStatus,
+            padding: const EdgeInsets.fromLTRB(16, 2, 16, 0),
+            child: Text(
+              _realtimeLabel(l10n),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: colors.ink2,
+              ),
+            ),
+          ),
+        if (detail.serverAuthoritative)
+          Padding(
             padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
             child: Text(
               l10n.familyChatServerPollingNotice,
@@ -870,6 +935,7 @@ class _Bubble extends StatelessWidget {
     );
 
     final statusSuffix = isMine ? _statusTicks(message.status) : '';
+    final receiptLine = isMine ? _receiptLabel(l10n, message.receipt) : null;
     final senderLabel = localizedFamilyChatSenderLabel(
       l10n,
       message.senderLabel,
@@ -909,6 +975,16 @@ class _Bubble extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                 ],
+                if (message.media != null && !message.deleted) ...[
+                  _MediaView(
+                    key: ConversationKeys.mediaView(message.id),
+                    media: message.media!,
+                    foreground: fg,
+                    surface: colors.surface,
+                  ),
+                  const SizedBox(height: 6),
+                ],
+                if (message.deleted || message.body.isNotEmpty)
                 Text(
                   message.deleted
                       ? l10n.familyChatMessageDeleted
@@ -934,6 +1010,7 @@ class _Bubble extends StatelessWidget {
                                 .format(message.createdAt!.toLocal())
                           else if (message.timeLabel.isNotEmpty)
                             message.timeLabel,
+                          if (receiptLine != null) receiptLine,
                           if (statusSuffix.isNotEmpty) statusSuffix.trim(),
                         ].join(' · '),
                         style: TextStyle(
@@ -977,8 +1054,26 @@ class _Bubble extends StatelessWidget {
     );
   }
 
-  /// One tick records the send state only; this contract has no per-device delivery receipt.
-  /// Never draw ✓✓ from aggregate read counts or the legacy delivered/read aliases.
+  /// "N of M" for my message, from aggregate counts only. Never names, never per-person ticks.
+  String? _receiptLabel(AppLocalizations l10n, ConversationReceipt? receipt) {
+    if (receipt == null || receipt.otherParticipantCount <= 0) return null;
+    if (receipt.readCount > 0) {
+      return l10n.familyChatReceiptRead(
+        receipt.readCount,
+        receipt.otherParticipantCount,
+      );
+    }
+    if (receipt.deliveredCount > 0) {
+      return l10n.familyChatReceiptDelivered(
+        receipt.deliveredCount,
+        receipt.otherParticipantCount,
+      );
+    }
+    return null;
+  }
+
+  /// One tick records only this device's send state. Other people's receipts are the counts above,
+  /// never ✓✓: the legacy delivered/read aliases are not drawn as ticks.
   String _statusTicks(ConversationDeliveryStatus status) => switch (status) {
     ConversationDeliveryStatus.sending => ' · …',
     ConversationDeliveryStatus.sent ||
@@ -1144,4 +1239,104 @@ class _Composer extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A photo or voice note. Photos are fetched when the bubble first appears, and any failure shows
+/// as unavailable. Voice notes show a card only, because this build has no audio player.
+class _MediaView extends StatefulWidget {
+  const _MediaView({
+    super.key,
+    required this.media,
+    required this.foreground,
+    required this.surface,
+  });
+
+  final ConversationMedia media;
+  final Color foreground;
+  final Color surface;
+
+  @override
+  State<_MediaView> createState() => _MediaViewState();
+}
+
+class _MediaViewState extends State<_MediaView> {
+  Future<Uint8List?>? _bytes;
+
+  @override
+  void initState() {
+    super.initState();
+    _start();
+  }
+
+  @override
+  void didUpdateWidget(covariant _MediaView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.media.id != widget.media.id) _start();
+  }
+
+  void _start() {
+    final media = widget.media;
+    final load = media.loadBytes;
+    _bytes = media.available &&
+            media.kind == ConversationMediaKind.image &&
+            load != null
+        ? load()
+        : null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final media = widget.media;
+    if (!media.available) return _note(l10n.familyChatMediaUnavailable);
+
+    if (media.kind == ConversationMediaKind.audio) {
+      final ms = media.durationMs;
+      final length = ms == null
+          ? ''
+          : ' · ${(ms ~/ 60000)}:${((ms ~/ 1000) % 60).toString().padLeft(2, '0')}';
+      return _note(
+        '${l10n.familyChatMediaVoiceNote}$length\n${l10n.familyChatMediaNoPlayback}',
+      );
+    }
+
+    if (_bytes == null) return _note(l10n.familyChatMediaNotOnThisDevice);
+    return FutureBuilder<Uint8List?>(
+      future: _bytes,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return _note(l10n.familyChatMediaLoading);
+        }
+        final bytes = snapshot.data;
+        if (bytes == null) return _note(l10n.familyChatMediaUnavailable);
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.memory(
+            bytes,
+            fit: BoxFit.contain,
+            gaplessPlayback: true,
+            errorBuilder: (context, error, stackTrace) =>
+                _note(l10n.familyChatMediaUnavailable),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _note(String text) => Container(
+    padding: const EdgeInsets.all(10),
+    decoration: BoxDecoration(
+      color: widget.surface.withValues(alpha: 0.18),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Text(
+      text,
+      style: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        color: widget.foreground,
+        height: 1.35,
+      ),
+    ),
+  );
 }

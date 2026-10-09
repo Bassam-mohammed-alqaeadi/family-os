@@ -256,6 +256,9 @@ class MainActivity : FlutterActivity() {
             "markRead" -> if (validUuid(threadId) && messageId == null && validJsonObject(body) && validIdempotencyKey(idempotencyKey) && query.isEmpty()) {
                 ChatRequestSpec("POST", "$base/threads/$threadId/reads", body, idempotencyKey)
             } else null
+            "markDelivered" -> if (validUuid(threadId) && messageId == null && validJsonObject(body) && validIdempotencyKey(idempotencyKey) && query.isEmpty()) {
+                ChatRequestSpec("POST", "$base/threads/$threadId/delivered", body, idempotencyKey)
+            } else null
             else -> null
         }
     }

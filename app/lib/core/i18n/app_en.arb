@@ -16309,6 +16309,58 @@
   "@familyChatEdit": {
       "description": "W9 family chat client state and controls"
   },
+  "familyChatMediaPhoto": "Photo",
+  "@familyChatMediaPhoto": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatMediaVoiceNote": "Voice note",
+  "@familyChatMediaVoiceNote": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatMediaUnavailable": "This attachment is no longer available",
+  "@familyChatMediaUnavailable": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatMediaLoading": "Loading attachment…",
+  "@familyChatMediaLoading": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatMediaNoPlayback": "Voice-note playback is not available in this version",
+  "@familyChatMediaNoPlayback": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatMediaNotOnThisDevice": "In this version, attachments show on a guardian's device",
+  "@familyChatMediaNotOnThisDevice": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatReceiptDelivered": "Delivered to {count} of {total}",
+  "@familyChatReceiptDelivered": {
+      "placeholders": {
+        "count": {"type": "int"},
+        "total": {"type": "int"}
+      },
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatReceiptRead": "Read by {count} of {total}",
+  "@familyChatReceiptRead": {
+      "placeholders": {
+        "count": {"type": "int"},
+        "total": {"type": "int"}
+      },
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatRealtimeLive": "Live updates on",
+  "@familyChatRealtimeLive": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatRealtimeRetrying": "Live updates are off; checking every 15 seconds",
+  "@familyChatRealtimeRetrying": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatRealtimePolling": "Checking for messages every 15 seconds",
+  "@familyChatRealtimePolling": {
+      "description": "W9 realtime, media and receipt copy"
+  },
   "familyChatDelete": "Delete",
   "@familyChatDelete": {
       "description": "W9 family chat client state and controls"

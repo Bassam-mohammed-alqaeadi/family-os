@@ -1,9 +1,13 @@
+import 'dart:typed_data';
+
 import 'package:family_os/features/n02_day/child_chats_repository.dart';
 import 'package:family_os/features/n02_day/conversation_repository.dart';
 import 'package:family_os/features/n02_day/conversations_list_repository.dart';
 import 'package:family_os/features/n02_day/live_conversation_repository.dart';
 import 'package:family_os/features/n02_day/family_chat_server_authority.dart';
 import 'package:family_os/foundation_gate/family_chat_api_client.dart';
+import 'package:family_os/foundation_gate/family_chat_media_client.dart';
+import 'package:family_os/foundation_gate/family_chat_realtime_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
@@ -113,12 +117,15 @@ final class FamilyChatThreadListRepository
 /// supports incremental recovery/polling, and retains one idempotency pair across retries of a
 /// message that received no answer. It never paints an optimistic message as server truth.
 final class FamilyChatServerConversationRepository
-    implements LiveConversationRepository {
+    implements LiveConversationRepository, LiveHintConversationRepository {
   FamilyChatServerConversationRepository({
     required this.authority,
     required this.surface,
     this.pageSize = 50,
-  }) {
+    FamilyChatRealtimeClient? realtime,
+    FamilyChatMediaClient? media,
+  }) : _realtime = realtime,
+       _media = media {
     if (pageSize < 1 || pageSize > 200) {
       throw ArgumentError.value(pageSize, 'pageSize', 'must be between 1 and 200');
     }
@@ -129,6 +136,38 @@ final class FamilyChatServerConversationRepository
   final int pageSize;
   final Map<String, _ThreadCache> _cache = <String, _ThreadCache>{};
   final Map<String, _PendingChatSend> _pendingSends = <String, _PendingChatSend>{};
+  FamilyChatMediaClient? _media;
+  FamilyChatRealtimeClient? _realtime;
+
+  FamilyChatMediaClient get _mediaClient =>
+      _media ??= FamilyChatMediaClient(configuration: authority.api.configuration);
+
+  FamilyChatRealtimeClient get _realtimeClient => _realtime ??= FamilyChatRealtimeClient(
+    configuration: authority.api.configuration,
+    bearer: authority.idToken,
+  );
+
+  @override
+  Stream<FamilyChatRealtimeHint> get hints => _realtimeClient.hints;
+
+  @override
+  Stream<FamilyChatRealtimeState> get realtimeStates => _realtimeClient.states;
+
+  @override
+  FamilyChatRealtimeState get realtimeState => _realtime?.state ?? FamilyChatRealtimeState.stopped;
+
+  @override
+  Future<void> watchRealtime(String chatWith) async {
+    // The child handset's credential lives in native storage and cannot open this socket, so the
+    // child surface stays on polling and says so.
+    if (surface != FamilyChatSurface.guardian || !isFoundationGateUuid(chatWith)) return;
+    await _realtimeClient.watch(chatWith);
+  }
+
+  @override
+  Future<void> stopRealtime() async {
+    await _realtime?.stop();
+  }
 
   @override
   bool hasMore(String chatWith) => _cache[chatWith]?.hasMore ?? false;
@@ -170,6 +209,7 @@ final class FamilyChatServerConversationRepository
           page.hasMore && newestFetchedSequence < newestListedSequence
       ..messages.addAll(page.messages);
     _cache[thread.id] = cache;
+    await _markDeliveredThrough(cache, _lastSeq(cache));
     await _markReadThrough(cache, _lastSeq(cache));
     return _detail(cache);
   }
@@ -192,6 +232,7 @@ final class FamilyChatServerConversationRepository
       ..readState = page.readState
       ..hasMore = page.hasMore;
     _mergeMessages(cache, page.messages);
+    await _markDeliveredThrough(cache, _lastSeq(cache));
     await _markReadThrough(cache, _lastSeq(cache));
     return _detail(cache);
   }
@@ -210,6 +251,7 @@ final class FamilyChatServerConversationRepository
       ..readState = page.readState
       ..hasMore = page.hasMore;
     _mergeMessages(cache, page.messages);
+    await _markDeliveredThrough(cache, _lastSeq(cache));
     await _markReadThrough(cache, _lastSeq(cache));
     return _detail(cache);
   }
@@ -266,11 +308,13 @@ final class FamilyChatServerConversationRepository
       if (_lastSeq(cache) == before) break;
     }
     _upsert(cache, receipt.message);
+    await _markDeliveredThrough(cache, _lastSeq(cache));
     await _markReadThrough(cache, receipt.message.seq);
     return _conversationMessage(
       receipt.message,
       cache.readState,
       cache.thread.participants,
+      threadId: cache.thread.id,
     ).copyWith(timeLabel: timeLabel);
   }
 
@@ -406,6 +450,27 @@ final class FamilyChatServerConversationRepository
     // Reading the body remains available if its independent receipt write is refused/offline.
   }
 
+  /// Tells the server what this client has received. It is sent after a fetch, never ahead of
+  /// what was fetched, and only moves forward. A refused or offline acknowledgement is not shown
+  /// as an error: nothing above the old mark was acknowledged, so the next fetch sends it again.
+  Future<void> _markDeliveredThrough(_ThreadCache cache, int sequence) async {
+    if (sequence <= cache.deliveredSent) return;
+    final key = 'chat-delivered-${cache.thread.id}-$sequence';
+    final answer = switch (surface) {
+      FamilyChatSurface.guardian => await authority.markGuardianThreadDelivered(
+        threadId: cache.thread.id,
+        deliveredSeq: sequence,
+        idempotencyKey: key,
+      ),
+      FamilyChatSurface.child => await authority.markChildThreadDelivered(
+        threadId: cache.thread.id,
+        deliveredSeq: sequence,
+        idempotencyKey: key,
+      ),
+    };
+    if (answer.isReady) cache.deliveredSent = sequence;
+  }
+
   void _mergeMessages(_ThreadCache cache, List<FamilyChatMessage> incoming) {
     for (final message in incoming) {
       _upsert(cache, message);
@@ -437,6 +502,7 @@ final class FamilyChatServerConversationRepository
           message,
           cache.readState,
           cache.thread.participants,
+          threadId: cache.thread.id,
         ),
       ),
     ),
@@ -488,11 +554,12 @@ final class FamilyChatServerConversationRepository
     );
   }
 
-  static ConversationMessage _conversationMessage(
+  ConversationMessage _conversationMessage(
     FamilyChatMessage message,
     FamilyChatReadState readState,
-    List<FamilyChatParticipant> participants,
-  ) {
+    List<FamilyChatParticipant> participants, {
+    required String threadId,
+  }) {
     final isMine = message.authorKind == readState.participantKind &&
         message.authorId == readState.participantId;
     String? senderLabel;
@@ -520,12 +587,57 @@ final class FamilyChatServerConversationRepository
       authorId: message.authorId,
       deleted: message.deleted,
       editedAt: message.editedAt,
+      media: _conversationMedia(message, threadId),
+      // Receipts are shown only for what this device wrote; they are counts, never names.
+      receipt: isMine
+          ? ConversationReceipt(
+              deliveredCount: message.receipt.deliveredCount,
+              readCount: message.receipt.readCount,
+              otherParticipantCount: message.receipt.otherParticipantCount,
+            )
+          : null,
     );
+  }
+
+  ConversationMedia? _conversationMedia(FamilyChatMessage message, String threadId) {
+    final item = message.media;
+    if (item == null || message.deleted) return null;
+    final loadable = item.isAvailable && surface == FamilyChatSurface.guardian;
+    return ConversationMedia(
+      id: item.id,
+      kind: item.kind == FamilyChatMessageKind.image
+          ? ConversationMediaKind.image
+          : ConversationMediaKind.audio,
+      mimeType: item.mimeType,
+      durationMs: item.durationMs,
+      available: item.isAvailable,
+      loadBytes: loadable ? () => _loadGuardianMedia(threadId, item) : null,
+    );
+  }
+
+  /// Null is the honest answer for "cannot show it now": the item was removed, the room no
+  /// longer includes the caller, the network failed, or the bytes did not match what was declared.
+  Future<Uint8List?> _loadGuardianMedia(String threadId, FamilyChatMedia item) async {
+    final family = authority.familyId()?.trim();
+    if (family == null || !isFoundationGateUuid(family)) return null;
+    try {
+      return await _mediaClient.fetchGuardianMedia(
+        familyId: family,
+        threadId: threadId,
+        media: item,
+        idToken: await authority.idToken(),
+      );
+    } on Object {
+      return null;
+    }
   }
 }
 
 final class _ThreadCache {
   _ThreadCache({required this.thread, required this.readState});
+
+  /// The highest sequence this client has already acknowledged as received.
+  int deliveredSent = 0;
 
   final FamilyChatThread thread;
   FamilyChatReadState readState;

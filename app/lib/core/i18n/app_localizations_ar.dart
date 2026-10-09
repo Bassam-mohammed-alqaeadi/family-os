@@ -12667,6 +12667,39 @@ class AppLocalizationsAr extends AppLocalizations {
   String get familyChatEdit => 'تعديل';
 
   @override
+  String get familyChatMediaPhoto => 'صورة';
+
+  @override
+  String get familyChatMediaVoiceNote => 'رسالة صوتية';
+
+  @override
+  String get familyChatMediaUnavailable => 'هذا المرفق لم يعد متاحًا';
+
+  @override
+  String get familyChatMediaLoading => 'جارٍ تحميل المرفق…';
+
+  @override
+  String get familyChatMediaNoPlayback => 'تشغيل الرسائل الصوتية غير متاح في هذه النسخة';
+
+  @override
+  String get familyChatMediaNotOnThisDevice => 'المرفقات تظهر على جهاز الوالد في هذه النسخة';
+
+  @override
+  String familyChatReceiptDelivered(int count, int total) => 'وصلت إلى $count من $total';
+
+  @override
+  String familyChatReceiptRead(int count, int total) => 'قرأها $count من $total';
+
+  @override
+  String get familyChatRealtimeLive => 'التحديث الفوري مفعّل';
+
+  @override
+  String get familyChatRealtimeRetrying => 'التحديث الفوري غير متصل؛ يتم التحقق كل ١٥ ثانية';
+
+  @override
+  String get familyChatRealtimePolling => 'يتم التحقق من الرسائل كل ١٥ ثانية';
+
+  @override
   String get familyChatDelete => 'حذف';
 
   @override

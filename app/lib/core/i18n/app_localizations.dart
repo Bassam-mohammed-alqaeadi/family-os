@@ -22485,6 +22485,28 @@ abstract class AppLocalizations {
   /// **'تعديل'**
   String get familyChatEdit;
 
+  String get familyChatMediaPhoto;
+
+  String get familyChatMediaVoiceNote;
+
+  String get familyChatMediaUnavailable;
+
+  String get familyChatMediaLoading;
+
+  String get familyChatMediaNoPlayback;
+
+  String get familyChatMediaNotOnThisDevice;
+
+  String familyChatReceiptDelivered(int count, int total);
+
+  String familyChatReceiptRead(int count, int total);
+
+  String get familyChatRealtimeLive;
+
+  String get familyChatRealtimeRetrying;
+
+  String get familyChatRealtimePolling;
+
   /// W9 family chat client state and controls
   ///
   /// In ar, this message translates to:

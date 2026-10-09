@@ -1,3 +1,5 @@
+import 'package:family_os/foundation_gate/family_chat_realtime_client.dart';
+
 import 'conversation_repository.dart';
 
 /// Optional live surface for server conversations. It never queues an unconfirmed message:
@@ -20,4 +22,20 @@ abstract interface class LiveConversationRepository
     String chatWith,
     ConversationMessage message,
   );
+}
+
+/// The hint channel for a server conversation. Hints say a room changed; the screen answers by
+/// asking the REST API again. A repository that cannot open the channel reports `stopped`, and the
+/// screen keeps its polling interval, so degradation is explicit rather than silent.
+abstract interface class LiveHintConversationRepository {
+  Stream<FamilyChatRealtimeHint> get hints;
+
+  Stream<FamilyChatRealtimeState> get realtimeStates;
+
+  FamilyChatRealtimeState get realtimeState;
+
+  /// Points the channel at the room on screen. Guardian surface only in this build.
+  Future<void> watchRealtime(String chatWith);
+
+  Future<void> stopRealtime();
 }

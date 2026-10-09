@@ -398,6 +398,39 @@ final class FamilyChatServerAuthority {
     );
   }
 
+  Future<FamilyChatAuthorityAnswer<FamilyChatDeliveryState>> markGuardianThreadDelivered({
+    required String threadId,
+    required int deliveredSeq,
+    required String idempotencyKey,
+  }) async {
+    if (!_addressable(threadId)) return _refused();
+    return _guardianCall(
+      (family, token) => api.markFamilyThreadDelivered(
+        familyId: family,
+        threadId: threadId,
+        deliveredSeq: deliveredSeq,
+        idempotencyKey: idempotencyKey,
+        idToken: token,
+      ),
+    );
+  }
+
+  Future<FamilyChatAuthorityAnswer<FamilyChatDeliveryState>> markChildThreadDelivered({
+    required String threadId,
+    required int deliveredSeq,
+    required String idempotencyKey,
+  }) async {
+    if (!_addressable(threadId)) return _refused();
+    return _deviceCall(
+      (deviceId) => api.markDeviceThreadDelivered(
+        deviceId: deviceId,
+        threadId: threadId,
+        deliveredSeq: deliveredSeq,
+        idempotencyKey: idempotencyKey,
+      ),
+    );
+  }
+
   Future<FamilyChatAuthorityAnswer<T>> _guardianCall<T>(
     Future<T> Function(String familyId, String token) run,
   ) async {

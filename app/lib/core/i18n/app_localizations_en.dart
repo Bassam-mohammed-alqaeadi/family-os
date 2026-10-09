@@ -12858,6 +12858,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get familyChatEdit => 'Edit';
 
   @override
+  String get familyChatMediaPhoto => 'Photo';
+
+  @override
+  String get familyChatMediaVoiceNote => 'Voice note';
+
+  @override
+  String get familyChatMediaUnavailable => 'This attachment is no longer available';
+
+  @override
+  String get familyChatMediaLoading => 'Loading attachment…';
+
+  @override
+  String get familyChatMediaNoPlayback => 'Voice-note playback is not available in this version';
+
+  @override
+  String get familyChatMediaNotOnThisDevice => 'In this version, attachments show on a guardian\'s device';
+
+  @override
+  String familyChatReceiptDelivered(int count, int total) => 'Delivered to $count of $total';
+
+  @override
+  String familyChatReceiptRead(int count, int total) => 'Read by $count of $total';
+
+  @override
+  String get familyChatRealtimeLive => 'Live updates on';
+
+  @override
+  String get familyChatRealtimeRetrying => 'Live updates are off; checking every 15 seconds';
+
+  @override
+  String get familyChatRealtimePolling => 'Checking for messages every 15 seconds';
+
+  @override
   String get familyChatDelete => 'Delete';
 
   @override

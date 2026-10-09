@@ -533,6 +533,28 @@ class FoundationGateConfiguration {
     );
   }
 
+  Uri familyChatDeliveredUri(String familyId, String threadId) {
+    _requireChatUuids(familyId, threadId);
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/chat/threads/$threadId/delivered',
+    );
+  }
+
+  Uri deviceChatDeliveredUri(String deviceId, String threadId) {
+    _requireChatUuids(deviceId, threadId);
+    return stagingApiOrigin.replace(
+      path: '/v1/devices/$deviceId/chat/threads/$threadId/delivered',
+    );
+  }
+
+  /// The realtime hint socket. It is the same origin as the REST API with a WebSocket scheme,
+  /// and the same credentials. Hints say that a room moved; they never carry its content.
+  Uri get chatRealtimeUri => stagingApiOrigin.replace(
+    scheme: stagingApiOrigin.scheme == 'https' ? 'wss' : 'ws',
+    path: '/v1/realtime',
+  );
+
+
   void _requireChatUuids(String first, [String? second, String? third]) {
     if (!isFoundationGateUuid(first) ||
         (second != null && !isFoundationGateUuid(second)) ||
