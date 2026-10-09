@@ -3,10 +3,9 @@ description: Family OS (عائلتي) — parent+child digital wellbeing. Mock-f
 publish_to: "none"
 version: 1.0.0+1
 
-# Pinned to owner PC SDK (QUESTIONS Q-PREFLIGHT-001 resolved 2026-09-20):
-# Flutter 3.35.7 stable · Dart 3.9.2 · C:\src\flutter
+# SDK floor: record 7.x requires Dart 3.12 or newer; CI pins Flutter 3.47.7.
 environment:
-  sdk: ^3.9.2
+  sdk: ^3.12.0
 
 dependencies:
   flutter:

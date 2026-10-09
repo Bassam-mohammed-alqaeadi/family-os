@@ -28,11 +28,20 @@ jobs:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.35.7"
+          flutter-version: "3.47.7"
           channel: stable
           cache: true
       - name: Resolve packages
+        id: resolve_packages
         run: flutter pub get
+      - name: Upload resolved dependency lock
+        if: always() && steps.resolve_packages.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: resolved-pubspec-lock-${{ github.run_id }}
+          path: app/pubspec.lock
+          if-no-files-found: error
+          retention-days: 7
       - name: Generate localization source
         run: flutter gen-l10n
       - name: Generate route and shell source
