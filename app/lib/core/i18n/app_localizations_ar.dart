@@ -12685,10 +12685,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get familyChatMediaNotOnThisDevice => 'المرفقات تظهر على جهاز الوالد في هذه النسخة';
 
   @override
-  String familyChatReceiptDelivered(int count, int total) => 'وصلت إلى $count من $total';
+  String familyChatReceiptDelivered(int count, int total) {
+    return 'وصلت إلى $count من $total';
+  }
 
   @override
-  String familyChatReceiptRead(int count, int total) => 'قرأها $count من $total';
+  String familyChatReceiptRead(int count, int total) {
+    return 'قرأها $count من $total';
+  }
 
   @override
   String get familyChatRealtimeLive => 'التحديث الفوري مفعّل';

@@ -12876,10 +12876,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get familyChatMediaNotOnThisDevice => 'In this version, attachments show on a guardian\'s device';
 
   @override
-  String familyChatReceiptDelivered(int count, int total) => 'Delivered to $count of $total';
+  String familyChatReceiptDelivered(int count, int total) {
+    return 'Delivered to $count of $total';
+  }
 
   @override
-  String familyChatReceiptRead(int count, int total) => 'Read by $count of $total';
+  String familyChatReceiptRead(int count, int total) {
+    return 'Read by $count of $total';
+  }
 
   @override
   String get familyChatRealtimeLive => 'Live updates on';

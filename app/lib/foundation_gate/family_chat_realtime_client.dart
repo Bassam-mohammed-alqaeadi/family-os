@@ -31,7 +31,7 @@ final class FamilyChatRealtimeHint {
   /// Reads one server frame. Acknowledgements (`ready`, `subscribed`, `pong`) return null, and so
   /// does anything malformed: a bad frame is ignored rather than trusted.
   static FamilyChatRealtimeHint? fromFrame(String raw) {
-    final Object? decoded;
+    Object? decoded;
     try {
       decoded = jsonDecode(raw);
     } on FormatException {
@@ -163,7 +163,8 @@ final class FamilyChatRealtimeClient {
     _setState(FamilyChatRealtimeState.retrying);
     _failures += 1;
     // 1s, 2s, 4s ... capped. A socket that keeps refusing must not be hammered.
-    final seconds = 1 << (_failures - 1).clamp(0, 6);
+    final exponent = _failures - 1 > 6 ? 6 : _failures - 1;
+    final seconds = 1 << exponent;
     final delay = Duration(seconds: seconds);
     _retryTimer?.cancel();
     _retryTimer = Timer(delay > maxBackoff ? maxBackoff : delay, () => unawaited(_connect()));

@@ -1292,9 +1292,10 @@ class _MediaViewState extends State<_MediaView> {
 
     if (media.kind == ConversationMediaKind.audio) {
       final ms = media.durationMs;
+      final seconds = ms == null ? 0 : ms ~/ 1000;
       final length = ms == null
           ? ''
-          : ' · ${(ms ~/ 60000)}:${((ms ~/ 1000) % 60).toString().padLeft(2, '0')}';
+          : ' · ${seconds ~/ 60}:${(seconds % 60).toString().padLeft(2, '0')}';
       return _note(
         '${l10n.familyChatMediaVoiceNote}$length\n${l10n.familyChatMediaNoPlayback}',
       );
@@ -1310,7 +1311,7 @@ class _MediaViewState extends State<_MediaView> {
         final bytes = snapshot.data;
         if (bytes == null) return _note(l10n.familyChatMediaUnavailable);
         return ClipRRect(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: const BorderRadius.all(Radius.circular(12)),
           child: Image.memory(
             bytes,
             fit: BoxFit.contain,
@@ -1327,7 +1328,7 @@ class _MediaViewState extends State<_MediaView> {
     padding: const EdgeInsets.all(10),
     decoration: BoxDecoration(
       color: widget.surface.withValues(alpha: 0.18),
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: const BorderRadius.all(Radius.circular(12)),
     ),
     child: Text(
       text,
