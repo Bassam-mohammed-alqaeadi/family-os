@@ -58,7 +58,7 @@ bash /tmp/repo-health.sh             # ٣) دليل أن مساحة العمل �
 
 **فحص السلامة** — نزّله في `/tmp` **ولا تُودِعه** (تجنّباً لأي تصادم مع فرع آخر):
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Bassam-mohammed-alqaeadi/family-os/arena/6233f1a1-family-os/tools/git/repo-health.sh -o /tmp/repo-health.sh
+curl -fsSL https://raw.githubusercontent.com/Bassam-mohammed-alqaeadi/family-os/main/tools/git/repo-health.sh -o /tmp/repo-health.sh
 bash /tmp/repo-health.sh
 ```
 إن تعذّر التنزيل، نفّذ الفحص يدوياً:
@@ -106,7 +106,7 @@ git reset --hard origin/<فرعك>    # بعد التأكد أن كل محتوى
 - **الأذونات:** السكربت الجديد يحتاج `chmod +x` وإلا فشل صامتاً.
 - **البِنايات المطابقة:** استخدم `npm ci` و `flutter pub get --enforce-lockfile`.
 - **الملفات المولَّدة المتتبَّعة:** شغّل خطوة التوليد في CI وتحقّق أن لا فرق، وإلا انحرف المولَّد عن المصدر بصمت.
-- **⚠️ تصادم أرقام الـmigration:** الفرع `arena/6233f1a1-family-os` أضاف `009_ai_events.sql`، والفرع `arena/01a10887-family-os` أضاف `009_pairing_code_short_numeric.sql`. الأسماء مختلفة فـGit سيدمجهما **بصمت** بينما `schema-manifest.js` يحمل `009` مرتين بترتيب غير معرّف — عطل قاعدة بيانات لا يظهر في المراجعة. **أي فرع يُدمج ثانياً يجب أن يُعيد الترقيم قبله، ويفحص المراجع في `schema-manifest.js`.**
+- **ترقيم الـmigration متسلسل على `main`:** الهجرة التالية هي `114` (يتحقق منها `tools/harness/check_migration_range.sh`). أي هجرة تُنقل من فرع مؤرشف — مثل `009_pairing_code_short_numeric.sql` في الوسم `archive/arena-e8dd180c` — **يجب أن يُعاد ترقيمها** إلى الرقم التالي على main، مع تحديث `schema-manifest.js`.
 
 ### المرجع الكامل
 

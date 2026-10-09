@@ -41,6 +41,16 @@ A successful API request, mock interaction or attractive screen is not a complet
 | `prototype/` | Frozen route-registry reference used by Flutter tests. |
 | `docs/archive/` | Preserved historical material; evidence, never the current execution authority. |
 
+## Branch policy
+
+- `main` is the **only long-lived branch** and the single source of truth.
+- Every change goes through a short-lived branch cut from `main` → pull request → green CI → **merge commit** (no squash, no rebase: loop documents cite commit hashes as evidence). The branch is deleted on merge and never outlives one pull request.
+- No force-push to `main`. An unmerged branch is deleted only after an annotated `archive/*` tag is pushed on its head and verified on GitHub. Archive tags are never deleted.
+- All earlier branches (`arena/*`, `copilot/*`, `cursor/*`, `feat/*`, `discovery/*`) were archived as `archive/*` tags and retired when development was unified on `main` (October 2026). Restore one with `git fetch origin tag archive/<name>` then `git switch -c <branch> archive/<name>`.
+- Database migrations are numbered sequentially on `main`; the next one is `114` (enforced by `tools/harness/check_migration_range.sh`).
+
+Full rules: [`docs/GIT_AND_GITHUB_OPERATING_METHOD.md`](docs/GIT_AND_GITHUB_OPERATING_METHOD.md) (Rule 5).
+
 ## Verification
 
 ```bash
