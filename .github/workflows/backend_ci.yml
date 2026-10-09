@@ -54,7 +54,8 @@ jobs:
         working-directory: backend
     services:
       postgres:
-        image: postgres:16
+        # Use AWS's public mirror of the official image to avoid anonymous Docker Hub pull-rate limits.
+        image: public.ecr.aws/docker/library/postgres:16
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
