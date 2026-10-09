@@ -647,7 +647,16 @@ void main() {
     );
     expect(find.text('Message 1'), findsOneWidget);
     expect(find.text('primary_guardian'), findsNothing);
-    expect(find.text(l10n.dayBoardGuardianFallback), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(
+          ChildConversationKeys.bubble('00000000-0000-4000-8000-000000000001'),
+        ),
+        matching: find.text('Father'),
+      ),
+      findsOneWidget,
+      reason: 'a server-disclosed participant name is shown instead of its role key',
+    );
     expect(
       deviceTransport.requests.map((request) => request.operation),
       <String>['listThreads', 'listMessages', 'markRead'],
