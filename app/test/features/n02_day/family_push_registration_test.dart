@@ -65,7 +65,7 @@ void main() {
   });
 
   test('without a token (no Firebase on this build, or refused) nothing is sent', () async {
-    final tokens = _FakeTokens()..token = null;
+    final tokens = _FakeTokens(token: null);
     final registrar = FamilyPushRegistrar(client: client, tokens: tokens);
     expect(await registrar.ensureRegistered(familyId: _family, idToken: 'id'), isFalse);
     expect(posted, isEmpty);

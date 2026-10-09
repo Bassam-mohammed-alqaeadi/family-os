@@ -1,12 +1,10 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/media/temporary_media_files.dart';
 import 'package:family_os/features/n02_day/conversation_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
 /// Plays one voice note the caller may see.
 ///
@@ -34,7 +32,7 @@ class VoiceNotePlayer extends StatefulWidget {
 class _VoiceNotePlayerState extends State<VoiceNotePlayer> {
   AudioPlayer? _player;
   StreamSubscription<PlayerState>? _stateSub;
-  File? _file;
+  String? _filePath;
   bool _loading = false;
   bool _failed = false;
 
@@ -55,14 +53,13 @@ class _VoiceNotePlayerState extends State<VoiceNotePlayer> {
       final load = widget.media.loadBytes;
       final bytes = load == null ? null : await load();
       if (bytes == null) throw StateError('voice note unavailable');
-      final directory = await getTemporaryDirectory();
-      final file = File(
-        p.join(directory.path, 'voice-${widget.media.id}.${_extensionFor(widget.media.mimeType)}'),
+      final path = await temporaryMediaFiles.newPath(
+        'voice-${widget.media.id}.${_extensionFor(widget.media.mimeType)}',
       );
-      await file.writeAsBytes(bytes, flush: true);
-      _file = file;
+      await temporaryMediaFiles.write(path, bytes);
+      _filePath = path;
       final created = AudioPlayer();
-      await created.setFilePath(file.path);
+      await created.setFilePath(path);
       _stateSub = created.playerStateStream.listen((_) {
         if (mounted) setState(() {});
       });
@@ -85,18 +82,16 @@ class _VoiceNotePlayerState extends State<VoiceNotePlayer> {
     _ => 'm4a',
   };
 
+  Future<void> _releaseResources() async {
+    await _stateSub?.cancel();
+    await _player?.dispose();
+    final path = _filePath;
+    if (path != null) await temporaryMediaFiles.deleteIfPresent(path);
+  }
+
   @override
   void dispose() {
-    unawaited(_stateSub?.cancel());
-    unawaited(_player?.dispose());
-    final file = _file;
-    if (file != null) {
-      try {
-        file.deleteSync();
-      } on FileSystemException {
-        // Already gone; nothing else refers to it.
-      }
-    }
+    unawaited(_releaseResources());
     super.dispose();
   }
 

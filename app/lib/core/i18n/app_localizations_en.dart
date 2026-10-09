@@ -12873,61 +12873,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get familyChatMediaNoPlayback =>
       'Voice-note playback is not available in this version';
-  @override
-  String get conversationAttachPhotoGallery =>
-      'Photo from gallery';
-
-  @override
-  String get conversationAttachPhotoCamera =>
-      'Take a photo';
-
-  @override
-  String get conversationAttachVoice =>
-      'Record a voice note';
-
-  @override
-  String get mediaPhotoPendingLabel =>
-      'Photo ready. Add a caption if you like, then send.';
-
-  @override
-  String get mediaPhotoRemove =>
-      'Remove photo';
-
-  @override
-  String get mediaComposeUnsupportedType =>
-      'This file type is not supported. Choose a JPEG, PNG or WebP photo.';
-
-  @override
-  String get mediaComposeTooLarge =>
-      'This file is too large to send.';
-
-  @override
-  String get mediaComposeMicrophoneDenied =>
-      'Microphone access is needed to record a voice note. Allow it in settings and try again.';
-
-  @override
-  String get mediaComposeFailed =>
-      'The photo or recording could not be prepared. Try again.';
-
-  @override
-  String get voiceRecordingTitle =>
-      'Voice note';
-
-  @override
-  String get voiceRecordingSend =>
-      'Send';
-
-  @override
-  String get voiceRecordingCancel =>
-      'Cancel';
-
-  @override
-  String get voicePlaySemantics =>
-      'Play voice note';
-
-  @override
-  String get voicePauseSemantics =>
-      'Pause voice note';
 
   @override
   String get familyChatMediaNotOnThisDevice =>
@@ -12990,4 +12935,50 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get familyChatNeverLocks =>
       'Family chat stays available after play time ends.';
+
+  @override
+  String get conversationAttachPhotoGallery => 'Photo from gallery';
+
+  @override
+  String get conversationAttachPhotoCamera => 'Take a photo';
+
+  @override
+  String get conversationAttachVoice => 'Record a voice note';
+
+  @override
+  String get mediaPhotoPendingLabel =>
+      'Photo ready. Add a caption if you like, then send.';
+
+  @override
+  String get mediaPhotoRemove => 'Remove photo';
+
+  @override
+  String get mediaComposeUnsupportedType =>
+      'This file type is not supported. Choose a JPEG, PNG or WebP photo.';
+
+  @override
+  String get mediaComposeTooLarge => 'This file is too large to send.';
+
+  @override
+  String get mediaComposeMicrophoneDenied =>
+      'Microphone access is needed to record a voice note. Allow it in settings and try again.';
+
+  @override
+  String get mediaComposeFailed =>
+      'The photo or recording could not be prepared. Try again.';
+
+  @override
+  String get voiceRecordingTitle => 'Voice note';
+
+  @override
+  String get voiceRecordingSend => 'Send';
+
+  @override
+  String get voiceRecordingCancel => 'Cancel';
+
+  @override
+  String get voicePlaySemantics => 'Play voice note';
+
+  @override
+  String get voicePauseSemantics => 'Pause voice note';
 }
