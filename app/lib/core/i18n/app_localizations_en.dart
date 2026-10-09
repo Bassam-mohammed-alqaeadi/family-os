@@ -12864,16 +12864,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get familyChatMediaVoiceNote => 'Voice note';
 
   @override
-  String get familyChatMediaUnavailable => 'This attachment is no longer available';
+  String get familyChatMediaUnavailable =>
+      'This attachment is no longer available';
 
   @override
   String get familyChatMediaLoading => 'Loading attachment…';
 
   @override
-  String get familyChatMediaNoPlayback => 'Voice-note playback is not available in this version';
+  String get familyChatMediaNoPlayback =>
+      'Voice-note playback is not available in this version';
 
   @override
-  String get familyChatMediaNotOnThisDevice => 'In this version, attachments show on a guardian\'s device';
+  String get familyChatMediaNotOnThisDevice =>
+      'In this version, attachments show on a guardian\'s device';
 
   @override
   String familyChatReceiptDelivered(int count, int total) {
@@ -12889,10 +12892,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get familyChatRealtimeLive => 'Live updates on';
 
   @override
-  String get familyChatRealtimeRetrying => 'Live updates are off; checking every 15 seconds';
+  String get familyChatRealtimeRetrying =>
+      'Live updates are off; checking every 15 seconds';
 
   @override
-  String get familyChatRealtimePolling => 'Checking for messages every 15 seconds';
+  String get familyChatRealtimePolling =>
+      'Checking for messages every 15 seconds';
 
   @override
   String get familyChatDelete => 'Delete';
