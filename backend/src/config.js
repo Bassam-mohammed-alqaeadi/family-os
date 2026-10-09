@@ -64,6 +64,8 @@ export function loadConfig(environment = process.env) {
     environment: optionalText(environment.NODE_ENV) ?? 'development',
     port: parsePort(environment.PORT),
     databaseUrl: optionalText(environment.DATABASE_URL),
+    // W9 media bytes. Unset means media is unavailable on this server; there is no default folder.
+    chatMediaDirectory: optionalText(environment.FAMILY_CHAT_MEDIA_DIR),
     guardianTransferTtlHours: optionalBoundedInteger(environment.GUARDIAN_TRANSFER_TTL_HOURS, 'GUARDIAN_TRANSFER_TTL_HOURS', {
       minimum: 1,
       maximum: 168,

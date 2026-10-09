@@ -2,6 +2,8 @@ import { createApp } from './app.js';
 import { configurationReadiness, loadConfig, loadListeningPort } from './config.js';
 import { DisabledAuthVerifier, OidcAuthVerifier } from './auth/oidc-verifier.js';
 import { PostgresFoundationStore } from './store/postgres-foundation-store.js';
+import { createChatEventBus } from './chat-realtime.js';
+import { LocalDiskChatMediaStore } from './chat-media-store.js';
 import { UnconfiguredFoundationStore } from './store/unconfigured-foundation-store.js';
 
 function unavailableConfig(port, error) {
@@ -41,8 +43,28 @@ export function createRuntime(environment = process.env) {
       : configurationReadiness(config)
   );
 
+  // Fail fast on a relative media directory: a silently ignored storage setting is worse than a
+  // refused start. The error names the variable only, never its value.
+  const chatMediaStore = config.chatMediaDirectory
+    ? new LocalDiskChatMediaStore({ root: config.chatMediaDirectory })
+    : null;
+  const chatBus = createChatEventBus();
+  const app = createApp({ store, authVerifier, readiness, chatMediaStore, chatBus });
+
+  // What the realtime gateway needs: the same verifier, the same store-backed readiness, and the
+  // same bus the routes publish to.
+  const ready = async () => {
+    const configStatus = readiness();
+    if (!configStatus.ready) return false;
+    const databaseStatus = await store.health();
+    return databaseStatus.available === true;
+  };
+
   return {
-    app: createApp({ store, authVerifier, readiness }),
+    app,
+    authVerifier,
+    chatBus,
+    ready,
     configurationError,
     port: config.port,
     store,

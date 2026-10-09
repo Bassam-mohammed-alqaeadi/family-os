@@ -200,6 +200,22 @@ test('every protected operation declares OIDC security, rate limiting and idempo
       '/v1/devices/{deviceId}/chat/threads/{threadId}/messages/{messageId}',
       '/v1/devices/{deviceId}/chat/threads/{threadId}/messages/{messageId}/deletion',
       '/v1/devices/{deviceId}/chat/threads/{threadId}/reads',
+      // W9 realtime and media add six, and they are the same decision again: the handset uploads
+      // its own voice note under the child it belongs to, reads a room's media after the room
+      // check, and states what it has received. None takes a child id. The realtime socket is
+      // the seventh: a handset connects with its credential and names its own device id, and
+      // every hint is checked against the room it would reveal.
+      '/v1/devices/{deviceId}/chat/threads/{threadId}/media',
+      '/v1/devices/{deviceId}/chat/threads/{threadId}/media/{mediaId}/content',
+      '/v1/devices/{deviceId}/chat/threads/{threadId}/delivered',
+      '/v1/realtime',
+    ]);
+    // A media upload is idempotent by its own `clientMediaId` (same id, same file, same media;
+    // a different file under that id is refused), so it does not take the platform's
+    // Idempotency-Key header. Named here, not inferred, so no other POST can slip in unnoticed.
+    const idempotentByClientMediaId = new Set([
+      '/v1/families/{familyId}/chat/threads/{threadId}/media',
+      '/v1/devices/{deviceId}/chat/threads/{threadId}/media',
     ]);
     // Roster reads and child-created/child-managed conversations use only the paired-device
     // credential. List/read/message routes that also support a guardian bearer token remain
@@ -227,7 +243,11 @@ test('every protected operation declares OIDC security, rate limiting and idempo
       'POST /v1/devices/{deviceId}/chat/threads',
       'POST /v1/devices/{deviceId}/chat/threads/{threadId}/members',
     ]);
-    if (method === 'POST' && (!deviceAuthenticated.has(path) || deviceChatMutations.has(operationKey))) {
+    if (
+      method === 'POST'
+      && (!deviceAuthenticated.has(path) || deviceChatMutations.has(operationKey))
+      && !idempotentByClientMediaId.has(path)
+    ) {
       assert.ok(
         operation.parameters?.some(
           (parameter) => parameter.$ref === '#/components/parameters/IdempotencyKey',
@@ -255,9 +275,13 @@ test('chat v1 publishes pair/group and future capability extension points withou
   assert.equal(CHAT_CURRENT_CAPABILITIES.transport, 'polling');
   assert.equal(CHAT_CURRENT_CAPABILITIES.listPollSeconds, 30);
   assert.equal(CHAT_CURRENT_CAPABILITIES.threadPollSeconds, 15);
-  for (const flag of [
-    'serverSentEvents', 'webSockets', 'attachments', 'audio', 'presence', 'richReactions',
-  ]) {
+  // Implemented in W9: the flag, the schema and the server must say the same thing.
+  for (const flag of ['webSockets', 'attachments', 'audio']) {
+    assert.equal(CHAT_CURRENT_CAPABILITIES[flag], true, `${flag} is implemented`);
+    assert.equal(capabilities[flag].type, 'boolean');
+    assert.match(capabilities[flag].description, /current service returns true/i);
+  }
+  for (const flag of ['serverSentEvents', 'presence', 'richReactions']) {
     assert.equal(CHAT_CURRENT_CAPABILITIES[flag], false);
     assert.equal(capabilities[flag].type, 'boolean');
     assert.equal(Object.hasOwn(capabilities[flag], 'const'), false);

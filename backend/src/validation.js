@@ -1558,11 +1558,39 @@ export function chatThreadMemberInput(value) {
 /** What a person wrote, and the client's own name for this message. */
 export function chatMessageInput(value) {
   const body = bodyObject(value);
-  onlyKnownFields(body, new Set(['body', 'clientMessageId']));
+  onlyKnownFields(body, new Set(['body', 'clientMessageId', 'mediaId']));
+  const mediaId = body.mediaId === undefined || body.mediaId === null ? null : requireUuid(body.mediaId, 'mediaId');
   return {
-    body: chatBody(body.body, 'body'),
+    // A message without media needs text. A message WITH media may carry an optional caption.
+    body: mediaId == null ? chatBody(body.body, 'body') : chatCaption(body.body),
+    mediaId,
     clientMessageId: clientMessageId(body.clientMessageId),
   };
+}
+
+function chatCaption(value) {
+  if (value === undefined || value === null) return '';
+  return chatBody(value, 'body');
+}
+
+/** The delivery acknowledgement: the highest sequence this client has received. */
+export function chatDeliveredInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['deliveredSeq']));
+  return { deliveredSeq: requiredWholeNumber(body.deliveredSeq, 'deliveredSeq', 0, Number.MAX_SAFE_INTEGER) };
+}
+
+/** The query of an upload: the client's own idempotency id, and the declared length of a voice note. */
+export function chatMediaUploadQuery(value) {
+  const allowed = new Set(['clientMediaId', 'durationMs']);
+  if (value && Object.keys(value).some((key) => !allowed.has(key))) {
+    throw new HttpError(400, 'invalid_request', 'The upload query contains unsupported parameters.');
+  }
+  const durationMs =
+    value?.durationMs === undefined || value?.durationMs === ''
+      ? null
+      : requiredWholeNumber(Number(value.durationMs), 'durationMs', 1, 300000);
+  return { clientMediaId: clientMessageId(value?.clientMediaId), durationMs };
 }
 
 /** An edit states the revision it read, so two editors collide loudly instead of one silently

@@ -97,6 +97,8 @@ function messageRow(overrides = {}) {
     family_id: FAMILY,
     thread_id: THREAD,
     seq: 1,
+    kind: 'text',
+    media_id: null,
     author_kind: 'membership',
     author_id: PRIMARY,
     body: 'السلام عليكم',
@@ -379,15 +381,23 @@ function memoryPort({
       return rows.slice(0, limit).map((row) => ({ ...row }));
     },
 
-    async readCountsForMessages(_tx, { threadId, messageIds }) {
+    async receiptCountsForMessages(_tx, { threadId, messageIds }) {
       return state.messages
         .filter((row) => row.thread_id === threadId && messageIds.includes(row.id))
-        .map((row) => ({
-          message_id: row.id,
-          read_count: state.members.filter((entry) => entry.thread_id === threadId
-            && entry.last_read_seq >= row.seq
-            && !(entry.participant_kind === row.author_kind && entry.participant_id === row.author_id)).length,
-        }));
+        .map((row) => {
+          const others = state.members.filter((entry) => entry.thread_id === threadId
+            && !(entry.participant_kind === row.author_kind && entry.participant_id === row.author_id));
+          return {
+            message_id: row.id,
+            other_count: others.length,
+            delivered_count: others.filter((entry) => (entry.last_delivered_seq ?? entry.last_read_seq) >= row.seq).length,
+            read_count: others.filter((entry) => entry.last_read_seq >= row.seq).length,
+          };
+        });
+    },
+
+    async mediaForMessages() {
+      return [];
     },
 
     async updateMessageBody(_tx, { messageId, body }) {
@@ -447,20 +457,17 @@ const sendArgs = (port, overrides = {}) => ({
 
 // ── the shapes a screen reads ─────────────────────────────────────────────────────────────
 
-test('the current chat advertises polling and text only while reserving future capability flags', () => {
+test('the chat advertises realtime hints, media and voice, and keeps the strict client fields unchanged', () => {
+  // The shipped client parses `transport` and `contentTypes` strictly; they stay as they were.
   assert.equal(CHAT_CURRENT_CAPABILITIES.transport, 'polling');
   assert.equal(CHAT_CURRENT_CAPABILITIES.listPollSeconds, 30);
   assert.equal(CHAT_CURRENT_CAPABILITIES.threadPollSeconds, 15);
   assert.deepEqual(CHAT_CURRENT_CAPABILITIES.contentTypes, ['text/plain']);
-  for (const feature of [
-    'serverSentEvents',
-    'webSockets',
-    'attachments',
-    'audio',
-    'presence',
-    'richReactions',
-  ]) {
-    assert.equal(CHAT_CURRENT_CAPABILITIES[feature], false, `${feature} is not implemented yet`);
+  for (const feature of ['webSockets', 'attachments', 'audio']) {
+    assert.equal(CHAT_CURRENT_CAPABILITIES[feature], true, `${feature} is implemented`);
+  }
+  for (const feature of ['serverSentEvents', 'presence', 'richReactions']) {
+    assert.equal(CHAT_CURRENT_CAPABILITIES[feature], false, `${feature} is not implemented`);
   }
 });
 

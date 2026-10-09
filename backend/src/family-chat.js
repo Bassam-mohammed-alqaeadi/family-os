@@ -61,15 +61,18 @@ export const CHAT_PARTICIPANTS_MAX = 24;
 export const CHAT_PAGE_MAX = 200;
 export const CHAT_PAGE_DEFAULT = 50;
 
+// `transport` and `contentTypes` keep the values the shipped client parses strictly: the client
+// still polls, and message BODIES are still text/plain. The realtime hint channel and media are
+// advertised through their own boolean flags. Changing the two strict fields is a client release.
 export const CHAT_CURRENT_CAPABILITIES = Object.freeze({
   transport: 'polling',
   listPollSeconds: 30,
   threadPollSeconds: 15,
   contentTypes: Object.freeze(['text/plain']),
   serverSentEvents: false,
-  webSockets: false,
-  attachments: false,
-  audio: false,
+  webSockets: true,
+  attachments: true,
+  audio: true,
   presence: false,
   richReactions: false,
 });
@@ -124,14 +127,23 @@ export function participantView(row, { selfParticipant = null, selfMembershipId 
 /// part of the conversation's shape, and pretending the sequence number never existed is how a
 /// reader stops trusting the numbering. `readCount` counts OTHER participants, never the
 /// author: a person has trivially read what they just wrote.
-export function messageView(row, { readCount = 0 } = {}) {
+export function messageView(row, {
+  readCount = 0,
+  deliveredCount = 0,
+  otherParticipantCount = 0,
+  media = null,
+  mediaPathPrefix = null,
+} = {}) {
   const deleted = row.deleted_at != null;
   return {
     id: row.id,
     seq: Number(row.seq),
+    kind: row.kind ?? 'text',
     authorKind: row.author_kind,
     authorId: row.author_id,
     body: deleted ? null : row.body,
+    // A deleted message keeps its kind and loses its media: the bytes go with the text.
+    media: deleted || media == null ? null : mediaView(media, { pathPrefix: mediaPathPrefix }),
     revision: row.revision,
     editedAt: optionalInstant(row.edited_at),
     deleted: deleted,
@@ -139,11 +151,45 @@ export function messageView(row, { readCount = 0 } = {}) {
     deletedByKind: row.deleted_by_kind ?? null,
     deletedById: row.deleted_by_id ?? null,
     createdAt: instant(row.created_at),
+    // The receipt is aggregate: counts of OTHER participants, never names. `readCount` stays at
+    // the top level because clients already read it there.
     readCount,
+    receipt: {
+      deliveredCount,
+      readCount,
+      otherParticipantCount,
+    },
   };
 }
 
-/// The newest message of a thread list row. The columns there are prefixed (`last_body`) because
+/// A media item as a screen may see it. Deliberately absent: the storage key (an internal
+/// handle), the uploader's identity (the room already knows who wrote the message), and the
+/// stored hash's raw form. The `contentPath` is a path, not a credential: fetching it still
+/// requires the caller to be a participant of the room at that moment.
+export function mediaView(row, { pathPrefix = null } = {}) {
+  const removed = row.removed_at != null;
+  return {
+    id: row.id,
+    kind: row.kind,
+    mimeType: row.mime_type,
+    byteSize: Number(row.byte_size),
+    durationMs: row.declared_duration_ms == null ? null : Number(row.declared_duration_ms),
+    sha256: Buffer.from(row.sha256).toString('hex'),
+    status: removed ? 'removed' : 'available',
+    contentPath: removed || pathPrefix == null ? null : `${pathPrefix}/media/${row.id}/content`,
+  };
+}
+
+/// The route prefix for a room as the caller reaches it: the guardian path, or the handset's own
+/// path. The prefix decides the link a screen follows; it never decides access.
+export function threadPathPrefix({ familyId, deviceId, threadId }) {
+  return deviceId != null
+    ? `/v1/devices/${deviceId}/chat/threads/${threadId}`
+    : `/v1/families/${familyId}/chat/threads/${threadId}`;
+}
+
+/// The newest message of a thread list row. A list preview states the message's kind; its
+/// `media` is null by design, because the list is a preview and the media is read from the room. The columns there are prefixed (`last_body`) because
 /// the row is a thread row with a lateral message attached, so the mapping is stated once here
 /// rather than passed to `messageView` as if it were a message row - which would have read the
 /// thread's own `id` and produced a preview of nothing.
@@ -152,6 +198,7 @@ export function threadLastMessage(row) {
   return messageView(
     {
       id: row.last_id,
+      kind: row.last_kind,
       seq: row.last_seq,
       author_kind: row.last_author_kind,
       author_id: row.last_author_id,
@@ -217,6 +264,24 @@ export function normalizeMessageQuery({ afterSeq, limit }) {
 /// A read mark is a statement about what THIS participant has seen, so it may not run ahead of
 /// the thread: a client that claims to have read sequence 900 of a thread that ends at 12 is
 /// either confused or trying to make somebody else's receipt meaningless.
+export function requireDeliverableSeq({ deliveredSeq, highestSeq, minimumSeq = 0 }) {
+  if (deliveredSeq < minimumSeq) {
+    throw new ChatError(
+      409,
+      'chat_delivered_before_join',
+      'A new participant cannot acknowledge conversation history from before they joined.',
+    );
+  }
+  if (deliveredSeq > highestSeq) {
+    throw new ChatError(
+      409,
+      'chat_delivered_ahead',
+      'A delivery acknowledgement cannot pass the newest message in the thread.',
+    );
+  }
+  return deliveredSeq;
+}
+
 export function requireReadableSeq({ readSeq, highestSeq, minimumSeq = 0 }) {
   if (readSeq < minimumSeq) {
     throw new ChatError(
@@ -762,6 +827,26 @@ export function createDeviceParticipantList({ port }) {
 /// Reading a thread's messages, from either surface, through one law: an active participant row
 /// must exist for the caller. The lower bound is that row's joined sequence, so a newly-added
 /// member cannot page backwards into conversation history from before they joined.
+/// Views for a page of messages: one receipt query and one media query, never one per message.
+async function viewMessages(port, tx, { threadId, rows, pathPrefix }) {
+  if (rows.length === 0) return [];
+  const messageIds = rows.map((row) => row.id);
+  const receipts = await port.receiptCountsForMessages(tx, { threadId, messageIds });
+  const mediaRows = await port.mediaForMessages(tx, { messageIds });
+  const receiptById = new Map(receipts.map((entry) => [entry.message_id, entry]));
+  const mediaById = new Map(mediaRows.map((entry) => [entry.message_id, entry]));
+  return rows.map((row) => {
+    const receipt = receiptById.get(row.id);
+    return messageView(row, {
+      readCount: Number(receipt?.read_count ?? 0),
+      deliveredCount: Number(receipt?.delivered_count ?? 0),
+      otherParticipantCount: Number(receipt?.other_count ?? 0),
+      media: mediaById.get(row.id) ?? null,
+      mediaPathPrefix: pathPrefix,
+    });
+  });
+}
+
 export function createMessageList({ port }) {
   return async function listChatMessages({
     principal,
@@ -797,10 +882,12 @@ export function createMessageList({ port }) {
       const joinedSeq = Number(member.joined_seq ?? 1);
       const from = Math.max(requestedAfter, joinedSeq - 1);
       const rows = await port.listMessages(tx, { threadId, afterSeq: from, minimumSeq: joinedSeq, limit: size });
-      const readCounts = await port.readCountsForMessages(tx, { threadId, messageIds: rows.map((row) => row.id) });
-      const byId = new Map(readCounts.map((entry) => [entry.message_id, Number(entry.read_count)]));
       return {
-        messages: rows.map((row) => messageView(row, { readCount: byId.get(row.id) ?? 0 })),
+        messages: await viewMessages(port, tx, {
+          threadId,
+          rows,
+          pathPrefix: threadPathPrefix({ familyId: participant.familyId, deviceId, threadId }),
+        }),
         readState: readStateView(member),
         hasMore: rows.length === size,
       };
@@ -819,6 +906,7 @@ export function createMessageSend({ port }) {
     familyId,
     threadId,
     body,
+    mediaId = null,
     clientMessageId,
     idempotencyKey,
     requestHash,
@@ -855,16 +943,27 @@ export function createMessageSend({ port }) {
           authorId: author.id,
           clientMessageId,
         });
+        const pathPrefix = threadPathPrefix({ familyId: participant.familyId, deviceId, threadId });
         if (replay != null) {
           // The same client message arriving twice is one message. It is NOT an error: a phone
           // that lost the answer must be able to ask again and get the sequence it was given -
           // and the receipt it is answered with is the receipt that is true NOW, not a zero
           // that would quietly un-tell a reader somebody had already read it.
-          const counts = await port.readCountsForMessages(tx, { threadId, messageIds: [replay.id] });
-          return {
-            message: messageView(replay, { readCount: Number(counts[0]?.read_count ?? 0) }),
-            replayed: true,
-          };
+          const [view] = await viewMessages(port, tx, { threadId, rows: [replay], pathPrefix });
+          return { message: view, replayed: true };
+        }
+        let media = null;
+        if (mediaId != null) {
+          // The media must be the caller's own, in this room, live, and not already sent. Every
+          // failure is the same 404: a stranger's media id is not a fact the caller may learn.
+          media = await port.readMediaInThread(tx, { familyId: participant.familyId, threadId, mediaId });
+          const mine = media != null && media.uploader_kind === author.kind && media.uploader_id === author.id;
+          if (!mine || media.removed_at != null) {
+            throw new ChatError(404, 'chat_media_not_found', 'This media is not part of the conversation.');
+          }
+          if (media.attached_message_id != null) {
+            throw new ChatError(409, 'chat_media_already_sent', 'This media was already sent.');
+          }
         }
         const seq = await port.allocateSeq(tx, { familyId: participant.familyId, threadId });
         const row = await port.insertMessage(tx, {
@@ -875,6 +974,8 @@ export function createMessageSend({ port }) {
           authorId: author.id,
           body,
           clientMessageId,
+          kind: media == null ? 'text' : media.kind,
+          mediaId,
         });
         await port.audit(tx, {
           familyId: participant.familyId,
@@ -884,7 +985,8 @@ export function createMessageSend({ port }) {
           subjectType: 'family_chat_message',
           eventType: 'family.chat_message_sent',
         });
-        return { message: messageView(row, { readCount: 0 }), replayed: false };
+        const [view] = await viewMessages(port, tx, { threadId, rows: [row], pathPrefix });
+        return { message: view, replayed: false };
       },
     );
   };
@@ -923,6 +1025,9 @@ export function createMessageEdit({ port }) {
       if (message.deleted_at != null) {
         throw new ChatError(409, 'chat_message_deleted', 'A deleted message is not edited.');
       }
+      if (message.kind !== 'text') {
+        throw new ChatError(409, 'chat_media_message_not_editable', 'A message with media is not edited.');
+      }
       if (message.revision !== expectedRevision(revision)) {
         throw new ChatError(
           409,
@@ -939,7 +1044,12 @@ export function createMessageEdit({ port }) {
         subjectType: 'family_chat_message',
         eventType: 'family.chat_message_edited',
       });
-      return { message: messageView(row, { readCount: 0 }) };
+      const [view] = await viewMessages(port, tx, {
+        threadId,
+        rows: [row],
+        pathPrefix: threadPathPrefix({ familyId: participant.familyId, deviceId, threadId }),
+      });
+      return { message: view };
     });
   };
 }
@@ -987,6 +1097,11 @@ export function createMessageDelete({ port }) {
           deletedByKind: author.kind,
           deletedById: author.id,
         });
+        let purgeStorageKeys = [];
+        if (message.media_id != null) {
+          const key = await port.markMediaRemoved(tx, { mediaId: message.media_id });
+          if (key != null) purgeStorageKeys = [key];
+        }
         await port.audit(tx, {
           familyId: participant.familyId,
           actorMembershipId: author.membershipId,
@@ -995,9 +1110,122 @@ export function createMessageDelete({ port }) {
           subjectType: 'family_chat_message',
           eventType: 'family.chat_message_deleted',
         });
-        return { message: messageView(row, { readCount: 0 }) };
+        const [view] = await viewMessages(port, tx, {
+          threadId,
+          rows: [row],
+          pathPrefix: threadPathPrefix({ familyId: participant.familyId, deviceId, threadId }),
+        });
+        return { message: view, purgeStorageKeys };
       },
     );
+  };
+}
+
+/// Delivery acknowledgement: "my client has received everything up to this sequence". It is
+/// the participant's own statement, bounded like a read mark and monotone. It is not written to
+/// the audit trail: it is high-volume and carries no decision - a receipt, not a change of rights.
+export function createDeliveredMark({ port }) {
+  return async function markThreadDelivered({
+    principal,
+    deviceId,
+    deviceCredential,
+    familyId,
+    threadId,
+    deliveredSeq,
+    idempotencyKey,
+    requestHash,
+  }) {
+    return port.idempotent(
+      `chat:delivered:${familyId ?? deviceId}:${threadId}`,
+      idempotencyKey,
+      requestHash,
+      async (tx) => {
+        const { participant } = await port.resolveParticipant(tx, {
+          principal,
+          deviceId,
+          deviceCredential,
+          familyId,
+        });
+        const thread = await port.readThread(tx, { familyId: participant.familyId, threadId }, { forUpdate: true });
+        if (thread == null) {
+          throw new ChatError(404, 'chat_thread_not_found', 'This conversation is not part of the family.');
+        }
+        const member = await port.readThreadMember(tx, {
+          threadId,
+          participantKind: participant.kind,
+          participantId: participant.id,
+        });
+        if (member == null) {
+          throw new ChatError(404, 'chat_thread_not_found', 'This conversation is not part of the family.');
+        }
+        const highestSeq = await port.readHighestSeq(tx, { threadId });
+        requireDeliverableSeq({
+          deliveredSeq,
+          highestSeq,
+          minimumSeq: Number(member.joined_seq ?? 1) - 1,
+        });
+        const row = await port.advanceLastDeliveredSeq(tx, {
+          threadId,
+          participantKind: participant.kind,
+          participantId: participant.id,
+          deliveredSeq,
+        });
+        return {
+          deliveryState: {
+            threadId,
+            participantKind: participant.kind,
+            participantId: participant.id,
+            lastDeliveredSeq: Number(row.last_delivered_seq),
+            lastReadSeq: Number(row.last_read_seq),
+          },
+        };
+      },
+    );
+  };
+}
+
+/// The device half of the upgrade check: is this credential a live credential of this handset,
+/// and which family is it in? Returns null for anything else, with no reason given.
+export function createDeviceAuthentication({ port }) {
+  return async function authenticateDevice({ deviceId, deviceCredential }) {
+    try {
+      return await port.read(async (tx) => {
+        const device = await port.requireDevice(tx, { deviceId, deviceCredential });
+        return { familyId: device.family_id, childId: device.child_id };
+      });
+    } catch (error) {
+      if (error instanceof HttpError) return null;
+      throw error;
+    }
+  };
+}
+
+/// The one question the realtime gateway asks before it forwards anything: may this caller read
+/// this room right now? It is the same resolution the REST routes perform, so a hint can never
+/// reach a socket that a GET would have refused. Any failure - unknown caller, revoked device,
+/// no member row - is a plain `false`, because the gateway must not explain why.
+export function createThreadAccessCheck({ port }) {
+  return async function canReadThread({ principal, deviceId, deviceCredential, familyId, threadId }) {
+    try {
+      return await port.read(async (tx) => {
+        const { participant } = await port.resolveParticipant(tx, {
+          principal,
+          deviceId,
+          deviceCredential,
+          familyId,
+        });
+        const thread = await port.readThread(tx, { familyId: participant.familyId, threadId });
+        if (thread == null) return false;
+        return port.isActiveParticipant(tx, {
+          threadId,
+          participantKind: participant.kind,
+          participantId: participant.id,
+        });
+      });
+    } catch (error) {
+      if (error instanceof HttpError) return false;
+      throw error;
+    }
   };
 }
 
@@ -1083,6 +1311,9 @@ export function familyChatFor(store, { credentialMatches }) {
     editMessage: createMessageEdit({ port }),
     deleteMessage: createMessageDelete({ port }),
     markThreadRead: createReadMark({ port }),
+    markThreadDelivered: createDeliveredMark({ port }),
+    canReadThread: createThreadAccessCheck({ port }),
+    authenticateDevice: createDeviceAuthentication({ port }),
   };
 }
 
@@ -1091,7 +1322,7 @@ export function familyChatFor(store, { credentialMatches }) {
 /// The columns are stated once, as lists, because one read needs them prefixed (`m.seq`) and a
 /// template string cannot be both flat and prefixed without becoming a parser's job.
 const MESSAGE_COLUMN_LIST = Object.freeze([
-  'id', 'family_id', 'thread_id', 'seq', 'author_kind', 'author_id', 'body',
+  'id', 'family_id', 'thread_id', 'seq', 'kind', 'media_id', 'author_kind', 'author_id', 'body',
   'client_message_id', 'revision', 'edited_at', 'deleted_at',
   'deleted_by_kind', 'deleted_by_id', 'created_at',
 ]);
@@ -1148,6 +1379,12 @@ export function postgresFamilyChatPort(store, { credentialMatches }) {
     credentialMatches,
 
     async read(run) {
+      return store.withTransaction(run);
+    },
+
+    /// A transaction that writes. Named apart from `read` so a reader of the call site can see
+    /// that the work commits, which matters for the media upload's ordering.
+    async transact(run) {
       return store.withTransaction(run);
     },
 
@@ -1267,10 +1504,11 @@ export function postgresFamilyChatPort(store, { credentialMatches }) {
         await client.query(
           `INSERT INTO family_chat_thread_members
              (thread_id, family_id, participant_kind, participant_id, ${identityColumn},
-              last_read_seq, joined_seq)
-           VALUES ($1, $2, $3, $4, $4, $5, $6)
+              last_read_seq, last_delivered_seq, joined_seq)
+           VALUES ($1, $2, $3, $4, $4, $5, $5, $6)
            ON CONFLICT (thread_id, participant_kind, participant_id) DO UPDATE
              SET last_read_seq = EXCLUDED.last_read_seq,
+                 last_delivered_seq = EXCLUDED.last_delivered_seq,
                  joined_seq = EXCLUDED.joined_seq,
                  left_at = NULL,
                  joined_at = NOW()
@@ -1323,7 +1561,8 @@ export function postgresFamilyChatPort(store, { credentialMatches }) {
       const { rows } = await client.query(
         `SELECT t.id, t.family_id, t.kind, t.title, t.created_at,
                 me.last_read_seq,
-                last.id AS last_id, last.seq AS last_seq, last.author_kind AS last_author_kind,
+                last.id AS last_id, last.seq AS last_seq, last.kind AS last_kind,
+                last.author_kind AS last_author_kind,
                 last.author_id AS last_author_id, last.body AS last_body, last.revision AS last_revision,
                 last.edited_at AS last_edited_at, last.deleted_at AS last_deleted_at,
                 last.deleted_by_kind AS last_deleted_by_kind, last.deleted_by_id AS last_deleted_by_id,
@@ -1397,13 +1636,15 @@ export function postgresFamilyChatPort(store, { credentialMatches }) {
       return rows[0] ?? null;
     },
 
-    async insertMessage(client, { familyId, threadId, seq, authorKind, authorId, body, clientMessageId }) {
+    async insertMessage(client, {
+      familyId, threadId, seq, authorKind, authorId, body, clientMessageId, kind = 'text', mediaId = null,
+    }) {
       const { rows } = await client.query(
         `INSERT INTO family_chat_messages
-           (id, family_id, thread_id, seq, author_kind, author_id, body, client_message_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+           (id, family_id, thread_id, seq, author_kind, author_id, body, client_message_id, kind, media_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
          RETURNING ${MESSAGE_COLUMNS}`,
-        [randomUUID(), familyId, threadId, seq, authorKind, authorId, body, clientMessageId],
+        [randomUUID(), familyId, threadId, seq, authorKind, authorId, body, clientMessageId, kind, mediaId],
       );
       return rows[0];
     },
@@ -1431,22 +1672,113 @@ export function postgresFamilyChatPort(store, { credentialMatches }) {
 
     /// How many OTHER participants have read up to each of these messages. One query for the
     /// page, because a receipt computed per message is a query per message on the read path.
-    async readCountsForMessages(client, { threadId, messageIds }) {
+    async receiptCountsForMessages(client, { threadId, messageIds }) {
       if (messageIds.length === 0) return [];
       const { rows } = await client.query(
-        `SELECT m.id AS message_id, COUNT(reader.*)::int AS read_count
+        `SELECT m.id AS message_id,
+                COUNT(other.thread_id)::int AS other_count,
+                COUNT(other.thread_id) FILTER (WHERE other.last_delivered_seq >= m.seq)::int AS delivered_count,
+                COUNT(other.thread_id) FILTER (WHERE other.last_read_seq >= m.seq)::int AS read_count
            FROM family_chat_messages m
-           LEFT JOIN family_chat_thread_members reader
-             ON reader.thread_id = m.thread_id
-            AND reader.left_at IS NULL
-            AND reader.joined_seq <= m.seq
-            AND reader.last_read_seq >= m.seq
-            AND NOT (reader.participant_kind = m.author_kind AND reader.participant_id = m.author_id)
+           LEFT JOIN family_chat_thread_members other
+             ON other.thread_id = m.thread_id
+            AND other.left_at IS NULL
+            AND other.joined_seq <= m.seq
+            AND NOT (other.participant_kind = m.author_kind AND other.participant_id = m.author_id)
           WHERE m.thread_id = $1 AND m.id = ANY($2::uuid[])
           GROUP BY m.id`,
         [threadId, messageIds],
       );
       return rows;
+    },
+
+    /// The media attached to these messages, aliased so it cannot be mistaken for message columns.
+    async mediaForMessages(client, { messageIds }) {
+      if (messageIds.length === 0) return [];
+      const { rows } = await client.query(
+        `SELECT msg.id AS message_id, md.id, md.kind, md.mime_type, md.byte_size,
+                md.declared_duration_ms, md.sha256, md.removed_at
+           FROM family_chat_messages msg
+           JOIN family_chat_media md ON md.id = msg.media_id
+          WHERE msg.id = ANY($1::uuid[])`,
+        [messageIds],
+      );
+      return rows;
+    },
+
+    /// One media item, scoped to its room, with the message it is attached to (if any).
+    async readMediaInThread(client, { familyId, threadId, mediaId }, { forUpdate = false } = {}) {
+      const { rows } = await client.query(
+        `SELECT md.id, md.family_id, md.thread_id, md.uploader_kind, md.uploader_id, md.kind,
+                md.mime_type, md.byte_size, md.declared_duration_ms, md.sha256, md.storage_key,
+                md.removed_at, msg.id AS attached_message_id, msg.seq AS attached_seq
+           FROM family_chat_media md
+           LEFT JOIN family_chat_messages msg ON msg.media_id = md.id
+          WHERE md.id = $1 AND md.thread_id = $2 AND md.family_id = $3
+          ${forUpdate ? 'FOR UPDATE OF md' : ''}`,
+        [mediaId, threadId, familyId],
+      );
+      return rows[0] ?? null;
+    },
+
+    /// The upload idempotency lookup: the same client media id from the same uploader is the same media.
+    async readMediaByClientId(client, { threadId, uploaderKind, uploaderId, clientMediaId }) {
+      const { rows } = await client.query(
+        `SELECT id, kind, mime_type, byte_size, declared_duration_ms, sha256, removed_at
+           FROM family_chat_media
+          WHERE thread_id = $1 AND uploader_kind = $2 AND uploader_id = $3 AND client_media_id = $4`,
+        [threadId, uploaderKind, uploaderId, clientMediaId],
+      );
+      return rows[0] ?? null;
+    },
+
+    /// Inserts the metadata row. A concurrent identical upload loses the conflict and gets null,
+    /// and the caller then returns the winner - the bytes it stored are discarded by the caller.
+    async insertMedia(client, row) {
+      const { rows } = await client.query(
+        `INSERT INTO family_chat_media
+           (id, family_id, thread_id, uploader_kind, uploader_id, client_media_id, kind, mime_type,
+            byte_size, sha256, declared_duration_ms, storage_key)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+         ON CONFLICT (thread_id, uploader_kind, uploader_id, client_media_id) DO NOTHING
+         RETURNING id, kind, mime_type, byte_size, declared_duration_ms, sha256, removed_at`,
+        [
+          row.id, row.familyId, row.threadId, row.uploaderKind, row.uploaderId, row.clientMediaId,
+          row.kind, row.mimeType, row.byteSize, row.sha256, row.declaredDurationMs ?? null, row.storageKey,
+        ],
+      );
+      return rows[0] ?? null;
+    },
+
+    /// Removal keeps the row and its trace and drops the key. Returns the key that was live, so
+    /// the caller can delete the bytes AFTER the transaction commits, never before.
+    async markMediaRemoved(client, { mediaId }) {
+      // The key is read BEFORE the row is cleared: RETURNING would hand back the new NULL, and the
+      // bytes would stay on disk with nothing pointing at them. The row lock holds the read and
+      // the clear together, so two deletions cannot both claim the same key.
+      const { rows: live } = await client.query(
+        `SELECT storage_key FROM family_chat_media
+          WHERE id = $1 AND removed_at IS NULL
+          FOR UPDATE`,
+        [mediaId],
+      );
+      if (live.length === 0 || live[0].storage_key == null) return null;
+      await client.query(
+        `UPDATE family_chat_media SET removed_at = NOW(), storage_key = NULL WHERE id = $1`,
+        [mediaId],
+      );
+      return live[0].storage_key;
+    },
+
+    /// Whether this caller can read this room right now. Used by the realtime gateway before each
+    /// hint, so a member who was removed stops receiving hints without reconnecting.
+    async isActiveParticipant(client, { threadId, participantKind, participantId }) {
+      const { rows } = await client.query(
+        `SELECT 1 FROM family_chat_thread_members
+          WHERE thread_id = $1 AND participant_kind = $2 AND participant_id = $3 AND left_at IS NULL`,
+        [threadId, participantKind, participantId],
+      );
+      return rows.length === 1;
     },
 
     /// The edit: the body it replaced is written to the revisions table first, so the change is
@@ -1492,11 +1824,25 @@ export function postgresFamilyChatPort(store, { credentialMatches }) {
     async advanceLastReadSeq(client, { threadId, participantKind, participantId, readSeq }) {
       const { rows } = await client.query(
         `UPDATE family_chat_thread_members
-            SET last_read_seq = GREATEST(last_read_seq, $4)
+            SET last_read_seq = GREATEST(last_read_seq, $4),
+                last_delivered_seq = GREATEST(last_delivered_seq, $4)
           WHERE thread_id = $1 AND participant_kind = $2 AND participant_id = $3
             AND left_at IS NULL
           RETURNING thread_id, participant_kind, participant_id, last_read_seq`,
         [threadId, participantKind, participantId, readSeq],
+      );
+      return rows[0];
+    },
+
+    /// Delivery is monotone like reading: a late acknowledgement never lowers the mark.
+    async advanceLastDeliveredSeq(client, { threadId, participantKind, participantId, deliveredSeq }) {
+      const { rows } = await client.query(
+        `UPDATE family_chat_thread_members
+            SET last_delivered_seq = GREATEST(last_delivered_seq, $4)
+          WHERE thread_id = $1 AND participant_kind = $2 AND participant_id = $3
+            AND left_at IS NULL
+          RETURNING thread_id, participant_kind, participant_id, last_delivered_seq, last_read_seq`,
+        [threadId, participantKind, participantId, deliveredSeq],
       );
       return rows[0];
     },
