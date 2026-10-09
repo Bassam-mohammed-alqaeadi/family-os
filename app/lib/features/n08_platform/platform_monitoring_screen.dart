@@ -187,73 +187,73 @@ class _PlatformMonitoringScreenState extends State<PlatformMonitoringScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                BannerNote(
-                  key: PlatformMonitoringKeys.honestyBanner,
-                  variant: BannerVariant.t,
-                  message: l10n.platformMonitoringHonestyBanner,
-                ),
-                if (widget.offline) ...[
-                  const SizedBox(height: 8),
                   BannerNote(
-                    key: PlatformMonitoringKeys.offlineBanner,
-                    variant: BannerVariant.a,
-                    message: l10n.platformMonitoringOfflineBanner,
+                    key: PlatformMonitoringKeys.honestyBanner,
+                    variant: BannerVariant.t,
+                    message: l10n.platformMonitoringHonestyBanner,
                   ),
-                ],
-                const SizedBox(height: 8),
-                Text(
-                  l10n.platformMonitoringSubtitle,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: colors.ink2,
-                    height: 1.5,
-                  ),
-                ),
-                for (final platform in PlatformId.values) ...[
-                  const SizedBox(height: 20),
+                  if (widget.offline) ...[
+                    const SizedBox(height: 8),
+                    BannerNote(
+                      key: PlatformMonitoringKeys.offlineBanner,
+                      variant: BannerVariant.a,
+                      message: l10n.platformMonitoringOfflineBanner,
+                    ),
+                  ],
+                  const SizedBox(height: 8),
                   Text(
-                    key: PlatformMonitoringKeys.platformSection(platform),
-                    _platformHeading(l10n, platform),
+                    l10n.platformMonitoringSubtitle,
                     style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
                       color: colors.ink2,
+                      height: 1.5,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  for (final feature in MonitoringFeature.values) ...[
-                    KeyedSubtree(
-                      key: PlatformMonitoringKeys.featureTile(
-                        platform,
-                        feature,
-                      ),
-                      child: CapabilityHonestyTile(
-                        label: _featureLabel(l10n, feature),
-                        desired: _prefs.desiredFor(feature),
-                        capability: PlatformCapabilityTable.level(
-                          platform,
-                          feature,
-                        ),
-                        unavailableLabel:
-                            l10n.smartSupervisionUnavailableBadge,
-                        limitedLabel: l10n.smartSupervisionLimitedBadge,
-                        limitedHint: l10n.platformMonitoringLimitedHint,
-                        switchKey: PlatformMonitoringKeys.featureSwitch(
-                          platform,
-                          feature,
-                        ),
-                        badgeKey: PlatformMonitoringKeys.featureBadge(
-                          platform,
-                          feature,
-                        ),
-                        onChanged: (v) => _onToggle(platform, feature, v),
+                  for (final platform in PlatformId.values) ...[
+                    const SizedBox(height: 20),
+                    Text(
+                      key: PlatformMonitoringKeys.platformSection(platform),
+                      _platformHeading(l10n, platform),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: colors.ink2,
                       ),
                     ),
                     const SizedBox(height: 8),
+                    for (final feature in MonitoringFeature.values) ...[
+                      KeyedSubtree(
+                        key: PlatformMonitoringKeys.featureTile(
+                          platform,
+                          feature,
+                        ),
+                        child: CapabilityHonestyTile(
+                          label: _featureLabel(l10n, feature),
+                          desired: _prefs.desiredFor(feature),
+                          capability: PlatformCapabilityTable.level(
+                            platform,
+                            feature,
+                          ),
+                          unavailableLabel:
+                              l10n.smartSupervisionUnavailableBadge,
+                          limitedLabel: l10n.smartSupervisionLimitedBadge,
+                          limitedHint: l10n.platformMonitoringLimitedHint,
+                          switchKey: PlatformMonitoringKeys.featureSwitch(
+                            platform,
+                            feature,
+                          ),
+                          badgeKey: PlatformMonitoringKeys.featureBadge(
+                            platform,
+                            feature,
+                          ),
+                          onChanged: (v) => _onToggle(platform, feature, v),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                   ],
                 ],
-              ],
               ),
             ),
     );

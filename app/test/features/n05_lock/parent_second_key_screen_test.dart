@@ -26,8 +26,9 @@ void main() {
     expect(find.byKey(ParentSecondKeyKeys.sosCta), findsOneWidget);
   });
 
-  testWidgets('father allow grants 10-minute window and clears inbox',
-      (tester) async {
+  testWidgets('father allow grants 10-minute window and clears inbox', (
+    tester,
+  ) async {
     final lock = ChildModeLockService();
     _seedAwaiting(lock);
     await _pump(tester, lockService: lock);
@@ -50,8 +51,9 @@ void main() {
     );
   });
 
-  testWidgets('father deny clears pending and keeps device locked',
-      (tester) async {
+  testWidgets('father deny clears pending and keeps device locked', (
+    tester,
+  ) async {
     final lock = ChildModeLockService();
     _seedAwaiting(lock);
     await _pump(tester, lockService: lock);
@@ -83,8 +85,9 @@ void main() {
     expect(find.byKey(ParentSecondKeyKeys.attemptRow(1)), findsOneWidget);
   });
 
-  testWidgets('mother sees pending but cannot decide (father holds key)',
-      (tester) async {
+  testWidgets('mother sees pending but cannot decide (father holds key)', (
+    tester,
+  ) async {
     final lock = ChildModeLockService();
     _seedAwaiting(lock);
     await _pump(tester, lockService: lock, role: AppRole.mother);

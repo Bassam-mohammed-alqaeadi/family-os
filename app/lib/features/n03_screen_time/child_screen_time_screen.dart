@@ -29,6 +29,8 @@ import 'package:family_os/core/policy/time_request_service.dart';
 import 'package:family_os/core/screen_time/screen_time_runtime.dart';
 import 'package:family_os/core/screen_time/stage1_time_request_runtime.dart';
 import 'package:family_os/features/n12_devices/mother_permission_level_repository.dart';
+import 'package:family_os/features/n03_screen_time/screen_time_server_authority.dart';
+import 'package:family_os/features/n03_screen_time/screen_time_server_panel.dart';
 import 'package:family_os/features/n03_screen_time/stage1_child_scope.dart';
 
 /// Optional time-picker override for widget tests.
@@ -313,11 +315,9 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
     return parsed != null && parsed >= 0;
   }
 
-  bool get _canSavePolicy =>
-      _policyRepository != null && !_policyUnavailable;
+  bool get _canSavePolicy => _policyRepository != null && !_policyUnavailable;
 
-  bool get _canSaveSchedule =>
-      _repository != null && !_policyUnavailable;
+  bool get _canSaveSchedule => _repository != null && !_policyUnavailable;
 
   bool get _canSave =>
       _canEdit &&
@@ -488,6 +488,45 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
       policy: _policy,
       grantRemaining: Minutes(_temporaryGrantRemaining),
     );
+
+    // W5 — the production path is the server's, and it is chosen by what the caller injected:
+    // a screen built WITHOUT a local repository (which is how the router builds it) renders
+    // what the server enforces, and a screen built WITH one renders the local model, because
+    // that is the widget-test seam and nothing else. Choosing on "is a session bound" instead
+    // would have made a build with no API origin fall through to a local save - the exact
+    // screen that promises minutes nobody enforces.
+    //
+    // So: no injected repositories → the server panel. With no session bound, that panel says
+    // so in one sentence and shows no numbers at all.
+    final serverAuthority = activeScreenTimeServerAuthority;
+    final usesLocalSeams =
+        widget.repository != null ||
+        widget.policyRepository != null ||
+        widget.timeRequestService != null;
+    if (!usesLocalSeams) {
+      return Scaffold(
+        key: ChildScreenTimeKeys.screen,
+        backgroundColor: colors.bg,
+        appBar: AppBar(
+          backgroundColor: colors.surface,
+          title: Text(
+            l10n.childScreenTimeTitle,
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: colors.ink,
+            ),
+          ),
+        ),
+        body: SafeArea(
+          child: ScreenTimeServerPanel(
+            childId: _childId,
+            authority: serverAuthority,
+            canEdit: canEdit,
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       key: ChildScreenTimeKeys.screen,

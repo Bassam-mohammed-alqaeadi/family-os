@@ -29,9 +29,7 @@ void main() {
     test('allow-list host overrides category deny', () {
       final policy = WebFilterPolicy(
         level: WebFilterLevel.strict,
-        categories: {
-          for (final k in WebFilterCategories.known) k: true,
-        },
+        categories: {for (final k in WebFilterCategories.known) k: true},
         allowList: {'adult.example'},
       );
 
@@ -69,9 +67,7 @@ void main() {
     test('safe host is allowed when categories off', () {
       final policy = WebFilterPolicy(
         level: WebFilterLevel.open,
-        categories: {
-          for (final k in WebFilterCategories.known) k: false,
-        },
+        categories: {for (final k in WebFilterCategories.known) k: false},
         policyVersion: 7,
       );
       final decision = WebFilterEvaluator.decide(
@@ -111,7 +107,9 @@ void main() {
 
       await repo1.save(
         child,
-        base.withCategory(WebFilterCategories.adults, true).copyWith(
+        base
+            .withCategory(WebFilterCategories.adults, true)
+            .copyWith(
               policyVersion: base.policyVersion + 1,
               updatedAt: DateTime.utc(2026, 9, 20),
             ),
@@ -120,12 +118,15 @@ void main() {
       // Flip adults off then on to prove persistence of true.
       await repo1.save(
         child,
-        (await repo1.load(child))
-            .withCategory(WebFilterCategories.adults, false),
+        (await repo1.load(
+          child,
+        )).withCategory(WebFilterCategories.adults, false),
       );
       await repo1.save(
         child,
-        (await repo1.load(child)).withCategory(WebFilterCategories.adults, true),
+        (await repo1.load(
+          child,
+        )).withCategory(WebFilterCategories.adults, true),
       );
 
       final repo2 = PrefsWebFilterPolicyRepository(

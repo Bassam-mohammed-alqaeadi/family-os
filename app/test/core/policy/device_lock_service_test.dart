@@ -17,49 +17,45 @@ void main() {
     setUp(() {
       audit = AuditAppend();
       bus = DeviceLockNotifyBus();
-      service = DeviceLockService.inMemory(
-        audit: audit,
-        notifyBus: bus,
-      );
+      service = DeviceLockService.inMemory(audit: audit, notifyBus: bus);
     });
 
     tearDown(() {
       bus.dispose();
     });
 
-    test('mother FULL lock then father unlock → unlocked + supersession audit',
-        () async {
-      final motherLock = await service.lock(
-        child,
-        const DeviceLockActor.mother(MotherLevel.full),
-      );
-      expect(motherLock, isA<DeviceLockCommandOk>());
-      final locked = (motherLock as DeviceLockCommandOk).state;
-      expect(locked.locked, isTrue);
-      expect(locked.lockedBy, DeviceLockedBy.mother);
+    test(
+      'mother FULL lock then father unlock → unlocked + supersession audit',
+      () async {
+        final motherLock = await service.lock(
+          child,
+          const DeviceLockActor.mother(MotherLevel.full),
+        );
+        expect(motherLock, isA<DeviceLockCommandOk>());
+        final locked = (motherLock as DeviceLockCommandOk).state;
+        expect(locked.locked, isTrue);
+        expect(locked.lockedBy, DeviceLockedBy.mother);
 
-      final fatherUnlock = await service.unlock(
-        child,
-        const DeviceLockActor.father(),
-      );
-      expect(fatherUnlock, isA<DeviceLockCommandOk>());
-      final ok = fatherUnlock as DeviceLockCommandOk;
-      expect(ok.state.locked, isFalse);
-      expect(ok.state.lockedBy, isNull);
-      expect(ok.superseded, isTrue);
+        final fatherUnlock = await service.unlock(
+          child,
+          const DeviceLockActor.father(),
+        );
+        expect(fatherUnlock, isA<DeviceLockCommandOk>());
+        final ok = fatherUnlock as DeviceLockCommandOk;
+        expect(ok.state.locked, isFalse);
+        expect(ok.state.lockedBy, isNull);
+        expect(ok.superseded, isTrue);
 
-      expect(audit.entries.length, greaterThanOrEqualTo(2));
-      expect(
-        audit.entries.any((e) => e.startsWith('LOCK actor=mother:full')),
-        isTrue,
-      );
-      expect(
-        audit.entries.any((e) => e.contains('SUPERSESSION')),
-        isTrue,
-      );
-      expect(bus.delivered, hasLength(1));
-      expect(bus.delivered.single.childId, child);
-    });
+        expect(audit.entries.length, greaterThanOrEqualTo(2));
+        expect(
+          audit.entries.any((e) => e.startsWith('LOCK actor=mother:full')),
+          isTrue,
+        );
+        expect(audit.entries.any((e) => e.contains('SUPERSESSION')), isTrue);
+        expect(bus.delivered, hasLength(1));
+        expect(bus.delivered.single.childId, child);
+      },
+    );
 
     test('mother observer cannot lock', () async {
       final result = await service.lock(
@@ -97,19 +93,13 @@ void main() {
     });
 
     test('father lock after mother lock wins ownership', () async {
-      await service.lock(
-        child,
-        const DeviceLockActor.mother(MotherLevel.full),
-      );
+      await service.lock(child, const DeviceLockActor.mother(MotherLevel.full));
       final result = await service.lock(child, const DeviceLockActor.father());
       expect(result, isA<DeviceLockCommandOk>());
       final state = (result as DeviceLockCommandOk).state;
       expect(state.locked, isTrue);
       expect(state.lockedBy, DeviceLockedBy.father);
-      expect(
-        audit.entries.any((e) => e.contains('SUPERSESSION')),
-        isTrue,
-      );
+      expect(audit.entries.any((e) => e.contains('SUPERSESSION')), isTrue);
     });
 
     test('mother cannot unlock father lock', () async {

@@ -12,6 +12,7 @@ import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/core/policy/time_engine.dart';
 import 'package:family_os/core/policy/time_expiry_surface.dart';
 import 'package:family_os/features/n03_screen_time/time_expiry_screen.dart';
+import '../../support/recording_sos_fire_service.dart';
 
 /// UI-011 — SCR-CHD-021 time expiry: chat+Quran open; entertainment locked; SOS
 /// reachable (Rules 9/11 · C-1 · S4 walkthrough step).
@@ -71,8 +72,9 @@ void main() {
   });
 
   group('UI-011 SCR-CHD-021 widget', () {
-    testWidgets('AC1: Chat & Quran CTAs visible and enabled (AR)',
-        (tester) async {
+    testWidgets('AC1: Chat & Quran CTAs visible and enabled (AR)', (
+      tester,
+    ) async {
       var chatTaps = 0;
       var quranTaps = 0;
 
@@ -104,26 +106,22 @@ void main() {
       expect(quranTaps, 1);
     });
 
-    testWidgets('AC1: Chat & Quran CTAs visible and enabled (EN)',
-        (tester) async {
-      await _pump(
-        tester,
-        childId: child,
-        locale: const Locale('en'),
-      );
+    testWidgets('AC1: Chat & Quran CTAs visible and enabled (EN)', (
+      tester,
+    ) async {
+      await _pump(tester, childId: child, locale: const Locale('en'));
 
       expect(find.text('Family chat'), findsOneWidget);
       expect(find.text('Quran & learning'), findsOneWidget);
       expect(
-        find.text(
-          'Family chat and Quran stay open. SOS is always reachable.',
-        ),
+        find.text('Family chat and Quran stay open. SOS is always reachable.'),
         findsOneWidget,
       );
     });
 
-    testWidgets('AC2: entertainment locked; TimeEngine deniedCap',
-        (tester) async {
+    testWidgets('AC2: entertainment locked; TimeEngine deniedCap', (
+      tester,
+    ) async {
       var entertainmentTaps = 0;
 
       await _pump(
@@ -156,7 +154,7 @@ void main() {
     testWidgets(
       'AC3: S4 walkthrough — chat+Quran never lock; SOS fires at expiry',
       (tester) async {
-        final sos = MockSosFireService();
+        final sos = RecordingSosFireService();
         var chatTaps = 0;
         var quranTaps = 0;
         var sosTaps = 0;

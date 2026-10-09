@@ -90,6 +90,7 @@ void main() {
     AppToast.dismiss();
 
     await tester.tap(find.byKey(CreateSafeZoneKeys.childChip('c1')));
+    await tester.enterText(find.byKey(CreateSafeZoneKeys.nameField), 'Home');
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(CreateSafeZoneKeys.saveCta));
     await tester.pumpAndSettle();

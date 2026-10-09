@@ -143,4 +143,3 @@ ResultsFollowupChild? _rosterResultsChild() {
   if (c == null) return null;
   return ResultsFollowupChild(id: c.id.value, nameKey: c.nameKey);
 }
-

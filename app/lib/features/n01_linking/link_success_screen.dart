@@ -192,10 +192,7 @@ class _LinkSuccessScreenState extends State<LinkSuccessScreen> {
                           ),
                           Positioned(
                             top: pinTop,
-                            left: pinLeft.clamp(
-                              4.0,
-                              constraints.maxWidth - 48,
-                            ),
+                            left: pinLeft.clamp(4.0, constraints.maxWidth - 48),
                             child: ExcludeSemantics(
                               child: _MapPin(
                                 emoji: '🦁',

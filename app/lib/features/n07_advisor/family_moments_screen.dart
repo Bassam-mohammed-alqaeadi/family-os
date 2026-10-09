@@ -81,7 +81,7 @@ class _FamilyMomentsScreenState extends State<FamilyMomentsScreen> {
   void initState() {
     super.initState();
     _repo = widget.repository ?? stage1FamilyMomentsRepository;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _load();

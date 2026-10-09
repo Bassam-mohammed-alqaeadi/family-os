@@ -89,7 +89,7 @@ class _ChildQuizScreenState extends State<ChildQuizScreen> {
     _repo = widget.repository ?? stage1ChildQuizRepository;
     _results = widget.results ?? stage1LearningResultRepository;
     _childId = widget.childId ?? resolveActiveChildId();
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _load();

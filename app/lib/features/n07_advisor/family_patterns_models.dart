@@ -16,12 +16,7 @@ enum FamilyPatternTag {
 }
 
 /// Domain icon discriminator for a pattern row.
-enum FamilyPatternDomain {
-  sleep,
-  communication,
-  education,
-  morningActivity,
-}
+enum FamilyPatternDomain { sleep, communication, education, morningActivity }
 
 @immutable
 final class FamilyPatternRow {

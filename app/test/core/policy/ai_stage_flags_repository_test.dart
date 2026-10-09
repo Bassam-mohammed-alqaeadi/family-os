@@ -38,14 +38,10 @@ void main() {
     });
 
     test('simulateServerPush is the only unlock path', () async {
-      final repo = MockRemoteAiStageFlags(
-        initialServer: AiStageFlags.allOff(),
-      );
+      final repo = MockRemoteAiStageFlags(initialServer: AiStageFlags.allOff());
       expect((await repo.fetchFlags()).isEnabled(AiStageId.suggest), isFalse);
 
-      repo.simulateServerPush(
-        AiStageFlags.fromMap({AiStageId.suggest: true}),
-      );
+      repo.simulateServerPush(AiStageFlags.fromMap({AiStageId.suggest: true}));
       expect((await repo.fetchFlags()).isEnabled(AiStageId.suggest), isTrue);
     });
   });

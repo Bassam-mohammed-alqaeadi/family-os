@@ -29,10 +29,10 @@ final class OfflineAiSafetyService {
     LocalSafetyClassifier? classifier,
     DateTime Function()? clock,
     String Function()? idFactory,
-  })  : _store = store,
-        _classifier = classifier ?? HeuristicSafetyClassifier(),
-        _clock = clock ?? DateTime.now,
-        _idFactory = idFactory ?? _defaultId;
+  }) : _store = store,
+       _classifier = classifier ?? HeuristicSafetyClassifier(),
+       _clock = clock ?? DateTime.now,
+       _idFactory = idFactory ?? _defaultId;
 
   final OfflineAiSafetyRepository _store;
   final FamilyId familyId;
@@ -248,8 +248,7 @@ final class OfflineAiSafetyService {
       familyId: familyId,
       eventType: 'suggestion_pending',
       at: now,
-      payloadJson:
-          '{"target":"${target.name}","auto_apply":false}',
+      payloadJson: '{"target":"${target.name}","auto_apply":false}',
     );
     return suggestion;
   }
@@ -275,7 +274,10 @@ final class OfflineAiSafetyService {
     return ChildSafetyTransparency(
       searchAnalysis: toolState(searchConfigured, localPlaneAvailable),
       imageClassification: toolState(imageConfigured, localPlaneAvailable),
-      screenshotMonitoring: toolState(screenshotConfigured, localPlaneAvailable),
+      screenshotMonitoring: toolState(
+        screenshotConfigured,
+        localPlaneAvailable,
+      ),
       namesOnDeviceOffline: localPlaneAvailable,
     );
   }

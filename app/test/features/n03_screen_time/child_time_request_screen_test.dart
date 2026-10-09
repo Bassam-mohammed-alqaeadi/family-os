@@ -143,10 +143,7 @@ void main() {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        home: RequestInboxScreen(
-          service: service,
-          role: AppRole.father,
-        ),
+        home: RequestInboxScreen(service: service, role: AppRole.father),
       ),
     );
     await tester.pumpAndSettle();

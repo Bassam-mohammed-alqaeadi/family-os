@@ -45,16 +45,12 @@ final class LocalAuditLogRepository implements AuditLogRepository {
 
   /// Awaitable append for restart proofs / composition.
   Future<void> appendDurable(AuditLogEntry entry) async {
-    await _db.insert(
-      _table,
-      {
-        'namespace': namespace,
-        'key': entry.id,
-        'value': jsonEncode(_toJson(entry)),
-        'updated_at': _clock().toUtc().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: LocalConflictAlgorithm.abort,
-    );
+    await _db.insert(_table, {
+      'namespace': namespace,
+      'key': entry.id,
+      'value': jsonEncode(_toJson(entry)),
+      'updated_at': _clock().toUtc().millisecondsSinceEpoch,
+    }, conflictAlgorithm: LocalConflictAlgorithm.abort);
     final ids = await _loadIndex();
     if (!ids.contains(entry.id)) {
       ids.insert(0, entry.id);
@@ -78,16 +74,12 @@ final class LocalAuditLogRepository implements AuditLogRepository {
   }
 
   Future<void> _saveIndex(List<String> ids) async {
-    await _db.insert(
-      _table,
-      {
-        'namespace': namespace,
-        'key': _indexKey,
-        'value': jsonEncode(ids),
-        'updated_at': _clock().toUtc().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: LocalConflictAlgorithm.replace,
-    );
+    await _db.insert(_table, {
+      'namespace': namespace,
+      'key': _indexKey,
+      'value': jsonEncode(ids),
+      'updated_at': _clock().toUtc().millisecondsSinceEpoch,
+    }, conflictAlgorithm: LocalConflictAlgorithm.replace);
   }
 
   Future<AuditLogEntry?> _loadOne(String id) async {
@@ -106,13 +98,13 @@ final class LocalAuditLogRepository implements AuditLogRepository {
   }
 
   static Map<String, Object?> _toJson(AuditLogEntry e) => {
-        'id': e.id,
-        'kind': e.kind.name,
-        'actor': e.actor.name,
-        'at': e.at.toUtc().toIso8601String(),
-        'subjectKey': e.subjectKey,
-        'detailKey': e.detailKey,
-      };
+    'id': e.id,
+    'kind': e.kind.name,
+    'actor': e.actor.name,
+    'at': e.at.toUtc().toIso8601String(),
+    'subjectKey': e.subjectKey,
+    'detailKey': e.detailKey,
+  };
 
   static AuditLogEntry _fromJson(Map<String, Object?> json) {
     return AuditLogEntry(

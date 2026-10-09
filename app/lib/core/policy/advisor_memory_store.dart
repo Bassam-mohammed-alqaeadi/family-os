@@ -29,7 +29,7 @@ abstract class AdvisorMemoryStore {
 /// In-memory Advisor memory — share [notes] across instances to simulate restart.
 final class MemoryAdvisorMemoryStore implements AdvisorMemoryStore {
   MemoryAdvisorMemoryStore([List<AdvisorMemoryNote>? seed])
-      : _notes = List<AdvisorMemoryNote>.from(seed ?? const []);
+    : _notes = List<AdvisorMemoryNote>.from(seed ?? const []);
 
   final List<AdvisorMemoryNote> _notes;
 
@@ -88,7 +88,9 @@ final class PrefsAdvisorMemoryStore implements AdvisorMemoryStore {
 
   static String _encode(List<AdvisorMemoryNote> notes) {
     return notes
-        .map((n) => '${n.id}|${n.createdAt.toUtc().toIso8601String()}|${n.text}')
+        .map(
+          (n) => '${n.id}|${n.createdAt.toUtc().toIso8601String()}|${n.text}',
+        )
         .join('\n');
   }
 
@@ -105,7 +107,8 @@ final class PrefsAdvisorMemoryStore implements AdvisorMemoryStore {
       }
       return AdvisorMemoryNote(
         id: parts[0],
-        createdAt: DateTime.tryParse(parts[1]) ??
+        createdAt:
+            DateTime.tryParse(parts[1]) ??
             DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
         text: parts.sublist(2).join('|'),
       );
@@ -121,7 +124,7 @@ abstract class AdvisorMemoryPrefsStore {
 
 final class MemoryAdvisorMemoryPrefsStore implements AdvisorMemoryPrefsStore {
   MemoryAdvisorMemoryPrefsStore([Map<String, String>? data])
-      : data = data ?? {};
+    : data = data ?? {};
 
   final Map<String, String> data;
 

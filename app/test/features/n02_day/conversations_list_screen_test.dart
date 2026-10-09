@@ -13,8 +13,9 @@ import 'package:family_os/features/n02_day/conversations_list_repository.dart';
 import 'package:family_os/features/n02_day/conversations_list_screen.dart';
 
 void main() {
-  testWidgets('SCR-FAT-021 empty → AppEmptyState + honesty + SOS ungated',
-      (tester) async {
+  testWidgets('SCR-FAT-021 empty → AppEmptyState + honesty + SOS ungated', (
+    tester,
+  ) async {
     var sos = false;
     await tester.pumpWidget(
       _app(
@@ -58,8 +59,9 @@ void main() {
     expect(find.byKey(ConversationsListKeys.row('c_mother')), findsNothing);
   });
 
-  testWidgets('SCR-FAT-021 many + pinned family first + honesty',
-      (tester) async {
+  testWidgets('SCR-FAT-021 many + pinned family first + honesty', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _app(
         child: ConversationsListScreen(
@@ -110,7 +112,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.byKey(ConversationsListKeys.row('c_child_a')));
+    await tester.ensureVisible(
+      find.byKey(ConversationsListKeys.row('c_child_a')),
+    );
     await tester.tap(find.byKey(ConversationsListKeys.row('c_child_a')));
     await tester.pumpAndSettle();
 

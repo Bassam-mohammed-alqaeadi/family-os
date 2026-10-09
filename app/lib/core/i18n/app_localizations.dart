@@ -21538,6 +21538,1168 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'جارٍ التحميل'**
   String get appLoadingSemantics;
+
+  /// No description provided for @childrenListLocalOnlyBanner.
+  ///
+  /// In ar, this message translates to:
+  /// **'معلومات الأسرة في هذه الشاشة محفوظة حاليًا على هذا الجهاز. قد لا تظهر التغييرات على الأجهزة الأخرى بعد.'**
+  String get childrenListLocalOnlyBanner;
+
+  /// No description provided for @childrenListProfileRepairTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'ملف الابن يحتاج إلى استكمال'**
+  String get childrenListProfileRepairTitle;
+
+  /// No description provided for @childrenListProfileRepairMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا الابن مسجّل، لكن بيانات العرض في ملفه غير مكتملة. أكمل الإعداد قبل الاعتماد على أدوات التحكم.'**
+  String get childrenListProfileRepairMessage;
+
+  /// No description provided for @childrenListProfileRepairCta.
+  ///
+  /// In ar, this message translates to:
+  /// **'إكمال الإعداد'**
+  String get childrenListProfileRepairCta;
+
+  /// No description provided for @childrenListDeviceActive.
+  ///
+  /// In ar, this message translates to:
+  /// **'الجهاز متصل'**
+  String get childrenListDeviceActive;
+
+  /// No description provided for @childrenListDevicePairing.
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ ربط الجهاز'**
+  String get childrenListDevicePairing;
+
+  /// No description provided for @childrenListDeviceNeedsAttention.
+  ///
+  /// In ar, this message translates to:
+  /// **'الجهاز يحتاج إلى انتباه'**
+  String get childrenListDeviceNeedsAttention;
+
+  /// No description provided for @childrenListDeviceStateUnavailable.
+  ///
+  /// In ar, this message translates to:
+  /// **'حالة الجهاز غير متاحة'**
+  String get childrenListDeviceStateUnavailable;
+
+  /// دلالات بطاقة قائمة الأبناء لمسار وقت التشغيل SCR-FAT-012
+  ///
+  /// In ar, this message translates to:
+  /// **'{name}، {age}، {device}'**
+  String childrenListRuntimeRowSemantics(
+    String name,
+    String age,
+    String device,
+  );
+
+  /// SCR: screen-time server panel — no session
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد جلسة خادم في هذا البناء — لا نعرض أرقامًا لا نفرضها.'**
+  String get screenTimeServerNoSession;
+
+  /// SCR: screen-time server panel — no answer, last state kept
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يستجب الخادم — ما تراه آخر جواب صحيح، ولم يتغيّر شيء.'**
+  String get screenTimeServerUnreachable;
+
+  /// SCR: screen-time server panel — no answer and nothing stored
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يستجب الخادم، ولا يوجد جواب سابق نعرضه.'**
+  String get screenTimeServerUnreachableNoData;
+
+  /// SCR: screen-time server panel — access denied
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا الحساب لا يملك قراءة وقت شاشة هذا الابن.'**
+  String get screenTimeServerDenied;
+
+  /// SCR: screen-time server panel — refusal with a reason
+  ///
+  /// In ar, this message translates to:
+  /// **'رفض الخادم الطلب — لم يتغيّر شيء.'**
+  String get screenTimeServerRefused;
+
+  /// SCR: screen-time server panel — cap field
+  ///
+  /// In ar, this message translates to:
+  /// **'الحد اليومي (دقائق، ٠ = بلا حد)'**
+  String get screenTimeServerCap;
+
+  /// SCR: screen-time server panel — bedtime window
+  ///
+  /// In ar, this message translates to:
+  /// **'وقت النوم'**
+  String get screenTimeServerBedtime;
+
+  /// SCR: screen-time server panel — school mode
+  ///
+  /// In ar, this message translates to:
+  /// **'وضع المدرسة'**
+  String get screenTimeServerSchoolMode;
+
+  /// SCR: screen-time server panel — save CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'احفظ على الخادم'**
+  String get screenTimeServerSave;
+
+  /// SCR: screen-time server panel — save confirmation
+  ///
+  /// In ar, this message translates to:
+  /// **'حُفظ على الخادم'**
+  String get screenTimeServerSaved;
+
+  /// SCR: screen-time server panel — instant lock CTA
+  ///
+  /// In ar, this message translates to:
+  /// **'أوقف الشاشة الآن'**
+  String get screenTimeServerLockNow;
+
+  /// SCR: screen-time server panel — release the lock
+  ///
+  /// In ar, this message translates to:
+  /// **'أعد التشغيل'**
+  String get screenTimeServerUnlock;
+
+  /// SCR: screen-time server panel — computed state
+  ///
+  /// In ar, this message translates to:
+  /// **'الشاشة متاحة'**
+  String get screenTimeServerStateFree;
+
+  /// SCR: screen-time server panel — computed state
+  ///
+  /// In ar, this message translates to:
+  /// **'الشاشة متاحة ضمن الحد'**
+  String get screenTimeServerStateLimited;
+
+  /// SCR: screen-time server panel — computed state
+  ///
+  /// In ar, this message translates to:
+  /// **'حان وقت النوم'**
+  String get screenTimeServerStateBedtime;
+
+  /// SCR: screen-time server panel — computed state
+  ///
+  /// In ar, this message translates to:
+  /// **'وقت المدرسة الآن'**
+  String get screenTimeServerStateSchool;
+
+  /// SCR: screen-time server panel — computed state
+  ///
+  /// In ar, this message translates to:
+  /// **'انتهى وقت اليوم'**
+  String get screenTimeServerStateLimit;
+
+  /// SCR: screen-time server panel — computed state
+  ///
+  /// In ar, this message translates to:
+  /// **'الشاشة موقوفة بقرار ولي أمر'**
+  String get screenTimeServerStateLock;
+
+  /// SCR: screen-time server panel — today usage
+  ///
+  /// In ar, this message translates to:
+  /// **'دقائق اليوم المحتسبة: {minutes}'**
+  String screenTimeServerTodayMinutes(int minutes);
+
+  /// SCR: screen-time server panel — open request
+  ///
+  /// In ar, this message translates to:
+  /// **'سؤال من الابن بانتظارك: {minutes} دقيقة'**
+  String screenTimeServerOpenRequest(int minutes);
+
+  /// SCR: screen-time server panel — answer a request
+  ///
+  /// In ar, this message translates to:
+  /// **'موافقة'**
+  String get screenTimeServerApprove;
+
+  /// SCR: screen-time server panel — answer a request
+  ///
+  /// In ar, this message translates to:
+  /// **'رفض'**
+  String get screenTimeServerDeny;
+
+  /// SCR: web-filter server panel — no session
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد جلسة خادم في هذا البناء — الفلترة معروضة من التخزين المحلي، ولا ندّعي فرضًا على الجهاز.'**
+  String get webFilterServerNoSession;
+
+  /// SCR: web-filter server panel — unreachable
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يستجب الخادم — ما تراه آخر جواب صحيح، ولم يتغيّر شيء.'**
+  String get webFilterServerUnreachable;
+
+  /// SCR: web-filter server panel — access denied
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا الحساب لا يملك قراءة فلترة هذا الابن من الخادم.'**
+  String get webFilterServerDenied;
+
+  /// SCR: web-filter server panel — refused
+  ///
+  /// In ar, this message translates to:
+  /// **'رفض الخادم الطلب — لم يتغيّر شيء.'**
+  String get webFilterServerRefused;
+
+  /// SCR: web-filter server panel — protection state
+  ///
+  /// In ar, this message translates to:
+  /// **'هل الحماية تعمل فعلًا؟'**
+  String get webFilterProtectionHeading;
+
+  /// SCR: web-filter server panel — protection state
+  ///
+  /// In ar, this message translates to:
+  /// **'آخر بلاغ حديث من الجهاز يقول إن الحماية تعمل.'**
+  String get webFilterProtectionProtected;
+
+  /// SCR: web-filter server panel — protection state
+  ///
+  /// In ar, this message translates to:
+  /// **'لا ندّعي حماية: لا بلاغ حديث من هذا الجهاز.'**
+  String get webFilterProtectionUnverified;
+
+  /// SCR: web-filter server panel — protection state
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يبلّغ هذا الجهاز عن حمايته قط — لا شيء يُقال عنها.'**
+  String get webFilterProtectionNeverReported;
+
+  /// SCR: web-filter server panel — protection state
+  ///
+  /// In ar, this message translates to:
+  /// **'هذه المنصة لا تدعم مستوى الحماية هذا — وهي حقيقة عن الجهاز لا عن الابن.'**
+  String get webFilterProtectionUnsupported;
+
+  /// SCR: web-filter server panel — protection state
+  ///
+  /// In ar, this message translates to:
+  /// **'الحماية ليست كما ينبغي — راجع ما رصده الجهاز.'**
+  String get webFilterProtectionAtRisk;
+
+  /// SCR: web-filter server panel — how long the silence has lasted
+  ///
+  /// In ar, this message translates to:
+  /// **'صمت الجهاز منذ {minutes} دقيقة.'**
+  String webFilterProtectionSilentMinutes(int minutes);
+
+  /// SCR: web-filter server panel — a question's state
+  ///
+  /// In ar, this message translates to:
+  /// **'بانتظار قرار أحد الوالدين.'**
+  String get webFilterServerQuestionPending;
+
+  /// SCR: web-filter server panel — a question's state
+  ///
+  /// In ar, this message translates to:
+  /// **'الفتح المؤقت سارٍ الآن.'**
+  String get webFilterServerQuestionOpen;
+
+  /// SCR: web-filter server panel — a question's state
+  ///
+  /// In ar, this message translates to:
+  /// **'رُفض الطلب.'**
+  String get webFilterServerQuestionDenied;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد جلسة خادم في هذا البناء — المهام معروضة من التخزين المحلي، ولا تُحتسب نقاط على الخادم.'**
+  String get tasksServerNoSession;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يستجب الخادم — ما تراه آخر جواب صحيح، ولم يتغيّر شيء.'**
+  String get tasksServerUnreachable;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا الحساب لا يملك قراءة مهام هذا الابن من الخادم.'**
+  String get tasksServerDenied;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'رفض الخادم الطلب — لم يتغيّر شيء.'**
+  String get tasksServerRefused;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'النقاط'**
+  String get tasksServerBalanceHeading;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'الرصيد مجموع السجل، لا رقم محفوظ: كل سطر أدناه هو من أكّده ومتى.'**
+  String get tasksServerBalanceNote;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لا نقاط بعد — تُكتسب النقاط بتأكيد أحد الوالدين لإنجاز مهمة.'**
+  String get tasksServerBalanceEmpty;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'‏+{points} نقطة — أكّدها أحد الوالدين.'**
+  String tasksServerBalanceEntry(int points);
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'المهام'**
+  String get tasksServerTasksHeading;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'‏{points} نقطة عند الإنجاز'**
+  String tasksServerTaskPoints(int points);
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يقل الابن شيئًا بعد.'**
+  String get tasksServerTaskWaiting;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'قال الابن إنه أنجزها — بانتظار كلمتك.'**
+  String get tasksServerTaskClaimed;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'أكّدت الإنجاز — أُضيفت {points} نقطة إلى رصيده.'**
+  String tasksServerTaskConfirmed(int points);
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لم تُؤكَّد بعد — ويمكنه المحاولة مرة أخرى.'**
+  String get tasksServerTaskDeclined;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'هذه المهمة مسحوبة، ولم تُحتسب لها نقاط.'**
+  String get tasksServerTaskArchived;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'سجّل أنه أنجز'**
+  String get tasksServerRecordClaim;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'تأكيد الإنجاز'**
+  String get tasksServerConfirm;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يُنجز بعد'**
+  String get tasksServerDecline;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'ملاحظة تُقرأ للابن عند الرفض'**
+  String get tasksServerNoteHint;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'مهمة جديدة'**
+  String get tasksServerCreateHeading;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'ما المطلوب؟'**
+  String get tasksServerCreateTitle;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'النقاط'**
+  String get tasksServerCreatePoints;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'ما معنى «أُنجزت»؟'**
+  String get tasksServerCreateNote;
+
+  /// Choose a direct or group conversation as task visibility scope
+  ///
+  /// In ar, this message translates to:
+  /// **'مرئية لهذه المحادثة (اختياري)'**
+  String get tasksServerAudienceScopeLabel;
+
+  /// Task remains visible only to the designated child and guardians
+  ///
+  /// In ar, this message translates to:
+  /// **'للطفل المكلّف فقط'**
+  String get tasksServerAudienceScopeChildOnly;
+
+  /// SCR: tasks server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف المهمة'**
+  String get tasksServerCreateButton;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد جلسة خادم في هذا البناء — لا يُبنى تقويم محلياً.'**
+  String get calendarServerNoSession;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يُسمح لهذا الحساب بقراءة التقويم.'**
+  String get calendarServerDenied;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يجب الخادم — هذا آخر قراءة صحيحة.'**
+  String get calendarServerUnreachable;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'رُفض الطلب — هذا آخر قراءة صحيحة.'**
+  String get calendarServerRefused;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'ما اتفقت عليه العائلة'**
+  String get calendarServerEventsHeading;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لا مناسبات في هذه المدة.'**
+  String get calendarServerEventsEmpty;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'أُلغيت'**
+  String get calendarServerEventCancelled;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'سبب الإلغاء'**
+  String get calendarServerEventCancelReason;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'من دُعي'**
+  String get calendarServerEventAudienceHeading;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يجب بعد'**
+  String get calendarServerAudienceWaiting;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'سيأتي'**
+  String get calendarServerAudienceAccepted;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لن يأتي'**
+  String get calendarServerAudienceDeclined;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'حضر'**
+  String get calendarServerAudienceAttended;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يحضر'**
+  String get calendarServerAudienceAbsent;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'التذكير تفضيل مسجَّل، ولا نقول إن إشعاراً وصل.'**
+  String get calendarServerReminderNote;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء مناسبة'**
+  String get calendarServerCancelHeading;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لماذا تغيّرت الخطة؟'**
+  String get calendarServerCancelReasonHint;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'ألغِ المناسبة'**
+  String get calendarServerCancelButton;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'سجّل جواب الابن'**
+  String get calendarServerAnswerHeading;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'ما قاله الابن'**
+  String get calendarServerAnswerNoteHint;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'ما حدث فعلاً'**
+  String get calendarServerAttendanceHeading;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'ملاحظة (اختياري)'**
+  String get calendarServerAttendanceNoteHint;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'سجّل الحضور'**
+  String get calendarServerAttendanceRecordButton;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'مناسبة جديدة'**
+  String get calendarServerCreateHeading;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'ما المناسبة؟'**
+  String get calendarServerCreateTitle;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'أين؟'**
+  String get calendarServerCreateLocation;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'تفاصيل للعائلة'**
+  String get calendarServerCreateNoteHint;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'تذكير قبل (دقائق)'**
+  String get calendarServerCreateReminder;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'من تُدعى؟'**
+  String get calendarServerCreateChildren;
+
+  /// Optional direct or group audience scope for calendar routing
+  ///
+  /// In ar, this message translates to:
+  /// **'اربط المناسبة بمحادثة (اختياري)'**
+  String get calendarServerAudienceScopeLabel;
+
+  /// No chat-thread routing scope selected
+  ///
+  /// In ar, this message translates to:
+  /// **'الأطفال المحددون فقط'**
+  String get calendarServerAudienceScopeChildrenOnly;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر البداية'**
+  String get calendarServerCreatePickStart;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر النهاية'**
+  String get calendarServerCreatePickEnd;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف المناسبة'**
+  String get calendarServerCreateButton;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'كل ما هنا قاله الخادم: لا مناسبة ولا جواب ولا حضور يُخترع محلياً.'**
+  String get calendarServerPanelNote;
+
+  /// SCR: calendar server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يمكن لهذه النسخة مخاطبة أبناء الخادم بعد — يُقرأ التقويم ولا يُكتب فيه.'**
+  String get calendarServerNoAddressableChildren;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ الاتصال بدردشة الأسرة…'**
+  String get familyChatConnecting;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'انقطع الاتصال. نتحقق من دردشة الأسرة مجددًا…'**
+  String get familyChatReconnecting;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد اتصال الآن. تبقى الرسائل التي سبق تحميلها ظاهرة؛ أعد المحاولة عند عودة الاتصال.'**
+  String get familyChatOffline;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'الدردشة غير مُعدّة في هذا الإصدار؛ لا تُستخدم محادثة محلية بديلة.'**
+  String get familyChatUnavailable;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يملك هذا الحساب أو الجهاز صلاحية فتح هذه المحادثة. الخادم هو من يحدد الوصول.'**
+  String get familyChatPermissionDenied;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'رفض الخادم إجراء الدردشة. تحقّق من عضوية الأسرة ثم حاول مجددًا.'**
+  String get familyChatRequestRejected;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'إعادة المحاولة'**
+  String get familyChatRetry;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'تُحدّث الرسائل من الخادم كل 15 ثانية أثناء فتح هذه الشاشة. لا تتوفر إشعارات فورية أو مزامنة لحظية.'**
+  String get familyChatServerPollingNotice;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'تُحدّث الرسائل من الخادم أثناء فتح هذه الشاشة. لا تتوفر تحديثات فورية.'**
+  String get childFamilyChatServerPollingNotice;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ دردشة أسرية'**
+  String get familyChatCreateHeading;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'نوع المحادثة'**
+  String get familyChatCreateTypeLabel;
+
+  /// Direct family chat type
+  ///
+  /// In ar, this message translates to:
+  /// **'محادثة مباشرة'**
+  String get familyChatDirectThread;
+
+  /// User-created family chat group type
+  ///
+  /// In ar, this message translates to:
+  /// **'محادثة جماعية'**
+  String get familyChatGroupThread;
+
+  /// Participant picker for direct and group chats
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر المشاركين'**
+  String get familyChatSelectParticipants;
+
+  /// Empty state for the server-owned family chat roster
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد مشاركون نشطون آخرون في الأسرة.'**
+  String get familyChatNoParticipantsAvailable;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'دردشة أولياء الأسرة'**
+  String get familyChatFamilyThread;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'محادثة مع طفل واحد'**
+  String get familyChatChildThread;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'الطفل'**
+  String get familyChatCreateChildLabel;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد طفل مؤكّد من الخادم لإنشاء محادثة معه.'**
+  String get familyChatNoChildrenAvailable;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'طفل'**
+  String get familyChatChildFallback;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'العنوان (اختياري)'**
+  String get familyChatCreateTitleLabel;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'اتركه فارغًا لاستخدام عنوان الخادم'**
+  String get familyChatCreateTitleHint;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'إنشاء الدردشة'**
+  String get familyChatCreateButton;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء'**
+  String get familyChatCancel;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر إنشاء الدردشة. لم يتأكد قبول الطلب.'**
+  String get familyChatCreateFailed;
+
+  /// Family collaboration policy settings
+  ///
+  /// In ar, this message translates to:
+  /// **'التعاون والأمان'**
+  String get familyChatPolicyTitle;
+
+  /// Server authorization and child safety notice
+  ///
+  /// In ar, this message translates to:
+  /// **'يستطيع الوصي الأساسي وحده حفظ هذه القواعد التي يطبقها الخادم، وتبقى له دائمًا صلاحيات حماية الأسرة.'**
+  String get familyChatPolicyPrimaryGuardianNotice;
+
+  /// Delegated guardian role permission
+  ///
+  /// In ar, this message translates to:
+  /// **'السماح للوصي المشارك بإنشاء المحادثات'**
+  String get familyChatPolicyCoGuardianChat;
+
+  /// Delegated guardian role permission
+  ///
+  /// In ar, this message translates to:
+  /// **'السماح للوصي المشارك بإضافة أشخاص إلى المجموعات'**
+  String get familyChatPolicyCoGuardianManageChat;
+
+  /// Delegated guardian role permission
+  ///
+  /// In ar, this message translates to:
+  /// **'السماح للوصي المشارك بإدارة المهام'**
+  String get familyChatPolicyCoGuardianTasks;
+
+  /// Delegated guardian role permission
+  ///
+  /// In ar, this message translates to:
+  /// **'السماح للوصي المشارك بإدارة التقويم'**
+  String get familyChatPolicyCoGuardianCalendar;
+
+  /// Child chat safety setting
+  ///
+  /// In ar, this message translates to:
+  /// **'السماح للأطفال ببدء محادثات مباشرة'**
+  String get familyChatPolicyChildDirect;
+
+  /// Child chat safety setting
+  ///
+  /// In ar, this message translates to:
+  /// **'السماح للأطفال بإنشاء مجموعات'**
+  String get familyChatPolicyChildGroups;
+
+  /// Child chat safety setting
+  ///
+  /// In ar, this message translates to:
+  /// **'السماح للأطفال بإضافة مشاركين إلى مجموعاتهم'**
+  String get familyChatPolicyChildManageGroups;
+
+  /// Server-enforced safety inclusion rule
+  ///
+  /// In ar, this message translates to:
+  /// **'متى يجب أن ينضم الأوصياء إلى محادثات الأطفال؟'**
+  String get familyChatPolicyGuardianInclusion;
+
+  /// No automatic guardian inclusion
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يُضافون تلقائيًا افتراضيًا'**
+  String get familyChatPolicyInclusionNone;
+
+  /// Include active guardians when any child is in a new conversation
+  ///
+  /// In ar, this message translates to:
+  /// **'كل محادثات الأطفال'**
+  String get familyChatPolicyInclusionAllChildChats;
+
+  /// Include active guardians when multiple children are in a conversation
+  ///
+  /// In ar, this message translates to:
+  /// **'محادثات الأطفال بعضهم مع بعض فقط'**
+  String get familyChatPolicyInclusionChildToChild;
+
+  /// Maximum active participants in a group
+  ///
+  /// In ar, this message translates to:
+  /// **'الحد الأقصى لأعضاء المجموعة'**
+  String get familyChatPolicyMaxGroupSize;
+
+  /// Save collaboration policy
+  ///
+  /// In ar, this message translates to:
+  /// **'احفظ القواعد'**
+  String get familyChatPolicySave;
+
+  /// Policy update confirmation
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظ الخادم قواعد التعاون.'**
+  String get familyChatPolicySaved;
+
+  /// Policy read failure
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذرت قراءة سياسة الخادم.'**
+  String get familyChatPolicyLoadFailed;
+
+  /// Policy update failure
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يقبل الخادم تغيير السياسة.'**
+  String get familyChatPolicySaveFailed;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'تحميل رسائل أقدم'**
+  String get familyChatLoadOlder;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'تحديث الرسائل'**
+  String get familyChatRefresh;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'حُذفت الرسالة'**
+  String get familyChatMessageDeleted;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'عُدّلت'**
+  String get familyChatEdited;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'المرفقات والرسائل الصوتية غير متاحة: واجهة الدردشة الحالية تدعم النص فقط.'**
+  String get familyChatMediaUnavailable;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'المرفقات والرسائل الصوتية غير متاحة'**
+  String get familyChatMediaUnavailableSemantics;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل'**
+  String get familyChatEdit;
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'صورة'**
+  String get familyChatMediaPhoto;
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'رسالة صوتية'**
+  String get familyChatMediaVoiceNote;
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا المرفق لم يعد متاحًا'**
+  String get familyChatMediaItemUnavailable;
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ تحميل المرفق…'**
+  String get familyChatMediaLoading;
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'تشغيل الرسائل الصوتية غير متاح في هذه النسخة'**
+  String get familyChatMediaNoPlayback;
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'المرفقات تظهر على جهاز الوالد في هذه النسخة'**
+  String get familyChatMediaNotOnThisDevice;
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'وصلت إلى {count} من {total}'**
+  String familyChatReceiptDelivered(int count, int total);
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'قرأها {count} من {total}'**
+  String familyChatReceiptRead(int count, int total);
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'التحديث الفوري مفعّل'**
+  String get familyChatRealtimeLive;
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'التحديث الفوري غير متصل؛ يتم التحقق كل ١٥ ثانية'**
+  String get familyChatRealtimeRetrying;
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'يتم التحقق من الرسائل كل ١٥ ثانية'**
+  String get familyChatRealtimePolling;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف'**
+  String get familyChatDelete;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل الرسالة'**
+  String get familyChatEditHeading;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظ التعديل'**
+  String get familyChatEditSave;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف هذه الرسالة؟'**
+  String get familyChatDeleteHeading;
+
+  /// W9 family chat client state and controls
+  ///
+  /// In ar, this message translates to:
+  /// **'سيُزال نص الرسالة، لكن موضعها في المحادثة سيبقى ظاهرًا.'**
+  String get familyChatDeleteBody;
+
+  /// W9 family chat storage transparency
+  ///
+  /// In ar, this message translates to:
+  /// **'تُحفظ الرسائل لدى خادم الأسرة؛ هذه الدردشة غير مشفّرة من طرف إلى طرف.'**
+  String get familyChatStorageNotice;
+
+  /// W9 family chat storage transparency
+  ///
+  /// In ar, this message translates to:
+  /// **'نص محفوظ في خادم الأسرة'**
+  String get familyChatServerStoredTag;
+
+  /// W9 chat pagination and message controls
+  ///
+  /// In ar, this message translates to:
+  /// **'تحميل المزيد من الرسائل'**
+  String get familyChatLoadMore;
+
+  /// W9 chat pagination and message controls
+  ///
+  /// In ar, this message translates to:
+  /// **'إجراءات الرسالة'**
+  String get familyChatMessageActionsSemantics;
+
+  /// W9 chat source and child availability honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'تأتي قائمة المحادثات ومعايناتها من خادم الأسرة. تُحدّث القائمة كل 30 ثانية؛ لا تتوفر إشعارات فورية.'**
+  String get familyChatListPollingNotice;
+
+  /// W9 chat source and child availability honesty
+  ///
+  /// In ar, this message translates to:
+  /// **'تبقى دردشة الأسرة متاحة بعد انتهاء وقت اللعب.'**
+  String get familyChatNeverLocks;
+
+  /// No description provided for @conversationAttachPhotoGallery.
+  ///
+  /// In ar, this message translates to:
+  /// **'صورة من المعرض'**
+  String get conversationAttachPhotoGallery;
+
+  /// No description provided for @conversationAttachPhotoCamera.
+  ///
+  /// In ar, this message translates to:
+  /// **'التقاط صورة'**
+  String get conversationAttachPhotoCamera;
+
+  /// No description provided for @conversationAttachVoice.
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل رسالة صوتية'**
+  String get conversationAttachVoice;
+
+  /// No description provided for @mediaPhotoPendingLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'الصورة جاهزة. أضف تعليقًا إن أردت، ثم أرسل.'**
+  String get mediaPhotoPendingLabel;
+
+  /// No description provided for @mediaPhotoRemove.
+  ///
+  /// In ar, this message translates to:
+  /// **'إزالة الصورة'**
+  String get mediaPhotoRemove;
+
+  /// No description provided for @mediaComposeUnsupportedType.
+  ///
+  /// In ar, this message translates to:
+  /// **'نوع الملف غير مدعوم. اختر صورة بصيغة JPEG أو PNG أو WebP.'**
+  String get mediaComposeUnsupportedType;
+
+  /// No description provided for @mediaComposeTooLarge.
+  ///
+  /// In ar, this message translates to:
+  /// **'حجم الملف كبير جدًا للإرسال.'**
+  String get mediaComposeTooLarge;
+
+  /// No description provided for @mediaComposeMicrophoneDenied.
+  ///
+  /// In ar, this message translates to:
+  /// **'يلزم السماح بالوصول إلى الميكروفون لتسجيل رسالة صوتية. فعّله في الإعدادات ثم حاول مجددًا.'**
+  String get mediaComposeMicrophoneDenied;
+
+  /// No description provided for @mediaComposeFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر تجهيز الصورة أو التسجيل. حاول مرة أخرى.'**
+  String get mediaComposeFailed;
+
+  /// No description provided for @voiceRecordingTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'رسالة صوتية'**
+  String get voiceRecordingTitle;
+
+  /// No description provided for @voiceRecordingSend.
+  ///
+  /// In ar, this message translates to:
+  /// **'إرسال'**
+  String get voiceRecordingSend;
+
+  /// No description provided for @voiceRecordingCancel.
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء'**
+  String get voiceRecordingCancel;
+
+  /// No description provided for @voicePlaySemantics.
+  ///
+  /// In ar, this message translates to:
+  /// **'تشغيل الرسالة الصوتية'**
+  String get voicePlaySemantics;
+
+  /// No description provided for @voicePauseSemantics.
+  ///
+  /// In ar, this message translates to:
+  /// **'إيقاف الرسالة الصوتية مؤقتًا'**
+  String get voicePauseSemantics;
 }
 
 class _AppLocalizationsDelegate

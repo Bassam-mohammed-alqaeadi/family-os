@@ -1,0 +1,101 @@
+name: Foundation Gate CI
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "app/lib/foundation_gate/**"
+      - "app/test/foundation_gate/**"
+      - "app/pubspec.yaml"
+      - "app/pubspec.lock"
+      - "app/analysis_options.yaml"
+      - ".github/workflows/foundation_gate_ci.yml"
+  pull_request:
+    paths:
+      - "app/lib/foundation_gate/**"
+      - "app/test/foundation_gate/**"
+      - "app/pubspec.yaml"
+      - "app/pubspec.lock"
+      - "app/analysis_options.yaml"
+      - ".github/workflows/foundation_gate_ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: foundation-gate-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  isolated-foundation-gate:
+    name: Isolated Foundation Gate tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.35.7"
+          channel: stable
+          cache: true
+      - name: Install committed dependency lock
+        run: flutter pub get --enforce-lockfile
+      - name: Verify committed dependency lock
+        run: git diff --exit-code -- pubspec.lock
+      - name: Generate localization source
+        run: flutter gen-l10n
+      - name: Analyze isolated gate
+        id: analyze
+        continue-on-error: true
+        run: |
+          mkdir -p build/ci
+          set -o pipefail
+          flutter analyze --fatal-infos lib/foundation_gate test/foundation_gate 2>&1 | tee build/ci/foundation-gate-analyze.txt
+      - name: Run isolated gate tests
+        if: steps.analyze.outcome == 'success'
+        id: tests
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          flutter test test/foundation_gate \
+            --file-reporter=json:build/ci/foundation-gate-test.json 2>&1 \
+            | tee build/ci/foundation-gate-test.txt
+      - name: Enforce isolated analysis and test gates
+        if: always() && (steps.analyze.outcome == 'failure' || steps.tests.outcome == 'failure')
+        run: |
+          if [ "${{ steps.analyze.outcome }}" = 'failure' ]; then
+            summary=$(tr '\n' ' ' < build/ci/foundation-gate-analyze.txt | cut -c1-4000)
+            echo "::error title=Isolated Flutter analyzer::${summary}"
+          fi
+          if [ "${{ steps.tests.outcome }}" = 'failure' ]; then
+            transcript=$(grep -A80 -B2 'EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK' build/ci/foundation-gate-test.txt | tr '\n' ' ' | cut -c1-4000)
+            if [ -z "$transcript" ]; then
+              transcript=$(tail -60 build/ci/foundation-gate-test.txt | tr '\n' ' ' | cut -c1-4000)
+            fi
+            echo "::error title=Isolated Foundation Gate test transcript::${transcript}"
+            python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = Path('build/ci/foundation-gate-test.json')
+          tests, errors, failures = {}, {}, []
+          if report.exists():
+              for raw in report.read_text(encoding='utf-8').splitlines():
+                  try:
+                      event = json.loads(raw)
+                  except json.JSONDecodeError:
+                      continue
+                  if event.get('type') == 'testStart':
+                      tests[str(event['test']['id'])] = event['test']['name']
+                  if event.get('type') == 'error':
+                      errors.setdefault(str(event.get('testID')), []).append(str(event.get('error') or event.get('message') or ''))
+                  if event.get('type') == 'testDone' and event.get('result') not in ('success', 'skipped'):
+                      test_id = str(event.get('testID', event.get('test', {}).get('id', '')))
+                      detail = ' '.join(errors.get(test_id, [])) or str(event.get('reason') or event.get('message') or '')
+                      failures.append(f"{tests.get(test_id, event.get('test', {}).get('name', 'unnamed test'))}: {detail}")
+          print('::error title=Isolated Foundation Gate tests::' + ' | '.join(failures)[:4000])
+          PY
+          fi
+          exit 1

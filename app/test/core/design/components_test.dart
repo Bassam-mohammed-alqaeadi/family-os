@@ -307,16 +307,14 @@ void main() {
     try {
       await pumpFamily(
         tester,
-        AppErrorState(
-          kind: AppErrorKind.network,
-          onRetry: () => retries++,
-        ),
+        AppErrorState(kind: AppErrorKind.network, onRetry: () => retries++),
       );
 
       expect(find.text('تعذّر الاتصال'), findsWidgets);
       expect(find.byKey(const Key('app_error_retry')), findsOneWidget);
-      final semantics =
-          tester.getSemantics(find.byKey(const Key('app_error_retry')));
+      final semantics = tester.getSemantics(
+        find.byKey(const Key('app_error_retry')),
+      );
       expect(semantics.label, contains('إعادة المحاولة'));
 
       await tester.tap(find.byKey(const Key('app_error_retry')));
@@ -331,12 +329,7 @@ void main() {
     var taps = 0;
     final handle = tester.ensureSemantics();
     try {
-      await pumpFamily(
-        tester,
-        AppEmptyState(
-          onAction: () => taps++,
-        ),
-      );
+      await pumpFamily(tester, AppEmptyState(onAction: () => taps++));
 
       expect(find.text('لا يوجد شيء هنا بعد'), findsWidgets);
       expect(find.byKey(const Key('app_empty_action')), findsOneWidget);

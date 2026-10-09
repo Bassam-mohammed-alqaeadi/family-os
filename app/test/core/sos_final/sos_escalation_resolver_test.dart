@@ -12,9 +12,7 @@ void main() {
   group('SosEscalationResolver', () {
     const childId = 'kid_alpha';
 
-    SosLadder ladderWith({
-      required List<SosBackupContact> backups,
-    }) =>
+    SosLadder ladderWith({required List<SosBackupContact> backups}) =>
         SosLadder.defaults().copyWith(backups: backups);
 
     test('disabled prefs → empty plan (no outside contacts)', () {

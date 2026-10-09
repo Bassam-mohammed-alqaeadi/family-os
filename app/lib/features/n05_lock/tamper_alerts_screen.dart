@@ -63,7 +63,7 @@ class TamperAlertsScreen extends StatefulWidget {
   /// Rule 25 seam — null → [stage1TamperAlertsRepository].
   final TamperAlertsRepository? repository;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — when set, ignores [CurrentRole].
@@ -110,7 +110,7 @@ class _TamperAlertsScreenState extends State<TamperAlertsScreen> {
     super.initState();
     _childId = _resolveChildId(widget.childId);
     _repo = widget.repository ?? stage1TamperAlertsRepository;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _load();

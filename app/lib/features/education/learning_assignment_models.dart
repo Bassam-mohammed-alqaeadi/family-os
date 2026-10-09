@@ -42,15 +42,15 @@ final class LearningAssignment {
   final String materialKindKey;
 
   Map<String, Object?> toJson() => {
-        'id': id,
-        'childId': childId.value,
-        'titleKey': titleKey,
-        'rewardMinutes': rewardMinutes.inMinutes,
-        'source': source.name,
-        'assignedAt': assignedAt.toUtc().toIso8601String(),
-        'ctaScreenId': ctaScreenId,
-        'materialKindKey': materialKindKey,
-      };
+    'id': id,
+    'childId': childId.value,
+    'titleKey': titleKey,
+    'rewardMinutes': rewardMinutes.inMinutes,
+    'source': source.name,
+    'assignedAt': assignedAt.toUtc().toIso8601String(),
+    'ctaScreenId': ctaScreenId,
+    'materialKindKey': materialKindKey,
+  };
 
   factory LearningAssignment.fromJson(Map<String, Object?> json) {
     final sourceName = json['source'] as String? ?? 'homework';

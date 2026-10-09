@@ -14,8 +14,8 @@ final class LocalLearningResultRepository implements LearningResultRepository {
     this.namespace = kvNamespace,
     DateTime Function()? clock,
     String Function()? idFactory,
-  })  : _clock = clock ?? DateTime.now,
-        _idFactory = idFactory ?? _defaultId;
+  }) : _clock = clock ?? DateTime.now,
+       _idFactory = idFactory ?? _defaultId;
 
   static const kvNamespace = 'edu_results';
   static const _indexKey = '_index';
@@ -52,16 +52,12 @@ final class LocalLearningResultRepository implements LearningResultRepository {
   }
 
   Future<void> _saveIndex(List<String> ids) async {
-    await _db.insert(
-      _table,
-      {
-        'namespace': namespace,
-        'key': _indexKey,
-        'value': jsonEncode(ids),
-        'updated_at': _clock().toUtc().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: LocalConflictAlgorithm.replace,
-    );
+    await _db.insert(_table, {
+      'namespace': namespace,
+      'key': _indexKey,
+      'value': jsonEncode(ids),
+      'updated_at': _clock().toUtc().millisecondsSinceEpoch,
+    }, conflictAlgorithm: LocalConflictAlgorithm.replace);
   }
 
   Future<LearningResultSubmission?> _loadById(String id) async {
@@ -108,16 +104,12 @@ final class LocalLearningResultRepository implements LearningResultRepository {
       scoreCorrect: request.scoreCorrect,
       scoreTotal: request.scoreTotal,
     );
-    await _db.insert(
-      _table,
-      {
-        'namespace': namespace,
-        'key': row.id,
-        'value': jsonEncode(row.toJson()),
-        'updated_at': _clock().toUtc().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: LocalConflictAlgorithm.abort,
-    );
+    await _db.insert(_table, {
+      'namespace': namespace,
+      'key': row.id,
+      'value': jsonEncode(row.toJson()),
+      'updated_at': _clock().toUtc().millisecondsSinceEpoch,
+    }, conflictAlgorithm: LocalConflictAlgorithm.abort);
     final ids = await _loadIndex();
     ids.add(row.id);
     await _saveIndex(ids);

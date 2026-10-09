@@ -38,9 +38,7 @@ void main() {
         ],
         supportedLocales: AppLocalizations.supportedLocales,
         theme: buildFamilyTheme(),
-        home: const Scaffold(
-          body: AppLoadingState(message: 'Please wait'),
-        ),
+        home: const Scaffold(body: AppLoadingState(message: 'Please wait')),
       ),
     );
     expect(find.text('Please wait'), findsOneWidget);

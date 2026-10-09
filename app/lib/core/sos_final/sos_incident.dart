@@ -110,29 +110,28 @@ final class SosIncident {
   }
 
   Map<String, Object?> toRow() => {
-        'id': id,
-        'family_id': familyId.value,
-        'child_id': childId.value,
-        'status': status.name,
-        'terminal_reason': terminalReason?.name,
-        'triggered_at': triggeredAt.toUtc().millisecondsSinceEpoch,
-        'acknowledged_at': acknowledgedAt?.toUtc().millisecondsSinceEpoch,
-        'acknowledged_by': acknowledgedBy,
-        'resolved_at': resolvedAt?.toUtc().millisecondsSinceEpoch,
-        'resolved_by': resolvedBy,
-        'trigger_source': triggerSource.name,
-        'location_class': locationClass.name,
-        'connection_class': connectionClass.name,
-        'battery_percent': batteryPercent,
-        'panic_quiet_at_trigger': panicQuietAtTrigger ? 1 : 0,
-        'evidence_retain_until':
-            evidenceRetainUntil.toUtc().millisecondsSinceEpoch,
-        'deliveries_json': deliveriesJson,
-        'child_display_name': childDisplayName,
-        'child_emoji': childEmoji,
-        'location_label': locationLabel,
-        'raised_by_actor_id': raisedByActorId,
-      };
+    'id': id,
+    'family_id': familyId.value,
+    'child_id': childId.value,
+    'status': status.name,
+    'terminal_reason': terminalReason?.name,
+    'triggered_at': triggeredAt.toUtc().millisecondsSinceEpoch,
+    'acknowledged_at': acknowledgedAt?.toUtc().millisecondsSinceEpoch,
+    'acknowledged_by': acknowledgedBy,
+    'resolved_at': resolvedAt?.toUtc().millisecondsSinceEpoch,
+    'resolved_by': resolvedBy,
+    'trigger_source': triggerSource.name,
+    'location_class': locationClass.name,
+    'connection_class': connectionClass.name,
+    'battery_percent': batteryPercent,
+    'panic_quiet_at_trigger': panicQuietAtTrigger ? 1 : 0,
+    'evidence_retain_until': evidenceRetainUntil.toUtc().millisecondsSinceEpoch,
+    'deliveries_json': deliveriesJson,
+    'child_display_name': childDisplayName,
+    'child_emoji': childEmoji,
+    'location_label': locationLabel,
+    'raised_by_actor_id': raisedByActorId,
+  };
 
   factory SosIncident.fromRow(Map<String, Object?> row) {
     return SosIncident(
@@ -151,12 +150,15 @@ final class SosIncident {
       acknowledgedBy: row['acknowledged_by'] as String?,
       resolvedAt: _ms(row['resolved_at']),
       resolvedBy: row['resolved_by'] as String?,
-      triggerSource:
-          SosTriggerSource.values.byName(row['trigger_source']! as String),
-      locationClass:
-          SosLocationClass.values.byName(row['location_class']! as String),
-      connectionClass: SosConnectionClass.values
-          .byName(row['connection_class']! as String),
+      triggerSource: SosTriggerSource.values.byName(
+        row['trigger_source']! as String,
+      ),
+      locationClass: SosLocationClass.values.byName(
+        row['location_class']! as String,
+      ),
+      connectionClass: SosConnectionClass.values.byName(
+        row['connection_class']! as String,
+      ),
       batteryPercent: row['battery_percent']! as int,
       panicQuietAtTrigger: (row['panic_quiet_at_trigger']! as int) == 1,
       evidenceRetainUntil: DateTime.fromMillisecondsSinceEpoch(
@@ -235,14 +237,14 @@ final class SosLifecycleAuditEntry {
   final String payloadJson;
 
   Map<String, Object?> toRow() => {
-        'id': id,
-        'incident_id': incidentId,
-        'family_id': familyId.value,
-        'event_type': eventType.name,
-        'at_ms': at.toUtc().millisecondsSinceEpoch,
-        'actor_id': actorId,
-        'payload_json': payloadJson,
-      };
+    'id': id,
+    'incident_id': incidentId,
+    'family_id': familyId.value,
+    'event_type': eventType.name,
+    'at_ms': at.toUtc().millisecondsSinceEpoch,
+    'actor_id': actorId,
+    'payload_json': payloadJson,
+  };
 
   factory SosLifecycleAuditEntry.fromRow(Map<String, Object?> row) {
     return SosLifecycleAuditEntry(
@@ -250,7 +252,10 @@ final class SosLifecycleAuditEntry {
       incidentId: row['incident_id']! as String,
       familyId: FamilyId(row['family_id']! as String),
       eventType: SosAuditEventType.values.byName(row['event_type']! as String),
-      at: DateTime.fromMillisecondsSinceEpoch(row['at_ms']! as int, isUtc: true),
+      at: DateTime.fromMillisecondsSinceEpoch(
+        row['at_ms']! as int,
+        isUtc: true,
+      ),
       actorId: row['actor_id'] as String?,
       payloadJson: row['payload_json']! as String,
     );
@@ -278,14 +283,14 @@ final class SosOpsSample {
   final String payloadJson;
 
   Map<String, Object?> toRow() => {
-        'id': id,
-        'incident_id': incidentId,
-        'family_id': familyId.value,
-        'kind': kind.name,
-        'captured_at': capturedAt.toUtc().millisecondsSinceEpoch,
-        'retain_until': retainUntil.toUtc().millisecondsSinceEpoch,
-        'payload_json': payloadJson,
-      };
+    'id': id,
+    'incident_id': incidentId,
+    'family_id': familyId.value,
+    'kind': kind.name,
+    'captured_at': capturedAt.toUtc().millisecondsSinceEpoch,
+    'retain_until': retainUntil.toUtc().millisecondsSinceEpoch,
+    'payload_json': payloadJson,
+  };
 
   factory SosOpsSample.fromRow(Map<String, Object?> row) {
     return SosOpsSample(

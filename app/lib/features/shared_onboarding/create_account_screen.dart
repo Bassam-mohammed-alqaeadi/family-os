@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/components/progress_bar.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/runtime/app_scope.dart';
+import 'package:family_os/foundation_gate/foundation_gate_copy.dart';
+import 'package:family_os/foundation_gate/main_app_foundation_runtime.dart';
 
 /// Password strength bands matching prototype SHR-002 (length-only).
 enum PasswordStrengthBand { empty, weak, good, strong }
@@ -76,12 +80,49 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         _agreed;
   }
 
-  void _submit() {
-    if (!_canSubmit) return;
+  bool _obscurePassword = true;
+  bool _obscureConfirm = true;
+  bool _submitting = false;
+
+  Future<void> _submit() async {
+    if (!_canSubmit || _submitting) return;
     if (widget.onCreated != null) {
       widget.onCreated!();
       return;
     }
+
+    final appRuntime = AppScope.maybeOf(context);
+    if (appRuntime != null) {
+      final remoteIdentity = appRuntime.identity;
+      if (remoteIdentity is! MainAppFoundationIdentitySource) {
+        AppToast.show(
+          context,
+          message: FoundationGateCopy.of(context).unconfigured,
+        );
+        return;
+      }
+
+      setState(() => _submitting = true);
+      try {
+        await remoteIdentity.signUp(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+        if (!mounted) return;
+        context.go('/scr-shr-007');
+      } catch (e) {
+        if (mounted) {
+          AppToast.show(
+            context,
+            message: FoundationGateCopy.of(context).createAccountFailed,
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _submitting = false);
+      }
+      return;
+    }
+
     context.go('/scr-shr-007');
   }
 
@@ -171,13 +212,25 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                     child: TextField(
                       key: const Key('create_account_password'),
                       controller: _passwordController,
-                      obscureText: true,
+                      obscureText: _obscurePassword,
                       autocorrect: false,
-                      decoration: _inputDecoration(
-                        colors: colors,
-                        radii: radii,
-                        hint: l10n.createAccountPasswordHint,
-                      ),
+                      decoration:
+                          _inputDecoration(
+                            colors: colors,
+                            radii: radii,
+                            hint: l10n.createAccountPasswordHint,
+                          ).copyWith(
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                              ),
+                              onPressed: () => setState(
+                                () => _obscurePassword = !_obscurePassword,
+                              ),
+                            ),
+                          ),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -209,13 +262,25 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 child: TextField(
                   key: const Key('create_account_confirm'),
                   controller: _confirmController,
-                  obscureText: true,
+                  obscureText: _obscureConfirm,
                   autocorrect: false,
-                  decoration: _inputDecoration(
-                    colors: colors,
-                    radii: radii,
-                    hint: l10n.createAccountConfirmHint,
-                  ),
+                  decoration:
+                      _inputDecoration(
+                        colors: colors,
+                        radii: radii,
+                        hint: l10n.createAccountConfirmHint,
+                      ).copyWith(
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscureConfirm
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                          onPressed: () => setState(
+                            () => _obscureConfirm = !_obscureConfirm,
+                          ),
+                        ),
+                      ),
                 ),
               ),
             ),
@@ -263,13 +328,25 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
             PrimaryBtn(
               key: const Key('create_account_submit'),
               label: l10n.createAccountSubmit,
-              onPressed: _canSubmit ? _submit : null,
+              onPressed: (_canSubmit && !_submitting) ? _submit : null,
             ),
             const SizedBox(height: 12),
             Text(
               l10n.createAccountNoPhoneNote,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: colors.ink2),
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () => context.pushReplacement('/scr-shr-003'),
+              child: Text(
+                FoundationGateCopy.of(context).alreadyHaveAccountSignIn,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: colors.p400,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ),

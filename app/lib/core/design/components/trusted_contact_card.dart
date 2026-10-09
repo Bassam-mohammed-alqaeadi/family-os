@@ -104,7 +104,8 @@ class TrustedContactCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: contact.verification ==
+                        color:
+                            contact.verification ==
                                 SosVerificationStatus.verified
                             ? colors.mint
                             : colors.amber,

@@ -14,8 +14,12 @@ import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
+import 'package:family_os/core/domain/child_id.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
 import 'package:family_os/features/n16_tasks/family_tasks_models.dart';
 import 'package:family_os/features/n16_tasks/family_tasks_repository.dart';
+import 'package:family_os/features/n16_tasks/tasks_server_authority.dart';
+import 'package:family_os/features/n16_tasks/tasks_server_panel.dart';
 
 /// Widget keys for SCR-FAT-054 acceptance.
 abstract final class FamilyTasksKeys {
@@ -47,6 +51,7 @@ abstract final class FamilyTasksKeys {
 class FamilyTasksScreen extends StatefulWidget {
   const FamilyTasksScreen({
     super.key,
+    this.childId,
     this.repository,
     this.sosFire,
     this.roleOverride,
@@ -55,10 +60,17 @@ class FamilyTasksScreen extends StatefulWidget {
     this.onNavigate,
   });
 
+  /// The child whose tasks this screen is about; null → the active child.
+  ///
+  /// Passed rather than read from the air for the same reason every other parametric screen
+  /// in this codebase takes one: a screen that guessed which child it was showing would be a
+  /// screen that could show the wrong child's chores to the right father.
+  final ChildId? childId;
+
   /// Rule 25 seam — null → [stage1FamilyTasksRepository].
   final FamilyTasksRepository? repository;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — when set, ignores [CurrentRole].
@@ -82,6 +94,12 @@ class _FamilyTasksScreenState extends State<FamilyTasksScreen> {
   var _sosBusy = false;
   var _loading = true;
   FamilyTasksSnapshot _snap = const FamilyTasksSnapshot();
+
+  /// The child whose tasks this screen is about: the one it was given, else the active one.
+  ///
+  /// Resolved once at init, like the web-filter screen does, so a rebuild cannot silently
+  /// move the panel to another child.
+  late ChildId _childId;
 
   AppRole get _role {
     final override = widget.roleOverride;
@@ -109,8 +127,9 @@ class _FamilyTasksScreenState extends State<FamilyTasksScreen> {
   @override
   void initState() {
     super.initState();
+    _childId = resolveActiveChildIdOf(context, explicit: widget.childId);
     _repo = widget.repository ?? stage1FamilyTasksRepository;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _load();
@@ -120,6 +139,14 @@ class _FamilyTasksScreenState extends State<FamilyTasksScreen> {
   @override
   void didUpdateWidget(covariant FamilyTasksScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.childId != widget.childId) {
+      // A screen that stays open while the family switches child has to follow, and the panel
+      // inside it has to follow with it: showing the previous child's chores beside the new
+      // child's name is the one mistake a chores screen must not make.
+      setState(() {
+        _childId = resolveActiveChildIdOf(context, explicit: widget.childId);
+      });
+    }
     if (oldWidget.repository != widget.repository) {
       _repo = widget.repository ?? stage1FamilyTasksRepository;
       _load();
@@ -348,6 +375,13 @@ class _FamilyTasksScreenState extends State<FamilyTasksScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // W7 — the server's tasks and points, when this build has a session. Rendering it
+          // first is the point: a family should read what is actually counted before reading
+          // anything this build keeps locally.
+          if (activeTasksServerAuthority != null) ...[
+            TasksServerPanel(childId: _childId, canEdit: _canAct),
+            const SizedBox(height: 12),
+          ],
           if (_isObserverMother) ...[
             BannerNote(
               key: FamilyTasksKeys.observerHint,
@@ -429,7 +463,9 @@ class _FamilyTasksScreenState extends State<FamilyTasksScreen> {
                           _proofLine(l10n, task.proofKey),
                           _timeLine(l10n, task.timeKey),
                         ].where((s) => s.isNotEmpty).join(' · '),
-                        approveLabel: l10n.familyTasksApproveCta(task.rewardMinutes),
+                        approveLabel: l10n.familyTasksApproveCta(
+                          task.rewardMinutes,
+                        ),
                         colors: colors,
                         onApprove: () => _onApprove(task),
                       ),
@@ -645,9 +681,7 @@ class _MotherHelpRow extends StatelessWidget {
             child: const SizedBox(
               width: 34,
               height: 34,
-              child: Center(
-                child: Text('🌸', style: TextStyle(fontSize: 14)),
-              ),
+              child: Center(child: Text('🌸', style: TextStyle(fontSize: 14))),
             ),
           ),
           const SizedBox(width: 10),

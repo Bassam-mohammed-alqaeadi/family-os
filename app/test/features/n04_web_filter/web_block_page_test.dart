@@ -21,13 +21,13 @@ void main() {
   final adultsUrl = Uri.parse('https://adult.example/page');
 
   WebFilterPolicy adultsOnPolicy({int version = 1}) => WebFilterPolicy(
-        level: WebFilterLevel.open,
-        categories: {
-          for (final k in WebFilterCategories.known) k: false,
-          WebFilterCategories.adults: true,
-        },
-        policyVersion: version,
-      );
+    level: WebFilterLevel.open,
+    categories: {
+      for (final k in WebFilterCategories.known) k: false,
+      WebFilterCategories.adults: true,
+    },
+    policyVersion: version,
+  );
 
   testWidgets(
     'same URL+policy → identical verdict on child page and father preview',
@@ -37,10 +37,7 @@ void main() {
 
       await tester.pumpWidget(
         _l10nApp(
-          home: WebBlockPage(
-            key: const Key('child_block'),
-            snapshot: snapshot,
-          ),
+          home: WebBlockPage(key: const Key('child_block'), snapshot: snapshot),
         ),
       );
       await tester.pumpAndSettle();
@@ -79,18 +76,20 @@ void main() {
     },
   );
 
-  testWidgets('adults category shows Arabic human reason (G-3)', (tester) async {
+  testWidgets('adults category shows Arabic human reason (G-3)', (
+    tester,
+  ) async {
     final snapshot = WebFilterDecisionSnapshot.evaluate(
       adultsUrl,
       adultsOnPolicy(),
     );
 
-    await tester.pumpWidget(
-      _l10nApp(home: WebBlockPage(snapshot: snapshot)),
-    );
+    await tester.pumpWidget(_l10nApp(home: WebBlockPage(snapshot: snapshot)));
     await tester.pumpAndSettle();
 
-    final reason = tester.widget<Text>(find.byKey(const Key('web_block_reason')));
+    final reason = tester.widget<Text>(
+      find.byKey(const Key('web_block_reason')),
+    );
     expect(reason.data, isNotNull);
     expect(reason.data!, contains('بالغين'));
     expect(reason.data!, isNot(equals('adults')));
@@ -130,16 +129,16 @@ void main() {
       policy,
     );
 
-    await tester.pumpWidget(
-      _l10nApp(home: WebBlockPage(snapshot: snapshot)),
-    );
+    await tester.pumpWidget(_l10nApp(home: WebBlockPage(snapshot: snapshot)));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('web_block_unlock_cta')), findsNothing);
     expect(find.byKey(const Key('web_block_allowed_body')), findsOneWidget);
   });
 
-  testWidgets('preview reopen re-evaluates after policy change', (tester) async {
+  testWidgets('preview reopen re-evaluates after policy change', (
+    tester,
+  ) async {
     final repo = InMemoryWebFilterPolicyRepository({
       child.value: adultsOnPolicy(version: 1),
     });
@@ -217,10 +216,7 @@ Future<void> _pumpFilter(
     CurrentRole(
       notifier: roleCtrl,
       child: _l10nApp(
-        home: WebFilterScreen(
-          childId: childId,
-          repository: repository,
-        ),
+        home: WebFilterScreen(childId: childId, repository: repository),
       ),
     ),
   );

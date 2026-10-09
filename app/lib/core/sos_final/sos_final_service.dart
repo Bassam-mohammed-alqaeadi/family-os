@@ -19,10 +19,10 @@ final class SosFinalService {
     DateTime Function()? clock,
     String Function()? idFactory,
     LocalEventEmitter? localEvents,
-  })  : _store = store,
-        _clock = clock ?? DateTime.now,
-        _idFactory = idFactory ?? _defaultId,
-        _localEvents = localEvents;
+  }) : _store = store,
+       _clock = clock ?? DateTime.now,
+       _idFactory = idFactory ?? _defaultId,
+       _localEvents = localEvents;
 
   final SosFinalRepository _store;
   final FamilyId familyId;

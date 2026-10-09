@@ -28,8 +28,9 @@ void _log(String hypothesisId, String message, Map<String, Object?> data) {
   final line = jsonEncode(payload);
   // ignore: avoid_print
   print('AGENT_DEBUG $line');
-  File(r'D:\special projects\family\debug-296a8e.log')
-      .writeAsStringSync('$line\n', mode: FileMode.append);
+  File(
+    r'D:\special projects\family\debug-296a8e.log',
+  ).writeAsStringSync('$line\n', mode: FileMode.append);
 }
 
 void main() {

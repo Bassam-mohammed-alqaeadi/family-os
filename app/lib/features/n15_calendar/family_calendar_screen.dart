@@ -12,8 +12,11 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/identity/roster_children.dart';
 import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
+import 'package:family_os/features/n15_calendar/calendar_server_authority.dart';
+import 'package:family_os/features/n15_calendar/calendar_server_panel.dart';
 import 'package:family_os/features/n15_calendar/family_calendar_models.dart';
 import 'package:family_os/features/n15_calendar/family_calendar_repository.dart';
 
@@ -32,6 +35,8 @@ abstract final class FamilyCalendarKeys {
   static const observerHint = Key('family_calendar_observer');
   static const childLean = Key('family_calendar_child_lean');
   static const sosCta = Key('family_calendar_sos');
+  /// W8 — the scroll view that carries the server's week above a local state.
+  static const serverBody = Key('family_calendar_server_body');
   static const sosIconCta = Key('family_calendar_sos_icon');
 
   static Key filterChip(String id) => Key('family_calendar_filter_$id');
@@ -57,7 +62,7 @@ class FamilyCalendarScreen extends StatefulWidget {
   /// Rule 25 seam — null → [stage1FamilyCalendarRepository].
   final FamilyCalendarRepository? repository;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — when set, ignores [CurrentRole].
@@ -117,7 +122,7 @@ class _FamilyCalendarScreenState extends State<FamilyCalendarScreen> {
   void initState() {
     super.initState();
     _repo = widget.repository ?? stage1FamilyCalendarRepository;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _load();
@@ -191,6 +196,28 @@ class _FamilyCalendarScreenState extends State<FamilyCalendarScreen> {
       FamilyCalendarFilter.all => FamilyCalendarEventCategory.din,
     };
   }
+
+  /// The children this screen can offer the server panel, named the way the rest of the
+  /// screen names them. The identifiers come from the identity runtime and the labels from the
+  /// ARB - never a planted name (Rule 23), and never a guess about who the server knows.
+  /// [body] under the server panel, in a scroll view of its own - the two live in one column
+  /// because the panel is taller than a phone and the local state has to stay reachable.
+  Widget _withServer(Widget? server, Widget body) {
+    if (server == null) return body;
+    return SingleChildScrollView(
+      key: FamilyCalendarKeys.serverBody,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [server, const SizedBox(height: 12), body],
+      ),
+    );
+  }
+
+  List<CalendarChild> _serverChildren(AppLocalizations l10n) => [
+    for (final child in activeFamilyRosterChildren())
+      CalendarChild(id: child.id, label: _whoName(l10n, child.nameKey)),
+  ];
 
   String _whoName(AppLocalizations l10n, String nameKey) {
     return switch (nameKey) {
@@ -332,23 +359,39 @@ class _FamilyCalendarScreenState extends State<FamilyCalendarScreen> {
       );
     }
 
+    // The week the server holds is not waiting on this build's local board: when a session is
+    // bound it is drawn in every state below - loading, empty or full - because a family whose
+    // local board is empty still has a Friday.
+    final server = activeCalendarServerAuthority == null
+        ? null
+        : CalendarServerPanel(
+            children: _serverChildren(l10n),
+            canEdit: _canAct,
+          );
+
     if (_loading) {
-      return Center(
-        key: FamilyCalendarKeys.loading,
-        child: Semantics(
-          label: l10n.familyCalendarLoadingSemantics,
-          child: const CircularProgressIndicator(),
+      return _withServer(
+        server,
+        Center(
+          key: FamilyCalendarKeys.loading,
+          child: Semantics(
+            label: l10n.familyCalendarLoadingSemantics,
+            child: const CircularProgressIndicator(),
+          ),
         ),
       );
     }
 
     if (_snap.isEmpty) {
-      return AppEmptyState(
-        key: FamilyCalendarKeys.empty,
-        title: l10n.familyCalendarEmptyTitle,
-        message: l10n.familyCalendarEmptyMessage,
-        actionLabel: l10n.familyCalendarEmptyCta,
-        onAction: () => _go('SCR-FAT-003'),
+      return _withServer(
+        server,
+        AppEmptyState(
+          key: FamilyCalendarKeys.empty,
+          title: l10n.familyCalendarEmptyTitle,
+          message: l10n.familyCalendarEmptyMessage,
+          actionLabel: l10n.familyCalendarEmptyCta,
+          onAction: () => _go('SCR-FAT-003'),
+        ),
       );
     }
 
@@ -369,6 +412,9 @@ class _FamilyCalendarScreenState extends State<FamilyCalendarScreen> {
             ),
             const SizedBox(height: 12),
           ],
+          // W8 - rendered first for the same reason W7 is: a family should read what was
+          // stated and recorded before reading anything this build keeps locally.
+          if (server != null) ...[server, const SizedBox(height: 12)],
           _HeaderCard(l10n: l10n, colors: colors, radii: radii),
           const SizedBox(height: 12),
           _MonthGridCard(
@@ -510,14 +556,26 @@ class _HeaderCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _PrayerChip(label: l10n.familyCalendarPrayerFajr, colors: colors),
-                _PrayerChip(label: l10n.familyCalendarPrayerDhuhr, colors: colors),
-                _PrayerChip(label: l10n.familyCalendarPrayerAsr, colors: colors),
+                _PrayerChip(
+                  label: l10n.familyCalendarPrayerFajr,
+                  colors: colors,
+                ),
+                _PrayerChip(
+                  label: l10n.familyCalendarPrayerDhuhr,
+                  colors: colors,
+                ),
+                _PrayerChip(
+                  label: l10n.familyCalendarPrayerAsr,
+                  colors: colors,
+                ),
                 _PrayerChip(
                   label: l10n.familyCalendarPrayerMaghrib,
                   colors: colors,
                 ),
-                _PrayerChip(label: l10n.familyCalendarPrayerIsha, colors: colors),
+                _PrayerChip(
+                  label: l10n.familyCalendarPrayerIsha,
+                  colors: colors,
+                ),
               ],
             ),
           ],

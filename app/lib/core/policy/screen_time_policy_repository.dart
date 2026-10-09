@@ -25,7 +25,7 @@ abstract class ScreenTimePolicyPrefsStore {
 final class MemoryScreenTimePolicyPrefsStore
     implements ScreenTimePolicyPrefsStore {
   MemoryScreenTimePolicyPrefsStore([Map<String, String>? data])
-      : data = data ?? {};
+    : data = data ?? {};
 
   final Map<String, String> data;
 
@@ -84,7 +84,7 @@ final class PrefsScreenTimePolicyRepository
 final class InMemoryScreenTimePolicyRepository
     implements ScreenTimePolicyRepository {
   InMemoryScreenTimePolicyRepository([Map<String, ScreenTimePolicy>? seed])
-      : _byChild = seed ?? {};
+    : _byChild = seed ?? {};
 
   final Map<String, ScreenTimePolicy> _byChild;
 

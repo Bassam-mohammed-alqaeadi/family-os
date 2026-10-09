@@ -16,8 +16,8 @@ final class InMemoryCreateTaskRepository implements CreateTaskRepository {
   InMemoryCreateTaskRepository({
     CreateTaskSnapshot? seed,
     FamilyTasksRepository? familyTasks,
-  })  : _snap = seed ?? createTaskEmptyFixture(),
-        _family = familyTasks;
+  }) : _snap = seed ?? createTaskEmptyFixture(),
+       _family = familyTasks;
 
   CreateTaskSnapshot _snap;
   final FamilyTasksRepository? _family;
@@ -121,7 +121,8 @@ CreateTaskSnapshot createTaskPrototypeFixture() {
   final roster = activeFamilyRosterChildren();
   return CreateTaskSnapshot(
     children: [
-      for (final c in roster) CreateTaskChild(id: c.id.value, nameKey: c.nameKey),
+      for (final c in roster)
+        CreateTaskChild(id: c.id.value, nameKey: c.nameKey),
     ],
     draft: CreateTaskDraft(
       title: '',
@@ -142,7 +143,8 @@ CreateTaskSnapshot bindCreateTaskToRoster(CreateTaskSnapshot snap) {
   }
   return snap.copyWith(
     children: [
-      for (final c in roster) CreateTaskChild(id: c.id.value, nameKey: c.nameKey),
+      for (final c in roster)
+        CreateTaskChild(id: c.id.value, nameKey: c.nameKey),
     ],
   );
 }

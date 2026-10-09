@@ -52,8 +52,7 @@ final class InMemoryDeviceUserSwitchRepository
   /// Test seam — next [listProfiles] throws.
   bool failLoad;
 
-  void seed(List<DeviceUserProfile> profiles) =>
-      _profiles = List.of(profiles);
+  void seed(List<DeviceUserProfile> profiles) => _profiles = List.of(profiles);
 
   @override
   Future<List<DeviceUserProfile>> listProfiles() async {

@@ -26,17 +26,15 @@ void main() {
   final adultsUrl = Uri.parse('https://adult.example/page');
 
   WebFilterPolicy adultsOnPolicy() => WebFilterPolicy(
-        level: WebFilterLevel.open,
-        categories: {
-          for (final k in WebFilterCategories.known) k: false,
-          WebFilterCategories.adults: true,
-        },
-      );
+    level: WebFilterLevel.open,
+    categories: {
+      for (final k in WebFilterCategories.known) k: false,
+      WebFilterCategories.adults: true,
+    },
+  );
 
-  ({
-    WebUnlockService service,
-    InMemoryWebFilterPolicyRepository policyRepo,
-  }) harness() {
+  ({WebUnlockService service, InMemoryWebFilterPolicyRepository policyRepo})
+  harness() {
     final policyRepo = InMemoryWebFilterPolicyRepository({
       child.value: adultsOnPolicy(),
     });
@@ -47,70 +45,69 @@ void main() {
     return (service: service, policyRepo: policyRepo);
   }
 
-  testWidgets(
-    'E2E: unlock CTA → partner approve → host allowed by evaluator',
-    (tester) async {
-      final h = harness();
-      final snapshot = WebFilterDecisionSnapshot.evaluate(
-        adultsUrl,
-        adultsOnPolicy(),
-      );
+  testWidgets('E2E: unlock CTA → partner approve → host allowed by evaluator', (
+    tester,
+  ) async {
+    final h = harness();
+    final snapshot = WebFilterDecisionSnapshot.evaluate(
+      adultsUrl,
+      adultsOnPolicy(),
+    );
 
-      await tester.pumpWidget(
-        _l10nApp(
-          home: WebBlockPage(
-            snapshot: snapshot,
-            childId: child,
-            unlockService: h.service,
-          ),
+    await tester.pumpWidget(
+      _l10nApp(
+        home: WebBlockPage(
+          snapshot: snapshot,
+          childId: child,
+          unlockService: h.service,
         ),
-      );
-      await tester.pumpAndSettle();
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const Key('web_block_unlock_cta')));
-      await tester.pumpAndSettle();
-      AppToast.dismiss();
-      await tester.pump(const Duration(milliseconds: 2600));
+    await tester.tap(find.byKey(const Key('web_block_unlock_cta')));
+    await tester.pumpAndSettle();
+    AppToast.dismiss();
+    await tester.pump(const Duration(milliseconds: 2600));
 
-      final pending = await h.service.listPending(childId: child);
-      expect(pending, hasLength(1));
+    final pending = await h.service.listPending(childId: child);
+    expect(pending, hasLength(1));
 
-      await tester.pumpWidget(
-        _l10nApp(
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: WebUnlockInbox(
-                service: h.service,
-                role: AppRole.mother,
-                motherLevel: MotherLevel.partner,
-              ),
+    await tester.pumpWidget(
+      _l10nApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: WebUnlockInbox(
+              service: h.service,
+              role: AppRole.mother,
+              motherLevel: MotherLevel.partner,
             ),
           ),
         ),
-      );
-      await tester.pumpAndSettle();
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('web_unlock_inbox')), findsOneWidget);
-      await tester.tap(find.byKey(Key('web_unlock_approve_${pending.first.id}')));
-      await tester.pumpAndSettle();
-      AppToast.dismiss();
-      await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byKey(const Key('web_unlock_inbox')), findsOneWidget);
+    await tester.tap(find.byKey(Key('web_unlock_approve_${pending.first.id}')));
+    await tester.pumpAndSettle();
+    AppToast.dismiss();
+    await tester.pump(const Duration(milliseconds: 100));
 
-      final policy = await h.policyRepo.load(child);
-      expect(policy.allowList, isEmpty);
-      final temps = await h.service.activeTemporaryHosts(child);
-      expect(temps, contains('adult.example'));
-      expect(
-        WebFilterEvaluator.decide(
-          adultsUrl,
-          policy,
-          activeTemporaryAllows: temps,
-        ).isDenied,
-        isFalse,
-      );
-      expect(find.byKey(const Key('web_unlock_inbox_empty')), findsOneWidget);
-    },
-  );
+    final policy = await h.policyRepo.load(child);
+    expect(policy.allowList, isEmpty);
+    final temps = await h.service.activeTemporaryHosts(child);
+    expect(temps, contains('adult.example'));
+    expect(
+      WebFilterEvaluator.decide(
+        adultsUrl,
+        policy,
+        activeTemporaryAllows: temps,
+      ).isDenied,
+      isFalse,
+    );
+    expect(find.byKey(const Key('web_unlock_inbox_empty')), findsOneWidget);
+  });
 
   testWidgets('mother observer sees list but Approve absent', (tester) async {
     final h = harness();
@@ -158,8 +155,7 @@ void main() {
 
   testWidgets('child decision bus publishes after father deny', (tester) async {
     final h = harness();
-    final created =
-        await h.service.requestUnlock(child, adultsUrl.toString());
+    final created = await h.service.requestUnlock(child, adultsUrl.toString());
     WebUnlockRequest? heard;
     h.service.decisionBus.addListener(() {
       heard = h.service.decisionBus.lastDecision;

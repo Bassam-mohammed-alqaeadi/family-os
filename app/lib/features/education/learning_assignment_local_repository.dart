@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/minutes.dart';
 import 'package:family_os/core/fs_foundation/local_database.dart';
+import 'package:family_os/core/identity/active_child_resolver.dart';
 import 'package:family_os/features/education/learning_assignment_models.dart';
 import 'package:family_os/features/education/learning_assignment_repository.dart';
 
@@ -18,8 +19,8 @@ final class LocalLearningAssignmentRepository
     this.namespace = kvNamespace,
     DateTime Function()? clock,
     String Function()? idFactory,
-  })  : _clock = clock ?? DateTime.now,
-        _idFactory = idFactory ?? _defaultId;
+  }) : _clock = clock ?? DateTime.now,
+       _idFactory = idFactory ?? _defaultId;
 
   static const kvNamespace = 'edu_assignments';
   static const _indexKey = '_index';
@@ -56,16 +57,12 @@ final class LocalLearningAssignmentRepository
   }
 
   Future<void> _saveIndex(List<String> ids) async {
-    await _db.insert(
-      _table,
-      {
-        'namespace': namespace,
-        'key': _indexKey,
-        'value': jsonEncode(ids),
-        'updated_at': _clock().toUtc().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: LocalConflictAlgorithm.replace,
-    );
+    await _db.insert(_table, {
+      'namespace': namespace,
+      'key': _indexKey,
+      'value': jsonEncode(ids),
+      'updated_at': _clock().toUtc().millisecondsSinceEpoch,
+    }, conflictAlgorithm: LocalConflictAlgorithm.replace);
   }
 
   Future<LearningAssignment?> _loadById(String id) async {
@@ -117,16 +114,12 @@ final class LocalLearningAssignmentRepository
       ctaScreenId: request.ctaScreenId,
       materialKindKey: request.materialKindKey,
     );
-    await _db.insert(
-      _table,
-      {
-        'namespace': namespace,
-        'key': assignment.id,
-        'value': jsonEncode(assignment.toJson()),
-        'updated_at': _clock().toUtc().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: LocalConflictAlgorithm.abort,
-    );
+    await _db.insert(_table, {
+      'namespace': namespace,
+      'key': assignment.id,
+      'value': jsonEncode(assignment.toJson()),
+      'updated_at': _clock().toUtc().millisecondsSinceEpoch,
+    }, conflictAlgorithm: LocalConflictAlgorithm.abort);
     final ids = await _loadIndex();
     ids.add(assignment.id);
     await _saveIndex(ids);
@@ -144,7 +137,7 @@ final class LocalLearningAssignmentRepository
     if (ids.isNotEmpty) return;
     await publish(
       LearningAssignmentPublishRequest(
-        childId: ChildId('demo-child'),
+        childId: resolveActiveChildId(),
         titleKey: 'mathPractice',
         rewardMinutes: Minutes(10),
         source: LearningAssignmentSource.homework,

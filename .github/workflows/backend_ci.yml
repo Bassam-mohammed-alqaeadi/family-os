@@ -1,0 +1,101 @@
+name: Backend CI
+
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend_ci.yml'
+  push:
+    branches:
+      - main
+      - arena/**
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  foundation-api:
+    name: Foundation API contract tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+
+  # The Environment Gate. Added 2026-10-06, after an audit found that migrations
+  # 001-101 had never been executed anywhere: the schema tests verified the text of the
+  # SQL and the checksums of the files, never the statements. A migration that has never
+  # run is a claim, not an artifact.
+  #
+  # This job starts a real PostgreSQL server, executes every migration against it, and
+  # drives the real revocation operation through the real store - including two genuinely
+  # concurrent revocations, because the guard against a second revocation lives in a WHERE
+  # clause and only a real database can prove that it holds.
+  #
+  # It runs on every push to backend/**, and it fails the build rather than warning: the
+  # whole point is that written-but-never-executed SQL stops being possible.
+  migration-and-integration:
+    name: Real PostgreSQL migrations and integration
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        # Use AWS's public mirror of the official image to avoid anonymous Docker Hub pull-rate limits.
+        image: public.ecr.aws/docker/library/postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: familyos_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d familyos_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/familyos_ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - name: Apply every migration to the real database
+        run: npm run migrate
+      - name: Verify the schema, the constraints, the revocation path, and W9 media, realtime and push
+        run: |
+          log_file=$(mktemp)
+          set +e
+          node --test test/postgres-integration.test.js test/postgres-chat-realtime-media.test.js test/postgres-push-registrations.test.js 2>&1 | tee "$log_file"
+          test_status=${PIPESTATUS[0]}
+          set -e
+          if [ "$test_status" -ne 0 ]; then
+            # A raw tail can spend its entire annotation budget on passing TAP cases and
+            # hide the one failure. Keep the failing TAP block, where the test name and
+            # PostgreSQL error are adjacent; fall back to the tail only if the reporter
+            # emitted no `not ok` block at all.
+            failure_block="$(grep -A80 -E '^not ok[[:space:]]' "$log_file" || true)"
+            if [ -z "$failure_block" ]; then
+              failure_block="$(tail -n 60 "$log_file")"
+            fi
+            summary="$(printf '%s' "$failure_block" | sed -e 's/%/%25/g' -e 's/\r//g' | tr '\n' '\036' | sed -e 's/\036/%0A/g')"
+            echo "::error title=PostgreSQL integration failure::${summary:0:5000}"
+            exit "$test_status"
+          fi

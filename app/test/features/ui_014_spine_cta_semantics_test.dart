@@ -9,13 +9,13 @@ import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/anti_tamper_repository.dart';
 import 'package:family_os/core/policy/device_lock_service.dart';
-import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/core/policy/time_request.dart';
 import 'package:family_os/core/policy/time_request_repository.dart';
 import 'package:family_os/core/policy/time_request_service.dart';
 import 'package:family_os/features/n02_day/request_inbox_screen.dart';
 import 'package:family_os/features/n03_screen_time/time_expiry_screen.dart';
 import 'package:family_os/features/n05_lock/instant_lock_screen.dart';
+import '../support/recording_sos_fire_service.dart';
 
 /// UI-014 — spine interactive CTAs: Semantics labels (ARB) for SOS / lock /
 /// approve; icon-only edge covered (Rule 16).
@@ -66,7 +66,7 @@ void main() {
           wrap(
             TimeExpiryScreen(
               childId: child,
-              sosFire: MockSosFireService(),
+              sosFire: RecordingSosFireService(),
               onSos: () {},
             ),
           ),
@@ -160,67 +160,63 @@ void main() {
     },
   );
 
-  testWidgets(
-    'AC2 EN: screen reader labels for SOS / lock / approve',
-    (tester) async {
-      final handle = tester.ensureSemantics();
-      final child = ChildId('ui014-en');
-      final pending = TimeRequest(
-        id: 'tr-en',
-        childId: child,
-        requestedMinutes: 30,
+  testWidgets('AC2 EN: screen reader labels for SOS / lock / approve', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    final child = ChildId('ui014-en');
+    final pending = TimeRequest(
+      id: 'tr-en',
+      childId: child,
+      requestedMinutes: 30,
+    );
+    final inbox = TimeRequestService(
+      repository: InMemoryTimeRequestRepository([pending]),
+      decisionBus: TimeRequestDecisionBus(),
+    );
+    addTearDown(inbox.dispose);
+
+    try {
+      await tester.pumpWidget(
+        wrap(
+          TimeExpiryScreen(
+            childId: child,
+            sosFire: RecordingSosFireService(),
+            onSos: () {},
+          ),
+          locale: const Locale('en'),
+        ),
       );
-      final inbox = TimeRequestService(
-        repository: InMemoryTimeRequestRepository([pending]),
-        decisionBus: TimeRequestDecisionBus(),
+      await tester.pumpAndSettle();
+      expect(find.bySemanticsLabel('Send SOS emergency alert'), findsWidgets);
+
+      await tester.pumpWidget(
+        wrap(
+          InstantLockScreen(
+            childId: child,
+            repository: InMemoryAntiTamperRepository(),
+            lockService: DeviceLockService.inMemory(),
+            roleOverride: AppRole.father,
+          ),
+          locale: const Locale('en'),
+        ),
       );
-      addTearDown(inbox.dispose);
+      await tester.pumpAndSettle();
+      expect(find.bySemanticsLabel('Lock child device now'), findsOneWidget);
 
-      try {
-        await tester.pumpWidget(
-          wrap(
-            TimeExpiryScreen(
-              childId: child,
-              sosFire: MockSosFireService(),
-              onSos: () {},
-            ),
-            locale: const Locale('en'),
-          ),
-        );
-        await tester.pumpAndSettle();
-        expect(
-          find.bySemanticsLabel('Send SOS emergency alert'),
-          findsWidgets,
-        );
-
-        await tester.pumpWidget(
-          wrap(
-            InstantLockScreen(
-              childId: child,
-              repository: InMemoryAntiTamperRepository(),
-              lockService: DeviceLockService.inMemory(),
-              roleOverride: AppRole.father,
-            ),
-            locale: const Locale('en'),
-          ),
-        );
-        await tester.pumpAndSettle();
-        expect(find.bySemanticsLabel('Lock child device now'), findsOneWidget);
-
-        await tester.pumpWidget(
-          wrap(
-            RequestInboxScreen(service: inbox, role: AppRole.father),
-            locale: const Locale('en'),
-          ),
-        );
-        await tester.pumpAndSettle();
-        expect(
-          find.bySemanticsLabel('Approve extra-time request'),
-          findsOneWidget,
-        );
-      } finally {
-        handle.dispose();
-      }
-    },
-  );
+      await tester.pumpWidget(
+        wrap(
+          RequestInboxScreen(service: inbox, role: AppRole.father),
+          locale: const Locale('en'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.bySemanticsLabel('Approve extra-time request'),
+        findsOneWidget,
+      );
+    } finally {
+      handle.dispose();
+    }
+  });
 }

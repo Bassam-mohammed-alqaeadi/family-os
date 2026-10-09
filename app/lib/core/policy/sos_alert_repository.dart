@@ -35,7 +35,7 @@ abstract class SosAlertRepository {
 /// In-memory Stage-1 store. Default has **no** planted names (Rule 23 empty).
 final class InMemorySosAlertRepository implements SosAlertRepository {
   InMemorySosAlertRepository({SosAlert? initialActive})
-      : _active = initialActive;
+    : _active = initialActive;
 
   SosAlert? _active;
   final List<SosAlert> _resolved = [];
@@ -102,7 +102,10 @@ final class InMemorySosAlertRepository implements SosAlertRepository {
   }
 
   @override
-  Future<SosAlert> acknowledge(String alertId, {required SosActor actor}) async {
+  Future<SosAlert> acknowledge(
+    String alertId, {
+    required SosActor actor,
+  }) async {
     if (!SosRoleActions.canAcknowledge(actor)) {
       throw StateError('acknowledge denied for actor');
     }
@@ -129,7 +132,8 @@ final class InMemorySosAlertRepository implements SosAlertRepository {
     required SosActor actor,
     SosTerminalReason reason = SosTerminalReason.helped,
   }) async {
-    final isChildFalseAlarm = actor.role == AppRole.child &&
+    final isChildFalseAlarm =
+        actor.role == AppRole.child &&
         SosRoleActions.canCancelOwnSos(actor) &&
         reason == SosTerminalReason.falseAlarm;
     if (!isChildFalseAlarm && !SosRoleActions.canResolve(actor)) {
@@ -163,8 +167,8 @@ final class InMemorySosAlertRepository implements SosAlertRepository {
     }
     // Local Stage-1: mark escalating + attach eligible outside contacts only.
     // Unverified hard-skipped via SosEscalationResolver / verifiedEscalationBackups.
-    final ladder = await (_ladderLoader?.call() ??
-        Future.value(SosLadder.defaults()));
+    final ladder =
+        await (_ladderLoader?.call() ?? Future.value(SosLadder.defaults()));
     final settings = _settingsLoader?.call() ?? const SosLocalSettings();
     final plan = SosEscalationResolver.resolve(
       childId: a.childId,
@@ -218,6 +222,19 @@ final class InMemorySosAlertRepository implements SosAlertRepository {
 /// Stage-1 shared SOS alert store (empty by default — Rule 23).
 final InMemorySosAlertRepository stage1SosAlertRepository =
     InMemorySosAlertRepository();
+
+SosAlertRepository? _activeSosAlertRepository;
+
+/// The repository the emergency boards read, or null when no server session is bound.
+///
+/// A screen asks this before it falls back to the device's own store: an incident a parent
+/// already acknowledged on another phone must not be shown here as untouched.
+SosAlertRepository? get activeSosAlertRepository => _activeSosAlertRepository;
+
+/// Binds the board's read path to the server session, or clears it.
+void bindActiveSosAlertRepository(SosAlertRepository? repository) {
+  _activeSosAlertRepository = repository;
+}
 
 /// Builds recipient display labels from [SosLadder] + ARB parent names.
 ///
@@ -274,9 +291,9 @@ Future<SosFireResult> fireAndSeedSosAlert({
   SosSettingsStore? settings,
 }) async {
   final result = await sosFire.fire(childId: childId, actorId: actorId);
-  final panicQuiet =
-      settings?.settings.panicQuietPreferred ?? false;
-  final alert = alertFactory?.call(result) ??
+  final panicQuiet = settings?.settings.panicQuietPreferred ?? false;
+  final alert =
+      alertFactory?.call(result) ??
       InMemorySosAlertRepository.demoActive(
         id: 'sos_${result.at.millisecondsSinceEpoch}',
         childId: result.childId,

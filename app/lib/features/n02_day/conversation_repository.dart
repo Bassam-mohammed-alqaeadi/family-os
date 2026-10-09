@@ -1,9 +1,10 @@
 import 'package:flutter/foundation.dart';
 
-/// Local outbound status for chat bubbles (CE-B0 / Q-CEX-001).
+/// Display status for chat bubbles: how far THIS device's own send has got.
 ///
-/// Multi-device relay is REMOTE CLOSED — do not treat [delivered]/[read] as
-/// proven remote delivery. UI maps those legacy values to local-sent ticks.
+/// [sent] means the family server accepted the message. Whether others received or read it is
+/// shown separately, as aggregate counts in [ConversationReceipt], and only for messages this
+/// device wrote. [delivered] and [read] are legacy aliases and are never drawn as ticks.
 enum ConversationDeliveryStatus {
   sending,
   sent,
@@ -13,6 +14,47 @@ enum ConversationDeliveryStatus {
 
   /// Legacy alias — UI shows local-sent only until chat relay is authorized.
   read,
+}
+
+/// What a photo or voice note is. Text messages have no media.
+enum ConversationMediaKind { image, audio }
+
+/// A photo or voice note attached to a message. The bytes are not held here: [loadBytes] fetches
+/// them from the server for the room the caller is in, and returns null when the item is removed
+/// or no longer reachable. A screen must treat null as "unavailable", never as an empty file.
+@immutable
+final class ConversationMedia {
+  const ConversationMedia({
+    required this.id,
+    required this.kind,
+    required this.mimeType,
+    required this.available,
+    this.durationMs,
+    this.loadBytes,
+  });
+
+  final String id;
+  final ConversationMediaKind kind;
+  final String mimeType;
+
+  /// The uploader's declared length for a voice note. Not measured by the server.
+  final int? durationMs;
+  final bool available;
+  final Future<Uint8List?> Function()? loadBytes;
+}
+
+/// Aggregate receipts for one of MY messages: "N of M", never who. Counts only.
+@immutable
+final class ConversationReceipt {
+  const ConversationReceipt({
+    required this.deliveredCount,
+    required this.readCount,
+    required this.otherParticipantCount,
+  });
+
+  final int deliveredCount;
+  final int readCount;
+  final int otherParticipantCount;
 }
 
 /// One bubble in SCR-FAT-022.
@@ -25,6 +67,16 @@ final class ConversationMessage {
     required this.isMine,
     this.senderLabel,
     this.status = ConversationDeliveryStatus.sent,
+    this.createdAt,
+    this.seq,
+    this.revision,
+    this.readCount = 0,
+    this.authorKind,
+    this.authorId,
+    this.deleted = false,
+    this.editedAt,
+    this.media,
+    this.receipt,
   });
 
   final String id;
@@ -39,6 +91,22 @@ final class ConversationMessage {
 
   final ConversationDeliveryStatus status;
 
+  /// Present only for a server-authoritative message; local preview messages have no sequence.
+  final DateTime? createdAt;
+  final int? seq;
+  final int? revision;
+  final int readCount;
+  final String? authorKind;
+  final String? authorId;
+  final bool deleted;
+  final DateTime? editedAt;
+
+  /// Present for a photo or voice note that is still live. A deleted message has none.
+  final ConversationMedia? media;
+
+  /// Present only for a message this device wrote, on a server-authoritative thread.
+  final ConversationReceipt? receipt;
+
   ConversationMessage copyWith({
     String? id,
     String? body,
@@ -46,6 +114,16 @@ final class ConversationMessage {
     bool? isMine,
     String? senderLabel,
     ConversationDeliveryStatus? status,
+    DateTime? createdAt,
+    int? seq,
+    int? revision,
+    int? readCount,
+    String? authorKind,
+    String? authorId,
+    bool? deleted,
+    DateTime? editedAt,
+    ConversationMedia? media,
+    ConversationReceipt? receipt,
   }) {
     return ConversationMessage(
       id: id ?? this.id,
@@ -54,6 +132,16 @@ final class ConversationMessage {
       isMine: isMine ?? this.isMine,
       senderLabel: senderLabel ?? this.senderLabel,
       status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      seq: seq ?? this.seq,
+      revision: revision ?? this.revision,
+      readCount: readCount ?? this.readCount,
+      authorKind: authorKind ?? this.authorKind,
+      authorId: authorId ?? this.authorId,
+      deleted: deleted ?? this.deleted,
+      editedAt: editedAt ?? this.editedAt,
+      media: media ?? this.media,
+      receipt: receipt ?? this.receipt,
     );
   }
 }
@@ -66,9 +154,13 @@ final class ConversationDetail {
     required this.title,
     required this.subtitle,
     required this.emoji,
+    this.threadKind,
     this.messages = const [],
     this.familyPinnedNote = false,
     this.toneChips = const [],
+    this.serverAuthoritative = false,
+    this.hasMoreMessages = false,
+    this.lastReadSeq = 0,
   });
 
   /// Peer / thread id — same wire values as FAT-021 (`family` / `mother` / `child_*`).
@@ -77,6 +169,7 @@ final class ConversationDetail {
   final String title;
   final String subtitle;
   final String emoji;
+  final String? threadKind;
   final List<ConversationMessage> messages;
 
   /// Show pinned-family honesty line (prototype family branch).
@@ -85,6 +178,11 @@ final class ConversationDetail {
   /// Optional calm quick-replies (tone bridge) — content from repo.
   final List<String> toneChips;
 
+  /// True only when every visible message came from the family chat API.
+  final bool serverAuthoritative;
+  final bool hasMoreMessages;
+  final int lastReadSeq;
+
   bool get isEmpty => messages.isEmpty;
 
   ConversationDetail copyWith({
@@ -92,18 +190,26 @@ final class ConversationDetail {
     String? title,
     String? subtitle,
     String? emoji,
+    String? threadKind,
     List<ConversationMessage>? messages,
     bool? familyPinnedNote,
     List<String>? toneChips,
+    bool? serverAuthoritative,
+    bool? hasMoreMessages,
+    int? lastReadSeq,
   }) {
     return ConversationDetail(
       chatWith: chatWith ?? this.chatWith,
       title: title ?? this.title,
       subtitle: subtitle ?? this.subtitle,
       emoji: emoji ?? this.emoji,
+      threadKind: threadKind ?? this.threadKind,
       messages: messages ?? this.messages,
       familyPinnedNote: familyPinnedNote ?? this.familyPinnedNote,
       toneChips: toneChips ?? this.toneChips,
+      serverAuthoritative: serverAuthoritative ?? this.serverAuthoritative,
+      hasMoreMessages: hasMoreMessages ?? this.hasMoreMessages,
+      lastReadSeq: lastReadSeq ?? this.lastReadSeq,
     );
   }
 }
@@ -129,8 +235,8 @@ final class InMemoryConversationRepository implements ConversationRepository {
     List<ConversationDetail>? initial,
     this.failLoad = false,
   }) : _threads = {
-          for (final t in initial ?? const <ConversationDetail>[]) t.chatWith: t,
-        };
+         for (final t in initial ?? const <ConversationDetail>[]) t.chatWith: t,
+       };
 
   final Map<String, ConversationDetail> _threads;
   var _sendSeq = 0;
@@ -182,9 +288,7 @@ final class InMemoryConversationRepository implements ConversationRepository {
       isMine: true,
       status: ConversationDeliveryStatus.sent,
     );
-    _threads[key] = existing.copyWith(
-      messages: [...existing.messages, msg],
-    );
+    _threads[key] = existing.copyWith(messages: [...existing.messages, msg]);
     return msg;
   }
 }

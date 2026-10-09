@@ -70,7 +70,10 @@ void main() {
     });
 
     test('chat peer counts as viewed child only if in the active family', () {
-      expect(familyChildOrNull('child_b', runtime: runtime), ChildId('child_b'));
+      expect(
+        familyChildOrNull('child_b', runtime: runtime),
+        ChildId('child_b'),
+      );
       expect(familyChildOrNull('child_c', runtime: runtime), isNull);
       expect(familyChildOrNull('family', runtime: runtime), isNull);
     });
@@ -108,45 +111,46 @@ void main() {
     expect(fire.firedActorIds, ['child_b']);
   });
 
-  testWidgets('father SOS on a per-child tool records parent actor + viewed child', (
-    tester,
-  ) async {
-    final bus = InMemoryQuranWardPlanRepository();
-    addTearDown(bus.dispose);
-    final fire = _RecordingSosFire();
-    final router = GoRouter(
-      initialLocation: '/q',
-      routes: [
-        GoRoute(
-          path: '/q',
-          builder: (context, state) => QuranProgressScreen(
-            childId: ChildId('child_b'),
-            repository: InMemoryQuranProgressRepository(
-              seed: quranProgressPrototypeFixture(),
-              plans: bus,
+  testWidgets(
+    'father SOS on a per-child tool records parent actor + viewed child',
+    (tester) async {
+      final bus = InMemoryQuranWardPlanRepository();
+      addTearDown(bus.dispose);
+      final fire = _RecordingSosFire();
+      final router = GoRouter(
+        initialLocation: '/q',
+        routes: [
+          GoRoute(
+            path: '/q',
+            builder: (context, state) => QuranProgressScreen(
+              childId: ChildId('child_b'),
+              repository: InMemoryQuranProgressRepository(
+                seed: quranProgressPrototypeFixture(),
+                plans: bus,
+              ),
+              sosFire: fire,
+              roleOverride: AppRole.father,
+              motherLevel: MotherLevel.partner,
+              onNavigate: (_) {},
             ),
-            sosFire: fire,
-            roleOverride: AppRole.father,
-            motherLevel: MotherLevel.partner,
-            onNavigate: (_) {},
           ),
-        ),
-        GoRoute(
-          path: '/scr-fat-018',
-          builder: (context, state) =>
-              const PlaceholderScreen(screenId: 'SCR-FAT-018', title: 'SOS'),
-        ),
-      ],
-    );
-    addTearDown(router.dispose);
-    await _pumpRouter(tester, runtime, router, role: AppRole.father);
+          GoRoute(
+            path: '/scr-fat-018',
+            builder: (context, state) =>
+                const PlaceholderScreen(screenId: 'SCR-FAT-018', title: 'SOS'),
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+      await _pumpRouter(tester, runtime, router, role: AppRole.father);
 
-    await tester.ensureVisible(find.byKey(QuranProgressKeys.sosIconCta));
-    await tester.tap(find.byKey(QuranProgressKeys.sosIconCta));
-    await tester.pumpAndSettle();
-    expect(fire.firedChildIds, ['child_b']);
-    expect(fire.firedActorIds, ['mem_stage1_owner']);
-  });
+      await tester.ensureVisible(find.byKey(QuranProgressKeys.sosIconCta));
+      await tester.tap(find.byKey(QuranProgressKeys.sosIconCta));
+      await tester.pumpAndSettle();
+      expect(fire.firedChildIds, ['child_b']);
+      expect(fire.firedActorIds, ['mem_stage1_owner']);
+    },
+  );
 }
 
 Future<void> _pumpRouter(

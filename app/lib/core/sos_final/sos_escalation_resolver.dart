@@ -19,13 +19,13 @@ final class SosEscalationPlan {
   });
 
   factory SosEscalationPlan.disabled(String childId) => SosEscalationPlan(
-        childId: childId,
-        enabled: false,
-        delaySeconds: 60,
-        notifyTrustedBackups: false,
-        prepareSmsFallback: false,
-        contacts: const [],
-      );
+    childId: childId,
+    enabled: false,
+    delaySeconds: 60,
+    notifyTrustedBackups: false,
+    prepareSmsFallback: false,
+    contacts: const [],
+  );
 
   final String childId;
   final bool enabled;
@@ -44,13 +44,13 @@ final class SosEscalationPlan {
   bool get hasEligibleContacts => contacts.isNotEmpty;
 
   Map<String, Object?> toJson() => {
-        'childId': childId,
-        'enabled': enabled,
-        'delaySeconds': delaySeconds,
-        'notifyTrustedBackups': notifyTrustedBackups,
-        'prepareSmsFallback': prepareSmsFallback,
-        'contactIds': [for (final c in contacts) c.id],
-      };
+    'childId': childId,
+    'enabled': enabled,
+    'delaySeconds': delaySeconds,
+    'notifyTrustedBackups': notifyTrustedBackups,
+    'prepareSmsFallback': prepareSmsFallback,
+    'contactIds': [for (final c in contacts) c.id],
+  };
 }
 
 /// Resolves FAT-028 per-child prefs against the family ladder.

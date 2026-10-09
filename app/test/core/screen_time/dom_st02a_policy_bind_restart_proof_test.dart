@@ -36,9 +36,7 @@ void main() {
         dailyCapMinutes: 88,
         allowWalletOverflow: true,
         usedMinutesToday: 3,
-        wallets: [
-          AppWallet(appId: 'games', earnedMinutes: Minutes(10)),
-        ],
+        wallets: [AppWallet(appId: 'games', earnedMinutes: Minutes(10))],
       ),
     );
     await FsSessionKernel.resetForTest();

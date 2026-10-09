@@ -27,14 +27,11 @@ void main() {
 
   testWidgets('enable sleep + save persists across restart', (tester) async {
     final shared = <String, String>{};
-    final repo = PrefsScheduleWindowRepository(MemorySchedulePrefsStore(shared));
-
-    await _pump(
-      tester,
-      repository: repo,
-      childId: child,
-      role: AppRole.father,
+    final repo = PrefsScheduleWindowRepository(
+      MemorySchedulePrefsStore(shared),
     );
+
+    await _pump(tester, repository: repo, childId: child, role: AppRole.father);
 
     await tester.tap(find.byKey(const Key('schedule_switch_sleep')));
     await tester.pumpAndSettle();
@@ -143,10 +140,15 @@ void main() {
     expect(sw.onChanged, isNotNull);
 
     await _scrollTo(tester, find.byKey(const Key('daily_cap_field')));
-    final capField = tester.widget<TextField>(find.byKey(const Key('daily_cap_field')));
+    final capField = tester.widget<TextField>(
+      find.byKey(const Key('daily_cap_field')),
+    );
     expect(capField.enabled, isTrue);
 
-    await _scrollTo(tester, find.byKey(const Key('allow_wallet_overflow_switch')));
+    await _scrollTo(
+      tester,
+      find.byKey(const Key('allow_wallet_overflow_switch')),
+    );
     final overflow = tester.widget<Switch>(
       find.byKey(const Key('allow_wallet_overflow_switch')),
     );
@@ -243,12 +245,7 @@ void main() {
       policyRepository: InMemoryScreenTimePolicyRepository({
         child.value: ScreenTimePolicy(
           dailyCapMinutes: 40,
-          wallets: [
-            AppWallet(
-              appId: 'games',
-              earnedMinutes: Minutes.zero,
-            ),
-          ],
+          wallets: [AppWallet(appId: 'games', earnedMinutes: Minutes.zero)],
         ),
       }),
       childId: child,
@@ -290,21 +287,13 @@ void main() {
       );
       expect(overflow.value, isFalse);
       expect(overflow.onChanged, isNotNull);
-      expect(
-        find.textContaining('معطّل افتراضياً (حكم B)'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('معطّل افتراضياً (حكم B)'), findsOneWidget);
     },
   );
 
   testWidgets('LOCAL honesty banner + SIMULATED enforcement', (tester) async {
     final repo = PrefsScheduleWindowRepository(MemorySchedulePrefsStore());
-    await _pump(
-      tester,
-      repository: repo,
-      childId: child,
-      role: AppRole.father,
-    );
+    await _pump(tester, repository: repo, childId: child, role: AppRole.father);
     expect(find.byKey(ChildScreenTimeKeys.localHonesty), findsOneWidget);
     expect(find.textContaining('SIMULATED'), findsWidgets);
     expect(find.textContaining('هذا الجهاز فقط'), findsOneWidget);
@@ -343,9 +332,7 @@ void main() {
 
     expect(find.byKey(ChildScreenTimeKeys.policyUnavailable), findsOneWidget);
     expect(find.textContaining('التخزين المحلي'), findsOneWidget);
-    final btn = tester.widget<PrimaryBtn>(
-      find.byKey(ChildScreenTimeKeys.save),
-    );
+    final btn = tester.widget<PrimaryBtn>(find.byKey(ChildScreenTimeKeys.save));
     expect(btn.onPressed, isNull);
   });
 

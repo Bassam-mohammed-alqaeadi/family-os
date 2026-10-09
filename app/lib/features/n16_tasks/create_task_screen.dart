@@ -55,7 +55,7 @@ class CreateTaskScreen extends StatefulWidget {
   /// Rule 25 seam — null → [stage1CreateTaskRepository].
   final CreateTaskRepository? repository;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — when set, ignores [CurrentRole].
@@ -110,7 +110,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   void initState() {
     super.initState();
     _repo = widget.repository ?? stage1CreateTaskRepository;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     _titleCtrl = TextEditingController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -366,12 +366,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                 vertical: 4,
               ),
             ),
-            items: [
-              'childOne',
-              'childTwo',
-              'childThree',
-              'mother',
-            ].map((key) {
+            items: ['childOne', 'childTwo', 'childThree', 'mother'].map((key) {
               return DropdownMenuItem(
                 value: key,
                 child: Text(_assigneeLabel(l10n, key)),

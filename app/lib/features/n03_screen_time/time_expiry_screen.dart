@@ -54,7 +54,7 @@ class TimeExpiryScreen extends StatefulWidget {
   /// C-1 seam — null → [stage1ChatAvailability].
   final ChatAvailability? chatAvailability;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test / navigation seams (null → go_router to CHD-007 / CHD-025 / CHD-005).
@@ -135,11 +135,8 @@ class _TimeExpiryScreenState extends State<TimeExpiryScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    final fire = widget.sosFire ?? stage1SosFireService;
-    await childSosSenderOf(
-      context,
-      explicit: widget.childId,
-    ).fireThrough(fire);
+    final fire = widget.sosFire ?? activeSosFireService;
+    await childSosSenderOf(context, explicit: widget.childId).fireThrough(fire);
     if (!mounted) return;
     setState(() => _sosBusy = false);
     context.go(screenPath('SCR-CHD-005'));

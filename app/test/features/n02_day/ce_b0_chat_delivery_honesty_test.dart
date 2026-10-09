@@ -20,8 +20,9 @@ void main() {
     expect(msg.status, ConversationDeliveryStatus.sent);
   });
 
-  testWidgets('SCR-FAT-022 never renders double-check for legacy statuses',
-      (tester) async {
+  testWidgets('SCR-FAT-022 never renders double-check for legacy statuses', (
+    tester,
+  ) async {
     final repo = InMemoryConversationRepository(
       initial: [
         const ConversationDetail(

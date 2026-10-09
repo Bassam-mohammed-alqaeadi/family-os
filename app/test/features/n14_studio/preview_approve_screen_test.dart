@@ -176,11 +176,7 @@ void main() {
 
   testWidgets('child RoleGuard lean + SOS', (tester) async {
     var sos = false;
-    await _pump(
-      tester,
-      role: AppRole.child,
-      onSos: () => sos = true,
-    );
+    await _pump(tester, role: AppRole.child, onSos: () => sos = true);
 
     expect(find.byKey(PreviewApproveKeys.childLean), findsOneWidget);
     expect(find.byKey(PreviewApproveKeys.body), findsNothing);
@@ -189,6 +185,27 @@ void main() {
     await tester.tap(find.byKey(PreviewApproveKeys.sosIconCta));
     await tester.pumpAndSettle();
     expect(sos, isTrue);
+  });
+
+  testWidgets('NotebookLM inline citations switch verified excerpt', (
+    tester,
+  ) async {
+    final repo = InMemoryPreviewApproveRepository(
+      seed: previewApprovePrototypeFixture(),
+    );
+    await _pump(tester, repository: repo);
+
+    expect(find.byKey(PreviewApproveKeys.citationsCard), findsOneWidget);
+    expect(find.byKey(PreviewApproveKeys.audioMapCard), findsOneWidget);
+    expect(find.textContaining('Math Textbook - p. 47'), findsOneWidget);
+
+    await tester.ensureVisible(
+      find.byKey(PreviewApproveKeys.citationChip('cit-w2')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(PreviewApproveKeys.citationChip('cit-w2')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Teacher Worksheet - p. 2'), findsOneWidget);
   });
 }
 

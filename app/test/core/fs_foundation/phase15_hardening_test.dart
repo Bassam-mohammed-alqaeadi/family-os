@@ -37,27 +37,27 @@ void main() {
     await FsSessionKernel.resetForTest();
   });
 
-  test('shared kernel: Location and Modes see the same capability rows', () async {
-    await Stage1LocationRuntime.ensureOpen();
-    await Stage1ModesRuntime.ensureOpen();
+  test(
+    'shared kernel: Location and Modes see the same capability rows',
+    () async {
+      await Stage1LocationRuntime.ensureOpen();
+      await Stage1ModesRuntime.ensureOpen();
 
-    expect(
-      identical(Stage1LocationRuntime.db, Stage1ModesRuntime.db),
-      isTrue,
-    );
+      expect(
+        identical(Stage1LocationRuntime.db, Stage1ModesRuntime.db),
+        isTrue,
+      );
 
-    final locCaps = await Stage1LocationRuntime.capabilities.listAll();
-    final modeCaps = await Stage1ModesRuntime.capabilities.listAll();
-    expect(locCaps.length, modeCaps.length);
-    expect(
-      locCaps.any((e) => e.id == 'fs001.modes_fact_feed'),
-      isTrue,
-    );
-    expect(
-      locCaps.firstWhere((e) => e.id == 'fs005.modes_scheduler').status,
-      CapabilityStatus.implemented,
-    );
-  });
+      final locCaps = await Stage1LocationRuntime.capabilities.listAll();
+      final modeCaps = await Stage1ModesRuntime.capabilities.listAll();
+      expect(locCaps.length, modeCaps.length);
+      expect(locCaps.any((e) => e.id == 'fs001.modes_fact_feed'), isTrue);
+      expect(
+        locCaps.firstWhere((e) => e.id == 'fs005.modes_scheduler').status,
+        CapabilityStatus.implemented,
+      );
+    },
+  );
 
   test('Location evaluate publishes Modes facts on shared DB', () async {
     await Stage1LocationRuntime.ensureOpen();
@@ -179,10 +179,7 @@ void main() {
         ]) {
           await db.execute(sql);
         }
-        await db.insert('schema_meta', {
-          'key': 'schema_version',
-          'value': '1',
-        });
+        await db.insert('schema_meta', {'key': 'schema_version', 'value': '1'});
       },
     );
     await v1.close();

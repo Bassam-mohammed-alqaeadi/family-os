@@ -99,7 +99,7 @@ final class PrefsWebUnlockRequestRepository
 final class InMemoryWebUnlockRequestRepository
     implements WebUnlockRequestRepository {
   InMemoryWebUnlockRequestRepository([List<WebUnlockRequest>? seed])
-      : _items = [if (seed != null) ...seed];
+    : _items = [if (seed != null) ...seed];
 
   final List<WebUnlockRequest> _items;
 

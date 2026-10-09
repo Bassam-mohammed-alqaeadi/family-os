@@ -6,7 +6,7 @@ abstract class PeerCompareRepository {
 
 final class InMemoryPeerCompareRepository implements PeerCompareRepository {
   InMemoryPeerCompareRepository({PeerCompareSnapshot? seed})
-      : _snap = seed ?? peerCompareEmptyFixture();
+    : _snap = seed ?? peerCompareEmptyFixture();
 
   PeerCompareSnapshot _snap;
   Future<void> Function()? loadGate;

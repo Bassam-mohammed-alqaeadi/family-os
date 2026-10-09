@@ -73,10 +73,7 @@ void main() {
     await tester.pump();
 
     final full = find.byKey(const Key('invite_mother_level_full'));
-    expect(
-      find.descendant(of: full, matching: find.text('●')),
-      findsOneWidget,
-    );
+    expect(find.descendant(of: full, matching: find.text('●')), findsOneWidget);
     final partner = find.byKey(const Key('invite_mother_level_partner'));
     expect(
       find.descendant(of: partner, matching: find.text('○')),
@@ -142,94 +139,93 @@ void main() {
     await tester.pump();
 
     expect(router.state.uri.path, '/scr-fat-008');
-    expect(stage1AdultInviteRepository.listByFamily(
-      stage1IdentityRuntime.activeFamilyId,
-    ), isEmpty);
+    expect(
+      stage1AdultInviteRepository.listByFamily(
+        stage1IdentityRuntime.activeFamilyId,
+      ),
+      isEmpty,
+    );
 
     await _settleTimers(tester);
   });
 
-  testWidgets(
-    'Identity owner send → local invite + toast + /scr-fat-027',
-    (tester) async {
-      resetStage1IdentityRuntimeForTest();
-      stage1AdultInviteRepository.resetForTests();
-      final runtime = stage1IdentityRuntime;
-      final repo = stage1AdultInviteRepository;
+  testWidgets('Identity owner send → local invite + toast + /scr-fat-027', (
+    tester,
+  ) async {
+    resetStage1IdentityRuntimeForTest();
+    stage1AdultInviteRepository.resetForTests();
+    final runtime = stage1IdentityRuntime;
+    final repo = stage1AdultInviteRepository;
 
-      final router = GoRouter(
-        initialLocation: '/scr-fat-008',
-        routes: [
-          GoRoute(
-            path: '/scr-fat-008',
-            builder: (context, state) => InviteMotherScreen(repository: repo),
-          ),
-          GoRoute(
-            path: '/scr-fat-027',
-            builder: (context, state) => const PlaceholderScreen(
-              screenId: 'SCR-FAT-027',
-              title: 'أعضاء العائلة',
-            ),
-          ),
-        ],
-      );
-      addTearDown(router.dispose);
-
-      await tester.pumpWidget(
-        CurrentIdentity(
-          runtime: runtime,
-          child: MaterialApp.router(
-            theme: buildFamilyTheme(),
-            locale: const Locale('ar'),
-            supportedLocales: AppLocalizations.supportedLocales,
-            localizationsDelegates: const [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            routerConfig: router,
+    final router = GoRouter(
+      initialLocation: '/scr-fat-008',
+      routes: [
+        GoRoute(
+          path: '/scr-fat-008',
+          builder: (context, state) => InviteMotherScreen(repository: repo),
+        ),
+        GoRoute(
+          path: '/scr-fat-027',
+          builder: (context, state) => const PlaceholderScreen(
+            screenId: 'SCR-FAT-027',
+            title: 'أعضاء العائلة',
           ),
         ),
-      );
-      await tester.pumpAndSettle();
+      ],
+    );
+    addTearDown(router.dispose);
 
-      await tester.enterText(
-        find.byKey(const Key('invite_mother_email')),
-        'sara@example.com',
-      );
-      await tester.pump();
-      await tester.tap(find.byKey(const Key('invite_mother_level_full')));
-      await tester.pump();
-      await tester.tap(find.byKey(const Key('invite_mother_submit')));
-      await tester.pump();
+    await tester.pumpWidget(
+      CurrentIdentity(
+        runtime: runtime,
+        child: MaterialApp.router(
+          theme: buildFamilyTheme(),
+          locale: const Locale('ar'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          routerConfig: router,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      expect(
-        find.textContaining('أُنشئت دعوة محلية لـ sara بمستوى «كاملة»'),
-        findsOneWidget,
-      );
+    await tester.enterText(
+      find.byKey(const Key('invite_mother_email')),
+      'sara@example.com',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('invite_mother_level_full')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('invite_mother_submit')));
+    await tester.pump();
 
-      final invites = repo.listByFamily(runtime.activeFamilyId);
-      expect(invites, hasLength(1));
-      expect(invites.first.target, 'sara@example.com');
-      expect(invites.first.level, MotherLevel.full);
+    expect(
+      find.textContaining('أُنشئت دعوة محلية لـ sara بمستوى «كاملة»'),
+      findsOneWidget,
+    );
 
-      await tester.pumpAndSettle();
-      expect(router.state.uri.path, '/scr-fat-027');
+    final invites = repo.listByFamily(runtime.activeFamilyId);
+    expect(invites, hasLength(1));
+    expect(invites.first.target, 'sara@example.com');
+    expect(invites.first.level, MotherLevel.full);
 
-      await _settleTimers(tester);
-    },
-  );
+    await tester.pumpAndSettle();
+    expect(router.state.uri.path, '/scr-fat-027');
+
+    await _settleTimers(tester);
+  });
 
   testWidgets('banner + intro copy present', (tester) async {
     await _pumpScreen(tester);
 
     expect(find.byKey(const Key('invite_mother_banner')), findsOneWidget);
     expect(find.textContaining('حقوق لا تخضع للتدرّج'), findsOneWidget);
-    expect(
-      find.textContaining('تطمئن معك على الأبناء'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('تطمئن معك على الأبناء'), findsOneWidget);
   });
 }
 

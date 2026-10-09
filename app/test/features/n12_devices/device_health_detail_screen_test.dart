@@ -32,7 +32,10 @@ void main() {
     expect(find.byKey(DeviceHealthDetailKeys.screen), findsOneWidget);
     expect(find.byKey(DeviceHealthDetailKeys.body), findsOneWidget);
     expect(find.byKey(DeviceHealthDetailKeys.healthCard), findsOneWidget);
-    expect(find.byKey(DeviceHealthDetailKeys.permissionsSection), findsOneWidget);
+    expect(
+      find.byKey(DeviceHealthDetailKeys.permissionsSection),
+      findsOneWidget,
+    );
     expect(find.byKey(DeviceHealthDetailKeys.sosCta), findsOneWidget);
     expect(find.text('قد ينقطع الاتصال'), findsOneWidget);
 
@@ -56,39 +59,39 @@ void main() {
     expect(find.byKey(DeviceHealthDetailKeys.oemGuide), findsOneWidget);
     expect(find.textContaining('Xiaomi'), findsOneWidget);
     expect(find.text('لكي لا ينقطع الجهاز عنك'), findsOneWidget);
-    expect(find.byKey(DeviceHealthDetailKeys.openSettingsNowCta), findsOneWidget);
+    expect(
+      find.byKey(DeviceHealthDetailKeys.openSettingsNowCta),
+      findsOneWidget,
+    );
     expect(find.byKey(DeviceHealthDetailKeys.repairCta), findsOneWidget);
   });
 
-  testWidgets(
-    'SCR-FAT-026 open-settings-now deny→repair→grant (UI-012 AC1)',
-    (tester) async {
-      final seam = FakeDeviceHealthSeam.atRiskBattery(
-        grantOnOpenSettings: true,
-      );
-      addTearDown(seam.dispose);
+  testWidgets('SCR-FAT-026 open-settings-now deny→repair→grant (UI-012 AC1)', (
+    tester,
+  ) async {
+    final seam = FakeDeviceHealthSeam.atRiskBattery(grantOnOpenSettings: true);
+    addTearDown(seam.dispose);
 
-      await _pumpDetail(
-        tester,
-        seam: seam,
-        deviceId: 'dev_ac',
-        role: AppRole.father,
-      );
+    await _pumpDetail(
+      tester,
+      seam: seam,
+      deviceId: 'dev_ac',
+      role: AppRole.father,
+    );
 
-      expect(find.byKey(DeviceHealthDetailKeys.repairCta), findsOneWidget);
+    expect(find.byKey(DeviceHealthDetailKeys.repairCta), findsOneWidget);
 
-      await tester.tap(find.byKey(DeviceHealthDetailKeys.openSettingsNowCta));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 50));
-      await tester.pumpAndSettle();
+    await tester.tap(find.byKey(DeviceHealthDetailKeys.openSettingsNowCta));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.pumpAndSettle();
 
-      expect(seam.openSettingsCount, 1);
-      expect(seam.recheckCount, 1);
-      expect(find.text('سليم'), findsOneWidget);
-      expect(find.byKey(DeviceHealthDetailKeys.repairCta), findsNothing);
-      expect(find.byKey(DeviceHealthDetailKeys.oemGuide), findsNothing);
-    },
-  );
+    expect(seam.openSettingsCount, 1);
+    expect(seam.recheckCount, 1);
+    expect(find.text('سليم'), findsOneWidget);
+    expect(find.byKey(DeviceHealthDetailKeys.repairCta), findsNothing);
+    expect(find.byKey(DeviceHealthDetailKeys.oemGuide), findsNothing);
+  });
 
   testWidgets('SCR-FAT-026 mother OK — full detail + SOS', (tester) async {
     var sos = false;
@@ -105,7 +108,10 @@ void main() {
 
     expect(find.byKey(DeviceHealthDetailKeys.body), findsOneWidget);
     expect(find.byKey(DeviceHealthDetailKeys.childLean), findsNothing);
-    expect(find.byKey(DeviceHealthDetailKeys.permissionsSection), findsOneWidget);
+    expect(
+      find.byKey(DeviceHealthDetailKeys.permissionsSection),
+      findsOneWidget,
+    );
     expect(find.byKey(DeviceHealthDetailKeys.sosCta), findsOneWidget);
 
     await tester.tap(find.byKey(DeviceHealthDetailKeys.sosCta));

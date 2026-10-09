@@ -55,7 +55,7 @@ class StudioCameraCaptureScreen extends StatefulWidget {
   /// Optional override used before first [CameraPermissionSeam.check].
   final CameraPermissionStatus? initialStatus;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — when set, ignores [CurrentRole].
@@ -111,7 +111,7 @@ class _StudioCameraCaptureScreenState extends State<StudioCameraCaptureScreen> {
   @override
   void initState() {
     super.initState();
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     _seam = widget.permissionSeam ?? FakeCameraPermissionSeam();
     final initial = widget.initialStatus;
     if (initial != null) {
@@ -255,17 +255,17 @@ class _StudioCameraCaptureScreenState extends State<StudioCameraCaptureScreen> {
 
     return switch (_status!) {
       CameraPermissionStatus.granted => _CaptureBody(
-          capturing: _capturing,
-          isObserver: _isObserverMother,
-          onCapture: _onCapture,
-        ),
+        capturing: _capturing,
+        isObserver: _isObserverMother,
+        onCapture: _onCapture,
+      ),
       CameraPermissionStatus.denied => _RepairBody(
-          onOpenSettings: _onOpenSettings,
-          onRetryRequest: _onRequestThenRefresh,
-        ),
+        onOpenSettings: _onOpenSettings,
+        onRetryRequest: _onRequestThenRefresh,
+      ),
       CameraPermissionStatus.permanentlyDenied => _PermanentBody(
-          onOpenSettings: _onOpenSettings,
-        ),
+        onOpenSettings: _onOpenSettings,
+      ),
     };
   }
 }

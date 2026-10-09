@@ -96,8 +96,9 @@ void main() {
     final db2 = await SqliteLocalDatabase.openAt(path);
     await FsSessionKernel.ensureOpen(override: db2);
     final loaded =
-        await (await ScreenTimeLocalPersistence.openScheduleRepository())
-            .load(child);
+        await (await ScreenTimeLocalPersistence.openScheduleRepository()).load(
+          child,
+        );
     final study = loaded.firstWhere((w) => w.kind == ScheduleKind.study);
     expect(study.enabled, isTrue);
     expect(ScheduleWindow.toMinutes(study.start), 15 * 60);

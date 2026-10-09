@@ -33,6 +33,10 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# The project currently uses the pinned owner SDK directly (not FVM).
+# If FVM is used locally in the future, never commit its downloaded SDK.
+.fvm/flutter_sdk/
+
 # Symbolication related
 app.*.symbols
 
@@ -43,3 +47,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Flutter-connected Foundation gate: manually provisioned staging configuration only.
+# These controlled project values must remain encrypted/local and must never be tracked.
+/android/app/google-services.json
+/ios/Runner/GoogleService-Info.plist
+/lib/foundation_gate/local/firebase_options.dart
+/lib/foundation_gate/local/foundation_gate_local_configuration.dart
+/lib/foundation_gate/local/main.dart

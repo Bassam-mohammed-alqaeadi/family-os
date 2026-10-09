@@ -44,10 +44,7 @@ final class CachedKvFamilyContextStore implements FamilyContextStore {
       ..clear()
       ..addEntries([
         for (final row in rows)
-          MapEntry(
-            row['key']! as String,
-            row['value']! as String,
-          ),
+          MapEntry(row['key']! as String, row['value']! as String),
       ]);
   }
 
@@ -61,16 +58,12 @@ final class CachedKvFamilyContextStore implements FamilyContextStore {
   @override
   Future<void> saveActiveFamily(AccountId accountId, FamilyId familyId) async {
     _cache[accountId.value] = familyId.value;
-    await _db.insert(
-      _table,
-      {
-        'namespace': namespace,
-        'key': accountId.value,
-        'value': familyId.value,
-        'updated_at': _clock().toUtc().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: LocalConflictAlgorithm.replace,
-    );
+    await _db.insert(_table, {
+      'namespace': namespace,
+      'key': accountId.value,
+      'value': familyId.value,
+      'updated_at': _clock().toUtc().millisecondsSinceEpoch,
+    }, conflictAlgorithm: LocalConflictAlgorithm.replace);
   }
 }
 
@@ -114,7 +107,8 @@ abstract final class IdentityLocalPersistence {
   /// Opens Local children display roster (`id_roster`); refuses Memory fallback.
   ///
   /// Seeds deterministic LOCAL DEMO rows when family keys are empty.
-  static Future<LocalChildrenListRepository> openChildrenListRepository() async {
+  static Future<LocalChildrenListRepository>
+  openChildrenListRepository() async {
     await FsSessionKernel.ensureOpen();
     if (FsSessionKernel.sqliteFallbackToMemory) {
       throw StateError(
@@ -149,9 +143,7 @@ abstract final class IdentityLocalPersistence {
   /// Safe even when children Local bind failed — projection still lists adults.
   static Future<bool> tryBindStage1FamilyMembers() async {
     try {
-      rebindStage1FamilyMembersRepository(
-        IdentityFamilyMembersRepository(),
-      );
+      rebindStage1FamilyMembersRepository(IdentityFamilyMembersRepository());
       return true;
     } catch (e, st) {
       debugPrint(

@@ -1,49 +1,52 @@
-# Family — Agent Harness workspace
+# Family OS
 
-**Purpose:** a continuous agent loop that builds Family OS. It keeps shipping cards until it must ask you a question — then it stops; after you answer, it resumes.
-
-```text
-work → ship → next card → … → QUESTION? → STOP → you answer → RESUME → work …
-```
+Family OS is a **Global Super App for families**: one coherent Arabic-first and globally usable platform for family identity, safety, control, learning, connection and administration. Its rich prototype is the user-experience promise; the programme replaces mock engines with real, secure and recoverable product capabilities.
 
 ## Start here
 
-| Doc | Role |
+| Read | Why |
 |---|---|
-| [`harness/00_NORTH_STAR.md`](harness/00_NORTH_STAR.md) | Why + ambition |
-| [`harness/LOOP_STATE.md`](harness/LOOP_STATE.md) | RUNNING / BLOCKED / STOPPED |
-| [`harness/04_LOOP_PROMPT.md`](harness/04_LOOP_PROMPT.md) | Paste every tick or `/loop 20m` |
-| [`harness/09_RESUME_PROTOCOL.md`](harness/09_RESUME_PROTOCOL.md) | After you answer QUESTIONS |
-| [`harness/BACKLOG.md`](harness/BACKLOG.md) | What to build next |
-| [`QUESTIONS.md`](QUESTIONS.md) | **Only hard stop** for the loop |
+| [`AGENTS.md`](AGENTS.md) | Global Super-App Constitution: prototype promise, system-by-system delivery and hard guards. |
+| [`docs/00_MASTER_PLAN.md`](docs/00_MASTER_PLAN.md) | The binding plan: 14 complete functions, the stages, the honest timing, and the first five tasks. |
+| [`docs/CURRENT_EXECUTION_PLAN.md`](docs/CURRENT_EXECUTION_PLAN.md) | The live pointer: the one active function, its stage and the immediate decision. |
+| [`docs/README.md`](docs/README.md) | The documentation map: what is authoritative, what is evidence, and what is history. |
+| [`docs/REAL_PLATFORM_TRANSFORMATION_RECORD.md`](docs/REAL_PLATFORM_TRANSFORMATION_RECORD.md) | Real-platform direction, system sequencing and durable truth standard. |
+| [`docs/product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md`](docs/product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md) | Runtime-truth policy. |
+| [`docs/real_platform/02_FAMILY_ENTRY_AND_CHILDREN_CONTROL_COVER_SPECIFICATION.md`](docs/real_platform/02_FAMILY_ENTRY_AND_CHILDREN_CONTROL_COVER_SPECIFICATION.md) | Active Family Entry & Children Control system: Cover-stage experience and contract specification. |
 
-## Layout
+## Delivery model
+
+```text
+Prototype UX promise
+→ competitor and user-job analysis
+→ control-centre / state design
+→ PostgreSQL + Node.js/Express authority
+→ Native Android capability where the user job requires it
+→ Flutter with truthful roles, states and recovery
+→ quality, privacy, accessibility and controlled evidence
+→ system locked before the next begins
+```
+
+A successful API request, mock interaction or attractive screen is not a completed capability. Every visible user fact and action must have an authorized source, a truthful result and a recovery path.
+
+## Repository layout
 
 | Path | Role |
 |---|---|
-| `app/` | Flutter app — Flutter 3.35.7 / Dart 3.9.2 |
-| `harness/` | Operating system for agents |
-| `prototype/` | Frozen HTML + registries + contracts |
-| `handoff/` | Product law |
-| `docs/project-plan/` | SET/UI gap specs |
-| `GAP_LOG.md` | Living gap status |
-| `CONVERSION_LOG.md` | One line per shipped card |
-| `.cursor/` | Rules, MCP (Dart/Playwright/Memory/Context7), hooks that chain ticks |
+| `app/` | Flutter product application and shared design system. |
+| `backend/` | Node.js/Express Foundation API, PostgreSQL migrations, OpenAPI contract and staging verifiers. |
+| `infra/` | Reviewed infrastructure templates; not a deployment record. |
+| `docs/` | Current plan, system contracts, audits, product authority and preserved evidence. |
+| `family-os/` | Frozen prototype/specification/registry reference. |
+| `prototype/` | Frozen route-registry reference used by Flutter tests. |
+| `docs/archive/` | Preserved historical material; evidence, never the current execution authority. |
 
-## Your job (Bassam)
+## Verification
 
-1. Answer `QUESTIONS.md` when the loop blocks  
-2. Say **resume harness** (or let the next `/loop` tick resume)  
-3. Own money / store / legal; merge PRs when you want  
+```bash
+npm ci --prefix backend
+npm run check --prefix backend
+npm test --prefix backend
+```
 
-You do **not** pick the next card — BACKLOG + continuous law do.
-
-## Quality
-
-Pillars P1–P12 — fail = retry in-loop, not an owner halt (unless law is ambiguous → QUESTION).
-
-## Status
-
-- Continuous loop OS: **installed**  
-- F0-0 scaffold: done  
-- **NEXT:** F0-A (design tokens) — say **run the harness loop** to start  
+Flutter and Foundation Gate checks are defined in `.github/workflows/`. Never place provider credentials, database URLs, JWTs, real family data or raw staging responses in source, CI logs or documentation.

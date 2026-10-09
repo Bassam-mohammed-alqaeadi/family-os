@@ -33,21 +33,19 @@ final class ChildSosEscalationPrefs {
     int? delaySeconds,
     bool? notifyTrustedBackups,
     bool? prepareSmsFallback,
-  }) =>
-      ChildSosEscalationPrefs(
-        enabled: enabled ?? this.enabled,
-        delaySeconds: delaySeconds ?? this.delaySeconds,
-        notifyTrustedBackups:
-            notifyTrustedBackups ?? this.notifyTrustedBackups,
-        prepareSmsFallback: prepareSmsFallback ?? this.prepareSmsFallback,
-      );
+  }) => ChildSosEscalationPrefs(
+    enabled: enabled ?? this.enabled,
+    delaySeconds: delaySeconds ?? this.delaySeconds,
+    notifyTrustedBackups: notifyTrustedBackups ?? this.notifyTrustedBackups,
+    prepareSmsFallback: prepareSmsFallback ?? this.prepareSmsFallback,
+  );
 
   Map<String, dynamic> toJson() => {
-        'enabled': enabled,
-        'delaySeconds': delaySeconds,
-        'notifyTrustedBackups': notifyTrustedBackups,
-        'prepareSmsFallback': prepareSmsFallback,
-      };
+    'enabled': enabled,
+    'delaySeconds': delaySeconds,
+    'notifyTrustedBackups': notifyTrustedBackups,
+    'prepareSmsFallback': prepareSmsFallback,
+  };
 
   factory ChildSosEscalationPrefs.fromJson(Map<String, dynamic> json) {
     final delay = json['delaySeconds'];
@@ -89,19 +87,17 @@ final class SosLocalSettings {
   SosLocalSettings copyWith({
     bool? panicQuietPreferred,
     Map<String, ChildSosEscalationPrefs>? childEscalation,
-  }) =>
-      SosLocalSettings(
-        panicQuietPreferred:
-            panicQuietPreferred ?? this.panicQuietPreferred,
-        childEscalation: childEscalation ?? this.childEscalation,
-      );
+  }) => SosLocalSettings(
+    panicQuietPreferred: panicQuietPreferred ?? this.panicQuietPreferred,
+    childEscalation: childEscalation ?? this.childEscalation,
+  );
 
   Map<String, dynamic> toJson() => {
-        'panicQuietPreferred': panicQuietPreferred,
-        'childEscalation': {
-          for (final e in childEscalation.entries) e.key: e.value.toJson(),
-        },
-      };
+    'panicQuietPreferred': panicQuietPreferred,
+    'childEscalation': {
+      for (final e in childEscalation.entries) e.key: e.value.toJson(),
+    },
+  };
 
   factory SosLocalSettings.fromJson(Map<String, dynamic> json) {
     final raw = json['childEscalation'];

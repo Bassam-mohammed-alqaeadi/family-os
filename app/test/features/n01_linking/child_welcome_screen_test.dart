@@ -94,14 +94,7 @@ void main() {
   });
 
   test('Rule 23 — no planted person names in CHD-001 ARB keys', () {
-    const banned = [
-      'خالد',
-      'عبدالله',
-      'نوال',
-      'Khalid',
-      'Abdullah',
-      'Nawal',
-    ];
+    const banned = ['خالد', 'عبدالله', 'نوال', 'Khalid', 'Abdullah', 'Nawal'];
     const sources = [
       'أهلًا بك يا بطل!',
       'هذا الجهاز سيرتبط بعائلتك — عشان يطمئنون عليك، وتلعب وتتعلم وتكسب دقائق لعب ⏱',

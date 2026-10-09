@@ -19,9 +19,7 @@ void main() {
       _app(
         child: ActiveCallScreen(
           callId: 'call_child_a',
-          repository: InMemoryActiveCallRepository(
-            initial: ActiveCallMock.all,
-          ),
+          repository: InMemoryActiveCallRepository(initial: ActiveCallMock.all),
           roleOverride: AppRole.father,
           onSos: () {},
           onEnd: () {},
@@ -80,9 +78,7 @@ void main() {
       _app(
         child: ActiveCallScreen(
           callId: 'call_child_a',
-          repository: InMemoryActiveCallRepository(
-            initial: ActiveCallMock.all,
-          ),
+          repository: InMemoryActiveCallRepository(initial: ActiveCallMock.all),
           roleOverride: AppRole.father,
           onSos: () {},
           onMute: (v) => muted = v,
@@ -128,9 +124,7 @@ void main() {
       _app(
         child: ActiveCallScreen(
           callId: 'missing_call',
-          repository: InMemoryActiveCallRepository(
-            initial: ActiveCallMock.all,
-          ),
+          repository: InMemoryActiveCallRepository(initial: ActiveCallMock.all),
           roleOverride: AppRole.father,
           onSos: () {},
         ),
@@ -141,8 +135,9 @@ void main() {
     expect(find.byKey(ActiveCallKeys.notFound), findsOneWidget);
   });
 
-  testWidgets('SCR-FAT-023 Rule 23 — empty repo no planted names',
-      (tester) async {
+  testWidgets('SCR-FAT-023 Rule 23 — empty repo no planted names', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _app(
         child: ActiveCallScreen(
@@ -161,15 +156,14 @@ void main() {
     }
   });
 
-  testWidgets('SCR-FAT-023 Rule 23 — seeded uses generic labels only',
-      (tester) async {
+  testWidgets('SCR-FAT-023 Rule 23 — seeded uses generic labels only', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _app(
         child: ActiveCallScreen(
           callId: 'call_child_a',
-          repository: InMemoryActiveCallRepository(
-            initial: ActiveCallMock.all,
-          ),
+          repository: InMemoryActiveCallRepository(initial: ActiveCallMock.all),
           roleOverride: AppRole.father,
           onSos: () {},
           onEnd: () {},
@@ -189,9 +183,7 @@ void main() {
       _app(
         child: ActiveCallScreen(
           callId: 'call_child_a',
-          repository: InMemoryActiveCallRepository(
-            initial: ActiveCallMock.all,
-          ),
+          repository: InMemoryActiveCallRepository(initial: ActiveCallMock.all),
           roleOverride: AppRole.child,
           onSos: () {},
         ),

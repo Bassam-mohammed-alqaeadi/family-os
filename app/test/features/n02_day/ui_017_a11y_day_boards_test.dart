@@ -41,8 +41,7 @@ void main() {
                 pendingRequests: const [
                   DayBoardPendingRequest(
                     id: 'p1',
-                    title:
-                        'طلب وقت إضافي طويل جدًا للاختبار مع نص عربي ممتد',
+                    title: 'طلب وقت إضافي طويل جدًا للاختبار مع نص عربي ممتد',
                     subtitle:
                         'وصف مساند طويل جدًا يجب ألا يقص البطاقة عند تكبير الخط',
                   ),
@@ -293,5 +292,3 @@ Widget _wrap({
     home: child,
   );
 }
-
-

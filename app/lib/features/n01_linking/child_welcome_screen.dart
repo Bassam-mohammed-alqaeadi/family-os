@@ -21,11 +21,7 @@ abstract final class ChildWelcomeKeys {
 /// Prototype CHD-001 · age-neutral (SHR-007 spirit) · no surveillance copy ·
 /// RoleGuard child · CTA → CHD-002 · Rule 12/23 · no SOS on this bare welcome.
 class ChildWelcomeScreen extends StatelessWidget {
-  const ChildWelcomeScreen({
-    super.key,
-    this.roleOverride,
-    this.onContinue,
-  });
+  const ChildWelcomeScreen({super.key, this.roleOverride, this.onContinue});
 
   /// Test seam — when set, ignores [CurrentRole].
   final AppRole? roleOverride;

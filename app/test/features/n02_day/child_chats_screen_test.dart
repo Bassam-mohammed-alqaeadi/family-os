@@ -14,8 +14,9 @@ import 'package:family_os/features/n02_day/child_chats_screen.dart';
 import 'package:family_os/features/n02_day/conversations_list_repository.dart';
 
 void main() {
-  testWidgets('SCR-CHD-007 empty → AppEmptyState + honesty + SOS ungated',
-      (tester) async {
+  testWidgets('SCR-CHD-007 empty → AppEmptyState + honesty + SOS ungated', (
+    tester,
+  ) async {
     var sos = false;
     await tester.pumpWidget(
       _app(
@@ -43,9 +44,7 @@ void main() {
     await tester.pumpWidget(
       _app(
         child: ChildChatsScreen(
-          repository: InMemoryChildChatsRepository(
-            initial: ChildChatsMock.one,
-          ),
+          repository: InMemoryChildChatsRepository(initial: ChildChatsMock.one),
           roleOverride: AppRole.child,
           onSos: () {},
         ),
@@ -60,8 +59,9 @@ void main() {
     expect(find.byKey(ChildChatsKeys.row('c_father')), findsNothing);
   });
 
-  testWidgets('SCR-CHD-007 many + pinned family first + honesty',
-      (tester) async {
+  testWidgets('SCR-CHD-007 many + pinned family first + honesty', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _app(
         child: ChildChatsScreen(
@@ -84,10 +84,12 @@ void main() {
     expect(find.byKey(ChildChatsKeys.row('c_father')), findsOneWidget);
     expect(find.byKey(ChildChatsKeys.row('c_mother')), findsOneWidget);
 
-    final familyY =
-        tester.getTopLeft(find.byKey(ChildChatsKeys.row('c_family'))).dy;
-    final fatherY =
-        tester.getTopLeft(find.byKey(ChildChatsKeys.row('c_father'))).dy;
+    final familyY = tester
+        .getTopLeft(find.byKey(ChildChatsKeys.row('c_family')))
+        .dy;
+    final fatherY = tester
+        .getTopLeft(find.byKey(ChildChatsKeys.row('c_father')))
+        .dy;
     expect(familyY < fatherY, isTrue);
   });
 
@@ -121,9 +123,7 @@ void main() {
     await tester.pumpWidget(
       _app(
         child: ChildChatsScreen(
-          repository: InMemoryChildChatsRepository(
-            initial: ChildChatsMock.one,
-          ),
+          repository: InMemoryChildChatsRepository(initial: ChildChatsMock.one),
           roleOverride: AppRole.child,
           onSos: () {},
           onCallContacts: () => called = true,
@@ -185,9 +185,7 @@ void main() {
     await tester.pumpWidget(
       _app(
         child: ChildChatsScreen(
-          repository: InMemoryChildChatsRepository(
-            initial: ChildChatsMock.one,
-          ),
+          repository: InMemoryChildChatsRepository(initial: ChildChatsMock.one),
           roleOverride: AppRole.child,
           chatAvailability: const AlwaysOnChatAvailability(),
           onSos: () {},

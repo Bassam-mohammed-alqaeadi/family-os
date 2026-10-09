@@ -5,7 +5,8 @@ import 'package:flutter/foundation.dart';
 /// Local-first and backend-ready: values are opaque, stable identifiers.
 @immutable
 final class AccountId {
-  factory AccountId(String value) => AccountId._(_normalize(value, 'AccountId'));
+  factory AccountId(String value) =>
+      AccountId._(_normalize(value, 'AccountId'));
   const AccountId._(this.value);
   final String value;
   @override
@@ -91,7 +92,8 @@ final class EnrollmentId {
 
 @immutable
 final class SessionId {
-  factory SessionId(String value) => SessionId._(_normalize(value, 'SessionId'));
+  factory SessionId(String value) =>
+      SessionId._(_normalize(value, 'SessionId'));
   const SessionId._(this.value);
   final String value;
   @override

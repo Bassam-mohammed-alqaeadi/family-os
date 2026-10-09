@@ -69,7 +69,7 @@ class LocationHistoryScreen extends StatefulWidget {
   /// Test seam — when set, ignores [CurrentRole].
   final AppRole? roleOverride;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — SOS fire / navigate.
@@ -98,7 +98,10 @@ class LocationHistoryScreenState extends State<LocationHistoryScreen> {
 
   /// Primary-only export/archive stubs (L2).
   bool get _isPrimary =>
-      resolveAuthorizationContext(context, fallbackRole: _role).isPrimaryOwner ||
+      resolveAuthorizationContext(
+        context,
+        fallbackRole: _role,
+      ).isPrimaryOwner ||
       _role == AppRole.father;
 
   String? get _resolvedChildId {
@@ -206,7 +209,7 @@ class LocationHistoryScreenState extends State<LocationHistoryScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    final fire = widget.sosFire ?? stage1SosFireService;
+    final fire = widget.sosFire ?? activeSosFireService;
     final sender = sosSenderForRole(
       context,
       _role,

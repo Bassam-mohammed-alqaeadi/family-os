@@ -42,10 +42,7 @@ abstract final class TemporaryGrantQuery {
   }
 
   /// Marks expired grants; returns updated list (caller persists).
-  static List<TimeGrant> sweepExpired(
-    List<TimeGrant> grants, {
-    DateTime? now,
-  }) {
+  static List<TimeGrant> sweepExpired(List<TimeGrant> grants, {DateTime? now}) {
     final clock = (now ?? DateTime.now()).toUtc();
     return [
       for (final g in grants)

@@ -42,8 +42,9 @@ void main() {
     final db2 = await SqliteLocalDatabase.openAt(path);
     await FsSessionKernel.ensureOpen(override: db2);
     final loaded =
-        await (await PrefsMiscLocalPersistence.openAntiTamperRepository())
-            .load(child);
+        await (await PrefsMiscLocalPersistence.openAntiTamperRepository()).load(
+          child,
+        );
     expect(loaded.noVpn, isTrue);
     expect(loaded.bypassAlert, isTrue);
 

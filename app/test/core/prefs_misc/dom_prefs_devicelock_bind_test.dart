@@ -38,8 +38,9 @@ void main() {
     final db2 = await SqliteLocalDatabase.openAt(path);
     await FsSessionKernel.ensureOpen(override: db2);
     final loaded =
-        await (await PrefsMiscLocalPersistence.openDeviceLockService())
-            .load(child);
+        await (await PrefsMiscLocalPersistence.openDeviceLockService()).load(
+          child,
+        );
     expect(loaded.locked, isTrue);
     expect(loaded.lockedBy, DeviceLockedBy.father);
 

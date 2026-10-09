@@ -20,7 +20,7 @@ abstract class OnboardingProgressStore {
 /// In-memory prefs — share [data] across instances to simulate restart / offline cache.
 final class MemoryOnboardingProgressStore implements OnboardingProgressStore {
   MemoryOnboardingProgressStore([Map<String, String>? data])
-      : data = data ?? {};
+    : data = data ?? {};
 
   final Map<String, String> data;
 
@@ -73,7 +73,7 @@ final class PrefsOnboardingProgressRepository
 final class InMemoryOnboardingProgressRepository
     implements OnboardingProgressRepository {
   InMemoryOnboardingProgressRepository([OnboardingProgressFlags? seed])
-      : _flags = seed ?? OnboardingProgressFlags.afterFamilyCreate();
+    : _flags = seed ?? OnboardingProgressFlags.afterFamilyCreate();
 
   OnboardingProgressFlags _flags;
 

@@ -58,8 +58,7 @@ abstract class AntiTamperRepository {
     ChildId childId,
     AntiTamperPolicy policy, {
     required AppRole actor,
-  }) =>
-      write(childId, policy, actor: actor);
+  }) => write(childId, policy, actor: actor);
 
   AuditAppend get audit;
 }
@@ -101,21 +100,15 @@ void _appendDeniedAudit(AuditAppend audit, AppRole actor, ChildId childId) {
   );
 }
 
-AntiTamperWriteResult _deny(
-  AuditAppend audit,
-  AppRole actor,
-  ChildId childId,
-) {
+AntiTamperWriteResult _deny(AuditAppend audit, AppRole actor, ChildId childId) {
   _appendDeniedAudit(audit, actor, childId);
-  return AntiTamperWriteDenied(
-    AntiTamperDenied(actor: actor),
-  );
+  return AntiTamperWriteDenied(AntiTamperDenied(actor: actor));
 }
 
 /// Prefs/JSON-backed repository (SharedPreferences adapter-ready).
 final class PrefsAntiTamperRepository implements AntiTamperRepository {
   PrefsAntiTamperRepository(this._store, {AuditAppend? audit})
-      : _audit = audit ?? AuditAppend();
+    : _audit = audit ?? AuditAppend();
 
   final AntiTamperPrefsStore _store;
   final AuditAppend _audit;
@@ -159,8 +152,7 @@ final class PrefsAntiTamperRepository implements AntiTamperRepository {
     ChildId childId,
     AntiTamperPolicy policy, {
     required AppRole actor,
-  }) =>
-      write(childId, policy, actor: actor);
+  }) => write(childId, policy, actor: actor);
 }
 
 /// Pure in-memory alternate for unit tests (Rule 25 fake).
@@ -168,8 +160,8 @@ final class InMemoryAntiTamperRepository implements AntiTamperRepository {
   InMemoryAntiTamperRepository({
     Map<String, AntiTamperPolicy>? seed,
     AuditAppend? audit,
-  })  : _byChild = seed ?? {},
-        _audit = audit ?? AuditAppend();
+  }) : _byChild = seed ?? {},
+       _audit = audit ?? AuditAppend();
 
   final Map<String, AntiTamperPolicy> _byChild;
   final AuditAppend _audit;
@@ -203,6 +195,5 @@ final class InMemoryAntiTamperRepository implements AntiTamperRepository {
     ChildId childId,
     AntiTamperPolicy policy, {
     required AppRole actor,
-  }) =>
-      write(childId, policy, actor: actor);
+  }) => write(childId, policy, actor: actor);
 }

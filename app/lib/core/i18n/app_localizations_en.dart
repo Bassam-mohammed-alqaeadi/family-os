@@ -11508,7 +11508,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sosReadinessBody =>
-      'Honest Stage-1 view — push/SMS/call/GPS stay Native-closed or degraded until those waves open. SOS still fires in-app.';
+      'Honest Stage-1 view — push, text messages, calls, and location can remain unavailable or limited until later stages. SOS still fires in-app.';
 
   @override
   String get sosReadinessRowChild => 'Child trigger linked';
@@ -11585,7 +11585,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sosLadderVerifyLocalHonesty =>
-      'Local Stage-1 verification — not SMS or carrier proof. Native verify comes later.';
+      'This Stage-1 check is not proof that a text message or call was delivered. Device verification comes later.';
 
   @override
   String get sosLadderEditBackupSemantics => 'Edit trusted backup contact';
@@ -11615,7 +11615,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sosChildEscalationSmsHonesty =>
-      'SMS send stays Native/Backend-closed — this switch only saves your intent so we can activate it later without redesigning the screen.';
+      'Sending a text message is not available yet — this switch only saves your intent for a future stage.';
 
   @override
   String sosChildEscalationChildLabel(String id) {
@@ -12302,4 +12302,683 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appLoadingSemantics => 'Loading';
+
+  @override
+  String get childrenListLocalOnlyBanner =>
+      'Family information on this screen is currently stored on this device. Changes may not appear on other devices yet.';
+
+  @override
+  String get childrenListProfileRepairTitle => 'Child profile needs setup';
+
+  @override
+  String get childrenListProfileRepairMessage =>
+      'This child is registered, but their display profile is incomplete. Finish setup before relying on child controls.';
+
+  @override
+  String get childrenListProfileRepairCta => 'Finish setup';
+
+  @override
+  String get childrenListDeviceActive => 'Device connected';
+
+  @override
+  String get childrenListDevicePairing => 'Device pairing in progress';
+
+  @override
+  String get childrenListDeviceNeedsAttention => 'Device needs attention';
+
+  @override
+  String get childrenListDeviceStateUnavailable => 'Device status unavailable';
+
+  @override
+  String childrenListRuntimeRowSemantics(
+    String name,
+    String age,
+    String device,
+  ) {
+    return '$name, $age, $device';
+  }
+
+  @override
+  String get screenTimeServerNoSession =>
+      'No server session in this build — we do not show numbers we cannot enforce.';
+
+  @override
+  String get screenTimeServerUnreachable =>
+      'The server did not answer — what you see is the last true answer, and nothing changed.';
+
+  @override
+  String get screenTimeServerUnreachableNoData =>
+      'The server did not answer, and there is no earlier answer to show.';
+
+  @override
+  String get screenTimeServerDenied =>
+      'This account may not read this child\'s screen time.';
+
+  @override
+  String get screenTimeServerRefused =>
+      'The server refused the request — nothing changed.';
+
+  @override
+  String get screenTimeServerCap => 'Daily cap (minutes, 0 = no cap)';
+
+  @override
+  String get screenTimeServerBedtime => 'Bedtime';
+
+  @override
+  String get screenTimeServerSchoolMode => 'School mode';
+
+  @override
+  String get screenTimeServerSave => 'Save to the server';
+
+  @override
+  String get screenTimeServerSaved => 'Saved on the server';
+
+  @override
+  String get screenTimeServerLockNow => 'Turn the screen off now';
+
+  @override
+  String get screenTimeServerUnlock => 'Switch it back on';
+
+  @override
+  String get screenTimeServerStateFree => 'The screen is available';
+
+  @override
+  String get screenTimeServerStateLimited =>
+      'The screen is available, within the cap';
+
+  @override
+  String get screenTimeServerStateBedtime => 'It is bedtime';
+
+  @override
+  String get screenTimeServerStateSchool => 'It is the school window now';
+
+  @override
+  String get screenTimeServerStateLimit => 'Today\'s time is up';
+
+  @override
+  String get screenTimeServerStateLock =>
+      'The screen is switched off by a guardian';
+
+  @override
+  String screenTimeServerTodayMinutes(int minutes) {
+    return 'Today\'s counted minutes: $minutes';
+  }
+
+  @override
+  String screenTimeServerOpenRequest(int minutes) {
+    return 'A question from your child is waiting: $minutes minutes';
+  }
+
+  @override
+  String get screenTimeServerApprove => 'Approve';
+
+  @override
+  String get screenTimeServerDeny => 'Deny';
+
+  @override
+  String get webFilterServerNoSession =>
+      'No server session in this build - the filter below is the local copy, and no on-device enforcement is claimed.';
+
+  @override
+  String get webFilterServerUnreachable =>
+      'The server did not answer - what you see is the last true answer, and nothing moved.';
+
+  @override
+  String get webFilterServerDenied =>
+      'This account may not read this child\'s filter from the server.';
+
+  @override
+  String get webFilterServerRefused =>
+      'The server refused the request - nothing changed.';
+
+  @override
+  String get webFilterProtectionHeading =>
+      'Is the protection actually running?';
+
+  @override
+  String get webFilterProtectionProtected =>
+      'The newest report from the device says the protection is running.';
+
+  @override
+  String get webFilterProtectionUnverified =>
+      'Protection is not claimed: there is no recent report from this device.';
+
+  @override
+  String get webFilterProtectionNeverReported =>
+      'This device has never reported on its protection - nothing can be said about it.';
+
+  @override
+  String get webFilterProtectionUnsupported =>
+      'This platform cannot hold the protection plane - a fact about the phone, not about the child.';
+
+  @override
+  String get webFilterProtectionAtRisk =>
+      'Protection is not what it should be - review what the device observed.';
+
+  @override
+  String webFilterProtectionSilentMinutes(int minutes) {
+    return 'The device has been silent for $minutes minutes.';
+  }
+
+  @override
+  String get webFilterServerQuestionPending =>
+      'Waiting for a parent to decide.';
+
+  @override
+  String get webFilterServerQuestionOpen =>
+      'The temporary open is in effect now.';
+
+  @override
+  String get webFilterServerQuestionDenied => 'The request was denied.';
+
+  @override
+  String get tasksServerNoSession =>
+      'No server session in this build - tasks are shown from local storage, and no points are counted on the server.';
+
+  @override
+  String get tasksServerUnreachable =>
+      'The server did not answer - what you see is the last true answer, and nothing changed.';
+
+  @override
+  String get tasksServerDenied =>
+      'This account may not read this child\'s tasks from the server.';
+
+  @override
+  String get tasksServerRefused =>
+      'The server refused the request - nothing changed.';
+
+  @override
+  String get tasksServerBalanceHeading => 'Points';
+
+  @override
+  String get tasksServerBalanceNote =>
+      'The balance is the sum of the ledger, not a stored number: every line below says who confirmed it and when.';
+
+  @override
+  String get tasksServerBalanceEmpty =>
+      'No points yet - points are earned when a parent confirms a finished task.';
+
+  @override
+  String tasksServerBalanceEntry(int points) {
+    return '+$points points, confirmed by a parent.';
+  }
+
+  @override
+  String get tasksServerTasksHeading => 'Tasks';
+
+  @override
+  String tasksServerTaskPoints(int points) {
+    return '$points points when it is done';
+  }
+
+  @override
+  String get tasksServerTaskWaiting => 'Your child has not said anything yet.';
+
+  @override
+  String get tasksServerTaskClaimed =>
+      'Your child says it is done - waiting for your word.';
+
+  @override
+  String tasksServerTaskConfirmed(int points) {
+    return 'You confirmed it - $points points were added to their balance.';
+  }
+
+  @override
+  String get tasksServerTaskDeclined =>
+      'Not confirmed yet - and they can try again.';
+
+  @override
+  String get tasksServerTaskArchived =>
+      'This task was withdrawn, and no points were counted for it.';
+
+  @override
+  String get tasksServerRecordClaim => 'Record that it is done';
+
+  @override
+  String get tasksServerConfirm => 'Confirm it is done';
+
+  @override
+  String get tasksServerDecline => 'Not done yet';
+
+  @override
+  String get tasksServerNoteHint => 'A note your child reads if you decline';
+
+  @override
+  String get tasksServerCreateHeading => 'A new task';
+
+  @override
+  String get tasksServerCreateTitle => 'What is asked?';
+
+  @override
+  String get tasksServerCreatePoints => 'Points';
+
+  @override
+  String get tasksServerCreateNote => 'What does \"done\" mean?';
+
+  @override
+  String get tasksServerAudienceScopeLabel =>
+      'Visible to this conversation (optional)';
+
+  @override
+  String get tasksServerAudienceScopeChildOnly => 'Only the assigned child';
+
+  @override
+  String get tasksServerCreateButton => 'Add the task';
+
+  @override
+  String get calendarServerNoSession =>
+      'No server session in this build - no calendar is built locally.';
+
+  @override
+  String get calendarServerDenied =>
+      'This account may not read the family calendar at all.';
+
+  @override
+  String get calendarServerUnreachable =>
+      'The server did not answer - what you see is the last true reading.';
+
+  @override
+  String get calendarServerRefused =>
+      'The request was refused - what you see is the last true reading.';
+
+  @override
+  String get calendarServerEventsHeading => 'What the family agreed to';
+
+  @override
+  String get calendarServerEventsEmpty => 'No events in this window.';
+
+  @override
+  String get calendarServerEventCancelled => 'Cancelled';
+
+  @override
+  String get calendarServerEventCancelReason => 'Why it was called off';
+
+  @override
+  String get calendarServerEventAudienceHeading => 'Who was invited';
+
+  @override
+  String get calendarServerAudienceWaiting => 'No answer yet';
+
+  @override
+  String get calendarServerAudienceAccepted => 'Coming';
+
+  @override
+  String get calendarServerAudienceDeclined => 'Not coming';
+
+  @override
+  String get calendarServerAudienceAttended => 'Attended';
+
+  @override
+  String get calendarServerAudienceAbsent => 'Did not attend';
+
+  @override
+  String get calendarServerReminderNote =>
+      'A reminder is a recorded preference; nothing here says a notification arrived.';
+
+  @override
+  String get calendarServerCancelHeading => 'Call an event off';
+
+  @override
+  String get calendarServerCancelReasonHint => 'Why the change?';
+
+  @override
+  String get calendarServerCancelButton => 'Call it off';
+
+  @override
+  String get calendarServerAnswerHeading => 'What your child said';
+
+  @override
+  String get calendarServerAnswerNoteHint => 'In their words';
+
+  @override
+  String get calendarServerAttendanceHeading => 'What happened';
+
+  @override
+  String get calendarServerAttendanceNoteHint => 'A note (optional)';
+
+  @override
+  String get calendarServerAttendanceRecordButton => 'Record it';
+
+  @override
+  String get calendarServerCreateHeading => 'A new event';
+
+  @override
+  String get calendarServerCreateTitle => 'What is it?';
+
+  @override
+  String get calendarServerCreateLocation => 'Where?';
+
+  @override
+  String get calendarServerCreateNoteHint => 'Details for the family';
+
+  @override
+  String get calendarServerCreateReminder => 'Remind before (minutes)';
+
+  @override
+  String get calendarServerCreateChildren => 'Who is invited?';
+
+  @override
+  String get calendarServerAudienceScopeLabel =>
+      'Also route through a conversation (optional)';
+
+  @override
+  String get calendarServerAudienceScopeChildrenOnly =>
+      'Selected children only';
+
+  @override
+  String get calendarServerCreatePickStart => 'Choose the start';
+
+  @override
+  String get calendarServerCreatePickEnd => 'Choose the end';
+
+  @override
+  String get calendarServerCreateButton => 'Add the event';
+
+  @override
+  String get calendarServerPanelNote =>
+      'Everything here is what the server said: no event, answer or attendance is invented locally.';
+
+  @override
+  String get calendarServerNoAddressableChildren =>
+      'This build cannot address the server\'s children yet - the calendar reads and nothing is written.';
+
+  @override
+  String get familyChatConnecting => 'Connecting to the family chat…';
+
+  @override
+  String get familyChatReconnecting =>
+      'Connection interrupted. Checking the family chat again…';
+
+  @override
+  String get familyChatOffline =>
+      'Offline. Messages already loaded remain visible; retry when the connection returns.';
+
+  @override
+  String get familyChatUnavailable =>
+      'Family chat is not configured on this build; no local chat is used as a substitute.';
+
+  @override
+  String get familyChatPermissionDenied =>
+      'This account or device is not allowed to open this conversation. The server controls access.';
+
+  @override
+  String get familyChatRequestRejected =>
+      'The server rejected this chat action. Check family membership and try again.';
+
+  @override
+  String get familyChatRetry => 'Retry';
+
+  @override
+  String get familyChatServerPollingNotice =>
+      'Messages refresh from the server every 15 seconds while this screen is open. Instant push updates are not available.';
+
+  @override
+  String get childFamilyChatServerPollingNotice =>
+      'Messages refresh from the server while this screen is open. Instant updates are not available.';
+
+  @override
+  String get familyChatCreateHeading => 'Start a family chat';
+
+  @override
+  String get familyChatCreateTypeLabel => 'Conversation type';
+
+  @override
+  String get familyChatDirectThread => 'Direct conversation';
+
+  @override
+  String get familyChatGroupThread => 'Group conversation';
+
+  @override
+  String get familyChatSelectParticipants => 'Choose who can join';
+
+  @override
+  String get familyChatNoParticipantsAvailable =>
+      'No other active family participants are available.';
+
+  @override
+  String get familyChatFamilyThread => 'Guardian family chat';
+
+  @override
+  String get familyChatChildThread => 'Conversation with one child';
+
+  @override
+  String get familyChatCreateChildLabel => 'Child';
+
+  @override
+  String get familyChatNoChildrenAvailable =>
+      'No server-confirmed children are available for a child conversation.';
+
+  @override
+  String get familyChatChildFallback => 'Child';
+
+  @override
+  String get familyChatCreateTitleLabel => 'Title (optional)';
+
+  @override
+  String get familyChatCreateTitleHint => 'Leave blank to use the server title';
+
+  @override
+  String get familyChatCreateButton => 'Create chat';
+
+  @override
+  String get familyChatCancel => 'Cancel';
+
+  @override
+  String get familyChatCreateFailed =>
+      'The chat could not be created. Your request was not confirmed.';
+
+  @override
+  String get familyChatPolicyTitle => 'Collaboration and safety';
+
+  @override
+  String get familyChatPolicyPrimaryGuardianNotice =>
+      'Only the primary guardian can save these server-enforced rules. The primary guardian always retains protected family permissions.';
+
+  @override
+  String get familyChatPolicyCoGuardianChat =>
+      'Allow the co-guardian to create conversations';
+
+  @override
+  String get familyChatPolicyCoGuardianManageChat =>
+      'Allow the co-guardian to add people to groups';
+
+  @override
+  String get familyChatPolicyCoGuardianTasks =>
+      'Allow the co-guardian to manage tasks';
+
+  @override
+  String get familyChatPolicyCoGuardianCalendar =>
+      'Allow the co-guardian to manage the calendar';
+
+  @override
+  String get familyChatPolicyChildDirect =>
+      'Allow children to start direct conversations';
+
+  @override
+  String get familyChatPolicyChildGroups => 'Allow children to create groups';
+
+  @override
+  String get familyChatPolicyChildManageGroups =>
+      'Allow children to add participants to their groups';
+
+  @override
+  String get familyChatPolicyGuardianInclusion =>
+      'When must guardians join child conversations?';
+
+  @override
+  String get familyChatPolicyInclusionNone => 'Never by default';
+
+  @override
+  String get familyChatPolicyInclusionAllChildChats =>
+      'Every child conversation';
+
+  @override
+  String get familyChatPolicyInclusionChildToChild =>
+      'Only child-to-child conversations';
+
+  @override
+  String get familyChatPolicyMaxGroupSize => 'Maximum group size';
+
+  @override
+  String get familyChatPolicySave => 'Save rules';
+
+  @override
+  String get familyChatPolicySaved =>
+      'The server saved the collaboration rules.';
+
+  @override
+  String get familyChatPolicyLoadFailed =>
+      'The server policy could not be loaded.';
+
+  @override
+  String get familyChatPolicySaveFailed =>
+      'The server did not accept the policy change.';
+
+  @override
+  String get familyChatLoadOlder => 'Load older messages';
+
+  @override
+  String get familyChatRefresh => 'Refresh messages';
+
+  @override
+  String get familyChatMessageDeleted => 'Message deleted';
+
+  @override
+  String get familyChatEdited => 'Edited';
+
+  @override
+  String get familyChatMediaUnavailable =>
+      'Attachments and voice messages are unavailable: this chat API supports text only.';
+
+  @override
+  String get familyChatMediaUnavailableSemantics =>
+      'Attachments and voice messages unavailable';
+
+  @override
+  String get familyChatEdit => 'Edit';
+
+  @override
+  String get familyChatMediaPhoto => 'Photo';
+
+  @override
+  String get familyChatMediaVoiceNote => 'Voice note';
+
+  @override
+  String get familyChatMediaItemUnavailable =>
+      'This attachment is no longer available';
+
+  @override
+  String get familyChatMediaLoading => 'Loading attachment…';
+
+  @override
+  String get familyChatMediaNoPlayback =>
+      'Voice-note playback is not available in this version';
+
+  @override
+  String get familyChatMediaNotOnThisDevice =>
+      'In this version, attachments show on a guardian\'s device';
+
+  @override
+  String familyChatReceiptDelivered(int count, int total) {
+    return 'Delivered to $count of $total';
+  }
+
+  @override
+  String familyChatReceiptRead(int count, int total) {
+    return 'Read by $count of $total';
+  }
+
+  @override
+  String get familyChatRealtimeLive => 'Live updates on';
+
+  @override
+  String get familyChatRealtimeRetrying =>
+      'Live updates are off; checking every 15 seconds';
+
+  @override
+  String get familyChatRealtimePolling =>
+      'Checking for messages every 15 seconds';
+
+  @override
+  String get familyChatDelete => 'Delete';
+
+  @override
+  String get familyChatEditHeading => 'Edit message';
+
+  @override
+  String get familyChatEditSave => 'Save changes';
+
+  @override
+  String get familyChatDeleteHeading => 'Delete this message?';
+
+  @override
+  String get familyChatDeleteBody =>
+      'The message text will be removed, but its place in the conversation remains.';
+
+  @override
+  String get familyChatStorageNotice =>
+      'Messages are stored by the family server; this chat is not end-to-end encrypted.';
+
+  @override
+  String get familyChatServerStoredTag => 'Server-stored text';
+
+  @override
+  String get familyChatLoadMore => 'Load more messages';
+
+  @override
+  String get familyChatMessageActionsSemantics => 'Message actions';
+
+  @override
+  String get familyChatListPollingNotice =>
+      'This conversation list and its previews come from the family server. The list checks again every 30 seconds; instant push updates are not available.';
+
+  @override
+  String get familyChatNeverLocks =>
+      'Family chat stays available after play time ends.';
+
+  @override
+  String get conversationAttachPhotoGallery => 'Photo from gallery';
+
+  @override
+  String get conversationAttachPhotoCamera => 'Take a photo';
+
+  @override
+  String get conversationAttachVoice => 'Record a voice note';
+
+  @override
+  String get mediaPhotoPendingLabel =>
+      'Photo ready. Add a caption if you like, then send.';
+
+  @override
+  String get mediaPhotoRemove => 'Remove photo';
+
+  @override
+  String get mediaComposeUnsupportedType =>
+      'This file type is not supported. Choose a JPEG, PNG or WebP photo.';
+
+  @override
+  String get mediaComposeTooLarge => 'This file is too large to send.';
+
+  @override
+  String get mediaComposeMicrophoneDenied =>
+      'Microphone access is needed to record a voice note. Allow it in settings and try again.';
+
+  @override
+  String get mediaComposeFailed =>
+      'The photo or recording could not be prepared. Try again.';
+
+  @override
+  String get voiceRecordingTitle => 'Voice note';
+
+  @override
+  String get voiceRecordingSend => 'Send';
+
+  @override
+  String get voiceRecordingCancel => 'Cancel';
+
+  @override
+  String get voicePlaySemantics => 'Play voice note';
+
+  @override
+  String get voicePauseSemantics => 'Pause voice note';
 }

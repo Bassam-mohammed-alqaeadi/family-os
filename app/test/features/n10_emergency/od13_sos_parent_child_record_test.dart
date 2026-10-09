@@ -5,9 +5,9 @@ import 'package:family_os/core/fs_foundation/fs_session_kernel.dart';
 import 'package:family_os/core/identity/family_context_store.dart';
 import 'package:family_os/core/identity/identity_runtime.dart';
 import 'package:family_os/core/identity/sos_sender.dart';
-import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/core/sos_final/sos_final_runtime.dart';
 import 'package:family_os/core/sos_final/sos_incident.dart';
+import '../../support/recording_sos_fire_service.dart';
 
 /// OD-13 — parent + viewed child on one SOS record + durable parent incident.
 void main() {
@@ -15,9 +15,7 @@ void main() {
 
   setUp(() async {
     resetStage1IdentityRuntimeForTest();
-    rebindStage1IdentityRuntime(
-      familyContextStore: MemoryFamilyContextStore(),
-    );
+    rebindStage1IdentityRuntime(familyContextStore: MemoryFamilyContextStore());
     await FsSessionKernel.resetForTest();
     Stage1SosFinalRuntime.resetForTest();
     await FsSessionKernel.ensureOpen();
@@ -31,7 +29,7 @@ void main() {
   });
 
   test('SosFireResult stores actor + subject child', () async {
-    final fire = MockSosFireService();
+    final fire = RecordingSosFireService();
     final result = await fire.fire(
       childId: 'child_b',
       actorId: 'mem_stage1_owner',
@@ -41,10 +39,8 @@ void main() {
   });
 
   test('parent fireThrough opens durable incident with both ids', () async {
-    final fire = MockSosFireService();
-    final sender = resolveParentSosSender(
-      viewedChild: ChildId('child_b'),
-    );
+    final fire = RecordingSosFireService();
+    final sender = resolveParentSosSender(viewedChild: ChildId('child_b'));
     await sender.fireThrough(fire);
 
     expect(fire.fireLog.single.childId, 'child_b');
@@ -61,7 +57,7 @@ void main() {
 
   test('parent with no view uses active child as subject', () async {
     stage1IdentityRuntime.setActiveChild(ChildId('demo-child'));
-    final fire = MockSosFireService();
+    final fire = RecordingSosFireService();
     final sender = resolveParentSosSender();
     await sender.fireThrough(fire);
 

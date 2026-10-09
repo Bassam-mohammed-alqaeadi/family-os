@@ -14881,7 +14881,7 @@
   "@sosReadinessTitle": {
     "description": "FAT-028 readiness"
   },
-  "sosReadinessBody": "Honest Stage-1 view — push/SMS/call/GPS stay Native-closed or degraded until those waves open. SOS still fires in-app.",
+  "sosReadinessBody": "Honest Stage-1 view — push, text messages, calls, and location can remain unavailable or limited until later stages. SOS still fires in-app.",
   "@sosReadinessBody": {
     "description": "FAT-028 readiness body"
   },
@@ -14981,7 +14981,7 @@
   "@sosLadderVerifyRevoke": {
     "description": "FAT-028 revoke verify"
   },
-  "sosLadderVerifyLocalHonesty": "Local Stage-1 verification — not SMS or carrier proof. Native verify comes later.",
+  "sosLadderVerifyLocalHonesty": "This Stage-1 check is not proof that a text message or call was delivered. Device verification comes later.",
   "@sosLadderVerifyLocalHonesty": {
     "description": "FAT-028 local verify honesty"
   },
@@ -15017,7 +15017,7 @@
   "@sosChildEscalationPrepareSms": {
     "description": "FAT-028 SMS channel preference (wire later)"
   },
-  "sosChildEscalationSmsHonesty": "SMS send stays Native/Backend-closed — this switch only saves your intent so we can activate it later without redesigning the screen.",
+  "sosChildEscalationSmsHonesty": "Sending a text message is not available yet — this switch only saves your intent for a future stage.",
   "@sosChildEscalationSmsHonesty": {
     "description": "FAT-028 SMS honesty for per-child"
   },
@@ -15714,5 +15714,709 @@
   "appLoadingSemantics": "Loading",
   "@appLoadingSemantics": {
     "description": "VX-B4 · AppLoadingState semantics label"
-  }
+  },
+  "childrenListLocalOnlyBanner": "Family information on this screen is currently stored on this device. Changes may not appear on other devices yet.",
+  "childrenListProfileRepairTitle": "Child profile needs setup",
+  "childrenListProfileRepairMessage": "This child is registered, but their display profile is incomplete. Finish setup before relying on child controls.",
+  "childrenListProfileRepairCta": "Finish setup",
+  "childrenListDeviceActive": "Device connected",
+  "childrenListDevicePairing": "Device pairing in progress",
+  "childrenListDeviceNeedsAttention": "Device needs attention",
+  "childrenListDeviceStateUnavailable": "Device status unavailable",
+  "childrenListRuntimeRowSemantics": "{name}, {age}, {device}",
+  "@childrenListRuntimeRowSemantics": {
+    "description": "SCR-FAT-012 runtime roster card semantics",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "age": {
+        "type": "String"
+      },
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "screenTimeServerNoSession": "No server session in this build — we do not show numbers we cannot enforce.",
+  "@screenTimeServerNoSession": {
+      "description": "SCR: screen-time server panel — no session"
+  },
+  "screenTimeServerUnreachable": "The server did not answer — what you see is the last true answer, and nothing changed.",
+  "@screenTimeServerUnreachable": {
+      "description": "SCR: screen-time server panel — no answer, last state kept"
+  },
+  "screenTimeServerUnreachableNoData": "The server did not answer, and there is no earlier answer to show.",
+  "@screenTimeServerUnreachableNoData": {
+      "description": "SCR: screen-time server panel — no answer and nothing stored"
+  },
+  "screenTimeServerDenied": "This account may not read this child's screen time.",
+  "@screenTimeServerDenied": {
+      "description": "SCR: screen-time server panel — access denied"
+  },
+  "screenTimeServerRefused": "The server refused the request — nothing changed.",
+  "@screenTimeServerRefused": {
+      "description": "SCR: screen-time server panel — refusal with a reason"
+  },
+  "screenTimeServerCap": "Daily cap (minutes, 0 = no cap)",
+  "@screenTimeServerCap": {
+      "description": "SCR: screen-time server panel — cap field"
+  },
+  "screenTimeServerBedtime": "Bedtime",
+  "@screenTimeServerBedtime": {
+      "description": "SCR: screen-time server panel — bedtime window"
+  },
+  "screenTimeServerSchoolMode": "School mode",
+  "@screenTimeServerSchoolMode": {
+      "description": "SCR: screen-time server panel — school mode"
+  },
+  "screenTimeServerSave": "Save to the server",
+  "@screenTimeServerSave": {
+      "description": "SCR: screen-time server panel — save CTA"
+  },
+  "screenTimeServerSaved": "Saved on the server",
+  "@screenTimeServerSaved": {
+      "description": "SCR: screen-time server panel — save confirmation"
+  },
+  "screenTimeServerLockNow": "Turn the screen off now",
+  "@screenTimeServerLockNow": {
+      "description": "SCR: screen-time server panel — instant lock CTA"
+  },
+  "screenTimeServerUnlock": "Switch it back on",
+  "@screenTimeServerUnlock": {
+      "description": "SCR: screen-time server panel — release the lock"
+  },
+  "screenTimeServerStateFree": "The screen is available",
+  "@screenTimeServerStateFree": {
+      "description": "SCR: screen-time server panel — computed state"
+  },
+  "screenTimeServerStateLimited": "The screen is available, within the cap",
+  "@screenTimeServerStateLimited": {
+      "description": "SCR: screen-time server panel — computed state"
+  },
+  "screenTimeServerStateBedtime": "It is bedtime",
+  "@screenTimeServerStateBedtime": {
+      "description": "SCR: screen-time server panel — computed state"
+  },
+  "screenTimeServerStateSchool": "It is the school window now",
+  "@screenTimeServerStateSchool": {
+      "description": "SCR: screen-time server panel — computed state"
+  },
+  "screenTimeServerStateLimit": "Today's time is up",
+  "@screenTimeServerStateLimit": {
+      "description": "SCR: screen-time server panel — computed state"
+  },
+  "screenTimeServerStateLock": "The screen is switched off by a guardian",
+  "@screenTimeServerStateLock": {
+      "description": "SCR: screen-time server panel — computed state"
+  },
+  "screenTimeServerTodayMinutes": "Today's counted minutes: {minutes}",
+  "@screenTimeServerTodayMinutes": {
+      "description": "SCR: screen-time server panel — today usage",
+      "placeholders": {
+          "minutes": {
+              "type": "int"
+          }
+      }
+  },
+  "screenTimeServerOpenRequest": "A question from your child is waiting: {minutes} minutes",
+  "@screenTimeServerOpenRequest": {
+      "description": "SCR: screen-time server panel — open request",
+      "placeholders": {
+          "minutes": {
+              "type": "int"
+          }
+      }
+  },
+  "screenTimeServerApprove": "Approve",
+  "@screenTimeServerApprove": {
+      "description": "SCR: screen-time server panel — answer a request"
+  },
+  "screenTimeServerDeny": "Deny",
+  "@screenTimeServerDeny": {
+      "description": "SCR: screen-time server panel — answer a request"
+  },
+  "webFilterServerNoSession": "No server session in this build - the filter below is the local copy, and no on-device enforcement is claimed.",
+  "@webFilterServerNoSession": {
+      "description": "SCR: web-filter server panel — no session"
+  },
+  "webFilterServerUnreachable": "The server did not answer - what you see is the last true answer, and nothing moved.",
+  "@webFilterServerUnreachable": {
+      "description": "SCR: web-filter server panel — unreachable"
+  },
+  "webFilterServerDenied": "This account may not read this child's filter from the server.",
+  "@webFilterServerDenied": {
+      "description": "SCR: web-filter server panel — access denied"
+  },
+  "webFilterServerRefused": "The server refused the request - nothing changed.",
+  "@webFilterServerRefused": {
+      "description": "SCR: web-filter server panel — refused"
+  },
+  "webFilterProtectionHeading": "Is the protection actually running?",
+  "@webFilterProtectionHeading": {
+      "description": "SCR: web-filter server panel — protection state"
+  },
+  "webFilterProtectionProtected": "The newest report from the device says the protection is running.",
+  "@webFilterProtectionProtected": {
+      "description": "SCR: web-filter server panel — protection state"
+  },
+  "webFilterProtectionUnverified": "Protection is not claimed: there is no recent report from this device.",
+  "@webFilterProtectionUnverified": {
+      "description": "SCR: web-filter server panel — protection state"
+  },
+  "webFilterProtectionNeverReported": "This device has never reported on its protection - nothing can be said about it.",
+  "@webFilterProtectionNeverReported": {
+      "description": "SCR: web-filter server panel — protection state"
+  },
+  "webFilterProtectionUnsupported": "This platform cannot hold the protection plane - a fact about the phone, not about the child.",
+  "@webFilterProtectionUnsupported": {
+      "description": "SCR: web-filter server panel — protection state"
+  },
+  "webFilterProtectionAtRisk": "Protection is not what it should be - review what the device observed.",
+  "@webFilterProtectionAtRisk": {
+      "description": "SCR: web-filter server panel — protection state"
+  },
+  "webFilterProtectionSilentMinutes": "The device has been silent for {minutes} minutes.",
+  "@webFilterProtectionSilentMinutes": {
+      "description": "SCR: web-filter server panel — how long the silence has lasted",
+      "placeholders": {
+          "minutes": {
+              "type": "int"
+          }
+      }
+  },
+  "webFilterServerQuestionPending": "Waiting for a parent to decide.",
+  "@webFilterServerQuestionPending": {
+      "description": "SCR: web-filter server panel — a question's state"
+  },
+  "webFilterServerQuestionOpen": "The temporary open is in effect now.",
+  "@webFilterServerQuestionOpen": {
+      "description": "SCR: web-filter server panel — a question's state"
+  },
+  "webFilterServerQuestionDenied": "The request was denied.",
+  "@webFilterServerQuestionDenied": {
+      "description": "SCR: web-filter server panel — a question's state"
+  },
+  "tasksServerNoSession": "No server session in this build - tasks are shown from local storage, and no points are counted on the server.",
+  "@tasksServerNoSession": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerUnreachable": "The server did not answer - what you see is the last true answer, and nothing changed.",
+  "@tasksServerUnreachable": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerDenied": "This account may not read this child's tasks from the server.",
+  "@tasksServerDenied": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerRefused": "The server refused the request - nothing changed.",
+  "@tasksServerRefused": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerBalanceHeading": "Points",
+  "@tasksServerBalanceHeading": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerBalanceNote": "The balance is the sum of the ledger, not a stored number: every line below says who confirmed it and when.",
+  "@tasksServerBalanceNote": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerBalanceEmpty": "No points yet - points are earned when a parent confirms a finished task.",
+  "@tasksServerBalanceEmpty": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerBalanceEntry": "+{points} points, confirmed by a parent.",
+  "@tasksServerBalanceEntry": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerTasksHeading": "Tasks",
+  "@tasksServerTasksHeading": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerTaskPoints": "{points} points when it is done",
+  "@tasksServerTaskPoints": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerTaskWaiting": "Your child has not said anything yet.",
+  "@tasksServerTaskWaiting": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerTaskClaimed": "Your child says it is done - waiting for your word.",
+  "@tasksServerTaskClaimed": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerTaskConfirmed": "You confirmed it - {points} points were added to their balance.",
+  "@tasksServerTaskConfirmed": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerTaskDeclined": "Not confirmed yet - and they can try again.",
+  "@tasksServerTaskDeclined": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerTaskArchived": "This task was withdrawn, and no points were counted for it.",
+  "@tasksServerTaskArchived": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerRecordClaim": "Record that it is done",
+  "@tasksServerRecordClaim": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerConfirm": "Confirm it is done",
+  "@tasksServerConfirm": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerDecline": "Not done yet",
+  "@tasksServerDecline": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerNoteHint": "A note your child reads if you decline",
+  "@tasksServerNoteHint": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerCreateHeading": "A new task",
+  "@tasksServerCreateHeading": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerCreateTitle": "What is asked?",
+  "@tasksServerCreateTitle": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerCreatePoints": "Points",
+  "@tasksServerCreatePoints": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerCreateNote": "What does \"done\" mean?",
+  "@tasksServerCreateNote": {
+      "description": "SCR: tasks server panel"
+  },
+  "tasksServerAudienceScopeLabel": "Visible to this conversation (optional)",
+  "@tasksServerAudienceScopeLabel": {
+      "description": "Choose a direct or group conversation as task visibility scope"
+  },
+  "tasksServerAudienceScopeChildOnly": "Only the assigned child",
+  "@tasksServerAudienceScopeChildOnly": {
+      "description": "Task remains visible only to the designated child and guardians"
+  },
+  "tasksServerCreateButton": "Add the task",
+  "@tasksServerCreateButton": {
+      "description": "SCR: tasks server panel"
+  },
+  "calendarServerNoSession": "No server session in this build - no calendar is built locally.",
+  "@calendarServerNoSession": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerDenied": "This account may not read the family calendar at all.",
+  "@calendarServerDenied": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerUnreachable": "The server did not answer - what you see is the last true reading.",
+  "@calendarServerUnreachable": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerRefused": "The request was refused - what you see is the last true reading.",
+  "@calendarServerRefused": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerEventsHeading": "What the family agreed to",
+  "@calendarServerEventsHeading": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerEventsEmpty": "No events in this window.",
+  "@calendarServerEventsEmpty": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerEventCancelled": "Cancelled",
+  "@calendarServerEventCancelled": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerEventCancelReason": "Why it was called off",
+  "@calendarServerEventCancelReason": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerEventAudienceHeading": "Who was invited",
+  "@calendarServerEventAudienceHeading": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAudienceWaiting": "No answer yet",
+  "@calendarServerAudienceWaiting": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAudienceAccepted": "Coming",
+  "@calendarServerAudienceAccepted": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAudienceDeclined": "Not coming",
+  "@calendarServerAudienceDeclined": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAudienceAttended": "Attended",
+  "@calendarServerAudienceAttended": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAudienceAbsent": "Did not attend",
+  "@calendarServerAudienceAbsent": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerReminderNote": "A reminder is a recorded preference; nothing here says a notification arrived.",
+  "@calendarServerReminderNote": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCancelHeading": "Call an event off",
+  "@calendarServerCancelHeading": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCancelReasonHint": "Why the change?",
+  "@calendarServerCancelReasonHint": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCancelButton": "Call it off",
+  "@calendarServerCancelButton": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAnswerHeading": "What your child said",
+  "@calendarServerAnswerHeading": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAnswerNoteHint": "In their words",
+  "@calendarServerAnswerNoteHint": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAttendanceHeading": "What happened",
+  "@calendarServerAttendanceHeading": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAttendanceNoteHint": "A note (optional)",
+  "@calendarServerAttendanceNoteHint": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAttendanceRecordButton": "Record it",
+  "@calendarServerAttendanceRecordButton": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCreateHeading": "A new event",
+  "@calendarServerCreateHeading": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCreateTitle": "What is it?",
+  "@calendarServerCreateTitle": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCreateLocation": "Where?",
+  "@calendarServerCreateLocation": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCreateNoteHint": "Details for the family",
+  "@calendarServerCreateNoteHint": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCreateReminder": "Remind before (minutes)",
+  "@calendarServerCreateReminder": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCreateChildren": "Who is invited?",
+  "@calendarServerCreateChildren": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerAudienceScopeLabel": "Also route through a conversation (optional)",
+  "@calendarServerAudienceScopeLabel": {
+      "description": "Optional direct or group audience scope for calendar routing"
+  },
+  "calendarServerAudienceScopeChildrenOnly": "Selected children only",
+  "@calendarServerAudienceScopeChildrenOnly": {
+      "description": "No chat-thread routing scope selected"
+  },
+  "calendarServerCreatePickStart": "Choose the start",
+  "@calendarServerCreatePickStart": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCreatePickEnd": "Choose the end",
+  "@calendarServerCreatePickEnd": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerCreateButton": "Add the event",
+  "@calendarServerCreateButton": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerPanelNote": "Everything here is what the server said: no event, answer or attendance is invented locally.",
+  "@calendarServerPanelNote": {
+      "description": "SCR: calendar server panel"
+  },
+  "calendarServerNoAddressableChildren": "This build cannot address the server's children yet - the calendar reads and nothing is written.",
+  "@calendarServerNoAddressableChildren": {
+      "description": "SCR: calendar server panel"
+  },
+  "familyChatConnecting": "Connecting to the family chat…",
+  "@familyChatConnecting": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatReconnecting": "Connection interrupted. Checking the family chat again…",
+  "@familyChatReconnecting": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatOffline": "Offline. Messages already loaded remain visible; retry when the connection returns.",
+  "@familyChatOffline": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatUnavailable": "Family chat is not configured on this build; no local chat is used as a substitute.",
+  "@familyChatUnavailable": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatPermissionDenied": "This account or device is not allowed to open this conversation. The server controls access.",
+  "@familyChatPermissionDenied": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatRequestRejected": "The server rejected this chat action. Check family membership and try again.",
+  "@familyChatRequestRejected": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatRetry": "Retry",
+  "@familyChatRetry": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatServerPollingNotice": "Messages refresh from the server every 15 seconds while this screen is open. Instant push updates are not available.",
+  "@familyChatServerPollingNotice": {
+      "description": "W9 family chat client state and controls"
+  },
+  "childFamilyChatServerPollingNotice": "Messages refresh from the server while this screen is open. Instant updates are not available.",
+  "@childFamilyChatServerPollingNotice": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatCreateHeading": "Start a family chat",
+  "@familyChatCreateHeading": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatCreateTypeLabel": "Conversation type",
+  "@familyChatCreateTypeLabel": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatDirectThread": "Direct conversation",
+  "@familyChatDirectThread": {
+      "description": "Direct family chat type"
+  },
+  "familyChatGroupThread": "Group conversation",
+  "@familyChatGroupThread": {
+      "description": "User-created family chat group type"
+  },
+  "familyChatSelectParticipants": "Choose who can join",
+  "@familyChatSelectParticipants": {
+      "description": "Participant picker for direct and group chats"
+  },
+  "familyChatNoParticipantsAvailable": "No other active family participants are available.",
+  "@familyChatNoParticipantsAvailable": {
+      "description": "Empty state for the server-owned family chat roster"
+  },
+  "familyChatFamilyThread": "Guardian family chat",
+  "@familyChatFamilyThread": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatChildThread": "Conversation with one child",
+  "@familyChatChildThread": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatCreateChildLabel": "Child",
+  "@familyChatCreateChildLabel": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatNoChildrenAvailable": "No server-confirmed children are available for a child conversation.",
+  "@familyChatNoChildrenAvailable": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatChildFallback": "Child",
+  "@familyChatChildFallback": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatCreateTitleLabel": "Title (optional)",
+  "@familyChatCreateTitleLabel": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatCreateTitleHint": "Leave blank to use the server title",
+  "@familyChatCreateTitleHint": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatCreateButton": "Create chat",
+  "@familyChatCreateButton": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatCancel": "Cancel",
+  "@familyChatCancel": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatCreateFailed": "The chat could not be created. Your request was not confirmed.",
+  "@familyChatCreateFailed": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatPolicyTitle": "Collaboration and safety",
+  "@familyChatPolicyTitle": { "description": "Family collaboration policy settings" },
+  "familyChatPolicyPrimaryGuardianNotice": "Only the primary guardian can save these server-enforced rules. The primary guardian always retains protected family permissions.",
+  "@familyChatPolicyPrimaryGuardianNotice": { "description": "Server authorization and child safety notice" },
+  "familyChatPolicyCoGuardianChat": "Allow the co-guardian to create conversations",
+  "@familyChatPolicyCoGuardianChat": { "description": "Delegated guardian role permission" },
+  "familyChatPolicyCoGuardianManageChat": "Allow the co-guardian to add people to groups",
+  "@familyChatPolicyCoGuardianManageChat": { "description": "Delegated guardian role permission" },
+  "familyChatPolicyCoGuardianTasks": "Allow the co-guardian to manage tasks",
+  "@familyChatPolicyCoGuardianTasks": { "description": "Delegated guardian role permission" },
+  "familyChatPolicyCoGuardianCalendar": "Allow the co-guardian to manage the calendar",
+  "@familyChatPolicyCoGuardianCalendar": { "description": "Delegated guardian role permission" },
+  "familyChatPolicyChildDirect": "Allow children to start direct conversations",
+  "@familyChatPolicyChildDirect": { "description": "Child chat safety setting" },
+  "familyChatPolicyChildGroups": "Allow children to create groups",
+  "@familyChatPolicyChildGroups": { "description": "Child chat safety setting" },
+  "familyChatPolicyChildManageGroups": "Allow children to add participants to their groups",
+  "@familyChatPolicyChildManageGroups": { "description": "Child chat safety setting" },
+  "familyChatPolicyGuardianInclusion": "When must guardians join child conversations?",
+  "@familyChatPolicyGuardianInclusion": { "description": "Server-enforced safety inclusion rule" },
+  "familyChatPolicyInclusionNone": "Never by default",
+  "@familyChatPolicyInclusionNone": { "description": "No automatic guardian inclusion" },
+  "familyChatPolicyInclusionAllChildChats": "Every child conversation",
+  "@familyChatPolicyInclusionAllChildChats": { "description": "Include active guardians when any child is in a new conversation" },
+  "familyChatPolicyInclusionChildToChild": "Only child-to-child conversations",
+  "@familyChatPolicyInclusionChildToChild": { "description": "Include active guardians when multiple children are in a conversation" },
+  "familyChatPolicyMaxGroupSize": "Maximum group size",
+  "@familyChatPolicyMaxGroupSize": { "description": "Maximum active participants in a group" },
+  "familyChatPolicySave": "Save rules",
+  "@familyChatPolicySave": { "description": "Save collaboration policy" },
+  "familyChatPolicySaved": "The server saved the collaboration rules.",
+  "@familyChatPolicySaved": { "description": "Policy update confirmation" },
+  "familyChatPolicyLoadFailed": "The server policy could not be loaded.",
+  "@familyChatPolicyLoadFailed": { "description": "Policy read failure" },
+  "familyChatPolicySaveFailed": "The server did not accept the policy change.",
+  "@familyChatPolicySaveFailed": { "description": "Policy update failure" },
+  "familyChatLoadOlder": "Load older messages",
+  "@familyChatLoadOlder": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatRefresh": "Refresh messages",
+  "@familyChatRefresh": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatMessageDeleted": "Message deleted",
+  "@familyChatMessageDeleted": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatEdited": "Edited",
+  "@familyChatEdited": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatMediaUnavailable": "Attachments and voice messages are unavailable: this chat API supports text only.",
+  "@familyChatMediaUnavailable": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatMediaUnavailableSemantics": "Attachments and voice messages unavailable",
+  "@familyChatMediaUnavailableSemantics": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatEdit": "Edit",
+  "@familyChatEdit": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatMediaPhoto": "Photo",
+  "@familyChatMediaPhoto": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatMediaVoiceNote": "Voice note",
+  "@familyChatMediaVoiceNote": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatMediaItemUnavailable": "This attachment is no longer available",
+  "@familyChatMediaItemUnavailable": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatMediaLoading": "Loading attachment…",
+  "@familyChatMediaLoading": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatMediaNoPlayback": "Voice-note playback is not available in this version",
+  "@familyChatMediaNoPlayback": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatMediaNotOnThisDevice": "In this version, attachments show on a guardian's device",
+  "@familyChatMediaNotOnThisDevice": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatReceiptDelivered": "Delivered to {count} of {total}",
+  "@familyChatReceiptDelivered": {
+      "placeholders": {
+        "count": {"type": "int"},
+        "total": {"type": "int"}
+      },
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatReceiptRead": "Read by {count} of {total}",
+  "@familyChatReceiptRead": {
+      "placeholders": {
+        "count": {"type": "int"},
+        "total": {"type": "int"}
+      },
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatRealtimeLive": "Live updates on",
+  "@familyChatRealtimeLive": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatRealtimeRetrying": "Live updates are off; checking every 15 seconds",
+  "@familyChatRealtimeRetrying": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatRealtimePolling": "Checking for messages every 15 seconds",
+  "@familyChatRealtimePolling": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatDelete": "Delete",
+  "@familyChatDelete": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatEditHeading": "Edit message",
+  "@familyChatEditHeading": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatEditSave": "Save changes",
+  "@familyChatEditSave": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatDeleteHeading": "Delete this message?",
+  "@familyChatDeleteHeading": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatDeleteBody": "The message text will be removed, but its place in the conversation remains.",
+  "@familyChatDeleteBody": {
+      "description": "W9 family chat client state and controls"
+  },
+  "familyChatStorageNotice": "Messages are stored by the family server; this chat is not end-to-end encrypted.",
+  "@familyChatStorageNotice": {
+      "description": "W9 family chat storage transparency"
+  },
+  "familyChatServerStoredTag": "Server-stored text",
+  "@familyChatServerStoredTag": {
+      "description": "W9 family chat storage transparency"
+  },
+  "familyChatLoadMore": "Load more messages",
+  "@familyChatLoadMore": {
+      "description": "W9 chat pagination and message controls"
+  },
+  "familyChatMessageActionsSemantics": "Message actions",
+  "@familyChatMessageActionsSemantics": {
+      "description": "W9 chat pagination and message controls"
+  },
+  "familyChatListPollingNotice": "This conversation list and its previews come from the family server. The list checks again every 30 seconds; instant push updates are not available.",
+  "@familyChatListPollingNotice": {
+      "description": "W9 chat source and child availability honesty"
+  },
+  "familyChatNeverLocks": "Family chat stays available after play time ends.",
+  "@familyChatNeverLocks": {
+      "description": "W9 chat source and child availability honesty"
+  },
+  "conversationAttachPhotoGallery": "Photo from gallery",
+  "conversationAttachPhotoCamera": "Take a photo",
+  "conversationAttachVoice": "Record a voice note",
+  "mediaPhotoPendingLabel": "Photo ready. Add a caption if you like, then send.",
+  "mediaPhotoRemove": "Remove photo",
+  "mediaComposeUnsupportedType": "This file type is not supported. Choose a JPEG, PNG or WebP photo.",
+  "mediaComposeTooLarge": "This file is too large to send.",
+  "mediaComposeMicrophoneDenied": "Microphone access is needed to record a voice note. Allow it in settings and try again.",
+  "mediaComposeFailed": "The photo or recording could not be prepared. Try again.",
+  "voiceRecordingTitle": "Voice note",
+  "voiceRecordingSend": "Send",
+  "voiceRecordingCancel": "Cancel",
+  "voicePlaySemantics": "Play voice note",
+  "voicePauseSemantics": "Pause voice note"
 }

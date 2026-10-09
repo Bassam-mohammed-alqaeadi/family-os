@@ -70,10 +70,7 @@ void main() {
     expect(result, isA<WipeScheduleOk>());
     final job = (result as WipeScheduleOk).job;
     expect(job.status, WipeJobStatus.pending);
-    expect(
-      job.pendingUntil,
-      DateTime.utc(2026, 9, 27, 12),
-    );
+    expect(job.pendingUntil, DateTime.utc(2026, 9, 27, 12));
     expect(svc.pendingWipe, isNotNull);
     expect(
       audit.entries.any((e) => e.contains('FAMILY_WIPE_REQUESTED')),

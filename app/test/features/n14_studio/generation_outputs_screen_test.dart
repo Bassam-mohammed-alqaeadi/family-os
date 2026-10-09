@@ -28,8 +28,14 @@ void main() {
     expect(find.byKey(GenerationOutputsKeys.body), findsOneWidget);
     expect(find.byKey(GenerationOutputsKeys.sourceBanner), findsOneWidget);
     expect(find.byKey(GenerationOutputsKeys.religiousLock), findsOneWidget);
-    expect(find.byKey(GenerationOutputsKeys.outputRow('out-lesson')), findsOneWidget);
-    expect(find.byKey(GenerationOutputsKeys.outputRow('out-review')), findsOneWidget);
+    expect(
+      find.byKey(GenerationOutputsKeys.outputRow('out-lesson')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(GenerationOutputsKeys.outputRow('out-review')),
+      findsOneWidget,
+    );
     expect(find.textContaining('Generate selected (5)'), findsOneWidget);
 
     await tester.ensureVisible(find.byKey(GenerationOutputsKeys.generateCta));
@@ -51,7 +57,9 @@ void main() {
 
     expect(find.textContaining('Generate selected (5)'), findsOneWidget);
 
-    await tester.tap(find.byKey(GenerationOutputsKeys.outputSwitch('out-quiz')));
+    await tester.tap(
+      find.byKey(GenerationOutputsKeys.outputSwitch('out-quiz')),
+    );
     await tester.pumpAndSettle();
     expect(find.textContaining('Generate selected (4)'), findsOneWidget);
   });
@@ -62,19 +70,30 @@ void main() {
     );
     await _pump(tester, repository: repo);
 
-    final sw = tester.widget<Switch>(
-      find.byKey(GenerationOutputsKeys.outputSwitch('out-review')),
-    );
+    final review = find.byKey(GenerationOutputsKeys.outputSwitch('out-review'));
+    final sw = tester.widget<Switch>(review);
     expect(sw.value, isFalse);
 
-    await tester.tap(find.byKey(GenerationOutputsKeys.outputSwitch('out-review')));
+    // The review row is the last in a long page and the test surface is shorter than a
+    // phone. Without revealing it first the tap lands below the fold and misses: the
+    // switch would stay off because nothing was pressed, and this test would pass for the
+    // wrong reason.
+    await tester.ensureVisible(review);
+    await tester.pumpAndSettle();
+    await tester.tap(review);
     await tester.pump();
+
+    // The tap landed: the screen answered it with the reason the switch will not move.
+    expect(
+      find.textContaining('not selectable yet'),
+      findsOneWidget,
+      reason: 'the phase lock answers the tap instead of silently ignoring it',
+    );
+
     AppToast.dismiss();
     await tester.pumpAndSettle();
 
-    final swAfter = tester.widget<Switch>(
-      find.byKey(GenerationOutputsKeys.outputSwitch('out-review')),
-    );
+    final swAfter = tester.widget<Switch>(review);
     expect(swAfter.value, isFalse);
     expect(find.textContaining('Generate selected (5)'), findsOneWidget);
   });
@@ -167,11 +186,7 @@ void main() {
 
   testWidgets('child RoleGuard lean + SOS', (tester) async {
     var sos = false;
-    await _pump(
-      tester,
-      role: AppRole.child,
-      onSos: () => sos = true,
-    );
+    await _pump(tester, role: AppRole.child, onSos: () => sos = true);
 
     expect(find.byKey(GenerationOutputsKeys.childLean), findsOneWidget);
     expect(find.byKey(GenerationOutputsKeys.body), findsNothing);
@@ -181,6 +196,63 @@ void main() {
     await tester.pumpAndSettle();
     expect(sos, isTrue);
   });
+
+  testWidgets(
+    'NotebookLM studio: toggle audio overview + source grounding + depth chip',
+    (tester) async {
+      final repo = InMemoryGenerationOutputsRepository(
+        seed: generationOutputsPrototypeFixture(),
+      );
+      await _pump(tester, repository: repo);
+
+      expect(find.byKey(GenerationOutputsKeys.sourcesCard), findsOneWidget);
+      expect(find.byKey(GenerationOutputsKeys.flexibilityCard), findsOneWidget);
+      expect(
+        find.byKey(GenerationOutputsKeys.outputRow('out-audio-overview')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(GenerationOutputsKeys.outputRow('out-mind-map')),
+        findsOneWidget,
+      );
+
+      await tester.ensureVisible(
+        find.byKey(GenerationOutputsKeys.outputSwitch('out-audio-overview')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(GenerationOutputsKeys.outputSwitch('out-audio-overview')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Generate selected (6)'), findsOneWidget);
+
+      await tester.ensureVisible(
+        find.byKey(GenerationOutputsKeys.sourceSwitch('src-voice-father')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(GenerationOutputsKeys.sourceSwitch('src-voice-father')),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('Active grounding sources: 2 of 3'),
+        findsOneWidget,
+      );
+
+      await tester.ensureVisible(
+        find.byKey(GenerationOutputsKeys.depthChip('examCrunch')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(GenerationOutputsKeys.depthChip('examCrunch')),
+      );
+      await tester.pumpAndSettle();
+      final chip = tester.widget<ChoiceChip>(
+        find.byKey(GenerationOutputsKeys.depthChip('examCrunch')),
+      );
+      expect(chip.selected, isTrue);
+    },
+  );
 }
 
 Future<void> _pump(

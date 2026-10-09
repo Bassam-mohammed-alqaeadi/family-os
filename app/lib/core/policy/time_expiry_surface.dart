@@ -19,7 +19,10 @@ abstract final class TimeExpirySurface {
   }
 
   /// Reachable when entertainment is not expired, or when [surface] is exempt.
-  static bool isReachable(String surface, {required bool entertainmentExpired}) {
+  static bool isReachable(
+    String surface, {
+    required bool entertainmentExpired,
+  }) {
     if (!entertainmentExpired) return true;
     return isExempt(surface);
   }
@@ -34,11 +37,7 @@ abstract final class TimeExpirySurface {
     TimeContext? base,
   }) {
     final ctx = ScreenTimePolicyQuery.timeContextFromPolicy(
-      base: base ??
-          TimeContext(
-            childId: childId,
-            dailyCapIncludesWallet: true,
-          ),
+      base: base ?? TimeContext(childId: childId, dailyCapIncludesWallet: true),
       policy: policy,
       appId: appId,
     );
@@ -74,10 +73,7 @@ abstract final class TimeExpirySurface {
       usedMinutesToday: dailyCapMinutes,
       allowWalletOverflow: allowWalletOverflow,
       wallets: [
-        AppWallet(
-          appId: 'game',
-          earnedMinutes: Minutes.zero,
-        ),
+        AppWallet(appId: 'game', earnedMinutes: Minutes.zero),
         AppWallet(
           appId: 'quran',
           earnedMinutes: Minutes.zero,

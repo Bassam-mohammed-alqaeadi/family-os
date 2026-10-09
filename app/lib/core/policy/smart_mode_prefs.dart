@@ -53,11 +53,11 @@ final class SmartModeRow {
   }
 
   Map<String, Object?> toJson() => {
-        'modeId': modeId.name,
-        'active': active,
-        'startMinutes': ScheduleWindow.toMinutes(scheduleStart),
-        'endMinutes': ScheduleWindow.toMinutes(scheduleEnd),
-      };
+    'modeId': modeId.name,
+    'active': active,
+    'startMinutes': ScheduleWindow.toMinutes(scheduleStart),
+    'endMinutes': ScheduleWindow.toMinutes(scheduleEnd),
+  };
 
   factory SmartModeRow.fromJson(Map<String, Object?> json) {
     final name = json['modeId'] as String? ?? BuiltInModeId.custom.name;
@@ -89,20 +89,17 @@ final class SmartModeRow {
 
   @override
   int get hashCode => Object.hash(
-        modeId,
-        active,
-        ScheduleWindow.toMinutes(scheduleStart),
-        ScheduleWindow.toMinutes(scheduleEnd),
-      );
+    modeId,
+    active,
+    ScheduleWindow.toMinutes(scheduleStart),
+    ScheduleWindow.toMinutes(scheduleEnd),
+  );
 }
 
 /// Family-level smart modes snapshot (SET-018 mock MODE store).
 @immutable
 final class SmartModePrefs {
-  const SmartModePrefs({
-    required this.childId,
-    required this.modes,
-  });
+  const SmartModePrefs({required this.childId, required this.modes});
 
   static const String defaultChildId = 'child_demo';
 
@@ -117,10 +114,12 @@ final class SmartModePrefs {
         for (final id in BuiltInModeId.values)
           SmartModeRow(
             modeId: id,
-            scheduleStart:
-                id == BuiltInModeId.school ? SmartModeRow.defaultSchoolStart : null,
-            scheduleEnd:
-                id == BuiltInModeId.school ? SmartModeRow.defaultSchoolEnd : null,
+            scheduleStart: id == BuiltInModeId.school
+                ? SmartModeRow.defaultSchoolStart
+                : null,
+            scheduleEnd: id == BuiltInModeId.school
+                ? SmartModeRow.defaultSchoolEnd
+                : null,
           ),
       ],
     );
@@ -159,9 +158,9 @@ final class SmartModePrefs {
   }
 
   Map<String, Object?> toJson() => {
-        'childId': childId,
-        'modes': modes.map((m) => m.toJson()).toList(),
-      };
+    'childId': childId,
+    'modes': modes.map((m) => m.toJson()).toList(),
+  };
 
   factory SmartModePrefs.fromJson(Map<String, Object?> json) {
     final childId = json['childId'] as String? ?? defaultChildId;

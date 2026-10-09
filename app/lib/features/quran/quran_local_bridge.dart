@@ -54,11 +54,11 @@ final class QuranLocalBridge {
   }
 
   Map<String, Object?> toJson() => {
-        'offlineReady': offlineReady,
-        'pendingWhisperKey': pendingWhisperKey,
-        'athkarBlessings': List<String>.from(athkarBlessings),
-        'memorizationReviews': List<String>.from(memorizationReviews),
-      };
+    'offlineReady': offlineReady,
+    'pendingWhisperKey': pendingWhisperKey,
+    'athkarBlessings': List<String>.from(athkarBlessings),
+    'memorizationReviews': List<String>.from(memorizationReviews),
+  };
 
   void applyJson(Map<String, Object?> json) {
     offlineReady = json['offlineReady'] == true;
@@ -87,7 +87,7 @@ void rebindStage1QuranLocalBridge(QuranLocalBridge bridge) {
 /// Durable offline-ready + whisper/athkar/memo journals via kv_store.
 final class LocalQuranBridgeStore {
   LocalQuranBridgeStore(FamilyLocalDatabase db)
-      : _store = KvSnapshotStore(db, namespace: kvNamespace);
+    : _store = KvSnapshotStore(db, namespace: kvNamespace);
 
   static const kvNamespace = 'quran_local';
 

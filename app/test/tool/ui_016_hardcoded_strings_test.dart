@@ -15,7 +15,8 @@ void main() {
     expect(
       result.exitCode,
       0,
-      reason: 'Rule 12 violations:\n'
+      reason:
+          'Rule 12 violations:\n'
           '${result.stdout}\n${result.stderr}',
     );
   });

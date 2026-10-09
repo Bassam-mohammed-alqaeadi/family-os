@@ -43,16 +43,18 @@ void main() {
     );
   });
 
-  test('intentional test Memory (no fallback flag) still opens policy repo',
-      () async {
-    await FsSessionKernel.resetForTest();
-    await FsSessionKernel.ensureOpen(preferSqlite: false);
-    expect(FsSessionKernel.sqliteFallbackToMemory, isFalse);
-    expect(FsSessionKernel.usingSqlite, isFalse);
-    final repo = await ScreenTimeLocalPersistence.openPolicyRepository();
-    await repo.save(ChildId('t'), ScreenTimePolicy(dailyCapMinutes: 10));
-    expect((await repo.load(ChildId('t'))).dailyCapMinutes, 10);
-  });
+  test(
+    'intentional test Memory (no fallback flag) still opens policy repo',
+    () async {
+      await FsSessionKernel.resetForTest();
+      await FsSessionKernel.ensureOpen(preferSqlite: false);
+      expect(FsSessionKernel.sqliteFallbackToMemory, isFalse);
+      expect(FsSessionKernel.usingSqlite, isFalse);
+      final repo = await ScreenTimeLocalPersistence.openPolicyRepository();
+      await repo.save(ChildId('t'), ScreenTimePolicy(dailyCapMinutes: 10));
+      expect((await repo.load(ChildId('t'))).dailyCapMinutes, 10);
+    },
+  );
 
   test('healthy SQLite openPolicyRepository still restart-safe', () async {
     final dir = await Directory.systemTemp.createTemp('dom_st02a1_');
@@ -70,8 +72,9 @@ void main() {
     final db2 = await SqliteLocalDatabase.openAt(path);
     await FsSessionKernel.ensureOpen(override: db2);
     final loaded =
-        await (await ScreenTimeLocalPersistence.openPolicyRepository())
-            .load(child);
+        await (await ScreenTimeLocalPersistence.openPolicyRepository()).load(
+          child,
+        );
     expect(loaded.dailyCapMinutes, 55);
 
     await FsSessionKernel.resetForTest();

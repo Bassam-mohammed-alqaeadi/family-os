@@ -86,16 +86,16 @@ final class PrefsScheduleWindowRepository implements ScheduleWindowRepository {
   }
 
   List<ScheduleWindow> _emptySet() => [
-        for (final kind in ScheduleKind.values)
-          ScheduleWindow(kind: kind, enabled: false),
-      ];
+    for (final kind in ScheduleKind.values)
+      ScheduleWindow(kind: kind, enabled: false),
+  ];
 }
 
 /// Pure in-memory alternate for unit tests (Rule 25 fake).
 final class InMemoryScheduleWindowRepository
     implements ScheduleWindowRepository {
   InMemoryScheduleWindowRepository([Map<String, List<ScheduleWindow>>? seed])
-      : _byChild = seed ?? {};
+    : _byChild = seed ?? {};
 
   final Map<String, List<ScheduleWindow>> _byChild;
 

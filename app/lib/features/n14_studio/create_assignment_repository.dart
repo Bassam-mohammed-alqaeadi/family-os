@@ -24,8 +24,12 @@ final class InMemoryCreateAssignmentRepository
   InMemoryCreateAssignmentRepository({
     CreateAssignmentSnapshot? seed,
     LearningAssignmentRepository? assignments,
-  })  : _snap = seed ?? createAssignmentEmptyFixture(),
-        _assignmentsOverride = assignments;
+  }) : _snap =
+           seed ??
+           (assignments == null
+               ? createAssignmentEmptyFixture()
+               : createAssignmentPrototypeFixture()),
+       _assignmentsOverride = assignments;
 
   CreateAssignmentSnapshot _snap;
   final LearningAssignmentRepository? _assignmentsOverride;

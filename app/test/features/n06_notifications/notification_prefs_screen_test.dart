@@ -9,18 +9,19 @@ import 'package:family_os/core/design/components/settings_persist_toggle.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
-import 'package:family_os/core/policy/notification_delivery.dart';
 import 'package:family_os/core/policy/notification_prefs.dart';
 import 'package:family_os/core/policy/notification_prefs_repository.dart';
 import 'package:family_os/core/policy/notification_tier.dart';
 import 'package:family_os/features/n06_notifications/notification_prefs_screen.dart';
 import 'package:family_os/features/n10_emergency/emergency_setup_screen.dart';
+import '../../support/recording_sos_fire_service.dart';
 
 void main() {
   tearDown(AppToast.dismiss);
 
-  testWidgets('quiet ON + SOS simulate → father and mother delivered',
-      (tester) async {
+  testWidgets('quiet ON + SOS simulate → father and mother delivered', (
+    tester,
+  ) async {
     final repo = InMemoryNotificationPrefsRepository();
     await repo.save(
       const NotificationPrefs(
@@ -52,12 +53,9 @@ void main() {
     expect(father.quietHoursEnabled, isTrue);
     expect(mother.quietHoursEnabled, isTrue);
 
-    final results = NotificationDelivery.simulateSosAlert(
+    final results = RecordingSosFireService.simulate(
       const ['father', 'mother'],
-      prefsByMember: {
-        'father': father,
-        'mother': mother,
-      },
+      prefsByMember: {'father': father, 'mother': mother},
       now: const TimeOfDay(hour: 23, minute: 15),
     );
     expect(results.every((r) => r.delivered), isTrue);
@@ -79,8 +77,9 @@ void main() {
     expect(find.textContaining('إيقاف الطوارئ'), findsNothing);
   });
 
-  testWidgets('SOS pierce banner visible; quiet hours editable for father',
-      (tester) async {
+  testWidgets('SOS pierce banner visible; quiet hours editable for father', (
+    tester,
+  ) async {
     final repo = InMemoryNotificationPrefsRepository();
     await _pump(
       tester,
@@ -185,10 +184,7 @@ void main() {
     testWidgets('two members → independent quietHoursEnabled', (tester) async {
       final repo = InMemoryNotificationPrefsRepository();
       await repo.save(
-        const NotificationPrefs(
-          memberId: 'father',
-          quietHoursEnabled: false,
-        ),
+        const NotificationPrefs(memberId: 'father', quietHoursEnabled: false),
       );
       await repo.save(
         const NotificationPrefs(
@@ -207,8 +203,9 @@ void main() {
       expect(mother.memberId, 'mother');
     });
 
-    testWidgets('father prefs unchanged when mother toggles quiet hours',
-        (tester) async {
+    testWidgets('father prefs unchanged when mother toggles quiet hours', (
+      tester,
+    ) async {
       final repo = InMemoryNotificationPrefsRepository();
       await repo.save(
         const NotificationPrefs(
@@ -253,8 +250,9 @@ void main() {
       expect(father.analysisNoticesEnabled, isTrue);
     });
 
-    testWidgets('mother cannot mute SOS — UI findsNothing + API reject',
-        (tester) async {
+    testWidgets('mother cannot mute SOS — UI findsNothing + API reject', (
+      tester,
+    ) async {
       final repo = InMemoryNotificationPrefsRepository();
       await _pump(
         tester,
@@ -281,8 +279,9 @@ void main() {
       );
     });
 
-    testWidgets('mother role settings tree — zero SOS-off controls',
-        (tester) async {
+    testWidgets('mother role settings tree — zero SOS-off controls', (
+      tester,
+    ) async {
       await _pump(
         tester,
         repository: InMemoryNotificationPrefsRepository(),
@@ -297,8 +296,9 @@ void main() {
       expect(find.byKey(NotificationPrefsKeys.sosPierceBanner), findsOneWidget);
     });
 
-    testWidgets('CurrentRole mother resolves memberId without constructor',
-        (tester) async {
+    testWidgets('CurrentRole mother resolves memberId without constructor', (
+      tester,
+    ) async {
       final repo = InMemoryNotificationPrefsRepository();
       await repo.save(
         const NotificationPrefs(
@@ -325,7 +325,9 @@ void main() {
   });
 
   group('UI-008 quiet hours persist feedback', () {
-    testWidgets('toggle success toast without bare Switch flip', (tester) async {
+    testWidgets('toggle success toast without bare Switch flip', (
+      tester,
+    ) async {
       final repo = InMemoryNotificationPrefsRepository();
       await _pump(
         tester,

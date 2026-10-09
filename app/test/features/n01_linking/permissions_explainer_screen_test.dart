@@ -22,7 +22,10 @@ void main() {
     expect(find.text('الموقع «طوال الوقت»'), findsOneWidget);
     expect(find.text('خدمة إمكانية الوصول'), findsOneWidget);
     expect(find.text('استثناء البطارية'), findsOneWidget);
-    expect(find.byKey(const Key('permissions_explainer_banner')), findsOneWidget);
+    expect(
+      find.byKey(const Key('permissions_explainer_banner')),
+      findsOneWidget,
+    );
     expect(
       find.textContaining('إن رُفض أي إذن لن تُقفل أي شاشة'),
       findsOneWidget,
@@ -110,9 +113,7 @@ void main() {
 }
 
 List<String> _permissionsExplainerValues(String arb) {
-  final re = RegExp(
-    r'"permissionsExplainer[^"]*"\s*:\s*"((?:\\.|[^"\\])*)"',
-  );
+  final re = RegExp(r'"permissionsExplainer[^"]*"\s*:\s*"((?:\\.|[^"\\])*)"');
   return re.allMatches(arb).map((m) => m.group(1)!).toList();
 }
 

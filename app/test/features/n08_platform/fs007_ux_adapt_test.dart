@@ -56,8 +56,9 @@ void main() {
     await db.close();
   });
 
-  testWidgets('FAT-065 shows ticket panel with redacted preview + resolve',
-      (tester) async {
+  testWidgets('FAT-065 shows ticket panel with redacted preview + resolve', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _app(
         role: AppRole.father,
@@ -105,7 +106,9 @@ void main() {
     expect(find.byKey(AiSafetyTicketReviewKeys.resolve), findsNothing);
   });
 
-  testWidgets('CHD-010 shows child on-device transparency card', (tester) async {
+  testWidgets('CHD-010 shows child on-device transparency card', (
+    tester,
+  ) async {
     final model = await service.activeModel();
     expect(model, isNotNull);
     expect(model!.mayExecute, isTrue);
@@ -131,7 +134,10 @@ void main() {
       find.byKey(AiSafetyChildTransparencyKeys.onDeviceNote),
       findsOneWidget,
     );
-    expect(find.byKey(AiSafetyChildTransparencyKeys.searchLine), findsOneWidget);
+    expect(
+      find.byKey(AiSafetyChildTransparencyKeys.searchLine),
+      findsOneWidget,
+    );
   });
 }
 

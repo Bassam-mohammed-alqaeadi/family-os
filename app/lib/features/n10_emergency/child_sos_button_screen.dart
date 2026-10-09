@@ -58,7 +58,7 @@ class ChildSosButtonScreen extends StatefulWidget {
   /// Test seam — when set, ignores [CurrentRole].
   final AppRole? roleOverride;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Alert store for CHD-006 handoff — null → sos_final Domain fire (Slice 01).
@@ -176,7 +176,7 @@ class _ChildSosButtonScreenState extends State<ChildSosButtonScreen>
       _firing = true;
       _secondsLeft = 0;
     });
-    final fire = widget.sosFire ?? stage1SosFireService;
+    final fire = widget.sosFire ?? activeSosFireService;
     final injected = widget.alerts;
     final sender = childSosSenderOf(
       context,
@@ -205,16 +205,17 @@ class _ChildSosButtonScreenState extends State<ChildSosButtonScreen>
     } else {
       // Production: durable sos_final lifecycle (AUTH-FS006).
       await Stage1SosFinalRuntime.ensureOpen();
-      final panicQuiet =
-          stage1SosSettingsStore.settings.panicQuietPreferred;
+      final panicQuiet = stage1SosSettingsStore.settings.panicQuietPreferred;
       final incident = await Stage1SosFinalRuntime.crossSystem.fireChildHold(
         childId: ChildId(childId),
         deviceId: deviceId,
         panicQuietAtTrigger: panicQuiet,
       );
-      // Keep fire service audit path for P-4 parity (no entitlement).
-      await fire.fire(childId: childId, actorId: sender.actorId);
-      alertId = incident.id;
+      // The live authority is asked BEFORE the handoff id is chosen, because a press that
+      // reached a server belongs to the server's incident - and that is the id the parent
+      // board is reading. A press that reached nobody keeps the device's own record.
+      final result = await fire.fire(childId: childId, actorId: sender.actorId);
+      alertId = result.alertId ?? incident.id;
       if (!mounted) return;
       if (widget.onFired != null) {
         widget.onFired!();
@@ -226,9 +227,7 @@ class _ChildSosButtonScreenState extends State<ChildSosButtonScreen>
       'childId': childId,
       if (alertId != null) 'alertId': alertId,
     };
-    context.go(
-      Uri(path: '/scr-chd-006', queryParameters: params).toString(),
-    );
+    context.go(Uri(path: '/scr-chd-006', queryParameters: params).toString());
   }
 
   String _statusText(AppLocalizations l10n) {

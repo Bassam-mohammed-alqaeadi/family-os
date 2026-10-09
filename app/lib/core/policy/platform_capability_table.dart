@@ -9,7 +9,7 @@ import 'platform_id.dart';
 /// Android [MonitoringFeature.webFilter] → full.
 abstract final class PlatformCapabilityTable {
   static const Map<PlatformId, Map<MonitoringFeature, CapabilityLevel>>
-      fixture = {
+  fixture = {
     PlatformId.android: {
       MonitoringFeature.webFilter: CapabilityLevel.full,
       MonitoringFeature.appLimits: CapabilityLevel.full,
@@ -24,10 +24,7 @@ abstract final class PlatformCapabilityTable {
     },
   };
 
-  static CapabilityLevel level(
-    PlatformId platform,
-    MonitoringFeature feature,
-  ) {
+  static CapabilityLevel level(PlatformId platform, MonitoringFeature feature) {
     return fixture[platform]?[feature] ?? CapabilityLevel.unavailable;
   }
 }

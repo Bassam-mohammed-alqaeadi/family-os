@@ -133,6 +133,10 @@ class _ChildSosInProgressScreenState extends State<ChildSosInProgressScreen>
     try {
       if (widget.repository != null) {
         _repo = widget.repository;
+      } else if (activeSosAlertRepository != null) {
+        // A server session is bound: this board reads the family's incident, which is the
+        // one every other phone in the family is looking at.
+        _repo = activeSosAlertRepository;
       } else {
         await Stage1SosFinalRuntime.ensureOpen();
         if (!mounted) return;
@@ -204,7 +208,10 @@ class _ChildSosInProgressScreenState extends State<ChildSosInProgressScreen>
 
   void _callFather(AppLocalizations l10n, {required bool panicQuiet}) {
     if (panicQuiet) {
-      AppToast.show(context, message: l10n.childSosInProgressCallUnavailableToast);
+      AppToast.show(
+        context,
+        message: l10n.childSosInProgressCallUnavailableToast,
+      );
       return;
     }
     if (widget.onCallFather != null) {
@@ -253,6 +260,12 @@ class _ChildSosInProgressScreenState extends State<ChildSosInProgressScreen>
     } on Object {
       if (!mounted) return;
       setState(() => _busy = false);
+      // A cancel that did not reach the authority is said out loud: silence here would
+      // read as "it worked" on the one screen where that mistake matters most.
+      AppToast.show(
+        context,
+        message: AppLocalizations.of(context).childSosInProgressErrorMessage,
+      );
     }
   }
 
@@ -261,8 +274,7 @@ class _ChildSosInProgressScreenState extends State<ChildSosInProgressScreen>
     final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final role = _role(context);
-    final active =
-        role == AppRole.child && _alert != null && _alert!.isActive;
+    final active = role == AppRole.child && _alert != null && _alert!.isActive;
 
     return FamilyUiModeScope(
       mode: FamilyUiMode.child,
@@ -281,11 +293,7 @@ class _ChildSosInProgressScreenState extends State<ChildSosInProgressScreen>
     );
   }
 
-  Widget _buildBody(
-    AppLocalizations l10n,
-    FamilyColors colors,
-    AppRole role,
-  ) {
+  Widget _buildBody(AppLocalizations l10n, FamilyColors colors, AppRole role) {
     if (role != AppRole.child) {
       return AppEmptyState(
         key: ChildSosInProgressKeys.parentLean,
@@ -375,24 +383,34 @@ class _InProgressBody extends StatelessWidget {
   final VoidCallback onCancel;
 
   String _locationLabel() => switch (alert.locationClass) {
-        SosLocationClass.acquiring => l10n.sosAlertLocationAcquiring,
-        SosLocationClass.ready => l10n.sosAlertLocationReady,
-        SosLocationClass.stale => l10n.sosAlertLocationStale,
-        SosLocationClass.unavailable => l10n.sosAlertLocationUnavailable,
-      };
+    SosLocationClass.acquiring => l10n.sosAlertLocationAcquiring,
+    SosLocationClass.ready => l10n.sosAlertLocationReady,
+    SosLocationClass.stale => l10n.sosAlertLocationStale,
+    SosLocationClass.unavailable => l10n.sosAlertLocationUnavailable,
+  };
 
   String _deliveryLabel(SosDeliveryRow row) {
     return switch (row.status) {
-      SosDeliveryClass.pending =>
-        l10n.sosAlertDeliveryPending(row.channel, row.recipientId),
-      SosDeliveryClass.delivered =>
-        l10n.sosAlertDeliveryDelivered(row.channel, row.recipientId),
-      SosDeliveryClass.failed =>
-        l10n.sosAlertDeliveryFailed(row.channel, row.recipientId),
-      SosDeliveryClass.unavailable =>
-        l10n.sosAlertDeliveryUnavailable(row.channel, row.recipientId),
-      SosDeliveryClass.notConfigured =>
-        l10n.sosAlertDeliveryNotConfigured(row.channel, row.recipientId),
+      SosDeliveryClass.pending => l10n.sosAlertDeliveryPending(
+        row.channel,
+        row.recipientId,
+      ),
+      SosDeliveryClass.delivered => l10n.sosAlertDeliveryDelivered(
+        row.channel,
+        row.recipientId,
+      ),
+      SosDeliveryClass.failed => l10n.sosAlertDeliveryFailed(
+        row.channel,
+        row.recipientId,
+      ),
+      SosDeliveryClass.unavailable => l10n.sosAlertDeliveryUnavailable(
+        row.channel,
+        row.recipientId,
+      ),
+      SosDeliveryClass.notConfigured => l10n.sosAlertDeliveryNotConfigured(
+        row.channel,
+        row.recipientId,
+      ),
     };
   }
 
@@ -494,7 +512,8 @@ class _InProgressBody extends StatelessWidget {
                       SosLocationStatus(
                         locationClass: alert.locationClass,
                         label: _locationLabel(),
-                        detail: alert.locationClass == SosLocationClass.acquiring
+                        detail:
+                            alert.locationClass == SosLocationClass.acquiring
                             ? l10n.childSosInProgressLocationPending
                             : alert.locationLabel,
                         onSurface: true,
@@ -578,8 +597,10 @@ class _ChildSosAction extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 14,
+                ),
                 child: Text(
                   label,
                   textAlign: TextAlign.center,

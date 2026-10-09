@@ -23,16 +23,12 @@ final class LocalEventJournal {
   final DateTime Function() _clock;
 
   Future<void> append(LocalEventEnvelope event) async {
-    await _db.insert(
-      _table,
-      {
-        'namespace': namespace,
-        'key': event.id,
-        'value': jsonEncode(event.toJson()),
-        'updated_at': _clock().toUtc().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: LocalConflictAlgorithm.abort,
-    );
+    await _db.insert(_table, {
+      'namespace': namespace,
+      'key': event.id,
+      'value': jsonEncode(event.toJson()),
+      'updated_at': _clock().toUtc().millisecondsSinceEpoch,
+    }, conflictAlgorithm: LocalConflictAlgorithm.abort);
   }
 
   Future<LocalEventEnvelope?> load(String id) async {

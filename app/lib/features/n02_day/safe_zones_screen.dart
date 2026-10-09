@@ -37,6 +37,7 @@ abstract final class SafeZonesKeys {
   static const childLean = Key('safe_zones_child_lean');
 
   static Key zone(String id) => Key('safe_zones_zone_$id');
+
   /// Legacy master switch key — kept for older tests; prefer flag keys.
   static Key zoneSwitch(String id) => Key('safe_zones_switch_$id');
   static Key zoneArrive(String id) => Key('safe_zones_arrive_$id');
@@ -82,7 +83,7 @@ class SafeZonesScreen extends StatefulWidget {
   /// Test seam — when set, overrides role/level edit gate.
   final bool? canEditOverride;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — SOS fire / navigate.
@@ -122,6 +123,9 @@ class SafeZonesScreenState extends State<SafeZonesScreen> {
     }
     return false;
   }
+
+  /// Whether the bound authority can store a missed-deadline alert at all.
+  bool get _repositoryStoresNoShow => _repo?.storesNoShowAlert ?? true;
 
   String? get _resolvedChildId {
     final raw = widget.childId?.trim();
@@ -178,6 +182,11 @@ class SafeZonesScreenState extends State<SafeZonesScreen> {
     try {
       if (widget.repository != null) {
         _repo = widget.repository;
+      } else if (stage1SafeZonesRepository.isRemoteAuthority) {
+        // Bound by the composition root when this build has a server: the family's shared
+        // boundaries. A zone that lives in one handset's store is invisible to the other
+        // parent, and no arrival can be detected from a boundary only one phone knows.
+        _repo = stage1SafeZonesRepository;
       } else {
         await Stage1LocationRuntime.ensureOpen();
         if (!mounted) return;
@@ -275,7 +284,7 @@ class SafeZonesScreenState extends State<SafeZonesScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    final fire = widget.sosFire ?? stage1SosFireService;
+    final fire = widget.sosFire ?? activeSosFireService;
     final sender = sosSenderForRole(
       context,
       _role,
@@ -397,6 +406,7 @@ class SafeZonesScreenState extends State<SafeZonesScreen> {
             l10n: l10n,
             onToggleFlag: _toggleFlag,
             onAdd: _canEdit ? _goCreate : null,
+            supportsNoShow: _repositoryStoresNoShow,
           ),
           const SizedBox(height: 14),
           PrimaryBtn(
@@ -430,17 +440,23 @@ class _ZonesCard extends StatelessWidget {
     required this.l10n,
     required this.onToggleFlag,
     required this.onAdd,
+    required this.supportsNoShow,
   });
 
   final List<SafeZone> zones;
   final bool canEdit;
+
+  /// False when the bound authority cannot store a missed-deadline alert, in which case
+  /// the switch is not rendered rather than rendered and dropped.
+  final bool supportsNoShow;
   final AppLocalizations l10n;
   final Future<void> Function(
     SafeZone zone, {
     bool? alertEnter,
     bool? alertExit,
     bool? alertNoShow,
-  }) onToggleFlag;
+  })
+  onToggleFlag;
   final VoidCallback? onAdd;
 
   @override
@@ -495,6 +511,7 @@ class _ZonesCard extends StatelessWidget {
                   l10n: l10n,
                   colors: colors,
                   onToggleFlag: onToggleFlag,
+                  supportsNoShow: supportsNoShow,
                 ),
                 if (i < zones.length - 1) const SizedBox(height: 12),
               ],
@@ -513,10 +530,12 @@ class _ZoneCard extends StatelessWidget {
     required this.l10n,
     required this.colors,
     required this.onToggleFlag,
+    required this.supportsNoShow,
   });
 
   final SafeZone zone;
   final bool canEdit;
+  final bool supportsNoShow;
   final AppLocalizations l10n;
   final FamilyColors colors;
   final Future<void> Function(
@@ -524,7 +543,8 @@ class _ZoneCard extends StatelessWidget {
     bool? alertEnter,
     bool? alertExit,
     bool? alertNoShow,
-  }) onToggleFlag;
+  })
+  onToggleFlag;
 
   @override
   Widget build(BuildContext context) {
@@ -582,15 +602,19 @@ class _ZoneCard extends StatelessWidget {
             colors: colors,
             onChanged: (v) => onToggleFlag(zone, alertExit: v),
           ),
-          _AlertFlagRow(
-            switchKey: SafeZonesKeys.zoneNoShow(zone.id),
-            label: l10n.createSafeZoneAlertNoShow,
-            value: zone.alertNoShow,
-            canEdit: canEdit,
-            colors: colors,
-            onChanged: (v) => onToggleFlag(zone, alertNoShow: v),
-          ),
-          if (zone.alertNoShow && zone.noShowDeadlineMinutes != null)
+          if (supportsNoShow) ...[
+            _AlertFlagRow(
+              switchKey: SafeZonesKeys.zoneNoShow(zone.id),
+              label: l10n.createSafeZoneAlertNoShow,
+              value: zone.alertNoShow,
+              canEdit: canEdit,
+              colors: colors,
+              onChanged: (v) => onToggleFlag(zone, alertNoShow: v),
+            ),
+          ],
+          if (supportsNoShow &&
+              zone.alertNoShow &&
+              zone.noShowDeadlineMinutes != null)
             Padding(
               key: SafeZonesKeys.zoneNoShowDeadline(zone.id),
               padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),

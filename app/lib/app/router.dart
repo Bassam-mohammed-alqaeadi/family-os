@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:family_os/app/dev_screen_gallery.dart';
 import 'package:family_os/app/gallery_screen.dart';
 import 'package:family_os/app/role_guard.dart';
+import 'package:family_os/app/showcase_policy.dart';
 import 'package:family_os/app/role_guard_notice.dart';
 import 'package:family_os/app/route_child_context.dart';
 import 'package:family_os/app/sys3_routes.dart';
@@ -24,14 +25,13 @@ import 'package:family_os/features/shared_templates/empty_state_template_screen.
 import 'package:family_os/features/n01_linking/create_family_screen.dart';
 import 'package:family_os/features/n01_linking/setup_wizard_screen.dart';
 import 'package:family_os/features/n01_linking/add_child_screen.dart';
-import 'package:family_os/features/n01_linking/link_qr_screen.dart';
+import 'package:family_os/features/n01_linking/native_device_pairing_screens.dart';
 import 'package:family_os/features/n01_linking/permissions_explainer_screen.dart';
 import 'package:family_os/features/n01_linking/link_success_screen.dart';
 import 'package:family_os/features/n01_linking/trial_mode_screen.dart';
 import 'package:family_os/features/n01_linking/invite_mother_screen.dart';
 import 'package:family_os/features/n01_linking/accept_mother_invite_screen.dart';
 import 'package:family_os/features/n01_linking/child_welcome_screen.dart';
-import 'package:family_os/features/n01_linking/child_qr_scan_screen.dart';
 import 'package:family_os/features/n01_linking/transparency_consent_screen.dart';
 import 'package:family_os/features/n02_day/day_board_screen.dart';
 import 'package:family_os/features/n02_day/children_list_screen.dart';
@@ -43,6 +43,7 @@ import 'package:family_os/features/n02_day/create_safe_zone_screen.dart';
 import 'package:family_os/features/n02_day/alerts_hub_screen.dart';
 import 'package:family_os/features/n02_day/alert_detail_screen.dart';
 import 'package:family_os/features/n02_day/conversations_list_screen.dart';
+import 'package:family_os/features/n02_day/family_chat_server_repository.dart';
 import 'package:family_os/features/n02_day/child_chats_screen.dart';
 import 'package:family_os/features/n02_day/child_conversation_screen.dart';
 import 'package:family_os/features/n02_day/child_active_call_screen.dart';
@@ -295,22 +296,34 @@ const Map<String, String> legacyRedirectPaths = {
   '/scr-fat-077': '/scr-fat-075',
 };
 
-/// Builds the app [GoRouter] with gallery + every **active** CSV screen route.
+/// Builds the app [GoRouter] with every **active** CSV screen route.
 ///
-/// Product entry is welcome (`/scr-shr-001`); design gallery at `/gallery`;
-/// QA catalog at `/dev-screens` ([DevScreenGallery]).
+/// Product entry is welcome (`/scr-shr-001`). The design showcase - the token gallery at
+/// `/gallery` and the QA catalog at `/dev-screens` ([DevScreenGallery]) - is registered
+/// only when [showcaseEnabled] is true, and never in a release build.
 /// Tombstone deep links (e.g. `/scr-fat-039`) redirect to [tombstoneSchoolRedirectTarget].
 /// Legacy paths in [legacyRedirectPaths] redirect before RoleGuard.
 /// System #3 identity routes (sys3_*) are appended via [sys3IdentityRoutes].
 GoRouter createAppRouter({
   required ValueListenable<AppRole> roleListenable,
   String initialLocation = '/scr-shr-001',
+  /// Whether the design showcase may be registered. Defaults to the build's own policy:
+  /// requested at compile time and refused in release mode. Tests pass it explicitly to
+  /// prove both directions.
+  bool? showcaseEnabled,
 }) {
+  final showShowcase = showcaseEnabled ?? showcaseEnabledFor();
   return GoRouter(
     initialLocation: initialLocation,
     refreshListenable: roleListenable,
     redirect: (context, state) {
       final path = state.uri.path;
+      // A build without the showcase must not serve one, even by deep link. This is the
+      // second half of the quarantine: the routes below are not registered at all, and
+      // this redirect means an old link lands on the product rather than on an error.
+      if (!showShowcase && isQuarantinedShowcasePath(path)) {
+        return showcaseFallbackPath;
+      }
       if (tombstonePaths.contains(path)) {
         return tombstoneSchoolRedirectTarget;
       }
@@ -318,7 +331,7 @@ GoRouter createAppRouter({
       if (legacyTarget != null) return legacyTarget;
       return roleGuardRedirect(state, roleListenable.value);
     },
-    routes: [
+    routes: _quarantineIfNeeded([
       GoRoute(
         path: '/gallery',
         name: 'gallery',
@@ -363,7 +376,7 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-fat-004',
       name: 'SCR-FAT-004',
-      builder: (context, state) => LinkQrScreen(),
+      builder: (context, state) => NativeParentPairingScreen(childId: state.uri.queryParameters['childId']),
     ),
     GoRoute(
       path: '/scr-fat-005',
@@ -453,12 +466,12 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-fat-021',
       name: 'SCR-FAT-021',
-      builder: (context, state) => ConversationsListScreen(),
+      builder: (context, state) => ConversationsListScreen(repository: familyChatGuardianListRepository()),
     ),
     GoRoute(
       path: '/scr-fat-022',
       name: 'SCR-FAT-022',
-      builder: (context, state) => ConversationScreen(chatWith: state.uri.queryParameters['chatWith']),
+      builder: (context, state) => ConversationScreen(chatWith: state.uri.queryParameters['chatWith'], repository: familyChatGuardianConversationRepository()),
     ),
     GoRoute(
       path: '/scr-fat-023',
@@ -498,7 +511,7 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-chd-002',
       name: 'SCR-CHD-002',
-      builder: (context, state) => ChildQrScanScreen(),
+      builder: (context, state) => ChildModePairingScreen(),
     ),
     GoRoute(
       path: '/scr-chd-003',
@@ -523,12 +536,12 @@ GoRouter createAppRouter({
     GoRoute(
       path: '/scr-chd-007',
       name: 'SCR-CHD-007',
-      builder: (context, state) => ChildChatsScreen(),
+      builder: (context, state) => ChildChatsScreen(repository: familyChatChildListRepository()),
     ),
     GoRoute(
       path: '/scr-chd-008',
       name: 'SCR-CHD-008',
-      builder: (context, state) => ChildConversationScreen(chatWith: state.uri.queryParameters['chatWith']),
+      builder: (context, state) => ChildConversationScreen(chatWith: state.uri.queryParameters['chatWith'], repository: familyChatChildConversationRepository()),
     ),
     GoRoute(
       path: '/scr-chd-009',
@@ -975,8 +988,22 @@ GoRouter createAppRouter({
       name: 'SCR-FAT-086',
       builder: (context, state) => FamilyMomentsScreen(),
     ),
-    ],
+    ], showShowcase),
   );
+}
+
+/// Drops quarantined showcase routes from a build that did not ask for them.
+///
+/// Applied to the declared route list rather than duplicating it, so there is exactly one
+/// place where a route is defined and exactly one place where the quarantine decides
+/// whether it ships. A route added later is covered by the policy without anyone
+/// remembering to gate it.
+List<RouteBase> _quarantineIfNeeded(List<RouteBase> routes, bool showShowcase) {
+  if (showShowcase) return routes;
+  return routes
+      .where((route) =>
+          route is! GoRoute || !isQuarantinedShowcasePath(route.path))
+      .toList(growable: false);
 }
 
 /// Shared localization delegates for [MaterialApp.router].

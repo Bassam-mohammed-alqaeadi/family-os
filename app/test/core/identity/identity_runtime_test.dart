@@ -75,17 +75,20 @@ void main() {
     expect(auth.canSetFamilyRules, isTrue);
   });
 
-  test('supports multiple families per account and active family switching', () {
-    final runtime = buildRuntime();
-    expect(runtime.membershipsForAccount(AccountId('acc_1')), hasLength(2));
-    runtime.switchActiveFamily(FamilyId('fam_b'));
-    final auth = runtime.authorizationContext;
-    expect(auth.activeFamily.familyId, FamilyId('fam_b'));
-    expect(auth.role, AppRole.mother);
-    expect(auth.motherLevel, MotherLevel.partner);
-    expect(auth.canApproveChildRequests, isTrue);
-    expect(auth.canSetFamilyRules, isFalse);
-  });
+  test(
+    'supports multiple families per account and active family switching',
+    () {
+      final runtime = buildRuntime();
+      expect(runtime.membershipsForAccount(AccountId('acc_1')), hasLength(2));
+      runtime.switchActiveFamily(FamilyId('fam_b'));
+      final auth = runtime.authorizationContext;
+      expect(auth.activeFamily.familyId, FamilyId('fam_b'));
+      expect(auth.role, AppRole.mother);
+      expect(auth.motherLevel, MotherLevel.partner);
+      expect(auth.canApproveChildRequests, isTrue);
+      expect(auth.canSetFamilyRules, isFalse);
+    },
+  );
 
   test('child identity cannot exist across multiple families', () {
     expect(
@@ -97,8 +100,16 @@ void main() {
           startedAt: DateTime.utc(2026, 1, 1),
         ),
         families: [
-          Family(id: FamilyId('fam_1'), name: '1', ownerMemberId: MemberId('m1')),
-          Family(id: FamilyId('fam_2'), name: '2', ownerMemberId: MemberId('m2')),
+          Family(
+            id: FamilyId('fam_1'),
+            name: '1',
+            ownerMemberId: MemberId('m1'),
+          ),
+          Family(
+            id: FamilyId('fam_2'),
+            name: '2',
+            ownerMemberId: MemberId('m2'),
+          ),
         ],
         memberships: [
           FamilyMembership(
@@ -183,7 +194,10 @@ void main() {
 
   test('child logout permission toggles OFF/ON', () {
     final runtime = buildRuntime();
-    final scope = ChildScope(familyId: FamilyId('fam_a'), childId: ChildId('child_a'));
+    final scope = ChildScope(
+      familyId: FamilyId('fam_a'),
+      childId: ChildId('child_a'),
+    );
     expect(runtime.childLogoutAllowed(scope), isFalse);
     runtime.setChildLogoutAllowed(
       childId: ChildId('child_a'),

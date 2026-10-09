@@ -36,11 +36,11 @@ class OnboardingProgressFlags {
 
   /// Fresh install / empty cache — still never blocks Skip.
   factory OnboardingProgressFlags.empty() => const OnboardingProgressFlags(
-        accountCreated: false,
-        childLinked: false,
-        motherInvited: false,
-        sosConfigured: false,
-      );
+    accountCreated: false,
+    childLinked: false,
+    motherInvited: false,
+    sosConfigured: false,
+  );
 
   static const int totalSteps = 4;
 
@@ -74,11 +74,11 @@ class OnboardingProgressFlags {
   }
 
   Map<String, Object?> toJson() => {
-        'accountCreated': accountCreated,
-        'childLinked': childLinked,
-        'motherInvited': motherInvited,
-        'sosConfigured': sosConfigured,
-      };
+    'accountCreated': accountCreated,
+    'childLinked': childLinked,
+    'motherInvited': motherInvited,
+    'sosConfigured': sosConfigured,
+  };
 
   factory OnboardingProgressFlags.fromJson(Map<String, Object?> json) {
     bool read(String key) {
@@ -104,10 +104,6 @@ class OnboardingProgressFlags {
   }
 
   @override
-  int get hashCode => Object.hash(
-        accountCreated,
-        childLinked,
-        motherInvited,
-        sosConfigured,
-      );
+  int get hashCode =>
+      Object.hash(accountCreated, childLinked, motherInvited, sosConfigured);
 }

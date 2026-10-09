@@ -29,18 +29,13 @@ void main() {
       await tester.pumpWidget(
         _wrap(
           locale: locale,
-          child: const DayBoardScreen(
-            projection: DayBoardProjection.empty,
-          ),
+          child: const DayBoardScreen(projection: DayBoardProjection.empty),
         ),
       );
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      expect(
-        find.text(isAr ? 'لوحة اليوم' : "Today's board"),
-        findsOneWidget,
-      );
+      expect(find.text(isAr ? 'لوحة اليوم' : "Today's board"), findsOneWidget);
       expect(
         Directionality.of(tester.element(find.byType(DayBoardScreen))),
         isAr ? TextDirection.rtl : TextDirection.ltr,
@@ -73,10 +68,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      expect(
-        find.text(isAr ? 'لوحة يومي' : 'My day board'),
-        findsOneWidget,
-      );
+      expect(find.text(isAr ? 'لوحة يومي' : 'My day board'), findsOneWidget);
       expect(
         Directionality.of(tester.element(find.byType(ChildDayBoardScreen))),
         isAr ? TextDirection.rtl : TextDirection.ltr,
@@ -122,10 +114,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      expect(
-        find.text(isAr ? 'ابدأ الآن' : 'Get started'),
-        findsOneWidget,
-      );
+      expect(find.text(isAr ? 'ابدأ الآن' : 'Get started'), findsOneWidget);
       expect(
         Directionality.of(tester.element(find.byType(WelcomeScreen))),
         isAr ? TextDirection.rtl : TextDirection.ltr,

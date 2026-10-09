@@ -81,6 +81,29 @@ void main() {
     await tester.pumpAndSettle();
     expect(sos, 1);
   });
+
+  testWidgets('NotebookLM noteboard P1 converts pinned note to flashcard', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      repository: InMemoryChildFlashcardsRepository(
+        seed: childFlashcardsPrototypeFixture(),
+      ),
+    );
+    expect(find.byKey(ChildFlashcardsKeys.noteboardCard), findsOneWidget);
+
+    await tester.ensureVisible(find.byKey(ChildFlashcardsKeys.convertNoteCta));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(ChildFlashcardsKeys.convertNoteCta));
+    await tester.pump();
+    expect(
+      find.textContaining('Added your personal flashcard'),
+      findsOneWidget,
+    );
+    AppToast.dismiss();
+    await tester.pumpAndSettle();
+  });
 }
 
 Future<void> _pump(

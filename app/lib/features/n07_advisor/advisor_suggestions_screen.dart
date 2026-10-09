@@ -24,9 +24,15 @@ abstract final class AdvisorSuggestionsKeys {
   static const list = Key('advisor_suggestions_list');
   static const readOnlyHint = Key('advisor_suggestions_read_only');
   static const privacyFooter = Key('advisor_suggestions_privacy_footer');
-  static const approveConfirmDialog = Key('advisor_suggestions_approve_confirm');
-  static const approveConfirmAction = Key('advisor_suggestions_approve_confirm_action');
-  static const approveConfirmCancel = Key('advisor_suggestions_approve_confirm_cancel');
+  static const approveConfirmDialog = Key(
+    'advisor_suggestions_approve_confirm',
+  );
+  static const approveConfirmAction = Key(
+    'advisor_suggestions_approve_confirm_action',
+  );
+  static const approveConfirmCancel = Key(
+    'advisor_suggestions_approve_confirm_cancel',
+  );
   static const approveForbiddenBlocked = Key(
     'advisor_suggestions_approve_forbidden_blocked',
   );
@@ -170,9 +176,7 @@ class AdvisorSuggestionsScreenState extends State<AdvisorSuggestionsScreen> {
     return Scaffold(
       key: AdvisorSuggestionsKeys.screen,
       backgroundColor: colors.bg,
-      appBar: AppBar(
-        title: Text(l10n.advisorSuggestionsTitle),
-      ),
+      appBar: AppBar(title: Text(l10n.advisorSuggestionsTitle)),
       body: _buildBody(context, l10n, colors),
     );
   }
@@ -184,9 +188,7 @@ class AdvisorSuggestionsScreenState extends State<AdvisorSuggestionsScreen> {
   ) {
     if (_loading) {
       return const Center(
-        child: CircularProgressIndicator(
-          key: AdvisorSuggestionsKeys.loading,
-        ),
+        child: CircularProgressIndicator(key: AdvisorSuggestionsKeys.loading),
       );
     }
     if (_loadFailed) {

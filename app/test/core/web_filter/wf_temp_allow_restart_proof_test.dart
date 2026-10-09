@@ -17,49 +17,54 @@ void main() {
     databaseFactory = databaseFactoryFfi;
   });
 
-  test('temp allow write→close→reopen→activeHosts; expires after timestamp',
-      () async {
-    final dir = await Directory.systemTemp.createTemp('fs_wf_unlock_');
-    final path = p.join(dir.path, 'wf.db');
-    final family = FamilyId('fam_wf');
-    final child = ChildId('child_a');
-    final starts = DateTime.utc(2026, 9, 24, 18);
-    final expires = starts.add(const Duration(hours: 1));
+  test(
+    'temp allow write→close→reopen→activeHosts; expires after timestamp',
+    () async {
+      final dir = await Directory.systemTemp.createTemp('fs_wf_unlock_');
+      final path = p.join(dir.path, 'wf.db');
+      final family = FamilyId('fam_wf');
+      final child = ChildId('child_a');
+      final starts = DateTime.utc(2026, 9, 24, 18);
+      final expires = starts.add(const Duration(hours: 1));
 
-    final db1 = await SqliteLocalDatabase.openAt(path);
-    final store1 = LocalWebFilterTempAllowStore(db1, clock: () => starts);
-    await store1.save(
-      WebFilterTempAllow(
-        id: 'ta_reopen',
-        familyId: family,
-        childId: child,
-        host: 'adult.example',
-        requestId: 'req_1',
-        startsAt: starts,
-        expiresAt: expires,
-        status: WebFilterTempAllowStatus.active,
-      ),
-    );
-    expect(
-      await store1.activeHosts(family, child, now: starts.add(const Duration(minutes: 5))),
-      {'adult.example'},
-    );
-    await db1.close();
+      final db1 = await SqliteLocalDatabase.openAt(path);
+      final store1 = LocalWebFilterTempAllowStore(db1, clock: () => starts);
+      await store1.save(
+        WebFilterTempAllow(
+          id: 'ta_reopen',
+          familyId: family,
+          childId: child,
+          host: 'adult.example',
+          requestId: 'req_1',
+          startsAt: starts,
+          expiresAt: expires,
+          status: WebFilterTempAllowStatus.active,
+        ),
+      );
+      expect(
+        await store1.activeHosts(
+          family,
+          child,
+          now: starts.add(const Duration(minutes: 5)),
+        ),
+        {'adult.example'},
+      );
+      await db1.close();
 
-    final db2 = await SqliteLocalDatabase.openAt(path);
-    final store2 = LocalWebFilterTempAllowStore(db2);
-    final mid = starts.add(const Duration(minutes: 30));
-    expect(
-      await store2.activeHosts(family, child, now: mid),
-      {'adult.example'},
-    );
+      final db2 = await SqliteLocalDatabase.openAt(path);
+      final store2 = LocalWebFilterTempAllowStore(db2);
+      final mid = starts.add(const Duration(minutes: 30));
+      expect(await store2.activeHosts(family, child, now: mid), {
+        'adult.example',
+      });
 
-    final after = expires.add(const Duration(minutes: 1));
-    expect(await store2.activeHosts(family, child, now: after), isEmpty);
-    final listed = await store2.listForChild(family, child);
-    expect(listed.single.status, WebFilterTempAllowStatus.expired);
+      final after = expires.add(const Duration(minutes: 1));
+      expect(await store2.activeHosts(family, child, now: after), isEmpty);
+      final listed = await store2.listForChild(family, child);
+      expect(listed.single.status, WebFilterTempAllowStatus.expired);
 
-    await db2.close();
-    await dir.delete(recursive: true);
-  });
+      await db2.close();
+      await dir.delete(recursive: true);
+    },
+  );
 }

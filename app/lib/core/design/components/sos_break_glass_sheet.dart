@@ -122,11 +122,7 @@ class _SosBreakGlassSheetState extends State<_SosBreakGlassSheet> {
           Text(
             l10n.sosBreakGlassBody(minutes),
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.45,
-              color: colors.ink2,
-            ),
+            style: TextStyle(fontSize: 13, height: 1.45, color: colors.ink2),
           ),
           const SizedBox(height: 12),
           TextField(

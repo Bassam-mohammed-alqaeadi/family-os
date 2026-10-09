@@ -51,22 +51,13 @@ void main() {
         expect(profile!.id, id);
       }
 
-      await FsSessionKernel.ensureOpen(
-        preferSqlite: false,
-        override: db,
-      );
+      await FsSessionKernel.ensureOpen(preferSqlite: false, override: db);
       await Stage1LocationRuntime.ensureOpen();
-      await ensureRealLocalSafeZonesSeeded(
-        domain: Stage1LocationRuntime.store,
-        familyId: familyId,
-      );
-      final zones = await Stage1LocationRuntime.store.listZones(familyId);
-      expect(zones, isNotEmpty);
-      for (final z in zones) {
-        for (final c in z.assignedChildIds) {
-          expect(rosterIds.contains(c.value), isTrue);
-        }
-      }
+
+      // W3: no sample zone is planted any more. A boundary nobody drew is not a boundary,
+      // and this handset would have disagreed with the server about it. The map therefore
+      // starts with the roster's children and whatever zones the family actually owns.
+      expect(await Stage1LocationRuntime.store.listZones(familyId), isEmpty);
 
       final map = DomainLocationMapRepository(
         domain: Stage1LocationRuntime.store,
@@ -75,19 +66,15 @@ void main() {
       );
       final mapSnap = await map.load();
       expect(mapSnap, isNotNull);
-      expect(
-        {for (final p in mapSnap!.pins) p.id},
-        rosterIds,
-      );
+      expect({for (final p in mapSnap!.pins) p.id}, rosterIds);
 
       final tasks = LocalFamilyTasksRepository(db);
       await tasks.ensureRealLocalSeeded();
       final taskSnap = await tasks.load();
       expect(taskSnap.childTasks.length, 2);
-      expect(
-        {for (final t in taskSnap.childTasks) t.assigneeNameKey},
-        containsAll(<String>['childOne', 'childTwo']),
-      );
+      expect({
+        for (final t in taskSnap.childTasks) t.assigneeNameKey,
+      }, containsAll(<String>['childOne', 'childTwo']));
 
       final chat = FamilyChatLocalStore(db);
       await chat.ensureRealLocalSampleMessages(familyId: familyId);
@@ -103,10 +90,7 @@ void main() {
         familyId: () => familyId,
       );
       final boardSnap = await board.load();
-      expect(
-        {for (final c in boardSnap.children) c.id},
-        rosterIds,
-      );
+      expect({for (final c in boardSnap.children) c.id}, rosterIds);
     },
   );
 

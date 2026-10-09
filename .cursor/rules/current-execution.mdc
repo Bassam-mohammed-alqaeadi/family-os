@@ -1,0 +1,16 @@
+---
+description: Family OS current execution and runtime-truth guard
+alwaysApply: true
+---
+
+# Family OS — current execution guard
+
+Before significant work, read `PROJECT_EXECUTION_PLAN.md`, `AGENTS.md`, `docs/CURRENT_EXECUTION_PLAN.md`, and the authorization/runtime-truth documents they name.
+
+- Do not revive a phase, backlog card, loop state or scope claim from `docs/archive/`.
+- The controlled synthetic Children Roster staging release passed; see `docs/foundation/18_CHILDREN_ROSTER_STAGING_EXECUTION_EVIDENCE.md`. The active increment is only the isolated Flutter roster read authorized in `docs/foundation/19_FLUTTER_CONNECTED_CHILDREN_ROSTER_SLICE.md`. A local test or CI pass is not Owner-only emulator evidence.
+- Do not add a Flutter roster mutation, a third client API read, provider expansion, device/native enforcement, recovery/support scope, real data, production or public release without a separate decision.
+- Preserve truthful UX: a real vertical slice includes role/scope authorization, source/freshness visibility, loading/empty/error/denied/pending/recovery states, accessibility, responsive behavior and RTL/EN quality.
+- Apply `docs/product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md`: familiar, coherent Family OS patterns and shared design tokens are required; never create a disconnected mini-app or use novelty to hide an unavailable capability.
+- Never put credentials, database URLs, JWTs, identities, raw provider responses or real family data in source, Git, CI, docs or chat.
+- Use only reviewed forward migrations; never migrate at application startup, in a build step or in CI.

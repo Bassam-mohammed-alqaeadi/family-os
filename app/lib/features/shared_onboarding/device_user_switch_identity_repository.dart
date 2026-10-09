@@ -1,12 +1,12 @@
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/identity/identity_runtime.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
-import 'package:family_os/features/n12_devices/family_members_mock.dart';
+import 'package:family_os/features/n12_devices/family_members_role_labels.dart';
 import 'package:family_os/features/shared_onboarding/device_user_switch_repository.dart';
 
 /// Projects [IdentityRuntime] adults (+ children roster) onto SHR-008.
 ///
-/// Adult labels from [FamilyMembersIdentityLabels] (`*mock*.dart`); child
+/// Adult labels from [FamilyMembersRoleLabels], owned by production code; child
 /// display names from the Local roster (VX-B6 / FVX-S-04). Never plants
 /// Register §10 person names for adults.
 final class IdentityDeviceUserSwitchRepository
@@ -34,21 +34,21 @@ final class IdentityDeviceUserSwitchRepository
         rows.add(
           DeviceUserProfile(
             id: membership.id.value,
-            displayName: FamilyMembersIdentityLabels.owner,
+            displayName: FamilyMembersRoleLabels.owner,
             role: AppRole.father,
             accountId: membership.accountId,
-            monogram: FamilyMembersIdentityLabels.ownerMonogram,
+            monogram: FamilyMembersRoleLabels.ownerMonogram,
           ),
         );
       } else if (membership.role == AppRole.mother) {
         rows.add(
           DeviceUserProfile(
             id: membership.id.value,
-            displayName: FamilyMembersIdentityLabels.mother,
+            displayName: FamilyMembersRoleLabels.mother,
             role: AppRole.mother,
             accountId: membership.accountId,
             motherLevel: membership.motherLevel,
-            monogram: FamilyMembersIdentityLabels.motherMonogram,
+            monogram: FamilyMembersRoleLabels.motherMonogram,
             avatarColorHex: '#FF8FA3',
           ),
         );
@@ -56,10 +56,10 @@ final class IdentityDeviceUserSwitchRepository
         rows.add(
           DeviceUserProfile(
             id: membership.id.value,
-            displayName: FamilyMembersIdentityLabels.guardian,
+            displayName: FamilyMembersRoleLabels.guardian,
             role: AppRole.father,
             accountId: membership.accountId,
-            monogram: FamilyMembersIdentityLabels.guardianMonogram,
+            monogram: FamilyMembersRoleLabels.guardianMonogram,
           ),
         );
       }

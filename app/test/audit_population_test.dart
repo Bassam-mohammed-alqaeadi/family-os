@@ -29,18 +29,12 @@ void main() {
   });
 
   test('vision host is opt-in — populate alone does not hide tabs', () {
-    expect(
-      resolveAuditVisionHost(platformRoute: '/scr-fat-010'),
-      isFalse,
-    );
+    expect(resolveAuditVisionHost(platformRoute: '/scr-fat-010'), isFalse);
     expect(
       resolveAuditVisionHost(platformRoute: '/scr-fat-010?audit=vision'),
       isTrue,
     );
-    expect(
-      resolveAuditVisionHost(platformRoute: '/dev-screens'),
-      isTrue,
-    );
+    expect(resolveAuditVisionHost(platformRoute: '/dev-screens'), isTrue);
   });
 
   test('population flag off leaves the studio singleton empty', () async {

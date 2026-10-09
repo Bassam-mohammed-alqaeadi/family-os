@@ -495,7 +495,10 @@ void main() {
 
     expect(find.byKey(DayBoardKeys.moreTools), findsOneWidget);
     expect(find.textContaining('المزيد'), findsOneWidget);
-    await tester.drag(find.byType(SingleChildScrollView).first, const Offset(0, -400));
+    await tester.drag(
+      find.byType(SingleChildScrollView).first,
+      const Offset(0, -400),
+    );
     await tester.pumpAndSettle();
     expect(find.byKey(DayBoardKeys.moreTools), findsOneWidget);
   });

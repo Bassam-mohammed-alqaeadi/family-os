@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'package:go_router/go_router.dart';
 
 import 'package:family_os/core/design/components/tag.dart';
@@ -7,6 +8,10 @@ import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/runtime/app_scope.dart';
+import 'package:family_os/foundation_gate/foundation_gate_copy.dart';
+import 'package:family_os/foundation_gate/foundation_gate_models.dart';
+import 'package:family_os/foundation_gate/main_app_foundation_runtime.dart';
 
 /// Widget keys for SCR-SHR-003.
 abstract final class LoginKeys {
@@ -39,6 +44,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   var _emailError = false;
   var _passwordError = false;
+  var _submitting = false;
+    bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -57,20 +64,76 @@ class _LoginScreenState extends State<LoginScreen> {
     return emailOk && passwordOk;
   }
 
-  void _login() {
-    if (!_validate()) {
-      final l10n = AppLocalizations.of(context);
-      AppToast.show(context, message: l10n.loginFieldsRequired);
-      return;
-    }
-    final runtime = CurrentIdentity.maybeOf(context);
-    if (runtime != null &&
-        runtime.session.isExpiredAt(DateTime.now().toUtc())) {
-      context.go('/sys3-session-expired');
+  Future<void> _login() async {
+    if (!_validate() || _submitting) {
+      if (!_submitting) {
+        AppToast.show(
+          context,
+          message: AppLocalizations.of(context).loginFieldsRequired,
+        );
+      }
       return;
     }
     if (widget.onLoginSuccess != null) {
       widget.onLoginSuccess!();
+      return;
+    }
+
+    final appRuntime = AppScope.maybeOf(context);
+    if (appRuntime != null) {
+      final remoteIdentity = appRuntime.identity;
+      if (remoteIdentity is! MainAppFoundationIdentitySource) {
+        // A composed main route with no Firebase/API configuration must not
+        // imitate a successful local account sign-in.
+        AppToast.show(
+          context,
+          message: FoundationGateCopy.of(context).unconfigured,
+        );
+        return;
+      }
+      setState(() => _submitting = true);
+      try {
+        final snapshot = await remoteIdentity.signIn(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+        if (!mounted) return;
+        if (!snapshot.isRemoteAuthoritative) {
+          AppToast.show(
+            context,
+            message: _signInOutcomeMessage(
+              FoundationGateCopy.of(context),
+              remoteIdentity.phase,
+            ),
+          );
+          return;
+        }
+        
+        if (snapshot.familyId == null) {
+          context.go('/scr-shr-007');
+          return;
+        }
+
+        context.go('/scr-fat-012');
+      } on Object {
+        if (mounted) {
+          AppToast.show(
+            context,
+            message: FoundationGateCopy.of(context).signInFailure,
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _submitting = false);
+      }
+      return;
+    }
+
+    // Standalone preview/test host seam: preserve the previous mock-only flow
+    // only where no composed application runtime exists.
+    final runtime = CurrentIdentity.maybeOf(context);
+    if (runtime != null &&
+        runtime.session.isExpiredAt(DateTime.now().toUtc())) {
+      context.go('/sys3-session-expired');
       return;
     }
     if (runtime?.needsFamilySelector ?? false) {
@@ -79,6 +142,19 @@ class _LoginScreenState extends State<LoginScreen> {
     }
     context.go('/scr-fat-010');
   }
+
+  String _signInOutcomeMessage(
+    FoundationGateCopy copy,
+    FoundationGatePhase phase,
+  ) => switch (phase) {
+    FoundationGatePhase.signInFailed => copy.signInFailure,
+    FoundationGatePhase.sessionInvalid => copy.signInAgain,
+    FoundationGatePhase.accessDenied ||
+    FoundationGatePhase.rosterAccessDenied => copy.accessDenied,
+    FoundationGatePhase.serviceUnavailable => copy.serviceUnavailable,
+    FoundationGatePhase.networkUnavailable => copy.networkUnavailable,
+    _ => copy.noActiveFamily,
+  };
 
   void _forgotPassword() {
     final l10n = AppLocalizations.of(context);
@@ -110,6 +186,9 @@ class _LoginScreenState extends State<LoginScreen> {
     final radii = Theme.of(context).extension<FamilyRadii>()!;
 
     final runtime = CurrentIdentity.maybeOf(context);
+    final appRuntime = AppScope.maybeOf(context);
+    final usesRemoteIdentity =
+        appRuntime?.identity is MainAppFoundationIdentitySource;
     final now = DateTime.now().toUtc();
     final sessionExpired = runtime?.session.isExpiredAt(now) ?? false;
     final sessionTag = runtime == null
@@ -162,7 +241,11 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
             Text(
               key: LoginKeys.honesty,
-              l10n.loginLocalAccountHonesty,
+              usesRemoteIdentity
+                  ? FoundationGateCopy.of(context).serverRosterCurrentSession
+                  : appRuntime != null
+                  ? FoundationGateCopy.of(context).unconfigured
+                  : l10n.loginLocalAccountHonesty,
               style: TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
@@ -213,7 +296,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: TextField(
                   key: const Key('login_password'),
                   controller: _passwordController,
-                  obscureText: true,
+                  obscureText: _obscurePassword,
                   autocorrect: false,
                   onChanged: (_) {
                     if (_passwordError) setState(() => _passwordError = false);
@@ -222,9 +305,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     colors: colors,
                     radii: radii,
                     hint: l10n.loginPasswordHint,
-                    errorText:
-                        _passwordError ? l10n.loginFieldsRequired : null,
-                  ),
+                    errorText: _passwordError ? l10n.loginFieldsRequired : null,
+                  ).copyWith(suffixIcon: IconButton(icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility), onPressed: () => setState(() => _obscurePassword = !_obscurePassword)))
                 ),
               ),
             ),
@@ -276,7 +358,7 @@ class _LoginScreenState extends State<LoginScreen> {
             PrimaryBtn(
               key: const Key('login_submit'),
               label: l10n.loginSubmit,
-              onPressed: _login,
+              onPressed: _submitting ? null : _login,
             ),
             const SizedBox(height: 10),
             PrimaryBtn(

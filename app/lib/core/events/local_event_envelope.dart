@@ -19,12 +19,12 @@ final class LocalEventEnvelope {
   final Map<String, Object?> payload;
 
   Map<String, Object?> toJson() => {
-        'id': id,
-        'channel': channel,
-        'at': at.toUtc().toIso8601String(),
-        'payload': payload,
-        'deliveryClaim': 'queued_locally',
-      };
+    'id': id,
+    'channel': channel,
+    'at': at.toUtc().toIso8601String(),
+    'payload': payload,
+    'deliveryClaim': 'queued_locally',
+  };
 
   factory LocalEventEnvelope.fromJson(Map<String, Object?> json) {
     final payloadRaw = json['payload'];

@@ -6,6 +6,35 @@ enum PreviewContentKind { quiz, lesson }
 /// Mock difficulty for light parent edit (Rule 23 — discrete).
 enum PreviewDifficulty { easier, normal, harder }
 
+/// Discrete inline citation keys for NotebookLM source verification.
+enum PreviewCitationKey { textbookP47, worksheetP2 }
+
+@immutable
+final class PreviewSourceCitation {
+  const PreviewSourceCitation({
+    required this.id,
+    required this.refLabel,
+    required this.citationKey,
+  });
+
+  final String id;
+  final String refLabel;
+  final PreviewCitationKey citationKey;
+}
+
+const List<PreviewSourceCitation> defaultPreviewCitations = [
+  PreviewSourceCitation(
+    id: 'cit-p47',
+    refLabel: '1 · p.47',
+    citationKey: PreviewCitationKey.textbookP47,
+  ),
+  PreviewSourceCitation(
+    id: 'cit-w2',
+    refLabel: '2 · p.2',
+    citationKey: PreviewCitationKey.worksheetP2,
+  ),
+];
+
 @immutable
 final class PreviewQuizOption {
   const PreviewQuizOption({
@@ -62,6 +91,8 @@ final class PreviewApproveSnapshot {
     this.ruleSeconds = 90,
     this.rejected = false,
     this.approved = false,
+    this.citations = defaultPreviewCitations,
+    this.selectedCitationId = 'cit-p47',
   });
 
   final String quizTitleKey;
@@ -76,11 +107,38 @@ final class PreviewApproveSnapshot {
   /// True after father Approve publishes pack (P15-EDU-004).
   final bool approved;
 
+  /// Grounded inline citations for NotebookLM provenance verification.
+  final List<PreviewSourceCitation> citations;
+  final String? selectedCitationId;
+
   bool get isEmpty => rejected || (questions.isEmpty && lesson == null);
 
   bool get withinNinetySeconds => elapsedSeconds <= ruleSeconds;
 
   bool get canApprove => !rejected && !approved && questions.isNotEmpty;
+
+  PreviewSourceCitation? get activeCitation {
+    for (final c in citations) {
+      if (c.id == selectedCitationId) return c;
+    }
+    return citations.isNotEmpty ? citations.first : null;
+  }
+
+  PreviewApproveSnapshot withSelectedCitation(String citationId) {
+    return PreviewApproveSnapshot(
+      quizTitleKey: quizTitleKey,
+      lessonTitleKey: lessonTitleKey,
+      questions: questions,
+      lesson: lesson,
+      difficulty: difficulty,
+      elapsedSeconds: elapsedSeconds,
+      ruleSeconds: ruleSeconds,
+      rejected: rejected,
+      approved: approved,
+      citations: citations,
+      selectedCitationId: citationId,
+    );
+  }
 
   PreviewApproveSnapshot withQuestions(List<PreviewQuizQuestion> next) {
     return PreviewApproveSnapshot(
@@ -93,6 +151,8 @@ final class PreviewApproveSnapshot {
       ruleSeconds: ruleSeconds,
       rejected: rejected,
       approved: approved,
+      citations: citations,
+      selectedCitationId: selectedCitationId,
     );
   }
 
@@ -107,6 +167,8 @@ final class PreviewApproveSnapshot {
       ruleSeconds: ruleSeconds,
       rejected: rejected,
       approved: approved,
+      citations: citations,
+      selectedCitationId: selectedCitationId,
     );
   }
 
@@ -121,6 +183,8 @@ final class PreviewApproveSnapshot {
       ruleSeconds: ruleSeconds,
       rejected: false,
       approved: true,
+      citations: citations,
+      selectedCitationId: selectedCitationId,
     );
   }
 
@@ -135,6 +199,8 @@ final class PreviewApproveSnapshot {
       ruleSeconds: ruleSeconds,
       rejected: true,
       approved: false,
+      citations: citations,
+      selectedCitationId: selectedCitationId,
     );
   }
 

@@ -84,7 +84,9 @@ void main() {
     expect(find.byKey(AddFromSourceKeys.body), findsOneWidget);
   });
 
-  testWidgets('mother observer view-only — create taps blocked', (tester) async {
+  testWidgets('mother observer view-only — create taps blocked', (
+    tester,
+  ) async {
     final nav = <String>[];
     await _pump(
       tester,
@@ -126,11 +128,7 @@ void main() {
 
   testWidgets('child RoleGuard lean + SOS', (tester) async {
     var sos = false;
-    await _pump(
-      tester,
-      role: AppRole.child,
-      onSos: () => sos = true,
-    );
+    await _pump(tester, role: AppRole.child, onSos: () => sos = true);
 
     expect(find.byKey(AddFromSourceKeys.childLean), findsOneWidget);
     expect(find.byKey(AddFromSourceKeys.body), findsNothing);

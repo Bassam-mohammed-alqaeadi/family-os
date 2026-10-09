@@ -95,8 +95,9 @@ Future<int> _seedWalletMinutes() async {
     final policy = await policyRepo.load(childId);
     final alreadyEarned = policy.wallets.any((w) => !w.earnedMinutes.isZero);
     if (alreadyEarned) return 0;
-    final appId =
-        policy.wallets.isEmpty ? 'youtube' : policy.wallets.first.appId;
+    final appId = policy.wallets.isEmpty
+        ? 'youtube'
+        : policy.wallets.first.appId;
     await WalletLedger(policyRepo).earn(
       childId: childId,
       appId: appId,

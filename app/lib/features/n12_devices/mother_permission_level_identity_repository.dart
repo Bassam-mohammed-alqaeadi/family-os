@@ -17,8 +17,7 @@ final class IdentityMotherPermissionLevelRepository
     MemberId? membershipId,
     DateTime Function()? clock,
   }) : _runtime = runtime ?? (() => stage1IdentityRuntime),
-       _membershipId =
-           membershipId ?? MemberId(kStage1MotherMembershipId),
+       _membershipId = membershipId ?? MemberId(kStage1MotherMembershipId),
        _clock = clock ?? DateTime.now;
 
   final IdentityRuntime Function() _runtime;

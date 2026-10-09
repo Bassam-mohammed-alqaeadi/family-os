@@ -19,11 +19,7 @@ void main() {
       }
       expect(
         () => repo.upsertBackup(
-          const SosBackupContact(
-            id: 'b6',
-            name: 'Too many',
-            priority: 1,
-          ),
+          const SosBackupContact(id: 'b6', name: 'Too many', priority: 1),
         ),
         throwsA(
           isA<SosLadderValidationException>().having(
@@ -39,11 +35,7 @@ void main() {
       final repo = InMemorySosLadderRepository();
       expect(
         () => repo.upsertBackup(
-          const SosBackupContact(
-            id: 'bad',
-            name: 'Bad',
-            priority: 9,
-          ),
+          const SosBackupContact(id: 'bad', name: 'Bad', priority: 9),
         ),
         throwsA(
           isA<SosLadderValidationException>().having(
@@ -91,13 +83,16 @@ void main() {
     });
 
     test('verification lifecycle values exist', () {
-      expect(SosVerificationStatus.values, containsAll([
-        SosVerificationStatus.unverified,
-        SosVerificationStatus.pending,
-        SosVerificationStatus.verified,
-        SosVerificationStatus.revoked,
-        SosVerificationStatus.failed,
-      ]));
+      expect(
+        SosVerificationStatus.values,
+        containsAll([
+          SosVerificationStatus.unverified,
+          SosVerificationStatus.pending,
+          SosVerificationStatus.verified,
+          SosVerificationStatus.revoked,
+          SosVerificationStatus.failed,
+        ]),
+      );
     });
   });
 }

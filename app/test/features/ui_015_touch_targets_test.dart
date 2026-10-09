@@ -8,7 +8,6 @@ import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/anti_tamper_repository.dart';
 import 'package:family_os/core/policy/device_lock_service.dart';
-import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/core/policy/time_request.dart';
 import 'package:family_os/core/policy/time_request_repository.dart';
 import 'package:family_os/core/policy/time_request_service.dart';
@@ -18,6 +17,7 @@ import 'package:family_os/features/n02_day/day_child_mock.dart';
 import 'package:family_os/features/n02_day/request_inbox_screen.dart';
 import 'package:family_os/features/n03_screen_time/time_expiry_screen.dart';
 import 'package:family_os/features/n05_lock/instant_lock_screen.dart';
+import '../support/recording_sos_fire_service.dart';
 
 /// UI-015 — SOS / lock / approve / grant hit targets ≥48×48 dp (Rule 16).
 void main() {
@@ -61,7 +61,7 @@ void main() {
       wrap(
         TimeExpiryScreen(
           childId: ChildId('ui015-sos'),
-          sosFire: MockSosFireService(),
+          sosFire: RecordingSosFireService(),
           onSos: () {},
         ),
       ),
@@ -93,11 +93,7 @@ void main() {
 
     await tester.pumpWidget(
       wrap(
-        RequestInboxScreen(
-          service: inbox,
-          role: AppRole.father,
-          onBack: () {},
-        ),
+        RequestInboxScreen(service: inbox, role: AppRole.father, onBack: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -149,9 +145,7 @@ void main() {
     await tester.pumpWidget(
       wrap(
         DayBoardScreen(
-          projection: DayBoardProjection(
-            children: DayChildMock.manyFixture,
-          ),
+          projection: DayBoardProjection(children: DayChildMock.manyFixture),
           onLock: () {},
         ),
       ),

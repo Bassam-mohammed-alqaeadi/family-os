@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:family_os/core/design/components/app_toast.dart';
+import 'package:family_os/core/runtime/app_scope.dart';
+import 'package:family_os/core/runtime/family_child_profile_source.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/identity/child_device_management_repository.dart';
 import 'package:family_os/core/identity/identity_runtime.dart';
@@ -14,8 +16,11 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/i18n/numeral_format.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
+import 'package:family_os/foundation_gate/foundation_gate_copy.dart';
+import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
-export 'package:family_os/core/i18n/numeral_format.dart' show toEasternDigits, formatAppInt;
+export 'package:family_os/core/i18n/numeral_format.dart'
+    show toEasternDigits, formatAppInt;
 
 /// Character emoji options (prototype FAT-003 picker).
 const List<String> kAddChildCharacters = ['🦁', '🐱', '🐼', '🦊', '🐰'];
@@ -30,10 +35,11 @@ String generateMockChildAlias([Random? random]) {
   return 'child_$hex';
 }
 
-/// SCR-FAT-003 — إضافة ابن (bare parent onboarding, mock-first).
+/// SCR-FAT-003 — server-backed child profile creation.
 ///
-/// Parametric / Rule 23: name field starts empty — no default person name.
-/// No Firebase / backend on this card.
+/// The visual onboarding form stays familiar, while the normal application path
+/// sends its values to the server-owned Family Entry source. Explicit injected
+/// local repositories remain test/preview seams only.
 class AddChildScreen extends StatefulWidget {
   const AddChildScreen({
     super.key,
@@ -60,6 +66,10 @@ class AddChildScreen extends StatefulWidget {
 class _AddChildScreenState extends State<AddChildScreen> {
   final _nameController = TextEditingController();
   late final String _alias;
+  String? _idempotencyKey;
+  String? _submittedName;
+  int? _submittedAge;
+  var _submitting = false;
 
   int _age = 14;
   int _characterIndex = 0;
@@ -82,20 +92,93 @@ class _AddChildScreenState extends State<AddChildScreen> {
 
   void _onNameChanged() => setState(() {});
 
-  bool get _canContinue => _nameController.text.trim().isNotEmpty;
+  int get _childNameLength => _nameController.text.trim().runes.length;
 
-  DayChildSwatch get _swatch => switch (_colorIndex % 3) {
-        0 => DayChildSwatch.purple,
-        1 => DayChildSwatch.sky,
-        _ => DayChildSwatch.amber,
-      };
+  // Server contract allows max 120 chars; keep the CTA honest.
+  bool get _canContinue =>
+      _nameController.text.trim().isNotEmpty &&
+      _childNameLength <= 120;
+
+  String get _themeColor => switch (_colorIndex) {
+    0 => 'purple',
+    1 => 'sky',
+    2 => 'amber',
+    3 => 'coral',
+    4 => 'mint',
+    _ => 'teal',
+  };
+
+  DayChildSwatch get _previewSwatch => switch (_colorIndex % 3) {
+    0 => DayChildSwatch.purple,
+    1 => DayChildSwatch.sky,
+    _ => DayChildSwatch.amber,
+  };
 
   Future<void> _continue() async {
-    if (!_canContinue) return;
+    if (!_canContinue || _submitting) return;
+    final appRuntime = AppScope.maybeOf(context);
+    final familyId = appRuntime?.identity.value.familyId;
+    final hasExplicitPreviewSeam =
+        widget.managementRepository != null ||
+        widget.childrenListRepository != null ||
+        widget.onContinue != null;
+
+    // Preview and unit-test hosts may inject a local seam explicitly. The main
+    // product route never reaches this branch.
+    if (hasExplicitPreviewSeam) {
+      await _continuePreview();
+      return;
+    }
+    if (appRuntime == null ||
+        familyId == null ||
+        !appRuntime.identity.value.isRemoteAuthoritative) {
+      AppToast.show(
+        context,
+        message: AppLocalizations.of(context).settingsPersistError,
+      );
+      return;
+    }
+
+    final name = _nameController.text.trim();
+    if (_idempotencyKey == null ||
+        _submittedName != name ||
+        _submittedAge != _age) {
+      _idempotencyKey = newFoundationGateIdempotencyKey();
+      _submittedName = name;
+      _submittedAge = _age;
+    }
+    setState(() => _submitting = true);
+    final result = await appRuntime.childProfiles.create(
+      familyId: familyId,
+      idempotencyKey: _idempotencyKey!,
+      draft: FamilyChildProfileDraft(
+        displayName: name,
+        ageYears: _age,
+        avatarEmoji: kAddChildCharacters[_characterIndex],
+        themeColor: _themeColor,
+      ),
+    );
+    if (!mounted) return;
+    setState(() => _submitting = false);
+    final childId = result.childId;
+    if (childId == null) {
+      AppToast.show(
+        context,
+        message: AppLocalizations.of(context).settingsPersistError,
+      );
+      return;
+    }
+
+    // A profile exists now; linking stays an explicit pending setup journey.
+    // No device, telemetry or policy result is fabricated by this hand-off.
+    context.go(
+      '/scr-fat-004?childId=${Uri.encodeComponent(childId)}&source=server',
+    );
+  }
+
+  Future<void> _continuePreview() async {
     final repo =
         widget.managementRepository ?? stage1ChildDeviceManagementRepository;
-    // Prefer the injected management runtime (explicit seam) over InheritedWidget
-    // lookup from an event handler — dependOnInheritedWidget is build-time only.
     final IdentityRuntime? runtime =
         repo is RuntimeChildDeviceManagementRepository
         ? repo.runtime
@@ -107,19 +190,22 @@ class _AddChildScreenState extends State<AddChildScreen> {
           childId: ChildId(_alias),
         );
       } on IdentityInvariantViolation {
-        final l10n = AppLocalizations.of(context);
-        AppToast.show(context, message: l10n.settingsPersistError);
+        if (mounted) {
+          AppToast.show(
+            context,
+            message: AppLocalizations.of(context).settingsPersistError,
+          );
+        }
         return;
       }
-      final name = _nameController.text.trim();
       final roster =
           widget.childrenListRepository ?? stage1ChildrenListRepository;
       await roster.upsertChild(
         ChildrenListEntry(
           id: _alias,
-          displayName: name,
+          displayName: _nameController.text.trim(),
           emoji: kAddChildCharacters[_characterIndex],
-          swatch: _swatch,
+          swatch: _previewSwatch,
           ageYears: _age,
           locationLabel: '',
           lastSeenLabel: '',
@@ -158,6 +244,9 @@ class _AddChildScreenState extends State<AddChildScreen> {
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final radii = Theme.of(context).extension<FamilyRadii>()!;
     final kidColors = _kidColors(colors);
+    final usesRemoteProfileCreation =
+        AppScope.maybeOf(context)?.identity.value.isRemoteAuthoritative ??
+        false;
 
     return Scaffold(
       backgroundColor: colors.bg,
@@ -198,6 +287,30 @@ class _AddChildScreenState extends State<AddChildScreen> {
                   key: const Key('add_child_name'),
                   controller: _nameController,
                   textInputAction: TextInputAction.next,
+                  maxLength: 120,
+                  buildCounter: (
+                    context, {
+                    required currentLength,
+                    required isFocused,
+                    maxLength,
+                  }) {
+                    final counterColors = Theme.of(
+                      context,
+                    ).extension<FamilyColors>()!;
+                    return Semantics(
+                      liveRegion: true,
+                      label: '$currentLength / 120',
+                      child: Text(
+                        '$currentLength / 120',
+                        textDirection: TextDirection.ltr,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: counterColors.ink2,
+                        ),
+                      ),
+                    );
+                  },
                   decoration: _inputDecoration(
                     colors: colors,
                     radii: radii,
@@ -257,9 +370,25 @@ class _AddChildScreenState extends State<AddChildScreen> {
                               child: AnimatedScale(
                                 duration: const Duration(milliseconds: 150),
                                 scale: _characterIndex == i ? 1.15 : 1,
-                                child: Text(
-                                  kAddChildCharacters[i],
-                                  style: const TextStyle(fontSize: 30),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 180),
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: _characterIndex == i
+                                        ? colors.surface
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: _characterIndex == i
+                                          ? colors.p400
+                                          : Colors.transparent,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    kAddChildCharacters[i],
+                                    style: const TextStyle(fontSize: 30),
+                                  ),
                                 ),
                               ),
                             ),
@@ -316,44 +445,63 @@ class _AddChildScreenState extends State<AddChildScreen> {
             PrimaryBtn(
               key: const Key('add_child_continue'),
               label: l10n.addChildContinue,
-              onPressed: _canContinue ? _continue : null,
+              onPressed: _canContinue && !_submitting ? _continue : null,
             ),
             const SizedBox(height: 10),
-            Semantics(
-              label: l10n.addChildAliasSemantics(_alias),
-              child: Text.rich(
-                TextSpan(
+            if (usesRemoteProfileCreation)
+              Semantics(
+                label: FoundationGateCopy.of(
+                  context,
+                ).serverAssignedProfileIdentifier,
+                child: Text(
+                  FoundationGateCopy.of(
+                    context,
+                  ).serverAssignedProfileIdentifier,
+                  key: const Key('add_child_server_assigned_id'),
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: colors.ink2,
                   ),
-                  children: [
-                    TextSpan(text: l10n.addChildAliasPrefix),
-                    WidgetSpan(
-                      alignment: PlaceholderAlignment.baseline,
-                      baseline: TextBaseline.alphabetic,
-                      child: Directionality(
-                        textDirection: TextDirection.ltr,
-                        child: Text(
-                          _alias,
-                          key: const Key('add_child_alias_ltr'),
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            color: colors.ink,
+                ),
+              )
+            else
+              Semantics(
+                label: l10n.addChildAliasSemantics(_alias),
+                child: Text.rich(
+                  TextSpan(
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: colors.ink2,
+                    ),
+                    children: [
+                      TextSpan(text: l10n.addChildAliasPrefix),
+                      WidgetSpan(
+                        alignment: PlaceholderAlignment.baseline,
+                        baseline: TextBaseline.alphabetic,
+                        child: Directionality(
+                          textDirection: TextDirection.ltr,
+                          child: Text(
+                            _alias,
+                            key: const Key('add_child_alias_ltr'),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: colors.ink,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    TextSpan(text: l10n.addChildAliasSuffix),
-                  ],
+                      TextSpan(text: l10n.addChildAliasSuffix),
+                    ],
+                  ),
+                  key: const Key('add_child_alias_footer'),
+                  textAlign: TextAlign.center,
+                  textDirection: TextDirection.rtl,
                 ),
-                key: const Key('add_child_alias_footer'),
-                textAlign: TextAlign.center,
-                textDirection: TextDirection.rtl,
               ),
-            ),
           ],
         ),
       ),

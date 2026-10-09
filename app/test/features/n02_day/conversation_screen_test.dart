@@ -36,8 +36,9 @@ void main() {
     expect(find.textContaining('ابن 1'), findsWidgets);
   });
 
-  testWidgets('SCR-FAT-022 family branch + pin note + mother OK',
-      (tester) async {
+  testWidgets('SCR-FAT-022 family branch + pin note + mother OK', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _app(
         child: ConversationScreen(
@@ -60,8 +61,9 @@ void main() {
     expect(find.textContaining('شريكة 1'), findsWidgets);
   });
 
-  testWidgets('SCR-FAT-022 parametric peers mother/child_b/child_c',
-      (tester) async {
+  testWidgets('SCR-FAT-022 parametric peers mother/child_b/child_c', (
+    tester,
+  ) async {
     final repo = InMemoryConversationRepository(initial: ConversationMock.all);
 
     Future<void> open(String peer) async {
@@ -178,8 +180,9 @@ void main() {
     expect(find.byKey(ConversationKeys.body), findsNothing);
   });
 
-  testWidgets('SCR-FAT-022 Rule 23 — empty repo no planted names',
-      (tester) async {
+  testWidgets('SCR-FAT-022 Rule 23 — empty repo no planted names', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _app(
         child: ConversationScreen(
@@ -200,8 +203,9 @@ void main() {
     expect(find.textContaining('عبدالله'), findsNothing);
   });
 
-  testWidgets('SCR-FAT-022 Rule 23 — seeded uses generic labels only',
-      (tester) async {
+  testWidgets('SCR-FAT-022 Rule 23 — seeded uses generic labels only', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _app(
         child: ConversationScreen(

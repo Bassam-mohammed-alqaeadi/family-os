@@ -74,15 +74,15 @@ final class WebUnlockRequest {
   }
 
   Map<String, Object?> toJson() => {
-        'id': id,
-        'childId': childId.value,
-        'url': url,
-        'host': host,
-        'status': status.name,
-        'createdAt': createdAt.toUtc().toIso8601String(),
-        'decidedBy': decidedBy,
-        'reason': reason,
-      };
+    'id': id,
+    'childId': childId.value,
+    'url': url,
+    'host': host,
+    'status': status.name,
+    'createdAt': createdAt.toUtc().toIso8601String(),
+    'decidedBy': decidedBy,
+    'reason': reason,
+  };
 
   factory WebUnlockRequest.fromJson(Map<String, Object?> json) {
     final statusName = json['status'] as String? ?? 'pending';
@@ -101,9 +101,7 @@ final class WebUnlockRequest {
       id: json['id'] as String? ?? '',
       childId: ChildId(json['childId'] as String? ?? 'unknown'),
       url: url,
-      host: WebFilterPolicy.normalizeHost(
-        hostRaw ?? _hostOf(url),
-      ),
+      host: WebFilterPolicy.normalizeHost(hostRaw ?? _hostOf(url)),
       status: status,
       createdAt: created,
       decidedBy: json['decidedBy'] as String?,
@@ -114,8 +112,7 @@ final class WebUnlockRequest {
   static String _hostOf(String url) {
     final trimmed = url.trim();
     if (trimmed.isEmpty) return '';
-    final withScheme =
-        trimmed.contains('://') ? trimmed : 'https://$trimmed';
+    final withScheme = trimmed.contains('://') ? trimmed : 'https://$trimmed';
     final uri = Uri.tryParse(withScheme);
     return uri?.host ?? '';
   }
@@ -134,14 +131,6 @@ final class WebUnlockRequest {
           reason == other.reason;
 
   @override
-  int get hashCode => Object.hash(
-        id,
-        childId,
-        url,
-        host,
-        status,
-        createdAt,
-        decidedBy,
-        reason,
-      );
+  int get hashCode =>
+      Object.hash(id, childId, url, host, status, createdAt, decidedBy, reason);
 }

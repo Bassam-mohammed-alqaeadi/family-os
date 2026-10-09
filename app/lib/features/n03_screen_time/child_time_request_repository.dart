@@ -230,9 +230,8 @@ void rebindStage1ChildTimeRequestRepository(
 }
 
 /// Production CHD-020 binder — Local KV TimeRequest authority (DOM-ST-02C).
-Future<ServiceChildTimeRequestRepository> openProductionChildTimeRequestRepository({
-  ChildId? childId,
-}) async {
+Future<ServiceChildTimeRequestRepository>
+openProductionChildTimeRequestRepository({ChildId? childId}) async {
   final service = await Stage1TimeRequestRuntime.ensureOpen();
   return ServiceChildTimeRequestRepository(
     service: service,

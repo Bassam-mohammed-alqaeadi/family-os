@@ -140,7 +140,7 @@ class _SmartAlertsScreenState extends State<SmartAlertsScreen> {
   void initState() {
     super.initState();
     _repo = widget.repository ?? stage1SmartAlertsRepository;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     _sc = widget.screenCamera;
     _ai = widget.offlineAi;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -152,9 +152,7 @@ class _SmartAlertsScreenState extends State<SmartAlertsScreen> {
   Future<void> _refreshAiTickets(OfflineAiSafetyService ai) async {
     final tickets = await ai.listTickets();
     final signals = await ai.listSignals();
-    final map = <String, SafetySignal>{
-      for (final s in signals) s.id: s,
-    };
+    final map = <String, SafetySignal>{for (final s in signals) s.id: s};
     if (!mounted) return;
     setState(() {
       _ai = ai;
@@ -466,9 +464,7 @@ class _SmartAlertsScreenState extends State<SmartAlertsScreen> {
     // review surface alive on an empty alerts inventory. Auto Stage1 AI with
     // zero open tickets must not swallow the classic empty → FAT-003 CTA.
     final openAiTickets = _aiTickets.where((t) => t.isOpen).toList();
-    if (_snap.isEmpty &&
-        openAiTickets.isEmpty &&
-        widget.offlineAi == null) {
+    if (_snap.isEmpty && openAiTickets.isEmpty && widget.offlineAi == null) {
       return AppEmptyState(
         key: SmartAlertsKeys.empty,
         title: l10n.smartAlertsEmptyTitle,

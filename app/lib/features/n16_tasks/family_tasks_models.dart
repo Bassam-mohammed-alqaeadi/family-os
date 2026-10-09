@@ -65,15 +65,15 @@ final class FamilyChildTask {
   }
 
   Map<String, Object?> toJson() => {
-        'id': id,
-        'titleKey': titleKey,
-        'assigneeNameKey': assigneeNameKey,
-        'avatarKey': avatarKey,
-        'rewardMinutes': reward.inMinutes,
-        'status': status.name,
-        'proofKey': proofKey,
-        'timeKey': timeKey,
-      };
+    'id': id,
+    'titleKey': titleKey,
+    'assigneeNameKey': assigneeNameKey,
+    'avatarKey': avatarKey,
+    'rewardMinutes': reward.inMinutes,
+    'status': status.name,
+    'proofKey': proofKey,
+    'timeKey': timeKey,
+  };
 
   static FamilyChildTask fromJson(Map<String, Object?> json) {
     final statusRaw = json['status']?.toString() ?? 'assigned';
@@ -113,11 +113,11 @@ final class MotherHelpTask {
   final String timeKey;
 
   Map<String, Object?> toJson() => {
-        'id': id,
-        'titleKey': titleKey,
-        'status': status.name,
-        'timeKey': timeKey,
-      };
+    'id': id,
+    'titleKey': titleKey,
+    'status': status.name,
+    'timeKey': timeKey,
+  };
 
   static MotherHelpTask fromJson(Map<String, Object?> json) {
     final statusRaw = json['status']?.toString() ?? 'open';
@@ -152,9 +152,9 @@ final class FamilyTasksSnapshot {
       .toList(growable: false);
 
   Map<String, Object?> toJson() => {
-        'childTasks': childTasks.map((t) => t.toJson()).toList(),
-        'motherHelpTasks': motherHelpTasks.map((t) => t.toJson()).toList(),
-      };
+    'childTasks': childTasks.map((t) => t.toJson()).toList(),
+    'motherHelpTasks': motherHelpTasks.map((t) => t.toJson()).toList(),
+  };
 
   static FamilyTasksSnapshot fromJson(Map<String, Object?> json) {
     final kidsRaw = json['childTasks'];
@@ -176,9 +176,7 @@ final class FamilyTasksSnapshot {
       for (final e in helpRaw) {
         if (e is Map) {
           help.add(
-            MotherHelpTask.fromJson(
-              e.map((k, v) => MapEntry(k.toString(), v)),
-            ),
+            MotherHelpTask.fromJson(e.map((k, v) => MapEntry(k.toString(), v))),
           );
         }
       }

@@ -108,93 +108,96 @@ void main() {
     );
   });
 
-  test('ticket gate B1: analysis/confirmed open; preliminary notify-only',
-      () async {
-    await activateModel();
+  test(
+    'ticket gate B1: analysis/confirmed open; preliminary notify-only',
+    () async {
+      await activateModel();
 
-    final prelim = await service.classifyCompleted(
-      childId: child,
-      text: 'note [preliminary:self_harm]',
-    );
-    expect(prelim, isNotNull);
-    expect(prelim!.notified, isTrue);
-    expect(prelim.ticket, isNull);
-    expect(prelim.signal.certainty, SafetyCertainty.preliminary);
+      final prelim = await service.classifyCompleted(
+        childId: child,
+        text: 'note [preliminary:self_harm]',
+      );
+      expect(prelim, isNotNull);
+      expect(prelim!.notified, isTrue);
+      expect(prelim.ticket, isNull);
+      expect(prelim.signal.certainty, SafetyCertainty.preliminary);
 
-    final analysis = await service.classifyCompleted(
-      childId: child,
-      text: 'chat [analysis:suspicious]',
-    );
-    expect(analysis!.ticket, isNotNull);
-    expect(analysis.signal.opensTicket, isTrue);
-    expect(analysis.ticket!.redactedPreview, isNotNull);
+      final analysis = await service.classifyCompleted(
+        childId: child,
+        text: 'chat [analysis:suspicious]',
+      );
+      expect(analysis!.ticket, isNotNull);
+      expect(analysis.signal.opensTicket, isTrue);
+      expect(analysis.ticket!.redactedPreview, isNotNull);
 
-    final confirmed = await service.classifyCompleted(
-      childId: child,
-      text: 'x [confirmed:violence]',
-    );
-    expect(confirmed!.ticket, isNotNull);
-    expect(confirmed.signal.certainty, SafetyCertainty.confirmed);
-  });
+      final confirmed = await service.classifyCompleted(
+        childId: child,
+        text: 'x [confirmed:violence]',
+      );
+      expect(confirmed!.ticket, isNotNull);
+      expect(confirmed.signal.certainty, SafetyCertainty.confirmed);
+    },
+  );
 
-  test('suggest-only never auto-applies; close purges preview; no SOS',
-      () async {
-    await activateModel();
-    final hit = await service.classifyCompleted(
-      childId: child,
-      text: '[analysis:suspicious]',
-    );
-    final ticketId = hit!.ticket!.id;
+  test(
+    'suggest-only never auto-applies; close purges preview; no SOS',
+    () async {
+      await activateModel();
+      final hit = await service.classifyCompleted(
+        childId: child,
+        text: '[analysis:suspicious]',
+      );
+      final ticketId = hit!.ticket!.id;
 
-    final suggestion = await service.createSuggestion(
-      ticketId: ticketId,
-      target: SafetySuggestionTarget.webFilter,
-      summary: 'Suggest keyword review',
-      actor: const SafetyAiActor.mother(MotherLevel.partner),
-    );
-    expect(suggestion.mayAutoApply, isFalse);
-    expect(suggestion.status, SafetySuggestionStatus.pendingHuman);
+      final suggestion = await service.createSuggestion(
+        ticketId: ticketId,
+        target: SafetySuggestionTarget.webFilter,
+        summary: 'Suggest keyword review',
+        actor: const SafetyAiActor.mother(MotherLevel.partner),
+      );
+      expect(suggestion.mayAutoApply, isFalse);
+      expect(suggestion.status, SafetySuggestionStatus.pendingHuman);
 
-    final closed = await service.closeTicket(
-      ticketId: ticketId,
-      actor: const SafetyAiActor.father(),
-      actorId: 'father',
-      closeStatus: SafetyTicketStatus.dismissedFp,
-    );
-    expect(closed.redactedPreview, isNull);
-    expect(closed.status, SafetyTicketStatus.dismissedFp);
+      final closed = await service.closeTicket(
+        ticketId: ticketId,
+        actor: const SafetyAiActor.father(),
+        actorId: 'father',
+        closeStatus: SafetyTicketStatus.dismissedFp,
+      );
+      expect(closed.redactedPreview, isNull);
+      expect(closed.status, SafetyTicketStatus.dismissedFp);
 
-    expect(SafetyAiForbiddenActions.mayFireSos, isFalse);
-    expect(
-      () => service.fireSosFromAi(),
-      throwsA(isA<UnsupportedError>()),
-    );
-  });
+      expect(SafetyAiForbiddenActions.mayFireSos, isFalse);
+      expect(() => service.fireSosFromAi(), throwsA(isA<UnsupportedError>()));
+    },
+  );
 
-  test('child transparency names on-device; cloud classify unsupported',
-      () async {
-    final card = service.childTransparency(
-      searchConfigured: true,
-      imageConfigured: false,
-      screenshotConfigured: true,
-      localPlaneAvailable: true,
-    );
-    expect(card.namesOnDeviceOffline, isTrue);
-    expect(card.searchAnalysis, 'on_device');
-    expect(card.imageClassification, 'off');
+  test(
+    'child transparency names on-device; cloud classify unsupported',
+    () async {
+      final card = service.childTransparency(
+        searchConfigured: true,
+        imageConfigured: false,
+        screenshotConfigured: true,
+        localPlaneAvailable: true,
+      );
+      expect(card.namesOnDeviceOffline, isTrue);
+      expect(card.searchAnalysis, 'on_device');
+      expect(card.imageClassification, 'off');
 
-    await capabilities.applyFs007SigCapabilities();
-    expect(
-      (await capabilities.get('fs007.local_classifier'))!.status,
-      CapabilityStatus.implemented,
-    );
-    expect(
-      (await capabilities.get('fs007.cloud_classify'))!.status,
-      CapabilityStatus.unsupported,
-    );
-    expect(
-      (await capabilities.get('fs007.suggest_only'))!.status,
-      CapabilityStatus.implemented,
-    );
-  });
+      await capabilities.applyFs007SigCapabilities();
+      expect(
+        (await capabilities.get('fs007.local_classifier'))!.status,
+        CapabilityStatus.implemented,
+      );
+      expect(
+        (await capabilities.get('fs007.cloud_classify'))!.status,
+        CapabilityStatus.unsupported,
+      );
+      expect(
+        (await capabilities.get('fs007.suggest_only'))!.status,
+        CapabilityStatus.implemented,
+      );
+    },
+  );
 }

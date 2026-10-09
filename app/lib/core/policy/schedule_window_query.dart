@@ -15,8 +15,7 @@ abstract final class ScheduleWindowQuery {
     ScheduleSnapshot snapshot,
     ScheduleKind kind,
     TimeOfDay now,
-  ) =>
-      snapshot.isActive(kind, now);
+  ) => snapshot.isActive(kind, now);
 
   /// Maps schedule kind → built-in mode when the window is active.
   static BuiltInModeId? activeBuiltInMode(

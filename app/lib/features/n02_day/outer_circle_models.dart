@@ -21,12 +21,12 @@ final class OuterCircleMember {
   final String statusKey;
 
   Map<String, Object?> toJson() => {
-        'id': id,
-        'kind': kind.name,
-        'nameKey': nameKey,
-        'metaKey': metaKey,
-        'statusKey': statusKey,
-      };
+    'id': id,
+    'kind': kind.name,
+    'nameKey': nameKey,
+    'metaKey': metaKey,
+    'statusKey': statusKey,
+  };
 
   static OuterCircleMember fromJson(Map<String, Object?> json) {
     final kindRaw = json['kind']?.toString() ?? 'friend';
@@ -61,11 +61,11 @@ final class OuterCircleSnapshot {
   bool get isEmpty => relatives.isEmpty && friends.isEmpty && pending.isEmpty;
 
   Map<String, Object?> toJson() => {
-        'relatives': relatives.map((e) => e.toJson()).toList(),
-        'friends': friends.map((e) => e.toJson()).toList(),
-        'pending': pending.map((e) => e.toJson()).toList(),
-        'scheduleNoteKey': scheduleNoteKey,
-      };
+    'relatives': relatives.map((e) => e.toJson()).toList(),
+    'friends': friends.map((e) => e.toJson()).toList(),
+    'pending': pending.map((e) => e.toJson()).toList(),
+    'scheduleNoteKey': scheduleNoteKey,
+  };
 
   static OuterCircleSnapshot fromJson(Map<String, Object?> json) {
     List<OuterCircleMember> parseList(Object? raw) {
@@ -87,8 +87,7 @@ final class OuterCircleSnapshot {
       relatives: parseList(json['relatives']),
       friends: parseList(json['friends']),
       pending: parseList(json['pending']),
-      scheduleNoteKey:
-          json['scheduleNoteKey']?.toString() ?? 'friendsEvening',
+      scheduleNoteKey: json['scheduleNoteKey']?.toString() ?? 'friendsEvening',
     );
   }
 }

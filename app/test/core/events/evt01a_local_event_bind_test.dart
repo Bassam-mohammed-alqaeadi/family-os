@@ -31,10 +31,7 @@ void main() {
     final db1 = await SqliteLocalDatabase.openAt(path);
     await FsSessionKernel.ensureOpen(override: db1);
     final emitter = await LocalEventPersistence.openEmitter();
-    final id = await emitter.emit(
-      channel: 'test.channel',
-      payload: {'k': 'v'},
-    );
+    final id = await emitter.emit(channel: 'test.channel', payload: {'k': 'v'});
     expect(id, isNotNull);
     await FsSessionKernel.resetForTest();
 
@@ -91,13 +88,11 @@ void main() {
     expect(incident.id, isNotEmpty);
 
     final recent = await LocalEventJournal(FsSessionKernel.db).listRecent();
-    expect(
-      recent.any((e) => e.channel == 'sos.lifecycle.fired'),
-      isTrue,
-    );
+    expect(recent.any((e) => e.channel == 'sos.lifecycle.fired'), isTrue);
     final pending = await FsSessionKernel.remoteSyncPort.pending();
-    final sosItems =
-        pending.where((e) => e.channel == 'sos.lifecycle.fired').toList();
+    final sosItems = pending
+        .where((e) => e.channel == 'sos.lifecycle.fired')
+        .toList();
     expect(sosItems, isNotEmpty);
     expect(sosItems.first.deliveredAt, isNull);
     expect(sosItems.first.payload['deliveryClaim'], 'queued_locally');

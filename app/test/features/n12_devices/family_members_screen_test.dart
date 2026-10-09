@@ -5,8 +5,10 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:family_os/core/design/components/app_empty_state.dart';
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
+import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/identity/identity_models.dart';
@@ -17,9 +19,11 @@ import 'package:family_os/features/n02_day/children_list_local_repository.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
 import 'package:family_os/features/n12_devices/family_members_identity_repository.dart';
-import 'package:family_os/features/n12_devices/family_members_mock.dart';
+import 'package:family_os/features/n12_devices/family_members_role_labels.dart';
 import 'package:family_os/features/n12_devices/family_members_repository.dart';
 import 'package:family_os/features/n12_devices/family_members_screen.dart';
+import 'package:family_os/foundation_gate/family_membership_api_client.dart';
+import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
 void main() {
   testWidgets('SCR-FAT-027 empty → AppEmptyState + owner invite CTA', (
@@ -57,7 +61,7 @@ void main() {
     var sos = false;
     String? motherOpened;
     final repo = InMemoryFamilyMembersRepository(
-      members: FamilyMembersMock.fullFixture,
+      members: _fullFixture,
     );
 
     await tester.pumpWidget(
@@ -119,7 +123,7 @@ void main() {
       String? motherOpened;
       var sos = false;
       final repo = InMemoryFamilyMembersRepository(
-        members: FamilyMembersMock.fullFixture,
+        members: _fullFixture,
       );
 
       await tester.pumpWidget(
@@ -152,7 +156,7 @@ void main() {
   testWidgets('SCR-FAT-027 child lean — SOS still ungated', (tester) async {
     var sos = false;
     final repo = InMemoryFamilyMembersRepository(
-      members: FamilyMembersMock.fullFixture,
+      members: _fullFixture,
     );
 
     await tester.pumpWidget(
@@ -194,7 +198,7 @@ void main() {
 
     repo
       ..failLoad = false
-      ..seed(FamilyMembersMock.ownerOnlyFixture);
+      ..seed(_ownerOnlyFixture);
     await tester.tap(find.byKey(const Key('app_error_retry')));
     await tester.pumpAndSettle();
 
@@ -205,11 +209,265 @@ void main() {
     );
   });
 
+  testWidgets(
+    'SCR-FAT-027 a pending invitation can be accepted, and the server is asked first',
+    (tester) async {
+      // The screen used to show members this device had recorded. An invitation addressed
+      // to the caller is the one row it must act on, and it must act through the server.
+      final commands = _RecordingCommands();
+      final repository = InMemoryFamilyMembersRepository(
+        members: [
+          _member(
+            id: 'member_owner',
+            kind: FamilyMemberKind.owner,
+            status: FamilyMembershipStatus.active,
+          ),
+          _member(
+            id: 'member_invited_self',
+            kind: FamilyMemberKind.mother,
+            displayName: FamilyMembersRoleLabels.mother,
+            monogram: FamilyMembersRoleLabels.motherMonogram,
+            swatch: DayChildSwatch.sky,
+            isSelf: true,
+            status: FamilyMembershipStatus.invited,
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        _app(
+          child: FamilyMembersScreen(
+            repository: repository,
+            membershipCommands: commands,
+            roleOverride: AppRole.mother,
+            onInvite: () {},
+            onSos: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final accept = find.byKey(
+        FamilyMembersKeys.acceptInvitation('member_invited_self'),
+      );
+      expect(accept, findsOneWidget, reason: 'the invitation must be acceptable');
+
+      // The key sits on the action's row, which spans the full width; the thing a person
+      // taps is the button at its end. Tapping the row's centre presses the row instead -
+      // which is how this test used to pass without ever reaching the command.
+      await tester.ensureVisible(accept);
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(of: accept, matching: find.byType(TextButton)),
+      );
+      await tester.pumpAndSettle();
+
+      expect(commands.accepted, ['member_invited_self']);
+      expect(commands.lastIdempotencyKey, isNotNull);
+      final reloaded = await repository.listMembers(familyId: 'fam_stage1');
+      expect(
+        reloaded
+            .where((member) => member.id == 'member_invited_self')
+            .single
+            .membershipStatus,
+        FamilyMembershipStatus.invited,
+        reason: 'the screen reads the roster back from the source rather than '
+            'redrawing it from its own hope: the command confirmed nothing here',
+      );
+    },
+  );
+
+  testWidgets(
+    'SCR-FAT-027 an owner can withdraw an invitation and remove an active member',
+    (tester) async {
+      final commands = _RecordingCommands();
+      final repository = InMemoryFamilyMembersRepository(
+        members: [
+          _member(
+            id: 'member_owner',
+            kind: FamilyMemberKind.owner,
+            isSelf: true,
+            status: FamilyMembershipStatus.active,
+          ),
+          _member(
+            id: 'member_pending',
+            kind: FamilyMemberKind.mother,
+            displayName: FamilyMembersRoleLabels.mother,
+            monogram: FamilyMembersRoleLabels.motherMonogram,
+            swatch: DayChildSwatch.sky,
+            status: FamilyMembershipStatus.invited,
+          ),
+          _member(
+            id: 'member_active',
+            kind: FamilyMemberKind.guardian,
+            displayName: FamilyMembersRoleLabels.guardian,
+            monogram: FamilyMembersRoleLabels.guardianMonogram,
+            swatch: DayChildSwatch.amber,
+            levelLocked: true,
+            status: FamilyMembershipStatus.active,
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        _app(
+          child: FamilyMembersScreen(
+            repository: repository,
+            membershipCommands: commands,
+            roleOverride: AppRole.father,
+            onInvite: () {},
+            onSos: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final cancel = find.byKey(
+        FamilyMembersKeys.cancelInvitation('member_pending'),
+      );
+      await tester.ensureVisible(cancel);
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(of: cancel, matching: find.byType(TextButton)),
+      );
+      await tester.pumpAndSettle();
+      expect(commands.revoked, ['member_pending']);
+      expect(commands.lastReasonCode, 'invitation_withdrawn');
+
+      final remove = find.byKey(FamilyMembersKeys.removeMember('member_active'));
+      await tester.ensureVisible(remove);
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(of: remove, matching: find.byType(TextButton)),
+      );
+      await tester.pumpAndSettle();
+      expect(commands.revoked, ['member_pending', 'member_active']);
+      expect(
+        commands.lastReasonCode,
+        'member_left',
+        reason: 'removing an active member and withdrawing an invitation are different '
+            'facts, and the server is told which one happened',
+      );
+
+      // The owner's own row offers nothing, and a child row offers nothing: the primary
+      // guardian is removed only through the continuity process, and a child is removed
+      // from the child's own profile.
+      expect(
+        find.byKey(FamilyMembersKeys.removeMember('member_owner')),
+        findsNothing,
+      );
+    },
+  );
+
+  testWidgets('SCR-FAT-027 a refused command says so and changes nothing', (
+    tester,
+  ) async {
+    final commands = _RecordingCommands(fail: true);
+    final repository = InMemoryFamilyMembersRepository(
+      members: [
+        _member(
+          id: 'member_pending',
+          kind: FamilyMemberKind.mother,
+          displayName: FamilyMembersRoleLabels.mother,
+          monogram: FamilyMembersRoleLabels.motherMonogram,
+          swatch: DayChildSwatch.sky,
+          status: FamilyMembershipStatus.invited,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _app(
+        child: FamilyMembersScreen(
+          repository: repository,
+          membershipCommands: commands,
+          roleOverride: AppRole.father,
+          onInvite: () {},
+          onSos: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final cancel = find.byKey(
+      FamilyMembersKeys.cancelInvitation('member_pending'),
+    );
+    await tester.ensureVisible(cancel);
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(of: cancel, matching: find.byType(TextButton)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(commands.revoked, ['member_pending']);
+    expect(
+      find.byKey(FamilyMembersKeys.memberRow('member_pending')),
+      findsOneWidget,
+      reason: 'a failed command leaves the roster exactly as it was',
+    );
+    expect(
+      find.textContaining('تعذر الإكمال'),
+      findsWidgets,
+      reason: 'the guardian is told the change did not happen',
+    );
+
+    // The refusal arrives as a toast, and a toast's auto-dismiss is a real timer. The
+    // framework checks for pending timers when the tree is disposed, so the test lets the
+    // toast it asked for finish its own life instead of leaving a timer behind.
+    await tester.pump(AppToast.duration + const Duration(milliseconds: 100));
+  });
+
+  testWidgets(
+    'SCR-FAT-027 without live commands no membership action is offered at all',
+    (tester) async {
+      // A build with no server must not draw buttons that could only fail. The rows stay
+      // readable; the actions are absent.
+      final repository = InMemoryFamilyMembersRepository(
+        members: [
+          _member(
+            id: 'member_pending',
+            kind: FamilyMemberKind.mother,
+            displayName: FamilyMembersRoleLabels.mother,
+            monogram: FamilyMembersRoleLabels.motherMonogram,
+            swatch: DayChildSwatch.sky,
+            status: FamilyMembershipStatus.invited,
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        _app(
+          child: FamilyMembersScreen(
+            repository: repository,
+            roleOverride: AppRole.father,
+            onInvite: () {},
+            onSos: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(FamilyMembersKeys.memberRow('member_pending')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(FamilyMembersKeys.cancelInvitation('member_pending')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(FamilyMembersKeys.acceptInvitation('member_pending')),
+        findsNothing,
+      );
+    },
+  );
+
   test('Rule 23 — no planted person names in FAT-027 sources/ARB', () {
     final files = [
       'lib/features/n12_devices/family_members_screen.dart',
       'lib/features/n12_devices/family_members_repository.dart',
-      'lib/features/n12_devices/family_members_mock.dart',
+      'lib/features/n12_devices/family_members_role_labels.dart',
+      'lib/features/n12_devices/family_members_remote_repository.dart',
     ];
     for (final path in files) {
       final src = File(path).readAsStringSync();
@@ -363,7 +621,7 @@ void main() {
         ],
         home: FamilyMembersScreen(
           repository: InMemoryFamilyMembersRepository(
-            members: FamilyMembersMock.fullFixture,
+            members: _fullFixture,
           ),
           roleOverride: AppRole.father,
           onSos: () {},
@@ -442,5 +700,182 @@ Widget _app({required Widget child}) {
       ],
       home: child,
     ),
+  );
+}
+
+/// One roster row. A factory rather than a literal so the entries stay plainly
+/// non-constant: these are values a test built, not compile-time constants the analyzer
+/// would rightly ask to be marked const.
+FamilyMemberEntry _member({
+  required String id,
+  required FamilyMemberKind kind,
+  String? displayName,
+  String? monogram,
+  DayChildSwatch swatch = DayChildSwatch.purple,
+  bool isSelf = false,
+  MotherLevel? motherLevel,
+  bool levelLocked = false,
+  FamilyMembershipStatus? status,
+}) {
+  return FamilyMemberEntry(
+    id: id,
+    familyId: 'fam_stage1',
+    displayName: displayName ?? FamilyMembersRoleLabels.owner,
+    kind: kind,
+    monogram: monogram ?? FamilyMembersRoleLabels.ownerMonogram,
+    swatch: swatch,
+    isSelf: isSelf,
+    motherLevel: motherLevel,
+    levelLocked: levelLocked,
+    membershipStatus: status,
+  );
+}
+
+final List<FamilyMemberEntry> _fullFixture = [
+  _member(
+    id: 'member_owner',
+    kind: FamilyMemberKind.owner,
+    displayName: FamilyMembersRoleLabels.owner,
+    isSelf: true,
+    status: FamilyMembershipStatus.active,
+  ),
+  _member(
+    id: 'member_mother',
+    kind: FamilyMemberKind.mother,
+    displayName: FamilyMembersRoleLabels.mother,
+    monogram: FamilyMembersRoleLabels.motherMonogram,
+    swatch: DayChildSwatch.sky,
+    motherLevel: MotherLevel.partner,
+    status: FamilyMembershipStatus.active,
+  ),
+  _member(
+    id: 'member_guardian',
+    kind: FamilyMemberKind.guardian,
+    displayName: FamilyMembersRoleLabels.guardian,
+    monogram: FamilyMembersRoleLabels.guardianMonogram,
+    swatch: DayChildSwatch.amber,
+    motherLevel: MotherLevel.observer,
+    levelLocked: true,
+    status: FamilyMembershipStatus.active,
+  ),
+  _member(
+    id: 'child_a',
+    kind: FamilyMemberKind.child,
+    displayName: 'ابن 1',
+    monogram: '🦁',
+    swatch: DayChildSwatch.purple,
+  ),
+  _member(
+    id: 'child_b',
+    kind: FamilyMemberKind.child,
+    displayName: 'ابن 2',
+    monogram: '🐱',
+    swatch: DayChildSwatch.sky,
+  ),
+];
+
+/// Owner-only family, so the invite CTA has a start state to work from.
+final List<FamilyMemberEntry> _ownerOnlyFixture = [
+  _member(
+    id: 'member_owner',
+    kind: FamilyMemberKind.owner,
+    isSelf: true,
+    status: FamilyMembershipStatus.active,
+  ),
+];
+
+
+/// The command seam the screen is given, recording exactly what it was asked to do.
+///
+/// A screen that draws its own success is the failure this seam exists to catch, so this
+/// records the three facts that matter: which membership was acted on, which reason code
+/// told the server what kind of change it was, and that every call carried its own
+/// idempotency key. `fail` refuses the way a server refusal arrives.
+final class _RecordingCommands implements FamilyMembershipCommands {
+  _RecordingCommands({this.fail = false});
+
+  final bool fail;
+
+  final List<String> invited = [];
+  final List<String> accepted = [];
+  final List<String> revoked = [];
+  String? lastReasonCode;
+  String? lastIdempotencyKey;
+
+  void _refuseIfAsked() {
+    if (fail) {
+      throw const FoundationGateApiException(
+        FoundationGateApiFailure.serviceUnavailable,
+      );
+    }
+  }
+
+  /// Records the attempt, then answers. The lists say what the screen ASKED for; `fail`
+  /// models the server refusing, and a refusal that erased the record would make the one
+  /// test that needs it - "a refused command says so and changes nothing" - unable to see
+  /// that the screen asked at all.
+  void _record(void Function() add) {
+    add();
+    _refuseIfAsked();
+  }
+
+  @override
+  Future<FoundationGateMembership> invite({
+    required FamilyId familyId,
+    required String role,
+    required String targetSubject,
+    required String idempotencyKey,
+  }) async {
+    _record(() => invited.add(targetSubject));
+    lastIdempotencyKey = idempotencyKey;
+    return _commandResult(id: 'member_invited', role: role, status: 'invited');
+  }
+
+  @override
+  Future<FoundationGateMembership> accept({
+    required FamilyId familyId,
+    required String membershipId,
+    required String idempotencyKey,
+  }) async {
+    _record(() => accepted.add(membershipId));
+    lastIdempotencyKey = idempotencyKey;
+    return _commandResult(
+      id: membershipId,
+      role: 'co_guardian',
+      status: 'active',
+    );
+  }
+
+  @override
+  Future<FoundationGateMembership> revoke({
+    required FamilyId familyId,
+    required String membershipId,
+    required String reasonCode,
+    required String idempotencyKey,
+  }) async {
+    _record(() => revoked.add(membershipId));
+    lastReasonCode = reasonCode;
+    lastIdempotencyKey = idempotencyKey;
+    return _commandResult(
+      id: membershipId,
+      role: 'co_guardian',
+      status: reasonCode == 'invitation_withdrawn' ? 'revoked' : 'removed',
+    );
+  }
+
+  FoundationGateMembership _commandResult({
+    required String id,
+    required String role,
+    required String status,
+  }) => FoundationGateMembership(
+    id: id,
+    role: role,
+    status: status,
+    statusReasonCode: null,
+    version: 1,
+    isSelf: false,
+    joinedAt: null,
+    statusChangedAt: null,
+    createdAt: DateTime.utc(2026, 10, 7),
   );
 }

@@ -45,10 +45,7 @@ abstract final class LocalEventPolicyBridge {
   static void _attachHooks(LocalEventEmitter emitter) {
     void auditHook(String entry) {
       unawaited(
-        emitter.emit(
-          channel: 'audit.append',
-          payload: {'entry': entry},
-        ),
+        emitter.emit(channel: 'audit.append', payload: {'entry': entry}),
       );
     }
 

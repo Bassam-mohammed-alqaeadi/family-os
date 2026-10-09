@@ -21,12 +21,12 @@ final class ChildMediaShareItem {
   final bool hasTranscript;
 
   Map<String, Object?> toJson() => {
-        'id': id,
-        'type': type.name,
-        'titleKey': titleKey,
-        'subtitleKey': subtitleKey,
-        'hasTranscript': hasTranscript,
-      };
+    'id': id,
+    'type': type.name,
+    'titleKey': titleKey,
+    'subtitleKey': subtitleKey,
+    'hasTranscript': hasTranscript,
+  };
 
   static ChildMediaShareItem fromJson(Map<String, Object?> json) {
     final typeRaw = json['type']?.toString() ?? 'photo';
@@ -59,9 +59,9 @@ final class ChildMediaShareSnapshot {
   bool get isEmpty => recentShares.isEmpty && intentJournal.isEmpty;
 
   Map<String, Object?> toJson() => {
-        'recentShares': recentShares.map((e) => e.toJson()).toList(),
-        'intentJournal': intentJournal,
-      };
+    'recentShares': recentShares.map((e) => e.toJson()).toList(),
+    'intentJournal': intentJournal,
+  };
 
   static ChildMediaShareSnapshot fromJson(Map<String, Object?> json) {
     final shares = <ChildMediaShareItem>[];

@@ -1,6 +1,7 @@
 name: Flutter CI
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - "app/**"
@@ -9,6 +10,13 @@ on:
     paths:
       - "app/**"
       - ".github/workflows/flutter_ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: flutter-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   analyze-test:
@@ -23,7 +31,240 @@ jobs:
           flutter-version: "3.35.7"
           channel: stable
           cache: true
-      - run: flutter pub get
-      - run: flutter gen-l10n
-      - run: flutter analyze --fatal-infos
-      - run: flutter test
+      - name: Resolve packages
+        id: resolve_packages
+        run: flutter pub get
+      - name: Upload resolved dependency lock
+        if: always() && steps.resolve_packages.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: resolved-pubspec-lock-${{ github.run_id }}
+          path: app/pubspec.lock
+          if-no-files-found: error
+          retention-days: 7
+      - name: Generate localization source
+        run: flutter gen-l10n
+      - name: Generate route and shell source
+        run: dart run tool/gen_routes.dart
+      - name: Analyze
+        id: analyze
+        continue-on-error: true
+        run: |
+          mkdir -p build/ci
+          set -o pipefail
+          flutter analyze --fatal-infos 2>&1 | tee build/ci/flutter-analyze.txt
+      - name: Run tests
+        if: steps.analyze.outcome == 'success'
+        id: tests
+        continue-on-error: true
+        run: |
+          mkdir -p build/ci
+          # The JSON report carries names and results, and the exception text goes to the
+          # console. Both are kept, because a failure named without its message cannot be
+          # acted on from a machine that can only read annotations.
+          #
+          # `pipefail` is not decoration: without it the step's exit code is `tee`'s, so a
+          # run in which half the suite failed was reported as a success and the gate below
+          # never fired. The gate is only a gate if the exit code is the test runner's.
+          set -o pipefail
+          flutter test --file-reporter=json:build/ci/flutter-test.json 2>&1 | tee build/ci/flutter-test.log
+      - name: Summarize test result
+        if: always()
+        env:
+          TEST_OUTCOME: ${{ steps.tests.outcome }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import sys
+          from pathlib import Path
+
+          report = Path("build/ci/flutter-test.json")
+          names = {}
+          errors = {}
+          failures = []
+
+          def describe(value):
+              if isinstance(value, dict):
+                  return value.get("message") or value.get("error") or json.dumps(value, ensure_ascii=False)
+              return str(value or "")
+
+          if report.exists():
+              for raw in report.read_text(encoding="utf-8").splitlines():
+                  try:
+                      event = json.loads(raw)
+                  except json.JSONDecodeError:
+                      continue
+                  if event.get("type") == "testStart":
+                      test = event.get("test", {})
+                      names[str(test.get("id", ""))] = test.get("name", "unnamed test")
+                  if event.get("type") == "error":
+                      test_id = str(event.get("testID", ""))
+                      errors.setdefault(test_id, []).append(describe(event.get("error") or event.get("message")))
+                  if event.get("type") == "testDone" and event.get("result") not in ("success", "skipped"):
+                      test = event.get("test", {})
+                      test_id = str(event.get("testID", test.get("id", "")))
+                      name = test.get("name") or names.get(test_id, "unnamed test")
+                      detail = (
+                          event.get("reason")
+                          or event.get("message")
+                          or event.get("error")
+                          or " ".join(errors.get(test_id, []))
+                      )
+                      failures.append((name, describe(detail).replace("\n", " ")[:500]))
+
+          def markdown_cell(value):
+              return value.replace("|", "\\|")
+
+          summary_path = Path(os.environ["GITHUB_STEP_SUMMARY"])
+          lines = ["## Flutter test result", ""]
+          if os.environ["TEST_OUTCOME"] == "success":
+              lines.append("✅ `flutter test` passed.")
+          elif failures:
+              lines.extend([
+                  f"❌ `flutter test` failed: **{len(failures)}** failing test(s).",
+                  "",
+                  "| Test | Failure summary |",
+                  "| --- | --- |",
+              ])
+              for name, detail in failures:
+                  lines.append(f"| `{markdown_cell(name)}` | {markdown_cell(detail)} |")
+          summary_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+          # The reporter's own events, dumped raw and filtered. Two lessons are baked in
+          # here: the annotations a step emits are budgeted, so this is the ONLY thing this
+          # step annotates; and a summary that says "see the exception logs above" is not a
+          # reason, so the events that carry the words are dumped verbatim. `print` events
+          # carry what the test wrote to stdout (the matcher block), `error` events carry
+          # the exception line - stack traces are dropped, they are never the point.
+          wanted = (
+              "Expected:",
+              "Which:",
+              "Actual:",
+              "Exception",
+              "════",
+              "Unhandled",
+              "would not hit test",
+              "Warning:",
+          )
+          kept = []
+          if report.exists():
+              for raw in report.read_text(encoding="utf-8", errors="replace").splitlines():
+                  try:
+                      event = json.loads(raw)
+                  except json.JSONDecodeError:
+                      continue
+                  kind = event.get("type")
+                  if kind == "print":
+                      message = str(event.get("message", ""))
+                      if message.strip() and any(w in message for w in wanted):
+                          # Stack frames are dropped line by line: they are 95% of the
+                          # bytes, they carry no reason, and they pushed the actual
+                          # matcher blocks past the annotation budget.
+                          kept.append(
+                              "\n".join(
+                                  line
+                                  for line in message.rstrip().splitlines()
+                                  if not line.lstrip().startswith(("#", "package:", "test/"))
+                                  and "<asynchronous" not in line
+                                  and "(elided" not in line
+                              )
+                          )
+                  elif kind == "error":
+                      kept.append(
+                          "ERROR: "
+                          + str(event.get("error") or event.get("message") or "").strip()
+                      )
+          kept = list(dict.fromkeys(kept))
+          text = "\n".join(kept)
+          escaped = text.replace("%", "%25").replace("\r", "").replace("\n", "%0A")
+          size = 2800
+          pieces = [escaped[i : i + size] for i in range(0, len(escaped), size)]
+          print(
+              f"::warning title=Flutter test result::{len(failures)} failing test(s); "
+              f"{len(kept)} event(s); {len(pieces)} chunk(s)"
+          )
+          for index, (name, detail) in enumerate(failures[:8], start=1):
+              summary = f"{name}: {detail}"
+              escaped_summary = (
+                  summary.replace("%", "%25")
+                  .replace("\r", "%0D")
+                  .replace("\n", "%0A")
+              )
+              print(
+                  f"::error title=Flutter failing test {index}/{len(failures)}::"
+                  f"{escaped_summary}"
+              )
+          for index, piece in enumerate(pieces[:8], start=1):
+              print(f"::error title=Failure detail {index}/{len(pieces)}::{piece}")
+
+          # A tap that missed is a test that passed for the wrong reason: the assertion
+          # after it ran against a screen nobody touched. `tester.tap` only warns, and a
+          # warning in a passing suite is invisible - so here it is an error, and the job
+          # fails on it. This is the only gate that can see a false green.
+          missed = [event for event in kept if "would not hit test" in event]
+          if missed:
+              for index, event in enumerate(missed[:8], start=1):
+                  first = event.strip().splitlines()[0]
+                  print(
+                      f"::error title=Tap missed its widget {index}/{len(missed)}::"
+                      f"{first.replace('%', '%25')}"
+                  )
+              sys.exit(1)
+          PY
+      - name: Upload Flutter test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-test-report-${{ github.run_id }}
+          path: app/build/ci/flutter-test.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Verify generated source is committed
+        id: generated
+        if: always()
+        run: |
+          if git diff --quiet -- \
+            lib/app/router.dart \
+            lib/app/shell_config.dart \
+            lib/core/i18n; then
+            echo "Generated source is committed and current."
+          else
+            # The diff itself is the only thing that says WHAT is stale, and the job log
+            # is not readable from every environment that has to fix it - so it leaves as
+            # numbered annotations rather than one clipped line.
+            mkdir -p build/ci
+            git diff -U1 -- lib/app/router.dart lib/app/shell_config.dart lib/core/i18n \
+              > build/ci/generated.diff || true
+            # The generator's own output is the only thing that says what the committed
+            # files must become, and one clipped annotation is not enough to apply it - so
+            # the whole diff leaves as numbered annotations. Escaped and chunked in the
+            # shell, because a heredoc nested this deep is one indentation away from being
+            # a silent no-op.
+            ESCAPED="$(sed -e 's/%/%25/g' -e 's/\r//g' build/ci/generated.diff | tr '\n' '\036' | sed -e 's/\036/%0A/g')"
+            TOTAL=$(( (${#ESCAPED} + 2999) / 3000 ))
+            echo "::error title=Generated source is stale::${TOTAL} chunk(s) follow; $(wc -c < build/ci/generated.diff) characters"
+            INDEX=0
+            while [ -n "$ESCAPED" ] && [ "$INDEX" -lt 30 ]; do
+              INDEX=$((INDEX + 1))
+              echo "::error title=Generated diff ${INDEX}/${TOTAL}::${ESCAPED:0:3000}"
+              ESCAPED="${ESCAPED:3000}"
+            done
+            git diff --stat -- lib/app/router.dart lib/app/shell_config.dart lib/core/i18n
+            exit 1
+          fi
+      - name: Upload regenerated localization sources when drift is found
+        if: always() && steps.generated.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: regenerated-localizations-${{ github.run_id }}
+          path: app/lib/core/i18n/app_localizations*.dart
+          if-no-files-found: error
+          retention-days: 3
+      - name: Enforce analyzer, test and generated-source gates
+        if: always() && (steps.analyze.outcome == 'failure' || steps.tests.outcome == 'failure' || steps.generated.outcome == 'failure')
+        run: |
+          if [ "${{ steps.analyze.outcome }}" = 'failure' ]; then
+            summary=$(tr '\n' ' ' < build/ci/flutter-analyze.txt | cut -c1-4000)
+            echo "::error title=Flutter analyzer::${summary:-flutter analyze failed; inspect build/ci/flutter-analyze.txt}"
+          fi
+          exit 1

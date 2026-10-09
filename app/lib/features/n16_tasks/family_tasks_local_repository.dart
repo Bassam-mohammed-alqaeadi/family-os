@@ -18,9 +18,9 @@ final class LocalFamilyTasksRepository implements FamilyTasksRepository {
     WalletLedger? walletLedger,
     ChildId Function(String assigneeNameKey)? resolveChildId,
     DateTime Function()? clock,
-  })  : _walletLedger = walletLedger,
-        _resolveChildId = resolveChildId,
-        _clock = clock ?? DateTime.now;
+  }) : _walletLedger = walletLedger,
+       _resolveChildId = resolveChildId,
+       _clock = clock ?? DateTime.now;
 
   static const kvNamespace = 'family_tasks';
   static const _snapKey = 'snapshot';
@@ -50,16 +50,12 @@ final class LocalFamilyTasksRepository implements FamilyTasksRepository {
   }
 
   Future<void> _write(FamilyTasksSnapshot snap) async {
-    await _db.insert(
-      _table,
-      {
-        'namespace': namespace,
-        'key': _snapKey,
-        'value': jsonEncode(snap.toJson()),
-        'updated_at': _clock().toUtc().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: LocalConflictAlgorithm.replace,
-    );
+    await _db.insert(_table, {
+      'namespace': namespace,
+      'key': _snapKey,
+      'value': jsonEncode(snap.toJson()),
+      'updated_at': _clock().toUtc().millisecondsSinceEpoch,
+    }, conflictAlgorithm: LocalConflictAlgorithm.replace);
   }
 
   @override
@@ -106,8 +102,9 @@ final class LocalFamilyTasksRepository implements FamilyTasksRepository {
   @override
   Future<void> applyChoreAssignments(List<FamilyChildTask> assignments) async {
     final snap = await _read();
-    final kept =
-        snap.childTasks.where((t) => !t.id.startsWith('chore-')).toList();
+    final kept = snap.childTasks
+        .where((t) => !t.id.startsWith('chore-'))
+        .toList();
     await _write(
       FamilyTasksSnapshot(
         childTasks: [...kept, ...assignments],
@@ -162,10 +159,11 @@ final class LocalFamilyTasksRepository implements FamilyTasksRepository {
     if (task.reward.isZero) return;
     if (task.assigneeNameKey == 'mother') return;
     try {
-      final ledger = _walletLedger ??
+      final ledger =
+          _walletLedger ??
           WalletLedger(await ScreenTimeLocalPersistence.openPolicyRepository());
-      final childId = _resolveChildId?.call(task.assigneeNameKey) ??
-          activeScopedChildId();
+      final childId =
+          _resolveChildId?.call(task.assigneeNameKey) ?? activeScopedChildId();
       await ledger.earn(
         childId: childId,
         appId: 'family_tasks',

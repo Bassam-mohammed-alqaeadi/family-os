@@ -29,7 +29,9 @@ void main() {
     expect(nav, contains('SCR-FAT-043'));
   });
 
-  testWidgets('camera denied → repair CTA; grant resumes capture', (tester) async {
+  testWidgets('camera denied → repair CTA; grant resumes capture', (
+    tester,
+  ) async {
     final seam = FakeCameraPermissionSeam(
       status: CameraPermissionStatus.denied,
       grantOnOpenSettings: true,
@@ -68,7 +70,9 @@ void main() {
     expect(find.byKey(StudioCameraCaptureKeys.viewfinder), findsOneWidget);
   });
 
-  testWidgets('permanently denied shows instructions + settings', (tester) async {
+  testWidgets('permanently denied shows instructions + settings', (
+    tester,
+  ) async {
     final seam = FakeCameraPermissionSeam(
       status: CameraPermissionStatus.permanentlyDenied,
     );
@@ -115,11 +119,7 @@ void main() {
 
   testWidgets('child RoleGuard lean + SOS', (tester) async {
     var sos = false;
-    await _pump(
-      tester,
-      role: AppRole.child,
-      onSos: () => sos = true,
-    );
+    await _pump(tester, role: AppRole.child, onSos: () => sos = true);
 
     expect(find.byKey(StudioCameraCaptureKeys.childLean), findsOneWidget);
     expect(find.byKey(StudioCameraCaptureKeys.body), findsNothing);

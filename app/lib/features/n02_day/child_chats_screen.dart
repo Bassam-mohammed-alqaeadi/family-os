@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart' as intl;
 
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/app/shell_tab_more_tools.dart';
@@ -18,7 +21,10 @@ import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n02_day/child_chats_repository.dart';
 import 'package:family_os/features/n02_day/conversations_list_repository.dart';
+import 'package:family_os/features/n02_day/family_chat_connection_banner.dart';
+import 'package:family_os/features/n02_day/family_chat_server_repository.dart';
 import 'package:family_os/features/n02_day/family_chat_labels.dart';
+import 'package:family_os/foundation_gate/family_chat_api_client.dart';
 
 Color _swatchColor(ConversationSwatch swatch, FamilyColors colors) =>
     switch (swatch) {
@@ -41,6 +47,7 @@ abstract final class ChildChatsKeys {
   static const sosCta = Key('child_chats_sos');
   static const parentLean = Key('child_chats_parent_lean');
   static const callContactsCta = Key('child_chats_call_contacts');
+  static const connection = Key('child_chats_connection');
 
   static Key row(String id) => Key('child_chats_row_$id');
 }
@@ -50,7 +57,7 @@ abstract final class ChildChatsKeys {
 /// Closed circle only (family · father · mother). UI-007 / ChatAvailability —
 /// never gated by billing; chat never locks when time expires. Rows open
 /// CHD-008 with `chatWith` (FAT-022 pattern). Phone-contacts CTA (عل-٤).
-/// P-4 SOS ungated. RoleGuard lean for parent. Mock-first — Rule 23 empty default.
+/// P-4 SOS ungated. RoleGuard lean for parent; server refresh is polled while visible.
 class ChildChatsScreen extends StatefulWidget {
   const ChildChatsScreen({
     super.key,
@@ -69,7 +76,7 @@ class ChildChatsScreen extends StatefulWidget {
   /// Test seam — when set, ignores [CurrentRole].
   final AppRole? roleOverride;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// UI-007 seam — null → [stage1ChatAvailability] (always usable).
@@ -89,10 +96,16 @@ class ChildChatsScreen extends StatefulWidget {
 }
 
 class ChildChatsScreenState extends State<ChildChatsScreen> {
-  late final ChildChatsRepository _repo;
+  late ChildChatsRepository _repo;
+  Timer? _refreshTimer;
   var _loading = true;
   var _loadFailed = false;
+  var _refreshing = false;
   var _sosBusy = false;
+  var _creatingThread = false;
+  var _requestInFlight = false;
+  FamilyChatConnectionState _connectionState =
+      FamilyChatConnectionState.checking;
   ConversationsListSnapshot? _snapshot;
 
   AppRole get _role =>
@@ -119,14 +132,38 @@ class ChildChatsScreenState extends State<ChildChatsScreen> {
   void didUpdateWidget(covariant ChildChatsScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.repository != widget.repository) {
-      _load();
+      _repo = widget.repository ?? stage1ChildChatsRepository;
+      _refreshTimer?.cancel();
+      _snapshot = null;
+      unawaited(_load());
     }
   }
 
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  void _scheduleRefresh() {
+    if (_repo is! FamilyChatThreadListRepository) return;
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      unawaited(_load());
+    });
+  }
+
   Future<void> _load() async {
+    if (_requestInFlight) return;
+    _requestInFlight = true;
+    final hadSnapshot = _snapshot != null;
     setState(() {
-      _loading = true;
+      _loading = !hadSnapshot;
+      _refreshing = hadSnapshot;
       _loadFailed = false;
+      if (_connectionState != FamilyChatConnectionState.connected) {
+        _connectionState = FamilyChatConnectionState.reconnecting;
+      }
     });
     try {
       final snap = await _repo.load();
@@ -134,15 +171,23 @@ class ChildChatsScreenState extends State<ChildChatsScreen> {
       setState(() {
         _snapshot = snap;
         _loading = false;
+        _refreshing = false;
         _loadFailed = false;
+        _connectionState = FamilyChatConnectionState.connected;
       });
-    } on Object {
+      _scheduleRefresh();
+    } on Object catch (error) {
       if (!mounted) return;
+      final discard = familyChatFailureRequiresDiscard(error);
       setState(() {
-        _snapshot = null;
         _loading = false;
-        _loadFailed = true;
+        _refreshing = false;
+        _loadFailed = !hadSnapshot || discard;
+        if (discard) _snapshot = null;
+        _connectionState = familyChatConnectionStateFor(error);
       });
+    } finally {
+      _requestInFlight = false;
     }
   }
 
@@ -153,7 +198,7 @@ class ChildChatsScreenState extends State<ChildChatsScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    final fire = widget.sosFire ?? stage1SosFireService;
+    final fire = widget.sosFire ?? activeSosFireService;
     await childSosSenderOf(context).fireThrough(fire);
     if (!mounted) return;
     setState(() => _sosBusy = false);
@@ -182,6 +227,162 @@ class ChildChatsScreenState extends State<ChildChatsScreen> {
     }
     final l10n = AppLocalizations.of(context);
     AppToast.show(context, message: l10n.childChatsCallContactsToast);
+  }
+
+  Future<void> _onNewChat() async {
+    final l10n = AppLocalizations.of(context);
+    final repository = _repo;
+    if (!_isChild || _creatingThread || repository is! FamilyChatThreadListRepository) {
+      return;
+    }
+    final List<FamilyChatParticipant> roster;
+    try {
+      roster = await repository.loadParticipants();
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() => _connectionState = familyChatConnectionStateFor(error));
+      AppToast.show(
+        context,
+        message: familyChatConnectionMessage(l10n, _connectionState) ?? l10n.familyChatUnavailable,
+      );
+      return;
+    }
+    if (!mounted) return;
+    final available = roster.where((participant) => !participant.isSelf).toList(growable: false);
+    if (available.isEmpty) {
+      AppToast.show(context, message: l10n.familyChatNoParticipantsAvailable);
+      return;
+    }
+    final titleController = TextEditingController();
+    var kind = FamilyChatThreadKind.direct;
+    final selectedKeys = <String>{};
+    String participantKey(FamilyChatParticipant participant) =>
+        '${participant.kind.wireValue}:${participant.id}';
+    final choice = await showDialog<_ChildCreateChatChoice>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final selected = available
+              .where((participant) => selectedKeys.contains(participantKey(participant)))
+              .toList(growable: false);
+          final canCreate = kind == FamilyChatThreadKind.direct
+              ? selected.length == 1
+              : selected.length >= 2 && selected.length <= 23;
+          return AlertDialog(
+            title: Text(l10n.familyChatCreateHeading),
+            content: SizedBox(
+              width: 420,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DropdownButtonFormField<FamilyChatThreadKind>(
+                      initialValue: kind,
+                      decoration: InputDecoration(labelText: l10n.familyChatCreateTypeLabel),
+                      items: <DropdownMenuItem<FamilyChatThreadKind>>[
+                        DropdownMenuItem(value: FamilyChatThreadKind.direct, child: Text(l10n.familyChatDirectThread)),
+                        DropdownMenuItem(value: FamilyChatThreadKind.group, child: Text(l10n.familyChatGroupThread)),
+                      ],
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setDialogState(() {
+                          kind = value;
+                          if (kind == FamilyChatThreadKind.direct && selectedKeys.length > 1) {
+                            final keep = selectedKeys.first;
+                            selectedKeys..clear()..add(keep);
+                          }
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    Text(l10n.familyChatSelectParticipants),
+                    for (final participant in available)
+                      CheckboxListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        title: Text(
+                          participant.displayName?.trim().isNotEmpty == true
+                              ? participant.displayName!.trim()
+                              : participant.kind == FamilyChatParticipantKind.child
+                                  ? l10n.familyChatChildFallback
+                                  : l10n.dayBoardGuardianFallback,
+                        ),
+                        value: selectedKeys.contains(participantKey(participant)),
+                        onChanged: (checked) => setDialogState(() {
+                          final key = participantKey(participant);
+                          if (checked == true) {
+                            if (kind == FamilyChatThreadKind.direct) selectedKeys.clear();
+                            selectedKeys.add(key);
+                          } else {
+                            selectedKeys.remove(key);
+                          }
+                        }),
+                      ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: titleController,
+                      maxLength: 120,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: InputDecoration(
+                        labelText: l10n.familyChatCreateTitleLabel,
+                        hintText: l10n.familyChatCreateTitleHint,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: Text(l10n.familyChatCancel)),
+              FilledButton(
+                onPressed: canCreate
+                    ? () => Navigator.of(dialogContext).pop(
+                          _ChildCreateChatChoice(
+                            kind: kind,
+                            title: titleController.text.trim(),
+                            participants: selected
+                                .map((participant) => FamilyChatParticipantReference(
+                                      kind: participant.kind,
+                                      id: participant.id,
+                                    ))
+                                .toList(growable: false),
+                          ),
+                        )
+                    : null,
+                child: Text(l10n.familyChatCreateButton),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+    titleController.dispose();
+    if (choice == null || !mounted) return;
+    setState(() => _creatingThread = true);
+    try {
+      final thread = await repository.createThread(
+        kind: choice.kind,
+        title: choice.title,
+        participants: choice.participants,
+      );
+      if (!mounted) return;
+      await _load();
+      if (!mounted) return;
+      // The conversation route resolves the newly created room through the server on open.
+      context.push(
+        Uri(path: '/scr-chd-008', queryParameters: <String, String>{'chatWith': thread.chatWith}).toString(),
+      );
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() => _connectionState = familyChatConnectionStateFor(error));
+      AppToast.show(
+        context,
+        message: familyChatConnectionMessage(l10n, _connectionState) ?? l10n.familyChatCreateFailed,
+      );
+    } finally {
+      if (mounted) setState(() => _creatingThread = false);
+    }
   }
 
   @override
@@ -216,6 +417,15 @@ class ChildChatsScreenState extends State<ChildChatsScreen> {
             ),
             icon: Icon(Icons.sos, color: colors.coral),
           ),
+          if (_isChild && _repo is FamilyChatThreadListRepository)
+            IconButton(
+              key: const Key('child_chats_new_chat'),
+              tooltip: l10n.familyChatCreateHeading,
+              onPressed: _creatingThread ? null : _onNewChat,
+              icon: _creatingThread
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.add_comment_outlined),
+            ),
         ],
       ),
       body: SafeArea(child: _buildBody(context, l10n, colors)),
@@ -244,48 +454,82 @@ class ChildChatsScreenState extends State<ChildChatsScreen> {
     }
 
     if (_loadFailed) {
-      return AppErrorState(
-        key: ChildChatsKeys.error,
-        kind: AppErrorKind.network,
-        onRetry: _load,
-      );
-    }
-
-    final snap = _snapshot ?? const ConversationsListSnapshot();
-    if (snap.isEmpty) {
       return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: BannerNote(
-              key: ChildChatsKeys.honestyBanner,
-              variant: BannerVariant.t,
-              message: l10n.honestyChildGentleLine,
-            ),
+          FamilyChatConnectionBanner(
+            key: ChildChatsKeys.connection,
+            state: _connectionState,
+            onRetry: _load,
           ),
           Expanded(
-            child: AppEmptyState(
-              key: ChildChatsKeys.empty,
-              title: l10n.childChatsEmptyTitle,
-              message: l10n.childChatsEmptyMessage,
+            child: AppErrorState(
+              key: ChildChatsKeys.error,
+              kind: AppErrorKind.network,
+              onRetry: _load,
             ),
           ),
         ],
       );
     }
 
+    final snap = _snapshot ?? const ConversationsListSnapshot();
+    if (snap.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _load,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            FamilyChatConnectionBanner(
+              key: ChildChatsKeys.connection,
+              state: _connectionState,
+              onRetry: _load,
+            ),
+            if (_refreshing) const LinearProgressIndicator(minHeight: 2),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: BannerNote(
+                key: ChildChatsKeys.honestyBanner,
+                variant: BannerVariant.t,
+                message: _repo is FamilyChatThreadListRepository
+                    ? l10n.familyChatListPollingNotice
+                    : l10n.honestyChildGentleLine,
+              ),
+            ),
+            SizedBox(
+              height: 300,
+              child: AppEmptyState(
+                key: ChildChatsKeys.empty,
+                title: l10n.childChatsEmptyTitle,
+                message: l10n.childChatsEmptyMessage,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     final ordered = snap.ordered;
-    return SingleChildScrollView(
-      key: ChildChatsKeys.body,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          BannerNote(
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: SingleChildScrollView(
+        key: ChildChatsKeys.body,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            FamilyChatConnectionBanner(
+              key: ChildChatsKeys.connection,
+              state: _connectionState,
+              onRetry: _load,
+            ),
+            if (_refreshing) const LinearProgressIndicator(minHeight: 2),
+            BannerNote(
             key: ChildChatsKeys.honestyBanner,
             variant: BannerVariant.t,
-            message: l10n.honestyChildGentleLine,
+            message: _repo is FamilyChatThreadListRepository
+                    ? l10n.familyChatListPollingNotice
+                    : l10n.honestyChildGentleLine,
           ),
           const SizedBox(height: 14),
           DecoratedBox(
@@ -326,10 +570,23 @@ class ChildChatsScreenState extends State<ChildChatsScreen> {
             message: l10n.childChatsSafeCircleBanner,
           ),
           const ShellTabMoreTools(tabId: 'cfam'),
-        ],
+          ],
+        ),
       ),
     );
   }
+}
+
+final class _ChildCreateChatChoice {
+  const _ChildCreateChatChoice({
+    required this.kind,
+    required this.title,
+    required this.participants,
+  });
+
+  final FamilyChatThreadKind kind;
+  final String title;
+  final List<FamilyChatParticipantReference> participants;
 }
 
 class _ChildChatRow extends StatelessWidget {
@@ -352,12 +609,19 @@ class _ChildChatRow extends StatelessWidget {
       l10n,
       thread.chatWith,
       thread.title,
+      threadKind: thread.threadKind,
     );
-    final preview = localizedConversationThreadPreview(
-      l10n,
-      thread.chatWith,
-      thread.preview,
-    );
+    final preview = thread.lastMessageDeleted
+        ? l10n.familyChatMessageDeleted
+        : localizedConversationThreadPreview(
+            l10n,
+            thread.chatWith,
+            thread.preview,
+          );
+    final timeLabel = thread.lastMessageAt == null
+        ? thread.timeLabel
+        : intl.DateFormat.Hm(l10n.localeName)
+            .format(thread.lastMessageAt!.toLocal());
 
     return RowTile(
       key: ChildChatsKeys.row(thread.id),
@@ -376,7 +640,7 @@ class _ChildChatRow extends StatelessWidget {
             Tag(label: '${thread.unreadCount}', variant: TagVariant.t)
           else
             Text(
-              thread.timeLabel,
+              timeLabel,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,

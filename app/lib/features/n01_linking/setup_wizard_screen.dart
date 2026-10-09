@@ -45,7 +45,8 @@ class SetupWizardScreenState extends State<SetupWizardScreen> {
   @override
   void initState() {
     super.initState();
-    _repository = widget.repository ??
+    _repository =
+        widget.repository ??
         PrefsOnboardingProgressRepository(stage1OnboardingProgressStore);
     _load();
   }

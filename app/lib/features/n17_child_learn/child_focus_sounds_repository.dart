@@ -10,7 +10,7 @@ abstract class ChildFocusSoundsRepository {
 final class InMemoryChildFocusSoundsRepository
     implements ChildFocusSoundsRepository {
   InMemoryChildFocusSoundsRepository({ChildFocusSoundsSnapshot? seed})
-      : _snap = seed ?? childFocusSoundsEmptyFixture();
+    : _snap = seed ?? childFocusSoundsEmptyFixture();
 
   ChildFocusSoundsSnapshot _snap;
   Future<void> Function()? loadGate;

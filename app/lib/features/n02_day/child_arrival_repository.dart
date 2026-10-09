@@ -9,7 +9,7 @@ abstract class ChildArrivalRepository {
 
 final class InMemoryChildArrivalRepository implements ChildArrivalRepository {
   InMemoryChildArrivalRepository({ChildArrivalSnapshot? seed})
-      : _snap = seed ?? childArrivalEmptyFixture();
+    : _snap = seed ?? childArrivalEmptyFixture();
 
   ChildArrivalSnapshot _snap;
   Future<void> Function()? loadGate;

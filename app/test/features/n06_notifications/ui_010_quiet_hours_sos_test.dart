@@ -10,15 +10,16 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/notification_prefs.dart';
 import 'package:family_os/core/policy/notification_prefs_repository.dart';
 import 'package:family_os/core/policy/notification_tier.dart';
-import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n06_notifications/notification_prefs_screen.dart';
 import 'package:family_os/features/n10_emergency/emergency_setup_screen.dart';
+import '../../support/recording_sos_fire_service.dart';
 
 /// UI-010 — SCR-FAT-058 quiet hours: SOS/critical never muted (P-4 / SET-010).
 void main() {
   group('UI-010 quiet hours SOS exclusion', () {
-    testWidgets('AC1: SOS-never-muted banner + subtitle copy visible (AR)',
-        (tester) async {
+    testWidgets('AC1: SOS-never-muted banner + subtitle copy visible (AR)', (
+      tester,
+    ) async {
       await _pump(
         tester,
         repository: InMemoryNotificationPrefsRepository(),
@@ -42,8 +43,9 @@ void main() {
       );
     });
 
-    testWidgets('AC1: SOS-never-muted banner + subtitle copy visible (EN)',
-        (tester) async {
+    testWidgets('AC1: SOS-never-muted banner + subtitle copy visible (EN)', (
+      tester,
+    ) async {
       await _pump(
         tester,
         repository: InMemoryNotificationPrefsRepository(),
@@ -67,7 +69,9 @@ void main() {
       );
     });
 
-    testWidgets('AC2: no SOS mute Switch in FAT-058 widget tree', (tester) async {
+    testWidgets('AC2: no SOS mute Switch in FAT-058 widget tree', (
+      tester,
+    ) async {
       await _pump(
         tester,
         repository: InMemoryNotificationPrefsRepository(),
@@ -82,7 +86,10 @@ void main() {
 
       // Three-tier settings expose multiple switches — never an SOS mute control.
       expect(find.byType(Switch), findsAtLeastNWidgets(1));
-      expect(find.byKey(NotificationPrefsKeys.quietHoursSwitch), findsOneWidget);
+      expect(
+        find.byKey(NotificationPrefsKeys.quietHoursSwitch),
+        findsOneWidget,
+      );
 
       expect(find.textContaining('Mute SOS'), findsNothing);
       expect(find.textContaining('كتم SOS'), findsNothing);
@@ -93,10 +100,7 @@ void main() {
     test('AC2 schema: forbidden SOS mute keys rejected', () {
       for (final key in kForbiddenSosMuteKeys) {
         expect(
-          () => NotificationPrefs.fromJson({
-            'memberId': 'father',
-            key: true,
-          }),
+          () => NotificationPrefs.fromJson({'memberId': 'father', key: true}),
           throwsA(isA<ForbiddenSosMuteFieldException>()),
           reason: 'schema must forbid $key',
         );
@@ -104,66 +108,62 @@ void main() {
       expect(NotificationPrefs.sosReceiptAlwaysOn, isTrue);
     });
 
-    testWidgets(
-      'AC3: quiet hours ON + MockSosFireService still delivers SOS',
-      (tester) async {
-        final quiet = const NotificationPrefs(
-          memberId: 'father',
-          quietHoursEnabled: true,
-          quietStart: TimeOfDay(hour: 22, minute: 0),
-          quietEnd: TimeOfDay(hour: 7, minute: 0),
-        );
-        final motherQuiet = const NotificationPrefs(
-          memberId: 'mother',
-          quietHoursEnabled: true,
-          quietStart: TimeOfDay(hour: 22, minute: 0),
-          quietEnd: TimeOfDay(hour: 7, minute: 0),
-        );
-        final repo = InMemoryNotificationPrefsRepository({
-          'father': quiet,
-          'mother': motherQuiet,
-        });
+    testWidgets('AC3: quiet hours ON + a child SOS press still reaches both guardians', (
+      tester,
+    ) async {
+      final quiet = const NotificationPrefs(
+        memberId: 'father',
+        quietHoursEnabled: true,
+        quietStart: TimeOfDay(hour: 22, minute: 0),
+        quietEnd: TimeOfDay(hour: 7, minute: 0),
+      );
+      final motherQuiet = const NotificationPrefs(
+        memberId: 'mother',
+        quietHoursEnabled: true,
+        quietStart: TimeOfDay(hour: 22, minute: 0),
+        quietEnd: TimeOfDay(hour: 7, minute: 0),
+      );
+      final repo = InMemoryNotificationPrefsRepository({
+        'father': quiet,
+        'mother': motherQuiet,
+      });
 
-        await _pump(
-          tester,
-          repository: repo,
-          role: AppRole.father,
-          memberId: 'father',
-        );
+      await _pump(
+        tester,
+        repository: repo,
+        role: AppRole.father,
+        memberId: 'father',
+      );
 
-        expect(find.byKey(NotificationPrefsKeys.sosPierceBanner), findsOneWidget);
-        final sw = tester.widget<Switch>(
-          find.byKey(NotificationPrefsKeys.quietHoursSwitch),
-        );
-        expect(sw.value, isTrue);
+      expect(find.byKey(NotificationPrefsKeys.sosPierceBanner), findsOneWidget);
+      final sw = tester.widget<Switch>(
+        find.byKey(NotificationPrefsKeys.quietHoursSwitch),
+      );
+      expect(sw.value, isTrue);
 
-        final sos = MockSosFireService(
-          prefsByMember: {
-            'father': await repo.load('father'),
-            'mother': await repo.load('mother'),
-          },
-        );
-        final result = await sos.fire(
-          childId: 'ui010-child',
-          recipients: const ['father', 'mother'],
-          clock: const TimeOfDay(hour: 23, minute: 30),
-        );
+      final sos = RecordingSosFireService(
+        prefsByMember: {
+          'father': await repo.load('father'),
+          'mother': await repo.load('mother'),
+        },
+      );
+      final result = await sos.fire(
+        childId: 'ui010-child',
+        recipients: const ['father', 'mother'],
+        clock: const TimeOfDay(hour: 23, minute: 30),
+      );
 
-        expect(result.fired, isTrue);
-        expect(sos.fireCount, 1);
-        expect(result.recipientDeliveries, hasLength(2));
-        expect(
-          result.recipientDeliveries.every((d) => d.delivered),
-          isTrue,
-        );
-        expect(
-          result.recipientDeliveries.every(
-            (d) => d.tier == NotificationTier.critical,
-          ),
-          isTrue,
-        );
-      },
-    );
+      expect(result.fired, isTrue);
+      expect(sos.fireCount, 1);
+      expect(result.recipientDeliveries, hasLength(2));
+      expect(result.recipientDeliveries.every((d) => d.delivered), isTrue);
+      expect(
+        result.recipientDeliveries.every(
+          (d) => d.tier == NotificationTier.critical,
+        ),
+        isTrue,
+      );
+    });
   });
 }
 

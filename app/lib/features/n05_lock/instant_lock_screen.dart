@@ -15,6 +15,8 @@ import 'package:family_os/core/policy/anti_tamper_permission.dart';
 import 'package:family_os/core/policy/anti_tamper_policy.dart';
 import 'package:family_os/core/policy/anti_tamper_repository.dart';
 import 'package:family_os/core/policy/device_lock_service.dart';
+import 'package:family_os/features/n03_screen_time/screen_time_server_authority.dart';
+import 'package:family_os/features/n03_screen_time/screen_time_server_panel.dart';
 import 'package:family_os/core/policy/device_lock_state.dart';
 import 'package:family_os/core/prefs_misc/prefs_misc_runtime.dart';
 
@@ -230,8 +232,7 @@ class InstantLockScreenState extends State<InstantLockScreen> {
       _policy = loaded;
       _lockState = lockState;
       _loading = false;
-      _showPermissionBanner =
-          loaded.noDelete && !widget.deviceAdminGranted;
+      _showPermissionBanner = loaded.noDelete && !widget.deviceAdminGranted;
     });
   }
 
@@ -293,8 +294,7 @@ class InstantLockScreenState extends State<InstantLockScreen> {
       _alertBus.simulateBypassAttempt(_childId, _policy);
 
   /// Test / Stage-1 hook — fires father alert when [simAlert] is ON.
-  bool simulateSimChange() =>
-      _alertBus.simulateSimChange(_childId, _policy);
+  bool simulateSimChange() => _alertBus.simulateSimChange(_childId, _policy);
 
   Future<void> _saveAntiTamper() async {
     final repo = _repository;
@@ -302,11 +302,7 @@ class InstantLockScreenState extends State<InstantLockScreen> {
       return;
     }
     setState(() => _saving = true);
-    final result = await repo.write(
-      _childId,
-      _policy,
-      actor: _role,
-    );
+    final result = await repo.write(_childId, _policy, actor: _role);
     if (!mounted) return;
     setState(() => _saving = false);
     final l10n = AppLocalizations.of(context);
@@ -390,6 +386,30 @@ class InstantLockScreenState extends State<InstantLockScreen> {
     final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final locked = _lockState?.locked ?? false;
+
+    // W5 — same rule as the screen-time screen, for the same reason: a lock a family presses
+    // here must be a decision the server holds and the child's phone obeys. Built without a
+    // local lock service (which is how the router builds it) this screen renders the panel
+    // above, whose lock button writes to the server; built with one, it keeps the local
+    // service that the widget tests inject.
+    final serverAuthority = activeScreenTimeServerAuthority;
+    if (widget.lockService == null && widget.repository == null) {
+      return Scaffold(
+        backgroundColor: colors.bg,
+        appBar: AppBar(
+          title: Text(l10n.instantLockTitle),
+          backgroundColor: colors.surface,
+          foregroundColor: colors.ink,
+        ),
+        body: SafeArea(
+          child: ScreenTimeServerPanel(
+            childId: _childId,
+            authority: serverAuthority,
+            canEdit: _canOfferLock,
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: colors.bg,
@@ -525,8 +545,8 @@ class _InstantLockCard extends StatelessWidget {
     final byText = lockedBy == DeviceLockedBy.father
         ? lockedByFather
         : lockedBy == DeviceLockedBy.mother
-            ? lockedByMother
-            : null;
+        ? lockedByMother
+        : null;
 
     return DecoratedBox(
       key: InstantLockKeys.card,
@@ -543,33 +563,33 @@ class _InstantLockCard extends StatelessWidget {
             Text(
               title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: colors.ink,
-                    fontWeight: FontWeight.w700,
-                  ),
+                color: colors.ink,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
               subtitle,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colors.ink2,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: colors.ink2),
             ),
             const SizedBox(height: 12),
             Text(
               statusText,
               key: InstantLockKeys.status,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: colors.ink,
-                    fontWeight: FontWeight.w700,
-                  ),
+                color: colors.ink,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             if (byText != null) ...[
               const SizedBox(height: 4),
               Text(
                 byText,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colors.ink2,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: colors.ink2),
               ),
             ],
             const SizedBox(height: 12),
@@ -652,9 +672,9 @@ class _AntiTamperSection extends StatelessWidget {
             Text(
               sectionTitle,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: colors.ink,
-                    fontWeight: FontWeight.w700,
-                  ),
+                color: colors.ink,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 8),
             for (final flag in AntiTamperFlags.known)
@@ -705,9 +725,9 @@ class _AntiTamperDenyPanel extends StatelessWidget {
           message,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: colors.ink,
-                fontWeight: FontWeight.w700,
-              ),
+            color: colors.ink,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
     );

@@ -53,6 +53,7 @@ class FamilyColors extends ThemeExtension<FamilyColors> {
   final Color amberDeep;
   final Color coral;
   final Color coral100;
+
   /// Kid palette sky (design system «سماوي» / FAT-003 swatch 2).
   final Color sky;
   final Color teal;

@@ -15,8 +15,8 @@ final class InMemoryAddEventRepository implements AddEventRepository {
   InMemoryAddEventRepository({
     AddEventSnapshot? seed,
     FamilyCalendarRepository? calendar,
-  })  : _snap = seed ?? addEventEmptyFixture(),
-        _calendarOverride = calendar;
+  }) : _snap = seed ?? addEventEmptyFixture(),
+       _calendarOverride = calendar;
 
   final CreateTaskStyleSeq _seq = CreateTaskStyleSeq();
   AddEventSnapshot _snap;

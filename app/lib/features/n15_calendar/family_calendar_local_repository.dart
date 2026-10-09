@@ -6,7 +6,7 @@ import 'package:family_os/features/n15_calendar/family_calendar_repository.dart'
 /// Durable Family Calendar via kv_store (CE-B1 / CE-G016–017).
 final class LocalFamilyCalendarRepository implements FamilyCalendarRepository {
   LocalFamilyCalendarRepository(FamilyLocalDatabase db)
-      : _store = KvSnapshotStore(db, namespace: kvNamespace);
+    : _store = KvSnapshotStore(db, namespace: kvNamespace);
 
   static const kvNamespace = 'family_calendar';
 

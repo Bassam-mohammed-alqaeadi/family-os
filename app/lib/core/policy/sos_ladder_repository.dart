@@ -69,15 +69,28 @@ final class MemorySosLadderStore implements SosLadderStore {
 /// [SosPrefsRuntime.ladder] Local KV (DOM-SOS-LADDER).
 final MemorySosLadderStore stage1SosLadderStore = MemorySosLadderStore();
 
+SosLadderRepository? _activeSosLadderRepository;
+
+/// The ladder the setup screen edits, or null when no server session is bound.
+///
+/// Rung 2 is a decision the whole family shares: a backup the mother added must escalate
+/// for the father too, and that is only true when the ladder lives on the server.
+SosLadderRepository? get activeSosLadderRepository => _activeSosLadderRepository;
+
+/// Binds the ladder to the server session, or clears it.
+void bindActiveSosLadderRepository(SosLadderRepository? repository) {
+  _activeSosLadderRepository = repository;
+}
+
 Never _rejectRemove(String memberId) => throw SosLadderValidationException(
-      SosLadderValidationCode.rung1ParentImmovable,
-      memberId: memberId,
-    );
+  SosLadderValidationCode.rung1ParentImmovable,
+  memberId: memberId,
+);
 
 Never _rejectDisable(String memberId) => throw SosLadderValidationException(
-      SosLadderValidationCode.rung1ParentDisableForbidden,
-      memberId: memberId,
-    );
+  SosLadderValidationCode.rung1ParentDisableForbidden,
+  memberId: memberId,
+);
 
 /// Prefs/JSON-backed repository (SharedPreferences adapter-ready).
 final class PrefsSosLadderRepository implements SosLadderRepository {
@@ -238,10 +251,10 @@ void _validateBackupContact(SosBackupContact contact) {
 /// Pure in-memory alternate for unit / widget tests (Rule 25 fake).
 final class InMemorySosLadderRepository implements SosLadderRepository {
   InMemorySosLadderRepository([Map<String, SosLadder>? seed])
-      : _byFamily = {
-          if (seed != null)
-            for (final e in seed.entries) e.key: e.value.normalized(),
-        };
+    : _byFamily = {
+        if (seed != null)
+          for (final e in seed.entries) e.key: e.value.normalized(),
+      };
 
   final Map<String, SosLadder> _byFamily;
 

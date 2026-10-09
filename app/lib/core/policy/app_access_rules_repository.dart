@@ -21,7 +21,7 @@ abstract class AppAccessRulesPrefsStore {
 /// In-memory prefs — share [data] across repo instances to simulate restart.
 final class MemoryAppAccessRulesPrefsStore implements AppAccessRulesPrefsStore {
   MemoryAppAccessRulesPrefsStore([Map<String, String>? data])
-      : data = data ?? {};
+    : data = data ?? {};
 
   final Map<String, String> data;
 
@@ -60,9 +60,7 @@ final class PrefsAppAccessRulesRepository implements AppAccessRulesRepository {
       for (final item in rulesRaw) {
         if (item is! Map) continue;
         rules.add(
-          AppAccessRule.fromJson(
-            item.map((k, v) => MapEntry(k.toString(), v)),
-          ),
+          AppAccessRule.fromJson(item.map((k, v) => MapEntry(k.toString(), v))),
         );
       }
     }
@@ -85,7 +83,7 @@ final class PrefsAppAccessRulesRepository implements AppAccessRulesRepository {
 final class InMemoryAppAccessRulesRepository
     implements AppAccessRulesRepository {
   InMemoryAppAccessRulesRepository([Map<String, AppAccessRuleSet>? seed])
-      : _byChild = seed ?? {};
+    : _byChild = seed ?? {};
 
   final Map<String, AppAccessRuleSet> _byChild;
 

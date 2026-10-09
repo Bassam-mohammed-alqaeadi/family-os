@@ -96,10 +96,7 @@ void main() {
   testWidgets('SCR-FAT-025 child lean', (tester) async {
     await tester.pumpWidget(
       _app(
-        child: SettingsHubScreen(
-          roleOverride: AppRole.child,
-          onSos: () {},
-        ),
+        child: SettingsHubScreen(roleOverride: AppRole.child, onSos: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -127,7 +124,9 @@ void main() {
     await tester.tap(find.byKey(SettingsHubKeys.linkDeviceRow));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.byKey(SettingsHubKeys.navRow('SCR-FAT-058')));
+    await tester.ensureVisible(
+      find.byKey(SettingsHubKeys.navRow('SCR-FAT-058')),
+    );
     await tester.tap(find.byKey(SettingsHubKeys.navRow('SCR-FAT-058')));
     await tester.pumpAndSettle();
 
@@ -138,82 +137,79 @@ void main() {
     expect(opened, containsAll(['SCR-FAT-058', 'SCR-FAT-004', 'SCR-FAT-056']));
   });
 
-  testWidgets(
-    'SCR-FAT-025 UI-012 AC2: hub card greens after FAT-026 repair',
-    (tester) async {
-      final seam = FakeDeviceHealthSeam.atRiskBattery(
-        grantOnOpenSettings: true,
-      );
-      addTearDown(seam.dispose);
+  testWidgets('SCR-FAT-025 UI-012 AC2: hub card greens after FAT-026 repair', (
+    tester,
+  ) async {
+    final seam = FakeDeviceHealthSeam.atRiskBattery(grantOnOpenSettings: true);
+    addTearDown(seam.dispose);
 
-      final router = GoRouter(
-        initialLocation: '/scr-fat-025',
-        routes: [
-          GoRoute(
-            path: '/scr-fat-025',
-            builder: (context, state) => SettingsHubScreen(
-              healthSeam: seam,
-              roleOverride: AppRole.father,
-              onSos: () {},
-            ),
-          ),
-          GoRoute(
-            path: '/scr-fat-026',
-            builder: (context, state) => DeviceHealthDetailScreen(
-              deviceId: state.uri.queryParameters['deviceId'],
-              healthSeam: seam,
-              onOpenSettingsToast: false,
-            ),
-          ),
-        ],
-      );
-      addTearDown(router.dispose);
-
-      await tester.pumpWidget(
-        CurrentIdentity(
-          runtime: createStage1IdentityRuntime(),
-          child: MaterialApp.router(
-            theme: buildFamilyTheme(),
-            locale: const Locale('ar'),
-            supportedLocales: AppLocalizations.supportedLocales,
-            localizationsDelegates: const [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            routerConfig: router,
+    final router = GoRouter(
+      initialLocation: '/scr-fat-025',
+      routes: [
+        GoRoute(
+          path: '/scr-fat-025',
+          builder: (context, state) => SettingsHubScreen(
+            healthSeam: seam,
+            roleOverride: AppRole.father,
+            onSos: () {},
           ),
         ),
-      );
-      await tester.pumpAndSettle();
+        GoRoute(
+          path: '/scr-fat-026',
+          builder: (context, state) => DeviceHealthDetailScreen(
+            deviceId: state.uri.queryParameters['deviceId'],
+            healthSeam: seam,
+            onOpenSettingsToast: false,
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
 
-      expect(
-        find.byKey(DeviceHealthListKeys.healthTag('dev_ac')),
-        findsOneWidget,
-      );
-      expect(find.text('قد ينقطع الاتصال'), findsWidgets);
+    await tester.pumpWidget(
+      CurrentIdentity(
+        runtime: createStage1IdentityRuntime(),
+        child: MaterialApp.router(
+          theme: buildFamilyTheme(),
+          locale: const Locale('ar'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          routerConfig: router,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(DeviceHealthListKeys.deviceCard('dev_ac')));
-      await tester.pumpAndSettle();
+    expect(
+      find.byKey(DeviceHealthListKeys.healthTag('dev_ac')),
+      findsOneWidget,
+    );
+    expect(find.text('قد ينقطع الاتصال'), findsWidgets);
 
-      expect(router.state.uri.path, '/scr-fat-026');
-      await tester.ensureVisible(find.byKey(DeviceHealthDetailKeys.repairCta));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(DeviceHealthDetailKeys.repairCta));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 50));
-      await tester.pumpAndSettle();
+    await tester.tap(find.byKey(DeviceHealthListKeys.deviceCard('dev_ac')));
+    await tester.pumpAndSettle();
 
-      router.pop();
-      await tester.pumpAndSettle();
+    expect(router.state.uri.path, '/scr-fat-026');
+    await tester.ensureVisible(find.byKey(DeviceHealthDetailKeys.repairCta));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(DeviceHealthDetailKeys.repairCta));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.pumpAndSettle();
 
-      expect(router.state.uri.path, '/scr-fat-025');
-      expect(find.text('سليم'), findsOneWidget);
-      expect(find.text('قد ينقطع الاتصال'), findsNothing);
-      expect(seam.devices.first.level, DeviceHealthLevel.healthy);
-    },
-  );
+    router.pop();
+    await tester.pumpAndSettle();
+
+    expect(router.state.uri.path, '/scr-fat-025');
+    expect(find.text('سليم'), findsOneWidget);
+    expect(find.text('قد ينقطع الاتصال'), findsNothing);
+    expect(seam.devices.first.level, DeviceHealthLevel.healthy);
+  });
 
   testWidgets('SCR-FAT-025 empty devices → AppEmptyState', (tester) async {
     await tester.pumpWidget(
@@ -275,10 +271,7 @@ void main() {
 
     final arArb = File('lib/core/i18n/app_ar.arb').readAsStringSync();
     final enArb = File('lib/core/i18n/app_en.arb').readAsStringSync();
-    for (final key in [
-      'settingsHub',
-      'deviceHealth',
-    ]) {
+    for (final key in ['settingsHub', 'deviceHealth']) {
       final re = RegExp('"$key[^"]*"\\s*:\\s*"((?:\\\\.|[^"\\\\])*)"');
       for (final value in [
         ...re.allMatches(arArb).map((m) => m.group(1)!),

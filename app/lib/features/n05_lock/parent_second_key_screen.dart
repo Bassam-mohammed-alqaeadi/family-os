@@ -56,7 +56,7 @@ class ParentSecondKeyScreen extends StatefulWidget {
   /// Rule 25 seam — null → [stage1ChildModeLockService].
   final ChildModeLockService? lockService;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — when set, ignores [CurrentRole].
@@ -91,7 +91,7 @@ class _ParentSecondKeyScreenState extends State<ParentSecondKeyScreen> {
   void initState() {
     super.initState();
     _lock = widget.lockService ?? stage1ChildModeLockService;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     _lock.addListener(_onLock);
     _lock.notifyBus.addListener(_onLock);
   }
@@ -139,20 +139,14 @@ class _ParentSecondKeyScreenState extends State<ParentSecondKeyScreen> {
     if (!_canDecide) return;
     _lock.approveSecondKey(window: widget.approveWindow);
     final l10n = AppLocalizations.of(context);
-    AppToast.show(
-      context,
-      message: l10n.parentSecondKeyApprovedToast,
-    );
+    AppToast.show(context, message: l10n.parentSecondKeyApprovedToast);
   }
 
   void _deny(ChildModeUnlockRequest request) {
     if (!_canDecide) return;
     _lock.rejectSecondKey();
     final l10n = AppLocalizations.of(context);
-    AppToast.show(
-      context,
-      message: l10n.parentSecondKeyDeniedToast,
-    );
+    AppToast.show(context, message: l10n.parentSecondKeyDeniedToast);
   }
 
   @override
@@ -359,11 +353,7 @@ class _PendingUnlockCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               l10n.parentSecondKeyPendingMeta,
-              style: TextStyle(
-                fontSize: 12,
-                height: 1.5,
-                color: colors.ink2,
-              ),
+              style: TextStyle(fontSize: 12, height: 1.5, color: colors.ink2),
             ),
             if (canDecide) ...[
               const SizedBox(height: 14),

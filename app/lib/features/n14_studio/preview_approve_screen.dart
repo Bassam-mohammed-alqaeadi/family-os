@@ -12,6 +12,7 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/i18n/notebook_studio_i18n.dart';
 import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n14_studio/preview_approve_models.dart';
@@ -26,6 +27,8 @@ abstract final class PreviewApproveKeys {
   static const ruleBanner = Key('preview_approve_rule');
   static const quizCard = Key('preview_approve_quiz');
   static const lessonCard = Key('preview_approve_lesson');
+  static const citationsCard = Key('preview_approve_citations');
+  static const audioMapCard = Key('preview_approve_audio_map');
   static const swapCta = Key('preview_approve_swap');
   static const editCta = Key('preview_approve_edit');
   static const deleteCta = Key('preview_approve_delete');
@@ -39,6 +42,7 @@ abstract final class PreviewApproveKeys {
   static const sosIconCta = Key('preview_approve_sos_icon');
 
   static Key questionRow(String id) => Key('preview_approve_q_$id');
+  static Key citationChip(String id) => Key('preview_approve_cit_$id');
 }
 
 /// SCR-FAT-044 — معاينة واعتماد (preview and approve).
@@ -60,7 +64,7 @@ class PreviewApproveScreen extends StatefulWidget {
   /// Rule 25 seam — null → [stage1PreviewApproveRepository].
   final PreviewApproveRepository? repository;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — when set, ignores [CurrentRole].
@@ -112,7 +116,7 @@ class _PreviewApproveScreenState extends State<PreviewApproveScreen> {
   void initState() {
     super.initState();
     _repo = widget.repository ?? stage1PreviewApproveRepository;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _load();
@@ -372,6 +376,20 @@ class _PreviewApproveScreenState extends State<PreviewApproveScreen> {
               l10n: l10n,
             ),
           ],
+          const SizedBox(height: 12),
+          _CitationsCard(
+            snap: _snap,
+            colors: colors,
+            radii: radii,
+            l10n: l10n,
+            onSelect: (id) {
+              setState(() {
+                _snap = _snap.withSelectedCitation(id);
+              });
+            },
+          ),
+          const SizedBox(height: 12),
+          _AudioMapCard(colors: colors, radii: radii, l10n: l10n),
           const SizedBox(height: 16),
           PrimaryBtn(
             key: PreviewApproveKeys.approveCta,
@@ -406,6 +424,158 @@ class _PreviewApproveScreenState extends State<PreviewApproveScreen> {
             onPressed: _sosBusy ? null : _openSos,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CitationsCard extends StatelessWidget {
+  const _CitationsCard({
+    required this.snap,
+    required this.colors,
+    required this.radii,
+    required this.l10n,
+    required this.onSelect,
+  });
+
+  final PreviewApproveSnapshot snap;
+  final FamilyColors colors;
+  final FamilyRadii radii;
+  final AppLocalizations l10n;
+  final ValueChanged<String> onSelect;
+
+  String _excerpt(PreviewCitationKey key) => switch (key) {
+    PreviewCitationKey.textbookP47 => l10n.previewApproveCitationExcerptP47,
+    PreviewCitationKey.worksheetP2 =>
+      l10n.previewApproveCitationExcerptWorksheet,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final active = snap.activeCitation;
+    return DecoratedBox(
+      key: PreviewApproveKeys.citationsCard,
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(radii.card),
+        border: Border.all(color: colors.border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              l10n.previewApproveCitationsHeading,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: colors.ink,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final c in snap.citations)
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minHeight: 48,
+                      minWidth: 48,
+                    ),
+                    child: ChoiceChip(
+                      key: PreviewApproveKeys.citationChip(c.id),
+                      label: Text(
+                        l10n.previewApproveCitationChipLabel(c.refLabel),
+                      ),
+                      selected: active?.id == c.id,
+                      onSelected: (_) => onSelect(c.id),
+                    ),
+                  ),
+              ],
+            ),
+            if (active != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                l10n.previewApproveCitationSelectedTitle,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: colors.tealDeep,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _excerpt(active.citationKey),
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: colors.ink2,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AudioMapCard extends StatelessWidget {
+  const _AudioMapCard({
+    required this.colors,
+    required this.radii,
+    required this.l10n,
+  });
+
+  final FamilyColors colors;
+  final FamilyRadii radii;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      key: PreviewApproveKeys.audioMapCard,
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(radii.card),
+        border: Border.all(color: colors.border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.podcasts_outlined, color: colors.p600, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    l10n.previewApproveAudioOverviewCardTitle,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: colors.ink,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              l10n.previewApproveAudioOverviewCardBody,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: colors.ink2,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

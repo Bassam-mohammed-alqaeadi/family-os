@@ -386,14 +386,11 @@ int _seedProfileKidToolFixtures() {
     }
   }
 
-  n += _seed<InMemoryTamperAlertsRepository>(
-    stage1TamperAlertsRepository,
-    (r) {
-      for (final id in kids) {
-        r.seed(id, tamperAlertsManyFixture(childId: id));
-      }
-    },
-  );
+  n += _seed<InMemoryTamperAlertsRepository>(stage1TamperAlertsRepository, (r) {
+    for (final id in kids) {
+      r.seed(id, tamperAlertsManyFixture(childId: id));
+    }
+  });
 
   n += _seed<InMemorySmartAlertsRepository>(
     stage1SmartAlertsRepository,

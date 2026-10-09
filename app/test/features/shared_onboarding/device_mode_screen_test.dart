@@ -24,7 +24,9 @@ void main() {
     expect(find.textContaining('لا يوجد خيار «أم» هنا'), findsOneWidget);
   });
 
-  testWidgets('guardian card → /scr-fat-001 and role not child', (tester) async {
+  testWidgets('guardian card → /scr-fat-001 and role not child', (
+    tester,
+  ) async {
     final role = RoleController(AppRole.father);
     final router = GoRouter(
       initialLocation: '/scr-shr-007',

@@ -19,7 +19,9 @@ void main() {
     stage1ChildModeLockService.resetForTests();
   });
 
-  testWidgets('shows dual-key + entertainment locked + SOS (P-4)', (tester) async {
+  testWidgets('shows dual-key + entertainment locked + SOS (P-4)', (
+    tester,
+  ) async {
     final lock = ChildModeLockService();
     await _pump(tester, lockService: lock);
     expect(find.byKey(ChildModeLockKeys.dualKeyBanner), findsOneWidget);
@@ -50,8 +52,9 @@ void main() {
     expect(find.byKey(ChildModeLockKeys.passwordStep), findsOneWidget);
   });
 
-  testWidgets('wrong password notifies father; 3rd locks 24h + mother',
-      (tester) async {
+  testWidgets('wrong password notifies father; 3rd locks 24h + mother', (
+    tester,
+  ) async {
     final lock = ChildModeLockService();
     await _pump(
       tester,
@@ -85,14 +88,12 @@ void main() {
     expect(lock.notifyBus.delivered.last.lockout, isTrue);
     expect(lock.notifyBus.delivered.last.notifiedMother, isTrue);
     expect(find.byKey(ChildModeLockKeys.lockoutBanner), findsOneWidget);
-    expect(
-      lock.audit.entries.any((e) => e.contains('lockout')),
-      isTrue,
-    );
+    expect(lock.audit.entries.any((e) => e.contains('lockout')), isTrue);
   });
 
-  testWidgets('correct password → awaiting second key (FAT-030 CTA)',
-      (tester) async {
+  testWidgets('correct password → awaiting second key (FAT-030 CTA)', (
+    tester,
+  ) async {
     var viewedFather = false;
     final lock = ChildModeLockService();
     await _pump(

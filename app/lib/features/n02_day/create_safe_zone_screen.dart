@@ -108,7 +108,7 @@ class CreateSafeZoneScreen extends StatefulWidget {
   /// Test seam — when set, overrides role/level edit gate.
   final bool? canEditOverride;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — SOS fire / navigate.
@@ -142,6 +142,7 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
   var _alertArrival = true;
   var _alertDeparture = true;
   var _alertNoShow = false;
+
   /// Minutes from local midnight when No-show is armed (LOCATION-1B).
   int? _noShowDeadlineMinutes;
   var _sosBusy = false;
@@ -263,7 +264,7 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    final fire = widget.sosFire ?? stage1SosFireService;
+    final fire = widget.sosFire ?? activeSosFireService;
     final sender = sosSenderForRole(
       context,
       _role,
@@ -286,10 +287,7 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
             minute: _noShowDeadlineMinutes! % 60,
           )
         : const TimeOfDay(hour: 7, minute: 30);
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: initial,
-    );
+    final picked = await showTimePicker(context: context, initialTime: initial);
     if (!mounted || picked == null) return;
     setState(() {
       _noShowDeadlineMinutes = picked.hour * 60 + picked.minute;
@@ -325,7 +323,10 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
       return;
     }
     if (_alertNoShow && _noShowDeadlineMinutes == null) {
-      AppToast.show(context, message: l10n.createSafeZoneNoShowDeadlineRequired);
+      AppToast.show(
+        context,
+        message: l10n.createSafeZoneNoShowDeadlineRequired,
+      );
       return;
     }
     final meters = _metersLabel(l10n);
@@ -339,6 +340,57 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
     );
 
     setState(() => _saving = true);
+
+    // A build with a server draws the boundary on the server, and that is the whole point
+    // of the pack: the zone exists for every handset and for the server that judges
+    // crossings. Everything below this block is the local Stage-1 path, kept for a build
+    // that has no server to draw on.
+    final writer = activeSafeZoneServerWriter;
+    if (writer != null) {
+      try {
+        await writer.createZone(
+          SafeZoneDraft(
+            name: name,
+            emoji: '📍',
+            geometry: CircleGeometry(
+              center: center,
+              radiusMeters: _radiusMeters.toDouble(),
+            ),
+            assignedChildIds: assignedList,
+            alertEnter: _alertArrival,
+            alertExit: _alertDeparture,
+          ),
+        );
+      } catch (e, st) {
+        debugPrint('W3 safe zone create failed: $e\n$st');
+        if (!mounted) return;
+        setState(() => _saving = false);
+        AppToast.show(
+          context,
+          message: l10n.errorLocalSaveMessage,
+          actionLabel: l10n.errorRetryCta,
+          onAction: () => _save(l10n),
+        );
+        return;
+      }
+      if (!mounted) return;
+      setState(() => _saving = false);
+      AppToast.show(context, message: l10n.createSafeZoneSavedToast(name));
+      if (widget.onSaved != null) {
+        widget.onSaved!();
+        return;
+      }
+      final createdChildId = _resolvedChildId;
+      final createdListPath = createdChildId == null
+          ? '/scr-fat-016'
+          : '/scr-fat-016?childId=${Uri.encodeComponent(createdChildId)}';
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go(createdListPath);
+      }
+      return;
+    }
 
     final domainRepo = _domainRepo ?? widget.domainRepository;
     final injectedList = _injectedListRepo ?? widget.repository;
@@ -601,6 +653,7 @@ class CreateSafeZoneScreenState extends State<CreateSafeZoneScreen> {
           _AlertsCard(
             canEdit: _canEdit,
             l10n: l10n,
+            supportsNoShow: activeSafeZoneServerWriter == null,
             arrival: _alertArrival,
             departure: _alertDeparture,
             noShow: _alertNoShow,
@@ -1026,6 +1079,7 @@ class _AlertsCard extends StatelessWidget {
   const _AlertsCard({
     required this.canEdit,
     required this.l10n,
+    required this.supportsNoShow,
     required this.arrival,
     required this.departure,
     required this.noShow,
@@ -1039,6 +1093,10 @@ class _AlertsCard extends StatelessWidget {
 
   final bool canEdit;
   final AppLocalizations l10n;
+
+  /// False when the bound authority cannot store a missed-deadline alert, in which case
+  /// the row is not rendered rather than rendered and silently dropped.
+  final bool supportsNoShow;
   final bool arrival;
   final bool departure;
   final bool noShow;
@@ -1109,19 +1167,20 @@ class _AlertsCard extends StatelessWidget {
                   activeThumbColor: colors.mint,
                 ),
               ),
-              RowTile(
-                key: CreateSafeZoneKeys.alertNoShow,
-                leading: Icon(Icons.schedule, color: colors.amber, size: 22),
-                title: l10n.createSafeZoneAlertNoShow,
-                subtitle: l10n.createSafeZoneAlertNoShowHint,
-                showDivider: noShow,
-                trailing: Switch.adaptive(
-                  value: noShow,
-                  onChanged: canEdit ? onNoShow : null,
-                  activeThumbColor: colors.mint,
+              if (supportsNoShow)
+                RowTile(
+                  key: CreateSafeZoneKeys.alertNoShow,
+                  leading: Icon(Icons.schedule, color: colors.amber, size: 22),
+                  title: l10n.createSafeZoneAlertNoShow,
+                  subtitle: l10n.createSafeZoneAlertNoShowHint,
+                  showDivider: noShow,
+                  trailing: Switch.adaptive(
+                    value: noShow,
+                    onChanged: canEdit ? onNoShow : null,
+                    activeThumbColor: colors.mint,
+                  ),
                 ),
-              ),
-              if (noShow) ...[
+              if (supportsNoShow && noShow) ...[
                 Padding(
                   key: CreateSafeZoneKeys.noShowDeadlineSection,
                   padding: const EdgeInsets.fromLTRB(0, 4, 0, 8),
@@ -1162,7 +1221,8 @@ class _AlertsCard extends StatelessWidget {
                             ),
                           _DeadlineChip(
                             chipKey: CreateSafeZoneKeys.noShowDeadlineCustom,
-                            label: noShowDeadlineMinutes != null &&
+                            label:
+                                noShowDeadlineMinutes != null &&
                                     !CreateSafeZoneScreenState._presetDeadlines
                                         .contains(noShowDeadlineMinutes)
                                 ? formatDeadlineClock(noShowDeadlineMinutes!)

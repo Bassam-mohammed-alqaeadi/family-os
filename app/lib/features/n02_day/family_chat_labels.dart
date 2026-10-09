@@ -5,13 +5,38 @@ import 'package:family_os/features/n02_day/family_chat_local_store.dart';
 String localizedConversationThreadTitle(
   AppLocalizations l10n,
   String chatWith,
-  String storedTitle,
-) {
+  String storedTitle, {
+  String? threadKind,
+  bool? isFamilyThread,
+}) {
   if (chatWith == FamilyChatLocalStore.familyChatWith ||
       storedTitle == FamilyChatLocalStore.familyChatWith) {
     return l10n.conversationsListFamilyThreadTitle;
   }
+  if (storedTitle.trim().isNotEmpty) return storedTitle;
+  if (isFamilyThread == true || threadKind == 'family') {
+    return l10n.familyChatFamilyThread;
+  }
+  if (threadKind == 'child' || (isFamilyThread == false && threadKind == null)) {
+    return l10n.familyChatChildThread;
+  }
+  if (threadKind == 'direct') return l10n.familyChatDirectThread;
+  if (threadKind == 'group') return l10n.familyChatGroupThread;
   return storedTitle;
+}
+
+/// A membership's stable role id is not a person's name. Show a localized generic role rather
+/// than leaking wire identifiers such as `primary_guardian` into a message bubble.
+String? localizedFamilyChatSenderLabel(
+  AppLocalizations l10n,
+  String? senderLabel,
+) {
+  if (senderLabel == null) return null;
+  return switch (senderLabel) {
+    'primary_guardian' || 'co_guardian' => l10n.dayBoardGuardianFallback,
+    'child' => l10n.familyChatChildFallback,
+    _ => senderLabel,
+  };
 }
 
 String localizedConversationThreadPreview(

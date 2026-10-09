@@ -364,106 +364,104 @@ class _PrivacyDataScreenState extends State<PrivacyDataScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                  Text(
-                    l10n.privacyDataSubtitle,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: colors.ink2,
-                      fontWeight: FontWeight.w600,
+                    Text(
+                      l10n.privacyDataSubtitle,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: colors.ink2,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  BannerNote(
-                    key: PrivacyDataKeys.retentionBanner,
-                    message: l10n.privacyDataRetentionNote,
-                    variant: BannerVariant.a,
-                  ),
-                  if (!_canEdit) ...[
                     const SizedBox(height: 12),
                     BannerNote(
-                      key: PrivacyDataKeys.readOnlyBanner,
-                      message: l10n.privacyDataReadOnlyNote,
-                      variant: BannerVariant.t,
+                      key: PrivacyDataKeys.retentionBanner,
+                      message: l10n.privacyDataRetentionNote,
+                      variant: BannerVariant.a,
                     ),
-                  ],
-                  const SizedBox(height: 20),
-                  Text(
-                    l10n.privacyDataScopesHeading,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: colors.ink,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  for (final scope in kLeanCollectionScopes)
-                    SwitchListTile(
-                      key: PrivacyDataKeys.scopeSwitch(scope),
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        _scopeLabel(l10n, scope),
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: colors.ink,
-                        ),
+                    if (!_canEdit) ...[
+                      const SizedBox(height: 12),
+                      BannerNote(
+                        key: PrivacyDataKeys.readOnlyBanner,
+                        message: l10n.privacyDataReadOnlyNote,
+                        variant: BannerVariant.t,
                       ),
-                      value: _policy.isEnabled(scope),
-                      onChanged: _canEdit
-                          ? (v) => _onToggle(scope, v)
-                          : null,
-                    ),
-                  const SizedBox(height: 24),
-                  if (_canEdit)
-                    PrimaryBtn(
-                      key: PrivacyDataKeys.save,
-                      label: l10n.privacyDataSave,
-                      onPressed: _canSave ? _save : null,
-                    ),
-                  if (_canLifecycle) ...[
-                    const SizedBox(height: 28),
+                    ],
+                    const SizedBox(height: 20),
                     Text(
-                      l10n.privacyLifecycleHeading,
+                      l10n.privacyDataScopesHeading,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
                         color: colors.ink,
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    PrimaryBtn(
-                      key: PrivacyDataKeys.forgetButton,
-                      label: l10n.privacyForgetButton,
-                      variant: PrimaryBtnVariant.sec,
-                      onPressed: _onForgetPressed,
-                    ),
-                    const SizedBox(height: 10),
-                    PrimaryBtn(
-                      key: PrivacyDataKeys.wipeButton,
-                      label: l10n.privacyWipeButton,
-                      variant: PrimaryBtnVariant.coral,
-                      onPressed: pending == null ? _onWipePressed : null,
-                    ),
-                    if (pending != null) ...[
-                      const SizedBox(height: 12),
-                      BannerNote(
-                        key: PrivacyDataKeys.wipePendingBanner,
-                        message: l10n.privacyWipePendingBanner(
-                          _formatPendingUntil(pending.pendingUntil),
+                    const SizedBox(height: 8),
+                    for (final scope in kLeanCollectionScopes)
+                      SwitchListTile(
+                        key: PrivacyDataKeys.scopeSwitch(scope),
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          _scopeLabel(l10n, scope),
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: colors.ink,
+                          ),
                         ),
-                        variant: BannerVariant.t,
+                        value: _policy.isEnabled(scope),
+                        onChanged: _canEdit ? (v) => _onToggle(scope, v) : null,
+                      ),
+                    const SizedBox(height: 24),
+                    if (_canEdit)
+                      PrimaryBtn(
+                        key: PrivacyDataKeys.save,
+                        label: l10n.privacyDataSave,
+                        onPressed: _canSave ? _save : null,
+                      ),
+                    if (_canLifecycle) ...[
+                      const SizedBox(height: 28),
+                      Text(
+                        l10n.privacyLifecycleHeading,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: colors.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      PrimaryBtn(
+                        key: PrivacyDataKeys.forgetButton,
+                        label: l10n.privacyForgetButton,
+                        variant: PrimaryBtnVariant.sec,
+                        onPressed: _onForgetPressed,
                       ),
                       const SizedBox(height: 10),
                       PrimaryBtn(
-                        key: PrivacyDataKeys.wipeCancelButton,
-                        label: l10n.privacyWipeCancelButton,
-                        variant: PrimaryBtnVariant.ghost,
-                        onPressed: _onCancelWipe,
+                        key: PrivacyDataKeys.wipeButton,
+                        label: l10n.privacyWipeButton,
+                        variant: PrimaryBtnVariant.coral,
+                        onPressed: pending == null ? _onWipePressed : null,
                       ),
+                      if (pending != null) ...[
+                        const SizedBox(height: 12),
+                        BannerNote(
+                          key: PrivacyDataKeys.wipePendingBanner,
+                          message: l10n.privacyWipePendingBanner(
+                            _formatPendingUntil(pending.pendingUntil),
+                          ),
+                          variant: BannerVariant.t,
+                        ),
+                        const SizedBox(height: 10),
+                        PrimaryBtn(
+                          key: PrivacyDataKeys.wipeCancelButton,
+                          label: l10n.privacyWipeCancelButton,
+                          variant: PrimaryBtnVariant.ghost,
+                          onPressed: _onCancelWipe,
+                        ),
+                      ],
                     ],
-                  ],
-                  const SizedBox(height: 28),
-                  AuditLogPanel(audit: _lifecycle.audit),
+                    const SizedBox(height: 28),
+                    AuditLogPanel(audit: _lifecycle.audit),
                   ],
                 ),
               ),

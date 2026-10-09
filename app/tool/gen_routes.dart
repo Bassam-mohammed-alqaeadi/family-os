@@ -185,7 +185,8 @@ const Map<String, String> screenBuilders = {
   'SCR-FAT-001': 'CreateFamilyScreen()',
   'SCR-FAT-002': 'SetupWizardScreen()',
   'SCR-FAT-003': 'AddChildScreen()',
-  'SCR-FAT-004': 'LinkQrScreen()',
+  'SCR-FAT-004':
+      "NativeParentPairingScreen(childId: state.uri.queryParameters['childId'])",
   'SCR-FAT-005': 'PermissionsExplainerScreen()',
   'SCR-FAT-006': 'LinkSuccessScreen()',
   'SCR-FAT-007': 'TrialModeScreen()',
@@ -210,9 +211,10 @@ const Map<String, String> screenBuilders = {
   'SCR-FAT-019': 'AlertsHubScreen()',
   'SCR-FAT-020':
       "AlertDetailScreen(alertId: state.uri.queryParameters['alertId'], alertKind: state.uri.queryParameters['alertKind'] ?? state.uri.queryParameters['kind'])",
-  'SCR-FAT-021': 'ConversationsListScreen()',
+  'SCR-FAT-021':
+      'ConversationsListScreen(repository: familyChatGuardianListRepository())',
   'SCR-FAT-022':
-      "ConversationScreen(chatWith: state.uri.queryParameters['chatWith'])",
+      "ConversationScreen(chatWith: state.uri.queryParameters['chatWith'], repository: familyChatGuardianConversationRepository())",
   'SCR-FAT-023':
       "ActiveCallScreen(callId: state.uri.queryParameters['callId'])",
   'SCR-FAT-024': 'CallHistoryScreen()',
@@ -279,7 +281,7 @@ const Map<String, String> screenBuilders = {
   'SCR-FAT-056': 'PlansScreen()',
   'SCR-FAT-057': 'ManageSubscriptionScreen()',
   'SCR-CHD-001': 'ChildWelcomeScreen()',
-  'SCR-CHD-002': 'ChildQrScanScreen()',
+  'SCR-CHD-002': 'ChildModePairingScreen()',
   'SCR-CHD-003': 'TransparencyConsentScreen()',
   'SCR-CHD-004':
       'RoleGuardLandingNotice(uri: state.uri, isChildHome: true, child: ChildDayBoardScreen(childId: routeChildId(context, state), screenTimeChildId: routeScopedChildId(context, state)))',
@@ -287,9 +289,10 @@ const Map<String, String> screenBuilders = {
       'ChildSosButtonScreen(childId: routeChildId(context, state).value)',
   'SCR-CHD-006':
       "ChildSosInProgressScreen(alertId: state.uri.queryParameters['alertId'], childId: state.uri.queryParameters['childId'])",
-  'SCR-CHD-007': 'ChildChatsScreen()',
+  'SCR-CHD-007':
+      'ChildChatsScreen(repository: familyChatChildListRepository())',
   'SCR-CHD-008':
-      "ChildConversationScreen(chatWith: state.uri.queryParameters['chatWith'])",
+      "ChildConversationScreen(chatWith: state.uri.queryParameters['chatWith'], repository: familyChatChildConversationRepository())",
   'SCR-CHD-009':
       "ChildActiveCallScreen(callId: state.uri.queryParameters['callId'])",
   'SCR-CHD-010':
@@ -341,14 +344,13 @@ const List<String> screenBuilderImports = [
   "import 'package:family_os/features/n01_linking/create_family_screen.dart';",
   "import 'package:family_os/features/n01_linking/setup_wizard_screen.dart';",
   "import 'package:family_os/features/n01_linking/add_child_screen.dart';",
-  "import 'package:family_os/features/n01_linking/link_qr_screen.dart';",
+  "import 'package:family_os/features/n01_linking/native_device_pairing_screens.dart';",
   "import 'package:family_os/features/n01_linking/permissions_explainer_screen.dart';",
   "import 'package:family_os/features/n01_linking/link_success_screen.dart';",
   "import 'package:family_os/features/n01_linking/trial_mode_screen.dart';",
   "import 'package:family_os/features/n01_linking/invite_mother_screen.dart';",
   "import 'package:family_os/features/n01_linking/accept_mother_invite_screen.dart';",
   "import 'package:family_os/features/n01_linking/child_welcome_screen.dart';",
-  "import 'package:family_os/features/n01_linking/child_qr_scan_screen.dart';",
   "import 'package:family_os/features/n01_linking/transparency_consent_screen.dart';",
   "import 'package:family_os/features/n02_day/day_board_screen.dart';",
   "import 'package:family_os/features/n02_day/children_list_screen.dart';",
@@ -360,6 +362,7 @@ const List<String> screenBuilderImports = [
   "import 'package:family_os/features/n02_day/alerts_hub_screen.dart';",
   "import 'package:family_os/features/n02_day/alert_detail_screen.dart';",
   "import 'package:family_os/features/n02_day/conversations_list_screen.dart';",
+  "import 'package:family_os/features/n02_day/family_chat_server_repository.dart';",
   "import 'package:family_os/features/n02_day/child_chats_screen.dart';",
   "import 'package:family_os/features/n02_day/child_conversation_screen.dart';",
   "import 'package:family_os/features/n02_day/child_active_call_screen.dart';",
@@ -513,6 +516,7 @@ import 'package:go_router/go_router.dart';
 import 'package:family_os/app/dev_screen_gallery.dart';
 import 'package:family_os/app/gallery_screen.dart';
 ${placeholderImport}import 'package:family_os/app/role_guard.dart';
+import 'package:family_os/app/showcase_policy.dart';
 import 'package:family_os/app/role_guard_notice.dart';
 import 'package:family_os/app/route_child_context.dart';
 import 'package:family_os/app/sys3_routes.dart';
@@ -545,22 +549,34 @@ const Map<String, String> legacyRedirectPaths = {
   '/scr-fat-077': '/scr-fat-075',
 };
 
-/// Builds the app [GoRouter] with gallery + every **active** CSV screen route.
+/// Builds the app [GoRouter] with every **active** CSV screen route.
 ///
-/// Product entry is welcome (`/scr-shr-001`); design gallery at `/gallery`;
-/// QA catalog at `/dev-screens` ([DevScreenGallery]).
+/// Product entry is welcome (`/scr-shr-001`). The design showcase - the token gallery at
+/// `/gallery` and the QA catalog at `/dev-screens` ([DevScreenGallery]) - is registered
+/// only when [showcaseEnabled] is true, and never in a release build.
 /// Tombstone deep links (e.g. `/scr-fat-039`) redirect to [tombstoneSchoolRedirectTarget].
 /// Legacy paths in [legacyRedirectPaths] redirect before RoleGuard.
 /// System #3 identity routes (sys3_*) are appended via [sys3IdentityRoutes].
 GoRouter createAppRouter({
   required ValueListenable<AppRole> roleListenable,
   String initialLocation = '/scr-shr-001',
+  /// Whether the design showcase may be registered. Defaults to the build's own policy:
+  /// requested at compile time and refused in release mode. Tests pass it explicitly to
+  /// prove both directions.
+  bool? showcaseEnabled,
 }) {
+  final showShowcase = showcaseEnabled ?? showcaseEnabledFor();
   return GoRouter(
     initialLocation: initialLocation,
     refreshListenable: roleListenable,
     redirect: (context, state) {
       final path = state.uri.path;
+      // A build without the showcase must not serve one, even by deep link. This is the
+      // second half of the quarantine: the routes below are not registered at all, and
+      // this redirect means an old link lands on the product rather than on an error.
+      if (!showShowcase && isQuarantinedShowcasePath(path)) {
+        return showcaseFallbackPath;
+      }
       if (tombstonePaths.contains(path)) {
         return tombstoneSchoolRedirectTarget;
       }
@@ -568,7 +584,7 @@ GoRouter createAppRouter({
       if (legacyTarget != null) return legacyTarget;
       return roleGuardRedirect(state, roleListenable.value);
     },
-    routes: [
+    routes: _quarantineIfNeeded([
       GoRoute(
         path: '/gallery',
         name: 'gallery',
@@ -580,8 +596,22 @@ GoRouter createAppRouter({
         builder: (context, state) => const DevScreenGallery(),
       ),
       ...sys3IdentityRoutes,
-${routeBlocks.toString()}    ],
+${routeBlocks.toString()}    ], showShowcase),
   );
+}
+
+/// Drops quarantined showcase routes from a build that did not ask for them.
+///
+/// Applied to the declared route list rather than duplicating it, so there is exactly one
+/// place where a route is defined and exactly one place where the quarantine decides
+/// whether it ships. A route added later is covered by the policy without anyone
+/// remembering to gate it.
+List<RouteBase> _quarantineIfNeeded(List<RouteBase> routes, bool showShowcase) {
+  if (showShowcase) return routes;
+  return routes
+      .where((route) =>
+          route is! GoRoute || !isQuarantinedShowcasePath(route.path))
+      .toList(growable: false);
 }
 
 /// Shared localization delegates for [MaterialApp.router].
@@ -714,7 +744,7 @@ String _hubIconForType(String type) {
   if (icon == null) {
     stderr.writeln(
       'Unknown screen type "$type" — no hub icon in frozen prototype map. '
-      'STOP: add a QUESTIONS.md entry; do not invent an emoji.',
+      'STOP: record the decision in docs/OPEN_DECISIONS.md; do not invent an emoji.',
     );
     exit(1);
   }

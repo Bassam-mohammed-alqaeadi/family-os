@@ -41,10 +41,7 @@ void main() {
     expect(find.byKey(FocusReportKeys.scheduleCard), findsOneWidget);
     expect(find.text('5'), findsOneWidget);
     expect(find.textContaining('3h 40m'), findsOneWidget);
-    expect(
-      find.byKey(FocusReportKeys.scheduleRow('sched-1')),
-      findsOneWidget,
-    );
+    expect(find.byKey(FocusReportKeys.scheduleRow('sched-1')), findsOneWidget);
   });
 
   testWidgets('praise toast then sent quote state', (tester) async {
@@ -85,9 +82,7 @@ void main() {
   });
 
   testWidgets('add schedule Stage-1 toast', (tester) async {
-    final repo = InMemoryFocusReportRepository(
-      seed: focusReportOneFixture(),
-    );
+    final repo = InMemoryFocusReportRepository(seed: focusReportOneFixture());
     await _pump(tester, repository: repo);
 
     await tester.ensureVisible(find.byKey(FocusReportKeys.addScheduleCta));
@@ -116,17 +111,13 @@ void main() {
 
     await tester.tap(switchFinder);
     await tester.pumpAndSettle();
-    expect(
-      tester.widget<Switch>(switchFinder).value,
-      isFalse,
-    );
+    expect(tester.widget<Switch>(switchFinder).value, isFalse);
   });
 
   testWidgets('loading then body', (tester) async {
     final gate = Completer<void>();
-    final repo = InMemoryFocusReportRepository(
-      seed: focusReportOneFixture(),
-    )..loadGate = () => gate.future;
+    final repo = InMemoryFocusReportRepository(seed: focusReportOneFixture())
+      ..loadGate = () => gate.future;
 
     await _pump(tester, repository: repo, settle: false);
     await tester.pump();

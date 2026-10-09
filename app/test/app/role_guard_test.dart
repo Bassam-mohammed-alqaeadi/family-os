@@ -25,16 +25,19 @@ void main() {
       }
     });
 
-    test('mother allowed on owner-only paths (privacy/audit; billing is father-only)', () {
-      for (final id in ownerOnlyScreenIds) {
-        final path = screenPath(id);
-        expect(
-          roleGuardRedirectForPath(path, AppRole.mother),
-          isNull,
-          reason: path,
-        );
-      }
-    });
+    test(
+      'mother allowed on owner-only paths (privacy/audit; billing is father-only)',
+      () {
+        for (final id in ownerOnlyScreenIds) {
+          final path = screenPath(id);
+          expect(
+            roleGuardRedirectForPath(path, AppRole.mother),
+            isNull,
+            reason: path,
+          );
+        }
+      },
+    );
 
     test('child redirected from owner-only paths to My Day (D4)', () {
       for (final id in ownerOnlyScreenIds) {
@@ -66,10 +69,7 @@ void main() {
     });
 
     test('owner-only IDs are privacy/audit (billing moved to father-only)', () {
-      expect(ownerOnlyScreenIds, {
-        'SCR-FAT-059',
-        'SCR-FAT-060',
-      });
+      expect(ownerOnlyScreenIds, {'SCR-FAT-059', 'SCR-FAT-060'});
     });
 
     test('SET-015 father allowed on brain control path', () {

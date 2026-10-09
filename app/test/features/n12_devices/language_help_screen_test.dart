@@ -32,9 +32,7 @@ void main() {
   });
 
   testWidgets('one help link loads body + language card', (tester) async {
-    final repo = InMemoryLanguageHelpRepository(
-      seed: languageHelpOneFixture(),
-    );
+    final repo = InMemoryLanguageHelpRepository(seed: languageHelpOneFixture());
     await _pump(tester, repository: repo);
 
     expect(find.byKey(LanguageHelpKeys.body), findsOneWidget);
@@ -84,9 +82,8 @@ void main() {
 
   testWidgets('loading then body', (tester) async {
     final gate = Completer<void>();
-    final repo = InMemoryLanguageHelpRepository(
-      seed: languageHelpOneFixture(),
-    )..loadGate = () => gate.future;
+    final repo = InMemoryLanguageHelpRepository(seed: languageHelpOneFixture())
+      ..loadGate = () => gate.future;
 
     await _pump(tester, repository: repo, settle: false);
     await tester.pump();

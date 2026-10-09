@@ -47,11 +47,11 @@ final class DeviceLockState {
   }
 
   Map<String, Object?> toJson() => {
-        'childId': childId.value,
-        'locked': locked,
-        'lockedBy': lockedBy?.name,
-        'updatedAt': updatedAt.toUtc().toIso8601String(),
-      };
+    'childId': childId.value,
+    'locked': locked,
+    'lockedBy': lockedBy?.name,
+    'updatedAt': updatedAt.toUtc().toIso8601String(),
+  };
 
   factory DeviceLockState.fromJson(Map<String, Object?> json) {
     final childRaw = json['childId']?.toString() ?? '';

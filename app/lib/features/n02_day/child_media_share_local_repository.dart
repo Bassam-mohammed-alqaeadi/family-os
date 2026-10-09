@@ -7,7 +7,7 @@ import 'package:family_os/features/n02_day/child_media_share_repository.dart';
 final class LocalChildMediaShareRepository
     implements ChildMediaShareRepository {
   LocalChildMediaShareRepository(FamilyLocalDatabase db)
-      : _store = KvSnapshotStore(db, namespace: kvNamespace);
+    : _store = KvSnapshotStore(db, namespace: kvNamespace);
 
   static const kvNamespace = 'child_media_share';
 

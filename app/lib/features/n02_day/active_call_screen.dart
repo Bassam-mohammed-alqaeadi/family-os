@@ -66,7 +66,7 @@ class ActiveCallScreen extends StatefulWidget {
   /// Test seam — when set, ignores [CurrentRole].
   final AppRole? roleOverride;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   final VoidCallback? onSos;
@@ -179,7 +179,7 @@ class ActiveCallScreenState extends State<ActiveCallScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    final fire = widget.sosFire ?? stage1SosFireService;
+    final fire = widget.sosFire ?? activeSosFireService;
     await sosSenderForRole(context, _role).fireThrough(fire);
     if (!mounted) return;
     setState(() => _sosBusy = false);
@@ -200,9 +200,12 @@ class ActiveCallScreenState extends State<ActiveCallScreen> {
       });
       widget.onMute?.call(next);
       final l10n = AppLocalizations.of(context);
-      AppToast.show(context, message: 
-            next ? l10n.activeCallMuteOnToast : l10n.activeCallMuteOffToast,
-          );
+      AppToast.show(
+        context,
+        message: next
+            ? l10n.activeCallMuteOnToast
+            : l10n.activeCallMuteOffToast,
+      );
     } on Object {
       if (!mounted) return;
       setState(() => _actionBusy = false);
@@ -223,11 +226,12 @@ class ActiveCallScreenState extends State<ActiveCallScreen> {
       });
       widget.onSpeaker?.call(next);
       final l10n = AppLocalizations.of(context);
-      AppToast.show(context, message: 
-            next
-                ? l10n.activeCallSpeakerOnToast
-                : l10n.activeCallSpeakerOffToast,
-          );
+      AppToast.show(
+        context,
+        message: next
+            ? l10n.activeCallSpeakerOnToast
+            : l10n.activeCallSpeakerOffToast,
+      );
     } on Object {
       if (!mounted) return;
       setState(() => _actionBusy = false);

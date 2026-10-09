@@ -2,9 +2,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show TimeOfDay;
 
 import 'notification_delivery.dart';
-import 'notification_prefs.dart';
 
 /// Result of an SOS fire attempt (UI-007 / P-4 · OD-13).
+///
+/// [fired] is the honest answer to "did this press reach something that will raise the
+/// alarm". It is `true` only when an authority accepted the press and can be asked about it
+/// afterwards; a device with no authority bound answers `false` and says so through
+/// [reachedServer], rather than succeeding locally where nobody would ever be told.
 @immutable
 final class SosFireResult {
   const SosFireResult({
@@ -13,9 +17,12 @@ final class SosFireResult {
     required this.recipientDeliveries,
     required this.childId,
     required this.actorId,
+    this.alertId,
+    this.reachedServer = false,
+    this.duplicate = false,
   });
 
-  /// Always `true` on the Stage-1 mock — entitlement cannot suppress fire.
+  /// True when an authority accepted this press. A local-only press is `false`.
   final bool fired;
   final DateTime at;
   final List<NotificationDeliveryResult> recipientDeliveries;
@@ -25,6 +32,19 @@ final class SosFireResult {
 
   /// Who pressed SOS (child id or parent membership id).
   final String actorId;
+
+  /// The incident this press belongs to on the server, when there is one.
+  ///
+  /// A screen hands this id to the board rather than an id it invented, so the child and
+  /// the parent are looking at the same incident.
+  final String? alertId;
+
+  /// True when the press was answered by a server rather than recorded locally.
+  final bool reachedServer;
+
+  /// True when the server answered that this child already had an open incident, which
+  /// makes this press part of that incident instead of a second one.
+  final bool duplicate;
 }
 
 /// SOS fire path — entitlement-free by construction (UI-007 / SET-PAYWALL-RISK).
@@ -45,19 +65,48 @@ abstract class SosFireService {
   });
 }
 
-/// Stage-1 mock SOS fire — always succeeds; uses [NotificationDelivery.simulateSosAlert].
-final class MockSosFireService implements SosFireService {
-  MockSosFireService({
-    Map<String, NotificationPrefs>? prefsByMember,
-    DateTime Function()? clock,
-  })  : _prefsByMember = prefsByMember,
-        _clock = clock ?? DateTime.now;
+/// Raised by a surface that needs an authority which was never bound.
+///
+/// The screens do not throw this on a press — they answer with
+/// [SosFireResult.fired] `false` — but a caller that must know the difference between
+/// "recorded here" and "told someone" can ask [activeSosFireService] whether it is wired.
+final class SosFireUnavailable implements Exception {
+  const SosFireUnavailable();
 
-  final Map<String, NotificationPrefs>? _prefsByMember;
-  final DateTime Function() _clock;
+  @override
+  String toString() => 'SosFireUnavailable: no SOS authority is bound in this build';
+}
 
-  int fireCount = 0;
-  final List<SosFireResult> fireLog = [];
+/// The service the family's buttons actually reach.
+///
+/// Bound once at boot, next to the location authority, from the server session the device
+/// already holds. When nothing is bound the answer is [UnwiredSosFireService]: a press is
+/// recorded as NOT fired and no recipient is reported as told, because there is nothing in
+/// this build that could tell anyone. That is deliberately worse-looking than the mock it
+/// replaced and deliberately true: a parent who believes an alarm left a handset stops
+/// checking, and the day it mattered nobody was coming.
+SosFireService get activeSosFireService =>
+    _activeSosFireService ?? const UnwiredSosFireService();
+
+/// True when this build can actually raise an alarm somewhere.
+bool get sosFireIsWired => _activeSosFireService != null;
+
+/// Rebinds the authority. Passing null puts the build back to honest refusal, which is what
+/// sign-out does.
+void bindSosFireService(SosFireService? service) {
+  _activeSosFireService = service;
+}
+
+SosFireService? _activeSosFireService;
+
+/// The answer when this build has no way to raise an alarm.
+///
+/// It does not throw on a press: a child holding the button must get a screen, not a
+/// crash. It answers [SosFireResult.fired] `false` with no deliveries, which is the shape a
+/// surface can render honestly - and no surface in this codebase may describe that press as
+/// having reached anyone.
+final class UnwiredSosFireService implements SosFireService {
+  const UnwiredSosFireService();
 
   @override
   Future<SosFireResult> fire({
@@ -67,26 +116,12 @@ final class MockSosFireService implements SosFireService {
     DateTime? at,
     TimeOfDay? clock,
   }) async {
-    assert(childId.isNotEmpty, 'childId required');
-    fireCount++;
-    final when = at ?? _clock().toUtc();
-    final actor = (actorId == null || actorId.isEmpty) ? childId : actorId;
-    final deliveries = NotificationDelivery.simulateSosAlert(
-      recipients,
-      prefsByMember: _prefsByMember,
-      now: clock ?? const TimeOfDay(hour: 23, minute: 0),
-    );
-    final result = SosFireResult(
-      fired: true,
-      at: when,
-      recipientDeliveries: deliveries,
+    return SosFireResult(
+      fired: false,
+      at: (at ?? DateTime.now()).toUtc(),
+      recipientDeliveries: const <NotificationDeliveryResult>[],
       childId: childId,
-      actorId: actor,
+      actorId: (actorId == null || actorId.isEmpty) ? childId : actorId,
     );
-    fireLog.add(result);
-    return result;
   }
 }
-
-/// Stage-1 shared SOS fire seam.
-final MockSosFireService stage1SosFireService = MockSosFireService();

@@ -114,9 +114,7 @@ void main() {
 
   testWidgets('mother deny panel on PlansScreen (composition)', (tester) async {
     await tester.pumpWidget(
-      _ScreenApp(
-        child: PlansScreen(roleOverride: AppRole.mother),
-      ),
+      _ScreenApp(child: PlansScreen(roleOverride: AppRole.mother)),
     );
     await tester.pumpAndSettle();
 

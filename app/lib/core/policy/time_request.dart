@@ -13,15 +13,11 @@ enum TimeGrantStatus { active, exhausted, expired }
 /// Who decides a time request (UF-05 / ADR-039).
 @immutable
 final class TimeRequestActor {
-  const TimeRequestActor.father()
-      : role = AppRole.father,
-        motherLevel = null;
+  const TimeRequestActor.father() : role = AppRole.father, motherLevel = null;
 
   const TimeRequestActor.mother(this.motherLevel) : role = AppRole.mother;
 
-  const TimeRequestActor.child()
-      : role = AppRole.child,
-        motherLevel = null;
+  const TimeRequestActor.child() : role = AppRole.child, motherLevel = null;
 
   final AppRole role;
   final MotherLevel? motherLevel;
@@ -134,16 +130,16 @@ final class TimeRequest {
   }
 
   Map<String, Object?> toJson() => {
-        'id': id,
-        'childId': childId.value,
-        'requestedMinutes': requestedMinutes,
-        'childReason': childReason,
-        'status': status.name,
-        'createdAt': createdAt.toUtc().toIso8601String(),
-        'decidedBy': decidedBy,
-        'decisionReason': decisionReason,
-        'grantedMinutes': grantedMinutes,
-      };
+    'id': id,
+    'childId': childId.value,
+    'requestedMinutes': requestedMinutes,
+    'childReason': childReason,
+    'status': status.name,
+    'createdAt': createdAt.toUtc().toIso8601String(),
+    'decidedBy': decidedBy,
+    'decisionReason': decisionReason,
+    'grantedMinutes': grantedMinutes,
+  };
 
   factory TimeRequest.fromJson(Map<String, Object?> json) {
     final statusName = json['status'] as String? ?? 'pending';
@@ -185,16 +181,16 @@ final class TimeRequest {
 
   @override
   int get hashCode => Object.hash(
-        id,
-        childId,
-        requestedMinutes,
-        childReason,
-        status,
-        createdAt,
-        decidedBy,
-        decisionReason,
-        grantedMinutes,
-      );
+    id,
+    childId,
+    requestedMinutes,
+    childReason,
+    status,
+    createdAt,
+    decidedBy,
+    decisionReason,
+    grantedMinutes,
+  );
 }
 
 /// Immutable Temporary Grant row (D-3 `time_grant`) produced on approve.
@@ -264,16 +260,16 @@ final class TimeGrant {
   }
 
   Map<String, Object?> toJson() => {
-        'id': id,
-        'requestId': requestId,
-        'childId': childId.value,
-        'minutes': minutes,
-        'remainingMinutes': remainingMinutes ?? minutes,
-        'grantedBy': grantedBy,
-        'createdAt': createdAt.toUtc().toIso8601String(),
-        'expiresAt': expiresAt.toUtc().toIso8601String(),
-        'status': status.name,
-      };
+    'id': id,
+    'requestId': requestId,
+    'childId': childId.value,
+    'minutes': minutes,
+    'remainingMinutes': remainingMinutes ?? minutes,
+    'grantedBy': grantedBy,
+    'createdAt': createdAt.toUtc().toIso8601String(),
+    'expiresAt': expiresAt.toUtc().toIso8601String(),
+    'status': status.name,
+  };
 
   factory TimeGrant.fromJson(Map<String, Object?> json) {
     final rawCreated = json['createdAt'];

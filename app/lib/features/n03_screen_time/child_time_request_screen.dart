@@ -98,7 +98,7 @@ class _ChildTimeRequestScreenState extends State<ChildTimeRequestScreen> {
   void initState() {
     super.initState();
     _repo = widget.repository ?? stage1ChildTimeRequestRepository;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     if (widget.repository == null) {
       _bus = stage1TimeRequestDecisionBus..addListener(_onDecision);
     }

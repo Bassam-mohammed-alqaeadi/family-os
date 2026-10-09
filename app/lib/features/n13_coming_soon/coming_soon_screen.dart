@@ -47,47 +47,47 @@ class ComingSoonScreen extends StatelessWidget {
   ];
 
   static List<ComingSoonFeature> featuresFor(AppLocalizations l10n) => [
-        ComingSoonFeature(
-          id: 'router_filter',
-          title: l10n.comingSoonFeatureRouterFilter,
-          subtitle: l10n.comingSoonFeatureRouterFilterSub,
-        ),
-        ComingSoonFeature(
-          id: 'road_safety',
-          title: l10n.comingSoonFeatureRoadSafety,
-          subtitle: l10n.comingSoonFeatureRoadSafetySub,
-        ),
-        ComingSoonFeature(
-          id: 'peer_compare',
-          title: l10n.comingSoonFeaturePeerCompare,
-          subtitle: l10n.comingSoonFeaturePeerCompareSub,
-        ),
-        ComingSoonFeature(
-          id: 'chore_ai',
-          title: l10n.comingSoonFeatureChoreAi,
-          subtitle: l10n.comingSoonFeatureChoreAiSub,
-        ),
-        ComingSoonFeature(
-          id: 'voice_advisor',
-          title: l10n.comingSoonFeatureVoiceAdvisor,
-          subtitle: l10n.comingSoonFeatureVoiceAdvisorSub,
-        ),
-        ComingSoonFeature(
-          id: 'phased_project',
-          title: l10n.comingSoonFeaturePhasedProject,
-          subtitle: l10n.comingSoonFeaturePhasedProjectSub,
-        ),
-        ComingSoonFeature(
-          id: 'smart_recitation',
-          title: l10n.comingSoonFeatureSmartRecitation,
-          subtitle: l10n.comingSoonFeatureSmartRecitationSub,
-        ),
-        ComingSoonFeature(
-          id: 'delegated_agent',
-          title: l10n.comingSoonFeatureDelegatedAgent,
-          subtitle: l10n.comingSoonFeatureDelegatedAgentSub,
-        ),
-      ];
+    ComingSoonFeature(
+      id: 'router_filter',
+      title: l10n.comingSoonFeatureRouterFilter,
+      subtitle: l10n.comingSoonFeatureRouterFilterSub,
+    ),
+    ComingSoonFeature(
+      id: 'road_safety',
+      title: l10n.comingSoonFeatureRoadSafety,
+      subtitle: l10n.comingSoonFeatureRoadSafetySub,
+    ),
+    ComingSoonFeature(
+      id: 'peer_compare',
+      title: l10n.comingSoonFeaturePeerCompare,
+      subtitle: l10n.comingSoonFeaturePeerCompareSub,
+    ),
+    ComingSoonFeature(
+      id: 'chore_ai',
+      title: l10n.comingSoonFeatureChoreAi,
+      subtitle: l10n.comingSoonFeatureChoreAiSub,
+    ),
+    ComingSoonFeature(
+      id: 'voice_advisor',
+      title: l10n.comingSoonFeatureVoiceAdvisor,
+      subtitle: l10n.comingSoonFeatureVoiceAdvisorSub,
+    ),
+    ComingSoonFeature(
+      id: 'phased_project',
+      title: l10n.comingSoonFeaturePhasedProject,
+      subtitle: l10n.comingSoonFeaturePhasedProjectSub,
+    ),
+    ComingSoonFeature(
+      id: 'smart_recitation',
+      title: l10n.comingSoonFeatureSmartRecitation,
+      subtitle: l10n.comingSoonFeatureSmartRecitationSub,
+    ),
+    ComingSoonFeature(
+      id: 'delegated_agent',
+      title: l10n.comingSoonFeatureDelegatedAgent,
+      subtitle: l10n.comingSoonFeatureDelegatedAgentSub,
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -133,11 +133,7 @@ class ComingSoonScreen extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 l10n.comingSoonSectionHint,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colors.ink2,
-                  height: 1.5,
-                ),
+                style: TextStyle(fontSize: 12, color: colors.ink2, height: 1.5),
               ),
               const SizedBox(height: 12),
               DecoratedBox(

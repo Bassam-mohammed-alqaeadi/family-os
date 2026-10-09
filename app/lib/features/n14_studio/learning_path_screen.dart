@@ -53,7 +53,7 @@ class LearningPathScreen extends StatefulWidget {
   /// Rule 25 seam — null → [stage1LearningPathRepository].
   final LearningPathRepository? repository;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — when set, ignores [CurrentRole].
@@ -105,7 +105,7 @@ class _LearningPathScreenState extends State<LearningPathScreen> {
   void initState() {
     super.initState();
     _repo = widget.repository ?? stage1LearningPathRepository;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _load();

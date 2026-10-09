@@ -1,0 +1,2 @@
+# Migration checksums are immutable across platforms; never rewrite SQL line endings in a working tree.
+backend/db/migrations/*.sql text eol=lf

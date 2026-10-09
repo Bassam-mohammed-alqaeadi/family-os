@@ -16,10 +16,7 @@ abstract final class AuditLogPanelKeys {
 ///
 /// Forget lives only on [PrivacyDataScreen] action row, never here.
 class AuditLogPanel extends StatelessWidget {
-  const AuditLogPanel({
-    super.key,
-    required this.audit,
-  });
+  const AuditLogPanel({super.key, required this.audit});
 
   final AuditAppend audit;
 

@@ -58,7 +58,7 @@ class CreateAssignmentScreen extends StatefulWidget {
   /// Rule 25 seam — null → [stage1CreateAssignmentRepository].
   final CreateAssignmentRepository? repository;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — when set, ignores [CurrentRole].
@@ -113,7 +113,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
   void initState() {
     super.initState();
     _repo = widget.repository ?? stage1CreateAssignmentRepository;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     _homeworkCtrl = TextEditingController();
     _familyCtrl = TextEditingController();
     WidgetsBinding.instance.addPostFrameCallback((_) {

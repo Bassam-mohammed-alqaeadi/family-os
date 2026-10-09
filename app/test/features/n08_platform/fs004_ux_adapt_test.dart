@@ -41,46 +41,50 @@ void main() {
     await db.close();
   });
 
-  testWidgets('FAT-065 binds SC panel; monitor writes domain; planes MOCK-REMOTE', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      _app(
-        role: AppRole.father,
-        child: SmartAlertsScreen(
-          repository: InMemorySmartAlertsRepository(
-            seed: smartAlertsPrototypeFixture(),
+  testWidgets(
+    'FAT-065 binds SC panel; monitor writes domain; planes MOCK-REMOTE',
+    (tester) async {
+      await tester.pumpWidget(
+        _app(
+          role: AppRole.father,
+          child: SmartAlertsScreen(
+            repository: InMemorySmartAlertsRepository(
+              seed: smartAlertsPrototypeFixture(),
+            ),
+            screenCamera: service,
+            childId: child,
+            roleOverride: AppRole.father,
           ),
-          screenCamera: service,
-          childId: child,
-          roleOverride: AppRole.father,
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.byKey(SmartAlertsKeys.scPolicyBanner), findsOneWidget);
-    expect(find.byKey(ScreenCameraParentPanelKeys.panel), findsOneWidget);
-    expect(find.byType(CapabilityHonestyBadge), findsWidgets);
-    // Screenshot tool moved into FS-004 panel (no duplicate store UI).
-    expect(find.byKey(SmartAlertsKeys.toolSwitch('screenshot')), findsNothing);
+      expect(find.byKey(SmartAlertsKeys.scPolicyBanner), findsOneWidget);
+      expect(find.byKey(ScreenCameraParentPanelKeys.panel), findsOneWidget);
+      expect(find.byType(CapabilityHonestyBadge), findsWidgets);
+      // Screenshot tool moved into FS-004 panel (no duplicate store UI).
+      expect(
+        find.byKey(SmartAlertsKeys.toolSwitch('screenshot')),
+        findsNothing,
+      );
 
-    await tester.ensureVisible(
-      find.byKey(ScreenCameraParentPanelKeys.monitorSwitch),
-    );
-    await tester.tap(find.byKey(ScreenCameraParentPanelKeys.monitorSwitch));
-    await tester.pumpAndSettle();
+      await tester.ensureVisible(
+        find.byKey(ScreenCameraParentPanelKeys.monitorSwitch),
+      );
+      await tester.tap(find.byKey(ScreenCameraParentPanelKeys.monitorSwitch));
+      await tester.pumpAndSettle();
 
-    final doc = await service.loadEffective(child);
-    expect(doc.monitorScreenshots, isTrue);
-    expect(find.byKey(ScreenCameraChildPreview.previewKey), findsOneWidget);
+      final doc = await service.loadEffective(child);
+      expect(doc.monitorScreenshots, isTrue);
+      expect(find.byKey(ScreenCameraChildPreview.previewKey), findsOneWidget);
 
-    // Honesty: no claimable enforcement on MOCK-REMOTE.
-    final eval = ScreenCameraEngine.evaluate(
-      doc.copyWith(preventCameraOs: true, preventCapture: true),
-    );
-    expect(eval.claimableEnforcement, isFalse);
-  });
+      // Honesty: no claimable enforcement on MOCK-REMOTE.
+      final eval = ScreenCameraEngine.evaluate(
+        doc.copyWith(preventCameraOs: true, preventCapture: true),
+      );
+      expect(eval.claimableEnforcement, isFalse);
+    },
+  );
 
   testWidgets('Partner cannot configure SC panel', (tester) async {
     await service.setScreenshotMonitoring(

@@ -48,12 +48,12 @@ final class AppAccessRule {
   }
 
   Map<String, Object?> toJson() => {
-        'appId': appId,
-        'blocked': blocked,
-        'limitMinutes': limitMinutes,
-        'countable': countable,
-        'unlimited': unlimited,
-      };
+    'appId': appId,
+    'blocked': blocked,
+    'limitMinutes': limitMinutes,
+    'countable': countable,
+    'unlimited': unlimited,
+  };
 
   factory AppAccessRule.fromJson(Map<String, Object?> json) {
     return AppAccessRule(
@@ -112,14 +112,16 @@ abstract final class AppAccessRuleQuery {
     final permanentlyBlocked = base.permanentlyBlocked || rule.blocked;
 
     // Education apps stay non-countable (S-1).
-    final effectiveCountable =
-        EducationAppIds.isEducation(rule.appId) ? false : rule.countable;
+    final effectiveCountable = EducationAppIds.isEducation(rule.appId)
+        ? false
+        : rule.countable;
 
     var dailyExhausted = base.dailyLimitExhausted;
     if (effectiveCountable && !rule.unlimited) {
-      final capExhausted = policy.isCapExhausted && temporaryGrantRemaining <= 0;
-      final perAppExhausted = rule.limitMinutes != null &&
-          appUsedMinutes >= rule.limitMinutes!;
+      final capExhausted =
+          policy.isCapExhausted && temporaryGrantRemaining <= 0;
+      final perAppExhausted =
+          rule.limitMinutes != null && appUsedMinutes >= rule.limitMinutes!;
       dailyExhausted = capExhausted || perAppExhausted;
     } else if (rule.unlimited) {
       // Unlimited bypasses daily cap (P4) only — still subject to P0–P3.

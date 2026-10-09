@@ -81,7 +81,10 @@ void main() {
         now: DateTime.utc(2020, 1, 1),
       );
       expect(store.active, isNull); // expired on read
-      expect(expiredCheck, isNotNull); // prior session was active at create time
+      expect(
+        expiredCheck,
+        isNotNull,
+      ); // prior session was active at create time
 
       final after = await ladderRepo.load();
       expect(after, before); // permanent policy untouched
@@ -99,10 +102,7 @@ void main() {
       await store.revoke(note: 'manual');
       expect(store.active, isNull);
       expect(store.auditLog, isNotEmpty);
-      expect(
-        store.auditLog.last.phase,
-        SosBreakGlassPhase.revoked,
-      );
+      expect(store.auditLog.last.phase, SosBreakGlassPhase.revoked);
     });
 
     test('break-glass does not add national emergency numbers', () {

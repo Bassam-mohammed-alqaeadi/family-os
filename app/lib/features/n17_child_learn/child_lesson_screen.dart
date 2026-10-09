@@ -10,6 +10,7 @@ import 'package:family_os/core/design/components/progress_bar.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/i18n/notebook_studio_i18n.dart';
 import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n17_child_learn/child_lesson_models.dart';
@@ -23,6 +24,15 @@ abstract final class ChildLessonKeys {
   static const body = Key('child_lesson_body');
   static const progress = Key('child_lesson_progress');
   static const pizza = Key('child_lesson_pizza');
+  static const notebookPanel = Key('child_lesson_notebook_panel');
+  static const citationBadge = Key('child_lesson_citation_badge');
+  static const pinNoteCta = Key('child_lesson_pin_note');
+  static const modeReaderChip = Key('child_lesson_mode_reader');
+  static const modeAudioChip = Key('child_lesson_mode_audio');
+  static const modeMindMapChip = Key('child_lesson_mode_mindmap');
+  static const audioOverviewCard = Key('child_lesson_audio_card');
+  static const handRaiseCta = Key('child_lesson_hand_raise');
+  static const mindMapCard = Key('child_lesson_mindmap_card');
   static const nextCta = Key('child_lesson_next');
   static const tutorCta = Key('child_lesson_tutor');
   static const parentLean = Key('child_lesson_parent_lean');
@@ -72,7 +82,7 @@ class _ChildLessonScreenState extends State<ChildLessonScreen> {
   void initState() {
     super.initState();
     _repo = widget.repository ?? stage1ChildLessonRepository;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _load();
@@ -285,6 +295,170 @@ class _ChildLessonScreenState extends State<ChildLessonScreen> {
             label: l10n.childLessonTutorCta,
             variant: PrimaryBtnVariant.ghost,
             onPressed: () => _go(_snap.tutorScreenId),
+          ),
+          const SizedBox(height: 14),
+          DecoratedBox(
+            key: ChildLessonKeys.notebookPanel,
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(radii.card),
+              border: Border.all(color: colors.border),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    key: ChildLessonKeys.citationBadge,
+                    l10n.childLessonCitationBadge,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: colors.tealDeep,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      ChoiceChip(
+                        key: ChildLessonKeys.modeReaderChip,
+                        label: Text(l10n.childLessonModeReader),
+                        selected:
+                            _snap.studyMode ==
+                            ChildLessonStudyMode.groundedReader,
+                        onSelected: (_) {
+                          setState(() {
+                            _snap = _snap.withStudyMode(
+                              ChildLessonStudyMode.groundedReader,
+                            );
+                          });
+                        },
+                      ),
+                      ChoiceChip(
+                        key: ChildLessonKeys.modeAudioChip,
+                        label: Text(l10n.childLessonModeAudio),
+                        selected:
+                            _snap.studyMode ==
+                            ChildLessonStudyMode.audioOverview,
+                        onSelected: (_) {
+                          setState(() {
+                            _snap = _snap.withStudyMode(
+                              ChildLessonStudyMode.audioOverview,
+                            );
+                          });
+                        },
+                      ),
+                      ChoiceChip(
+                        key: ChildLessonKeys.modeMindMapChip,
+                        label: Text(l10n.childLessonModeMindMap),
+                        selected:
+                            _snap.studyMode ==
+                            ChildLessonStudyMode.conceptMindMap,
+                        onSelected: (_) {
+                          setState(() {
+                            _snap = _snap.withStudyMode(
+                              ChildLessonStudyMode.conceptMindMap,
+                            );
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  if (_snap.studyMode == ChildLessonStudyMode.audioOverview)
+                    DecoratedBox(
+                      key: ChildLessonKeys.audioOverviewCard,
+                      decoration: BoxDecoration(
+                        color: colors.bg,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              l10n.childLessonAudioHostLine,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: colors.ink,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            PrimaryBtn(
+                              key: ChildLessonKeys.handRaiseCta,
+                              label: l10n.childLessonAudioHandRaiseCta,
+                              variant: PrimaryBtnVariant.sec,
+                              onPressed: () => _go(_snap.tutorScreenId),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  if (_snap.studyMode == ChildLessonStudyMode.conceptMindMap)
+                    DecoratedBox(
+                      key: ChildLessonKeys.mindMapCard,
+                      decoration: BoxDecoration(
+                        color: colors.bg,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.childLessonMindMapRoot,
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w800,
+                                color: colors.ink,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              l10n.childLessonMindMapBranchSame,
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                                color: colors.ink2,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              l10n.childLessonMindMapBranchDiff,
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                                color: colors.ink2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                  PrimaryBtn(
+                    key: ChildLessonKeys.pinNoteCta,
+                    label: l10n.childLessonPinNoteCta,
+                    variant: PrimaryBtnVariant.sec,
+                    onPressed: () {
+                      setState(() {
+                        _snap = _snap.withNotePinned(true);
+                      });
+                      AppToast.show(
+                        context,
+                        message: l10n.childLessonNotePinnedToast,
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),

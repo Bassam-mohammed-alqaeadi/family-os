@@ -58,7 +58,7 @@ class StudioBoardScreen extends StatefulWidget {
   /// Rule 25 seam — null → [stage1StudioBoardRepository].
   final StudioBoardRepository? repository;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — when set, ignores [CurrentRole].
@@ -110,7 +110,7 @@ class _StudioBoardScreenState extends State<StudioBoardScreen> {
   void initState() {
     super.initState();
     _repo = widget.repository ?? stage1StudioBoardRepository;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _load();

@@ -1,59 +1,74 @@
-# AGENTS.md — Family OS root execution guard
+# Family OS Global Super-App Constitution (The Execution Guard)
 
-Read **`PROJECT_EXECUTION_PLAN.md`** before significant work. Do not duplicate the roadmap here.
+## 1. Authority and execution pointer
 
-## Hard guards
+This document sets the product direction. Before significant work, read the live system-selection and delivery pointer in [`docs/CURRENT_EXECUTION_PLAN.md`](docs/CURRENT_EXECUTION_PLAN.md), then the applicable domain contract.
 
-1. **Read the plan first** — identify CURRENT PHASE and whether the request belongs there.
-2. **Never silently change phase** — Owner must say `CHANGE PHASE`; then update `PROJECT_EXECUTION_PLAN.md` before proceeding.
-3. **Detect and report scope drift** — PREMATURE / BLOCKED / CONFLICTING → warn Owner; do not quietly continue.
-4. **KEEP + REFINE UX law** — do not redesign frozen surfaces to simplify code.
-5. **Single source of truth** — never create a second authority beside the approved domain owner.
-6. **Honest capability states** — distinguish UI / domain / SQLite / offline / native / remote; never convert mocks into fake production claims.
-7. **Gate Backend and native** — do not start Backend/native work before its approved gate.
-8. **Conflict with roadmap** — warn the Owner before editing.
-9. **Owner runs verify** — Bassam runs analyze / tests / `verify_ship` and pastes results; agent decides from the paste. Do **not** run the suite as the normal path (see `.cursor/rules/owner-runs-verify.mdc`).
-10. **Platform cohesion** — every system pack must prove ties to the mailbox, identity, policy, and closed loops; no isolated screens (see `.cursor/rules/platform-cohesion-partner.mdc`).
-11. **Four-phase system polish** — Compare → Cover → Compete → Polish. Prototype is an incomplete baseline, not the UX ceiling.
-12. **Partnership stance** — agent acts as senior engineer + strategist + UX psychologist + craft designer + power-user advocate; challenge weak ideas; protect Policy.
-13. **Father control completeness** — each system’s Cover phase must leave Primary with full, flexible, real controls (mood-aligned intensity within Policy); retention = “settings desk complete enough that father will not abandon the platform” (see `.cursor/rules/platform-cohesion-partner.mdc`).
-14. **Owner orients · Partner owns** — Owner ideas are orientation, not micromanagement. Agent executes full UX impact without confirmation theater; halt only on Policy ambiguity (QUESTIONS.md).
-15. **UI-complete now · Backend wire later** — ship full screens/settings desks now; Local persist + honesty. Backend/Native later only wires existing controls — **zero** screen redesign or IA rearrange (Rule 25).
+The authority order is:
 
-## Progress report (significant tasks)
+1. this Global Super-App Constitution — strategic direction, delivery model and the gates below;
+2. [`docs/00_MASTER_PLAN.md`](docs/00_MASTER_PLAN.md) — the binding scope and sequence: 14 complete functions, the stages, the honest timing and the first five tasks. It supersedes the scope and schedule of the master plan's sections 6 and 7;
+3. [`docs/CURRENT_EXECUTION_PLAN.md`](docs/CURRENT_EXECUTION_PLAN.md) — the one active function, its current stage and the next decision;
+4. [`docs/product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md`](docs/product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md) and [`docs/product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md`](docs/product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md) — truth and experience requirements;
+5. system-specific contracts, privacy/security decisions and runbooks — operational detail for the selected function.
 
-```
-CURRENT PHASE:
-TASK PHASE:
-STATUS: ALIGNED / PREMATURE / BLOCKED / CONFLICTING
-REQUIRED GATE:
-WILL MODIFY PRODUCTION CODE: YES/NO
-```
+## 1.1 The two gates, and the one honesty measure
 
-## Current markers (see plan for detail)
+These were added on 2026-10-06, after a full audit of the code measured the platform at
+2.5 of 42 systems sold as complete and zero usable families. They are binding on every
+function from now on, and they are the answer to how that gap happened.
 
-* PHASE 1.5 COMPLETE  
-* PHASE 1.75 COMPLETE  
-* PHASE 2 COMPLETE (analysis — FS-008/009/010)  
-* PHASE 3 COMPLETE (global reconciliation — docs only)  
-* PHASE 4 COMPLETE (Master Implementation Plan — docs only)  
-* FRONTEND COMPLETION GATE — **COMPLETE** (2026-09-25)  
-* FULL FRONTEND CLOSURE — **COMPLETE** (2026-09-25; 128/130; Policy=0 · Deferred=0 · OOS=2)  
-* CONTROL & EXPERIENCE LOCAL CAMPAIGN (CE-B0→B5) — **COMPLETE** (2026-09-25; Final Re-Audit + Final Frontend Gate PASSED; STOP)  
-* FINAL VISUAL · UX · JOURNEY VERIFICATION — **AUTHORIZED** (2026-09-25; VX-B0→B7 PASSED) — UX verification pack **UNLOCKED** after LDR-EXIT; next: execute `user_experience_verification/` → **D-FINAL**  
-* LOCAL DATA REALITY (LDR) — **COMPLETE** (2026-09-26; Owner EXIT; B0…B8; `test/ldr/` +27; verify --full +80) — see `docs/experience_discovery/final_product_experience/local_data_reality/`  
-* SYS-SEC NOTIFICATIONS CORE — **COMPLETE** (2026-09-27; Owner scoped verify)  
-* SYS-SEC LOCATION COVER (LOCATION-1 + LOCATION-1B) — **COMPLETE** (2026-09-28; Owner scoped verify EXIT:0 for LOCATION-1B; no-show deadline + FAT-013 location desk; Native GPS still closed)  
-* SYS-SEC EMERGENCY — Cover/Compete code ready; Owner verify for EMERGENCY-COMPETE still owed when convenient  
-* PHASE 5 NATIVE — NOT STARTED / NOT AUTHORIZED  
-* BACKEND — NOT YET AUTHORIZED  
-* NATIVE WAVES — NOT YET AUTHORIZED
+**Surface Wiring Gate.** No function is complete on four pieces of evidence together:
+(1) the contract — every route in `app.js` present in `openapi/foundation.v1.json`, with
+a drift test that fails when they differ; (2) the client — a Dart method that names the
+route and reads its fields; (3) the surface — a screen reachable from a user journey,
+never a file nothing imports; (4) the journey — a test proving a guardian reached the
+outcome and saw a truthful state.
 
-## Authority anti-conflict (do not invent a second roadmap)
+**Environment Gate.** No work touching SQL is complete until it actually runs on real
+PostgreSQL in CI. Written migrations are not evidence; executed migrations are.
 
-1. **Policy Register** (`handoff/04_POLICY_REGISTER_EN.md`) wins product law.  
-2. **`PROJECT_EXECUTION_PLAN.md`** wins phase / gate / authorization.  
-3. **`AGENTS.md` markers** mirror the plan — update both together when Owner ships a campaign exit.  
-4. **`harness/LOOP_STATE.md`** is the live tick pointer only — never a second phase authority.  
-5. **`.cursor/rules/*`** enforce workflow; they must not contradict items 1–4. On clash: stop and align docs before coding.  
-6. **`verify_ship` card** = newest `CONVERSION_LOG.md` line (env `VERIFY_CARD` is ignored). Append the log line before Owner runs verify so the correct card is scoped.
+**The one honesty measure.** Every function is measured on four columns — table,
+contract, client, screen-and-journey. A function is real at 4/4 or it is not real. No
+report may describe a function as complete while any column is empty, and the measure is
+published in every status report.
+
+Foundation and staging documents preserve real technical evidence. They do not reduce the product destination to the smallest endpoint that has already been implemented.
+
+## 2. The Grand Vision
+
+Family OS is not a simple app; it is a **Global Super App** for families, designed to replace fragmented single-purpose apps such as Life360 for safety, Qustodio for parental control, and NotebookLM/Duolingo for learning. It must anticipate family needs and provide a seamless, flexible and beautiful experience that matches or exceeds leading global products.
+
+## 3. The true meaning of polishing (عملية الصقل)
+
+- **The prototype is the target.** The rich, colourful prototype is a promise to the user, not a draft to discard.
+- **Do not delete — build.** If a valuable UI feature relies on mock data, retain its user value and build the data, backend and device services needed to make it real.
+- **Competitive UX completion.** Polishing includes analysing strong competitors, finding missing journeys, controls and states, designing them coherently in the Family OS system, and wiring them to truthful runtime sources.
+- **Runtime truth.** Production must never present fake data or a fake outcome. We solve mock gaps by building the real data pipeline, not by shrinking the product into a technical demo.
+
+## 4. System-by-system execution (نظام بنظام)
+
+Development proceeds vertically **system by system**, not as disconnected screen work. One selected system remains in focus until it passes its agreed exit gate; supporting design, backend, quality and Native work may proceed only in service of that system.
+
+For every system:
+
+1. **Domain selection:** lock one user problem and its affected family roles.
+2. **Competitive analysis:** learn from global products without copying their branding or private workflows.
+3. **UX gap analysis:** make the prototype journey, controls, states, settings and recovery good enough to compete.
+4. **The real engine:** build the complete vertical slice as required: PostgreSQL data model → **Node.js/Express backend API** → authorised Native Android services where the capability requires them → Flutter UI.
+5. **Lock and ship:** verify truth, roles, privacy, reliability, accessibility and experience quality before moving to the next system.
+
+A system does not require Native work merely because another system will. Conversely, a device-control claim cannot be called real until its necessary Native lifecycle is implemented and evidenced.
+
+## 5. Hard guards
+
+- **No scattered development:** do not open unrelated systems before the active system reaches its exit decision.
+- **No mock persistence:** no production outcome may originate from mock/seed data, a local role picker or a hidden fallback. Test and explicit demo routes remain separate.
+- **One capability, one truth:** every visible state has a source, freshness, authorization scope, result and recovery path.
+- **Server-owned authorization:** the client explains permission but does not decide it for remote or sensitive actions.
+- **Keep and refine:** preserve valuable prototype UX while replacing its mock engines with real ones. Never let a technical shortcut force a degraded product journey.
+- **Family OS continuity:** use the shared Arabic-first design system, familiar interaction patterns, role-aware flows, AR/EN, RTL/LTR, accessibility and responsive states.
+- **Security and privacy:** never expose credentials, tokens, raw payloads, family identifiers or sensitive diagnostics in source, CI, evidence or chat.
+- **Deliberate high-risk decisions:** production/public release, real-data expansion, invasive device capability, provider use and irreversible policy changes require explicit system-level decisions and evidence.
+
+> **Historical note:** earlier Foundation Wave documents remain evidence of the base that was built. They are no longer the global product ceiling. The Global Super-App strategy builds truthful real engines to fulfil the user experience promised by the prototype.

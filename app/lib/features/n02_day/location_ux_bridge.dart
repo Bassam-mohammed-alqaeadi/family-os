@@ -14,7 +14,6 @@ import 'package:family_os/core/location/location_repository.dart';
 import 'package:family_os/core/location/location_store.dart';
 import 'package:family_os/core/location/modes_location_fact_feed.dart';
 import 'package:family_os/core/location/safe_zone_definition.dart';
-import 'package:family_os/core/location/zone_geometry.dart';
 import 'package:family_os/core/modes/modes_runtime.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/location_history_repository.dart';
@@ -123,6 +122,13 @@ final class DomainSafeZonesRepository implements SafeZonesRepository {
 
   /// Optional Stage-1 list mirror for legacy UI fields (emoji/description).
   final InMemorySafeZonesRepository? listRepo;
+
+  /// The local Domain store keeps the missed-deadline flag and is not a server.
+  @override
+  bool get storesNoShowAlert => true;
+
+  @override
+  bool get isRemoteAuthority => false;
 
   @override
   Future<SafeZonesSnapshot> load() async {
@@ -292,16 +298,15 @@ final class DomainLocationMapRepository implements LocationMapRepository {
     required this.domain,
     FamilyId? familyId,
     ChildrenListRepository? children,
-  })  : _familyIdOverride = familyId,
-        _children = children;
+  }) : _familyIdOverride = familyId,
+       _children = children;
 
   final LocationDomainRepository domain;
   final FamilyId? _familyIdOverride;
   final ChildrenListRepository? _children;
 
   FamilyId get _familyId =>
-      _familyIdOverride ??
-      stage1IdentityRuntime.activeFamilyId;
+      _familyIdOverride ?? stage1IdentityRuntime.activeFamilyId;
 
   ChildrenListRepository get _roster =>
       _children ?? stage1ChildrenListRepository;
@@ -379,13 +384,18 @@ final class DomainLocationMapRepository implements LocationMapRepository {
 }
 
 /// Boot-once: rebind FAT-014/015/016 stage1 repos to domain adapters (LDR-B1/B2).
+///
+/// This is the local path, and it no longer plants anything: until W3 it seeded two sample
+/// zones into the local store so the map and the zones screen would have something to show.
+/// A boundary nobody drew is not a boundary, and both a family that had drawn one and a
+/// server that judges crossings would have disagreed with this handset about it. When a
+/// server is configured the composition root binds the server authority instead.
 Future<void> tryBindStage1LocationUx() async {
   try {
     await Stage1LocationRuntime.ensureOpen();
     if (FsSessionKernel.sqliteFallbackToMemory) return;
     final domain = Stage1LocationRuntime.store;
     final familyId = stage1IdentityRuntime.activeFamilyId;
-    await ensureRealLocalSafeZonesSeeded(domain: domain, familyId: familyId);
     rebindStage1LocationMapRepository(
       DomainLocationMapRepository(domain: domain, familyId: familyId),
     );
@@ -402,56 +412,6 @@ Future<void> tryBindStage1LocationUx() async {
   } catch (e, st) {
     debugPrint('LDR tryBindStage1LocationUx soft-fail: $e\n$st');
   }
-}
-
-/// LDR-B2 — zone definitions only (no trail/GPS samples). Idempotent.
-Future<void> ensureRealLocalSafeZonesSeeded({
-  required LocationDomainRepository domain,
-  required FamilyId familyId,
-}) async {
-  final existing = await domain.listZones(familyId);
-  if (existing.isNotEmpty) return;
-  final now = DateTime.now().toUtc();
-  final kids = await stage1ChildrenListRepository.listChildren(
-    familyId: familyId,
-  );
-  final childIds = [
-    for (final k in kids.take(2)) ChildId(k.id),
-  ];
-  final assigned = childIds.isNotEmpty
-      ? childIds
-      : [ChildId('demo-child'), ChildId('child_b')];
-
-  await domain.saveZone(
-    SafeZoneDefinition(
-      id: 'zone_home_real_local',
-      familyId: familyId,
-      name: 'المنزل',
-      emoji: '📍',
-      geometry: const CircleGeometry(
-        center: GeoPoint(latitude: 24.7136, longitude: 46.6753),
-        radiusMeters: 250,
-      ),
-      assignedChildIds: assigned,
-      createdAt: now,
-      updatedAt: now,
-    ),
-  );
-  await domain.saveZone(
-    SafeZoneDefinition(
-      id: 'zone_school_real_local',
-      familyId: familyId,
-      name: 'المدرسة',
-      emoji: '📍',
-      geometry: const CircleGeometry(
-        center: GeoPoint(latitude: 24.7250, longitude: 46.6900),
-        radiusMeters: 180,
-      ),
-      assignedChildIds: assigned,
-      createdAt: now,
-      updatedAt: now,
-    ),
-  );
 }
 
 /// Silent Location Request result honesty (LOC-OD-08).

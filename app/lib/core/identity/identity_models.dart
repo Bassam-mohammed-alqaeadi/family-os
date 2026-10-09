@@ -25,7 +25,11 @@ final class Account {
 
 @immutable
 final class Family {
-  const Family({required this.id, required this.name, required this.ownerMemberId});
+  const Family({
+    required this.id,
+    required this.name,
+    required this.ownerMemberId,
+  });
   final FamilyId id;
   final String name;
   final MemberId ownerMemberId;
@@ -261,7 +265,8 @@ final class AuthorizationContext {
   bool get canApproveChildRequests {
     if (isFather) return true;
     if (isMother) {
-      return motherLevel == MotherLevel.partner || motherLevel == MotherLevel.full;
+      return motherLevel == MotherLevel.partner ||
+          motherLevel == MotherLevel.full;
     }
     return false;
   }
@@ -329,12 +334,15 @@ final class AdultInvite {
     if (revokedAt != null || replacedByInviteId != null) {
       return InviteLifecycleState.revoked;
     }
-    if (!nowUtc.isBefore(expiresAt.toUtc())) return InviteLifecycleState.expired;
+    if (!nowUtc.isBefore(expiresAt.toUtc())) {
+      return InviteLifecycleState.expired;
+    }
     if (nowUtc.isBefore(createdAt.toUtc())) return InviteLifecycleState.created;
     return InviteLifecycleState.active;
   }
 
-  bool isActiveAt(DateTime nowUtc) => stateAt(nowUtc) == InviteLifecycleState.active;
+  bool isActiveAt(DateTime nowUtc) =>
+      stateAt(nowUtc) == InviteLifecycleState.active;
 
   AdultInvite copyWith({
     MotherLevel? level,

@@ -38,10 +38,7 @@ import 'package:family_os/features/n17_child_learn/child_learn_home_screen.dart'
 /// Binary goldens are optional Owner artifacts (see render/INDEX.md).
 void main() {
   final cases = <_HomeCase>[
-    _HomeCase(
-      id: 'FAT-010',
-      builder: (_) => const DayBoardScreen(),
-    ),
+    _HomeCase(id: 'FAT-010', builder: (_) => const DayBoardScreen()),
     _HomeCase(
       id: 'FAT-012',
       builder: (_) => ChildrenListScreen(
@@ -148,7 +145,8 @@ void main() {
             expect(
               overflows,
               isEmpty,
-              reason: 'overflow on $tag: ${overflows.map((e) => e.exceptionAsString()).join(' | ')}',
+              reason:
+                  'overflow on $tag: ${overflows.map((e) => e.exceptionAsString()).join(' | ')}',
             );
           });
         }

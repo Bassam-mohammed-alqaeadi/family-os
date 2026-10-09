@@ -30,7 +30,10 @@ final class DomainSosAlertRepository implements SosAlertRepository {
   }
 
   @override
-  Future<SosAlert> acknowledge(String alertId, {required SosActor actor}) async {
+  Future<SosAlert> acknowledge(
+    String alertId, {
+    required SosActor actor,
+  }) async {
     final next = await _service.acknowledge(
       incidentId: alertId,
       actor: actor,

@@ -47,10 +47,14 @@ void main(List<String> args) {
 Directory _featuresRoot() {
   final cwd = Directory.current;
   final candidates = <Directory>[
-    Directory('${cwd.path}${Platform.pathSeparator}lib'
-        '${Platform.pathSeparator}features'),
-    Directory('${cwd.path}${Platform.pathSeparator}app'
-        '${Platform.pathSeparator}lib${Platform.pathSeparator}features'),
+    Directory(
+      '${cwd.path}${Platform.pathSeparator}lib'
+      '${Platform.pathSeparator}features',
+    ),
+    Directory(
+      '${cwd.path}${Platform.pathSeparator}app'
+      '${Platform.pathSeparator}lib${Platform.pathSeparator}features',
+    ),
   ];
   for (final d in candidates) {
     if (d.existsSync()) return d;
@@ -66,12 +70,13 @@ bool _isDart(FileSystemEntity e) => e is File && e.path.endsWith('.dart');
 /// Public for unit tests — scan [featuresRoot] and return violations.
 List<HardcodedHit> scanFeatures(Directory featuresRoot) {
   final hits = <HardcodedHit>[];
-  final files = featuresRoot
-      .listSync(recursive: true)
-      .whereType<File>()
-      .where(_isDart)
-      .toList()
-    ..sort((a, b) => a.path.compareTo(b.path));
+  final files =
+      featuresRoot
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where(_isDart)
+          .toList()
+        ..sort((a, b) => a.path.compareTo(b.path));
 
   for (final file in files) {
     final norm = file.path.replaceAll('\\', '/');

@@ -12,14 +12,13 @@ import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n01_linking/add_child_screen.dart';
 import 'package:family_os/features/n01_linking/create_family_screen.dart';
-import 'package:family_os/features/n01_linking/link_qr_screen.dart';
+import 'package:family_os/features/n01_linking/native_device_pairing_screens.dart';
 import 'package:family_os/features/n01_linking/link_success_screen.dart';
 import 'package:family_os/features/n01_linking/permissions_explainer_screen.dart';
 import 'package:family_os/features/n01_linking/setup_wizard_screen.dart';
 import 'package:family_os/features/n01_linking/trial_mode_screen.dart';
 import 'package:family_os/features/n01_linking/invite_mother_screen.dart';
 import 'package:family_os/features/n01_linking/accept_mother_invite_screen.dart';
-import 'package:family_os/features/n01_linking/child_qr_scan_screen.dart';
 import 'package:family_os/features/n01_linking/transparency_consent_screen.dart';
 import 'package:family_os/features/n02_day/day_board_screen.dart';
 import 'package:family_os/features/n02_day/children_list_screen.dart';
@@ -98,9 +97,7 @@ void main() {
       isTrue,
     );
     expect(
-      goRoutes.any(
-        (r) => r.name == 'dev-screens' || r.path == '/dev-screens',
-      ),
+      goRoutes.any((r) => r.name == 'dev-screens' || r.path == '/dev-screens'),
       isTrue,
     );
     expect(goRoutes.length, greaterThanOrEqualTo(activeCsvIds.length + 2));
@@ -197,11 +194,9 @@ void main() {
       expect(find.byType(AddChildScreen), findsOneWidget);
       expect(find.byType(PlaceholderScreen), findsNothing);
 
-      // LinkQrScreen owns a periodic timer — avoid pumpAndSettle while it is up.
       router.go(screenPath('SCR-FAT-004'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 50));
-      expect(find.byType(LinkQrScreen), findsOneWidget);
+      await tester.pumpAndSettle();
+      expect(find.byType(NativeParentPairingScreen), findsOneWidget);
       expect(find.byType(PlaceholderScreen), findsNothing);
       router.go(screenPath('SCR-FAT-003'));
       await tester.pump();
@@ -330,7 +325,7 @@ void main() {
 
       router.go(screenPath('SCR-CHD-002'));
       await tester.pumpAndSettle();
-      expect(find.byType(ChildQrScanScreen), findsOneWidget);
+      expect(find.byType(ChildModePairingScreen), findsOneWidget);
       expect(find.byType(PlaceholderScreen), findsNothing);
 
       router.go(screenPath('SCR-CHD-003'));

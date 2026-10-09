@@ -137,9 +137,7 @@ void main() {
 }
 
 List<String> _trialModeValues(String arb) {
-  final re = RegExp(
-    r'"trialMode[^"]*"\s*:\s*"((?:\\.|[^"\\])*)"',
-  );
+  final re = RegExp(r'"trialMode[^"]*"\s*:\s*"((?:\\.|[^"\\])*)"');
   return re.allMatches(arb).map((m) => m.group(1)!).toList();
 }
 

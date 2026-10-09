@@ -49,15 +49,15 @@ final class QueuedTimeDecision {
     required this.requestId,
     required this.actor,
     required this.grantMinutes,
-  })  : kind = QueuedTimeDecisionKind.approve,
-        reason = null;
+  }) : kind = QueuedTimeDecisionKind.approve,
+       reason = null;
 
   const QueuedTimeDecision.reject({
     required this.requestId,
     required this.actor,
     required this.reason,
-  })  : kind = QueuedTimeDecisionKind.reject,
-        grantMinutes = null;
+  }) : kind = QueuedTimeDecisionKind.reject,
+       grantMinutes = null;
 
   final QueuedTimeDecisionKind kind;
   final String requestId;
@@ -89,12 +89,12 @@ final class TimeRequestService extends ChangeNotifier {
     bool offline = false,
     String Function()? idFactory,
     DateTime Function()? clock,
-  })  : _repo = repository,
-        _bus = decisionBus ?? TimeRequestDecisionBus(),
-        _activeCeilingMinutes = activeCeilingMinutes,
-        _offline = offline,
-        _idFactory = idFactory ?? _defaultId,
-        _clock = clock ?? DateTime.now;
+  }) : _repo = repository,
+       _bus = decisionBus ?? TimeRequestDecisionBus(),
+       _activeCeilingMinutes = activeCeilingMinutes,
+       _offline = offline,
+       _idFactory = idFactory ?? _defaultId,
+       _clock = clock ?? DateTime.now;
 
   final TimeRequestRepository _repo;
   final TimeRequestDecisionBus _bus;
@@ -184,9 +184,7 @@ final class TimeRequestService extends ChangeNotifier {
       if (!r.isPending) continue;
       final expires = TemporaryGrantQuery.requestOrGrantExpiresAt(r.createdAt);
       if (!now.isBefore(expires)) {
-        await _repo.save(
-          r.copyWith(status: TimeRequestStatus.expired),
-        );
+        await _repo.save(r.copyWith(status: TimeRequestStatus.expired));
         changed = true;
       }
     }
@@ -282,11 +280,7 @@ final class TimeRequestService extends ChangeNotifier {
     for (final item in copy) {
       switch (item.kind) {
         case QueuedTimeDecisionKind.approve:
-          await _applyApprove(
-            item.requestId,
-            item.actor,
-            item.grantMinutes!,
-          );
+          await _applyApprove(item.requestId, item.actor, item.grantMinutes!);
         case QueuedTimeDecisionKind.reject:
           await _applyReject(item.requestId, item.actor, item.reason!);
       }
@@ -383,8 +377,8 @@ final class TimeRequestService extends ChangeNotifier {
     return switch (role) {
       AppRole.father => const TimeRequestActor.father(),
       AppRole.mother => TimeRequestActor.mother(
-          motherLevel ?? MotherLevel.partner,
-        ),
+        motherLevel ?? MotherLevel.partner,
+      ),
       AppRole.child => const TimeRequestActor.child(),
     };
   }

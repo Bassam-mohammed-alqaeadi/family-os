@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Family chat: take a photo to share with your family circle.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Family chat: record a voice note to share with your family circle.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Family chat: choose a photo from your library to share with your family circle.</string>
 </dict>
 </plist>

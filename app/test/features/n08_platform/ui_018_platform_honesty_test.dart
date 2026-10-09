@@ -90,24 +90,18 @@ void main() {
   });
 
   group('UI-018 AC2 Semantics states reason', () {
-    testWidgets('FAT-068 EN Semantics include Unavailable reason',
-        (tester) async {
+    testWidgets('FAT-068 EN Semantics include Unavailable reason', (
+      tester,
+    ) async {
       final repo = InMemoryDesiredMonitoringPrefsRepository({
         DesiredMonitoringPrefs.defaultChildId: const DesiredMonitoringPrefs(
           notificationListen: true,
         ),
       });
 
-      await _pumpPlatform(
-        tester,
-        repository: repo,
-        locale: const Locale('en'),
-      );
+      await _pumpPlatform(tester, repository: repo, locale: const Locale('en'));
 
-      expect(
-        find.bySemanticsLabel(RegExp('Unavailable')),
-        findsWidgets,
-      );
+      expect(find.bySemanticsLabel(RegExp('Unavailable')), findsWidgets);
     });
 
     testWidgets('FAT-067 AR Semantics include غير متاح reason', (tester) async {
@@ -124,16 +118,14 @@ void main() {
         locale: const Locale('ar'),
       );
 
-      expect(
-        find.bySemanticsLabel(RegExp('غير متاح')),
-        findsWidgets,
-      );
+      expect(find.bySemanticsLabel(RegExp('غير متاح')), findsWidgets);
     });
   });
 
   group('UI-018 reportsOnly intermediate + offline', () {
-    testWidgets('reportsOnly never looks fully ON + limited badge',
-        (tester) async {
+    testWidgets('reportsOnly never looks fully ON + limited badge', (
+      tester,
+    ) async {
       final repo = InMemoryDesiredMonitoringPrefsRepository({
         DesiredMonitoringPrefs.defaultChildId: const DesiredMonitoringPrefs(
           webFilter: true,
@@ -165,10 +157,7 @@ void main() {
         locale: const Locale('en'),
       );
 
-      expect(
-        find.byKey(PlatformMonitoringKeys.offlineBanner),
-        findsOneWidget,
-      );
+      expect(find.byKey(PlatformMonitoringKeys.offlineBanner), findsOneWidget);
       expect(find.textContaining('Offline'), findsWidgets);
     });
   });
@@ -234,8 +223,9 @@ void main() {
       },
     );
 
-    testWidgets('P12 father toggle updates child effective same session',
-        (tester) async {
+    testWidgets('P12 father toggle updates child effective same session', (
+      tester,
+    ) async {
       final bus = DesiredMonitoringSyncBus();
       final repo = InMemoryDesiredMonitoringPrefsRepository();
 
@@ -297,24 +287,15 @@ void main() {
   group('UI-018 Mother FULL host access', () {
     test('FAT-067/068 not father-only — mother may open', () {
       expect(
-        roleGuardRedirectForPath(
-          screenPath('SCR-FAT-067'),
-          AppRole.mother,
-        ),
+        roleGuardRedirectForPath(screenPath('SCR-FAT-067'), AppRole.mother),
         isNull,
       );
       expect(
-        roleGuardRedirectForPath(
-          screenPath('SCR-FAT-068'),
-          AppRole.mother,
-        ),
+        roleGuardRedirectForPath(screenPath('SCR-FAT-068'), AppRole.mother),
         isNull,
       );
       expect(
-        roleGuardRedirectForPath(
-          screenPath('SCR-FAT-067'),
-          AppRole.child,
-        ),
+        roleGuardRedirectForPath(screenPath('SCR-FAT-067'), AppRole.child),
         isNull,
       );
     });
@@ -352,10 +333,7 @@ Future<void> _pumpPlatform(
   await tester.pumpWidget(
     _app(
       locale: locale,
-      home: PlatformMonitoringScreen(
-        repository: repository,
-        offline: offline,
-      ),
+      home: PlatformMonitoringScreen(repository: repository, offline: offline),
     ),
   );
   await tester.pumpAndSettle();

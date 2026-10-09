@@ -12,11 +12,11 @@ import 'package:family_os/core/policy/sos_alert.dart';
 abstract final class SosLocationHonestyBridge {
   /// Map FS-001 honesty → SOS UI [SosLocationClass] (incident ≠ delivery).
   static SosLocationClass toIncidentClass(SosLocationHonesty h) => switch (h) {
-        SosLocationHonesty.acquiring => SosLocationClass.acquiring,
-        SosLocationHonesty.located => SosLocationClass.ready,
-        SosLocationHonesty.staleLastKnown => SosLocationClass.stale,
-        SosLocationHonesty.unavailable => SosLocationClass.unavailable,
-      };
+    SosLocationHonesty.acquiring => SosLocationClass.acquiring,
+    SosLocationHonesty.located => SosLocationClass.ready,
+    SosLocationHonesty.staleLastKnown => SosLocationClass.stale,
+    SosLocationHonesty.unavailable => SosLocationClass.unavailable,
+  };
 
   /// Prefer handoff mapper token when string UI is needed.
   static String toUiToken(SosLocationHonesty h) =>

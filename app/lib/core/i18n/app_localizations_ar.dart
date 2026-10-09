@@ -12128,4 +12128,664 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get appLoadingSemantics => 'جارٍ التحميل';
+
+  @override
+  String get childrenListLocalOnlyBanner =>
+      'معلومات الأسرة في هذه الشاشة محفوظة حاليًا على هذا الجهاز. قد لا تظهر التغييرات على الأجهزة الأخرى بعد.';
+
+  @override
+  String get childrenListProfileRepairTitle => 'ملف الابن يحتاج إلى استكمال';
+
+  @override
+  String get childrenListProfileRepairMessage =>
+      'هذا الابن مسجّل، لكن بيانات العرض في ملفه غير مكتملة. أكمل الإعداد قبل الاعتماد على أدوات التحكم.';
+
+  @override
+  String get childrenListProfileRepairCta => 'إكمال الإعداد';
+
+  @override
+  String get childrenListDeviceActive => 'الجهاز متصل';
+
+  @override
+  String get childrenListDevicePairing => 'جارٍ ربط الجهاز';
+
+  @override
+  String get childrenListDeviceNeedsAttention => 'الجهاز يحتاج إلى انتباه';
+
+  @override
+  String get childrenListDeviceStateUnavailable => 'حالة الجهاز غير متاحة';
+
+  @override
+  String childrenListRuntimeRowSemantics(
+    String name,
+    String age,
+    String device,
+  ) {
+    return '$name، $age، $device';
+  }
+
+  @override
+  String get screenTimeServerNoSession =>
+      'لا توجد جلسة خادم في هذا البناء — لا نعرض أرقامًا لا نفرضها.';
+
+  @override
+  String get screenTimeServerUnreachable =>
+      'لم يستجب الخادم — ما تراه آخر جواب صحيح، ولم يتغيّر شيء.';
+
+  @override
+  String get screenTimeServerUnreachableNoData =>
+      'لم يستجب الخادم، ولا يوجد جواب سابق نعرضه.';
+
+  @override
+  String get screenTimeServerDenied =>
+      'هذا الحساب لا يملك قراءة وقت شاشة هذا الابن.';
+
+  @override
+  String get screenTimeServerRefused => 'رفض الخادم الطلب — لم يتغيّر شيء.';
+
+  @override
+  String get screenTimeServerCap => 'الحد اليومي (دقائق، ٠ = بلا حد)';
+
+  @override
+  String get screenTimeServerBedtime => 'وقت النوم';
+
+  @override
+  String get screenTimeServerSchoolMode => 'وضع المدرسة';
+
+  @override
+  String get screenTimeServerSave => 'احفظ على الخادم';
+
+  @override
+  String get screenTimeServerSaved => 'حُفظ على الخادم';
+
+  @override
+  String get screenTimeServerLockNow => 'أوقف الشاشة الآن';
+
+  @override
+  String get screenTimeServerUnlock => 'أعد التشغيل';
+
+  @override
+  String get screenTimeServerStateFree => 'الشاشة متاحة';
+
+  @override
+  String get screenTimeServerStateLimited => 'الشاشة متاحة ضمن الحد';
+
+  @override
+  String get screenTimeServerStateBedtime => 'حان وقت النوم';
+
+  @override
+  String get screenTimeServerStateSchool => 'وقت المدرسة الآن';
+
+  @override
+  String get screenTimeServerStateLimit => 'انتهى وقت اليوم';
+
+  @override
+  String get screenTimeServerStateLock => 'الشاشة موقوفة بقرار ولي أمر';
+
+  @override
+  String screenTimeServerTodayMinutes(int minutes) {
+    return 'دقائق اليوم المحتسبة: $minutes';
+  }
+
+  @override
+  String screenTimeServerOpenRequest(int minutes) {
+    return 'سؤال من الابن بانتظارك: $minutes دقيقة';
+  }
+
+  @override
+  String get screenTimeServerApprove => 'موافقة';
+
+  @override
+  String get screenTimeServerDeny => 'رفض';
+
+  @override
+  String get webFilterServerNoSession =>
+      'لا توجد جلسة خادم في هذا البناء — الفلترة معروضة من التخزين المحلي، ولا ندّعي فرضًا على الجهاز.';
+
+  @override
+  String get webFilterServerUnreachable =>
+      'لم يستجب الخادم — ما تراه آخر جواب صحيح، ولم يتغيّر شيء.';
+
+  @override
+  String get webFilterServerDenied =>
+      'هذا الحساب لا يملك قراءة فلترة هذا الابن من الخادم.';
+
+  @override
+  String get webFilterServerRefused => 'رفض الخادم الطلب — لم يتغيّر شيء.';
+
+  @override
+  String get webFilterProtectionHeading => 'هل الحماية تعمل فعلًا؟';
+
+  @override
+  String get webFilterProtectionProtected =>
+      'آخر بلاغ حديث من الجهاز يقول إن الحماية تعمل.';
+
+  @override
+  String get webFilterProtectionUnverified =>
+      'لا ندّعي حماية: لا بلاغ حديث من هذا الجهاز.';
+
+  @override
+  String get webFilterProtectionNeverReported =>
+      'لم يبلّغ هذا الجهاز عن حمايته قط — لا شيء يُقال عنها.';
+
+  @override
+  String get webFilterProtectionUnsupported =>
+      'هذه المنصة لا تدعم مستوى الحماية هذا — وهي حقيقة عن الجهاز لا عن الابن.';
+
+  @override
+  String get webFilterProtectionAtRisk =>
+      'الحماية ليست كما ينبغي — راجع ما رصده الجهاز.';
+
+  @override
+  String webFilterProtectionSilentMinutes(int minutes) {
+    return 'صمت الجهاز منذ $minutes دقيقة.';
+  }
+
+  @override
+  String get webFilterServerQuestionPending => 'بانتظار قرار أحد الوالدين.';
+
+  @override
+  String get webFilterServerQuestionOpen => 'الفتح المؤقت سارٍ الآن.';
+
+  @override
+  String get webFilterServerQuestionDenied => 'رُفض الطلب.';
+
+  @override
+  String get tasksServerNoSession =>
+      'لا توجد جلسة خادم في هذا البناء — المهام معروضة من التخزين المحلي، ولا تُحتسب نقاط على الخادم.';
+
+  @override
+  String get tasksServerUnreachable =>
+      'لم يستجب الخادم — ما تراه آخر جواب صحيح، ولم يتغيّر شيء.';
+
+  @override
+  String get tasksServerDenied =>
+      'هذا الحساب لا يملك قراءة مهام هذا الابن من الخادم.';
+
+  @override
+  String get tasksServerRefused => 'رفض الخادم الطلب — لم يتغيّر شيء.';
+
+  @override
+  String get tasksServerBalanceHeading => 'النقاط';
+
+  @override
+  String get tasksServerBalanceNote =>
+      'الرصيد مجموع السجل، لا رقم محفوظ: كل سطر أدناه هو من أكّده ومتى.';
+
+  @override
+  String get tasksServerBalanceEmpty =>
+      'لا نقاط بعد — تُكتسب النقاط بتأكيد أحد الوالدين لإنجاز مهمة.';
+
+  @override
+  String tasksServerBalanceEntry(int points) {
+    return '‏+$points نقطة — أكّدها أحد الوالدين.';
+  }
+
+  @override
+  String get tasksServerTasksHeading => 'المهام';
+
+  @override
+  String tasksServerTaskPoints(int points) {
+    return '‏$points نقطة عند الإنجاز';
+  }
+
+  @override
+  String get tasksServerTaskWaiting => 'لم يقل الابن شيئًا بعد.';
+
+  @override
+  String get tasksServerTaskClaimed => 'قال الابن إنه أنجزها — بانتظار كلمتك.';
+
+  @override
+  String tasksServerTaskConfirmed(int points) {
+    return 'أكّدت الإنجاز — أُضيفت $points نقطة إلى رصيده.';
+  }
+
+  @override
+  String get tasksServerTaskDeclined =>
+      'لم تُؤكَّد بعد — ويمكنه المحاولة مرة أخرى.';
+
+  @override
+  String get tasksServerTaskArchived =>
+      'هذه المهمة مسحوبة، ولم تُحتسب لها نقاط.';
+
+  @override
+  String get tasksServerRecordClaim => 'سجّل أنه أنجز';
+
+  @override
+  String get tasksServerConfirm => 'تأكيد الإنجاز';
+
+  @override
+  String get tasksServerDecline => 'لم يُنجز بعد';
+
+  @override
+  String get tasksServerNoteHint => 'ملاحظة تُقرأ للابن عند الرفض';
+
+  @override
+  String get tasksServerCreateHeading => 'مهمة جديدة';
+
+  @override
+  String get tasksServerCreateTitle => 'ما المطلوب؟';
+
+  @override
+  String get tasksServerCreatePoints => 'النقاط';
+
+  @override
+  String get tasksServerCreateNote => 'ما معنى «أُنجزت»؟';
+
+  @override
+  String get tasksServerAudienceScopeLabel => 'مرئية لهذه المحادثة (اختياري)';
+
+  @override
+  String get tasksServerAudienceScopeChildOnly => 'للطفل المكلّف فقط';
+
+  @override
+  String get tasksServerCreateButton => 'أضف المهمة';
+
+  @override
+  String get calendarServerNoSession =>
+      'لا توجد جلسة خادم في هذا البناء — لا يُبنى تقويم محلياً.';
+
+  @override
+  String get calendarServerDenied => 'لا يُسمح لهذا الحساب بقراءة التقويم.';
+
+  @override
+  String get calendarServerUnreachable =>
+      'لم يجب الخادم — هذا آخر قراءة صحيحة.';
+
+  @override
+  String get calendarServerRefused => 'رُفض الطلب — هذا آخر قراءة صحيحة.';
+
+  @override
+  String get calendarServerEventsHeading => 'ما اتفقت عليه العائلة';
+
+  @override
+  String get calendarServerEventsEmpty => 'لا مناسبات في هذه المدة.';
+
+  @override
+  String get calendarServerEventCancelled => 'أُلغيت';
+
+  @override
+  String get calendarServerEventCancelReason => 'سبب الإلغاء';
+
+  @override
+  String get calendarServerEventAudienceHeading => 'من دُعي';
+
+  @override
+  String get calendarServerAudienceWaiting => 'لم يجب بعد';
+
+  @override
+  String get calendarServerAudienceAccepted => 'سيأتي';
+
+  @override
+  String get calendarServerAudienceDeclined => 'لن يأتي';
+
+  @override
+  String get calendarServerAudienceAttended => 'حضر';
+
+  @override
+  String get calendarServerAudienceAbsent => 'لم يحضر';
+
+  @override
+  String get calendarServerReminderNote =>
+      'التذكير تفضيل مسجَّل، ولا نقول إن إشعاراً وصل.';
+
+  @override
+  String get calendarServerCancelHeading => 'إلغاء مناسبة';
+
+  @override
+  String get calendarServerCancelReasonHint => 'لماذا تغيّرت الخطة؟';
+
+  @override
+  String get calendarServerCancelButton => 'ألغِ المناسبة';
+
+  @override
+  String get calendarServerAnswerHeading => 'سجّل جواب الابن';
+
+  @override
+  String get calendarServerAnswerNoteHint => 'ما قاله الابن';
+
+  @override
+  String get calendarServerAttendanceHeading => 'ما حدث فعلاً';
+
+  @override
+  String get calendarServerAttendanceNoteHint => 'ملاحظة (اختياري)';
+
+  @override
+  String get calendarServerAttendanceRecordButton => 'سجّل الحضور';
+
+  @override
+  String get calendarServerCreateHeading => 'مناسبة جديدة';
+
+  @override
+  String get calendarServerCreateTitle => 'ما المناسبة؟';
+
+  @override
+  String get calendarServerCreateLocation => 'أين؟';
+
+  @override
+  String get calendarServerCreateNoteHint => 'تفاصيل للعائلة';
+
+  @override
+  String get calendarServerCreateReminder => 'تذكير قبل (دقائق)';
+
+  @override
+  String get calendarServerCreateChildren => 'من تُدعى؟';
+
+  @override
+  String get calendarServerAudienceScopeLabel =>
+      'اربط المناسبة بمحادثة (اختياري)';
+
+  @override
+  String get calendarServerAudienceScopeChildrenOnly => 'الأطفال المحددون فقط';
+
+  @override
+  String get calendarServerCreatePickStart => 'اختر البداية';
+
+  @override
+  String get calendarServerCreatePickEnd => 'اختر النهاية';
+
+  @override
+  String get calendarServerCreateButton => 'أضف المناسبة';
+
+  @override
+  String get calendarServerPanelNote =>
+      'كل ما هنا قاله الخادم: لا مناسبة ولا جواب ولا حضور يُخترع محلياً.';
+
+  @override
+  String get calendarServerNoAddressableChildren =>
+      'لا يمكن لهذه النسخة مخاطبة أبناء الخادم بعد — يُقرأ التقويم ولا يُكتب فيه.';
+
+  @override
+  String get familyChatConnecting => 'جارٍ الاتصال بدردشة الأسرة…';
+
+  @override
+  String get familyChatReconnecting =>
+      'انقطع الاتصال. نتحقق من دردشة الأسرة مجددًا…';
+
+  @override
+  String get familyChatOffline =>
+      'لا يوجد اتصال الآن. تبقى الرسائل التي سبق تحميلها ظاهرة؛ أعد المحاولة عند عودة الاتصال.';
+
+  @override
+  String get familyChatUnavailable =>
+      'الدردشة غير مُعدّة في هذا الإصدار؛ لا تُستخدم محادثة محلية بديلة.';
+
+  @override
+  String get familyChatPermissionDenied =>
+      'لا يملك هذا الحساب أو الجهاز صلاحية فتح هذه المحادثة. الخادم هو من يحدد الوصول.';
+
+  @override
+  String get familyChatRequestRejected =>
+      'رفض الخادم إجراء الدردشة. تحقّق من عضوية الأسرة ثم حاول مجددًا.';
+
+  @override
+  String get familyChatRetry => 'إعادة المحاولة';
+
+  @override
+  String get familyChatServerPollingNotice =>
+      'تُحدّث الرسائل من الخادم كل 15 ثانية أثناء فتح هذه الشاشة. لا تتوفر إشعارات فورية أو مزامنة لحظية.';
+
+  @override
+  String get childFamilyChatServerPollingNotice =>
+      'تُحدّث الرسائل من الخادم أثناء فتح هذه الشاشة. لا تتوفر تحديثات فورية.';
+
+  @override
+  String get familyChatCreateHeading => 'ابدأ دردشة أسرية';
+
+  @override
+  String get familyChatCreateTypeLabel => 'نوع المحادثة';
+
+  @override
+  String get familyChatDirectThread => 'محادثة مباشرة';
+
+  @override
+  String get familyChatGroupThread => 'محادثة جماعية';
+
+  @override
+  String get familyChatSelectParticipants => 'اختر المشاركين';
+
+  @override
+  String get familyChatNoParticipantsAvailable =>
+      'لا يوجد مشاركون نشطون آخرون في الأسرة.';
+
+  @override
+  String get familyChatFamilyThread => 'دردشة أولياء الأسرة';
+
+  @override
+  String get familyChatChildThread => 'محادثة مع طفل واحد';
+
+  @override
+  String get familyChatCreateChildLabel => 'الطفل';
+
+  @override
+  String get familyChatNoChildrenAvailable =>
+      'لا يوجد طفل مؤكّد من الخادم لإنشاء محادثة معه.';
+
+  @override
+  String get familyChatChildFallback => 'طفل';
+
+  @override
+  String get familyChatCreateTitleLabel => 'العنوان (اختياري)';
+
+  @override
+  String get familyChatCreateTitleHint => 'اتركه فارغًا لاستخدام عنوان الخادم';
+
+  @override
+  String get familyChatCreateButton => 'إنشاء الدردشة';
+
+  @override
+  String get familyChatCancel => 'إلغاء';
+
+  @override
+  String get familyChatCreateFailed =>
+      'تعذّر إنشاء الدردشة. لم يتأكد قبول الطلب.';
+
+  @override
+  String get familyChatPolicyTitle => 'التعاون والأمان';
+
+  @override
+  String get familyChatPolicyPrimaryGuardianNotice =>
+      'يستطيع الوصي الأساسي وحده حفظ هذه القواعد التي يطبقها الخادم، وتبقى له دائمًا صلاحيات حماية الأسرة.';
+
+  @override
+  String get familyChatPolicyCoGuardianChat =>
+      'السماح للوصي المشارك بإنشاء المحادثات';
+
+  @override
+  String get familyChatPolicyCoGuardianManageChat =>
+      'السماح للوصي المشارك بإضافة أشخاص إلى المجموعات';
+
+  @override
+  String get familyChatPolicyCoGuardianTasks =>
+      'السماح للوصي المشارك بإدارة المهام';
+
+  @override
+  String get familyChatPolicyCoGuardianCalendar =>
+      'السماح للوصي المشارك بإدارة التقويم';
+
+  @override
+  String get familyChatPolicyChildDirect =>
+      'السماح للأطفال ببدء محادثات مباشرة';
+
+  @override
+  String get familyChatPolicyChildGroups => 'السماح للأطفال بإنشاء مجموعات';
+
+  @override
+  String get familyChatPolicyChildManageGroups =>
+      'السماح للأطفال بإضافة مشاركين إلى مجموعاتهم';
+
+  @override
+  String get familyChatPolicyGuardianInclusion =>
+      'متى يجب أن ينضم الأوصياء إلى محادثات الأطفال؟';
+
+  @override
+  String get familyChatPolicyInclusionNone => 'لا يُضافون تلقائيًا افتراضيًا';
+
+  @override
+  String get familyChatPolicyInclusionAllChildChats => 'كل محادثات الأطفال';
+
+  @override
+  String get familyChatPolicyInclusionChildToChild =>
+      'محادثات الأطفال بعضهم مع بعض فقط';
+
+  @override
+  String get familyChatPolicyMaxGroupSize => 'الحد الأقصى لأعضاء المجموعة';
+
+  @override
+  String get familyChatPolicySave => 'احفظ القواعد';
+
+  @override
+  String get familyChatPolicySaved => 'حفظ الخادم قواعد التعاون.';
+
+  @override
+  String get familyChatPolicyLoadFailed => 'تعذرت قراءة سياسة الخادم.';
+
+  @override
+  String get familyChatPolicySaveFailed => 'لم يقبل الخادم تغيير السياسة.';
+
+  @override
+  String get familyChatLoadOlder => 'تحميل رسائل أقدم';
+
+  @override
+  String get familyChatRefresh => 'تحديث الرسائل';
+
+  @override
+  String get familyChatMessageDeleted => 'حُذفت الرسالة';
+
+  @override
+  String get familyChatEdited => 'عُدّلت';
+
+  @override
+  String get familyChatMediaUnavailable =>
+      'المرفقات والرسائل الصوتية غير متاحة: واجهة الدردشة الحالية تدعم النص فقط.';
+
+  @override
+  String get familyChatMediaUnavailableSemantics =>
+      'المرفقات والرسائل الصوتية غير متاحة';
+
+  @override
+  String get familyChatEdit => 'تعديل';
+
+  @override
+  String get familyChatMediaPhoto => 'صورة';
+
+  @override
+  String get familyChatMediaVoiceNote => 'رسالة صوتية';
+
+  @override
+  String get familyChatMediaItemUnavailable => 'هذا المرفق لم يعد متاحًا';
+
+  @override
+  String get familyChatMediaLoading => 'جارٍ تحميل المرفق…';
+
+  @override
+  String get familyChatMediaNoPlayback =>
+      'تشغيل الرسائل الصوتية غير متاح في هذه النسخة';
+
+  @override
+  String get familyChatMediaNotOnThisDevice =>
+      'المرفقات تظهر على جهاز الوالد في هذه النسخة';
+
+  @override
+  String familyChatReceiptDelivered(int count, int total) {
+    return 'وصلت إلى $count من $total';
+  }
+
+  @override
+  String familyChatReceiptRead(int count, int total) {
+    return 'قرأها $count من $total';
+  }
+
+  @override
+  String get familyChatRealtimeLive => 'التحديث الفوري مفعّل';
+
+  @override
+  String get familyChatRealtimeRetrying =>
+      'التحديث الفوري غير متصل؛ يتم التحقق كل ١٥ ثانية';
+
+  @override
+  String get familyChatRealtimePolling => 'يتم التحقق من الرسائل كل ١٥ ثانية';
+
+  @override
+  String get familyChatDelete => 'حذف';
+
+  @override
+  String get familyChatEditHeading => 'تعديل الرسالة';
+
+  @override
+  String get familyChatEditSave => 'حفظ التعديل';
+
+  @override
+  String get familyChatDeleteHeading => 'حذف هذه الرسالة؟';
+
+  @override
+  String get familyChatDeleteBody =>
+      'سيُزال نص الرسالة، لكن موضعها في المحادثة سيبقى ظاهرًا.';
+
+  @override
+  String get familyChatStorageNotice =>
+      'تُحفظ الرسائل لدى خادم الأسرة؛ هذه الدردشة غير مشفّرة من طرف إلى طرف.';
+
+  @override
+  String get familyChatServerStoredTag => 'نص محفوظ في خادم الأسرة';
+
+  @override
+  String get familyChatLoadMore => 'تحميل المزيد من الرسائل';
+
+  @override
+  String get familyChatMessageActionsSemantics => 'إجراءات الرسالة';
+
+  @override
+  String get familyChatListPollingNotice =>
+      'تأتي قائمة المحادثات ومعايناتها من خادم الأسرة. تُحدّث القائمة كل 30 ثانية؛ لا تتوفر إشعارات فورية.';
+
+  @override
+  String get familyChatNeverLocks =>
+      'تبقى دردشة الأسرة متاحة بعد انتهاء وقت اللعب.';
+
+  @override
+  String get conversationAttachPhotoGallery => 'صورة من المعرض';
+
+  @override
+  String get conversationAttachPhotoCamera => 'التقاط صورة';
+
+  @override
+  String get conversationAttachVoice => 'تسجيل رسالة صوتية';
+
+  @override
+  String get mediaPhotoPendingLabel =>
+      'الصورة جاهزة. أضف تعليقًا إن أردت، ثم أرسل.';
+
+  @override
+  String get mediaPhotoRemove => 'إزالة الصورة';
+
+  @override
+  String get mediaComposeUnsupportedType =>
+      'نوع الملف غير مدعوم. اختر صورة بصيغة JPEG أو PNG أو WebP.';
+
+  @override
+  String get mediaComposeTooLarge => 'حجم الملف كبير جدًا للإرسال.';
+
+  @override
+  String get mediaComposeMicrophoneDenied =>
+      'يلزم السماح بالوصول إلى الميكروفون لتسجيل رسالة صوتية. فعّله في الإعدادات ثم حاول مجددًا.';
+
+  @override
+  String get mediaComposeFailed =>
+      'تعذّر تجهيز الصورة أو التسجيل. حاول مرة أخرى.';
+
+  @override
+  String get voiceRecordingTitle => 'رسالة صوتية';
+
+  @override
+  String get voiceRecordingSend => 'إرسال';
+
+  @override
+  String get voiceRecordingCancel => 'إلغاء';
+
+  @override
+  String get voicePlaySemantics => 'تشغيل الرسالة الصوتية';
+
+  @override
+  String get voicePauseSemantics => 'إيقاف الرسالة الصوتية مؤقتًا';
 }

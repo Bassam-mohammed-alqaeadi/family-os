@@ -58,7 +58,7 @@ class FocusReportScreen extends StatefulWidget {
   /// Rule 25 seam — null → [stage1FocusReportRepository].
   final FocusReportRepository? repository;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — when set, ignores [CurrentRole].
@@ -111,7 +111,7 @@ class _FocusReportScreenState extends State<FocusReportScreen> {
   void initState() {
     super.initState();
     _repo = widget.repository ?? stage1FocusReportRepository;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _load();
@@ -217,7 +217,9 @@ class _FocusReportScreenState extends State<FocusReportScreen> {
 
   String _advisorBody(AppLocalizations l10n, FocusAdvisorNote note) {
     return switch (note.bodyKey) {
-      'scienceResist' => l10n.focusReportAdvisorBodyScienceResist(_childName(l10n)),
+      'scienceResist' => l10n.focusReportAdvisorBodyScienceResist(
+        _childName(l10n),
+      ),
       _ => l10n.focusReportAdvisorBodyScienceResist(_childName(l10n)),
     };
   }
@@ -457,8 +459,7 @@ class _WeeklySummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final hours = summary.totalDurationMinutes ~/ 60;
     final mins = summary.totalDurationMinutes % 60;
-    final goalComplete =
-        summary.goalStatus == FocusReportGoalStatus.complete;
+    final goalComplete = summary.goalStatus == FocusReportGoalStatus.complete;
 
     return DecoratedBox(
       key: FocusReportKeys.weeklyCard,

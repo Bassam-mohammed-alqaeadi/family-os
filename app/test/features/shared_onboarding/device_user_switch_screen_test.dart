@@ -16,21 +16,21 @@ import 'package:family_os/features/shared_onboarding/device_user_switch_screen.d
 
 /// Parametric seed only — no person names in lib (Rule 12/23).
 List<DeviceUserProfile> _seedProfiles() => const [
-      DeviceUserProfile(
-        id: 'local_father',
-        displayName: 'Parent A',
-        role: AppRole.father,
-        monogram: 'A',
-      ),
-      DeviceUserProfile(
-        id: 'local_mother',
-        displayName: 'Parent B',
-        role: AppRole.mother,
-        monogram: 'B',
-        motherLevel: MotherLevel.partner,
-        avatarColorHex: '#FF8FA3',
-      ),
-    ];
+  DeviceUserProfile(
+    id: 'local_father',
+    displayName: 'Parent A',
+    role: AppRole.father,
+    monogram: 'A',
+  ),
+  DeviceUserProfile(
+    id: 'local_mother',
+    displayName: 'Parent B',
+    role: AppRole.mother,
+    monogram: 'B',
+    motherLevel: MotherLevel.partner,
+    avatarColorHex: '#FF8FA3',
+  ),
+];
 
 void main() {
   testWidgets('Rule 23 empty default + add CTA', (tester) async {
@@ -84,9 +84,7 @@ void main() {
   });
 
   testWidgets('child RoleGuard lean — no switch list', (tester) async {
-    final repo = InMemoryDeviceUserSwitchRepository(
-      profiles: _seedProfiles(),
-    );
+    final repo = InMemoryDeviceUserSwitchRepository(profiles: _seedProfiles());
     await _pump(
       tester,
       repository: repo,
@@ -97,13 +95,12 @@ void main() {
     expect(find.byKey(DeviceUserSwitchKeys.list), findsNothing);
   });
 
-  testWidgets('switch mother → password confirm → role + navigate',
-      (tester) async {
+  testWidgets('switch mother → password confirm → role + navigate', (
+    tester,
+  ) async {
     final role = RoleController(AppRole.father);
     DeviceUserProfile? switched;
-    final repo = InMemoryDeviceUserSwitchRepository(
-      profiles: _seedProfiles(),
-    );
+    final repo = InMemoryDeviceUserSwitchRepository(profiles: _seedProfiles());
     final router = GoRouter(
       initialLocation: '/scr-shr-008',
       routes: [
@@ -168,14 +165,8 @@ void main() {
 
   testWidgets('add account CTA fires seam', (tester) async {
     var added = false;
-    final repo = InMemoryDeviceUserSwitchRepository(
-      profiles: _seedProfiles(),
-    );
-    await _pump(
-      tester,
-      repository: repo,
-      onAddAccount: () => added = true,
-    );
+    final repo = InMemoryDeviceUserSwitchRepository(profiles: _seedProfiles());
+    await _pump(tester, repository: repo, onAddAccount: () => added = true);
     await tester.tap(find.byKey(DeviceUserSwitchKeys.addAccount));
     await tester.pumpAndSettle();
     expect(added, isTrue);
@@ -183,9 +174,7 @@ void main() {
 
   testWidgets('confirm cancel leaves role unchanged', (tester) async {
     final role = RoleController(AppRole.father);
-    final repo = InMemoryDeviceUserSwitchRepository(
-      profiles: _seedProfiles(),
-    );
+    final repo = InMemoryDeviceUserSwitchRepository(profiles: _seedProfiles());
     addTearDown(role.dispose);
     await tester.pumpWidget(
       CurrentRole(

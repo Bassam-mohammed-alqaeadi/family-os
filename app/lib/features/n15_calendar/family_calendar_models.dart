@@ -27,14 +27,14 @@ final class FamilyCalendarEvent {
   final String colorKey;
 
   Map<String, Object?> toJson() => {
-        'id': id,
-        'titleKey': titleKey,
-        'whenKey': whenKey,
-        'day': day,
-        'category': category.name,
-        'whoNameKey': whoNameKey,
-        'colorKey': colorKey,
-      };
+    'id': id,
+    'titleKey': titleKey,
+    'whenKey': whenKey,
+    'day': day,
+    'category': category.name,
+    'whoNameKey': whoNameKey,
+    'colorKey': colorKey,
+  };
 
   static FamilyCalendarEvent fromJson(Map<String, Object?> json) {
     final catRaw = json['category']?.toString() ?? 'sch';
@@ -75,12 +75,12 @@ final class FamilyCalendarMonthGrid {
   final Set<int> eventDays;
 
   Map<String, Object?> toJson() => {
-        'monthTitleKey': monthTitleKey,
-        'firstDayOffset': firstDayOffset,
-        'daysInMonth': daysInMonth,
-        'todayDay': todayDay,
-        'eventDays': eventDays.toList(),
-      };
+    'monthTitleKey': monthTitleKey,
+    'firstDayOffset': firstDayOffset,
+    'daysInMonth': daysInMonth,
+    'todayDay': todayDay,
+    'eventDays': eventDays.toList(),
+  };
 
   static FamilyCalendarMonthGrid fromJson(Map<String, Object?> json) {
     final daysRaw = json['eventDays'];
@@ -140,9 +140,9 @@ final class FamilyCalendarSnapshot {
   }
 
   Map<String, Object?> toJson() => {
-        'events': events.map((e) => e.toJson()).toList(),
-        'month': month.toJson(),
-      };
+    'events': events.map((e) => e.toJson()).toList(),
+    'month': month.toJson(),
+  };
 
   static FamilyCalendarSnapshot fromJson(Map<String, Object?> json) {
     final eventsRaw = json['events'];

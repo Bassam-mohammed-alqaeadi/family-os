@@ -35,7 +35,8 @@ final class SmartModeActivation {
       childId: childId,
       modeId: null,
       active: false,
-      updatedAt: updatedAt ?? DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+      updatedAt:
+          updatedAt ?? DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
     );
   }
 
@@ -58,12 +59,12 @@ final class SmartModeActivation {
   }
 
   Map<String, Object?> toJson() => {
-        'childId': childId,
-        'modeId': modeId?.name,
-        'active': active,
-        'updatedAt': updatedAt.toUtc().toIso8601String(),
-        'expiresAt': expiresAt?.toUtc().toIso8601String(),
-      };
+    'childId': childId,
+    'modeId': modeId?.name,
+    'active': active,
+    'updatedAt': updatedAt.toUtc().toIso8601String(),
+    'expiresAt': expiresAt?.toUtc().toIso8601String(),
+  };
 
   factory SmartModeActivation.fromJson(Map<String, Object?> json) {
     final name = json['modeId'] as String?;

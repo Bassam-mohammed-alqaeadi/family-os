@@ -40,7 +40,8 @@ abstract final class SosPermanentExemptions {
     // Hostile environment flags are intentionally unused: OD-14 forbids gating.
     assert(() {
       // Touch args so analyzers treat them as part of the public fire contract.
-      final hostile = subscriptionExpired ||
+      final hostile =
+          subscriptionExpired ||
           quietHoursActive ||
           screenTimeExpired ||
           entertainmentLocked ||

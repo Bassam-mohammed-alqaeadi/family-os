@@ -13,18 +13,8 @@ abstract final class SafeZonesMock {
       name: 'المدرسة',
       description: 'ثانوية النور',
     ),
-    SafeZone(
-      id: 'z2',
-      emoji: '🏡',
-      name: 'المنزل',
-      description: 'حي النرجس',
-    ),
-    SafeZone(
-      id: 'z3',
-      emoji: '👴',
-      name: 'بيت الجد',
-      description: 'حي الروضة',
-    ),
+    SafeZone(id: 'z2', emoji: '🏡', name: 'المنزل', description: 'حي النرجس'),
+    SafeZone(id: 'z3', emoji: '👴', name: 'بيت الجد', description: 'حي الروضة'),
     SafeZone(
       id: 'z4',
       emoji: '⚽',

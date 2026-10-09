@@ -21,27 +21,30 @@ void main() {
     await FsSessionKernel.resetForTest();
   });
 
-  test('ScreenTimeRuntime boot-once opens policy+schedule+timeRequest', () async {
-    final dir = await Directory.systemTemp.createTemp('host_router_b_');
-    final path = p.join(dir.path, 'st.db');
-    final db = await SqliteLocalDatabase.openAt(path);
-    await FsSessionKernel.ensureOpen(override: db);
+  test(
+    'ScreenTimeRuntime boot-once opens policy+schedule+timeRequest',
+    () async {
+      final dir = await Directory.systemTemp.createTemp('host_router_b_');
+      final path = p.join(dir.path, 'st.db');
+      final db = await SqliteLocalDatabase.openAt(path);
+      await FsSessionKernel.ensureOpen(override: db);
 
-    await ScreenTimeRuntime.ensureOpen();
-    expect(ScreenTimeRuntime.isOpen, isTrue);
-    expect(ScreenTimeRuntime.unavailable, isFalse);
-    expect(ScreenTimeRuntime.policy, isNotNull);
-    expect(ScreenTimeRuntime.schedule, isNotNull);
-    expect(ScreenTimeRuntime.timeRequest, isNotNull);
+      await ScreenTimeRuntime.ensureOpen();
+      expect(ScreenTimeRuntime.isOpen, isTrue);
+      expect(ScreenTimeRuntime.unavailable, isFalse);
+      expect(ScreenTimeRuntime.policy, isNotNull);
+      expect(ScreenTimeRuntime.schedule, isNotNull);
+      expect(ScreenTimeRuntime.timeRequest, isNotNull);
 
-    final p0 = ScreenTimeRuntime.policy;
-    await ScreenTimeRuntime.ensureOpen();
-    expect(identical(ScreenTimeRuntime.policy, p0), isTrue);
+      final p0 = ScreenTimeRuntime.policy;
+      await ScreenTimeRuntime.ensureOpen();
+      expect(identical(ScreenTimeRuntime.policy, p0), isTrue);
 
-    ScreenTimeRuntime.resetForTest();
-    await FsSessionKernel.resetForTest();
-    await dir.delete(recursive: true);
-  });
+      ScreenTimeRuntime.resetForTest();
+      await FsSessionKernel.resetForTest();
+      await dir.delete(recursive: true);
+    },
+  );
 
   test('ScreenTimeRuntime policy write→close→reopen', () async {
     final dir = await Directory.systemTemp.createTemp('host_router_b_r_');

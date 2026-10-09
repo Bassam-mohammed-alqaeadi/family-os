@@ -15,11 +15,11 @@ final class FocusSoundOption {
   final String toastKey;
 
   Map<String, Object?> toJson() => {
-        'id': id,
-        'labelKey': labelKey,
-        'emoji': emoji,
-        'toastKey': toastKey,
-      };
+    'id': id,
+    'labelKey': labelKey,
+    'emoji': emoji,
+    'toastKey': toastKey,
+  };
 
   static FocusSoundOption fromJson(Map<String, Object?> json) {
     return FocusSoundOption(
@@ -68,10 +68,10 @@ final class ChildFocusSoundsSnapshot {
 
   /// Prefs-only payload (catalog is static fixture).
   Map<String, Object?> prefsToJson() => {
-        'activeSoundId': activeSoundId,
-        'autoWithFocus': autoWithFocus,
-        'fadeLastTwoMinutes': fadeLastTwoMinutes,
-      };
+    'activeSoundId': activeSoundId,
+    'autoWithFocus': autoWithFocus,
+    'fadeLastTwoMinutes': fadeLastTwoMinutes,
+  };
 
   static ChildFocusSoundsSnapshot prefsFromJson(
     Map<String, Object?> json, {

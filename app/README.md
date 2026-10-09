@@ -5,9 +5,28 @@
 - Dart **3.9.2**
 - No FVM on this machine; agents must use this SDK only
 
+## Workspace and build policy
+
+This repository is **source-only**. Keep the exact Flutter SDK, Pub cache,
+`.dart_tool/`, platform caches, Pods, and `build/` output outside Git. The
+application lockfile (`pubspec.lock`), source, assets, tests, platform project
+files, and generated source that is intentionally tracked are the reproducible
+inputs.
+
+When a limited remote workspace does not already contain Flutter, do **not**
+download a second SDK into this repository or substitute a different Flutter
+version. Make source changes here; validate with the pinned GitHub Actions
+workflow and with the owner's pinned local SDK. GitHub Actions is the source of
+truth for automated checks, while physical-device verification remains an
+owner task.
+
+The project does not use FVM today. If a future local setup uses it, only its
+local downloaded SDK (`.fvm/flutter_sdk/`) is ignored; do not introduce a new
+version pin without an owner decision.
+
 **Font:** IBM Plex Sans Arabic (OFL) — see `assets/fonts/` + `IBM_Plex_OFL.txt`
 
-**Structure:** feature-first per `../handoff/02_ARCHITECTURE.md`  
+**Structure:** feature-first; the frozen historical rationale is preserved in `../docs/reference/frozen-prototype-handoff/02_ARCHITECTURE.md`, while current execution authority is `../docs/CURRENT_EXECUTION_PLAN.md`.
 **i18n:** Arabic-first ARB in `lib/core/i18n/` (`app_ar.arb` template)
 
 ## Commands

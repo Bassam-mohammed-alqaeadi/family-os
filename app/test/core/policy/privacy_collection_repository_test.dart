@@ -23,8 +23,9 @@ void main() {
     });
 
     test('withScope off removes from enabledScopes', () {
-      final p = PrivacyCollectionPolicy.defaults(childId: 'c1')
-          .withScope(CollectionScope.location, false);
+      final p = PrivacyCollectionPolicy.defaults(
+        childId: 'c1',
+      ).withScope(CollectionScope.location, false);
       expect(p.enabledScopes, isNot(contains(CollectionScope.location)));
       expect(p.enabledScopes, contains(CollectionScope.screenTime));
     });
@@ -45,8 +46,9 @@ void main() {
     test('father save persists across reopen', () async {
       final store = MemoryPrivacyCollectionPrefsStore();
       final repo = PrefsPrivacyCollectionRepository(store);
-      final saved = PrivacyCollectionPolicy.defaults(childId: 'demo-child')
-          .withScope(CollectionScope.location, false);
+      final saved = PrivacyCollectionPolicy.defaults(
+        childId: 'demo-child',
+      ).withScope(CollectionScope.location, false);
 
       final result = await repo.save(saved, actor: AppRole.father);
       expect(result, isA<PrivacyCollectionWriteOk>());
@@ -64,8 +66,9 @@ void main() {
         audit: audit,
       );
       final result = await repo.save(
-        PrivacyCollectionPolicy.defaults(childId: 'c1')
-            .withScope(CollectionScope.location, false),
+        PrivacyCollectionPolicy.defaults(
+          childId: 'c1',
+        ).withScope(CollectionScope.location, false),
         actor: AppRole.mother,
       );
       expect(result, isA<PrivacyCollectionWriteDenied>());

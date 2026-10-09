@@ -1,0 +1,36 @@
+# Family OS — حارس الحلقة. يعمل على فرعنا فقط ولا يعتمد على أي workflow آخر.
+name: Harness Guard
+
+on:
+  push:
+    branches:
+      - 'arena/6233f1a1-family-os'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  harness:
+    name: Loop state and repository boundary
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify loop state is consistent and the workspace is safe
+        run: |
+          chmod +x tools/harness/harness_check.sh tools/git/repo-health.sh
+          tools/harness/harness_check.sh
+
+      - name: Verify migration numbering stays inside this branch's reserved range
+        run: |
+          chmod +x tools/harness/check_migration_range.sh
+          tools/harness/check_migration_range.sh
+
+      # يعمل هنا بلا Flutter: `unused_import` أسقط بوابة analyze-test مرّتين، والكشف
+      # كان يأتي بعد دفع وبعد سبع دقائق. القراءة المتحفّظة نفسها في الأداة.
+      - name: Verify no Dart import is dead
+        run: node tools/harness/check_dart_imports.mjs .

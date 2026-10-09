@@ -48,10 +48,7 @@ final class SosSender {
   }) async {
     final identity = runtime ?? stage1IdentityRuntime;
     final subject = subjectChildId(runtime: identity);
-    final result = await sosFire.fire(
-      childId: subject.value,
-      actorId: actorId,
-    );
+    final result = await sosFire.fire(childId: subject.value, actorId: actorId);
     if (!isChild && openDurableParentIncident) {
       try {
         await Stage1SosFinalRuntime.ensureOpen();
@@ -110,7 +107,10 @@ SosSender resolveParentSosSender({
 }
 
 SosSender childSosSenderOf(BuildContext context, {ChildId? explicit}) {
-  return resolveChildSosSender(explicit: explicit, runtime: identityOf(context));
+  return resolveChildSosSender(
+    explicit: explicit,
+    runtime: identityOf(context),
+  );
 }
 
 SosSender parentSosSenderOf(

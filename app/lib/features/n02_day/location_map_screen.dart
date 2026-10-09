@@ -85,7 +85,7 @@ class LocationMapScreen extends StatefulWidget {
   /// Test seam — when set, ignores [CurrentRole].
   final AppRole? roleOverride;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — pin row / full history → `/scr-fat-015`.
@@ -250,7 +250,7 @@ class LocationMapScreenState extends State<LocationMapScreen> {
       return;
     }
     setState(() => _sosBusy = true);
-    final fire = widget.sosFire ?? stage1SosFireService;
+    final fire = widget.sosFire ?? activeSosFireService;
     final viewed = childIdFromParam(
       _resolvedChildId ??
           _snapshot?.focusChildId ??
@@ -872,7 +872,11 @@ class _PinRow extends StatelessWidget {
           showDivider: false,
         ),
         Padding(
-          padding: const EdgeInsetsDirectional.only(start: 56, end: 12, bottom: 8),
+          padding: const EdgeInsetsDirectional.only(
+            start: 56,
+            end: 12,
+            bottom: 8,
+          ),
           child: Align(
             alignment: AlignmentDirectional.centerStart,
             child: Container(

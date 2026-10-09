@@ -11,14 +11,23 @@ import 'package:family_os/core/policy/sos_alert.dart';
 import 'package:family_os/core/policy/sos_alert_repository.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n10_emergency/sos_alert_screen.dart';
+import '../../support/recording_sos_fire_service.dart';
 
 void main() {
   tearDown(AppToast.dismiss);
 
-  testWidgets('SCR-FAT-018 father sees active coral board + CTAs',
-      (tester) async {
+  testWidgets('SCR-FAT-018 father sees active coral board + CTAs', (
+    tester,
+  ) async {
+    // A pin is a measurement, not decoration: the board draws one only where the alert
+    // carries a position, which is the wave-4 rule this suite proves on the server path.
+    // The demo incident is `acquiring` (no reading), so the fixture that wants to see a pin
+    // has to say where the child's phone was.
     final repo = InMemorySosAlertRepository(
-      initialActive: InMemorySosAlertRepository.demoActive(),
+      initialActive: InMemorySosAlertRepository.demoActive().copyWith(
+        pinFracX: 0.42,
+        pinFracY: 0.38,
+      ),
     );
 
     await tester.pumpWidget(
@@ -56,8 +65,9 @@ void main() {
     expect(find.textContaining('يطلب النجدة'), findsOneWidget);
   });
 
-  testWidgets('SCR-FAT-018 Observer CANNOT ack, resolve, or escalate',
-      (tester) async {
+  testWidgets('SCR-FAT-018 Observer CANNOT ack, resolve, or escalate', (
+    tester,
+  ) async {
     final repo = InMemorySosAlertRepository(
       initialActive: InMemorySosAlertRepository.demoActive(),
     );
@@ -86,8 +96,9 @@ void main() {
     expect(repo.escalateCount, 0);
   });
 
-  testWidgets('SCR-FAT-018 Partner can acknowledge; ACK ≠ RESOLVE',
-      (tester) async {
+  testWidgets('SCR-FAT-018 Partner can acknowledge; ACK ≠ RESOLVE', (
+    tester,
+  ) async {
     final repo = InMemorySosAlertRepository(
       initialActive: InMemorySosAlertRepository.demoActive(),
     );
@@ -145,8 +156,9 @@ void main() {
     expect(after?.status, SosAlertStatus.escalating);
   });
 
-  testWidgets('SCR-FAT-018 auto-call fires after delay (S-SEC-028)',
-      (tester) async {
+  testWidgets('SCR-FAT-018 auto-call fires after delay (S-SEC-028)', (
+    tester,
+  ) async {
     final repo = InMemorySosAlertRepository(
       initialActive: InMemorySosAlertRepository.demoActive(),
     );
@@ -198,8 +210,9 @@ void main() {
     expect(setup, isTrue);
   });
 
-  testWidgets('SCR-FAT-018 empty incomplete CTA deep-links setup',
-      (tester) async {
+  testWidgets('SCR-FAT-018 empty incomplete CTA deep-links setup', (
+    tester,
+  ) async {
     final repo = InMemorySosAlertRepository();
     var setup = false;
 
@@ -285,7 +298,7 @@ void main() {
   });
 
   test('SCR-FAT-018 fireAndSeedSosAlert is entitlement-free + P-4', () async {
-    final sos = MockSosFireService();
+    final sos = RecordingSosFireService();
     final alerts = InMemorySosAlertRepository();
     final result = await fireAndSeedSosAlert(
       childId: 'child_a',

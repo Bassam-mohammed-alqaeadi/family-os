@@ -6,7 +6,7 @@ import 'package:family_os/features/n02_day/outer_circle_repository.dart';
 /// Durable Outer Circle via kv_store (CE-B1 / CE-G018–020).
 final class LocalOuterCircleRepository implements OuterCircleRepository {
   LocalOuterCircleRepository(FamilyLocalDatabase db)
-      : _store = KvSnapshotStore(db, namespace: kvNamespace);
+    : _store = KvSnapshotStore(db, namespace: kvNamespace);
 
   static const kvNamespace = 'outer_circle';
 
@@ -36,10 +36,7 @@ final class LocalOuterCircleRepository implements OuterCircleRepository {
     final idx = pending.indexWhere((m) => m.id == memberId);
     if (idx == -1) return snap;
     final member = pending.removeAt(idx);
-    final meta = [
-      if (allowText) 'text',
-      if (allowCalls) 'calls',
-    ].join('+');
+    final meta = [if (allowText) 'text', if (allowCalls) 'calls'].join('+');
     final friends = List<OuterCircleMember>.from(snap.friends)
       ..add(
         OuterCircleMember(

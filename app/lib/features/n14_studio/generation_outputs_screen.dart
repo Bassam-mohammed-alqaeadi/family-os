@@ -12,6 +12,7 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/i18n/notebook_studio_i18n.dart';
 import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n14_studio/generation_outputs_models.dart';
@@ -25,6 +26,8 @@ abstract final class GenerationOutputsKeys {
   static const body = Key('generation_outputs_body');
   static const sourceBanner = Key('generation_outputs_source');
   static const listCard = Key('generation_outputs_list');
+  static const sourcesCard = Key('generation_outputs_sources_card');
+  static const flexibilityCard = Key('generation_outputs_flexibility_card');
   static const religiousLock = Key('generation_outputs_religious_lock');
   static const generateCta = Key('generation_outputs_generate');
   static const observerHint = Key('generation_outputs_observer');
@@ -34,9 +37,12 @@ abstract final class GenerationOutputsKeys {
 
   static Key outputRow(String id) => Key('generation_outputs_row_$id');
   static Key outputSwitch(String id) => Key('generation_outputs_swt_$id');
+  static Key sourceSwitch(String id) => Key('generation_outputs_src_swt_$id');
+  static Key depthChip(String name) => Key('generation_outputs_depth_$name');
+  static Key toneChip(String name) => Key('generation_outputs_tone_$name');
 }
 
-/// SCR-FAT-043 — مخرجات التوليد (generation outputs).
+/// SCR-FAT-043 — مخرجات التوليد (generation outputs + NotebookLM Studio).
 ///
 /// Prototype FAT-043 · S-EDU-054…060 · S-AIC-021 · Rule 12/23 · mother
 /// levels · mock-first · ARB · P-4 SOS · generate → FAT-044 · religious
@@ -55,7 +61,7 @@ class GenerationOutputsScreen extends StatefulWidget {
   /// Rule 25 seam — null → [stage1GenerationOutputsRepository].
   final GenerationOutputsRepository? repository;
 
-  /// P-4 SOS seam — null → [stage1SosFireService].
+  /// P-4 SOS seam — null → [activeSosFireService].
   final SosFireService? sosFire;
 
   /// Test seam — when set, ignores [CurrentRole].
@@ -109,7 +115,7 @@ class _GenerationOutputsScreenState extends State<GenerationOutputsScreen> {
   void initState() {
     super.initState();
     _repo = widget.repository ?? stage1GenerationOutputsRepository;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _load();
@@ -168,6 +174,31 @@ class _GenerationOutputsScreenState extends State<GenerationOutputsScreen> {
     }
     setState(() {
       _snap = _snap.withToggled(item.id, value);
+    });
+  }
+
+  void _onSourceToggle(NotebookSourceItem src, bool value) {
+    final l10n = AppLocalizations.of(context);
+    if (!_canEdit) {
+      AppToast.show(context, message: l10n.generationOutputsObserverBlocked);
+      return;
+    }
+    setState(() {
+      _snap = _snap.withSourceToggled(src.id, value);
+    });
+  }
+
+  void _onDepthSelected(NotebookDepthLevel depth) {
+    if (!_canEdit) return;
+    setState(() {
+      _snap = _snap.withFlexibility(_snap.flexibility.copyWith(depth: depth));
+    });
+  }
+
+  void _onToneSelected(NotebookToneStyle tone) {
+    if (!_canEdit) return;
+    setState(() {
+      _snap = _snap.withFlexibility(_snap.flexibility.copyWith(tone: tone));
     });
   }
 
@@ -289,7 +320,11 @@ class _GenerationOutputsScreenState extends State<GenerationOutputsScreen> {
           BannerNote(
             key: GenerationOutputsKeys.sourceBanner,
             variant: BannerVariant.g,
-            leading: Icon(Icons.menu_book_outlined, color: colors.mintInk, size: 20),
+            leading: Icon(
+              Icons.menu_book_outlined,
+              color: colors.mintInk,
+              size: 20,
+            ),
             message: _sourceLabel(l10n, _snap.source),
           ),
           const SizedBox(height: 12),
@@ -331,6 +366,28 @@ class _GenerationOutputsScreenState extends State<GenerationOutputsScreen> {
             ),
           ),
           const SizedBox(height: 12),
+          _SourcesGroundingCard(
+            key: GenerationOutputsKeys.sourcesCard,
+            sources: _snap.sources,
+            activeCount: _snap.activeSourceCount,
+            enabled: _canEdit,
+            colors: colors,
+            radii: radii,
+            l10n: l10n,
+            onToggle: _onSourceToggle,
+          ),
+          const SizedBox(height: 12),
+          _FlexibilityEngineCard(
+            key: GenerationOutputsKeys.flexibilityCard,
+            config: _snap.flexibility,
+            enabled: _canEdit,
+            colors: colors,
+            radii: radii,
+            l10n: l10n,
+            onDepthSelected: _onDepthSelected,
+            onToneSelected: _onToneSelected,
+          ),
+          const SizedBox(height: 12),
           _ReligiousLockBanner(
             key: GenerationOutputsKeys.religiousLock,
             message: l10n.generationOutputsReligiousLock,
@@ -370,6 +427,13 @@ class _GenerationOutputsScreenState extends State<GenerationOutputsScreen> {
       GenerationOutputKind.flashcards => l10n.generationOutputsFlashcardsTitle,
       GenerationOutputKind.challenge => l10n.generationOutputsChallengeTitle,
       GenerationOutputKind.reviewGame => l10n.generationOutputsReviewGameTitle,
+      GenerationOutputKind.studyGuideFaq =>
+        l10n.generationOutputsStudyGuideFaqTitle,
+      GenerationOutputKind.audioOverview =>
+        l10n.generationOutputsAudioOverviewTitle,
+      GenerationOutputKind.conceptMindMap =>
+        l10n.generationOutputsConceptMindMapTitle,
+      GenerationOutputKind.timeline => l10n.generationOutputsTimelineTitle,
     };
   }
 
@@ -381,7 +445,261 @@ class _GenerationOutputsScreenState extends State<GenerationOutputsScreen> {
       GenerationOutputKind.flashcards => l10n.generationOutputsFlashcardsSub,
       GenerationOutputKind.challenge => l10n.generationOutputsChallengeSub,
       GenerationOutputKind.reviewGame => l10n.generationOutputsReviewGameSub,
+      GenerationOutputKind.studyGuideFaq =>
+        l10n.generationOutputsStudyGuideFaqSub,
+      GenerationOutputKind.audioOverview =>
+        l10n.generationOutputsAudioOverviewSub,
+      GenerationOutputKind.conceptMindMap =>
+        l10n.generationOutputsConceptMindMapSub,
+      GenerationOutputKind.timeline => l10n.generationOutputsTimelineSub,
     };
+  }
+}
+
+class _SourcesGroundingCard extends StatelessWidget {
+  const _SourcesGroundingCard({
+    super.key,
+    required this.sources,
+    required this.activeCount,
+    required this.enabled,
+    required this.colors,
+    required this.radii,
+    required this.l10n,
+    required this.onToggle,
+  });
+
+  final List<NotebookSourceItem> sources;
+  final int activeCount;
+  final bool enabled;
+  final FamilyColors colors;
+  final FamilyRadii radii;
+  final AppLocalizations l10n;
+  final void Function(NotebookSourceItem src, bool value) onToggle;
+
+  String _title(NotebookSourceKey key) => switch (key) {
+    NotebookSourceKey.cameraPage47 => l10n.notebookSourceCameraPage47,
+    NotebookSourceKey.teacherPdf => l10n.notebookSourceTeacherPdf,
+    NotebookSourceKey.fatherVoice => l10n.notebookSourceFatherVoice,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(radii.card),
+        border: Border.all(color: colors.border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.library_books_outlined,
+                  color: colors.tealDeep,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    l10n.notebookSourcesHeading,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                      color: colors.ink,
+                    ),
+                  ),
+                ),
+                Tag(
+                  label: l10n.notebookSourcesActiveCount(
+                    activeCount,
+                    sources.length,
+                  ),
+                  variant: TagVariant.g,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            for (final src in sources)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _title(src.sourceKey),
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: colors.ink,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            l10n.notebookSourcePassagesBadge(src.passageCount),
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: colors.ink2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch.adaptive(
+                      key: GenerationOutputsKeys.sourceSwitch(src.id),
+                      value: src.includedInGrounding,
+                      onChanged: enabled ? (v) => onToggle(src, v) : null,
+                      activeThumbColor: colors.mint,
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FlexibilityEngineCard extends StatelessWidget {
+  const _FlexibilityEngineCard({
+    super.key,
+    required this.config,
+    required this.enabled,
+    required this.colors,
+    required this.radii,
+    required this.l10n,
+    required this.onDepthSelected,
+    required this.onToneSelected,
+  });
+
+  final NotebookFlexibilityConfig config;
+  final bool enabled;
+  final FamilyColors colors;
+  final FamilyRadii radii;
+  final AppLocalizations l10n;
+  final ValueChanged<NotebookDepthLevel> onDepthSelected;
+  final ValueChanged<NotebookToneStyle> onToneSelected;
+
+  String _depthText(NotebookDepthLevel d) => switch (d) {
+    NotebookDepthLevel.quickBriefing => l10n.notebookDepthQuick,
+    NotebookDepthLevel.standardLesson => l10n.notebookDepthStandard,
+    NotebookDepthLevel.examCrunch => l10n.notebookDepthExam,
+  };
+
+  String _toneText(NotebookToneStyle t) => switch (t) {
+    NotebookToneStyle.simpleFusha => l10n.notebookToneFusha,
+    NotebookToneStyle.gulfWarm => l10n.notebookToneGulf,
+    NotebookToneStyle.bilingualStem => l10n.notebookToneBilingual,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(radii.card),
+        border: Border.all(color: colors.border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.tune_outlined, color: colors.p600, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    l10n.notebookFlexibilityTitle,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                      color: colors.ink,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              l10n.notebookDepthLabel,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: colors.ink2,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final d in NotebookDepthLevel.values)
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minHeight: 48,
+                      minWidth: 48,
+                    ),
+                    child: ChoiceChip(
+                      key: GenerationOutputsKeys.depthChip(d.name),
+                      label: Text(_depthText(d)),
+                      selected: config.depth == d,
+                      onSelected: enabled ? (_) => onDepthSelected(d) : null,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              l10n.notebookToneLabel,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: colors.ink2,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final t in NotebookToneStyle.values)
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minHeight: 48,
+                      minWidth: 48,
+                    ),
+                    child: ChoiceChip(
+                      key: GenerationOutputsKeys.toneChip(t.name),
+                      label: Text(_toneText(t)),
+                      selected: config.tone == t,
+                      onSelected: enabled ? (_) => onToneSelected(t) : null,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.notebookStrictGroundingLabel,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                color: colors.mintInk,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -459,6 +777,10 @@ class _OutputRow extends StatelessWidget {
     GenerationOutputKind.flashcards => Icons.style_outlined,
     GenerationOutputKind.challenge => Icons.emoji_events_outlined,
     GenerationOutputKind.reviewGame => Icons.sports_esports_outlined,
+    GenerationOutputKind.studyGuideFaq => Icons.fact_check_outlined,
+    GenerationOutputKind.audioOverview => Icons.podcasts_outlined,
+    GenerationOutputKind.conceptMindMap => Icons.account_tree_outlined,
+    GenerationOutputKind.timeline => Icons.timeline_outlined,
   };
 
   @override

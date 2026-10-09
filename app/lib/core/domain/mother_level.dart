@@ -12,15 +12,11 @@ enum MotherLevel { observer, partner, full }
 /// Who decides a web unlock request (SET-006).
 @immutable
 final class WebUnlockActor {
-  const WebUnlockActor.father()
-      : role = AppRole.father,
-        motherLevel = null;
+  const WebUnlockActor.father() : role = AppRole.father, motherLevel = null;
 
   const WebUnlockActor.mother(this.motherLevel) : role = AppRole.mother;
 
-  const WebUnlockActor.child()
-      : role = AppRole.child,
-        motherLevel = null;
+  const WebUnlockActor.child() : role = AppRole.child, motherLevel = null;
 
   final AppRole role;
   final MotherLevel? motherLevel;

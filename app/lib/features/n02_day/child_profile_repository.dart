@@ -75,8 +75,8 @@ final class InMemoryChildProfileRepository implements ChildProfileRepository {
     List<ChildProfile> profiles = const [],
     ChildrenListRepository? childrenList,
     this.failLoad = false,
-  })  : _profiles = List.of(profiles),
-        _childrenList = childrenList;
+  }) : _profiles = List.of(profiles),
+       _childrenList = childrenList;
 
   List<ChildProfile> _profiles;
   final ChildrenListRepository? _childrenList;

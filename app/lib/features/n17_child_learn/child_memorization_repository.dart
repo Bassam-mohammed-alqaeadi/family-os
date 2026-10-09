@@ -11,16 +11,15 @@ final class InMemoryChildMemorizationRepository
   InMemoryChildMemorizationRepository({
     ChildMemorizationSnapshot? seed,
     QuranLocalBridge? bridge,
-  })  : _snap = seed ?? childMemorizationEmptyFixture(),
-        _bridgeOverride = bridge;
+  }) : _snap = seed ?? childMemorizationEmptyFixture(),
+       _bridgeOverride = bridge;
 
   ChildMemorizationSnapshot _snap;
   final QuranLocalBridge? _bridgeOverride;
   Future<void> Function()? loadGate;
   final List<String> startedReviews = [];
 
-  QuranLocalBridge get _bridge =>
-      _bridgeOverride ?? stage1QuranLocalBridge;
+  QuranLocalBridge get _bridge => _bridgeOverride ?? stage1QuranLocalBridge;
 
   @override
   Future<ChildMemorizationSnapshot> load() async {

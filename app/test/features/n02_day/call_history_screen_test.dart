@@ -12,8 +12,9 @@ import 'package:family_os/features/n02_day/call_history_repository.dart';
 import 'package:family_os/features/n02_day/call_history_screen.dart';
 
 void main() {
-  testWidgets('SCR-FAT-024 empty → AppEmptyState + honesty + SOS ungated',
-      (tester) async {
+  testWidgets('SCR-FAT-024 empty → AppEmptyState + honesty + SOS ungated', (
+    tester,
+  ) async {
     var sos = false;
     await tester.pumpWidget(
       _app(
@@ -75,9 +76,15 @@ void main() {
     expect(find.byKey(CallHistoryKeys.body), findsOneWidget);
     expect(find.byKey(CallHistoryKeys.honestyBanner), findsOneWidget);
     expect(find.byKey(CallHistoryKeys.row('log_child_a')), findsOneWidget);
-    expect(find.byKey(CallHistoryKeys.row('log_child_b_missed')), findsOneWidget);
+    expect(
+      find.byKey(CallHistoryKeys.row('log_child_b_missed')),
+      findsOneWidget,
+    );
     expect(find.byKey(CallHistoryKeys.row('log_mother')), findsOneWidget);
-    expect(find.byKey(CallHistoryKeys.row('log_child_c_video')), findsOneWidget);
+    expect(
+      find.byKey(CallHistoryKeys.row('log_child_c_video')),
+      findsOneWidget,
+    );
     expect(find.textContaining('صادرة'), findsWidgets);
     expect(find.textContaining('فائتة'), findsOneWidget);
     expect(find.textContaining('واردة'), findsOneWidget);
@@ -206,8 +213,9 @@ void main() {
     expect(find.byKey(CallHistoryKeys.body), findsOneWidget);
   });
 
-  testWidgets('SCR-FAT-024 Rule 23 — empty default no planted names',
-      (tester) async {
+  testWidgets('SCR-FAT-024 Rule 23 — empty default no planted names', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _app(
         child: CallHistoryScreen(
@@ -224,8 +232,9 @@ void main() {
     }
   });
 
-  testWidgets('SCR-FAT-024 Rule 23 — seeded generic labels only',
-      (tester) async {
+  testWidgets('SCR-FAT-024 Rule 23 — seeded generic labels only', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _app(
         child: CallHistoryScreen(

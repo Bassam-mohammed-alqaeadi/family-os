@@ -66,11 +66,11 @@ final class ScheduleWindow {
   }
 
   Map<String, Object?> toJson() => {
-        'kind': kind.name,
-        'enabled': enabled,
-        'startMinutes': toMinutes(start),
-        'endMinutes': toMinutes(end),
-      };
+    'kind': kind.name,
+    'enabled': enabled,
+    'startMinutes': toMinutes(start),
+    'endMinutes': toMinutes(end),
+  };
 
   factory ScheduleWindow.fromJson(Map<String, Object?> json) {
     final kindName = json['kind'] as String? ?? ScheduleKind.sleep.name;
@@ -96,7 +96,8 @@ final class ScheduleWindow {
           toMinutes(end) == toMinutes(other.end);
 
   @override
-  int get hashCode => Object.hash(kind, enabled, toMinutes(start), toMinutes(end));
+  int get hashCode =>
+      Object.hash(kind, enabled, toMinutes(start), toMinutes(end));
 }
 
 /// Defaults applied when a kind is first enabled with unset times.
@@ -122,13 +123,13 @@ abstract final class ScheduleWindowDefaults {
 
     return switch (current.kind) {
       ScheduleKind.sleep => current.copyWith(
-          start: current.start ?? sleepStart,
-          end: current.end ?? sleepEnd,
-        ),
+        start: current.start ?? sleepStart,
+        end: current.end ?? sleepEnd,
+      ),
       ScheduleKind.study => current.copyWith(
-          start: current.start ?? studyStart,
-          end: current.end ?? studyEnd,
-        ),
+        start: current.start ?? studyStart,
+        end: current.end ?? studyEnd,
+      ),
       ScheduleKind.prayer => _seedPrayer(current),
     };
   }
@@ -136,8 +137,10 @@ abstract final class ScheduleWindowDefaults {
   static ScheduleWindow _seedPrayer(ScheduleWindow current) {
     final start = current.start ?? prayerSeedStart;
     final endMinutes =
-        (ScheduleWindow.toMinutes(start)! + prayerDurationMinutes)
-            .clamp(0, 24 * 60 - 1);
+        (ScheduleWindow.toMinutes(start)! + prayerDurationMinutes).clamp(
+          0,
+          24 * 60 - 1,
+        );
     final end = current.end ?? ScheduleWindow.fromMinutes(endMinutes);
     return current.copyWith(start: start, end: end);
   }

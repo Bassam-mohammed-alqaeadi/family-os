@@ -35,12 +35,14 @@ final class LocalChildrenListRepository implements ChildrenListRepository {
   final DateTime Function() _clock;
 
   static const _table = 'kv_store';
-  static const _policiesKey = 'shared_policies';
+  static const _legacyPoliciesKey = 'shared_policies';
 
-  static String _childrenKey(FamilyId familyId) =>
-      'children:${familyId.value}';
+  static String _policiesKey(FamilyId familyId) =>
+      'shared_policies:${familyId.value}';
 
-  /// Ensures deterministic LOCAL DEMO seed when family roster key is missing.
+  static String _childrenKey(FamilyId familyId) => 'children:${familyId.value}';
+
+  /// Ensures deterministic local roster seed when the family key is missing.
   Future<void> ensureSeeded(FamilyId familyId) async {
     final existing = await _readRaw(_childrenKey(familyId));
     if (existing != null && existing.isNotEmpty) return;
@@ -49,10 +51,25 @@ final class LocalChildrenListRepository implements ChildrenListRepository {
     await _writeChildren(familyId, seed);
   }
 
-  Future<void> ensurePoliciesSeeded() async {
-    final existing = await _readRaw(_policiesKey);
+  Future<void> ensurePoliciesSeeded({FamilyId? familyId}) async {
+    final id = familyId ?? ChildrenListLocalSeed.famStage1;
+    final key = _policiesKey(id);
+    final existing = await _readRaw(key);
     if (existing != null && existing.isNotEmpty) return;
-    await saveSharedPolicies(ChildrenListLocalSeed.defaultPolicies);
+    // The old unscoped key predates family selection. It is only attributable
+    // to the original Stage-1 local family; copying it to a later-selected
+    // family would leak another family's local policy draft.
+    if (id == ChildrenListLocalSeed.famStage1) {
+      final legacy = await _readRaw(_legacyPoliciesKey);
+      if (legacy != null && legacy.isNotEmpty) {
+        await _write(key, legacy);
+        return;
+      }
+    }
+    await saveSharedPolicies(
+      ChildrenListLocalSeed.defaultPolicies,
+      familyId: id,
+    );
   }
 
   /// Envelope provenance after load (empty if not seeded / missing).
@@ -119,7 +136,10 @@ final class LocalChildrenListRepository implements ChildrenListRepository {
   }
 
   @override
-  Future<void> upsertChild(ChildrenListEntry entry, {FamilyId? familyId}) async {
+  Future<void> upsertChild(
+    ChildrenListEntry entry, {
+    FamilyId? familyId,
+  }) async {
     final id = familyId ?? ChildrenListLocalSeed.famStage1;
     final existing = await listChildren(familyId: id);
     final next = List<ChildrenListEntry>.of(existing);
@@ -133,9 +153,12 @@ final class LocalChildrenListRepository implements ChildrenListRepository {
   }
 
   @override
-  Future<SharedChildrenPolicies> loadSharedPolicies() async {
-    await ensurePoliciesSeeded();
-    final raw = await _readRaw(_policiesKey);
+  Future<SharedChildrenPolicies> loadSharedPolicies({
+    FamilyId? familyId,
+  }) async {
+    final id = familyId ?? ChildrenListLocalSeed.famStage1;
+    await ensurePoliciesSeeded(familyId: id);
+    final raw = await _readRaw(_policiesKey(id));
     if (raw == null || raw.isEmpty) {
       return ChildrenListLocalSeed.defaultPolicies;
     }
@@ -145,9 +168,13 @@ final class LocalChildrenListRepository implements ChildrenListRepository {
   }
 
   @override
-  Future<void> saveSharedPolicies(SharedChildrenPolicies policies) async {
+  Future<void> saveSharedPolicies(
+    SharedChildrenPolicies policies, {
+    FamilyId? familyId,
+  }) async {
+    final id = familyId ?? ChildrenListLocalSeed.famStage1;
     await _write(
-      _policiesKey,
+      _policiesKey(id),
       jsonEncode({
         'provenance': kChildrenListRealLocalProvenance,
         ..._policiesToJson(policies),
@@ -180,31 +207,27 @@ final class LocalChildrenListRepository implements ChildrenListRepository {
   }
 
   Future<void> _write(String key, String value) async {
-    await _db.insert(
-      _table,
-      {
-        'namespace': namespace,
-        'key': key,
-        'value': value,
-        'updated_at': _clock().toUtc().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: LocalConflictAlgorithm.replace,
-    );
+    await _db.insert(_table, {
+      'namespace': namespace,
+      'key': key,
+      'value': value,
+      'updated_at': _clock().toUtc().millisecondsSinceEpoch,
+    }, conflictAlgorithm: LocalConflictAlgorithm.replace);
   }
 
   static Map<String, Object?> _entryToJson(ChildrenListEntry e) => {
-        'id': e.id,
-        'displayName': e.displayName,
-        'emoji': e.emoji,
-        'swatch': e.swatch.name,
-        'ageYears': e.ageYears,
-        'locationLabel': e.locationLabel,
-        'lastSeenLabel': e.lastSeenLabel,
-        'batteryLabel': e.batteryLabel,
-        'timeLeftLabel': e.timeLeftLabel,
-        'health': e.health.name,
-        'warnRing': e.warnRing,
-      };
+    'id': e.id,
+    'displayName': e.displayName,
+    'emoji': e.emoji,
+    'swatch': e.swatch.name,
+    'ageYears': e.ageYears,
+    'locationLabel': e.locationLabel,
+    'lastSeenLabel': e.lastSeenLabel,
+    'batteryLabel': e.batteryLabel,
+    'timeLeftLabel': e.timeLeftLabel,
+    'health': e.health.name,
+    'warnRing': e.warnRing,
+  };
 
   static ChildrenListEntry _entryFromJson(Map<String, Object?> json) {
     final swatchName = json['swatch'] as String? ?? DayChildSwatch.purple.name;
@@ -232,12 +255,12 @@ final class LocalChildrenListRepository implements ChildrenListRepository {
   }
 
   static Map<String, Object?> _policiesToJson(SharedChildrenPolicies p) => {
-        'scopeAll': p.scopeAll,
-        'selectedChildIds': p.selectedChildIds,
-        'dailyCapHours': p.dailyCapHours,
-        'bedtimeLabel': p.bedtimeLabel,
-        'webFilterOn': p.webFilterOn,
-      };
+    'scopeAll': p.scopeAll,
+    'selectedChildIds': p.selectedChildIds,
+    'dailyCapHours': p.dailyCapHours,
+    'bedtimeLabel': p.bedtimeLabel,
+    'webFilterOn': p.webFilterOn,
+  };
 
   static SharedChildrenPolicies _policiesFromJson(Map<String, Object?> json) {
     final ids = json['selectedChildIds'];

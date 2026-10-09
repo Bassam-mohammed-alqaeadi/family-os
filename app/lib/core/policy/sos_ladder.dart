@@ -9,13 +9,7 @@ const Set<String> kSosLadderFixedParentIds = {'father', 'mother'};
 const int kSosMaxBackupContacts = 5;
 
 /// Backup phone verification lifecycle (FAT-028).
-enum SosVerificationStatus {
-  unverified,
-  pending,
-  verified,
-  revoked,
-  failed,
-}
+enum SosVerificationStatus { unverified, pending, verified, revoked, failed }
 
 /// Validation codes for illegal SOS ladder edits (SET-020).
 abstract final class SosLadderValidationCode {
@@ -102,15 +96,15 @@ final class SosBackupContact {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'relation': relation,
-        'delaySeconds': delaySeconds,
-        'enabled': enabled,
-        'priority': priority,
-        'phoneE164': phoneE164,
-        'verification': verification.name,
-      };
+    'id': id,
+    'name': name,
+    'relation': relation,
+    'delaySeconds': delaySeconds,
+    'enabled': enabled,
+    'priority': priority,
+    'phoneE164': phoneE164,
+    'verification': verification.name,
+  };
 
   factory SosBackupContact.fromJson(Map<String, dynamic> json) {
     final vRaw = json['verification']?.toString();
@@ -146,15 +140,15 @@ final class SosBackupContact {
 
   @override
   int get hashCode => Object.hash(
-        id,
-        name,
-        relation,
-        delaySeconds,
-        enabled,
-        priority,
-        phoneE164,
-        verification,
-      );
+    id,
+    name,
+    relation,
+    delaySeconds,
+    enabled,
+    priority,
+    phoneE164,
+    verification,
+  );
 }
 
 /// SOS escalation ladder — rung 1 parents fixed; backups editable below (P-5).
@@ -170,10 +164,10 @@ final class SosLadder {
 
   /// Defaults: both parents present on rung 1; no backups.
   factory SosLadder.defaults({String familyId = defaultFamilyId}) => SosLadder(
-        familyId: familyId,
-        presentParentIds: Set<String>.from(kSosLadderFixedParentIds),
-        backups: const [],
-      );
+    familyId: familyId,
+    presentParentIds: Set<String>.from(kSosLadderFixedParentIds),
+    backups: const [],
+  );
 
   final String familyId;
 
@@ -255,7 +249,9 @@ final class SosLadder {
         .where(kSosLadderFixedParentIds.contains)
         .toSet();
     final safeBackups = backups
-        .where((b) => b.id.isNotEmpty && !kSosLadderFixedParentIds.contains(b.id))
+        .where(
+          (b) => b.id.isNotEmpty && !kSosLadderFixedParentIds.contains(b.id),
+        )
         .toList();
     return SosLadder(
       familyId: familyId,
@@ -267,10 +263,10 @@ final class SosLadder {
   }
 
   Map<String, dynamic> toJson() => {
-        'familyId': familyId,
-        'presentParentIds': presentParentIds.toList()..sort(),
-        'backups': backups.map((b) => b.toJson()).toList(),
-      };
+    'familyId': familyId,
+    'presentParentIds': presentParentIds.toList()..sort(),
+    'backups': backups.map((b) => b.toJson()).toList(),
+  };
 
   factory SosLadder.fromJson(Map<String, dynamic> json) {
     final parentsRaw = json['presentParentIds'];
@@ -313,8 +309,8 @@ final class SosLadder {
 
   @override
   int get hashCode => Object.hash(
-        familyId,
-        Object.hashAll(presentParentIds.toList()..sort()),
-        Object.hashAll(backups),
-      );
+    familyId,
+    Object.hashAll(presentParentIds.toList()..sort()),
+    Object.hashAll(backups),
+  );
 }

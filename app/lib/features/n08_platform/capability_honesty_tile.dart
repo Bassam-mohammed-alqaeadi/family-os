@@ -47,15 +47,15 @@ class CapabilityHonestyTile extends StatelessWidget {
 
     final Tag? badge = switch (capability) {
       CapabilityLevel.unavailable => Tag(
-          key: badgeKey,
-          label: unavailableLabel,
-          variant: TagVariant.a,
-        ),
+        key: badgeKey,
+        label: unavailableLabel,
+        variant: TagVariant.a,
+      ),
       CapabilityLevel.reportsOnly => Tag(
-          key: badgeKey,
-          label: limitedLabel,
-          variant: TagVariant.a,
-        ),
+        key: badgeKey,
+        label: limitedLabel,
+        variant: TagVariant.a,
+      ),
       CapabilityLevel.full => null,
     };
 
@@ -115,10 +115,7 @@ class CapabilityHonestyTile extends StatelessWidget {
                         ),
                       ),
                     ],
-                    if (badge != null) ...[
-                      const SizedBox(height: 6),
-                      badge,
-                    ],
+                    if (badge != null) ...[const SizedBox(height: 6), badge],
                   ],
                 ),
               ),

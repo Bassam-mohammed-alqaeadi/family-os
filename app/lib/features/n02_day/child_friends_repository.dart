@@ -14,9 +14,8 @@ abstract class ChildFriendsRepository {
 /// CHD-030 — projects [OuterCircleRepository] friends/pending (one authority).
 final class OuterCircleBoundChildFriendsRepository
     implements ChildFriendsRepository {
-  OuterCircleBoundChildFriendsRepository({
-    OuterCircleRepository? circle,
-  }) : _circleOverride = circle;
+  OuterCircleBoundChildFriendsRepository({OuterCircleRepository? circle})
+    : _circleOverride = circle;
 
   final OuterCircleRepository? _circleOverride;
 
@@ -69,10 +68,7 @@ final class OuterCircleBoundChildFriendsRepository
     required String placeKey,
   }) async {
     addRequestCount++;
-    await _circle.requestFriend(
-      nameKey: nameKey,
-      metaKey: placeKey,
-    );
+    await _circle.requestFriend(nameKey: nameKey, metaKey: placeKey);
   }
 
   @override

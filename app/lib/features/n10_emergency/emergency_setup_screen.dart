@@ -57,8 +57,9 @@ abstract final class EmergencySetupKeys {
 
   static const childEscalationSection = Key('sos_child_escalation_section');
   static const childEscalationEmpty = Key('sos_child_escalation_empty');
-  static const childEscalationSmsHonesty =
-      Key('sos_child_escalation_sms_honesty');
+  static const childEscalationSmsHonesty = Key(
+    'sos_child_escalation_sms_honesty',
+  );
   static Key childEscalationCard(String childId) =>
       Key('sos_child_escalation_card_$childId');
   static Key childEscalationEnable(String childId) =>
@@ -117,11 +118,10 @@ class EmergencySetupScreenState extends State<EmergencySetupScreen> {
       : (_role == AppRole.child ? SosActor.child() : SosActor.primary());
 
   bool get _canConfigure => SosRoleActions.canConfigure(_actor);
-  bool get _atBackupLimit =>
-      _ladder.backups.length >= kSosMaxBackupContacts;
+  bool get _atBackupLimit => _ladder.backups.length >= kSosMaxBackupContacts;
   bool get _hasUnverifiedArmed => _ladder.backups.any(
-        (b) => b.enabled && b.verification != SosVerificationStatus.verified,
-      );
+    (b) => b.enabled && b.verification != SosVerificationStatus.verified,
+  );
 
   List<RosterChildRef> get _rosterChildren =>
       widget.childrenOverride ?? activeFamilyRosterChildren();
@@ -212,8 +212,9 @@ class EmergencySetupScreenState extends State<EmergencySetupScreen> {
     } on SosLadderValidationException {
       if (mounted) {
         setState(
-          () => _inlineError =
-              AppLocalizations.of(context).sosLadderParentImmovableError,
+          () => _inlineError = AppLocalizations.of(
+            context,
+          ).sosLadderParentImmovableError,
         );
       }
     }
@@ -235,8 +236,9 @@ class EmergencySetupScreenState extends State<EmergencySetupScreen> {
     } on SosLadderValidationException {
       if (mounted) {
         setState(
-          () => _inlineError =
-              AppLocalizations.of(context).sosLadderParentImmovableError,
+          () => _inlineError = AppLocalizations.of(
+            context,
+          ).sosLadderParentImmovableError,
         );
       }
     }
@@ -291,8 +293,7 @@ class EmergencySetupScreenState extends State<EmergencySetupScreen> {
     final nextStatus = switch (contact.verification) {
       SosVerificationStatus.unverified ||
       SosVerificationStatus.failed ||
-      SosVerificationStatus.revoked =>
-        SosVerificationStatus.pending,
+      SosVerificationStatus.revoked => SosVerificationStatus.pending,
       SosVerificationStatus.pending => SosVerificationStatus.verified,
       SosVerificationStatus.verified => SosVerificationStatus.revoked,
     };
@@ -329,8 +330,9 @@ class EmergencySetupScreenState extends State<EmergencySetupScreen> {
     } on SosLadderValidationException {
       if (mounted) {
         setState(
-          () => _inlineError =
-              AppLocalizations.of(context).sosLadderParentImmovableError,
+          () => _inlineError = AppLocalizations.of(
+            context,
+          ).sosLadderParentImmovableError,
         );
       }
     }
@@ -378,271 +380,261 @@ class EmergencySetupScreenState extends State<EmergencySetupScreen> {
       body: _loading
           ? Center(child: CircularProgressIndicator(color: colors.p600))
           : !_canConfigure
-              ? _PartnerReadOnlySummary(
-                  key: EmergencySetupKeys.readOnlyLean,
-                  l10n: l10n,
-                  colors: colors,
-                  ladder: _ladder,
-                  snap: snap,
-                )
-              : SingleChildScrollView(
-                  padding:
-                      const EdgeInsetsDirectional.fromSTEB(20, 8, 20, 60),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      BannerNote(
-                        key: EmergencySetupKeys.protocolBanner,
-                        message: l10n.sosLadderProtocolBanner,
-                      ),
-                      const SizedBox(height: 8),
-                      BannerNote(
-                        key: EmergencySetupKeys.sosReceiptBanner,
-                        variant: BannerVariant.p,
-                        message: l10n.sosReceiptCannotDisableBanner,
-                      ),
-                      const SizedBox(height: 24),
-                      _DashboardSectionHeader(
-                        title: l10n.sosDashboardReadinessTitle,
-                        icon: Icons.speed_rounded,
+          ? _PartnerReadOnlySummary(
+              key: EmergencySetupKeys.readOnlyLean,
+              l10n: l10n,
+              colors: colors,
+              ladder: _ladder,
+              snap: snap,
+            )
+          : SingleChildScrollView(
+              padding: const EdgeInsetsDirectional.fromSTEB(20, 8, 20, 60),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  BannerNote(
+                    key: EmergencySetupKeys.protocolBanner,
+                    message: l10n.sosLadderProtocolBanner,
+                  ),
+                  const SizedBox(height: 8),
+                  BannerNote(
+                    key: EmergencySetupKeys.sosReceiptBanner,
+                    variant: BannerVariant.p,
+                    message: l10n.sosReceiptCannotDisableBanner,
+                  ),
+                  const SizedBox(height: 24),
+                  _DashboardSectionHeader(
+                    title: l10n.sosDashboardReadinessTitle,
+                    icon: Icons.speed_rounded,
+                    colors: colors,
+                  ),
+                  if (snap != null) ...[
+                    KeyedSubtree(
+                      key: EmergencySetupKeys.readinessCard,
+                      child: _ReadinessGrid(
+                        rows: snap.rows,
+                        l10n: l10n,
                         colors: colors,
                       ),
-                      if (snap != null) ...[
-                        KeyedSubtree(
-                          key: EmergencySetupKeys.readinessCard,
-                          child: _ReadinessGrid(
-                            rows: snap.rows,
-                            l10n: l10n,
-                            colors: colors,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        BannerNote(
-                          variant: BannerVariant.t,
-                          message: l10n.sosReadinessBody,
-                        ),
-                      ],
-                      const SizedBox(height: 32),
-                      _DashboardSectionHeader(
-                        title: l10n.sosLadderHeading,
-                        subtitle: l10n.sosLadderSubtitle,
-                        icon: Icons.shield_rounded,
-                        colors: colors,
+                    ),
+                    const SizedBox(height: 12),
+                    BannerNote(
+                      variant: BannerVariant.t,
+                      message: l10n.sosReadinessBody,
+                    ),
+                  ],
+                  const SizedBox(height: 32),
+                  _DashboardSectionHeader(
+                    title: l10n.sosLadderHeading,
+                    subtitle: l10n.sosLadderSubtitle,
+                    icon: Icons.shield_rounded,
+                    colors: colors,
+                  ),
+                  BannerNote(
+                    key: EmergencySetupKeys.verifyHonesty,
+                    variant: BannerVariant.t,
+                    message: l10n.sosLadderVerifyLocalHonesty,
+                  ),
+                  const SizedBox(height: 12),
+                  if (_hasUnverifiedArmed) ...[
+                    BannerNote(
+                      key: EmergencySetupKeys.unverifiedNote,
+                      variant: BannerVariant.a,
+                      message: l10n.sosLadderUnverifiedEscalationNote,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  if (_inlineError != null) ...[
+                    Text(
+                      _inlineError!,
+                      key: EmergencySetupKeys.inlineError,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: colors.coral,
                       ),
-                      BannerNote(
-                        key: EmergencySetupKeys.verifyHonesty,
-                        variant: BannerVariant.t,
-                        message: l10n.sosLadderVerifyLocalHonesty,
-                      ),
-                      const SizedBox(height: 12),
-                      if (_hasUnverifiedArmed) ...[
-                        BannerNote(
-                          key: EmergencySetupKeys.unverifiedNote,
-                          variant: BannerVariant.a,
-                          message: l10n.sosLadderUnverifiedEscalationNote,
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      if (_inlineError != null) ...[
-                        Text(
-                          _inlineError!,
-                          key: EmergencySetupKeys.inlineError,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: colors.coral,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      if (_atBackupLimit) ...[
-                        BannerNote(
-                          key: EmergencySetupKeys.maxReachedBanner,
-                          variant: BannerVariant.t,
-                          message: l10n.sosLadderMaxBackupsError,
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      KeyedSubtree(
-                        key: EmergencySetupKeys.ladderList,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                color: colors.surface,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: colors.border),
-                              ),
-                              child: Column(
-                                children: [
-                                  Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 8,
-                                      horizontal: 16,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: colors.p50
-                                          .withValues(alpha: 0.5),
-                                      borderRadius: const BorderRadius.vertical(
-                                        top: Radius.circular(16),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      l10n.sosLadderRung1SectionTitle,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w800,
-                                        color: colors.p600,
-                                      ),
-                                    ),
-                                  ),
-                                  KeyedSubtree(
-                                    key: EmergencySetupKeys.rung1Section,
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(8),
-                                      child: Column(
-                                        children: [
-                                          for (final id
-                                              in _ladder.rung1MemberIds)
-                                            _LockedParentCard(
-                                              memberId: id,
-                                              label: id == 'father'
-                                                  ? l10n.sosLadderFatherLabel
-                                                  : l10n.sosLadderMotherLabel,
-                                              lockedHint:
-                                                  l10n.sosLadderRung1LockedHint,
-                                              mandatoryTag:
-                                                  l10n.sosLadderMandatoryTag,
-                                              colors: colors,
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            for (final contact
-                                in _ladder.backupsByPriority) ...[
-                              KeyedSubtree(
-                                key: EmergencySetupKeys.backupRow(contact.id),
-                                child: _DashboardBackupCard(
-                                  contact: contact,
-                                  l10n: l10n,
-                                  colors: colors,
-                                  canMoveUp: contact.priority > 1,
-                                  canMoveDown: contact.priority <
-                                      _ladder.backups.length,
-                                  onToggle: (v) =>
-                                      _onBackupToggle(contact.id, v),
-                                  onEdit: () =>
-                                      _openBackupSheet(existing: contact),
-                                  onDelete: () =>
-                                      _onBackupRemove(contact.id),
-                                  onVerify: () =>
-                                      _advanceVerification(contact),
-                                  onPriorityUp: () =>
-                                      _moveBackupPriority(contact.id, -1),
-                                  onPriorityDown: () =>
-                                      _moveBackupPriority(contact.id, 1),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                            ],
-                            if (!_atBackupLimit)
-                              Semantics(
-                                button: true,
-                                label: l10n.sosLadderAddBackup,
-                                child: InkWell(
-                                  key: EmergencySetupKeys.addBackup,
-                                  onTap: () => _openBackupSheet(),
-                                  borderRadius: BorderRadius.circular(16),
-                                  child: Container(
-                                    constraints:
-                                        const BoxConstraints(minHeight: 48),
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 16,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: colors.surface
-                                          .withValues(alpha: 0.5),
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(
-                                        color: colors.p600
-                                            .withValues(alpha: 0.5),
-                                        width: 1.5,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.add_circle_outline,
-                                          color: colors.p600,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          l10n.sosLadderAddBackup,
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w700,
-                                            color: colors.p600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                      _DashboardSectionHeader(
-                        title: l10n.sosPanicQuietTitle,
-                        icon: Icons.do_not_disturb_on_rounded,
-                        colors: colors,
-                      ),
-                      Semantics(
-                        container: true,
-                        label: l10n.sosPanicQuietSubtitle,
-                        child: Container(
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  if (_atBackupLimit) ...[
+                    BannerNote(
+                      key: EmergencySetupKeys.maxReachedBanner,
+                      variant: BannerVariant.t,
+                      message: l10n.sosLadderMaxBackupsError,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  KeyedSubtree(
+                    key: EmergencySetupKeys.ladderList,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Container(
                           decoration: BoxDecoration(
                             color: colors.surface,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: colors.amber, width: 1.5),
+                            border: Border.all(color: colors.border),
                           ),
-                          padding: const EdgeInsets.all(4),
-                          child: SettingsPersistToggle(
-                            title: l10n.sosPanicQuietTitle,
-                            subtitle: l10n.sosPanicQuietSubtitle,
-                            value: _settings.settings.panicQuietPreferred,
-                            switchKey: EmergencySetupKeys.panicQuietToggle,
-                            successMessage: l10n.sosPanicQuietTitle,
-                            errorMessage: l10n.settingsPersistError,
-                            onPersist: _persistPanicQuiet,
+                          child: Column(
+                            children: [
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                  horizontal: 16,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: colors.p50.withValues(alpha: 0.5),
+                                  borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(16),
+                                  ),
+                                ),
+                                child: Text(
+                                  l10n.sosLadderRung1SectionTitle,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                    color: colors.p600,
+                                  ),
+                                ),
+                              ),
+                              KeyedSubtree(
+                                key: EmergencySetupKeys.rung1Section,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: Column(
+                                    children: [
+                                      for (final id in _ladder.rung1MemberIds)
+                                        _LockedParentCard(
+                                          memberId: id,
+                                          label: id == 'father'
+                                              ? l10n.sosLadderFatherLabel
+                                              : l10n.sosLadderMotherLabel,
+                                          lockedHint:
+                                              l10n.sosLadderRung1LockedHint,
+                                          mandatoryTag:
+                                              l10n.sosLadderMandatoryTag,
+                                          colors: colors,
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 32),
-                      KeyedSubtree(
-                        key: EmergencySetupKeys.childEscalationSection,
-                        child: _ChildEscalationDashboard(
-                          l10n: l10n,
-                          colors: colors,
-                          children: _rosterChildren,
-                          settings: _settings.settings,
-                          delays: _escalationDelays,
-                          onPersist: _persistChildEscalation,
-                        ),
-                      ),
-                    ],
+                        const SizedBox(height: 16),
+                        for (final contact in _ladder.backupsByPriority) ...[
+                          KeyedSubtree(
+                            key: EmergencySetupKeys.backupRow(contact.id),
+                            child: _DashboardBackupCard(
+                              contact: contact,
+                              l10n: l10n,
+                              colors: colors,
+                              canMoveUp: contact.priority > 1,
+                              canMoveDown:
+                                  contact.priority < _ladder.backups.length,
+                              onToggle: (v) => _onBackupToggle(contact.id, v),
+                              onEdit: () => _openBackupSheet(existing: contact),
+                              onDelete: () => _onBackupRemove(contact.id),
+                              onVerify: () => _advanceVerification(contact),
+                              onPriorityUp: () =>
+                                  _moveBackupPriority(contact.id, -1),
+                              onPriorityDown: () =>
+                                  _moveBackupPriority(contact.id, 1),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                        if (!_atBackupLimit)
+                          Semantics(
+                            button: true,
+                            label: l10n.sosLadderAddBackup,
+                            child: InkWell(
+                              key: EmergencySetupKeys.addBackup,
+                              onTap: () => _openBackupSheet(),
+                              borderRadius: BorderRadius.circular(16),
+                              child: Container(
+                                constraints: const BoxConstraints(
+                                  minHeight: 48,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: colors.surface.withValues(alpha: 0.5),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: colors.p600.withValues(alpha: 0.5),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.add_circle_outline,
+                                      color: colors.p600,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      l10n.sosLadderAddBackup,
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
+                                        color: colors.p600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 32),
+                  _DashboardSectionHeader(
+                    title: l10n.sosPanicQuietTitle,
+                    icon: Icons.do_not_disturb_on_rounded,
+                    colors: colors,
+                  ),
+                  Semantics(
+                    container: true,
+                    label: l10n.sosPanicQuietSubtitle,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: colors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: colors.amber, width: 1.5),
+                      ),
+                      padding: const EdgeInsets.all(4),
+                      child: SettingsPersistToggle(
+                        title: l10n.sosPanicQuietTitle,
+                        subtitle: l10n.sosPanicQuietSubtitle,
+                        value: _settings.settings.panicQuietPreferred,
+                        switchKey: EmergencySetupKeys.panicQuietToggle,
+                        successMessage: l10n.sosPanicQuietTitle,
+                        errorMessage: l10n.settingsPersistError,
+                        onPersist: _persistPanicQuiet,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  KeyedSubtree(
+                    key: EmergencySetupKeys.childEscalationSection,
+                    child: _ChildEscalationDashboard(
+                      l10n: l10n,
+                      colors: colors,
+                      children: _rosterChildren,
+                      settings: _settings.settings,
+                      delays: _escalationDelays,
+                      onPersist: _persistChildEscalation,
+                    ),
+                  ),
+                ],
+              ),
+            ),
     );
   }
 }
@@ -723,42 +715,39 @@ class _ReadinessGrid extends StatelessWidget {
   final FamilyColors colors;
 
   String _title(String id) => switch (id) {
-        'child_trigger' => l10n.sosReadinessRowChild,
-        'local_persistence' => l10n.sosReadinessRowPersistence,
-        'push_alerts' => l10n.sosReadinessRowPush,
-        'sms_fallback' => l10n.sosReadinessRowSms,
-        'call_fallback' => l10n.sosReadinessRowCall,
-        'location' => l10n.sosReadinessRowLocation,
-        'trusted_ladder' => l10n.sosReadinessRowLadder,
-        'panic_quiet' => l10n.sosReadinessRowPanicQuiet,
-        'break_glass' => l10n.sosReadinessRowBreakGlass,
-        _ => id,
-      };
+    'child_trigger' => l10n.sosReadinessRowChild,
+    'local_persistence' => l10n.sosReadinessRowPersistence,
+    'push_alerts' => l10n.sosReadinessRowPush,
+    'sms_fallback' => l10n.sosReadinessRowSms,
+    'call_fallback' => l10n.sosReadinessRowCall,
+    'location' => l10n.sosReadinessRowLocation,
+    'trusted_ladder' => l10n.sosReadinessRowLadder,
+    'panic_quiet' => l10n.sosReadinessRowPanicQuiet,
+    'break_glass' => l10n.sosReadinessRowBreakGlass,
+    _ => id,
+  };
 
   Color _dotColor(SosReadinessClass klass) => switch (klass) {
-        // Soft mint — never scream "armed" for Local-only available rows.
-        SosReadinessClass.available => colors.mint.withValues(alpha: 0.75),
-        SosReadinessClass.degraded => colors.amber,
-        SosReadinessClass.unavailable ||
-        SosReadinessClass.notConfigured =>
-          colors.ink2,
-      };
+    // Soft mint — never scream "armed" for Local-only available rows.
+    SosReadinessClass.available => colors.mint.withValues(alpha: 0.75),
+    SosReadinessClass.degraded => colors.amber,
+    SosReadinessClass.unavailable ||
+    SosReadinessClass.notConfigured => colors.ink2,
+  };
 
   Color _statusInk(SosReadinessClass klass) => switch (klass) {
-        SosReadinessClass.available => colors.ink,
-        SosReadinessClass.degraded => colors.amberInk,
-        SosReadinessClass.unavailable ||
-        SosReadinessClass.notConfigured =>
-          colors.ink2,
-      };
+    SosReadinessClass.available => colors.ink,
+    SosReadinessClass.degraded => colors.amberInk,
+    SosReadinessClass.unavailable ||
+    SosReadinessClass.notConfigured => colors.ink2,
+  };
 
   String _klassLabel(SosReadinessClass klass) => switch (klass) {
-        SosReadinessClass.available => l10n.sosReadinessClassAvailable,
-        SosReadinessClass.degraded => l10n.sosReadinessClassDegraded,
-        SosReadinessClass.unavailable => l10n.sosReadinessClassUnavailable,
-        SosReadinessClass.notConfigured =>
-          l10n.sosReadinessClassNotConfigured,
-      };
+    SosReadinessClass.available => l10n.sosReadinessClassAvailable,
+    SosReadinessClass.degraded => l10n.sosReadinessClassDegraded,
+    SosReadinessClass.unavailable => l10n.sosReadinessClassUnavailable,
+    SosReadinessClass.notConfigured => l10n.sosReadinessClassNotConfigured,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -989,7 +978,9 @@ class _PartnerReadOnlySummary extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: snap!.claimsReady ? colors.mintInk : colors.amberInk,
+                      color: snap!.claimsReady
+                          ? colors.mintInk
+                          : colors.amberInk,
                     ),
                   ),
                 ],
@@ -1030,18 +1021,16 @@ class _DashboardBackupCard extends StatelessWidget {
   final VoidCallback onPriorityDown;
 
   String _verifyLabel() => switch (contact.verification) {
-        SosVerificationStatus.verified => l10n.sosLadderVerifyRevoke,
-        SosVerificationStatus.pending => l10n.sosLadderVerifyConfirmLocal,
-        SosVerificationStatus.unverified ||
-        SosVerificationStatus.failed ||
-        SosVerificationStatus.revoked =>
-          l10n.sosLadderNeedsVerify,
-      };
+    SosVerificationStatus.verified => l10n.sosLadderVerifyRevoke,
+    SosVerificationStatus.pending => l10n.sosLadderVerifyConfirmLocal,
+    SosVerificationStatus.unverified ||
+    SosVerificationStatus.failed ||
+    SosVerificationStatus.revoked => l10n.sosLadderNeedsVerify,
+  };
 
   @override
   Widget build(BuildContext context) {
-    final isVerified =
-        contact.verification == SosVerificationStatus.verified;
+    final isVerified = contact.verification == SosVerificationStatus.verified;
 
     return Semantics(
       container: true,
@@ -1052,7 +1041,9 @@ class _DashboardBackupCard extends StatelessWidget {
           color: colors.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isVerified ? colors.mint.withValues(alpha: 0.55) : colors.border,
+            color: isVerified
+                ? colors.mint.withValues(alpha: 0.55)
+                : colors.border,
             width: isVerified ? 1.5 : 1,
           ),
         ),
@@ -1064,10 +1055,8 @@ class _DashboardBackupCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   CircleAvatar(
-                    backgroundColor:
-                        isVerified ? colors.mint100 : colors.p50,
-                    foregroundColor:
-                        isVerified ? colors.mintInk : colors.p600,
+                    backgroundColor: isVerified ? colors.mint100 : colors.p50,
+                    foregroundColor: isVerified ? colors.mintInk : colors.p600,
                     child: Text(
                       '${contact.priority}',
                       style: const TextStyle(fontWeight: FontWeight.w800),
@@ -1169,8 +1158,7 @@ class _DashboardBackupCard extends StatelessWidget {
                         icon: Icon(
                           isVerified ? Icons.verified : Icons.gpp_maybe,
                           size: 16,
-                          color:
-                              isVerified ? colors.mintInk : colors.amberInk,
+                          color: isVerified ? colors.mintInk : colors.amberInk,
                         ),
                         label: Text(
                           isVerified
@@ -1202,8 +1190,10 @@ class _DashboardBackupCard extends StatelessWidget {
                     icon: Icon(Icons.keyboard_arrow_up, color: colors.ink2),
                     onPressed: canMoveUp ? onPriorityUp : null,
                     tooltip: l10n.sosLadderPriorityUp,
-                    constraints:
-                        const BoxConstraints(minWidth: 48, minHeight: 48),
+                    constraints: const BoxConstraints(
+                      minWidth: 48,
+                      minHeight: 48,
+                    ),
                     padding: EdgeInsets.zero,
                   ),
                   const SizedBox(width: 4),
@@ -1212,8 +1202,10 @@ class _DashboardBackupCard extends StatelessWidget {
                     icon: Icon(Icons.keyboard_arrow_down, color: colors.ink2),
                     onPressed: canMoveDown ? onPriorityDown : null,
                     tooltip: l10n.sosLadderPriorityDown,
-                    constraints:
-                        const BoxConstraints(minWidth: 48, minHeight: 48),
+                    constraints: const BoxConstraints(
+                      minWidth: 48,
+                      minHeight: 48,
+                    ),
                     padding: EdgeInsets.zero,
                   ),
                   const SizedBox(width: 4),
@@ -1226,8 +1218,10 @@ class _DashboardBackupCard extends StatelessWidget {
                     ),
                     onPressed: onEdit,
                     tooltip: l10n.sosLadderBackupSheetTitleEdit,
-                    constraints:
-                        const BoxConstraints(minWidth: 48, minHeight: 48),
+                    constraints: const BoxConstraints(
+                      minWidth: 48,
+                      minHeight: 48,
+                    ),
                     padding: EdgeInsets.zero,
                   ),
                   IconButton(
@@ -1239,8 +1233,10 @@ class _DashboardBackupCard extends StatelessWidget {
                     ),
                     onPressed: onDelete,
                     tooltip: l10n.sosLadderBackupRemoveSemantics,
-                    constraints:
-                        const BoxConstraints(minWidth: 48, minHeight: 48),
+                    constraints: const BoxConstraints(
+                      minWidth: 48,
+                      minHeight: 48,
+                    ),
                     padding: EdgeInsets.zero,
                   ),
                 ],
@@ -1269,7 +1265,7 @@ class _ChildEscalationDashboard extends StatelessWidget {
   final SosLocalSettings settings;
   final List<int> delays;
   final Future<void> Function(String childId, ChildSosEscalationPrefs prefs)
-      onPersist;
+  onPersist;
 
   @override
   Widget build(BuildContext context) {
@@ -1330,14 +1326,15 @@ class _ChildControlCard extends StatelessWidget {
   final AppLocalizations l10n;
   final FamilyColors colors;
   final Future<void> Function(String childId, ChildSosEscalationPrefs prefs)
-      onPersist;
+  onPersist;
 
   Future<void> _save(ChildSosEscalationPrefs next) => onPersist(childId, next);
 
   @override
   Widget build(BuildContext context) {
-    final delayValue =
-        delays.contains(prefs.delaySeconds) ? prefs.delaySeconds : delays[1];
+    final delayValue = delays.contains(prefs.delaySeconds)
+        ? prefs.delaySeconds
+        : delays[1];
 
     return Container(
       key: EmergencySetupKeys.childEscalationCard(childId),
@@ -1453,8 +1450,9 @@ class _ChildControlCard extends StatelessWidget {
                   SettingsPersistToggle(
                     title: l10n.sosChildEscalationUseBackups,
                     value: prefs.notifyTrustedBackups,
-                    switchKey:
-                        EmergencySetupKeys.childEscalationUseBackups(childId),
+                    switchKey: EmergencySetupKeys.childEscalationUseBackups(
+                      childId,
+                    ),
                     successMessage: l10n.sosChildEscalationUseBackups,
                     errorMessage: l10n.settingsPersistError,
                     onPersist: (v) =>
@@ -1464,8 +1462,9 @@ class _ChildControlCard extends StatelessWidget {
                   SettingsPersistToggle(
                     title: l10n.sosChildEscalationPrepareSms,
                     value: prefs.prepareSmsFallback,
-                    switchKey:
-                        EmergencySetupKeys.childEscalationPrepareSms(childId),
+                    switchKey: EmergencySetupKeys.childEscalationPrepareSms(
+                      childId,
+                    ),
                     successMessage: l10n.sosChildEscalationPrepareSms,
                     errorMessage: l10n.settingsPersistError,
                     onPersist: (v) =>
@@ -1540,7 +1539,8 @@ class _BackupEditorSheetState extends State<_BackupEditorSheet> {
           ? widget.l10n.sosLadderBackupDefaultRelation
           : _relation.text.trim(),
       delaySeconds: _delay,
-      priority: widget.existing?.priority ??
+      priority:
+          widget.existing?.priority ??
           widget.nextPriority.clamp(1, kSosMaxBackupContacts),
       enabled: widget.existing?.enabled ?? true,
       phoneE164: phone,
@@ -1621,9 +1621,7 @@ class _BackupEditorSheetState extends State<_BackupEditorSheet> {
                     for (final d in _delays)
                       DropdownMenuItem(
                         value: d,
-                        child: Text(
-                          widget.l10n.sosEscalationSecondsShort(d),
-                        ),
+                        child: Text(widget.l10n.sosEscalationSecondsShort(d)),
                       ),
                   ],
                   onChanged: (v) {

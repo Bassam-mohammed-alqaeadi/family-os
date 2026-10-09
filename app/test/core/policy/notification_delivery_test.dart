@@ -7,6 +7,8 @@ import 'package:family_os/core/policy/notification_prefs.dart';
 import 'package:family_os/core/policy/notification_prefs_repository.dart';
 import 'package:family_os/core/policy/notification_tier.dart';
 
+import '../../support/recording_sos_fire_service.dart';
+
 void main() {
   group('NotificationDelivery SET-010', () {
     final quietOn = NotificationPrefs(
@@ -90,29 +92,23 @@ void main() {
       );
     });
 
-    test('simulateSosAlert delivers to father and mother with quiet ON', () {
+    test('a critical alert delivers to father and mother with quiet ON', () {
       final motherQuiet = NotificationPrefs(
         memberId: 'mother',
         quietHoursEnabled: true,
         quietStart: const TimeOfDay(hour: 22, minute: 0),
         quietEnd: const TimeOfDay(hour: 7, minute: 0),
       );
-      final results = NotificationDelivery.simulateSosAlert(
+      final results = RecordingSosFireService.simulate(
         const ['father', 'mother'],
-        prefsByMember: {
-          'father': quietOn,
-          'mother': motherQuiet,
-        },
+        prefsByMember: {'father': quietOn, 'mother': motherQuiet},
         now: const TimeOfDay(hour: 23, minute: 0),
       );
 
       expect(results, hasLength(2));
       expect(results.every((r) => r.tier == NotificationTier.critical), isTrue);
       expect(results.every((r) => r.delivered), isTrue);
-      expect(
-        results.map((r) => r.recipientId).toSet(),
-        {'father', 'mother'},
-      );
+      expect(results.map((r) => r.recipientId).toSet(), {'father', 'mother'});
     });
 
     test('child request respects prefs + quiet hours', () {
@@ -146,10 +142,9 @@ void main() {
     });
 
     test('prefs filter excludes critical tier', () {
-      expect(
-        NotificationPrefs.filterableTiers().toList(),
-        [NotificationTier.nonCritical],
-      );
+      expect(NotificationPrefs.filterableTiers().toList(), [
+        NotificationTier.nonCritical,
+      ]);
       expect(
         NotificationPrefs.quietHoursAppliesTo(NotificationTier.critical),
         isFalse,
@@ -228,10 +223,7 @@ void main() {
     test('independent quiet hours rows for two members', () async {
       final repo = InMemoryNotificationPrefsRepository();
       await repo.save(
-        const NotificationPrefs(
-          memberId: 'father',
-          quietHoursEnabled: false,
-        ),
+        const NotificationPrefs(memberId: 'father', quietHoursEnabled: false),
       );
       await repo.save(
         const NotificationPrefs(
@@ -254,10 +246,7 @@ void main() {
       );
       await repo.save(father);
       await repo.save(
-        const NotificationPrefs(
-          memberId: 'mother',
-          quietHoursEnabled: false,
-        ),
+        const NotificationPrefs(memberId: 'mother', quietHoursEnabled: false),
       );
       await repo.save(
         const NotificationPrefs(
@@ -318,8 +307,9 @@ void main() {
     });
 
     test('simulateAnalysisNotify suppressed when mother flag off', () {
-      final mother = NotificationPrefs.defaults(memberId: 'mother')
-          .copyWith(analysisNoticesEnabled: false);
+      final mother = NotificationPrefs.defaults(
+        memberId: 'mother',
+      ).copyWith(analysisNoticesEnabled: false);
       final result = NotificationDelivery.simulateAnalysisNotify(
         'mother',
         prefs: mother,
@@ -339,14 +329,14 @@ void main() {
   });
 
   group('SET-021 no SOS mute mother/guardian', () {
-    test('simulateSosAlert delivers to mother OBSERVER', () {
+    test('a critical alert delivers to the mother at the OBSERVER level', () {
       final motherQuiet = NotificationPrefs(
         memberId: 'mother',
         quietHoursEnabled: true,
         quietStart: const TimeOfDay(hour: 22, minute: 0),
         quietEnd: const TimeOfDay(hour: 7, minute: 0),
       );
-      final results = NotificationDelivery.simulateSosAlert(
+      final results = RecordingSosFireService.simulate(
         const ['mother'],
         prefsByMember: {'mother': motherQuiet},
         motherLevelByMember: const {'mother': MotherLevel.observer},
@@ -366,9 +356,9 @@ void main() {
       );
     });
 
-    test('simulateSosAlert delivers to mother at every level', () {
+    test('a critical alert delivers to the mother at every level', () {
       for (final level in MotherLevel.values) {
-        final results = NotificationDelivery.simulateSosAlert(
+        final results = RecordingSosFireService.simulate(
           const ['mother'],
           motherLevelByMember: {'mother': level},
           now: const TimeOfDay(hour: 23, minute: 0),

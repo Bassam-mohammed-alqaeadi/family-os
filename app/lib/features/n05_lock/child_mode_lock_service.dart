@@ -119,12 +119,12 @@ final class ChildModeLockService extends ChangeNotifier {
     DateTime Function()? clock,
     int maxFailedAttempts = kChildModeLockMaxFailedAttempts,
     Duration lockoutDuration = kChildModeLockLockoutDuration,
-  })  : _expectedPassword = expectedPassword,
-        _audit = audit ?? AuditAppend(),
-        _notifyBus = notifyBus ?? ChildModeUnlockNotifyBus(),
-        _clock = clock ?? DateTime.now,
-        _maxFailedAttempts = maxFailedAttempts,
-        _lockoutDuration = lockoutDuration;
+  }) : _expectedPassword = expectedPassword,
+       _audit = audit ?? AuditAppend(),
+       _notifyBus = notifyBus ?? ChildModeUnlockNotifyBus(),
+       _clock = clock ?? DateTime.now,
+       _maxFailedAttempts = maxFailedAttempts,
+       _lockoutDuration = lockoutDuration;
 
   String _expectedPassword;
   final AuditAppend _audit;

@@ -141,7 +141,7 @@ class _ChildActiveCallScreenState extends State<ChildActiveCallScreen>
       return;
     }
     setState(() => _sosBusy = true);
-    final fire = widget.sosFire ?? stage1SosFireService;
+    final fire = widget.sosFire ?? activeSosFireService;
     await childSosSenderOf(context).fireThrough(fire);
     if (!mounted) return;
     setState(() => _sosBusy = false);
@@ -162,11 +162,12 @@ class _ChildActiveCallScreenState extends State<ChildActiveCallScreen>
       });
       widget.onMute?.call(next);
       final l10n = AppLocalizations.of(context);
-      AppToast.show(context, message: 
-            next
-                ? l10n.childActiveCallMuteOnToast
-                : l10n.childActiveCallMuteOffToast,
-          );
+      AppToast.show(
+        context,
+        message: next
+            ? l10n.childActiveCallMuteOnToast
+            : l10n.childActiveCallMuteOffToast,
+      );
     } on Object {
       if (!mounted) return;
       setState(() => _actionBusy = false);
@@ -187,11 +188,12 @@ class _ChildActiveCallScreenState extends State<ChildActiveCallScreen>
       });
       widget.onSpeaker?.call(next);
       final l10n = AppLocalizations.of(context);
-      AppToast.show(context, message: 
-            next
-                ? l10n.childActiveCallSpeakerOnToast
-                : l10n.childActiveCallSpeakerOffToast,
-          );
+      AppToast.show(
+        context,
+        message: next
+            ? l10n.childActiveCallSpeakerOnToast
+            : l10n.childActiveCallSpeakerOffToast,
+      );
     } on Object {
       if (!mounted) return;
       setState(() => _actionBusy = false);

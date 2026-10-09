@@ -17,11 +17,11 @@ final class ChildArrivalZone {
   final String iconKey;
 
   Map<String, Object?> toJson() => {
-        'id': id,
-        'nameKey': nameKey,
-        'descKey': descKey,
-        'iconKey': iconKey,
-      };
+    'id': id,
+    'nameKey': nameKey,
+    'descKey': descKey,
+    'iconKey': iconKey,
+  };
 
   static ChildArrivalZone fromJson(Map<String, Object?> json) {
     return ChildArrivalZone(
@@ -52,11 +52,11 @@ final class ChildArrivalSnapshot {
   bool get isEmpty => zones.isEmpty;
 
   Map<String, Object?> toJson() => {
-        'zones': zones.map((e) => e.toJson()).toList(),
-        'liveLocationSafe': liveLocationSafe,
-        'liveLocationLabelKey': liveLocationLabelKey,
-        'checkInJournal': checkInJournal,
-      };
+    'zones': zones.map((e) => e.toJson()).toList(),
+    'liveLocationSafe': liveLocationSafe,
+    'liveLocationLabelKey': liveLocationLabelKey,
+    'checkInJournal': checkInJournal,
+  };
 
   static ChildArrivalSnapshot fromJson(Map<String, Object?> json) {
     final zones = <ChildArrivalZone>[];

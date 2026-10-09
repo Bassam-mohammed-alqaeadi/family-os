@@ -3,15 +3,16 @@ import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/identity/identity_runtime.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
-import 'package:family_os/features/n12_devices/family_members_mock.dart';
+import 'package:family_os/features/n12_devices/family_members_role_labels.dart';
 import 'package:family_os/features/n12_devices/family_members_repository.dart';
 
 /// Projects [IdentityRuntime] adults + [ChildrenListRepository] children
 /// onto SCR-FAT-027 roster (FE-W1-FAT-027).
 ///
 /// Fail-closed when [familyId] is null/empty. Never plants Register §10 names.
-/// Role display labels come from [FamilyMembersIdentityLabels] (`*mock*.dart`).
-final class IdentityFamilyMembersRepository implements FamilyMembersRepository {
+/// Role display labels come from [FamilyMembersRoleLabels], which production code owns.
+final class IdentityFamilyMembersRepository
+    implements FamilyMembersRepository, FamilyMembersProvenanceSource {
   IdentityFamilyMembersRepository({
     IdentityRuntime Function()? runtime,
     ChildrenListRepository? children,
@@ -41,9 +42,9 @@ final class IdentityFamilyMembersRepository implements FamilyMembersRepository {
           FamilyMemberEntry(
             id: membership.id.value,
             familyId: id,
-            displayName: FamilyMembersIdentityLabels.owner,
+            displayName: FamilyMembersRoleLabels.owner,
             kind: FamilyMemberKind.owner,
-            monogram: FamilyMembersIdentityLabels.ownerMonogram,
+            monogram: FamilyMembersRoleLabels.ownerMonogram,
             swatch: DayChildSwatch.purple,
             isSelf: isSelf,
           ),
@@ -53,9 +54,9 @@ final class IdentityFamilyMembersRepository implements FamilyMembersRepository {
           FamilyMemberEntry(
             id: membership.id.value,
             familyId: id,
-            displayName: FamilyMembersIdentityLabels.mother,
+            displayName: FamilyMembersRoleLabels.mother,
             kind: FamilyMemberKind.mother,
-            monogram: FamilyMembersIdentityLabels.motherMonogram,
+            monogram: FamilyMembersRoleLabels.motherMonogram,
             swatch: DayChildSwatch.sky,
             isSelf: isSelf,
             motherLevel: membership.motherLevel,
@@ -67,9 +68,9 @@ final class IdentityFamilyMembersRepository implements FamilyMembersRepository {
           FamilyMemberEntry(
             id: membership.id.value,
             familyId: id,
-            displayName: FamilyMembersIdentityLabels.guardian,
+            displayName: FamilyMembersRoleLabels.guardian,
             kind: FamilyMemberKind.guardian,
-            monogram: FamilyMembersIdentityLabels.guardianMonogram,
+            monogram: FamilyMembersRoleLabels.guardianMonogram,
             swatch: DayChildSwatch.amber,
             isSelf: isSelf,
             motherLevel: membership.motherLevel,
@@ -97,6 +98,7 @@ final class IdentityFamilyMembersRepository implements FamilyMembersRepository {
   }
 
   /// Delegates to children roster envelope provenance (LOCAL_DEMO_SEEDED).
+  @override
   Future<String?> loadProvenance({FamilyId? familyId}) {
     return _roster.loadProvenance(familyId: familyId);
   }

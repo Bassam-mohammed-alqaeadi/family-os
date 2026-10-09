@@ -65,7 +65,7 @@ abstract class PrivacyCollectionPrefsStore {
 final class MemoryPrivacyCollectionPrefsStore
     implements PrivacyCollectionPrefsStore {
   MemoryPrivacyCollectionPrefsStore([Map<String, String>? data])
-      : data = data ?? {};
+    : data = data ?? {};
 
   final Map<String, String> data;
 
@@ -87,11 +87,7 @@ final MemoryPrivacyCollectionPrefsStore stage1PrivacyCollectionPrefsStore =
 
 final AuditAppend stage1PrivacyCollectionAudit = AuditAppend();
 
-void _appendDeniedAudit(
-  AuditAppend audit,
-  AppRole actor,
-  String childId,
-) {
+void _appendDeniedAudit(AuditAppend audit, AppRole actor, String childId) {
   audit.add(
     '403 PRIVACY_COLLECTION write denied actor=${actor.name} child=$childId',
   );
@@ -103,16 +99,14 @@ PrivacyCollectionWriteResult _deny(
   String childId,
 ) {
   _appendDeniedAudit(audit, actor, childId);
-  return PrivacyCollectionWriteDenied(
-    PrivacyCollectionDenied(actor: actor),
-  );
+  return PrivacyCollectionWriteDenied(PrivacyCollectionDenied(actor: actor));
 }
 
 /// Prefs/JSON-backed repository (SharedPreferences adapter-ready).
 final class PrefsPrivacyCollectionRepository
     implements PrivacyCollectionRepository {
   PrefsPrivacyCollectionRepository(this._store, {AuditAppend? audit})
-      : _audit = audit ?? AuditAppend();
+    : _audit = audit ?? AuditAppend();
 
   final PrivacyCollectionPrefsStore _store;
   final AuditAppend _audit;
@@ -166,11 +160,11 @@ final class InMemoryPrivacyCollectionRepository
   InMemoryPrivacyCollectionRepository({
     Map<String, PrivacyCollectionPolicy>? seed,
     AuditAppend? audit,
-  })  : _byChild = {
-          if (seed != null)
-            for (final e in seed.entries) e.key: e.value,
-        },
-        _audit = audit ?? AuditAppend();
+  }) : _byChild = {
+         if (seed != null)
+           for (final e in seed.entries) e.key: e.value,
+       },
+       _audit = audit ?? AuditAppend();
 
   final Map<String, PrivacyCollectionPolicy> _byChild;
   final AuditAppend _audit;

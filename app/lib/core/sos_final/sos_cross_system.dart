@@ -23,10 +23,10 @@ final class SosCrossSystemCoordinator {
     required SosFinalRepository store,
     SosLocationHandoff? locationHandoff,
     CapabilityRegistry? capabilities,
-  })  : _lifecycle = lifecycle,
-        _store = store,
-        _handoff = locationHandoff,
-        _capabilities = capabilities;
+  }) : _lifecycle = lifecycle,
+       _store = store,
+       _handoff = locationHandoff,
+       _capabilities = capabilities;
 
   final SosFinalService _lifecycle;
   final SosFinalRepository _store;

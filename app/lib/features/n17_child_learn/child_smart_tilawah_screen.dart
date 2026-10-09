@@ -70,7 +70,7 @@ class _ChildSmartTilawahScreenState extends State<ChildSmartTilawahScreen> {
   void initState() {
     super.initState();
     _repo = widget.repository ?? stage1ChildSmartTilawahRepository;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _load();

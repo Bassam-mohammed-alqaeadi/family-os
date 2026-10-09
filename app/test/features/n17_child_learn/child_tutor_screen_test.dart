@@ -85,6 +85,26 @@ void main() {
     await tester.pumpAndSettle();
     expect(sos, 1);
   });
+
+  testWidgets('NotebookLM grounded sources badge + citation excerpt toast', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      repository: InMemoryChildTutorRepository(
+        seed: childTutorPrototypeFixture(),
+      ),
+    );
+    expect(find.byKey(ChildTutorKeys.groundedSourcesBadge), findsOneWidget);
+
+    await tester.ensureVisible(find.byKey(ChildTutorKeys.citationP47Cta));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(ChildTutorKeys.citationP47Cta));
+    await tester.pump();
+    expect(find.textContaining('Math Textbook - p. 47'), findsOneWidget);
+    AppToast.dismiss();
+    await tester.pumpAndSettle();
+  });
 }
 
 Future<void> _pump(

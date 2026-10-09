@@ -19,12 +19,7 @@ enum AuditLogEntryKind {
 }
 
 /// Who performed or triggered the action (identity on every row — ن٥٢).
-enum AuditLogActor {
-  father,
-  mother,
-  system,
-  childDevice,
-}
+enum AuditLogActor { father, mother, system, childDevice }
 
 /// One append-only audit row (R10 — never mutated after create).
 @immutable

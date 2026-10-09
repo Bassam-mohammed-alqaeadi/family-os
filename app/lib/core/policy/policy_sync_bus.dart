@@ -113,10 +113,8 @@ final class PolicySyncBus {
   final Map<String, ChildPolicyMirror> _mirrors = {};
   final Map<String, List<PolicySyncEvent>> _queue = {};
 
-  final _statusControllers =
-      <String, StreamController<PolicySyncStatus>>{};
-  final _mirrorControllers =
-      <String, StreamController<ChildPolicyMirror>>{};
+  final _statusControllers = <String, StreamController<PolicySyncStatus>>{};
+  final _mirrorControllers = <String, StreamController<ChildPolicyMirror>>{};
 
   /// Soft journal bridge — never throws to callers.
   void Function(PolicySyncEvent event, PolicySyncStatus status)? journalHook;

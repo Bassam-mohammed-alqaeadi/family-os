@@ -8,13 +8,11 @@ final class AiStageFlags {
   const AiStageFlags(this._enabled);
 
   /// All stages off — honest coming-soon UI when cache/server unknown.
-  factory AiStageFlags.allOff() => AiStageFlags({
-        for (final id in AiStageId.values) id: false,
-      });
+  factory AiStageFlags.allOff() =>
+      AiStageFlags({for (final id in AiStageId.values) id: false});
 
-  factory AiStageFlags.fromMap(Map<AiStageId, bool> map) => AiStageFlags({
-        for (final id in AiStageId.values) id: map[id] ?? false,
-      });
+  factory AiStageFlags.fromMap(Map<AiStageId, bool> map) =>
+      AiStageFlags({for (final id in AiStageId.values) id: map[id] ?? false});
 
   final Map<AiStageId, bool> _enabled;
 
@@ -22,10 +20,8 @@ final class AiStageFlags {
 
   Map<AiStageId, bool> get asMap => Map.unmodifiable(_enabled);
 
-  AiStageFlags copyWithEnabled(AiStageId id, bool enabled) => AiStageFlags({
-        ..._enabled,
-        id: enabled,
-      });
+  AiStageFlags copyWithEnabled(AiStageId id, bool enabled) =>
+      AiStageFlags({..._enabled, id: enabled});
 
   @override
   bool operator ==(Object other) =>
@@ -34,6 +30,6 @@ final class AiStageFlags {
 
   @override
   int get hashCode => Object.hashAll(
-        AiStageId.values.map((id) => Object.hash(id, _enabled[id])),
-      );
+    AiStageId.values.map((id) => Object.hash(id, _enabled[id])),
+  );
 }

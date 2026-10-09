@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Role-filtered SOS action row — only enabled actions appear as pressable.
 class SosActionBar extends StatelessWidget {
-  const SosActionBar({
-    super.key,
-    required this.children,
-  });
+  const SosActionBar({super.key, required this.children});
 
   final List<Widget> children;
 
@@ -65,8 +62,10 @@ class SosActionButton extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 14,
+                ),
                 child: Text(
                   label,
                   textAlign: TextAlign.center,

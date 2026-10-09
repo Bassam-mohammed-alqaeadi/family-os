@@ -10,6 +10,7 @@ import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/i18n/notebook_studio_i18n.dart';
 import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n17_child_learn/child_tutor_models.dart';
@@ -23,6 +24,9 @@ abstract final class ChildTutorKeys {
   static const body = Key('child_tutor_body');
   static const policyBanner = Key('child_tutor_policy');
   static const transparencyNote = Key('child_tutor_transparency');
+  static const groundedSourcesBadge = Key('child_tutor_grounded_sources');
+  static const citationP47Cta = Key('child_tutor_citation_p47');
+  static const citationWorksheetCta = Key('child_tutor_citation_worksheet');
   static const thread = Key('child_tutor_thread');
   static const choices = Key('child_tutor_choices');
   static const photoCta = Key('child_tutor_photo');
@@ -77,7 +81,7 @@ class _ChildTutorScreenState extends State<ChildTutorScreen> {
   void initState() {
     super.initState();
     _repo = widget.repository ?? stage1ChildTutorRepository;
-    _sos = widget.sosFire ?? stage1SosFireService;
+    _sos = widget.sosFire ?? activeSosFireService;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _load();
@@ -251,6 +255,41 @@ class _ChildTutorScreenState extends State<ChildTutorScreen> {
               fontWeight: FontWeight.w600,
               color: colors.ink2,
             ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            key: ChildTutorKeys.groundedSourcesBadge,
+            l10n.childTutorGroundedSourcesBadge,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
+              color: colors.tealDeep,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: [
+              ActionChip(
+                key: ChildTutorKeys.citationP47Cta,
+                label: Text(l10n.childTutorCitationChipP47),
+                onPressed: () => AppToast.show(
+                  context,
+                  message: l10n.previewApproveCitationExcerptP47,
+                ),
+              ),
+              ActionChip(
+                key: ChildTutorKeys.citationWorksheetCta,
+                label: Text(l10n.childTutorCitationChipWorksheet),
+                onPressed: () => AppToast.show(
+                  context,
+                  message: l10n.previewApproveCitationExcerptWorksheet,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Column(

@@ -15,9 +15,7 @@ final class PrivacyCollectionPolicy {
   factory PrivacyCollectionPolicy.defaults({required String childId}) {
     return PrivacyCollectionPolicy(
       childId: childId,
-      scopes: {
-        for (final s in kLeanCollectionScopes) s: true,
-      },
+      scopes: {for (final s in kLeanCollectionScopes) s: true},
     );
   }
 
@@ -29,9 +27,9 @@ final class PrivacyCollectionPolicy {
 
   /// Enabled scopes only — child transparency list input.
   List<CollectionScope> get enabledScopes => [
-        for (final s in kLeanCollectionScopes)
-          if (isEnabled(s)) s,
-      ];
+    for (final s in kLeanCollectionScopes)
+      if (isEnabled(s)) s,
+  ];
 
   PrivacyCollectionPolicy copyWith({
     String? childId,
@@ -52,12 +50,10 @@ final class PrivacyCollectionPolicy {
   }
 
   Map<String, dynamic> toJson() => {
-        'childId': childId,
-        'scopes': {
-          for (final s in kLeanCollectionScopes) s.key: isEnabled(s),
-        },
-        if (updatedAt != null) 'updatedAt': updatedAt!.toUtc().toIso8601String(),
-      };
+    'childId': childId,
+    'scopes': {for (final s in kLeanCollectionScopes) s.key: isEnabled(s)},
+    if (updatedAt != null) 'updatedAt': updatedAt!.toUtc().toIso8601String(),
+  };
 
   factory PrivacyCollectionPolicy.fromJson(Map<String, dynamic> json) {
     final childId = (json['childId'] ?? '').toString();
@@ -95,18 +91,13 @@ final class PrivacyCollectionPolicy {
 
   @override
   int get hashCode => Object.hash(
-        childId,
-        updatedAt,
-        Object.hashAll(
-          kLeanCollectionScopes.map((s) => scopes[s]),
-        ),
-      );
+    childId,
+    updatedAt,
+    Object.hashAll(kLeanCollectionScopes.map((s) => scopes[s])),
+  );
 }
 
-bool _scopesEqual(
-  Map<CollectionScope, bool> a,
-  Map<CollectionScope, bool> b,
-) {
+bool _scopesEqual(Map<CollectionScope, bool> a, Map<CollectionScope, bool> b) {
   for (final s in kLeanCollectionScopes) {
     if ((a[s] ?? false) != (b[s] ?? false)) return false;
   }

@@ -67,11 +67,9 @@ void main() {
     await store.ensureRealLocalSampleMessages(familyId: fid);
     expect(
       (await store.loadDetail(
-            FamilyChatLocalStore.familyChatWith,
-            familyId: fid,
-          ))!
-          .messages
-          .length,
+        FamilyChatLocalStore.familyChatWith,
+        familyId: fid,
+      ))!.messages.length,
       3,
     );
   });

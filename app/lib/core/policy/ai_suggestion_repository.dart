@@ -56,7 +56,7 @@ final class MockAiSuggestionRepository implements AiSuggestionRepository {
   MockAiSuggestionRepository({
     AdvisorRepository? advisor,
     RulesEngineRuleRepository? rules,
-  }) : _advisor = advisor ?? stage1AdvisorRepository,
+  }) : _advisor = advisor ?? const MockAdvisorRepository(),
        _rules = rules ?? stage1RulesEngineRuleRepository;
 
   final AdvisorRepository _advisor;
