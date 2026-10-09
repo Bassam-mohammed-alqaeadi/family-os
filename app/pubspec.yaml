@@ -28,7 +28,7 @@ dependencies:
   qr_flutter: ^4.1.0
   mobile_scanner: ^7.0.0
   # Family chat media: pick or take a photo, record a voice note, play a voice note.
-  image_picker: ^1.2.4
+  image_picker: ^1.2.2
   record: ^6.1.2
   just_audio: ^0.10.6
 
