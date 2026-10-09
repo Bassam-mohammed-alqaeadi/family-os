@@ -12673,7 +12673,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get familyChatMediaVoiceNote => 'رسالة صوتية';
 
   @override
-  String get familyChatMediaUnavailable => 'هذا المرفق لم يعد متاحًا';
+  String get familyChatMediaItemUnavailable => 'هذا المرفق لم يعد متاحًا';
 
   @override
   String get familyChatMediaLoading => 'جارٍ تحميل المرفق…';

@@ -22501,7 +22501,7 @@ abstract class AppLocalizations {
   ///
   /// In ar, this message translates to:
   /// **'هذا المرفق لم يعد متاحًا'**
-  String get familyChatMediaUnavailable;
+  String get familyChatMediaItemUnavailable;
 
   /// W9 realtime, media and receipt copy
   ///

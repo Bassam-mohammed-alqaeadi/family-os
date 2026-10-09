@@ -16332,8 +16332,8 @@
   "@familyChatMediaVoiceNote": {
       "description": "W9 realtime, media and receipt copy"
   },
-  "familyChatMediaUnavailable": "هذا المرفق لم يعد متاحًا",
-  "@familyChatMediaUnavailable": {
+  "familyChatMediaItemUnavailable": "هذا المرفق لم يعد متاحًا",
+  "@familyChatMediaItemUnavailable": {
       "description": "W9 realtime, media and receipt copy"
   },
   "familyChatMediaLoading": "جارٍ تحميل المرفق…",

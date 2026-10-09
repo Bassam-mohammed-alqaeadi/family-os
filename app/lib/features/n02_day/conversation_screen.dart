@@ -1288,7 +1288,7 @@ class _MediaViewState extends State<_MediaView> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final media = widget.media;
-    if (!media.available) return _note(l10n.familyChatMediaUnavailable);
+    if (!media.available) return _note(l10n.familyChatMediaItemUnavailable);
 
     if (media.kind == ConversationMediaKind.audio) {
       final ms = media.durationMs;
@@ -1309,7 +1309,7 @@ class _MediaViewState extends State<_MediaView> {
           return _note(l10n.familyChatMediaLoading);
         }
         final bytes = snapshot.data;
-        if (bytes == null) return _note(l10n.familyChatMediaUnavailable);
+        if (bytes == null) return _note(l10n.familyChatMediaItemUnavailable);
         return ClipRRect(
           borderRadius: const BorderRadius.all(Radius.circular(12)),
           child: Image.memory(
@@ -1317,7 +1317,7 @@ class _MediaViewState extends State<_MediaView> {
             fit: BoxFit.contain,
             gaplessPlayback: true,
             errorBuilder: (context, error, stackTrace) =>
-                _note(l10n.familyChatMediaUnavailable),
+                _note(l10n.familyChatMediaItemUnavailable),
           ),
         );
       },

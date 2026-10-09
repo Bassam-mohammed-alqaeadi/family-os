@@ -16317,8 +16317,8 @@
   "@familyChatMediaVoiceNote": {
       "description": "W9 realtime, media and receipt copy"
   },
-  "familyChatMediaUnavailable": "This attachment is no longer available",
-  "@familyChatMediaUnavailable": {
+  "familyChatMediaItemUnavailable": "This attachment is no longer available",
+  "@familyChatMediaItemUnavailable": {
       "description": "W9 realtime, media and receipt copy"
   },
   "familyChatMediaLoading": "Loading attachment…",

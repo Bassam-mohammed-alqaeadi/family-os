@@ -12864,7 +12864,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get familyChatMediaVoiceNote => 'Voice note';
 
   @override
-  String get familyChatMediaUnavailable =>
+  String get familyChatMediaItemUnavailable =>
       'This attachment is no longer available';
 
   @override
