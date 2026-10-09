@@ -17,9 +17,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      # على طلب الدمج يُسحب فرع الرأس باسمه (لا merge ref منفصل)، لأن فحص المستودع
+      # يرفض detached HEAD عن قصد.
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Verify loop state is consistent and the workspace is safe
         run: |
