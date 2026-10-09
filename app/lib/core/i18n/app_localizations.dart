@@ -22485,6 +22485,72 @@ abstract class AppLocalizations {
   /// **'تعديل'**
   String get familyChatEdit;
 
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'صورة'**
+  String get familyChatMediaPhoto;
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'رسالة صوتية'**
+  String get familyChatMediaVoiceNote;
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا المرفق لم يعد متاحًا'**
+  String get familyChatMediaItemUnavailable;
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ تحميل المرفق…'**
+  String get familyChatMediaLoading;
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'تشغيل الرسائل الصوتية غير متاح في هذه النسخة'**
+  String get familyChatMediaNoPlayback;
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'المرفقات تظهر على جهاز الوالد في هذه النسخة'**
+  String get familyChatMediaNotOnThisDevice;
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'وصلت إلى {count} من {total}'**
+  String familyChatReceiptDelivered(int count, int total);
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'قرأها {count} من {total}'**
+  String familyChatReceiptRead(int count, int total);
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'التحديث الفوري مفعّل'**
+  String get familyChatRealtimeLive;
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'التحديث الفوري غير متصل؛ يتم التحقق كل ١٥ ثانية'**
+  String get familyChatRealtimeRetrying;
+
+  /// W9 realtime, media and receipt copy
+  ///
+  /// In ar, this message translates to:
+  /// **'يتم التحقق من الرسائل كل ١٥ ثانية'**
+  String get familyChatRealtimePolling;
+
   /// W9 family chat client state and controls
   ///
   /// In ar, this message translates to:
@@ -22550,6 +22616,90 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'تبقى دردشة الأسرة متاحة بعد انتهاء وقت اللعب.'**
   String get familyChatNeverLocks;
+
+  /// No description provided for @conversationAttachPhotoGallery.
+  ///
+  /// In ar, this message translates to:
+  /// **'صورة من المعرض'**
+  String get conversationAttachPhotoGallery;
+
+  /// No description provided for @conversationAttachPhotoCamera.
+  ///
+  /// In ar, this message translates to:
+  /// **'التقاط صورة'**
+  String get conversationAttachPhotoCamera;
+
+  /// No description provided for @conversationAttachVoice.
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل رسالة صوتية'**
+  String get conversationAttachVoice;
+
+  /// No description provided for @mediaPhotoPendingLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'الصورة جاهزة. أضف تعليقًا إن أردت، ثم أرسل.'**
+  String get mediaPhotoPendingLabel;
+
+  /// No description provided for @mediaPhotoRemove.
+  ///
+  /// In ar, this message translates to:
+  /// **'إزالة الصورة'**
+  String get mediaPhotoRemove;
+
+  /// No description provided for @mediaComposeUnsupportedType.
+  ///
+  /// In ar, this message translates to:
+  /// **'نوع الملف غير مدعوم. اختر صورة بصيغة JPEG أو PNG أو WebP.'**
+  String get mediaComposeUnsupportedType;
+
+  /// No description provided for @mediaComposeTooLarge.
+  ///
+  /// In ar, this message translates to:
+  /// **'حجم الملف كبير جدًا للإرسال.'**
+  String get mediaComposeTooLarge;
+
+  /// No description provided for @mediaComposeMicrophoneDenied.
+  ///
+  /// In ar, this message translates to:
+  /// **'يلزم السماح بالوصول إلى الميكروفون لتسجيل رسالة صوتية. فعّله في الإعدادات ثم حاول مجددًا.'**
+  String get mediaComposeMicrophoneDenied;
+
+  /// No description provided for @mediaComposeFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر تجهيز الصورة أو التسجيل. حاول مرة أخرى.'**
+  String get mediaComposeFailed;
+
+  /// No description provided for @voiceRecordingTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'رسالة صوتية'**
+  String get voiceRecordingTitle;
+
+  /// No description provided for @voiceRecordingSend.
+  ///
+  /// In ar, this message translates to:
+  /// **'إرسال'**
+  String get voiceRecordingSend;
+
+  /// No description provided for @voiceRecordingCancel.
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء'**
+  String get voiceRecordingCancel;
+
+  /// No description provided for @voicePlaySemantics.
+  ///
+  /// In ar, this message translates to:
+  /// **'تشغيل الرسالة الصوتية'**
+  String get voicePlaySemantics;
+
+  /// No description provided for @voicePauseSemantics.
+  ///
+  /// In ar, this message translates to:
+  /// **'إيقاف الرسالة الصوتية مؤقتًا'**
+  String get voicePauseSemantics;
 }
 
 class _AppLocalizationsDelegate

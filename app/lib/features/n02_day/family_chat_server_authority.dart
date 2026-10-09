@@ -1,4 +1,9 @@
+import 'dart:typed_data';
+
+import 'package:family_os/features/n02_day/family_push_registration.dart';
 import 'package:family_os/foundation_gate/family_chat_api_client.dart';
+import 'package:family_os/foundation_gate/family_push_client.dart';
+import 'package:family_os/foundation_gate/family_chat_media_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
@@ -65,11 +70,37 @@ final class FamilyChatServerAuthority {
     required this.idToken,
     required this.familyId,
     this.childOptions,
-  });
+    FamilyChatMediaClient? media,
+  }) : _media = media;
 
   final FamilyChatApiClient api;
   final Future<String> Function() idToken;
   final String? Function() familyId;
+  FamilyChatMediaClient? _media;
+
+  FamilyChatMediaClient get _mediaClient =>
+      _media ??= FamilyChatMediaClient(configuration: api.configuration);
+
+  FamilyPushRegistrar? _push;
+
+  /// Keeps this guardian's handset registered for chat nudges, for the selected family.
+  ///
+  /// Push is optional: without Firebase on this build, or without a notification permission,
+  /// nothing is registered and chat works exactly as before. A failure here is never shown and
+  /// never reaches the chat list, which must keep loading.
+  Future<void> registerGuardianPush({PushTokenSource? tokens}) async {
+    final family = familyId()?.trim();
+    if (family == null || !isFoundationGateUuid(family)) return;
+    try {
+      final registrar = _push ??= FamilyPushRegistrar(
+        client: FamilyPushClient(configuration: api.configuration),
+        tokens: tokens ?? FirebasePushTokenSource(),
+      );
+      await registrar.ensureRegistered(familyId: family, idToken: await idToken());
+    } on Object {
+      // Best effort, as above. Nothing here may fail a chat load.
+    }
+  }
 
   /// Kept as a compatibility seam for older child-picker consumers. New direct/group creation
   /// uses the full participant roster returned by the server instead.
@@ -237,6 +268,7 @@ final class FamilyChatServerAuthority {
     required String body,
     required String clientMessageId,
     required String idempotencyKey,
+    String? mediaId,
   }) async {
     if (!_addressable(threadId)) return _refused();
     return _guardianCall(
@@ -246,6 +278,28 @@ final class FamilyChatServerAuthority {
         body: body,
         clientMessageId: clientMessageId,
         idempotencyKey: idempotencyKey,
+        idToken: token,
+        mediaId: mediaId,
+      ),
+    );
+  }
+
+  Future<FamilyChatAuthorityAnswer<FamilyChatMedia>> uploadGuardianMedia({
+    required String threadId,
+    required String clientMediaId,
+    required String contentType,
+    required Uint8List bytes,
+    int? durationMs,
+  }) async {
+    if (!_addressable(threadId)) return _refused();
+    return _guardianCall(
+      (family, token) => _mediaClient.uploadGuardianMedia(
+        familyId: family,
+        threadId: threadId,
+        clientMediaId: clientMediaId,
+        contentType: contentType,
+        bytes: bytes,
+        durationMs: durationMs,
         idToken: token,
       ),
     );
@@ -393,6 +447,39 @@ final class FamilyChatServerAuthority {
         deviceId: deviceId,
         threadId: threadId,
         readSeq: readSeq,
+        idempotencyKey: idempotencyKey,
+      ),
+    );
+  }
+
+  Future<FamilyChatAuthorityAnswer<FamilyChatDeliveryState>> markGuardianThreadDelivered({
+    required String threadId,
+    required int deliveredSeq,
+    required String idempotencyKey,
+  }) async {
+    if (!_addressable(threadId)) return _refused();
+    return _guardianCall(
+      (family, token) => api.markFamilyThreadDelivered(
+        familyId: family,
+        threadId: threadId,
+        deliveredSeq: deliveredSeq,
+        idempotencyKey: idempotencyKey,
+        idToken: token,
+      ),
+    );
+  }
+
+  Future<FamilyChatAuthorityAnswer<FamilyChatDeliveryState>> markChildThreadDelivered({
+    required String threadId,
+    required int deliveredSeq,
+    required String idempotencyKey,
+  }) async {
+    if (!_addressable(threadId)) return _refused();
+    return _deviceCall(
+      (deviceId) => api.markDeviceThreadDelivered(
+        deviceId: deviceId,
+        threadId: threadId,
+        deliveredSeq: deliveredSeq,
         idempotencyKey: idempotencyKey,
       ),
     );

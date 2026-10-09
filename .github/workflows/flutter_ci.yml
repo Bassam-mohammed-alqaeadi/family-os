@@ -32,7 +32,16 @@ jobs:
           channel: stable
           cache: true
       - name: Resolve packages
+        id: resolve_packages
         run: flutter pub get
+      - name: Upload resolved dependency lock
+        if: always() && steps.resolve_packages.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: resolved-pubspec-lock-${{ github.run_id }}
+          path: app/pubspec.lock
+          if-no-files-found: error
+          retention-days: 7
       - name: Generate localization source
         run: flutter gen-l10n
       - name: Generate route and shell source
@@ -248,7 +257,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: regenerated-localizations-${{ github.run_id }}
-          path: lib/core/i18n/app_localizations*.dart
+          path: app/lib/core/i18n/app_localizations*.dart
           if-no-files-found: error
           retention-days: 3
       - name: Enforce analyzer, test and generated-source gates

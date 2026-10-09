@@ -12667,6 +12667,46 @@ class AppLocalizationsAr extends AppLocalizations {
   String get familyChatEdit => 'تعديل';
 
   @override
+  String get familyChatMediaPhoto => 'صورة';
+
+  @override
+  String get familyChatMediaVoiceNote => 'رسالة صوتية';
+
+  @override
+  String get familyChatMediaItemUnavailable => 'هذا المرفق لم يعد متاحًا';
+
+  @override
+  String get familyChatMediaLoading => 'جارٍ تحميل المرفق…';
+
+  @override
+  String get familyChatMediaNoPlayback =>
+      'تشغيل الرسائل الصوتية غير متاح في هذه النسخة';
+
+  @override
+  String get familyChatMediaNotOnThisDevice =>
+      'المرفقات تظهر على جهاز الوالد في هذه النسخة';
+
+  @override
+  String familyChatReceiptDelivered(int count, int total) {
+    return 'وصلت إلى $count من $total';
+  }
+
+  @override
+  String familyChatReceiptRead(int count, int total) {
+    return 'قرأها $count من $total';
+  }
+
+  @override
+  String get familyChatRealtimeLive => 'التحديث الفوري مفعّل';
+
+  @override
+  String get familyChatRealtimeRetrying =>
+      'التحديث الفوري غير متصل؛ يتم التحقق كل ١٥ ثانية';
+
+  @override
+  String get familyChatRealtimePolling => 'يتم التحقق من الرسائل كل ١٥ ثانية';
+
+  @override
   String get familyChatDelete => 'حذف';
 
   @override
@@ -12702,4 +12742,50 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get familyChatNeverLocks =>
       'تبقى دردشة الأسرة متاحة بعد انتهاء وقت اللعب.';
+
+  @override
+  String get conversationAttachPhotoGallery => 'صورة من المعرض';
+
+  @override
+  String get conversationAttachPhotoCamera => 'التقاط صورة';
+
+  @override
+  String get conversationAttachVoice => 'تسجيل رسالة صوتية';
+
+  @override
+  String get mediaPhotoPendingLabel =>
+      'الصورة جاهزة. أضف تعليقًا إن أردت، ثم أرسل.';
+
+  @override
+  String get mediaPhotoRemove => 'إزالة الصورة';
+
+  @override
+  String get mediaComposeUnsupportedType =>
+      'نوع الملف غير مدعوم. اختر صورة بصيغة JPEG أو PNG أو WebP.';
+
+  @override
+  String get mediaComposeTooLarge => 'حجم الملف كبير جدًا للإرسال.';
+
+  @override
+  String get mediaComposeMicrophoneDenied =>
+      'يلزم السماح بالوصول إلى الميكروفون لتسجيل رسالة صوتية. فعّله في الإعدادات ثم حاول مجددًا.';
+
+  @override
+  String get mediaComposeFailed =>
+      'تعذّر تجهيز الصورة أو التسجيل. حاول مرة أخرى.';
+
+  @override
+  String get voiceRecordingTitle => 'رسالة صوتية';
+
+  @override
+  String get voiceRecordingSend => 'إرسال';
+
+  @override
+  String get voiceRecordingCancel => 'إلغاء';
+
+  @override
+  String get voicePlaySemantics => 'تشغيل الرسالة الصوتية';
+
+  @override
+  String get voicePauseSemantics => 'إيقاف الرسالة الصوتية مؤقتًا';
 }

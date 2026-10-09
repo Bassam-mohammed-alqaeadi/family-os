@@ -16309,6 +16309,58 @@
   "@familyChatEdit": {
       "description": "W9 family chat client state and controls"
   },
+  "familyChatMediaPhoto": "Photo",
+  "@familyChatMediaPhoto": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatMediaVoiceNote": "Voice note",
+  "@familyChatMediaVoiceNote": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatMediaItemUnavailable": "This attachment is no longer available",
+  "@familyChatMediaItemUnavailable": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatMediaLoading": "Loading attachment…",
+  "@familyChatMediaLoading": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatMediaNoPlayback": "Voice-note playback is not available in this version",
+  "@familyChatMediaNoPlayback": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatMediaNotOnThisDevice": "In this version, attachments show on a guardian's device",
+  "@familyChatMediaNotOnThisDevice": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatReceiptDelivered": "Delivered to {count} of {total}",
+  "@familyChatReceiptDelivered": {
+      "placeholders": {
+        "count": {"type": "int"},
+        "total": {"type": "int"}
+      },
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatReceiptRead": "Read by {count} of {total}",
+  "@familyChatReceiptRead": {
+      "placeholders": {
+        "count": {"type": "int"},
+        "total": {"type": "int"}
+      },
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatRealtimeLive": "Live updates on",
+  "@familyChatRealtimeLive": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatRealtimeRetrying": "Live updates are off; checking every 15 seconds",
+  "@familyChatRealtimeRetrying": {
+      "description": "W9 realtime, media and receipt copy"
+  },
+  "familyChatRealtimePolling": "Checking for messages every 15 seconds",
+  "@familyChatRealtimePolling": {
+      "description": "W9 realtime, media and receipt copy"
+  },
   "familyChatDelete": "Delete",
   "@familyChatDelete": {
       "description": "W9 family chat client state and controls"
@@ -16352,5 +16404,19 @@
   "familyChatNeverLocks": "Family chat stays available after play time ends.",
   "@familyChatNeverLocks": {
       "description": "W9 chat source and child availability honesty"
-  }
+  },
+  "conversationAttachPhotoGallery": "Photo from gallery",
+  "conversationAttachPhotoCamera": "Take a photo",
+  "conversationAttachVoice": "Record a voice note",
+  "mediaPhotoPendingLabel": "Photo ready. Add a caption if you like, then send.",
+  "mediaPhotoRemove": "Remove photo",
+  "mediaComposeUnsupportedType": "This file type is not supported. Choose a JPEG, PNG or WebP photo.",
+  "mediaComposeTooLarge": "This file is too large to send.",
+  "mediaComposeMicrophoneDenied": "Microphone access is needed to record a voice note. Allow it in settings and try again.",
+  "mediaComposeFailed": "The photo or recording could not be prepared. Try again.",
+  "voiceRecordingTitle": "Voice note",
+  "voiceRecordingSend": "Send",
+  "voiceRecordingCancel": "Cancel",
+  "voicePlaySemantics": "Play voice note",
+  "voicePauseSemantics": "Pause voice note"
 }

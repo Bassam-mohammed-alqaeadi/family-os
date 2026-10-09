@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
@@ -10,6 +12,7 @@ import 'package:family_os/features/n02_day/conversations_list_screen.dart';
 import 'package:family_os/features/n02_day/family_chat_server_authority.dart';
 import 'package:family_os/features/n02_day/family_chat_server_repository.dart';
 import 'package:family_os/foundation_gate/family_chat_api_client.dart';
+import 'package:family_os/foundation_gate/family_chat_realtime_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 import 'package:flutter/material.dart';
@@ -39,6 +42,13 @@ Map<String, Object?> _message(int seq, {String? body, int revision = 1}) =>
       'deletedById': null,
       'createdAt': _messageTime,
       'readCount': 1,
+      'kind': 'text',
+      'media': null,
+      'receipt': <String, Object?>{
+        'deliveredCount': 1,
+        'readCount': 1,
+        'otherParticipantCount': 1,
+      },
     };
 
 Map<String, Object?> _thread(
@@ -96,6 +106,22 @@ Map<String, Object?> _readState(int seq) => <String, Object?>{
   'participantKind': 'membership',
   'participantId': _membershipId,
   'lastReadSeq': seq,
+};
+
+Map<String, Object?> _deliveryState(int seq) => <String, Object?>{
+  'threadId': _threadId,
+  'participantKind': 'membership',
+  'participantId': _membershipId,
+  'lastDeliveredSeq': seq,
+  'lastReadSeq': 0,
+};
+
+Map<String, Object?> _childDeliveryState(int seq) => <String, Object?>{
+  'threadId': _threadId,
+  'participantKind': 'child',
+  'participantId': _childId,
+  'lastDeliveredSeq': seq,
+  'lastReadSeq': 0,
 };
 
 Map<String, Object?> _childReadState(int seq) => <String, Object?>{
@@ -201,6 +227,7 @@ void main() {
           'hasMore': true,
         }),
       )
+      ..add(_response(200, <String, Object?>{'deliveryState': _deliveryState(80)}))
       ..add(_response(200, <String, Object?>{'readState': _readState(80)}))
       ..add(
         _response(200, <String, Object?>{
@@ -209,6 +236,7 @@ void main() {
           'hasMore': false,
         }),
       )
+      ..add(_response(200, <String, Object?>{'deliveryState': _deliveryState(81)}))
       ..add(_response(200, <String, Object?>{'readState': _readState(81)}));
     final api = FamilyChatApiClient(
       configuration: FoundationGateConfiguration.fromStagingApiOrigin(
@@ -238,7 +266,9 @@ void main() {
       'afterSeq': '30',
       'limit': '50',
     });
-    expect(jsonDecode(transport.calls[2].body!), <String, Object?>{'readSeq': 80});
+    // Acknowledge receipt of what was fetched, before marking it read.
+    expect(jsonDecode(transport.calls[2].body!), <String, Object?>{'deliveredSeq': 80});
+    expect(jsonDecode(transport.calls[3].body!), <String, Object?>{'readSeq': 80});
 
     final refreshed = await repository.refresh(_threadId);
     expect(refreshed, isNotNull);
@@ -249,16 +279,19 @@ void main() {
     );
     expect(refreshed.messages.last.seq, 81);
     expect(refreshed.lastReadSeq, 81);
-    expect(transport.calls[3].uri.queryParameters, <String, String>{
+    expect(transport.calls[4].uri.queryParameters, <String, String>{
       'afterSeq': '30',
       'limit': '100',
     });
+    expect(jsonDecode(transport.calls[5].body!), <String, Object?>{'deliveredSeq': 81});
     expect(transport.calls.map((call) => call.headers['authorization']), <String?>[
       'Bearer guardian-token-1',
       'Bearer guardian-token-2',
       'Bearer guardian-token-3',
       'Bearer guardian-token-4',
       'Bearer guardian-token-5',
+      'Bearer guardian-token-6',
+      'Bearer guardian-token-7',
     ]);
   });
 
@@ -488,7 +521,7 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('server conversation states stored text honestly and disables unsupported media', (
+  testWidgets('server conversation states stored text honestly and offers guardian media', (
     tester,
   ) async {
     final transport = _QueueTransport();
@@ -504,6 +537,7 @@ void main() {
           'hasMore': false,
         }),
       )
+      ..add(_response(200, <String, Object?>{'deliveryState': _deliveryState(1)}))
       ..add(_response(200, <String, Object?>{'readState': _readState(1)}))
       ..add(
         _response(200, <String, Object?>{
@@ -512,6 +546,7 @@ void main() {
           'hasMore': false,
         }),
       )
+      ..add(_response(200, <String, Object?>{'deliveryState': _deliveryState(2)}))
       ..add(_response(200, <String, Object?>{'readState': _readState(2)}));
     final authority = FamilyChatServerAuthority(
       api: FamilyChatApiClient(
@@ -523,9 +558,17 @@ void main() {
       idToken: () async => 'guardian-token',
       familyId: () => _familyId,
     );
+    // The live socket is replaced by one that never connects, so the widget test has no timers.
     final repository = FamilyChatServerConversationRepository(
       authority: authority,
       surface: FamilyChatSurface.guardian,
+      realtime: FamilyChatRealtimeClient(
+        configuration: FoundationGateConfiguration.fromStagingApiOrigin(
+          Uri.parse('https://staging.example.test'),
+        ),
+        bearer: () async => 'guardian-token',
+        connector: (uri, headers) => Completer<WebSocket>().future,
+      ),
     );
 
     await tester.pumpWidget(
@@ -552,18 +595,20 @@ void main() {
     expect(find.byKey(ConversationKeys.serverStoredTag), findsOneWidget);
     expect(find.text('Server-stored text'), findsOneWidget);
     expect(find.byKey(ConversationKeys.encryptedTag), findsNothing);
-    expect(find.byKey(ConversationKeys.mediaUnavailable), findsOneWidget);
+    expect(find.byKey(ConversationKeys.mediaUnavailable), findsNothing);
     expect(
       tester.widget<IconButton>(find.byKey(ConversationKeys.attach)).onPressed,
-      isNull,
+      isNotNull,
     );
     expect(find.text('Message 1'), findsOneWidget);
-    expect(transport.calls, hasLength(3));
+    // threads, messages, delivered, read.
+    expect(transport.calls, hasLength(4));
 
     await tester.pump(const Duration(seconds: 15));
     await tester.pumpAndSettle();
     expect(find.text('Message 2'), findsOneWidget);
-    expect(transport.calls, hasLength(5));
+    // The poll adds messages, delivered and read.
+    expect(transport.calls, hasLength(7));
   });
 
   testWidgets('paired child thread uses native auth and makes text-only server storage clear', (
@@ -585,6 +630,11 @@ void main() {
           'messages': [_message(1)],
           'readState': _childReadState(0),
           'hasMore': false,
+        }),
+      )
+      ..add(
+        _response(200, <String, Object?>{
+          'deliveryState': _childDeliveryState(1),
         }),
       )
       ..add(
@@ -659,7 +709,7 @@ void main() {
     );
     expect(
       deviceTransport.requests.map((request) => request.operation),
-      <String>['listThreads', 'listMessages', 'markRead'],
+      <String>['listThreads', 'listMessages', 'markDelivered', 'markRead'],
     );
   });
 

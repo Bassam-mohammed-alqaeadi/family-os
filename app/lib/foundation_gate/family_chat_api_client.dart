@@ -145,14 +145,137 @@ final class FamilyChatCapabilities {
   }
 }
 
+/// What a message carries. Text is the only kind the first chat contract had; `image` and
+/// `audio` were added with W9 and always come with a media item unless the message was deleted.
+enum FamilyChatMessageKind {
+  text('text'),
+  image('image'),
+  audio('audio');
+
+  const FamilyChatMessageKind(this.wireValue);
+
+  final String wireValue;
+
+  static FamilyChatMessageKind parse(Object? value) => switch (value) {
+    'text' => FamilyChatMessageKind.text,
+    'image' => FamilyChatMessageKind.image,
+    'audio' => FamilyChatMessageKind.audio,
+    _ => throw _invalidField('kind'),
+  };
+}
+
+const Set<String> _imageMimeTypes = <String>{'image/jpeg', 'image/png', 'image/webp'};
+const Set<String> _audioMimeTypes = <String>{'audio/mp4', 'audio/ogg', 'audio/mpeg'};
+
+/// A photo or voice note as the server discloses it. The bytes are NOT in this object: they are
+/// fetched from [contentPath] with the caller's own credential, and only while the caller is in
+/// the room. A removed item has no content path and no bytes.
+final class FamilyChatMedia {
+  const FamilyChatMedia({
+    required this.id,
+    required this.kind,
+    required this.mimeType,
+    required this.byteSize,
+    required this.durationMs,
+    required this.sha256,
+    required this.removed,
+    required this.contentPath,
+  });
+
+  final String id;
+  final FamilyChatMessageKind kind;
+  final String mimeType;
+  final int byteSize;
+
+  /// The length the UPLOADER declared for a voice note. It is not measured by the server.
+  final int? durationMs;
+  final String sha256;
+  final bool removed;
+  final String? contentPath;
+
+  /// True only while the server still holds the bytes and issued a path to them.
+  bool get isAvailable => !removed && contentPath != null;
+
+  factory FamilyChatMedia.fromJson(Object? value) {
+    final json = FamilyChatApiClient._object(value, 'media');
+    final kind = FamilyChatMessageKind.parse(json['kind']);
+    if (kind == FamilyChatMessageKind.text) throw _invalidField('media.kind');
+    final mimeType = FamilyChatApiClient._string(json['mimeType'], 'media.mimeType');
+    final mimeMatchesKind = kind == FamilyChatMessageKind.image
+        ? _imageMimeTypes.contains(mimeType)
+        : _audioMimeTypes.contains(mimeType);
+    if (!mimeMatchesKind) throw _invalidField('media.mimeType');
+    final durationValue = json['durationMs'];
+    final durationMs = durationValue == null
+        ? null
+        : FamilyChatApiClient._positiveInteger(durationValue, 'media.durationMs');
+    if (durationMs != null && durationMs > 300000) throw _invalidField('media.durationMs');
+    if ((kind == FamilyChatMessageKind.image) != (durationMs == null)) {
+      throw _invalidField('media.durationMs');
+    }
+    final sha256 = FamilyChatApiClient._string(json['sha256'], 'media.sha256');
+    if (!RegExp(r'^[0-9a-f]{64}$').hasMatch(sha256)) throw _invalidField('media.sha256');
+    final status = FamilyChatApiClient._string(json['status'], 'media.status');
+    if (status != 'available' && status != 'removed') throw _invalidField('media.status');
+    final contentPath = FamilyChatApiClient._nullableString(json['contentPath'], 'media.contentPath');
+    final removed = status == 'removed';
+    if (removed != (contentPath == null)) throw _invalidField('media.contentPath');
+    return FamilyChatMedia(
+      id: FamilyChatApiClient._uuid(json['id'], 'media.id'),
+      kind: kind,
+      mimeType: mimeType,
+      byteSize: FamilyChatApiClient._positiveInteger(json['byteSize'], 'media.byteSize'),
+      durationMs: durationMs,
+      sha256: sha256,
+      removed: removed,
+      contentPath: contentPath,
+    );
+  }
+}
+
+/// Aggregate receipts for one message, counted over OTHER participants. There is no list of
+/// names: the server counts, and the screen says "N of M", never who.
+final class FamilyChatReceipt {
+  const FamilyChatReceipt({
+    required this.deliveredCount,
+    required this.readCount,
+    required this.otherParticipantCount,
+  });
+
+  final int deliveredCount;
+  final int readCount;
+  final int otherParticipantCount;
+
+  factory FamilyChatReceipt.fromJson(Object? value) {
+    final json = FamilyChatApiClient._object(value, 'receipt');
+    final deliveredCount = FamilyChatApiClient._nonNegativeInteger(json['deliveredCount'], 'receipt.deliveredCount');
+    final readCount = FamilyChatApiClient._nonNegativeInteger(json['readCount'], 'receipt.readCount');
+    final otherParticipantCount = FamilyChatApiClient._nonNegativeInteger(
+      json['otherParticipantCount'],
+      'receipt.otherParticipantCount',
+    );
+    // A read is also a delivery, and nobody can count beyond the others who were in the room.
+    if (deliveredCount > otherParticipantCount || readCount > deliveredCount) {
+      throw _invalidField('receipt');
+    }
+    return FamilyChatReceipt(
+      deliveredCount: deliveredCount,
+      readCount: readCount,
+      otherParticipantCount: otherParticipantCount,
+    );
+  }
+}
+
 /// One immutable server message. Deleted content stays absent while its sequence and trace stay.
 final class FamilyChatMessage {
   const FamilyChatMessage({
     required this.id,
     required this.seq,
+    required this.kind,
     required this.authorKind,
     required this.authorId,
     required this.body,
+    required this.media,
     required this.revision,
     required this.editedAt,
     required this.deleted,
@@ -161,13 +284,16 @@ final class FamilyChatMessage {
     required this.deletedById,
     required this.createdAt,
     required this.readCount,
+    required this.receipt,
   });
 
   final String id;
   final int seq;
+  final FamilyChatMessageKind kind;
   final FamilyChatParticipantKind authorKind;
   final String authorId;
   final String? body;
+  final FamilyChatMedia? media;
   final int revision;
   final DateTime? editedAt;
   final bool deleted;
@@ -176,6 +302,7 @@ final class FamilyChatMessage {
   final String? deletedById;
   final DateTime createdAt;
   final int readCount;
+  final FamilyChatReceipt receipt;
 
   factory FamilyChatMessage.fromJson(Object? value) {
     final json = FamilyChatApiClient._object(value, 'message');
@@ -193,12 +320,30 @@ final class FamilyChatMessage {
         (deleted && deletedByKind == null)) {
       throw _invalidField('deleted');
     }
+    final kind = FamilyChatMessageKind.parse(json['kind']);
+    final mediaValue = json['media'];
+    final media = mediaValue == null ? null : FamilyChatMedia.fromJson(mediaValue);
+    // A live message has media exactly when its kind says it does. A deleted message keeps its
+    // kind and loses its media, because the bytes go with the text.
+    if (deleted) {
+      if (media != null) throw _invalidField('media');
+    } else {
+      if ((kind == FamilyChatMessageKind.text) != (media == null)) {
+        throw _invalidField('kind');
+      }
+      if (media != null && media.kind != kind) throw _invalidField('media.kind');
+    }
+    final readCount = FamilyChatApiClient._nonNegativeInteger(json['readCount'], 'readCount');
+    final receipt = FamilyChatReceipt.fromJson(json['receipt']);
+    if (receipt.readCount != readCount) throw _invalidField('receipt.readCount');
     return FamilyChatMessage(
       id: FamilyChatApiClient._uuid(json['id'], 'id'),
       seq: FamilyChatApiClient._positiveInteger(json['seq'], 'seq'),
+      kind: kind,
       authorKind: FamilyChatParticipantKind.parse(json['authorKind']),
       authorId: FamilyChatApiClient._uuid(json['authorId'], 'authorId'),
       body: body,
+      media: media,
       revision: FamilyChatApiClient._positiveInteger(json['revision'], 'revision'),
       editedAt: FamilyChatApiClient._nullableInstant(json['editedAt'], 'editedAt'),
       deleted: deleted,
@@ -206,7 +351,8 @@ final class FamilyChatMessage {
       deletedByKind: deletedByKind,
       deletedById: deletedById == null ? null : FamilyChatApiClient._uuid(deletedById, 'deletedById'),
       createdAt: FamilyChatApiClient._instant(json['createdAt'], 'createdAt'),
-      readCount: FamilyChatApiClient._nonNegativeInteger(json['readCount'], 'readCount'),
+      readCount: readCount,
+      receipt: receipt,
     );
   }
 }
@@ -232,6 +378,38 @@ final class FamilyChatReadState {
       participantKind: FamilyChatParticipantKind.parse(json['participantKind']),
       participantId: FamilyChatApiClient._uuid(json['participantId'], 'participantId'),
       lastReadSeq: FamilyChatApiClient._nonNegativeInteger(json['lastReadSeq'], 'lastReadSeq'),
+    );
+  }
+}
+
+/// The caller's own two marks. A read is always also a delivery, so `lastDeliveredSeq` is never
+/// behind `lastReadSeq`.
+final class FamilyChatDeliveryState {
+  const FamilyChatDeliveryState({
+    required this.threadId,
+    required this.participantKind,
+    required this.participantId,
+    required this.lastDeliveredSeq,
+    required this.lastReadSeq,
+  });
+
+  final String threadId;
+  final FamilyChatParticipantKind participantKind;
+  final String participantId;
+  final int lastDeliveredSeq;
+  final int lastReadSeq;
+
+  factory FamilyChatDeliveryState.fromJson(Object? value) {
+    final json = FamilyChatApiClient._object(value, 'deliveryState');
+    final lastDeliveredSeq = FamilyChatApiClient._nonNegativeInteger(json['lastDeliveredSeq'], 'lastDeliveredSeq');
+    final lastReadSeq = FamilyChatApiClient._nonNegativeInteger(json['lastReadSeq'], 'lastReadSeq');
+    if (lastReadSeq > lastDeliveredSeq) throw _invalidField('lastReadSeq');
+    return FamilyChatDeliveryState(
+      threadId: FamilyChatApiClient._uuid(json['threadId'], 'threadId'),
+      participantKind: FamilyChatParticipantKind.parse(json['participantKind']),
+      participantId: FamilyChatApiClient._uuid(json['participantId'], 'participantId'),
+      lastDeliveredSeq: lastDeliveredSeq,
+      lastReadSeq: lastReadSeq,
     );
   }
 }
@@ -478,6 +656,9 @@ final class FamilyChatApiClient {
 
   bool get hasDeviceTransport => _deviceTransport != null;
 
+  /// The same origin and rules as every other chat call. Media and realtime clients reuse it.
+  FoundationGateConfiguration get configuration => _configuration;
+
   Future<String?> configuredDeviceId() async =>
       _deviceTransport?.configuredDeviceId();
 
@@ -620,6 +801,8 @@ final class FamilyChatApiClient {
     return FamilyChatMessagePage.fromJson(_expect(response, successStatus: 200));
   }
 
+  /// Sends a text message, or a message that carries one stored photo or voice note. A media
+  /// message may have an empty caption; a text message must have a body.
   Future<FamilyChatSendResult> sendFamilyMessage({
     required String familyId,
     required String threadId,
@@ -627,8 +810,18 @@ final class FamilyChatApiClient {
     required String clientMessageId,
     required String idempotencyKey,
     required String idToken,
+    String? mediaId,
   }) async {
-    _validateMessage(body, clientMessageId);
+    if (mediaId == null) {
+      _validateMessage(body, clientMessageId);
+    } else if (body.length > 2000 ||
+        !RegExp(r'^[A-Za-z0-9_.:-]{8,64}$').hasMatch(clientMessageId) ||
+        !RegExp(
+          r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+          caseSensitive: false,
+        ).hasMatch(mediaId)) {
+      throw _invalidInput();
+    }
     _validateIdempotencyKey(idempotencyKey);
     final response = await _guardianRequest(
       'POST',
@@ -638,6 +831,7 @@ final class FamilyChatApiClient {
       body: <String, Object?>{
         'body': body,
         'clientMessageId': clientMessageId,
+        'mediaId': ?mediaId,
       },
     );
     return FamilyChatSendResult.fromJson(
@@ -703,6 +897,28 @@ final class FamilyChatApiClient {
     );
     final json = _expect(response, successStatus: 200);
     return FamilyChatReadState.fromJson(_object(json['readState'], 'readState'));
+  }
+
+  /// "I have received everything up to here." Monotonic on the server: a lower value is ignored,
+  /// a value beyond the newest message is refused.
+  Future<FamilyChatDeliveryState> markFamilyThreadDelivered({
+    required String familyId,
+    required String threadId,
+    required int deliveredSeq,
+    required String idempotencyKey,
+    required String idToken,
+  }) async {
+    if (deliveredSeq < 0) throw _invalidInput();
+    _validateIdempotencyKey(idempotencyKey);
+    final response = await _guardianRequest(
+      'POST',
+      _configuration.familyChatDeliveredUri(familyId, threadId),
+      idToken: idToken,
+      idempotencyKey: idempotencyKey,
+      body: <String, Object?>{'deliveredSeq': deliveredSeq},
+    );
+    final json = _expect(response, successStatus: 200);
+    return FamilyChatDeliveryState.fromJson(_object(json['deliveryState'], 'deliveryState'));
   }
 
   Future<FamilyChatThreadList> listDeviceThreads({
@@ -907,6 +1123,29 @@ final class FamilyChatApiClient {
     );
     final json = _expect(response, successStatus: 200);
     return FamilyChatReadState.fromJson(_object(json['readState'], 'readState'));
+  }
+
+  Future<FamilyChatDeliveryState> markDeviceThreadDelivered({
+    required String deviceId,
+    required String threadId,
+    required int deliveredSeq,
+    required String idempotencyKey,
+    String? deviceCredential,
+  }) async {
+    if (deliveredSeq < 0) throw _invalidInput();
+    _validateIdempotencyKey(idempotencyKey);
+    final response = await _deviceRequest(
+      operation: 'markDelivered',
+      method: 'POST',
+      uri: _configuration.deviceChatDeliveredUri(deviceId, threadId),
+      deviceId: deviceId,
+      threadId: threadId,
+      deviceCredential: deviceCredential,
+      idempotencyKey: idempotencyKey,
+      body: <String, Object?>{'deliveredSeq': deliveredSeq},
+    );
+    final json = _expect(response, successStatus: 200);
+    return FamilyChatDeliveryState.fromJson(_object(json['deliveryState'], 'deliveryState'));
   }
 
   Future<FoundationGateHttpResponse> _guardianRequest(

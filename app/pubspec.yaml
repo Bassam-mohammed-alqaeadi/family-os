@@ -4,7 +4,7 @@ publish_to: "none"
 version: 1.0.0+1
 
 # Pinned to owner PC SDK (QUESTIONS Q-PREFLIGHT-001 resolved 2026-09-20):
-# Flutter 3.35.7 stable · Dart 3.9.2 · C:\src\flutter
+# Flutter 3.35.7 stable · Dart 3.9.2 · C:\\src\\flutter
 environment:
   sdk: ^3.9.2
 
@@ -21,10 +21,16 @@ dependencies:
   path_provider: ^2.1.5
   firebase_core: ^3.15.2
   firebase_auth: ^5.7.0
+  # Push nudges for guardian chat (Firebase Cloud Messaging). 15.x pairs with firebase_core 3.x.
+  firebase_messaging: ^15.2.10
   http: ^1.2.2
   # QR Code — pairing flow (parent shows QR, child scans with camera)
   qr_flutter: ^4.1.0
   mobile_scanner: ^7.0.0
+  # Family chat media: pick or take a photo, record a voice note, play a voice note.
+  image_picker: ^1.2.2
+  record: ^6.1.2
+  just_audio: ^0.10.6
 
 dev_dependencies:
   flutter_test:
