@@ -6918,6 +6918,188 @@
           }
         }
       }
+    },
+    "/v1/families/{familyId}/invite-codes": {
+      "post": {
+        "tags": [
+          "Families"
+        ],
+        "operationId": "issueFamilyInviteCode",
+        "summary": "Primary guardian issues a single-use invite code for one role",
+        "description": "Owner decision 2026-10-10: invites are by code, not by the invitee's account identifier. The code is ten letters (~49.5 bits), expires after 24 hours, is single-use, and is returned exactly once; only its SHA-256 digest is stored. A family holds at most five open codes. A retried request with the same Idempotency-Key answers 409 invite_code_not_replayable rather than revealing the code again.",
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInviteCodeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Invite code issued.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedFamilyInviteCodeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/invite-codes/{inviteId}/revoke": {
+      "post": {
+        "tags": [
+          "Families"
+        ],
+        "operationId": "revokeFamilyInviteCode",
+        "summary": "Primary guardian revokes an open invite code",
+        "description": "Only the active primary guardian may revoke. A code that was already redeemed or revoked answers 409 invite_code_not_revocable.",
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/InviteId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invite code revoked, or durable idempotent replay returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyInviteCodeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/invite-codes/redeem": {
+      "post": {
+        "tags": [
+          "Families"
+        ],
+        "operationId": "redeemFamilyInviteCode",
+        "summary": "The signed-in invitee redeems an invite code and joins the family",
+        "description": "The membership is bound to the subject of the verified bearer token and becomes active in the same transaction that spends the code. An unknown, expired, used or revoked code all answer the same 404 invite_code_not_redeemable, so the endpoint is not an oracle. An account already in the family answers 409 membership_already_exists and the code stays open. Rate limited per subject and per network peer.",
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RedeemInviteCodeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Membership created and active, or durable idempotent replay returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RedeemInviteCodeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -7124,6 +7306,14 @@
         "schema": {
           "type": "string",
           "format": "uuid"
+        }
+      },
+      "InviteId": {
+        "name": "inviteId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/Uuid"
         }
       }
     },
@@ -13408,6 +13598,176 @@
             }
           }
         }
+      },
+      "CreateInviteCodeRequest": {
+        "type": "object",
+        "required": [
+          "role"
+        ],
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "co_guardian",
+              "child"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "RedeemInviteCodeRequest": {
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 64,
+            "description": "Ten letters from the alphabet ABCDEFGHJKMNPQRSTUVWXYZ23456789. Case, spaces and hyphens are ignored."
+          }
+        },
+        "additionalProperties": false
+      },
+      "FamilyInviteCode": {
+        "type": "object",
+        "required": [
+          "id",
+          "role",
+          "status",
+          "expiresAt",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "co_guardian",
+              "child"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "redeemed",
+              "revoked"
+            ]
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "IssuedFamilyInviteCode": {
+        "type": "object",
+        "required": [
+          "id",
+          "role",
+          "status",
+          "expiresAt",
+          "createdAt",
+          "code"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "co_guardian",
+              "child"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "redeemed",
+              "revoked"
+            ]
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "code": {
+            "type": "string",
+            "pattern": "^[A-HJKMNP-Z2-9]{5}-[A-HJKMNP-Z2-9]{5}$",
+            "description": "The raw code, returned exactly once. Only its digest is stored; a retried issue answers 409 invite_code_not_replayable."
+          }
+        },
+        "additionalProperties": false
+      },
+      "IssuedFamilyInviteCodeResponse": {
+        "type": "object",
+        "required": [
+          "invite"
+        ],
+        "properties": {
+          "invite": {
+            "$ref": "#/components/schemas/IssuedFamilyInviteCode"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FamilyInviteCodeResponse": {
+        "type": "object",
+        "required": [
+          "invite"
+        ],
+        "properties": {
+          "invite": {
+            "$ref": "#/components/schemas/FamilyInviteCode"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RedeemInviteCodeResponse": {
+        "type": "object",
+        "required": [
+          "family",
+          "membership"
+        ],
+        "properties": {
+          "family": {
+            "type": "object",
+            "required": [
+              "id",
+              "displayName"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/components/schemas/Uuid"
+              },
+              "displayName": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              }
+            },
+            "additionalProperties": false
+          },
+          "membership": {
+            "$ref": "#/components/schemas/Membership"
+          }
+        },
+        "additionalProperties": false
       }
     }
   }

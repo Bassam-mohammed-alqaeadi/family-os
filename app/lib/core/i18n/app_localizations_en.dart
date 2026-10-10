@@ -12992,4 +12992,117 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get voicePauseSemantics => 'Pause voice note';
+
+  @override
+  String get inviteCodeIntro =>
+      'Create an invite code and send it to her yourself. She enters it from her own account in the app and joins the family as a co-guardian.';
+
+  @override
+  String get inviteCodeIssue => 'Create invite code';
+
+  @override
+  String get inviteCodeIssuing => 'Creating code…';
+
+  @override
+  String get inviteCodeValueLabel => 'Invite code';
+
+  @override
+  String inviteCodeExpiry(String time) {
+    return 'Valid until $time · single use';
+  }
+
+  @override
+  String get inviteCodeCopy => 'Copy code';
+
+  @override
+  String get inviteCodeCopied => 'Code copied — send it to her in a message';
+
+  @override
+  String get inviteCodeRevoke => 'Cancel this code';
+
+  @override
+  String get inviteCodeRevoked =>
+      'The code was cancelled on the server and no longer works';
+
+  @override
+  String get inviteCodeDone => 'Done — family members';
+
+  @override
+  String get inviteCodeHonesty =>
+      'The server issues the code and it is shown here only once; it expires after 24 hours. We do not send email or messages for you — share it yourself. Mother permission levels (observer/partner/full) are not stored on the server yet: every co-guardian has the same permissions.';
+
+  @override
+  String get inviteCodeErrorLimit =>
+      'The family already has 5 open codes. Cancel one or wait for it to expire.';
+
+  @override
+  String get inviteCodeErrorDenied =>
+      'Only the primary guardian can create invite codes.';
+
+  @override
+  String get inviteCodeErrorUnavailable =>
+      'This build is not connected to the server — no code was created.';
+
+  @override
+  String get inviteCodeErrorNetwork =>
+      'Could not reach the server. Check the connection and try again.';
+
+  @override
+  String get inviteCodeErrorService =>
+      'The service is unavailable right now. Try again shortly.';
+
+  @override
+  String get joinCodeIntro =>
+      'Enter the code the guardian sent you. You join the family with the account you are signed in with, and you are a member only once the server confirms it.';
+
+  @override
+  String get joinCodeFieldLabel => 'Invite code';
+
+  @override
+  String get joinCodeFieldHint => 'ABCDE-FGHJK';
+
+  @override
+  String get joinCodeSubmit => 'Join the family';
+
+  @override
+  String get joinCodeJoining => 'Joining…';
+
+  @override
+  String joinCodeJoined(String family) {
+    return 'You joined «$family»';
+  }
+
+  @override
+  String get joinCodeErrorFormat =>
+      'The code is 10 letters and digits, like ABCDE-FGHJK.';
+
+  @override
+  String get joinCodeErrorNotRedeemable =>
+      'The code is wrong, expired or already used. Ask for a new one.';
+
+  @override
+  String get joinCodeErrorAlreadyMember =>
+      'Your account is already a member of this family.';
+
+  @override
+  String get joinCodeErrorRateLimited =>
+      'Too many attempts. Wait a few minutes and try again.';
+
+  @override
+  String get joinCodeErrorSignIn =>
+      'Sign in with your account first, then enter the code.';
+
+  @override
+  String get deviceModeInviteCodeEmoji => '🔑';
+
+  @override
+  String get deviceModeInviteCodeTitle => 'I have an invite code';
+
+  @override
+  String get deviceModeInviteCodeBody =>
+      'Join an existing family with a code from the guardian';
+
+  @override
+  String get deviceModeInviteCodeSemantics =>
+      'I have an invite code — join an existing family';
 }

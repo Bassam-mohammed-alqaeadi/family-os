@@ -4,6 +4,7 @@ import { rateLimit } from 'express-rate-limit';
 import { asHttpError, HttpError } from './http-error.js';
 import { deviceRevocationFor } from './device-revocation.js';
 import { membershipRosterFor } from './membership-roster.js';
+import { familyInviteCodesFor } from './family-invite-codes.js';
 import { safeZonesFor } from './safe-zones.js';
 import { locationSurfaceFor } from './location-telemetry.js';
 import { childConsentsFor } from './child-consents.js';
@@ -28,6 +29,8 @@ import {
     registerFamilyChildDeviceInput,
     createGuardianTransferInput,
     createMembershipInput,
+    createInviteCodeInput,
+    redeemInviteCodeInput,
     appRuleInput,
     createSafeZoneInput,
     deviceScreenTimeReportInput,
@@ -161,6 +164,10 @@ export function createApp({
     // published transaction and membership helpers, so the read surface costs one
     // route and no edit inside a shared write path.
     membershipRoster = membershipRosterFor(store),
+    // Invites by code (owner decision 2026-10-10): the guardian shares a short code instead of
+    // needing the invitee's account identifier. Same arrangement as the roster: the rules live
+    // in the module, data access goes through the store's published helpers.
+    familyInviteCodes = familyInviteCodesFor(store),
     // W3. The zone definitions and the location surface reach the database through the
     // same published store helpers, so both cost route lines here and nothing inside a
     // file another session is editing.
@@ -201,6 +208,7 @@ export function createApp({
     collaborationPolicy = collaborationPolicyFor(store),
     preAuthenticationRateLimit = {},
     protectedRateLimit = {},
+    inviteRedeemRateLimit = {},
 }) {
     const app = express();
     const chatMedia = chatMediaFor(store, { credentialMatches: capabilityMatches, mediaStore: chatMediaStore });
@@ -303,6 +311,32 @@ export function createApp({
         validate: { xForwardedForHeader: false },
         handler: (_request, _response, next) => {
             next(new HttpError(429, 'rate_limit_exceeded', 'Too many pairing attempts. Try again later.'));
+        },
+    });
+
+    // Redeeming an invite code is the one place a signed-in person submits a secret they were
+    // told. Two limits stack: one per verified subject, and one per network peer so a crowd of
+    // throwaway accounts behind one address cannot share a guessing budget. With a ~49-bit code
+    // that expires in a day, these budgets make guessing a live code hopeless.
+    const inviteRedeemSubjectRateLimit = rateLimit({
+        windowMs: inviteRedeemRateLimit.windowMs ?? 15 * 60_000,
+        limit: inviteRedeemRateLimit.subjectLimit ?? 10,
+        standardHeaders: 'draft-7',
+        legacyHeaders: false,
+        validate: { xForwardedForHeader: false },
+        keyGenerator: (request) => `invite-redeem:${request.principal.subject}`,
+        handler: (_request, _response, next) => {
+            next(new HttpError(429, 'rate_limit_exceeded', 'Too many invite code attempts. Try again later.'));
+        },
+    });
+    const inviteRedeemPeerRateLimit = rateLimit({
+        windowMs: inviteRedeemRateLimit.windowMs ?? 15 * 60_000,
+        limit: inviteRedeemRateLimit.peerLimit ?? 30,
+        standardHeaders: 'draft-7',
+        legacyHeaders: false,
+        validate: { xForwardedForHeader: false },
+        handler: (_request, _response, next) => {
+            next(new HttpError(429, 'rate_limit_exceeded', 'Too many invite code attempts. Try again later.'));
         },
     });
 
@@ -2832,6 +2866,88 @@ export function createApp({
                     action: 'membership.revoke',
                     principal: request.principal,
                     input: { familyId, membershipId, reasonCode },
+                }),
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // Invites by code. The guardian issues a code for a role; the code itself is returned
+    // exactly once and never replayed. Who joins is decided at redemption, by the token.
+    app.post(
+        '/v1/families/:familyId/invite-codes',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            requireNoQueryParameters(request.query);
+            const { role } = createInviteCodeInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await familyInviteCodes.issue({
+                principal: request.principal,
+                familyId,
+                role,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'family.invite_code.issue',
+                    principal: request.principal,
+                    input: { familyId, role },
+                }),
+            });
+            response.status(201).json(result);
+        }),
+    );
+
+    app.post(
+        '/v1/families/:familyId/invite-codes/:inviteId/revoke',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const inviteId = requireUuid(request.params.inviteId, 'inviteId');
+            requireNoQueryParameters(request.query);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await familyInviteCodes.revoke({
+                principal: request.principal,
+                familyId,
+                inviteId,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'family.invite_code.revoke',
+                    principal: request.principal,
+                    input: { familyId, inviteId },
+                }),
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // The invitee's side: no family in the path, because the invitee is not in one yet. The
+    // code names the family; the verified token names the person.
+    app.post(
+        '/v1/invite-codes/redeem',
+        inviteRedeemPeerRateLimit,
+        requirePrincipal,
+        inviteRedeemSubjectRateLimit,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            requireNoQueryParameters(request.query);
+            const { code } = redeemInviteCodeInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await familyInviteCodes.redeem({
+                principal: request.principal,
+                code,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'family.invite_code.redeem',
+                    principal: request.principal,
+                    input: { code },
                 }),
             });
             response.status(200).json(result);

@@ -22718,6 +22718,192 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'إيقاف الرسالة الصوتية مؤقتًا'**
   String get voicePauseSemantics;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'أنشئ رمز دعوة وأرسله للأم بنفسك. تُدخله من حسابها في التطبيق فتنضم إلى العائلة وليّةَ أمرٍ مشاركة.'**
+  String get inviteCodeIntro;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'أنشئ رمز الدعوة'**
+  String get inviteCodeIssue;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ إنشاء الرمز…'**
+  String get inviteCodeIssuing;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'رمز الدعوة'**
+  String get inviteCodeValueLabel;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'صالح حتى {time} · يُستعمل مرة واحدة'**
+  String inviteCodeExpiry(String time);
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'انسخ الرمز'**
+  String get inviteCodeCopy;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'نُسخ الرمز — أرسله للأم في رسالة'**
+  String get inviteCodeCopied;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'ألغِ هذا الرمز'**
+  String get inviteCodeRevoke;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'أُلغي الرمز على الخادم ولم يعد صالحاً'**
+  String get inviteCodeRevoked;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'تم — إلى أعضاء العائلة'**
+  String get inviteCodeDone;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'الرمز يصدره الخادم ويظهر هنا مرة واحدة فقط، وينتهي بعد ٢٤ ساعة. لا نرسل بريداً أو رسالة نيابةً عنك — شاركه بنفسك. مستويات صلاحية الأم (مطّلعة/مشاركة/كاملة) لم تُحفظ على الخادم بعد: كل وليّة أمر مشاركة لها الصلاحيات نفسها.'**
+  String get inviteCodeHonesty;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'لدى العائلة ٥ رموز مفتوحة. ألغِ رمزاً أو انتظر انتهاءه.'**
+  String get inviteCodeErrorLimit;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'إنشاء رموز الدعوة لوليّ الأمر الأساسي فقط.'**
+  String get inviteCodeErrorDenied;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'هذه النسخة غير متصلة بالخادم — لم يُنشأ أي رمز.'**
+  String get inviteCodeErrorUnavailable;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر الوصول إلى الخادم. تحقق من الاتصال وحاول مجدداً.'**
+  String get inviteCodeErrorNetwork;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'الخدمة غير متاحة الآن. حاول بعد قليل.'**
+  String get inviteCodeErrorService;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل الرمز الذي وصلك من وليّ الأمر. تنضم إلى العائلة بالحساب الذي سجّلت به الدخول، ولا تُعدّ عضواً إلا بعد أن يؤكد الخادم ذلك.'**
+  String get joinCodeIntro;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'رمز الدعوة'**
+  String get joinCodeFieldLabel;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'ABCDE-FGHJK'**
+  String get joinCodeFieldHint;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'انضم إلى العائلة'**
+  String get joinCodeSubmit;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ الانضمام…'**
+  String get joinCodeJoining;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'انضممت إلى «{family}»'**
+  String joinCodeJoined(String family);
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'الرمز ١٠ أحرف وأرقام، مثل ABCDE-FGHJK.'**
+  String get joinCodeErrorFormat;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'الرمز غير صحيح أو انتهت صلاحيته أو استُعمل من قبل. اطلب رمزاً جديداً.'**
+  String get joinCodeErrorNotRedeemable;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'حسابك عضو في هذه العائلة بالفعل.'**
+  String get joinCodeErrorAlreadyMember;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'محاولات كثيرة. انتظر بضع دقائق ثم حاول مجدداً.'**
+  String get joinCodeErrorRateLimited;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'سجّل الدخول بحسابك أولاً، ثم أدخل الرمز.'**
+  String get joinCodeErrorSignIn;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'🔑'**
+  String get deviceModeInviteCodeEmoji;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'عندي رمز دعوة'**
+  String get deviceModeInviteCodeTitle;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'أنضم إلى عائلة موجودة برمز من وليّ الأمر'**
+  String get deviceModeInviteCodeBody;
+
+  /// Invites by code (owner decision 2026-10-10)
+  ///
+  /// In ar, this message translates to:
+  /// **'عندي رمز دعوة — الانضمام إلى عائلة موجودة'**
+  String get deviceModeInviteCodeSemantics;
 }
 
 class _AppLocalizationsDelegate

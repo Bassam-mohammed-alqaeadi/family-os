@@ -2,202 +2,157 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/role_controller.dart';
-import 'package:family_os/core/design/components/tag.dart';
-import 'package:family_os/core/design/components/app_card.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
-import 'package:family_os/core/design/components/row_tile.dart';
 import 'package:family_os/core/design/tokens.dart';
-import 'package:family_os/core/domain/identity_ids.dart';
-import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
-import 'package:family_os/core/identity/adult_invite_repository.dart';
-import 'package:family_os/core/identity/identity_models.dart';
-import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
-import 'package:family_os/features/n01_linking/invite_mother_screen.dart';
+import 'package:family_os/core/runtime/app_scope.dart';
+import 'package:family_os/core/runtime/family_invite_code_source.dart';
+import 'package:family_os/foundation_gate/family_invite_code_api_client.dart';
+import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
-/// SCR-FAT-009 — قبول دعوة الأم (bare parent onboarding, mock-first).
+/// SCR-FAT-009 — الانضمام برمز الدعوة (قرار المالك 2026-10-10).
 ///
-/// Wave-1: family name + inviter + granted level meaning; join.
-/// Mother does not choose role — enters at [grantedLevel].
-/// Parametric / Rule 23: inject names via constructor; empty → ARB
-/// fallbacks («ولي الأمر» / «العائلة»), never hardcoded person names.
-class AcceptMotherInviteScreen extends StatelessWidget {
+/// The invitee — signed in with their own account — types the code the guardian shared.
+/// The server checks it, creates an active membership bound to this verified account, and
+/// only then does the screen say "you joined". Nothing is recorded on the phone first: the
+/// phone-local acceptance this screen used before is no longer on the real journey.
+///
+/// The role shown afterwards is the server's (`co_guardian` → mother view); the invitee does
+/// not choose it.
+class AcceptMotherInviteScreen extends StatefulWidget {
   const AcceptMotherInviteScreen({
     super.key,
-    this.inviterName = '',
-    this.familyName = '',
-    this.inviteeFirstName = '',
-    this.grantedLevel = MotherInviteLevel.partner,
-    this.inviteTokenId,
-    this.repository,
+    this.inviteCodes,
     this.roleController,
-    this.acceptAsAccountId,
-    this.onAccept,
+    this.onJoined,
     this.onDecline,
   });
 
-  /// Inviter display name (e.g. father). Empty → ARB fallback.
-  final String inviterName;
-
-  /// Family display name. Empty → ARB fallback.
-  final String familyName;
-
-  /// Optional invitee first name for welcome toast only.
-  final String inviteeFirstName;
-  final String? inviteTokenId;
-  final AdultInviteRepository? repository;
-
-  /// Level granted by father — display only; mother cannot change.
-  final MotherInviteLevel grantedLevel;
+  /// Test seam. When null, the screen uses [AppScope]'s invite-code source.
+  final FamilyInviteCodeSource? inviteCodes;
 
   /// Optional override; when null, uses [CurrentRole.maybeNotifierOf].
   final RoleController? roleController;
 
-  /// Test seam — accepting account (defaults to CurrentIdentity.account).
-  final AccountId? acceptAsAccountId;
+  /// Test seam — when null, a confirmed join shows a toast and goes to `/scr-fat-028`.
+  final ValueChanged<InviteCodeRedeemResult>? onJoined;
 
-  /// Test seam — when null, sets mother role, toast, `/scr-fat-028`.
-  final VoidCallback? onAccept;
-
-  /// Test seam — when null, toast + `/scr-shr-001`.
+  /// Test seam — when null, goes back to `/scr-shr-001`.
   final VoidCallback? onDecline;
 
-  String _resolveInviter(AppLocalizations l10n) {
-    final trimmed = inviterName.trim();
-    return trimmed.isEmpty ? l10n.acceptMotherInviteInviterFallback : trimmed;
+  @override
+  State<AcceptMotherInviteScreen> createState() =>
+      _AcceptMotherInviteScreenState();
+}
+
+class _AcceptMotherInviteScreenState extends State<AcceptMotherInviteScreen> {
+  final _codeController = TextEditingController();
+  InviteCodeFailure? _failure;
+  bool _formatError = false;
+  bool _busy = false;
+  String? _idempotencyKey;
+  String? _submittedCode;
+
+  @override
+  void initState() {
+    super.initState();
+    _codeController.addListener(_onChanged);
   }
 
-  String _resolveFamily(AppLocalizations l10n) {
-    final trimmed = familyName.trim();
-    return trimmed.isEmpty ? l10n.acceptMotherInviteFamilyFallback : trimmed;
+  @override
+  void dispose() {
+    _codeController
+      ..removeListener(_onChanged)
+      ..dispose();
+    super.dispose();
   }
 
-  String _levelName(AppLocalizations l10n, MotherInviteLevel level) {
-    return switch (level) {
-      MotherInviteLevel.observer => l10n.inviteMotherLevelObserverTitle,
-      MotherInviteLevel.partner => l10n.inviteMotherLevelPartnerTitle,
-      MotherInviteLevel.full => l10n.inviteMotherLevelFullTitle,
-    };
-  }
+  void _onChanged() => setState(() {
+    _formatError = false;
+  });
 
-  String _levelMeaning(AppLocalizations l10n, MotherInviteLevel level) {
-    return switch (level) {
-      MotherInviteLevel.observer => l10n.acceptMotherInviteLevelObserverMeaning,
-      MotherInviteLevel.partner => l10n.acceptMotherInviteLevelPartnerMeaning,
-      MotherInviteLevel.full => l10n.acceptMotherInviteLevelFullMeaning,
-    };
-  }
+  bool get _canSubmit => _codeController.text.trim().isNotEmpty && !_busy;
 
-  MotherInviteLevel _effectiveLevel() {
-    final token = inviteTokenId?.trim();
-    if (token != null && token.isNotEmpty) {
-      final invite = (repository ?? stage1AdultInviteRepository).findByToken(
-        InviteTokenId(token),
-      );
-      if (invite != null) {
-        return switch (invite.level) {
-          MotherLevel.observer => MotherInviteLevel.observer,
-          MotherLevel.partner => MotherInviteLevel.partner,
-          MotherLevel.full => MotherInviteLevel.full,
-        };
-      }
-    }
-    return grantedLevel;
-  }
-
-  void _accept(BuildContext context) {
-    if (onAccept != null) {
-      onAccept!();
+  Future<void> _join() async {
+    if (!_canSubmit) return;
+    final normalized = FamilyInviteCodeApiClient.normalizeCode(
+      _codeController.text,
+    );
+    if (normalized == null) {
+      setState(() {
+        _formatError = true;
+        _failure = null;
+      });
       return;
     }
-
-    final l10n = AppLocalizations.of(context);
-    final level = _effectiveLevel();
-    final levelName = _levelName(l10n, level);
-    final runtime = CurrentIdentity.maybeOf(context);
-    final repo = repository ?? stage1AdultInviteRepository;
-    final token = inviteTokenId?.trim();
-    final hasToken = token != null && token.isNotEmpty;
-
-    // Token path requires Identity + active invite — fail closed otherwise.
-    if (hasToken) {
-      if (runtime == null) {
-        AppToast.show(context, message: l10n.settingsPersistError);
-        return;
-      }
-      final invite = repo.findByToken(InviteTokenId(token));
-      if (invite == null ||
-          invite.stateAt(DateTime.now().toUtc()) !=
-              InviteLifecycleState.active) {
-        AppToast.show(
-          context,
-          message: l10n.acceptMotherInviteDeclineToast(_resolveInviter(l10n)),
-        );
-        return;
-      }
-      try {
-        repo.acceptInvite(
-          tokenId: invite.tokenId,
-          acceptedByAccountId: runtime.account.id,
-          actorMemberId: invite.createdByMemberId,
-        );
-        runtime.setLegacyRoleFallback(AppRole.mother);
-      } on InviteMutationDenied {
-        AppToast.show(context, message: l10n.settingsPersistError);
-        return;
-      }
+    final source = widget.inviteCodes ?? AppScope.maybeOf(context)?.inviteCodes;
+    if (source == null) {
+      setState(() => _failure = InviteCodeFailure.unavailable);
+      return;
     }
+    // A retry of the same code reuses its key, so a dropped connection after the server
+    // committed replays the same membership instead of reporting a spent code.
+    if (_idempotencyKey == null || _submittedCode != normalized) {
+      _idempotencyKey = newFoundationGateIdempotencyKey();
+      _submittedCode = normalized;
+    }
+    setState(() {
+      _busy = true;
+      _failure = null;
+      _formatError = false;
+    });
+    final result = await source.redeem(
+      code: normalized,
+      idempotencyKey: _idempotencyKey!,
+    );
+    if (!mounted) return;
+    setState(() {
+      _busy = false;
+      _failure = result.failure;
+    });
+    if (!result.isJoined) return;
 
-    final notifier = roleController ?? CurrentRole.maybeNotifierOf(context);
+    if (widget.onJoined != null) {
+      widget.onJoined!(result);
+      return;
+    }
+    final notifier =
+        widget.roleController ?? CurrentRole.maybeNotifierOf(context);
     if (notifier != null) {
-      notifier.value = AppRole.mother;
+      notifier.value = result.role == 'child' ? AppRole.child : AppRole.mother;
     }
-
-    final invitee = inviteeFirstName.trim();
-    final message = invitee.isEmpty
-        ? l10n.acceptMotherInviteWelcomeToastGeneric(levelName)
-        : l10n.acceptMotherInviteWelcomeToast(invitee, levelName);
-    AppToast.show(context, message: message);
+    AppToast.show(
+      context,
+      message: AppLocalizations.of(
+        context,
+      ).joinCodeJoined(result.familyDisplayName ?? ''),
+    );
     context.go('/scr-fat-028');
   }
 
-  void _decline(BuildContext context) {
-    if (onDecline != null) {
-      onDecline!();
+  void _decline() {
+    if (widget.onDecline != null) {
+      widget.onDecline!();
       return;
     }
-
-    final l10n = AppLocalizations.of(context);
-    final inviter = _resolveInviter(l10n);
-    AppToast.show(
-      context,
-      message: l10n.acceptMotherInviteDeclineToast(inviter),
-    );
     context.go('/scr-shr-001');
   }
 
-  InviteLifecycleState? _inviteLifecycleState() {
-    final token = inviteTokenId?.trim();
-    if (token == null || token.isEmpty) return null;
-    final invite = (repository ?? stage1AdultInviteRepository).findByToken(
-      InviteTokenId(token),
-    );
-    if (invite == null) return InviteLifecycleState.expired;
-    return invite.stateAt(DateTime.now().toUtc());
-  }
-
-  String? _inviteStateLabel(AppLocalizations l10n) {
-    final state = _inviteLifecycleState();
-    if (state == null) return null;
-    return switch (state) {
-      InviteLifecycleState.created => l10n.inviteLifecyclePending,
-      InviteLifecycleState.active => l10n.inviteLifecycleActive,
-      InviteLifecycleState.accepted => l10n.inviteLifecycleAccepted,
-      InviteLifecycleState.expired => l10n.inviteLifecycleExpired,
-      InviteLifecycleState.revoked => l10n.inviteLifecycleRevoked,
+  String _failureText(AppLocalizations l10n, InviteCodeFailure failure) {
+    return switch (failure) {
+      InviteCodeFailure.notRedeemable => l10n.joinCodeErrorNotRedeemable,
+      InviteCodeFailure.alreadyMember => l10n.joinCodeErrorAlreadyMember,
+      InviteCodeFailure.rateLimited => l10n.joinCodeErrorRateLimited,
+      InviteCodeFailure.invalidInput => l10n.joinCodeErrorFormat,
+      InviteCodeFailure.sessionInvalid ||
+      InviteCodeFailure.accessDenied => l10n.joinCodeErrorSignIn,
+      InviteCodeFailure.networkUnavailable => l10n.inviteCodeErrorNetwork,
+      InviteCodeFailure.serviceUnavailable ||
+      InviteCodeFailure.limitReached => l10n.inviteCodeErrorService,
+      InviteCodeFailure.unavailable => l10n.inviteCodeErrorUnavailable,
     };
   }
 
@@ -205,14 +160,12 @@ class AcceptMotherInviteScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).extension<FamilyColors>()!;
-    final inviter = _resolveInviter(l10n);
-    final family = _resolveFamily(l10n);
-    final level = _effectiveLevel();
-    final levelName = _levelName(l10n, level);
-    final inviteStatus = _inviteStateLabel(l10n);
-    final lifecycle = _inviteLifecycleState();
-    final canAccept =
-        lifecycle == null || lifecycle == InviteLifecycleState.active;
+    final radii = Theme.of(context).extension<FamilyRadii>()!;
+    final failure = _failure;
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(radii.input),
+      borderSide: BorderSide(color: colors.border, width: 1.5),
+    );
 
     return Scaffold(
       backgroundColor: colors.bg,
@@ -254,89 +207,93 @@ class AcceptMotherInviteScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            Semantics(
-              header: true,
-              child: Text(
-                key: const Key('accept_mother_invite_headline'),
-                l10n.acceptMotherInviteHeadline(inviter, family),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 19,
-                  fontWeight: FontWeight.w800,
-                  color: colors.ink,
-                  height: 1.45,
-                ),
+            Text(
+              key: const Key('join_code_intro'),
+              l10n.joinCodeIntro,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: colors.ink2,
+                height: 1.6,
               ),
             ),
             const SizedBox(height: 16),
-            AppCard(
-              key: const Key('accept_mother_invite_card'),
-              child: Column(
-                children: [
-                  if (inviteStatus != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Align(
-                        alignment: AlignmentDirectional.centerStart,
-                        child: Tag(
-                          key: Key(
-                            'accept_mother_invite_state_${lifecycle?.name ?? 'none'}',
-                          ),
-                          label: inviteStatus,
-                          variant: TagVariant.a,
-                        ),
-                      ),
-                    ),
-                  RowTile(
-                    key: const Key('accept_mother_invite_level_row'),
-                    leading: Text(
-                      l10n.acceptMotherInviteLevelEmoji,
-                      style: const TextStyle(fontSize: 18),
-                    ),
-                    title: l10n.acceptMotherInviteLevelTitle(levelName),
-                    subtitle: _levelMeaning(l10n, level),
-                  ),
-                  RowTile(
-                    key: const Key('accept_mother_invite_rights_row'),
-                    leading: Text(
-                      l10n.acceptMotherInviteRightsEmoji,
-                      style: const TextStyle(fontSize: 18),
-                    ),
-                    title: l10n.acceptMotherInviteRightsTitle,
-                    subtitle: l10n.acceptMotherInviteRightsSubtitle,
-                    showDivider: false,
-                  ),
-                ],
+            Text(
+              l10n.joinCodeFieldLabel,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: colors.ink,
               ),
             ),
-            const SizedBox(height: 10),
-            BannerNote(
-              key: const Key('accept_mother_invite_local_honesty'),
-              variant: BannerVariant.t,
-              message: l10n.acceptMotherInviteLocalHonestyBanner,
-            ),
-            if (inviteTokenId?.trim().isNotEmpty ?? false) ...[
-              const SizedBox(height: 8),
-              TextButton(
-                key: const Key('accept_mother_invite_status'),
-                onPressed: () => context.push(
-                  '/sys3-invite-status?inviteTokenId=${Uri.encodeComponent(inviteTokenId!.trim())}',
+            const SizedBox(height: 6),
+            Semantics(
+              textField: true,
+              label: l10n.joinCodeFieldLabel,
+              child: Directionality(
+                textDirection: TextDirection.ltr,
+                child: TextField(
+                  key: const Key('join_code_field'),
+                  controller: _codeController,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  textCapitalization: TextCapitalization.characters,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _join(),
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 2,
+                    color: colors.ink,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: l10n.joinCodeFieldHint,
+                    hintStyle: TextStyle(
+                      color: colors.ink2.withValues(alpha: 0.45),
+                    ),
+                    filled: true,
+                    fillColor: colors.surface,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 13,
+                    ),
+                    border: border,
+                    enabledBorder: border,
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(radii.input),
+                      borderSide: BorderSide(color: colors.p400, width: 1.5),
+                    ),
+                  ),
                 ),
-                child: Text(l10n.sys3InviteStatusCta),
+              ),
+            ),
+            if (_formatError || failure != null) ...[
+              const SizedBox(height: 10),
+              BannerNote(
+                key: Key(
+                  _formatError
+                      ? 'join_code_error_format'
+                      : 'join_code_error_${failure!.name}',
+                ),
+                variant: BannerVariant.a,
+                message: _formatError
+                    ? l10n.joinCodeErrorFormat
+                    : _failureText(l10n, failure!),
               ),
             ],
             const SizedBox(height: 16),
             PrimaryBtn(
-              key: const Key('accept_mother_invite_accept'),
-              label: l10n.acceptMotherInviteAccept,
-              onPressed: canAccept ? () => _accept(context) : null,
+              key: const Key('join_code_submit'),
+              label: _busy ? l10n.joinCodeJoining : l10n.joinCodeSubmit,
+              onPressed: _canSubmit ? _join : null,
             ),
             const SizedBox(height: 8),
             PrimaryBtn(
               key: const Key('accept_mother_invite_decline'),
               label: l10n.acceptMotherInviteDecline,
               variant: PrimaryBtnVariant.ghost,
-              onPressed: () => _decline(context),
+              onPressed: _decline,
             ),
           ],
         ),

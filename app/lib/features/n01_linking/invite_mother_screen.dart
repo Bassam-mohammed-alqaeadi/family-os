@@ -1,163 +1,145 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart' show DateFormat;
 
+import 'package:family_os/core/design/components/app_card.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
-import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
-import 'package:family_os/core/domain/mother_level.dart';
-import 'package:family_os/core/identity/adult_invite_repository.dart';
-import 'package:family_os/core/identity/identity_models.dart';
-import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/runtime/app_scope.dart';
+import 'package:family_os/core/runtime/family_invite_code_source.dart';
+import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
-/// Mother permission level chosen by the father on invite (Wave-1).
-enum MotherInviteLevel {
-  /// مطّلعة — see and be notified.
-  observer,
-
-  /// مشاركة — approve requests + extra time (default / recommended).
-  partner,
-
-  /// كاملة — edit rules and limits with the father.
-  full,
-}
-
-/// SCR-FAT-008 — دعوة الأم (bare parent onboarding, mock-first).
+/// SCR-FAT-008 — دعوة الأم، برمز يصدره الخادم (قرار المالك 2026-10-10).
 ///
-/// Parametric / Rule 23: email starts empty — no prefilled invitee or
-/// person name. Toast uses typed email local-part only (no fixed name).
-/// No real email send / Firebase on this card.
+/// The guardian asks the server for a single-use code, sees it once, copies it and shares
+/// it however the family talks. The invitee redeems it from their own account on
+/// SCR-FAT-009; the server binds the membership to that verified account. Nothing here is
+/// stored on the phone: a code exists only because the server issued it, and the phone-local
+/// invite storage this screen used before is no longer on the real journey.
+///
+/// The prototype's mother permission levels are not stored by the server yet, so this screen
+/// does not offer a choice it cannot keep — the honesty banner says so.
 class InviteMotherScreen extends StatefulWidget {
-  const InviteMotherScreen({super.key, this.repository, this.onInviteSent});
+  const InviteMotherScreen({super.key, this.inviteCodes, this.onDone});
 
-  /// Test seam — when null, shows toast and navigates to `/scr-fat-027`.
-  final VoidCallback? onInviteSent;
-  final AdultInviteRepository? repository;
+  /// Test seam. When null, the screen uses [AppScope]'s invite-code source.
+  final FamilyInviteCodeSource? inviteCodes;
+
+  /// Test seam — when null, "done" navigates to `/scr-fat-027` (family members).
+  final VoidCallback? onDone;
 
   @override
   State<InviteMotherScreen> createState() => _InviteMotherScreenState();
 }
 
 class _InviteMotherScreenState extends State<InviteMotherScreen> {
-  final _emailController = TextEditingController();
-  MotherInviteLevel _level = MotherInviteLevel.partner;
-  late final AdultInviteRepository _repo;
-  AdultInvite? _latest;
+  IssuedInviteCode? _issued;
+  InviteCodeFailure? _failure;
+  bool _busy = false;
+  bool _revoked = false;
+  String? _issueKey;
 
-  @override
-  void initState() {
-    super.initState();
-    _repo = widget.repository ?? stage1AdultInviteRepository;
-    _emailController.addListener(_onEmailChanged);
-  }
+  FamilyInviteCodeSource? get _source =>
+      widget.inviteCodes ?? AppScope.maybeOf(context)?.inviteCodes;
 
-  @override
-  void dispose() {
-    _emailController
-      ..removeListener(_onEmailChanged)
-      ..dispose();
-    super.dispose();
-  }
-
-  void _onEmailChanged() {
-    final email = _emailController.text.trim().toLowerCase();
-    final runtime = CurrentIdentity.maybeOf(context);
-    if (runtime != null && email.isNotEmpty) {
-      _latest = _repo.latestForTarget(runtime.activeFamilyId, email);
-    } else {
-      _latest = null;
-    }
-    setState(() {});
-  }
-
-  bool get _canSubmit => _emailController.text.trim().isNotEmpty;
-
-  String _levelName(AppLocalizations l10n, MotherInviteLevel level) {
-    return switch (level) {
-      MotherInviteLevel.observer => l10n.inviteMotherLevelObserverTitle,
-      MotherInviteLevel.partner => l10n.inviteMotherLevelPartnerTitle,
-      MotherInviteLevel.full => l10n.inviteMotherLevelFullTitle,
-    };
-  }
-
-  String _levelDesc(AppLocalizations l10n, MotherInviteLevel level) {
-    return switch (level) {
-      MotherInviteLevel.observer => l10n.inviteMotherLevelObserverDesc,
-      MotherInviteLevel.partner => l10n.inviteMotherLevelPartnerDesc,
-      MotherInviteLevel.full => l10n.inviteMotherLevelFullDesc,
-    };
-  }
-
-  String _emailLocalPart(String email) {
-    final trimmed = email.trim();
-    final at = trimmed.indexOf('@');
-    if (at <= 0) return trimmed;
-    return trimmed.substring(0, at);
-  }
-
-  void _submit() {
-    if (!_canSubmit) return;
-    final l10n = AppLocalizations.of(context);
-    final localPart = _emailLocalPart(_emailController.text);
-    final levelName = _levelName(l10n, _level);
-
-    if (widget.onInviteSent != null) {
-      widget.onInviteSent!();
+  Future<void> _issue() async {
+    if (_busy) return;
+    final source = _source;
+    final identity = AppScope.maybeOf(context)?.identity.value;
+    final familyId = identity?.familyId;
+    if (source == null || familyId == null) {
+      setState(() => _failure = InviteCodeFailure.unavailable);
       return;
     }
+    // One key per attempt: the server never replays an issued code, so a retry after a
+    // refusal must be a new request rather than a replay the server would refuse.
+    _issueKey = newFoundationGateIdempotencyKey();
+    setState(() {
+      _busy = true;
+      _failure = null;
+      _revoked = false;
+    });
+    final result = await source.issue(
+      familyId: familyId,
+      role: 'co_guardian',
+      idempotencyKey: _issueKey!,
+    );
+    if (!mounted) return;
+    setState(() {
+      _busy = false;
+      _issued = result.invite;
+      _failure = result.failure;
+    });
+  }
 
-    final runtime = CurrentIdentity.maybeOf(context);
-    // Fail closed without Identity — no fake “sent” toast / navigation.
-    if (runtime == null) {
-      AppToast.show(context, message: l10n.settingsPersistError);
-      return;
-    }
-    if (!runtime.authorizationContext.canInviteAdults) {
-      AppToast.show(context, message: l10n.settingsPersistError);
-      return;
-    }
-    final email = _emailController.text.trim().toLowerCase();
-    final mapped = switch (_level) {
-      MotherInviteLevel.observer => MotherLevel.observer,
-      MotherInviteLevel.partner => MotherLevel.partner,
-      MotherInviteLevel.full => MotherLevel.full,
-    };
-    try {
-      final latest = _repo.latestForTarget(runtime.activeFamilyId, email);
-      if (latest != null && latest.isActiveAt(DateTime.now().toUtc())) {
-        _latest = _repo.resendInvite(
-          inviteId: latest.id,
-          actorMemberId: runtime.activeMembership.id,
-        );
+  Future<void> _revoke() async {
+    final issued = _issued;
+    final source = _source;
+    final familyId = AppScope.maybeOf(context)?.identity.value.familyId;
+    if (_busy || issued == null || source == null || familyId == null) return;
+    setState(() {
+      _busy = true;
+      _failure = null;
+    });
+    final result = await source.revoke(
+      familyId: familyId,
+      inviteId: issued.inviteId,
+      idempotencyKey: newFoundationGateIdempotencyKey(),
+    );
+    if (!mounted) return;
+    setState(() {
+      _busy = false;
+      if (result.isRevoked) {
+        // The code is dead on the server; the phone forgets it too.
+        _issued = null;
+        _revoked = true;
       } else {
-        _latest = _repo.createInvite(
-          familyId: runtime.activeFamilyId,
-          target: email,
-          level: mapped,
-          actorMemberId: runtime.activeMembership.id,
-        );
+        _failure = result.failure;
       }
-    } on InviteMutationDenied {
-      AppToast.show(context, message: l10n.settingsPersistError);
-      return;
+    });
+    if (result.isRevoked) {
+      AppToast.show(
+        context,
+        message: AppLocalizations.of(context).inviteCodeRevoked,
+      );
     }
+  }
 
+  Future<void> _copy() async {
+    final issued = _issued;
+    if (issued == null) return;
+    await Clipboard.setData(ClipboardData(text: issued.code));
+    if (!mounted) return;
     AppToast.show(
       context,
-      message: l10n.inviteMotherToast(localPart, levelName),
+      message: AppLocalizations.of(context).inviteCodeCopied,
     );
+  }
+
+  void _done() {
+    if (widget.onDone != null) {
+      widget.onDone!();
+      return;
+    }
     context.go('/scr-fat-027');
   }
 
-  String _stateLabel(AppLocalizations l10n, InviteLifecycleState state) {
-    return switch (state) {
-      InviteLifecycleState.created => l10n.inviteLifecyclePending,
-      InviteLifecycleState.active => l10n.inviteLifecycleActive,
-      InviteLifecycleState.accepted => l10n.inviteLifecycleAccepted,
-      InviteLifecycleState.expired => l10n.inviteLifecycleExpired,
-      InviteLifecycleState.revoked => l10n.inviteLifecycleRevoked,
+  String _failureText(AppLocalizations l10n, InviteCodeFailure failure) {
+    return switch (failure) {
+      InviteCodeFailure.limitReached => l10n.inviteCodeErrorLimit,
+      InviteCodeFailure.accessDenied => l10n.inviteCodeErrorDenied,
+      InviteCodeFailure.networkUnavailable => l10n.inviteCodeErrorNetwork,
+      InviteCodeFailure.sessionInvalid => l10n.loginSessionExpired,
+      InviteCodeFailure.serviceUnavailable ||
+      InviteCodeFailure.rateLimited ||
+      InviteCodeFailure.invalidInput ||
+      InviteCodeFailure.notRedeemable ||
+      InviteCodeFailure.alreadyMember => l10n.inviteCodeErrorService,
+      InviteCodeFailure.unavailable => l10n.inviteCodeErrorUnavailable,
     };
   }
 
@@ -165,7 +147,9 @@ class _InviteMotherScreenState extends State<InviteMotherScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).extension<FamilyColors>()!;
-    final radii = Theme.of(context).extension<FamilyRadii>()!;
+    final issued = _issued;
+    final failure = _failure;
+    final localeName = Localizations.localeOf(context).toString();
 
     return Scaffold(
       backgroundColor: colors.bg,
@@ -186,7 +170,7 @@ class _InviteMotherScreenState extends State<InviteMotherScreen> {
           children: [
             Text(
               key: const Key('invite_mother_intro'),
-              l10n.inviteMotherIntro,
+              l10n.inviteCodeIntro,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -194,243 +178,105 @@ class _InviteMotherScreenState extends State<InviteMotherScreen> {
                 height: 1.6,
               ),
             ),
-            const SizedBox(height: 12),
-            _LabeledField(
-              label: l10n.inviteMotherEmailLabel,
-              child: Semantics(
-                textField: true,
-                label: l10n.inviteMotherEmailLabel,
-                child: TextField(
-                  key: const Key('invite_mother_email'),
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  autocorrect: false,
-                  textInputAction: TextInputAction.done,
-                  decoration: _inputDecoration(
-                    colors: colors,
-                    radii: radii,
-                    hint: l10n.inviteMotherEmailHint,
-                  ),
-                ),
-              ),
-            ),
-            for (final level in MotherInviteLevel.values)
-              _LevelRow(
-                key: Key('invite_mother_level_${level.name}'),
-                selected: _level == level,
-                title: _levelName(l10n, level),
-                description: _levelDesc(l10n, level),
-                recommendedTag: level == MotherInviteLevel.partner
-                    ? l10n.inviteMotherRecommendedTag
-                    : null,
-                onTap: () => setState(() => _level = level),
-              ),
-            if (_latest != null) ...[
-              const SizedBox(height: 2),
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: Tag(
-                  key: Key(
-                    'invite_mother_state_${_latest!.stateAt(DateTime.now().toUtc()).name}',
-                  ),
-                  label: _stateLabel(
-                    l10n,
-                    _latest!.stateAt(DateTime.now().toUtc()),
-                  ),
-                  variant: TagVariant.a,
-                ),
-              ),
-              TextButton(
-                key: const Key('invite_mother_status'),
-                onPressed: () => context.push(
-                  '/sys3-invite-status?inviteTokenId=${Uri.encodeComponent(_latest!.tokenId.value)}',
-                ),
-                child: Text(l10n.sys3InviteStatusCta),
-              ),
-            ],
-            const SizedBox(height: 4),
-            BannerNote(
-              key: const Key('invite_mother_banner'),
-              variant: BannerVariant.p,
-              leading: Text(
-                l10n.inviteMotherBannerLeading,
-                style: TextStyle(fontSize: 14, color: colors.p700),
-              ),
-              message: l10n.inviteMotherBanner,
-            ),
-            const SizedBox(height: 10),
-            BannerNote(
-              key: const Key('invite_mother_local_honesty'),
-              variant: BannerVariant.t,
-              message: l10n.inviteMotherLocalHonestyBanner,
-            ),
-            const SizedBox(height: 16),
-            PrimaryBtn(
-              key: const Key('invite_mother_submit'),
-              label: l10n.inviteMotherSubmit,
-              onPressed: _canSubmit ? _submit : null,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  InputDecoration _inputDecoration({
-    required FamilyColors colors,
-    required FamilyRadii radii,
-    required String hint,
-  }) {
-    final border = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(radii.input),
-      borderSide: BorderSide(color: colors.border, width: 1.5),
-    );
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: TextStyle(color: colors.ink2.withValues(alpha: 0.55)),
-      filled: true,
-      fillColor: colors.surface,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-      border: border,
-      enabledBorder: border,
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(radii.input),
-        borderSide: BorderSide(color: colors.p400, width: 1.5),
-      ),
-    );
-  }
-}
-
-class _LevelRow extends StatelessWidget {
-  const _LevelRow({
-    super.key,
-    required this.selected,
-    required this.title,
-    required this.description,
-    required this.onTap,
-    this.recommendedTag,
-  });
-
-  final bool selected;
-  final String title;
-  final String description;
-  final String? recommendedTag;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<FamilyColors>()!;
-    final radii = Theme.of(context).extension<FamilyRadii>()!;
-    final marker = selected ? '●' : '○';
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Semantics(
-        button: true,
-        selected: selected,
-        label: recommendedTag == null
-            ? '$title. $description'
-            : '$title. $recommendedTag. $description',
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(radii.card),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: selected ? colors.p50 : colors.surface,
-                borderRadius: BorderRadius.circular(radii.card),
-                border: Border.all(
-                  color: selected ? colors.p500 : colors.border,
-                  width: 2,
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(13),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(height: 14),
+            if (issued != null)
+              AppCard(
+                key: const Key('invite_code_card'),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      marker,
+                      l10n.inviteCodeValueLabel,
                       style: TextStyle(
-                        fontSize: 16,
-                        height: 1.3,
-                        color: selected ? colors.p500 : colors.ink2,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: colors.ink2,
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Wrap(
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            spacing: 6,
-                            children: [
-                              Text(
-                                title,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w800,
-                                  color: colors.ink,
-                                ),
-                              ),
-                              if (recommendedTag != null)
-                                Tag(
-                                  label: recommendedTag!,
-                                  variant: TagVariant.g,
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            description,
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w600,
-                              color: colors.ink2,
-                              height: 1.6,
-                            ),
-                          ),
-                        ],
+                    const SizedBox(height: 8),
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: SelectableText(
+                        key: const Key('invite_code_value'),
+                        issued.code,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 3,
+                          color: colors.ink,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
                       ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      key: const Key('invite_code_expiry'),
+                      l10n.inviteCodeExpiry(
+                        DateFormat.MMMd(
+                          localeName,
+                        ).add_jm().format(issued.expiresAt.toLocal()),
+                      ),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: colors.ink2,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    PrimaryBtn(
+                      key: const Key('invite_code_copy'),
+                      label: l10n.inviteCodeCopy,
+                      onPressed: _busy ? null : _copy,
+                    ),
+                    const SizedBox(height: 8),
+                    PrimaryBtn(
+                      key: const Key('invite_code_revoke'),
+                      label: l10n.inviteCodeRevoke,
+                      variant: PrimaryBtnVariant.ghost,
+                      onPressed: _busy ? null : _revoke,
                     ),
                   ],
                 ),
+              )
+            else
+              PrimaryBtn(
+                key: const Key('invite_code_issue'),
+                label: _busy ? l10n.inviteCodeIssuing : l10n.inviteCodeIssue,
+                onPressed: _busy ? null : _issue,
               ),
+            if (failure != null) ...[
+              const SizedBox(height: 10),
+              BannerNote(
+                key: Key('invite_code_error_${failure.name}'),
+                variant: BannerVariant.a,
+                message: _failureText(l10n, failure),
+              ),
+            ],
+            if (_revoked) ...[
+              const SizedBox(height: 10),
+              Text(
+                key: const Key('invite_code_revoked'),
+                l10n.inviteCodeRevoked,
+                style: TextStyle(fontSize: 12.5, color: colors.ink2),
+              ),
+            ],
+            const SizedBox(height: 14),
+            BannerNote(
+              key: const Key('invite_code_honesty'),
+              variant: BannerVariant.t,
+              message: l10n.inviteCodeHonesty,
             ),
-          ),
+            const SizedBox(height: 16),
+            PrimaryBtn(
+              key: const Key('invite_code_done'),
+              label: l10n.inviteCodeDone,
+              variant: PrimaryBtnVariant.ghost,
+              onPressed: _done,
+            ),
+          ],
         ),
-      ),
-    );
-  }
-}
-
-class _LabeledField extends StatelessWidget {
-  const _LabeledField({required this.label, required this.child});
-
-  final String label;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<FamilyColors>()!;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w700,
-              color: colors.ink,
-            ),
-          ),
-          const SizedBox(height: 6),
-          child,
-        ],
       ),
     );
   }

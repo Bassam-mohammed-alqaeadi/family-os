@@ -12798,4 +12798,112 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get voicePauseSemantics => 'إيقاف الرسالة الصوتية مؤقتًا';
+
+  @override
+  String get inviteCodeIntro =>
+      'أنشئ رمز دعوة وأرسله للأم بنفسك. تُدخله من حسابها في التطبيق فتنضم إلى العائلة وليّةَ أمرٍ مشاركة.';
+
+  @override
+  String get inviteCodeIssue => 'أنشئ رمز الدعوة';
+
+  @override
+  String get inviteCodeIssuing => 'جارٍ إنشاء الرمز…';
+
+  @override
+  String get inviteCodeValueLabel => 'رمز الدعوة';
+
+  @override
+  String inviteCodeExpiry(String time) {
+    return 'صالح حتى $time · يُستعمل مرة واحدة';
+  }
+
+  @override
+  String get inviteCodeCopy => 'انسخ الرمز';
+
+  @override
+  String get inviteCodeCopied => 'نُسخ الرمز — أرسله للأم في رسالة';
+
+  @override
+  String get inviteCodeRevoke => 'ألغِ هذا الرمز';
+
+  @override
+  String get inviteCodeRevoked => 'أُلغي الرمز على الخادم ولم يعد صالحاً';
+
+  @override
+  String get inviteCodeDone => 'تم — إلى أعضاء العائلة';
+
+  @override
+  String get inviteCodeHonesty =>
+      'الرمز يصدره الخادم ويظهر هنا مرة واحدة فقط، وينتهي بعد ٢٤ ساعة. لا نرسل بريداً أو رسالة نيابةً عنك — شاركه بنفسك. مستويات صلاحية الأم (مطّلعة/مشاركة/كاملة) لم تُحفظ على الخادم بعد: كل وليّة أمر مشاركة لها الصلاحيات نفسها.';
+
+  @override
+  String get inviteCodeErrorLimit =>
+      'لدى العائلة ٥ رموز مفتوحة. ألغِ رمزاً أو انتظر انتهاءه.';
+
+  @override
+  String get inviteCodeErrorDenied =>
+      'إنشاء رموز الدعوة لوليّ الأمر الأساسي فقط.';
+
+  @override
+  String get inviteCodeErrorUnavailable =>
+      'هذه النسخة غير متصلة بالخادم — لم يُنشأ أي رمز.';
+
+  @override
+  String get inviteCodeErrorNetwork =>
+      'تعذّر الوصول إلى الخادم. تحقق من الاتصال وحاول مجدداً.';
+
+  @override
+  String get inviteCodeErrorService => 'الخدمة غير متاحة الآن. حاول بعد قليل.';
+
+  @override
+  String get joinCodeIntro =>
+      'أدخل الرمز الذي وصلك من وليّ الأمر. تنضم إلى العائلة بالحساب الذي سجّلت به الدخول، ولا تُعدّ عضواً إلا بعد أن يؤكد الخادم ذلك.';
+
+  @override
+  String get joinCodeFieldLabel => 'رمز الدعوة';
+
+  @override
+  String get joinCodeFieldHint => 'ABCDE-FGHJK';
+
+  @override
+  String get joinCodeSubmit => 'انضم إلى العائلة';
+
+  @override
+  String get joinCodeJoining => 'جارٍ الانضمام…';
+
+  @override
+  String joinCodeJoined(String family) {
+    return 'انضممت إلى «$family»';
+  }
+
+  @override
+  String get joinCodeErrorFormat => 'الرمز ١٠ أحرف وأرقام، مثل ABCDE-FGHJK.';
+
+  @override
+  String get joinCodeErrorNotRedeemable =>
+      'الرمز غير صحيح أو انتهت صلاحيته أو استُعمل من قبل. اطلب رمزاً جديداً.';
+
+  @override
+  String get joinCodeErrorAlreadyMember => 'حسابك عضو في هذه العائلة بالفعل.';
+
+  @override
+  String get joinCodeErrorRateLimited =>
+      'محاولات كثيرة. انتظر بضع دقائق ثم حاول مجدداً.';
+
+  @override
+  String get joinCodeErrorSignIn => 'سجّل الدخول بحسابك أولاً، ثم أدخل الرمز.';
+
+  @override
+  String get deviceModeInviteCodeEmoji => '🔑';
+
+  @override
+  String get deviceModeInviteCodeTitle => 'عندي رمز دعوة';
+
+  @override
+  String get deviceModeInviteCodeBody =>
+      'أنضم إلى عائلة موجودة برمز من وليّ الأمر';
+
+  @override
+  String get deviceModeInviteCodeSemantics =>
+      'عندي رمز دعوة — الانضمام إلى عائلة موجودة';
 }

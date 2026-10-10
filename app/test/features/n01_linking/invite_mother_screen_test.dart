@@ -1,101 +1,228 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/placeholder_screen.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
-import 'package:family_os/core/design/components/primary_btn.dart';
-import 'package:family_os/core/design/components/tag.dart';
-import 'package:family_os/core/design/tokens.dart';
-import 'package:family_os/core/domain/mother_level.dart';
-import 'package:family_os/core/identity/adult_invite_repository.dart';
-import 'package:family_os/core/identity/identity_runtime.dart';
-import 'package:family_os/core/identity/identity_scope.dart';
-import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/runtime/family_invite_code_source.dart';
 import 'package:family_os/features/n01_linking/invite_mother_screen.dart';
 
+import 'invite_code_fakes.dart';
+
+/// SCR-FAT-008 — invites by code (owner decision 2026-10-10). The screen shows a code only
+/// when the server issued one, and keeps nothing on the phone.
 void main() {
-  tearDown(() {
-    AppToast.dismiss();
-    stage1AdultInviteRepository.resetForTests();
-    resetStage1IdentityRuntimeForTest();
-  });
+  tearDown(AppToast.dismiss);
 
-  testWidgets('empty email disables CTA; Rule 23 — no prefilled email / خالد', (
-    tester,
-  ) async {
-    var sent = 0;
-    await _pumpScreen(tester, onInviteSent: () => sent++);
+  Future<void> settle(WidgetTester tester) async {
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+  }
 
-    final emailField = tester.widget<TextField>(
-      find.byKey(const Key('invite_mother_email')),
+  testWidgets(
+    'before issuing: no code, no email field, no level picker, honest banner',
+    (tester) async {
+      final source = FakeInviteCodeSource();
+      await pumpWithInviteCodes(
+        tester,
+        source: source,
+        identity: guardianSnapshot(),
+        home: const InviteMotherScreen(),
+      );
+
+      expect(find.byKey(const Key('invite_code_issue')), findsOneWidget);
+      expect(find.byKey(const Key('invite_code_value')), findsNothing);
+      expect(find.byKey(const Key('invite_mother_email')), findsNothing);
+      expect(
+        find.byKey(const Key('invite_mother_level_partner')),
+        findsNothing,
+      );
+      expect(find.byKey(const Key('invite_code_honesty')), findsOneWidget);
+      expect(find.textContaining('مرة واحدة فقط'), findsOneWidget);
+      expect(find.textContaining('لم تُحفظ على الخادم'), findsOneWidget);
+      expect(
+        source.issued,
+        isEmpty,
+        reason: 'nothing is issued until the guardian asks',
+      );
+    },
+  );
+
+  testWidgets(
+    'issue → the server\'s code is shown once, for the selected family, as co-guardian',
+    (tester) async {
+      final source = FakeInviteCodeSource();
+      await pumpWithInviteCodes(
+        tester,
+        source: source,
+        identity: guardianSnapshot(),
+        home: const InviteMotherScreen(),
+      );
+
+      await tester.tap(find.byKey(const Key('invite_code_issue')));
+      await tester.pumpAndSettle();
+
+      expect(source.issued, hasLength(1));
+      expect(source.issued.single.familyId.value, inviteTestFamilyUuid);
+      expect(source.issued.single.role, 'co_guardian');
+      expect(find.byKey(const Key('invite_code_value')), findsOneWidget);
+      expect(find.text('ABCDE-FGHJK'), findsOneWidget);
+      expect(find.byKey(const Key('invite_code_expiry')), findsOneWidget);
+      expect(find.byKey(const Key('invite_code_issue')), findsNothing);
+    },
+  );
+
+  testWidgets('copy puts exactly the code on the clipboard', (tester) async {
+    String? copied;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          copied = (call.arguments as Map)['text'] as String?;
+        }
+        return null;
+      },
     );
-    expect(emailField.controller!.text, isEmpty);
-    expect(find.text('nawal@example.com'), findsNothing);
-    expect(find.textContaining('خالد'), findsNothing);
-    expect(find.textContaining('نوال'), findsNothing);
-
-    final btn = tester.widget<PrimaryBtn>(
-      find.byKey(const Key('invite_mother_submit')),
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
     );
-    expect(btn.onPressed, isNull);
-
-    await tester.tap(find.byKey(const Key('invite_mother_submit')));
+    await pumpWithInviteCodes(
+      tester,
+      source: FakeInviteCodeSource(),
+      identity: guardianSnapshot(),
+      home: const InviteMotherScreen(),
+    );
+    await tester.tap(find.byKey(const Key('invite_code_issue')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('invite_code_copy')));
+    await tester.tap(find.byKey(const Key('invite_code_copy')));
     await tester.pump();
-    expect(sent, 0);
+    expect(copied, 'ABCDE-FGHJK');
+    await settle(tester);
   });
 
-  testWidgets('default level is مشاركة with recommended tag', (tester) async {
-    await _pumpScreen(tester);
-
-    final partner = find.byKey(const Key('invite_mother_level_partner'));
-    expect(partner, findsOneWidget);
-    expect(
-      find.descendant(of: partner, matching: find.text('●')),
-      findsOneWidget,
-    );
-    expect(find.text('مشاركة'), findsOneWidget);
-    expect(find.text('موصى به'), findsOneWidget);
-    expect(find.byType(Tag), findsOneWidget);
-
-    final observer = find.byKey(const Key('invite_mother_level_observer'));
-    expect(
-      find.descendant(of: observer, matching: find.text('○')),
-      findsOneWidget,
-    );
-  });
-
-  testWidgets('select كاملة updates selection marker', (tester) async {
-    await _pumpScreen(tester);
-
-    await tester.tap(find.byKey(const Key('invite_mother_level_full')));
-    await tester.pump();
-
-    final full = find.byKey(const Key('invite_mother_level_full'));
-    expect(find.descendant(of: full, matching: find.text('●')), findsOneWidget);
-    final partner = find.byKey(const Key('invite_mother_level_partner'));
-    expect(
-      find.descendant(of: partner, matching: find.text('○')),
-      findsOneWidget,
-    );
-  });
-
-  testWidgets('LOCAL honesty banner present (no email/Backend claim)', (
+  testWidgets('revoke → the code disappears only after the server confirms', (
     tester,
   ) async {
-    await _pumpScreen(tester);
+    final source = FakeInviteCodeSource(
+      revokeResult: const InviteCodeRevokeResult.failed(
+        InviteCodeFailure.networkUnavailable,
+      ),
+    );
+    await pumpWithInviteCodes(
+      tester,
+      source: source,
+      identity: guardianSnapshot(),
+      home: const InviteMotherScreen(),
+    );
+    await tester.tap(find.byKey(const Key('invite_code_issue')));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.byKey(const Key('invite_code_revoke')));
+    await tester.tap(find.byKey(const Key('invite_code_revoke')));
+    await tester.pumpAndSettle();
     expect(
-      find.byKey(const Key('invite_mother_local_honesty')),
+      source.revoked.single.inviteId,
+      FakeInviteCodeSource.sampleCode().inviteId,
+    );
+    expect(
+      find.text('ABCDE-FGHJK'),
+      findsOneWidget,
+      reason: 'a refused revoke keeps the code on screen',
+    );
+    expect(
+      find.byKey(const Key('invite_code_error_networkUnavailable')),
       findsOneWidget,
     );
-    expect(find.textContaining('محلياً'), findsOneWidget);
-    expect(find.textContaining('تحديث قادم'), findsOneWidget);
+
+    source.revokeResult = const InviteCodeRevokeResult.revoked();
+    await tester.ensureVisible(find.byKey(const Key('invite_code_revoke')));
+    await tester.tap(find.byKey(const Key('invite_code_revoke')));
+    await tester.pumpAndSettle();
+    expect(find.text('ABCDE-FGHJK'), findsNothing);
+    expect(find.byKey(const Key('invite_code_revoked')), findsOneWidget);
+    expect(find.byKey(const Key('invite_code_issue')), findsOneWidget);
+    await settle(tester);
   });
 
-  testWidgets('without Identity — fail-closed (no navigate / no invite)', (
+  for (final (failure, text) in [
+    (InviteCodeFailure.limitReached, '٥ رموز مفتوحة'),
+    (InviteCodeFailure.accessDenied, 'لوليّ الأمر الأساسي فقط'),
+    (InviteCodeFailure.networkUnavailable, 'تعذّر الوصول إلى الخادم'),
+    (InviteCodeFailure.unavailable, 'لم يُنشأ أي رمز'),
+  ]) {
+    testWidgets(
+      'a refused issue says why (${failure.name}) and shows no code',
+      (tester) async {
+        final source = FakeInviteCodeSource(
+          issueResult: InviteCodeIssueResult.failed(failure),
+        );
+        await pumpWithInviteCodes(
+          tester,
+          source: source,
+          identity: guardianSnapshot(),
+          home: const InviteMotherScreen(),
+        );
+        await tester.tap(find.byKey(const Key('invite_code_issue')));
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(Key('invite_code_error_${failure.name}')),
+          findsOneWidget,
+        );
+        expect(find.textContaining(text), findsOneWidget);
+        expect(find.byKey(const Key('invite_code_value')), findsNothing);
+      },
+    );
+  }
+
+  testWidgets(
+    'a retry after a refusal is a new request (codes are never replayed)',
+    (tester) async {
+      final source = FakeInviteCodeSource(
+        issueResult: const InviteCodeIssueResult.failed(
+          InviteCodeFailure.networkUnavailable,
+        ),
+      );
+      await pumpWithInviteCodes(
+        tester,
+        source: source,
+        identity: guardianSnapshot(),
+        home: const InviteMotherScreen(),
+      );
+      await tester.tap(find.byKey(const Key('invite_code_issue')));
+      await tester.pumpAndSettle();
+      source.issueResult = null;
+      await tester.tap(find.byKey(const Key('invite_code_issue')));
+      await tester.pumpAndSettle();
+      expect(source.issued, hasLength(2));
+      expect(source.issued[0].key, isNot(source.issued[1].key));
+      expect(find.text('ABCDE-FGHJK'), findsOneWidget);
+    },
+  );
+
+  testWidgets('without a server family the screen says so and calls nothing', (
     tester,
   ) async {
+    final source = FakeInviteCodeSource();
+    await pumpWithInviteCodes(
+      tester,
+      source: source,
+      home: const InviteMotherScreen(),
+    );
+    await tester.tap(find.byKey(const Key('invite_code_issue')));
+    await tester.pumpAndSettle();
+    expect(source.issued, isEmpty);
+    expect(
+      find.byKey(const Key('invite_code_error_unavailable')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('done → family members (/scr-fat-027)', (tester) async {
     final router = GoRouter(
       initialLocation: '/scr-fat-008',
       routes: [
@@ -113,144 +240,30 @@ void main() {
       ],
     );
     addTearDown(router.dispose);
-
-    await tester.pumpWidget(
-      MaterialApp.router(
-        theme: buildFamilyTheme(),
-        locale: const Locale('ar'),
-        supportedLocales: AppLocalizations.supportedLocales,
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        routerConfig: router,
-      ),
+    await pumpWithInviteCodes(
+      tester,
+      source: FakeInviteCodeSource(),
+      identity: guardianSnapshot(),
+      router: router,
     );
-    await tester.pumpAndSettle();
-
-    await tester.enterText(
-      find.byKey(const Key('invite_mother_email')),
-      'sara@example.com',
-    );
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('invite_mother_submit')));
-    await tester.pump();
-
-    expect(router.state.uri.path, '/scr-fat-008');
-    expect(
-      stage1AdultInviteRepository.listByFamily(
-        stage1IdentityRuntime.activeFamilyId,
-      ),
-      isEmpty,
-    );
-
-    await _settleTimers(tester);
-  });
-
-  testWidgets('Identity owner send → local invite + toast + /scr-fat-027', (
-    tester,
-  ) async {
-    resetStage1IdentityRuntimeForTest();
-    stage1AdultInviteRepository.resetForTests();
-    final runtime = stage1IdentityRuntime;
-    final repo = stage1AdultInviteRepository;
-
-    final router = GoRouter(
-      initialLocation: '/scr-fat-008',
-      routes: [
-        GoRoute(
-          path: '/scr-fat-008',
-          builder: (context, state) => InviteMotherScreen(repository: repo),
-        ),
-        GoRoute(
-          path: '/scr-fat-027',
-          builder: (context, state) => const PlaceholderScreen(
-            screenId: 'SCR-FAT-027',
-            title: 'أعضاء العائلة',
-          ),
-        ),
-      ],
-    );
-    addTearDown(router.dispose);
-
-    await tester.pumpWidget(
-      CurrentIdentity(
-        runtime: runtime,
-        child: MaterialApp.router(
-          theme: buildFamilyTheme(),
-          locale: const Locale('ar'),
-          supportedLocales: AppLocalizations.supportedLocales,
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          routerConfig: router,
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.enterText(
-      find.byKey(const Key('invite_mother_email')),
-      'sara@example.com',
-    );
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('invite_mother_level_full')));
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('invite_mother_submit')));
-    await tester.pump();
-
-    expect(
-      find.textContaining('أُنشئت دعوة محلية لـ sara بمستوى «كاملة»'),
-      findsOneWidget,
-    );
-
-    final invites = repo.listByFamily(runtime.activeFamilyId);
-    expect(invites, hasLength(1));
-    expect(invites.first.target, 'sara@example.com');
-    expect(invites.first.level, MotherLevel.full);
-
+    await tester.ensureVisible(find.byKey(const Key('invite_code_done')));
+    await tester.tap(find.byKey(const Key('invite_code_done')));
     await tester.pumpAndSettle();
     expect(router.state.uri.path, '/scr-fat-027');
-
-    await _settleTimers(tester);
   });
 
-  testWidgets('banner + intro copy present', (tester) async {
-    await _pumpScreen(tester);
-
-    expect(find.byKey(const Key('invite_mother_banner')), findsOneWidget);
-    expect(find.textContaining('حقوق لا تخضع للتدرّج'), findsOneWidget);
-    expect(find.textContaining('تطمئن معك على الأبناء'), findsOneWidget);
+  testWidgets('English locale renders the code flow', (tester) async {
+    await pumpWithInviteCodes(
+      tester,
+      source: FakeInviteCodeSource(),
+      identity: guardianSnapshot(),
+      home: const InviteMotherScreen(),
+      locale: const Locale('en'),
+    );
+    expect(find.text('Create invite code'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('invite_code_issue')));
+    await tester.pumpAndSettle();
+    expect(find.text('ABCDE-FGHJK'), findsOneWidget);
+    expect(find.textContaining('single use'), findsOneWidget);
   });
-}
-
-Future<void> _pumpScreen(
-  WidgetTester tester, {
-  VoidCallback? onInviteSent,
-}) async {
-  await tester.pumpWidget(
-    MaterialApp(
-      theme: buildFamilyTheme(),
-      locale: const Locale('ar'),
-      supportedLocales: AppLocalizations.supportedLocales,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      home: InviteMotherScreen(onInviteSent: onInviteSent),
-    ),
-  );
-  await tester.pumpAndSettle();
-}
-
-Future<void> _settleTimers(WidgetTester tester) async {
-  AppToast.dismiss();
-  await tester.pump(const Duration(milliseconds: 2600));
 }
