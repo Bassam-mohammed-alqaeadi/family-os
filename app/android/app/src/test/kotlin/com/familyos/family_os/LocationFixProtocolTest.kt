@@ -149,6 +149,34 @@ class LocationFixProtocolTest {
         assertEquals(listOf(LocationReportOutcome.CREDENTIAL_REVOKED), LocationReportOutcome.values().filter { it.endsSession })
     }
 
+    @Test
+    fun oneReadingPerIntervalAcrossAllProviders() {
+        val interval = LocationFixProtocol.MIN_REPORT_INTERVAL_MILLIS
+        assertEquals(5 * 60 * 1000L, interval)
+        assertTrue(LocationFixProtocol.dueForReport(null, 10_000L))
+        // A network reading right after a GPS reading is held back...
+        assertTrue(!LocationFixProtocol.dueForReport(10_000L, 10_000L + 1_000L))
+        assertTrue(!LocationFixProtocol.dueForReport(10_000L, 10_000L + interval - 1))
+        // ...until the interval has passed.
+        assertTrue(LocationFixProtocol.dueForReport(10_000L, 10_000L + interval))
+    }
+
+    @Test
+    fun legacyHeartbeatOnlyFollowsAnAcceptedGenuineFix() {
+        assertTrue(LocationFixProtocol.legacyHeartbeatAllowed(LocationReportOutcome.ACCEPTED, fixtureReading))
+        // A mock reading never reaches the route that cannot label it.
+        assertTrue(
+            !LocationFixProtocol.legacyHeartbeatAllowed(
+                LocationReportOutcome.ACCEPTED,
+                fixtureReading.copy(fromMockProvider = true),
+            ),
+        )
+        // A refusal on the W3 route is never bypassed through the older route.
+        for (outcome in LocationReportOutcome.values().filter { it != LocationReportOutcome.ACCEPTED }) {
+            assertTrue("$outcome", !LocationFixProtocol.legacyHeartbeatAllowed(outcome, fixtureReading))
+        }
+    }
+
     private fun repositoryRoot(): File {
         var directory: File? = File(System.getProperty("user.dir")).absoluteFile
         while (directory != null) {

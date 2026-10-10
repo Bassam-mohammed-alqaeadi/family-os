@@ -11,7 +11,7 @@ import java.util.TimeZone
  * Deliberately free of Android imports so the exact bytes the handset sends, and the exact
  * way it reads the server's answer, are proven by plain JVM tests
  * (`app/android/app/src/test/.../LocationFixProtocolTest.kt`) against the same fixture the
- * backend validates (`backend/test/fixtures/native-location-fix.json`).
+ * backend validates (`backend/test/fixtures/native-location-fix.wire.json`).
  *
  * Two rules live here because getting either wrong is expensive for a family:
  *
@@ -29,6 +29,14 @@ import java.util.TimeZone
 object LocationFixProtocol {
     /** Readings worse than this are not reported; unchanged from the collection rule before. */
     const val MAX_REPORTED_ACCURACY_METERS = 200.0
+
+    /**
+     * The shortest gap between two reported readings, across every provider together.
+     * Android applies `minTime` per provider, so GPS and network each alone could deliver
+     * one reading per interval; this gate is what makes "at most once every 5 minutes" in
+     * the ongoing notification true.
+     */
+    const val MIN_REPORT_INTERVAL_MILLIS = 5 * 60 * 1000L
 
     /** The single server error code that means "this credential is dead". */
     const val REVOKED_CREDENTIAL_CODE = "invalid_device_credential"
@@ -66,6 +74,28 @@ object LocationFixProtocol {
         if (reading.recordedAtEpochMillis <= 0L) return null
         return reading
     }
+
+    /**
+     * Whether a reading taken at [nowElapsedMillis] (monotonic clock) may be reported, given
+     * when the last one was handed to the network ([lastReportedElapsedMillis], null if none
+     * yet in this session). A clock that went backwards never blocks reporting for long:
+     * it is treated as a new session.
+     */
+    fun dueForReport(lastReportedElapsedMillis: Long?, nowElapsedMillis: Long): Boolean {
+        if (lastReportedElapsedMillis == null) return true
+        val gap = nowElapsedMillis - lastReportedElapsedMillis
+        return gap < 0L || gap >= MIN_REPORT_INTERVAL_MILLIS
+    }
+
+    /**
+     * Whether the legacy heartbeat (battery + the coordinates the W2 device card reads) may
+     * follow a fix. Only after the W3 route accepted that same fix - a refusal there (for
+     * example a future consent pause) must never be bypassed by writing the coordinates to
+     * the older route - and never for a mock-provider reading, because the legacy route has
+     * no field to say "test position" and would show it as a real one.
+     */
+    fun legacyHeartbeatAllowed(fixOutcome: LocationReportOutcome, reading: Reading): Boolean =
+        fixOutcome == LocationReportOutcome.ACCEPTED && !reading.fromMockProvider
 
     /** The JSON body, field for field what `locationFixInput` in the backend accepts. */
     fun body(reading: Reading): String = buildString {

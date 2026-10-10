@@ -90,6 +90,18 @@ test('the native service reports to the W3 route with an idempotency key', async
   assert.doesNotMatch(service, /println\(/);
 });
 
+test('the legacy heartbeat never carries coordinates the W3 route refused or a mock reading', async () => {
+  const service = await readFile(join(nativeSource, 'ChildTelemetryService.kt'), 'utf8');
+  const gate = service.indexOf('LocationFixProtocol.legacyHeartbeatAllowed(fixOutcome, reading)');
+  const legacy = service.indexOf('/telemetry"');
+  assert.ok(gate > 0, 'the heartbeat must be gated on the fix outcome');
+  assert.ok(legacy > gate, 'the gate must come before the legacy telemetry call');
+  // Revocation handling and the pairing screen share one process-wide lock.
+  assert.match(service, /private val LOCK = Any\(\)/);
+  const activity = await readFile(join(nativeSource, 'MainActivity.kt'), 'utf8');
+  assert.match(activity, /TelemetryConfigStore\.locked \{/);
+});
+
 test('the foreground notification says the same thing in Arabic and English, and matches the code', async () => {
   const res = join(repositoryRoot, 'app/android/app/src/main/res');
   const names = (xml) => [...xml.matchAll(/<string name="([a-z_]+)">/g)].map((m) => m[1]).sort();
@@ -103,6 +115,11 @@ test('the foreground notification says the same thing in Arabic and English, and
   // on that interval. Change one and this fails until the other is changed with it.
   const service = await readFile(join(nativeSource, 'ChildTelemetryService.kt'), 'utf8');
   assert.match(service, /UPDATE_INTERVAL_MILLIS = 5 \* 60 \* 1000L/);
+  // Android applies the interval per provider (GPS and network), so the promise holds only
+  // because one gate spans both.
+  const protocolSource = await readFile(join(nativeSource, 'LocationFixProtocol.kt'), 'utf8');
+  assert.match(protocolSource, /MIN_REPORT_INTERVAL_MILLIS = 5 \* 60 \* 1000L/);
+  assert.match(service, /LocationFixProtocol\.dueForReport\(/);
   assert.match(text(arabic, 'location_sharing_notification_text'), /٥ دقائق/);
   assert.match(text(english, 'location_sharing_notification_text'), /5 minutes/);
   for (const xml of [arabic, english]) {

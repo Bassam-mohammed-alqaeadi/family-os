@@ -115,8 +115,12 @@ class MainActivity : FlutterActivity() {
         try {
             // Pairing is a chat capability too: retain the credential securely even if the
             // guardian or child declines location permission. Location collection remains off.
-            TelemetryConfigStore(this).write(TelemetryConfig(apiOrigin!!.trimEnd('/'), deviceId!!, credential))
-            LocationReportStatusStore(this).resetForNewPairing()
+            // Written under the service's lock, so a late answer for the previous credential
+            // can neither undo this pairing nor stamp its outcome onto it.
+            TelemetryConfigStore.locked {
+                TelemetryConfigStore(this).write(TelemetryConfig(apiOrigin!!.trimEnd('/'), deviceId!!, credential))
+                LocationReportStatusStore(this).resetForNewPairing()
+            }
             if (!hasFineLocation() || !hasBackgroundLocation()) {
                 result.success(mapOf<String, Any>("started" to false, "reason" to "location_permission_required"))
                 return

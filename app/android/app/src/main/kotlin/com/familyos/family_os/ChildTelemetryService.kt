@@ -16,6 +16,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.SystemClock
 import android.util.Base64
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -58,6 +59,9 @@ class ChildTelemetryService : Service(), LocationListener {
     private lateinit var locationManager: LocationManager
     private lateinit var configStore: TelemetryConfigStore
     private lateinit var reportStatus: LocationReportStatusStore
+
+    /** Main-thread only: when the last reading was handed to [executor] (monotonic clock). */
+    private var lastReportedElapsedMillis: Long? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -110,8 +114,17 @@ class ChildTelemetryService : Service(), LocationListener {
                 fromMockProvider = isFromMockProvider(location),
             ),
         ) ?: return
+        // GPS and network each honour the interval on their own; one gate across both keeps
+        // the notification's "at most once every 5 minutes" true.
+        val now = SystemClock.elapsedRealtime()
+        if (!LocationFixProtocol.dueForReport(lastReportedElapsedMillis, now)) return
+        lastReportedElapsedMillis = now
         val battery = readBattery()
-        executor.execute { report(config, reading, battery) }
+        try {
+            executor.execute { report(config, reading, battery) }
+        } catch (_: java.util.concurrent.RejectedExecutionException) {
+            // The service is shutting down; this reading is not sent.
+        }
     }
 
     override fun onProviderDisabled(provider: String) = Unit
@@ -155,7 +168,10 @@ class ChildTelemetryService : Service(), LocationListener {
         return BatteryReading(percentage, if (charging) "charging" else "unplugged")
     }
 
-    /** Runs on [executor]: one fix, then - unless the session ended - one heartbeat. */
+    /**
+     * Runs on [executor]: one fix, then - only if that fix was accepted and is not a mock
+     * reading - one heartbeat.
+     */
     private fun report(config: TelemetryConfig, reading: LocationFixProtocol.Reading, battery: BatteryReading?) {
         // A callback queued before a revocation (or a re-pairing) must not speak with a
         // credential that is no longer the stored one.
@@ -167,12 +183,8 @@ class ChildTelemetryService : Service(), LocationListener {
             LocationFixProtocol.idempotencyKey(reading.fixId),
         )
         val fixOutcome = LocationFixProtocol.classify(fixAnswer.statusCode, fixAnswer.errorBody)
-        reportStatus.record(fixOutcome, System.currentTimeMillis())
-        if (fixOutcome.endsSession) {
-            endRevokedSession(config)
-            return
-        }
-        if (battery == null) return
+        if (!settle(config, fixOutcome)) return
+        if (!LocationFixProtocol.legacyHeartbeatAllowed(fixOutcome, reading) || battery == null) return
         // The W2 device card and children list still read battery, last-seen and this label
         // from the legacy route, so its body is unchanged. It is sent from the same genuine
         // reading, never on its own schedule. Narrowing what this route stores is a later,
@@ -189,22 +201,46 @@ class ChildTelemetryService : Service(), LocationListener {
             """{"batteryLevel":${battery.level},"batteryStatus":"${battery.status}","locationLat":${reading.latitude},"locationLng":${reading.longitude},"locationLabel":"$locationLabel"}""",
             null,
         )
-        if (LocationFixProtocol.classify(heartbeat.statusCode, heartbeat.errorBody).endsSession) {
-            reportStatus.record(LocationReportOutcome.CREDENTIAL_REVOKED, System.currentTimeMillis())
-            endRevokedSession(config)
-        }
+        val heartbeatOutcome = LocationFixProtocol.classify(heartbeat.statusCode, heartbeat.errorBody)
+        if (heartbeatOutcome.endsSession) settle(config, heartbeatOutcome)
     }
 
     /**
-     * The server said this credential is dead. Forget it - only if it is still the one that
-     * was used, so a re-pairing that happened meanwhile is never undone - stop collecting,
-     * and tell the person holding the phone, because sharing stopping is as visible as
-     * sharing starting.
+     * Records [outcome] for the session that used [usedConfig] and, on a definitive
+     * revocation, ends that session. Returns true if the caller may continue.
+     *
+     * Everything happens under the same process-wide lock the pairing screen writes under,
+     * so an answer that arrives for an old credential after a new pairing was stored can
+     * neither overwrite the new pairing's status nor stop its collection: re-pairing
+     * revokes the old credential on the server, so that late 401 is the expected case,
+     * not a rare one.
      */
-    private fun endRevokedSession(usedConfig: TelemetryConfig) {
-        configStore.clearIfCurrent(usedConfig)
-        reportStatus.markCredentialRevoked(System.currentTimeMillis())
+    private fun settle(usedConfig: TelemetryConfig, outcome: LocationReportOutcome): Boolean {
+        val endedHere = TelemetryConfigStore.locked {
+            if (configStore.read() != usedConfig) return@locked null
+            reportStatus.record(outcome, System.currentTimeMillis())
+            if (!outcome.endsSession) return@locked false
+            configStore.clearIfCurrent(usedConfig)
+            reportStatus.markCredentialRevoked(System.currentTimeMillis())
+            true
+        }
+        when (endedHere) {
+            null -> return false // A newer pairing owns this phone now; stay silent.
+            true -> stopRevokedSession()
+            false -> Unit
+        }
+        return endedHere == false
+    }
+
+    /**
+     * The server said this credential is dead and it has been forgotten: stop collecting and
+     * tell the person holding the phone, because sharing stopping is as visible as sharing
+     * starting.
+     */
+    private fun stopRevokedSession() {
         Handler(Looper.getMainLooper()).post {
+            // A pairing stored between the revocation and this moment starts its own session.
+            if (configStore.read() != null) return@post
             try {
                 locationManager.removeUpdates(this)
             } catch (_: SecurityException) {
@@ -249,9 +285,15 @@ class ChildTelemetryService : Service(), LocationListener {
     private fun readBounded(stream: java.io.InputStream?): String? {
         if (stream == null) return null
         return stream.bufferedReader(Charsets.UTF_8).use { reader ->
+            // read() may return a short count; keep reading until the bound or the end.
             val buffer = CharArray(LocationFixProtocol.MAX_ERROR_BODY_CHARS)
-            val read = reader.read(buffer)
-            if (read <= 0) null else String(buffer, 0, read)
+            var total = 0
+            while (total < buffer.size) {
+                val read = reader.read(buffer, total, buffer.size - total)
+                if (read < 0) break
+                total += read
+            }
+            if (total == 0) null else String(buffer, 0, total)
         }
     }
 
@@ -396,7 +438,7 @@ data class TelemetryConfig(
 
 /** Small encrypted-file store backed by a non-exportable Android Keystore key. */
 class TelemetryConfigStore(private val context: Context) {
-    fun write(config: TelemetryConfig) {
+    fun write(config: TelemetryConfig) = locked {
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, key())
         val payload = "${config.apiOrigin}\n${config.deviceId}\n${config.deviceCredential}".toByteArray(Charsets.UTF_8)
@@ -436,11 +478,10 @@ class TelemetryConfigStore(private val context: Context) {
      * definitively refuses the credential; a pairing written after that request started is
      * a new session and is left alone.
      */
-    @Synchronized
-    fun clearIfCurrent(expected: TelemetryConfig): Boolean {
-        val current = read() ?: return false
-        if (current != expected) return false
-        return file().delete()
+    fun clearIfCurrent(expected: TelemetryConfig): Boolean = locked {
+        val current = read() ?: return@locked false
+        if (current != expected) return@locked false
+        file().delete()
     }
 
     private fun file(): File = File(context.noBackupFilesDir, "child-telemetry.v1")
@@ -463,5 +504,14 @@ class TelemetryConfigStore(private val context: Context) {
     companion object {
         private const val KEY_ALIAS = "family_os_child_telemetry_v1"
         private const val TRANSFORMATION = "AES/GCM/NoPadding"
+
+        /**
+         * One lock for the whole process, not per instance: the pairing screen and the
+         * service each create their own store, and a per-instance lock would let a new
+         * pairing be written between a revocation's check and its delete.
+         */
+        private val LOCK = Any()
+
+        fun <T> locked(block: () -> T): T = synchronized(LOCK, block)
     }
 }
