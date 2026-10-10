@@ -58,8 +58,8 @@ class NativeChildPairingCopy {
       ? 'يلزم عنوان API آمن ورمز ربط.'
       : 'A secure API origin and pairing code are required.';
   String get locationPermissionNotGranted => isArabic
-      ? 'لم يُمنح إذن الموقع. يظل رمز الربط غير مستخدم.'
-      : 'Location access was not granted. The pairing code remains unused.';
+      ? 'لم يُمنح إذن الموقع بعد. تم ربط الجهاز، ويبدأ جمع الموقع بعد شاشة الشفافية والأذونات.'
+      : 'Location access is not granted yet. The device is paired; location collection starts after the transparency screen and its permissions.';
   String get childModeActive => isArabic
       ? 'وضع الابن نشط. يرسل هذا الجهاز الآن قياسات البطارية والموقع الحقيقية.'
       : 'Child Mode is active. This device now sends real battery and location telemetry.';

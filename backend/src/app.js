@@ -6,6 +6,7 @@ import { deviceRevocationFor } from './device-revocation.js';
 import { membershipRosterFor } from './membership-roster.js';
 import { safeZonesFor } from './safe-zones.js';
 import { locationSurfaceFor } from './location-telemetry.js';
+import { childConsentsFor } from './child-consents.js';
 import { sosEmergencyFor } from './sos-emergency.js';
 import { screenTimeFor } from './screen-time.js';
 import { webFilterFor } from './web-filter.js';
@@ -31,6 +32,8 @@ import {
     createSafeZoneInput,
     deviceScreenTimeReportInput,
     locationFixInput,
+    childConsentInput,
+    childConsentWithdrawalInput,
     lockInput,
     screenTimePolicyInput,
     timeRequestDecisionInput,
@@ -163,6 +166,9 @@ export function createApp({
     // file another session is editing.
     safeZones = safeZonesFor(store),
     location = locationSurfaceFor(store, { credentialMatches: capabilityMatches }),
+    // Safety slice 2. The consent ledger is reached through the same published store
+    // helpers and the same one credential check as every device route.
+    childConsents = childConsentsFor(store, { credentialMatches: capabilityMatches }),
     // W4. The emergency surface reaches the database through the same published helpers,
     // and its credential check is the one the device routes already use.
     sos = sosEmergencyFor(store, { credentialMatches: capabilityMatches }),
@@ -713,6 +719,75 @@ export function createApp({
                 }),
             });
             response.status(201).json(result);
+        }),
+    );
+
+    // ── Safety slice 2 — child consents ───────────────────────────────────────────────
+    //
+    // The record of the disclosure act: who consented to collecting what, against which
+    // text, and when. The child's handset records its own setup agreement with its device
+    // credential; a primary guardian records and withdraws with their session. The ledger
+    // is what `location-fixes` consults — collection with no active consent is refused.
+
+    app.post(
+        '/v1/devices/:deviceId/consents',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            const { capability, textVersion } = childConsentInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await childConsents.recordConsent({
+                principal: request.principal,
+                deviceCredential: request.deviceCredential,
+                deviceId,
+                capability,
+                textVersion,
+                idempotencyKey,
+                requestHash: requestFingerprint({
+                    action: 'child-consent.grant',
+                    principal: request.principal ?? { subject: `device:${deviceId}` },
+                    input: { deviceId, capability, textVersion },
+                }),
+            });
+            response.status(201).json(result);
+        }),
+    );
+
+    app.post(
+        '/v1/devices/:deviceId/consents/withdrawal',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            const { capability } = childConsentWithdrawalInput(request.body);
+            const result = await childConsents.withdrawConsent({
+                principal: request.principal,
+                deviceId,
+                capability,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // What this handset is sharing right now — readable by the handset itself and by a
+    // primary guardian. The state is the ledger's state, never an inference.
+    app.get(
+        '/v1/devices/:deviceId/location-sharing',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            requireNoQueryParameters(request.query);
+            const result = await childConsents.locationSharing({
+                principal: request.principal,
+                deviceCredential: request.deviceCredential,
+                deviceId,
+            });
+            response.status(200).json(result);
         }),
     );
 

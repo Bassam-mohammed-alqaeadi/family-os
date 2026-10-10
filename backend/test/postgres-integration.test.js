@@ -1085,6 +1085,15 @@ test('a zone is drawn, a device reports, and the boundary crossing becomes a rec
         const deviceId = device.rows[0].id;
         const deviceAuth = { authorization: `Device ${deviceCredential}` };
 
+        // Collection is consent-first (safety slice 2): the handset records the disclosure
+        // act before any fix is accepted.
+        const consent = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/consents`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w3-consent-location' },
+          body: { capability: 'location', textVersion: '2026-10-10' },
+        });
+        assert.equal(consent.status, 201);
+
         const now = Date.now();
         const at = (offsetMs) => new Date(now + offsetMs).toISOString();
         const minute = 60 * 1000;
@@ -1694,6 +1703,15 @@ test('a child presses the button, the family answers it, and nothing claims a de
         );
         const deviceId = device.rows[0].id;
         const deviceAuth = { authorization: `Device ${deviceCredential}` };
+
+        // Collection is consent-first (safety slice 2): the handset records the disclosure
+        // act before any fix is accepted.
+        const consent = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/consents`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w4-consent-location' },
+          body: { capability: 'location', textVersion: '2026-10-10' },
+        });
+        assert.equal(consent.status, 201);
 
         const now = Date.now();
         const day = 24 * 60 * 60 * 1000;
@@ -4679,6 +4697,15 @@ test('a paired handset reports a fix the family reads back, and only a definitiv
               [deviceId],
             )
           ).rows[0].n;
+
+        // Collection is consent-first (safety slice 2): the handset records the disclosure
+        // act its screen performed before any fix is accepted.
+        const consent = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/consents`, {
+          method: 'POST',
+          headers: asDevice('nl-consent-location'),
+          body: { capability: 'location', textVersion: '2026-10-10' },
+        });
+        assert.equal(consent.status, 201);
 
         // 2. The handset's report, exactly as the native service shapes it.
         const first = fixBody();

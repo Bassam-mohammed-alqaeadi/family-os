@@ -3799,6 +3799,13 @@ class AppLocalizationsAr extends AppLocalizations {
       'فهمت وأوافق — المتابعة إلى لوحة يومي';
 
   @override
+  String get transparencyConsentRecording => 'جارٍ تسجيل موافقتك…';
+
+  @override
+  String get transparencyConsentError =>
+      'تعذر تسجيل موافقتك — حاول مرة أخرى.';
+
+  @override
   String get transparencyConsentParentLeanTitle => 'لجهاز الابن';
 
   @override
@@ -11858,11 +11865,11 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get silentLocateTitle => 'طلب موقع صامت';
+  String get silentLocateTitle => 'تحديث الموقع الآن';
 
   @override
   String silentLocateBody(String name) {
-    return 'طلب تحديد موقع بهدوء لـ $name. لن يرى الابن واجهة تفاعلية.';
+    return 'اطلب قراءة موقع جديدة من هاتف $name. الابن لا يُفاجأ أبدًا: إشعار المشاركة الدائم يبقى ظاهرًا أثناء ذلك.';
   }
 
   @override
@@ -11885,14 +11892,14 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get silentLocateResultGpsNotImplemented =>
-      'GPS الجهاز قريبًا — لا يمكن ادعاء تحديد صامت حي.';
+      'GPS الجهاز قريبًا — لا يمكن ادعاء تحديث حي للموقع.';
 
   @override
-  String get locationMapSilentLocateCta => 'تحديد صامت';
+  String get locationMapSilentLocateCta => 'تحديث الموقع الآن';
 
   @override
   String get locationMapSilentLocateDenied =>
-      'التحديد الصامت يحتاج صلاحية أب/أم أعلى من المطّلعة.';
+      'تحديث الموقع الآن يحتاج صلاحية أب/أم أعلى من المطّلعة.';
 
   @override
   String get childArrivalSilentBanner =>

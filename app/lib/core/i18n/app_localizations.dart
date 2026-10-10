@@ -6824,6 +6824,18 @@ abstract class AppLocalizations {
   /// **'فهمت وأوافق — المتابعة إلى لوحة يومي'**
   String get transparencyConsentAcceptSemantics;
 
+  /// SCR-CHD-003 recording-in-progress banner
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ تسجيل موافقتك…'**
+  String get transparencyConsentRecording;
+
+  /// SCR-CHD-003 recording-failed banner
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر تسجيل موافقتك — حاول مرة أخرى.'**
+  String get transparencyConsentError;
+
   /// SCR-CHD-003 RoleGuard parent lean title
   ///
   /// In ar, this message translates to:

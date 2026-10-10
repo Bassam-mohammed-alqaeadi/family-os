@@ -82,7 +82,7 @@ jobs:
         run: |
           log_file=$(mktemp)
           set +e
-          node --test test/postgres-integration.test.js test/postgres-chat-realtime-media.test.js test/postgres-push-registrations.test.js 2>&1 | tee "$log_file"
+          node --test test/postgres-integration.test.js test/postgres-chat-realtime-media.test.js test/postgres-push-registrations.test.js test/postgres-child-consents.test.js 2>&1 | tee "$log_file"
           test_status=${PIPESTATUS[0]}
           set -e
           if [ "$test_status" -ne 0 ]; then

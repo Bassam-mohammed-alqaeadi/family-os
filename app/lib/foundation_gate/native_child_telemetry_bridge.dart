@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/services.dart';
 
 /// Android boundary for the real child-device telemetry engine.
@@ -68,6 +70,67 @@ class NativeChildTelemetryBridge {
       return const NativeTelemetryStartResult.unavailable();
     } on PlatformException {
       return const NativeTelemetryStartResult.unavailable();
+    }
+  }
+
+  /// Starts the foreground service from the pairing the native layer already holds.
+  ///
+  /// The pairing screen configures; the transparency screen starts — after the
+  /// disclosure has been made and the permissions asked. No credential crosses
+  /// this boundary in either direction.
+  static Future<NativeTelemetryStartResult> startConfigured() async {
+    try {
+      final result = await _channel.invokeMapMethod<String, dynamic>(
+        'startConfigured',
+      );
+      return NativeTelemetryStartResult.fromMap(result);
+    } on MissingPluginException {
+      return const NativeTelemetryStartResult.unavailable();
+    } on PlatformException {
+      return const NativeTelemetryStartResult.unavailable();
+    }
+  }
+
+  /// Records the disclosure-consent act on the server, with the paired-device
+  /// credential the native layer holds. The credential never reaches Dart.
+  static Future<NativeConsentAnswer> recordConsent({
+    required String capability,
+    required String textVersion,
+    required String idempotencyKey,
+  }) async {
+    try {
+      final result = await _channel.invokeMapMethod<String, dynamic>(
+        'consentRequest',
+        <String, Object?>{
+          'operation': 'recordConsent',
+          'body': jsonEncode({
+            'capability': capability,
+            'textVersion': textVersion,
+          }),
+          'idempotencyKey': idempotencyKey,
+        },
+      );
+      return NativeConsentAnswer.fromMap(result);
+    } on MissingPluginException {
+      return const NativeConsentAnswer.unavailable();
+    } on PlatformException {
+      return const NativeConsentAnswer.unavailable();
+    }
+  }
+
+  /// What this handset is sharing right now, as the server's consent ledger
+  /// holds it — never an inference.
+  static Future<NativeConsentAnswer> readLocationSharing() async {
+    try {
+      final result = await _channel.invokeMapMethod<String, dynamic>(
+        'consentRequest',
+        <String, Object?>{'operation': 'readLocationSharing'},
+      );
+      return NativeConsentAnswer.fromMap(result);
+    } on MissingPluginException {
+      return const NativeConsentAnswer.unavailable();
+    } on PlatformException {
+      return const NativeConsentAnswer.unavailable();
     }
   }
 }
@@ -146,4 +209,29 @@ class NativeTelemetryStatus {
         fineLocationGranted: value?['fineLocationGranted'] == true,
         backgroundLocationGranted: value?['backgroundLocationGranted'] == true,
       );
+}
+
+/// One consent answer from the server, carried across the native boundary as the
+/// raw status and body. Nothing here interprets consent: the caller reads the
+/// ledger's own words.
+class NativeConsentAnswer {
+  const NativeConsentAnswer({required this.statusCode, required this.body});
+
+  const NativeConsentAnswer.unavailable()
+    : statusCode = null,
+      body = null;
+
+  final int? statusCode;
+  final String? body;
+
+  bool get available => statusCode != null;
+
+  factory NativeConsentAnswer.fromMap(Map<String, dynamic>? value) {
+    final status = value?['statusCode'];
+    final body = value?['body'];
+    if (status is! int || body is! String) {
+      return const NativeConsentAnswer.unavailable();
+    }
+    return NativeConsentAnswer(statusCode: status, body: body);
+  }
 }

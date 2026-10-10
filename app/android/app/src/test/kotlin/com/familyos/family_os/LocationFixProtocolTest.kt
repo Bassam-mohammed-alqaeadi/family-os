@@ -105,6 +105,11 @@ class LocationFixProtocolTest {
             Pair(403, """{"error":{"code":"invalid_device_credential"}}""") to LocationReportOutcome.ACCESS_REFUSED,
             Pair(403, """{"error":{"code":"family_access_denied"}}""") to LocationReportOutcome.ACCESS_REFUSED,
             Pair(404, """{"error":{"code":"device_not_found"}}""") to LocationReportOutcome.ACCESS_REFUSED,
+            // Safety slice 2: no consent, no collection — and no cleared pairing either.
+            // The answer is a refusal to store this position, not a revocation of the
+            // handset; the credential is kept so the device can record the consent its
+            // disclosure screen produces and start sharing again.
+            Pair(403, """{"error":{"code":"consent_required"}}""") to LocationReportOutcome.ACCESS_REFUSED,
             Pair(400, """{"error":{"code":"invalid_request"}}""") to LocationReportOutcome.REJECTED,
             Pair(409, """{"error":{"code":"idempotency_conflict"}}""") to LocationReportOutcome.REJECTED,
             Pair(413, null) to LocationReportOutcome.REJECTED,

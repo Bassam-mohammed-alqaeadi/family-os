@@ -4856,6 +4856,14 @@
   "@transparencyConsentAcceptSemantics": {
     "description": "SCR-CHD-003 CTA Semantics"
   },
+  "transparencyConsentRecording": "جارٍ تسجيل موافقتك…",
+  "@transparencyConsentRecording": {
+    "description": "SCR-CHD-003 recording-in-progress banner"
+  },
+  "transparencyConsentError": "تعذر تسجيل موافقتك — حاول مرة أخرى.",
+  "@transparencyConsentError": {
+    "description": "SCR-CHD-003 recording-failed banner"
+  },
   "transparencyConsentParentLeanTitle": "لجهاز الابن",
   "@transparencyConsentParentLeanTitle": {
     "description": "SCR-CHD-003 RoleGuard parent lean title"
@@ -15372,11 +15380,11 @@
       }
     }
   },
-  "silentLocateTitle": "طلب موقع صامت",
+  "silentLocateTitle": "تحديث الموقع الآن",
   "@silentLocateTitle": {
     "description": "LOC-P-SLR sheet title"
   },
-  "silentLocateBody": "طلب تحديد موقع بهدوء لـ {name}. لن يرى الابن واجهة تفاعلية.",
+  "silentLocateBody": "اطلب قراءة موقع جديدة من هاتف {name}. الابن لا يُفاجأ أبدًا: إشعار المشاركة الدائم يبقى ظاهرًا أثناء ذلك.",
   "@silentLocateBody": {
     "description": "LOC-P-SLR body",
     "placeholders": {
@@ -15409,15 +15417,15 @@
   "@silentLocateResultUnavailable": {
     "description": "LOC-P-SLR result"
   },
-  "silentLocateResultGpsNotImplemented": "GPS الجهاز قريبًا — لا يمكن ادعاء تحديد صامت حي.",
+  "silentLocateResultGpsNotImplemented": "GPS الجهاز قريبًا — لا يمكن ادعاء تحديث حي للموقع.",
   "@silentLocateResultGpsNotImplemented": {
     "description": "LOC-P-SLR honesty when GPS missing"
   },
-  "locationMapSilentLocateCta": "تحديد صامت",
+  "locationMapSilentLocateCta": "تحديث الموقع الآن",
   "@locationMapSilentLocateCta": {
     "description": "FAT-014 silent locate CTA"
   },
-  "locationMapSilentLocateDenied": "التحديد الصامت يحتاج صلاحية أب/أم أعلى من المطّلعة.",
+  "locationMapSilentLocateDenied": "تحديث الموقع الآن يحتاج صلاحية أب/أم أعلى من المطّلعة.",
   "@locationMapSilentLocateDenied": {
     "description": "FAT-014 Silent Locate Observer deny toast"
   },

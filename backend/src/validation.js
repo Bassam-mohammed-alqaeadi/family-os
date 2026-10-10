@@ -1,3 +1,4 @@
+import { CONSENT_CAPABILITIES } from './child-consents.js';
 import { HttpError } from './http-error.js';
 
 const MAX_DISPLAY_NAME_LENGTH = 120;
@@ -184,6 +185,38 @@ export function revokeFamilyChildDeviceInput(value) {
     throw new HttpError(400, 'invalid_request', 'reasonCode must be a stable, non-sensitive machine code.');
   }
   return { reasonCode };
+}
+
+/**
+ * Recording a child-data consent.
+ *
+ * `capability` names what was agreed to and `textVersion` names the disclosure text the
+ * consenter saw — a consent recorded against an unnamed text is not evidence of anything.
+ * The capability vocabulary is closed here and again by migration 114.
+ */
+export function childConsentInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['capability', 'textVersion']));
+  const capability = requiredText(body.capability, 'capability', { maxLength: 32 });
+  if (!CONSENT_CAPABILITIES.has(capability)) {
+    throw new HttpError(400, 'invalid_request', 'capability must name a known collection capability.');
+  }
+  const textVersion = requiredText(body.textVersion, 'textVersion', { maxLength: 64 });
+  return { capability, textVersion };
+}
+
+/**
+ * Withdrawing a child-data consent. The guardian names the capability and nothing else;
+ * the moment of withdrawal is the server's clock.
+ */
+export function childConsentWithdrawalInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['capability']));
+  const capability = requiredText(body.capability, 'capability', { maxLength: 32 });
+  if (!CONSENT_CAPABILITIES.has(capability)) {
+    throw new HttpError(400, 'invalid_request', 'capability must name a known collection capability.');
+  }
+  return { capability };
 }
 
 /**

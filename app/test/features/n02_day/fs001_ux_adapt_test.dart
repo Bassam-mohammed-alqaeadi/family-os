@@ -25,7 +25,7 @@ import 'package:family_os/features/n02_day/safe_zones_repository.dart';
 
 void main() {
   tearDown(AppToast.dismiss);
-  testWidgets('FAT-014 shows GPS NOT IMPLEMENTED honesty + silent locate CTA', (
+  testWidgets('FAT-014 shows GPS NOT IMPLEMENTED honesty; the locate CTA stays hidden until the server can push one (ش٤/ش٥)', (
     tester,
   ) async {
     var silentChild = '';
@@ -46,12 +46,11 @@ void main() {
 
     expect(find.byKey(LocationMapKeys.gpsBanner), findsOneWidget);
     expect(find.byType(CapabilityHonestyBadge), findsWidgets);
-    expect(find.byKey(LocationMapKeys.silentLocateCta), findsOneWidget);
-
-    await tester.ensureVisible(find.byKey(LocationMapKeys.silentLocateCta));
-    await tester.tap(find.byKey(LocationMapKeys.silentLocateCta));
-    await tester.pumpAndSettle();
-    expect(silentChild, isNotEmpty);
+    // The button claimed a live «silent» request over a stage-1 local service.
+    // It returns — renamed «تحديث الموقع الآن» — when ش٤/ش٥ give it a real
+    // server→device request (coherence map, slice 2).
+    expect(find.byKey(LocationMapKeys.silentLocateCta), findsNothing);
+    expect(silentChild, isEmpty);
   });
 
   testWidgets('FAT-017 blocks save without assignment when roster shown', (

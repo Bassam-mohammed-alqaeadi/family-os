@@ -116,6 +116,23 @@ export function createLocationSurface({ port, now = () => new Date() }) {
           });
         }
 
+        // Consent is a condition of collection (Play User Data + Background Location).
+        // A fix reported while the child has no active location consent is refused before
+        // it is stored: a position the family never agreed to collect must not become a
+        // row that later reads would have to explain. The device keeps its pairing; the
+        // answer is `consent_required`, not revocation.
+        const consent = await port.readActiveConsent(tx, {
+          childId: device.child_id,
+          capability: 'location',
+        });
+        if (consent === null) {
+          throw new HttpError(
+            403,
+            'consent_required',
+            'Location consent is required before fixes are accepted.',
+          );
+        }
+
         const { row, replayed } = await port.insertFix(tx, {
           familyId: device.family_id,
           childId: device.child_id,
@@ -403,6 +420,19 @@ export function postgresLocationPort(store, { credentialMatches }) {
           WHERE id = $1
           FOR UPDATE`,
         [deviceId],
+      );
+      return rows[0] ?? null;
+    },
+
+    // The consent ledger (migration 114) is the only source of consent. This read is
+    // shared with the child-consent surface so collection and the consent record can
+    // never disagree about what is active.
+    async readActiveConsent(client, { childId, capability }) {
+      const { rows } = await client.query(
+        `SELECT id, capability, text_version, granted_at
+           FROM family_child_consents
+          WHERE child_id = $1 AND capability = $2 AND withdrawn_at IS NULL`,
+        [childId, capability],
       );
       return rows[0] ?? null;
     },
