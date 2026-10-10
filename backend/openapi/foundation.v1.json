@@ -2076,11 +2076,193 @@
         }
       }
     },
+    "/v1/devices/{deviceId}/consents": {
+      "post": {
+        "operationId": "recordChildConsent",
+        "summary": "Record the child-data consent the disclosure act produced",
+        "description": "Play's User Data and Background Location rules make a recorded consent a condition of collection: a prominent disclosure, an explicit act, and a durable record of who agreed to which text and when. Two actors may record a grant - the child's own handset at setup (device credential, the act the disclosure screen performed) or a primary guardian (bearer), and the row names which of the two it was. Granting while an active consent exists is refused rather than stacked: one act, one row, and the withdrawal history is never overwritten. Replaying the same Idempotency-Key returns the first answer. Recording a consent grants nothing by itself; `location-fixes` consults this ledger and refuses collection while no active consent exists.",
+        "tags": [
+          "Safety"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChildConsentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The consent as recorded, with who granted it and when.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildConsentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/consents/withdrawal": {
+      "post": {
+        "operationId": "withdrawChildConsent",
+        "summary": "A guardian withdraws an active child-data consent",
+        "description": "Withdrawal is a guardian act only - a handset that could withdraw its own consent could silence a guardian's decision as easily as it recorded one. The active consent is frozen with the moment of withdrawal and the guardian's identity, and the history stays readable. Repeat-safe: withdrawing an already-withdrawn (or never-granted) capability answers with the current honest state instead of manufacturing an error for a second no. After withdrawal, `location-fixes` refuses new positions with `consent_required`.",
+        "tags": [
+          "Safety"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChildConsentWithdrawalRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The consent state after the withdrawal, exactly as the ledger holds it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildConsentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/location-sharing": {
+      "get": {
+        "operationId": "readDeviceLocationSharing",
+        "summary": "What this handset is sharing right now, as the ledger says",
+        "description": "The child phone's honest answer about itself, readable by the handset (device credential) and by a primary guardian. Every capability comes back with its real ledger state - `granted`, `withdrawn`, or `none` for never-granted - plus the disclosure text version and the exact moments. `none` and `withdrawn` are different answers to a child's question and the wire keeps them apart. The state is the ledger's state, never an inference from other rows.",
+        "tags": [
+          "Safety"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The per-capability consent state for this handset's child.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocationSharingResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
     "/v1/devices/{deviceId}/location-fixes": {
       "post": {
         "operationId": "ingestDeviceLocationFix",
         "summary": "A child's device reports one position, and the server judges it",
-        "description": "The device proves itself with the credential it was issued at pairing; a primary guardian may still report on its behalf while native collection is finished, and the audit record says which of the two happened. The server stores the fix, evaluates it against the zones ASSIGNED TO THAT CHILD, and answers with what it concluded: `evaluated` is false, with a `reason`, when the fix carried no usable position, when it arrived out of order (older than the newest fix already stored for that child - kept in the trail and deliberately NOT evaluated, so a late retry cannot replay history backwards), or when it was a duplicate. A duplicate - the same fix id, under this or a fresh key - produces no second row and no second crossing, which is what makes an arrival alert exactly-once. The `acquisition` state is an honesty switch enforced by both the request schema and the database: `located` and `stale_last_known` must carry coordinates and an accuracy, `acquiring` and `unavailable` must not carry any.",
+        "description": "The device proves itself with the credential it was issued at pairing; a primary guardian may still report on its behalf while native collection is finished, and the audit record says which of the two happened. **Collection requires an active location consent:** while the child has none (never granted, or withdrawn), the server refuses with 403 `consent_required` before anything is stored - the pairing is kept and the handset classifies the answer as `ACCESS_REFUSED`. The server stores the fix, evaluates it against the zones ASSIGNED TO THAT CHILD, and answers with what it concluded: `evaluated` is false, with a `reason`, when the fix carried no usable position, when it arrived out of order (older than the newest fix already stored for that child - kept in the trail and deliberately NOT evaluated, so a late retry cannot replay history backwards), or when it was a duplicate. A duplicate - the same fix id, under this or a fresh key - produces no second row and no second crossing, which is what makes an arrival alert exactly-once. The `acquisition` state is an honesty switch enforced by both the request schema and the database: `located` and `stale_last_known` must carry coordinates and an accuracy, `acquiring` and `unavailable` must not carry any.",
         "tags": [
           "Location"
         ],
@@ -7248,6 +7430,144 @@
       }
     },
     "schemas": {
+      "ChildConsentRequest": {
+        "type": "object",
+        "description": "What was agreed to, and which disclosure text the consenter saw.",
+        "additionalProperties": false,
+        "required": [
+          "capability",
+          "textVersion"
+        ],
+        "properties": {
+          "capability": {
+            "type": "string",
+            "description": "The collection capability the consent covers.",
+            "enum": [
+              "location",
+              "usage_stats",
+              "web_filtering"
+            ]
+          },
+          "textVersion": {
+            "type": "string",
+            "description": "The version of the disclosure text shown at the consent act.",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        }
+      },
+      "ChildConsentWithdrawalRequest": {
+        "type": "object",
+        "description": "The capability the guardian withdraws, and nothing else.",
+        "additionalProperties": false,
+        "required": [
+          "capability"
+        ],
+        "properties": {
+          "capability": {
+            "type": "string",
+            "description": "The collection capability the withdrawal covers.",
+            "enum": [
+              "location",
+              "usage_stats",
+              "web_filtering"
+            ]
+          }
+        }
+      },
+      "ChildConsentState": {
+        "type": "object",
+        "description": "One capability's consent as the ledger holds it. `none` means never granted; `withdrawn` means a grant existed and was withdrawn - different answers to a child's question.",
+        "additionalProperties": false,
+        "required": [
+          "capability",
+          "state",
+          "textVersion",
+          "grantedAt",
+          "withdrawnAt"
+        ],
+        "properties": {
+          "capability": {
+            "type": "string",
+            "enum": [
+              "location",
+              "usage_stats",
+              "web_filtering"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "granted",
+              "withdrawn",
+              "none"
+            ]
+          },
+          "textVersion": {
+            "type": "string",
+            "nullable": true
+          },
+          "grantedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "withdrawnAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "grantedByMembershipId": {
+            "type": "string",
+            "nullable": true
+          },
+          "grantedByDeviceId": {
+            "type": "string",
+            "nullable": true
+          },
+          "withdrawnByMembershipId": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ChildConsentResponse": {
+        "type": "object",
+        "description": "The consent row after the write, exactly as the ledger holds it.",
+        "additionalProperties": false,
+        "required": [
+          "consent"
+        ],
+        "properties": {
+          "consent": {
+            "$ref": "#/components/schemas/ChildConsentState"
+          }
+        }
+      },
+      "LocationSharingResponse": {
+        "type": "object",
+        "description": "Per-capability consent state for the handset's child.",
+        "additionalProperties": false,
+        "required": [
+          "deviceId",
+          "childId",
+          "capabilities"
+        ],
+        "properties": {
+          "deviceId": {
+            "type": "string"
+          },
+          "childId": {
+            "type": "string"
+          },
+          "capabilities": {
+            "type": "object",
+            "description": "The full capability vocabulary, each with its state - including the not-yet ones, so the phone never shows a capability the ledger does not hold.",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ChildConsentState"
+            }
+          }
+        }
+      },
+
       "Uuid": {
         "type": "string",
         "format": "uuid",

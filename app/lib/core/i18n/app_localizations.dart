@@ -6824,6 +6824,18 @@ abstract class AppLocalizations {
   /// **'فهمت وأوافق — المتابعة إلى لوحة يومي'**
   String get transparencyConsentAcceptSemantics;
 
+  /// SCR-CHD-003 recording-in-progress banner
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ تسجيل موافقتك…'**
+  String get transparencyConsentRecording;
+
+  /// SCR-CHD-003 recording-failed banner
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر تسجيل موافقتك — حاول مرة أخرى.'**
+  String get transparencyConsentError;
+
   /// SCR-CHD-003 RoleGuard parent lean title
   ///
   /// In ar, this message translates to:
@@ -21050,13 +21062,13 @@ abstract class AppLocalizations {
   /// LOC-P-SLR sheet title
   ///
   /// In ar, this message translates to:
-  /// **'طلب موقع صامت'**
+  /// **'تحديث الموقع الآن'**
   String get silentLocateTitle;
 
   /// LOC-P-SLR body
   ///
   /// In ar, this message translates to:
-  /// **'طلب تحديد موقع بهدوء لـ {name}. لن يرى الابن واجهة تفاعلية.'**
+  /// **'اطلب قراءة موقع جديدة من هاتف {name}. الابن لا يُفاجأ أبدًا: إشعار المشاركة الدائم يبقى ظاهرًا أثناء ذلك.'**
   String silentLocateBody(String name);
 
   /// LOC-P-SLR confirm
@@ -21098,19 +21110,19 @@ abstract class AppLocalizations {
   /// LOC-P-SLR honesty when GPS missing
   ///
   /// In ar, this message translates to:
-  /// **'GPS الجهاز قريبًا — لا يمكن ادعاء تحديد صامت حي.'**
+  /// **'GPS الجهاز قريبًا — لا يمكن ادعاء تحديث حي للموقع.'**
   String get silentLocateResultGpsNotImplemented;
 
   /// FAT-014 silent locate CTA
   ///
   /// In ar, this message translates to:
-  /// **'تحديد صامت'**
+  /// **'تحديث الموقع الآن'**
   String get locationMapSilentLocateCta;
 
   /// FAT-014 Silent Locate Observer deny toast
   ///
   /// In ar, this message translates to:
-  /// **'التحديد الصامت يحتاج صلاحية أب/أم أعلى من المطّلعة.'**
+  /// **'تحديث الموقع الآن يحتاج صلاحية أب/أم أعلى من المطّلعة.'**
   String get locationMapSilentLocateDenied;
 
   /// CHD-024 FS-001 silent location law

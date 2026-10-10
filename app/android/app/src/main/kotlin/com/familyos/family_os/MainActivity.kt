@@ -42,7 +42,9 @@ class MainActivity : FlutterActivity() {
                 when (call.method) {
                     "requestLocationPermissions" -> requestLocationPermissions(result)
                     "configureAndStart" -> configureAndStart(call, result)
+                    "startConfigured" -> startConfiguredTelemetry(result)
                     "chatRequest" -> proxyFamilyChatRequest(call, result)
+                    "consentRequest" -> proxyFamilyConsentRequest(call, result)
                     "stop" -> stopTelemetry(result)
                     "status" -> telemetryStatus(result)
                     else -> result.notImplemented()
@@ -136,6 +138,30 @@ class MainActivity : FlutterActivity() {
     private fun stopTelemetry(result: MethodChannel.Result) {
         val stopped = stopService(Intent(this, ChildTelemetryService::class.java))
         result.success(mapOf<String, Any>("stopped" to (stopped || !ChildTelemetryService.isRunning)))
+    }
+
+    /**
+     * Starts the foreground service from the pairing that is already stored, once the
+     * disclosure has been made and the permissions asked. The pairing screen configures;
+     * the transparency screen starts. Nothing here invents a credential.
+     */
+    private fun startConfiguredTelemetry(result: MethodChannel.Result) {
+        val config = TelemetryConfigStore(this).read()
+        if (config == null) {
+            result.success(mapOf<String, Any>("started" to false, "reason" to "not_configured"))
+            return
+        }
+        if (!hasFineLocation() || !hasBackgroundLocation()) {
+            result.success(mapOf<String, Any>("started" to false, "reason" to "location_permission_required"))
+            return
+        }
+        try {
+            val serviceIntent = Intent(this, ChildTelemetryService::class.java)
+            ContextCompat.startForegroundService(this, serviceIntent)
+            result.success(mapOf<String, Any>("started" to true, "reason" to "started"))
+        } catch (_: Exception) {
+            result.success(mapOf<String, Any>("started" to false, "reason" to "native_telemetry_start_failed"))
+        }
     }
 
     private fun telemetryStatus(result: MethodChannel.Result) {
@@ -277,6 +303,67 @@ class MainActivity : FlutterActivity() {
         false
     }
 
+    /**
+     * Runs the two allow-listed consent operations without returning the device credential
+     * to Dart: the handset records the disclosure act its screen performed, and reads what it
+     * is sharing as the ledger holds it. Verbs and request paths are reconstructed here from
+     * operation names; a Flutter caller cannot turn this bridge into an arbitrary
+     * authenticated proxy.
+     */
+    private fun proxyFamilyConsentRequest(call: MethodCall, result: MethodChannel.Result) {
+        val config = TelemetryConfigStore(this).read()
+        if (config == null) {
+            result.error("device_consent_not_configured", "No paired device session is available.", null)
+            return
+        }
+        val requestedDeviceId = call.argument<String>("deviceId")?.trim()
+        if (requestedDeviceId != null && requestedDeviceId != config.deviceId) {
+            result.error("device_consent_scope_mismatch", "The device scope does not match this paired handset.", null)
+            return
+        }
+        val operation = call.argument<String>("operation") ?: ""
+        val body = call.argument<String>("body")
+        val idempotencyKey = call.argument<String>("idempotencyKey")?.trim()
+        val spec = when (operation) {
+            "recordConsent" -> if (validJsonObject(body) && validIdempotencyKey(idempotencyKey)) {
+                ConsentRequestSpec("POST", "/v1/devices/${config.deviceId}/consents", body, idempotencyKey)
+            } else null
+            "readLocationSharing" -> if (body == null && idempotencyKey == null) {
+                ConsentRequestSpec("GET", "/v1/devices/${config.deviceId}/location-sharing", null, null)
+            } else null
+            else -> null
+        }
+        if (spec == null) {
+            result.error("invalid_device_consent_request", "The consent operation is not valid for this route.", null)
+            return
+        }
+        chatExecutor.execute {
+            try {
+                val requestBuilder = Request.Builder()
+                    .url("${config.apiOrigin}${spec.path}")
+                    .header("Authorization", "Device ${config.deviceCredential}")
+                    .header("Accept", "application/json")
+                if (spec.idempotencyKey != null) {
+                    requestBuilder.header("Idempotency-Key", spec.idempotencyKey)
+                }
+                val requestBody = spec.body?.toRequestBody(JSON_MEDIA_TYPE)
+                val request = requestBuilder.method(spec.method, requestBody).build()
+                val answer = chatHttpClient.newCall(request).execute().use { response ->
+                    mapOf(
+                        "statusCode" to response.code,
+                        "body" to (response.body?.string() ?: ""),
+                    )
+                }
+                runOnUiThread { result.success(answer) }
+            } catch (_: Exception) {
+                // Credentials and server response text are never logged.
+                runOnUiThread {
+                    result.error("device_consent_unreachable", "The consent service did not answer.", null)
+                }
+            }
+        }
+    }
+
     private fun validIdempotencyKey(value: String?): Boolean =
         !value.isNullOrBlank() && value.length <= 128
 
@@ -286,6 +373,13 @@ class MainActivity : FlutterActivity() {
     }
 
     private data class ChatRequestSpec(
+        val method: String,
+        val path: String,
+        val body: String?,
+        val idempotencyKey: String?,
+    )
+
+    private data class ConsentRequestSpec(
         val method: String,
         val path: String,
         val body: String?,

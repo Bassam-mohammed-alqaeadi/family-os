@@ -4856,6 +4856,14 @@
   "@transparencyConsentAcceptSemantics": {
     "description": "SCR-CHD-003 CTA Semantics"
   },
+  "transparencyConsentRecording": "Recording your agreement…",
+  "@transparencyConsentRecording": {
+    "description": "SCR-CHD-003 recording-in-progress banner"
+  },
+  "transparencyConsentError": "Couldn't record your agreement — try again.",
+  "@transparencyConsentError": {
+    "description": "SCR-CHD-003 recording-failed banner"
+  },
   "transparencyConsentParentLeanTitle": "For the child's device",
   "@transparencyConsentParentLeanTitle": {
     "description": "SCR-CHD-003 RoleGuard parent lean title"
@@ -15372,11 +15380,11 @@
       }
     }
   },
-  "silentLocateTitle": "Silent location request",
+  "silentLocateTitle": "Update location now",
   "@silentLocateTitle": {
     "description": "LOC-P-SLR sheet title"
   },
-  "silentLocateBody": "Request a quiet locate for {name}. The child will not see an interactive prompt.",
+  "silentLocateBody": "Ask the phone of {name} for a fresh location reading. The child is never surprised: the always-on sharing notice stays visible while this runs.",
   "@silentLocateBody": {
     "description": "LOC-P-SLR body",
     "placeholders": {
@@ -15409,15 +15417,15 @@
   "@silentLocateResultUnavailable": {
     "description": "LOC-P-SLR result"
   },
-  "silentLocateResultGpsNotImplemented": "Device GPS is Coming soon — cannot claim a live silent locate.",
+  "silentLocateResultGpsNotImplemented": "Device GPS is Coming soon — cannot claim a live update.",
   "@silentLocateResultGpsNotImplemented": {
     "description": "LOC-P-SLR honesty when GPS missing"
   },
-  "locationMapSilentLocateCta": "Silent locate",
+  "locationMapSilentLocateCta": "Update location now",
   "@locationMapSilentLocateCta": {
     "description": "FAT-014 silent locate CTA"
   },
-  "locationMapSilentLocateDenied": "Silent locate needs a parent authority above Observer.",
+  "locationMapSilentLocateDenied": "Updating the location now needs a parent authority above Observer.",
   "@locationMapSilentLocateDenied": {
     "description": "FAT-014 Silent Locate Observer deny toast"
   },

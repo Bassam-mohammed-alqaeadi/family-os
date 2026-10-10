@@ -3860,6 +3860,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'I understand and agree — continue to My day board';
 
   @override
+  String get transparencyConsentRecording => 'Recording your agreement…';
+
+  @override
+  String get transparencyConsentError =>
+      'Couldn\'t record your agreement — try again.';
+
+  @override
   String get transparencyConsentParentLeanTitle => 'For the child\'s device';
 
   @override
@@ -12031,11 +12038,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get silentLocateTitle => 'Silent location request';
+  String get silentLocateTitle => 'Update location now';
 
   @override
   String silentLocateBody(String name) {
-    return 'Request a quiet locate for $name. The child will not see an interactive prompt.';
+    return 'Ask the phone of $name for a fresh location reading. The child is never surprised: the always-on sharing notice stays visible while this runs.';
   }
 
   @override
@@ -12058,14 +12065,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get silentLocateResultGpsNotImplemented =>
-      'Device GPS is Coming soon — cannot claim a live silent locate.';
+      'Device GPS is Coming soon — cannot claim a live update.';
 
   @override
-  String get locationMapSilentLocateCta => 'Silent locate';
+  String get locationMapSilentLocateCta => 'Update location now';
 
   @override
   String get locationMapSilentLocateDenied =>
-      'Silent locate needs a parent authority above Observer.';
+      'Updating the location now needs a parent authority above Observer.';
 
   @override
   String get childArrivalSilentBanner =>

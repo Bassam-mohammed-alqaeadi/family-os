@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 
 import 'package:family_os/app/shell_tab_more_tools.dart';
@@ -20,6 +22,7 @@ import 'package:family_os/core/policy/privacy_collection_sync_bus.dart';
 import 'package:family_os/core/prefs_misc/prefs_misc_runtime.dart';
 import 'package:family_os/core/screen_camera/screen_camera.dart';
 import 'package:family_os/features/n08_platform/effective_monitoring_transparency.dart';
+import 'package:family_os/foundation_gate/native_child_telemetry_bridge.dart';
 
 /// Widget keys for SCR-CHD-010 / SET-012 acceptance.
 abstract final class WhatIsCollectedKeys {
@@ -192,13 +195,43 @@ class _WhatIsCollectedScreenState extends State<WhatIsCollectedScreen> {
       }
     }
     if (!mounted) return;
-    _syncBus.hydrate(loaded);
+    final withServer = await _applyServerLocationConsent(loaded);
+    if (!mounted) return;
+    _syncBus.hydrate(withServer);
     setState(() {
-      _policy = loaded;
+      _policy = withServer;
       _scDoc = scDoc;
       _aiTransparency = aiCard;
       _loading = false;
     });
+  }
+
+  /// Backs the location scope with the server's consent ledger (ش٢).
+  ///
+  /// The child's honesty list must never claim location is collected while the
+  /// server refuses fixes for want of consent, and never hide a collection the
+  /// ledger says is granted. The native layer reads
+  /// `GET /v1/devices/{id}/location-sharing` with the paired-device credential;
+  /// without a paired session there is no server truth to apply and the local
+  /// policy stands, unchanged and unpretended.
+  Future<PrivacyCollectionPolicy> _applyServerLocationConsent(
+    PrivacyCollectionPolicy loaded,
+  ) async {
+    final answer = await NativeChildTelemetryBridge.readLocationSharing();
+    if (!answer.available || answer.statusCode != 200) return loaded;
+    try {
+      final decoded = jsonDecode(answer.body!);
+      if (decoded is! Map<String, Object?>) return loaded;
+      final capabilities = decoded['capabilities'];
+      if (capabilities is! Map<String, Object?>) return loaded;
+      final location = capabilities['location'];
+      if (location is! Map<String, Object?>) return loaded;
+      final granted = location['state'] == 'granted';
+      if (granted == loaded.isEnabled(CollectionScope.location)) return loaded;
+      return loaded.withScope(CollectionScope.location, granted);
+    } on FormatException {
+      return loaded;
+    }
   }
 
   String _scopeLabel(AppLocalizations l10n, CollectionScope scope) {

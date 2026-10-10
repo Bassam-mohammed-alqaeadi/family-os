@@ -209,6 +209,13 @@ test('every protected operation declares OIDC security, rate limiting and idempo
       '/v1/devices/{deviceId}/chat/threads/{threadId}/media/{mediaId}/content',
       '/v1/devices/{deviceId}/chat/threads/{threadId}/delivered',
       '/v1/realtime',
+      // Safety slice 2 adds two, and they are the same decision again: the handset records
+      // the consent its own disclosure screen produced (with the credential issued at
+      // pairing - it is the child's phone that saw the text), and reads what it is sharing
+      // as the ledger holds it. Neither takes a child id: the device row is what proves
+      // which child is speaking.
+      '/v1/devices/{deviceId}/consents',
+      '/v1/devices/{deviceId}/location-sharing',
     ]);
     // A media upload is idempotent by its own `clientMediaId` (same id, same file, same media;
     // a different file under that id is refused), so it does not take the platform's
@@ -220,6 +227,10 @@ test('every protected operation declares OIDC security, rate limiting and idempo
     // A push registration is idempotent by its device token: the same token again changes nothing
     // but its owner, so it does not take the platform's Idempotency-Key header either.
     idempotentByClientMediaId.add('/v1/families/{familyId}/push/registrations');
+    // A consent withdrawal is repeat-safe by construction: the second "no" freezes nothing
+    // new and answers with the same state as the first, so it does not take the header
+    // either. Named here, not inferred, so no other POST can slip in unnoticed.
+    idempotentByClientMediaId.add('/v1/devices/{deviceId}/consents/withdrawal');
     // Roster reads and child-created/child-managed conversations use only the paired-device
     // credential. List/read/message routes that also support a guardian bearer token remain
     // explicitly dual-authenticated.

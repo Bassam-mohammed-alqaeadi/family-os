@@ -10,7 +10,14 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n01_linking/transparency_consent_screen.dart';
 import 'package:family_os/features/n02_day/child_day_board_screen.dart';
 
+import '../../support/native_telemetry_channel.dart';
+
 void main() {
+  // The disclosure screen records consent and starts the service through the
+  // native channel; in widget tests it answers 'unavailable' — the honest
+  // non-Android path — instead of never answering.
+  setUp(mockNativeChildTelemetryChannel);
+
   testWidgets('child role — honesty banner + shared/never/advisor + CTA', (
     tester,
   ) async {
@@ -40,7 +47,8 @@ void main() {
       routes: [
         GoRoute(
           path: '/scr-chd-003',
-          builder: (context, state) => const TransparencyConsentScreen(),
+          builder: (context, state) =>
+              const TransparencyConsentScreen(runNativeFlow: false),
         ),
         GoRoute(
           path: '/scr-chd-004',
@@ -79,6 +87,51 @@ void main() {
     expect(router.state.uri.path, '/scr-chd-004');
     expect(find.byType(ChildDayBoardScreen), findsOneWidget);
     expect(role.value, AppRole.child);
+  });
+
+  testWidgets('consent act: the recording is confirmed before the journey continues', (
+    tester,
+  ) async {
+    var recorded = 0;
+    var navigated = false;
+    await _pumpConsentSeamed(
+      tester,
+      recordConsent: () async {
+        recorded++;
+        return true;
+      },
+      onAccept: () => navigated = true,
+    );
+
+    await tester.ensureVisible(find.byKey(TransparencyConsentKeys.acceptCta));
+    await tester.tap(find.byKey(TransparencyConsentKeys.acceptCta));
+    await tester.pumpAndSettle();
+
+    expect(recorded, 1);
+    expect(navigated, isTrue);
+    expect(find.byKey(TransparencyConsentKeys.errorBanner), findsNothing);
+  });
+
+  testWidgets('consent act: a refused recording holds the journey and says so', (
+    tester,
+  ) async {
+    var navigated = false;
+    await _pumpConsentSeamed(
+      tester,
+      recordConsent: () async => false,
+      onAccept: () => navigated = true,
+    );
+
+    await tester.ensureVisible(find.byKey(TransparencyConsentKeys.acceptCta));
+    await tester.tap(find.byKey(TransparencyConsentKeys.acceptCta));
+    await tester.pumpAndSettle();
+
+    // No server record, no pretended agreement: the journey does not advance
+    // and the honest failure is on screen. The button is the retry.
+    expect(navigated, isFalse);
+    expect(find.byKey(TransparencyConsentKeys.errorBanner), findsOneWidget);
+    expect(find.text('تعذر تسجيل موافقتك — حاول مرة أخرى.'), findsOneWidget);
+    expect(find.byKey(TransparencyConsentKeys.acceptCta), findsOneWidget);
   });
 
   testWidgets('RoleGuard — father lean hides CTA', (tester) async {
@@ -138,7 +191,44 @@ Future<void> _pumpConsent(
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        home: TransparencyConsentScreen(roleOverride: role),
+        home: TransparencyConsentScreen(
+          roleOverride: role,
+          runNativeFlow: false,
+        ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+/// Pumps CHD-003 with an explicit consent-recording seam (child role, Arabic).
+Future<void> _pumpConsentSeamed(
+  WidgetTester tester, {
+  required Future<bool> Function() recordConsent,
+  VoidCallback? onAccept,
+}) async {
+  final controller = RoleController(AppRole.child);
+  addTearDown(controller.dispose);
+
+  await tester.pumpWidget(
+    CurrentRole(
+      notifier: controller,
+      child: MaterialApp(
+        theme: buildFamilyTheme(),
+        locale: const Locale('ar'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: TransparencyConsentScreen(
+          roleOverride: AppRole.child,
+          runNativeFlow: false,
+          recordConsent: recordConsent,
+          onAccept: onAccept,
+        ),
       ),
     ),
   );

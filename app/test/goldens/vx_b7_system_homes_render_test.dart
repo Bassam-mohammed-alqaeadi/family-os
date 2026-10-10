@@ -36,7 +36,13 @@ import 'package:family_os/features/n17_child_learn/child_learn_home_screen.dart'
 /// Pumps each shell home at 360 & 412 dp, AR (RTL) & EN (LTR), font 1.0 & 1.3.
 /// Asserts the screen mounts with no [FlutterError] overflow exceptions.
 /// Binary goldens are optional Owner artifacts (see render/INDEX.md).
+import '../support/native_telemetry_channel.dart';
+
 void main() {
+  // CHD-010 reads the paired handset's consent ledger; in widget tests the
+  // native side answers 'unavailable' instead of spinning forever.
+  setUp(mockNativeChildTelemetryChannel);
+
   final cases = <_HomeCase>[
     _HomeCase(id: 'FAT-010', builder: (_) => const DayBoardScreen()),
     _HomeCase(

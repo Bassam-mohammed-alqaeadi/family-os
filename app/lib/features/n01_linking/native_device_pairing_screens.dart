@@ -346,16 +346,11 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
       _message = null;
     });
     try {
-      final permissions =
-          await NativeChildTelemetryBridge.requestLocationPermissions();
-      if (!permissions.available) {
-        if (!mounted) return;
-        setState(() => _message = copy.locationPermissionNotGranted);
-        return;
-      }
-      // Pairing grants the chat capability independently from location collection. If
-      // location is declined, the device credential is still stored natively and telemetry
-      // remains stopped; chat never borrows location permission as an access requirement.
+      // Play order (User Data + Background location): the permission dialogs may not
+      // open before the prominent disclosure, and the disclosure is SCR-CHD-003 — the
+      // next screen. Pairing claims and stores the credential under the native layer's
+      // lock; the permission asks, the consent record, and the service start all happen
+      // after the disclosure agrees (the transparency screen drives them).
       final claimed = await client.claimPairing(pairingCode: pairingCode);
       const origin = String.fromEnvironment('FAMILY_OS_API_ORIGIN');
       final result = await NativeChildTelemetryBridge.configureAndStart(
@@ -365,10 +360,10 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
       );
       if (!mounted) return;
       setState(
-        () => _message = result.started
-            ? copy.childModeActive
-            : result.reason == 'location_permission_required'
+        () => _message = result.reason == 'location_permission_required'
             ? copy.childChatReadyWithoutLocation
+            : result.started
+            ? copy.childModeActive
             : copy.childModeStartFailed(result.reason),
       );
       await _refreshServiceStatus();

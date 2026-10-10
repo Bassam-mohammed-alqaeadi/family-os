@@ -8,22 +8,16 @@ import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/capability_honesty_badge.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/components/row_tile.dart';
-import 'package:family_os/core/design/components/silent_locate_sheet.dart';
 import 'package:family_os/core/design/tokens.dart';
-import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/identity_ids.dart';
-import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/fs_foundation/capability_status.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/identity/active_child_resolver.dart';
-import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/identity/sos_sender.dart';
-import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
 import 'package:family_os/features/n02_day/location_map_repository.dart';
-import 'package:family_os/features/n02_day/location_ux_bridge.dart';
 
 Color _swatchColor(DayChildSwatch swatch, FamilyColors colors) =>
     switch (swatch) {
@@ -200,49 +194,6 @@ class LocationMapScreenState extends State<LocationMapScreen> {
     context.push(path);
   }
 
-  bool get _canInitiateSilentLocate {
-    if (_role == AppRole.father) return true;
-    if (_role == AppRole.mother) {
-      final level = resolveAuthorizationContext(
-        context,
-        fallbackRole: _role,
-      ).motherLevel;
-      // L2: Primary + Partner + Full may initiate; Observer may not.
-      return level != MotherLevel.observer;
-    }
-    return false;
-  }
-
-  Future<void> _openSilentLocate(String childId, String label) async {
-    if (!_canInitiateSilentLocate) {
-      if (!mounted) return;
-      AppToast.show(
-        context,
-        message: AppLocalizations.of(context).locationMapSilentLocateDenied,
-      );
-      return;
-    }
-    if (widget.onSilentLocate != null) {
-      widget.onSilentLocate!(childId);
-      return;
-    }
-    await Stage1LocationRuntime.ensureOpen();
-    if (!mounted) return;
-    final family = widget.familyId ?? resolveActiveFamilyId();
-    await SilentLocateSheet.show(
-      context,
-      childId: childId,
-      childLabel: label,
-      gpsStatus: CapabilityStatus.notImplemented,
-      onRequest: () => SilentLocateService.request(
-        domain: Stage1LocationRuntime.store,
-        familyId: family,
-        childId: ChildId(childId),
-        nativeGpsStatus: CapabilityStatus.notImplemented,
-      ),
-    );
-  }
-
   Future<void> _openSos() async {
     if (_sosBusy) return;
     if (widget.onSos != null) {
@@ -385,20 +336,12 @@ class LocationMapScreenState extends State<LocationMapScreen> {
               onOpenFullHistory: _goHistory,
             ),
           ],
+          // «تحديث الموقع الآن» stays hidden until the server can push a real
+          // request to the handset (ش٤/ش٥). The old button claimed a live
+          // request over a stage-1 local service — that claim shipped in
+          // release (coherence map, slice 2). Nothing here is removed; it
+          // returns when it can say the truth.
           const SizedBox(height: 12),
-          PrimaryBtn(
-            key: LocationMapKeys.silentLocateCta,
-            label: l10n.locationMapSilentLocateCta,
-            variant: PrimaryBtnVariant.sec,
-            onPressed: () => _openSilentLocate(
-              snap.focusChildId ?? snap.pins.first.id,
-              snap.focusDisplayName.isNotEmpty
-                  ? snap.focusDisplayName
-                  : (snap.pins.first.displayName),
-            ),
-            semanticsLabel: l10n.locationMapSilentLocateCta,
-          ),
-          const SizedBox(height: 8),
           PrimaryBtn(
             key: LocationMapKeys.safeZonesCta,
             label: l10n.locationMapSafeZonesCta,
