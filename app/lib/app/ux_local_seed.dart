@@ -18,8 +18,12 @@ import 'package:family_os/features/n03_screen_time/stage1_child_scope.dart';
 /// Does **not** plant GPS / AI / FCM / billing as live (LDR seed contract).
 ///
 /// Complements [applyAuditPopulation] (in-memory fixtures for unbound repos).
-Future<int> applyUxLocalSeed() async {
-  if (kReleaseMode) return 0;
+///
+/// [isReleaseMode] exists only so a test can prove the release branch without building
+/// a release binary (safety phase S1 guard: a release APK plants nothing). Production
+/// callers pass nothing and get the compile-time [kReleaseMode].
+Future<int> applyUxLocalSeed({bool? isReleaseMode}) async {
+  if (isReleaseMode ?? kReleaseMode) return 0;
   var n = 0;
   n += await _seedPendingAppInstall();
   n += await _seedNotificationPrefsRows();
