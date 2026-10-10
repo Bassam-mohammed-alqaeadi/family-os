@@ -4,6 +4,7 @@ import 'package:family_os/core/runtime/family_child_profile_source.dart';
 import 'package:family_os/core/runtime/family_creation_source.dart';
 import 'package:family_os/core/runtime/family_device_revocation.dart';
 import 'package:family_os/core/runtime/family_device_source.dart';
+import 'package:family_os/core/runtime/family_invite_code_source.dart';
 import 'package:family_os/core/runtime/family_policy_source.dart';
 import 'package:family_os/core/runtime/family_roster_source.dart';
 import 'package:family_os/core/runtime/identity_source.dart';
@@ -20,6 +21,7 @@ final class AppRuntime extends ChangeNotifier {
     FamilyCreationSource? familyCreation,
     FamilyDeviceSource? devices,
     FamilyDeviceRevocationSource? deviceRevocation,
+    FamilyInviteCodeSource? inviteCodes,
     FamilyPolicySource? policies,
   }) : roster = roster ?? UnavailableFamilyRosterSource(),
        childProfiles = childProfiles ?? UnavailableFamilyChildProfileSource(),
@@ -27,6 +29,7 @@ final class AppRuntime extends ChangeNotifier {
        devices = devices ?? UnavailableFamilyDeviceSource(),
        deviceRevocation =
            deviceRevocation ?? UnavailableFamilyDeviceRevocationSource(),
+       inviteCodes = inviteCodes ?? UnavailableFamilyInviteCodeSource(),
        policies = policies ?? UnavailableFamilyPolicySource() {
     identity.addListener(notifyListeners);
     this.roster.addListener(notifyListeners);
@@ -55,6 +58,10 @@ final class AppRuntime extends ChangeNotifier {
   /// The one device-write port: cutting a child device off on the server.
   /// Success exists only when the server confirms the revocation.
   final FamilyDeviceRevocationSource deviceRevocation;
+
+  /// Invites by code: a guardian's code exists only when the server issued it, and joining
+  /// a family exists only when the server created the membership. Fails closed.
+  final FamilyInviteCodeSource inviteCodes;
 
   /// Explicit shared-policy source. A local source can persist a draft, but
   /// may never be presented as remote policy enforcement.
@@ -94,6 +101,14 @@ final class AppRuntime extends ChangeNotifier {
         !identical(deviceRevocation, familyCreation) &&
         !identical(deviceRevocation, devices)) {
       deviceRevocation.dispose();
+    }
+    if (!identical(inviteCodes, identity) &&
+        !identical(inviteCodes, roster) &&
+        !identical(inviteCodes, childProfiles) &&
+        !identical(inviteCodes, familyCreation) &&
+        !identical(inviteCodes, devices) &&
+        !identical(inviteCodes, deviceRevocation)) {
+      inviteCodes.dispose();
     }
     if (!identical(policies, identity) &&
         !identical(policies, roster) &&

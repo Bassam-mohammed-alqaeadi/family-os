@@ -16437,5 +16437,139 @@
   "voiceRecordingSend": "إرسال",
   "voiceRecordingCancel": "إلغاء",
   "voicePlaySemantics": "تشغيل الرسالة الصوتية",
-  "voicePauseSemantics": "إيقاف الرسالة الصوتية مؤقتًا"
+  "voicePauseSemantics": "إيقاف الرسالة الصوتية مؤقتًا",
+  "inviteCodeIntro": "أنشئ رمز دعوة وأرسله للأم بنفسك. تُدخله من حسابها في التطبيق فتنضم إلى العائلة وليّةَ أمرٍ مشاركة.",
+  "@inviteCodeIntro": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeIssue": "أنشئ رمز الدعوة",
+  "@inviteCodeIssue": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeIssuing": "جارٍ إنشاء الرمز…",
+  "@inviteCodeIssuing": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeValueLabel": "رمز الدعوة",
+  "@inviteCodeValueLabel": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeExpiry": "صالح حتى {time} · يُستعمل مرة واحدة",
+  "@inviteCodeExpiry": {
+    "description": "Invites by code (owner decision 2026-10-10)",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteCodeCopy": "انسخ الرمز",
+  "@inviteCodeCopy": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeCopied": "نُسخ الرمز — أرسله للأم في رسالة",
+  "@inviteCodeCopied": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeRevoke": "ألغِ هذا الرمز",
+  "@inviteCodeRevoke": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeRevoked": "أُلغي الرمز على الخادم ولم يعد صالحاً",
+  "@inviteCodeRevoked": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeDone": "تم — إلى أعضاء العائلة",
+  "@inviteCodeDone": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeHonesty": "الرمز يصدره الخادم ويظهر هنا مرة واحدة فقط، وينتهي بعد ٢٤ ساعة. لا نرسل بريداً أو رسالة نيابةً عنك — شاركه بنفسك. مستويات صلاحية الأم (مطّلعة/مشاركة/كاملة) لم تُحفظ على الخادم بعد: كل وليّة أمر مشاركة لها الصلاحيات نفسها.",
+  "@inviteCodeHonesty": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeErrorLimit": "لدى العائلة ٥ رموز مفتوحة. ألغِ رمزاً أو انتظر انتهاءه.",
+  "@inviteCodeErrorLimit": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeErrorDenied": "إنشاء رموز الدعوة لوليّ الأمر الأساسي فقط.",
+  "@inviteCodeErrorDenied": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeErrorUnavailable": "هذه النسخة غير متصلة بالخادم — لم يُنشأ أي رمز.",
+  "@inviteCodeErrorUnavailable": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeErrorNetwork": "تعذّر الوصول إلى الخادم. تحقق من الاتصال وحاول مجدداً.",
+  "@inviteCodeErrorNetwork": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeErrorService": "الخدمة غير متاحة الآن. حاول بعد قليل.",
+  "@inviteCodeErrorService": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeIntro": "أدخل الرمز الذي وصلك من وليّ الأمر. تنضم إلى العائلة بالحساب الذي سجّلت به الدخول، ولا تُعدّ عضواً إلا بعد أن يؤكد الخادم ذلك.",
+  "@joinCodeIntro": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeFieldLabel": "رمز الدعوة",
+  "@joinCodeFieldLabel": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeFieldHint": "ABCDE-FGHJK",
+  "@joinCodeFieldHint": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeSubmit": "انضم إلى العائلة",
+  "@joinCodeSubmit": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeJoining": "جارٍ الانضمام…",
+  "@joinCodeJoining": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeJoined": "انضممت إلى «{family}»",
+  "@joinCodeJoined": {
+    "description": "Invites by code (owner decision 2026-10-10)",
+    "placeholders": {
+      "family": {
+        "type": "String"
+      }
+    }
+  },
+  "joinCodeErrorFormat": "الرمز ١٠ أحرف وأرقام، مثل ABCDE-FGHJK.",
+  "@joinCodeErrorFormat": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeErrorNotRedeemable": "الرمز غير صحيح أو انتهت صلاحيته أو استُعمل من قبل. اطلب رمزاً جديداً.",
+  "@joinCodeErrorNotRedeemable": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeErrorAlreadyMember": "حسابك عضو في هذه العائلة بالفعل.",
+  "@joinCodeErrorAlreadyMember": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeErrorRateLimited": "محاولات كثيرة. انتظر بضع دقائق ثم حاول مجدداً.",
+  "@joinCodeErrorRateLimited": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeErrorSignIn": "سجّل الدخول بحسابك أولاً، ثم أدخل الرمز.",
+  "@joinCodeErrorSignIn": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "deviceModeInviteCodeEmoji": "🔑",
+  "@deviceModeInviteCodeEmoji": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "deviceModeInviteCodeTitle": "عندي رمز دعوة",
+  "@deviceModeInviteCodeTitle": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "deviceModeInviteCodeBody": "أنضم إلى عائلة موجودة برمز من وليّ الأمر",
+  "@deviceModeInviteCodeBody": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "deviceModeInviteCodeSemantics": "عندي رمز دعوة — الانضمام إلى عائلة موجودة",
+  "@deviceModeInviteCodeSemantics": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  }
 }

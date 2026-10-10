@@ -16422,5 +16422,139 @@
   "voiceRecordingSend": "Send",
   "voiceRecordingCancel": "Cancel",
   "voicePlaySemantics": "Play voice note",
-  "voicePauseSemantics": "Pause voice note"
+  "voicePauseSemantics": "Pause voice note",
+  "inviteCodeIntro": "Create an invite code and send it to her yourself. She enters it from her own account in the app and joins the family as a co-guardian.",
+  "@inviteCodeIntro": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeIssue": "Create invite code",
+  "@inviteCodeIssue": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeIssuing": "Creating code…",
+  "@inviteCodeIssuing": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeValueLabel": "Invite code",
+  "@inviteCodeValueLabel": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeExpiry": "Valid until {time} · single use",
+  "@inviteCodeExpiry": {
+    "description": "Invites by code (owner decision 2026-10-10)",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteCodeCopy": "Copy code",
+  "@inviteCodeCopy": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeCopied": "Code copied — send it to her in a message",
+  "@inviteCodeCopied": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeRevoke": "Cancel this code",
+  "@inviteCodeRevoke": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeRevoked": "The code was cancelled on the server and no longer works",
+  "@inviteCodeRevoked": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeDone": "Done — family members",
+  "@inviteCodeDone": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeHonesty": "The server issues the code and it is shown here only once; it expires after 24 hours. We do not send email or messages for you — share it yourself. Mother permission levels (observer/partner/full) are not stored on the server yet: every co-guardian has the same permissions.",
+  "@inviteCodeHonesty": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeErrorLimit": "The family already has 5 open codes. Cancel one or wait for it to expire.",
+  "@inviteCodeErrorLimit": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeErrorDenied": "Only the primary guardian can create invite codes.",
+  "@inviteCodeErrorDenied": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeErrorUnavailable": "This build is not connected to the server — no code was created.",
+  "@inviteCodeErrorUnavailable": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeErrorNetwork": "Could not reach the server. Check the connection and try again.",
+  "@inviteCodeErrorNetwork": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeErrorService": "The service is unavailable right now. Try again shortly.",
+  "@inviteCodeErrorService": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeIntro": "Enter the code the guardian sent you. You join the family with the account you are signed in with, and you are a member only once the server confirms it.",
+  "@joinCodeIntro": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeFieldLabel": "Invite code",
+  "@joinCodeFieldLabel": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeFieldHint": "ABCDE-FGHJK",
+  "@joinCodeFieldHint": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeSubmit": "Join the family",
+  "@joinCodeSubmit": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeJoining": "Joining…",
+  "@joinCodeJoining": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeJoined": "You joined «{family}»",
+  "@joinCodeJoined": {
+    "description": "Invites by code (owner decision 2026-10-10)",
+    "placeholders": {
+      "family": {
+        "type": "String"
+      }
+    }
+  },
+  "joinCodeErrorFormat": "The code is 10 letters and digits, like ABCDE-FGHJK.",
+  "@joinCodeErrorFormat": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeErrorNotRedeemable": "The code is wrong, expired or already used. Ask for a new one.",
+  "@joinCodeErrorNotRedeemable": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeErrorAlreadyMember": "Your account is already a member of this family.",
+  "@joinCodeErrorAlreadyMember": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeErrorRateLimited": "Too many attempts. Wait a few minutes and try again.",
+  "@joinCodeErrorRateLimited": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeErrorSignIn": "Sign in with your account first, then enter the code.",
+  "@joinCodeErrorSignIn": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "deviceModeInviteCodeEmoji": "🔑",
+  "@deviceModeInviteCodeEmoji": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "deviceModeInviteCodeTitle": "I have an invite code",
+  "@deviceModeInviteCodeTitle": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "deviceModeInviteCodeBody": "Join an existing family with a code from the guardian",
+  "@deviceModeInviteCodeBody": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "deviceModeInviteCodeSemantics": "I have an invite code — join an existing family",
+  "@deviceModeInviteCodeSemantics": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  }
 }

@@ -1,424 +1,221 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/placeholder_screen.dart';
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
-import 'package:family_os/core/design/tokens.dart';
-import 'package:family_os/core/domain/mother_level.dart';
+import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/domain/role.dart';
-import 'package:family_os/core/identity/adult_invite_repository.dart';
-import 'package:family_os/core/identity/identity_models.dart';
-import 'package:family_os/core/identity/identity_runtime.dart';
-import 'package:family_os/core/identity/identity_scope.dart';
-import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/runtime/family_invite_code_source.dart';
 import 'package:family_os/features/n01_linking/accept_mother_invite_screen.dart';
 
+import 'invite_code_fakes.dart';
+
+const _joined = InviteCodeRedeemResult.joined(
+  familyId: inviteTestFamilyUuid,
+  familyDisplayName: 'عائلة الدعوة',
+  role: 'co_guardian',
+);
+
+/// SCR-FAT-009 — joining with an invite code. "You joined" exists only after the server
+/// confirmed the membership; nothing is recorded on the phone first.
 void main() {
-  tearDown(() {
-    AppToast.dismiss();
-    stage1AdultInviteRepository.resetForTests();
-    resetStage1IdentityRuntimeForTest();
-  });
+  tearDown(AppToast.dismiss);
 
-  testWidgets('shows injected inviter + family names', (tester) async {
-    await _pumpScreen(tester, inviterName: 'سامي', familyName: 'عائلة سامي');
-
-    expect(
-      find.textContaining('سامي يدعوك للانضمام إلى «عائلة سامي»'),
-      findsOneWidget,
-    );
-    expect(find.textContaining('عبدالله'), findsNothing);
-    expect(find.textContaining('نوال'), findsNothing);
-    expect(find.textContaining('خالد'), findsNothing);
-  });
-
-  testWidgets('empty names → generic ARB fallbacks (Rule 23)', (tester) async {
-    await _pumpScreen(tester);
-
-    expect(
-      find.textContaining('ولي الأمر يدعوك للانضمام إلى «العائلة»'),
-      findsOneWidget,
-    );
-    expect(find.textContaining('عبدالله'), findsNothing);
-    expect(find.textContaining('نوال'), findsNothing);
-    expect(find.textContaining('خالد'), findsNothing);
-    expect(find.text('مستواك: مشاركة'), findsOneWidget);
-    expect(
-      find.textContaining('ترين كل شيء · توافقين على الطلبات'),
-      findsOneWidget,
-    );
-    expect(find.text('حقوقك الثابتة'), findsOneWidget);
-  });
-
-  testWidgets('accept sets mother role + toast + → /scr-fat-028', (
-    tester,
-  ) async {
-    final role = RoleController(AppRole.father);
+  GoRouter routerFor(Widget screen) {
     final router = GoRouter(
       initialLocation: '/scr-fat-009',
       routes: [
-        GoRoute(
-          path: '/scr-fat-009',
-          builder: (context, state) => AcceptMotherInviteScreen(
-            inviterName: 'سامي',
-            familyName: 'عائلة سامي',
-            inviteeFirstName: 'سارة',
-            roleController: role,
-          ),
-        ),
+        GoRoute(path: '/scr-fat-009', builder: (context, state) => screen),
         GoRoute(
           path: '/scr-fat-028',
-          builder: (context, state) => const PlaceholderScreen(
-            screenId: 'SCR-FAT-028',
-            title: 'إعداد الطوارئ',
-          ),
-        ),
-      ],
-    );
-    addTearDown(() {
-      router.dispose();
-      role.dispose();
-    });
-
-    await tester.pumpWidget(
-      CurrentRole(
-        notifier: role,
-        child: MaterialApp.router(
-          theme: buildFamilyTheme(),
-          locale: const Locale('ar'),
-          supportedLocales: AppLocalizations.supportedLocales,
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          routerConfig: router,
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(role.value, AppRole.father);
-
-    await tester.tap(find.byKey(const Key('accept_mother_invite_accept')));
-    await tester.pump();
-
-    expect(role.value, AppRole.mother);
-    expect(
-      find.textContaining(
-        'أهلًا سارة — أنتِ الآن شريكة التوجيه بمستوى «مشاركة»',
-      ),
-      findsOneWidget,
-    );
-    expect(find.textContaining('نوال'), findsNothing);
-
-    await tester.pumpAndSettle();
-    expect(router.state.uri.path, '/scr-fat-028');
-    expect(find.byType(PlaceholderScreen), findsOneWidget);
-
-    await _settleTimers(tester);
-  });
-
-  testWidgets('decline → toast + /scr-shr-001', (tester) async {
-    final router = GoRouter(
-      initialLocation: '/scr-fat-009',
-      routes: [
-        GoRoute(
-          path: '/scr-fat-009',
-          builder: (context, state) => const AcceptMotherInviteScreen(
-            inviterName: 'سامي',
-            familyName: 'عائلة سامي',
-          ),
+          builder: (context, state) =>
+              const PlaceholderScreen(screenId: 'SCR-FAT-028', title: 'الأم'),
         ),
         GoRoute(
           path: '/scr-shr-001',
           builder: (context, state) => const PlaceholderScreen(
             screenId: 'SCR-SHR-001',
-            title: 'شاشة الترحيب',
+            title: 'البداية',
           ),
         ),
       ],
     );
     addTearDown(router.dispose);
+    return router;
+  }
 
-    await tester.pumpWidget(
-      MaterialApp.router(
-        theme: buildFamilyTheme(),
-        locale: const Locale('ar'),
-        supportedLocales: AppLocalizations.supportedLocales,
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        routerConfig: router,
-      ),
+  testWidgets('empty field disables join; no prefilled code or names', (
+    tester,
+  ) async {
+    final source = FakeInviteCodeSource(redeemResults: [_joined]);
+    await pumpWithInviteCodes(
+      tester,
+      source: source,
+      home: const AcceptMotherInviteScreen(),
     );
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byKey(const Key('accept_mother_invite_decline')));
-    await tester.pump();
-
-    expect(find.textContaining('تبقى الدعوة صالحة أسبوعًا'), findsOneWidget);
-    expect(find.textContaining('سامي يستطيع تذكيرك'), findsOneWidget);
-    expect(find.textContaining('عبدالله'), findsNothing);
-
-    await tester.pumpAndSettle();
-    expect(router.state.uri.path, '/scr-shr-001');
-    expect(find.byType(PlaceholderScreen), findsOneWidget);
-
-    await _settleTimers(tester);
-  });
-
-  testWidgets('LOCAL honesty banner present', (tester) async {
-    await _pumpScreen(tester);
+    final field = tester.widget<TextField>(
+      find.byKey(const Key('join_code_field')),
+    );
+    expect(field.controller!.text, isEmpty);
+    final button = tester.widget<PrimaryBtn>(
+      find.byKey(const Key('join_code_submit')),
+    );
+    expect(button.onPressed, isNull);
+    expect(find.textContaining('خالد'), findsNothing);
     expect(
       find.byKey(const Key('accept_mother_invite_local_honesty')),
-      findsOneWidget,
+      findsNothing,
     );
-    expect(find.textContaining('محلياً'), findsOneWidget);
-    expect(find.textContaining('تحديث قادم'), findsOneWidget);
+    expect(source.redeemed, isEmpty);
   });
 
-  testWidgets('token without Identity — fail-closed', (tester) async {
-    resetStage1IdentityRuntimeForTest();
-    stage1AdultInviteRepository.resetForTests();
-    final runtime = stage1IdentityRuntime;
-    final invite = stage1AdultInviteRepository.createInvite(
-      familyId: runtime.activeFamilyId,
-      target: 'join@example.com',
-      level: MotherLevel.full,
-      actorMemberId: runtime.activeMembership.id,
-    );
-
-    final router = GoRouter(
-      initialLocation: '/scr-fat-009',
-      routes: [
-        GoRoute(
-          path: '/scr-fat-009',
-          builder: (context, state) =>
-              AcceptMotherInviteScreen(inviteTokenId: invite.tokenId.value),
-        ),
-        GoRoute(
-          path: '/scr-fat-028',
-          builder: (context, state) => const PlaceholderScreen(
-            screenId: 'SCR-FAT-028',
-            title: 'إعداد الطوارئ',
-          ),
-        ),
-      ],
-    );
-    addTearDown(router.dispose);
-
-    await tester.pumpWidget(
-      MaterialApp.router(
-        theme: buildFamilyTheme(),
-        locale: const Locale('ar'),
-        supportedLocales: AppLocalizations.supportedLocales,
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        routerConfig: router,
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byKey(const Key('accept_mother_invite_accept')));
-    await tester.pump();
-
-    expect(router.state.uri.path, '/scr-fat-009');
-    expect(
-      invite.stateAt(DateTime.now().toUtc()),
-      isNot(InviteLifecycleState.accepted),
-    );
-
-    await _settleTimers(tester);
-  });
-
-  testWidgets('Identity + token accept → invite accepted + /scr-fat-028', (
+  testWidgets('a malformed code is refused on the phone and never sent', (
     tester,
   ) async {
-    resetStage1IdentityRuntimeForTest();
-    stage1AdultInviteRepository.resetForTests();
-    final runtime = stage1IdentityRuntime;
-    final repo = stage1AdultInviteRepository;
-    final invite = repo.createInvite(
-      familyId: runtime.activeFamilyId,
-      target: 'join@example.com',
-      level: MotherLevel.full,
-      actorMemberId: runtime.activeMembership.id,
+    final source = FakeInviteCodeSource(redeemResults: [_joined]);
+    await pumpWithInviteCodes(
+      tester,
+      source: source,
+      home: const AcceptMotherInviteScreen(),
     );
-    final role = RoleController(AppRole.father);
-    final router = GoRouter(
-      initialLocation: '/scr-fat-009',
-      routes: [
-        GoRoute(
-          path: '/scr-fat-009',
-          builder: (context, state) => AcceptMotherInviteScreen(
-            inviteTokenId: invite.tokenId.value,
-            repository: repo,
-            roleController: role,
-          ),
-        ),
-        GoRoute(
-          path: '/scr-fat-028',
-          builder: (context, state) => const PlaceholderScreen(
-            screenId: 'SCR-FAT-028',
-            title: 'إعداد الطوارئ',
-          ),
-        ),
-      ],
-    );
-    addTearDown(() {
-      router.dispose();
-      role.dispose();
-    });
-
-    await tester.pumpWidget(
-      CurrentIdentity(
-        runtime: runtime,
-        child: CurrentRole(
-          notifier: role,
-          child: MaterialApp.router(
-            theme: buildFamilyTheme(),
-            locale: const Locale('ar'),
-            supportedLocales: AppLocalizations.supportedLocales,
-            localizationsDelegates: const [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            routerConfig: router,
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('مستواك: كاملة'), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('accept_mother_invite_accept')));
+    await tester.enterText(find.byKey(const Key('join_code_field')), 'O0O0-1');
     await tester.pump();
-
-    final accepted = repo.findByToken(invite.tokenId)!;
-    expect(
-      accepted.stateAt(DateTime.now().toUtc()),
-      InviteLifecycleState.accepted,
-    );
-    expect(role.value, AppRole.mother);
-
+    await tester.tap(find.byKey(const Key('join_code_submit')));
     await tester.pumpAndSettle();
-    expect(router.state.uri.path, '/scr-fat-028');
-
-    await _settleTimers(tester);
+    expect(source.redeemed, isEmpty);
+    expect(find.byKey(const Key('join_code_error_format')), findsOneWidget);
   });
 
-  testWidgets('accept without invitee uses generic welcome toast', (
-    tester,
-  ) async {
-    final role = RoleController(AppRole.father);
-    final router = GoRouter(
-      initialLocation: '/scr-fat-009',
-      routes: [
-        GoRoute(
-          path: '/scr-fat-009',
-          builder: (context, state) => AcceptMotherInviteScreen(
-            inviterName: 'سامي',
-            familyName: 'عائلة سامي',
-            roleController: role,
-          ),
-        ),
-        GoRoute(
-          path: '/scr-fat-028',
-          builder: (context, state) => const PlaceholderScreen(
-            screenId: 'SCR-FAT-028',
-            title: 'إعداد الطوارئ',
-          ),
-        ),
-      ],
-    );
-    addTearDown(() {
-      router.dispose();
-      role.dispose();
-    });
+  testWidgets(
+    'server confirms → mother role, toast with the family name, /scr-fat-028',
+    (tester) async {
+      final source = FakeInviteCodeSource(redeemResults: [_joined]);
+      final role = RoleController(AppRole.father);
+      addTearDown(role.dispose);
+      final router = routerFor(AcceptMotherInviteScreen(roleController: role));
+      await pumpWithInviteCodes(tester, source: source, router: router);
 
-    await tester.pumpWidget(
-      CurrentRole(
-        notifier: role,
-        child: MaterialApp.router(
-          theme: buildFamilyTheme(),
-          locale: const Locale('ar'),
-          supportedLocales: AppLocalizations.supportedLocales,
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          routerConfig: router,
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('join_code_field')),
+        ' abcde fghjk ',
+      );
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('join_code_submit')));
+      await tester.pump();
 
-    await tester.tap(find.byKey(const Key('accept_mother_invite_accept')));
-    await tester.pump();
-
-    expect(
-      find.textContaining('أهلًا — أنتِ الآن شريكة التوجيه بمستوى «مشاركة»'),
-      findsOneWidget,
-    );
-    expect(find.textContaining('نوال'), findsNothing);
-    expect(role.value, AppRole.mother);
-
-    await tester.pumpAndSettle();
-    expect(router.state.uri.path, '/scr-fat-028');
-
-    await _settleTimers(tester);
-  });
-}
-
-Future<void> _pumpScreen(
-  WidgetTester tester, {
-  String inviterName = '',
-  String familyName = '',
-  String inviteeFirstName = '',
-  VoidCallback? onAccept,
-  VoidCallback? onDecline,
-}) async {
-  await tester.pumpWidget(
-    MaterialApp(
-      theme: buildFamilyTheme(),
-      locale: const Locale('ar'),
-      supportedLocales: AppLocalizations.supportedLocales,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      home: AcceptMotherInviteScreen(
-        inviterName: inviterName,
-        familyName: familyName,
-        inviteeFirstName: inviteeFirstName,
-        onAccept: onAccept,
-        onDecline: onDecline,
-      ),
-    ),
+      expect(
+        source.redeemed.single.code,
+        'ABCDEFGHJK',
+        reason: 'the code is normalised before it is sent',
+      );
+      expect(find.textContaining('عائلة الدعوة'), findsOneWidget);
+      await tester.pumpAndSettle();
+      expect(router.state.uri.path, '/scr-fat-028');
+      expect(role.value, AppRole.mother);
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+    },
   );
-  await tester.pumpAndSettle();
-}
 
-Future<void> _settleTimers(WidgetTester tester) async {
-  AppToast.dismiss();
-  await tester.pump(const Duration(milliseconds: 2600));
+  for (final (failure, text) in [
+    (InviteCodeFailure.notRedeemable, 'غير صحيح أو انتهت صلاحيته'),
+    (InviteCodeFailure.alreadyMember, 'عضو في هذه العائلة بالفعل'),
+    (InviteCodeFailure.rateLimited, 'محاولات كثيرة'),
+    (InviteCodeFailure.sessionInvalid, 'سجّل الدخول بحسابك أولاً'),
+    (InviteCodeFailure.unavailable, 'غير متصلة بالخادم'),
+  ]) {
+    testWidgets(
+      'a refusal (${failure.name}) is said plainly and nobody joins',
+      (tester) async {
+        final source = FakeInviteCodeSource(
+          redeemResults: [InviteCodeRedeemResult.failed(failure)],
+        );
+        final role = RoleController(AppRole.father);
+        addTearDown(role.dispose);
+        final router = routerFor(
+          AcceptMotherInviteScreen(roleController: role),
+        );
+        await pumpWithInviteCodes(tester, source: source, router: router);
+
+        await tester.enterText(
+          find.byKey(const Key('join_code_field')),
+          'ABCDE-FGHJK',
+        );
+        await tester.pump();
+        await tester.tap(find.byKey(const Key('join_code_submit')));
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(Key('join_code_error_${failure.name}')),
+          findsOneWidget,
+        );
+        expect(find.textContaining(text), findsOneWidget);
+        expect(router.state.uri.path, '/scr-fat-009');
+        expect(
+          role.value,
+          AppRole.father,
+          reason: 'a refused code never changes the role',
+        );
+      },
+    );
+  }
+
+  testWidgets(
+    'retrying the same code reuses its idempotency key; a new code gets a new one',
+    (tester) async {
+      final source = FakeInviteCodeSource(
+        redeemResults: const [
+          InviteCodeRedeemResult.failed(InviteCodeFailure.networkUnavailable),
+          InviteCodeRedeemResult.failed(InviteCodeFailure.networkUnavailable),
+          InviteCodeRedeemResult.failed(InviteCodeFailure.notRedeemable),
+        ],
+      );
+      await pumpWithInviteCodes(
+        tester,
+        source: source,
+        home: AcceptMotherInviteScreen(onJoined: (_) {}),
+      );
+      Future<void> submit(String code) async {
+        await tester.enterText(find.byKey(const Key('join_code_field')), code);
+        await tester.pump();
+        await tester.tap(find.byKey(const Key('join_code_submit')));
+        await tester.pumpAndSettle();
+      }
+
+      await submit('ABCDE-FGHJK');
+      await submit('abcdefghjk');
+      await submit('ZZZZZ-ZZZZZ');
+      expect(source.redeemed, hasLength(3));
+      expect(source.redeemed[0].key, source.redeemed[1].key);
+      expect(source.redeemed[2].key, isNot(source.redeemed[0].key));
+    },
+  );
+
+  testWidgets('decline → /scr-shr-001 without calling the server', (
+    tester,
+  ) async {
+    final source = FakeInviteCodeSource();
+    final router = routerFor(const AcceptMotherInviteScreen());
+    await pumpWithInviteCodes(tester, source: source, router: router);
+    await tester.ensureVisible(
+      find.byKey(const Key('accept_mother_invite_decline')),
+    );
+    await tester.tap(find.byKey(const Key('accept_mother_invite_decline')));
+    await tester.pumpAndSettle();
+    expect(router.state.uri.path, '/scr-shr-001');
+    expect(source.redeemed, isEmpty);
+  });
+
+  testWidgets('English locale renders the join flow', (tester) async {
+    await pumpWithInviteCodes(
+      tester,
+      source: FakeInviteCodeSource(),
+      home: const AcceptMotherInviteScreen(),
+      locale: const Locale('en'),
+    );
+    expect(find.text('Join the family'), findsOneWidget);
+    expect(find.textContaining('server confirms'), findsOneWidget);
+  });
 }
