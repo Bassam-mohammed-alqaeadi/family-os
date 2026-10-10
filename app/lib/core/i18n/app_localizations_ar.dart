@@ -6041,6 +6041,10 @@ class AppLocalizationsAr extends AppLocalizations {
       '⚠️ كل محاولة خاطئة تصل والدك فورًا. وبعد 3 محاولات: قفل 24 ساعة + إخطار والدتك.';
 
   @override
+  String get childModeLockVerifierUnavailable =>
+      'فتح وضع الوالد من هذا الهاتف غير متاح بعد: التحقق من حساب الوالد لم يُبنَ. اطلب من والدك تغيير الإعداد من هاتفه. وزر الطوارئ يعمل دائماً.';
+
+  @override
   String get childModeLockLockoutBanner =>
       '🔒 قُفل المدخل 24 ساعة بعد ثلاث محاولات فاشلة — وأُخطرت والدتك.';
 

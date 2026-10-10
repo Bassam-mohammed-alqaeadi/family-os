@@ -2,9 +2,6 @@ import 'package:flutter/foundation.dart';
 
 import 'package:family_os/core/policy/web_unlock_service.dart' show AuditAppend;
 
-/// Stage-1 mock account password — not a device PIN / MDM credential.
-const kChildModeLockMockPassword = 'parent-account';
-
 /// Failed password attempts before 24h lockout (ADR-017).
 const kChildModeLockMaxFailedAttempts = 3;
 
@@ -21,6 +18,13 @@ enum ChildModeUnlockOutcome {
 
   /// Device locked for 24h after 3 failures — mother also notified.
   lockout,
+
+  /// No real verifier of the parent's account is wired yet (safety phase S1).
+  ///
+  /// The fixed password that used to sit in production code was removed; until the
+  /// server-side check exists (slice S12), nothing typed here can unlock, no attempt is
+  /// counted and no parent is "notified".
+  unavailable,
 }
 
 /// Notification fired on every failed password attempt (and lockout).
@@ -106,14 +110,18 @@ final class ChildModeUnlockResult {
   final DateTime? lockoutUntil;
 }
 
-/// ADR-017 triple-lock seam for SCR-CHD-011 (mock-first · no OS MDM).
+/// ADR-017 triple-lock seam for SCR-CHD-011 (no OS MDM).
+///
+/// Safety phase S1: there is no built-in password. Production constructs this with no
+/// verifier, so [verifyAccountPassword] answers [ChildModeUnlockOutcome.unavailable];
+/// tests pass their own `expectedPassword`.
 ///
 /// 1. Secret entry (UI hold) · 2. Account password (not PIN) ·
 /// 3. Second key on parent device (FAT-030). Failures notify father;
 /// 3 fails → 24h lockout + mother notify.
 final class ChildModeLockService extends ChangeNotifier {
   ChildModeLockService({
-    String expectedPassword = kChildModeLockMockPassword,
+    String? expectedPassword,
     AuditAppend? audit,
     ChildModeUnlockNotifyBus? notifyBus,
     DateTime Function()? clock,
@@ -126,7 +134,7 @@ final class ChildModeLockService extends ChangeNotifier {
        _maxFailedAttempts = maxFailedAttempts,
        _lockoutDuration = lockoutDuration;
 
-  String _expectedPassword;
+  String? _expectedPassword;
   final AuditAppend _audit;
   final ChildModeUnlockNotifyBus _notifyBus;
   final DateTime Function() _clock;
@@ -160,9 +168,16 @@ final class ChildModeLockService extends ChangeNotifier {
     return _clock().toUtc().isBefore(until);
   }
 
-  /// Test / Stage-1 seam — rotate expected mock password.
-  void setExpectedPassword(String password) {
+  /// Whether a parent-account verifier is wired. False in production until slice S12.
+  bool get verifierConfigured {
+    final expected = _expectedPassword;
+    return expected != null && expected.isNotEmpty;
+  }
+
+  /// Test seam — set or clear the expected password.
+  void setExpectedPassword(String? password) {
     _expectedPassword = password;
+    notifyListeners();
   }
 
   /// Opens step 2 after the secret-entry hold succeeds.
@@ -185,6 +200,14 @@ final class ChildModeLockService extends ChangeNotifier {
     if (!_secretEntryOpen) {
       return ChildModeUnlockResult(
         outcome: ChildModeUnlockOutcome.failed,
+        failedAttempts: _failedAttempts,
+      );
+    }
+
+    if (!verifierConfigured) {
+      _audit.add('mode_unlock_attempt:unavailable');
+      return ChildModeUnlockResult(
+        outcome: ChildModeUnlockOutcome.unavailable,
         failedAttempts: _failedAttempts,
       );
     }
@@ -268,7 +291,7 @@ final class ChildModeLockService extends ChangeNotifier {
   }
 }
 
-/// Stage-1 singleton — empty audit until UI/tests drive attempts.
+/// Production singleton — no verifier wired (see [ChildModeUnlockOutcome.unavailable]).
 final ChildModeUnlockNotifyBus stage1ChildModeUnlockNotifyBus =
     ChildModeUnlockNotifyBus();
 

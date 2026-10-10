@@ -6128,6 +6128,10 @@ class AppLocalizationsEn extends AppLocalizations {
       '⚠️ Every wrong attempt notifies your father immediately. After 3 attempts: 24-hour lock + mother notified.';
 
   @override
+  String get childModeLockVerifierUnavailable =>
+      'Opening parent mode from this phone is not available yet: the parent-account check is not built. Ask your parent to change the setting from their phone. The emergency button always works.';
+
+  @override
   String get childModeLockLockoutBanner =>
       '🔒 Secret entry locked for 24 hours after three failed attempts — and your mother was notified.';
 

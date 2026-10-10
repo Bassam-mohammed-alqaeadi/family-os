@@ -1,0 +1,203 @@
+name: Android Build
+
+# Safety phase, slice S1 (docs/safety_phase/01_SAFETY_PHASE_PLAN.md) — the honest test APK.
+# Ported from RESCUE-002 (archive/arena-01a10887, commit 8085861) and changed in three ways:
+#   1. it builds a RELEASE APK, so the debug/profile-only UX seed and the design showcase
+#      are compiled out (lib/app/ux_local_seed.dart and lib/app/showcase_policy.dart);
+#   2. it checks the built APK itself - not just the source - for the Google Play
+#      `isMonitoringTool` declaration and for `debuggable` being off;
+#   3. it never prints the Firebase configuration or anything derived from it.
+#
+# The APK is TEST-SIGNED: app/android/app/build.gradle.kts signs release with the debug
+# key. That key is a throwaway, cached between runs only so that a newer test APK installs
+# over an older one. It is never a Play upload key. Choosing who holds the real release key
+# is an owner decision recorded in docs/safety_phase/RESUME.md (needed before slice S6).
+#
+# Required repository configuration (Settings → Secrets and variables → Actions):
+#   secret   GOOGLE_SERVICES_JSON   app/android/app/google-services.json, raw JSON or base64
+#   variable FAMILY_OS_API_ORIGIN   https origin of the backend the test APK talks to
+# The job fails with a named error when either is missing, because an APK without them
+# boots into the not-configured route and is not a faithful test build.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "app/**"
+      - ".github/workflows/android_build.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "app/**"
+      - ".github/workflows/android_build.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  assemble-release:
+    name: Test-signed release APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: app
+    env:
+      FAMILY_OS_API_ORIGIN: ${{ vars.FAMILY_OS_API_ORIGIN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check build configuration is present
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          missing=0
+          if [ -z "$GOOGLE_SERVICES_JSON" ]; then
+            echo "::error title=Missing secret GOOGLE_SERVICES_JSON::Add app/android/app/google-services.json (raw JSON or its base64) as an Actions secret named GOOGLE_SERVICES_JSON. Pull requests from forks never receive secrets."
+            missing=1
+          fi
+          if [ -z "$FAMILY_OS_API_ORIGIN" ]; then
+            echo "::error title=Missing variable FAMILY_OS_API_ORIGIN::Add an Actions variable (not a secret) named FAMILY_OS_API_ORIGIN with the https origin of the backend."
+            missing=1
+          fi
+          case "$FAMILY_OS_API_ORIGIN" in
+            https://*|"") ;;
+            *) echo "::error title=Invalid FAMILY_OS_API_ORIGIN::Must start with https:// (the device layer rejects cleartext origins)."; missing=1 ;;
+          esac
+          exit $missing
+
+      - name: Materialize google-services.json (contents never printed)
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          umask 077
+          python3 - <<'PY'
+          import base64, binascii, json, os, sys
+          raw = os.environ["GOOGLE_SERVICES_JSON"].strip()
+          def fail(message):
+              print(f"::error title=GOOGLE_SERVICES_JSON is not usable::{message}")
+              sys.exit(1)
+          if raw.startswith("{"):
+              text = raw
+          else:
+              try:
+                  text = base64.b64decode(raw, validate=False).decode("utf-8")
+              except (binascii.Error, UnicodeDecodeError):
+                  fail("It is neither JSON nor base64 of JSON.")
+          try:
+              data = json.loads(text)
+          except json.JSONDecodeError:
+              fail("It does not parse as JSON.")
+          packages = [
+              ((client.get("client_info") or {}).get("android_client_info") or {}).get("package_name")
+              for client in data.get("client") or []
+          ]
+          if "com.familyos.family_os" not in packages:
+              fail("No Android client for package com.familyos.family_os in this file.")
+          with open("android/app/google-services.json", "w", encoding="utf-8") as handle:
+              handle.write(text)
+          print("google-services.json written: valid JSON with an Android client for com.familyos.family_os.")
+          PY
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.35.7"
+          channel: stable
+          cache: true
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('app/android/**/*.gradle.kts', 'app/android/gradle/wrapper/gradle-wrapper.properties', 'app/pubspec.yaml') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      # Throwaway test-signing key, kept stable between runs so the owner's phone can
+      # install a newer test APK over the previous one without losing its pairing. If the
+      # cache is evicted a new key is generated and the old install must be removed first.
+      - name: Restore test-signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: android-test-signing-key-v1
+
+      - name: Resolve packages
+        run: flutter pub get
+
+      - name: Generate localization source
+        run: flutter gen-l10n
+
+      - name: Build test-signed release APK
+        run: |
+          flutter build apk --release \
+            --dart-define=FAMILY_OS_API_ORIGIN="$FAMILY_OS_API_ORIGIN" \
+            --dart-define=FAMILY_OS_SHOWCASE=false \
+            --build-number="${{ github.run_number }}"
+
+      - name: Verify the APK itself (release, not debuggable, monitoring declaration)
+        run: |
+          apk=build/app/outputs/flutter-apk/app-release.apk
+          aapt2="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)aapt2"
+          "$aapt2" dump xmltree --file AndroidManifest.xml "$apk" > build/manifest.txt
+          python3 - <<'PY'
+          import re, sys
+          text = open("build/manifest.txt", encoding="utf-8").read()
+          problems = []
+          # Google Play stalkerware policy: <meta-data android:name="isMonitoringTool"
+          # android:value="child_monitoring" /> in every version code of the app.
+          if not re.search(r'android:name\([^)]*\)="isMonitoringTool"[^\n]*\n[^\n]*android:value\([^)]*\)="child_monitoring"', text):
+              problems.append("isMonitoringTool=child_monitoring meta-data is missing from the merged manifest")
+          if re.search(r'android:debuggable\([^)]*\)=\(type 0x12\)0xffffffff', text):
+              problems.append("the APK is debuggable")
+          for problem in problems:
+              print(f"::error title=APK policy check::{problem}")
+          if problems:
+              sys.exit(1)
+          print("APK policy check passed: release, not debuggable, isMonitoringTool=child_monitoring present.")
+          PY
+
+      - name: Name artifact
+        id: name
+        run: |
+          short="${GITHUB_SHA::7}"
+          out="family-os-test-release-${short}-${{ github.run_number }}.apk"
+          cp build/app/outputs/flutter-apk/app-release.apk "build/app/outputs/flutter-apk/$out"
+          echo "file=$out" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(sha256sum "build/app/outputs/flutter-apk/$out" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload test APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.name.outputs.file }}
+          path: app/build/app/outputs/flutter-apk/${{ steps.name.outputs.file }}
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Remove google-services.json from the runner
+        if: always()
+        run: rm -f android/app/google-services.json
+
+      - name: Summary
+        run: |
+          {
+            echo "## Family OS test APK (release build, test-signed)"
+            echo
+            echo "- Commit: \`${GITHUB_SHA::7}\` on \`${GITHUB_REF_NAME}\`, build number ${{ github.run_number }}"
+            echo "- SHA-256: \`${{ steps.name.outputs.sha256 }}\`"
+            echo "- Checked in the APK: not debuggable, \`isMonitoringTool=child_monitoring\` present"
+            echo
+            echo "Download **${{ steps.name.outputs.file }}** from this run's Artifacts (kept 7 days), unzip, then open it on the phone or \`adb install -r\`."
+            echo "Test-signed: never upload this file to Google Play. Phone checks use mock location only (docs/safety_phase/PHONE_CHECKS.md)."
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -225,20 +225,14 @@ function keywordHit(host, keywords) {
  * fetching the page: this is the same declaration the client's engine makes, and neither
  * one claims to be a content classifier. A wrong guess here costs a family a blocked page
  * they can open with a temporary allow - which is why the allow path exists.
+ *
+ * Safety phase S1: the `*.example` test hosts that used to sit here as an exact-match
+ * table were removed from production code. Every one of them was already classified the
+ * same way by the label tokens below; the tests now pin that equivalence instead.
  */
 export function classifyHost(rawHost) {
   const host = normalizeHost(rawHost);
   if (host === '') return null;
-  const fixtures = {
-    'adult.example': 'adults',
-    'gambling.example': 'gambling',
-    'casino.example': 'gambling',
-    'violence.example': 'violence',
-    'social.example': 'social',
-    'games.example': 'games',
-    'streaming.example': 'streaming',
-  };
-  if (fixtures[host] != null) return fixtures[host];
   const tokens = [
     ['adults', ['adult', 'porn', 'xxx']],
     ['gambling', ['gambling', 'casino', 'betting']],

@@ -15,6 +15,22 @@ void main() {
     await FsSessionKernel.ensureOpen(preferSqlite: true);
   });
 
+  test('S1 guard: a release build plants nothing', () async {
+    await PrefsMiscRuntime.tryBind();
+    await Stage1AppControlRuntime.ensureOpen();
+    final before = await Stage1AppControlRuntime.service.listPendingInstalls(
+      ChildId('demo-child'),
+    );
+
+    final planted = await applyUxLocalSeed(isReleaseMode: true);
+
+    expect(planted, 0);
+    final after = await Stage1AppControlRuntime.service.listPendingInstalls(
+      ChildId('demo-child'),
+    );
+    expect(after.length, before.length);
+  });
+
   test('applyUxLocalSeed is idempotent for app-install tickets', () async {
     await PrefsMiscRuntime.tryBind();
     await Stage1AppControlRuntime.ensureOpen();

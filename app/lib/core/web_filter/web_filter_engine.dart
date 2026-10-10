@@ -80,22 +80,14 @@ abstract final class WebFilterEngine {
     return WebFilterVerdict.allow(policyVersion: version);
   }
 
-  /// Stage-1 fixture classifier — same tokens as legacy evaluator.
+  /// Host-label classifier — same tokens as the server's `classifyHost`.
+  ///
+  /// Safety phase S1: the `*.example` exact-match test table was removed from
+  /// production code; the label tokens already classified those hosts the same way,
+  /// and the tests pin that equivalence.
   static String? classifyHost(String host) {
     final h = WebFilterPolicy.normalizeHost(host);
     if (h.isEmpty) return null;
-
-    const fixtures = <String, String>{
-      'adult.example': WebFilterCategories.adults,
-      'gambling.example': WebFilterCategories.gambling,
-      'casino.example': WebFilterCategories.gambling,
-      'violence.example': WebFilterCategories.violence,
-      'social.example': WebFilterCategories.social,
-      'games.example': WebFilterCategories.games,
-      'streaming.example': WebFilterCategories.streaming,
-    };
-    final exact = fixtures[h];
-    if (exact != null) return exact;
 
     if (_hostMatches(h, const ['adult', 'porn', 'xxx'])) {
       return WebFilterCategories.adults;

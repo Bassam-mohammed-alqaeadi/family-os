@@ -8,6 +8,8 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n05_lock/child_mode_lock_service.dart';
+
+import 'support/child_mode_lock_test_password.dart';
 import 'package:family_os/features/n05_lock/parent_second_key_screen.dart';
 
 void main() {
@@ -17,7 +19,9 @@ void main() {
   });
 
   testWidgets('empty inbox when no pending unlock request', (tester) async {
-    final lock = ChildModeLockService();
+    final lock = ChildModeLockService(
+      expectedPassword: kChildModeLockTestPassword,
+    );
     await _pump(tester, lockService: lock);
 
     expect(find.byKey(ParentSecondKeyKeys.emptyInbox), findsOneWidget);
@@ -29,7 +33,9 @@ void main() {
   testWidgets('father allow grants 10-minute window and clears inbox', (
     tester,
   ) async {
-    final lock = ChildModeLockService();
+    final lock = ChildModeLockService(
+      expectedPassword: kChildModeLockTestPassword,
+    );
     _seedAwaiting(lock);
     await _pump(tester, lockService: lock);
 
@@ -54,7 +60,9 @@ void main() {
   testWidgets('father deny clears pending and keeps device locked', (
     tester,
   ) async {
-    final lock = ChildModeLockService();
+    final lock = ChildModeLockService(
+      expectedPassword: kChildModeLockTestPassword,
+    );
     _seedAwaiting(lock);
     await _pump(tester, lockService: lock);
 
@@ -74,7 +82,9 @@ void main() {
   });
 
   testWidgets('failed attempts appear in father attempt log', (tester) async {
-    final lock = ChildModeLockService();
+    final lock = ChildModeLockService(
+      expectedPassword: kChildModeLockTestPassword,
+    );
     lock.openSecretEntry();
     lock.verifyAccountPassword('wrong-1');
     lock.verifyAccountPassword('wrong-2');
@@ -88,7 +98,9 @@ void main() {
   testWidgets('mother sees pending but cannot decide (father holds key)', (
     tester,
   ) async {
-    final lock = ChildModeLockService();
+    final lock = ChildModeLockService(
+      expectedPassword: kChildModeLockTestPassword,
+    );
     _seedAwaiting(lock);
     await _pump(tester, lockService: lock, role: AppRole.mother);
 
@@ -105,7 +117,9 @@ void main() {
   });
 
   testWidgets('child RoleGuard lean — no decide controls', (tester) async {
-    final lock = ChildModeLockService();
+    final lock = ChildModeLockService(
+      expectedPassword: kChildModeLockTestPassword,
+    );
     _seedAwaiting(lock);
     await _pump(tester, lockService: lock, role: AppRole.child);
 
@@ -117,7 +131,7 @@ void main() {
 
 void _seedAwaiting(ChildModeLockService lock) {
   lock.openSecretEntry();
-  final result = lock.verifyAccountPassword(kChildModeLockMockPassword);
+  final result = lock.verifyAccountPassword(kChildModeLockTestPassword);
   expect(result.outcome, ChildModeUnlockOutcome.awaitingSecondKey);
   expect(lock.awaitingSecondKeyRequests, hasLength(1));
 }

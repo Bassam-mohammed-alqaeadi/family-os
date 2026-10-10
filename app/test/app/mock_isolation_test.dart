@@ -27,7 +27,10 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-/// Every mock surface reachable from production code, as of 2026-10-07.
+/// Every mock surface reachable from production code, as of 2026-10-10.
+///
+/// Safety phase S1 removed `lib/features/n05_lock/child_mode_lock_service.dart`: its
+/// fixed password moved to test support and production now answers `unavailable`.
 ///
 /// One left this list today: `lib/core/policy/sos_fire.dart` held `MockSosFireService` -
 /// an alarm that always succeeded, reachable from every screen that had a button. What
@@ -54,7 +57,6 @@ const Set<String> productionReachableMocks = <String>{
   'lib/features/n02_day/family_chat_local_seed_mock.dart',
   'lib/features/n03_screen_time/child_apps_mock.dart',
   'lib/features/n03_screen_time/child_apps_real_local_seed_mock.dart',
-  'lib/features/n05_lock/child_mode_lock_service.dart',
   'lib/features/n12_devices/device_health_seam.dart',
   'lib/main.dart',
 };
