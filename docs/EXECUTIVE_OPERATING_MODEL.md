@@ -208,6 +208,7 @@ Compare → Cover → Compete → Real Engine (PG→Express→Native→Flutter) 
 ## 6) أول 90 يوماً — التزامات صريحة
 
 النظام النشط: **Family Entry & Children Control** — القدرة المقبولة: `primary-guardian create child profile`.
+> **مُتجاوز (قرار المالك 2026-10-10):** المرحلة النشطة الآن **السلامة** (ش١…ش١٧ في `safety_phase/01_SAFETY_PHASE_PLAN.md`)، ثم اختبار الهاتفين الشامل، ثم التعليم. «Family Entry & Children Control» يبقى هنا كاسم تاريخي للنظام المختار في 2026-10-04؛ العمل الجديد يتبع خطة السلامة و`CURRENT_EXECUTION_PLAN.md`.
 
 | الأسبوع | العمل | الإثبات |
 |---|---|---|

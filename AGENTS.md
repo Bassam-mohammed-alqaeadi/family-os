@@ -28,10 +28,16 @@ outcome and saw a truthful state.
 **Environment Gate.** No work touching SQL is complete until it actually runs on real
 PostgreSQL in CI. Written migrations are not evidence; executed migrations are.
 
-**The one honesty measure.** Every function is measured on four columns — table,
-contract, client, screen-and-journey. A function is real at 4/4 or it is not real. No
-report may describe a function as complete while any column is empty, and the measure is
-published in every status report.
+**The one honesty measure.** Every function is measured on five columns — table,
+contract, client, screen-and-journey, **on-the-phone**. A function is real at 5/5 or it
+is not real. No report may describe a function as complete while any column is empty,
+and the measure is published in every status report. The fifth column **"on the phone"**
+was approved by the owner (**Taha**, 2026-10-10) applying §4 below: a device-control
+claim cannot be real until its native lifecycle is implemented and **evidenced on a
+real phone build**. It is marked ✅ only by a "passed" row in
+`docs/safety_phase/PHONE_CHECKS.md` (release build, dated, test accounts); before that
+it is ◐ at best. The first four columns alone remain the historical record of what was
+built; the fifth is what the family actually experiences.
 
 Foundation and staging documents preserve real technical evidence. They do not reduce the product destination to the smallest endpoint that has already been implemented.
 

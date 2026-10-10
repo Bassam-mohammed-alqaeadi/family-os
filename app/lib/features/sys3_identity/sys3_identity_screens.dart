@@ -3,12 +3,16 @@ import 'package:go_router/go_router.dart';
 
 import 'package:family_os/core/design/components/components.dart';
 import 'package:family_os/core/design/tokens.dart';
+import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/identity/adult_invite_repository.dart';
 import 'package:family_os/core/identity/identity_models.dart';
 import 'package:family_os/core/identity/identity_runtime.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/runtime/app_scope.dart';
+import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
+import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
 abstract final class Sys3Keys {
   static const mockBanner = Key('sys3_mock_honesty');
@@ -779,9 +783,26 @@ class _RemoteEndChildSessionScreenState
 }
 
 class RevokeConfirmScreen extends StatefulWidget {
-  const RevokeConfirmScreen({super.key, this.kind, this.id});
+  const RevokeConfirmScreen({
+    super.key,
+    this.kind,
+    this.id,
+    this.childId,
+    this.deviceId,
+    this.reason,
+  });
   final String? kind;
   final String? id;
+
+  /// Server-addressable ids for a device cut: the confirm screen calls the
+  /// server revocation route with these. Optional so the Stage-1 route shape
+  /// (kind + id from query params) keeps working unchanged.
+  final String? childId;
+  final String? deviceId;
+
+  /// The server's closed revocation vocabulary
+  /// (`lost | stolen | replaced | no_longer_used | other`).
+  final String? reason;
 
   @override
   State<RevokeConfirmScreen> createState() => _RevokeConfirmScreenState();
@@ -790,7 +811,7 @@ class RevokeConfirmScreen extends StatefulWidget {
 class _RevokeConfirmScreenState extends State<RevokeConfirmScreen> {
   bool? _done;
 
-  void _revoke() {
+  Future<void> _revoke() async {
     final runtime = _runtime(context);
     final raw = widget.id?.trim();
     if (raw == null || raw.isEmpty) {
@@ -801,6 +822,41 @@ class _RevokeConfirmScreenState extends State<RevokeConfirmScreen> {
       if (!resolveAuthorizationContext(context).isPrimaryOwner) {
         setState(() => _done = false);
         return;
+      }
+      // A device cut answers to the server first: success is shown only after
+      // the server confirms the revocation, and a refusal is reported honestly
+      // instead of pretending the device is off.
+      final appRuntime = AppScope.maybeOf(context);
+      final identity = appRuntime?.identity.value;
+      if (identity != null && identity.isRemoteAuthoritative) {
+        final familyId = identity.familyId;
+        if (familyId == null ||
+            widget.childId == null ||
+            widget.deviceId == null ||
+            !isFoundationGateUuid(familyId.value) ||
+            !isFoundationGateUuid(widget.childId!) ||
+            !isFoundationGateUuid(widget.deviceId!)) {
+          setState(() => _done = false);
+          return;
+        }
+        final confirmed =
+            (await appRuntime!.deviceRevocation.revokeDevice(
+                  familyId: familyId,
+                  childId: ChildId(widget.childId!),
+                  deviceId: widget.deviceId!,
+                  reasonCode: switch (widget.reason) {
+                    'lost' || 'stolen' || 'replaced' || 'no_longer_used' =>
+                      widget.reason!,
+                    _ => 'other',
+                  },
+                  idempotencyKey: newFoundationGateIdempotencyKey(),
+                ))
+                .isConfirmed;
+        if (!mounted) return;
+        if (!confirmed) {
+          setState(() => _done = false);
+          return;
+        }
       }
       runtime.revokeEnrollment(EnrollmentId(raw));
       setState(() => _done = true);

@@ -2,6 +2,8 @@
 
 > **Status:** Build-ready roadmap; Backend, provider, remote retrieval, worker, notification and Native implementation remain unauthorized.
 > **Goal:** Build explainable intelligence as closed, source-qualified family loops on Render—not as a collection of local advisor screens, hard-coded reports, or generic chatbot promises.
+>
+> **Superseded (owner decision 2026-10-10):** the "unauthorized" line above governed the foundation wave. The owner's approved SAFETY phase authorizes the backend/native/notification work its slices require (see `docs/safety_phase/01_SAFETY_PHASE_PLAN.md`); education-related intelligence waits for the safety phase to complete (5/5) per the same decision. Historical text kept as written.
 
 ## 1. Shared foundation
 

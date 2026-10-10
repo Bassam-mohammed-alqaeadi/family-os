@@ -119,6 +119,23 @@ class FoundationGateConfiguration {
     );
   }
 
+  Uri familyChildDeviceRevocationUri(
+    String familyId,
+    String childId,
+    String deviceId,
+  ) {
+    if (!isFoundationGateUuid(familyId) ||
+        !isFoundationGateUuid(childId) ||
+        !isFoundationGateUuid(deviceId)) {
+      throw ArgumentError(
+        'Server-returned UUID family, child and device identifiers are required.',
+      );
+    }
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/children/$childId/devices/$deviceId/revocation',
+    );
+  }
+
   Uri deviceTelemetryUri(String deviceId) {
     if (!isFoundationGateUuid(deviceId)) {
       throw ArgumentError.value(

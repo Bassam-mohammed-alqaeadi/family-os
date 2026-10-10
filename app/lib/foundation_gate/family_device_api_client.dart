@@ -288,6 +288,93 @@ class FamilyDeviceApiClient {
     }
   }
 
+  /// Cuts one child device off — the write half of the device lifecycle.
+  ///
+  /// [reasonCode] is the server's closed vocabulary
+  /// (`lost` · `stolen` · `replaced` · `no_longer_used` · `other`) or null when
+  /// the guardian did not classify the loss. Status 200 is the server's
+  /// confirmation (or its durable idempotent replay) and carries the device's
+  /// derived condition; every other outcome is thrown so no caller can present
+  /// a local cut as a server truth.
+  Future<FoundationGateGuardianDevice> revokeDevice({
+    required String familyId,
+    required String childId,
+    required String deviceId,
+    required String? reasonCode,
+    required String idempotencyKey,
+    required String idToken,
+  }) async {
+    if (!isFoundationGateUuid(familyId) ||
+        !isFoundationGateUuid(childId) ||
+        !isFoundationGateUuid(deviceId) ||
+        !_validText(idempotencyKey, 128) ||
+        (reasonCode != null &&
+            !const <String>{
+              'lost',
+              'stolen',
+              'replaced',
+              'no_longer_used',
+              'other',
+            }.contains(reasonCode))) {
+      throw const FoundationGateApiException(
+        FoundationGateApiFailure.invalidInput,
+      );
+    }
+    final Uri uri;
+    try {
+      uri = _configuration.familyChildDeviceRevocationUri(
+        familyId,
+        childId,
+        deviceId,
+      );
+    } on ArgumentError {
+      throw const FoundationGateApiException(
+        FoundationGateApiFailure.invalidInput,
+      );
+    }
+    final response = await _post(
+      uri,
+      idToken,
+      reasonCode == null
+          ? const <String, Object>{}
+          : <String, Object>{'reasonCode': reasonCode},
+      idempotencyKey: idempotencyKey,
+    );
+    switch (response.statusCode) {
+      case 200:
+        return _parseDeviceResponse(response.body);
+      case 400:
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.invalidInput,
+        );
+      case 401:
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.unauthenticated,
+        );
+      case 403:
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.accessDenied,
+        );
+      case 404:
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.notFound,
+        );
+      case 409:
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.conflict,
+        );
+      case 429:
+      case 503:
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.serviceUnavailable,
+        );
+      default:
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.invalidResponse,
+        );
+    }
+  }
+
   Uri _familyDevicesUri(String familyId) {
     try {
       return _configuration.familyDevicesUri(familyId);

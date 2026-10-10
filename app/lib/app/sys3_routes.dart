@@ -76,12 +76,15 @@ List<RouteBase> get sys3IdentityRoutes => [
       childId: state.uri.queryParameters['childId'],
     ),
   ),
-  GoRoute(
-    path: '/sys3-revoke-confirm',
-    name: 'sys3-revoke-confirm',
-    builder: (context, state) => RevokeConfirmScreen(
-      kind: state.uri.queryParameters['kind'],
-      id: state.uri.queryParameters['id'],
-    ),
-  ),
+        GoRoute(
+          path: '/sys3-revoke-confirm',
+          name: 'sys3-revoke-confirm',
+          builder: (context, state) => RevokeConfirmScreen(
+            kind: state.uri.queryParameters['kind'],
+            id: state.uri.queryParameters['id'],
+            childId: state.uri.queryParameters['childId'],
+            deviceId: state.uri.queryParameters['deviceId'],
+            reason: state.uri.queryParameters['reason'],
+          ),
+        ),
 ];

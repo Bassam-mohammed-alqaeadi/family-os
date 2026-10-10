@@ -110,3 +110,5 @@ Today does not duplicate the four domain hubs. It prioritizes and routes to them
 ## 7. Gate result
 
 The direction classifies every registered administration system and reconciles all four unjourneyed administration services. The next loop will create the G2 UX lock: Today/Trust Hub information architecture, role journeys, setup/membership/device/commercial/privacy/notification state model and screen/state map. Backend, Native, provider, payment, notification transport and release work remain unauthorized.
+
+> **Superseded (owner decision 2026-10-10):** the "remain unauthorized" sentence above governed the foundation wave. The owner's approved SAFETY phase authorizes the backend/native/notification work its slices require (see `docs/safety_phase/01_SAFETY_PHASE_PLAN.md`); the two-phone test comes after it, then education. Historical text kept as written.

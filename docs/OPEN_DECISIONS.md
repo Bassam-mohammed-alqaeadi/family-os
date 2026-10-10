@@ -8,6 +8,8 @@
 
 **Family Entry & Children Control** was selected on 2026-10-04 as the first Global Super-App system. It now progresses through **Compare → Cover → Compete → Real Engine → Polish → Lock** before unrelated systems open.
 
+> **Naming/sequencing superseded (owner decision 2026-10-10):** the active phase is **SAFETY** — all safety systems first (ش١…ش١٧, [`safety_phase/01_SAFETY_PHASE_PLAN.md`](safety_phase/01_SAFETY_PHASE_PLAN.md)), then the comprehensive two-phone test (ش١٧), then education. "Family Entry & Children Control" is retained below as the historical name of the 2026-10-04 selection; new work follows the safety-phase plan and [`CURRENT_EXECUTION_PLAN.md`](CURRENT_EXECUTION_PLAN.md).
+
 The Cover specification is [`real_platform/02_FAMILY_ENTRY_AND_CHILDREN_CONTROL_COVER_SPECIFICATION.md`](real_platform/02_FAMILY_ENTRY_AND_CHILDREN_CONTROL_COVER_SPECIFICATION.md). It preserves the prototype's full control-centre promise while making every capability conditional on a real source and lifecycle.
 
 Device/Screen Time, Learning & Minutes, Family Connection, and Safety/Location/SOS remain sequenced after this system unless an explicit portfolio decision changes the order.
