@@ -62,6 +62,17 @@ Before any Firebase SDK enters a production target, the implementation card must
 7. Kill switch and fallback when the Firebase feature is unavailable, limited, or pricing changes.
 8. Owner/architecture approval.
 
+### Recorded owner decisions
+
+- **2026-10-10 — Google Maps billing (owner: Taha).** Google Maps is approved for the
+  safety phase **now** (ش٦ live map / places: Maps SDK + geocoding). When the free quota
+  runs out, the owner has approved **subscribing to the Google Maps billing plan** —
+  an explicit, written owner decision under §6 ("no automatic billing enablement …
+  without an explicit Owner decision recorded in the decision register"). Scope is
+  limited to Google Maps usage for the safety phase; **no** Firebase Blaze migration,
+  Cloud Functions/Run workload, or any other paid service is authorized by this record.
+  (Owner decision text: "Google Maps now; subscribe when the free quota runs out.")
+
 ## 6. Cost and reliability controls
 
 - No automatic Firebase billing enablement or Blaze migration without an explicit Owner decision recorded in the decision register.

@@ -15,12 +15,15 @@ import 'package:family_os/core/identity/child_device_management_repository.dart'
 import 'package:family_os/core/identity/identity_models.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/runtime/app_scope.dart';
 import 'package:family_os/features/n01_linking/add_child_screen.dart';
 import 'package:family_os/core/i18n/numeral_format.dart' show formatAppInt;
 import 'package:family_os/features/n02_day/child_profile_repository.dart';
 import 'package:family_os/features/n02_day/children_list_local_repository.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/safe_zones_repository.dart';
+import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
+import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
 /// Widget keys for SCR-FAT-013 acceptance.
 abstract final class ChildProfileKeys {
@@ -234,6 +237,83 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
       familyId: familyId,
       childId: ChildId(childId),
     );
+  }
+
+  String? _deviceIdForEnrollment(EnrollmentId enrollmentId) {
+    for (final device in _devicesForCurrentChild()) {
+      for (final enrollment in device.enrollments) {
+        if (enrollment.id.value == enrollmentId.value) {
+          return enrollment.deviceId.value;
+        }
+      }
+    }
+    return null;
+  }
+
+  /// The server's closed revocation vocabulary for this close reason.
+  static String _serverReasonCode(EnrollmentCloseReason reason) {
+    return switch (reason) {
+      EnrollmentCloseReason.lost => 'lost',
+      EnrollmentCloseReason.decommissioned => 'no_longer_used',
+      EnrollmentCloseReason.revoked => 'other',
+    };
+  }
+
+  /// Cuts the device on the server first; the local mirror closes only after
+  /// the server confirms.
+  ///
+  /// A remote-authoritative session never reports a cut the server did not
+  /// confirm — a device the server still trusts is a child still exposed. Only
+  /// a Stage-1 (no server) build may close locally, and that world is local by
+  /// definition.
+  Future<void> _closeEnrollment({
+    required EnrollmentId enrollmentId,
+    required String? deviceId,
+    required EnrollmentCloseReason reason,
+  }) async {
+    final runtime = AppScope.maybeOf(context);
+    final identity = runtime?.identity.value;
+    if (identity != null &&
+        identity.isRemoteAuthoritative &&
+        runtime != null) {
+      final familyId = identity.familyId;
+      final childId = _resolvedChildId;
+      if (familyId == null ||
+          childId == null ||
+          deviceId == null ||
+          !isFoundationGateUuid(familyId.value) ||
+          !isFoundationGateUuid(childId) ||
+          !isFoundationGateUuid(deviceId)) {
+        // These ids cannot address the server's revocation route: say so
+        // instead of pretending the device is cut.
+        if (mounted) {
+          AppToast.show(
+            context,
+            message: AppLocalizations.of(context).settingsPersistError,
+          );
+        }
+        return;
+      }
+      final confirmed =
+          (await runtime.deviceRevocation.revokeDevice(
+                familyId: familyId,
+                childId: ChildId(childId),
+                deviceId: deviceId,
+                reasonCode: _serverReasonCode(reason),
+                idempotencyKey: newFoundationGateIdempotencyKey(),
+              ))
+              .isConfirmed;
+      if (!mounted) return;
+      if (!confirmed) {
+        AppToast.show(
+          context,
+          message: AppLocalizations.of(context).settingsPersistError,
+        );
+        return;
+      }
+    }
+    _managementRepo.closeEnrollment(enrollmentId: enrollmentId, reason: reason);
+    if (mounted) setState(() {});
   }
 
   Future<void> _load() async {
@@ -620,18 +700,33 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
                     required EnrollmentId enrollmentId,
                     required EnrollmentCloseReason reason,
                   }) {
+                    final deviceId = _deviceIdForEnrollment(enrollmentId);
                     if (reason == EnrollmentCloseReason.revoked &&
                         GoRouter.maybeOf(context) != null) {
-                      context.push(
-                        '/sys3-revoke-confirm?kind=enrollment&id=${Uri.encodeComponent(enrollmentId.value)}',
-                      );
+                      // The confirm screen owns the cut: it calls the server
+                      // revocation route and reports success only after the
+                      // server confirms. It needs the server-addressable ids.
+                      final childId = _resolvedChildId;
+                      final query = StringBuffer(
+                        'kind=enrollment&id=${Uri.encodeComponent(enrollmentId.value)}',
+                      )
+                        ..write(
+                          '&reason=${Uri.encodeComponent(_serverReasonCode(reason))}',
+                        );
+                      if (childId != null) {
+                        query.write('&childId=${Uri.encodeComponent(childId)}');
+                      }
+                      if (deviceId != null) {
+                        query.write('&deviceId=${Uri.encodeComponent(deviceId)}');
+                      }
+                      context.push('/sys3-revoke-confirm?$query');
                       return;
                     }
-                    _managementRepo.closeEnrollment(
+                    _closeEnrollment(
                       enrollmentId: enrollmentId,
+                      deviceId: deviceId,
                       reason: reason,
                     );
-                    setState(() {});
                   },
               onShowPairing:
                   ({required EnrollmentId enrollmentId, String? deviceId}) {

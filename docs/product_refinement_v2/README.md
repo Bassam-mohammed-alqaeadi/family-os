@@ -5,6 +5,8 @@
 > **Product Ready:** Security & Digital Safety, Learning & Growth, Family Connection, Family Intelligence, Administration, Trust & Operations
 > **Current scope:** Render account/session/recovery, family/membership/role/child authorization, durable data/event/outbox/audit, tests and operations baseline.
 > **Current delivery boundary:** Native/device, Firebase/FCM, billing, providers, realtime and release implementation remain unauthorized.
+>
+> **Superseded (owner decision 2026-10-10):** the delivery boundary above governed the foundation wave. The owner approved the **SAFETY phase** — all safety systems first (ش١…ش١٧ in `docs/safety_phase/01_SAFETY_PHASE_PLAN.md`), then the two-phone test, then education — which authorizes the native/device, FCM and realtime work those safety slices require (child push registration and outbox delivery in ش٤, the native SOS bridge in ش٨, device durability in ش٥). The historical text is kept as written for its record.
 
 ## Why this workspace exists
 

@@ -2,6 +2,8 @@
 
 > **Status:** Build-ready roadmap; Backend, Native/device, notification, payment, provider and release implementation remain unauthorized.
 > **Goal:** Build one reliable family trust spine on Render, then connect every product pillar to it through real state—not by retaining local mocks behind production-looking UI.
+>
+> **Superseded (owner decision 2026-10-10):** the "unauthorized" line above governed the foundation wave. The owner's approved SAFETY phase authorizes the backend/native/notification work its slices require (see `docs/safety_phase/01_SAFETY_PHASE_PLAN.md`); the two-phone test comes after it, then education. Historical text kept as written.
 
 ## 1. Shared platform foundation
 

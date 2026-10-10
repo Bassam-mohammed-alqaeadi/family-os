@@ -2,35 +2,43 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:family_os/core/design/components/app_error_state.dart';
+import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/runtime/app_scope.dart';
+import 'package:family_os/core/runtime/family_creation_source.dart';
 import 'package:family_os/features/n01_linking/create_family_create.dart';
+import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
-/// How many children the father plans to follow (mock UX only).
+/// How many children the father plans to follow (presentation only — the
+/// server family-creation contract carries the name alone).
 enum ChildCountChoice { one, two, three, fourPlus }
 
-/// SCR-FAT-001 — إنشاء العائلة (bare parent onboarding, mock-first).
+/// SCR-FAT-001 — إنشاء العائلة (server-backed since safety-phase Slice 0).
 ///
 /// Creator becomes OWNER — product note only (one_owner_per_family).
-/// No Firebase / backend on this card. Create failures surface SHR-005
-/// ([AppErrorState]) with Retry — UI-001.
 ///
-/// The previously injected draft attempted a direct backend POST from the
-/// widget with an empty bearer token, a path-only URI and a timestamp
-/// idempotency value; that path could never produce a truthful server result.
-/// The production route intentionally stays unavailable until a dedicated
-/// family-creation admission wires this card through the isolated
-/// Foundation Gate typed client, server discovery and explicit error states.
+/// The normal application path creates the family on the server through the
+/// Foundation Gate typed client ([FamilyCreationSource]) with the authenticated
+/// session, keeps the server-issued family id selected so add-child can address
+/// it, and renders honest loading/error/offline states. Failures surface
+/// SHR-005 ([AppErrorState]) with Retry — UI-001.
+///
+/// [CreateFamilyScreen.createFamily] remains a test seam only; the mocks live in
+/// test code (`create_family_mocks.dart`) and tests inject them explicitly. With
+/// no seam and no configured server session the screen says so and saves
+/// nothing locally — it never reports success the server did not confirm.
 class CreateFamilyScreen extends StatefulWidget {
   const CreateFamilyScreen({super.key, this.onCreated, this.createFamily});
 
   /// Test seam — when null after successful create, navigates to `/scr-fat-002`.
   final VoidCallback? onCreated;
 
-  /// Injectable create (Rule 23/25). Defaults to [mockCreateFamilySuccess].
-  /// Throw [CreateFamilyException] to force SHR-005 variants in tests.
+  /// Injectable create (Rule 23/25) — tests only. Defaults to the real
+  /// [FamilyCreationSource] from [AppScope]. Throw [CreateFamilyException] to
+  /// force SHR-005 variants in tests.
   final CreateFamilyFn? createFamily;
 
   @override
@@ -41,10 +49,10 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
   final _nameController = TextEditingController();
   ChildCountChoice _childCount = ChildCountChoice.three;
   AppErrorKind? _errorKind;
+  String? _errorTitle;
   bool _submitting = false;
-
-  CreateFamilyFn get _create =>
-      widget.createFamily ?? mockCreateFamilySuccess;
+  String? _idempotencyKey;
+  String? _submittedName;
   @override
   void initState() {
     super.initState();
@@ -75,15 +83,23 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
     setState(() {
       _submitting = true;
       _errorKind = null;
+      _errorTitle = null;
     });
     try {
-      await _create(name);
+      final seam = widget.createFamily;
+      if (seam != null) {
+        // Test/preview seam — the mock lives in tests only.
+        await seam(name);
+      } else if (!await _createOnServer(name)) {
+        return;
+      }
       if (!mounted) return;
       if (widget.onCreated != null) {
         widget.onCreated!();
         return;
       }
-      // Mock-only: creator is OWNER (no persistence this card).
+      // The server-issued family id is selected by the runtime before this
+      // navigation, so SCR-FAT-003 (add child) addresses the real family.
       context.go('/scr-fat-002');
     } on CreateFamilyException catch (e) {
       if (!mounted) return;
@@ -94,6 +110,63 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  /// Real path: create the family on the server through [FamilyCreationSource].
+  ///
+  /// Returns true only after the server confirmed creation. With no configured
+  /// server session the screen says so and saves nothing locally — the same
+  /// honest shape SCR-FAT-003 uses for the same missing capability.
+  Future<bool> _createOnServer(String name) async {
+    final source = AppScope.maybeOf(context)?.familyCreation;
+    if (source == null) {
+      AppToast.show(
+        context,
+        message: AppLocalizations.of(context).settingsPersistError,
+      );
+      return false;
+    }
+    // The same idempotency key accompanies retries of the same name, so a
+    // dropped connection cannot create two families.
+    if (_idempotencyKey == null || _submittedName != name) {
+      _idempotencyKey = newFoundationGateIdempotencyKey();
+      _submittedName = name;
+    }
+    final result = await source.createFamily(
+      displayName: name,
+      idempotencyKey: _idempotencyKey!,
+    );
+    if (!result.isCreated) {
+      if (mounted) _showFailure(result.failure);
+      return false;
+    }
+    return true;
+  }
+
+  void _showFailure(FamilyCreateFailure? failure) {
+    final l10n = AppLocalizations.of(context);
+    setState(() {
+      switch (failure) {
+        case FamilyCreateFailure.invalidInput:
+        case FamilyCreateFailure.conflict:
+        case FamilyCreateFailure.accessDenied:
+          _errorKind = AppErrorKind.validation;
+          _errorTitle = null;
+        case FamilyCreateFailure.serviceUnavailable:
+          _errorKind = AppErrorKind.timeout;
+          _errorTitle = null;
+        case FamilyCreateFailure.networkUnavailable:
+          _errorKind = AppErrorKind.network;
+          _errorTitle = null;
+        case FamilyCreateFailure.sessionInvalid:
+          _errorKind = AppErrorKind.network;
+          _errorTitle = l10n.loginSessionExpired;
+        case FamilyCreateFailure.unavailable:
+        case null:
+          _errorKind = AppErrorKind.network;
+          _errorTitle = l10n.settingsPersistError;
+      }
+    });
   }
 
   String _childCountLabel(AppLocalizations l10n, ChildCountChoice choice) {
@@ -142,6 +215,7 @@ class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
             ? AppErrorState(
                 key: const Key('create_family_error'),
                 kind: _errorKind!,
+                title: _errorTitle,
                 onRetry: _submitting ? null : _submit,
               )
             : ListView(

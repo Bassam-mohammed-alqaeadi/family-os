@@ -60,6 +60,7 @@ import 'package:family_os/features/quran/quran_local_bridge.dart';
 import 'package:family_os/features/shared_onboarding/device_user_switch_identity_repository.dart';
 import 'package:family_os/features/shared_onboarding/device_user_switch_repository.dart';
 import 'package:family_os/foundation_gate/children_roster_api_client.dart';
+import 'package:family_os/foundation_gate/family_creation_api_client.dart';
 import 'package:family_os/foundation_gate/family_device_api_client.dart';
 import 'package:family_os/foundation_gate/family_location_api_client.dart';
 import 'package:family_os/foundation_gate/family_discovery_api_client.dart';
@@ -395,6 +396,10 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
         configuration: configuration,
         transport: PackageFoundationGateHttpTransport(),
       ),
+      familyApi: FamilyCreationApiClient(
+        configuration: configuration,
+        transport: PackageFoundationGateHttpTransport(),
+      ),
       membershipApi: FamilyMembershipApiClient(
         configuration: configuration,
         transport: PackageFoundationGateHttpTransport(),
@@ -497,9 +502,15 @@ class _FamilyOsAppState extends State<FamilyOsApp> {
       childProfiles: foundationRuntime == null
           ? null
           : RemoteFamilyChildProfileSource(foundationRuntime),
+      familyCreation: foundationRuntime == null
+          ? null
+          : RemoteFamilyCreationSource(foundationRuntime),
       devices: foundationRuntime == null
           ? UnavailableFamilyDeviceSource()
           : RemoteFamilyDeviceSource(foundationRuntime),
+      deviceRevocation: foundationRuntime == null
+          ? null
+          : RemoteDeviceRevocationSource(foundationRuntime),
       policies: UnavailableFamilyPolicySource(),
     );
     if (widget.roleController != null) {

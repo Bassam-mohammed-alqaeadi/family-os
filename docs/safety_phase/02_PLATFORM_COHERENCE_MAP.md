@@ -389,4 +389,22 @@ The **top five** are in bold. Each entry gives the evidence and a recommended si
 
 **Small factual corrections to the plan (§4 table):**
 - Geofence events **are** read by the app, but only into the map's day thread. The alerts surface is what is missing.
-- The device "cut" check in the post-ش١ phone check cannot be triggered from the app UI today (C2).
+- ~~The device "cut" check in the post-ش١ phone check cannot be triggered from the app UI today (C2).~~ **Superseded by Slice 0 (2026-10-10):** the device cut is server-first now.
+
+### Slice 0 resolutions (2026-10-10)
+
+- **C1 fixed:** FAT-001 creates the family on the server (`MainAppFoundationRuntime.createFamily`
+  → `POST /v1/families` via `FamilyCreationApiClient`, re-discovers families and selects the
+  created one so add-child addresses it). `mockCreateFamilySuccess` left `lib/` and lives in
+  `app/test/features/n01_linking/create_family_mocks.dart` only.
+- **C2 fixed:** FAT-013 close (revoked/lost/decommissioned) and `/sys3-revoke-confirm` call the
+  server revocation route (`revokeFamilyChildDevice`) first and report success only after the
+  server confirms; a refusal never closes the local mirror. The Dart client method
+  `FamilyDeviceApiClient.revokeDevice` was added (the contract already existed).
+- **C3 fixed:** pointer docs unified — `CURRENT_EXECUTION_PLAN.md` and `OPEN_DECISIONS.md`/
+  `EXECUTIVE_OPERATING_MODEL.md` name the active phase SAFETY; "Family Entry" is history.
+- **C16 partial:** the Google Maps billing approval is now recorded in doc 17 (owner 2026-10-10);
+  the ش٦ amendment of the exclusion wording itself remains ش٦ work.
+- The `product_refinement_v2` "unauthorized" boundary lines are marked superseded by the owner's
+  safety-phase approval (README, 49, 69, 82, 89), and AGENTS.md §1.1 records the owner (Taha)
+  approval of the fifth "on the phone" column.

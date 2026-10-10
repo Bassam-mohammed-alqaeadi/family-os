@@ -5,6 +5,8 @@ import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/runtime/family_child_profile_source.dart';
+import 'package:family_os/core/runtime/family_creation_source.dart';
+import 'package:family_os/core/runtime/family_device_revocation.dart';
 import 'package:family_os/core/runtime/family_device_source.dart';
 import 'package:family_os/core/runtime/family_roster_source.dart';
 import 'package:family_os/core/runtime/identity_source.dart';
@@ -13,6 +15,7 @@ import 'package:family_os/core/runtime/runtime_data_origin.dart';
 import 'device_lifecycle.dart';
 import 'family_calendar_api_client.dart';
 import 'family_chat_api_client.dart';
+import 'family_creation_api_client.dart';
 import 'family_device_api_client.dart';
 import 'family_location_api_client.dart';
 import 'family_membership_api_client.dart';
@@ -35,6 +38,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     required FoundationGateSessionController controller,
     required FoundationGateIdentity identity,
     required FamilyDeviceApiClient deviceApi,
+    FamilyCreationApiClient? familyApi,
     FamilyMembershipApiClient? membershipApi,
     FamilyLocationApiClient? locationApi,
     FamilySosApiClient? sosApi,
@@ -47,6 +51,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   }) : _controller = controller,
        _identity = identity,
        _deviceApi = deviceApi,
+       _familyApi = familyApi,
        _membershipApi = membershipApi,
        _locationApi = locationApi,
        _sosApi = sosApi,
@@ -65,6 +70,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   final FoundationGateSessionController _controller;
   final FoundationGateIdentity _identity;
   final FamilyDeviceApiClient _deviceApi;
+  final FamilyCreationApiClient? _familyApi;
   final FamilyMembershipApiClient? _membershipApi;
   final FamilyLocationApiClient? _locationApi;
   final FamilySosApiClient? _sosApi;
@@ -441,6 +447,136 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     };
   }
 
+  /// Creates the family this principal owns, then adopts it as the selected
+  /// family so the next onboarding step (add child) addresses it by the
+  /// server-issued identifier.
+  ///
+  /// The server's 201 is the only authority that the family exists. The
+  /// created family is re-discovered through the collection source of truth
+  /// before it is selected, so the selectable set stays server-owned and no
+  /// locally invented family id can reach a later path.
+  Future<FamilyCreateResult> createFamily({
+    required String displayName,
+    required String idempotencyKey,
+  }) async {
+    final api = _familyApi;
+    if (api == null) {
+      return const FamilyCreateResult.failed(FamilyCreateFailure.unavailable);
+    }
+    String idToken;
+    try {
+      idToken = await _identity.currentIdToken();
+    } on FoundationGateIdentityException {
+      return const FamilyCreateResult.failed(
+        FamilyCreateFailure.sessionInvalid,
+      );
+    }
+    try {
+      final created = await api.create(
+        idToken: idToken,
+        idempotencyKey: idempotencyKey,
+        displayName: displayName,
+      );
+      // Re-read the server's family list rather than splicing a local row: a
+      // family this principal may select is a family the server listed.
+      await _controller.restoreCurrentSession();
+      FoundationGateFamily? discovered;
+      for (final family in _controller.families) {
+        if (family.id == created.id) {
+          discovered = family;
+          break;
+        }
+      }
+      if (discovered != null) {
+        await _controller.selectFamily(discovered);
+      }
+      await _refreshIdentitySnapshot();
+      return FamilyCreateResult.created(
+        familyId: created.id,
+        displayName: created.displayName,
+      );
+    } on FoundationGateIdentityException {
+      return const FamilyCreateResult.failed(
+        FamilyCreateFailure.sessionInvalid,
+      );
+    } on FoundationGateApiException catch (error) {
+      return FamilyCreateResult.failed(_mapFamilyCreateFailure(error.failure));
+    }
+  }
+
+  FamilyCreateFailure _mapFamilyCreateFailure(FoundationGateApiFailure failure) {
+    return switch (failure) {
+      FoundationGateApiFailure.invalidInput => FamilyCreateFailure.invalidInput,
+      FoundationGateApiFailure.unauthenticated =>
+        FamilyCreateFailure.sessionInvalid,
+      FoundationGateApiFailure.accessDenied => FamilyCreateFailure.accessDenied,
+      FoundationGateApiFailure.conflict => FamilyCreateFailure.conflict,
+      FoundationGateApiFailure.notFound => FamilyCreateFailure.invalidInput,
+      FoundationGateApiFailure.serviceUnavailable =>
+        FamilyCreateFailure.serviceUnavailable,
+      FoundationGateApiFailure.networkUnavailable =>
+        FamilyCreateFailure.networkUnavailable,
+      FoundationGateApiFailure.invalidResponse =>
+        FamilyCreateFailure.serviceUnavailable,
+    };
+  }
+
+  /// Cuts one child device off on the server, as the active primary guardian.
+  ///
+  /// Success is the server's confirmation (or its durable idempotent replay)
+  /// and nothing else: a revoked device the server never recorded is a child
+  /// the server still trusts. Fail closed when this build has no selected
+  /// family for the call.
+  Future<DeviceRevokeResult> revokeDevice({
+    required FamilyId familyId,
+    required ChildId childId,
+    required String deviceId,
+    required String? reasonCode,
+    required String idempotencyKey,
+  }) async {
+    await refreshIdentity();
+    final selected = _controller.selectedFamily;
+    if (!_identityValue.isRemoteAuthoritative ||
+        !_identityValue.isPrimaryOwner ||
+        selected == null ||
+        selected.id != familyId.value) {
+      return const DeviceRevokeResult.failed(DeviceRevokeFailure.unavailable);
+    }
+    try {
+      await _deviceApi.revokeDevice(
+        familyId: familyId.value,
+        childId: childId.value,
+        deviceId: deviceId,
+        reasonCode: reasonCode,
+        idempotencyKey: idempotencyKey,
+        idToken: await _identity.currentIdToken(),
+      );
+      return const DeviceRevokeResult.confirmed();
+    } on FoundationGateIdentityException {
+      return const DeviceRevokeResult.failed(DeviceRevokeFailure.sessionInvalid);
+    } on FoundationGateApiException catch (error) {
+      return DeviceRevokeResult.failed(_mapDeviceRevokeFailure(error.failure));
+    }
+  }
+
+  DeviceRevokeFailure _mapDeviceRevokeFailure(FoundationGateApiFailure failure) {
+    return switch (failure) {
+      FoundationGateApiFailure.invalidInput =>
+        DeviceRevokeFailure.invalidInput,
+      FoundationGateApiFailure.unauthenticated =>
+        DeviceRevokeFailure.sessionInvalid,
+      FoundationGateApiFailure.accessDenied => DeviceRevokeFailure.accessDenied,
+      FoundationGateApiFailure.conflict => DeviceRevokeFailure.conflict,
+      FoundationGateApiFailure.notFound => DeviceRevokeFailure.invalidInput,
+      FoundationGateApiFailure.serviceUnavailable =>
+        DeviceRevokeFailure.serviceUnavailable,
+      FoundationGateApiFailure.networkUnavailable =>
+        DeviceRevokeFailure.networkUnavailable,
+      FoundationGateApiFailure.invalidResponse =>
+        DeviceRevokeFailure.serviceUnavailable,
+    };
+  }
+
   /// The family's memberships, as the server describes them to this principal.
   ///
   /// Fail closed on every condition the server would refuse anyway: no remote-authoritative
@@ -652,4 +788,47 @@ final class RemoteFamilyChildProfileSource implements FamilyChildProfileSource {
 
   @override
   void dispose() => _runtime.dispose();
+}
+
+final class RemoteFamilyCreationSource implements FamilyCreationSource {
+  RemoteFamilyCreationSource(this._runtime);
+
+  final MainAppFoundationRuntime _runtime;
+
+  @override
+  Future<FamilyCreateResult> createFamily({
+    required String displayName,
+    required String idempotencyKey,
+  }) => _runtime.createFamily(
+    displayName: displayName,
+    idempotencyKey: idempotencyKey,
+  );
+
+  @override
+  void dispose() {}
+}
+
+final class RemoteDeviceRevocationSource
+    implements FamilyDeviceRevocationSource {
+  RemoteDeviceRevocationSource(this._runtime);
+
+  final MainAppFoundationRuntime _runtime;
+
+  @override
+  Future<DeviceRevokeResult> revokeDevice({
+    required FamilyId familyId,
+    required ChildId childId,
+    required String deviceId,
+    required String? reasonCode,
+    required String idempotencyKey,
+  }) => _runtime.revokeDevice(
+    familyId: familyId,
+    childId: childId,
+    deviceId: deviceId,
+    reasonCode: reasonCode,
+    idempotencyKey: idempotencyKey,
+  );
+
+  @override
+  void dispose() {}
 }
