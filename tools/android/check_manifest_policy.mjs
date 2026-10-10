@@ -9,7 +9,27 @@
 import { readFileSync } from 'node:fs';
 
 const path = process.argv[2] ?? 'app/android/app/src/main/AndroidManifest.xml';
-const xml = readFileSync(path, 'utf8').replace(/<!--[\s\S]*?-->/g, '');
+// Comments are removed by a single left-to-right scan, not a regex replace: a regex pass
+// can leave a new `<!--` behind when comments are nested or malformed. An unterminated
+// comment swallows the rest of the file, which then fails the check (fail closed).
+function stripXmlComments(text) {
+  let out = '';
+  let index = 0;
+  while (index < text.length) {
+    const open = text.indexOf('<!--', index);
+    if (open === -1) {
+      out += text.slice(index);
+      break;
+    }
+    out += text.slice(index, open);
+    const close = text.indexOf('-->', open + 4);
+    if (close === -1) break;
+    index = close + 3;
+  }
+  return out;
+}
+
+const xml = stripXmlComments(readFileSync(path, 'utf8'));
 const application = xml.match(/<application\b[\s\S]*?<\/application>/);
 const problems = [];
 if (!application) {

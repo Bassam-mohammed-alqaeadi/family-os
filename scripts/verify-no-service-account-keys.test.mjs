@@ -48,8 +48,8 @@ for (const path of [
     try {
       const result = runGuard(dir);
       assert.equal(result.status, 1);
-      assert.match(result.stderr, new RegExp(path.replace(/[.]/g, '\\.')));
-      assert.doesNotMatch(result.stdout + result.stderr, new RegExp(marker));
+      assert.ok(result.stderr.includes(path), `guard output names ${path}`);
+      assert.ok(!(result.stdout + result.stderr).includes(marker), 'contents never printed');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
