@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- English counterparts of values/strings.xml. Keep the two files saying the same thing. -->
+<resources>
+    <string name="location_sharing_channel_name">Location sharing with family</string>
+    <string name="location_sharing_channel_description">Shown the whole time this phone is sharing its location with the family\'s guardians.</string>
+    <string name="location_sharing_notification_title">Location sharing with family is on</string>
+    <string name="location_sharing_notification_text">This phone sends its location and battery level to your family\'s guardians when it moves, at most once every 5 minutes. Open Family OS to see what is shared.</string>
+    <string name="location_sharing_stopped_channel_name">Location sharing stopped</string>
+    <string name="location_sharing_stopped_title">Location sharing stopped</string>
+    <string name="location_sharing_stopped_text">This phone was disconnected from the family, so it no longer sends its location. Sharing again needs a new pairing from a guardian\'s phone.</string>
+</resources>

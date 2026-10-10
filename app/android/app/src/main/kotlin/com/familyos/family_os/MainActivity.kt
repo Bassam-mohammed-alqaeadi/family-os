@@ -115,7 +115,12 @@ class MainActivity : FlutterActivity() {
         try {
             // Pairing is a chat capability too: retain the credential securely even if the
             // guardian or child declines location permission. Location collection remains off.
-            TelemetryConfigStore(this).write(TelemetryConfig(apiOrigin!!.trimEnd('/'), deviceId!!, credential))
+            // Written under the service's lock, so a late answer for the previous credential
+            // can neither undo this pairing nor stamp its outcome onto it.
+            TelemetryConfigStore.locked {
+                TelemetryConfigStore(this).write(TelemetryConfig(apiOrigin!!.trimEnd('/'), deviceId!!, credential))
+                LocationReportStatusStore(this).resetForNewPairing()
+            }
             if (!hasFineLocation() || !hasBackgroundLocation()) {
                 result.success(mapOf<String, Any>("started" to false, "reason" to "location_permission_required"))
                 return
@@ -135,6 +140,9 @@ class MainActivity : FlutterActivity() {
 
     private fun telemetryStatus(result: MethodChannel.Result) {
         val config = TelemetryConfigStore(this).read()
+        // The last report's outcome travels as a closed vocabulary (see LocationReportOutcome)
+        // plus times, so the child's screen can say "sharing stopped: this phone was
+        // disconnected" from what the server actually answered, not from a guess.
         result.success(mapOf(
             "available" to true,
             "running" to ChildTelemetryService.isRunning,
@@ -142,7 +150,7 @@ class MainActivity : FlutterActivity() {
             "deviceId" to (config?.deviceId ?: ""),
             "fineLocationGranted" to hasFineLocation(),
             "backgroundLocationGranted" to hasBackgroundLocation(),
-        ))
+        ) + LocationReportStatusStore(this).snapshot())
     }
 
     /**
