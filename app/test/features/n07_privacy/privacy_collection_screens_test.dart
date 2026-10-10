@@ -15,8 +15,13 @@ import 'package:family_os/core/policy/privacy_collection_sync_bus.dart';
 import 'package:family_os/features/n07_privacy/privacy_data_screen.dart';
 import 'package:family_os/features/n07_privacy/what_is_collected_screen.dart';
 
+import '../../support/native_telemetry_channel.dart';
+
 void main() {
   tearDown(AppToast.dismiss);
+  // CHD-010 reads the paired handset's consent ledger; in widget tests the
+  // native side answers 'unavailable' instead of spinning forever.
+  setUp(mockNativeChildTelemetryChannel);
 
   final child = ChildId('demo-child');
 

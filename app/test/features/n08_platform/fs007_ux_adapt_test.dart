@@ -18,6 +18,8 @@ import 'package:family_os/features/n07_privacy/what_is_collected_screen.dart';
 import 'package:family_os/features/n08_platform/smart_alerts_repository.dart';
 import 'package:family_os/features/n08_platform/smart_alerts_screen.dart';
 
+import '../../support/native_telemetry_channel.dart';
+
 void main() {
   late MemoryLocalDatabase db;
   late LocalOfflineAiSafetyStore store;
@@ -27,6 +29,9 @@ void main() {
   final now = DateTime.utc(2026, 9, 24, 16, 0);
 
   setUp(() async {
+    // CHD-010 reads the paired handset's consent ledger; in widget tests the
+    // native side answers 'unavailable' instead of spinning forever.
+    mockNativeChildTelemetryChannel();
     db = MemoryLocalDatabase();
     await db.open();
     store = LocalOfflineAiSafetyStore(db);

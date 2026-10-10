@@ -10,7 +10,14 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n01_linking/transparency_consent_screen.dart';
 import 'package:family_os/features/n02_day/child_day_board_screen.dart';
 
+import '../../support/native_telemetry_channel.dart';
+
 void main() {
+  // The disclosure screen records consent and starts the service through the
+  // native channel; in widget tests it answers 'unavailable' — the honest
+  // non-Android path — instead of never answering.
+  setUp(mockNativeChildTelemetryChannel);
+
   testWidgets('child role — honesty banner + shared/never/advisor + CTA', (
     tester,
   ) async {

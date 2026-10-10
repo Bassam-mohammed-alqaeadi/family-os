@@ -54,9 +54,15 @@ import 'package:family_os/features/shared_onboarding/login_screen.dart';
 import 'package:family_os/features/shared_onboarding/welcome_screen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import '../support/native_telemetry_channel.dart';
+
 void main() {
   late final List<String> csvIds;
   late final List<String> activeCsvIds;
+
+  // Route builds mount CHD-003/CHD-010, which talk to the paired handset; in
+  // widget tests the native side answers 'unavailable' instead of spinning.
+  setUp(mockNativeChildTelemetryChannel);
 
   setUpAll(() {
     csvIds = _readCsvScreenIds();
