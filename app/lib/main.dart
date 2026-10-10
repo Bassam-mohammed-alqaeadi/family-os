@@ -64,6 +64,7 @@ import 'package:family_os/foundation_gate/family_creation_api_client.dart';
 import 'package:family_os/foundation_gate/family_device_api_client.dart';
 import 'package:family_os/foundation_gate/family_location_api_client.dart';
 import 'package:family_os/foundation_gate/family_discovery_api_client.dart';
+import 'package:family_os/foundation_gate/family_invite_code_api_client.dart';
 import 'package:family_os/foundation_gate/family_membership_api_client.dart';
 import 'package:family_os/foundation_gate/family_calendar_api_client.dart';
 import 'package:family_os/foundation_gate/family_chat_api_client.dart';
@@ -404,6 +405,10 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
         configuration: configuration,
         transport: PackageFoundationGateHttpTransport(),
       ),
+      inviteCodeApi: FamilyInviteCodeApiClient(
+        configuration: configuration,
+        transport: PackageFoundationGateHttpTransport(),
+      ),
       locationApi: FamilyLocationApiClient(
         configuration: configuration,
         transport: PackageFoundationGateHttpTransport(),
@@ -511,6 +516,9 @@ class _FamilyOsAppState extends State<FamilyOsApp> {
       deviceRevocation: foundationRuntime == null
           ? null
           : RemoteDeviceRevocationSource(foundationRuntime),
+      inviteCodes: foundationRuntime == null
+          ? null
+          : RemoteFamilyInviteCodeSource(foundationRuntime),
       policies: UnavailableFamilyPolicySource(),
     );
     if (widget.roleController != null) {

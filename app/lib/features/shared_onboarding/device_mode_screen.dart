@@ -13,13 +13,21 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 /// Guardian → `/scr-fat-001` without setting child role.
 /// Child → [AppRole.child] then `/scr-chd-001`.
 class DeviceModeScreen extends StatelessWidget {
-  const DeviceModeScreen({super.key, this.onGuardian, this.onChild});
+  const DeviceModeScreen({
+    super.key,
+    this.onGuardian,
+    this.onChild,
+    this.onInviteCode,
+  });
 
   /// Test seam — when null, navigates to `/scr-fat-001` (role unchanged).
   final VoidCallback? onGuardian;
 
   /// Test seam — when null, sets child role then `/scr-chd-001`.
   final VoidCallback? onChild;
+
+  /// Test seam — when null, navigates to `/scr-fat-009` (join with an invite code).
+  final VoidCallback? onInviteCode;
 
   void _pickGuardian(BuildContext context) {
     if (onGuardian != null) {
@@ -28,6 +36,15 @@ class DeviceModeScreen extends StatelessWidget {
     }
     // Do not set child role — leave CurrentRole as-is (typically father).
     context.go('/scr-fat-001');
+  }
+
+  /// Joining an existing family with a code from its guardian (owner decision 2026-10-10).
+  void _pickInviteCode(BuildContext context) {
+    if (onInviteCode != null) {
+      onInviteCode!();
+      return;
+    }
+    context.go('/scr-fat-009');
   }
 
   void _pickChild(BuildContext context) {
@@ -105,6 +122,15 @@ class DeviceModeScreen extends StatelessWidget {
               body: l10n.deviceModeChildBody,
               semanticsLabel: l10n.deviceModeChildSemantics,
               onTap: () => _pickChild(context),
+            ),
+            const SizedBox(height: 12),
+            _ModeChoiceCard(
+              key: const Key('device_mode_invite_code'),
+              emoji: l10n.deviceModeInviteCodeEmoji,
+              title: l10n.deviceModeInviteCodeTitle,
+              body: l10n.deviceModeInviteCodeBody,
+              semanticsLabel: l10n.deviceModeInviteCodeSemantics,
+              onTap: () => _pickInviteCode(context),
             ),
             const SizedBox(height: 16),
             BannerNote(

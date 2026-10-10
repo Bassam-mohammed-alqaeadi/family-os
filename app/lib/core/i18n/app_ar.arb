@@ -14876,9 +14876,15 @@
   "@sosLadderPartnerSummaryBody": {
     "description": "FAT-028 Mother Partner read summary body",
     "placeholders": {
-      "parents": {"type": "int"},
-      "verified": {"type": "int"},
-      "total": {"type": "int"}
+      "parents": {
+        "type": "int"
+      },
+      "verified": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
     }
   },
   "sosReadinessTitle": "جاهزية القدرات",
@@ -15744,685 +15750,729 @@
   },
   "screenTimeServerNoSession": "لا توجد جلسة خادم في هذا البناء — لا نعرض أرقامًا لا نفرضها.",
   "@screenTimeServerNoSession": {
-      "description": "SCR: screen-time server panel — no session"
+    "description": "SCR: screen-time server panel — no session"
   },
   "screenTimeServerUnreachable": "لم يستجب الخادم — ما تراه آخر جواب صحيح، ولم يتغيّر شيء.",
   "@screenTimeServerUnreachable": {
-      "description": "SCR: screen-time server panel — no answer, last state kept"
+    "description": "SCR: screen-time server panel — no answer, last state kept"
   },
   "screenTimeServerUnreachableNoData": "لم يستجب الخادم، ولا يوجد جواب سابق نعرضه.",
   "@screenTimeServerUnreachableNoData": {
-      "description": "SCR: screen-time server panel — no answer and nothing stored"
+    "description": "SCR: screen-time server panel — no answer and nothing stored"
   },
   "screenTimeServerDenied": "هذا الحساب لا يملك قراءة وقت شاشة هذا الابن.",
   "@screenTimeServerDenied": {
-      "description": "SCR: screen-time server panel — access denied"
+    "description": "SCR: screen-time server panel — access denied"
   },
   "screenTimeServerRefused": "رفض الخادم الطلب — لم يتغيّر شيء.",
   "@screenTimeServerRefused": {
-      "description": "SCR: screen-time server panel — refusal with a reason"
+    "description": "SCR: screen-time server panel — refusal with a reason"
   },
   "screenTimeServerCap": "الحد اليومي (دقائق، ٠ = بلا حد)",
   "@screenTimeServerCap": {
-      "description": "SCR: screen-time server panel — cap field"
+    "description": "SCR: screen-time server panel — cap field"
   },
   "screenTimeServerBedtime": "وقت النوم",
   "@screenTimeServerBedtime": {
-      "description": "SCR: screen-time server panel — bedtime window"
+    "description": "SCR: screen-time server panel — bedtime window"
   },
   "screenTimeServerSchoolMode": "وضع المدرسة",
   "@screenTimeServerSchoolMode": {
-      "description": "SCR: screen-time server panel — school mode"
+    "description": "SCR: screen-time server panel — school mode"
   },
   "screenTimeServerSave": "احفظ على الخادم",
   "@screenTimeServerSave": {
-      "description": "SCR: screen-time server panel — save CTA"
+    "description": "SCR: screen-time server panel — save CTA"
   },
   "screenTimeServerSaved": "حُفظ على الخادم",
   "@screenTimeServerSaved": {
-      "description": "SCR: screen-time server panel — save confirmation"
+    "description": "SCR: screen-time server panel — save confirmation"
   },
   "screenTimeServerLockNow": "أوقف الشاشة الآن",
   "@screenTimeServerLockNow": {
-      "description": "SCR: screen-time server panel — instant lock CTA"
+    "description": "SCR: screen-time server panel — instant lock CTA"
   },
   "screenTimeServerUnlock": "أعد التشغيل",
   "@screenTimeServerUnlock": {
-      "description": "SCR: screen-time server panel — release the lock"
+    "description": "SCR: screen-time server panel — release the lock"
   },
   "screenTimeServerStateFree": "الشاشة متاحة",
   "@screenTimeServerStateFree": {
-      "description": "SCR: screen-time server panel — computed state"
+    "description": "SCR: screen-time server panel — computed state"
   },
   "screenTimeServerStateLimited": "الشاشة متاحة ضمن الحد",
   "@screenTimeServerStateLimited": {
-      "description": "SCR: screen-time server panel — computed state"
+    "description": "SCR: screen-time server panel — computed state"
   },
   "screenTimeServerStateBedtime": "حان وقت النوم",
   "@screenTimeServerStateBedtime": {
-      "description": "SCR: screen-time server panel — computed state"
+    "description": "SCR: screen-time server panel — computed state"
   },
   "screenTimeServerStateSchool": "وقت المدرسة الآن",
   "@screenTimeServerStateSchool": {
-      "description": "SCR: screen-time server panel — computed state"
+    "description": "SCR: screen-time server panel — computed state"
   },
   "screenTimeServerStateLimit": "انتهى وقت اليوم",
   "@screenTimeServerStateLimit": {
-      "description": "SCR: screen-time server panel — computed state"
+    "description": "SCR: screen-time server panel — computed state"
   },
   "screenTimeServerStateLock": "الشاشة موقوفة بقرار ولي أمر",
   "@screenTimeServerStateLock": {
-      "description": "SCR: screen-time server panel — computed state"
+    "description": "SCR: screen-time server panel — computed state"
   },
   "screenTimeServerTodayMinutes": "دقائق اليوم المحتسبة: {minutes}",
   "@screenTimeServerTodayMinutes": {
-      "description": "SCR: screen-time server panel — today usage",
-      "placeholders": {
-          "minutes": {
-              "type": "int"
-          }
+    "description": "SCR: screen-time server panel — today usage",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
       }
+    }
   },
   "screenTimeServerOpenRequest": "سؤال من الابن بانتظارك: {minutes} دقيقة",
   "@screenTimeServerOpenRequest": {
-      "description": "SCR: screen-time server panel — open request",
-      "placeholders": {
-          "minutes": {
-              "type": "int"
-          }
+    "description": "SCR: screen-time server panel — open request",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
       }
+    }
   },
   "screenTimeServerApprove": "موافقة",
   "@screenTimeServerApprove": {
-      "description": "SCR: screen-time server panel — answer a request"
+    "description": "SCR: screen-time server panel — answer a request"
   },
   "screenTimeServerDeny": "رفض",
   "@screenTimeServerDeny": {
-      "description": "SCR: screen-time server panel — answer a request"
+    "description": "SCR: screen-time server panel — answer a request"
   },
   "webFilterServerNoSession": "لا توجد جلسة خادم في هذا البناء — الفلترة معروضة من التخزين المحلي، ولا ندّعي فرضًا على الجهاز.",
   "@webFilterServerNoSession": {
-      "description": "SCR: web-filter server panel — no session"
+    "description": "SCR: web-filter server panel — no session"
   },
   "webFilterServerUnreachable": "لم يستجب الخادم — ما تراه آخر جواب صحيح، ولم يتغيّر شيء.",
   "@webFilterServerUnreachable": {
-      "description": "SCR: web-filter server panel — unreachable"
+    "description": "SCR: web-filter server panel — unreachable"
   },
   "webFilterServerDenied": "هذا الحساب لا يملك قراءة فلترة هذا الابن من الخادم.",
   "@webFilterServerDenied": {
-      "description": "SCR: web-filter server panel — access denied"
+    "description": "SCR: web-filter server panel — access denied"
   },
   "webFilterServerRefused": "رفض الخادم الطلب — لم يتغيّر شيء.",
   "@webFilterServerRefused": {
-      "description": "SCR: web-filter server panel — refused"
+    "description": "SCR: web-filter server panel — refused"
   },
   "webFilterProtectionHeading": "هل الحماية تعمل فعلًا؟",
   "@webFilterProtectionHeading": {
-      "description": "SCR: web-filter server panel — protection state"
+    "description": "SCR: web-filter server panel — protection state"
   },
   "webFilterProtectionProtected": "آخر بلاغ حديث من الجهاز يقول إن الحماية تعمل.",
   "@webFilterProtectionProtected": {
-      "description": "SCR: web-filter server panel — protection state"
+    "description": "SCR: web-filter server panel — protection state"
   },
   "webFilterProtectionUnverified": "لا ندّعي حماية: لا بلاغ حديث من هذا الجهاز.",
   "@webFilterProtectionUnverified": {
-      "description": "SCR: web-filter server panel — protection state"
+    "description": "SCR: web-filter server panel — protection state"
   },
   "webFilterProtectionNeverReported": "لم يبلّغ هذا الجهاز عن حمايته قط — لا شيء يُقال عنها.",
   "@webFilterProtectionNeverReported": {
-      "description": "SCR: web-filter server panel — protection state"
+    "description": "SCR: web-filter server panel — protection state"
   },
   "webFilterProtectionUnsupported": "هذه المنصة لا تدعم مستوى الحماية هذا — وهي حقيقة عن الجهاز لا عن الابن.",
   "@webFilterProtectionUnsupported": {
-      "description": "SCR: web-filter server panel — protection state"
+    "description": "SCR: web-filter server panel — protection state"
   },
   "webFilterProtectionAtRisk": "الحماية ليست كما ينبغي — راجع ما رصده الجهاز.",
   "@webFilterProtectionAtRisk": {
-      "description": "SCR: web-filter server panel — protection state"
+    "description": "SCR: web-filter server panel — protection state"
   },
   "webFilterProtectionSilentMinutes": "صمت الجهاز منذ {minutes} دقيقة.",
   "@webFilterProtectionSilentMinutes": {
-      "description": "SCR: web-filter server panel — how long the silence has lasted",
-      "placeholders": {
-          "minutes": {
-              "type": "int"
-          }
+    "description": "SCR: web-filter server panel — how long the silence has lasted",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
       }
+    }
   },
   "webFilterServerQuestionPending": "بانتظار قرار أحد الوالدين.",
   "@webFilterServerQuestionPending": {
-      "description": "SCR: web-filter server panel — a question's state"
+    "description": "SCR: web-filter server panel — a question's state"
   },
   "webFilterServerQuestionOpen": "الفتح المؤقت سارٍ الآن.",
   "@webFilterServerQuestionOpen": {
-      "description": "SCR: web-filter server panel — a question's state"
+    "description": "SCR: web-filter server panel — a question's state"
   },
   "webFilterServerQuestionDenied": "رُفض الطلب.",
   "@webFilterServerQuestionDenied": {
-      "description": "SCR: web-filter server panel — a question's state"
+    "description": "SCR: web-filter server panel — a question's state"
   },
   "tasksServerNoSession": "لا توجد جلسة خادم في هذا البناء — المهام معروضة من التخزين المحلي، ولا تُحتسب نقاط على الخادم.",
   "@tasksServerNoSession": {
-      "description": "SCR: tasks server panel"
+    "description": "SCR: tasks server panel"
   },
   "tasksServerUnreachable": "لم يستجب الخادم — ما تراه آخر جواب صحيح، ولم يتغيّر شيء.",
   "@tasksServerUnreachable": {
-      "description": "SCR: tasks server panel"
+    "description": "SCR: tasks server panel"
   },
   "tasksServerDenied": "هذا الحساب لا يملك قراءة مهام هذا الابن من الخادم.",
   "@tasksServerDenied": {
-      "description": "SCR: tasks server panel"
+    "description": "SCR: tasks server panel"
   },
   "tasksServerRefused": "رفض الخادم الطلب — لم يتغيّر شيء.",
   "@tasksServerRefused": {
-      "description": "SCR: tasks server panel"
+    "description": "SCR: tasks server panel"
   },
   "tasksServerBalanceHeading": "النقاط",
   "@tasksServerBalanceHeading": {
-      "description": "SCR: tasks server panel"
+    "description": "SCR: tasks server panel"
   },
   "tasksServerBalanceNote": "الرصيد مجموع السجل، لا رقم محفوظ: كل سطر أدناه هو من أكّده ومتى.",
   "@tasksServerBalanceNote": {
-      "description": "SCR: tasks server panel"
+    "description": "SCR: tasks server panel"
   },
   "tasksServerBalanceEmpty": "لا نقاط بعد — تُكتسب النقاط بتأكيد أحد الوالدين لإنجاز مهمة.",
   "@tasksServerBalanceEmpty": {
-      "description": "SCR: tasks server panel"
+    "description": "SCR: tasks server panel"
   },
   "tasksServerBalanceEntry": "‏+{points} نقطة — أكّدها أحد الوالدين.",
   "@tasksServerBalanceEntry": {
-      "description": "SCR: tasks server panel",
-      "placeholders": {
-          "points": {
-              "type": "int"
-          }
+    "description": "SCR: tasks server panel",
+    "placeholders": {
+      "points": {
+        "type": "int"
       }
+    }
   },
   "tasksServerTasksHeading": "المهام",
   "@tasksServerTasksHeading": {
-      "description": "SCR: tasks server panel"
+    "description": "SCR: tasks server panel"
   },
   "tasksServerTaskPoints": "‏{points} نقطة عند الإنجاز",
   "@tasksServerTaskPoints": {
-      "description": "SCR: tasks server panel",
-      "placeholders": {
-          "points": {
-              "type": "int"
-          }
+    "description": "SCR: tasks server panel",
+    "placeholders": {
+      "points": {
+        "type": "int"
       }
+    }
   },
   "tasksServerTaskWaiting": "لم يقل الابن شيئًا بعد.",
   "@tasksServerTaskWaiting": {
-      "description": "SCR: tasks server panel"
+    "description": "SCR: tasks server panel"
   },
   "tasksServerTaskClaimed": "قال الابن إنه أنجزها — بانتظار كلمتك.",
   "@tasksServerTaskClaimed": {
-      "description": "SCR: tasks server panel"
+    "description": "SCR: tasks server panel"
   },
   "tasksServerTaskConfirmed": "أكّدت الإنجاز — أُضيفت {points} نقطة إلى رصيده.",
   "@tasksServerTaskConfirmed": {
-      "description": "SCR: tasks server panel",
-      "placeholders": {
-          "points": {
-              "type": "int"
-          }
+    "description": "SCR: tasks server panel",
+    "placeholders": {
+      "points": {
+        "type": "int"
       }
+    }
   },
   "tasksServerTaskDeclined": "لم تُؤكَّد بعد — ويمكنه المحاولة مرة أخرى.",
   "@tasksServerTaskDeclined": {
-      "description": "SCR: tasks server panel"
+    "description": "SCR: tasks server panel"
   },
   "tasksServerTaskArchived": "هذه المهمة مسحوبة، ولم تُحتسب لها نقاط.",
   "@tasksServerTaskArchived": {
-      "description": "SCR: tasks server panel"
+    "description": "SCR: tasks server panel"
   },
   "tasksServerRecordClaim": "سجّل أنه أنجز",
   "@tasksServerRecordClaim": {
-      "description": "SCR: tasks server panel"
+    "description": "SCR: tasks server panel"
   },
   "tasksServerConfirm": "تأكيد الإنجاز",
   "@tasksServerConfirm": {
-      "description": "SCR: tasks server panel"
+    "description": "SCR: tasks server panel"
   },
   "tasksServerDecline": "لم يُنجز بعد",
   "@tasksServerDecline": {
-      "description": "SCR: tasks server panel"
+    "description": "SCR: tasks server panel"
   },
   "tasksServerNoteHint": "ملاحظة تُقرأ للابن عند الرفض",
   "@tasksServerNoteHint": {
-      "description": "SCR: tasks server panel"
+    "description": "SCR: tasks server panel"
   },
   "tasksServerCreateHeading": "مهمة جديدة",
   "@tasksServerCreateHeading": {
-      "description": "SCR: tasks server panel"
+    "description": "SCR: tasks server panel"
   },
   "tasksServerCreateTitle": "ما المطلوب؟",
   "@tasksServerCreateTitle": {
-      "description": "SCR: tasks server panel"
+    "description": "SCR: tasks server panel"
   },
   "tasksServerCreatePoints": "النقاط",
   "@tasksServerCreatePoints": {
-      "description": "SCR: tasks server panel"
+    "description": "SCR: tasks server panel"
   },
   "tasksServerCreateNote": "ما معنى «أُنجزت»؟",
   "@tasksServerCreateNote": {
-      "description": "SCR: tasks server panel"
+    "description": "SCR: tasks server panel"
   },
   "tasksServerAudienceScopeLabel": "مرئية لهذه المحادثة (اختياري)",
   "@tasksServerAudienceScopeLabel": {
-      "description": "Choose a direct or group conversation as task visibility scope"
+    "description": "Choose a direct or group conversation as task visibility scope"
   },
   "tasksServerAudienceScopeChildOnly": "للطفل المكلّف فقط",
   "@tasksServerAudienceScopeChildOnly": {
-      "description": "Task remains visible only to the designated child and guardians"
+    "description": "Task remains visible only to the designated child and guardians"
   },
   "tasksServerCreateButton": "أضف المهمة",
   "@tasksServerCreateButton": {
-      "description": "SCR: tasks server panel"
+    "description": "SCR: tasks server panel"
   },
   "calendarServerNoSession": "لا توجد جلسة خادم في هذا البناء — لا يُبنى تقويم محلياً.",
   "@calendarServerNoSession": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerDenied": "لا يُسمح لهذا الحساب بقراءة التقويم.",
   "@calendarServerDenied": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerUnreachable": "لم يجب الخادم — هذا آخر قراءة صحيحة.",
   "@calendarServerUnreachable": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerRefused": "رُفض الطلب — هذا آخر قراءة صحيحة.",
   "@calendarServerRefused": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerEventsHeading": "ما اتفقت عليه العائلة",
   "@calendarServerEventsHeading": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerEventsEmpty": "لا مناسبات في هذه المدة.",
   "@calendarServerEventsEmpty": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerEventCancelled": "أُلغيت",
   "@calendarServerEventCancelled": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerEventCancelReason": "سبب الإلغاء",
   "@calendarServerEventCancelReason": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerEventAudienceHeading": "من دُعي",
   "@calendarServerEventAudienceHeading": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerAudienceWaiting": "لم يجب بعد",
   "@calendarServerAudienceWaiting": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerAudienceAccepted": "سيأتي",
   "@calendarServerAudienceAccepted": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerAudienceDeclined": "لن يأتي",
   "@calendarServerAudienceDeclined": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerAudienceAttended": "حضر",
   "@calendarServerAudienceAttended": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerAudienceAbsent": "لم يحضر",
   "@calendarServerAudienceAbsent": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerReminderNote": "التذكير تفضيل مسجَّل، ولا نقول إن إشعاراً وصل.",
   "@calendarServerReminderNote": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerCancelHeading": "إلغاء مناسبة",
   "@calendarServerCancelHeading": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerCancelReasonHint": "لماذا تغيّرت الخطة؟",
   "@calendarServerCancelReasonHint": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerCancelButton": "ألغِ المناسبة",
   "@calendarServerCancelButton": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerAnswerHeading": "سجّل جواب الابن",
   "@calendarServerAnswerHeading": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerAnswerNoteHint": "ما قاله الابن",
   "@calendarServerAnswerNoteHint": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerAttendanceHeading": "ما حدث فعلاً",
   "@calendarServerAttendanceHeading": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerAttendanceNoteHint": "ملاحظة (اختياري)",
   "@calendarServerAttendanceNoteHint": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerAttendanceRecordButton": "سجّل الحضور",
   "@calendarServerAttendanceRecordButton": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerCreateHeading": "مناسبة جديدة",
   "@calendarServerCreateHeading": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerCreateTitle": "ما المناسبة؟",
   "@calendarServerCreateTitle": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerCreateLocation": "أين؟",
   "@calendarServerCreateLocation": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerCreateNoteHint": "تفاصيل للعائلة",
   "@calendarServerCreateNoteHint": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerCreateReminder": "تذكير قبل (دقائق)",
   "@calendarServerCreateReminder": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerCreateChildren": "من تُدعى؟",
   "@calendarServerCreateChildren": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerAudienceScopeLabel": "اربط المناسبة بمحادثة (اختياري)",
   "@calendarServerAudienceScopeLabel": {
-      "description": "Optional direct or group audience scope for calendar routing"
+    "description": "Optional direct or group audience scope for calendar routing"
   },
   "calendarServerAudienceScopeChildrenOnly": "الأطفال المحددون فقط",
   "@calendarServerAudienceScopeChildrenOnly": {
-      "description": "No chat-thread routing scope selected"
+    "description": "No chat-thread routing scope selected"
   },
   "calendarServerCreatePickStart": "اختر البداية",
   "@calendarServerCreatePickStart": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerCreatePickEnd": "اختر النهاية",
   "@calendarServerCreatePickEnd": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerCreateButton": "أضف المناسبة",
   "@calendarServerCreateButton": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerPanelNote": "كل ما هنا قاله الخادم: لا مناسبة ولا جواب ولا حضور يُخترع محلياً.",
   "@calendarServerPanelNote": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "calendarServerNoAddressableChildren": "لا يمكن لهذه النسخة مخاطبة أبناء الخادم بعد — يُقرأ التقويم ولا يُكتب فيه.",
   "@calendarServerNoAddressableChildren": {
-      "description": "SCR: calendar server panel"
+    "description": "SCR: calendar server panel"
   },
   "familyChatConnecting": "جارٍ الاتصال بدردشة الأسرة…",
   "@familyChatConnecting": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatReconnecting": "انقطع الاتصال. نتحقق من دردشة الأسرة مجددًا…",
   "@familyChatReconnecting": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatOffline": "لا يوجد اتصال الآن. تبقى الرسائل التي سبق تحميلها ظاهرة؛ أعد المحاولة عند عودة الاتصال.",
   "@familyChatOffline": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatUnavailable": "الدردشة غير مُعدّة في هذا الإصدار؛ لا تُستخدم محادثة محلية بديلة.",
   "@familyChatUnavailable": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatPermissionDenied": "لا يملك هذا الحساب أو الجهاز صلاحية فتح هذه المحادثة. الخادم هو من يحدد الوصول.",
   "@familyChatPermissionDenied": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatRequestRejected": "رفض الخادم إجراء الدردشة. تحقّق من عضوية الأسرة ثم حاول مجددًا.",
   "@familyChatRequestRejected": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatRetry": "إعادة المحاولة",
   "@familyChatRetry": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatServerPollingNotice": "تُحدّث الرسائل من الخادم كل 15 ثانية أثناء فتح هذه الشاشة. لا تتوفر إشعارات فورية أو مزامنة لحظية.",
   "@familyChatServerPollingNotice": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "childFamilyChatServerPollingNotice": "تُحدّث الرسائل من الخادم أثناء فتح هذه الشاشة. لا تتوفر تحديثات فورية.",
   "@childFamilyChatServerPollingNotice": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatCreateHeading": "ابدأ دردشة أسرية",
   "@familyChatCreateHeading": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatCreateTypeLabel": "نوع المحادثة",
   "@familyChatCreateTypeLabel": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatDirectThread": "محادثة مباشرة",
   "@familyChatDirectThread": {
-      "description": "Direct family chat type"
+    "description": "Direct family chat type"
   },
   "familyChatGroupThread": "محادثة جماعية",
   "@familyChatGroupThread": {
-      "description": "User-created family chat group type"
+    "description": "User-created family chat group type"
   },
   "familyChatSelectParticipants": "اختر المشاركين",
   "@familyChatSelectParticipants": {
-      "description": "Participant picker for direct and group chats"
+    "description": "Participant picker for direct and group chats"
   },
   "familyChatNoParticipantsAvailable": "لا يوجد مشاركون نشطون آخرون في الأسرة.",
   "@familyChatNoParticipantsAvailable": {
-      "description": "Empty state for the server-owned family chat roster"
+    "description": "Empty state for the server-owned family chat roster"
   },
   "familyChatFamilyThread": "دردشة أولياء الأسرة",
   "@familyChatFamilyThread": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatChildThread": "محادثة مع طفل واحد",
   "@familyChatChildThread": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatCreateChildLabel": "الطفل",
   "@familyChatCreateChildLabel": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatNoChildrenAvailable": "لا يوجد طفل مؤكّد من الخادم لإنشاء محادثة معه.",
   "@familyChatNoChildrenAvailable": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatChildFallback": "طفل",
   "@familyChatChildFallback": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatCreateTitleLabel": "العنوان (اختياري)",
   "@familyChatCreateTitleLabel": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatCreateTitleHint": "اتركه فارغًا لاستخدام عنوان الخادم",
   "@familyChatCreateTitleHint": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatCreateButton": "إنشاء الدردشة",
   "@familyChatCreateButton": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatCancel": "إلغاء",
   "@familyChatCancel": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatCreateFailed": "تعذّر إنشاء الدردشة. لم يتأكد قبول الطلب.",
   "@familyChatCreateFailed": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatPolicyTitle": "التعاون والأمان",
-  "@familyChatPolicyTitle": { "description": "Family collaboration policy settings" },
+  "@familyChatPolicyTitle": {
+    "description": "Family collaboration policy settings"
+  },
   "familyChatPolicyPrimaryGuardianNotice": "يستطيع الوصي الأساسي وحده حفظ هذه القواعد التي يطبقها الخادم، وتبقى له دائمًا صلاحيات حماية الأسرة.",
-  "@familyChatPolicyPrimaryGuardianNotice": { "description": "Server authorization and child safety notice" },
+  "@familyChatPolicyPrimaryGuardianNotice": {
+    "description": "Server authorization and child safety notice"
+  },
   "familyChatPolicyCoGuardianChat": "السماح للوصي المشارك بإنشاء المحادثات",
-  "@familyChatPolicyCoGuardianChat": { "description": "Delegated guardian role permission" },
+  "@familyChatPolicyCoGuardianChat": {
+    "description": "Delegated guardian role permission"
+  },
   "familyChatPolicyCoGuardianManageChat": "السماح للوصي المشارك بإضافة أشخاص إلى المجموعات",
-  "@familyChatPolicyCoGuardianManageChat": { "description": "Delegated guardian role permission" },
+  "@familyChatPolicyCoGuardianManageChat": {
+    "description": "Delegated guardian role permission"
+  },
   "familyChatPolicyCoGuardianTasks": "السماح للوصي المشارك بإدارة المهام",
-  "@familyChatPolicyCoGuardianTasks": { "description": "Delegated guardian role permission" },
+  "@familyChatPolicyCoGuardianTasks": {
+    "description": "Delegated guardian role permission"
+  },
   "familyChatPolicyCoGuardianCalendar": "السماح للوصي المشارك بإدارة التقويم",
-  "@familyChatPolicyCoGuardianCalendar": { "description": "Delegated guardian role permission" },
+  "@familyChatPolicyCoGuardianCalendar": {
+    "description": "Delegated guardian role permission"
+  },
   "familyChatPolicyChildDirect": "السماح للأطفال ببدء محادثات مباشرة",
-  "@familyChatPolicyChildDirect": { "description": "Child chat safety setting" },
+  "@familyChatPolicyChildDirect": {
+    "description": "Child chat safety setting"
+  },
   "familyChatPolicyChildGroups": "السماح للأطفال بإنشاء مجموعات",
-  "@familyChatPolicyChildGroups": { "description": "Child chat safety setting" },
+  "@familyChatPolicyChildGroups": {
+    "description": "Child chat safety setting"
+  },
   "familyChatPolicyChildManageGroups": "السماح للأطفال بإضافة مشاركين إلى مجموعاتهم",
-  "@familyChatPolicyChildManageGroups": { "description": "Child chat safety setting" },
+  "@familyChatPolicyChildManageGroups": {
+    "description": "Child chat safety setting"
+  },
   "familyChatPolicyGuardianInclusion": "متى يجب أن ينضم الأوصياء إلى محادثات الأطفال؟",
-  "@familyChatPolicyGuardianInclusion": { "description": "Server-enforced safety inclusion rule" },
+  "@familyChatPolicyGuardianInclusion": {
+    "description": "Server-enforced safety inclusion rule"
+  },
   "familyChatPolicyInclusionNone": "لا يُضافون تلقائيًا افتراضيًا",
-  "@familyChatPolicyInclusionNone": { "description": "No automatic guardian inclusion" },
+  "@familyChatPolicyInclusionNone": {
+    "description": "No automatic guardian inclusion"
+  },
   "familyChatPolicyInclusionAllChildChats": "كل محادثات الأطفال",
-  "@familyChatPolicyInclusionAllChildChats": { "description": "Include active guardians when any child is in a new conversation" },
+  "@familyChatPolicyInclusionAllChildChats": {
+    "description": "Include active guardians when any child is in a new conversation"
+  },
   "familyChatPolicyInclusionChildToChild": "محادثات الأطفال بعضهم مع بعض فقط",
-  "@familyChatPolicyInclusionChildToChild": { "description": "Include active guardians when multiple children are in a conversation" },
+  "@familyChatPolicyInclusionChildToChild": {
+    "description": "Include active guardians when multiple children are in a conversation"
+  },
   "familyChatPolicyMaxGroupSize": "الحد الأقصى لأعضاء المجموعة",
-  "@familyChatPolicyMaxGroupSize": { "description": "Maximum active participants in a group" },
+  "@familyChatPolicyMaxGroupSize": {
+    "description": "Maximum active participants in a group"
+  },
   "familyChatPolicySave": "احفظ القواعد",
-  "@familyChatPolicySave": { "description": "Save collaboration policy" },
+  "@familyChatPolicySave": {
+    "description": "Save collaboration policy"
+  },
   "familyChatPolicySaved": "حفظ الخادم قواعد التعاون.",
-  "@familyChatPolicySaved": { "description": "Policy update confirmation" },
+  "@familyChatPolicySaved": {
+    "description": "Policy update confirmation"
+  },
   "familyChatPolicyLoadFailed": "تعذرت قراءة سياسة الخادم.",
-  "@familyChatPolicyLoadFailed": { "description": "Policy read failure" },
+  "@familyChatPolicyLoadFailed": {
+    "description": "Policy read failure"
+  },
   "familyChatPolicySaveFailed": "لم يقبل الخادم تغيير السياسة.",
-  "@familyChatPolicySaveFailed": { "description": "Policy update failure" },
+  "@familyChatPolicySaveFailed": {
+    "description": "Policy update failure"
+  },
   "familyChatLoadOlder": "تحميل رسائل أقدم",
   "@familyChatLoadOlder": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatRefresh": "تحديث الرسائل",
   "@familyChatRefresh": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatMessageDeleted": "حُذفت الرسالة",
   "@familyChatMessageDeleted": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatEdited": "عُدّلت",
   "@familyChatEdited": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatMediaUnavailable": "المرفقات والرسائل الصوتية غير متاحة: واجهة الدردشة الحالية تدعم النص فقط.",
   "@familyChatMediaUnavailable": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatMediaUnavailableSemantics": "المرفقات والرسائل الصوتية غير متاحة",
   "@familyChatMediaUnavailableSemantics": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatEdit": "تعديل",
   "@familyChatEdit": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatMediaPhoto": "صورة",
   "@familyChatMediaPhoto": {
-      "description": "W9 realtime, media and receipt copy"
+    "description": "W9 realtime, media and receipt copy"
   },
   "familyChatMediaVoiceNote": "رسالة صوتية",
   "@familyChatMediaVoiceNote": {
-      "description": "W9 realtime, media and receipt copy"
+    "description": "W9 realtime, media and receipt copy"
   },
   "familyChatMediaItemUnavailable": "هذا المرفق لم يعد متاحًا",
   "@familyChatMediaItemUnavailable": {
-      "description": "W9 realtime, media and receipt copy"
+    "description": "W9 realtime, media and receipt copy"
   },
   "familyChatMediaLoading": "جارٍ تحميل المرفق…",
   "@familyChatMediaLoading": {
-      "description": "W9 realtime, media and receipt copy"
+    "description": "W9 realtime, media and receipt copy"
   },
   "familyChatMediaNoPlayback": "تشغيل الرسائل الصوتية غير متاح في هذه النسخة",
   "@familyChatMediaNoPlayback": {
-      "description": "W9 realtime, media and receipt copy"
+    "description": "W9 realtime, media and receipt copy"
   },
   "familyChatMediaNotOnThisDevice": "المرفقات تظهر على جهاز الوالد في هذه النسخة",
   "@familyChatMediaNotOnThisDevice": {
-      "description": "W9 realtime, media and receipt copy"
+    "description": "W9 realtime, media and receipt copy"
   },
   "familyChatReceiptDelivered": "وصلت إلى {count} من {total}",
   "@familyChatReceiptDelivered": {
-      "placeholders": {
-        "count": {"type": "int"},
-        "total": {"type": "int"}
+    "placeholders": {
+      "count": {
+        "type": "int"
       },
-      "description": "W9 realtime, media and receipt copy"
+      "total": {
+        "type": "int"
+      }
+    },
+    "description": "W9 realtime, media and receipt copy"
   },
   "familyChatReceiptRead": "قرأها {count} من {total}",
   "@familyChatReceiptRead": {
-      "placeholders": {
-        "count": {"type": "int"},
-        "total": {"type": "int"}
+    "placeholders": {
+      "count": {
+        "type": "int"
       },
-      "description": "W9 realtime, media and receipt copy"
+      "total": {
+        "type": "int"
+      }
+    },
+    "description": "W9 realtime, media and receipt copy"
   },
   "familyChatRealtimeLive": "التحديث الفوري مفعّل",
   "@familyChatRealtimeLive": {
-      "description": "W9 realtime, media and receipt copy"
+    "description": "W9 realtime, media and receipt copy"
   },
   "familyChatRealtimeRetrying": "التحديث الفوري غير متصل؛ يتم التحقق كل ١٥ ثانية",
   "@familyChatRealtimeRetrying": {
-      "description": "W9 realtime, media and receipt copy"
+    "description": "W9 realtime, media and receipt copy"
   },
   "familyChatRealtimePolling": "يتم التحقق من الرسائل كل ١٥ ثانية",
   "@familyChatRealtimePolling": {
-      "description": "W9 realtime, media and receipt copy"
+    "description": "W9 realtime, media and receipt copy"
   },
   "familyChatDelete": "حذف",
   "@familyChatDelete": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatEditHeading": "تعديل الرسالة",
   "@familyChatEditHeading": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatEditSave": "حفظ التعديل",
   "@familyChatEditSave": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatDeleteHeading": "حذف هذه الرسالة؟",
   "@familyChatDeleteHeading": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatDeleteBody": "سيُزال نص الرسالة، لكن موضعها في المحادثة سيبقى ظاهرًا.",
   "@familyChatDeleteBody": {
-      "description": "W9 family chat client state and controls"
+    "description": "W9 family chat client state and controls"
   },
   "familyChatStorageNotice": "تُحفظ الرسائل لدى خادم الأسرة؛ هذه الدردشة غير مشفّرة من طرف إلى طرف.",
   "@familyChatStorageNotice": {
-      "description": "W9 family chat storage transparency"
+    "description": "W9 family chat storage transparency"
   },
   "familyChatServerStoredTag": "نص محفوظ في خادم الأسرة",
   "@familyChatServerStoredTag": {
-      "description": "W9 family chat storage transparency"
+    "description": "W9 family chat storage transparency"
   },
   "familyChatLoadMore": "تحميل المزيد من الرسائل",
   "@familyChatLoadMore": {
-      "description": "W9 chat pagination and message controls"
+    "description": "W9 chat pagination and message controls"
   },
   "familyChatMessageActionsSemantics": "إجراءات الرسالة",
   "@familyChatMessageActionsSemantics": {
-      "description": "W9 chat pagination and message controls"
+    "description": "W9 chat pagination and message controls"
   },
   "familyChatListPollingNotice": "تأتي قائمة المحادثات ومعايناتها من خادم الأسرة. تُحدّث القائمة كل 30 ثانية؛ لا تتوفر إشعارات فورية.",
   "@familyChatListPollingNotice": {
-      "description": "W9 chat source and child availability honesty"
+    "description": "W9 chat source and child availability honesty"
   },
   "familyChatNeverLocks": "تبقى دردشة الأسرة متاحة بعد انتهاء وقت اللعب.",
   "@familyChatNeverLocks": {
-      "description": "W9 chat source and child availability honesty"
+    "description": "W9 chat source and child availability honesty"
   },
   "conversationAttachPhotoGallery": "صورة من المعرض",
   "conversationAttachPhotoCamera": "التقاط صورة",
@@ -16437,5 +16487,139 @@
   "voiceRecordingSend": "إرسال",
   "voiceRecordingCancel": "إلغاء",
   "voicePlaySemantics": "تشغيل الرسالة الصوتية",
-  "voicePauseSemantics": "إيقاف الرسالة الصوتية مؤقتًا"
+  "voicePauseSemantics": "إيقاف الرسالة الصوتية مؤقتًا",
+  "inviteCodeIntro": "أنشئ رمز دعوة وأرسله للأم بنفسك. تُدخله من حسابها في التطبيق فتنضم إلى العائلة وليّةَ أمرٍ مشاركة.",
+  "@inviteCodeIntro": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeIssue": "أنشئ رمز الدعوة",
+  "@inviteCodeIssue": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeIssuing": "جارٍ إنشاء الرمز…",
+  "@inviteCodeIssuing": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeValueLabel": "رمز الدعوة",
+  "@inviteCodeValueLabel": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeExpiry": "صالح حتى {time} · يُستعمل مرة واحدة",
+  "@inviteCodeExpiry": {
+    "description": "Invites by code (owner decision 2026-10-10)",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteCodeCopy": "انسخ الرمز",
+  "@inviteCodeCopy": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeCopied": "نُسخ الرمز — أرسله للأم في رسالة",
+  "@inviteCodeCopied": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeRevoke": "ألغِ هذا الرمز",
+  "@inviteCodeRevoke": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeRevoked": "أُلغي الرمز على الخادم ولم يعد صالحاً",
+  "@inviteCodeRevoked": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeDone": "تم — إلى أعضاء العائلة",
+  "@inviteCodeDone": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeHonesty": "الرمز يصدره الخادم ويظهر هنا مرة واحدة فقط، وينتهي بعد ٢٤ ساعة. لا نرسل بريداً أو رسالة نيابةً عنك — شاركه بنفسك. مستويات صلاحية الأم (مطّلعة/مشاركة/كاملة) لم تُحفظ على الخادم بعد: كل وليّة أمر مشاركة لها الصلاحيات نفسها.",
+  "@inviteCodeHonesty": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeErrorLimit": "لدى العائلة ٥ رموز مفتوحة. ألغِ رمزاً أو انتظر انتهاءه.",
+  "@inviteCodeErrorLimit": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeErrorDenied": "إنشاء رموز الدعوة لوليّ الأمر الأساسي فقط.",
+  "@inviteCodeErrorDenied": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeErrorUnavailable": "هذه النسخة غير متصلة بالخادم — لم يُنشأ أي رمز.",
+  "@inviteCodeErrorUnavailable": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeErrorNetwork": "تعذّر الوصول إلى الخادم. تحقق من الاتصال وحاول مجدداً.",
+  "@inviteCodeErrorNetwork": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "inviteCodeErrorService": "الخدمة غير متاحة الآن. حاول بعد قليل.",
+  "@inviteCodeErrorService": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeIntro": "أدخل الرمز الذي وصلك من وليّ الأمر. تنضم إلى العائلة بالحساب الذي سجّلت به الدخول، ولا تُعدّ عضواً إلا بعد أن يؤكد الخادم ذلك.",
+  "@joinCodeIntro": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeFieldLabel": "رمز الدعوة",
+  "@joinCodeFieldLabel": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeFieldHint": "ABCDE-FGHJK",
+  "@joinCodeFieldHint": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeSubmit": "انضم إلى العائلة",
+  "@joinCodeSubmit": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeJoining": "جارٍ الانضمام…",
+  "@joinCodeJoining": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeJoined": "انضممت إلى «{family}»",
+  "@joinCodeJoined": {
+    "description": "Invites by code (owner decision 2026-10-10)",
+    "placeholders": {
+      "family": {
+        "type": "String"
+      }
+    }
+  },
+  "joinCodeErrorFormat": "الرمز ١٠ أحرف وأرقام، مثل ABCDE-FGHJK.",
+  "@joinCodeErrorFormat": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeErrorNotRedeemable": "الرمز غير صحيح أو انتهت صلاحيته أو استُعمل من قبل. اطلب رمزاً جديداً.",
+  "@joinCodeErrorNotRedeemable": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeErrorAlreadyMember": "حسابك عضو في هذه العائلة بالفعل.",
+  "@joinCodeErrorAlreadyMember": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeErrorRateLimited": "محاولات كثيرة. انتظر بضع دقائق ثم حاول مجدداً.",
+  "@joinCodeErrorRateLimited": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "joinCodeErrorSignIn": "سجّل الدخول بحسابك أولاً، ثم أدخل الرمز.",
+  "@joinCodeErrorSignIn": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "deviceModeInviteCodeEmoji": "🔑",
+  "@deviceModeInviteCodeEmoji": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "deviceModeInviteCodeTitle": "عندي رمز دعوة",
+  "@deviceModeInviteCodeTitle": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "deviceModeInviteCodeBody": "أنضم إلى عائلة موجودة برمز من وليّ الأمر",
+  "@deviceModeInviteCodeBody": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "deviceModeInviteCodeSemantics": "عندي رمز دعوة — الانضمام إلى عائلة موجودة",
+  "@deviceModeInviteCodeSemantics": {
+    "description": "Invites by code (owner decision 2026-10-10)"
+  }
 }

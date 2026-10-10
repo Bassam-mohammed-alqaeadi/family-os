@@ -8,6 +8,7 @@ import 'package:family_os/core/runtime/family_child_profile_source.dart';
 import 'package:family_os/core/runtime/family_creation_source.dart';
 import 'package:family_os/core/runtime/family_device_revocation.dart';
 import 'package:family_os/core/runtime/family_device_source.dart';
+import 'package:family_os/core/runtime/family_invite_code_source.dart';
 import 'package:family_os/core/runtime/family_roster_source.dart';
 import 'package:family_os/core/runtime/identity_source.dart';
 import 'package:family_os/core/runtime/runtime_data_origin.dart';
@@ -17,6 +18,7 @@ import 'family_calendar_api_client.dart';
 import 'family_chat_api_client.dart';
 import 'family_creation_api_client.dart';
 import 'family_device_api_client.dart';
+import 'family_invite_code_api_client.dart';
 import 'family_location_api_client.dart';
 import 'family_membership_api_client.dart';
 import 'family_sos_api_client.dart';
@@ -40,6 +42,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     required FamilyDeviceApiClient deviceApi,
     FamilyCreationApiClient? familyApi,
     FamilyMembershipApiClient? membershipApi,
+    FamilyInviteCodeApiClient? inviteCodeApi,
     FamilyLocationApiClient? locationApi,
     FamilySosApiClient? sosApi,
     FamilyScreenTimeApiClient? screenTimeApi,
@@ -53,6 +56,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
        _deviceApi = deviceApi,
        _familyApi = familyApi,
        _membershipApi = membershipApi,
+       _inviteCodeApi = inviteCodeApi,
        _locationApi = locationApi,
        _sosApi = sosApi,
        _screenTimeApi = screenTimeApi,
@@ -72,6 +76,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   final FamilyDeviceApiClient _deviceApi;
   final FamilyCreationApiClient? _familyApi;
   final FamilyMembershipApiClient? _membershipApi;
+  final FamilyInviteCodeApiClient? _inviteCodeApi;
   final FamilyLocationApiClient? _locationApi;
   final FamilySosApiClient? _sosApi;
   final FamilyScreenTimeApiClient? _screenTimeApi;
@@ -577,6 +582,171 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     };
   }
 
+  /// Issues an invite code for [role] in the selected family, as its primary guardian.
+  ///
+  /// The code exists only because the server issued it; it is returned once and the phone
+  /// keeps it in memory only. Fail closed with no session, no selected family, or a caller
+  /// who is not the primary guardian - the server would refuse all three anyway.
+  Future<InviteCodeIssueResult> issueInviteCode({
+    required FamilyId familyId,
+    required String role,
+    required String idempotencyKey,
+  }) async {
+    final api = _inviteCodeApi;
+    if (api == null) {
+      return const InviteCodeIssueResult.failed(InviteCodeFailure.unavailable);
+    }
+    await refreshIdentity();
+    final selected = _controller.selectedFamily;
+    if (!_identityValue.isRemoteAuthoritative ||
+        selected == null ||
+        selected.id != familyId.value) {
+      return const InviteCodeIssueResult.failed(InviteCodeFailure.unavailable);
+    }
+    if (!_identityValue.isPrimaryOwner) {
+      return const InviteCodeIssueResult.failed(InviteCodeFailure.accessDenied);
+    }
+    try {
+      final issued = await api.issue(
+        familyId: familyId.value,
+        role: role,
+        idempotencyKey: idempotencyKey,
+        idToken: await _identity.currentIdToken(),
+      );
+      return InviteCodeIssueResult.issued(
+        IssuedInviteCode(
+          inviteId: issued.id,
+          code: issued.code,
+          role: issued.role,
+          expiresAt: issued.expiresAt,
+        ),
+      );
+    } on FoundationGateIdentityException {
+      return const InviteCodeIssueResult.failed(
+        InviteCodeFailure.sessionInvalid,
+      );
+    } on FoundationGateApiException catch (error) {
+      return InviteCodeIssueResult.failed(
+        _mapInviteCodeFailure(
+          error.failure,
+          conflict: InviteCodeFailure.limitReached,
+        ),
+      );
+    }
+  }
+
+  /// Revokes one open code this family issued. Success is the server's confirmation.
+  Future<InviteCodeRevokeResult> revokeInviteCode({
+    required FamilyId familyId,
+    required String inviteId,
+    required String idempotencyKey,
+  }) async {
+    final api = _inviteCodeApi;
+    final selected = _controller.selectedFamily;
+    if (api == null ||
+        !_identityValue.isRemoteAuthoritative ||
+        selected == null ||
+        selected.id != familyId.value) {
+      return const InviteCodeRevokeResult.failed(InviteCodeFailure.unavailable);
+    }
+    try {
+      await api.revoke(
+        familyId: familyId.value,
+        inviteId: inviteId,
+        idempotencyKey: idempotencyKey,
+        idToken: await _identity.currentIdToken(),
+      );
+      return const InviteCodeRevokeResult.revoked();
+    } on FoundationGateIdentityException {
+      return const InviteCodeRevokeResult.failed(
+        InviteCodeFailure.sessionInvalid,
+      );
+    } on FoundationGateApiException catch (error) {
+      return InviteCodeRevokeResult.failed(
+        _mapInviteCodeFailure(
+          error.failure,
+          conflict: InviteCodeFailure.notRedeemable,
+        ),
+      );
+    }
+  }
+
+  /// Redeems a code as the signed-in account, then adopts the joined family the same way
+  /// [createFamily] adopts a created one: re-discovered from the server, then selected.
+  ///
+  /// No family needs to be selected first - the invitee is not in one yet. A signed-in
+  /// Firebase session is the only precondition, and the server binds the membership to it.
+  Future<InviteCodeRedeemResult> redeemInviteCode({
+    required String code,
+    required String idempotencyKey,
+  }) async {
+    final api = _inviteCodeApi;
+    if (api == null) {
+      return const InviteCodeRedeemResult.failed(InviteCodeFailure.unavailable);
+    }
+    String idToken;
+    try {
+      idToken = await _identity.currentIdToken();
+    } on FoundationGateIdentityException {
+      return const InviteCodeRedeemResult.failed(
+        InviteCodeFailure.sessionInvalid,
+      );
+    }
+    try {
+      final joined = await api.redeem(
+        code: code,
+        idempotencyKey: idempotencyKey,
+        idToken: idToken,
+      );
+      await _controller.restoreCurrentSession();
+      for (final family in _controller.families) {
+        if (family.id == joined.familyId) {
+          await _controller.selectFamily(family);
+          break;
+        }
+      }
+      await _refreshIdentitySnapshot();
+      return InviteCodeRedeemResult.joined(
+        familyId: joined.familyId,
+        familyDisplayName: joined.familyDisplayName,
+        role: joined.role,
+      );
+    } on FamilyInviteCodeRateLimited {
+      return const InviteCodeRedeemResult.failed(InviteCodeFailure.rateLimited);
+    } on FoundationGateIdentityException {
+      return const InviteCodeRedeemResult.failed(
+        InviteCodeFailure.sessionInvalid,
+      );
+    } on FoundationGateApiException catch (error) {
+      return InviteCodeRedeemResult.failed(
+        _mapInviteCodeFailure(
+          error.failure,
+          conflict: InviteCodeFailure.alreadyMember,
+        ),
+      );
+    }
+  }
+
+  InviteCodeFailure _mapInviteCodeFailure(
+    FoundationGateApiFailure failure, {
+    required InviteCodeFailure conflict,
+  }) {
+    return switch (failure) {
+      FoundationGateApiFailure.invalidInput => InviteCodeFailure.invalidInput,
+      FoundationGateApiFailure.unauthenticated =>
+        InviteCodeFailure.sessionInvalid,
+      FoundationGateApiFailure.accessDenied => InviteCodeFailure.accessDenied,
+      FoundationGateApiFailure.conflict => conflict,
+      FoundationGateApiFailure.notFound => InviteCodeFailure.notRedeemable,
+      FoundationGateApiFailure.serviceUnavailable =>
+        InviteCodeFailure.serviceUnavailable,
+      FoundationGateApiFailure.networkUnavailable =>
+        InviteCodeFailure.networkUnavailable,
+      FoundationGateApiFailure.invalidResponse =>
+        InviteCodeFailure.serviceUnavailable,
+    };
+  }
+
   /// The family's memberships, as the server describes them to this principal.
   ///
   /// Fail closed on every condition the server would refuse anyway: no remote-authoritative
@@ -828,6 +998,43 @@ final class RemoteDeviceRevocationSource
     reasonCode: reasonCode,
     idempotencyKey: idempotencyKey,
   );
+
+  @override
+  void dispose() {}
+}
+
+final class RemoteFamilyInviteCodeSource implements FamilyInviteCodeSource {
+  RemoteFamilyInviteCodeSource(this._runtime);
+
+  final MainAppFoundationRuntime _runtime;
+
+  @override
+  Future<InviteCodeIssueResult> issue({
+    required FamilyId familyId,
+    required String role,
+    required String idempotencyKey,
+  }) => _runtime.issueInviteCode(
+    familyId: familyId,
+    role: role,
+    idempotencyKey: idempotencyKey,
+  );
+
+  @override
+  Future<InviteCodeRevokeResult> revoke({
+    required FamilyId familyId,
+    required String inviteId,
+    required String idempotencyKey,
+  }) => _runtime.revokeInviteCode(
+    familyId: familyId,
+    inviteId: inviteId,
+    idempotencyKey: idempotencyKey,
+  );
+
+  @override
+  Future<InviteCodeRedeemResult> redeem({
+    required String code,
+    required String idempotencyKey,
+  }) => _runtime.redeemInviteCode(code: code, idempotencyKey: idempotencyKey);
 
   @override
   void dispose() {}

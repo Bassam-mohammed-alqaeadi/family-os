@@ -150,6 +150,45 @@ export function createMembershipInput(value) {
   };
 }
 
+/**
+ * Issuing an invite code: the role is the only thing a guardian chooses. Who the invitee is
+ * is not part of the request - the server binds the account when the code is redeemed.
+ */
+export function createInviteCodeInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['role']));
+  const role = requiredText(body.role, 'role', { maxLength: 32 });
+  if (!INVITABLE_ROLES.has(role)) {
+    throw new HttpError(400, 'invalid_request', 'role must be co_guardian or child.');
+  }
+  return { role };
+}
+
+/** The alphabet an invite code is drawn from: no 0/O, no 1/I/L, so it survives being read aloud. */
+export const INVITE_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+export const INVITE_CODE_LENGTH = 10;
+const INVITE_CODE_PATTERN = /^[A-HJKMNP-Z2-9]{10}$/;
+
+/**
+ * Normalises a typed or pasted code: case, spaces and the display hyphen are forgiven,
+ * anything else is refused before it reaches the database.
+ */
+export function normalizeInviteCode(value) {
+  if (typeof value !== 'string' || value.length > 64) return null;
+  const normalized = value.replace(/[\s-]/g, '').toUpperCase();
+  return INVITE_CODE_PATTERN.test(normalized) ? normalized : null;
+}
+
+export function redeemInviteCodeInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['code']));
+  const code = normalizeInviteCode(body.code);
+  if (code === null) {
+    throw new HttpError(400, 'invalid_request', 'code is invalid.');
+  }
+  return { code };
+}
+
 export function createGuardianTransferInput(value) {
   const body = bodyObject(value);
   return { candidateMembershipId: requireUuid(body.candidateMembershipId, 'candidateMembershipId') };

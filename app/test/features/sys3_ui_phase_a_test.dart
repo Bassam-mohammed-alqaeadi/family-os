@@ -5,14 +5,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/identity_ids.dart';
-import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
-import 'package:family_os/core/identity/adult_invite_repository.dart';
 import 'package:family_os/core/identity/child_device_management_repository.dart';
 import 'package:family_os/core/identity/identity_models.dart';
 import 'package:family_os/core/identity/identity_runtime.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/runtime/family_invite_code_source.dart';
 import 'package:family_os/features/n01_linking/accept_mother_invite_screen.dart';
 import 'package:family_os/features/n01_linking/camera_permission_seam.dart';
 import 'package:family_os/features/n01_linking/child_qr_scan_screen.dart';
@@ -24,6 +23,8 @@ import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
 import 'package:family_os/features/n12_devices/device_health_list_screen.dart';
 import 'package:family_os/features/n12_devices/device_health_seam.dart';
+
+import 'n01_linking/invite_code_fakes.dart';
 
 void main() {
   IdentityRuntime buildRuntime({
@@ -276,51 +277,46 @@ void main() {
   testWidgets('Phase A4: invite lifecycle states are visible and honest', (
     tester,
   ) async {
-    final runtime = buildRuntime();
-    final invites = InMemoryAdultInviteRepository(runtime: runtime);
-    final pending = invites.createInvite(
-      familyId: FamilyId('fam_a'),
-      target: 'mom@example.com',
-      level: MotherLevel.partner,
-      actorMemberId: MemberId('mem_owner'),
+    // Invites by code (owner decision 2026-10-10): the lifecycle is the server's. An issued
+    // code is shown; a revoked one disappears only after the server confirms; and the
+    // invitee who types a revoked code is told it cannot be used, with nobody joining.
+    final source = FakeInviteCodeSource(
+      redeemResults: const [
+        InviteCodeRedeemResult.failed(InviteCodeFailure.notRedeemable),
+      ],
     );
-
-    await tester.pumpWidget(
-      _app(
-        runtime: runtime,
-        child: InviteMotherScreen(repository: invites),
-      ),
+    await pumpWithInviteCodes(
+      tester,
+      source: source,
+      identity: guardianSnapshot(),
+      home: const InviteMotherScreen(),
     );
+    await tester.tap(find.byKey(const Key('invite_code_issue')));
     await tester.pumpAndSettle();
+    expect(find.byKey(const Key('invite_code_value')), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('invite_code_revoke')));
+    await tester.tap(find.byKey(const Key('invite_code_revoke')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('invite_code_revoked')), findsOneWidget);
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+
+    await pumpWithInviteCodes(
+      tester,
+      source: source,
+      home: AcceptMotherInviteScreen(onJoined: (_) {}, onDecline: () {}),
+    );
     await tester.enterText(
-      find.byKey(const Key('invite_mother_email')),
-      'mom@example.com',
+      find.byKey(const Key('join_code_field')),
+      FakeInviteCodeSource.sampleCode().code,
     );
-    await tester.pumpAndSettle();
-    final stateName = pending.stateAt(DateTime.now().toUtc()).name;
-    expect(find.byKey(Key('invite_mother_state_$stateName')), findsOneWidget);
-
-    invites.revokeInvite(
-      inviteId: pending.id,
-      actorMemberId: MemberId('mem_owner'),
-    );
-    await tester.pumpWidget(
-      _app(
-        runtime: runtime,
-        child: AcceptMotherInviteScreen(
-          inviteTokenId: pending.tokenId.value,
-          repository: invites,
-          onAccept: () {},
-          onDecline: () {},
-        ),
-      ),
-    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('join_code_submit')));
     await tester.pumpAndSettle();
     expect(
-      find.byKey(const Key('accept_mother_invite_state_revoked')),
+      find.byKey(const Key('join_code_error_notRedeemable')),
       findsOneWidget,
     );
-    expect(find.textContaining('دعوة ملغاة'), findsOneWidget);
   });
 
   testWidgets(

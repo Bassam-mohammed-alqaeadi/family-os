@@ -173,6 +173,36 @@ class FoundationGateConfiguration {
     return stagingApiOrigin.replace(path: '/v1/families/$familyId/memberships');
   }
 
+  /// Invite codes this family issues (owner decision 2026-10-10: invites by code).
+  Uri familyInviteCodesUri(String familyId) {
+    if (!isFoundationGateUuid(familyId)) {
+      throw ArgumentError.value(
+        familyId,
+        'familyId',
+        'A server-returned UUID family identifier is required.',
+      );
+    }
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/invite-codes',
+    );
+  }
+
+  /// Revokes one open invite code the server issued.
+  Uri familyInviteCodeRevokeUri(String familyId, String inviteId) {
+    if (!isFoundationGateUuid(familyId) || !isFoundationGateUuid(inviteId)) {
+      throw ArgumentError(
+        'Server-returned UUID family and invite identifiers are required.',
+      );
+    }
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/invite-codes/$inviteId/revoke',
+    );
+  }
+
+  /// The invitee's side: no family in the path, the code names it.
+  Uri get inviteCodeRedeemUri =>
+      stagingApiOrigin.replace(path: '/v1/invite-codes/redeem');
+
   /// The zones this family defined. Read with GET, draw with POST.
   Uri familySafeZonesUri(String familyId) {
     if (!isFoundationGateUuid(familyId)) {
