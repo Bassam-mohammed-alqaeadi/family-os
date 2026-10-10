@@ -16,7 +16,7 @@
 //   3. The provenance constraint actually rejects a reason the vocabulary forbids.
 //   4. The derived device view is computed from real rows the way the tests assume.
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { readdir, readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import test from 'node:test';
@@ -4594,6 +4594,231 @@ test('explicit direct and group rooms enforce their rosters across real PostgreS
         assert.equal(byType.get('family.chat_read_marked') ?? 0, 1);
       });
     } finally {
+      await store.close();
+    }
+  });
+});
+
+test('a paired handset reports a fix the family reads back, and only a definitive revocation silences it', { skip }, async () => {
+  // The native location path end to end, with synthetic coordinates and test identities
+  // only: pairing through the real routes, the exact body the Android service builds
+  // (`fixtures/native-location-fix.wire.json`, asserted byte-for-byte by the Kotlin test),
+  // the family's live read, and the one answer the handset treats as "forget this pairing".
+  const wire = JSON.parse(
+    await readFile(
+      join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'native-location-fix.wire.json'),
+      'utf8',
+    ),
+  );
+  await withFreshDatabase(async (client) => {
+    await migrate(client);
+    const store = new PostgresFoundationStore({
+      connectionString: withDatabase(DATABASE_URL, client.database),
+    });
+    const app = createApp({
+      store,
+      authVerifier: new TestAuthVerifier(),
+      readiness: () => ({ ready: true, missing: [] }),
+    });
+    const printed = [];
+    const originals = {};
+    for (const level of ['log', 'info', 'warn', 'error', 'debug']) {
+      originals[level] = console[level];
+      console[level] = (...args) => {
+        printed.push(args.map((arg) => (typeof arg === 'string' ? arg : JSON.stringify(arg))).join(' '));
+      };
+    }
+    try {
+      await withServer(app, async (baseUrl) => {
+        // 1. Family, child, and a pairing claimed by the handset - all through the API.
+        const created = await jsonRequest(baseUrl, '/v1/families', {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'nl-family' }),
+          body: { displayName: 'عائلة الاختبار' },
+        });
+        assert.equal(created.status, 201);
+        const familyId = created.body.family.id;
+        const child = await jsonRequest(baseUrl, `/v1/families/${familyId}/children`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'nl-child' }),
+          body: { displayName: 'طفل تجريبي', ageYears: 10, avatarEmoji: '🦁', themeColor: 'sky' },
+        });
+        assert.equal(child.status, 201);
+        const childId = child.body.child.id;
+        const pairing = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/children/${childId}/device-pairings`,
+          {
+            method: 'POST',
+            headers: authorized('test-primary', { 'idempotency-key': 'nl-pair' }),
+            body: { deviceLabel: 'Test Android' },
+          },
+        );
+        assert.equal(pairing.status, 201);
+        const claim = await jsonRequest(baseUrl, '/v1/device-pairings/claim', {
+          method: 'POST',
+          body: { pairingCode: pairing.body.pairing.pairingCode },
+        });
+        assert.equal(claim.status, 201);
+        const deviceId = claim.body.device.id;
+        const deviceCredential = claim.body.deviceCredential;
+        const asDevice = (key) => ({
+          authorization: `Device ${deviceCredential}`,
+          ...(key ? { 'idempotency-key': key } : {}),
+        });
+        const fixBody = (overrides = {}) => ({
+          ...wire,
+          fixId: randomUUID(),
+          recordedAt: new Date(Date.now() - 30_000).toISOString(),
+          ...overrides,
+        });
+        const countFixes = async () =>
+          (
+            await client.query(
+              `SELECT count(*)::int AS n FROM family_child_location_fixes WHERE device_id = $1`,
+              [deviceId],
+            )
+          ).rows[0].n;
+
+        // 2. The handset's report, exactly as the native service shapes it.
+        const first = fixBody();
+        const reported = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/location-fixes`, {
+          method: 'POST',
+          headers: asDevice(`location-fix-${first.fixId}`),
+          body: first,
+        });
+        assert.equal(reported.status, 201);
+        assert.equal(reported.body.fix.id, first.fixId);
+        assert.equal(reported.body.fix.integritySoftWarning, false);
+        assert.equal(reported.body.replayed, false);
+
+        // 3. The same report retried (a timeout after the server committed): no second row.
+        const retried = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/location-fixes`, {
+          method: 'POST',
+          headers: asDevice(`location-fix-${first.fixId}`),
+          body: first,
+        });
+        assert.ok([200, 201].includes(retried.status));
+        assert.equal(retried.body.fix.id, first.fixId);
+        assert.equal(await countFixes(), 1, 'a retried native report created a second row');
+
+        // 4. The family's live picture now carries that fix, read by the guardian - not a
+        //    value the device kept, and not the legacy device row.
+        const picture = await jsonRequest(baseUrl, `/v1/families/${familyId}/location`, {
+          headers: authorized('test-primary'),
+        });
+        assert.equal(picture.status, 200);
+        const seen = picture.body.children
+          .find((entry) => entry.childId === childId)
+          ?.devices.find((device) => device.deviceId === deviceId);
+        assert.ok(seen, 'the paired device is missing from the family picture');
+        assert.equal(seen.state, 'live');
+        assert.equal(seen.lastFix.id, first.fixId);
+        assert.equal(seen.lastFix.latitude, wire.latitude);
+        assert.equal(seen.lastFix.longitude, wire.longitude);
+        assert.equal(seen.lastFix.accuracyMeters, wire.accuracyMeters);
+
+        // 5. A reading from a mock provider is stored as one, never laundered into a real one.
+        const mocked = fixBody({ integritySoftWarning: true });
+        const mockReport = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/location-fixes`, {
+          method: 'POST',
+          headers: asDevice(`location-fix-${mocked.fixId}`),
+          body: mocked,
+        });
+        assert.equal(mockReport.status, 201);
+        assert.equal(mockReport.body.fix.integritySoftWarning, true);
+
+        // 6. A refusal that is NOT a revocation: a clock far ahead. The handset drops this
+        //    one fix and keeps its pairing, because the code says nothing about the credential.
+        const ahead = fixBody({ recordedAt: new Date(Date.now() + 60 * 60 * 1000).toISOString() });
+        const refused = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/location-fixes`, {
+          method: 'POST',
+          headers: asDevice(`location-fix-${ahead.fixId}`),
+          body: ahead,
+        });
+        assert.equal(refused.status, 400);
+        assert.notEqual(refused.body.error.code, 'invalid_device_credential');
+
+        // 7. The battery heartbeat the W2 card reads still works beside the fix route.
+        const heartbeat = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/telemetry`, {
+          method: 'POST',
+          headers: asDevice(),
+          body: {
+            batteryLevel: 71,
+            batteryStatus: 'unplugged',
+            locationLat: wire.latitude,
+            locationLng: wire.longitude,
+            locationLabel: 'GPS 15.36940, 44.19100',
+          },
+        });
+        assert.equal(heartbeat.status, 200);
+
+        // 8. Someone outside the family cannot read the picture.
+        const outsider = await jsonRequest(baseUrl, `/v1/families/${familyId}/location`, {
+          headers: authorized('test-stranger'),
+        });
+        assert.equal(outsider.status, 403);
+
+        // 9. A credential the server never issued is refused with the definitive code too:
+        //    it can never become a way to write into this device's trail.
+        const forged = fixBody();
+        const forgedReport = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/location-fixes`, {
+          method: 'POST',
+          headers: {
+            authorization: `Device ${'x'.repeat(43)}`,
+            'idempotency-key': `location-fix-${forged.fixId}`,
+          },
+          body: forged,
+        });
+        assert.equal(forgedReport.status, 401);
+        assert.equal(forgedReport.body.error.code, 'invalid_device_credential');
+
+        // 10. The guardian cuts the phone off. From then on both routes the service calls
+        //     answer 401 `invalid_device_credential` - the only answer on which the handset
+        //     forgets its pairing - and nothing more is stored.
+        const before = await countFixes();
+        const revoked = await jsonRequest(
+          baseUrl,
+          `/v1/families/${familyId}/children/${childId}/devices/${deviceId}/revocation`,
+          {
+            method: 'POST',
+            headers: authorized('test-primary', { 'idempotency-key': 'nl-revoke' }),
+            body: { reasonCode: 'lost' },
+          },
+        );
+        assert.equal(revoked.status, 200);
+        const late = fixBody();
+        const afterRevocation = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/location-fixes`, {
+          method: 'POST',
+          headers: asDevice(`location-fix-${late.fixId}`),
+          body: late,
+        });
+        assert.equal(afterRevocation.status, 401);
+        assert.equal(afterRevocation.body.error.code, 'invalid_device_credential');
+        const lateHeartbeat = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/telemetry`, {
+          method: 'POST',
+          headers: asDevice(),
+          body: {
+            batteryLevel: 70,
+            batteryStatus: 'unplugged',
+            locationLat: wire.latitude,
+            locationLng: wire.longitude,
+            locationLabel: 'GPS 15.36940, 44.19100',
+          },
+        });
+        assert.equal(lateHeartbeat.status, 401);
+        assert.equal(lateHeartbeat.body.error.code, 'invalid_device_credential');
+        assert.equal(await countFixes(), before, 'a revoked handset still wrote to the trail');
+
+        // 11. Nothing the server printed while doing all this carries a coordinate, the
+        //     credential, or the family's identifier.
+        const output = printed.join('\n');
+        for (const secret of [deviceCredential, familyId, String(wire.latitude), String(wire.longitude)]) {
+          assert.equal(output.includes(secret), false, 'server output leaked a sensitive value');
+        }
+      });
+    } finally {
+      for (const [level, original] of Object.entries(originals)) console[level] = original;
       await store.close();
     }
   });

@@ -1,0 +1,48 @@
+name: Android Native CI
+
+# Plain-JVM tests of the Android-free part of the native layer (the location-fix wire
+# contract and how the handset reads the server's answer). This is not an APK build: the
+# repository has no Gradle wrapper and no google-services.json, so a Gradle build cannot run
+# here. What runs is exactly tools/android/run_native_protocol_tests.sh.
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "app/android/**"
+      - "backend/test/fixtures/native-location-fix.wire.json"
+      - "tools/android/**"
+      - ".github/workflows/android_native_ci.yml"
+  pull_request:
+    paths:
+      - "app/android/**"
+      - "backend/test/fixtures/native-location-fix.wire.json"
+      - "tools/android/**"
+      - ".github/workflows/android_native_ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-native-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-protocol-tests:
+    name: Native protocol unit tests (JVM)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Install the Kotlin compiler (pinned and verified)
+        run: |
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/kotlinc.zip" \
+            https://github.com/JetBrains/kotlin/releases/download/v2.1.0/kotlin-compiler-2.1.0.zip
+          echo "b6698d5728ad8f9edcdd01617d638073191d8a03139cc538a391b4e3759ad297  $RUNNER_TEMP/kotlinc.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/kotlinc.zip" -d "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/kotlinc/bin" >> "$GITHUB_PATH"
+      - name: Run native protocol tests
+        run: tools/android/run_native_protocol_tests.sh

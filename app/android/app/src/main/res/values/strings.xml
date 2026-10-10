@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Native strings shown by Android itself (notifications and their channels).
+  Arabic is the default because Family OS is Arabic-first; values-en carries English.
+  Every sentence must stay true to what ChildTelemetryService does: it sends this phone's
+  location and battery level to the family's guardians when the phone moves, at most once
+  every 5 minutes, and only while the permissions are granted. Change the code and the text
+  together, never one without the other.
+-->
+<resources>
+    <string name="location_sharing_channel_name">مشاركة الموقع مع العائلة</string>
+    <string name="location_sharing_channel_description">يظهر طوال الوقت الذي يشارك فيه هذا الهاتف موقعه مع أولياء الأمور في العائلة.</string>
+    <string name="location_sharing_notification_title">مشاركة الموقع مع العائلة تعمل</string>
+    <string name="location_sharing_notification_text">يرسل هذا الهاتف موقعه ونسبة البطارية إلى أولياء الأمور في عائلتك عندما يتنقّل، مرة كل ٥ دقائق على الأكثر. افتح Family OS لترى ما يُشارَك.</string>
+    <string name="location_sharing_stopped_channel_name">توقّف مشاركة الموقع</string>
+    <string name="location_sharing_stopped_title">توقّفت مشاركة الموقع</string>
+    <string name="location_sharing_stopped_text">فُصل هذا الهاتف عن العائلة، فتوقّف عن إرسال موقعه. لإعادة المشاركة يلزم إقران جديد من هاتف وليّ الأمر.</string>
+</resources>

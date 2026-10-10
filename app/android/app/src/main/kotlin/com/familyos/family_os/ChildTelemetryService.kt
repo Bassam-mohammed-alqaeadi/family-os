@@ -3,6 +3,7 @@ package com.familyos.family_os
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -12,10 +13,12 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.os.BatteryManager
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.util.Base64
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import java.io.File
 import java.net.HttpURLConnection
@@ -23,6 +26,7 @@ import java.net.URL
 import java.nio.ByteBuffer
 import java.security.KeyStore
 import java.util.Locale
+import java.util.UUID
 import java.util.concurrent.Executors
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -37,17 +41,30 @@ import android.security.keystore.KeyProperties
  * It reads Android battery state and LocationManager data only after the OS has
  * granted location permission. It contains no synthetic coordinates, battery
  * values, guardian bearer tokens, or developer simulation path.
+ *
+ * Each genuine location callback becomes one fix on the W3 route
+ * (`POST /v1/devices/{id}/location-fixes`) - the table the family's live picture and
+ * history are read from - followed by the battery heartbeat on the legacy telemetry
+ * route that the W2 device card still reads. The wire contract and the reading of the
+ * server's answer live in [LocationFixProtocol].
+ *
+ * The collection rule itself is unchanged by this file: the same providers, interval,
+ * distance and accuracy ceiling as before, and only while fine + background permission
+ * are granted. The ongoing notification says, in the phone's language, what is shared
+ * and with whom.
  */
 class ChildTelemetryService : Service(), LocationListener {
     private val executor = Executors.newSingleThreadExecutor()
     private lateinit var locationManager: LocationManager
     private lateinit var configStore: TelemetryConfigStore
+    private lateinit var reportStatus: LocationReportStatusStore
 
     override fun onCreate() {
         super.onCreate()
         configStore = TelemetryConfigStore(this)
+        reportStatus = LocationReportStatusStore(this)
         locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        createNotificationChannel()
+        createNotificationChannels()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -81,18 +98,20 @@ class ChildTelemetryService : Service(), LocationListener {
     }
 
     override fun onLocationChanged(location: Location) {
-        if (!location.hasAccuracy() || location.accuracy > MAX_LOCATION_ACCURACY_METERS) return
+        if (!location.hasAccuracy()) return
         val config = configStore.read() ?: return
-        val battery = readBattery() ?: return
-        val locationLabel = String.format(
-            Locale.US,
-            "GPS %.5f, %.5f",
-            location.latitude,
-            location.longitude,
-        )
-        executor.execute {
-            sendTelemetry(config, battery, location.latitude, location.longitude, locationLabel)
-        }
+        val reading = LocationFixProtocol.reportable(
+            LocationFixProtocol.Reading(
+                fixId = UUID.randomUUID().toString(),
+                latitude = location.latitude,
+                longitude = location.longitude,
+                accuracyMeters = location.accuracy.toDouble(),
+                recordedAtEpochMillis = location.time,
+                fromMockProvider = isFromMockProvider(location),
+            ),
+        ) ?: return
+        val battery = readBattery()
+        executor.execute { report(config, reading, battery) }
     }
 
     override fun onProviderDisabled(provider: String) = Unit
@@ -117,6 +136,10 @@ class ChildTelemetryService : Service(), LocationListener {
         ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) ==
             android.content.pm.PackageManager.PERMISSION_GRANTED
 
+    @Suppress("DEPRECATION")
+    private fun isFromMockProvider(location: Location): Boolean =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) location.isMock else location.isFromMockProvider
+
     private fun readBattery(): BatteryReading? {
         // BATTERY_STATS is a signature-only Android permission and cannot be
         // requested by a normal Play-distributed app. ACTION_BATTERY_CHANGED is
@@ -132,17 +155,71 @@ class ChildTelemetryService : Service(), LocationListener {
         return BatteryReading(percentage, if (charging) "charging" else "unplugged")
     }
 
-    private fun sendTelemetry(
-        config: TelemetryConfig,
-        battery: BatteryReading,
-        latitude: Double,
-        longitude: Double,
-        locationLabel: String,
-    ) {
+    /** Runs on [executor]: one fix, then - unless the session ended - one heartbeat. */
+    private fun report(config: TelemetryConfig, reading: LocationFixProtocol.Reading, battery: BatteryReading?) {
+        // A callback queued before a revocation (or a re-pairing) must not speak with a
+        // credential that is no longer the stored one.
+        if (configStore.read() != config) return
+        val fixAnswer = post(
+            config,
+            LocationFixProtocol.path(config.deviceId),
+            LocationFixProtocol.body(reading),
+            LocationFixProtocol.idempotencyKey(reading.fixId),
+        )
+        val fixOutcome = LocationFixProtocol.classify(fixAnswer.statusCode, fixAnswer.errorBody)
+        reportStatus.record(fixOutcome, System.currentTimeMillis())
+        if (fixOutcome.endsSession) {
+            endRevokedSession(config)
+            return
+        }
+        if (battery == null) return
+        // The W2 device card and children list still read battery, last-seen and this label
+        // from the legacy route, so its body is unchanged. It is sent from the same genuine
+        // reading, never on its own schedule. Narrowing what this route stores is a later,
+        // separate change (see the task card).
+        val locationLabel = String.format(
+            Locale.US,
+            "GPS %.5f, %.5f",
+            reading.latitude,
+            reading.longitude,
+        )
+        val heartbeat = post(
+            config,
+            "/v1/devices/${config.deviceId}/telemetry",
+            """{"batteryLevel":${battery.level},"batteryStatus":"${battery.status}","locationLat":${reading.latitude},"locationLng":${reading.longitude},"locationLabel":"$locationLabel"}""",
+            null,
+        )
+        if (LocationFixProtocol.classify(heartbeat.statusCode, heartbeat.errorBody).endsSession) {
+            reportStatus.record(LocationReportOutcome.CREDENTIAL_REVOKED, System.currentTimeMillis())
+            endRevokedSession(config)
+        }
+    }
+
+    /**
+     * The server said this credential is dead. Forget it - only if it is still the one that
+     * was used, so a re-pairing that happened meanwhile is never undone - stop collecting,
+     * and tell the person holding the phone, because sharing stopping is as visible as
+     * sharing starting.
+     */
+    private fun endRevokedSession(usedConfig: TelemetryConfig) {
+        configStore.clearIfCurrent(usedConfig)
+        reportStatus.markCredentialRevoked(System.currentTimeMillis())
+        Handler(Looper.getMainLooper()).post {
+            try {
+                locationManager.removeUpdates(this)
+            } catch (_: SecurityException) {
+                // Already stopping.
+            }
+            postSharingStoppedNotification()
+            stopForegroundCompat()
+            stopSelf()
+        }
+    }
+
+    private fun post(config: TelemetryConfig, path: String, body: String, idempotencyKey: String?): HttpAnswer {
         var connection: HttpURLConnection? = null
-        try {
-            connection = URL("${config.apiOrigin}/v1/devices/${config.deviceId}/telemetry")
-                .openConnection() as HttpURLConnection
+        return try {
+            connection = URL("${config.apiOrigin}$path").openConnection() as HttpURLConnection
             connection.requestMethod = "POST"
             connection.connectTimeout = CONNECT_TIMEOUT_MILLIS
             connection.readTimeout = READ_TIMEOUT_MILLIS
@@ -150,51 +227,164 @@ class ChildTelemetryService : Service(), LocationListener {
             connection.setRequestProperty("Content-Type", "application/json")
             connection.setRequestProperty("Accept", "application/json")
             connection.setRequestProperty("Authorization", "Device ${config.deviceCredential}")
-            val body = """{"batteryLevel":${battery.level},"batteryStatus":"${battery.status}","locationLat":$latitude,"locationLng":$longitude,"locationLabel":"$locationLabel"}"""
+            if (idempotencyKey != null) connection.setRequestProperty("Idempotency-Key", idempotencyKey)
             connection.outputStream.bufferedWriter(Charsets.UTF_8).use { it.write(body) }
-            // Consume the response to release the connection. Coordinates and
-            // credential are intentionally never logged.
-            connection.inputStream?.close()
+            val code = connection.responseCode
+            // Only an error envelope is read, and only its first few KB, to learn the error
+            // code. Coordinates, credential and response text are never logged.
+            val errorBody = if (code >= 400) readBounded(connection.errorStream) else {
+                connection.inputStream?.close()
+                null
+            }
+            HttpAnswer(code, errorBody)
         } catch (_: Exception) {
-            // Connectivity failures are retried by the next genuine location
-            // callback. No fabricated cached observation is transmitted.
+            // No HTTP answer. The next genuine location callback is the retry; nothing
+            // cached or fabricated is transmitted in its place.
+            HttpAnswer(null, null)
         } finally {
             connection?.disconnect()
         }
     }
 
-    private fun createNotificationChannel() {
+    private fun readBounded(stream: java.io.InputStream?): String? {
+        if (stream == null) return null
+        return stream.bufferedReader(Charsets.UTF_8).use { reader ->
+            val buffer = CharArray(LocationFixProtocol.MAX_ERROR_BODY_CHARS)
+            val read = reader.read(buffer)
+            if (read <= 0) null else String(buffer, 0, read)
+        }
+    }
+
+    private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(
             NotificationChannel(
                 CHANNEL_ID,
-                "Child location telemetry",
+                getString(R.string.location_sharing_channel_name),
                 NotificationManager.IMPORTANCE_LOW,
             ).apply {
-                description = "Shows when Child Mode is collecting real device telemetry."
+                description = getString(R.string.location_sharing_channel_description)
             },
+        )
+        manager.createNotificationChannel(
+            NotificationChannel(
+                STOPPED_CHANNEL_ID,
+                getString(R.string.location_sharing_stopped_channel_name),
+                NotificationManager.IMPORTANCE_DEFAULT,
+            ),
         )
     }
 
-    private fun foregroundNotification(): Notification = NotificationCompat.Builder(this, CHANNEL_ID)
-        .setSmallIcon(com.familyos.family_os.R.mipmap.ic_launcher)
-        .setContentTitle("Child Mode active")
-        .setContentText("Sharing real battery and location telemetry with the linked family.")
-        .setOngoing(true)
-        .build()
+    private fun openAppIntent(): PendingIntent? {
+        val launch = packageManager.getLaunchIntentForPackage(packageName) ?: return null
+        return PendingIntent.getActivity(
+            this,
+            0,
+            launch,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+    }
+
+    private fun foregroundNotification(): Notification {
+        val text = getString(R.string.location_sharing_notification_text)
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(com.familyos.family_os.R.mipmap.ic_launcher)
+            .setContentTitle(getString(R.string.location_sharing_notification_title))
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setContentIntent(openAppIntent())
+            .setOngoing(true)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .build()
+    }
+
+    private fun postSharingStoppedNotification() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) !=
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        val text = getString(R.string.location_sharing_stopped_text)
+        val notification = NotificationCompat.Builder(this, STOPPED_CHANNEL_ID)
+            .setSmallIcon(com.familyos.family_os.R.mipmap.ic_launcher)
+            .setContentTitle(getString(R.string.location_sharing_stopped_title))
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setContentIntent(openAppIntent())
+            .setAutoCancel(true)
+            .build()
+        try {
+            NotificationManagerCompat.from(this).notify(STOPPED_NOTIFICATION_ID, notification)
+        } catch (_: SecurityException) {
+            // Notification permission withdrawn in the meantime; the in-app status still says it.
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun stopForegroundCompat() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } else {
+            stopForeground(true)
+        }
+    }
 
     private data class BatteryReading(val level: Int, val status: String)
+    private data class HttpAnswer(val statusCode: Int?, val errorBody: String?)
 
     companion object {
         const val CHANNEL_ID = "child_telemetry"
+        const val STOPPED_CHANNEL_ID = "child_location_sharing_stopped"
         const val NOTIFICATION_ID = 91201
+        const val STOPPED_NOTIFICATION_ID = 91202
         @Volatile var isRunning: Boolean = false
         private const val UPDATE_INTERVAL_MILLIS = 5 * 60 * 1000L
         private const val UPDATE_DISTANCE_METERS = 50f
-        private const val MAX_LOCATION_ACCURACY_METERS = 200f
         private const val CONNECT_TIMEOUT_MILLIS = 15_000
         private const val READ_TIMEOUT_MILLIS = 15_000
+    }
+}
+
+/**
+ * What the handset last heard back, for the child's "what I share" screen and the pairing
+ * screen. Outcome names and times only - never a coordinate, identifier or server message.
+ */
+class LocationReportStatusStore(context: Context) {
+    private val preferences = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+
+    fun record(outcome: LocationReportOutcome, atEpochMillis: Long) {
+        val editor = preferences.edit()
+            .putString(KEY_LAST_OUTCOME, outcome.wire)
+            .putLong(KEY_LAST_OUTCOME_AT, atEpochMillis)
+        if (outcome == LocationReportOutcome.ACCEPTED) editor.putLong(KEY_LAST_ACCEPTED_AT, atEpochMillis)
+        editor.apply()
+    }
+
+    fun markCredentialRevoked(atEpochMillis: Long) {
+        preferences.edit().putLong(KEY_REVOKED_AT, atEpochMillis).apply()
+    }
+
+    /** A new pairing starts a new story; the previous one's outcome must not leak into it. */
+    fun resetForNewPairing() {
+        preferences.edit().clear().apply()
+    }
+
+    fun snapshot(): Map<String, Any> = mapOf(
+        "lastReportOutcome" to (preferences.getString(KEY_LAST_OUTCOME, null) ?: "none"),
+        "lastReportAtMillis" to preferences.getLong(KEY_LAST_OUTCOME_AT, 0L),
+        "lastAcceptedAtMillis" to preferences.getLong(KEY_LAST_ACCEPTED_AT, 0L),
+        "credentialRevoked" to (preferences.getLong(KEY_REVOKED_AT, 0L) > 0L),
+    )
+
+    companion object {
+        private const val PREFERENCES = "family_os_location_report_status"
+        private const val KEY_LAST_OUTCOME = "last_outcome"
+        private const val KEY_LAST_OUTCOME_AT = "last_outcome_at"
+        private const val KEY_LAST_ACCEPTED_AT = "last_accepted_at"
+        private const val KEY_REVOKED_AT = "credential_revoked_at"
     }
 }
 
@@ -239,6 +429,18 @@ class TelemetryConfigStore(private val context: Context) {
         } catch (_: Exception) {
             null
         }
+    }
+
+    /**
+     * Forgets the stored pairing, but only if it is still [expected]. Used when the server
+     * definitively refuses the credential; a pairing written after that request started is
+     * a new session and is left alone.
+     */
+    @Synchronized
+    fun clearIfCurrent(expected: TelemetryConfig): Boolean {
+        val current = read() ?: return false
+        if (current != expected) return false
+        return file().delete()
     }
 
     private fun file(): File = File(context.noBackupFilesDir, "child-telemetry.v1")
