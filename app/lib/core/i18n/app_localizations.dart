@@ -10751,6 +10751,12 @@ abstract class AppLocalizations {
   /// **'⚠️ كل محاولة خاطئة تصل والدك فورًا. وبعد 3 محاولات: قفل 24 ساعة + إخطار والدتك.'**
   String get childModeLockAttemptsWarning;
 
+  /// SCR-CHD-011 shown instead of the password step while no parent-account verifier exists (safety phase S1)
+  ///
+  /// In ar, this message translates to:
+  /// **'فتح وضع الوالد من هذا الهاتف غير متاح بعد: التحقق من حساب الوالد لم يُبنَ. اطلب من والدك تغيير الإعداد من هاتفه. وزر الطوارئ يعمل دائماً.'**
+  String get childModeLockVerifierUnavailable;
+
   /// SCR-CHD-011 24h lockout banner
   ///
   /// In ar, this message translates to:

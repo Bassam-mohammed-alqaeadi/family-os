@@ -31,6 +31,9 @@ abstract final class ChildModeLockKeys {
   static const viewFatherCta = Key('child_mode_lock_view_father_cta');
   static const attemptsBanner = Key('child_mode_lock_attempts_banner');
   static const lockoutBanner = Key('child_mode_lock_lockout_banner');
+  static const verifierUnavailableBanner = Key(
+    'child_mode_lock_verifier_unavailable_banner',
+  );
   static const entertainmentLocked = Key(
     'child_mode_lock_entertainment_locked',
   );
@@ -210,6 +213,9 @@ class _ChildModeLockScreenState extends State<ChildModeLockScreen> {
         case ChildModeUnlockOutcome.awaitingSecondKey:
           _passwordController.clear();
           _statusMessage = null;
+        case ChildModeUnlockOutcome.unavailable:
+          _passwordController.clear();
+          _statusMessage = null;
       }
     });
     if (!mounted) return;
@@ -344,7 +350,22 @@ class _ChildModeLockScreenState extends State<ChildModeLockScreen> {
             onPointerUp: _onLogoPointerUp,
             onPointerCancel: _onLogoPointerUp,
           ),
-          if (_lock.secretEntryOpen && !_lock.isLockedOut) ...[
+          if (_lock.secretEntryOpen &&
+              !_lock.isLockedOut &&
+              !_lock.verifierConfigured) ...[
+            // Safety phase S1: no fixed password in production. Until the real
+            // parent-account check exists (S12) the step says so instead of
+            // accepting input it cannot verify.
+            const SizedBox(height: 12),
+            BannerNote(
+              key: ChildModeLockKeys.verifierUnavailableBanner,
+              variant: BannerVariant.a,
+              message: l10n.childModeLockVerifierUnavailable,
+            ),
+          ],
+          if (_lock.secretEntryOpen &&
+              !_lock.isLockedOut &&
+              _lock.verifierConfigured) ...[
             const SizedBox(height: 12),
             _PasswordStepCard(
               colors: colors,
@@ -372,12 +393,16 @@ class _ChildModeLockScreenState extends State<ChildModeLockScreen> {
               semanticsLabel: l10n.childModeLockViewFatherSemantics,
             ),
           ],
-          const SizedBox(height: 12),
-          BannerNote(
-            key: ChildModeLockKeys.attemptsBanner,
-            variant: BannerVariant.a,
-            message: l10n.childModeLockAttemptsWarning,
-          ),
+          // The attempts warning promises parent notification; it is shown only when
+          // a verifier exists, never as a threat the app cannot carry out.
+          if (_lock.verifierConfigured) ...[
+            const SizedBox(height: 12),
+            BannerNote(
+              key: ChildModeLockKeys.attemptsBanner,
+              variant: BannerVariant.a,
+              message: l10n.childModeLockAttemptsWarning,
+            ),
+          ],
           const SizedBox(height: 16),
           DecoratedBox(
             key: ChildModeLockKeys.entertainmentLocked,

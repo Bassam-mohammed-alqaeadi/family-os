@@ -14,6 +14,8 @@ import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n05_lock/child_mode_lock_screen.dart';
 import 'package:family_os/features/n05_lock/child_mode_lock_service.dart';
 
+import 'support/child_mode_lock_test_password.dart';
+
 void main() {
   tearDown(() {
     stage1ChildModeLockService.resetForTests();
@@ -22,7 +24,9 @@ void main() {
   testWidgets('shows dual-key + entertainment locked + SOS (P-4)', (
     tester,
   ) async {
-    final lock = ChildModeLockService();
+    final lock = ChildModeLockService(
+      expectedPassword: kChildModeLockTestPassword,
+    );
     await _pump(tester, lockService: lock);
     expect(find.byKey(ChildModeLockKeys.dualKeyBanner), findsOneWidget);
     expect(find.byKey(ChildModeLockKeys.entertainmentLocked), findsOneWidget);
@@ -32,7 +36,9 @@ void main() {
   });
 
   testWidgets('secret hold opens password step (mock gesture)', (tester) async {
-    final lock = ChildModeLockService();
+    final lock = ChildModeLockService(
+      expectedPassword: kChildModeLockTestPassword,
+    );
     await _pump(
       tester,
       lockService: lock,
@@ -55,7 +61,9 @@ void main() {
   testWidgets('wrong password notifies father; 3rd locks 24h + mother', (
     tester,
   ) async {
-    final lock = ChildModeLockService();
+    final lock = ChildModeLockService(
+      expectedPassword: kChildModeLockTestPassword,
+    );
     await _pump(
       tester,
       lockService: lock,
@@ -95,7 +103,9 @@ void main() {
     tester,
   ) async {
     var viewedFather = false;
-    final lock = ChildModeLockService();
+    final lock = ChildModeLockService(
+      expectedPassword: kChildModeLockTestPassword,
+    );
     await _pump(
       tester,
       lockService: lock,
@@ -107,7 +117,7 @@ void main() {
 
     await tester.enterText(
       find.byKey(ChildModeLockKeys.passwordField),
-      kChildModeLockMockPassword,
+      kChildModeLockTestPassword,
     );
     await tester.tap(find.byKey(ChildModeLockKeys.verifyCta));
     await tester.pump(); // show toast
@@ -124,9 +134,50 @@ void main() {
     expect(viewedFather, isTrue);
   });
 
+  testWidgets(
+    'S1: with no verifier (production) the password step is replaced by an honest banner',
+    (tester) async {
+      final lock = ChildModeLockService();
+      expect(lock.verifierConfigured, isFalse);
+      await _pump(
+        tester,
+        lockService: lock,
+        secretHold: const Duration(milliseconds: 50),
+        secretTick: const Duration(milliseconds: 25),
+      );
+      // No threat of parent notification the app cannot carry out.
+      expect(find.byKey(ChildModeLockKeys.attemptsBanner), findsNothing);
+      await _openSecret(tester);
+
+      expect(
+        find.byKey(ChildModeLockKeys.verifierUnavailableBanner),
+        findsOneWidget,
+      );
+      expect(find.byKey(ChildModeLockKeys.passwordStep), findsNothing);
+      expect(find.byKey(ChildModeLockKeys.passwordField), findsNothing);
+      // SOS stays reachable (P-4).
+      expect(find.byKey(ChildModeLockKeys.sosCta), findsOneWidget);
+    },
+  );
+
+  test('S1: the production singleton has no built-in password', () {
+    expect(stage1ChildModeLockService.verifierConfigured, isFalse);
+    final lock = ChildModeLockService();
+    lock.openSecretEntry();
+    for (final guess in ['parent-account', '', '0000']) {
+      final result = lock.verifyAccountPassword(guess);
+      expect(result.outcome, ChildModeUnlockOutcome.unavailable);
+      expect(result.failedAttempts, 0);
+    }
+    expect(lock.pendingRequest, isNull);
+    expect(lock.notifyBus.delivered, isEmpty);
+  });
+
   testWidgets('SOS CTA reachable while locked (P-4)', (tester) async {
     var sosOpened = false;
-    final lock = ChildModeLockService();
+    final lock = ChildModeLockService(
+      expectedPassword: kChildModeLockTestPassword,
+    );
     final fire = RecordingSosFire();
     await _pump(
       tester,
@@ -146,7 +197,9 @@ void main() {
   });
 
   testWidgets('parent RoleGuard lean — no secret entry', (tester) async {
-    final lock = ChildModeLockService();
+    final lock = ChildModeLockService(
+      expectedPassword: kChildModeLockTestPassword,
+    );
     await _pump(
       tester,
       lockService: lock,
@@ -158,7 +211,9 @@ void main() {
   });
 
   testWidgets('SOS navigates to CHD-005 when seam null', (tester) async {
-    final lock = ChildModeLockService();
+    final lock = ChildModeLockService(
+      expectedPassword: kChildModeLockTestPassword,
+    );
     final fire = RecordingSosFire();
     final router = GoRouter(
       initialLocation: '/scr-chd-011',

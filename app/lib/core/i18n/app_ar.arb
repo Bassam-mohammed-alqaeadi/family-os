@@ -7743,6 +7743,10 @@
   "@childModeLockAttemptsWarning": {
     "description": "SCR-CHD-011 attempts warning banner"
   },
+  "childModeLockVerifierUnavailable": "فتح وضع الوالد من هذا الهاتف غير متاح بعد: التحقق من حساب الوالد لم يُبنَ. اطلب من والدك تغيير الإعداد من هاتفه. وزر الطوارئ يعمل دائماً.",
+  "@childModeLockVerifierUnavailable": {
+    "description": "SCR-CHD-011 shown instead of the password step while no parent-account verifier exists (safety phase S1)"
+  },
   "childModeLockLockoutBanner": "🔒 قُفل المدخل 24 ساعة بعد ثلاث محاولات فاشلة — وأُخطرت والدتك.",
   "@childModeLockLockoutBanner": {
     "description": "SCR-CHD-011 24h lockout banner"
