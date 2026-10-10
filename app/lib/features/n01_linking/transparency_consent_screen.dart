@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -98,7 +96,7 @@ class _TransparencyConsentScreenState extends State<TransparencyConsentScreen> {
         answer.statusCode == 409;
   }
 
-  Future<void> _accept(BuildContext context) async {
+  Future<void> _accept() async {
     final notifier = CurrentRole.maybeNotifierOf(context);
     if (notifier != null && notifier.value != AppRole.child) {
       notifier.value = AppRole.child;
@@ -180,7 +178,7 @@ class _TransparencyConsentScreenState extends State<TransparencyConsentScreen> {
                   colors: colors,
                   recording: _recording,
                   failed: _failed,
-                  onAccept: () => _accept(context),
+                  onAccept: _accept,
                 )
               : AppEmptyState(
                   key: TransparencyConsentKeys.parentLean,
@@ -239,7 +237,7 @@ class _ConsentBody extends StatelessWidget {
                   const SizedBox(height: 12),
                   BannerNote(
                     key: TransparencyConsentKeys.errorBanner,
-                    variant: BannerVariant.warn,
+                    variant: BannerVariant.a,
                     message: l10n.transparencyConsentError,
                   ),
                 ],

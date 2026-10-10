@@ -102,18 +102,18 @@ async function call(baseUrl, path, { method = 'GET', headers = {}, body } = {}) 
   return { status: response.status, body: text ? JSON.parse(text) : null };
 }
 
-/** A family with a primary guardian, a child and one paired handset. */
-async function seedHousehold(baseUrl, client, tag) {
+/** A family with its own primary guardian, a child and one paired handset. */
+async function seedHousehold(baseUrl, client, tag, guardian = 'test-primary') {
   const created = await call(baseUrl, '/v1/families', {
     method: 'POST',
-    headers: authorized('test-primary', { 'idempotency-key': `${tag}-family` }),
+    headers: authorized(guardian, { 'idempotency-key': `${tag}-family` }),
     body: { displayName: 'عائلة الاختبار' },
   });
   assert.equal(created.status, 201, JSON.stringify(created.body));
   const familyId = created.body.family.id;
   const child = await call(baseUrl, `/v1/families/${familyId}/children`, {
     method: 'POST',
-    headers: authorized('test-primary', { 'idempotency-key': `${tag}-child` }),
+    headers: authorized(guardian, { 'idempotency-key': `${tag}-child` }),
     body: { displayName: 'أماني', ageYears: 11, avatarEmoji: '🦁', themeColor: 'sky' },
   });
   assert.equal(child.status, 201);
@@ -301,19 +301,26 @@ test(
       openStores.add(store);
       await withServer(appWith(store), async (baseUrl) => {
         const mine = await seedHousehold(baseUrl, client, 'consent-mine');
-        const theirs = await seedHousehold(baseUrl, client, 'consent-theirs');
+        // A DIFFERENT guardian owns the second family: two households, two primaries.
+        const theirs = await seedHousehold(baseUrl, client, 'consent-theirs', 'test-rival');
 
         const grant = await call(baseUrl, `/v1/devices/${theirs.deviceId}/consents`, {
           method: 'POST',
           headers: authorized('test-primary', { 'idempotency-key': 'foreign-grant' }),
           body: { capability: 'location', textVersion: '2026-10-10' },
         });
-        assert.equal(grant.status, 403);
+        assert.equal(grant.status, 403, JSON.stringify(grant.body));
 
         const read = await call(baseUrl, `/v1/devices/${theirs.deviceId}/location-sharing`, {
           headers: authorized('test-primary'),
         });
         assert.equal(read.status, 403);
+
+        // And the other way round: the rival guardian reaches nothing in my family.
+        const reverse = await call(baseUrl, `/v1/devices/${mine.deviceId}/location-sharing`, {
+          headers: authorized('test-rival'),
+        });
+        assert.equal(reverse.status, 403);
 
         // A handset cannot speak for a device it does not hold.
         const forged = await call(baseUrl, `/v1/devices/${theirs.deviceId}/location-sharing`, {

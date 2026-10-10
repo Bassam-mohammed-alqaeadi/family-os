@@ -3802,8 +3802,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get transparencyConsentRecording => 'جارٍ تسجيل موافقتك…';
 
   @override
-  String get transparencyConsentError =>
-      'تعذر تسجيل موافقتك — حاول مرة أخرى.';
+  String get transparencyConsentError => 'تعذر تسجيل موافقتك — حاول مرة أخرى.';
 
   @override
   String get transparencyConsentParentLeanTitle => 'لجهاز الابن';
