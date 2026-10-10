@@ -15,6 +15,11 @@ const prohibitedFilename = [
   /(?:^|\/)GoogleService-Info\.plist$/i,
   /(?:^|\/)firebase_options\.dart$/i,
   /(?:^|\/)foundation_gate_local_configuration\.dart$/i,
+  // Android signing material (RESCUE-002 / safety phase S1): keystores and their password
+  // file. The test APK is signed with a throwaway CI key that is never committed; the real
+  // release key is an owner decision and must never live in the repository either.
+  /\.(?:jks|keystore|p12|pfx)$/i,
+  /(?:^|\/)key\.properties$/i,
 ];
 const credentialMarkers = [
   new RegExp(`"type"\\s*:\\s*"service${'_'}account"`),
