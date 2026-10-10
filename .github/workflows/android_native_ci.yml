@@ -3,7 +3,9 @@ name: Android Native CI
 # Plain-JVM tests of the Android-free part of the native layer (the location-fix wire
 # contract and how the handset reads the server's answer). This is not an APK build: the
 # repository has no Gradle wrapper and no google-services.json, so a Gradle build cannot run
-# here. What runs is exactly tools/android/run_native_protocol_tests.sh.
+# here. What runs is exactly tools/android/run_native_protocol_tests.sh, plus the source-level
+# manifest policy check (tools/android/check_manifest_policy.mjs). The APK itself is built by
+# android_build.yml, which needs the Firebase secret.
 
 on:
   workflow_dispatch:
@@ -46,3 +48,5 @@ jobs:
           echo "$RUNNER_TEMP/kotlinc/bin" >> "$GITHUB_PATH"
       - name: Run native protocol tests
         run: tools/android/run_native_protocol_tests.sh
+      - name: Check the Google Play monitoring-app declaration in the manifest
+        run: node tools/android/check_manifest_policy.mjs

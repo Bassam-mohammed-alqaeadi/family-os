@@ -43,6 +43,13 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- Google Play "Stalkerware and monitoring apps" policy: a parental-control app
+             must declare itself in every version code with exactly this flag. Syntax from
+             Play Console Help answer 12955211 ("Use of the isMonitoringTool flag"). The
+             Android Build workflow fails if the built APK does not carry it. -->
+        <meta-data
+            android:name="isMonitoringTool"
+            android:value="child_monitoring" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
