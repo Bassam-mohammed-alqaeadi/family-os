@@ -59,6 +59,7 @@ class ChildTelemetryService : Service(), LocationListener {
     private lateinit var locationManager: LocationManager
     private lateinit var configStore: TelemetryConfigStore
     private lateinit var reportStatus: LocationReportStatusStore
+    private lateinit var session: LocationSessionCoordinator<TelemetryConfig>
 
     /** Main-thread only: when the last reading was handed to [executor] (monotonic clock). */
     private var lastReportedElapsedMillis: Long? = null
@@ -67,13 +68,18 @@ class ChildTelemetryService : Service(), LocationListener {
         super.onCreate()
         configStore = TelemetryConfigStore(this)
         reportStatus = LocationReportStatusStore(this)
+        session = LocationSessionCoordinator(configStore, reportStatus, TelemetryConfigStore.LOCK) {
+            System.currentTimeMillis()
+        }
         locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         createNotificationChannels()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val config = configStore.read()
-        if (config == null || !hasFineLocationPermission()) {
+        // A revoked pairing never restarts collection, even if a failed delete left its
+        // credential on disk; only a new pairing clears the mark.
+        session.retryForgetRevoked()
+        if (!session.mayStart() || !hasFineLocationPermission()) {
             stopSelf(startId)
             return START_NOT_STICKY
         }
@@ -104,6 +110,7 @@ class ChildTelemetryService : Service(), LocationListener {
     override fun onLocationChanged(location: Location) {
         if (!location.hasAccuracy()) return
         val config = configStore.read() ?: return
+        if (!session.mayReport(config)) return
         val reading = LocationFixProtocol.reportable(
             LocationFixProtocol.Reading(
                 fixId = UUID.randomUUID().toString(),
@@ -175,7 +182,7 @@ class ChildTelemetryService : Service(), LocationListener {
     private fun report(config: TelemetryConfig, reading: LocationFixProtocol.Reading, battery: BatteryReading?) {
         // A callback queued before a revocation (or a re-pairing) must not speak with a
         // credential that is no longer the stored one.
-        if (configStore.read() != config) return
+        if (!session.mayReport(config)) return
         val fixAnswer = post(
             config,
             LocationFixProtocol.path(config.deviceId),
@@ -206,46 +213,34 @@ class ChildTelemetryService : Service(), LocationListener {
     }
 
     /**
-     * Records [outcome] for the session that used [usedConfig] and, on a definitive
-     * revocation, ends that session. Returns true if the caller may continue.
-     *
-     * Everything happens under the same process-wide lock the pairing screen writes under,
-     * so an answer that arrives for an old credential after a new pairing was stored can
-     * neither overwrite the new pairing's status nor stop its collection: re-pairing
-     * revokes the old credential on the server, so that late 401 is the expected case,
-     * not a rare one.
+     * Hands one answer to [session] (see [LocationSessionCoordinator] for the rules and their
+     * tests) and acts on its decision. Returns true if the caller may continue.
      */
-    private fun settle(usedConfig: TelemetryConfig, outcome: LocationReportOutcome): Boolean {
-        val endedHere = TelemetryConfigStore.locked {
-            if (configStore.read() != usedConfig) return@locked null
-            reportStatus.record(outcome, System.currentTimeMillis())
-            if (!outcome.endsSession) return@locked false
-            configStore.clearIfCurrent(usedConfig)
-            reportStatus.markCredentialRevoked(System.currentTimeMillis())
-            true
+    private fun settle(usedConfig: TelemetryConfig, outcome: LocationReportOutcome): Boolean =
+        when (session.settle(usedConfig, outcome).decision) {
+            SettleDecision.CONTINUE -> true
+            SettleDecision.IGNORE -> false
+            SettleDecision.STOP_SESSION -> {
+                stopRevokedSession()
+                false
+            }
         }
-        when (endedHere) {
-            null -> return false // A newer pairing owns this phone now; stay silent.
-            true -> stopRevokedSession()
-            false -> Unit
-        }
-        return endedHere == false
-    }
 
     /**
-     * The server said this credential is dead and it has been forgotten: stop collecting and
-     * tell the person holding the phone, because sharing stopping is as visible as sharing
-     * starting.
+     * The server said this credential is dead: stop collecting and tell the person holding
+     * the phone, because sharing stopping is as visible as sharing starting. This happens
+     * even if forgetting the credential failed (fail-closed); it is skipped only if a new
+     * pairing was stored in between, which clears the revocation mark.
      */
     private fun stopRevokedSession() {
         Handler(Looper.getMainLooper()).post {
-            // A pairing stored between the revocation and this moment starts its own session.
-            if (configStore.read() != null) return@post
+            if (!session.revocationStillStands()) return@post
             try {
                 locationManager.removeUpdates(this)
             } catch (_: SecurityException) {
                 // Already stopping.
             }
+            isRunning = false
             postSharingStoppedNotification()
             stopForegroundCompat()
             stopSelf()
@@ -394,10 +389,10 @@ class ChildTelemetryService : Service(), LocationListener {
  * What the handset last heard back, for the child's "what I share" screen and the pairing
  * screen. Outcome names and times only - never a coordinate, identifier or server message.
  */
-class LocationReportStatusStore(context: Context) {
+class LocationReportStatusStore(context: Context) : ReportStatusSink {
     private val preferences = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
 
-    fun record(outcome: LocationReportOutcome, atEpochMillis: Long) {
+    override fun record(outcome: LocationReportOutcome, atEpochMillis: Long) {
         val editor = preferences.edit()
             .putString(KEY_LAST_OUTCOME, outcome.wire)
             .putLong(KEY_LAST_OUTCOME_AT, atEpochMillis)
@@ -405,9 +400,11 @@ class LocationReportStatusStore(context: Context) {
         editor.apply()
     }
 
-    fun markCredentialRevoked(atEpochMillis: Long) {
+    override fun markCredentialRevoked(atEpochMillis: Long) {
         preferences.edit().putLong(KEY_REVOKED_AT, atEpochMillis).apply()
     }
+
+    override fun credentialRevoked(): Boolean = preferences.getLong(KEY_REVOKED_AT, 0L) > 0L
 
     /** A new pairing starts a new story; the previous one's outcome must not leak into it. */
     fun resetForNewPairing() {
@@ -418,7 +415,7 @@ class LocationReportStatusStore(context: Context) {
         "lastReportOutcome" to (preferences.getString(KEY_LAST_OUTCOME, null) ?: "none"),
         "lastReportAtMillis" to preferences.getLong(KEY_LAST_OUTCOME_AT, 0L),
         "lastAcceptedAtMillis" to preferences.getLong(KEY_LAST_ACCEPTED_AT, 0L),
-        "credentialRevoked" to (preferences.getLong(KEY_REVOKED_AT, 0L) > 0L),
+        "credentialRevoked" to credentialRevoked(),
     )
 
     companion object {
@@ -437,7 +434,7 @@ data class TelemetryConfig(
 )
 
 /** Small encrypted-file store backed by a non-exportable Android Keystore key. */
-class TelemetryConfigStore(private val context: Context) {
+class TelemetryConfigStore(private val context: Context) : PairingSessionStore<TelemetryConfig> {
     fun write(config: TelemetryConfig) = locked {
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, key())
@@ -448,7 +445,15 @@ class TelemetryConfigStore(private val context: Context) {
             .put(cipher.iv)
             .put(encrypted)
             .array()
-        file().writeBytes(bytes)
+        // Write a sibling file and rename it over the old one: a reader (or a crash) sees the
+        // old pairing or the new one, never a half-written file.
+        val target = file()
+        val staging = File(target.parentFile, target.name + ".tmp")
+        staging.writeBytes(bytes)
+        if (!staging.renameTo(target)) {
+            staging.delete()
+            throw java.io.IOException("pairing could not be stored")
+        }
     }
 
     fun read(): TelemetryConfig? {
@@ -478,11 +483,14 @@ class TelemetryConfigStore(private val context: Context) {
      * definitively refuses the credential; a pairing written after that request started is
      * a new session and is left alone.
      */
-    fun clearIfCurrent(expected: TelemetryConfig): Boolean = locked {
-        val current = read() ?: return@locked false
-        if (current != expected) return@locked false
-        file().delete()
+    override fun forgetIfCurrent(expected: TelemetryConfig): ForgetResult = locked {
+        val current = read()
+        if (current != null && current != expected) return@locked ForgetResult.SUPERSEDED
+        val target = file()
+        if (target.delete() || !target.exists()) ForgetResult.FORGOTTEN else ForgetResult.FAILED
     }
+
+    override fun current(): TelemetryConfig? = read()
 
     private fun file(): File = File(context.noBackupFilesDir, "child-telemetry.v1")
 
@@ -510,7 +518,7 @@ class TelemetryConfigStore(private val context: Context) {
          * service each create their own store, and a per-instance lock would let a new
          * pairing be written between a revocation's check and its delete.
          */
-        private val LOCK = Any()
+        val LOCK = Any()
 
         fun <T> locked(block: () -> T): T = synchronized(LOCK, block)
     }

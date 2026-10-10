@@ -14,9 +14,9 @@ cd "$ROOT"
 
 MAIN="app/android/app/src/main/kotlin/com/familyos/family_os"
 TEST="app/android/app/src/test/kotlin/com/familyos/family_os"
-SOURCES=("$MAIN/LocationFixProtocol.kt")
-TESTS=("$TEST/LocationFixProtocolTest.kt")
-TEST_CLASSES=("com.familyos.family_os.LocationFixProtocolTest")
+SOURCES=("$MAIN/LocationFixProtocol.kt" "$MAIN/LocationSessionCoordinator.kt")
+TESTS=("$TEST/LocationFixProtocolTest.kt" "$TEST/LocationSessionCoordinatorTest.kt")
+TEST_CLASSES=("com.familyos.family_os.LocationFixProtocolTest" "com.familyos.family_os.LocationSessionCoordinatorTest")
 
 for source in "${SOURCES[@]}"; do
   if grep -qE '^import android\.|^import androidx\.' "$source"; then

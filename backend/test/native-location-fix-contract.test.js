@@ -96,10 +96,10 @@ test('the legacy heartbeat never carries coordinates the W3 route refused or a m
   const legacy = service.indexOf('/telemetry"');
   assert.ok(gate > 0, 'the heartbeat must be gated on the fix outcome');
   assert.ok(legacy > gate, 'the gate must come before the legacy telemetry call');
-  // Revocation handling and the pairing screen share one process-wide lock.
-  assert.match(service, /private val LOCK = Any\(\)/);
-  const activity = await readFile(join(nativeSource, 'MainActivity.kt'), 'utf8');
-  assert.match(activity, /TelemetryConfigStore\.locked \{/);
+  // The revocation rules themselves are behaviour-tested on the JVM
+  // (LocationSessionCoordinatorTest); here we only pin that the service delegates to them.
+  assert.match(service, /session\.settle\(usedConfig, outcome\)/);
+  assert.match(service, /session\.mayReport\(config\)/);
 });
 
 test('the foreground notification says the same thing in Arabic and English, and matches the code', async () => {
