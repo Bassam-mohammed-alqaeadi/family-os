@@ -95,6 +95,23 @@ test('the category classifier answers with a category or with nothing', () => {
   assert.equal(classifyHost(''), null);
 });
 
+test('the former *.example fixture hosts classify the same through label tokens alone (S1)', () => {
+  // These hosts used to be an exact-match table inside production code. The table was
+  // removed; this pins that nothing about their classification changed.
+  const expected = {
+    'adult.example': 'adults',
+    'gambling.example': 'gambling',
+    'casino.example': 'gambling',
+    'violence.example': 'violence',
+    'social.example': 'social',
+    'games.example': 'games',
+    'streaming.example': 'streaming',
+  };
+  for (const [host, category] of Object.entries(expected)) {
+    assert.equal(classifyHost(host), category, host);
+  }
+});
+
 // ── the honest shield ──────────────────────────────────────────────────────────────────
 
 test('silence is not health: a device that never reported is unverified', () => {
