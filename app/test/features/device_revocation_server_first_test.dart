@@ -137,6 +137,8 @@ void main() {
         EnrollmentState.enrolled,
       );
       expect(find.text('Could not save — try again'), findsOneWidget);
+      // Burn the toast's auto-dismiss timer before the tree is disposed.
+      await tester.pump(const Duration(milliseconds: 2600));
     },
   );
 

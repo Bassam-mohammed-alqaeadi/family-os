@@ -438,6 +438,8 @@ void main() {
     expect(find.text('تعذر الحفظ — حاول مرة أخرى'), findsOneWidget);
     expect(find.byType(AppErrorState), findsNothing);
     expect(find.byType(PlaceholderScreen), findsNothing);
+    // Burn the toast's auto-dismiss timer before the tree is disposed.
+    await tester.pump(const Duration(milliseconds: 2600));
   });
 }
 
