@@ -95,7 +95,16 @@ const PAIRED_DEVICE = {
   version: 1,
 };
 
-const REVOKED_DEVICE = { ...PAIRED_DEVICE, credential_revoked_at: '2026-10-06T12:00:00.000Z', version: 2 };
+// What the guarded UPDATE ... RETURNING really hands back since slice 3: the revocation
+// statement itself empties the location snapshot, so the returned row cannot carry one.
+const REVOKED_DEVICE = {
+  ...PAIRED_DEVICE,
+  credential_revoked_at: '2026-10-06T12:00:00.000Z',
+  location_lat: null,
+  location_lng: null,
+  location_label: null,
+  version: 2,
+};
 
 function sqlOf(transcript, needle) {
   return transcript.filter((entry) => entry.sql.includes(needle));
@@ -327,4 +336,104 @@ test('a request still in progress is not answered with an empty success', async 
     () => revoke({ pool, requestHash: 'hash-1' }),
     (error) => error.status === 409 && error.code === 'request_in_progress',
   );
+});
+
+// ── Safety slice 3: a revocation really deletes ───────────────────────────────────────
+//
+// Cutting a handset off used to stop the future and keep the past: the trail it had
+// already reported stayed in the database, and its last-known position stayed in the
+// device row the guardian screen reads next. These laws pin the deletion into the same
+// single transaction as the revocation itself, in the order the foreign keys force.
+
+test('the revocation statement itself empties the device location snapshot', async () => {
+  const pool = recordingPool({
+    membership: { id: 'membership-primary', role: 'primary_guardian' },
+    device: PAIRED_DEVICE,
+    updatedDevice: REVOKED_DEVICE,
+  });
+
+  await revoke({ pool });
+
+  const [update] = sqlOf(pool.transcript, 'UPDATE family_child_devices');
+  assert.match(update.sql, /location_lat = NULL/);
+  assert.match(update.sql, /location_lng = NULL/);
+  assert.match(update.sql, /location_label = NULL/);
+  // A time is not a position: the honest fact that the device once reported stays.
+  assert.doesNotMatch(update.sql, /last_seen_at = NULL/);
+});
+
+test('the trail deletion is scoped to the family and the device, in the order the foreign keys force', async () => {
+  const pool = recordingPool({
+    membership: { id: 'membership-primary', role: 'primary_guardian' },
+    device: PAIRED_DEVICE,
+    updatedDevice: REVOKED_DEVICE,
+  });
+
+  await revoke({ pool });
+
+  const [crossings] = sqlOf(pool.transcript, 'DELETE FROM family_geofence_events');
+  assert.ok(crossings, 'the crossings derived from the trail are deleted with it');
+  assert.match(crossings.sql, /family_id = \$1 AND device_id = \$2/);
+  assert.deepEqual(crossings.params, [FAMILY_ID, DEVICE_ID]);
+
+  const [sos] = sqlOf(pool.transcript, 'UPDATE family_sos_alerts');
+  assert.ok(sos, 'incidents keep their rows and lose only the reference');
+  assert.match(sos.sql, /SET fix_id = NULL/);
+
+  const [fixes] = sqlOf(pool.transcript, 'DELETE FROM family_child_location_fixes');
+  assert.ok(fixes, 'the trail itself is deleted');
+  assert.match(fixes.sql, /family_id = \$1 AND device_id = \$2/);
+  assert.deepEqual(fixes.params, [FAMILY_ID, DEVICE_ID]);
+
+  // The order is the schema's, not a style choice: both referencing tables are RESTRICT
+  // on the fix, so the trail deletion must come last or it fails.
+  const order = pool.transcript.map((entry) => entry.sql);
+  assert.ok(
+    order.indexOf(crossings.sql) < order.indexOf(fixes.sql) &&
+      order.indexOf(sos.sql) < order.indexOf(fixes.sql),
+    'the derived records and the references must go before the trail they point at',
+  );
+
+  // One transaction still: the deletion either all commits with the revocation or none
+  // of it does. A revocation that committed while the deletion rolled back would be the
+  // exact lie slice 3 exists to remove.
+  const control = order.filter((sql) => ['BEGIN', 'COMMIT', 'ROLLBACK'].includes(sql));
+  assert.deepEqual(control, ['BEGIN', 'COMMIT']);
+});
+
+test('the erasure is audited as its own fact, and is not an announcement', async () => {
+  const pool = recordingPool({
+    membership: { id: 'membership-primary', role: 'primary_guardian' },
+    device: PAIRED_DEVICE,
+    updatedDevice: REVOKED_DEVICE,
+  });
+
+  await revoke({ pool });
+
+  const audits = sqlOf(pool.transcript, 'INSERT INTO family_audit_events');
+  assert.equal(audits.length, 2, 'the revocation and the deletion each leave their own row');
+  assert.ok(
+    audits.some((entry) => entry.sql.includes('family.child_device_location_erased')),
+    'the audit trail says deleted — and carries no coordinates and no counts to say it with',
+  );
+  const outbox = sqlOf(pool.transcript, 'INSERT INTO outbox_events');
+  assert.equal(outbox.length, 1, 'only the revocation is announced; the erasure is a fact about data');
+  assert.ok(outbox[0].params.includes('family.child_device_revoked'));
+});
+
+test('a refused revocation deletes nothing', async () => {
+  const pool = recordingPool({
+    membership: { id: 'membership-primary', role: 'primary_guardian' },
+    device: { ...PAIRED_DEVICE, credential_revoked_at: '2026-10-05T08:00:00.000Z' },
+    updatedDevice: REVOKED_DEVICE,
+  });
+
+  await assert.rejects(
+    () => revoke({ pool }),
+    (error) => error.status === 409 && error.code === 'device_already_revoked',
+  );
+
+  assert.equal(sqlOf(pool.transcript, 'DELETE FROM family_child_location_fixes').length, 0);
+  assert.equal(sqlOf(pool.transcript, 'DELETE FROM family_geofence_events').length, 0);
+  assert.equal(sqlOf(pool.transcript, 'UPDATE family_sos_alerts').length, 0);
 });

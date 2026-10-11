@@ -99,7 +99,24 @@ export function createDeviceRevocation({ port }) {
           );
         }
 
+        // Slice 3: cutting a device off really deletes what it reported. The trail it
+        // stored, the crossings derived from that trail, and (in the revocation
+        // statement itself) the device's own location snapshot. What an incident points
+        // at keeps the incident and loses the reference: the emergency the family lived
+        // through is a safety record, the sample it named is location data.
+        const erased = await port.eraseDeviceLocation(tx, { familyId, deviceId });
+        erased.deviceSnapshots =
+          device.location_lat !== null || device.location_lng !== null || device.location_label !== null
+            ? 1
+            : 0;
+
         await port.audit(tx, {
+          familyId,
+          actorMembershipId: actor.id,
+          correlationId,
+          subjectId: deviceId,
+        });
+        await port.auditErasure(tx, {
           familyId,
           actorMembershipId: actor.id,
           correlationId,
@@ -107,9 +124,11 @@ export function createDeviceRevocation({ port }) {
         });
         await port.fact(tx, { familyId, childId, deviceId, correlationId });
 
-        // The response carries the device's new condition, so a guardian's screen
-        // needs no second request to show that the device is now cut off.
-        return { device: toGuardianDeviceView(revoked, { now: Date.now() }) };
+        // The response carries the device's new condition — with its location snapshot
+        // already empty, because the revocation statement itself emptied it — so a
+        // guardian's screen needs no second request to show that the device is now cut
+        // off, and cannot keep drawing a last-known position that no longer exists.
+        return { device: toGuardianDeviceView(revoked, { now: Date.now() }), erased };
       },
     );
   };
@@ -189,11 +208,18 @@ export function postgresDeviceRevocationPort(store) {
       // simultaneous revocations cannot both succeed and cannot record two
       // different actors or times. NOW() is the database's clock: this server
       // never invents a revocation time.
+      //
+      // The same statement empties the device's location snapshot (slice 3): a cut-off
+      // handset must not leave "where the child last was" sitting in the device row the
+      // guardian screen reads next. last_seen_at stays — a time is not a position.
       const { rows } = await client.query(
         `UPDATE family_child_devices
             SET credential_revoked_at = NOW(),
                 revoked_by_membership_id = $2,
                 revocation_reason = $3,
+                location_lat = NULL,
+                location_lng = NULL,
+                location_label = NULL,
                 version = version + 1
           WHERE id = $1
             AND credential_hash IS NOT NULL
@@ -205,6 +231,38 @@ export function postgresDeviceRevocationPort(store) {
       return rows[0] ?? null;
     },
 
+    async eraseDeviceLocation(client, { familyId, deviceId }) {
+      // The order is the schema's, not a choice: crossings reference fixes through a
+      // composite RESTRICT key and incidents reference them by primary key, so the
+      // derived records and the references go first or the trail deletion fails.
+      const crossings = await client.query(
+        `DELETE FROM family_geofence_events
+          WHERE family_id = $1 AND device_id = $2`,
+        [familyId, deviceId],
+      );
+      const sosReferences = await client.query(
+        `UPDATE family_sos_alerts
+            SET fix_id = NULL
+          WHERE family_id = $1
+            AND fix_id IS NOT NULL
+            AND fix_id IN (
+              SELECT id FROM family_child_location_fixes
+               WHERE family_id = $1 AND device_id = $2
+            )`,
+        [familyId, deviceId],
+      );
+      const fixes = await client.query(
+        `DELETE FROM family_child_location_fixes
+          WHERE family_id = $1 AND device_id = $2`,
+        [familyId, deviceId],
+      );
+      return {
+        locationFixes: fixes.rowCount ?? 0,
+        geofenceEvents: crossings.rowCount ?? 0,
+        sosFixReferences: sosReferences.rowCount ?? 0,
+      };
+    },
+
     async audit(client, { familyId, actorMembershipId, correlationId, subjectId }) {
       await store.appendAuditAndOutbox(client, {
         familyId,
@@ -214,6 +272,21 @@ export function postgresDeviceRevocationPort(store) {
         subjectType: 'family_child_device',
         subjectId,
       });
+    },
+
+    /**
+     * The erasure's own audit row, and deliberately not an outbox row: the revocation
+     * is the family event (announced above), the deletion is a fact about data. It says
+     * "deleted" and nothing else — no coordinates, no counts — because an audit trail
+     * carrying the erased picture would rebuild what the family just removed.
+     */
+    async auditErasure(client, { familyId, actorMembershipId, correlationId, subjectId }) {
+      await client.query(
+        `INSERT INTO family_audit_events
+           (id, family_id, actor_membership_id, correlation_id, event_type, subject_type, subject_id)
+         VALUES (gen_random_uuid(), $1, $2, $3, 'family.child_device_location_erased', 'family_child_device', $4)`,
+        [familyId, actorMembershipId, correlationId, subjectId],
+      );
     },
 
     async fact(client, { familyId, childId, deviceId, correlationId }) {

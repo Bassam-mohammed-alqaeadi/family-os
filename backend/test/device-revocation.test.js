@@ -11,6 +11,7 @@
 // device-revocation-sql.test.js against a recording pool, because a statement that
 // is never run is not evidence.
 import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
 import test from 'node:test';
 import { createApp } from '../src/app.js';
 import { createDeviceRevocation } from '../src/device-revocation.js';
@@ -177,6 +178,65 @@ test('a revoked credential actually stops the device reporting', async () => {
     });
     assert.equal(after.status, 401);
     assert.equal((await after.json()).error.code, 'invalid_device_credential');
+  });
+});
+
+test('a revocation really deletes what the handset reported, and empties its snapshot', async () => {
+  const { app, store } = revocationApp();
+  await withServer(app, async (baseUrl) => {
+    const { family, child, device, deviceCredential } = await seedPairedDevice(baseUrl);
+
+    // The device reports, so there is a real snapshot to empty and a real trail to delete.
+    const telemetry = await request(baseUrl, `/v1/devices/${device.id}/telemetry`, {
+      method: 'POST',
+      authorization: `Device ${deviceCredential}`,
+      body: { batteryLevel: 80, batteryStatus: 'charging', locationLat: 15.35, locationLng: 44.2, locationLabel: 'GPS 15.35, 44.2' },
+    });
+    assert.equal(telemetry.status, 200);
+
+    // A sibling child with her own handset: the deletion must be scoped to the device
+    // that was cut off, not to the family's whole memory.
+    const siblingResponse = await request(baseUrl, `/v1/families/${family.id}/children`, {
+      method: 'POST',
+      authorization: token(PRIMARY),
+      idempotencyKey: 'revocation-erasure-sibling',
+      body: { displayName: 'Sibling', ageYears: 7, avatarEmoji: '🦊', themeColor: 'mint' },
+    });
+    const siblingId = (await siblingResponse.json()).child.id;
+    const siblingFix = { id: randomUUID(), familyId: family.id, childId: siblingId, deviceId: randomUUID() };
+    store.locationFixes.push(siblingFix);
+
+    const trailFix = { id: randomUUID(), familyId: family.id, childId: child.id, deviceId: device.id };
+    store.locationFixes.push(trailFix);
+    store.geofenceEvents.push({ id: randomUUID(), familyId: family.id, childId: child.id, deviceId: device.id, fixId: trailFix.id });
+    store.sosAlerts.push({ id: randomUUID(), familyId: family.id, childId: child.id, fixId: trailFix.id, status: 'resolved' });
+
+    const response = await revoke(baseUrl, { familyId: family.id, childId: child.id, deviceId: device.id });
+    assert.equal(response.status, 200);
+    const body = await response.json();
+
+    // The device's own trail, its crossings, and the references an incident held are gone…
+    assert.deepEqual(body.erased, {
+      locationFixes: 1,
+      geofenceEvents: 1,
+      sosFixReferences: 1,
+      deviceSnapshots: 1,
+    });
+    assert.deepEqual(store.locationFixes, [siblingFix], 'the sibling child\'s trail is not this device\'s business');
+    assert.equal(store.geofenceEvents.length, 0);
+    assert.equal(store.sosAlerts.length, 1, 'the incident stays');
+    assert.equal(store.sosAlerts[0].fixId, null, 'the measurement it pointed at is honestly gone');
+
+    // …and the response cannot keep drawing a last-known position that no longer exists.
+    assert.equal(body.device.locationLat, null);
+    assert.equal(body.device.locationLng, null);
+    assert.equal(body.device.locationLabel, null);
+    assert.equal(store.devices.get(device.id).locationLat, null);
+
+    // The erasure is audited as a fact — and, unlike the revocation itself, is not an
+    // announcement: no outbox row carries it.
+    assert.equal(store.audit.filter((entry) => entry.eventType === 'family.child_device_location_erased').length, 1);
+    assert.equal(store.outbox.filter((entry) => entry.eventType === 'family.child_device_location_erased').length, 0);
   });
 });
 

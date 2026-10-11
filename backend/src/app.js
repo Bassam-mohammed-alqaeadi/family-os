@@ -8,6 +8,7 @@ import { familyInviteCodesFor } from './family-invite-codes.js';
 import { safeZonesFor } from './safe-zones.js';
 import { locationSurfaceFor } from './location-telemetry.js';
 import { childConsentsFor } from './child-consents.js';
+import { dataErasureFor } from './data-erasure.js';
 import { sosEmergencyFor } from './sos-emergency.js';
 import { screenTimeFor } from './screen-time.js';
 import { webFilterFor } from './web-filter.js';
@@ -176,6 +177,11 @@ export function createApp({
     // Safety slice 2. The consent ledger is reached through the same published store
     // helpers and the same one credential check as every device route.
     childConsents = childConsentsFor(store, { credentialMatches: capabilityMatches }),
+    // Safety slice 3. Retention bounds the trail by time; this bounds it by right:
+    // the guardian's erasure demand and the removal of a child from the family. Same
+    // arrangement as every destructive operation: primary-guardian-only, idempotent,
+    // one transaction, data access through the store's published helpers.
+    dataErasure = dataErasureFor(store),
     // W4. The emergency surface reaches the database through the same published helpers,
     // and its credential check is the one the device routes already use.
     sos = sosEmergencyFor(store, { credentialMatches: capabilityMatches }),
@@ -457,6 +463,71 @@ export function createApp({
                 }),
             });
             response.status(201).json(result);
+        }),
+    );
+
+    // ── Safety slice 3 — retention 90 days, and deletion that actually deletes ────────
+    //
+    // Removing a child from the family: the profile is archived with provenance, every
+    // location fact is really deleted, the consent ledger is frozen by withdrawal, and
+    // every paired handset is cut off — one transaction, primary guardian only, and
+    // idempotent like every destructive operation: a retry with the same key replays the
+    // first answer, a second removal under a new key is refused rather than overwriting
+    // who removed the child, or when.
+    app.delete(
+        '/v1/families/:familyId/children/:childId',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            requireNoQueryParameters(request.query);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await dataErasure.removeFamilyChild({
+                principal: request.principal,
+                familyId,
+                childId,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'family_child.remove',
+                    principal: request.principal,
+                    input: { familyId, childId },
+                }),
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // The guardian's erasure demand: the child stays in the family, and what was
+    // collected about where they have been is gone — trail, crossings, and device
+    // snapshots. Consent is deliberately untouched; stopping collection is withdrawal
+    // (slice 2), erasing what was collected is this. Repeat-safe: erasing data that is
+    // already gone answers with honest zeros, not with an error.
+    app.post(
+        '/v1/families/:familyId/children/:childId/data-erasure',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            requireNoQueryParameters(request.query);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await dataErasure.eraseChildLocationData({
+                principal: request.principal,
+                familyId,
+                childId,
+                idempotencyKey,
+                correlationId: request.correlationId,
+                requestHash: requestFingerprint({
+                    action: 'family_child.data_erasure',
+                    principal: request.principal,
+                    input: { familyId, childId },
+                }),
+            });
+            response.status(200).json(result);
         }),
     );
 

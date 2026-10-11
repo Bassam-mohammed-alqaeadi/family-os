@@ -892,7 +892,7 @@ export function postgresSosPort(store, { credentialMatches }) {
 
     async readChild(client, { familyId, childId }) {
       const { rows } = await client.query(
-        `SELECT id FROM family_children WHERE family_id = $1 AND id = $2`,
+        `SELECT id FROM family_children WHERE family_id = $1 AND id = $2 AND archived_at IS NULL`,
         [familyId, childId],
       );
       return rows[0] ?? null;
