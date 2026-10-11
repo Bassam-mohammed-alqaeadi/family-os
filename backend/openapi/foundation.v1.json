@@ -398,6 +398,124 @@
         }
       }
     },
+    "/v1/families/{familyId}/children/{childId}": {
+      "delete": {
+        "tags": [
+          "Families"
+        ],
+        "operationId": "removeFamilyChild",
+        "summary": "Remove a child from the family, and really delete their location data",
+        "description": "Safety slice 3. Removing a child is one transaction with four facts: the profile is ARCHIVED with provenance (who removed the child, and when — the archival row stays because the safety record and the consent ledger still name the child), every location fact is really deleted (trail samples, the crossings derived from them, and the device snapshots of where the child last was), the consent ledger is frozen by withdrawal (never erased — it is compliance evidence), and every paired handset is cut off so a device of a child who is gone cannot keep reporting. Primary guardian only, idempotent: a retry with the same Idempotency-Key replays the first answer, and a second removal under a different key is refused with 409 rather than overwriting the original removal's provenance. SOS incidents are kept — an emergency the family lived through is a safety record — but the fix reference an incident held is set to null: the measurement it pointed at is honestly gone. The audit trail records that data was deleted, never what was deleted.",
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Child removed: the archival fact, the erasure counts, and what the removal froze and cut off. Or the durable idempotent replay of that removal.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyChildRemovalResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/data-erasure": {
+      "post": {
+        "tags": [
+          "Families"
+        ],
+        "operationId": "eraseFamilyChildLocationData",
+        "summary": "Erase the location data collected about one child, on the guardian's demand",
+        "description": "Safety slice 3. The child stays in the family; what was collected about where they have been does not. One transaction really deletes the trail samples, the geofence crossings derived from them (an arrival alert is a statement about where the child was, so it is location data), and the device snapshots of the last known position; SOS incidents stay and lose only the fix reference they held. Consent is deliberately untouched: stopping collection is withdrawal (slice 2), erasing what was collected is this operation — one button must not silently do the other. Primary guardian only, idempotent, and repeat-safe by nature: erasing data that is already gone answers 200 with honest zero counts rather than an error. The audit trail records that data was deleted, never what was deleted — no coordinates, no counts — because an audit trail carrying the erased picture would rebuild exactly what the family demanded be gone.",
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Erasure executed: what was deleted, counted. Or the durable idempotent replay of that erasure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildDataErasureResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
     "/v1/families/{familyId}/children/{childId}/devices": {
       "post": {
         "tags": [
@@ -1805,7 +1923,7 @@
         ],
         "operationId": "revokeFamilyChildDevice",
         "summary": "Cut one child device off as the active primary guardian",
-        "description": "The write half of the device lifecycle. Before this operation existed the server refused telemetry from a revoked credential with 401 but nothing could set the revocation, so a lost or stolen handset stayed trusted indefinitely. Idempotent: a retry with the same Idempotency-Key replays the first answer, and a second revocation under a different key is refused rather than overwriting who revoked the device and when. The response carries the device's derived condition so a guardian screen needs no second request.",
+        "description": "The write half of the device lifecycle. Before this operation existed the server refused telemetry from a revoked credential with 401 but nothing could set the revocation, so a lost or stolen handset stayed trusted indefinitely. Since safety slice 3 a revocation also really deletes: the trail the handset stored, the crossings derived from that trail, and the device's own last-known-position snapshot are gone inside the same transaction — the response reports what was deleted, counted, and the device it returns can no longer carry a position. SOS incidents keep their rows and lose only the fix references they held. Idempotent: a retry with the same Idempotency-Key replays the first answer, and a second revocation under a different key is refused rather than overwriting who revoked the device and when. The response carries the device's derived condition so a guardian screen needs no second request.",
         "security": [
           {
             "oidcBearer": []
@@ -8793,11 +8911,116 @@
       "DeviceRevocationResponse": {
         "type": "object",
         "required": [
-          "device"
+          "device",
+          "erased"
         ],
         "properties": {
           "device": {
             "$ref": "#/components/schemas/GuardianDeviceLifecycle"
+          },
+          "erased": {
+            "$ref": "#/components/schemas/LocationErasureSummary"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationErasureSummary": {
+        "type": "object",
+        "description": "What one deletion really deleted, counted. The counts answer the guardian's demand with evidence; the audit trail deliberately carries only the fact that data was deleted, never these numbers and never any content.",
+        "required": [
+          "locationFixes",
+          "geofenceEvents",
+          "deviceSnapshots",
+          "sosFixReferences"
+        ],
+        "properties": {
+          "locationFixes": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Trail samples deleted."
+          },
+          "geofenceEvents": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Crossings deleted. They are derived from the trail — an arrival alert is a statement about where the child was — so they go with it."
+          },
+          "deviceSnapshots": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Device rows whose last-known-position snapshot (location_lat, location_lng, location_label) was emptied."
+          },
+          "sosFixReferences": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "SOS incidents that kept their row and lost their fix reference: the emergency the family lived through is a safety record, the measurement it pointed at is deleted."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ChildDataErasureResponse": {
+        "type": "object",
+        "required": [
+          "childId",
+          "erased"
+        ],
+        "properties": {
+          "childId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "erased": {
+            "$ref": "#/components/schemas/LocationErasureSummary"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RemovedFamilyChild": {
+        "type": "object",
+        "description": "The archival fact of a removal: the child the roster no longer shows, with the moment they left it.",
+        "required": [
+          "id",
+          "displayName",
+          "archivedAt"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "archivedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FamilyChildRemovalResponse": {
+        "type": "object",
+        "required": [
+          "child",
+          "erased",
+          "consentsWithdrawn",
+          "devicesRevoked"
+        ],
+        "properties": {
+          "child": {
+            "$ref": "#/components/schemas/RemovedFamilyChild"
+          },
+          "erased": {
+            "$ref": "#/components/schemas/LocationErasureSummary"
+          },
+          "consentsWithdrawn": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Active consents frozen by withdrawal. The ledger rows stay — who agreed to what and when is compliance evidence, not location data."
+          },
+          "devicesRevoked": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Paired handsets cut off inside the same transaction. Unclaimed device rows have no credential to revoke and are not counted."
           }
         },
         "additionalProperties": false

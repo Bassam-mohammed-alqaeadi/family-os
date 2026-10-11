@@ -487,10 +487,14 @@ export class PostgresFoundationStore {
           'Only guardian memberships can access the parent children control centre.',
         );
       }
+      // The roster is the active family. A child removed from the family (archived,
+      // migration 116) leaves every read and refuses every new write; the archival row
+      // itself stays, with who and when, because the safety record and the consent
+      // ledger still name the child and must keep answering honestly about it.
       const children = await client.query(
         `SELECT id, display_name, age_years, avatar_emoji, theme_color, version, created_at, updated_at
          FROM family_children
-         WHERE family_id = $1
+         WHERE family_id = $1 AND archived_at IS NULL
          ORDER BY created_at ASC, id ASC`,
         [familyId],
       );
@@ -600,7 +604,7 @@ export class PostgresFoundationStore {
       // The scoped foreign key also enforces this at write time. This explicit
       // check yields an intentional API result instead of a driver error.
       const child = await client.query(
-        'SELECT id FROM family_children WHERE family_id = $1 AND id = $2',
+        'SELECT id FROM family_children WHERE family_id = $1 AND id = $2 AND archived_at IS NULL',
         [familyId, childId],
       );
       if (child.rowCount === 0) {
@@ -658,7 +662,7 @@ export class PostgresFoundationStore {
         throw new HttpError(409, 'pairing_code_not_replayable', 'A pairing code was already issued. Create a new pairing code.');
       }
       const child = await client.query(
-        'SELECT id FROM family_children WHERE family_id = $1 AND id = $2',
+        'SELECT id FROM family_children WHERE family_id = $1 AND id = $2 AND archived_at IS NULL',
         [familyId, childId],
       );
       if (child.rowCount === 0) {

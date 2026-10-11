@@ -28,6 +28,12 @@ export class MemoryFoundationStore {
     this.children = new Map();
     this.devices = new Map();
     this.devicePairings = new Map();
+    // Slice 3: the location facts an erasure or a revocation must really delete. The
+    // in-memory store keeps them as plain arrays because that is exactly what the
+    // PostgreSQL tables are to the erasure port: rows to count and remove.
+    this.locationFixes = [];
+    this.geofenceEvents = [];
+    this.sosAlerts = [];
     this.audit = [];
     this.outbox = [];
     this.aiEvents = [];
@@ -225,7 +231,7 @@ export class MemoryFoundationStore {
     }
     return {
       children: [...this.children.values()]
-        .filter((child) => child.familyId === familyId)
+        .filter((child) => child.familyId === familyId && child.archivedAt == null)
         .sort((left, right) => left.createdAt.localeCompare(right.createdAt) || left.id.localeCompare(right.id))
         .map((child) => this.familyChildView(child)),
     };
@@ -257,6 +263,8 @@ export class MemoryFoundationStore {
         version: 1,
         createdAt: now,
         updatedAt: now,
+        archivedAt: null,
+        archivedByMembershipId: null,
       };
       this.children.set(child.id, child);
       this.recordAudit(familyId, actor.id, correlationId, 'family.child_created', 'family_child', child.id);
@@ -304,7 +312,7 @@ export class MemoryFoundationStore {
     const actor = this.activeMembership(familyId, principal.subject, true);
     return this.idempotent(`family-child-device:register:${familyId}:${childId}`, idempotencyKey, requestHash, () => {
       const child = this.children.get(childId);
-      if (!child || child.familyId !== familyId) {
+      if (!child || child.familyId !== familyId || child.archivedAt != null) {
         throw new HttpError(404, 'family_child_not_found', 'Child profile was not found in this family.');
       }
       const now = this.now().toISOString();
@@ -339,7 +347,7 @@ export class MemoryFoundationStore {
   }) {
     const actor = this.activeMembership(familyId, principal.subject, true);
     const child = this.children.get(childId);
-    if (!child || child.familyId !== familyId) {
+    if (!child || child.familyId !== familyId || child.archivedAt != null) {
       throw new HttpError(404, 'family_child_not_found', 'Child profile was not found in this family.');
     }
     const idempotencyRecordKey = `family-device-pairing:create:${familyId}:${childId}:${idempotencyKey}`;

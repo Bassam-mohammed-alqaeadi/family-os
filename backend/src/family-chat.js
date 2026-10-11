@@ -1444,7 +1444,7 @@ export function postgresFamilyChatPort(store, { credentialMatches }) {
 
     async readChild(client, { familyId, childId }) {
       const { rows } = await client.query(
-        `SELECT id FROM family_children WHERE family_id = $1 AND id = $2`,
+        `SELECT id FROM family_children WHERE family_id = $1 AND id = $2 AND archived_at IS NULL`,
         [familyId, childId],
       );
       return rows[0] ?? null;
@@ -1474,7 +1474,7 @@ export function postgresFamilyChatPort(store, { credentialMatches }) {
          SELECT 'child'::text AS participant_kind, child.id AS participant_id,
                 'child'::text AS membership_role, child.display_name AS child_display_name
            FROM family_children child
-          WHERE child.family_id = $1
+          WHERE child.family_id = $1 AND child.archived_at IS NULL
           ORDER BY participant_kind, participant_id`,
         [familyId],
       );

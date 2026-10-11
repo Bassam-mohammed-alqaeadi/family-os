@@ -97,4 +97,8 @@ export const FOUNDATION_SCHEMA_MIGRATIONS = Object.freeze([
     name: '115_family_invite_codes.sql',
     sha256: '08a971388e6e66d359424500ac69e3ea375963c309532af87b77b53815196006',
   }),
+  Object.freeze({
+    name: '116_location_retention_erasure.sql',
+    sha256: 'c244cb7bb986f6e16f27606f7b984cd27361dd43b23fafb001a8cf95654dcfaa',
+  }),
 ]);

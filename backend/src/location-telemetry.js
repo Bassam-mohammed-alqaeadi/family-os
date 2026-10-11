@@ -39,8 +39,15 @@ import { HttpError } from './http-error.js';
  * can check.
  */
 
-/** How long a trail sample is kept. Enforced on every write, per family. */
-export const LOCATION_RETENTION_DAYS = 30;
+/**
+ * How long a trail sample is kept. Enforced on every write, per family.
+ *
+ * 90 days is the owner's decision (2026-10-10, safety phase §2), raised from the 30 the
+ * table shipped with. Bounded by construction as before — and bounded from the other side
+ * by the erasure surface (data-erasure.js), which is what makes deletion a right and not
+ * only a schedule.
+ */
+export const LOCATION_RETENTION_DAYS = 90;
 
 /**
  * How long ago a device may have reported and still count as live. Deliberately generous:
@@ -655,8 +662,13 @@ export function postgresLocationPort(store, { credentialMatches }) {
       // one for where each child stands relative to each zone. The zone state is derived
       // from the crossing log, never from a stored flag.
       const [children, devices, latest, zoneState, zoneNames] = await Promise.all([
+        // Archived children (removed from the family, migration 116) leave the live
+        // picture entirely — their devices are cut off in the same transaction that
+        // archived them, so a row here could only ever be a child who is gone.
         client.query(
-          `SELECT id, display_name, avatar_emoji FROM family_children WHERE family_id = $1 ORDER BY created_at ASC, id ASC`,
+          `SELECT id, display_name, avatar_emoji FROM family_children
+            WHERE family_id = $1 AND archived_at IS NULL
+            ORDER BY created_at ASC, id ASC`,
           [familyId],
         ),
         client.query(
@@ -727,10 +739,13 @@ export function postgresLocationPort(store, { credentialMatches }) {
     },
 
     async readChild(client, { familyId, childId }) {
+      // The trail of a removed child is erased in the same transaction that archived the
+      // profile, so this read filters the archive for the same reason the roster does:
+      // an archived child is not found, rather than found-with-nothing.
       const { rows } = await client.query(
         `SELECT id AS child_id, display_name
            FROM family_children
-          WHERE family_id = $1 AND id = $2`,
+          WHERE family_id = $1 AND id = $2 AND archived_at IS NULL`,
         [familyId, childId],
       );
       return rows[0] ?? null;

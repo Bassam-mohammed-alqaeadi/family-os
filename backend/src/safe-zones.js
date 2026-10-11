@@ -319,7 +319,7 @@ export function postgresSafeZonePort(store) {
 
     async readFamilyChildren(client, { familyId, childIds }) {
       const { rows } = await client.query(
-        `SELECT id FROM family_children WHERE family_id = $1 AND id = ANY($2::uuid[])`,
+        `SELECT id FROM family_children WHERE family_id = $1 AND id = ANY($2::uuid[]) AND archived_at IS NULL`,
         [familyId, childIds],
       );
       return rows;

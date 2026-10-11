@@ -429,13 +429,23 @@ test('a real revocation commits, and the device stops being trusted', { skip }, 
       assert.equal(row.rows[0].revocation_reason, 'stolen');
       assert.equal(row.rows[0].version, 2);
 
-      // The audit record, the outbox event and the fact must exist, because they were
-      // written in the same transaction the update committed in.
+      // The audit records, the outbox event and the fact must exist, because they were
+      // written in the same transaction the update committed in. Since slice 3 a
+      // revocation leaves TWO audit rows — the cut-off (announced) and the deletion it
+      // performed (a fact about data, deliberately not announced) — and still exactly
+      // one outbox row.
       const audit = await client.query(
-        `SELECT count(*)::int AS n FROM family_audit_events WHERE subject_id = $1`,
+        `SELECT event_type, count(*)::int AS n FROM family_audit_events
+          WHERE subject_id = $1 GROUP BY event_type ORDER BY event_type`,
         [ids.deviceId],
       );
-      assert.equal(audit.rows[0].n, 1);
+      assert.deepEqual(
+        audit.rows.map((row) => [row.event_type, row.n]),
+        [
+          ['family.child_device_location_erased', 1],
+          ['family.child_device_revoked', 1],
+        ],
+      );
       const outbox = await client.query(`SELECT count(*)::int AS n FROM outbox_events`);
       assert.equal(outbox.rows[0].n, 1);
       const fact = await client.query(
@@ -481,10 +491,11 @@ test('the guard in the WHERE clause survives two real concurrent revocations', {
       assert.equal(rejected[0].reason.code, 'device_already_revoked');
 
       const row = await client.query(
-        `SELECT count(*)::int AS n FROM family_audit_events WHERE subject_id = $1`,
+        `SELECT count(*)::int AS n FROM family_audit_events
+          WHERE subject_id = $1 AND event_type = 'family.child_device_revoked'`,
         [ids.deviceId],
       );
-      assert.equal(row.rows[0].n, 1, 'one instruction produced one audit record');
+      assert.equal(row.rows[0].n, 1, 'one instruction produced one revocation record');
     } finally {
       await store.close();
     }
@@ -1384,7 +1395,7 @@ test('a zone is drawn, a device reports, and the boundary crossing becomes a rec
           `INSERT INTO family_child_location_fixes
              (id, family_id, child_id, device_id, acquisition, location_lat, location_lng,
               accuracy_meters, recorded_at)
-           VALUES (gen_random_uuid(), $1, $2, $3, 'located', 15.3, 44.1, 20, NOW() - INTERVAL '40 days')
+           VALUES (gen_random_uuid(), $1, $2, $3, 'located', 15.3, 44.1, 20, NOW() - INTERVAL '91 days')
            RETURNING id`,
           [familyId, childId, deviceId],
         );
@@ -1421,7 +1432,7 @@ test('a zone is drawn, a device reports, and the boundary crossing becomes a rec
         );
         assert.equal(historyAsGuardian.status, 200);
         assert.equal(historyAsGuardian.body.visibility, 'family_members');
-        assert.equal(historyAsGuardian.body.retentionDays, 30);
+        assert.equal(historyAsGuardian.body.retentionDays, 90);
         assert.equal(historyAsGuardian.body.childId, childId);
         const trail = historyAsGuardian.body.fixes;
         assert.ok(trail.length >= 6, `the trail lost fixes: ${trail.length}`);
@@ -1734,7 +1745,7 @@ test('a child presses the button, the family answers it, and nothing claims a de
         // 2. The sample the press will point at. It is reported while it is still fresh -
         //    a sample older than the window is pruned inside the very write that stores it,
         //    which is the correct behaviour and useless for this test - and then AGED by
-        //    the test, because observing a thirty-day window must not mean waiting thirty
+        //    the test, because observing a ninety-day window must not mean waiting ninety
         //    days. Everything after this point is the real surface.
         const evidenceFixId = 'a1a1a1a1-1111-4111-8111-111111111111';
         const evidence = await reportFix(evidenceFixId, at(-60 * 1000));
@@ -1742,7 +1753,7 @@ test('a child presses the button, the family answers it, and nothing claims a de
         assert.equal(evidence.body.fix.id, evidenceFixId);
         await client.query(
           `UPDATE family_child_location_fixes
-              SET recorded_at = NOW() - INTERVAL '40 days'
+              SET recorded_at = NOW() - INTERVAL '95 days'
             WHERE id = $1`,
           [evidenceFixId],
         );
@@ -2034,7 +2045,7 @@ test('a child presses the button, the family answers it, and nothing claims a de
         //     prune runs inside that same write, and the sample the incident points at is
         //     the one thing it does not delete.
         const secondOldFixId = 'b2b2b2b2-2222-4222-8222-222222222222';
-        const pruned = await reportFix(secondOldFixId, at(-41 * day));
+        const pruned = await reportFix(secondOldFixId, at(-96 * day));
         assert.equal(pruned.status, 201);
         assert.equal(pruned.body.reason, 'stored_out_of_order');
         assert.equal(pruned.body.pruned, 1, 'the unreferenced old sample is deleted');
@@ -4802,7 +4813,9 @@ test('a paired handset reports a fix the family reads back, and only a definitiv
 
         // 10. The guardian cuts the phone off. From then on both routes the service calls
         //     answer 401 `invalid_device_credential` - the only answer on which the handset
-        //     forgets its pairing - and nothing more is stored.
+        //     forgets its pairing - and nothing more is stored. Since slice 3 the cut-off
+        //     also really deletes what WAS stored: the trail this handset reported is gone
+        //     inside the revocation's own transaction.
         const before = await countFixes();
         const revoked = await jsonRequest(
           baseUrl,
@@ -4835,7 +4848,12 @@ test('a paired handset reports a fix the family reads back, and only a definitiv
         });
         assert.equal(lateHeartbeat.status, 401);
         assert.equal(lateHeartbeat.body.error.code, 'invalid_device_credential');
-        assert.equal(await countFixes(), before, 'a revoked handset still wrote to the trail');
+        assert.equal(
+          revoked.body.erased.locationFixes,
+          before,
+          'the revocation really deleted the trail the cut-off handset had stored',
+        );
+        assert.equal(await countFixes(), 0, 'a revoked handset leaves no trail behind');
 
         // 11. Nothing the server printed while doing all this carries a coordinate, the
         //     credential, or the family's identifier.

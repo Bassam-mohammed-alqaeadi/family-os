@@ -53,8 +53,31 @@ export function memoryDeviceRevocationPort(store) {
       device.credentialRevokedAt = store.now().toISOString();
       device.revokedByMembershipId = actorMembershipId;
       device.revocationReason = reasonCode;
+      // Slice 3: the revocation statement itself empties the location snapshot, so the
+      // double must too — a test adapter that kept a position production deletes would
+      // let a suite pass while the guardian screen still drew a last-known place.
+      device.locationLat = null;
+      device.locationLng = null;
+      device.locationLabel = null;
       device.version += 1;
       return asRow(device);
+    },
+    async eraseDeviceLocation(_tx, { familyId, deviceId }) {
+      const inFamily = (row) => row.familyId === familyId && row.deviceId === deviceId;
+      const geofenceEvents = store.geofenceEvents.filter(inFamily).length;
+      store.geofenceEvents = store.geofenceEvents.filter((row) => !inFamily(row));
+      let sosFixReferences = 0;
+      for (const alert of store.sosAlerts) {
+        if (alert.familyId !== familyId || alert.fixId == null) continue;
+        const referenced = store.locationFixes.some((fix) => fix.id === alert.fixId && fix.deviceId === deviceId);
+        if (referenced) {
+          alert.fixId = null;
+          sosFixReferences += 1;
+        }
+      }
+      const locationFixes = store.locationFixes.filter(inFamily).length;
+      store.locationFixes = store.locationFixes.filter((row) => !inFamily(row));
+      return { locationFixes, geofenceEvents, sosFixReferences };
     },
     async audit(_tx, { familyId, actorMembershipId, correlationId, subjectId }) {
       store.recordAudit(
@@ -65,6 +88,19 @@ export function memoryDeviceRevocationPort(store) {
         'family_child_device',
         subjectId,
       );
+    },
+    /** Audit only, deliberately NOT store.recordAudit — that helper also writes an
+     * outbox row, and the erasure is a fact about data, not an announcement. The
+     * revocation itself is the family event; it is the one that gets announced. */
+    async auditErasure(_tx, { familyId, actorMembershipId, correlationId, subjectId }) {
+      store.audit.push({
+        familyId,
+        actorMembershipId,
+        correlationId,
+        eventType: 'family.child_device_location_erased',
+        subjectType: 'family_child_device',
+        subjectId,
+      });
     },
     async fact(_tx, { familyId, childId, deviceId, correlationId }) {
       store.recordAiEvent({
@@ -83,6 +119,13 @@ export function asRow(device) {
     ...device,
     credential_hash: device.credentialHash ?? null,
     credential_revoked_at: device.credentialRevokedAt ?? null,
+    // Slice 3: the operation reads the location snapshot to count what the revocation
+    // emptied, so the double must present it in the same shape the database row has —
+    // an `undefined` where production says `null` would count a snapshot that does not
+    // exist.
+    location_lat: device.locationLat ?? null,
+    location_lng: device.locationLng ?? null,
+    location_label: device.locationLabel ?? null,
   };
 }
 
