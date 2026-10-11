@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'foundation_gate_configuration.dart';
 import 'foundation_gate_http.dart';
+import 'foundation_gate_models.dart';
 
 /// Closed vocabulary of capability keys a child's handset may report (S0 spine).
 ///
