@@ -81,6 +81,11 @@ test('only registered fact types exist and every one is a certain observation', 
     'device.registered',
     'device.paired',
     'device.revoked',
+    'command.dispatched',
+    'command.applied',
+    'command.failed',
+    'command.expired',
+    'device.capability.changed',
   ]);
   for (const eventType of AI_EVENT_TYPES) {
     const definition = aiEventDefinition(eventType);

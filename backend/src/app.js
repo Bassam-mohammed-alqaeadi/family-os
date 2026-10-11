@@ -17,6 +17,8 @@ import { calendarFor } from './calendar.js';
 import { familyChatFor } from './family-chat.js';
 import { chatMediaFor } from './family-chat-media.js';
 import { pushRegistrationsFor } from './push-registrations.js';
+import { deviceCapabilitiesFor } from './device-capabilities.js';
+import { commandLifecycleFor } from './command-lifecycle.js';
 import { createChatEventBus } from './chat-realtime.js';
 import { CHAT_CURRENT_CAPABILITIES } from './family-chat.js';
 import { collaborationPolicyFor } from './collaboration-policy.js';
@@ -78,6 +80,11 @@ import {
     chatMessageQuery,
     chatDeliveredInput,
     chatMediaUploadQuery,
+    deviceCapabilitiesSnapshotInput,
+    commandCreateInput,
+    commandReceiptInput,
+    commandListQuery,
+    pendingCommandsQuery,
 } from './validation.js';
 
 /// Upper bound for one raw upload, the largest allowed kind plus framing. Each kind is checked
@@ -212,6 +219,11 @@ export function createApp({
     pushSender = null,
     chatBus = createChatEventBus(),
     collaborationPolicy = collaborationPolicyFor(store),
+    // S0 spine. The device-capability ledger and the command bus share the same one
+    // credential check as every device route; data access goes through the published
+    // store helpers.
+    deviceCapabilities = deviceCapabilitiesFor(store, { credentialMatches: capabilityMatches }),
+    commands = commandLifecycleFor(store, { credentialMatches: capabilityMatches }),
     preAuthenticationRateLimit = {},
     protectedRateLimit = {},
     inviteRedeemRateLimit = {},
@@ -3146,6 +3158,157 @@ export function createApp({
                 principal: request.principal,
                 familyId,
             }));
+        }),
+    );
+
+    // ── S0 spine — device capabilities ─────────────────────────────────────────────
+    //
+    // The handset reports what it can honestly do right now; guardians read the honest
+    // state per child. The device decides the facts; the UI renders them with a badge,
+    // never a toggle that lies.
+
+    app.post(
+        '/v1/devices/:deviceId/capabilities',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            const { entries } = deviceCapabilitiesSnapshotInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await deviceCapabilities.reportSnapshot({
+                principal: request.principal,
+                deviceCredential: request.deviceCredential,
+                deviceId,
+                entries,
+                idempotencyKey,
+                requestHash: requestFingerprint({
+                    action: 'device.capabilities.snapshot',
+                    principal: request.principal ?? { subject: `device:${deviceId}` },
+                    input: { deviceId, entries: entries.map((e) => e.capabilityKey) },
+                }),
+            });
+            response.status(201).json(result);
+        }),
+    );
+
+    app.get(
+        '/v1/families/:familyId/children/:childId/device-capabilities',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            requireNoQueryParameters(request.query);
+            const result = await deviceCapabilities.readForChild({
+                principal: request.principal,
+                familyId,
+                childId,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // ── S0 spine — command lifecycle ──────────────────────────────────────────────
+    //
+    // Three command types only: lock_now, release_lock, refresh_policy. The create path
+    // is guardian-scoped; receipts are device-scoped; listing is family-scoped with
+    // optional filters. Pull is a device endpoint for fetching accepted commands.
+
+    app.post(
+        '/v1/families/:familyId/children/:childId/devices/:deviceId/commands',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            const urlDeviceId = requireUuid(request.params.deviceId, 'deviceId');
+            const {
+                commandType, targetDeviceId, payload, priority, ttlSeconds,
+                policyId, policyVersion,
+            } = commandCreateInput(request.body);
+            if (targetDeviceId !== urlDeviceId) {
+                throw new HttpError(400, 'invalid_request',
+                    'deviceId in the body must match the deviceId in the path.');
+            }
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await commands.createCommand({
+                principal: request.principal,
+                familyId, childId, deviceId: targetDeviceId,
+                commandType, payload, priority, ttlSeconds,
+                policyId, policyVersion,
+                idempotencyKey,
+            });
+            response.status(201).json(result);
+        }),
+    );
+
+    app.get(
+        '/v1/devices/:deviceId/commands/pending',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            // Only the device itself may pull — bearer tokens pull via the family list.
+            if (!request.deviceCredential) {
+                throw new HttpError(401, 'authentication_required',
+                    'Pending commands are pulled with a device credential.');
+            }
+            const { limit } = pendingCommandsQuery(request.query);
+            const result = await commands.pullPending({
+                deviceCredential: request.deviceCredential,
+                deviceId, limit,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    app.post(
+        '/v1/devices/:deviceId/command-receipts',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            if (!request.deviceCredential) {
+                throw new HttpError(401, 'authentication_required',
+                    'Receipts are submitted with a device credential.');
+            }
+            const {
+                commandId, receiptKind, effectiveState, observedAtDevice, failureReason,
+            } = commandReceiptInput(request.body);
+            const idempotencyKey = requireIdempotencyKey(request.get('Idempotency-Key'));
+            const result = await commands.recordReceipt({
+                deviceCredential: request.deviceCredential,
+                deviceId, commandId, receiptKind,
+                effectiveState, observedAtDevice, failureReason,
+                idempotencyKey,
+                requestHash: requestFingerprint({
+                    action: 'command.receipt',
+                    principal: { subject: `device:${deviceId}` },
+                    input: { commandId, receiptKind },
+                }),
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    app.get(
+        '/v1/families/:familyId/commands',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const { limit, state, childId, deviceId } = commandListQuery(request.query);
+            const result = await commands.listForFamily({
+                principal: request.principal,
+                familyId, limit, state, childId, deviceId,
+            });
+            response.status(200).json(result);
         }),
     );
 

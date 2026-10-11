@@ -810,4 +810,115 @@ class FoundationGateConfiguration {
       path: '/v1/families/$familyId/memberships/$membershipId/$command',
     );
   }
+
+  // ── S0 spine — device capabilities + command lifecycle ───────────────────────
+
+  /// POST  /v1/devices/{deviceId}/capabilities   (device credential)
+  Uri deviceCapabilitiesUri(String deviceId) {
+    if (!isFoundationGateUuid(deviceId)) {
+      throw ArgumentError.value(
+        deviceId,
+        'deviceId',
+        'A server-returned UUID device identifier is required.',
+      );
+    }
+    return stagingApiOrigin.replace(path: '/v1/devices/$deviceId/capabilities');
+  }
+
+  /// GET   /v1/families/{familyId}/children/{childId}/device-capabilities  (guardian)
+  Uri familyChildDeviceCapabilitiesUri(String familyId, String childId) {
+    if (!isFoundationGateUuid(familyId) || !isFoundationGateUuid(childId)) {
+      throw ArgumentError(
+        'Server-returned UUID family and child identifiers are required.',
+      );
+    }
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/children/$childId/device-capabilities',
+    );
+  }
+
+  /// POST  /v1/families/{familyId}/children/{childId}/devices/{deviceId}/commands
+  Uri familyChildDeviceCommandsUri(
+    String familyId,
+    String childId,
+    String deviceId,
+  ) {
+    if (!isFoundationGateUuid(familyId) ||
+        !isFoundationGateUuid(childId) ||
+        !isFoundationGateUuid(deviceId)) {
+      throw ArgumentError(
+        'Server-returned UUID family, child and device identifiers are required.',
+      );
+    }
+    return stagingApiOrigin.replace(
+      path:
+          '/v1/families/$familyId/children/$childId/devices/$deviceId/commands',
+    );
+  }
+
+  /// GET   /v1/devices/{deviceId}/commands/pending   (device credential)
+  Uri devicePendingCommandsUri(String deviceId, {int? limit}) {
+    if (!isFoundationGateUuid(deviceId)) {
+      throw ArgumentError.value(
+        deviceId,
+        'deviceId',
+        'A server-returned UUID device identifier is required.',
+      );
+    }
+    final query = limit == null ? null : 'limit=$limit';
+    return stagingApiOrigin.replace(
+      path: '/v1/devices/$deviceId/commands/pending',
+      query: query,
+    );
+  }
+
+  /// POST  /v1/devices/{deviceId}/command-receipts
+  Uri deviceCommandReceiptsUri(String deviceId) {
+    if (!isFoundationGateUuid(deviceId)) {
+      throw ArgumentError.value(
+        deviceId,
+        'deviceId',
+        'A server-returned UUID device identifier is required.',
+      );
+    }
+    return stagingApiOrigin.replace(
+      path: '/v1/devices/$deviceId/command-receipts',
+    );
+  }
+
+  /// GET   /v1/families/{familyId}/commands
+  Uri familyCommandsUri(
+    String familyId, {
+    int? limit,
+    String? state,
+    String? childId,
+    String? deviceId,
+  }) {
+    if (!isFoundationGateUuid(familyId)) {
+      throw ArgumentError.value(
+        familyId,
+        'familyId',
+        'A server-returned UUID family identifier is required.',
+      );
+    }
+    final params = <String>[];
+    if (limit != null) params.add('limit=$limit');
+    if (state != null) params.add('state=${Uri.encodeQueryComponent(state)}');
+    if (childId != null) {
+      if (!isFoundationGateUuid(childId)) {
+        throw ArgumentError.value(childId, 'childId', 'UUID required.');
+      }
+      params.add('childId=$childId');
+    }
+    if (deviceId != null) {
+      if (!isFoundationGateUuid(deviceId)) {
+        throw ArgumentError.value(deviceId, 'deviceId', 'UUID required.');
+      }
+      params.add('deviceId=$deviceId');
+    }
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/commands',
+      query: params.isEmpty ? null : params.join('&'),
+    );
+  }
 }
