@@ -14,7 +14,7 @@
 | **الموجة** | المرحلة الثانية — السلامة (قبل س١ قفل حي وس٢ موقع حي) |
 | **المرحلة** | `REAL_ENGINE` |
 | **المالك** | جلسة واحدة (Arena) |
-| **الملفات المملوكة** | `backend/db/migrations/117_device_capabilities.sql` · `backend/db/migrations/118_command_lifecycle.sql` · `backend/db/migrations/119_ai_events_security_envelope.sql` · `backend/src/device-capabilities.js` (جديد) · `backend/src/command-lifecycle.js` (جديد) · `backend/src/ai-events.js` (مظروف S-SEV-1: مطلوب `securityContext` + قيود كاتب/قارئ/ttl) · `backend/src/app.js` (٥ مسارات) · `backend/src/validation.js` (مدخلات القدرات/الأوامر/الإيصالات) · `backend/src/schema-manifest.js` (بصمات ١١٧–١١٩) · `backend/openapi/foundation.v1.json` (١٢٠ مساراً و٢١٣ schema) · `backend/test/spine-device-capabilities.test.js` · `backend/test/spine-command-lifecycle.test.js` · `app/lib/foundation_gate/foundation_gate_configuration.dart` (٦ URI builders) · `app/lib/foundation_gate/family_capability_api_client.dart` (جديد) · `app/lib/foundation_gate/family_command_api_client.dart` (جديد) · `app/lib/core/design/components/device_capability_honesty_badge.dart` (جديد) |
+| **الملفات المملوكة** | `backend/db/migrations/117_device_capabilities.sql` · `backend/db/migrations/118_command_lifecycle.sql` · `backend/db/migrations/119_ai_events_security_envelope.sql` · `backend/src/device-capabilities.js` (جديد) · `backend/src/command-lifecycle.js` (جديد) · `backend/src/ai-events.js` (مظروف S-SEV-1: أعمدة `security_context`/`required_capabilities`/`ttl_minutes`/`expires_at`/`trace_id` + قيود) · `backend/src/app.js` (٦ مسارات) · `backend/src/validation.js` (مدخلات القدرات/الأوامر/الإيصالات) · `backend/src/schema-manifest.js` (بصمات ١١٧–١١٩) · `backend/openapi/foundation.v1.json` (١٢٠ مساراً و٢١٣ schema) · `backend/test/spine-device-capabilities.test.js` · `backend/test/spine-command-lifecycle.test.js` · `backend/test/postgres-spine-s0-migrations.test.js` (PGlite يطبّق ٢٨ هجرة كاملة) · `app/lib/foundation_gate/foundation_gate_configuration.dart` (٦ URI builders) · `app/lib/foundation_gate/family_capability_api_client.dart` (جديد) · `app/lib/foundation_gate/family_command_api_client.dart` (جديد) · `app/lib/core/design/components/device_capability_honesty_badge.dart` (جديد) · `app/android/app/src/main/kotlin/com/familyos/family_os/NativeCapabilitySnapshot.kt` (جديد) + `MainActivity.kt` (قناة `capabilitySnapshot`) |
 | **تاريخ الفتح** | 2026-10-11 |
 
 ## ٢) مشكلة المستخدم
@@ -60,14 +60,20 @@
 
 ## ٥) ما يُؤجَّل
 
-- **لقطة Kotlin للقدرات في `MainActivity`**: استدعاءات الأجهزة لقنوات MethodChannel (`capabilitiesSnapshot`, `pullPendingCommands`, `submitReceipt`) تُكمل في جولة تثبيت قادمة (Flutter SDK غير متاح الآن في الصندوق؛ الكود Dart موجود والبوابات الخلفية جاهزة).
-- **تكامل حقيقي مع PostgreSQL على CI**: مسارات العمود الفقري مضمونة بقوانين الوحدة على fake port؛ تكامل Postgres الحي يضاف في جولة لاحقة عند تمديد الاختبارات التكاملية الموجودة.
-- **شاشات الوصي الفعلية**: س١ (قفل حي) هي من يرسم الأزرار فوق هذه المسارات؛ المكوّن `DeviceCapabilityHonestyBadge` والعميلان جاهزان للاستيراد.
+- **سحب الأوامر وتقديم الإيصالات على Kotlin** (`pullPendingCommands` / `submitReceipt`) تُكمل في س١ (الإشعارات) لأنها تحتاج ربطًا بخدمة الإقلاع والطابور المشفّر الذي يأتي في س٢؛ لقطة القدرات نفسها صارت Native والقناة `capabilitySnapshot` موصولة في `MainActivity`.
+- **رحلات Postgres الحية لمسارات القدرات/الأوامر HTTP** تُضاف في جولة لاحقة. بوابة CI الحقيقية (`backend_ci.yml` الهجرة) تُطبّق ٠٠١–١١٩ فعلاً فانكسار FK/CHECK/ENUM سيظهر فوراً؛ رحلات HTTP السطحية تغطيها قوانين الوحدة (١٢) + اختبار PGlite (٢٨ هجرة كاملة).
+- **شاشات الوصي الفعلية**: س١١ (القفل الفوري، بعد ١٠ شرائح) هي من يرسم الأزرار فوق هذه المسارات — س١ (الإشعارات) يكتفي باستعمال ناقل الأوامر لتبليغات التسليم، والمكوّن `DeviceCapabilityHonestyBadge` والعميلان جاهزان للاستيراد من أي شاشة.
+
+## ٥ب) الصدق في المصدر (Kotlin) — أُنجز في التصحيح
+
+لقطة القدرات تُبنى في `app/android/app/src/main/kotlin/com/familyos/family_os/NativeCapabilitySnapshot.kt` من إشارات أندرويد الأصلية فقط: أذونات Runtime (`ACCESS_FINE_LOCATION`/`ACCESS_BACKGROUND_LOCATION`)، `SYSTEM_ALERT_WINDOW` (canDrawOverlays)، `PACKAGE_USAGE_STATS` (AppOpsManager)، `AccessibilityService` (مكشوف في الخدمات المفعّلة)، مستقبل `BOOT_COMPLETED` (استعلام PackageManager)، `DevicePolicyManager` (isAdminActive)، وإشارات العبث (خيارات المطور وADB). القدرات التي لا يعرفها Dart بصدق **لا يُبلَّغ عنها من Dart أبدًا** كقيمة مخترعة؛ القناة `capabilitySnapshot` في `TELEMETRY_CHANNEL` تعيد JSON جاهزاً يمزجه Dart مع القدرات التي هو وحده يملكها (وجود رمز FCM، ربط خدمة التليمتري) قبل إرسال `reportSnapshot`. القدرات غير المبنية في س٠ (مثل `web_filter_vpn`) تُرجَع صراحةً `unsupported` مع دليل نصي.
 
 ## ٦) البوابات التي فتحتها
 
-- **ف١ (عمود القفل الحي — س١):** القدرات `instant_lock`/`push_delivery` مدعومة بدفتر صادق؛ `lock_now` و`release_lock` و`refresh_policy` جاهزة؛ `CapabilityHonestyBadge` يُستعمل في شاشة القفل لقول الحقيقة قبل الضغط.
-- **ف٢ (موقع حي — س٢):** القدرة `background_location` موجودة في الدفتر ومسار قراءتها جاهز لدمج لقطات التليمتري الحالية مع حالة الإذن (الموقع كان موجوداً لكن لم يكن يبلّغ عن إذنه بصدق في واجهة الوصي).
+- **عمود س١ الإشعارات (= ش٤):** القدرة `push_delivery` صارت ذات مصداقية من Kotlin (خدمات اللعب + رمز FCM)، وناقل الأوامر يحمل `command.dispatched/applied/expired/failed` التي س١ تُحوّلها إلى تنبيهات تسليم؛ مسار `GET …/commands` يُستعمل في قائمة «آخر الأوامر» للوصي.
+- **عمود س٢ متانة الهاتف (= ش٥):** لقطة القدرات تُبلغ من البداية عن حقيقة `boot_persistence` و`accessibility_enforcement` و`battery_reporting` قبل أن تُبنى هذه الخدمات — فالوصي يرى «ينتظر الإعداد» لا «جاهز».
+- **عمود س١١ القفل الفوري (= ش١٢):** دفتر `instant_lock` ومسار `lock_now` جاهزان؛ القفل الحقيقي على الهاتف يأتي في شريحته لكن الشارة الصادقة موجودة من الآن.
+- **سجل الموقع الحالي (س٨/س٤):** القدرة `background_location` موجودة في الدفتر ومسار قراءتها جاهز لدمج لقطات التليمتري الحالية مع حالة الإذن (الموقع كان موجوداً لكن لم يكن يبلّغ عن إذنه بصدق في واجهة الوصي).
 
 ## ٧) قرارات مُلزِمة
 

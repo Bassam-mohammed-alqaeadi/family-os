@@ -111,6 +111,6 @@ export const FOUNDATION_SCHEMA_MIGRATIONS = Object.freeze([
   }),
   Object.freeze({
     name: '119_ai_events_security_envelope.sql',
-    sha256: 'f41cb60ded35cccfacd2fdb80ffd6ca9d637e73230f51b26aaf913dee0334fcd',
+    sha256: 'c323657db99429062c5816bfcbc1caf11129141515b85c51cdd1a198e67fe6a7',
   }),
 ]);
