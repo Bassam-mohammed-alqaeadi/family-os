@@ -1,14 +1,12 @@
 package com.familyos.family_os
 
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.app.AppOpsManager
 import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
-import android.os.PowerManager
 import android.provider.Settings
 import android.view.accessibility.AccessibilityManager
 import androidx.core.content.ContextCompat
@@ -181,7 +179,9 @@ object NativeCapabilitySnapshot {
         // always reported; guardian sees evidence.
         rows += run {
             val devOn = try {
-                Settings.Global.getInt(context.contentResolver, Settings.Global.DEVELOPMENT_OPTIONS_ON, 0) == 1
+                // `development_settings_enabled` has been a stable Global setting since
+                // API 17 and replaces the hidden DEVELOPMENT_OPTIONS_ON.
+                Settings.Global.getInt(context.contentResolver, "development_settings_enabled", 0) == 1
             } catch (_: Throwable) { false }
             val adbOn = try {
                 Settings.Global.getInt(context.contentResolver, Settings.Global.ADB_ENABLED, 0) == 1
