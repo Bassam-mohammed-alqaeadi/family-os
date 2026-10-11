@@ -216,6 +216,13 @@ test('every protected operation declares OIDC security, rate limiting and idempo
       // which child is speaking.
       '/v1/devices/{deviceId}/consents',
       '/v1/devices/{deviceId}/location-sharing',
+      // S0 spine adds three device-scoped endpoints: capability snapshots (the
+      // handset states what it can do), command polling (the handset pulls its
+      // pending commands), and command receipts (the handset reports what it did).
+      // Same decision: the pairing credential proves which child is speaking.
+      '/v1/devices/{deviceId}/capabilities',
+      '/v1/devices/{deviceId}/commands/pending',
+      '/v1/devices/{deviceId}/command-receipts',
     ]);
     // A media upload is idempotent by its own `clientMediaId` (same id, same file, same media;
     // a different file under that id is refused), so it does not take the platform's

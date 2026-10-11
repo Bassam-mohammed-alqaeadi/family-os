@@ -865,6 +865,15 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
           "422": {
             "description": "The event is stated in the past, or longer than a month.",
             "content": {
@@ -874,15 +883,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "$ref": "#/components/responses/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationRequired"
-          },
-          "403": {
-            "$ref": "#/components/responses/FamilyAccessDenied"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -935,6 +935,15 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
@@ -957,15 +966,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "$ref": "#/components/responses/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationRequired"
-          },
-          "403": {
-            "$ref": "#/components/responses/FamilyAccessDenied"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -1021,6 +1021,15 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
@@ -1033,15 +1042,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "$ref": "#/components/responses/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationRequired"
-          },
-          "403": {
-            "$ref": "#/components/responses/FamilyAccessDenied"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -1097,6 +1097,15 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
@@ -1109,15 +1118,6 @@
                 }
               }
             }
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "400": {
-            "$ref": "#/components/responses/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationRequired"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -1176,6 +1176,15 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
@@ -1188,15 +1197,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "$ref": "#/components/responses/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationRequired"
-          },
-          "403": {
-            "$ref": "#/components/responses/FamilyAccessDenied"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -1323,6 +1323,12 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
           "403": {
             "$ref": "#/components/responses/Forbidden"
           },
@@ -1338,12 +1344,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "$ref": "#/components/responses/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationRequired"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -4044,6 +4044,15 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
           "409": {
             "description": "The policy changed since this screen read it (`web_filter_stale_version`), or a host was sent on both lists (`web_filter_host_both_lists`).",
             "content": {
@@ -4053,15 +4062,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "$ref": "#/components/responses/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationRequired"
-          },
-          "403": {
-            "$ref": "#/components/responses/FamilyAccessDenied"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -4215,6 +4215,15 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
           "409": {
             "description": "This host is already waiting for an answer (`web_filter_request_pending`).",
             "content": {
@@ -4224,15 +4233,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "$ref": "#/components/responses/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationRequired"
-          },
-          "403": {
-            "$ref": "#/components/responses/FamilyAccessDenied"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -4291,6 +4291,12 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
           "403": {
             "$ref": "#/components/responses/FamilyAccessDenied"
           },
@@ -4313,12 +4319,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "$ref": "#/components/responses/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationRequired"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -4374,6 +4374,12 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
           "403": {
             "description": "The device credential is not accepted (`device_credential_rejected`).",
             "content": {
@@ -4393,12 +4399,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "$ref": "#/components/responses/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationRequired"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -4441,6 +4441,12 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
           "403": {
             "description": "The device credential is not accepted (`device_credential_rejected`).",
             "content": {
@@ -4450,12 +4456,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "$ref": "#/components/responses/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationRequired"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -4508,6 +4508,12 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
           "403": {
             "description": "The device credential is not accepted (`device_credential_rejected`).",
             "content": {
@@ -4527,12 +4533,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "$ref": "#/components/responses/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationRequired"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -4683,6 +4683,15 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
           "422": {
             "description": "The title is empty or too long, or the points are outside 1-200 or not whole.",
             "content": {
@@ -4692,15 +4701,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "$ref": "#/components/responses/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationRequired"
-          },
-          "403": {
-            "$ref": "#/components/responses/FamilyAccessDenied"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -4759,6 +4759,15 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
           "404": {
             "description": "The task does not exist, or it is not this child's task.",
             "content": {
@@ -4778,15 +4787,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "$ref": "#/components/responses/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationRequired"
-          },
-          "403": {
-            "$ref": "#/components/responses/FamilyAccessDenied"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -4845,6 +4845,15 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
           "404": {
             "description": "The task does not exist, or it is not this child's task.",
             "content": {
@@ -4864,15 +4873,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "$ref": "#/components/responses/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationRequired"
-          },
-          "403": {
-            "$ref": "#/components/responses/FamilyAccessDenied"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -5031,6 +5031,15 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
           "409": {
             "description": "A claim is already waiting on this task (`task_claim_pending`), or the task was withdrawn (`task_archived`).",
             "content": {
@@ -5040,15 +5049,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "$ref": "#/components/responses/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationRequired"
-          },
-          "403": {
-            "$ref": "#/components/responses/FamilyAccessDenied"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -5088,14 +5088,14 @@
               }
             }
           },
-          "403": {
-            "$ref": "#/components/responses/FamilyAccessDenied"
-          },
           "400": {
             "$ref": "#/components/responses/InvalidRequest"
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -5146,6 +5146,12 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
           "403": {
             "$ref": "#/components/responses/FamilyAccessDenied"
           },
@@ -5157,12 +5163,6 @@
           },
           "422": {
             "$ref": "#/components/responses/InvalidRequest"
-          },
-          "400": {
-            "$ref": "#/components/responses/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationRequired"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -5218,6 +5218,12 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
           "403": {
             "$ref": "#/components/responses/FamilyAccessDenied"
           },
@@ -5229,12 +5235,6 @@
           },
           "422": {
             "$ref": "#/components/responses/Forbidden"
-          },
-          "400": {
-            "$ref": "#/components/responses/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationRequired"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -5300,17 +5300,17 @@
               }
             }
           },
-          "403": {
-            "$ref": "#/components/responses/FamilyAccessDenied"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
           "400": {
             "$ref": "#/components/responses/InvalidRequest"
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -5364,6 +5364,12 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
           "403": {
             "$ref": "#/components/responses/FamilyAccessDenied"
           },
@@ -5375,12 +5381,6 @@
           },
           "422": {
             "$ref": "#/components/responses/Forbidden"
-          },
-          "400": {
-            "$ref": "#/components/responses/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationRequired"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -5436,6 +5436,12 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
           "403": {
             "$ref": "#/components/responses/Forbidden"
           },
@@ -5444,12 +5450,6 @@
           },
           "409": {
             "$ref": "#/components/responses/Conflict"
-          },
-          "400": {
-            "$ref": "#/components/responses/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationRequired"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -5498,6 +5498,12 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
           "403": {
             "$ref": "#/components/responses/Forbidden"
           },
@@ -5506,12 +5512,6 @@
           },
           "409": {
             "$ref": "#/components/responses/Conflict"
-          },
-          "400": {
-            "$ref": "#/components/responses/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationRequired"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -5567,6 +5567,12 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
           "403": {
             "$ref": "#/components/responses/FamilyAccessDenied"
           },
@@ -5575,12 +5581,6 @@
           },
           "409": {
             "$ref": "#/components/responses/Conflict"
-          },
-          "400": {
-            "$ref": "#/components/responses/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationRequired"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -5950,14 +5950,14 @@
               }
             }
           },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
           "400": {
             "$ref": "#/components/responses/InvalidRequest"
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -6009,14 +6009,14 @@
               }
             }
           },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
           "400": {
             "$ref": "#/components/responses/InvalidRequest"
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -6326,8 +6326,8 @@
           }
         ],
         "responses": {
-          "201": {
-            "description": "The media was stored. It is visible to the room only once a message carries it.",
+          "200": {
+            "description": "The same upload id had already produced this media; nothing was stored again.",
             "content": {
               "application/json": {
                 "schema": {
@@ -6336,8 +6336,8 @@
               }
             }
           },
-          "200": {
-            "description": "The same upload id had already produced this media; nothing was stored again.",
+          "201": {
+            "description": "The media was stored. It is visible to the room only once a message carries it.",
             "content": {
               "application/json": {
                 "schema": {
@@ -6612,8 +6612,8 @@
           }
         ],
         "responses": {
-          "201": {
-            "description": "The media was stored. It is visible to the room only once a message carries it.",
+          "200": {
+            "description": "The same upload id had already produced this media; nothing was stored again.",
             "content": {
               "application/json": {
                 "schema": {
@@ -6622,8 +6622,8 @@
               }
             }
           },
-          "200": {
-            "description": "The same upload id had already produced this media; nothing was stored again.",
+          "201": {
+            "description": "The media was stored. It is visible to the room only once a message carries it.",
             "content": {
               "application/json": {
                 "schema": {
@@ -7218,6 +7218,433 @@
           }
         }
       }
+    },
+    "/v1/devices/{deviceId}/capabilities": {
+      "post": {
+        "operationId": "reportDeviceCapabilities",
+        "summary": "Report what this handset can honestly do right now",
+        "description": "S0 spine: the handset upserts its capability snapshot. The device decides the facts (granted, denied, unsupported), not the UI. A replayed snapshot is idempotent. Only state changes produce events; heartbeat duplicates are silently accepted. S0 reports three capabilities at launch (background_location, instant_lock, push_delivery); other keys are added by their slice.",
+        "tags": [
+          "Safety"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceCapabilitySnapshotRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The snapshot was accepted; returns only capabilities whose state changed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceCapabilitySnapshotResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "410": {
+            "description": "The command expired before delivery.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/device-capabilities": {
+      "get": {
+        "operationId": "readDeviceCapabilitiesForChild",
+        "summary": "Read the honest capability state of a child's devices (guardian)",
+        "description": "Guardian view of the per-device capability map. Every control in the UI is evaluated against this record rather than being guessed from a toggle state.",
+        "tags": [
+          "Safety"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current capabilities grouped by device.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceCapabilitiesForChildResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/devices/{deviceId}/commands": {
+      "post": {
+        "operationId": "createCommand",
+        "summary": "Dispatch a command to a child device",
+        "description": "S0 spine: create an asynchronous command (lock_now, release_lock, or refresh_policy). The command is evaluated against the device's current capability record; creating a command for a device whose instant_lock capability is not confirmed is refused. The Idempotency-Key replays the first answer.",
+        "tags": [
+          "Safety"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommandCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The command as created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandCreateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/commands/pending": {
+      "get": {
+        "operationId": "pullPendingCommands",
+        "summary": "Pull commands queued for this device",
+        "description": "Used by the handset on wake / poll to fetch accepted commands and mark them dispatched. Returns only commands that have not yet expired.",
+        "tags": [
+          "Safety"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "410": {
+            "description": "The command expired before delivery.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/command-receipts": {
+      "post": {
+        "operationId": "submitCommandReceipt",
+        "summary": "Report the outcome of a command this device processed",
+        "description": "The handset reports what actually happened when it processed the command: applied, limited, or failed. Expired commands are refused (410) so a late device never acts on a stale intent. Replaying the same Idempotency-Key returns the existing receipt.",
+        "tags": [
+          "Safety"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommandReceiptSubmitRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "410": {
+            "description": "The command expired before delivery.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/commands": {
+      "get": {
+        "operationId": "listFamilyCommands",
+        "summary": "List commands for a family (guardian view)",
+        "description": "Returns recent commands with their receipts where present; supports optional filters by state, childId, deviceId.",
+        "tags": [
+          "Safety"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/CommandState"
+            }
+          },
+          {
+            "name": "childId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "deviceId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of commands.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -7685,7 +8112,6 @@
           }
         }
       },
-
       "Uuid": {
         "type": "string",
         "format": "uuid",
@@ -13991,6 +14417,597 @@
           }
         },
         "additionalProperties": false
+      },
+      "CapabilityLedgerKey": {
+        "type": "string",
+        "description": "One capability a child's handset may report. S0 ships three reporting capabilities (background_location, instant_lock, push_delivery); others are added by their slice when the handset actually starts reporting them.",
+        "enum": [
+          "usage_metering",
+          "app_inventory",
+          "app_block_overlay",
+          "accessibility_enforcement",
+          "instant_lock",
+          "web_filter_vpn",
+          "background_location",
+          "boot_persistence",
+          "push_delivery",
+          "battery_reporting",
+          "tamper_signals"
+        ]
+      },
+      "CapabilityLedgerState": {
+        "type": "string",
+        "description": "Honest state of one capability on the device. 'confirmed' means the subsystem is actually running and reporting; other states explain what is missing.",
+        "enum": [
+          "confirmed",
+          "awaiting_setup",
+          "permission_needed",
+          "unsupported",
+          "revoked",
+          "unknown"
+        ]
+      },
+      "DeviceCapabilityRecord": {
+        "type": "object",
+        "description": "One capability entry reported by the handset (S0 spine ledger).",
+        "additionalProperties": false,
+        "required": [
+          "capabilityKey",
+          "state",
+          "reportedAt"
+        ],
+        "properties": {
+          "capabilityKey": {
+            "$ref": "#/components/schemas/CapabilityLedgerKey"
+          },
+          "state": {
+            "$ref": "#/components/schemas/CapabilityLedgerState"
+          },
+          "evidence": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What the device actually said — never coordinates, never content.",
+            "maxLength": 512
+          },
+          "appVersion": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 64
+          },
+          "osVersion": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 64
+          },
+          "confirmedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "When the capability was confirmed; present iff state is confirmed."
+          },
+          "reportedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "DeviceCapabilitySnapshotRequest": {
+        "type": "object",
+        "description": "Snapshot the handset reports about its own capabilities.",
+        "additionalProperties": false,
+        "required": [
+          "capabilities"
+        ],
+        "properties": {
+          "capabilities": {
+            "type": "array",
+            "description": "One entry per capability key this device knows about; at most 32 per snapshot.",
+            "maxItems": 32,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "capabilityKey",
+                "state"
+              ],
+              "properties": {
+                "capabilityKey": {
+                  "$ref": "#/components/schemas/CapabilityLedgerKey"
+                },
+                "state": {
+                  "$ref": "#/components/schemas/CapabilityLedgerState"
+                },
+                "evidence": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 512
+                },
+                "confirmedAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                }
+              }
+            }
+          },
+          "appVersion": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 64
+          },
+          "osVersion": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 64
+          }
+        }
+      },
+      "DeviceCapabilitySnapshotResponse": {
+        "type": "object",
+        "description": "What changed as a result of processing the snapshot.",
+        "additionalProperties": false,
+        "required": [
+          "deviceId",
+          "reportedAt",
+          "capabilities"
+        ],
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reportedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "capabilities": {
+            "type": "array",
+            "description": "Entries whose state actually changed (heartbeat duplicates are not echoed).",
+            "items": {
+              "$ref": "#/components/schemas/DeviceCapabilityRecord"
+            }
+          }
+        }
+      },
+      "DeviceCapabilitiesForChildResponse": {
+        "type": "object",
+        "description": "All current capabilities for a child's devices (guardian view).",
+        "additionalProperties": false,
+        "required": [
+          "familyId",
+          "childId",
+          "devices"
+        ],
+        "properties": {
+          "familyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "childId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "devices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "deviceId",
+                "capabilities"
+              ],
+              "properties": {
+                "deviceId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "capabilities": {
+                  "type": "object",
+                  "description": "Map of capabilityKey to its current state; missing keys mean the device has never reported that capability.",
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/DeviceCapabilityRecord"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "CommandType": {
+        "type": "string",
+        "description": "The command verb. S0 ships only lock_now, release_lock, refresh_policy; other verbs are added by their slice.",
+        "enum": [
+          "lock_now",
+          "release_lock",
+          "refresh_policy"
+        ]
+      },
+      "CommandState": {
+        "type": "string",
+        "description": "Current lifecycle state of the command.",
+        "enum": [
+          "accepted",
+          "dispatched",
+          "received",
+          "applied",
+          "limited",
+          "rejected",
+          "expired",
+          "failed"
+        ]
+      },
+      "CommandReceiptKind": {
+        "type": "string",
+        "description": "What the device ultimately did with the command.",
+        "enum": [
+          "applied",
+          "limited",
+          "failed"
+        ]
+      },
+      "Command": {
+        "type": "object",
+        "description": "One asynchronous command dispatched to a child device.",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "familyId",
+          "childId",
+          "deviceId",
+          "commandType",
+          "idempotencyKey",
+          "priority",
+          "expiresAt",
+          "state",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "familyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "childId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "deviceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "commandType": {
+            "$ref": "#/components/schemas/CommandType"
+          },
+          "policyId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "policyVersion": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "payload": {
+            "type": "object",
+            "description": "Command-specific arguments; bounded to 4 KiB."
+          },
+          "actorMembershipId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "state": {
+            "$ref": "#/components/schemas/CommandState"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "dispatchedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "receivedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "appliedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "failureReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 256
+          },
+          "receipt": {
+            "$ref": "#/components/schemas/CommandReceipt"
+          }
+        }
+      },
+      "CommandReceipt": {
+        "type": "object",
+        "description": "The device's delivery receipt for one command.",
+        "additionalProperties": false,
+        "required": [
+          "commandId",
+          "receiptKind",
+          "effectiveState",
+          "observedAtDevice",
+          "receivedAtServer"
+        ],
+        "properties": {
+          "commandId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "receiptKind": {
+            "$ref": "#/components/schemas/CommandReceiptKind"
+          },
+          "effectiveState": {
+            "type": "object",
+            "description": "The effective state the device reports after applying (e.g. new lock state)."
+          },
+          "observedAtDevice": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the device observed the outcome, by its own clock."
+          },
+          "receivedAtServer": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "failureReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 256
+          }
+        }
+      },
+      "CommandCreateRequest": {
+        "type": "object",
+        "description": "Guardian creates a command for a specific child device.",
+        "additionalProperties": false,
+        "required": [
+          "commandType",
+          "deviceId"
+        ],
+        "properties": {
+          "commandType": {
+            "$ref": "#/components/schemas/CommandType"
+          },
+          "deviceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Must match the deviceId in the URL."
+          },
+          "payload": {
+            "type": "object",
+            "description": "Command-specific arguments.",
+            "maxProperties": 32
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000,
+            "default": 100
+          },
+          "ttlSeconds": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 3600,
+            "default": 120,
+            "description": "How long the command stays valid before expiry."
+          },
+          "policyId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "policyVersion": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          }
+        }
+      },
+      "CommandCreateResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "command"
+        ],
+        "properties": {
+          "command": {
+            "$ref": "#/components/schemas/Command"
+          }
+        }
+      },
+      "CommandReceiptSubmitRequest": {
+        "type": "object",
+        "description": "The device reports the outcome of a command it processed.",
+        "additionalProperties": false,
+        "required": [
+          "commandId",
+          "receiptKind",
+          "observedAtDevice"
+        ],
+        "properties": {
+          "commandId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "receiptKind": {
+            "$ref": "#/components/schemas/CommandReceiptKind"
+          },
+          "effectiveState": {
+            "type": "object",
+            "maxProperties": 32
+          },
+          "observedAtDevice": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "failureReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 256,
+            "description": "Required iff receiptKind is failed."
+          }
+        }
+      },
+      "CommandReceiptSubmitResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "command",
+          "receipt"
+        ],
+        "properties": {
+          "command": {
+            "$ref": "#/components/schemas/Command"
+          },
+          "receipt": {
+            "$ref": "#/components/schemas/CommandReceipt"
+          },
+          "note": {
+            "type": "string",
+            "description": "Set when the command was already terminal."
+          }
+        }
+      },
+      "PendingCommandsResponse": {
+        "type": "object",
+        "description": "Commands the device should process now (pulled by the handset).",
+        "additionalProperties": false,
+        "required": [
+          "deviceId",
+          "pulledAt",
+          "commands"
+        ],
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pulledAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "commands": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Command"
+            }
+          }
+        }
+      },
+      "CommandListResponse": {
+        "type": "object",
+        "description": "Paginated command list for a family (guardian view).",
+        "additionalProperties": false,
+        "required": [
+          "familyId",
+          "commands"
+        ],
+        "properties": {
+          "familyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "commands": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Command"
+            }
+          }
+        }
+      },
+      "ErrorEnvelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": [
+              "status",
+              "code",
+              "message"
+            ],
+            "properties": {
+              "status": {
+                "type": "integer"
+              },
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            }
+          }
+        }
       }
     }
   }

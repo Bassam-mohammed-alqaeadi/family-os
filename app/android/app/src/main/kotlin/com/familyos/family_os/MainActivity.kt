@@ -45,6 +45,7 @@ class MainActivity : FlutterActivity() {
                     "startConfigured" -> startConfiguredTelemetry(result)
                     "chatRequest" -> proxyFamilyChatRequest(call, result)
                     "consentRequest" -> proxyFamilyConsentRequest(call, result)
+                    "capabilitySnapshot" -> capabilitySnapshot(result)
                     "stop" -> stopTelemetry(result)
                     "status" -> telemetryStatus(result)
                     else -> result.notImplemented()
@@ -162,6 +163,12 @@ class MainActivity : FlutterActivity() {
         } catch (_: Exception) {
             result.success(mapOf<String, Any>("started" to false, "reason" to "native_telemetry_start_failed"))
         }
+    }
+
+    private fun capabilitySnapshot(result: MethodChannel.Result) {
+        // S0 spine: honest snapshot from native signals only. Dart merges in the
+        // capabilities it alone can confirm (push token presence, service binding).
+        result.success(NativeCapabilitySnapshot.toJson(NativeCapabilitySnapshot.snapshot(this)))
     }
 
     private fun telemetryStatus(result: MethodChannel.Result) {

@@ -2,7 +2,7 @@
 
 > **الغرض:** أن تستأنف أي جلسة — إنسان أو وكيل — العمل بلا فقد، حتى لو انتهى رصيد الجلسة السابقة.
 > **يُحدَّث في نهاية كل شريحة**، في طلب الدمج نفسه.
-> **آخر تحديث:** 2026-10-11 — ش٣ مدموجة (PR #37)؛ التالية ش٤ (الإشعارات)، وبوابة ف٣ (أول فحص بموقع حقيقي) صارت بانتظار قرار المالك.
+> **آخر تحديث:** 2026-10-11 — ش٠ (العمود الفقري) مكتملة على الفرع (دفع القدرات + ناقل الأوامر + مظروف الأحداث، ٣٦٦/٠ اختبار)؛ ش٣ مدموجة (PR #37)؛ التالية ش١ القفل الحي، يليها ش٢ الموقع الحي فوق العمود الفقري، ثم ش٤ الإشعارات. بوابة ف٣ (أول فحص بموقع حقيقي) بانتظار قرار المالك.
 
 ---
 
@@ -17,8 +17,9 @@
 | حالة ش١ | **مدموجة**: APK release من CI + إعلان Play + إزالة بقايا التجربة — بطاقة [`SAFETY-S1`](../harness/cards/SAFETY-S1-honest-build.md) |
 | حالة ش٢ | **مدموجة** (PR #35، 2026-10-10، CI أخضر بكل بواباته): هجرة ١١٤ سجل الموافقات، `location-fixes` يرفض `consent_required` بلا موافقة نشطة، ٣ مسارات موافقات، ترتيب Play (الإفصاح قبل الأذونات)، CHD-010 من دفتر الخادم، «تحديث الموقع الآن» مسمّى ومُخفى حتى ش٤/ش٥ — بطاقة [`SAFETY-S2`](../harness/cards/SAFETY-S2-consent-disclosure.md) |
 | حالة ش٣ | **مدموجة** (PR #37، 2026-10-11، خادم فقط — لم تمسّ الهاتف): هجرة ١١٦ (فهرس الاحتفاظ + أرشفة الأطفال + قانون لقطة التليمتري المُعاد تعريفه)، `LOCATION_RETENTION_DAYS = 90` مُثبت بساعة محقونة على PostgreSQL، محو بطلب الوالد (`data-erasure`)، إزالة الطفل (أرشفة + تجميد الدفتر + قطع الأجهزة + محو كامل)، والمحو الفعلي عند قطع الجهاز، وسجل تدقيق «حُذف» بلا محتوى ولا outbox — بطاقة [`SAFETY-S3`](../harness/cards/SAFETY-S3-retention-erasure.md) |
-| التالي | ش٤ — الإشعارات. **وبوابة ف٣ (أول فحص بموقع حقيقي على هاتفين) اكتمل شرطها التقني (ش٢+ش٣) ولا تُفتح إلا بقرار المالك** — [`PHONE_CHECKS.md`](PHONE_CHECKS.md) ف٣ |
-| الهجرة التالية | `117` |
+| حالة ش٠ (العمود الفقري) | **مكتملة على الفرع (هذا الطلب)**: هجرات ١١٧ (دفتر القدرات) · ١١٨ (ناقل الأوامر + الإيصالات) · ١١٩ (مظروف الأحداث الأمني S-SEV-1: security_context/required_capabilities/ttl_minutes/expires_at/trace_id + قيود) · وحدتا `device-capabilities.js` و`command-lifecycle.js` · ٦ مسارات منشورة في العقد · عقد OpenAPI صار ١٢٠ مساراً و٢١٣ schema (من ١١٤/١٩٥ عند إيداع الخطة) · عملاء Dart و٦ URI builders · مكوّن `DeviceCapabilityHonestyBadge` · لقطة Kotlin أصلية (`NativeCapabilitySnapshot.kt` + قناة `capabilitySnapshot` في `MainActivity`) مصدر صادق للأذونات التي لا يعرفها Dart (PACKAGE_USAGE_STATS/SYSTEM_ALERT_WINDOW/Accessibility/BOOT_COMPLETED/DeviceAdmin) · ١٢ قانون وحدة + اختبار PGlite يطبّق ٢٨ هجرة (إجمالي ٣٦٦/٠) — بطاقة [`SAFETY-S0`](../harness/cards/SAFETY-S0-spine.md) |
+| التالي | **س١ الإشعارات** (هجرات ١٢٠/١٢١/١٢٢ وفق §٦٫١ من الخطة الرئيسية — تسجيل الدفع بهوية الجهاز، delivered/failed في delivery_state، تفضيلات الإشعارات). يليها س٢ متانة الهاتف، فس٤ الخريطة الحية، فس٥ الأماكن وتنبيهاتها، وصولاً إلى س١١ القفل الفوري وس١٦ الاختبار الشامل. **بوابة ف٣ (أول فحص بموقع حقيقي على هاتفين) شرطها التقني س٤ (الخريطة) + ش٣، ولا تُفتح إلا بقرار المالك** — [`PHONE_CHECKS.md`](PHONE_CHECKS.md) ف٣ |
+| الهجرة التالية | `120` (لس١ الإشعارات) |
 | اختبار على هاتف حقيقي | **لم يجرِ أي اختبار بعد** |
 
 ## ٢) ما أُنجز في ش٣ (مدموجة — PR #37، 2026-10-11)
@@ -55,6 +56,18 @@
 التفصيل والأدلة في البطاقة.
 
 > **ش٠ (شريحة التماسك) مدموجة قبل ش١** (PR #34): الإنشاء الحقيقي للعائلة، القطع server-first، ومحاذاة التوثيق — انظر «Slice 0 resolutions» في [`02_PLATFORM_COHERENCE_MAP.md`](02_PLATFORM_COHERENCE_MAP.md).
+
+## ٢ب) ما أُنجز في ش٠-العمود الفقري (هذا الطلب)
+
+- **هجرة ١١٧ `family_device_capabilities`**: دفتر قدرات صادق لكل جهاز، مفتاح طبيعي `(device_id, capability_key)`، CHECK يربط `state='confirmed'` بـ`confirmed_at` غير فارغ، نوعا `capability_key` و`capability_state` ENUM بالمفردات الأولى (`instant_lock`, `background_location`, `push_delivery` × `confirmed/awaiting_setup/permission_needed/unsupported/revoked/unknown`).
+- **هجرة ١١٨ `family_commands` + `family_command_receipts`**: ناقل أوامر بـ`idempotency_key` فريد في العائلة، و`expires_at` إلزامي، وقيود حالة، و`failure_reason` إلزامي عند `failed`/`limited`، وجدول إيصالات بمفتاح أمر واحد فقط. أنواع س٠: `lock_now`, `release_lock`, `refresh_policy`.
+- **هجرة ١١٩ مظروف `ai_events`**: أعمدة S-SEV-1 (`security_context` JSONB object، `required_capabilities` text[] مقيدة بالمفردات المعلنة، `ttl_minutes` int مع CHECK ١–٤٣٢٠٠، `expires_at` timestamptz بقيود ttl_pair، `capability_key`، `command_id` FK إلى family_commands، `causality_id`, `severity`, `policy_id`, `source_trust`, `data_quality`, `visibility_class`, `retention_class`, `trace_id` بفهرس فريد داخل العائلة) + backfill للأحداث التاريخية.
+- **الوحدات**: `device-capabilities.js` (جهاز يُبلّغ لقطة + وصي يقرأ، idempotent، نبض القلب لا يُحدث حدثاً) و`command-lifecycle.js` (وصي يُنشئ أمراً بتحقق من القدرة المؤكدة، جهاز يسحب ويردّ بإيصال، إيصال متأخر ٤١٠) مع منافذ Postgres كاملة وتحقق من المدخلات.
+- **العقد**: ٦ مسارات منشورة فعلاً (منها مسار قائمة أوامر العائلة)، ٢١٣ schema، ١٢٠ مساراً إجمالاً (بسبب schemas/مسارات سابقة مضافة أثناء العمل).
+- **Dart**: عميلان للقدرات وللأوامر بنمط العميل الموجود، ٦ URI builders، مكوّن `DeviceCapabilityHonestyBadge` يعرض شارات عربية صادقة بألوان `Tag` الموجودة.
+- **الاختبارات**: ١٢ قانوناً جديداً (٦ للقدرات + ٦ للأوامر); المجموع الكلي ٣٦٦ pass / ٠ fail من ٤١٠. البوابات الخلفية كلها خضراء.
+
+التفصيل والأدلة في البطاقة.
 
 ## ٣) قرارات المالك (ملزمة)
 

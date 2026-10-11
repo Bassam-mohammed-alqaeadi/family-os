@@ -1698,3 +1698,170 @@ export function chatMessageQuery(value) {
       : requiredWholeNumber(Number(value.limit), 'limit', 1, MAX_CHAT_PAGE);
   return { afterSeq, limit };
 }
+
+// ── S0 spine — device capabilities + command lifecycle ──────────────────────────────
+
+const CAPABILITY_KEYS_S0 = new Set([
+  'usage_metering','app_inventory','app_block_overlay','accessibility_enforcement',
+  'instant_lock','web_filter_vpn','background_location','boot_persistence',
+  'push_delivery','battery_reporting','tamper_signals',
+]);
+
+const CAPABILITY_STATES_S0 = new Set([
+  'confirmed','awaiting_setup','permission_needed','unsupported','revoked','unknown',
+]);
+
+const COMMAND_TYPES_S0 = new Set(['lock_now','release_lock','refresh_policy']);
+const RECEIPT_KINDS_S0 = new Set(['applied','limited','failed']);
+
+export function deviceCapabilitiesSnapshotInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['capabilities','appVersion','osVersion']));
+  if (!Array.isArray(body.capabilities)) {
+    throw new HttpError(400, 'invalid_request', 'capabilities must be a list.');
+  }
+  if (body.capabilities.length > 32) {
+    throw new HttpError(400, 'invalid_request', 'capabilities must hold at most 32 entries.');
+  }
+  const appVersion = body.appVersion === undefined || body.appVersion === null
+    ? null : optionalText(body.appVersion, 'appVersion', 64);
+  const osVersion = body.osVersion === undefined || body.osVersion === null
+    ? null : optionalText(body.osVersion, 'osVersion', 64);
+  const seen = new Set();
+  const entries = body.capabilities.map((entry, index) => {
+    if (entry === null || typeof entry !== 'object') {
+      throw new HttpError(400, 'invalid_request', `capabilities[${index}] must be an object.`);
+    }
+    const entryAllowed = new Set(['capabilityKey','state','evidence','confirmedAt']);
+    for (const k of Object.keys(entry)) {
+      if (!entryAllowed.has(k)) {
+        throw new HttpError(400, 'invalid_request', `capabilities[${index}].${k} is not a recognized field.`);
+      }
+    }
+    const key = requiredText(entry.capabilityKey, `capabilities[${index}].capabilityKey`, { maxLength: 32 });
+    if (!CAPABILITY_KEYS_S0.has(key)) {
+      throw new HttpError(400, 'invalid_request', `capabilities[${index}].capabilityKey is not known.`);
+    }
+    if (seen.has(key)) {
+      throw new HttpError(400, 'invalid_request', `capabilities[${index}] duplicates key '${key}'.`);
+    }
+    seen.add(key);
+    const state = requiredText(entry.state, `capabilities[${index}].state`, { maxLength: 24 });
+    if (!CAPABILITY_STATES_S0.has(state)) {
+      throw new HttpError(400, 'invalid_request', `capabilities[${index}].state is not a known state.`);
+    }
+    let evidence = null;
+    if (entry.evidence !== undefined && entry.evidence !== null) {
+      evidence = optionalText(entry.evidence, `capabilities[${index}].evidence`, 512);
+    }
+    let confirmedAt = null;
+    if (entry.confirmedAt !== undefined && entry.confirmedAt !== null) {
+      if (state !== 'confirmed') {
+        throw new HttpError(400, 'invalid_request',
+          `capabilities[${index}].confirmedAt must be omitted unless state is 'confirmed'.`);
+      }
+      const parsed = new Date(entry.confirmedAt);
+      if (Number.isNaN(parsed.getTime())) {
+        throw new HttpError(400, 'invalid_request', `capabilities[${index}].confirmedAt must be an ISO-8601 instant.`);
+      }
+      confirmedAt = parsed;
+    }
+    return { capabilityKey: key, state, evidence, confirmedAt };
+  });
+  return { entries, appVersion, osVersion };
+}
+
+export function commandCreateInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['commandType','deviceId','payload','priority','ttlSeconds','policyId','policyVersion']));
+  const commandType = requiredText(body.commandType, 'commandType', { maxLength: 32 });
+  if (!COMMAND_TYPES_S0.has(commandType)) {
+    throw new HttpError(400, 'invalid_request', 'commandType is not enabled in this slice (lock_now | release_lock | refresh_policy).');
+  }
+  const targetDeviceId = requireUuid(body.deviceId, 'deviceId');
+  let payload = {};
+  if (body.payload !== undefined && body.payload !== null) {
+    if (typeof body.payload !== 'object' || Array.isArray(body.payload)) {
+      throw new HttpError(400, 'invalid_request', 'payload must be a JSON object.');
+    }
+    payload = body.payload;
+    // payload size guard: no giant blobs on the command bus.
+    if (JSON.stringify(payload).length > 4096) {
+      throw new HttpError(400, 'invalid_request', 'payload must be at most 4 KiB.');
+    }
+  }
+  const priority = body.priority === undefined ? 100
+    : requiredWholeNumber(body.priority, 'priority', 0, 1000);
+  const ttlSeconds = body.ttlSeconds === undefined ? 120
+    : requiredWholeNumber(body.ttlSeconds, 'ttlSeconds', 5, 3600);
+  const policyId = body.policyId === undefined || body.policyId === null
+    ? null : requireUuid(body.policyId, 'policyId');
+  const policyVersion = body.policyVersion === undefined || body.policyVersion === null
+    ? null : requiredWholeNumber(body.policyVersion, 'policyVersion', 0, 1_000_000);
+  return { commandType, targetDeviceId, payload, priority, ttlSeconds, policyId, policyVersion };
+}
+
+export function commandReceiptInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['commandId','receiptKind','effectiveState','observedAtDevice','failureReason']));
+  const commandId = requireUuid(body.commandId, 'commandId');
+  const receiptKind = requiredText(body.receiptKind, 'receiptKind', { maxLength: 16 });
+  if (!RECEIPT_KINDS_S0.has(receiptKind)) {
+    throw new HttpError(400, 'invalid_request', 'receiptKind must be applied, limited, or failed.');
+  }
+  let effectiveState = {};
+  if (body.effectiveState !== undefined && body.effectiveState !== null) {
+    if (typeof body.effectiveState !== 'object' || Array.isArray(body.effectiveState)) {
+      throw new HttpError(400, 'invalid_request', 'effectiveState must be a JSON object.');
+    }
+    effectiveState = body.effectiveState;
+    if (JSON.stringify(effectiveState).length > 4096) {
+      throw new HttpError(400, 'invalid_request', 'effectiveState must be at most 4 KiB.');
+    }
+  }
+  let observedAtDevice = new Date();
+  if (body.observedAtDevice !== undefined && body.observedAtDevice !== null) {
+    const parsed = new Date(body.observedAtDevice);
+    if (Number.isNaN(parsed.getTime())) {
+      throw new HttpError(400, 'invalid_request', 'observedAtDevice must be an ISO-8601 instant.');
+    }
+    observedAtDevice = parsed;
+  }
+  let failureReason = null;
+  if (receiptKind === 'failed') {
+    failureReason = requiredText(body.failureReason, 'failureReason', { maxLength: 256 });
+  } else if (body.failureReason !== undefined && body.failureReason !== null) {
+    failureReason = optionalText(body.failureReason, 'failureReason', 256);
+  }
+  return { commandId, receiptKind, effectiveState, observedAtDevice, failureReason };
+}
+
+export function commandListQuery(value) {
+  const allowed = new Set(['limit','state','childId','deviceId']);
+  if (value && Object.keys(value).some((k) => !allowed.has(k))) {
+    throw new HttpError(400, 'invalid_request', 'The query contains unsupported parameters.');
+  }
+  const limit = value?.limit === undefined || value?.limit === ''
+    ? 50 : requiredWholeNumber(Number(value.limit), 'limit', 1, 200);
+  const state = value?.state === undefined || value?.state === '' ? null : value.state;
+  if (state !== null && !COMMAND_STATES_S0.has(state)) {
+    // Include additional states a receipt may set, so the filter accepts them too.
+    const terminal = new Set([...CAPABILITY_STATES_S0, ...RECEIPT_KINDS_S0, 'accepted','dispatched','received','rejected','expired']);
+    if (!terminal.has(state)) {
+      throw new HttpError(400, 'invalid_request', 'state is not a known command state.');
+    }
+  }
+  const childId = value?.childId === undefined || value?.childId === '' ? null : requireUuid(value.childId, 'childId');
+  const deviceId = value?.deviceId === undefined || value?.deviceId === '' ? null : requireUuid(value.deviceId, 'deviceId');
+  return { limit, state, childId, deviceId };
+}
+
+export function pendingCommandsQuery(value) {
+  const allowed = new Set(['limit']);
+  if (value && Object.keys(value).some((k) => !allowed.has(k))) {
+    throw new HttpError(400, 'invalid_request', 'The query contains unsupported parameters.');
+  }
+  const limit = value?.limit === undefined || value?.limit === ''
+    ? 20 : requiredWholeNumber(Number(value.limit), 'limit', 1, 100);
+  return { limit };
+}

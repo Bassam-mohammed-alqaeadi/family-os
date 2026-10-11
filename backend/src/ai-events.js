@@ -43,6 +43,37 @@ const AI_EVENT_REGISTRY = Object.freeze({
       'A guardian cut this device off, and its credential can no longer be used.',
     rejectPath: null,
   }),
+  // S0 spine — command lifecycle events. One per observable transition.
+  'command.dispatched': Object.freeze({
+    source: 'server',
+    confidence: 1,
+    explanation: 'A command was queued for delivery to a child device.',
+    rejectPath: null,
+  }),
+  'command.applied': Object.freeze({
+    source: 'server',
+    confidence: 1,
+    explanation: 'A device applied a command and returned a receipt.',
+    rejectPath: null,
+  }),
+  'command.failed': Object.freeze({
+    source: 'server',
+    confidence: 1,
+    explanation: 'A device could not apply a command and reported failure.',
+    rejectPath: null,
+  }),
+  'command.expired': Object.freeze({
+    source: 'server',
+    confidence: 1,
+    explanation: 'A command reached its expiry without being applied.',
+    rejectPath: null,
+  }),
+  'device.capability.changed': Object.freeze({
+    source: 'server',
+    confidence: 1,
+    explanation: 'Device capability state changed.',
+    rejectPath: null,
+  }),
   // Telemetry heartbeats are deliberately NOT events. A device reporting every
   // few minutes would bury the facts that matter under its own pulse, and the
   // latest reading already lives on the device row. What belongs on a timeline is

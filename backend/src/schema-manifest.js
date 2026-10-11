@@ -101,4 +101,16 @@ export const FOUNDATION_SCHEMA_MIGRATIONS = Object.freeze([
     name: '116_location_retention_erasure.sql',
     sha256: 'c244cb7bb986f6e16f27606f7b984cd27361dd43b23fafb001a8cf95654dcfaa',
   }),
+  Object.freeze({
+    name: '117_device_capabilities.sql',
+    sha256: 'ac2fb338f0b35fb68ce1cfafd526b91ca1b58102abf60d51a95931b08cafc5ac',
+  }),
+  Object.freeze({
+    name: '118_command_lifecycle.sql',
+    sha256: '79cbe3a16da8cb423ff1b0ba84b83a84c752bce66b6b182a9e20700ec10bf34e',
+  }),
+  Object.freeze({
+    name: '119_ai_events_security_envelope.sql',
+    sha256: 'c323657db99429062c5816bfcbc1caf11129141515b85c51cdd1a198e67fe6a7',
+  }),
 ]);
