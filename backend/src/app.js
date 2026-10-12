@@ -191,7 +191,7 @@ export function createApp({
     dataErasure = dataErasureFor(store),
     // W4. The emergency surface reaches the database through the same published helpers,
     // and its credential check is the one the device routes already use.
-    sos = sosEmergencyFor(store, { credentialMatches: capabilityMatches }),
+    sos = null,
     // W5. The minutes a child has, the apps they belong to, and the instant lock. Same
     // arrangement as the surfaces before it: data access through the store's published
     // helpers, and the one credential check every device route already uses.
@@ -217,6 +217,7 @@ export function createApp({
     chatMediaStore = null,
     // Firebase push sender. Null means push is not configured: registration answers 503.
     pushSender = null,
+    notificationDispatcher = null,
     chatBus = createChatEventBus(),
     collaborationPolicy = collaborationPolicyFor(store),
     // S0 spine. The device-capability ledger and the command bus share the same one
@@ -229,6 +230,10 @@ export function createApp({
     inviteRedeemRateLimit = {},
 }) {
     const app = express();
+    sos ??= sosEmergencyFor(store, {
+        credentialMatches: capabilityMatches,
+        pushConfigured: Boolean(pushSender),
+    });
     const chatMedia = chatMediaFor(store, { credentialMatches: capabilityMatches, mediaStore: chatMediaStore });
     const pushRegistrations = pushRegistrationsFor(store, { credentialMatches: capabilityMatches, sender: pushSender });
     familyChat = withChatHints(familyChat, {
@@ -259,6 +264,19 @@ export function createApp({
         response.set('X-Correlation-Id', request.correlationId);
         next();
     });
+    if (notificationDispatcher) {
+        app.use((_request, response, next) => {
+            response.once('finish', () => {
+                Promise.resolve(notificationDispatcher.sweep({ limit: 3 }))
+                    .catch((error) => console.error(JSON.stringify({
+                        severity: 'error',
+                        event: 'notification_post_response_sweep_failed',
+                        errorName: error?.name ?? 'Error',
+                    })));
+            });
+            next();
+        });
+    }
     app.use(express.json({ limit: '64kb', strict: true }));
     // Raw media bodies are parsed only by the upload routes, after authentication.
     const rawMediaBody = express.raw({ type: () => true, limit: CHAT_MEDIA_UPLOAD_LIMIT });

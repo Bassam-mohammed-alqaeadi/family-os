@@ -1,0 +1,6 @@
+<resources>
+    <color name="familyos_sos_notification">#FF5A5F</color>
+    <color name="familyos_geofence_notification">#FFB547</color>
+    <color name="familyos_protection_notification">#7C5CE6</color>
+    <color name="familyos_chat_notification">#26B3A9</color>
+</resources>

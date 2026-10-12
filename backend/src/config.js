@@ -103,8 +103,12 @@ export function configurationReadiness(config) {
 
 /** Firebase push settings. Absent means push is not configured; a partial setting is refused. */
 function pushFcmSettings(environment) {
-  const projectId = optionalText(environment.FAMILY_PUSH_FCM_PROJECT_ID);
-  const serviceAccountJson = optionalText(environment.FAMILY_PUSH_FCM_SERVICE_ACCOUNT_JSON);
+  // Keep the deployed FAMILY_PUSH_* names while accepting the concise names used by the
+  // S1 runtime contract. A partial pair is refused; neither value is ever echoed.
+  const projectId = optionalText(environment.FCM_PROJECT_ID)
+    ?? optionalText(environment.FAMILY_PUSH_FCM_PROJECT_ID);
+  const serviceAccountJson = optionalText(environment.FCM_SERVICE_ACCOUNT_JSON)
+    ?? optionalText(environment.FAMILY_PUSH_FCM_SERVICE_ACCOUNT_JSON);
   if (projectId == null && serviceAccountJson == null) return null;
   if (projectId == null || serviceAccountJson == null) {
     throw new HttpError(

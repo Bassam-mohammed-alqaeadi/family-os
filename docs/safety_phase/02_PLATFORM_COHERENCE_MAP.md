@@ -195,7 +195,7 @@ Data sources were traced per screen. **S** = reads or writes the server through 
 | W13 Today | ❌ | ❌ | ❌ | L only | ⬜ | FAT-010 `DayBoardScreen` uses `day_child_mock` and a local projection |
 | W14 Privacy & transparency | ◐ (audit, ai_events) | ◐ (`audit-events`, `permission-snapshot`, `ai-events`) | ❌ | L only | ⬜ | FAT-059/060 and CHD-010 are local. There is no consent table (Slice 2) |
 | Check-in / battery alert | ◐ (battery in telemetry) | ◐ | ◐ | L (CHD-024) | not tracked | Slice 9 |
-| Notifications / alerts centre | ◐ (outbox, SOS deliveries, push nudges) | ◐ | ◐ (chat only) | L (FAT-019/020/058, FAT-065) | not tracked | See C5 and §5 ش٤/ش١٥ |
+| Notifications / alerts centre | ✅ (120–122, commit-aware outbox dispatcher for four safety events) | ✅ (closed event/copy-key contract) | ◐ (guardian registration at app startup; existing chat registration remains) | ◐ (safe Dart routing + four Android channels; FAT-019/020 centre remains local) | not tracked | S1 supplies delivery mechanics; the shared alert centre remains ش١٥; no phone/DND result is claimed |
 | Billing | ❌ | ❌ | ❌ | L (`MockEntitlementService`) | — | MOCK_INVENTORY #4 |
 | Advisor / AI | ◐ (`ai_events`, device facts only) | ◐ | ❌ | L/mock | — | `ai-events.js` registers only `device.*` ([L17–L30](https://github.com/Bassam-mohammed-alqaeadi/family-os/blob/main/backend/src/ai-events.js#L17-L30)) |
 | Calls, outer circle, friends, smart modes, studio | ❌ | ❌ | ❌ | L | — | No server domain |
@@ -301,6 +301,8 @@ The **top five** are in bold. Each entry gives the evidence and a recommended si
 | C18 | Design-token doc drift | `ink2` is `#8A8FA3` in the doc and `#6B7082` in code (an intentional WCAG change) ([06_DESIGN_TOKENS L25](https://github.com/Bassam-mohammed-alqaeadi/family-os/blob/main/docs/reference/frozen-prototype-handoff/06_DESIGN_TOKENS.md#L25)) | `tokens.dart` is the SSOT; annotate the doc |
 | C19 | SPINE-001 binding 5 not applied | Only `device.*` AiEvents exist; W3–W9 emit none | Each safety slice emits its `AiEvent` type or explicitly declares "none" |
 | C20 | Duplicate LOOP_STATE | `docs/harness/LOOP_STATE.md` (live) and `docs/product_refinement_v2/LOOP_STATE.md` (stale) | Keep the harness one |
+| C21 | Notification event-name punctuation drift (dot/underscore variants), e.g. `family.child_created` vs `family.child.created` | S1 preserves exact event literals in a closed classifier; do not alias them or broaden classification. Defer canonical naming cleanup and repository-wide reconciliation to ش١٥ |
+| C22 | No single bounded, commit-aware worker for safety outbox delivery; push copy/channel routing was not connected end-to-end | **Fixed in S1:** post-COMMIT notification hook, boot sweep for events older than five seconds, bounded post-response sweep (no periodic timer), four FCM alert definitions, and safe Dart routing with four Android channels. Device/DND acceptance remains a manual check before ش٢ |
 
 ---
 

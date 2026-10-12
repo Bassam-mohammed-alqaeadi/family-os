@@ -8,4 +8,13 @@
     <string name="location_sharing_stopped_channel_name">Location sharing stopped</string>
     <string name="location_sharing_stopped_title">Location sharing stopped</string>
     <string name="location_sharing_stopped_text">This phone was disconnected from the family, so it no longer sends its location. Sharing again needs a new pairing from a guardian\'s phone.</string>
+
+    <string name="familyos_sos_channel_name">Family SOS alerts</string>
+    <string name="familyos_sos_channel_description">Urgent alerts when a child in the family presses the SOS button.</string>
+    <string name="familyos_geofence_channel_name">Safe-zone alerts</string>
+    <string name="familyos_geofence_channel_description">Urgent alerts when a child enters or leaves a safe zone.</string>
+    <string name="familyos_protection_channel_name">Protection alerts</string>
+    <string name="familyos_protection_channel_description">Urgent alerts when a child\'s device reports that protection is disabled.</string>
+    <string name="familyos_chat_channel_name">Family messages</string>
+    <string name="familyos_chat_channel_description">A neutral alert when a new message arrives in a family conversation.</string>
 </resources>

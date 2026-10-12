@@ -197,7 +197,8 @@ test('PostgreSQL audit and outbox inserts share only the supplied server correla
   assert.match(statements[1].sql, /outbox_events[\s\S]*correlation_id/);
   assert.equal(statements[0].values[3], correlationId);
   assert.equal(statements[1].values[2], correlationId);
-  assert.equal(JSON.parse(statements[1].values[4]).auditEventId, statements[0].values[0]);
+  assert.equal(statements[1].values[4], null, 'audit-only outbox events have no user-facing copy key');
+  assert.equal(JSON.parse(statements[1].values[5]).auditEventId, statements[0].values[0]);
 });
 
 test('PostgreSQL evidence writes fail closed when internal correlation context is absent', async () => {
@@ -414,4 +415,65 @@ test('PostgreSQL idempotent replay of child creation writes no second roster row
 
   assert.equal(statements.some((statement) => statement.sql.includes('INSERT INTO family_children')), false);
   assert.equal(statements.some((statement) => statement.sql.includes('INSERT INTO ai_events')), false);
+});
+
+test('outbox listener fires immediately after COMMIT and receives the inserted event identity', async () => {
+  const statements = [];
+  const client = {
+    async query(sql, values) {
+      statements.push({ sql, values });
+      return { rows: [], rowCount: 1 };
+    },
+    release() { statements.push({ sql: 'RELEASE' }); },
+  };
+  const store = new PostgresFoundationStore({
+    connectionString: 'postgresql://unused-in-test',
+    pool: { async connect() { return client; }, async end() {} },
+  });
+  const notified = [];
+  store.setOutboxListener((id, type) => notified.push({ id, type, committed: statements.some((item) => item.sql === 'COMMIT') }));
+  const outboxId = '6dbb6760-f609-4f3e-a29f-4c209dc1d53b';
+
+  const result = await store.withTransaction(async (tx) => {
+    await tx.query(
+      `INSERT INTO outbox_events (id, aggregate_type, aggregate_id, correlation_id, event_type, copy_key, payload)
+       VALUES ($1, 'family', $2, $3, $4, $5, $6::jsonb)`,
+      [outboxId, 'b7fe4b27-2df2-4cf7-8071-9792b4ef665b', '1f7f43e1-ea4f-4d8a-9a0a-8dc1d6421fe1',
+        'family.geofence_entered', 'geofence.entered', '{}'],
+    );
+    return 'committed';
+  });
+
+  assert.equal(result, 'committed');
+  assert.deepEqual(notified, [{ id: outboxId, type: 'family.geofence_entered', committed: true }]);
+  assert.ok(statements.findIndex((item) => item.sql === 'COMMIT') < statements.findIndex((item) => item.sql === 'RELEASE'));
+});
+
+test('outbox listener does not fire for an insert rolled back by its transaction', async () => {
+  const statements = [];
+  const client = {
+    async query(sql, values) {
+      statements.push({ sql, values });
+      return { rows: [], rowCount: 1 };
+    },
+    release() {},
+  };
+  const store = new PostgresFoundationStore({
+    connectionString: 'postgresql://unused-in-test',
+    pool: { async connect() { return client; }, async end() {} },
+  });
+  const notified = [];
+  store.setOutboxListener((id, type) => notified.push({ id, type }));
+
+  await assert.rejects(store.withTransaction(async (tx) => {
+    await tx.query(
+      `INSERT INTO outbox_events (id, aggregate_type, aggregate_id, correlation_id, event_type, copy_key, payload)
+       VALUES ($1, 'family', $2, $3, $4, $5, $6::jsonb)`,
+      ['6dbb6760-f609-4f3e-a29f-4c209dc1d53b', 'b7fe4b27-2df2-4cf7-8071-9792b4ef665b',
+        '1f7f43e1-ea4f-4d8a-9a0a-8dc1d6421fe1', 'family.geofence_entered', 'geofence.entered', '{}'],
+    );
+    throw new Error('rollback');
+  }), /rollback/);
+  assert.deepEqual(notified, []);
+  assert.ok(statements.some((item) => item.sql === 'ROLLBACK'));
 });

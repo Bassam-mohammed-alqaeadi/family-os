@@ -5,10 +5,43 @@ import { HttpError } from '../http-error.js';
 import { toGuardianDeviceView } from '../device-lifecycle.js';
 import { PERMISSION_POLICY_VERSION, buildPermissionSnapshot } from '../permission-policy.js';
 import { FOUNDATION_SCHEMA_MIGRATIONS } from '../schema-manifest.js';
+import { NOTIFY_TYPES } from '../notification-dispatcher.js';
 
 const { Pool } = pg;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_DISCOVERABLE_FAMILIES = 20;
+
+function outboxInsertFrom(query, positionalValues) {
+  const sql = typeof query === 'string' ? query : query?.text;
+  const values = Array.isArray(positionalValues) ? positionalValues : query?.values;
+  if (typeof sql !== 'string' || !Array.isArray(values)
+    || !/^\s*INSERT\s+INTO\s+(?:public\.)?outbox_events\b/i.test(sql)) return null;
+  const match = sql.match(/INSERT\s+INTO\s+(?:public\.)?outbox_events\s*\(([^)]+)\)\s*VALUES\s*\(([^)]+)\)/i);
+  if (!match) return null;
+  const columns = match[1].split(',').map((column) => column.trim().replaceAll('"', '').toLowerCase());
+  const expressions = match[2].split(',').map((expression) => expression.trim());
+  const read = (column) => {
+    const index = columns.indexOf(column);
+    if (index < 0 || !expressions[index]) return null;
+    const placeholder = expressions[index].match(/^\$(\d+)$/);
+    if (placeholder) return values[Number(placeholder[1]) - 1] ?? null;
+    const literal = expressions[index].match(/^'([^']*)'$/);
+    return literal?.[1] ?? null;
+  };
+  const id = read('id');
+  const eventType = read('event_type');
+  return typeof id === 'string' && typeof eventType === 'string' ? { id, eventType } : null;
+}
+
+function logOutboxListenerFailure(outboxId, eventType, error) {
+  console.error(JSON.stringify({
+    severity: 'error',
+    event: 'outbox_after_commit_listener_failed',
+    outboxId,
+    eventType,
+    errorName: error?.name ?? 'Error',
+  }));
+}
 
 function requireServerCorrelationId(correlationId) {
   if (typeof correlationId !== 'string' || !UUID_PATTERN.test(correlationId)) {
@@ -132,6 +165,14 @@ export class PostgresFoundationStore {
   constructor({ connectionString, guardianTransferTtlHours, pool = undefined }) {
     this.pool = pool ?? new Pool({ connectionString, max: 10, idleTimeoutMillis: 10_000 });
     this.guardianTransferTtlHours = guardianTransferTtlHours;
+    this.outboxListener = null;
+  }
+
+  setOutboxListener(listener) {
+    if (listener !== null && typeof listener !== 'function') {
+      throw new TypeError('The outbox listener must be a function or null.');
+    }
+    this.outboxListener = listener;
   }
 
   async close() {
@@ -187,17 +228,47 @@ export class PostgresFoundationStore {
 
   async withTransaction(run) {
     const client = await this.pool.connect();
+    const outboxEvents = new Map();
+    let committed = false;
+    let result;
+    const transactionClient = new Proxy(client, {
+      get: (target, property, receiver) => {
+        if (property === 'query') {
+          return async (...args) => {
+            const queryResult = await target.query.apply(target, args);
+            const inserted = outboxInsertFrom(args[0], args[1]);
+            if (inserted) outboxEvents.set(inserted.id, inserted.eventType);
+            return queryResult;
+          };
+        }
+        const value = Reflect.get(target, property, receiver);
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+    });
     try {
-      await client.query('BEGIN');
-      const result = await run(client);
-      await client.query('COMMIT');
-      return result;
+      await transactionClient.query('BEGIN');
+      result = await run(transactionClient);
+      await transactionClient.query('COMMIT');
+      committed = true;
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
     } finally {
       client.release();
     }
+    if (committed && this.outboxListener) {
+      for (const [outboxId, eventType] of outboxEvents) {
+        try {
+          // Start dispatch immediately after COMMIT, but do not make an HTTP mutation
+          // wait on FCM or let a provider outage roll back an already-committed family fact.
+          Promise.resolve(this.outboxListener(outboxId, eventType))
+            .catch((error) => logOutboxListenerFailure(outboxId, eventType, error));
+        } catch (error) {
+          logOutboxListenerFailure(outboxId, eventType, error);
+        }
+      }
+    }
+    return result;
   }
 
   async ensureAccount(client, subject) {
@@ -270,16 +341,27 @@ export class PostgresFoundationStore {
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [auditId, familyId, actorMembershipId, correlationId, eventType, subjectType, subjectId],
     );
+    const notifyDefinition = NOTIFY_TYPES[eventType];
+    const outboxPayload = {
+      ...payload,
+      ...(eventType === 'family.device_protection_reported'
+        ? { deviceId: payload.deviceId ?? subjectId }
+        : {}),
+      auditEventId: auditId,
+      subjectType,
+      subjectId,
+    };
     await client.query(
       `INSERT INTO outbox_events
-       (id, aggregate_type, aggregate_id, correlation_id, event_type, payload)
-       VALUES ($1, 'family', $2, $3, $4, $5::jsonb)`,
+       (id, aggregate_type, aggregate_id, correlation_id, event_type, copy_key, payload)
+       VALUES ($1, 'family', $2, $3, $4, $5, $6::jsonb)`,
       [
         randomUUID(),
         familyId,
         correlationId,
         eventType,
-        JSON.stringify({ ...payload, auditEventId: auditId, subjectType, subjectId }),
+        notifyDefinition?.copyKey ?? null,
+        JSON.stringify(outboxPayload),
       ],
     );
   }

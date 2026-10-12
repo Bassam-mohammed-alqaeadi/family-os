@@ -17,8 +17,17 @@ attachChatRealtime(server, {
   familyChat: runtime.app.locals.familyChat,
   ready: runtime.ready,
 });
+server.on('afterStart', () => {
+  Promise.resolve(runtime.notificationDispatcher?.bootSweep())
+    .catch((error) => console.error(JSON.stringify({
+      severity: 'error',
+      event: 'notification_boot_sweep_failed',
+      errorName: error?.name ?? 'Error',
+    })));
+});
 server.listen(runtime.port, '0.0.0.0', () => {
   console.log(JSON.stringify({ severity: 'info', event: 'server_started', port: runtime.port }));
+  server.emit('afterStart');
 });
 
 async function shutdown(signal) {
