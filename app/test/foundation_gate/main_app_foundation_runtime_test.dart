@@ -238,7 +238,10 @@ void main() {
           isA<GuardianPushUnregistrationException>().having(
             (error) => error.message,
             'message',
-            contains('تعذّر حذف تسجيل إشعارات هذا الهاتف'),
+            allOf(
+              contains('تعذّر تأكيد إزالة تسجيل إشعارات قديم'),
+              contains('قد يستمر في تلقي التنبيهات'),
+            ),
           ),
         ),
       );
