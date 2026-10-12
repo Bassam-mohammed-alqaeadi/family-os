@@ -1,11 +1,14 @@
 package com.familyos.family_os
 
 import android.Manifest
+import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -28,6 +31,7 @@ import java.util.concurrent.TimeUnit
  */
 class MainActivity : FlutterActivity() {
     private var pendingPermissionResult: MethodChannel.Result? = null
+    private var notificationMethodChannel: MethodChannel? = null
     private val chatExecutor = Executors.newSingleThreadExecutor()
     private val chatHttpClient = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
@@ -51,6 +55,17 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+        notificationMethodChannel = MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            NOTIFICATION_CHANNEL,
+        ).also { channel ->
+            channel.setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "showForegroundNotification" -> showForegroundNotification(call, result)
+                    else -> result.notImplemented()
+                }
+            }
+        }
     }
 
     private fun requestLocationPermissions(result: MethodChannel.Result) {
@@ -393,6 +408,104 @@ class MainActivity : FlutterActivity() {
         val idempotencyKey: String?,
     )
 
+    private fun showForegroundNotification(call: MethodCall, result: MethodChannel.Result) {
+        val title = call.argument<String>("title")?.trim()
+        val body = call.argument<String>("body")?.trim()
+        val channelId = call.argument<String>("channelId")
+        val route = call.argument<String>("route")?.trim()
+        val notificationId = call.argument<Number>("id")?.toInt()
+            ?: (System.currentTimeMillis() % Int.MAX_VALUE).toInt()
+        val allowedChannels = setOf(
+            FamilyOsApplication.CHANNEL_SOS,
+            FamilyOsApplication.CHANNEL_GEOFENCE,
+            FamilyOsApplication.CHANNEL_PROTECTION,
+            FamilyOsApplication.CHANNEL_CHAT,
+        )
+        if (title.isNullOrEmpty() || title.length > 160 || body.isNullOrEmpty() || body.length > 240 ||
+            channelId == null || channelId !in allowedChannels || !isValidNotificationRoute(route)) {
+            result.success(false)
+            return
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            result.success(false)
+            return
+        }
+        if (!NotificationManagerCompat.from(this).areNotificationsEnabled()) {
+            result.success(false)
+            return
+        }
+
+        val color = when (channelId) {
+            FamilyOsApplication.CHANNEL_SOS -> ContextCompat.getColor(this, R.color.familyos_sos_notification)
+            FamilyOsApplication.CHANNEL_GEOFENCE -> ContextCompat.getColor(this, R.color.familyos_geofence_notification)
+            FamilyOsApplication.CHANNEL_PROTECTION -> ContextCompat.getColor(this, R.color.familyos_protection_notification)
+            else -> ContextCompat.getColor(this, R.color.familyos_chat_notification)
+        }
+        val openApp = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra(EXTRA_FLUTTER_ROUTE, route)
+        }
+        val contentIntent = PendingIntent.getActivity(
+            this,
+            notificationId,
+            openApp,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        val builder = NotificationCompat.Builder(this, channelId!!)
+            .setSmallIcon(R.drawable.ic_stat_family_notification)
+            .setColor(color)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setCategory(NotificationCompat.CATEGORY_EVENT)
+            .setPriority(
+                if (channelId == FamilyOsApplication.CHANNEL_CHAT) NotificationCompat.PRIORITY_DEFAULT
+                else NotificationCompat.PRIORITY_HIGH,
+            )
+            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+            .setAutoCancel(true)
+            .setContentIntent(contentIntent)
+        // Match legacy FCM channel behavior on pre-O devices; Android channels own this on O+.
+        when (channelId) {
+            FamilyOsApplication.CHANNEL_SOS, FamilyOsApplication.CHANNEL_GEOFENCE ->
+                builder.setDefaults(NotificationCompat.DEFAULT_SOUND or NotificationCompat.DEFAULT_VIBRATE)
+            FamilyOsApplication.CHANNEL_CHAT -> builder.setDefaults(NotificationCompat.DEFAULT_SOUND)
+        }
+        val notification = builder.build()
+        try {
+            NotificationManagerCompat.from(this).notify(notificationId, notification)
+            result.success(true)
+        } catch (_: SecurityException) {
+            result.success(false)
+        } catch (_: IllegalArgumentException) {
+            result.success(false)
+        }
+    }
+
+    private fun isValidNotificationRoute(route: String?): Boolean {
+        if (route.isNullOrEmpty() || route.length > 512) return false
+        val uri = try { Uri.parse(route) } catch (_: Exception) { return false }
+        if (uri.scheme != null || uri.host != null || uri.fragment != null || uri.path.isNullOrEmpty()) return false
+        val keys = uri.queryParameterNames
+        return when (uri.path) {
+            "/scr-fat-018" -> keys == setOf("alertId", "childId") &&
+                validUuid(uri.getQueryParameter("alertId")) && validUuid(uri.getQueryParameter("childId"))
+            "/scr-fat-014" -> keys == setOf("childId") && validUuid(uri.getQueryParameter("childId"))
+            "/scr-fat-026" -> keys == setOf("deviceId") && validUuid(uri.getQueryParameter("deviceId"))
+            else -> false
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val route = intent.getStringExtra(EXTRA_FLUTTER_ROUTE)?.trim()
+        if (isValidNotificationRoute(route)) {
+            notificationMethodChannel?.invokeMethod("openRoute", route)
+        }
+    }
+
     private fun hasFineLocation(): Boolean =
         ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
@@ -434,6 +547,7 @@ class MainActivity : FlutterActivity() {
     companion object {
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
         private const val TELEMETRY_CHANNEL = "com.familyos.family_os/native_child_telemetry"
+        private const val NOTIFICATION_CHANNEL = "com.familyos.family_os/family_notifications"
         private const val REQUEST_FOREGROUND_LOCATION = 8101
         private const val REQUEST_BACKGROUND_LOCATION = 8102
         const val EXTRA_FLUTTER_ROUTE = "flutter_route"

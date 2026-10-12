@@ -81,6 +81,78 @@ test('a nudge is sent over HTTP v1 with the bearer token and carries only neutra
   assert.equal(body.message.token, device);
   assert.deepEqual(body.message.notification, PUSH_COPY.ar);
   assert.deepEqual(body.message.data, { type: 'chat.message', threadId: '0b8f8a3e-2d0e-4a53-9a5e-3f0c1a2b3c4d' });
+  assert.equal(body.message.android.notification.channel_id, 'familyos_chat_nudges');
+  assert.equal(body.message.android.notification.color, '#26B3A9');
+  assert.equal(body.message.android.priority, 'HIGH', 'legacy chat urgency remains unchanged');
+  assert.equal(body.message.android.ttl, '3600s');
+  assert.equal(body.message.apns.headers['apns-priority'], '10');
+  assert.equal(Object.hasOwn(body.message.apns.payload.aps, 'sound'), false,
+    'chat keeps its neutral, non-alert APNs presentation');
+});
+
+test('normal-urgency notifications use their channel, TTL and non-interrupting APNs priority', async () => {
+  const fake = fakeGoogle();
+  const receipt = [];
+  const outcome = await sender(fake.transport).send({
+    token: device,
+    locale: 'en',
+    title: 'Maya arrived at School',
+    body: 'Entered the safe zone at 7:05 AM',
+    ttlSeconds: 1800,
+    urgency: 'normal',
+    channelId: 'familyos_geofence_alerts',
+    data: { type: 'family.geofence_entered' },
+    onAccepted: (id) => receipt.push(id),
+  });
+  assert.equal(outcome, 'sent');
+  assert.deepEqual(receipt, ['projects/x/messages/1']);
+  const body = JSON.parse(fake.requests[1].init.body).message;
+  assert.deepEqual(body.notification, { title: 'Maya arrived at School', body: 'Entered the safe zone at 7:05 AM' });
+  assert.equal(body.android.notification.channel_id, 'familyos_geofence_alerts');
+  assert.equal(body.android.notification.color, '#FFB547');
+  assert.equal(body.android.priority, 'NORMAL');
+  assert.equal(body.android.ttl, '1800s');
+  assert.equal(body.apns.headers['apns-priority'], '5');
+  assert.equal(Object.hasOwn(body.apns.payload.aps, 'sound'), false);
+});
+
+test('alert urgency uses high platform priority and a normal sound, never critical alerts', async () => {
+  const fake = fakeGoogle();
+  await sender(fake.transport).send({
+    token: device,
+    locale: 'ar',
+    title: 'استغاثة من ليان',
+    body: 'ضغط زر الاستغاثة الساعة ٣:٤٥ م',
+    ttlSeconds: 3600,
+    urgency: 'alert',
+    channelId: 'familyos_sos_alerts',
+    data: { type: 'family.sos_alert_raised' },
+  });
+  const message = JSON.parse(fake.requests[1].init.body).message;
+  assert.equal(message.android.priority, 'HIGH');
+  assert.equal(message.android.notification.channel_id, 'familyos_sos_alerts');
+  assert.equal(message.android.notification.color, '#FF5A5F');
+  assert.equal(message.apns.headers['apns-priority'], '10');
+  assert.equal(message.apns.payload.aps.sound, 'default');
+  assert.equal(JSON.stringify(message).includes('critical'), false);
+});
+
+test('high urgency is delivered promptly without turning a protection report into a sound alert', async () => {
+  const fake = fakeGoogle();
+  await sender(fake.transport).send({
+    token: device,
+    locale: 'en',
+    title: 'Maya’s protection is disabled',
+    body: 'Device protection was turned off at 7:05 AM',
+    ttlSeconds: 3600,
+    urgency: 'high',
+    channelId: 'familyos_protection_alerts',
+    data: { type: 'family.device_protection_reported' },
+  });
+  const message = JSON.parse(fake.requests[1].init.body).message;
+  assert.equal(message.android.priority, 'HIGH');
+  assert.equal(message.apns.headers['apns-priority'], '10');
+  assert.equal(Object.hasOwn(message.apns.payload.aps, 'sound'), false);
 });
 
 test('the access token is cached until shortly before it expires', async () => {

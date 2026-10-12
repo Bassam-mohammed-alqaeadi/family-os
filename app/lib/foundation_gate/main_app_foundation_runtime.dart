@@ -12,6 +12,7 @@ import 'package:family_os/core/runtime/family_invite_code_source.dart';
 import 'package:family_os/core/runtime/family_roster_source.dart';
 import 'package:family_os/core/runtime/identity_source.dart';
 import 'package:family_os/core/runtime/runtime_data_origin.dart';
+import 'package:family_os/features/n02_day/family_push_registration.dart';
 
 import 'device_lifecycle.dart';
 import 'family_calendar_api_client.dart';
@@ -21,6 +22,7 @@ import 'family_device_api_client.dart';
 import 'family_invite_code_api_client.dart';
 import 'family_location_api_client.dart';
 import 'family_membership_api_client.dart';
+import 'family_push_client.dart';
 import 'family_sos_api_client.dart';
 import 'foundation_gate_identity.dart';
 import 'foundation_gate_models.dart';
@@ -84,6 +86,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   final FamilyTasksApiClient? _tasksApi;
   final FamilyCalendarApiClient? _calendarApi;
   final FamilyChatApiClient? _chatApi;
+  FamilyPushRegistrar? _pushRegistrar;
   final String? _preferredFamilyId;
   IdentitySnapshot _identityValue;
   FamilyRosterSnapshot _rosterValue;
@@ -130,6 +133,33 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   /// protected storage; this runtime exposes only the typed client, never the secret.
   FamilyChatApiClient? get chatApi => _chatApi;
 
+  /// Best-effort push registration for the active guardian session.
+  ///
+  /// This runs once at app startup (and after a successful sign-in/sign-up) so SOS, geofence and
+  /// protection alerts are available before the person opens chat. Chat keeps its existing
+  /// `registerGuardianPush` call; both paths use the same idempotent server registration. Missing
+  /// Firebase setup, denied permission, and network errors never block app startup or sign-in.
+  Future<void> registerGuardianPush({PushTokenSource? tokens}) async {
+    final family = _controller.selectedFamily;
+    final chat = _chatApi;
+    if (!_identityValue.isRemoteAuthoritative || family == null || chat == null ||
+        (family.role != 'primary_guardian' && family.role != 'co_guardian')) {
+      return;
+    }
+    try {
+      final registrar = _pushRegistrar ??= FamilyPushRegistrar(
+        client: FamilyPushClient(configuration: chat.configuration),
+        tokens: tokens ?? FirebasePushTokenSource(),
+      );
+      await registrar.ensureRegistered(
+        familyId: family.id,
+        idToken: await _identity.currentIdToken(),
+      );
+    } on Object {
+      // Device permission, Firebase setup and registration are all optional capabilities.
+    }
+  }
+
   /// The family this device is looking at, or null before one is selected.
   String? get selectedFamilyId => _controller.selectedFamily?.id;
 
@@ -145,7 +175,9 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   }) async {
     await _controller.signIn(email: email, password: password);
     await _selectConfiguredFamily();
-    return _refreshIdentitySnapshot();
+    final snapshot = await _refreshIdentitySnapshot();
+    await registerGuardianPush();
+    return snapshot;
   }
 
   Future<IdentitySnapshot> signUp({
@@ -154,7 +186,9 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   }) async {
     await _controller.signUp(email: email, password: password);
     await _selectConfiguredFamily();
-    return _refreshIdentitySnapshot();
+    final snapshot = await _refreshIdentitySnapshot();
+    await registerGuardianPush();
+    return snapshot;
   }
 
   Future<void> signOut() async {
@@ -496,6 +530,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
         await _controller.selectFamily(discovered);
       }
       await _refreshIdentitySnapshot();
+      await registerGuardianPush();
       return FamilyCreateResult.created(
         familyId: created.id,
         displayName: created.displayName,

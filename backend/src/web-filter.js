@@ -792,6 +792,7 @@ export function createProtectionReportSubmit({ port }) {
         subjectId: device.id,
         subjectType: 'device_protection',
         eventType: 'family.device_protection_reported',
+        payload: { deviceId: device.id, occurredAt: row.reported_at, observedState },
       });
       const latest = await port.readLatestProtectionReport(tx, { deviceId: device.id });
       return { report: deviceRowToReport(row), health: protectionView(device, latest, new Date()) };
@@ -1107,6 +1108,7 @@ export function postgresWebFilterPort(store, { credentialMatches }) {
       subjectId,
       subjectType,
       eventType,
+      payload = {},
     }) {
       await store.appendAuditAndOutbox(client, {
         familyId,
@@ -1115,6 +1117,7 @@ export function postgresWebFilterPort(store, { credentialMatches }) {
         subjectId,
         subjectType,
         eventType,
+        payload,
       });
     },
   };

@@ -15,4 +15,14 @@
     <string name="location_sharing_stopped_channel_name">توقّف مشاركة الموقع</string>
     <string name="location_sharing_stopped_title">توقّفت مشاركة الموقع</string>
     <string name="location_sharing_stopped_text">فُصل هذا الهاتف عن العائلة، فتوقّف عن إرسال موقعه. لإعادة المشاركة يلزم إقران جديد من هاتف وليّ الأمر.</string>
+
+    <string name="familyos_sos_channel_name">استغاثات العائلة</string>
+    <string name="familyos_sos_channel_description">تنبيهات عاجلة عندما يضغط طفل في العائلة زر الاستغاثة.</string>
+    <string name="familyos_geofence_channel_name">تنبيهات المنطقة الآمنة</string>
+    <string name="familyos_geofence_channel_description">تنبيهات عاجلة عند دخول الطفل منطقة آمنة أو الخروج منها.</string>
+    <string name="familyos_protection_channel_name">تنبيهات الحماية</string>
+    <string name="familyos_protection_channel_description">تنبيهات عاجلة عندما يرصد جهاز الطفل مؤشراً يؤثر في الحماية.</string>
+    <string name="familyos_chat_channel_name">رسائل العائلة</string>
+    <string name="familyos_chat_channel_description">إشعار محايد عند وصول رسالة جديدة إلى محادثة عائلية.</string>
+    <string name="familyos_default_notification_channel_id" translatable="false">familyos_chat_nudges</string>
 </resources>

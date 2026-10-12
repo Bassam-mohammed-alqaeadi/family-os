@@ -274,8 +274,8 @@ export function createSosAlertFire({ port, now = () => new Date() }) {
             recipientMembershipId: guardian.id,
             recipientContactId: null,
             channel: 'push',
-            deliveryState: 'not_configured',
-            reasonCode: 'push_transport_absent',
+            deliveryState: port.pushConfigured ? 'recorded' : 'not_configured',
+            reasonCode: port.pushConfigured ? null : 'push_transport_absent',
           })),
         ];
         await port.insertDeliveries(tx, {
@@ -843,7 +843,7 @@ function groupDeliveries(rows) {
  * membership, idempotency and audit helpers, so the whole emergency surface costs route
  * lines in `app.js` and nothing else.
  */
-export function postgresSosPort(store, { credentialMatches }) {
+export function postgresSosPort(store, { credentialMatches, pushConfigured = false }) {
   const alertColumns = `id, family_id, child_id, raised_by_kind, raised_by_membership_id,
                         pressed_at, received_at, status, location_class, latitude, longitude,
                         accuracy_meters, connection_class, battery_percent, place_label,
@@ -853,6 +853,8 @@ export function postgresSosPort(store, { credentialMatches }) {
                         version, created_at, updated_at`;
 
   return {
+    pushConfigured: pushConfigured === true,
+
     async withTransaction(run) {
       return store.withTransaction(run);
     },
@@ -1165,8 +1167,8 @@ export function postgresSosPort(store, { credentialMatches }) {
 }
 
 /** Builds every operation for a server that was handed a Foundation store. */
-export function sosEmergencyFor(store, { credentialMatches }) {
-  const port = postgresSosPort(store, { credentialMatches });
+export function sosEmergencyFor(store, { credentialMatches, pushConfigured = false }) {
+  const port = postgresSosPort(store, { credentialMatches, pushConfigured });
   return {
     fire: createSosAlertFire({ port }),
     list: createSosAlertList({ port }),

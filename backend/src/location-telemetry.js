@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { HttpError } from './http-error.js';
+import { NOTIFY_TYPES } from './notification-dispatcher.js';
 
 /**
  * Where a child's device has been, and the boundaries it crossed.
@@ -634,15 +635,19 @@ export function postgresLocationPort(store, { credentialMatches }) {
       // The same outbox the rest of the Foundation writes to, with a payload that carries
       // everything a delivery worker needs to phrase the alert - so the alert is never a
       // second interpretation of the event.
+      const eventType = kind === 'ENTER' ? 'family.geofence_entered' : 'family.geofence_exited';
+      const copyKey = NOTIFY_TYPES[eventType]?.copyKey;
+      if (!copyKey) throw new HttpError(500, 'notification_type_unconfigured', 'The geofence notification type is not configured.');
       await client.query(
         `INSERT INTO outbox_events
-           (id, aggregate_type, aggregate_id, correlation_id, event_type, payload)
-         VALUES ($1, 'family', $2, $3, $4, $5::jsonb)`,
+           (id, aggregate_type, aggregate_id, correlation_id, event_type, copy_key, payload)
+         VALUES ($1, 'family', $2, $3, $4, $5, $6::jsonb)`,
         [
           randomUUID(),
           familyId,
           correlationId,
-          kind === 'ENTER' ? 'family.geofence_entered' : 'family.geofence_exited',
+          eventType,
+          copyKey,
           JSON.stringify({
             zoneId,
             zoneName,
