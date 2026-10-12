@@ -115,9 +115,10 @@ final class FamilyPushClient {
     }
   }
 
-  /// Removes the registration for this exact device token without needing the UUID an old
-  /// app version kept only in memory. The token exists only in this request's body and is
-  /// never persisted by the client. The server answers identically whether a row existed.
+  /// Best-effort cleanup for an exact legacy token whose UUID the old app kept only in memory.
+  /// The token selects a row; the server deletes only when the authenticated guardian owns its
+  /// recorded membership. Foreign, absent and stale rotated tokens all return the same empty 204,
+  /// so this response alone is not proof that no server row exists.
   Future<void> unregisterCurrentToken({
     required String token,
     required String idToken,

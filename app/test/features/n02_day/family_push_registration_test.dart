@@ -104,8 +104,7 @@ void main() {
         if (request.method == 'DELETE' &&
             request.url.path == '/v1/me/push/registrations/current') {
           if (failTokenUnregister) throw StateError('token cleanup offline');
-          final body = jsonDecode(request.body) as Map<String, Object?>;
-          serverRows.remove(body['token']);
+          // Exercise the opaque no-op branch: 204 does not prove the token was deleted.
           return http.Response('', 204);
         }
         if (request.method == 'DELETE') {
@@ -151,6 +150,7 @@ void main() {
   test(
     'a handset removes the old UUID before registering a rotated token',
     () async {
+      store.snapshot = FamilyPushRegistrationSnapshot.knownNone;
       final tokens = _FakeTokens();
       final registrar = FamilyPushRegistrar(
         client: client,
@@ -182,7 +182,7 @@ void main() {
   );
 
   test(
-    'upgrade with no pre-ledger row treats absence as unknown and removes the old server token',
+    'legacy-unknown state can register the live token but remains unresolved',
     () async {
       store.snapshot = FamilyPushRegistrationSnapshot.unknown;
       serverRows[_legacyToken] = const FamilyPushRegistrationRecord(
@@ -198,13 +198,17 @@ void main() {
 
       expect(store.snapshot.hasUntrackedRegistration, isTrue);
       expect(await registrar.ensureRegistered(familyId: _family, idToken: 'new-owner'), isTrue);
+      expect(await registrar.ensureRegistered(familyId: _family, idToken: 'new-owner'), isTrue);
+      expect(posted, hasLength(1));
       expect(serverRows, hasLength(1));
       expect(serverRows[_legacyToken]?.familyId, _family);
       expect(
         serverRows[_legacyToken]?.registrationId,
-        isNot('66666666-6666-4666-8666-666666666666'),
+        '66666666-6666-4666-8666-666666666666',
       );
-      expect(store.snapshot.hasUntrackedRegistration, isFalse);
+      // The POST makes this live token addressable, but local state cannot prove it was
+      // the same token used by the pre-ledger registration rather than a rotated one.
+      expect(store.snapshot.hasUntrackedRegistration, isTrue);
       expect(store.snapshot.registrations, hasLength(1));
       expect(
         requests.first.url.path,
@@ -212,14 +216,56 @@ void main() {
       );
       expect(requests.first.headers['authorization'], 'Bearer new-owner');
 
-      await registrar.unregister(idToken: () async => 'new-owner');
+      await expectLater(
+        registrar.unregister(idToken: () async => 'new-owner'),
+        throwsA(isA<StateError>()),
+      );
       expect(serverRows, isEmpty);
-      expect(store.snapshot, _knownNone());
+      expect(store.snapshot.hasUntrackedRegistration, isTrue);
+      expect(store.snapshot.registrations, isEmpty);
     },
   );
 
   test(
-    'permission denial still cleans a legacy row when FCM exposes a token without prompting',
+    'a successful current-token POST does not claim a rotated legacy token is removed',
+    () async {
+      store.snapshot = FamilyPushRegistrationSnapshot.unknown;
+      serverRows[_legacyToken] = const FamilyPushRegistrationRecord(
+        familyId: _otherFamily,
+        registrationId: '66666666-6666-4666-8666-666666666666',
+      );
+      final tokens = _FakeTokens(
+        token: _rotatedToken,
+        cleanupToken: _rotatedToken,
+      );
+      final registrar = FamilyPushRegistrar(
+        client: client,
+        tokens: tokens,
+        store: store,
+      );
+
+      expect(
+        await registrar.ensureRegistered(familyId: _family, idToken: 'owner'),
+        isTrue,
+      );
+      expect(posted.single['token'], _rotatedToken);
+      expect(serverRows.keys.toSet(), {_legacyToken, _rotatedToken});
+      expect(serverRows[_legacyToken]?.familyId, _otherFamily);
+      expect(serverRows[_rotatedToken]?.familyId, _family);
+      expect(store.snapshot.hasUntrackedRegistration, isTrue);
+      expect(store.snapshot.registrations, hasLength(1));
+
+      await expectLater(
+        registrar.unregister(idToken: () async => 'owner'),
+        throwsA(isA<StateError>()),
+      );
+      expect(serverRows.keys.toSet(), {_legacyToken});
+      expect(store.snapshot.hasUntrackedRegistration, isTrue);
+    },
+  );
+
+  test(
+    'permission denial keeps legacy state unknown after opaque token cleanup',
     () async {
       store.snapshot = FamilyPushRegistrationSnapshot.unknown;
       serverRows[_legacyToken] = const FamilyPushRegistrationRecord(
@@ -237,12 +283,18 @@ void main() {
       expect(tokens.cleanupTokenReads, 1);
       expect(tokens.registrationTokenReads, 1);
       expect(posted, isEmpty);
-      expect(serverRows, isEmpty);
-      expect(store.snapshot, _knownNone());
+      // The fake returns the same opaque 204 without removing its row. The app cannot claim
+      // whether that response matched an owned token, a foreign token, or no row at all.
+      expect(serverRows, hasLength(1));
+      // The API intentionally does not reveal whether an absent or foreign-owned row matched.
+      // A successful cleanup request therefore cannot promote this legacy state to known-empty.
+      expect(store.snapshot.hasUntrackedRegistration, isTrue);
+      expect(store.snapshot.registrations, isEmpty);
       await expectLater(
         registrar.unregister(idToken: () async => 'owner'),
-        completes,
+        throwsA(isA<StateError>()),
       );
+      expect(store.snapshot.hasUntrackedRegistration, isTrue);
     },
   );
 
@@ -300,11 +352,15 @@ void main() {
         ),
       );
       expect(store.snapshot.hasUntrackedRegistration, isTrue);
-      expect(serverRows, isEmpty);
+      expect(serverRows, hasLength(1));
 
-      await registrar.unregister(idToken: () async => 'owner');
-      expect(serverRows, isEmpty);
-      expect(store.snapshot, _knownNone());
+      await expectLater(
+        registrar.unregister(idToken: () async => 'owner'),
+        throwsA(isA<StateError>()),
+      );
+      expect(serverRows, hasLength(1));
+      expect(store.snapshot.hasUntrackedRegistration, isTrue);
+      expect(store.snapshot.registrations, isEmpty);
     },
   );
 

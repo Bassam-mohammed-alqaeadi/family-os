@@ -82,17 +82,22 @@ export function pushRegistrationsFor(store, { credentialMatches, sender }) {
       `SELECT 1 FROM family_memberships
         WHERE target_subject = $1
           AND role IN ('primary_guardian', 'co_guardian')
-          AND status <> 'invited'
+          AND status IN ('active', 'removed', 'revoked')
         LIMIT 1`,
       [subject],
     );
     if (rowCount === 0) {
       throw new ChatError(403, 'push_guardian_only', 'Only a guardian can remove device notifications.');
     }
+    return subject;
   }
 
   return {
-    /** Registers (or moves) one device token for the caller's guardian membership. */
+    /**
+     * An explicit registration is authorized by the caller's guardian membership in this family,
+     * not by token possession alone. The authenticated guardian can bind this shared handset to
+     * their family; legacy DELETE remains owner-scoped and cannot be used to remove a foreign row.
+     */
     async register({ principal, familyId, body }) {
       const input = requireRegistrationBody(body);
       return port.transact(async (client) => {
@@ -144,19 +149,27 @@ export function pushRegistrationsFor(store, { credentialMatches, sender }) {
     },
 
     /**
-     * Removes the row for the exact current FCM token without requiring the UUID an older app
-     * kept only in process memory. The token is supplied once in the authenticated request body,
-     * never stored by this path, and the caller learns nothing about whether a row existed. It
-     * intentionally works across prior family ownership: registration itself treats the unique
-     * FCM token as the current device identity and moves that row to the latest signed-in guardian.
+     * Legacy cleanup lacks the registration UUID, so the exact FCM token selects a candidate row;
+     * it is not authorization. Delete only when the authenticated current/former guardian owns
+     * the row through its recorded membership. A guardian from another account/family is a
+     * uniform no-op, indistinguishable from an absent token. If FCM rotated the token, this
+     * request also cannot identify the older row. An explicit registration POST is the separate,
+     * authorized path that may move a shared handset to the newly signed-in guardian.
      */
     async unregisterCurrentToken({ principal, body }) {
       const { token } = requireCurrentTokenBody(body);
       return port.transact(async (client) => {
-        await requireGuardianIdentity(client, principal);
+        const subject = await requireGuardianIdentity(client, principal);
         await client.query(
-          'DELETE FROM family_push_registrations WHERE token = $1',
-          [token],
+          `DELETE FROM family_push_registrations AS registration
+            USING family_memberships AS membership
+            WHERE registration.token = $1
+              AND membership.id = registration.membership_id
+              AND membership.family_id = registration.family_id
+              AND membership.target_subject = $2
+              AND membership.role IN ('primary_guardian', 'co_guardian')
+              AND membership.status IN ('active', 'removed', 'revoked')`,
+          [token, subject],
         );
         return { deleted: true };
       });

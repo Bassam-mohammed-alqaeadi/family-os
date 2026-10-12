@@ -425,6 +425,25 @@ test('the revocation contract declares provenance, the closed vocabulary and the
   assert.match(schemas.DeviceHealth.properties.needsAttention.description, /revoked/);
 });
 
+test('legacy push cleanup treats the token as a selector and hides foreign ownership', async () => {
+  const specification = await readSpecification();
+  const operation = specification.paths['/v1/me/push/registrations/current'].delete;
+
+  assert.deepEqual(operation.security, [{ oidcBearer: [] }]);
+  assert.match(operation.description, /token is only a row selector, not authorization/i);
+  assert.match(operation.description, /authenticated subject owns the registration/i);
+  assert.match(operation.description, /same empty 204 as an absent token/i);
+  assert.match(operation.description, /rotated the token.*may not identify that older row/i);
+  assert.match(operation.responses['204'].description, /foreign-owned.*same empty 204/i);
+  assert.match(operation.responses['204'].description, /does not confirm.*stale rotated-token row is gone/i);
+  assert.doesNotMatch(operation.description, /deleted regardless of its prior guardian\/family owner/i);
+
+  const registration = specification.paths['/v1/families/{familyId}/push/registrations'].post;
+  assert.match(registration.description, /authenticated caller to be a guardian/i);
+  assert.match(registration.description, /cannot be authorized by the token alone/i);
+  assert.match(registration.description, /account switch on a shared handset/i);
+});
+
 // ── helpers ──
 
 function* walk(value) {

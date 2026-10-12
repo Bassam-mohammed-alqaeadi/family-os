@@ -73,9 +73,12 @@ final class FirebasePushTokenSource implements PushTokenSource {
 ///
 /// The persisted ledger distinguishes three facts: a known UUID, a server-confirmed empty state,
 /// and unknown legacy state (including an absent ledger written by a pre-ledger app). Registration
-/// writes an "untracked may exist" marker before its network request, so a timeout cannot be
-/// mistaken for no server row. Failed sign-out deletion retains known UUIDs for a restart retry.
-/// FCM tokens and bearer credentials are transient request data and are never stored.
+/// writes an "untracked may exist" marker before its network request. The owner-scoped current-token
+/// cleanup response intentionally hides foreign-row existence, so only a successful registration
+/// POST whose returned UUID is durably recorded makes the submitted token addressable. Any
+/// pre-existing unknown marker remains: the old registration may have used a token that FCM has
+/// since rotated. Failed UUID deletion is retained and blocks another registration until retry
+/// succeeds. FCM tokens and bearer credentials are never stored.
 final class FamilyPushRegistrar {
   FamilyPushRegistrar({
     required FamilyPushClient client,
@@ -102,9 +105,11 @@ final class FamilyPushRegistrar {
 
   /// Attempts cleanup before the provider session is cleared.
   ///
-  /// A legacy-unknown state is reconciled by revoking only the exact current FCM token, without
-  /// prompting for permission. If no token is available, it remains unknown and the caller gets
-  /// a post-logout warning. A failed UUID deletion is retained durably and retried next time.
+  /// A legacy-unknown state triggers an owner-scoped cleanup for the exact current FCM token,
+  /// without prompting for permission. The uniform 204 does not prove the token is globally absent,
+  /// and cannot show whether FCM rotated since the old registration, so the unknown marker remains.
+  /// Failed UUID deletion is retained durably and surfaced after logout; a later authenticated
+  /// startup retries known UUIDs.
   Future<void> unregister({
     required Future<String> Function() idToken,
   }) =>
@@ -139,7 +144,7 @@ final class FamilyPushRegistrar {
 
     Future<String>? liveIdToken;
     Future<String> currentIdToken() => liveIdToken ??= idToken();
-    var unresolvedLegacy = snapshot.hasUntrackedRegistration;
+    final unresolvedLegacy = snapshot.hasUntrackedRegistration;
     final remaining = <FamilyPushRegistrationRecord>[];
 
     final cleanupToken = tokenOverride ?? await _cleanupToken();
@@ -149,9 +154,9 @@ final class FamilyPushRegistrar {
           token: cleanupToken,
           idToken: await currentIdToken(),
         );
-        // This confirms the current FCM address is absent at the server, without revealing
-        // whether a row existed. Known UUIDs are still deleted individually below.
-        unresolvedLegacy = false;
+        // The route deletes only a registration owned by this authenticated guardian, while
+        // returning the same 204 for absent and foreign rows. Do not mistake that response for
+        // proof of global absence or proof that an old, rotated token is gone.
       } on Object {
         // Keep the unknown marker. UUID cleanup below can still succeed independently.
       }
@@ -192,9 +197,9 @@ final class FamilyPushRegistrar {
     final platform = _tokens.platform;
     if (platform == null) return false;
 
-    // A previous process may have left a known row (or a failed-delete retry). Try to remove
-    // it before this process creates a new row; failure is retained and blocks push registration,
-    // but never blocks sign-in.
+    // A previous process may have left known UUIDs or unknown legacy state. Try cleanup before
+    // creating a row. A failed known-UUID deletion blocks push registration. An authenticated
+    // upsert can record the live token, but it cannot resolve uncertainty about an older rotated token.
     if (_registeredToken == null && _snapshot.hasAnythingToClean) {
       try {
         await _unregister(idToken: () async => idToken);
@@ -210,9 +215,7 @@ final class FamilyPushRegistrar {
     final current = snapshot.registrations.where(
       (record) => record.familyId == familyId,
     );
-    if (!snapshot.hasUntrackedRegistration &&
-        _registeredToken == token &&
-        current.isNotEmpty) {
+    if (_registeredToken == token && current.isNotEmpty) {
       return true;
     }
 
@@ -228,14 +231,19 @@ final class FamilyPushRegistrar {
         // Do not block sign-in; any unresolved UUID/legacy marker remains for logout retry.
       }
     }
-    // Do not create a new registration while any old registration is still unknown or
-    // undeleted. Sign-in remains available; a later startup retries this cleanup first.
-    if (_snapshot.hasAnythingToClean) return false;
+    // Never register over a known UUID whose deletion failed. Legacy-unknown state with no
+    // recoverable UUID may proceed to an authenticated upsert for this exact live token. The
+    // returned UUID makes this token addressable, but an inherited unknown marker remains because
+    // the old registration may have used a token FCM has since rotated. A failed POST also keeps
+    // the marker. Sign-in itself is never blocked.
+    if (_snapshot.registrations.isNotEmpty) return false;
     snapshot = _snapshot;
+    final inheritedUnknown = snapshot.hasUntrackedRegistration;
 
     // The registration POST can commit remotely and still lose its response. Persist uncertainty
-    // before making that side effect, so a restart retries exact-token cleanup rather than claiming
-    // an empty server state. Do not send the POST if this durable write fails.
+    // before making that side effect. A successful POST clears only this attempt's marker; any
+    // inherited unknown state may refer to an older rotated token and must remain. Do not send the
+    // POST if this durable write fails.
     final inFlight = snapshot.copyWith(
       hasUntrackedRegistration: true,
     );
@@ -265,7 +273,7 @@ final class FamilyPushRegistrar {
       updatedRecords[existingIndex] = saved;
     }
     final confirmed = FamilyPushRegistrationSnapshot(
-      hasUntrackedRegistration: false,
+      hasUntrackedRegistration: inheritedUnknown,
       registrations: List<FamilyPushRegistrationRecord>.unmodifiable(
         updatedRecords,
       ),

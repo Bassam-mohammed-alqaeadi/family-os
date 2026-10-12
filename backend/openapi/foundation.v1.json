@@ -6930,8 +6930,8 @@
     "/v1/me/push/registrations/current": {
       "delete": {
         "operationId": "revokeCurrentPushToken",
-        "summary": "Removes this handset's current push token",
-        "description": "Current or former guardians use this for upgrade/sign-out cleanup when an old registration UUID cannot be recovered. The exact FCM token is sent in the request body over HTTPS, deleted regardless of its prior guardian/family owner, never returned, and never persisted by the client. The same 204 answer is returned whether or not a row existed. This route does not depend on the server's FCM sender being configured.",
+        "summary": "Requests owner-scoped cleanup of a legacy push token",
+        "description": "Current or former guardians use this for upgrade/sign-out cleanup when an old registration UUID cannot be recovered. The FCM token is only a row selector, not authorization: the server deletes only when the authenticated subject owns the registration's recorded guardian membership. A token registered to another account or unrelated family is left untouched and receives the same empty 204 as an absent token, so its existence is not disclosed. If FCM rotated the token since the legacy registration, this request may not identify that older row and the response does not confirm its removal. The token is sent in the HTTPS request body, never returned or persisted by the client. This route does not depend on the server's FCM sender. A separate authenticated registration POST may explicitly move a shared handset to the newly signed-in guardian.",
         "tags": [
           "Push notifications"
         ],
@@ -6964,7 +6964,7 @@
         },
         "responses": {
           "204": {
-            "description": "The current token is no longer registered; absent rows are treated as success."
+            "description": "Any registration owned by the authenticated guardian that matches this token is removed. An absent, foreign-owned, or previously rotated token has the same empty 204 response; repeating the request is idempotent, but 204 does not confirm that a stale rotated-token row is gone."
           },
           "400": {
             "$ref": "#/components/responses/InvalidRequest"
@@ -6988,7 +6988,7 @@
       "post": {
         "operationId": "registerFamilyPushDevice",
         "summary": "Registers this guardian handset for chat nudges",
-        "description": "Guardians only. The token is the one Firebase issued to the app. A token that was registered before moves to the caller, so a handset is only ever nudged for its latest guardian. Registration is idempotent by token, so no Idempotency-Key is taken. Answers 503 push_not_configured when the server has no FCM sender.",
+        "description": "Requires the authenticated caller to be a guardian of this family. The FCM token is a delivery destination, not an authorization credential: this POST cannot be authorized by the token alone and it does not grant access to a family or to another guardian's cleanup. An explicit successful registration may move the unique token to this caller's guardian membership, supporting an account switch on a shared handset; only content-free nudges for this caller's authorized family are then sent to it. Registration is idempotent by token, so no Idempotency-Key is taken. Answers 503 push_not_configured when the server has no FCM sender.",
         "tags": [
           "Push notifications"
         ],

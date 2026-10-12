@@ -2496,9 +2496,11 @@ export function createApp({
         }),
     );
 
-    // Upgrade cleanup for a token whose old registration UUID was never persisted. This route
-    // remains available even when this server has no FCM sender: deleting stored rows does not
-    // send notifications. The token stays in a JSON body (not a URL) and is never echoed.
+    // Upgrade cleanup for a token whose old registration UUID was never persisted. The service
+    // deletes only a row owned by this caller's current/former guardian membership; an unrelated
+    // row is a no-op with the same 204 as an absent token; an older rotated token also cannot be
+    // identified by this request. It works without an FCM sender. The token stays in a JSON body
+    // (not a URL) and is never echoed.
     app.delete(
         '/v1/me/push/registrations/current',
         requirePrincipal,

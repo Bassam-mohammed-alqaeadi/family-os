@@ -20,11 +20,13 @@ final class FamilyPushRegistrationRecord {
 ///
 /// A missing row (or a row written by the pre-ledger release) is **unknown**, not
 /// known-empty: that older client could have registered an FCM token without writing
-/// its server UUID to disk. `hasUntrackedRegistration` remains true until a
-/// token-scoped server cleanup or successful server registration resolves the current
-/// FCM token. Known UUIDs are kept separately so a token rotation cannot overwrite a
-/// prior cleanup address. An empty, non-unknown snapshot is the only trusted
-/// "nothing to remove" state.
+/// its server UUID to disk. The token-scoped cleanup route intentionally returns the
+/// same response for an absent token and a token owned by another guardian, so its 204
+/// cannot clear this uncertainty. A successful registration POST durably records the UUID
+/// for the submitted current token, but an inherited unknown marker remains because the
+/// legacy row may have used a token FCM has since rotated. Known UUIDs are kept separately
+/// so a token rotation cannot overwrite a prior cleanup address. An empty, non-unknown
+/// snapshot is the only trusted "nothing to remove" state.
 final class FamilyPushRegistrationSnapshot {
   const FamilyPushRegistrationSnapshot({
     required this.hasUntrackedRegistration,
