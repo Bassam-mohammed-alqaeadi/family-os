@@ -149,7 +149,7 @@ void main() {
   });
 
   test(
-    'a handset registers once per token and retains old UUIDs across token rotation',
+    'a handset removes the old UUID before registering a rotated token',
     () async {
       final tokens = _FakeTokens();
       final registrar = FamilyPushRegistrar(
@@ -170,8 +170,10 @@ void main() {
       await registrar.ensureRegistered(familyId: _family, idToken: 'id');
       expect(posted, hasLength(2));
       expect(posted.last['token'], _rotatedToken);
-      expect(store.snapshot.registrations, hasLength(2));
-      expect(serverRows, hasLength(2));
+      expect(store.snapshot.registrations, hasLength(1));
+      expect(serverRows, hasLength(1));
+      expect(serverRows.containsKey(_firstToken), isFalse);
+      expect(serverRows.containsKey(_rotatedToken), isTrue);
 
       await registrar.unregister(idToken: () async => 'live-owner');
       expect(serverRows, isEmpty);

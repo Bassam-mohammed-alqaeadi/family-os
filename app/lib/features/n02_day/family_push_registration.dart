@@ -206,9 +206,19 @@ final class FamilyPushRegistrar {
     final token = await _tokens.currentToken();
     if (token == null) return false;
 
-    // If the permission-free token lookup was unavailable, permission approval may have made
-    // the token visible. Resolve the old current-token row before registering the signed-in owner.
-    if (_registeredToken == null && _snapshot.hasAnythingToClean) {
+    var snapshot = _snapshot;
+    final current = snapshot.registrations.where(
+      (record) => record.familyId == familyId,
+    );
+    if (!snapshot.hasUntrackedRegistration &&
+        _registeredToken == token &&
+        current.isNotEmpty) {
+      return true;
+    }
+
+    // Permission-free token retrieval may have been unavailable, or Firebase may have rotated
+    // the token during this process. Retry cleanup with the token now visible before registering.
+    if (snapshot.hasAnythingToClean) {
       try {
         await _unregister(
           idToken: () async => idToken,
@@ -221,16 +231,7 @@ final class FamilyPushRegistrar {
     // Do not create a new registration while any old registration is still unknown or
     // undeleted. Sign-in remains available; a later startup retries this cleanup first.
     if (_snapshot.hasAnythingToClean) return false;
-
-    final snapshot = _snapshot;
-    final current = snapshot.registrations.where(
-      (record) => record.familyId == familyId,
-    );
-    if (!snapshot.hasUntrackedRegistration &&
-        _registeredToken == token &&
-        current.isNotEmpty) {
-      return true;
-    }
+    snapshot = _snapshot;
 
     // The registration POST can commit remotely and still lose its response. Persist uncertainty
     // before making that side effect, so a restart retries exact-token cleanup rather than claiming
