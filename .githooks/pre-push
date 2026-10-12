@@ -7,12 +7,14 @@
 #
 # ما يمنعه:
 #   ١) دفع غير fast-forward (أي قوة append/rewrite) على أي فرع.
-#   ٢) حذف فرع على الريموت (local sha = أصفار).
+#   ٢) حذف فرع أو وسم على الريموت (local sha = أصفار).
 #   ٣) force على main — ممنوع دائماً ولا يوجد له تجاوز.
 #   ٤) **أي دفع تعذّر فيه التحقق من ancestry** (غياب كائن الطرف الآخر، استنساخ shallow،
 #      أو أي حالة لا يستطيع فيها Git إثبات أن رأس الريموت سلفٌ لرأسنا).
 #      القاعدة: عند الشك **نرفض** — لا نسمح بعد تحذير. والاستثناء الوحيد: تجاوز صريح
 #      على فرع **غير main** لمَن يعرف ما يفعل.
+#   ٥) **نقل وسم قائم** — يُرفض دائماً: ancestry بين وسمين لا معنى له (قد يبدو fast-forward
+#      وهو ليس كذلك)، والوسوم الأرشيفية `archive/*` لا تُنقل ولا تُحذف.
 #
 # ما يسمح به: دفع fast-forward عادي، وإنشاء فرع جديد (remote sha = أصفار).
 #
@@ -44,19 +46,23 @@ while read -r LOCAL_REF LOCAL_SHA REMOTE_REF REMOTE_SHA; do
   ZERO='0000000000000000000000000000000000000000'
   FORCED="${FAMILY_OS_ALLOW_FORCE_PUSH:-0}"
   case "$REMOTE_REF" in *refs/heads/main) EMPTY_OK=0 ;; *) EMPTY_OK=1 ;; esac
+  IS_TAG=0
+  case "$REMOTE_REF" in refs/tags/*) IS_TAG=1 ;; esac
+  # اسم ودّي للرسائل: فرع بلا بادئة، وإلا المرجع كما هو (وسم مثلاً)
+  case "$REMOTE_REF" in refs/heads/*) REF_NAME="${REMOTE_REF#refs/heads/}" ;; *) REF_NAME="$REMOTE_REF" ;; esac
 
   # ١) حذف فرع على الريموت
   if [ "$LOCAL_SHA" = "$ZERO" ]; then
     if [ "$EMPTY_OK" = "0" ]; then
-      printf '\n  ⛔ منع الخطاف حذف الفرع: %s\n' "$REMOTE_REF"
-      printf '     سياسة المستودع: لا حذف للفروع. التراجع إلى الفروع المؤرشفة عبر وسوم archive/*.\n'
+      printf '\n  ⛔ منع الخطاف حذف مرجع على الريموت: %s\n' "$REMOTE_REF"
+      printf '     سياسة المستودع: لا حذف للفروع ولا للوسوم. الفروع القديمة تُؤرشف بوسم archive/* ثم تُترك.\n'
       log "BLOCKED-DELETE" "$REMOTE_REF"
       BLOCKED=1
     elif [ "$FORCED" = "1" ]; then
       printf '\n  ⚠ الخطاف: سُمح بحذف %s بتجاوز صريح (FAMILY_OS_ALLOW_FORCE_PUSH=1).\n' "$REMOTE_REF"
       log "ALLOWED-DELETE-OVERRIDE" "$REMOTE_REF"
     else
-      printf '\n  ⛔ منع الخطاف حذف الفرع: %s\n' "$REMOTE_REF"
+      printf '\n  ⛔ منع الخطاف حذف مرجع على الريموت: %s\n' "$REMOTE_REF"
       printf '     إن كان مقصوداً: FAMILY_OS_ALLOW_FORCE_PUSH=1 git push ... (يُسجَّل)\n'
       log "BLOCKED-DELETE" "$REMOTE_REF"
       BLOCKED=1
@@ -64,8 +70,28 @@ while read -r LOCAL_REF LOCAL_SHA REMOTE_REF REMOTE_SHA; do
     continue
   fi
 
-  # ٢) فرع جديد — لا تاريخ ليُكتب فوقه
+  # ٢) مرجع جديد — لا تاريخ ليُكتب فوقه
   if [ "$REMOTE_SHA" = "$ZERO" ]; then
+    continue
+  fi
+
+  # ٢.٥) وسم قائم يتغيّر = إعادة كتابة مرجع، و«ancestry» لا معنى له بين وسمين:
+  #      الهدف الجديد قد ينحدر من القديم فيبدو fast-forward وهو ليس كذلك. توسوم archive/*
+  #      لا تُنقل أبداً حسب §٥ من منهجية العمل. ولهذا تُعالَج الوسوم هنا لا في فحص ancestry.
+  if [ "$IS_TAG" = "1" ]; then
+    [ "$LOCAL_SHA" = "$REMOTE_SHA" ] && continue   # لا تغيير فعلاً
+    if [ "$FORCED" = "1" ]; then
+      printf '\n  ⚠ الخطاف: سُمح بنقل وسم قائم (%s) بتجاوز صريح — يُسجَّل.\n' "$REF_NAME"
+      log "ALLOWED-TAG-MOVE-OVERRIDE" "$REMOTE_REF $REMOTE_SHA -> $LOCAL_SHA"
+      continue
+    fi
+    printf '\n  ⛔ منع الخطاف نقل وسم قائم: %s\n' "$REF_NAME"
+    printf '     %s → %s. الوسوم لا تُنقل: من يشير إليها (وثائق، سجل حلقة، أرشفة فروع) يقرأ تاريخاً آخر بعد النقل.\n' \
+      "$(printf '%.10s' "$REMOTE_SHA")" "$(printf '%.10s' "$LOCAL_SHA")"
+    printf '     إن أردت وسم إيداع أحدث: أنشئ وسماً جديداً باسم جديد. وإن كان النقل مقصوداً حقاً:\n'
+    printf '        FAMILY_OS_ALLOW_FORCE_PUSH=1 git push --force origin %s\n' "$REF_NAME"
+    log "BLOCKED-TAG-MOVE" "$REMOTE_REF $REMOTE_SHA -> $LOCAL_SHA"
+    BLOCKED=1
     continue
   fi
 
@@ -104,7 +130,7 @@ while read -r LOCAL_REF LOCAL_SHA REMOTE_REF REMOTE_SHA; do
       printf '     تعذّر إثبات أن %s سلف لـ %s (كائن الطرف الآخر غير موجود محلياً — استنساخ shallow؟).\n' \
         "$REMOTE_SHA_SHORT" "$LOCAL_SHA_SHORT"
       printf '     عند الشك نرفض لا نسمح. الحل:\n'
-      printf '        git fetch origin && git merge origin/%s   # أو: tools/git/git-doctor.sh repair\n' "${REMOTE_REF#refs/heads/}"
+      printf '        git fetch origin && git merge origin/%s   # أو: tools/git/git-doctor.sh repair\n' "$REF_NAME"
       printf '     وإن كان مقصوداً حقاً (فرع قصير العمر): FAMILY_OS_ALLOW_FORCE_PUSH=1 git push ...\n'
       log "BLOCKED-UNVERIFIED" "$REMOTE_REF $REMOTE_SHA_SHORT->$LOCAL_SHA_SHORT"
       BLOCKED=1
@@ -125,7 +151,7 @@ while read -r LOCAL_REF LOCAL_SHA REMOTE_REF REMOTE_SHA; do
     printf '\n  ⛔ منع الخطاف دفعاً غير fast-forward على %s: %s → %s\n' \
       "$REMOTE_REF" "$REMOTE_SHA_SHORT" "$LOCAL_SHA_SHORT"
     printf '     هذا يمحو تاريخاً على الريموت. الحل دائماً إلى الأمام:\n'
-    printf '        git fetch origin && git merge origin/%s\n' "${REMOTE_REF#refs/heads/}"
+    printf '        git fetch origin && git merge origin/%s\n' "$REF_NAME"
     printf '     وإن كان مقصوداً حقاً (فرع قصير العمر): FAMILY_OS_ALLOW_FORCE_PUSH=1 git push ...\n'
     log "BLOCKED-NONFASTFORWARD" "$REMOTE_REF $REMOTE_SHA_SHORT->$LOCAL_SHA_SHORT"
     BLOCKED=1

@@ -532,6 +532,53 @@ do_self_test() {
   [ "$other_before" = "$other_after" ] && ok "shallow: ريموت الفرع الآخر سليم بعد الرفض" || { bad "shallow: تغيّر ريموت فرع لم نتحقق منه"; failures=$((failures+1)); }
   [ "$s_main" != "0" ] && ok "shallow: main مرفوض رغم التجاوز الصريح" || { bad "shallow: main قَبِل فرض تاريخ"; failures=$((failures+1)); }
 
+  # و) الوسوم: وسم جديد يُسمح (وسوم archive/* تُنشأ كثيراً)، ونقل وسم قائم يُرفض
+  #     (ancestry بين وسمين لا معنى له: قد يبدو fast-forward وهو ليس كذلك — عطل حقيقي اكتُشف في المراجعة)
+  (
+    cd "$tmp" || exit 1
+    rm -rf tag-src tag-origin.git tag-work
+    git init -q tag-src
+    (
+      cd tag-src
+      git config user.email t@t; git config user.name t
+      echo a > f; git add f; git commit -q -m c1; git branch -M main
+      git tag archive/legacy            # وسم خفيف على الإيداع الأول
+      echo b >> f; git commit -qam c2
+    )
+    git init -q --bare -b main tag-origin.git
+    git -C tag-src push -q "$tmp/tag-origin.git" main
+    git -C tag-src push -q "$tmp/tag-origin.git" --tags
+    git clone -q "file://$tmp/tag-origin.git" tag-work 2>/dev/null
+    (
+      cd tag-work
+      git config user.email t@t; git config user.name t
+      cp "$REPO/.githooks/pre-push" .git/hooks/pre-push; chmod +x .git/hooks/pre-push
+      # (١) وسم جديد على إيداع أقدم: يجب أن يُسمح
+      git tag archive/new-on-old HEAD~1
+      git push -q origin archive/new-on-old >/dev/null 2>&1; echo "TAG_NEW=$?"
+      # (٢) نقل وسم قائم (هدفه الجديد ينحدر من القديم — يبدو fast-forward): يجب أن يُرفض
+      echo "TAG_BEFORE=$(git ls-remote origin refs/tags/archive/legacy | awk '{print $1}')"
+      git tag -f archive/legacy HEAD >/dev/null 2>&1
+      git push --force origin refs/tags/archive/legacy >/dev/null 2>&1; echo "TAG_MOVE=$?"
+      echo "TAG_AFTER=$(git ls-remote origin refs/tags/archive/legacy | awk '{print $1}')"
+      echo "TAG_MOVE_LOGGED=$(grep -c 'BLOCKED-TAG-MOVE' .git/family-os-push-guard.log 2>/dev/null || echo 0)"
+      # (٣) حذف وسم: يجب أن يُرفض
+      git push origin :refs/tags/archive/new-on-old >/dev/null 2>&1; echo "TAG_DELETE=$?"
+    )
+  ) > "$tmp/out6" 2>&1
+  local t_new t_move t_log t_del t_before t_after
+  t_new="$(grep '^TAG_NEW=' "$tmp/out6" | cut -d= -f2)"
+  t_move="$(grep '^TAG_MOVE=' "$tmp/out6" | cut -d= -f2)"
+  t_log="$(grep '^TAG_MOVE_LOGGED=' "$tmp/out6" | cut -d= -f2)"
+  t_del="$(grep '^TAG_DELETE=' "$tmp/out6" | cut -d= -f2)"
+  t_before="$(grep '^TAG_BEFORE=' "$tmp/out6" | cut -d= -f2)"
+  t_after="$(grep '^TAG_AFTER=' "$tmp/out6" | cut -d= -f2)"
+  [ "$t_new" = "0" ] && ok "وسم جديد على إيداع أقدم: مسموح (لا يعطّل وسوم archive/*)" || { bad "وسم جديد رُفض (منع كاذب يعطّل الأرشفة)"; failures=$((failures+1)); }
+  [ "$t_move" != "0" ] && ok "نقل وسم قائم: مرفوض (لم يُقبل كـfast-forward)" || { bad "نُقل وسم قائم على الريموت"; failures=$((failures+1)); }
+  [ "${t_log:-0}" != "0" ] && ok "نقل الوسم موثّق في سجل الحارس" || { bad "لم يُسجَّل رفض نقل الوسم"; failures=$((failures+1)); }
+  [ "$t_before" = "$t_after" ] && ok "الوسم على الريموت لم يتغيّر" || { bad "تغيّر وسم على الريموت رغم الحارس"; failures=$((failures+1)); }
+  [ "$t_del" != "0" ] && ok "حذف وسم: مرفوض" || { bad "سُمح بحذف وسم"; failures=$((failures+1)); }
+
   rm -rf "$tmp"
   printf "\n"
   [ "$failures" -eq 0 ] && { printf "${GREEN}${BOLD}الاختبار الذاتي: ناجح${OFF}\n"; return 0; }
