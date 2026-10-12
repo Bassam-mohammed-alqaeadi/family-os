@@ -1,0 +1,37 @@
+# Family OS — حارس Git. يثبت أن أدوات منع فشل الدفع تعمل فعلاً، بلا شبكة.
+name: Git Guard CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: git-guard-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  self-test:
+    name: Guard tools self-test (offline)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      # لا شبكة هنا عن قصد: الاختبار يبني ريموتاً محلياً ويثبت أن force-push يُرفض فعلاً
+      # عبر `git push` حقيقي — لا باستدعاء الخطاف مباشرة. هذا ما يجعل الشهادة قابلة للتصديق.
+      - name: Run the guard self-test
+        run: |
+          chmod +x tools/git/git-doctor.sh .githooks/pre-push
+          tools/git/git-doctor.sh self-test
+
+      - name: Verify the hook is executable in the index (mode 100755)
+        run: |
+          MODE="$(git ls-files -s .githooks/pre-push | awk '{print $1}')"
+          echo "mode=$MODE"
+          [ "$MODE" = "100755" ] || { echo "::error::الخطاف غير قابل للتنفيذ في الفهرس — سيفشل صامتاً عند التثبيت"; exit 1; }
