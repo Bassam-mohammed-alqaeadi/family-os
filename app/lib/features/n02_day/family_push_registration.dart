@@ -59,11 +59,33 @@ final class FamilyPushRegistrar {
   final PushTokenSource _tokens;
   String? _registeredFamilyId;
   String? _registeredToken;
+  String? _registeredRegistrationId;
 
   /// Clears the process-local cache after sign-out so a shared handset registers for its next owner.
   void reset() {
     _registeredFamilyId = null;
     _registeredToken = null;
+    _registeredRegistrationId = null;
+  }
+
+  /// Removes this handset's saved server registration before sign-out.
+  ///
+  /// Local state is cleared even when the server cannot be reached, so a later account
+  /// cannot be suppressed by a stale cache entry. The caller remains responsible for
+  /// reporting the propagated deletion failure to the person signing out.
+  Future<void> unregister({required String idToken}) async {
+    final familyId = _registeredFamilyId;
+    final registrationId = _registeredRegistrationId;
+    try {
+      if (familyId == null || registrationId == null) return;
+      await _client.unregister(
+        familyId: familyId,
+        registrationId: registrationId,
+        idToken: idToken,
+      );
+    } finally {
+      reset();
+    }
   }
 
   /// Returns true when the server holds this handset's registration for [familyId].
@@ -75,8 +97,12 @@ final class FamilyPushRegistrar {
     if (platform == null) return false;
     final token = await _tokens.currentToken();
     if (token == null) return false;
-    if (_registeredFamilyId == familyId && _registeredToken == token) return true;
-    await _client.register(
+    if (_registeredFamilyId == familyId &&
+        _registeredToken == token &&
+        _registeredRegistrationId != null) {
+      return true;
+    }
+    final registration = await _client.register(
       familyId: familyId,
       token: token,
       platform: platform,
@@ -85,6 +111,7 @@ final class FamilyPushRegistrar {
     );
     _registeredFamilyId = familyId;
     _registeredToken = token;
+    _registeredRegistrationId = registration.id;
     return true;
   }
 

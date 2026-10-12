@@ -29,10 +29,25 @@ import 'family_web_filter_api_client.dart';
 import 'foundation_gate_session_controller.dart';
 
 typedef GuardianPushRegistrationCallback =
-    Future<void> Function({
+    Future<bool> Function({
       required String familyId,
       required String idToken,
     });
+
+typedef GuardianPushUnregistrationCallback =
+    Future<void> Function({required String idToken});
+
+/// Raised after sign-out completes when the server could not remove this phone's push registration.
+final class GuardianPushUnregistrationException implements Exception {
+  const GuardianPushUnregistrationException();
+
+  String get message =>
+      'تم تسجيل الخروج، لكن تعذّر حذف تسجيل إشعارات هذا الهاتف من الخادم. '
+      'قد يستمر في استقبال تنبيهات الحساب السابق.';
+
+  @override
+  String toString() => message;
+}
 
 /// Main-app orchestration for the admitted Family Entry capability.
 ///
@@ -57,6 +72,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     FamilyChatApiClient? chatApi,
     String? preferredFamilyId,
     GuardianPushRegistrationCallback? guardianPushRegistration,
+    GuardianPushUnregistrationCallback? guardianPushUnregistration,
     VoidCallback? onSessionSignedOut,
   }) : _controller = controller,
        _identity = identity,
@@ -73,6 +89,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
        _chatApi = chatApi,
        _preferredFamilyId = preferredFamilyId?.trim(),
        _guardianPushRegistration = guardianPushRegistration,
+       _guardianPushUnregistration = guardianPushUnregistration,
        _onSessionSignedOut = onSessionSignedOut,
        _identityValue = const IdentitySnapshot.unavailable(),
        _rosterValue = const FamilyRosterSnapshot.unavailable(),
@@ -95,7 +112,9 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   final FamilyChatApiClient? _chatApi;
   final String? _preferredFamilyId;
   final GuardianPushRegistrationCallback? _guardianPushRegistration;
+  final GuardianPushUnregistrationCallback? _guardianPushUnregistration;
   final VoidCallback? _onSessionSignedOut;
+  var _hasGuardianPushRegistration = false;
   IdentitySnapshot _identityValue;
   FamilyRosterSnapshot _rosterValue;
   FamilyDeviceSnapshot _deviceValue;
@@ -154,10 +173,11 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
       return;
     }
     try {
-      await register(
+      final registered = await register(
         familyId: family.id,
         idToken: await _identity.currentIdToken(),
       );
+      if (registered) _hasGuardianPushRegistration = true;
     } on Object {
       // Device permission, Firebase setup and registration are all optional capabilities.
     }
@@ -195,16 +215,39 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
-    await _controller.signOut();
+    var pushRegistrationRemovalFailed = false;
     try {
-      _onSessionSignedOut?.call();
+      if (_hasGuardianPushRegistration) {
+        final unregister = _guardianPushUnregistration;
+        if (unregister == null) {
+          pushRegistrationRemovalFailed = true;
+        } else {
+          final idToken = await _identity.currentIdToken();
+          await unregister(idToken: idToken);
+        }
+      }
     } on Object {
-      // Clearing an optional push cache cannot prevent a person from signing out.
+      pushRegistrationRemovalFailed = true;
+    } finally {
+      // Forget the local registration even when the server cannot be reached.
+      _hasGuardianPushRegistration = false;
+      try {
+        _onSessionSignedOut?.call();
+      } on Object {
+        pushRegistrationRemovalFailed = true;
+      }
     }
+
+    // The valid account token above is used before this clears the provider session.
+    await _controller.signOut();
     _identityValue = const IdentitySnapshot.unavailable();
     _rosterValue = const FamilyRosterSnapshot.unavailable();
     _deviceValue = const FamilyDeviceSnapshot.unavailable();
     notifyListeners();
+
+    if (pushRegistrationRemovalFailed) {
+      throw const GuardianPushUnregistrationException();
+    }
   }
 
   Future<IdentitySnapshot> refreshIdentity() async {

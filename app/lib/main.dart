@@ -448,12 +448,12 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
       guardianPushRegistration: ({
         required String familyId,
         required String idToken,
-      }) async {
-        await pushRegistrar.ensureRegistered(
-          familyId: familyId,
-          idToken: idToken,
-        );
-      },
+      }) => pushRegistrar.ensureRegistered(
+        familyId: familyId,
+        idToken: idToken,
+      ),
+      guardianPushUnregistration: ({required String idToken}) =>
+          pushRegistrar.unregister(idToken: idToken),
       onSessionSignedOut: pushRegistrar.reset,
     );
   } on Object {

@@ -37,6 +37,25 @@ const _membershipRosterBody = '{"memberships":['
 const _createdChildBody =
     '{"child":{"id":"$_childId","displayName":"Synthetic child","ageYears":8,"avatarEmoji":"🧒","themeColor":"teal","version":1,"createdAt":"2026-10-03T10:00:00.000Z","updatedAt":"2026-10-03T10:00:00.000Z"}}';
 
+final class _RecordingIdentity extends FakeIdentity {
+  _RecordingIdentity(this.operations)
+      : super(token: 'valid-account-token', subject: 'firebase-subject');
+
+  final List<String> operations;
+
+  @override
+  Future<String> currentIdToken() async {
+    operations.add('read-account-token');
+    return super.currentIdToken();
+  }
+
+  @override
+  Future<void> signOut() async {
+    operations.add('clear-provider-session');
+    await super.signOut();
+  }
+}
+
 void main() {
   test(
     'main runtime exposes only remote family authority and passes presentation fields to the server',
@@ -143,6 +162,86 @@ void main() {
 
       await runtime.signOut();
       expect(signOutResetCount, 1);
+    },
+  );
+
+  test(
+    'push removal uses the live account token before sign-out and reports failure after clearing state',
+    () async {
+      final operations = <String>[];
+      final identity = _RecordingIdentity(operations);
+      final configuration = FoundationGateConfiguration.fromStagingApiOrigin(
+        Uri.parse('https://staging.example.test'),
+      );
+      final controller = FoundationGateSessionController(
+        identity: identity,
+        discoveryApi: FamilyDiscoveryApiClient(
+          configuration: configuration,
+          transport: FakeTransport(
+            const FoundationGateHttpResponse(statusCode: 200, body: _familyBody),
+          ),
+        ),
+        rosterApi: ChildrenRosterApiClient(
+          configuration: configuration,
+          transport: FakeTransport(
+            const FoundationGateHttpResponse(
+              statusCode: 200,
+              body: _emptyRosterBody,
+            ),
+          ),
+        ),
+      );
+      final runtime = MainAppFoundationRuntime(
+        identity: identity,
+        controller: controller,
+        deviceApi: FamilyDeviceApiClient(
+          configuration: configuration,
+          transport: FakeTransport(
+            const FoundationGateHttpResponse(
+              statusCode: 200,
+              body: '{"devices":[]}',
+            ),
+          ),
+        ),
+        guardianPushRegistration: ({
+          required String familyId,
+          required String idToken,
+        }) async => true,
+        guardianPushUnregistration: ({required String idToken}) async {
+          operations.add('unregister:$idToken');
+          throw StateError('network unavailable');
+        },
+        onSessionSignedOut: () {
+          operations.add('clear-local-registration');
+        },
+      );
+      addTearDown(runtime.dispose);
+
+      await runtime.signIn(
+        email: 'guardian@example.test',
+        password: 'synthetic-password',
+      );
+      operations.clear();
+
+      await expectLater(
+        runtime.signOut(),
+        throwsA(
+          isA<GuardianPushUnregistrationException>().having(
+            (error) => error.message,
+            'message',
+            contains('تعذّر حذف تسجيل إشعارات هذا الهاتف'),
+          ),
+        ),
+      );
+
+      expect(operations, <String>[
+        'read-account-token',
+        'unregister:valid-account-token',
+        'clear-local-registration',
+        'clear-provider-session',
+      ]);
+      expect(controller.phase, FoundationGatePhase.signedOut);
+      expect(runtime.identityValue.isRemoteAuthoritative, isFalse);
     },
   );
 
