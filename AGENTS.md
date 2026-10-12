@@ -97,7 +97,11 @@ tools/git/git-doctor.sh self-test  # offline proof that the guard still works
 - **Fail closed:** a push whose ancestry cannot be proven (missing remote object, shallow
   clone, any inconclusive `merge-base` result) is *refused*, not allowed after a warning.
   The fix is to prove it — `git fetch origin` then merge, or `git-doctor.sh repair` to
-  complete a shallow history — not to bypass the guard. A deliberate override exists for short-lived branches only, is opt-in via
+  complete a shallow history — not to bypass the guard.
+- **Tags are absolute:** moving or deleting an existing tag is refused **always, with no
+  override** — not even `FAMILY_OS_ALLOW_FORCE_PUSH=1`. Tags are references other people
+  cite (`archive/*` in the branch log, loop documents), so a local override cannot be
+  trusted with them. Creating a new tag is always allowed. A deliberate override exists for short-lived branches only, is opt-in via
   `FAMILY_OS_ALLOW_FORCE_PUSH=1`, and is written to `.git/family-os-push-guard.log`.
 - `Git Guard CI` runs the self-test on every pull request, so a broken guard fails CI
   instead of failing silently.

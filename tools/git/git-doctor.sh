@@ -564,6 +564,31 @@ do_self_test() {
       echo "TAG_MOVE_LOGGED=$(grep -c 'BLOCKED-TAG-MOVE' .git/family-os-push-guard.log 2>/dev/null || echo 0)"
       # (٣) حذف وسم: يجب أن يُرفض
       git push origin :refs/tags/archive/new-on-old >/dev/null 2>&1; echo "TAG_DELETE=$?"
+
+      # (٤) الثغرة الأخيرة: نفس المحاولتين مع تجاوز صريح — يجب أن تبقى مرفوضة.
+      #     الوسوم مرجعٌ للآخرين، فلا يكفي فيها «أعرف ما أفعل».
+      FAMILY_OS_ALLOW_FORCE_PUSH=1 git push --force origin refs/tags/archive/legacy >/dev/null 2>&1
+      echo "TAG_MOVE_OVERRIDE=$?"
+      echo "TAG_AFTER_OVERRIDE=$(git ls-remote origin refs/tags/archive/legacy | awk '{print $1}')"
+      FAMILY_OS_ALLOW_FORCE_PUSH=1 git push origin :refs/tags/archive/new-on-old >/dev/null 2>&1
+      echo "TAG_DELETE_OVERRIDE=$?"
+      echo "TAG_STILL_ON_REMOTE=$(git ls-remote origin refs/tags/archive/new-on-old | wc -l | tr -d ' ')"
+      echo "LOG_ALLOWED_TAG=$(grep -c 'ALLOWED-TAG-MOVE-OVERRIDE\|ALLOWED-DELETE-TAG' .git/family-os-push-guard.log 2>/dev/null || echo 0)"
+      echo "LOG_DELETE_TAG=$(grep -c 'BLOCKED-DELETE-TAG' .git/family-os-push-guard.log 2>/dev/null || echo 0)"
+      echo "LOG_MOVE_TAG=$(grep -c 'BLOCKED-TAG-MOVE' .git/family-os-push-guard.log 2>/dev/null || echo 0)"
+
+      # (٦) صيغ التفاف أخرى على الوسوم: force-with-lease و refspec صريح بـ+ — تُرفض هي الأخرى
+      FAMILY_OS_ALLOW_FORCE_PUSH=1 git push --force-with-lease origin refs/tags/archive/legacy >/dev/null 2>&1
+      echo "TAG_LEASE_OVERRIDE=$?"
+      FAMILY_OS_ALLOW_FORCE_PUSH=1 git push origin +refs/tags/archive/legacy:refs/tags/archive/legacy >/dev/null 2>&1
+      echo "TAG_PLUSREF_OVERRIDE=$?"
+      echo "TAG_AFTER_BYPASS=$(git ls-remote origin refs/tags/archive/legacy | awk '{print $1}')"
+
+      # (٥) تراجع مقصود: حذف فرع غير main بتجاوز صريح ما زال مسموحاً — لم نُفرط في المنع
+      git push -q origin HEAD:refs/heads/throwaway >/dev/null 2>&1
+      FAMILY_OS_ALLOW_FORCE_PUSH=1 git push origin :refs/heads/throwaway >/dev/null 2>&1
+      echo "BRANCH_DELETE_OVERRIDE=$?"
+      echo "THROWAWAY_STILL_THERE=$(git ls-remote origin refs/heads/throwaway | wc -l | tr -d ' ')"
     )
   ) > "$tmp/out6" 2>&1
   local t_new t_move t_log t_del t_before t_after
@@ -578,6 +603,35 @@ do_self_test() {
   [ "${t_log:-0}" != "0" ] && ok "نقل الوسم موثّق في سجل الحارس" || { bad "لم يُسجَّل رفض نقل الوسم"; failures=$((failures+1)); }
   [ "$t_before" = "$t_after" ] && ok "الوسم على الريموت لم يتغيّر" || { bad "تغيّر وسم على الريموت رغم الحارس"; failures=$((failures+1)); }
   [ "$t_del" != "0" ] && ok "حذف وسم: مرفوض" || { bad "سُمح بحذف وسم"; failures=$((failures+1)); }
+
+  # الثغرة الأخيرة: الوسوم ممنوعة نهائياً حتى مع التجاوز الصريح
+  local tmv tov tdelov tstill tlogall tlogdel tlogmove tbranch ttkw
+  tmv="$(grep '^TAG_MOVE_OVERRIDE=' "$tmp/out6" | cut -d= -f2)"
+  tov="$(grep '^TAG_AFTER_OVERRIDE=' "$tmp/out6" | cut -d= -f2)"
+  tdelov="$(grep '^TAG_DELETE_OVERRIDE=' "$tmp/out6" | cut -d= -f2)"
+  tstill="$(grep '^TAG_STILL_ON_REMOTE=' "$tmp/out6" | cut -d= -f2)"
+  tlogall="$(grep '^LOG_ALLOWED_TAG=' "$tmp/out6" | cut -d= -f2)"
+  tlogdel="$(grep '^LOG_DELETE_TAG=' "$tmp/out6" | cut -d= -f2)"
+  tlogmove="$(grep '^LOG_MOVE_TAG=' "$tmp/out6" | cut -d= -f2)"
+  tbranch="$(grep '^BRANCH_DELETE_OVERRIDE=' "$tmp/out6" | cut -d= -f2)"
+  ttkw="$(grep '^THROWAWAY_STILL_THERE=' "$tmp/out6" | cut -d= -f2)"
+  [ "$tmv" != "0" ] && ok "نقل وسم بتجاوز صريح: مرفوض (لا تجاوز للوسوم)" || { bad "التجاوز الصريح نقل وسماً قائماً"; failures=$((failures+1)); }
+  [ "$tov" = "$t_before" ] && ok "الوسم لم يتغيّر على الريموت رغم التجاوز الصريح" || { bad "تغيّر وسم رغم الحارس"; failures=$((failures+1)); }
+  [ "$tdelov" != "0" ] && ok "حذف وسم بتجاوز صريح: مرفوض" || { bad "التجاوز الصريح حذف وسماً"; failures=$((failures+1)); }
+  [ "$tstill" = "1" ] && ok "الوسم ما زال على الريموت بعد محاولة الحذف" || { bad "اختفى وسم من الريموت"; failures=$((failures+1)); }
+  [ "${tlogall:-0}" = "0" ] && ok "سجل الحارس نظيف: لا يوجد أي سماح للوسوم (٠ سطر ALLOWED-*TAG)" || { bad "السجل يحمل سماحاً لوسم — الثغرة ما زالت قائمة"; failures=$((failures+1)); }
+  [ "${tlogdel:-0}" != "0" ] && [ "${tlogmove:-0}" != "0" ] && ok "الرفضان موثّقان في السجل (BLOCKED-DELETE-TAG و BLOCKED-TAG-MOVE)" || { bad "أحد الرفضين غير موثّق في السجل"; failures=$((failures+1)); }
+  [ "$tbranch" = "0" ] && ok "تراجع مقصود: حذف فرع غير main بتجاوز صريح ما زال مسموحاً" || { bad "أفرطنا في المنع: التجاوز لم يعد يعمل على الفروع"; failures=$((failures+1)); }
+  [ "$ttkw" = "0" ] && ok "الفرع المحذوف اختفى فعلاً (التجاوز عمل، لا أنه مُنع كاذباً)" || { bad "الفرع لم يُحذف رغم التجاوز"; failures=$((failures+1)); }
+
+  # صيغ التفاف على الوسوم
+  local tlease tplus tbypass
+  tlease="$(grep '^TAG_LEASE_OVERRIDE=' "$tmp/out6" | cut -d= -f2)"
+  tplus="$(grep '^TAG_PLUSREF_OVERRIDE=' "$tmp/out6" | cut -d= -f2)"
+  tbypass="$(grep '^TAG_AFTER_BYPASS=' "$tmp/out6" | cut -d= -f2)"
+  [ "$tlease" != "0" ] && ok "force-with-lease على وسم بتجاوز صريح: مرفوض" || { bad "force-with-lease نقل وسماً"; failures=$((failures+1)); }
+  [ "$tplus" != "0" ] && ok "refspec صريح (+refs/tags/…) بتجاوز صريح: مرفوض" || { bad "صيغة +refspec نقلت وسماً"; failures=$((failures+1)); }
+  [ "$tbypass" = "$t_before" ] && ok "الوسم سليم بعد كل محاولات الالتفاف" || { bad "تغيّر الوسم بعد محاولات الالتفاف"; failures=$((failures+1)); }
 
   rm -rf "$tmp"
   printf "\n"
@@ -620,9 +674,14 @@ E2B_TEMPLATE_ID  : ${E2B_TEMPLATE_ID:-غير متاح}
   • أمر التأسيس (docs/AGENT_BOOTSTRAP_PROMPT.md) يطلب تشغيل repair في بداية كل جلسة.
 
 الإعداد المطلوب تغييره على مستوى المنصة (لا يملكه وكيل داخل الجلسة):
-  أ) تشغيل أمر بدء جلسة تلقائي عند تهيئة مساحة العمل:
-       tools/git/git-doctor.sh repair     (بعد الاستنساخ وقبل أي عمل)
-     هذا يجعل الإصلاح فعلياً "تلقائياً" بلا اعتماد على انتباه الوكيل.
+  أ) تشغيل أمر تهيئة تلقائي بعد الاستنساخ وقبل أي عمل. الأمر المطلوب بالضبط:
+       for d in /home/user/*/; do [ -x "$d/tools/git/git-doctor.sh" ] && (cd "$d" && tools/git/git-doctor.sh repair); done
+     (وإن كان الأمر يُنفَّذ داخل المستودع مباشرة فيكفي: tools/git/git-doctor.sh repair)
+     وهو idempotent وغير مُدمِّر ولا يحتاج شبكة لمعظمه، ويعالج: origin مفقود، فرعاً بلا
+     upstream، upstream باسم مختلف، هوية إيداع غائبة، وخطافات غير مثبّتة، ويُكمل تاريخ shallow.
+     طريقة التحقق من أنه عمل في جلسة جديدة:
+       git config --get push.default   →  يجب أن يعيد: current
+       tools/git/git-doctor.sh check   →  يجب أن يكون فاشل=0
   ب) لا تُسقط .git/config من اللقطات (أو انقل رمز الدفع إلى ملف مستقل فلا يحتاج config للحماية).
   ج) لا تُعِد إنشاء/استنساخ مساحة العمل أثناء الجلسة؛ وإن لزم فليكن استنساخاً كاملاً لا depth=1.
   د) اضبط في صورة الـsandbox: push.default=current و push.autoSetupRemote=true.

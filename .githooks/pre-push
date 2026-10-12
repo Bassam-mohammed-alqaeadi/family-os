@@ -13,14 +13,17 @@
 #      أو أي حالة لا يستطيع فيها Git إثبات أن رأس الريموت سلفٌ لرأسنا).
 #      القاعدة: عند الشك **نرفض** — لا نسمح بعد تحذير. والاستثناء الوحيد: تجاوز صريح
 #      على فرع **غير main** لمَن يعرف ما يفعل.
-#   ٥) **نقل وسم قائم** — يُرفض دائماً: ancestry بين وسمين لا معنى له (قد يبدو fast-forward
-#      وهو ليس كذلك)، والوسوم الأرشيفية `archive/*` لا تُنقل ولا تُحذف.
+#   ٥) **نقل وسم قائم أو حذفه** — يُرفض دائماً **بلا أي تجاوز**: ancestry بين وسمين لا معنى
+#      له (قد يبدو fast-forward وهو ليس كذلك)، والوسوم الأرشيفية `archive/*` مرجعٌ للآخرين
+#      فلا يكفي فيها إصلاح محلي. `FAMILY_OS_ALLOW_FORCE_PUSH` لا يفتح حالة وسم أبداً.
 #
 # ما يسمح به: دفع fast-forward عادي، وإنشاء فرع جديد (remote sha = أصفار).
 #
 # تجاوز واعٍ ومحدود (للفرع غير main فقط):
 #     FAMILY_OS_ALLOW_FORCE_PUSH=1 git push ...
 # يُسجَّل التجاوز في .git/family-os-push-guard.log، ولا يعمل على main أبداً.
+# **ولا يعمل على الوسوم إطلاقاً**: نقل وسم قائم وحذفه مرفوضان دائماً وبلا استثناء,
+# لأن الوسوم مرجعٌ للآخرين (archive/*) ولا يُصلحها تجاوز محلي.
 #
 # الاستدعاء: $1 = اسم الريموت، $2 = عنوانه. stdin: "<local ref> <local sha> <remote ref> <remote sha>"
 
@@ -51,8 +54,19 @@ while read -r LOCAL_REF LOCAL_SHA REMOTE_REF REMOTE_SHA; do
   # اسم ودّي للرسائل: فرع بلا بادئة، وإلا المرجع كما هو (وسم مثلاً)
   case "$REMOTE_REF" in refs/heads/*) REF_NAME="${REMOTE_REF#refs/heads/}" ;; *) REF_NAME="$REMOTE_REF" ;; esac
 
-  # ١) حذف فرع على الريموت
+  # ١) حذف مرجع على الريموت
   if [ "$LOCAL_SHA" = "$ZERO" ]; then
+    # الوسوم ممنوعة منعاً مطلقاً: لا يوجد تجاوز لهذه الحالة أصلاً، وفحصها يأتي أولاً
+    # كي لا يلتقطها مسار التجاوز المخصّص للفروع.
+    if [ "$IS_TAG" = "1" ]; then
+      printf '\n  ⛔ منع الخطاف حذف وسم: %s\n' "$REF_NAME"
+      printf '     الوسوم لا تُحذف — لا يوجد تجاوز لهذه الحالة، ولا حتى FAMILY_OS_ALLOW_FORCE_PUSH.\n'
+      printf '     من يشير إلى وسم (وثائق، سجل حلقة، أرشفة فرع) يفقد ما يشير إليه بحذفه.\n'
+      printf '     إن كان الوسم خاطئاً: أنشئ وسماً جديداً باسم صحيح واترك القديم.\n'
+      log "BLOCKED-DELETE-TAG" "$REMOTE_REF"
+      BLOCKED=1
+      continue
+    fi
     if [ "$EMPTY_OK" = "0" ]; then
       printf '\n  ⛔ منع الخطاف حذف مرجع على الريموت: %s\n' "$REMOTE_REF"
       printf '     سياسة المستودع: لا حذف للفروع ولا للوسوم. الفروع القديمة تُؤرشف بوسم archive/* ثم تُترك.\n'
@@ -80,16 +94,12 @@ while read -r LOCAL_REF LOCAL_SHA REMOTE_REF REMOTE_SHA; do
   #      لا تُنقل أبداً حسب §٥ من منهجية العمل. ولهذا تُعالَج الوسوم هنا لا في فحص ancestry.
   if [ "$IS_TAG" = "1" ]; then
     [ "$LOCAL_SHA" = "$REMOTE_SHA" ] && continue   # لا تغيير فعلاً
-    if [ "$FORCED" = "1" ]; then
-      printf '\n  ⚠ الخطاف: سُمح بنقل وسم قائم (%s) بتجاوز صريح — يُسجَّل.\n' "$REF_NAME"
-      log "ALLOWED-TAG-MOVE-OVERRIDE" "$REMOTE_REF $REMOTE_SHA -> $LOCAL_SHA"
-      continue
-    fi
+    # لا مسار تجاوز هنا عن قصد: نقل الوسم مرفوض دائماً، حتى مع FAMILY_OS_ALLOW_FORCE_PUSH=1.
     printf '\n  ⛔ منع الخطاف نقل وسم قائم: %s\n' "$REF_NAME"
     printf '     %s → %s. الوسوم لا تُنقل: من يشير إليها (وثائق، سجل حلقة، أرشفة فروع) يقرأ تاريخاً آخر بعد النقل.\n' \
       "$(printf '%.10s' "$REMOTE_SHA")" "$(printf '%.10s' "$LOCAL_SHA")"
-    printf '     إن أردت وسم إيداع أحدث: أنشئ وسماً جديداً باسم جديد. وإن كان النقل مقصوداً حقاً:\n'
-    printf '        FAMILY_OS_ALLOW_FORCE_PUSH=1 git push --force origin %s\n' "$REF_NAME"
+    printf '     لا يوجد تجاوز لهذه الحالة، ولا حتى FAMILY_OS_ALLOW_FORCE_PUSH.\n'
+    printf '     إن أردت وسم إيداع أحدث: أنشئ وسماً جديداً باسم جديد واترك القديم كما هو.\n'
     log "BLOCKED-TAG-MOVE" "$REMOTE_REF $REMOTE_SHA -> $LOCAL_SHA"
     BLOCKED=1
     continue
