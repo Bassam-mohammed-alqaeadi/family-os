@@ -1220,10 +1220,10 @@ test('a zone is drawn, a device reports, and the boundary crossing becomes a rec
           [familyId],
         );
         assert.equal(exitOutbox.rowCount, 1);
+        assert.deepEqual(Object.keys(exitOutbox.rows[0].payload).sort(), ['childId', 'occurredAt', 'zoneId']);
         assert.equal(exitOutbox.rows[0].payload.zoneId, zoneId);
-        assert.equal(exitOutbox.rows[0].payload.kind, 'EXIT');
-        assert.equal(exitOutbox.rows[0].payload.zoneVersion, 1);
         assert.equal(exitOutbox.rows[0].payload.childId, childId);
+        assert.equal(typeof exitOutbox.rows[0].payload.occurredAt, 'string');
 
         // 6. The same report again under a FRESH key: one fix id is one report. No second
         //    row, no second crossing, and an answer that says which of the two happened.
@@ -1591,10 +1591,12 @@ test('a zone is drawn, a device reports, and the boundary crossing becomes a rec
           ['family.geofence_exited', 'family.geofence_exited'],
           'the announcement queue disagrees with the switch the family flipped',
         );
-        assert.equal(schoolAnnouncements.rows[0].payload.zoneVersion, 1);
-        assert.equal(schoolAnnouncements.rows[1].payload.zoneVersion, 2);
-        assert.equal(schoolAnnouncements.rows[1].payload.kind, 'EXIT');
-        assert.equal(schoolAnnouncements.rows[1].payload.childId, childId);
+        for (const announcement of schoolAnnouncements.rows) {
+          assert.deepEqual(Object.keys(announcement.payload).sort(), ['childId', 'occurredAt', 'zoneId']);
+          assert.equal(announcement.payload.zoneId, schoolId);
+          assert.equal(announcement.payload.childId, childId);
+          assert.equal(typeof announcement.payload.occurredAt, 'string');
+        }
 
         // The trail keeps every crossing, including the two the family did not want to hear
         // about, and each one still points at the measurement it was judged from.
