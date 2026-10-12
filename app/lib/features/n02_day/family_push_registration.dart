@@ -193,7 +193,8 @@ final class FamilyPushRegistrar {
     if (platform == null) return false;
 
     // A previous process may have left a known row (or a failed-delete retry). Try to remove
-    // it before this process creates a new row; failure is retained but never blocks sign-in.
+    // it before this process creates a new row; failure is retained and blocks push registration,
+    // but never blocks sign-in.
     if (_registeredToken == null && _snapshot.hasAnythingToClean) {
       try {
         await _unregister(idToken: () async => idToken);
@@ -217,6 +218,10 @@ final class FamilyPushRegistrar {
         // Do not block sign-in; any unresolved UUID/legacy marker remains for logout retry.
       }
     }
+    // Do not create a new registration while any old registration is still unknown or
+    // undeleted. Sign-in remains available; a later startup retries this cleanup first.
+    if (_snapshot.hasAnythingToClean) return false;
+
     final snapshot = _snapshot;
     final current = snapshot.registrations.where(
       (record) => record.familyId == familyId,

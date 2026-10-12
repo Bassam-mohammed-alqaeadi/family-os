@@ -285,7 +285,6 @@ void main() {
         tokens: tokens,
         store: store,
       );
-      failTokenUnregister = true;
       failRegister = true;
 
       await expectLater(
@@ -299,12 +298,52 @@ void main() {
         ),
       );
       expect(store.snapshot.hasUntrackedRegistration, isTrue);
-      expect(serverRows, hasLength(1));
+      expect(serverRows, isEmpty);
 
-      failTokenUnregister = false;
       await registrar.unregister(idToken: () async => 'owner');
       expect(serverRows, isEmpty);
       expect(store.snapshot, _knownNone());
+    },
+  );
+
+  test(
+    'failed cleanup blocks a new push registration until a retry succeeds',
+    () async {
+      const oldRecord = FamilyPushRegistrationRecord(
+        familyId: _family,
+        registrationId: _registrationId,
+      );
+      store.snapshot = const FamilyPushRegistrationSnapshot(
+        hasUntrackedRegistration: false,
+        registrations: <FamilyPushRegistrationRecord>[oldRecord],
+      );
+      serverRows[_firstToken] = oldRecord;
+      final registrar = FamilyPushRegistrar(
+        client: client,
+        tokens: _FakeTokens(token: _rotatedToken, cleanupToken: _firstToken),
+        store: store,
+      );
+      failUnregister = true;
+      failTokenUnregister = true;
+
+      expect(
+        await registrar.ensureRegistered(familyId: _family, idToken: 'owner'),
+        isFalse,
+      );
+      expect(posted, isEmpty);
+      expect(serverRows, hasLength(1));
+      expect(store.snapshot.registrations, <FamilyPushRegistrationRecord>[oldRecord]);
+
+      failUnregister = false;
+      failTokenUnregister = false;
+      expect(
+        await registrar.ensureRegistered(familyId: _family, idToken: 'owner'),
+        isTrue,
+      );
+      expect(posted, hasLength(1));
+      expect(posted.single['token'], _rotatedToken);
+      expect(serverRows, hasLength(1));
+      expect(serverRows[_rotatedToken]?.familyId, _family);
     },
   );
 
