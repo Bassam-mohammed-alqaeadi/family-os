@@ -260,12 +260,75 @@ test('registration is guardian-only, a token moves to its latest guardian, and r
       assert.equal(removed.status, 204);
       const gone = await client.query('SELECT count(*)::int AS n FROM family_push_registrations');
       assert.equal(gone.rows[0].n, 0);
+      const repeatedRemoval = await call(baseUrl, `${registerPath(h.familyId)}/${moved.body.registration.id}`, {
+        method: 'DELETE',
+        headers: authorized('test-co2'),
+      });
+      assert.equal(repeatedRemoval.status, 204, 'a lost successful response can be retried safely');
 
       const invalidToken = await call(baseUrl, registerPath(h.familyId), { method: 'POST', headers: authorized('test-co'), body: { ...body, token: 'short' } });
       assert.equal(invalidToken.status, 400);
       assert.equal(invalidToken.body.error.code, 'invalid_push_token');
       const extraField = await call(baseUrl, registerPath(h.familyId), { method: 'POST', headers: authorized('test-co'), body: { ...body, owner: 'x' } });
       assert.equal(extraField.status, 400);
+    });
+  });
+});
+
+test('upgrade cleanup revokes one exact token across its old owner and is idempotent without an FCM sender', { skip }, async () => {
+  await withFreshDatabase(async (client) => {
+    await migrate(client);
+    const store = new PostgresFoundationStore({ connectionString: withDatabase(DATABASE_URL, client.database) });
+    openStores.add(store);
+    await withServer(appWith(store, null), async (baseUrl) => {
+      const h = await seedHousehold(baseUrl, client, 'pushupgrade');
+      await client.query(
+        `INSERT INTO family_push_registrations (family_id, membership_id, token, platform, locale)
+         VALUES ($1, $2, $3, 'android', 'en'), ($1, $4, $5, 'android', 'ar')`,
+        [h.familyId, h.co, TOKEN_A, h.co2, TOKEN_B],
+      );
+
+      const nonGuardian = await call(baseUrl, '/v1/me/push/registrations/current', {
+        method: 'DELETE',
+        headers: authorized('test-outsider'),
+        body: { token: TOKEN_A },
+      });
+      assert.equal(nonGuardian.status, 403);
+      const malformed = await call(baseUrl, '/v1/me/push/registrations/current', {
+        method: 'DELETE',
+        headers: authorized('test-co2'),
+        body: { token: 'short' },
+      });
+      assert.equal(malformed.status, 400);
+
+      // The upgrading install no longer knows the server UUID. Possession of the exact
+      // current token can remove its row even if another guardian originally owned it.
+      const removed = await call(baseUrl, '/v1/me/push/registrations/current', {
+        method: 'DELETE',
+        headers: authorized('test-co2'),
+        body: { token: TOKEN_A },
+      });
+      assert.equal(removed.status, 204);
+      assert.equal(removed.body, null);
+      const remaining = await client.query(
+        'SELECT token FROM family_push_registrations ORDER BY token',
+      );
+      assert.deepEqual(remaining.rows.map((row) => row.token), [TOKEN_B]);
+
+      // Missing and already-removed rows are indistinguishable to the caller.
+      const replay = await call(baseUrl, '/v1/me/push/registrations/current', {
+        method: 'DELETE',
+        headers: authorized('test-co2'),
+        body: { token: TOKEN_A },
+      });
+      assert.equal(replay.status, 204);
+      assert.equal(replay.body, null);
+
+      const unauthenticated = await call(baseUrl, '/v1/me/push/registrations/current', {
+        method: 'DELETE',
+        body: { token: TOKEN_B },
+      });
+      assert.equal(unauthenticated.status, 401);
     });
   });
 });

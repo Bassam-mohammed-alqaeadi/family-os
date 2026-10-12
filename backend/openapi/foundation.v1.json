@@ -6927,6 +6927,63 @@
         }
       }
     },
+    "/v1/me/push/registrations/current": {
+      "delete": {
+        "operationId": "revokeCurrentPushToken",
+        "summary": "Removes this handset's current push token",
+        "description": "Current or former guardians use this for upgrade/sign-out cleanup when an old registration UUID cannot be recovered. The exact FCM token is sent in the request body over HTTPS, deleted regardless of its prior guardian/family owner, never returned, and never persisted by the client. The same 204 answer is returned whether or not a row existed. This route does not depend on the server's FCM sender being configured.",
+        "tags": [
+          "Push notifications"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "token"
+                ],
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "minLength": 32,
+                    "maxLength": 4096,
+                    "pattern": "^[A-Za-z0-9:_-]{32,4096}$"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "The current token is no longer registered; absent rows are treated as success."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
     "/v1/families/{familyId}/push/registrations": {
       "post": {
         "operationId": "registerFamilyPushDevice",
@@ -6998,7 +7055,7 @@
       "delete": {
         "operationId": "unregisterFamilyPushDevice",
         "summary": "Removes one of the caller's push registrations",
-        "description": "Sign-out on this handset. Another guardian's registration id reads as not found.",
+        "description": "Sign-out on this handset. Repeating a delete for an absent id is idempotent; a registration owned by another guardian remains not found.",
         "tags": [
           "Push notifications"
         ],

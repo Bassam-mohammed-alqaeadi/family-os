@@ -10,9 +10,12 @@ abstract interface class PushTokenSource {
   /// 'android' or 'ios' on a platform that can receive pushes, otherwise null.
   String? get platform;
 
-  /// This handset's token. Null means push is not available here: Firebase is not configured on
-  /// this build, or the person refused notifications. Chat works without it.
+  /// The token for creating a registration. This may request notification permission.
   Future<String?> currentToken();
+
+  /// Best-effort token retrieval without requesting notification permission. Used only to remove
+  /// an old registration; a null result means that the server state remains unknown.
+  Future<String?> currentTokenForCleanup();
 }
 
 /// The real token source, through Firebase Cloud Messaging.
@@ -23,32 +26,56 @@ abstract interface class PushTokenSource {
 final class FirebasePushTokenSource implements PushTokenSource {
   @override
   String? get platform => switch (defaultTargetPlatform) {
-        TargetPlatform.android => 'android',
-        TargetPlatform.iOS => 'ios',
-        _ => null,
-      };
+    TargetPlatform.android => 'android',
+    TargetPlatform.iOS => 'ios',
+    _ => null,
+  };
 
   @override
   Future<String?> currentToken() async {
     if (platform == null) return null;
     try {
-      if (Firebase.apps.isEmpty) await Firebase.initializeApp();
-      final messaging = FirebaseMessaging.instance;
+      final messaging = await _messaging();
       final permission = await messaging.requestPermission();
-      if (permission.authorizationStatus == AuthorizationStatus.denied) return null;
-      final token = await messaging.getToken();
-      return token == null || token.isEmpty ? null : token;
+      if (permission.authorizationStatus == AuthorizationStatus.denied) {
+        return null;
+      }
+      return await _tokenFrom(messaging);
     } on Object {
       return null;
     }
+  }
+
+  @override
+  Future<String?> currentTokenForCleanup() async {
+    if (platform == null) return null;
+    try {
+      // getToken does not itself display the notification-permission prompt. On platforms where
+      // the OS withholds a token without permission, null leaves cleanup explicitly unresolved.
+      return await _tokenFrom(await _messaging());
+    } on Object {
+      return null;
+    }
+  }
+
+  Future<FirebaseMessaging> _messaging() async {
+    if (Firebase.apps.isEmpty) await Firebase.initializeApp();
+    return FirebaseMessaging.instance;
+  }
+
+  Future<String?> _tokenFrom(FirebaseMessaging messaging) async {
+    final token = await messaging.getToken();
+    return token == null || token.isEmpty ? null : token;
   }
 }
 
 /// Keeps the server's record of this guardian's handset current.
 ///
-/// The family and server registration id are persisted locally so sign-out can still remove the
-/// exact row after process death, a denied notification permission, or a failed refresh request.
-/// The FCM token and account credential are never written to that store.
+/// The persisted ledger distinguishes three facts: a known UUID, a server-confirmed empty state,
+/// and unknown legacy state (including an absent ledger written by a pre-ledger app). Registration
+/// writes an "untracked may exist" marker before its network request, so a timeout cannot be
+/// mistaken for no server row. Failed sign-out deletion retains known UUIDs for a restart retry.
+/// FCM tokens and bearer credentials are transient request data and are never stored.
 final class FamilyPushRegistrar {
   FamilyPushRegistrar({
     required FamilyPushClient client,
@@ -61,45 +88,96 @@ final class FamilyPushRegistrar {
   final FamilyPushClient _client;
   final PushTokenSource _tokens;
   final FamilyPushRegistrationStore _store;
-  FamilyPushRegistrationRecord? _registration;
+  FamilyPushRegistrationSnapshot _snapshot =
+      FamilyPushRegistrationSnapshot.unknown;
   String? _registeredToken;
   var _loaded = false;
 
-  /// Clears process-local state after the durable registration has been cleared by sign-out.
+  /// Clears process-local state after sign-out; durable pending/unknown state is not erased.
   void reset() {
-    _registration = null;
+    _snapshot = FamilyPushRegistrationSnapshot.unknown;
     _registeredToken = null;
     _loaded = false;
   }
 
-  /// Deletes the persisted registration before the provider session is cleared.
+  /// Attempts cleanup before the provider session is cleared.
   ///
-  /// The account token is requested only when a stored registration exists. Regardless of a
-  /// server deletion error, the local record is cleared so the next account can register. A
-  /// non-durable fallback is treated as uncertain, not as proof that no old server row exists.
+  /// A legacy-unknown state is reconciled by revoking only the exact current FCM token, without
+  /// prompting for permission. If no token is available, it remains unknown and the caller gets
+  /// a post-logout warning. A failed UUID deletion is retained durably and retried next time.
   Future<void> unregister({
     required Future<String> Function() idToken,
+  }) =>
+      _unregister(idToken: idToken);
+
+  Future<void> _unregister({
+    required Future<String> Function() idToken,
+    String? tokenOverride,
   }) async {
     try {
       await _loadRegistration();
-      final registration = _registration;
-      if (!_store.isRestartSafe && registration == null) {
-        throw StateError(
-          'Cannot verify an older push registration without durable local storage.',
-        );
+    } on Object {
+      // If storage cannot be read, do not interpret that as known-empty. Best-effort cleanup
+      // with the current token, then warn so a later authenticated start retries safely.
+      final cleanupToken = tokenOverride ?? await _cleanupToken();
+      if (cleanupToken != null) {
+        try {
+          await _client.unregisterCurrentToken(
+            token: cleanupToken,
+            idToken: await idToken(),
+          );
+        } on Object {
+          // The durable row remains untouched; logout still proceeds with a warning.
+        }
       }
-      if (registration == null) return;
-      await _client.unregister(
-        familyId: registration.familyId,
-        registrationId: registration.registrationId,
-        idToken: await idToken(),
+      throw StateError(
+        'Push registration storage is unreadable; cleanup cannot be confirmed.',
       );
-    } finally {
+    }
+    var snapshot = _snapshot;
+    if (!snapshot.hasAnythingToClean) return;
+
+    Future<String>? liveIdToken;
+    Future<String> currentIdToken() => liveIdToken ??= idToken();
+    var unresolvedLegacy = snapshot.hasUntrackedRegistration;
+    final remaining = <FamilyPushRegistrationRecord>[];
+
+    final cleanupToken = tokenOverride ?? await _cleanupToken();
+    if (cleanupToken != null) {
       try {
-        await _store.clear();
-      } finally {
-        reset();
+        await _client.unregisterCurrentToken(
+          token: cleanupToken,
+          idToken: await currentIdToken(),
+        );
+        // This confirms the current FCM address is absent at the server, without revealing
+        // whether a row existed. Known UUIDs are still deleted individually below.
+        unresolvedLegacy = false;
+      } on Object {
+        // Keep the unknown marker. UUID cleanup below can still succeed independently.
       }
+    }
+
+    for (final registration in snapshot.registrations) {
+      try {
+        await _client.unregister(
+          familyId: registration.familyId,
+          registrationId: registration.registrationId,
+          idToken: await currentIdToken(),
+        );
+      } on Object {
+        remaining.add(registration);
+      }
+    }
+
+    snapshot = snapshot.copyWith(
+      hasUntrackedRegistration: unresolvedLegacy,
+      registrations: List<FamilyPushRegistrationRecord>.unmodifiable(remaining),
+    );
+    await _persist(snapshot);
+    if (snapshot.hasAnythingToClean) {
+      throw StateError(
+        'A push registration may still exist; cleanup state was retained for retry.',
+      );
     }
   }
 
@@ -109,18 +187,54 @@ final class FamilyPushRegistrar {
     required String idToken,
   }) async {
     await _loadRegistration();
-    // Never create a server row that cannot be found after this process exits.
+    // Never create server state that cannot be found or reconciled after this process exits.
     if (!_store.isRestartSafe) return false;
     final platform = _tokens.platform;
     if (platform == null) return false;
+
+    // A previous process may have left a known row (or a failed-delete retry). Try to remove
+    // it before this process creates a new row; failure is retained but never blocks sign-in.
+    if (_registeredToken == null && _snapshot.hasAnythingToClean) {
+      try {
+        await _unregister(idToken: () async => idToken);
+      } on Object {
+        // The state remains durable and the next cleanup attempt will retry it.
+      }
+    }
+
     final token = await _tokens.currentToken();
     if (token == null) return false;
-    final current = _registration;
-    if (current?.familyId == familyId &&
+
+    // If the permission-free token lookup was unavailable, permission approval may have made
+    // the token visible. Resolve the old current-token row before registering the signed-in owner.
+    if (_registeredToken == null && _snapshot.hasAnythingToClean) {
+      try {
+        await _unregister(
+          idToken: () async => idToken,
+          tokenOverride: token,
+        );
+      } on Object {
+        // Do not block sign-in; any unresolved UUID/legacy marker remains for logout retry.
+      }
+    }
+    final snapshot = _snapshot;
+    final current = snapshot.registrations.where(
+      (record) => record.familyId == familyId,
+    );
+    if (!snapshot.hasUntrackedRegistration &&
         _registeredToken == token &&
-        current?.registrationId.isNotEmpty == true) {
+        current.isNotEmpty) {
       return true;
     }
+
+    // The registration POST can commit remotely and still lose its response. Persist uncertainty
+    // before making that side effect, so a restart retries exact-token cleanup rather than claiming
+    // an empty server state. Do not send the POST if this durable write fails.
+    final inFlight = snapshot.copyWith(
+      hasUntrackedRegistration: true,
+    );
+    await _persist(inFlight);
+
     final registration = await _client.register(
       familyId: familyId,
       token: token,
@@ -128,40 +242,63 @@ final class FamilyPushRegistrar {
       locale: _localeCode(),
       idToken: idToken,
     );
+    final updatedRecords = List<FamilyPushRegistrationRecord>.of(
+      inFlight.registrations,
+    );
+    final existingIndex = updatedRecords.indexWhere(
+      (record) => record.registrationId == registration.id,
+    );
     final saved = FamilyPushRegistrationRecord(
       familyId: familyId,
       registrationId: registration.id,
     );
+    if (existingIndex == -1) {
+      updatedRecords.add(saved);
+    } else {
+      // A unique FCM token can move to another family/guardian while keeping the same UUID.
+      updatedRecords[existingIndex] = saved;
+    }
+    final confirmed = FamilyPushRegistrationSnapshot(
+      hasUntrackedRegistration: false,
+      registrations: List<FamilyPushRegistrationRecord>.unmodifiable(
+        updatedRecords,
+      ),
+    );
     try {
-      await _store.save(saved);
+      await _persist(confirmed);
     } on Object {
-      // Avoid leaving an untracked server row if durable persistence fails after POST succeeds.
-      _registration = saved;
-      _registeredToken = token;
-      _loaded = true;
+      // The on-disk in-flight marker remains recoverable. Best-effort compensation removes the
+      // current token without persisting it; if this also fails, a later sign-out retries it.
       try {
-        await _client.unregister(
-          familyId: saved.familyId,
-          registrationId: saved.registrationId,
-          idToken: idToken,
-        );
-        reset();
+        await _client.unregisterCurrentToken(token: token, idToken: idToken);
       } on Object {
-        // Keep the in-process id available for a sign-out retry; the failure remains visible to
-        // the best-effort caller, and no credential is retained.
+        // Keep the in-flight unknown marker in process state and on disk for cleanup retry.
       }
       rethrow;
     }
-    _registration = saved;
     _registeredToken = token;
-    _loaded = true;
     return true;
+  }
+
+  Future<String?> _cleanupToken() async {
+    try {
+      return await _tokens
+          .currentTokenForCleanup()
+          .timeout(const Duration(seconds: 3));
+    } on Object {
+      return null;
+    }
   }
 
   Future<void> _loadRegistration() async {
     if (_loaded) return;
-    _registration = await _store.read();
-    _registeredToken = null;
+    _snapshot = await _store.read();
+    _loaded = true;
+  }
+
+  Future<void> _persist(FamilyPushRegistrationSnapshot snapshot) async {
+    await _store.save(snapshot);
+    _snapshot = snapshot;
     _loaded = true;
   }
 

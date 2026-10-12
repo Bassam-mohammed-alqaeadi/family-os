@@ -157,6 +157,22 @@ void main() {
     expect(seen.url.path, '/v1/families/$_family/push/registrations/$_registration');
   });
 
+  test('legacy cleanup sends the exact token only in the authenticated request body', () async {
+    late http.Request seen;
+    final client = _client((request) async {
+      seen = request;
+      return http.Response('', 204);
+    });
+
+    await client.unregisterCurrentToken(token: _token, idToken: 'id-token-value');
+
+    expect(seen.method, 'DELETE');
+    expect(seen.url.path, '/v1/me/push/registrations/current');
+    expect(seen.url.query, isEmpty);
+    expect(seen.headers['authorization'], 'Bearer id-token-value');
+    expect(jsonDecode(seen.body), <String, Object?>{'token': _token});
+  });
+
   test('a refused removal surfaces the server failure', () async {
     final client = _client((_) async => http.Response('', 404));
     await expectLater(

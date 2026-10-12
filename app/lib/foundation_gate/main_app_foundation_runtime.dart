@@ -43,8 +43,8 @@ final class GuardianPushUnregistrationException implements Exception {
   const GuardianPushUnregistrationException();
 
   String get message =>
-      'تم تسجيل الخروج، لكن تعذّر حذف تسجيل إشعارات هذا الهاتف من الخادم. '
-      'قد يستمر في استقبال تنبيهات الحساب السابق.';
+      'تم تسجيل الخروج، لكن تعذّر تأكيد إزالة تسجيل إشعارات قديم لهذا الهاتف. '
+      'قد يستمر في تلقي التنبيهات؛ ستُعاد محاولة التنظيف عند تسجيل الدخول مجددًا وتوفر الاتصال.';
 
   @override
   String toString() => message;

@@ -15,24 +15,37 @@ const TOKEN_PATTERN = /^[A-Za-z0-9:_-]{32,4096}$/;
 const PLATFORMS = new Set(['android', 'ios']);
 const LOCALES = new Set(['ar', 'en']);
 
-function requireRegistrationBody(body) {
+function requireObject(body, allowed, message) {
   if (typeof body !== 'object' || body === null || Array.isArray(body)) {
-    throw new ChatError(400, 'invalid_request', 'The registration must be a JSON object.');
+    throw new ChatError(400, 'invalid_request', message);
   }
-  const allowed = new Set(['token', 'platform', 'locale']);
   for (const key of Object.keys(body)) {
     if (!allowed.has(key)) throw new ChatError(400, 'invalid_request', `Unknown field: ${key}.`);
   }
-  if (typeof body.token !== 'string' || !TOKEN_PATTERN.test(body.token)) {
+}
+
+function requirePushToken(value) {
+  if (typeof value !== 'string' || !TOKEN_PATTERN.test(value)) {
     throw new ChatError(400, 'invalid_push_token', 'The device token is not in the expected format.');
   }
+  return value;
+}
+
+function requireRegistrationBody(body) {
+  requireObject(body, new Set(['token', 'platform', 'locale']), 'The registration must be a JSON object.');
+  const token = requirePushToken(body.token);
   if (!PLATFORMS.has(body.platform)) {
     throw new ChatError(400, 'invalid_request', 'platform must be android or ios.');
   }
   if (!LOCALES.has(body.locale)) {
     throw new ChatError(400, 'invalid_request', 'locale must be ar or en.');
   }
-  return { token: body.token, platform: body.platform, locale: body.locale };
+  return { token, platform: body.platform, locale: body.locale };
+}
+
+function requireCurrentTokenBody(body) {
+  requireObject(body, new Set(['token']), 'The current-device revocation must be a JSON object.');
+  return { token: requirePushToken(body.token) };
 }
 
 /**
@@ -56,6 +69,26 @@ export function pushRegistrationsFor(store, { credentialMatches, sender }) {
       throw new ChatError(403, 'push_guardian_only', 'Only a guardian can register this device for notifications.');
     }
     return participant.id;
+  }
+
+  async function requireGuardianIdentity(client, principal) {
+    const subject = principal?.subject;
+    if (typeof subject !== 'string' || subject.trim().length === 0) {
+      throw new ChatError(403, 'push_guardian_only', 'Only a guardian can remove device notifications.');
+    }
+    // Permit a former guardian to clean up their device after family access has been revoked.
+    // Invited-only memberships do not prove prior guardian access.
+    const { rowCount } = await client.query(
+      `SELECT 1 FROM family_memberships
+        WHERE target_subject = $1
+          AND role IN ('primary_guardian', 'co_guardian')
+          AND status <> 'invited'
+        LIMIT 1`,
+      [subject],
+    );
+    if (rowCount === 0) {
+      throw new ChatError(403, 'push_guardian_only', 'Only a guardian can remove device notifications.');
+    }
   }
 
   return {
@@ -96,8 +129,35 @@ export function pushRegistrationsFor(store, { credentialMatches, sender }) {
           [registrationId, familyId, membershipId],
         );
         if (rowCount === 0) {
-          throw new ChatError(404, 'push_registration_not_found', 'This device is not registered for notifications.');
+          // A retry after a successful server delete whose response was lost is idempotent.
+          // A row owned by someone else remains concealed as not found.
+          const stillExists = await client.query(
+            'SELECT 1 FROM family_push_registrations WHERE id = $1 LIMIT 1',
+            [registrationId],
+          );
+          if (stillExists.rowCount > 0) {
+            throw new ChatError(404, 'push_registration_not_found', 'This device is not registered for notifications.');
+          }
         }
+        return { deleted: true };
+      });
+    },
+
+    /**
+     * Removes the row for the exact current FCM token without requiring the UUID an older app
+     * kept only in process memory. The token is supplied once in the authenticated request body,
+     * never stored by this path, and the caller learns nothing about whether a row existed. It
+     * intentionally works across prior family ownership: registration itself treats the unique
+     * FCM token as the current device identity and moves that row to the latest signed-in guardian.
+     */
+    async unregisterCurrentToken({ principal, body }) {
+      const { token } = requireCurrentTokenBody(body);
+      return port.transact(async (client) => {
+        await requireGuardianIdentity(client, principal);
+        await client.query(
+          'DELETE FROM family_push_registrations WHERE token = $1',
+          [token],
+        );
         return { deleted: true };
       });
     },

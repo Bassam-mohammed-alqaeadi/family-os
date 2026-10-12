@@ -2489,12 +2489,26 @@ export function createApp({
         protectedApiRateLimit,
         requireRuntimeReady,
         asyncRoute(async(request, response) => {
-            if (!pushSender) {
-                throw new HttpError(503, 'push_not_configured', 'Push notifications are not configured on this server.');
-            }
             const familyId = requireUuid(request.params.familyId, 'familyId');
             const registrationId = requireUuid(request.params.registrationId, 'registrationId');
             await pushRegistrations.unregister({ principal: request.principal, familyId, registrationId });
+            response.status(204).end();
+        }),
+    );
+
+    // Upgrade cleanup for a token whose old registration UUID was never persisted. This route
+    // remains available even when this server has no FCM sender: deleting stored rows does not
+    // send notifications. The token stays in a JSON body (not a URL) and is never echoed.
+    app.delete(
+        '/v1/me/push/registrations/current',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            await pushRegistrations.unregisterCurrentToken({
+                principal: request.principal,
+                body: request.body,
+            });
             response.status(204).end();
         }),
     );
