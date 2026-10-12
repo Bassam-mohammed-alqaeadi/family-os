@@ -38,6 +38,10 @@ MODE="${1:-check}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEFAULT_REPO="$(cd "$SCRIPT_DIR/../.." 2>/dev/null && pwd || echo "$PWD")"
 REPO="${2:-$DEFAULT_REPO}"
+# هوية الإيداع الافتراضية لهذا المستودع (يمكن تجاوزها بمتغيّر بيئة).
+# تُضبط محلياً فقط — لا نلمس إعداداً عاماً للهوية.
+IDENTITY_NAME="${GIT_IDENTITY_NAME:-Bassam-mohammed-alqaeadi}"
+IDENTITY_EMAIL="${GIT_IDENTITY_EMAIL:-312219484+Bassam-mohammed-alqaeadi@users.noreply.github.com}"
 
 case "$MODE" in
   check|repair|push|self-test|report) ;;
@@ -146,6 +150,11 @@ config_check() {
     fi
   fi
 
+  if [ -z "$(git config --get user.name || true)" ] || [ -z "$(git config --get user.email || true)" ]; then
+    bad "هوية الإيداع ناقصة → 'Author identity unknown' يمنع أي إيداع — الإصلاح: $0 repair"
+  else
+    ok "هوية الإيداع مضبوطة"
+  fi
   [ "$(git config push.default || true)" = "current" ] \
     && ok "push.default=current" \
     || bad "push.default غير مضبوط → 'git push' قد تفشل بلا سبب — الإصلاح: $0 repair"
@@ -222,7 +231,36 @@ install_hooks() {
 }
 
 do_repair() {
-  section "إصلاح غير مُدمِّر (لا يمسّ أي ملف متتبَّع)"
+  section "إصلاح كامل غير مُدمِّر (لا يمسّ أي ملف متتبَّع)"
+  do_local_repair
+  # ٥) التاريخ الكامل — يحتاج شبكة، ولهذا هو خارج الإصلاح المحلي
+  if [ "$(git rev-parse --is-shallow-repository 2>/dev/null)" = "true" ]; then
+    if GIT_TERMINAL_PROMPT=0 git fetch --unshallow origin >/dev/null 2>&1; then
+      ok "اكتمل التاريخ: $(git rev-list --count HEAD) إيداع"
+    else
+      warn "تعذّر إكمال التاريخ الآن (شبكة؟) — أعد المحاولة عند توفر الشبكة"
+    fi
+  fi
+  # ٦) upstream مطابق للاسم — بعد التأكد من وجود الفرع على الريموت
+  if [ "$IN_GIT" = "1" ] && [ "$BRANCH" != "main" ]; then
+    if git rev-parse --verify --quiet "refs/remotes/origin/$BRANCH" >/dev/null 2>&1; then
+      git branch --set-upstream-to="origin/$BRANCH" "$BRANCH" >/dev/null 2>&1 \
+        && ok "upstream = origin/$BRANCH (اسم مطابق، لا main)"
+    else
+      GIT_TERMINAL_PROMPT=0 git fetch -q origin "$BRANCH" 2>/dev/null || true
+      if git rev-parse --verify --quiet "refs/remotes/origin/$BRANCH" >/dev/null 2>&1; then
+        git branch --set-upstream-to="origin/$BRANCH" "$BRANCH" >/dev/null 2>&1 && ok "upstream = origin/$BRANCH (بعد الجلب)"
+      else
+        warn "الفرع ليس على origin بعد — أول دفعة ستنشئه (push.autoSetupRemote يتولّى الربط)"
+      fi
+    fi
+  fi
+}
+
+# الإصلاح المحلي: فوري، بلا شبكة، غير مُدمِّر، وآمن للتكرار.
+# يُستدعى تلقائياً في وضع `push` — لأن الأشياء الثلاثة التي تُفشل الدفع تُصلَح هنا قبل الدفع.
+do_local_repair() {
+  section "إصلاح محلي فوري (بلا شبكة)"
   # ١) الوجهة
   if [ -z "$(git config --get remote.origin.url || true)" ]; then
     git remote add origin "$EXPECTED_ORIGIN" && ok "أُعيد remote origin: $EXPECTED_ORIGIN"
@@ -261,21 +299,20 @@ do_repair() {
   fi
   # ٤) الخطافات
   install_hooks
-  # ٥) التاريخ الكامل
-  if [ "$(git rev-parse --is-shallow-repository 2>/dev/null)" = "true" ]; then
-    if GIT_TERMINAL_PROMPT=0 git fetch --unshallow origin >/dev/null 2>&1; then
-      ok "اكتمل التاريخ: $(git rev-list --count HEAD) إيداع"
-    else
-      warn "تعذّر إكمال التاريخ الآن (شبكة؟) — أعد المحاولة عند توفر الشبكة"
-    fi
-  fi
-  # ٦) upstream مطابق للاسم
+  # ٥) هوية الإيداع: الاستنساخ لا ينقل user.name/user.email، فجلسة باردة تفشل بـ
+  #    "Author identity unknown" قبل أن تصل إلى الدفع أصلاً.
+  [ -n "$(git config --get user.name || true)" ]  || { git config user.name "$IDENTITY_NAME" && ok "ضُبطت هوية الإيداع (name)"; }
+  [ -n "$(git config --get user.email || true)" ] || { git config user.email "$IDENTITY_EMAIL" && ok "ضُبطت هوية الإيداع (email)"; }
+  [ -n "$(git config --get user.name || true)" ] && [ -n "$(git config --get user.email || true)" ] && ok "هوية الإيداع جاهزة"
+  # ٦) upstream مطابق للاسم، محلياً بلا شبكة (إن كان الفرع معروفاً)
   if [ "$IN_GIT" = "1" ] && [ "$BRANCH" != "main" ]; then
-    if git rev-parse --verify --quiet "refs/remotes/origin/$BRANCH" >/dev/null 2>&1; then
+    local _merge
+    _merge="$(git config --get "branch.$BRANCH.merge" || true)"
+    if [ "$_merge" = "refs/heads/$BRANCH" ]; then
+      ok "upstream مطابق لاسم الفرع أصلاً"
+    elif git rev-parse --verify --quiet "refs/remotes/origin/$BRANCH" >/dev/null 2>&1; then
       git branch --set-upstream-to="origin/$BRANCH" "$BRANCH" >/dev/null 2>&1 \
         && ok "upstream = origin/$BRANCH (اسم مطابق، لا main)"
-    else
-      warn "الفرع ليس على origin بعد — أول دفعة ستنشئه (push.autoSetupRemote يتولّى الربط)"
     fi
   fi
 }
@@ -286,7 +323,8 @@ do_repair() {
 do_push() {
   [ "$IN_GIT" = "1" ] || { bad "لا يمكن الدفع من detached HEAD"; exit 1; }
   section "دفعة آمنة + تحقّق أن GitHub استلم فعلاً"
-  [ -n "$(git config --get remote.origin.url || true)" ] || do_repair
+  # «الإصلاح قبل الدفع»: كل ما يُصلَح هنا محلي وفوري وبلا شبكة، وآمن للتكرار.
+  do_local_repair
   local local_sha remote_sha
   local_sha="$(git rev-parse HEAD)"
   if ! git push origin "HEAD:refs/heads/$BRANCH" 2>&1 | sed 's/^/      /'; then
@@ -357,11 +395,15 @@ do_self_test() {
     echo "R2=$?"
     echo "REMOTE=$(git config --get remote.origin.url || echo MISSING)"
     echo "DUPES=$(git config --get-all remote.origin.fetch 2>/dev/null | sort | uniq -d | wc -l | tr -d ' ')"
+    echo "IDENT=$(git config --get user.email || echo MISSING)"
+    echo "PUSHDEF=$(git config --get push.default || echo MISSING)"
   ) > "$tmp/out2" 2>&1
   [ "$(grep '^R1=' "$tmp/out2" | cut -d= -f2)" = "0" ] && ok "repair ينجح على مستودع فقد إعداده" || { bad "repair فشل على مستودع بلا config"; failures=$((failures+1)); }
   [ "$(grep '^R2=' "$tmp/out2" | cut -d= -f2)" = "0" ] && ok "repair آمن للتكرار (تشغيل ثانٍ)" || { bad "repair غير آمن للتكرار"; failures=$((failures+1)); }
   [ "$(grep '^REMOTE=' "$tmp/out2" | cut -d= -f2-)" != "MISSING" ] && ok "repair أعاد remote origin" || { bad "repair لم يُعِد origin"; failures=$((failures+1)); }
   [ "$(grep '^DUPES=' "$tmp/out2" | cut -d= -f2)" = "0" ] && ok "لا refspec مكرر بعد تشغيلين" || { bad "تكرّر refspec بعد تشغيلين"; failures=$((failures+1)); }
+  [ "$(grep '^IDENT=' "$tmp/out2" | cut -d= -f2-)" != "MISSING" ] && ok "repair يضبط هوية الإيداع (بلاها لا إيداع أصلاً)" || { bad "repair لم يضبط هوية الإيداع"; failures=$((failures+1)); }
+  [ "$(grep '^PUSHDEF=' "$tmp/out2" | cut -d= -f2)" = "current" ] && ok "repair يضبط push.default=current" || { bad "push.default لم يُضبط"; failures=$((failures+1)); }
 
   # د) اختبار شامل على ريموت محلي حقيقي (بلا شبكة): هل يمنع الخطاف force-push فعلاً؟
   (
