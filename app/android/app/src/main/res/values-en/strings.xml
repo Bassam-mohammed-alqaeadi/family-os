@@ -14,7 +14,7 @@
     <string name="familyos_geofence_channel_name">Safe-zone alerts</string>
     <string name="familyos_geofence_channel_description">Urgent alerts when a child enters or leaves a safe zone.</string>
     <string name="familyos_protection_channel_name">Protection alerts</string>
-    <string name="familyos_protection_channel_description">Urgent alerts when a child\'s device reports that protection is disabled.</string>
+    <string name="familyos_protection_channel_description">Urgent alerts when a child\'s device reports a protection concern.</string>
     <string name="familyos_chat_channel_name">Family messages</string>
     <string name="familyos_chat_channel_description">A neutral alert when a new message arrives in a family conversation.</string>
 </resources>

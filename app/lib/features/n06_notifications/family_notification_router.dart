@@ -187,6 +187,11 @@ final class FamilyNotificationRouter {
     try {
       if (Firebase.apps.isEmpty) return;
       final messaging = FirebaseMessaging.instance;
+      await messaging.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: false,
+        sound: true,
+      );
       _subscriptions.add(FirebaseMessaging.onMessage.listen(
         (message) => unawaited(_showForeground(message)),
         onError: (Object _) {},

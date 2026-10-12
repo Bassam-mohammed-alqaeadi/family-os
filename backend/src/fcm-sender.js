@@ -189,7 +189,7 @@ export class FcmSender {
                 'apns-priority': isHighPriority ? '10' : '5',
                 'apns-expiration': String(Math.floor(this.#now() / 1000) + ttlSeconds),
               },
-              payload: { aps: { ...(includeDefaultSound ? { sound: { name: 'default' } } : {}) } },
+              payload: { aps: { ...(includeDefaultSound ? { sound: 'default' } : {}) } },
             },
           },
         }),

@@ -3,7 +3,11 @@
 // Ordinary audit/outbox facts are not notifications. Only the four reviewed safety facts below
 // may reach FCM. Chat messages continue through the existing, idempotent chat nudger; every other
 // event is recorded as skipped with a reason. Unknown event types fail closed and remain visible
-// as failed outbox rows rather than disappearing into an open-ended notification rule.
+// as failed outbox rows rather than disappearing into an open-ended notification rule. Protection
+// reports notify only for the explicitly registered tamper observations; healthy/unsupported
+// reports remain audit-only outcomes.
+
+import { PROTECTION_OBSERVED_STATES, TAMPER_OBSERVED_STATES } from './web-filter.js';
 
 const copy = (arTitle, arBody, enTitle, enBody) => Object.freeze({
   ar: Object.freeze({ title: arTitle, body: arBody }),
@@ -30,10 +34,10 @@ export const ALERT_COPY = Object.freeze({
     'Left the safe zone at {time}',
   ),
   'protection.reported': copy(
-    'حماية {child} مُعطَّلة',
-    'تم تعطيل الحماية على جهازه الساعة {time}',
-    '{child}’s protection is disabled',
-    'Device protection was turned off at {time}',
+    'حالة الحماية على جهاز {child} تحتاج إلى مراجعة',
+    'أبلغ الجهاز عن مؤشر يؤثر في الحماية الساعة {time}',
+    '{child}’s protection needs attention',
+    'The device reported a protection concern at {time}',
   ),
 });
 
@@ -131,9 +135,6 @@ const MAX_SWEEP_LIMIT = 50;
 const BOOT_SWEEP_LIMIT = 20;
 const BOOT_PENDING_AGE_SECONDS = 5;
 const STALE_PROCESSING_SECONDS = 120;
-const URGENT_COPY_KEYS = new Set([
-  'sos.raised', 'geofence.entered', 'geofence.exited', 'protection.reported',
-]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ARABIC_INDIC_DIGITS = Object.freeze(['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩']);
 
@@ -456,6 +457,18 @@ export class NotificationDispatcher {
       await this.#finish(event.id, 'failed', 'copy_key_mismatch');
       logDispatchFailure(event.id, event.event_type, 'copy_key_mismatch');
       return { outboxId: event.id, status: 'failed', reason: 'copy_key_mismatch' };
+    }
+    if (event.event_type === 'family.device_protection_reported') {
+      const payload = rowPayload(event);
+      if (!PROTECTION_OBSERVED_STATES.includes(payload.observedState)) {
+        await this.#finish(event.id, 'failed', 'payload_invalid');
+        logDispatchFailure(event.id, event.event_type, 'payload_invalid');
+        return { outboxId: event.id, status: 'failed', reason: 'payload_invalid' };
+      }
+      if (!TAMPER_OBSERVED_STATES.includes(payload.observedState)) {
+        await this.#finish(event.id, 'skipped', 'protection_observation_not_alertable');
+        return { outboxId: event.id, status: 'skipped', reason: 'protection_observation_not_alertable' };
+      }
     }
     if (!this.fcmSender || typeof this.fcmSender.send !== 'function') {
       await this.#markSosUnavailable(event, 'push_not_configured');

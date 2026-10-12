@@ -454,18 +454,27 @@ class MainActivity : FlutterActivity() {
             openApp,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
-        val notification = NotificationCompat.Builder(this, channelId!!)
+        val builder = NotificationCompat.Builder(this, channelId!!)
             .setSmallIcon(R.drawable.ic_stat_family_notification)
             .setColor(color)
             .setContentTitle(title)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setCategory(NotificationCompat.CATEGORY_EVENT)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setPriority(
+                if (channelId == FamilyOsApplication.CHANNEL_CHAT) NotificationCompat.PRIORITY_DEFAULT
+                else NotificationCompat.PRIORITY_HIGH,
+            )
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
             .setAutoCancel(true)
             .setContentIntent(contentIntent)
-            .build()
+        // Match legacy FCM channel behavior on pre-O devices; Android channels own this on O+.
+        when (channelId) {
+            FamilyOsApplication.CHANNEL_SOS, FamilyOsApplication.CHANNEL_GEOFENCE ->
+                builder.setDefaults(NotificationCompat.DEFAULT_SOUND or NotificationCompat.DEFAULT_VIBRATE)
+            FamilyOsApplication.CHANNEL_CHAT -> builder.setDefaults(NotificationCompat.DEFAULT_SOUND)
+        }
+        val notification = builder.build()
         try {
             NotificationManagerCompat.from(this).notify(notificationId, notification)
             result.success(true)

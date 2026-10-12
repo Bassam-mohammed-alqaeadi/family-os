@@ -3432,6 +3432,15 @@ test('the filter a family set is the filter the child’s phone is handed, and a
         ]) {
           assert.ok(events.has(eventType), `${eventType} must reach the announcement queue`);
         }
+        const protectionOutbox = await client.query(
+          `SELECT payload->>'observedState' AS observed_state
+             FROM outbox_events
+            WHERE aggregate_id = $1 AND event_type = 'family.device_protection_reported'
+            ORDER BY created_at ASC`,
+          [familyId],
+        );
+        assert.deepEqual(protectionOutbox.rows.map((row) => row.observed_state), ['vpn_active', 'healthy'],
+          'the outbox must preserve the closed observation so a healthy report cannot become an alert');
         const audit = await client.query(
           `SELECT count(*)::int AS n FROM family_audit_events
             WHERE family_id = $1 AND subject_type IN ('web_filter_policy', 'web_filter_temp_allow', 'device_protection')`,

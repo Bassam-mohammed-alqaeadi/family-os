@@ -28,6 +28,7 @@ const FAMILY = 'aaaaaaaa-1111-4111-8111-111111111111';
 const ACCOUNT = 'bbbbbbbb-2222-4222-8222-222222222222';
 const MEMBERSHIP = 'cccccccc-3333-4333-8333-333333333333';
 const CHILD = 'dddddddd-4444-4444-8444-444444444444';
+const DEVICE = 'abababab-2222-4222-8222-222222222222';
 const ALERT = 'eeeeeeee-5555-4555-8555-555555555555';
 const ZONE = 'ffffffff-6666-4666-8666-666666666666';
 const REGISTRATION = '11111111-7777-4777-8777-777777777777';
@@ -35,6 +36,8 @@ const TOKEN = 'fcm-token-0123456789abcdef0123456789abcdef';
 const OUTBOX = '22222222-8888-4888-8888-888888888888';
 const SOS_OUTBOX = '33333333-9999-4999-8999-999999999999';
 const UNKNOWN_OUTBOX = '44444444-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+const HEALTHY_PROTECTION_OUTBOX = '55555555-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+const RISK_PROTECTION_OUTBOX = '66666666-cccc-4ccc-8ccc-cccccccccccc';
 
 async function freshDb() {
   const db = new PGlite();
@@ -230,6 +233,62 @@ test('FCM unregistered result is recorded without token data and removes that re
   assert.deepEqual(attempts.rows, [{ outcome: 'unregistered', failure_reason: null, provider_message_id: null }]);
   const outbox = await db.query(`SELECT status, failure_reason FROM outbox_events WHERE id=$1`, [OUTBOX]);
   assert.deepEqual(outbox.rows[0], { status: 'failed', failure_reason: 'all_tokens_unregistered' });
+  await db.close();
+});
+
+test('healthy protection reports are skipped; a tamper observation alerts the guardian without overclaiming', async () => {
+  const db = await freshDb();
+  await seedFamily(db);
+  await db.query(
+    `INSERT INTO family_child_devices (id, family_id, child_id, device_label)
+     VALUES ($1, $2, $3, 'Layan Android')`,
+    [DEVICE, FAMILY, CHILD],
+  );
+  for (const [id, observedState, time] of [
+    [HEALTHY_PROTECTION_OUTBOX, 'healthy', '2026-05-10T10:00:00.000Z'],
+    [RISK_PROTECTION_OUTBOX, 'vpn_active', '2026-05-10T11:00:00.000Z'],
+  ]) {
+    await db.query(
+      `INSERT INTO outbox_events
+         (id, aggregate_type, aggregate_id, correlation_id, event_type, copy_key, payload)
+       VALUES ($1, 'family', $2, gen_random_uuid(), 'family.device_protection_reported', 'protection.reported', $3::jsonb)`,
+      [id, FAMILY, JSON.stringify({ deviceId: DEVICE, occurredAt: time, observedState })],
+    );
+  }
+  const sender = fakeSender();
+  const dispatcher = new NotificationDispatcher(sender, clientFactory(db));
+
+  const healthy = await dispatcher.notify(HEALTHY_PROTECTION_OUTBOX, 'family.device_protection_reported');
+  assert.deepEqual(healthy, {
+    outboxId: HEALTHY_PROTECTION_OUTBOX,
+    status: 'skipped',
+    reason: 'protection_observation_not_alertable',
+  });
+  assert.equal(sender.calls.length, 0, 'a healthy observation must not say protection is disabled');
+
+  const atRisk = await dispatcher.notify(RISK_PROTECTION_OUTBOX, 'family.device_protection_reported');
+  assert.equal(atRisk.status, 'delivered');
+  assert.equal(sender.calls.length, 1);
+  assert.equal(sender.calls[0].title, 'حالة الحماية على جهاز ليان تحتاج إلى مراجعة');
+  assert.equal(sender.calls[0].body, 'أبلغ الجهاز عن مؤشر يؤثر في الحماية الساعة ١١:٠٠ ص');
+  assert.equal(sender.calls[0].urgency, 'high');
+  assert.equal(sender.calls[0].channelId, 'familyos_protection_alerts');
+  assert.deepEqual(sender.calls[0].data, {
+    type: 'family.device_protection_reported',
+    childId: CHILD,
+    deviceId: DEVICE,
+    copyKey: 'protection.reported',
+    occurredAt: '2026-05-10T11:00:00.000Z',
+  });
+  const statuses = await db.query(
+    `SELECT id, status, failure_reason FROM outbox_events
+      WHERE id = ANY($1::uuid[]) ORDER BY id`,
+    [[HEALTHY_PROTECTION_OUTBOX, RISK_PROTECTION_OUTBOX]],
+  );
+  assert.deepEqual(statuses.rows.map((row) => [row.id, row.status, row.failure_reason]), [
+    [HEALTHY_PROTECTION_OUTBOX, 'skipped', 'protection_observation_not_alertable'],
+    [RISK_PROTECTION_OUTBOX, 'delivered', null],
+  ]);
   await db.close();
 });
 

@@ -56,6 +56,12 @@ test('protection reports are high priority without claiming an SOS alert', () =>
   assert.equal(result.type.subject, 'device');
   assert.equal(result.type.channelId, 'familyos_protection_alerts');
   assert.equal(result.type.urgency, 'high');
+  assert.deepEqual(renderAlertCopy('protection.reported', {
+    locale: 'en', child: 'Maya', time: '2026-05-10T07:05:00Z',
+  }), {
+    title: 'Maya’s protection needs attention',
+    body: 'The device reported a protection concern at 7:05 AM',
+  });
 });
 
 test('chat message stays with the existing nudger', () => {

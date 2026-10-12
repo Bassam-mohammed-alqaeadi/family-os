@@ -133,7 +133,7 @@ test('alert urgency uses high platform priority and a normal sound, never critic
   assert.equal(message.android.notification.channel_id, 'familyos_sos_alerts');
   assert.equal(message.android.notification.color, '#FF5A5F');
   assert.equal(message.apns.headers['apns-priority'], '10');
-  assert.deepEqual(message.apns.payload.aps.sound, { name: 'default' });
+  assert.equal(message.apns.payload.aps.sound, 'default');
   assert.equal(JSON.stringify(message).includes('critical'), false);
 });
 

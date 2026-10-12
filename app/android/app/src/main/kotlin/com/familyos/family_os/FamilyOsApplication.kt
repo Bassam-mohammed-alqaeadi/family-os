@@ -35,24 +35,30 @@ class FamilyOsApplication : Application() {
                 name = getString(R.string.familyos_protection_channel_name),
                 description = getString(R.string.familyos_protection_channel_description),
                 color = Color.rgb(124, 92, 230),
+                importance = NotificationManager.IMPORTANCE_HIGH,
+                soundEnabled = false,
+                vibrationEnabled = false,
             ),
             ChannelSpec(
                 id = CHANNEL_CHAT,
                 name = getString(R.string.familyos_chat_channel_name),
                 description = getString(R.string.familyos_chat_channel_description),
                 color = Color.rgb(38, 179, 169),
+                importance = NotificationManager.IMPORTANCE_DEFAULT,
+                vibrationEnabled = false,
             ),
         )
         channels.forEach { spec ->
             val channel = NotificationChannel(
                 spec.id,
                 spec.name,
-                NotificationManager.IMPORTANCE_HIGH,
+                spec.importance,
             ).apply {
                 description = spec.description
                 enableLights(true)
                 lightColor = spec.color
-                enableVibration(true)
+                enableVibration(spec.vibrationEnabled)
+                if (!spec.soundEnabled) setSound(null, null)
                 setShowBadge(true)
             }
             manager.createNotificationChannel(channel)
@@ -64,6 +70,9 @@ class FamilyOsApplication : Application() {
         val name: String,
         val description: String,
         val color: Int,
+        val importance: Int = NotificationManager.IMPORTANCE_HIGH,
+        val soundEnabled: Boolean = true,
+        val vibrationEnabled: Boolean = true,
     )
 
     companion object {
