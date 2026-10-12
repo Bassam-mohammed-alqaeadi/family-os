@@ -303,7 +303,7 @@ void main() {
       expect(foundationRuntime.phase, FoundationGatePhase.signedOut);
       expect(find.byKey(Sys3Keys.success), findsOneWidget);
       expect(
-        find.textContaining('تعذّر حذف تسجيل إشعارات هذا الهاتف'),
+        find.textContaining('قد يستمر في تلقي التنبيهات'),
         findsOneWidget,
       );
     },
