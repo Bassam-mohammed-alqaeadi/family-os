@@ -1,0 +1,111 @@
+#!/bin/sh
+# FAMILY-OS-MANAGED — خطاف pre-push لحماية تاريخ الريموت.
+#
+# سياسة هذا المستودع: لا force-push، ولا حذف فروع. الخطاف يفرضها ميكانيكياً
+# بدل الاعتماد على انتباه الوكيل — وهو يُثبَّت تلقائياً بـ:
+#     tools/git/git-doctor.sh repair
+#
+# ما يمنعه:
+#   ١) دفع غير fast-forward (أي قوة append/rewrite) على أي فرع.
+#   ٢) حذف فرع على الريموت (local sha = أصفار).
+#   ٣) force على main — ممنوع دائماً ولا يوجد له تجاوز.
+#
+# ما يسمح به: دفع fast-forward عادي، وإنشاء فرع جديد (remote sha = أصفار).
+#
+# تجاوز واعٍ ومحدود (للفرع غير main فقط):
+#     FAMILY_OS_ALLOW_FORCE_PUSH=1 git push ...
+# يُسجَّل التجاوز في .git/family-os-push-guard.log، ولا يعمل على main أبداً.
+#
+# الاستدعاء: $1 = اسم الريموت، $2 = عنوانه. stdin: "<local ref> <local sha> <remote ref> <remote sha>"
+
+set -u
+
+MARKER="FAMILY-OS-MANAGED"
+GIT_DIR_PATH="$(git rev-parse --git-path . 2>/dev/null || echo .git)"
+LOG="$GIT_DIR_PATH/family-os-push-guard.log"
+
+log() {
+  printf '%s | %s | %s\n' "$(date -u '+%Y-%m-%d %H:%M:%SZ')" "$1" "$2" >> "$LOG" 2>/dev/null || true
+}
+
+# --- استنساخ stdin مؤقتاً: نحتاج قراءته للفحص، ثم تمريره لخطاف خارجي محفوظ إن وُجد ---
+INPUT="$(mktemp 2>/dev/null || echo /tmp/.family-os-prepush.$$)"
+cat > "$INPUT"
+
+BLOCKED=0
+while read -r LOCAL_REF LOCAL_SHA REMOTE_REF REMOTE_SHA; do
+  [ -n "${LOCAL_REF:-}" ] || continue
+  [ -n "${REMOTE_REF:-}" ] || REMOTE_REF="$LOCAL_REF"
+
+  ZERO='0000000000000000000000000000000000000000'
+  FORCED="${FAMILY_OS_ALLOW_FORCE_PUSH:-0}"
+  case "$REMOTE_REF" in *refs/heads/main) EMPTY_OK=0 ;; *) EMPTY_OK=1 ;; esac
+
+  # ١) حذف فرع على الريموت
+  if [ "$LOCAL_SHA" = "$ZERO" ]; then
+    if [ "$EMPTY_OK" = "0" ]; then
+      printf '\n  ⛔ منع الخطاف حذف الفرع: %s\n' "$REMOTE_REF"
+      printf '     سياسة المستودع: لا حذف للفروع. التراجع إلى الفروع المؤرشفة عبر وسوم archive/*.\n'
+      log "BLOCKED-DELETE" "$REMOTE_REF"
+      BLOCKED=1
+    elif [ "$FORCED" = "1" ]; then
+      printf '\n  ⚠ الخطاف: سُمح بحذف %s بتجاوز صريح (FAMILY_OS_ALLOW_FORCE_PUSH=1).\n' "$REMOTE_REF"
+      log "ALLOWED-DELETE-OVERRIDE" "$REMOTE_REF"
+    else
+      printf '\n  ⛔ منع الخطاف حذف الفرع: %s\n' "$REMOTE_REF"
+      printf '     إن كان مقصوداً: FAMILY_OS_ALLOW_FORCE_PUSH=1 git push ... (يُسجَّل)\n'
+      log "BLOCKED-DELETE" "$REMOTE_REF"
+      BLOCKED=1
+    fi
+    continue
+  fi
+
+  # ٢) فرع جديد — لا تاريخ ليُكتب فوقه
+  if [ "$REMOTE_SHA" = "$ZERO" ]; then
+    continue
+  fi
+
+  # ٣) دفع غير fast-forward = إعادة كتابة تاريخ
+  LOCAL_SHA_SHORT="$(printf '%.10s' "$LOCAL_SHA")"
+  REMOTE_SHA_SHORT="$(printf '%.10s' "$REMOTE_SHA")"
+  if git merge-base --is-ancestor "$REMOTE_SHA" "$LOCAL_SHA" >/dev/null 2>&1; then
+    continue   # fast-forward مشروع
+  fi
+  if ! git cat-file -e "$REMOTE_SHA" 2>/dev/null; then
+    # لا نملك الطرف الآخر محلياً (استنساخ جزئي؟) فلا نستطيع إثبات كونها إعادة كتابة.
+    printf '\n  ▲ الخطاف: تعذّر التحقق من ancestry لـ %s (الكائن %s غير موجود محلياً) — مضيّق بفحص Git نفسه.\n' \
+      "$REMOTE_REF" "$REMOTE_SHA_SHORT"
+    printf '     إن كان المستودع shallow فأكمل التاريخ: tools/git/git-doctor.sh repair\n'
+    log "UNVERIFIED-ALLOWED" "$REMOTE_REF $REMOTE_SHA_SHORT"
+    continue
+  fi
+
+  if [ "$EMPTY_OK" = "0" ]; then
+    printf '\n  ⛔ منع الخطاف إعادة كتابة تاريخ main: %s → %s\n' "$REMOTE_SHA_SHORT" "$LOCAL_SHA_SHORT"
+    printf '     main ممنوع عليه force-push دائماً، ولا يوجد تجاوز لهذه الحالة.\n'
+    printf '     الطريق الصحيح: دمج للأمام عبر فرع قصير + طلب دمج.\n'
+    log "BLOCKED-REWRITE-MAIN" "$REMOTE_REF $REMOTE_SHA_SHORT->$LOCAL_SHA_SHORT"
+    BLOCKED=1
+  elif [ "$FORCED" = "1" ]; then
+    printf '\n  ⚠ الخطاف: سُمح بإعادة كتابة %s بتجاوز صريح.\n' "$REMOTE_REF"
+    log "ALLOWED-REWRITE-OVERRIDE" "$REMOTE_REF $REMOTE_SHA_SHORT->$LOCAL_SHA_SHORT"
+  else
+    printf '\n  ⛔ منع الخطاف دفعاً غير fast-forward على %s: %s → %s\n' \
+      "$REMOTE_REF" "$REMOTE_SHA_SHORT" "$LOCAL_SHA_SHORT"
+    printf '     هذا يمحو تاريخاً على الريموت. الحل دائماً إلى الأمام:\n'
+    printf '        git fetch origin && git merge origin/%s\n' "${REMOTE_REF#refs/heads/}"
+    printf '     وإن كان مقصوداً حقاً (فرع قصير العمر): FAMILY_OS_ALLOW_FORCE_PUSH=1 git push ...\n'
+    log "BLOCKED-NONFASTFORWARD" "$REMOTE_REF $REMOTE_SHA_SHORT->$LOCAL_SHA_SHORT"
+    BLOCKED=1
+  fi
+done < "$INPUT"
+
+# --- خطاف خارجي محفوظ؟ أعِد تشغيله بنفس المدخلات (لا نكسر سلوك المنصة) ---
+SELF_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+if [ -x "$SELF_DIR/pre-push.local" ]; then
+  "$SELF_DIR/pre-push.local" "$@" < "$INPUT" || { rm -f "$INPUT"; exit 1; }
+fi
+
+rm -f "$INPUT"
+[ "$BLOCKED" -eq 0 ] || exit 1
+exit 0
