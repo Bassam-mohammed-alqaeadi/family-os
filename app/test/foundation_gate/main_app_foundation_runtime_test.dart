@@ -81,6 +81,7 @@ void main() {
       );
       final pushRegistrations = <String>[];
       var signOutResetCount = 0;
+      var signOutUnregistrationCount = 0;
       final runtime = MainAppFoundationRuntime(
         identity: identity,
         controller: FoundationGateSessionController(
@@ -110,6 +111,11 @@ void main() {
           pushRegistrations.add('$familyId:$idToken');
           throw StateError('optional push service unavailable');
         },
+        guardianPushUnregistration:
+            ({required Future<String> Function() idToken}) async {
+              signOutUnregistrationCount += 1;
+              await idToken();
+            },
         onSessionSignedOut: () {
           signOutResetCount += 1;
         },
@@ -163,11 +169,12 @@ void main() {
 
       await runtime.signOut();
       expect(signOutResetCount, 1);
+      expect(signOutUnregistrationCount, 1);
     },
   );
 
   test(
-    'push removal uses the live account token before sign-out and reports failure after clearing state',
+    'push removal checks persisted state after optional registration returns false and reports failure after sign-out',
     () async {
       final operations = <String>[];
       final identity = _RecordingIdentity(operations);
@@ -207,11 +214,12 @@ void main() {
         guardianPushRegistration: ({
           required String familyId,
           required String idToken,
-        }) async => true,
-        guardianPushUnregistration: ({required String idToken}) async {
-          operations.add('unregister:$idToken');
-          throw StateError('network unavailable');
-        },
+        }) async => false,
+        guardianPushUnregistration:
+            ({required Future<String> Function() idToken}) async {
+              operations.add('unregister:${await idToken()}');
+              throw StateError('network unavailable');
+            },
         onSessionSignedOut: () {
           operations.add('clear-local-registration');
         },

@@ -44,6 +44,7 @@ import 'package:family_os/features/n02_day/child_profile_repository.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/family_chat_server_authority.dart';
 import 'package:family_os/features/n02_day/family_push_registration.dart';
+import 'package:family_os/features/n02_day/family_push_registration_store.dart';
 import 'package:family_os/features/n02_day/location_server_authority.dart';
 import 'package:family_os/features/n06_notifications/family_notification_router.dart';
 import 'package:family_os/features/n03_screen_time/screen_time_server_authority.dart';
@@ -277,6 +278,7 @@ Future<void> main() async {
             ? _noFamilyChatToken
             : chatRuntime.currentIdToken,
         familyId: () => chatRuntime?.selectedFamilyId,
+        guardianPushRegistration: chatRuntime?.registerGuardianPush,
         childOptions: chatRuntime == null
             ? null
             : () async {
@@ -386,9 +388,12 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
       Uri.parse(apiOrigin),
     );
     final identity = FirebaseEmailPasswordIdentity(FirebaseAuth.instance);
+    final pushRegistrationStore =
+        await FamilyPushRegistrationLocalPersistence.openStore();
     final pushRegistrar = FamilyPushRegistrar(
       client: FamilyPushClient(configuration: configuration),
       tokens: FirebasePushTokenSource(),
+      store: pushRegistrationStore,
     );
     return MainAppFoundationRuntime(
       controller: FoundationGateSessionController(
@@ -452,7 +457,7 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
         familyId: familyId,
         idToken: idToken,
       ),
-      guardianPushUnregistration: ({required String idToken}) =>
+      guardianPushUnregistration: ({required Future<String> Function() idToken}) =>
           pushRegistrar.unregister(idToken: idToken),
       onSessionSignedOut: pushRegistrar.reset,
     );

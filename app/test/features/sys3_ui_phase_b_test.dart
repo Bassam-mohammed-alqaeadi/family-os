@@ -270,10 +270,12 @@ void main() {
           required String familyId,
           required String idToken,
         }) async => true,
-        guardianPushUnregistration: ({required String idToken}) async {
-          unregisterCalls += 1;
-          throw StateError('offline');
-        },
+        guardianPushUnregistration:
+            ({required Future<String> Function() idToken}) async {
+              await idToken();
+              unregisterCalls += 1;
+              throw StateError('offline');
+            },
       );
       await foundationRuntime.signIn(
         email: 'guardian@example.test',

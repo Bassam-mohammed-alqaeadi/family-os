@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:family_os/foundation_gate/family_push_client.dart';
+import 'package:family_os/features/n02_day/family_push_registration_store.dart';
 
 /// Where this handset's push token comes from. The Firebase implementation is [FirebasePushTokenSource];
 /// tests supply their own.
@@ -45,46 +46,60 @@ final class FirebasePushTokenSource implements PushTokenSource {
 
 /// Keeps the server's record of this guardian's handset current.
 ///
-/// Called every time a guardian's chat list loads. It registers at most once per (family, token):
-/// a token that changes (Firebase rotates it) is registered again on the next load, and the
-/// server treats a repeat as a no-op.
+/// The family and server registration id are persisted locally so sign-out can still remove the
+/// exact row after process death, a denied notification permission, or a failed refresh request.
+/// The FCM token and account credential are never written to that store.
 final class FamilyPushRegistrar {
   FamilyPushRegistrar({
     required FamilyPushClient client,
     required PushTokenSource tokens,
+    required FamilyPushRegistrationStore store,
   }) : _client = client,
-       _tokens = tokens;
+       _tokens = tokens,
+       _store = store;
 
   final FamilyPushClient _client;
   final PushTokenSource _tokens;
-  String? _registeredFamilyId;
+  final FamilyPushRegistrationStore _store;
+  FamilyPushRegistrationRecord? _registration;
   String? _registeredToken;
-  String? _registeredRegistrationId;
+  var _loaded = false;
 
-  /// Clears the process-local cache after sign-out so a shared handset registers for its next owner.
+  /// Clears process-local state after the durable registration has been cleared by sign-out.
   void reset() {
-    _registeredFamilyId = null;
+    _registration = null;
     _registeredToken = null;
-    _registeredRegistrationId = null;
+    _loaded = false;
   }
 
-  /// Removes this handset's saved server registration before sign-out.
+  /// Deletes the persisted registration before the provider session is cleared.
   ///
-  /// Local state is cleared even when the server cannot be reached, so a later account
-  /// cannot be suppressed by a stale cache entry. The caller remains responsible for
-  /// reporting the propagated deletion failure to the person signing out.
-  Future<void> unregister({required String idToken}) async {
-    final familyId = _registeredFamilyId;
-    final registrationId = _registeredRegistrationId;
+  /// The account token is requested only when a stored registration exists. Regardless of a
+  /// server deletion error, the local record is cleared so the next account can register. A
+  /// non-durable fallback is treated as uncertain, not as proof that no old server row exists.
+  Future<void> unregister({
+    required Future<String> Function() idToken,
+  }) async {
     try {
-      if (familyId == null || registrationId == null) return;
+      await _loadRegistration();
+      final registration = _registration;
+      if (!_store.isRestartSafe && registration == null) {
+        throw StateError(
+          'Cannot verify an older push registration without durable local storage.',
+        );
+      }
+      if (registration == null) return;
       await _client.unregister(
-        familyId: familyId,
-        registrationId: registrationId,
-        idToken: idToken,
+        familyId: registration.familyId,
+        registrationId: registration.registrationId,
+        idToken: await idToken(),
       );
     } finally {
-      reset();
+      try {
+        await _store.clear();
+      } finally {
+        reset();
+      }
     }
   }
 
@@ -93,13 +108,17 @@ final class FamilyPushRegistrar {
     required String familyId,
     required String idToken,
   }) async {
+    await _loadRegistration();
+    // Never create a server row that cannot be found after this process exits.
+    if (!_store.isRestartSafe) return false;
     final platform = _tokens.platform;
     if (platform == null) return false;
     final token = await _tokens.currentToken();
     if (token == null) return false;
-    if (_registeredFamilyId == familyId &&
+    final current = _registration;
+    if (current?.familyId == familyId &&
         _registeredToken == token &&
-        _registeredRegistrationId != null) {
+        current?.registrationId.isNotEmpty == true) {
       return true;
     }
     final registration = await _client.register(
@@ -109,10 +128,41 @@ final class FamilyPushRegistrar {
       locale: _localeCode(),
       idToken: idToken,
     );
-    _registeredFamilyId = familyId;
+    final saved = FamilyPushRegistrationRecord(
+      familyId: familyId,
+      registrationId: registration.id,
+    );
+    try {
+      await _store.save(saved);
+    } on Object {
+      // Avoid leaving an untracked server row if durable persistence fails after POST succeeds.
+      _registration = saved;
+      _registeredToken = token;
+      _loaded = true;
+      try {
+        await _client.unregister(
+          familyId: saved.familyId,
+          registrationId: saved.registrationId,
+          idToken: idToken,
+        );
+        reset();
+      } on Object {
+        // Keep the in-process id available for a sign-out retry; the failure remains visible to
+        // the best-effort caller, and no credential is retained.
+      }
+      rethrow;
+    }
+    _registration = saved;
     _registeredToken = token;
-    _registeredRegistrationId = registration.id;
+    _loaded = true;
     return true;
+  }
+
+  Future<void> _loadRegistration() async {
+    if (_loaded) return;
+    _registration = await _store.read();
+    _registeredToken = null;
+    _loaded = true;
   }
 
   /// The nudge's words follow the phone's language: Arabic when the phone is in Arabic, otherwise English.

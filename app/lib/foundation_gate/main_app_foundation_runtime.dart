@@ -34,8 +34,9 @@ typedef GuardianPushRegistrationCallback =
       required String idToken,
     });
 
-typedef GuardianPushUnregistrationCallback =
-    Future<void> Function({required String idToken});
+typedef GuardianPushUnregistrationCallback = Future<void> Function({
+  required Future<String> Function() idToken,
+});
 
 /// Raised after sign-out completes when the server could not remove this phone's push registration.
 final class GuardianPushUnregistrationException implements Exception {
@@ -114,7 +115,6 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   final GuardianPushRegistrationCallback? _guardianPushRegistration;
   final GuardianPushUnregistrationCallback? _guardianPushUnregistration;
   final VoidCallback? _onSessionSignedOut;
-  var _hasGuardianPushRegistration = false;
   IdentitySnapshot _identityValue;
   FamilyRosterSnapshot _rosterValue;
   FamilyDeviceSnapshot _deviceValue;
@@ -173,11 +173,10 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
       return;
     }
     try {
-      final registered = await register(
+      await register(
         familyId: family.id,
         idToken: await _identity.currentIdToken(),
       );
-      if (registered) _hasGuardianPushRegistration = true;
     } on Object {
       // Device permission, Firebase setup and registration are all optional capabilities.
     }
@@ -217,20 +216,18 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   Future<void> signOut() async {
     var pushRegistrationRemovalFailed = false;
     try {
-      if (_hasGuardianPushRegistration) {
-        final unregister = _guardianPushUnregistration;
-        if (unregister == null) {
-          pushRegistrationRemovalFailed = true;
-        } else {
-          final idToken = await _identity.currentIdToken();
-          await unregister(idToken: idToken);
-        }
+      final unregister = _guardianPushUnregistration;
+      if (unregister != null) {
+        // The registrar first checks durable state, then obtains a fresh token only if it found
+        // a previous server row. This runs regardless of this process's registration history.
+        await unregister(idToken: _identity.currentIdToken);
+      } else if (_guardianPushRegistration != null) {
+        // Without a cleanup capability, prior durable state cannot be ruled out.
+        pushRegistrationRemovalFailed = true;
       }
     } on Object {
       pushRegistrationRemovalFailed = true;
     } finally {
-      // Forget the local registration even when the server cannot be reached.
-      _hasGuardianPushRegistration = false;
       try {
         _onSessionSignedOut?.call();
       } on Object {
@@ -238,7 +235,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
       }
     }
 
-    // The valid account token above is used before this clears the provider session.
+    // Any required account token was resolved before this clears the provider session.
     await _controller.signOut();
     _identityValue = const IdentitySnapshot.unavailable();
     _rosterValue = const FamilyRosterSnapshot.unavailable();
