@@ -633,6 +633,24 @@ do_self_test() {
   [ "$tplus" != "0" ] && ok "refspec صريح (+refs/tags/…) بتجاوز صريح: مرفوض" || { bad "صيغة +refspec نقلت وسماً"; failures=$((failures+1)); }
   [ "$tbypass" = "$t_before" ] && ok "الوسم سليم بعد كل محاولات الالتفاف" || { bad "تغيّر الوسم بعد محاولات الالتفاف"; failures=$((failures+1)); }
 
+  # ز) وضع report: كان يفشل صامتاً ("d: unbound variable" بسبب $d داخل heredoc مع set -u)
+  #    وهو أسوأ أنواع الفشل: يُطبع تقرير ناقص ثم يُرجع exit 0.
+  local rep_out rep_err rep_rc
+  rep_out="$(mktemp)"; rep_err="$(mktemp)"
+  bash "$SCRIPT_DIR/git-doctor.sh" report "$REPO" >"$rep_out" 2>"$rep_err"
+  rep_rc=$?
+  if [ "$rep_rc" = "0" ] && [ ! -s "$rep_err" ]; then
+    ok "وضع report يعمل بلا أخطاء (exit 0، بلا مخرجات خطأ)"
+  else
+    bad "وضع report معطوب (exit=$rep_rc، stderr: $(head -1 "$rep_err" 2>/dev/null))"
+    failures=$((failures+1))
+  fi
+  grep -q 'git-doctor.sh repair); done' "$rep_out" && ok "report يحمل أمر التهيئة المطلوب من المنصة" \
+    || { bad "report لا يحمل أمر التهيئة"; failures=$((failures+1)); }
+  grep -q 'push.default' "$rep_out" && ok "report يحمل خطوة التحقق من الإصلاح" \
+    || { bad "report لا يحمل خطوة التحقق"; failures=$((failures+1)); }
+  rm -f "$rep_out" "$rep_err"
+
   rm -rf "$tmp"
   printf "\n"
   [ "$failures" -eq 0 ] && { printf "${GREEN}${BOLD}الاختبار الذاتي: ناجح${OFF}\n"; return 0; }
@@ -675,7 +693,7 @@ E2B_TEMPLATE_ID  : ${E2B_TEMPLATE_ID:-غير متاح}
 
 الإعداد المطلوب تغييره على مستوى المنصة (لا يملكه وكيل داخل الجلسة):
   أ) تشغيل أمر تهيئة تلقائي بعد الاستنساخ وقبل أي عمل. الأمر المطلوب بالضبط:
-       for d in /home/user/*/; do [ -x "$d/tools/git/git-doctor.sh" ] && (cd "$d" && tools/git/git-doctor.sh repair); done
+       for d in /home/user/*/; do [ -x "\$d/tools/git/git-doctor.sh" ] && (cd "\$d" && tools/git/git-doctor.sh repair); done
      (وإن كان الأمر يُنفَّذ داخل المستودع مباشرة فيكفي: tools/git/git-doctor.sh repair)
      وهو idempotent وغير مُدمِّر ولا يحتاج شبكة لمعظمه، ويعالج: origin مفقود، فرعاً بلا
      upstream، upstream باسم مختلف، هوية إيداع غائبة، وخطافات غير مثبّتة، ويُكمل تاريخ shallow.
