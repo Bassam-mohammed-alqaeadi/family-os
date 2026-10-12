@@ -77,4 +77,34 @@ A system does not require Native work merely because another system will. Conver
 - **Security and privacy:** never expose credentials, tokens, raw payloads, family identifiers or sensitive diagnostics in source, CI, evidence or chat.
 - **Deliberate high-risk decisions:** production/public release, real-data expansion, invasive device capability, provider use and irreversible policy changes require explicit system-level decisions and evidence.
 
+## 5.1 Durable Git guard (never trust the environment to remember)
+
+The workspace is disposable, and so is every setting that lives outside Git. A repaired
+environment is not a repaired repository: if the fix is not committed, the next session
+starts broken again. Therefore the guard against repeated push failure lives **inside the
+repository** and is re-applied in one command:
+
+```bash
+tools/git/git-doctor.sh repair     # start of every session (idempotent, non-destructive)
+tools/git/git-doctor.sh push       # instead of a bare push: proves GitHub received the SHA
+tools/git/git-doctor.sh check      # network, auth, settings, hooks, sync
+tools/git/git-doctor.sh self-test  # offline proof that the guard still works
+```
+
+- `.githooks/pre-push` enforces the no-force-push rule mechanically: a non-fast-forward push
+  or a branch deletion is refused locally, before anything reaches GitHub. `main` has no
+  override at all.
+- **Fail closed:** a push whose ancestry cannot be proven (missing remote object, shallow
+  clone, any inconclusive `merge-base` result) is *refused*, not allowed after a warning.
+  The fix is to prove it — `git fetch origin` then merge, or `git-doctor.sh repair` to
+  complete a shallow history — not to bypass the guard.
+- **Tags are absolute:** moving or deleting an existing tag is refused **always, with no
+  override** — not even `FAMILY_OS_ALLOW_FORCE_PUSH=1`. Tags are references other people
+  cite (`archive/*` in the branch log, loop documents), so a local override cannot be
+  trusted with them. Creating a new tag is always allowed. A deliberate override exists for short-lived branches only, is opt-in via
+  `FAMILY_OS_ALLOW_FORCE_PUSH=1`, and is written to `.git/family-os-push-guard.log`.
+- `Git Guard CI` runs the self-test on every pull request, so a broken guard fails CI
+  instead of failing silently.
+- The guard never edits a tracked file and never reads a secret from the environment.
+
 > **Historical note:** earlier Foundation Wave documents remain evidence of the base that was built. They are no longer the global product ceiling. The Global Super-App strategy builds truthful real engines to fulfil the user experience promised by the prototype.
