@@ -721,12 +721,18 @@ export class NotificationDispatcher {
 
     // A stale `in_flight` row is evidence of an interrupted/ambiguous provider call. Resolve
     // it without replaying the push, including attempts whose registration was since removed.
+    const currentRegistrationIds = new Set(targets.map((target) => target.registration_id));
     latest = await this.#readLatestAttempts(event.id);
     for (const attempt of latest.values()) {
       if (attempt.outcome === 'in_flight') {
         await this.#completeAttempt(event.id, attempt.registration_id, attempt.attempt_number, {
           outcome: 'ambiguous', providerMessageId: null, failureReason: 'provider_outcome_unknown',
         });
+      } else if (attempt.outcome === 'retryable_failure'
+        && !currentRegistrationIds.has(attempt.registration_id)) {
+        // A registration can be deleted (for example on logout or token rotation) while
+        // its retry is waiting. Do not keep scheduling an attempt that has no active target.
+        await this.#failRetryWithoutRegistration(event.id, attempt.registration_id, attempt.attempt_number);
       }
     }
     latest = await this.#readLatestAttempts(event.id);
@@ -834,6 +840,24 @@ export class NotificationDispatcher {
       await client.query(
         `UPDATE outbox_delivery_attempts
             SET outcome = 'permanent_failure', failure_reason = 'retry_exhausted', retry_after_at = NULL
+          WHERE outbox_id = $1 AND registration_id = $2 AND attempt_number = $3
+            AND outcome = 'retryable_failure'`,
+        [outboxId, registrationId, attemptNumber],
+      );
+    } catch (error) {
+      throw preserveLease(error);
+    } finally {
+      client.release?.();
+    }
+  }
+
+  async #failRetryWithoutRegistration(outboxId, registrationId, attemptNumber) {
+    const client = await this.clientFactory();
+    try {
+      await client.query(
+        `UPDATE outbox_delivery_attempts
+            SET outcome = 'permanent_failure', failure_reason = 'registration_unavailable',
+                retry_after_at = NULL
           WHERE outbox_id = $1 AND registration_id = $2 AND attempt_number = $3
             AND outcome = 'retryable_failure'`,
         [outboxId, registrationId, attemptNumber],

@@ -389,6 +389,50 @@ test('transient delivery retries are capped at five attempts', async () => {
   await db.close();
 });
 
+test('a removed registration terminates its scheduled retry instead of leaving SOS delivery pending', async () => {
+  const db = await freshDb();
+  await seedFamily(db);
+  await insertSosEvent(db);
+  let calls = 0;
+  const sender = {
+    async send() {
+      calls += 1;
+      throw new FcmDeliveryError('transient', 'provider_unavailable');
+    },
+  };
+  const dispatcher = new NotificationDispatcher(sender, clientFactory(db));
+
+  const first = await dispatcher.notify(SOS_OUTBOX, 'family.sos_alert_raised');
+  assert.equal(first.status, 'retry_scheduled');
+  await db.query(`DELETE FROM family_push_registrations WHERE id=$1`, [REGISTRATION]);
+  await db.query(`UPDATE outbox_events SET available_at=NOW() - INTERVAL '1 second' WHERE id=$1`, [SOS_OUTBOX]);
+  await db.query(
+    `UPDATE outbox_delivery_attempts SET retry_after_at=NOW() - INTERVAL '1 second'
+      WHERE outbox_id=$1 AND outcome='retryable_failure'`,
+    [SOS_OUTBOX],
+  );
+
+  const retry = await dispatcher.sweep({ limit: 1 });
+  assert.equal(retry.processed, 1);
+  assert.equal(retry.results[0].status, 'failed');
+  assert.equal(calls, 1, 'a retry is not sent to a registration that no longer exists');
+  const attempt = await db.query(
+    `SELECT outcome, failure_reason, retry_after_at FROM outbox_delivery_attempts WHERE outbox_id=$1`,
+    [SOS_OUTBOX],
+  );
+  assert.deepEqual(attempt.rows[0], {
+    outcome: 'permanent_failure', failure_reason: 'registration_unavailable', retry_after_at: null,
+  });
+  const delivery = await db.query(
+    `SELECT delivery_state, reason_code FROM family_sos_alert_deliveries WHERE alert_id=$1 AND channel='push'`,
+    [ALERT],
+  );
+  assert.deepEqual(delivery.rows[0], { delivery_state: 'failed', reason_code: 'registration_unavailable' });
+  const outbox = await db.query(`SELECT status FROM outbox_events WHERE id=$1`, [SOS_OUTBOX]);
+  assert.equal(outbox.rows[0].status, 'failed');
+  await db.close();
+});
+
 test('SOS with no active registrations fails every push recipient instead of leaving recorded rows', async () => {
   const db = await freshDb();
   await seedFamily(db);

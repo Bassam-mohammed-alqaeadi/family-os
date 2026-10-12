@@ -405,6 +405,53 @@ test('real PostgreSQL never retries an ambiguous provider outcome', { skip }, as
   });
 });
 
+test('real PostgreSQL terminates a due retry after its push registration is removed', { skip }, async () => {
+  await withFreshDatabase(async ({ client, pool }) => {
+    await seedGuardianAndChild(client);
+    await insertSosOutbox(client, { membershipIds: [MEMBERSHIP] });
+    let calls = 0;
+    const sender = {
+      async send() {
+        calls += 1;
+        throw new FcmDeliveryError('transient', 'provider_unavailable');
+      },
+    };
+    const dispatcher = new NotificationDispatcher(sender, () => pool.connect());
+
+    const first = await dispatcher.notify(SOS_OUTBOX, 'family.sos_alert_raised');
+    assert.equal(first.status, 'retry_scheduled');
+    await client.query(`DELETE FROM family_push_registrations WHERE id=$1`, [REGISTRATION]);
+    await client.query(`UPDATE outbox_events SET available_at=NOW() - INTERVAL '1 second' WHERE id=$1`, [SOS_OUTBOX]);
+    await client.query(
+      `UPDATE outbox_delivery_attempts SET retry_after_at=NOW() - INTERVAL '1 second'
+        WHERE outbox_id=$1 AND outcome='retryable_failure'`,
+      [SOS_OUTBOX],
+    );
+
+    const retry = await dispatcher.sweep({ limit: 1 });
+    assert.equal(retry.processed, 1);
+    assert.equal(retry.results[0].status, 'failed');
+    assert.equal(calls, 1, 'the dispatcher does not keep retrying or send to a removed registration');
+    const attempt = await client.query(
+      `SELECT outcome, failure_reason, retry_after_at FROM outbox_delivery_attempts WHERE outbox_id=$1`,
+      [SOS_OUTBOX],
+    );
+    assert.deepEqual(attempt.rows[0], {
+      outcome: 'permanent_failure', failure_reason: 'registration_unavailable', retry_after_at: null,
+    });
+    const delivery = await client.query(
+      `SELECT delivery_state, reason_code FROM family_sos_alert_deliveries WHERE alert_id=$1 AND channel='push'`,
+      [ALERT],
+    );
+    assert.deepEqual(delivery.rows[0], { delivery_state: 'failed', reason_code: 'registration_unavailable' });
+    const outbox = await client.query(
+      `SELECT status, failure_reason FROM outbox_events WHERE id=$1`,
+      [SOS_OUTBOX],
+    );
+    assert.deepEqual(outbox.rows[0], { status: 'failed', failure_reason: 'one_or_more_recipients_failed' });
+  });
+});
+
 test('real PostgreSQL reports a missing push registration for each SOS guardian and fails the overall event', { skip }, async () => {
   await withFreshDatabase(async ({ client, pool }) => {
     await seedGuardianAndChild(client);
