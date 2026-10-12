@@ -12,8 +12,6 @@ import 'package:family_os/core/runtime/family_invite_code_source.dart';
 import 'package:family_os/core/runtime/family_roster_source.dart';
 import 'package:family_os/core/runtime/identity_source.dart';
 import 'package:family_os/core/runtime/runtime_data_origin.dart';
-import 'package:family_os/features/n02_day/family_push_registration.dart';
-
 import 'device_lifecycle.dart';
 import 'family_calendar_api_client.dart';
 import 'family_chat_api_client.dart';
@@ -30,6 +28,12 @@ import 'family_screen_time_api_client.dart';
 import 'family_tasks_api_client.dart';
 import 'family_web_filter_api_client.dart';
 import 'foundation_gate_session_controller.dart';
+
+typedef GuardianPushRegistrationCallback =
+    Future<void> Function({
+      required String familyId,
+      required String idToken,
+    });
 
 /// Main-app orchestration for the admitted Family Entry capability.
 ///
@@ -53,6 +57,8 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     FamilyCalendarApiClient? calendarApi,
     FamilyChatApiClient? chatApi,
     String? preferredFamilyId,
+    GuardianPushRegistrationCallback? guardianPushRegistration,
+    VoidCallback? onSessionSignedOut,
   }) : _controller = controller,
        _identity = identity,
        _deviceApi = deviceApi,
@@ -67,6 +73,8 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
        _calendarApi = calendarApi,
        _chatApi = chatApi,
        _preferredFamilyId = preferredFamilyId?.trim(),
+       _guardianPushRegistration = guardianPushRegistration,
+       _onSessionSignedOut = onSessionSignedOut,
        _identityValue = const IdentitySnapshot.unavailable(),
        _rosterValue = const FamilyRosterSnapshot.unavailable(),
        _deviceValue = const FamilyDeviceSnapshot.unavailable() {
@@ -86,8 +94,9 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   final FamilyTasksApiClient? _tasksApi;
   final FamilyCalendarApiClient? _calendarApi;
   final FamilyChatApiClient? _chatApi;
-  FamilyPushRegistrar? _pushRegistrar;
   final String? _preferredFamilyId;
+  final GuardianPushRegistrationCallback? _guardianPushRegistration;
+  final VoidCallback? _onSessionSignedOut;
   IdentitySnapshot _identityValue;
   FamilyRosterSnapshot _rosterValue;
   FamilyDeviceSnapshot _deviceValue;
@@ -135,23 +144,18 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
 
   /// Best-effort push registration for the active guardian session.
   ///
-  /// This runs once at app startup (and after a successful sign-in/sign-up) so SOS, geofence and
-  /// protection alerts are available before the person opens chat. Chat keeps its existing
-  /// `registerGuardianPush` call; both paths use the same idempotent server registration. Missing
+  /// The app composition root owns the optional FCM implementation and passes it through this
+  /// callback, keeping the isolated Foundation Gate independent of feature packages. Missing
   /// Firebase setup, denied permission, and network errors never block app startup or sign-in.
-  Future<void> registerGuardianPush({PushTokenSource? tokens}) async {
+  Future<void> registerGuardianPush() async {
     final family = _controller.selectedFamily;
-    final chat = _chatApi;
-    if (!_identityValue.isRemoteAuthoritative || family == null || chat == null ||
+    final register = _guardianPushRegistration;
+    if (!_identityValue.isRemoteAuthoritative || family == null || register == null ||
         (family.role != 'primary_guardian' && family.role != 'co_guardian')) {
       return;
     }
     try {
-      final registrar = _pushRegistrar ??= FamilyPushRegistrar(
-        client: FamilyPushClient(configuration: chat.configuration),
-        tokens: tokens ?? FirebasePushTokenSource(),
-      );
-      await registrar.ensureRegistered(
+      await register(
         familyId: family.id,
         idToken: await _identity.currentIdToken(),
       );
@@ -193,9 +197,11 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
 
   Future<void> signOut() async {
     await _controller.signOut();
-    // A shared handset may be handed to another guardian. Do not let the previous account's
-    // (family, token) cache suppress registration that moves this token to the new owner.
-    _pushRegistrar = null;
+    try {
+      _onSessionSignedOut?.call();
+    } on Object {
+      // Clearing an optional push cache cannot prevent a person from signing out.
+    }
     _identityValue = const IdentitySnapshot.unavailable();
     _rosterValue = const FamilyRosterSnapshot.unavailable();
     _deviceValue = const FamilyDeviceSnapshot.unavailable();

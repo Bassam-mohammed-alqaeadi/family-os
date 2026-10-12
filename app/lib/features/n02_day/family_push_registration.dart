@@ -60,6 +60,12 @@ final class FamilyPushRegistrar {
   String? _registeredFamilyId;
   String? _registeredToken;
 
+  /// Clears the process-local cache after sign-out so a shared handset registers for its next owner.
+  void reset() {
+    _registeredFamilyId = null;
+    _registeredToken = null;
+  }
+
   /// Returns true when the server holds this handset's registration for [familyId].
   Future<bool> ensureRegistered({
     required String familyId,

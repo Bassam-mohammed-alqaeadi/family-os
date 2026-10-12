@@ -43,6 +43,7 @@ import 'package:family_os/features/n02_day/alerts_hub_local_projection.dart';
 import 'package:family_os/features/n02_day/child_profile_repository.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/family_chat_server_authority.dart';
+import 'package:family_os/features/n02_day/family_push_registration.dart';
 import 'package:family_os/features/n02_day/location_server_authority.dart';
 import 'package:family_os/features/n06_notifications/family_notification_router.dart';
 import 'package:family_os/features/n03_screen_time/screen_time_server_authority.dart';
@@ -71,6 +72,7 @@ import 'package:family_os/foundation_gate/family_invite_code_api_client.dart';
 import 'package:family_os/foundation_gate/family_membership_api_client.dart';
 import 'package:family_os/foundation_gate/family_calendar_api_client.dart';
 import 'package:family_os/foundation_gate/family_chat_api_client.dart';
+import 'package:family_os/foundation_gate/family_push_client.dart';
 import 'package:family_os/foundation_gate/native_family_chat_device_transport.dart';
 import 'package:family_os/foundation_gate/family_screen_time_api_client.dart';
 import 'package:family_os/foundation_gate/family_tasks_api_client.dart';
@@ -384,6 +386,10 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
       Uri.parse(apiOrigin),
     );
     final identity = FirebaseEmailPasswordIdentity(FirebaseAuth.instance);
+    final pushRegistrar = FamilyPushRegistrar(
+      client: FamilyPushClient(configuration: configuration),
+      tokens: FirebasePushTokenSource(),
+    );
     return MainAppFoundationRuntime(
       controller: FoundationGateSessionController(
         identity: identity,
@@ -439,6 +445,16 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
       ),
       chatApi: _familyChatApi(configuration),
       preferredFamilyId: preferredFamilyId,
+      guardianPushRegistration: ({
+        required String familyId,
+        required String idToken,
+      }) async {
+        await pushRegistrar.ensureRegistered(
+          familyId: familyId,
+          idToken: idToken,
+        );
+      },
+      onSessionSignedOut: pushRegistrar.reset,
     );
   } on Object {
     return null;

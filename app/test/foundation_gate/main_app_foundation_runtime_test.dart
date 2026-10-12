@@ -59,6 +59,8 @@ void main() {
       final configuration = FoundationGateConfiguration.fromStagingApiOrigin(
         Uri.parse('https://staging.example.test'),
       );
+      final pushRegistrations = <String>[];
+      var signOutResetCount = 0;
       final runtime = MainAppFoundationRuntime(
         identity: identity,
         controller: FoundationGateSessionController(
@@ -81,6 +83,16 @@ void main() {
             ),
           ),
         ),
+        guardianPushRegistration: ({
+          required String familyId,
+          required String idToken,
+        }) async {
+          pushRegistrations.add('$familyId:$idToken');
+          throw StateError('optional push service unavailable');
+        },
+        onSessionSignedOut: () {
+          signOutResetCount += 1;
+        },
       );
       addTearDown(runtime.dispose);
 
@@ -98,6 +110,7 @@ void main() {
       expect(snapshot.accountId?.value, 'firebase-subject');
       expect(snapshot.familyId?.value, _familyId);
       expect(snapshot.isPrimaryOwner, isTrue);
+      expect(pushRegistrations, <String>['$_familyId:synthetic-token']);
 
       final roster = await rosterSource.load(FamilyId(_familyId));
       expect(roster.isAuthoritative, isTrue);
@@ -127,6 +140,9 @@ void main() {
       });
       expect(rosterSource.value.children.single.avatarEmoji, '🧒');
       expect(rosterSource.value.children.single.themeColor, 'teal');
+
+      await runtime.signOut();
+      expect(signOutResetCount, 1);
     },
   );
 

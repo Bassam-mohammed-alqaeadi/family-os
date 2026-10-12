@@ -64,6 +64,16 @@ void main() {
     expect(posted.last['token'], _rotatedToken);
   });
 
+  test('a shared handset registers again after sign-out clears the local owner cache', () async {
+    final registrar = FamilyPushRegistrar(client: client, tokens: _FakeTokens());
+
+    await registrar.ensureRegistered(familyId: _family, idToken: 'first-owner');
+    registrar.reset();
+    await registrar.ensureRegistered(familyId: _family, idToken: 'next-owner');
+
+    expect(posted, hasLength(2));
+  });
+
   test('without a token (no Firebase on this build, or refused) nothing is sent', () async {
     final tokens = _FakeTokens(token: null);
     final registrar = FamilyPushRegistrar(client: client, tokens: tokens);
