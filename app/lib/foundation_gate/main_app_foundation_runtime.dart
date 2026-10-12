@@ -961,6 +961,8 @@ final class MainAppFoundationIdentitySource extends ChangeNotifier
     required String password,
   }) => _runtime.signUp(email: email, password: password);
 
+  Future<void> signOut() => _runtime.signOut();
+
   FoundationGatePhase get phase => _runtime.phase;
 
   @override

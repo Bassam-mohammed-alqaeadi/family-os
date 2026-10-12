@@ -13,6 +13,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/runtime/app_scope.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
+import 'package:family_os/foundation_gate/main_app_foundation_runtime.dart';
 
 abstract final class Sys3Keys {
   static const mockBanner = Key('sys3_mock_honesty');
@@ -198,6 +199,42 @@ class LogoutConfirmScreen extends StatefulWidget {
 
 class _LogoutConfirmScreenState extends State<LogoutConfirmScreen> {
   bool? _done;
+  bool _submitting = false;
+  String? _message;
+
+  Future<void> _signOut() async {
+    if (_submitting) return;
+    final appRuntime = AppScope.maybeOf(context);
+    final remoteIdentity = appRuntime?.identity;
+    if (remoteIdentity is MainAppFoundationIdentitySource) {
+      setState(() => _submitting = true);
+      try {
+        await remoteIdentity.signOut();
+        if (!mounted) return;
+        setState(() => _done = true);
+      } on GuardianPushUnregistrationException catch (error) {
+        // The provider session was cleared; this exception is a warning that
+        // the server-side push registration could not be deleted.
+        if (!mounted) return;
+        setState(() {
+          _done = true;
+          _message = error.message;
+        });
+      } on Object {
+        if (!mounted) return;
+        setState(() {
+          _done = false;
+          _message = AppLocalizations.of(context).sys3ErrorBody;
+        });
+      } finally {
+        if (mounted) setState(() => _submitting = false);
+      }
+      return;
+    }
+
+    final ok = _runtime(context).logoutCurrentSession();
+    setState(() => _done = ok);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -208,15 +245,12 @@ class _LogoutConfirmScreenState extends State<LogoutConfirmScreen> {
       body: l10n.sys3LogoutBody,
       children: [
         if (_done != null)
-          _result(l10n, success: _done!)
+          _result(l10n, success: _done!, message: _message)
         else
           PrimaryBtn(
             key: const Key('sys3_logout_action'),
             label: l10n.sys3LogoutAction,
-            onPressed: () {
-              final ok = _runtime(context).logoutCurrentSession();
-              setState(() => _done = ok);
-            },
+            onPressed: _submitting ? null : _signOut,
           ),
       ],
     );
