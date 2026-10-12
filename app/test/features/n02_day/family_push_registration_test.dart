@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:family_os/features/n02_day/family_push_registration.dart';
 import 'package:family_os/foundation_gate/family_push_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
-import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;

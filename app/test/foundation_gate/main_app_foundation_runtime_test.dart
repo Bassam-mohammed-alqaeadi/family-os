@@ -9,6 +9,7 @@ import 'package:family_os/foundation_gate/family_discovery_api_client.dart';
 import 'package:family_os/foundation_gate/family_membership_api_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_http.dart';
+import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 import 'package:family_os/foundation_gate/foundation_gate_session_controller.dart';
 import 'package:family_os/foundation_gate/main_app_foundation_runtime.dart';
 import 'package:flutter_test/flutter_test.dart';
