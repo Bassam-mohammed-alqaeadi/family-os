@@ -11,6 +11,7 @@ import test from 'node:test';
 import pg from 'pg';
 import { applyMigrations } from '../src/migration-runner.js';
 import { NotificationDispatcher } from '../src/notification-dispatcher.js';
+import { FcmDeliveryError } from '../src/fcm-sender.js';
 import { FOUNDATION_SCHEMA_MIGRATIONS } from '../src/schema-manifest.js';
 
 const { Client, Pool } = pg;
@@ -20,6 +21,9 @@ const migrationDirectory = join(dirname(fileURLToPath(import.meta.url)), '..', '
 const FAMILY = 'aaaaaaaa-1111-4111-8111-111111111111';
 const ACCOUNT = 'bbbbbbbb-2222-4222-8222-222222222222';
 const MEMBERSHIP = 'cccccccc-3333-4333-8333-333333333333';
+const SECOND_ACCOUNT = 'cccccccc-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+const SECOND_MEMBERSHIP = 'dddddddd-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+const SECOND_REGISTRATION = 'eeeeeeee-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const CHILD = 'dddddddd-4444-4444-8444-444444444444';
 const DEVICE = 'abababab-2222-4222-8222-222222222222';
 const ALERT = 'eeeeeeee-5555-4555-8555-555555555555';
@@ -95,6 +99,48 @@ async function seedGuardianAndChild(client) {
   );
 }
 
+async function addCoGuardian(client, { registration = false } = {}) {
+  await client.query(`INSERT INTO accounts (id, oidc_subject) VALUES ($1, 's1-notification-co-guardian-test')`, [SECOND_ACCOUNT]);
+  await client.query(
+    `INSERT INTO family_memberships
+       (id, family_id, account_id, target_subject, role, status, joined_at)
+     VALUES ($1, $2, $3, 's1-notification-co-guardian-test', 'co_guardian', 'active', NOW())`,
+    [SECOND_MEMBERSHIP, FAMILY, SECOND_ACCOUNT],
+  );
+  if (registration) {
+    await client.query(
+      `INSERT INTO family_push_registrations
+         (id, family_id, membership_id, token, platform, locale)
+       VALUES ($1, $2, $3, $4, 'android', 'en')`,
+      [SECOND_REGISTRATION, FAMILY, SECOND_MEMBERSHIP, `${TOKEN}-co`],
+    );
+  }
+}
+
+async function insertSosOutbox(client, { membershipIds, outboxId = SOS_OUTBOX }) {
+  await client.query(
+    `INSERT INTO family_sos_alerts
+       (id, family_id, child_id, raised_by_kind, raised_by_membership_id, pressed_at,
+        location_class, connection_class)
+     VALUES ($1, $2, $3, 'guardian', $4, '2026-05-10T15:45:00Z', 'unavailable', 'online')`,
+    [ALERT, FAMILY, CHILD, MEMBERSHIP],
+  );
+  for (const membershipId of membershipIds) {
+    await client.query(
+      `INSERT INTO family_sos_alert_deliveries
+         (id, alert_id, family_id, recipient_kind, recipient_membership_id, channel, delivery_state)
+       VALUES (gen_random_uuid(), $1, $2, 'guardian', $3, 'push', 'recorded')`,
+      [ALERT, FAMILY, membershipId],
+    );
+  }
+  await client.query(
+    `INSERT INTO outbox_events
+       (id, aggregate_type, aggregate_id, correlation_id, event_type, copy_key, payload)
+     VALUES ($1, 'family', $2, gen_random_uuid(), 'family.sos_alert_raised', 'sos.raised', $3::jsonb)`,
+    [outboxId, FAMILY, JSON.stringify({ subjectType: 'sos_alert', subjectId: ALERT })],
+  );
+}
+
 function acceptedSender() {
   const calls = [];
   return {
@@ -144,9 +190,11 @@ test('real PostgreSQL delivers an SOS despite quiet/history preferences and reco
     const result = await dispatcher.notify(SOS_OUTBOX, 'family.sos_alert_raised');
 
     assert.equal(result.status, 'delivered');
+    const duplicate = await dispatcher.notify(SOS_OUTBOX, 'family.sos_alert_raised');
+    assert.equal(duplicate.claimed, false, 'a durable accepted attempt must never be sent twice');
     assert.equal(sender.calls.length, 1, 'SOS must bypass quiet hours, push_allowed=false, and history_only');
     assert.equal(sender.calls[0].title, 'استغاثة من ليان');
-    assert.equal(sender.calls[0].body, 'ضغط زر الاستغاثة الساعة ٣:٤٥ م');
+    assert.equal(sender.calls[0].body, 'ضغط زر الاستغاثة الساعة ٣:٤٥ م بتوقيت UTC');
     assert.equal(sender.calls[0].urgency, 'alert');
     assert.deepEqual(sender.calls[0].data, {
       type: 'family.sos_alert_raised',
@@ -208,7 +256,7 @@ test('real PostgreSQL delivers an SOS despite quiet/history preferences and reco
     assert.equal(atRisk.status, 'delivered');
     assert.equal(sender.calls.length, 2);
     assert.equal(sender.calls[1].title, 'حالة الحماية على جهاز ليان تحتاج إلى مراجعة');
-    assert.equal(sender.calls[1].body, 'أبلغ الجهاز عن مؤشر يؤثر في الحماية الساعة ٤:٠١ م');
+    assert.equal(sender.calls[1].body, 'أبلغ الجهاز عن مؤشر يؤثر في الحماية الساعة ٤:٠١ م بتوقيت UTC');
     assert.equal(sender.calls[1].urgency, 'high');
     assert.deepEqual(sender.calls[1].data, {
       type: 'family.device_protection_reported',
@@ -226,6 +274,221 @@ test('real PostgreSQL delivers an SOS despite quiet/history preferences and reco
       [HEALTHY_PROTECTION_OUTBOX, 'skipped', 'protection_observation_not_alertable'],
       [RISK_PROTECTION_OUTBOX, 'delivered', null],
     ]);
+  });
+});
+
+test('real PostgreSQL retries a transient FCM refusal with durable backoff without replaying an accepted recipient', { skip }, async () => {
+  await withFreshDatabase(async ({ client, pool }) => {
+    await seedGuardianAndChild(client);
+    await addCoGuardian(client, { registration: true });
+    await insertSosOutbox(client, { membershipIds: [MEMBERSHIP, SECOND_MEMBERSHIP] });
+    const calls = [];
+    const sender = {
+      async send(args) {
+        calls.push(args);
+        if (calls.length === 2) throw new FcmDeliveryError('transient', 'provider_unavailable');
+        args.onAccepted?.(calls.length === 1
+          ? 'projects/family-os-test/messages/primary-accepted'
+          : 'projects/family-os-test/messages/retry-success');
+        return 'sent';
+      },
+    };
+    const dispatcher = new NotificationDispatcher(sender, () => pool.connect());
+
+    const first = await dispatcher.notify(SOS_OUTBOX, 'family.sos_alert_raised');
+    assert.equal(first.status, 'retry_scheduled');
+    assert.equal(calls.length, 2);
+    const scheduled = await client.query(
+      `SELECT status, available_at > NOW() AS backoff_pending
+         FROM outbox_events WHERE id=$1`,
+      [SOS_OUTBOX],
+    );
+    assert.deepEqual(scheduled.rows[0], { status: 'pending', backoff_pending: true });
+    const retryable = await client.query(
+      `SELECT attempt_number, outcome, retry_after_at > NOW() AS attempt_backoff_pending
+         FROM outbox_delivery_attempts WHERE outbox_id=$1 AND outcome='retryable_failure'`,
+      [SOS_OUTBOX],
+    );
+    assert.deepEqual(retryable.rows[0], {
+      attempt_number: 1, outcome: 'retryable_failure', attempt_backoff_pending: true,
+    });
+
+    await client.query(`UPDATE outbox_events SET available_at=NOW() - INTERVAL '1 second' WHERE id=$1`, [SOS_OUTBOX]);
+    await client.query(
+      `UPDATE outbox_delivery_attempts SET retry_after_at=NOW() - INTERVAL '1 second'
+        WHERE outbox_id=$1 AND outcome='retryable_failure'`,
+      [SOS_OUTBOX],
+    );
+    const retry = await dispatcher.sweep({ limit: 1 });
+    assert.equal(retry.processed, 1);
+    assert.equal(retry.results[0].status, 'delivered');
+    assert.equal(calls.length, 3, 'the already-accepted first guardian is not sent again');
+    const attempts = await client.query(
+      `SELECT registration_id, attempt_number, outcome, provider_message_id
+         FROM outbox_delivery_attempts WHERE outbox_id=$1 ORDER BY registration_id, attempt_number`,
+      [SOS_OUTBOX],
+    );
+    assert.deepEqual(attempts.rows, [
+      { registration_id: REGISTRATION, attempt_number: 1, outcome: 'delivered',
+        provider_message_id: 'projects/family-os-test/messages/primary-accepted' },
+      { registration_id: SECOND_REGISTRATION, attempt_number: 1, outcome: 'retryable_failure',
+        provider_message_id: null },
+      { registration_id: SECOND_REGISTRATION, attempt_number: 2, outcome: 'delivered',
+        provider_message_id: 'projects/family-os-test/messages/retry-success' },
+    ]);
+    const delivery = await client.query(
+      `SELECT recipient_membership_id, delivery_state, reason_code, fcm_message_id
+         FROM family_sos_alert_deliveries WHERE alert_id=$1 AND channel='push'
+        ORDER BY recipient_membership_id`,
+      [ALERT],
+    );
+    assert.deepEqual(delivery.rows, [
+      { recipient_membership_id: MEMBERSHIP, delivery_state: 'delivered', reason_code: null,
+        fcm_message_id: 'projects/family-os-test/messages/primary-accepted' },
+      { recipient_membership_id: SECOND_MEMBERSHIP, delivery_state: 'delivered', reason_code: null,
+        fcm_message_id: 'projects/family-os-test/messages/retry-success' },
+    ]);
+  });
+});
+
+test('real PostgreSQL records permanent FCM rejection without retrying', { skip }, async () => {
+  await withFreshDatabase(async ({ client, pool }) => {
+    await seedGuardianAndChild(client);
+    await insertSosOutbox(client, { membershipIds: [MEMBERSHIP] });
+    const calls = [];
+    const sender = { async send() { calls.push(true); throw new FcmDeliveryError('permanent', 'provider_rejected'); } };
+    const dispatcher = new NotificationDispatcher(sender, () => pool.connect());
+
+    const result = await dispatcher.notify(SOS_OUTBOX, 'family.sos_alert_raised');
+    assert.equal(result.status, 'failed');
+    assert.equal(calls.length, 1);
+    await dispatcher.sweep({ limit: 5 });
+    assert.equal(calls.length, 1, 'a permanent refusal is terminal');
+    const attempts = await client.query(
+      `SELECT attempt_number, outcome, failure_reason FROM outbox_delivery_attempts WHERE outbox_id=$1`,
+      [SOS_OUTBOX],
+    );
+    assert.deepEqual(attempts.rows, [{
+      attempt_number: 1, outcome: 'permanent_failure', failure_reason: 'provider_rejected',
+    }]);
+    const delivery = await client.query(
+      `SELECT delivery_state, reason_code FROM family_sos_alert_deliveries WHERE alert_id=$1 AND channel='push'`,
+      [ALERT],
+    );
+    assert.deepEqual(delivery.rows[0], { delivery_state: 'failed', reason_code: 'provider_rejected' });
+  });
+});
+
+test('real PostgreSQL never retries an ambiguous provider outcome', { skip }, async () => {
+  await withFreshDatabase(async ({ client, pool }) => {
+    await seedGuardianAndChild(client);
+    await insertSosOutbox(client, { membershipIds: [MEMBERSHIP] });
+    const calls = [];
+    const sender = { async send() { calls.push(true); throw new FcmDeliveryError('ambiguous', 'provider_outcome_unknown'); } };
+    const dispatcher = new NotificationDispatcher(sender, () => pool.connect());
+
+    const result = await dispatcher.notify(SOS_OUTBOX, 'family.sos_alert_raised');
+    assert.equal(result.status, 'failed');
+    assert.equal(calls.length, 1);
+    await dispatcher.sweep({ limit: 5 });
+    assert.equal(calls.length, 1, 'a lost provider response may already represent an accepted push');
+    const attempt = await client.query(
+      `SELECT outcome, failure_reason FROM outbox_delivery_attempts WHERE outbox_id=$1`,
+      [SOS_OUTBOX],
+    );
+    assert.deepEqual(attempt.rows[0], { outcome: 'ambiguous', failure_reason: 'provider_outcome_unknown' });
+    const delivery = await client.query(
+      `SELECT delivery_state, reason_code FROM family_sos_alert_deliveries WHERE alert_id=$1 AND channel='push'`,
+      [ALERT],
+    );
+    assert.deepEqual(delivery.rows[0], { delivery_state: 'failed', reason_code: 'provider_outcome_unknown' });
+  });
+});
+
+test('real PostgreSQL reports a missing push registration for each SOS guardian and fails the overall event', { skip }, async () => {
+  await withFreshDatabase(async ({ client, pool }) => {
+    await seedGuardianAndChild(client);
+    await addCoGuardian(client);
+    await insertSosOutbox(client, { membershipIds: [MEMBERSHIP, SECOND_MEMBERSHIP] });
+    const sender = acceptedSender();
+    const dispatcher = new NotificationDispatcher(sender, () => pool.connect());
+
+    const result = await dispatcher.notify(SOS_OUTBOX, 'family.sos_alert_raised');
+    assert.equal(result.status, 'failed');
+    assert.equal(result.deliveredCount, 1);
+    assert.equal(result.failedCount, 1);
+    assert.equal(sender.calls.length, 1);
+    const deliveries = await client.query(
+      `SELECT recipient_membership_id, delivery_state, reason_code, fcm_message_id
+         FROM family_sos_alert_deliveries WHERE alert_id=$1 AND channel='push'
+        ORDER BY recipient_membership_id`,
+      [ALERT],
+    );
+    assert.deepEqual(deliveries.rows.map((row) => [
+      row.recipient_membership_id, row.delivery_state, row.reason_code, row.fcm_message_id,
+    ]), [
+      [MEMBERSHIP, 'delivered', null, 'projects/family-os-test/messages/postgres-1'],
+      [SECOND_MEMBERSHIP, 'failed', 'push_registration_absent', null],
+    ]);
+    const outbox = await client.query(`SELECT status, failure_reason FROM outbox_events WHERE id=$1`, [SOS_OUTBOX]);
+    assert.deepEqual(outbox.rows[0], { status: 'failed', failure_reason: 'one_or_more_recipients_failed' });
+  });
+});
+
+test('real PostgreSQL marks every SOS guardian failed when no push registrations exist', { skip }, async () => {
+  await withFreshDatabase(async ({ client, pool }) => {
+    await seedGuardianAndChild(client);
+    await client.query(`DELETE FROM family_push_registrations WHERE family_id=$1`, [FAMILY]);
+    await addCoGuardian(client);
+    await insertSosOutbox(client, { membershipIds: [MEMBERSHIP, SECOND_MEMBERSHIP] });
+    const sender = acceptedSender();
+    const dispatcher = new NotificationDispatcher(sender, () => pool.connect());
+
+    const result = await dispatcher.notify(SOS_OUTBOX, 'family.sos_alert_raised');
+    assert.equal(result.status, 'failed');
+    assert.equal(result.reason, 'no_active_registration');
+    assert.equal(result.deliveredCount, 0);
+    assert.equal(result.failedCount, 2);
+    assert.equal(sender.calls.length, 0);
+    const deliveries = await client.query(
+      `SELECT delivery_state, reason_code FROM family_sos_alert_deliveries
+        WHERE alert_id=$1 AND channel='push' ORDER BY recipient_membership_id`,
+      [ALERT],
+    );
+    assert.deepEqual(deliveries.rows, [
+      { delivery_state: 'failed', reason_code: 'push_registration_absent' },
+      { delivery_state: 'failed', reason_code: 'push_registration_absent' },
+    ]);
+    const outbox = await client.query(`SELECT status, failure_reason FROM outbox_events WHERE id=$1`, [SOS_OUTBOX]);
+    assert.deepEqual(outbox.rows[0], { status: 'failed', failure_reason: 'no_active_registration' });
+  });
+});
+
+test('real PostgreSQL reports SOS delivered only after every guardian registration succeeds', { skip }, async () => {
+  await withFreshDatabase(async ({ client, pool }) => {
+    await seedGuardianAndChild(client);
+    await addCoGuardian(client, { registration: true });
+    await insertSosOutbox(client, { membershipIds: [MEMBERSHIP, SECOND_MEMBERSHIP] });
+    const sender = acceptedSender();
+    const dispatcher = new NotificationDispatcher(sender, () => pool.connect());
+
+    const result = await dispatcher.notify(SOS_OUTBOX, 'family.sos_alert_raised');
+    assert.equal(result.status, 'delivered');
+    assert.equal(result.deliveredCount, 2);
+    assert.equal(result.failedCount, 0);
+    assert.equal(sender.calls.length, 2);
+    const deliveries = await client.query(
+      `SELECT delivery_state, reason_code, fcm_message_id
+         FROM family_sos_alert_deliveries WHERE alert_id=$1 AND channel='push'
+        ORDER BY recipient_membership_id`,
+      [ALERT],
+    );
+    assert.deepEqual(deliveries.rows, [
+      { delivery_state: 'delivered', reason_code: null, fcm_message_id: 'projects/family-os-test/messages/postgres-1' },
+      { delivery_state: 'delivered', reason_code: null, fcm_message_id: 'projects/family-os-test/messages/postgres-2' },
+    ]);
+    const outbox = await client.query(`SELECT status, failure_reason FROM outbox_events WHERE id=$1`, [SOS_OUTBOX]);
+    assert.deepEqual(outbox.rows[0], { status: 'delivered', failure_reason: null });
   });
 });
 

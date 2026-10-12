@@ -15,6 +15,22 @@ export const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const FCM_ORIGIN = 'https://fcm.googleapis.com';
 const PROJECT_ID = /^[a-z][a-z0-9-]{4,61}[a-z0-9]$/;
 
+export class FcmDeliveryError extends Error {
+  constructor(classification, reasonCode, { retryAfterSeconds = null } = {}) {
+    super(`fcm_${reasonCode}`);
+    this.name = 'FcmDeliveryError';
+    this.classification = classification;
+    this.reasonCode = reasonCode;
+    this.retryAfterSeconds = retryAfterSeconds;
+  }
+}
+
+function retryAfterSeconds(response) {
+  const value = response.headers?.get?.('retry-after');
+  if (!value || !/^\d+$/.test(value.trim())) return null;
+  return Math.min(3600, Math.max(0, Number(value.trim())));
+}
+
 /** The words of a nudge. Neutral by design: they name the app and the kind of change only. */
 export const PUSH_COPY = Object.freeze({
   ar: Object.freeze({ title: 'عائلتي', body: 'رسالة جديدة' }),
@@ -94,28 +110,44 @@ export class FcmSender {
   async #accessToken() {
     const nowMs = this.#now();
     if (this.#access && this.#access.expiresAt - 60_000 > nowMs) return this.#access.token;
-    this.#key ??= await importPKCS8(this.#serviceAccount.privateKey, 'RS256');
-    const seconds = Math.floor(nowMs / 1000);
-    const assertion = await new SignJWT({ scope: FCM_SCOPE })
-      .setProtectedHeader({ alg: 'RS256', typ: 'JWT' })
-      .setIssuer(this.#serviceAccount.clientEmail)
-      .setSubject(this.#serviceAccount.clientEmail)
-      .setAudience(this.#tokenUrl)
-      .setIssuedAt(seconds)
-      .setExpirationTime(seconds + 3600)
-      .sign(this.#key);
-    const response = await this.#fetch(this.#tokenUrl, {
-      method: 'POST',
-      headers: { 'content-type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-        assertion,
-      }),
-      redirect: 'error',
-    });
+    let assertion;
+    try {
+      this.#key ??= await importPKCS8(this.#serviceAccount.privateKey, 'RS256');
+      const seconds = Math.floor(nowMs / 1000);
+      assertion = await new SignJWT({ scope: FCM_SCOPE })
+        .setProtectedHeader({ alg: 'RS256', typ: 'JWT' })
+        .setIssuer(this.#serviceAccount.clientEmail)
+        .setSubject(this.#serviceAccount.clientEmail)
+        .setAudience(this.#tokenUrl)
+        .setIssuedAt(seconds)
+        .setExpirationTime(seconds + 3600)
+        .sign(this.#key);
+    } catch {
+      throw new FcmDeliveryError('permanent', 'sender_configuration');
+    }
+    let response;
+    try {
+      response = await this.#fetch(this.#tokenUrl, {
+        method: 'POST',
+        headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+          assertion,
+        }),
+        redirect: 'error',
+      });
+    } catch {
+      // This request cannot have sent an FCM message; it is safe to retry the token exchange.
+      throw new FcmDeliveryError('transient', 'oauth_transport_failure');
+    }
     const body = await response.json().catch(() => null);
     if (response.status !== 200 || typeof body?.access_token !== 'string') {
-      throw new Error(`Google refused the FCM access token with HTTP ${response.status}.`);
+      const transient = response.status === 408 || response.status === 429 || response.status >= 500;
+      throw new FcmDeliveryError(
+        transient ? 'transient' : 'permanent',
+        transient ? 'oauth_temporary_failure' : 'oauth_rejected',
+        { retryAfterSeconds: retryAfterSeconds(response) },
+      );
     }
     this.#access = {
       token: body.access_token,
@@ -126,9 +158,10 @@ export class FcmSender {
 
   /**
    * Sends one push. Resolves to `sent`, or `unregistered` when FCM says the token no longer names
-   * a device (the caller then deletes that registration). Any other failure throws, so a transient
-   * error never removes a device. `onAccepted` receives FCM's opaque message name so a caller may
-   * persist the evidence without changing the long-standing string result used by chat nudges.
+   * a device (the caller then deletes that registration). Other failures carry a safe classification:
+   * clear refusals may be retried, local/provider configuration errors are permanent, and a lost
+   * response is ambiguous because FCM may already have accepted the message. `onAccepted` receives
+   * FCM's opaque message name so a caller can durably record provider acceptance.
    */
   async send({
     token,
@@ -142,13 +175,13 @@ export class FcmSender {
     onAccepted = null,
   }) {
     if (!Number.isInteger(ttlSeconds) || ttlSeconds < 0 || ttlSeconds > 2_419_200) {
-      throw new Error('FCM TTL must be an integer from 0 to 2419200 seconds.');
+      throw new FcmDeliveryError('permanent', 'invalid_request');
     }
     if (!['normal', 'high', 'alert'].includes(urgency)) {
-      throw new Error('FCM urgency must be normal, high, or alert.');
+      throw new FcmDeliveryError('permanent', 'invalid_request');
     }
     if (typeof channelId !== 'string' || !/^[a-z][a-z0-9_]{0,63}$/.test(channelId)) {
-      throw new Error('FCM notification channel id is invalid.');
+      throw new FcmDeliveryError('permanent', 'invalid_request');
     }
     const copy = PUSH_COPY[locale] ?? PUSH_COPY.en;
     const notificationTitle = title ?? copy.title;
@@ -157,53 +190,64 @@ export class FcmSender {
       typeof notificationTitle !== 'string' || notificationTitle.length < 1 || notificationTitle.length > 160
       || typeof notificationBody !== 'string' || notificationBody.length < 1 || notificationBody.length > 240
     ) {
-      throw new Error('FCM notification copy is invalid.');
+      throw new FcmDeliveryError('permanent', 'invalid_request');
     }
     const isHighPriority = urgency === 'high' || urgency === 'alert';
     const includeDefaultSound = urgency === 'alert';
     const priority = isHighPriority ? 'HIGH' : 'NORMAL';
     const accessToken = await this.#accessToken();
-    const response = await this.#fetch(
-      `${this.#fcmOrigin}/v1/projects/${this.projectId}/messages:send`,
-      {
-        method: 'POST',
-        headers: {
-          authorization: `Bearer ${accessToken}`,
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: {
-            token,
-            notification: { title: notificationTitle, body: notificationBody },
-            data: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])),
-            android: {
-              priority,
-              ttl: `${ttlSeconds}s`,
-              notification: {
-                channel_id: channelId,
-                color: ANDROID_CHANNEL_COLORS[channelId] ?? ANDROID_CHANNEL_COLORS.familyos_chat_nudges,
-              },
-            },
-            apns: {
-              headers: {
-                'apns-priority': isHighPriority ? '10' : '5',
-                'apns-expiration': String(Math.floor(this.#now() / 1000) + ttlSeconds),
-              },
-              payload: { aps: { ...(includeDefaultSound ? { sound: 'default' } : {}) } },
-            },
+    let response;
+    try {
+      response = await this.#fetch(
+        `${this.#fcmOrigin}/v1/projects/${this.projectId}/messages:send`,
+        {
+          method: 'POST',
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+            'content-type': 'application/json',
           },
-        }),
-        redirect: 'error',
-      },
-    );
+          body: JSON.stringify({
+            message: {
+              token,
+              notification: { title: notificationTitle, body: notificationBody },
+              data: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])),
+              android: {
+                priority,
+                ttl: `${ttlSeconds}s`,
+                notification: {
+                  channel_id: channelId,
+                  color: ANDROID_CHANNEL_COLORS[channelId] ?? ANDROID_CHANNEL_COLORS.familyos_chat_nudges,
+                },
+              },
+              apns: {
+                headers: {
+                  'apns-priority': isHighPriority ? '10' : '5',
+                  'apns-expiration': String(Math.floor(this.#now() / 1000) + ttlSeconds),
+                },
+                payload: { aps: { ...(includeDefaultSound ? { sound: 'default' } : {}) } },
+              },
+            },
+          }),
+          redirect: 'error',
+        },
+      );
+    } catch {
+      // A socket loss can happen after the provider accepted the request. Never retry this blindly.
+      throw new FcmDeliveryError('ambiguous', 'provider_outcome_unknown');
+    }
     if (response.status === 200) {
       const accepted = await response.json().catch(() => null);
       const providerMessageId = accepted?.name;
+      if (typeof providerMessageId !== 'string' || !/^projects\/[^/]+\/messages\/[^/]+$/.test(providerMessageId)) {
+        // HTTP 200 proves acceptance may have occurred; the missing receipt prevents safe retries.
+        throw new FcmDeliveryError('ambiguous', 'provider_receipt_missing');
+      }
       if (typeof onAccepted === 'function') {
-        if (typeof providerMessageId !== 'string' || !/^projects\/[^/]+\/messages\/[^/]+$/.test(providerMessageId)) {
-          throw new Error('FCM accepted the push without a valid provider message id.');
+        try {
+          onAccepted(providerMessageId);
+        } catch {
+          throw new FcmDeliveryError('ambiguous', 'acceptance_callback_failed');
         }
-        onAccepted(providerMessageId);
       }
       return 'sent';
     }
@@ -215,6 +259,11 @@ export class FcmSender {
     ) {
       return 'unregistered';
     }
-    throw new Error(`FCM refused the push with HTTP ${response.status}.`);
+    const transient = response.status === 408 || response.status === 429 || response.status >= 500;
+    throw new FcmDeliveryError(
+      transient ? 'transient' : 'permanent',
+      transient ? 'provider_unavailable' : 'provider_rejected',
+      { retryAfterSeconds: retryAfterSeconds(response) },
+    );
   }
 }

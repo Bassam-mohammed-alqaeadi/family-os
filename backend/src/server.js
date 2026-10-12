@@ -10,6 +10,17 @@ if (runtime.configurationError) {
 }
 
 const server = http.createServer(runtime.app);
+const notificationSweepInterval = setInterval(() => {
+  Promise.resolve(runtime.notificationDispatcher?.sweep({ limit: 20 }))
+    .catch((error) => console.error(JSON.stringify({
+      severity: 'error',
+      event: 'notification_periodic_sweep_failed',
+      errorName: error?.name ?? 'Error',
+    })));
+}, 5_000);
+// HTTP traffic is not a retry scheduler: keep due durable outbox work moving even when
+// no guardian requests arrive. Each sweep claims only rows whose persisted backoff elapsed.
+notificationSweepInterval.unref();
 // The realtime hint channel rides the same HTTP server, on its own path, with the same credentials.
 attachChatRealtime(server, {
   bus: runtime.chatBus,
@@ -32,6 +43,7 @@ server.listen(runtime.port, '0.0.0.0', () => {
 
 async function shutdown(signal) {
   console.log(JSON.stringify({ severity: 'info', event: 'server_stopping', signal }));
+  clearInterval(notificationSweepInterval);
   server.close(async () => {
     await runtime.store.close();
     process.exit(0);

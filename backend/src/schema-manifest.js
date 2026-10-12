@@ -125,4 +125,12 @@ export const FOUNDATION_SCHEMA_MIGRATIONS = Object.freeze([
     name: '122_family_notification_preferences.sql',
     sha256: '860c3244e753d31b640a14b99d234de6b429b52587c5b1ee49cd205a4d502789',
   }),
+  Object.freeze({
+    name: '123_notification_retries.sql',
+    sha256: 'ccd21d6ae27b8c3d3c81a8fc57070171d5419bbe9024e9e6fe4a8b475bdaea48',
+  }),
+  Object.freeze({
+    name: '124_geofence_notification_payload_minimization.sql',
+    sha256: '44929dc7031ad3bc7614b6613f41c3e0cf331cebcb0e745eb507ed1e44e6c114',
+  }),
 ]);

@@ -219,18 +219,14 @@ export function createLocationSurface({ port, now = () => new Date() }) {
               eventType: kind === 'ENTER' ? 'family.geofence_entered' : 'family.geofence_exited',
             });
             if (notified) {
-              // The payload a delivery worker would hand to a notification is written here,
+              // The notification's minimal identifiers and event time are written here,
               // in the same transaction as the crossing, so a family is never told about a
               // crossing that was rolled back and never misses one that committed.
               await port.notify(tx, {
                 familyId: device.family_id,
                 zoneId: zone.id,
-                zoneName: zone.name,
                 childId: device.child_id,
-                deviceId,
-                fixId: row.id,
                 kind,
-                zoneVersion: zone.version,
                 occurredAt: row.recorded_at,
                 correlationId,
               });
@@ -623,18 +619,13 @@ export function postgresLocationPort(store, { credentialMatches }) {
     async notify(client, {
       familyId,
       zoneId,
-      zoneName,
       childId,
-      deviceId,
-      fixId,
       kind,
-      zoneVersion,
       occurredAt,
       correlationId,
     }) {
-      // The same outbox the rest of the Foundation writes to, with a payload that carries
-      // everything a delivery worker needs to phrase the alert - so the alert is never a
-      // second interpretation of the event.
+      // The outbox carries only the identifiers and event time needed by dispatch. Names,
+      // coordinates and other location details stay out of the durable notification payload.
       const eventType = kind === 'ENTER' ? 'family.geofence_entered' : 'family.geofence_exited';
       const copyKey = NOTIFY_TYPES[eventType]?.copyKey;
       if (!copyKey) throw new HttpError(500, 'notification_type_unconfigured', 'The geofence notification type is not configured.');
@@ -650,12 +641,7 @@ export function postgresLocationPort(store, { credentialMatches }) {
           copyKey,
           JSON.stringify({
             zoneId,
-            zoneName,
             childId,
-            deviceId,
-            fixId,
-            kind,
-            zoneVersion,
             occurredAt,
           }),
         ],
