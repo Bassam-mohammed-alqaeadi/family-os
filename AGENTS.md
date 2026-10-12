@@ -93,7 +93,11 @@ tools/git/git-doctor.sh self-test  # offline proof that the guard still works
 
 - `.githooks/pre-push` enforces the no-force-push rule mechanically: a non-fast-forward push
   or a branch deletion is refused locally, before anything reaches GitHub. `main` has no
-  override at all. A deliberate override exists for short-lived branches only, is opt-in via
+  override at all.
+- **Fail closed:** a push whose ancestry cannot be proven (missing remote object, shallow
+  clone, any inconclusive `merge-base` result) is *refused*, not allowed after a warning.
+  The fix is to prove it — `git fetch origin` then merge, or `git-doctor.sh repair` to
+  complete a shallow history — not to bypass the guard. A deliberate override exists for short-lived branches only, is opt-in via
   `FAMILY_OS_ALLOW_FORCE_PUSH=1`, and is written to `.git/family-os-push-guard.log`.
 - `Git Guard CI` runs the self-test on every pull request, so a broken guard fails CI
   instead of failing silently.

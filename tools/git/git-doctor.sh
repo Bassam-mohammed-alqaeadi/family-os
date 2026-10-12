@@ -376,6 +376,20 @@ do_self_test() {
     echo "NONFF=$?"
     printf '%s %s %s %s\n' "$REF" '0000000000000000000000000000000000000000' "$REF" "$B" | GIT_DIR=.git .git/pre-push origin x
     echo "DELETE=$?"
+
+    # غياب كائن الطرف الآخر: sha صحيح الشكل لكنه غير موجود محلياً ⇒ تعذّر التحقق ⇒ رفض
+    UNKNOWN='1111111111111111111111111111111111111111'
+    printf '%s %s %s %s\n' "$REF" "$B" "$REF" "$UNKNOWN" | GIT_DIR=.git .git/pre-push origin x
+    echo "UNKNOWN_SHA=$?"
+    # main: حتى مع تجاوز صريح يبقى مرفوضاً
+    printf '%s %s %s %s\n' 'refs/heads/main' "$B" 'refs/heads/main' "$UNKNOWN" | FAMILY_OS_ALLOW_FORCE_PUSH=1 GIT_DIR=.git .git/pre-push origin x
+    echo "MAIN_UNVERIFIED_OVERRIDE=$?"
+    # فرع غير main مع تجاوز صريح: مسموح (المخرج الوحيد المقصود)
+    printf '%s %s %s %s\n' "$REF" "$B" "$REF" "$UNKNOWN" | FAMILY_OS_ALLOW_FORCE_PUSH=1 GIT_DIR=.git .git/pre-push origin x
+    echo "UNVERIFIED_OVERRIDE=$?"
+    # سجل الحارس: يجب أن يحمل المرفوض ولا يحمل المسموح-بتحذير القديم
+    echo "LOG_BLOCKED=$(grep -c 'BLOCKED-UNVERIFIED' .git/family-os-push-guard.log 2>/dev/null || echo 0)"
+    echo "LOG_OLD_ALLOW=$(grep -c 'UNVERIFIED-ALLOWED' .git/family-os-push-guard.log 2>/dev/null || echo 0)"
   ) > "$tmp/out" 2>"$tmp/err"
   local ff nonff del
   ff="$(grep '^FF=' "$tmp/out" | cut -d= -f2)"
@@ -384,6 +398,19 @@ do_self_test() {
   [ "$ff" = "0" ] && ok "الخطاف يسمح بدمج fast-forward" || { bad "الخطاف رفض fast-forward (يجب أن يسمح)"; failures=$((failures+1)); }
   [ "$nonff" != "0" ] && ok "الخطاف يمنع force-push (خروج $nonff)" || { bad "الخطاف سمح بـ force-push"; failures=$((failures+1)); }
   [ "$del" != "0" ] && ok "الخطاف يمنع حذف الفرع (خروج $del)" || { bad "الخطاف سمح بحذف فرع"; failures=$((failures+1)); }
+
+  # حالات «تعذّر التحقق»: كانت تُسمح بعد تحذير، ويجب الآن أن تُرفض
+  local unk mainunk over logblk logold
+  unk="$(grep '^UNKNOWN_SHA=' "$tmp/out" | cut -d= -f2)"
+  mainunk="$(grep '^MAIN_UNVERIFIED_OVERRIDE=' "$tmp/out" | cut -d= -f2)"
+  over="$(grep '^UNVERIFIED_OVERRIDE=' "$tmp/out" | cut -d= -f2)"
+  logblk="$(grep '^LOG_BLOCKED=' "$tmp/out" | cut -d= -f2)"
+  logold="$(grep '^LOG_OLD_ALLOW=' "$tmp/out" | cut -d= -f2)"
+  [ "$unk" != "0" ] && ok "غياب remote SHA: مرفوض لا مسموح (خروج $unk)" || { bad "الخطاف سمح بدفع تعذّر التحقق فيه"; failures=$((failures+1)); }
+  [ "$mainunk" != "0" ] && ok "main بلا تجاوز: مرفوض حتى مع FAMILY_OS_ALLOW_FORCE_PUSH=1" || { bad "main قَبِل دفعاً تعذّر التحقق فيه رغم التجاوز"; failures=$((failures+1)); }
+  [ "$over" = "0" ] && ok "فرع غير main مع تجاوز صريح: مسموح (المخرج المقصود وحده)" || { bad "التجاوز الصريح لم يعمل على فرع غير main"; failures=$((failures+1)); }
+  [ "${logblk:-0}" != "0" ] && ok "سجل الحارس يوثّق الرفض (BLOCKED-UNVERIFIED)" || { bad "لم يُسجَّل الرفض في سجل الحارس"; failures=$((failures+1)); }
+  [ "${logold:-0}" = "0" ] && ok "لا أثر للسلوك القديم (UNVERIFIED-ALLOWED)" || { bad "ما زال السلوك القديم يسجّل سماحاً"; failures=$((failures+1)); }
 
   # ج) الإصلاح آمن للتكرار في مستودع بلا إعداد
   (
@@ -451,6 +478,59 @@ do_self_test() {
     || { bad "الريموت تغيّر رغم الحارس — خطر فقدان تاريخ"; failures=$((failures+1)); }
   [ "$newbranch" = "0" ] && ok "إنشاء فرع جديد (بلا تاريخ يُكتب فوقه) مسموح" \
     || warn "دفع فرع جديد رُفض (خروج $newbranch)"
+
+  # هـ) استنساخ shallow حقيقي: التحقق من ancestry مستحيل ⇒ يجب الرفض، والدفع العادي يجب أن يمرّ
+  (
+    cd "$tmp" || exit 1
+    rm -rf shallow-src shallow-origin.git shallow-clone
+    git init -q shallow-src
+    (
+      cd shallow-src
+      git config user.email t@t; git config user.name t
+      echo one > f; git add f; git commit -q -m c1
+      git branch -M main
+      echo two >> f; git commit -qam c2
+      git checkout -q -b other; echo side > s; git add s; git commit -q -m c3
+      git checkout -q main
+    )
+    git init -q --bare shallow-origin.git
+    git -C shallow-src push -q "$tmp/shallow-origin.git" --all
+    git clone -q --depth=1 --branch main "file://$tmp/shallow-origin.git" shallow-clone 2>/dev/null
+    (
+      cd shallow-clone
+      echo "IS_SHALLOW=$(git rev-parse --is-shallow-repository)"
+      echo "COMMITS=$(git rev-list --count HEAD)"
+      cp "$REPO/.githooks/pre-push" .git/hooks/pre-push; chmod +x .git/hooks/pre-push
+      # (١) دفع fast-forward عادي من استنساخ shallow: يجب أن يُسمح
+      echo three >> f
+      git -c user.email=t@t -c user.name=t commit -qam c4
+      git push -q origin HEAD:refs/heads/main >/dev/null 2>&1; echo "SHALLOW_FF=$?"
+      # (٢) دفع إلى فرع لا نملك تاريخه (other): الطرف الآخر غير موجود محلياً ⇒ التحقق مستحيل ⇒ رفض
+      echo "OTHER_BEFORE=$(git ls-remote origin refs/heads/other | awk '{print $1}')"
+      git push --force origin HEAD:refs/heads/other >/dev/null 2>&1; echo "SHALLOW_UNVERIFIED=$?"
+      echo "OTHER_AFTER=$(git ls-remote origin refs/heads/other | awk '{print $1}')"
+      echo "GUARD_LOGGED=$(grep -c 'BLOCKED-UNVERIFIED' .git/family-os-push-guard.log 2>/dev/null || echo 0)"
+      # (٣) main من استنساخ shallow: تجاوز صريح لا يجوز أن يفتحه
+      git -c user.email=t@t -c user.name=t commit -q --amend -m rewritten
+      FAMILY_OS_ALLOW_FORCE_PUSH=1 git push --force origin HEAD:refs/heads/main >/dev/null 2>&1; echo "SHALLOW_MAIN_OVERRIDE=$?"
+      echo "MAIN_REMOTE=$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+    )
+  ) > "$tmp/out5" 2>&1
+  local s_ff s_unv s_ok s_log s_main s_mainremote other_before other_after
+  s_ff="$(grep '^SHALLOW_FF=' "$tmp/out5" | cut -d= -f2)"
+  s_unv="$(grep '^SHALLOW_UNVERIFIED=' "$tmp/out5" | cut -d= -f2)"
+  s_log="$(grep '^GUARD_LOGGED=' "$tmp/out5" | cut -d= -f2)"
+  s_main="$(grep '^SHALLOW_MAIN_OVERRIDE=' "$tmp/out5" | cut -d= -f2)"
+  other_before="$(grep '^OTHER_BEFORE=' "$tmp/out5" | cut -d= -f2)"
+  other_after="$(grep '^OTHER_AFTER=' "$tmp/out5" | cut -d= -f2)"
+  [ "$(grep '^IS_SHALLOW=' "$tmp/out5" | cut -d= -f2)" = "true" ] \
+    && ok "اختبار shallow حقيقي: الاستنساخ فعلاً shallow (depth=1)" \
+    || warn "لم يكن الاستنساخ shallow — الاختبار أقل قوة"
+  [ "$s_ff" = "0" ] && ok "shallow: دفع fast-forward عادي مسموح (لا منع كاذب)" || { bad "shallow: مُنع دفع fast-forward مشروع (منع كاذب)"; failures=$((failures+1)); }
+  [ "$s_unv" != "0" ] && ok "shallow + غياب كائن الطرف الآخر: مرفوض (لم يُسمح بعد تحذير)" || { bad "shallow: سُمح بدفع تعذّر التحقق من ancestry فيه"; failures=$((failures+1)); }
+  [ "${s_log:-0}" != "0" ] && ok "shallow: الرفض موثّق في سجل الحارس" || { bad "shallow: لم يُسجَّل الرفض"; failures=$((failures+1)); }
+  [ "$other_before" = "$other_after" ] && ok "shallow: ريموت الفرع الآخر سليم بعد الرفض" || { bad "shallow: تغيّر ريموت فرع لم نتحقق منه"; failures=$((failures+1)); }
+  [ "$s_main" != "0" ] && ok "shallow: main مرفوض رغم التجاوز الصريح" || { bad "shallow: main قَبِل فرض تاريخ"; failures=$((failures+1)); }
 
   rm -rf "$tmp"
   printf "\n"

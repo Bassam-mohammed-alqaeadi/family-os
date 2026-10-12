@@ -9,6 +9,10 @@
 #   ١) دفع غير fast-forward (أي قوة append/rewrite) على أي فرع.
 #   ٢) حذف فرع على الريموت (local sha = أصفار).
 #   ٣) force على main — ممنوع دائماً ولا يوجد له تجاوز.
+#   ٤) **أي دفع تعذّر فيه التحقق من ancestry** (غياب كائن الطرف الآخر، استنساخ shallow،
+#      أو أي حالة لا يستطيع فيها Git إثبات أن رأس الريموت سلفٌ لرأسنا).
+#      القاعدة: عند الشك **نرفض** — لا نسمح بعد تحذير. والاستثناء الوحيد: تجاوز صريح
+#      على فرع **غير main** لمَن يعرف ما يفعل.
 #
 # ما يسمح به: دفع fast-forward عادي، وإنشاء فرع جديد (remote sha = أصفار).
 #
@@ -65,18 +69,46 @@ while read -r LOCAL_REF LOCAL_SHA REMOTE_REF REMOTE_SHA; do
     continue
   fi
 
-  # ٣) دفع غير fast-forward = إعادة كتابة تاريخ
+  # ٣) دفع غير fast-forward = إعادة كتابة تاريخ. القاعدة: **عند الشك نرفض، لا نسمح.**
+  #    كان الخطاف سابقاً يسمح عند تعذّر التحقق بعد تحذير — وذلك يفتح الثقب الذي وُجد لمنعه:
+  #    استنساخ shallow أو غياب كائن الطرف الآخر يجعل ancestry غير قابل للإثبات، والسماح حينها
+  #    يعني تمرير إعادة كتابة تاريخ محتملة. الآن: غير مُثبت = مرفوض.
   LOCAL_SHA_SHORT="$(printf '%.10s' "$LOCAL_SHA")"
   REMOTE_SHA_SHORT="$(printf '%.10s' "$REMOTE_SHA")"
-  if git merge-base --is-ancestor "$REMOTE_SHA" "$LOCAL_SHA" >/dev/null 2>&1; then
-    continue   # fast-forward مشروع
+
+  git merge-base --is-ancestor "$REMOTE_SHA" "$LOCAL_SHA" >/dev/null 2>&1
+  ANCESTRY_RC=$?
+  [ "$ANCESTRY_RC" -eq 0 ] && continue   # fast-forward مُثبت — مسموح
+
+  # ماذا يعني الخروج ١؟ «ليس سلفاً» والكائنان موجودان ⇒ إعادة كتابة مُثبتة.
+  # وأي شيء آخر (١٢٨، أو غياب الكائن) ⇒ تعذّر التحقق ⇒ رفض إلزامي.
+  VERIFIED_REWRITE=0
+  if [ "$ANCESTRY_RC" -eq 1 ] && git cat-file -e "$REMOTE_SHA" 2>/dev/null; then
+    VERIFIED_REWRITE=1
   fi
-  if ! git cat-file -e "$REMOTE_SHA" 2>/dev/null; then
-    # لا نملك الطرف الآخر محلياً (استنساخ جزئي؟) فلا نستطيع إثبات كونها إعادة كتابة.
-    printf '\n  ▲ الخطاف: تعذّر التحقق من ancestry لـ %s (الكائن %s غير موجود محلياً) — مضيّق بفحص Git نفسه.\n' \
-      "$REMOTE_REF" "$REMOTE_SHA_SHORT"
-    printf '     إن كان المستودع shallow فأكمل التاريخ: tools/git/git-doctor.sh repair\n'
-    log "UNVERIFIED-ALLOWED" "$REMOTE_REF $REMOTE_SHA_SHORT"
+
+  if [ "$VERIFIED_REWRITE" = "0" ]; then
+    if [ "$EMPTY_OK" = "0" ]; then
+      printf '\n  ⛔ منع الخطاف دفعاً على main تعذّر التحقق من ancestry فيه (%s ← %s).\n' \
+        "$REMOTE_SHA_SHORT" "$LOCAL_SHA_SHORT"
+      printf '     main ممنوع عليه فرض التاريخ دائماً، ولا تجاوز لهذه الحالة.\n'
+      printf '     الحل: git fetch origin (أو tools/git/git-doctor.sh repair لإكمال تاريخ shallow) ثم أعِد الدفع.\n'
+      log "BLOCKED-UNVERIFIED-MAIN" "$REMOTE_REF $REMOTE_SHA_SHORT->$LOCAL_SHA_SHORT"
+      BLOCKED=1
+    elif [ "$FORCED" = "1" ]; then
+      printf '\n  ⚠ الخطاف: سُمح بدفع تعذّر التحقق فيه على %s بتجاوز صريح (FAMILY_OS_ALLOW_FORCE_PUSH=1).\n' "$REMOTE_REF"
+      printf '     تعذّر إثبات أن %s سلف لـ %s.\n' "$REMOTE_SHA_SHORT" "$LOCAL_SHA_SHORT"
+      log "ALLOWED-UNVERIFIED-OVERRIDE" "$REMOTE_REF $REMOTE_SHA_SHORT->$LOCAL_SHA_SHORT"
+    else
+      printf '\n  ⛔ منع الخطاف دفعاً تعذّر التحقق من ancestry فيه على %s\n' "$REMOTE_REF"
+      printf '     تعذّر إثبات أن %s سلف لـ %s (كائن الطرف الآخر غير موجود محلياً — استنساخ shallow؟).\n' \
+        "$REMOTE_SHA_SHORT" "$LOCAL_SHA_SHORT"
+      printf '     عند الشك نرفض لا نسمح. الحل:\n'
+      printf '        git fetch origin && git merge origin/%s   # أو: tools/git/git-doctor.sh repair\n' "${REMOTE_REF#refs/heads/}"
+      printf '     وإن كان مقصوداً حقاً (فرع قصير العمر): FAMILY_OS_ALLOW_FORCE_PUSH=1 git push ...\n'
+      log "BLOCKED-UNVERIFIED" "$REMOTE_REF $REMOTE_SHA_SHORT->$LOCAL_SHA_SHORT"
+      BLOCKED=1
+    fi
     continue
   fi
 
