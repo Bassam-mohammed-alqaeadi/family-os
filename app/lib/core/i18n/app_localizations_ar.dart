@@ -11775,6 +11775,36 @@ class AppLocalizationsAr extends AppLocalizations {
   String get sys3PushCleanupWarning =>
       'تم تسجيل الخروج، لكن تعذّر تأكيد إزالة تسجيل إشعارات قديم لهذا الهاتف. سيُعاد فحص التنظيف عند تسجيل الدخول مجددًا.';
 
+  String get s2ProtectionTitle => '['حالة الحماية']';
+  String get s2ProtectionFullyProtected => '['الحماية تعمل بالكامل']';
+  String get s2ProtectionDegraded => '['الحماية تعمل جزئياً']';
+  String get s2ProtectionStopped => '['الحماية متوقفة']';
+  String get s2ProtectionNotConfigured =>
+      '['هذا الهاتف غير مُعدّ للحماية بعد']';
+  String get s2ProtectionUnavailable => '['تعذّرت قراءة حالة الحماية']';
+  String get s2ProtectionQueuedNote => '['نقاط مؤجلة ستُرسل عند عودة الشبكة']';
+  String get s2ProtectionBatteryButton => '['إرشاد البطارية']';
+  String get s2BatteryTitle => '['استثناء البطارية']';
+  String get s2BatteryBody =>
+      '['يقيّد نظام الهاتف عمل التطبيق في الخلفية لتوفير البطارية، فيتأخر إرسال الموقع. امنح الاستثناء من الإعدادات ليستمر الإرسال.']';
+  String get s2BatteryOpenSettings => '['فتح إعدادات البطارية']';
+  String get s2BatteryOpenedNote =>
+      '['فُتحت الإعدادات. بعد منح الاستثناء ارجع إلى التطبيق.']';
+  String get s2BatteryFallbackNote =>
+      '['تعذّر فتح صفحة الشركة. فُتحت إعدادات التطبيق: ابحث عن البطارية ثم امنح «عدم التقييد».']';
+  String get s2BatteryOemXiaomi =>
+      '['شاومي/ريدمي: الإعدادات ← البطارية ← تشغيل تلقائي: اسمح للتطبيق، ثم فعّل «عدم تقييد النشاط في الخلفية».']';
+  String get s2BatteryOemHuawei =>
+      '['هواوي/هونر: مدير الهاتف ← بدء التشغيل التلقائي: فعّل التطبيق يدوياً واسمح بالعمل في الخلفية.']';
+  String get s2BatteryOemOppo =>
+      '['أوبو/ريلمي/ون بلس: الإعدادات ← البطارية ← تحسين البطارية: اختر التطبيق وامنح «عدم التحسين».']';
+  String get s2BatteryOemVivo =>
+      '['فيفو: الإعدادات ← البطارية ← استهلاك الخلفية: اسمح للتطبيق بالعمل المرتفع في الخلفية.']';
+  String get s2BatteryOemSamsung =>
+      '['سامسونغ: الإعدادات ← البطارية ← حدود استخدام الخلفية: أضف التطبيق إلى «عدم السكون أبداً».']';
+  String get s2BatteryOemStock =>
+      '['أندرويد: الإعدادات ← البطارية ← تحسين البطارية: اختر «كل التطبيقات» ثم امنح التطبيق «عدم التحسين».']';
+
   @override
   String get sys3ErrorTitle => 'تعذر الإكمال';
 

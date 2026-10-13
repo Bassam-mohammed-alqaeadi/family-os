@@ -20903,6 +20903,102 @@ abstract class AppLocalizations {
   /// **'تم تسجيل الخروج، لكن تعذّر تأكيد إزالة تسجيل إشعارات قديم لهذا الهاتف. سيُعاد فحص التنظيف عند تسجيل الدخول مجددًا.'**
   String get sys3PushCleanupWarning;
 
+  /// No description provided for @s2ProtectionTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'حالة الحماية'**
+  String get s2ProtectionTitle;
+  /// No description provided for @s2ProtectionFullyProtected.
+  ///
+  /// In ar, this message translates to:
+  /// **'الحماية تعمل بالكامل'**
+  String get s2ProtectionFullyProtected;
+  /// No description provided for @s2ProtectionDegraded.
+  ///
+  /// In ar, this message translates to:
+  /// **'الحماية تعمل جزئياً'**
+  String get s2ProtectionDegraded;
+  /// No description provided for @s2ProtectionStopped.
+  ///
+  /// In ar, this message translates to:
+  /// **'الحماية متوقفة'**
+  String get s2ProtectionStopped;
+  /// No description provided for @s2ProtectionNotConfigured.
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا الهاتف غير مُعدّ للحماية بعد'**
+  String get s2ProtectionNotConfigured;
+  /// No description provided for @s2ProtectionUnavailable.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّرت قراءة حالة الحماية'**
+  String get s2ProtectionUnavailable;
+  /// No description provided for @s2ProtectionQueuedNote.
+  ///
+  /// In ar, this message translates to:
+  /// **'نقاط مؤجلة ستُرسل عند عودة الشبكة'**
+  String get s2ProtectionQueuedNote;
+  /// No description provided for @s2ProtectionBatteryButton.
+  ///
+  /// In ar, this message translates to:
+  /// **'إرشاد البطارية'**
+  String get s2ProtectionBatteryButton;
+  /// No description provided for @s2BatteryTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'استثناء البطارية'**
+  String get s2BatteryTitle;
+  /// No description provided for @s2BatteryBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'يقيّد نظام الهاتف عمل التطبيق في الخلفية لتوفير البطارية، فيتأخر إرسال الموقع. امنح الاستثناء من الإعدادات ليستمر الإرسال.'**
+  String get s2BatteryBody;
+  /// No description provided for @s2BatteryOpenSettings.
+  ///
+  /// In ar, this message translates to:
+  /// **'فتح إعدادات البطارية'**
+  String get s2BatteryOpenSettings;
+  /// No description provided for @s2BatteryOpenedNote.
+  ///
+  /// In ar, this message translates to:
+  /// **'فُتحت الإعدادات. بعد منح الاستثناء ارجع إلى التطبيق.'**
+  String get s2BatteryOpenedNote;
+  /// No description provided for @s2BatteryFallbackNote.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر فتح صفحة الشركة. فُتحت إعدادات التطبيق: ابحث عن البطارية ثم امنح «عدم التقييد».'**
+  String get s2BatteryFallbackNote;
+  /// No description provided for @s2BatteryOemXiaomi.
+  ///
+  /// In ar, this message translates to:
+  /// **'شاومي/ريدمي: الإعدادات ← البطارية ← تشغيل تلقائي: اسمح للتطبيق، ثم فعّل «عدم تقييد النشاط في الخلفية».'**
+  String get s2BatteryOemXiaomi;
+  /// No description provided for @s2BatteryOemHuawei.
+  ///
+  /// In ar, this message translates to:
+  /// **'هواوي/هونر: مدير الهاتف ← بدء التشغيل التلقائي: فعّل التطبيق يدوياً واسمح بالعمل في الخلفية.'**
+  String get s2BatteryOemHuawei;
+  /// No description provided for @s2BatteryOemOppo.
+  ///
+  /// In ar, this message translates to:
+  /// **'أوبو/ريلمي/ون بلس: الإعدادات ← البطارية ← تحسين البطارية: اختر التطبيق وامنح «عدم التحسين».'**
+  String get s2BatteryOemOppo;
+  /// No description provided for @s2BatteryOemVivo.
+  ///
+  /// In ar, this message translates to:
+  /// **'فيفو: الإعدادات ← البطارية ← استهلاك الخلفية: اسمح للتطبيق بالعمل المرتفع في الخلفية.'**
+  String get s2BatteryOemVivo;
+  /// No description provided for @s2BatteryOemSamsung.
+  ///
+  /// In ar, this message translates to:
+  /// **'سامسونغ: الإعدادات ← البطارية ← حدود استخدام الخلفية: أضف التطبيق إلى «عدم السكون أبداً».'**
+  String get s2BatteryOemSamsung;
+  /// No description provided for @s2BatteryOemStock.
+  ///
+  /// In ar, this message translates to:
+  /// **'أندرويد: الإعدادات ← البطارية ← تحسين البطارية: اختر «كل التطبيقات» ثم امنح التطبيق «عدم التحسين».'**
+  String get s2BatteryOemStock;
+
   /// No description provided for @sys3ErrorTitle.
   ///
   /// In ar, this message translates to:

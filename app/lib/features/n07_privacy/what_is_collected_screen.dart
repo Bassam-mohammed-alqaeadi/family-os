@@ -21,6 +21,7 @@ import 'package:family_os/core/policy/privacy_collection_repository.dart';
 import 'package:family_os/core/policy/privacy_collection_sync_bus.dart';
 import 'package:family_os/core/prefs_misc/prefs_misc_runtime.dart';
 import 'package:family_os/core/screen_camera/screen_camera.dart';
+import 'package:family_os/features/n07_privacy/protection_status_card.dart';
 import 'package:family_os/features/n08_platform/effective_monitoring_transparency.dart';
 import 'package:family_os/foundation_gate/native_child_telemetry_bridge.dart';
 
@@ -282,6 +283,9 @@ class _WhatIsCollectedScreenState extends State<WhatIsCollectedScreen> {
                     message: l10n.whatIsCollectedHonestyNote,
                     variant: BannerVariant.t,
                   ),
+                  // S2 resilience verdict — mirrored from native, honest when absent.
+                  const SizedBox(height: 16),
+                  const ProtectionStatusCard(),
                   if (_policy.updatedAt != null) ...[
                     const SizedBox(height: 12),
                     Text(

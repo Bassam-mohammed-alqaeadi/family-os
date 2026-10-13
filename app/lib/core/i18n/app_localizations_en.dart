@@ -11948,6 +11948,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sys3PushCleanupWarning =>
       'Signed out, but an old notification registration for this phone could not be confirmed removed. Cleanup will be rechecked at the next sign-in.';
 
+  String get s2ProtectionTitle => '['Protection status']';
+  String get s2ProtectionFullyProtected => '['Protection is fully running']';
+  String get s2ProtectionDegraded => '['Protection is partially limited']';
+  String get s2ProtectionStopped => '['Protection is stopped']';
+  String get s2ProtectionNotConfigured =>
+      '['This phone is not set up for protection yet']';
+  String get s2ProtectionUnavailable =>
+      '['The protection state could not be read']';
+  String get s2ProtectionQueuedNote =>
+      '['Delayed fixes will send when the network returns']';
+  String get s2ProtectionBatteryButton => '['Battery guidance']';
+  String get s2BatteryTitle => '['Battery exemption']';
+  String get s2BatteryBody =>
+      '['The phone system restricts background work to save battery, delaying location reports. Grant the exemption in Settings so reporting continues.']';
+  String get s2BatteryOpenSettings => '['Open battery settings']';
+  String get s2BatteryOpenedNote =>
+      '['Settings opened. After granting the exemption, return to the app.']';
+  String get s2BatteryFallbackNote =>
+      '['The vendor page could not be opened. App settings opened instead: find Battery, then allow Unrestricted.']';
+  String get s2BatteryOemXiaomi =>
+      '['Xiaomi/Redmi: Settings, Battery, Autostart: allow the app, then set background activity to Unrestricted.']';
+  String get s2BatteryOemHuawei =>
+      '['Huawei/Honor: Phone Manager, Auto-launch: enable the app manually and allow background activity.']';
+  String get s2BatteryOemOppo =>
+      '['Oppo/Realme/OnePlus: Settings, Battery, Battery optimization: choose the app and turn optimization off.']';
+  String get s2BatteryOemVivo =>
+      '['Vivo: Settings, Battery, Background power consumption: allow high background activity.']';
+  String get s2BatteryOemSamsung =>
+      '['Samsung: Settings, Battery, Background usage limits: add the app to Never sleeping.']';
+  String get s2BatteryOemStock =>
+      '['Android: Settings, Battery, Battery optimization: choose All apps, then turn optimization off for the app.']';
+
   @override
   String get sys3ErrorTitle => 'Unable to complete';
 

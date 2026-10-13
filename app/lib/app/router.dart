@@ -107,6 +107,7 @@ import 'package:family_os/features/n10_emergency/child_sos_button_screen.dart';
 import 'package:family_os/features/n10_emergency/child_sos_in_progress_screen.dart';
 import 'package:family_os/features/n11_billing/plans_screen.dart';
 import 'package:family_os/features/n11_billing/manage_subscription_screen.dart';
+import 'package:family_os/features/n07_privacy/battery_guidance_screen.dart';
 import 'package:family_os/features/n07_privacy/what_is_collected_screen.dart';
 import 'package:family_os/features/n13_coming_soon/coming_soon_screen.dart';
 import 'package:family_os/features/n02_day/child_arrival_screen.dart';
@@ -552,6 +553,11 @@ GoRouter createAppRouter({
       path: '/scr-chd-010',
       name: 'SCR-CHD-010',
       builder: (context, state) => WhatIsCollectedScreen(monitoringChildId: routeChildId(context, state).value),
+    ),
+    GoRoute(
+      path: '/protection/battery-guidance',
+      name: 'protection-battery-guidance',
+      builder: (context, state) => BatteryGuidanceScreen(),
     ),
     GoRoute(
       path: '/scr-shr-005',
