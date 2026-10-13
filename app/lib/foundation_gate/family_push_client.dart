@@ -94,7 +94,7 @@ final class FamilyPushClient {
     return FamilyPushRegistration.fromJson(decoded['registration']);
   }
 
-  /// Removes one of the caller's own registrations (sign-out on this handset).
+  /// Removes one of the caller's known registrations (sign-out on this handset).
   Future<void> unregister({
     required String familyId,
     required String registrationId,
@@ -113,6 +113,31 @@ final class FamilyPushClient {
     if (response.statusCode != 204 && response.statusCode != 200) {
       throw _failure(response);
     }
+  }
+
+  /// Best-effort cleanup for an exact legacy token whose UUID the old app kept only in memory.
+  /// The token selects a row; the server deletes only when the authenticated guardian owns its
+  /// recorded membership. Foreign, absent and stale rotated tokens all return the same empty 204,
+  /// so this response alone is not proof that no server row exists.
+  Future<void> unregisterCurrentToken({
+    required String token,
+    required String idToken,
+  }) async {
+    if (!_token.hasMatch(token)) {
+      throw const FoundationGateApiException(FoundationGateApiFailure.invalidInput);
+    }
+    _requireCredential(idToken);
+    final uri = _configuration.stagingApiOrigin.replace(
+      path: '/v1/me/push/registrations/current',
+    );
+    final response = await _send(
+      () => _client.delete(
+        uri,
+        headers: _headers(idToken, json: true),
+        body: jsonEncode(<String, Object?>{'token': token}),
+      ),
+    );
+    if (response.statusCode != 204) throw _failure(response);
   }
 
   static void _requireCredential(String idToken) {

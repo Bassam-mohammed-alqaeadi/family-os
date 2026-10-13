@@ -3,8 +3,8 @@
 //
 // What it must prove:
 //   1. Without an FCM sender, registration answers 503 and writes nothing.
-//   2. Only guardians register; a token moves to the latest guardian who registers it; a guardian
-//      removes only their own registration.
+//   2. Only guardians register; an explicit registration can move a shared-handset token, while
+//      both UUID and legacy-token cleanup remain scoped to the caller's owner membership.
 //   3. A message nudges the other active guardians in its room, never the author and never a
 //      guardian outside the room, whether a guardian or a child sent it.
 //   4. A nudge carries no message text and no sender name.
@@ -31,6 +31,7 @@ const MESSAGE_TEXT = 'SECRET-MESSAGE-TEXT-4417';
 const TOKEN_A = 'android-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 const TOKEN_B = 'android-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
 const TOKEN_C = 'android-token-cccccccccccccccccccccccccccccccc';
+const TOKEN_D = 'android-token-dddddddddddddddddddddddddddddd';
 
 function sha256Hex(bytes) {
   return createHash('sha256').update(bytes).digest('hex');
@@ -252,7 +253,13 @@ test('registration is guardian-only, a token moves to its latest guardian, and r
         method: 'DELETE',
         headers: authorized('test-co'),
       });
-      assert.equal(stolen.status, 404);
+      assert.equal(stolen.status, 204);
+      const stillOwned = await client.query(
+        'SELECT membership_id FROM family_push_registrations WHERE id = $1',
+        [moved.body.registration.id],
+      );
+      assert.deepEqual(stillOwned.rows, [{ membership_id: h.co2 }],
+        'a concealed foreign UUID must not delete the other guardian registration');
       const removed = await call(baseUrl, `${registerPath(h.familyId)}/${moved.body.registration.id}`, {
         method: 'DELETE',
         headers: authorized('test-co2'),
@@ -260,12 +267,152 @@ test('registration is guardian-only, a token moves to its latest guardian, and r
       assert.equal(removed.status, 204);
       const gone = await client.query('SELECT count(*)::int AS n FROM family_push_registrations');
       assert.equal(gone.rows[0].n, 0);
+      const repeatedRemoval = await call(baseUrl, `${registerPath(h.familyId)}/${moved.body.registration.id}`, {
+        method: 'DELETE',
+        headers: authorized('test-co2'),
+      });
+      assert.equal(repeatedRemoval.status, 204, 'a lost successful response can be retried safely');
 
       const invalidToken = await call(baseUrl, registerPath(h.familyId), { method: 'POST', headers: authorized('test-co'), body: { ...body, token: 'short' } });
       assert.equal(invalidToken.status, 400);
       assert.equal(invalidToken.body.error.code, 'invalid_push_token');
       const extraField = await call(baseUrl, registerPath(h.familyId), { method: 'POST', headers: authorized('test-co'), body: { ...body, owner: 'x' } });
       assert.equal(extraField.status, 400);
+    });
+  });
+});
+
+test('legacy token cleanup is owner-scoped, allows former guardians, and hides foreign rows', { skip }, async () => {
+  await withFreshDatabase(async (client) => {
+    await migrate(client);
+    const store = new PostgresFoundationStore({ connectionString: withDatabase(DATABASE_URL, client.database) });
+    openStores.add(store);
+    await withServer(appWith(store, null), async (baseUrl) => {
+      const h = await seedHousehold(baseUrl, client, 'pushupgrade');
+      const unrelatedFamily = await call(baseUrl, '/v1/families', {
+        method: 'POST',
+        headers: authorized('test-outsider', { 'idempotency-key': 'pushupgrade-unrelated-family' }),
+        body: { displayName: 'عائلة منفصلة' },
+      });
+      assert.equal(unrelatedFamily.status, 201, JSON.stringify(unrelatedFamily.body));
+      const unrelatedFamilyId = unrelatedFamily.body.family.id;
+      const unrelatedOwner = await client.query(
+        `SELECT id FROM family_memberships
+          WHERE family_id = $1 AND target_subject = 'test-outsider'
+            AND role = 'primary_guardian' AND status = 'active'`,
+        [unrelatedFamilyId],
+      );
+      assert.equal(unrelatedOwner.rowCount, 1);
+
+      await client.query(
+        `INSERT INTO family_push_registrations (family_id, membership_id, token, platform, locale)
+         VALUES ($1, $2, $3, 'android', 'en'),
+                ($1, $4, $5, 'android', 'ar'),
+                ($6, $7, $8, 'android', 'en')`,
+        [h.familyId, h.co, TOKEN_A, h.co2, TOKEN_B, unrelatedFamilyId, unrelatedOwner.rows[0].id, TOKEN_C],
+      );
+      const cleanupPath = '/v1/me/push/registrations/current';
+      const rows = async () => (await client.query(
+        'SELECT token FROM family_push_registrations ORDER BY token',
+      )).rows.map((row) => row.token);
+      const pendingInvite = await call(
+        baseUrl,
+        `/v1/families/${h.familyId}/memberships`,
+        {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'pushupgrade-invited-only' }),
+          body: { role: 'co_guardian', targetSubject: 'test-invited' },
+        },
+      );
+      assert.equal(pendingInvite.status, 201);
+
+      const invitedOnly = await call(baseUrl, cleanupPath, {
+        method: 'DELETE',
+        headers: authorized('test-invited'),
+        body: { token: TOKEN_A },
+      });
+      assert.equal(invitedOnly.status, 403);
+
+      const nonGuardian = await call(baseUrl, cleanupPath, {
+        method: 'DELETE',
+        headers: authorized('test-no-guardian'),
+        body: { token: TOKEN_A },
+      });
+      assert.equal(nonGuardian.status, 403);
+      const malformed = await call(baseUrl, cleanupPath, {
+        method: 'DELETE',
+        headers: authorized('test-co2'),
+        body: { token: 'short' },
+      });
+      assert.equal(malformed.status, 400);
+
+      // A guardian in the same family cannot use a leaked token to delete another account's row.
+      const crossAccount = await call(baseUrl, cleanupPath, {
+        method: 'DELETE',
+        headers: authorized('test-co2'),
+        body: { token: TOKEN_A },
+      });
+      assert.deepEqual(crossAccount, { status: 204, body: null });
+      assert.deepEqual(await rows(), [TOKEN_A, TOKEN_B, TOKEN_C]);
+
+      // A guardian from an unrelated family also cannot delete the row. Its response is
+      // byte-for-byte equivalent to an absent token, so it is not an existence oracle.
+      const unrelatedToken = await call(baseUrl, cleanupPath, {
+        method: 'DELETE',
+        headers: authorized('test-co2'),
+        body: { token: TOKEN_C },
+      });
+      const absentToken = await call(baseUrl, cleanupPath, {
+        method: 'DELETE',
+        headers: authorized('test-co2'),
+        body: { token: TOKEN_D },
+      });
+      assert.deepEqual(unrelatedToken, { status: 204, body: null });
+      assert.deepEqual(unrelatedToken, absentToken);
+      assert.deepEqual(await rows(), [TOKEN_A, TOKEN_B, TOKEN_C]);
+
+      // An upgrade can remove an untracked legacy row when the authenticated subject owns it.
+      const currentOwner = await call(baseUrl, cleanupPath, {
+        method: 'DELETE',
+        headers: authorized('test-co'),
+        body: { token: TOKEN_A },
+      });
+      assert.deepEqual(currentOwner, { status: 204, body: null });
+      const repeatedOwnerCleanup = await call(baseUrl, cleanupPath, {
+        method: 'DELETE',
+        headers: authorized('test-co'),
+        body: { token: TOKEN_A },
+      });
+      assert.deepEqual(currentOwner, repeatedOwnerCleanup);
+      assert.deepEqual(await rows(), [TOKEN_B, TOKEN_C]);
+
+      // The same membership owner can clean up after being removed from the family.
+      await client.query(
+        "UPDATE family_memberships SET status = 'removed' WHERE id = $1",
+        [h.co2],
+      );
+      const formerOwner = await call(baseUrl, cleanupPath, {
+        method: 'DELETE',
+        headers: authorized('test-co2'),
+        body: { token: TOKEN_B },
+      });
+      assert.deepEqual(formerOwner, { status: 204, body: null });
+      assert.deepEqual(await rows(), [TOKEN_C]);
+
+      // The owner in the unrelated family can clean up their own row; no other row was touched.
+      const unrelatedOwnerCleanup = await call(baseUrl, cleanupPath, {
+        method: 'DELETE',
+        headers: authorized('test-outsider'),
+        body: { token: TOKEN_C },
+      });
+      assert.deepEqual(unrelatedOwnerCleanup, { status: 204, body: null });
+      assert.deepEqual(await rows(), []);
+
+      const unauthenticated = await call(baseUrl, cleanupPath, {
+        method: 'DELETE',
+        body: { token: TOKEN_C },
+      });
+      assert.equal(unauthenticated.status, 401);
     });
   });
 });

@@ -1,8 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:family_os/features/n02_day/family_push_registration.dart';
 import 'package:family_os/foundation_gate/family_chat_api_client.dart';
-import 'package:family_os/foundation_gate/family_push_client.dart';
 import 'package:family_os/foundation_gate/family_chat_media_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
@@ -70,35 +68,29 @@ final class FamilyChatServerAuthority {
     required this.idToken,
     required this.familyId,
     this.childOptions,
+    this.guardianPushRegistration,
     FamilyChatMediaClient? media,
   }) : _media = media;
 
   final FamilyChatApiClient api;
   final Future<String> Function() idToken;
   final String? Function() familyId;
+  final Future<void> Function()? guardianPushRegistration;
   FamilyChatMediaClient? _media;
 
   FamilyChatMediaClient get _mediaClient =>
       _media ??= FamilyChatMediaClient(configuration: api.configuration);
 
-  FamilyPushRegistrar? _push;
-
-  /// Keeps this guardian's handset registered for chat nudges, for the selected family.
-  ///
-  /// Push is optional: without Firebase on this build, or without a notification permission,
-  /// nothing is registered and chat works exactly as before. A failure here is never shown and
-  /// never reaches the chat list, which must keep loading.
-  Future<void> registerGuardianPush({PushTokenSource? tokens}) async {
+  /// Delegates to the app's single durable registrar. A standalone chat surface without that
+  /// composition does not create an untracked server registration of its own.
+  Future<void> registerGuardianPush() async {
     final family = familyId()?.trim();
-    if (family == null || !isFoundationGateUuid(family)) return;
+    final register = guardianPushRegistration;
+    if (family == null || !isFoundationGateUuid(family) || register == null) return;
     try {
-      final registrar = _push ??= FamilyPushRegistrar(
-        client: FamilyPushClient(configuration: api.configuration),
-        tokens: tokens ?? FirebasePushTokenSource(),
-      );
-      await registrar.ensureRegistered(familyId: family, idToken: await idToken());
+      await register();
     } on Object {
-      // Best effort, as above. Nothing here may fail a chat load.
+      // Best effort: a push problem never prevents the chat list from loading.
     }
   }
 

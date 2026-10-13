@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart' show kReleaseMode;
@@ -41,7 +43,10 @@ import 'package:family_os/features/n02_day/alerts_hub_local_projection.dart';
 import 'package:family_os/features/n02_day/child_profile_repository.dart';
 import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/family_chat_server_authority.dart';
+import 'package:family_os/features/n02_day/family_push_registration.dart';
+import 'package:family_os/features/n02_day/family_push_registration_store.dart';
 import 'package:family_os/features/n02_day/location_server_authority.dart';
+import 'package:family_os/features/n06_notifications/family_notification_router.dart';
 import 'package:family_os/features/n03_screen_time/screen_time_server_authority.dart';
 import 'package:family_os/features/n04_web_filter/web_filter_server_authority.dart';
 import 'package:family_os/features/n15_calendar/calendar_server_authority.dart';
@@ -68,6 +73,7 @@ import 'package:family_os/foundation_gate/family_invite_code_api_client.dart';
 import 'package:family_os/foundation_gate/family_membership_api_client.dart';
 import 'package:family_os/foundation_gate/family_calendar_api_client.dart';
 import 'package:family_os/foundation_gate/family_chat_api_client.dart';
+import 'package:family_os/foundation_gate/family_push_client.dart';
 import 'package:family_os/foundation_gate/native_family_chat_device_transport.dart';
 import 'package:family_os/foundation_gate/family_screen_time_api_client.dart';
 import 'package:family_os/foundation_gate/family_tasks_api_client.dart';
@@ -155,6 +161,7 @@ Future<void> main() async {
   // Restore only a provider-managed session; no local family/roster fallback is
   // consulted when this remote capability has not been configured.
   if (familyEntryRuntime != null) {
+    FamilyNotificationRouter.registerBackgroundHandler();
     await familyEntryRuntime.refreshIdentity();
     // FE-W1-FAT-027 — the members roster and its three commands come from the server when
     // a server is configured. Without this, the screen keeps the local projection: it can
@@ -271,6 +278,7 @@ Future<void> main() async {
             ? _noFamilyChatToken
             : chatRuntime.currentIdToken,
         familyId: () => chatRuntime?.selectedFamilyId,
+        guardianPushRegistration: chatRuntime?.registerGuardianPush,
         childOptions: chatRuntime == null
             ? null
             : () async {
@@ -380,6 +388,13 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
       Uri.parse(apiOrigin),
     );
     final identity = FirebaseEmailPasswordIdentity(FirebaseAuth.instance);
+    final pushRegistrationStore =
+        await FamilyPushRegistrationLocalPersistence.openStore();
+    final pushRegistrar = FamilyPushRegistrar(
+      client: FamilyPushClient(configuration: configuration),
+      tokens: FirebasePushTokenSource(),
+      store: pushRegistrationStore,
+    );
     return MainAppFoundationRuntime(
       controller: FoundationGateSessionController(
         identity: identity,
@@ -435,6 +450,16 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
       ),
       chatApi: _familyChatApi(configuration),
       preferredFamilyId: preferredFamilyId,
+      guardianPushRegistration: ({
+        required String familyId,
+        required String idToken,
+      }) => pushRegistrar.ensureRegistered(
+        familyId: familyId,
+        idToken: idToken,
+      ),
+      guardianPushUnregistration: ({required Future<String> Function() idToken}) =>
+          pushRegistrar.unregister(idToken: idToken),
+      onSessionSignedOut: pushRegistrar.reset,
     );
   } on Object {
     return null;
@@ -486,6 +511,7 @@ class _FamilyOsAppState extends State<FamilyOsApp> {
   late final IdentityRuntime _identity;
   late final LocaleController _locale;
   late final AppRuntime _runtime;
+  late final FamilyNotificationRouter _notificationRouter;
   var _ownsRole = false;
   var _ownsLocale = false;
 
@@ -539,6 +565,14 @@ class _FamilyOsAppState extends State<FamilyOsApp> {
       roleListenable: _role,
       initialLocation: resolveAppInitialLocation(),
     );
+    _notificationRouter = FamilyNotificationRouter(router: _router);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_notificationRouter.attach());
+      final foundationRuntime = widget.foundationRuntime;
+      if (foundationRuntime != null) {
+        unawaited(foundationRuntime.registerGuardianPush());
+      }
+    });
   }
 
   void _syncLegacyRoleFallback() {
@@ -555,6 +589,7 @@ class _FamilyOsAppState extends State<FamilyOsApp> {
     if (_ownsLocale) {
       _locale.dispose();
     }
+    _notificationRouter.dispose();
     _router.dispose();
     _runtime.dispose();
     super.dispose();

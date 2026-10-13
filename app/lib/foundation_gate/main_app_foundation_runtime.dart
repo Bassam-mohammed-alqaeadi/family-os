@@ -12,7 +12,6 @@ import 'package:family_os/core/runtime/family_invite_code_source.dart';
 import 'package:family_os/core/runtime/family_roster_source.dart';
 import 'package:family_os/core/runtime/identity_source.dart';
 import 'package:family_os/core/runtime/runtime_data_origin.dart';
-
 import 'device_lifecycle.dart';
 import 'family_calendar_api_client.dart';
 import 'family_chat_api_client.dart';
@@ -28,6 +27,29 @@ import 'family_screen_time_api_client.dart';
 import 'family_tasks_api_client.dart';
 import 'family_web_filter_api_client.dart';
 import 'foundation_gate_session_controller.dart';
+
+typedef GuardianPushRegistrationCallback =
+    Future<bool> Function({
+      required String familyId,
+      required String idToken,
+    });
+
+typedef GuardianPushUnregistrationCallback = Future<void> Function({
+  required Future<String> Function() idToken,
+});
+
+/// Raised after sign-out completes when the server could not remove this phone's push registration.
+final class GuardianPushUnregistrationException implements Exception {
+  const GuardianPushUnregistrationException();
+
+  String get message =>
+      'تم تسجيل الخروج، لكن تعذّر تأكيد إزالة تسجيل إشعارات قديم لهذا الهاتف. '
+      'قد يستمر في تلقي التنبيهات؛ سيُعاد فحص التنظيف عند تسجيل الدخول مجددًا. '
+      'إذا تغيّر رمز FCM القديم أو كان التسجيل مرتبطًا بحساب آخر، فقد لا تطابقه هذه المحاولة.';
+
+  @override
+  String toString() => message;
+}
 
 /// Main-app orchestration for the admitted Family Entry capability.
 ///
@@ -51,6 +73,9 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     FamilyCalendarApiClient? calendarApi,
     FamilyChatApiClient? chatApi,
     String? preferredFamilyId,
+    GuardianPushRegistrationCallback? guardianPushRegistration,
+    GuardianPushUnregistrationCallback? guardianPushUnregistration,
+    VoidCallback? onSessionSignedOut,
   }) : _controller = controller,
        _identity = identity,
        _deviceApi = deviceApi,
@@ -65,6 +90,9 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
        _calendarApi = calendarApi,
        _chatApi = chatApi,
        _preferredFamilyId = preferredFamilyId?.trim(),
+       _guardianPushRegistration = guardianPushRegistration,
+       _guardianPushUnregistration = guardianPushUnregistration,
+       _onSessionSignedOut = onSessionSignedOut,
        _identityValue = const IdentitySnapshot.unavailable(),
        _rosterValue = const FamilyRosterSnapshot.unavailable(),
        _deviceValue = const FamilyDeviceSnapshot.unavailable() {
@@ -85,6 +113,9 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   final FamilyCalendarApiClient? _calendarApi;
   final FamilyChatApiClient? _chatApi;
   final String? _preferredFamilyId;
+  final GuardianPushRegistrationCallback? _guardianPushRegistration;
+  final GuardianPushUnregistrationCallback? _guardianPushUnregistration;
+  final VoidCallback? _onSessionSignedOut;
   IdentitySnapshot _identityValue;
   FamilyRosterSnapshot _rosterValue;
   FamilyDeviceSnapshot _deviceValue;
@@ -130,6 +161,28 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   /// protected storage; this runtime exposes only the typed client, never the secret.
   FamilyChatApiClient? get chatApi => _chatApi;
 
+  /// Best-effort push registration for the active guardian session.
+  ///
+  /// The app composition root owns the optional FCM implementation and passes it through this
+  /// callback, keeping the isolated Foundation Gate independent of feature packages. Missing
+  /// Firebase setup, denied permission, and network errors never block app startup or sign-in.
+  Future<void> registerGuardianPush() async {
+    final family = _controller.selectedFamily;
+    final register = _guardianPushRegistration;
+    if (!_identityValue.isRemoteAuthoritative || family == null || register == null ||
+        (family.role != 'primary_guardian' && family.role != 'co_guardian')) {
+      return;
+    }
+    try {
+      await register(
+        familyId: family.id,
+        idToken: await _identity.currentIdToken(),
+      );
+    } on Object {
+      // Device permission, Firebase setup and registration are all optional capabilities.
+    }
+  }
+
   /// The family this device is looking at, or null before one is selected.
   String? get selectedFamilyId => _controller.selectedFamily?.id;
 
@@ -145,7 +198,9 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   }) async {
     await _controller.signIn(email: email, password: password);
     await _selectConfiguredFamily();
-    return _refreshIdentitySnapshot();
+    final snapshot = await _refreshIdentitySnapshot();
+    await registerGuardianPush();
+    return snapshot;
   }
 
   Future<IdentitySnapshot> signUp({
@@ -154,15 +209,43 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   }) async {
     await _controller.signUp(email: email, password: password);
     await _selectConfiguredFamily();
-    return _refreshIdentitySnapshot();
+    final snapshot = await _refreshIdentitySnapshot();
+    await registerGuardianPush();
+    return snapshot;
   }
 
   Future<void> signOut() async {
+    var pushRegistrationRemovalFailed = false;
+    try {
+      final unregister = _guardianPushUnregistration;
+      if (unregister != null) {
+        // The registrar first checks durable state, then obtains a fresh token only if it found
+        // a previous server row. This runs regardless of this process's registration history.
+        await unregister(idToken: _identity.currentIdToken);
+      } else if (_guardianPushRegistration != null) {
+        // Without a cleanup capability, prior durable state cannot be ruled out.
+        pushRegistrationRemovalFailed = true;
+      }
+    } on Object {
+      pushRegistrationRemovalFailed = true;
+    } finally {
+      try {
+        _onSessionSignedOut?.call();
+      } on Object {
+        pushRegistrationRemovalFailed = true;
+      }
+    }
+
+    // Any required account token was resolved before this clears the provider session.
     await _controller.signOut();
     _identityValue = const IdentitySnapshot.unavailable();
     _rosterValue = const FamilyRosterSnapshot.unavailable();
     _deviceValue = const FamilyDeviceSnapshot.unavailable();
     notifyListeners();
+
+    if (pushRegistrationRemovalFailed) {
+      throw const GuardianPushUnregistrationException();
+    }
   }
 
   Future<IdentitySnapshot> refreshIdentity() async {
@@ -496,6 +579,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
         await _controller.selectFamily(discovered);
       }
       await _refreshIdentitySnapshot();
+      await registerGuardianPush();
       return FamilyCreateResult.created(
         familyId: created.id,
         displayName: created.displayName,
@@ -874,6 +958,8 @@ final class MainAppFoundationIdentitySource extends ChangeNotifier
     required String email,
     required String password,
   }) => _runtime.signUp(email: email, password: password);
+
+  Future<void> signOut() => _runtime.signOut();
 
   FoundationGatePhase get phase => _runtime.phase;
 

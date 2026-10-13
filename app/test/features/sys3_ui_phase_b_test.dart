@@ -13,7 +13,19 @@ import 'package:family_os/core/identity/identity_models.dart';
 import 'package:family_os/core/identity/identity_runtime.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/runtime/app_runtime.dart';
+import 'package:family_os/core/runtime/app_scope.dart';
 import 'package:family_os/features/sys3_identity/sys3_identity_screens.dart';
+import 'package:family_os/foundation_gate/children_roster_api_client.dart';
+import 'package:family_os/foundation_gate/family_device_api_client.dart';
+import 'package:family_os/foundation_gate/family_discovery_api_client.dart';
+import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
+import 'package:family_os/foundation_gate/foundation_gate_http.dart';
+import 'package:family_os/foundation_gate/foundation_gate_models.dart';
+import 'package:family_os/foundation_gate/foundation_gate_session_controller.dart';
+import 'package:family_os/foundation_gate/main_app_foundation_runtime.dart';
+
+import '../foundation_gate/foundation_gate_test_fakes.dart';
 
 void main() {
   final accountId = AccountId('acc_owner');
@@ -208,6 +220,94 @@ void main() {
       isNotNull,
     );
   });
+
+  testWidgets(
+    'remote logout completes and visibly warns when guardian registration deletion fails',
+    (tester) async {
+      const remoteFamilyId = '11111111-1111-4111-8111-111111111111';
+      final identity = FakeIdentity(
+        token: 'valid-account-token',
+        subject: 'firebase-subject',
+      );
+      final configuration = FoundationGateConfiguration.fromStagingApiOrigin(
+        Uri.parse('https://staging.example.test'),
+      );
+      var unregisterCalls = 0;
+      final foundationRuntime = MainAppFoundationRuntime(
+        identity: identity,
+        controller: FoundationGateSessionController(
+          identity: identity,
+          discoveryApi: FamilyDiscoveryApiClient(
+            configuration: configuration,
+            transport: FakeTransport(
+              const FoundationGateHttpResponse(
+                statusCode: 200,
+                body:
+                    '{"families":[{"id":"$remoteFamilyId","displayName":"Synthetic family","role":"primary_guardian"}]}',
+              ),
+            ),
+          ),
+          rosterApi: ChildrenRosterApiClient(
+            configuration: configuration,
+            transport: FakeTransport(
+              const FoundationGateHttpResponse(
+                statusCode: 200,
+                body: '{"children":[]}',
+              ),
+            ),
+          ),
+        ),
+        deviceApi: FamilyDeviceApiClient(
+          configuration: configuration,
+          transport: FakeTransport(
+            const FoundationGateHttpResponse(
+              statusCode: 200,
+              body: '{"devices":[]}',
+            ),
+          ),
+        ),
+        guardianPushRegistration: ({
+          required String familyId,
+          required String idToken,
+        }) async => true,
+        guardianPushUnregistration:
+            ({required Future<String> Function() idToken}) async {
+              await idToken();
+              unregisterCalls += 1;
+              throw StateError('offline');
+            },
+      );
+      await foundationRuntime.signIn(
+        email: 'guardian@example.test',
+        password: 'synthetic-password',
+      );
+      final identitySource = MainAppFoundationIdentitySource(foundationRuntime);
+      final appRuntime = AppRuntime(identity: identitySource);
+      addTearDown(appRuntime.dispose);
+      addTearDown(foundationRuntime.dispose);
+
+      final localIdentity = primaryRuntime();
+      await tester.pumpWidget(
+        _app(
+          runtime: localIdentity,
+          appRuntime: appRuntime,
+          child: const LogoutConfirmScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('sys3_logout_action')));
+      await tester.pumpAndSettle();
+
+      expect(unregisterCalls, 1);
+      expect(identity.signOutCalls, 1);
+      expect(foundationRuntime.phase, FoundationGatePhase.signedOut);
+      expect(find.byKey(Sys3Keys.success), findsOneWidget);
+      expect(
+        find.textContaining('قد يستمر في تلقي التنبيهات'),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets(
     'Phase B: account recovery records local success without email claim',
@@ -525,7 +625,14 @@ void main() {
   });
 }
 
-Widget _app({required IdentityRuntime runtime, required Widget child}) {
+Widget _app({
+  required IdentityRuntime runtime,
+  required Widget child,
+  AppRuntime? appRuntime,
+}) {
+  final appScopedChild = appRuntime == null
+      ? child
+      : AppScope(runtime: appRuntime, child: child);
   return MaterialApp(
     theme: buildFamilyTheme(),
     locale: const Locale('en'),
@@ -536,7 +643,7 @@ Widget _app({required IdentityRuntime runtime, required Widget child}) {
       GlobalWidgetsLocalizations.delegate,
       GlobalCupertinoLocalizations.delegate,
     ],
-    home: CurrentIdentity(runtime: runtime, child: child),
+    home: CurrentIdentity(runtime: runtime, child: appScopedChild),
   );
 }
 

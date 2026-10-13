@@ -7,6 +7,7 @@ import { LocalDiskChatMediaStore } from './chat-media-store.js';
 import { S3ChatMediaStore } from './chat-media-store-s3.js';
 import { FcmSender, parseServiceAccount } from './fcm-sender.js';
 import { UnconfiguredFoundationStore } from './store/unconfigured-foundation-store.js';
+import { NotificationDispatcher } from './notification-dispatcher.js';
 
 function unavailableConfig(port, error) {
   return {
@@ -57,16 +58,30 @@ export function createRuntime(environment = process.env) {
     : config.chatMediaDirectory
       ? new LocalDiskChatMediaStore({ root: config.chatMediaDirectory })
       : null;
-  // Push is optional. Without the FCM settings the registration routes answer 503 and nothing is
-  // sent; with them, a message nudges the other guardians in its room.
+  // Push is optional. Without FCM settings, registration reports 503 and safety dispatch records
+  // an explicit unavailable outcome; with them, the outbox dispatcher sends reviewed safety copy.
+  // The existing chat nudger remains on its current path.
   const pushSender = config.pushFcm
     ? new FcmSender({
         projectId: config.pushFcm.projectId,
         serviceAccount: parseServiceAccount(config.pushFcm.serviceAccountJson),
       })
     : null;
+  const notificationDispatcher = new NotificationDispatcher(
+    pushSender,
+    () => (typeof store.pool?.connect === 'function' ? store.pool.connect() : null),
+  );
+  store.setOutboxListener?.((outboxId, eventType) => notificationDispatcher.notify(outboxId, eventType));
   const chatBus = createChatEventBus();
-  const app = createApp({ store, authVerifier, readiness, chatMediaStore, chatBus, pushSender });
+  const app = createApp({
+    store,
+    authVerifier,
+    readiness,
+    chatMediaStore,
+    chatBus,
+    pushSender,
+    notificationDispatcher,
+  });
 
   // What the realtime gateway needs: the same verifier, the same store-backed readiness, and the
   // same bus the routes publish to.
@@ -81,6 +96,7 @@ export function createRuntime(environment = process.env) {
     app,
     authVerifier,
     chatBus,
+    notificationDispatcher,
     ready,
     configurationError,
     port: config.port,

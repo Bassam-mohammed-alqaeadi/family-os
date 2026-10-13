@@ -15,24 +15,37 @@ const TOKEN_PATTERN = /^[A-Za-z0-9:_-]{32,4096}$/;
 const PLATFORMS = new Set(['android', 'ios']);
 const LOCALES = new Set(['ar', 'en']);
 
-function requireRegistrationBody(body) {
+function requireObject(body, allowed, message) {
   if (typeof body !== 'object' || body === null || Array.isArray(body)) {
-    throw new ChatError(400, 'invalid_request', 'The registration must be a JSON object.');
+    throw new ChatError(400, 'invalid_request', message);
   }
-  const allowed = new Set(['token', 'platform', 'locale']);
   for (const key of Object.keys(body)) {
     if (!allowed.has(key)) throw new ChatError(400, 'invalid_request', `Unknown field: ${key}.`);
   }
-  if (typeof body.token !== 'string' || !TOKEN_PATTERN.test(body.token)) {
+}
+
+function requirePushToken(value) {
+  if (typeof value !== 'string' || !TOKEN_PATTERN.test(value)) {
     throw new ChatError(400, 'invalid_push_token', 'The device token is not in the expected format.');
   }
+  return value;
+}
+
+function requireRegistrationBody(body) {
+  requireObject(body, new Set(['token', 'platform', 'locale']), 'The registration must be a JSON object.');
+  const token = requirePushToken(body.token);
   if (!PLATFORMS.has(body.platform)) {
     throw new ChatError(400, 'invalid_request', 'platform must be android or ios.');
   }
   if (!LOCALES.has(body.locale)) {
     throw new ChatError(400, 'invalid_request', 'locale must be ar or en.');
   }
-  return { token: body.token, platform: body.platform, locale: body.locale };
+  return { token, platform: body.platform, locale: body.locale };
+}
+
+function requireCurrentTokenBody(body) {
+  requireObject(body, new Set(['token']), 'The current-device revocation must be a JSON object.');
+  return { token: requirePushToken(body.token) };
 }
 
 /**
@@ -58,8 +71,33 @@ export function pushRegistrationsFor(store, { credentialMatches, sender }) {
     return participant.id;
   }
 
+  async function requireGuardianIdentity(client, principal) {
+    const subject = principal?.subject;
+    if (typeof subject !== 'string' || subject.trim().length === 0) {
+      throw new ChatError(403, 'push_guardian_only', 'Only a guardian can remove device notifications.');
+    }
+    // Permit a former guardian to clean up their device after family access has been revoked.
+    // Invited-only memberships do not prove prior guardian access.
+    const { rowCount } = await client.query(
+      `SELECT 1 FROM family_memberships
+        WHERE target_subject = $1
+          AND role IN ('primary_guardian', 'co_guardian')
+          AND status IN ('active', 'removed', 'revoked')
+        LIMIT 1`,
+      [subject],
+    );
+    if (rowCount === 0) {
+      throw new ChatError(403, 'push_guardian_only', 'Only a guardian can remove device notifications.');
+    }
+    return subject;
+  }
+
   return {
-    /** Registers (or moves) one device token for the caller's guardian membership. */
+    /**
+     * An explicit registration is authorized by the caller's guardian membership in this family,
+     * not by token possession alone. The authenticated guardian can bind this shared handset to
+     * their family; legacy DELETE remains owner-scoped and cannot be used to remove a foreign row.
+     */
     async register({ principal, familyId, body }) {
       const input = requireRegistrationBody(body);
       return port.transact(async (client) => {
@@ -72,6 +110,7 @@ export function pushRegistrationsFor(store, { credentialMatches, sender }) {
            ON CONFLICT (token) DO UPDATE
              SET family_id = EXCLUDED.family_id,
                  membership_id = EXCLUDED.membership_id,
+                 device_id = NULL,
                  platform = EXCLUDED.platform,
                  locale = EXCLUDED.locale,
                  updated_at = now()
@@ -95,9 +134,35 @@ export function pushRegistrationsFor(store, { credentialMatches, sender }) {
             WHERE id = $1 AND family_id = $2 AND membership_id = $3`,
           [registrationId, familyId, membershipId],
         );
-        if (rowCount === 0) {
-          throw new ChatError(404, 'push_registration_not_found', 'This device is not registered for notifications.');
-        }
+        // This is deliberately idempotent for both absent and foreign-owned UUIDs. Returning
+        // the same response prevents this endpoint from becoming a registration-existence oracle.
+        return { deleted: true };
+      });
+    },
+
+    /**
+     * Legacy cleanup lacks the registration UUID, so the exact FCM token selects a candidate row;
+     * it is not authorization. Delete only when the authenticated current/former guardian owns
+     * the row through its recorded membership. A guardian from another account/family is a
+     * uniform no-op, indistinguishable from an absent token. If FCM rotated the token, this
+     * request also cannot identify the older row. An explicit registration POST is the separate,
+     * authorized path that may move a shared handset to the newly signed-in guardian.
+     */
+    async unregisterCurrentToken({ principal, body }) {
+      const { token } = requireCurrentTokenBody(body);
+      return port.transact(async (client) => {
+        const subject = await requireGuardianIdentity(client, principal);
+        await client.query(
+          `DELETE FROM family_push_registrations AS registration
+            USING family_memberships AS membership
+            WHERE registration.token = $1
+              AND membership.id = registration.membership_id
+              AND membership.family_id = registration.family_id
+              AND membership.target_subject = $2
+              AND membership.role IN ('primary_guardian', 'co_guardian')
+              AND membership.status IN ('active', 'removed', 'revoked')`,
+          [token, subject],
+        );
         return { deleted: true };
       });
     },

@@ -9,6 +9,7 @@ import 'package:family_os/foundation_gate/family_discovery_api_client.dart';
 import 'package:family_os/foundation_gate/family_membership_api_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_http.dart';
+import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 import 'package:family_os/foundation_gate/foundation_gate_session_controller.dart';
 import 'package:family_os/foundation_gate/main_app_foundation_runtime.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -37,6 +38,25 @@ const _membershipRosterBody = '{"memberships":['
 const _createdChildBody =
     '{"child":{"id":"$_childId","displayName":"Synthetic child","ageYears":8,"avatarEmoji":"🧒","themeColor":"teal","version":1,"createdAt":"2026-10-03T10:00:00.000Z","updatedAt":"2026-10-03T10:00:00.000Z"}}';
 
+final class _RecordingIdentity extends FakeIdentity {
+  _RecordingIdentity(this.operations)
+      : super(token: 'valid-account-token', subject: 'firebase-subject');
+
+  final List<String> operations;
+
+  @override
+  Future<String> currentIdToken() async {
+    operations.add('read-account-token');
+    return super.currentIdToken();
+  }
+
+  @override
+  Future<void> signOut() async {
+    operations.add('clear-provider-session');
+    await super.signOut();
+  }
+}
+
 void main() {
   test(
     'main runtime exposes only remote family authority and passes presentation fields to the server',
@@ -59,6 +79,9 @@ void main() {
       final configuration = FoundationGateConfiguration.fromStagingApiOrigin(
         Uri.parse('https://staging.example.test'),
       );
+      final pushRegistrations = <String>[];
+      var signOutResetCount = 0;
+      var signOutUnregistrationCount = 0;
       final runtime = MainAppFoundationRuntime(
         identity: identity,
         controller: FoundationGateSessionController(
@@ -81,6 +104,21 @@ void main() {
             ),
           ),
         ),
+        guardianPushRegistration: ({
+          required String familyId,
+          required String idToken,
+        }) async {
+          pushRegistrations.add('$familyId:$idToken');
+          throw StateError('optional push service unavailable');
+        },
+        guardianPushUnregistration:
+            ({required Future<String> Function() idToken}) async {
+              signOutUnregistrationCount += 1;
+              await idToken();
+            },
+        onSessionSignedOut: () {
+          signOutResetCount += 1;
+        },
       );
       addTearDown(runtime.dispose);
 
@@ -98,6 +136,7 @@ void main() {
       expect(snapshot.accountId?.value, 'firebase-subject');
       expect(snapshot.familyId?.value, _familyId);
       expect(snapshot.isPrimaryOwner, isTrue);
+      expect(pushRegistrations, <String>['$_familyId:synthetic-token']);
 
       final roster = await rosterSource.load(FamilyId(_familyId));
       expect(roster.isAuthoritative, isTrue);
@@ -127,6 +166,95 @@ void main() {
       });
       expect(rosterSource.value.children.single.avatarEmoji, '🧒');
       expect(rosterSource.value.children.single.themeColor, 'teal');
+
+      await runtime.signOut();
+      expect(signOutResetCount, 1);
+      expect(signOutUnregistrationCount, 1);
+    },
+  );
+
+  test(
+    'push removal checks persisted state after optional registration returns false and reports failure after sign-out',
+    () async {
+      final operations = <String>[];
+      final identity = _RecordingIdentity(operations);
+      final configuration = FoundationGateConfiguration.fromStagingApiOrigin(
+        Uri.parse('https://staging.example.test'),
+      );
+      final controller = FoundationGateSessionController(
+        identity: identity,
+        discoveryApi: FamilyDiscoveryApiClient(
+          configuration: configuration,
+          transport: FakeTransport(
+            const FoundationGateHttpResponse(statusCode: 200, body: _familyBody),
+          ),
+        ),
+        rosterApi: ChildrenRosterApiClient(
+          configuration: configuration,
+          transport: FakeTransport(
+            const FoundationGateHttpResponse(
+              statusCode: 200,
+              body: _emptyRosterBody,
+            ),
+          ),
+        ),
+      );
+      final runtime = MainAppFoundationRuntime(
+        identity: identity,
+        controller: controller,
+        deviceApi: FamilyDeviceApiClient(
+          configuration: configuration,
+          transport: FakeTransport(
+            const FoundationGateHttpResponse(
+              statusCode: 200,
+              body: '{"devices":[]}',
+            ),
+          ),
+        ),
+        guardianPushRegistration: ({
+          required String familyId,
+          required String idToken,
+        }) async => false,
+        guardianPushUnregistration:
+            ({required Future<String> Function() idToken}) async {
+              operations.add('unregister:${await idToken()}');
+              throw StateError('network unavailable');
+            },
+        onSessionSignedOut: () {
+          operations.add('clear-local-registration');
+        },
+      );
+      addTearDown(runtime.dispose);
+
+      await runtime.signIn(
+        email: 'guardian@example.test',
+        password: 'synthetic-password',
+      );
+      operations.clear();
+
+      await expectLater(
+        runtime.signOut(),
+        throwsA(
+          isA<GuardianPushUnregistrationException>().having(
+            (error) => error.message,
+            'message',
+            allOf(
+              contains('تعذّر تأكيد إزالة تسجيل إشعارات قديم'),
+              contains('قد يستمر في تلقي التنبيهات'),
+              contains('إذا تغيّر رمز FCM القديم'),
+            ),
+          ),
+        ),
+      );
+
+      expect(operations, <String>[
+        'read-account-token',
+        'unregister:valid-account-token',
+        'clear-local-registration',
+        'clear-provider-session',
+      ]);
+      expect(controller.phase, FoundationGatePhase.signedOut);
+      expect(runtime.identityValue.isRemoteAuthoritative, isFalse);
     },
   );
 

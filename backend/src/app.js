@@ -191,7 +191,7 @@ export function createApp({
     dataErasure = dataErasureFor(store),
     // W4. The emergency surface reaches the database through the same published helpers,
     // and its credential check is the one the device routes already use.
-    sos = sosEmergencyFor(store, { credentialMatches: capabilityMatches }),
+    sos = null,
     // W5. The minutes a child has, the apps they belong to, and the instant lock. Same
     // arrangement as the surfaces before it: data access through the store's published
     // helpers, and the one credential check every device route already uses.
@@ -217,6 +217,7 @@ export function createApp({
     chatMediaStore = null,
     // Firebase push sender. Null means push is not configured: registration answers 503.
     pushSender = null,
+    notificationDispatcher = null,
     chatBus = createChatEventBus(),
     collaborationPolicy = collaborationPolicyFor(store),
     // S0 spine. The device-capability ledger and the command bus share the same one
@@ -229,6 +230,10 @@ export function createApp({
     inviteRedeemRateLimit = {},
 }) {
     const app = express();
+    sos ??= sosEmergencyFor(store, {
+        credentialMatches: capabilityMatches,
+        pushConfigured: Boolean(pushSender),
+    });
     const chatMedia = chatMediaFor(store, { credentialMatches: capabilityMatches, mediaStore: chatMediaStore });
     const pushRegistrations = pushRegistrationsFor(store, { credentialMatches: capabilityMatches, sender: pushSender });
     familyChat = withChatHints(familyChat, {
@@ -259,6 +264,19 @@ export function createApp({
         response.set('X-Correlation-Id', request.correlationId);
         next();
     });
+    if (notificationDispatcher) {
+        app.use((_request, response, next) => {
+            response.once('finish', () => {
+                Promise.resolve(notificationDispatcher.sweep({ limit: 3 }))
+                    .catch((error) => console.error(JSON.stringify({
+                        severity: 'error',
+                        event: 'notification_post_response_sweep_failed',
+                        errorName: error?.name ?? 'Error',
+                    })));
+            });
+            next();
+        });
+    }
     app.use(express.json({ limit: '64kb', strict: true }));
     // Raw media bodies are parsed only by the upload routes, after authentication.
     const rawMediaBody = express.raw({ type: () => true, limit: CHAT_MEDIA_UPLOAD_LIMIT });
@@ -2471,12 +2489,28 @@ export function createApp({
         protectedApiRateLimit,
         requireRuntimeReady,
         asyncRoute(async(request, response) => {
-            if (!pushSender) {
-                throw new HttpError(503, 'push_not_configured', 'Push notifications are not configured on this server.');
-            }
             const familyId = requireUuid(request.params.familyId, 'familyId');
             const registrationId = requireUuid(request.params.registrationId, 'registrationId');
             await pushRegistrations.unregister({ principal: request.principal, familyId, registrationId });
+            response.status(204).end();
+        }),
+    );
+
+    // Upgrade cleanup for a token whose old registration UUID was never persisted. The service
+    // deletes only a row owned by this caller's current/former guardian membership; an unrelated
+    // row is a no-op with the same 204 as an absent token; an older rotated token also cannot be
+    // identified by this request. It works without an FCM sender. The token stays in a JSON body
+    // (not a URL) and is never echoed.
+    app.delete(
+        '/v1/me/push/registrations/current',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            await pushRegistrations.unregisterCurrentToken({
+                principal: request.principal,
+                body: request.body,
+            });
             response.status(204).end();
         }),
     );

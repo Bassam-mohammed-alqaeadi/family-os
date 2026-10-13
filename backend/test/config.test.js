@@ -128,4 +128,16 @@ test('push is off unless both FCM settings are present, and a partial setting is
     }).pushFcm,
     { projectId: 'family-os-prod', serviceAccountJson: '{"client_email":"x"}' },
   );
+  assert.deepEqual(
+    loadConfig({
+      ...identityConfig,
+      FCM_PROJECT_ID: 'family-os-test',
+      FCM_SERVICE_ACCOUNT_JSON: '{"client_email":"alias"}',
+    }).pushFcm,
+    { projectId: 'family-os-test', serviceAccountJson: '{"client_email":"alias"}' },
+  );
+  assert.throws(
+    () => loadConfig({ ...identityConfig, FCM_PROJECT_ID: 'family-os-test' }),
+    (error) => error.code === 'invalid_configuration',
+  );
 });

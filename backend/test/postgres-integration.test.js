@@ -1220,10 +1220,10 @@ test('a zone is drawn, a device reports, and the boundary crossing becomes a rec
           [familyId],
         );
         assert.equal(exitOutbox.rowCount, 1);
+        assert.deepEqual(Object.keys(exitOutbox.rows[0].payload).sort(), ['childId', 'occurredAt', 'zoneId']);
         assert.equal(exitOutbox.rows[0].payload.zoneId, zoneId);
-        assert.equal(exitOutbox.rows[0].payload.kind, 'EXIT');
-        assert.equal(exitOutbox.rows[0].payload.zoneVersion, 1);
         assert.equal(exitOutbox.rows[0].payload.childId, childId);
+        assert.equal(typeof exitOutbox.rows[0].payload.occurredAt, 'string');
 
         // 6. The same report again under a FRESH key: one fix id is one report. No second
         //    row, no second crossing, and an answer that says which of the two happened.
@@ -1591,10 +1591,12 @@ test('a zone is drawn, a device reports, and the boundary crossing becomes a rec
           ['family.geofence_exited', 'family.geofence_exited'],
           'the announcement queue disagrees with the switch the family flipped',
         );
-        assert.equal(schoolAnnouncements.rows[0].payload.zoneVersion, 1);
-        assert.equal(schoolAnnouncements.rows[1].payload.zoneVersion, 2);
-        assert.equal(schoolAnnouncements.rows[1].payload.kind, 'EXIT');
-        assert.equal(schoolAnnouncements.rows[1].payload.childId, childId);
+        for (const announcement of schoolAnnouncements.rows) {
+          assert.deepEqual(Object.keys(announcement.payload).sort(), ['childId', 'occurredAt', 'zoneId']);
+          assert.equal(announcement.payload.zoneId, schoolId);
+          assert.equal(announcement.payload.childId, childId);
+          assert.equal(typeof announcement.payload.occurredAt, 'string');
+        }
 
         // The trail keeps every crossing, including the two the family did not want to hear
         // about, and each one still points at the measurement it was judged from.
@@ -3432,6 +3434,15 @@ test('the filter a family set is the filter the child’s phone is handed, and a
         ]) {
           assert.ok(events.has(eventType), `${eventType} must reach the announcement queue`);
         }
+        const protectionOutbox = await client.query(
+          `SELECT payload->>'observedState' AS observed_state
+             FROM outbox_events
+            WHERE aggregate_id = $1 AND event_type = 'family.device_protection_reported'
+            ORDER BY created_at ASC`,
+          [familyId],
+        );
+        assert.deepEqual(protectionOutbox.rows.map((row) => row.observed_state), ['vpn_active', 'healthy'],
+          'the outbox must preserve the closed observation so a healthy report cannot become an alert');
         const audit = await client.query(
           `SELECT count(*)::int AS n FROM family_audit_events
             WHERE family_id = $1 AND subject_type IN ('web_filter_policy', 'web_filter_temp_allow', 'device_protection')`,

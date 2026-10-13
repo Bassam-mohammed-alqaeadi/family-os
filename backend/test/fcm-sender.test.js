@@ -7,6 +7,7 @@ import test from 'node:test';
 import { jwtVerify } from 'jose';
 import {
   FCM_SCOPE,
+  FcmDeliveryError,
   FcmSender,
   parseServiceAccount,
   PUSH_COPY,
@@ -81,6 +82,78 @@ test('a nudge is sent over HTTP v1 with the bearer token and carries only neutra
   assert.equal(body.message.token, device);
   assert.deepEqual(body.message.notification, PUSH_COPY.ar);
   assert.deepEqual(body.message.data, { type: 'chat.message', threadId: '0b8f8a3e-2d0e-4a53-9a5e-3f0c1a2b3c4d' });
+  assert.equal(body.message.android.notification.channel_id, 'familyos_chat_nudges');
+  assert.equal(body.message.android.notification.color, '#26B3A9');
+  assert.equal(body.message.android.priority, 'HIGH', 'legacy chat urgency remains unchanged');
+  assert.equal(body.message.android.ttl, '3600s');
+  assert.equal(body.message.apns.headers['apns-priority'], '10');
+  assert.equal(Object.hasOwn(body.message.apns.payload.aps, 'sound'), false,
+    'chat keeps its neutral, non-alert APNs presentation');
+});
+
+test('normal-urgency notifications use their channel, TTL and non-interrupting APNs priority', async () => {
+  const fake = fakeGoogle();
+  const receipt = [];
+  const outcome = await sender(fake.transport).send({
+    token: device,
+    locale: 'en',
+    title: 'Maya arrived at School',
+    body: 'Entered the safe zone at 7:05 AM UTC',
+    ttlSeconds: 1800,
+    urgency: 'normal',
+    channelId: 'familyos_geofence_alerts',
+    data: { type: 'family.geofence_entered' },
+    onAccepted: (id) => receipt.push(id),
+  });
+  assert.equal(outcome, 'sent');
+  assert.deepEqual(receipt, ['projects/x/messages/1']);
+  const body = JSON.parse(fake.requests[1].init.body).message;
+  assert.deepEqual(body.notification, { title: 'Maya arrived at School', body: 'Entered the safe zone at 7:05 AM UTC' });
+  assert.equal(body.android.notification.channel_id, 'familyos_geofence_alerts');
+  assert.equal(body.android.notification.color, '#FFB547');
+  assert.equal(body.android.priority, 'NORMAL');
+  assert.equal(body.android.ttl, '1800s');
+  assert.equal(body.apns.headers['apns-priority'], '5');
+  assert.equal(Object.hasOwn(body.apns.payload.aps, 'sound'), false);
+});
+
+test('alert urgency uses high platform priority and a normal sound, never critical alerts', async () => {
+  const fake = fakeGoogle();
+  await sender(fake.transport).send({
+    token: device,
+    locale: 'ar',
+    title: 'استغاثة من ليان',
+    body: 'ضغط زر الاستغاثة الساعة ٣:٤٥ م بتوقيت UTC',
+    ttlSeconds: 3600,
+    urgency: 'alert',
+    channelId: 'familyos_sos_alerts',
+    data: { type: 'family.sos_alert_raised' },
+  });
+  const message = JSON.parse(fake.requests[1].init.body).message;
+  assert.equal(message.android.priority, 'HIGH');
+  assert.equal(message.android.notification.channel_id, 'familyos_sos_alerts');
+  assert.equal(message.android.notification.color, '#FF5A5F');
+  assert.equal(message.apns.headers['apns-priority'], '10');
+  assert.equal(message.apns.payload.aps.sound, 'default');
+  assert.equal(JSON.stringify(message).includes('critical'), false);
+});
+
+test('high urgency is delivered promptly without turning a protection report into a sound alert', async () => {
+  const fake = fakeGoogle();
+  await sender(fake.transport).send({
+    token: device,
+    locale: 'en',
+    title: 'Maya’s protection is disabled',
+    body: 'Device protection was turned off at 7:05 AM UTC',
+    ttlSeconds: 3600,
+    urgency: 'high',
+    channelId: 'familyos_protection_alerts',
+    data: { type: 'family.device_protection_reported' },
+  });
+  const message = JSON.parse(fake.requests[1].init.body).message;
+  assert.equal(message.android.priority, 'HIGH');
+  assert.equal(message.apns.headers['apns-priority'], '10');
+  assert.equal(Object.hasOwn(message.apns.payload.aps, 'sound'), false);
 });
 
 test('the access token is cached until shortly before it expires', async () => {
@@ -103,19 +176,60 @@ test('FCM saying the token is unregistered is reported, so the registration can 
   assert.equal(await sender(fake.transport).send({ token: device, locale: 'en', data: { type: 'chat.message', threadId: 'x' } }), 'unregistered');
 });
 
-test('any other refusal throws and removes nothing, and its message names no token', async () => {
+test('a provider 5xx refusal is explicitly transient and does not expose the token', async () => {
   const fake = fakeGoogle({ sendResponses: [json(500, { error: { status: 'INTERNAL' } })] });
   await assert.rejects(
     sender(fake.transport).send({ token: device, locale: 'en', data: { type: 'chat.message', threadId: 'x' } }),
-    (error) => /HTTP 500/.test(error.message) && !error.message.includes(device),
+    (error) => error instanceof FcmDeliveryError
+      && error.classification === 'transient'
+      && error.reasonCode === 'provider_unavailable'
+      && !error.message.includes(device),
   );
 });
 
-test('a refused access token throws without the assertion or the key', async () => {
+test('a provider 4xx refusal is explicitly permanent', async () => {
+  const fake = fakeGoogle({ sendResponses: [json(400, { error: { status: 'INVALID_ARGUMENT' } })] });
+  await assert.rejects(
+    sender(fake.transport).send({ token: device, locale: 'en', data: { type: 'chat.message', threadId: 'x' } }),
+    (error) => error instanceof FcmDeliveryError
+      && error.classification === 'permanent'
+      && error.reasonCode === 'provider_rejected',
+  );
+});
+
+test('a lost FCM response is ambiguous and must not be treated as a retryable refusal', async () => {
+  const transport = async (url) => {
+    if (String(url) === TOKEN_URL) {
+      return json(200, { access_token: 'ya29.test-access-token', expires_in: 3600 });
+    }
+    throw new Error('socket reset after request');
+  };
+  await assert.rejects(
+    sender(transport).send({ token: device, locale: 'en', data: { type: 'chat.message', threadId: 'x' } }),
+    (error) => error instanceof FcmDeliveryError
+      && error.classification === 'ambiguous'
+      && error.reasonCode === 'provider_outcome_unknown',
+  );
+});
+
+test('a 200 without the provider receipt is ambiguous even if no callback was requested', async () => {
+  const fake = fakeGoogle({ sendResponses: [json(200, {})] });
+  await assert.rejects(
+    sender(fake.transport).send({ token: device, locale: 'en', data: { type: 'chat.message', threadId: 'x' } }),
+    (error) => error instanceof FcmDeliveryError
+      && error.classification === 'ambiguous'
+      && error.reasonCode === 'provider_receipt_missing',
+  );
+});
+
+test('a refused access token is classified without exposing the assertion or key', async () => {
   const fake = fakeGoogle({ tokenStatus: 401 });
   await assert.rejects(
     sender(fake.transport).send({ token: device, locale: 'en', data: { type: 'chat.message', threadId: 'x' } }),
-    (error) => /HTTP 401/.test(error.message) && !error.message.includes('BEGIN PRIVATE KEY'),
+    (error) => error instanceof FcmDeliveryError
+      && error.classification === 'permanent'
+      && error.reasonCode === 'oauth_rejected'
+      && !error.message.includes('BEGIN PRIVATE KEY'),
   );
 });
 
