@@ -15,7 +15,12 @@
 #
 #   001–008 → التاريخ المشترك الموروث (مستثنى صراحةً)
 #   100–113 → عمل arena/6233 الذي دُمج في main (محفوظ في الوسم archive/arena-6233f1a1)
-#   114+    → كل هجرة جديدة، بالتسلسل، على main
+#   114–124 → مدموج على main (ش٢/ش٣/س٠/س١ والدعوات)
+#   125     → فجوة محجوزة — لا تُستعمل أبداً (توسّع س١ إلى 120–124 أزاح س٣)
+#   126+    → كل هجرة جديدة حسب جدول التخصيص §6.1 في
+#             docs/safety_phase/04_REMAINING_SYSTEMS_MASTER_PLAN.md
+#             (الحارس يمنع ميكانيكياً: التكرار، والخروج عن النطاق، والرقم المحجوز؛
+#              وتوزيع الأرقام على الشرائح سلطة الجدول وحده)
 #
 # أي عمل يُنقل من فرع مؤرشف (مثل 009_pairing_code_short_numeric.sql في
 # archive/arena-e8dd180c) يجب أن يُعاد ترقيمه إلى الرقم التالي على main.
@@ -71,6 +76,15 @@ is_inherited() {
   case " $INHERITED_NUMBERS " in *" $1 "*) return 0 ;; *) return 1 ;; esac
 }
 
+# أرقام محجوزة بصيغة الملف (ثلاث خانات): موجودة في التسلسل ولا يجوز أن يملكها ملف.
+# 125 = الفجوة المقصودة بعد توسّع س١ (120–124) — س٣ أُزيحت إلى 130–132 (انظر §6.1).
+# القاعدة: الرقم المحجوز يُرفض هنا ميكانيكياً فلا يعتمد على انتباه المراجع.
+RESERVED_NUMBERS='125'
+
+is_reserved() {
+  case " $RESERVED_NUMBERS " in *" $1 "*) return 0 ;; *) return 1 ;; esac
+}
+
 while IFS= read -r file; do
   [ -n "$file" ] || continue
   base="$(basename "$file")"
@@ -81,6 +95,12 @@ while IFS= read -r file; do
   n=$((10#$num))
 
   if is_inherited "$num"; then
+    continue
+  fi
+
+  if is_reserved "$num"; then
+    BAD "$base — الرقم $num فجوة محجوزة (توسّع س١ 120–124 أزاح س٣ إلى 130–132) — لا يجوز أن يملكه ملف؛ راجع جدول التخصيص §6.1"
+    VIOLATIONS=$((VIOLATIONS + 1))
     continue
   fi
 
@@ -127,11 +147,16 @@ fi
 LAST_MIGRATION="$(find "$MIGRATIONS_DIR" -maxdepth 1 -name '*.sql' -printf '%f\n' 2>/dev/null | sed 's/_.*//' | sort | tail -1)"
 NEXT_MIGRATION=$(( 10#${LAST_MIGRATION:-099} + 1 ))
 [ "$NEXT_MIGRATION" -lt "$RANGE_MIN" ] && NEXT_MIGRATION=$RANGE_MIN
+NEXT_DISPLAY="$(printf '%03d' "$NEXT_MIGRATION")"
 
 printf "\n${BOLD}────────────────────────────────────────────────${OFF}\n"
 if [ "$PROBLEMS" -eq 0 ]; then
   printf "${BOLD}${GREEN}النتيجة: الترقيم آمن ومتسلسل على main.${OFF}\n"
-  printf "الهجرة التالية على main: %03d\n" "$NEXT_MIGRATION"
+  if is_reserved "$NEXT_DISPLAY"; then
+    printf "الهجرة التالية على main: %s (فجوة محجوزة — لا تُستعمل؛ التوزيع من جدول §6.1)\n" "$NEXT_DISPLAY"
+  else
+    printf "الهجرة التالية على main: %s\n" "$NEXT_DISPLAY"
+  fi
 else
   printf "${BOLD}${RED}النتيجة: %d خلل في الترقيم.${OFF}\n" "$PROBLEMS"
 fi

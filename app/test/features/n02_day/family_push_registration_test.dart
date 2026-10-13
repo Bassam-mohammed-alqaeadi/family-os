@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:family_os/features/n02_day/family_push_registration.dart';
@@ -49,6 +50,11 @@ final class _FakeTokens implements PushTokenSource {
     cleanupTokenReads += 1;
     return cleanupToken;
   }
+
+  final refreshes = StreamController<String>();
+
+  @override
+  Stream<String> tokenRefreshes() => refreshes.stream;
 }
 
 final class _PersistentStore implements FamilyPushRegistrationStore {
@@ -535,5 +541,81 @@ void main() {
     );
     expect(await registrar.ensureRegistered(familyId: _family, idToken: 'id'), isFalse);
     expect(requests, isEmpty);
+  });
+
+  test('a mid-session token rotation re-registers under the watched family', () async {
+    store.snapshot = FamilyPushRegistrationSnapshot.knownNone;
+    final tokens = _FakeTokens();
+    final registrar = FamilyPushRegistrar(
+      client: client,
+      tokens: tokens,
+      store: store,
+    );
+    addTearDown(registrar.reset);
+
+    expect(await registrar.ensureRegistered(familyId: _family, idToken: 'id'), isTrue);
+    await registrar.watchTokenRefresh(
+      familyId: _family,
+      idToken: () async => 'live-owner',
+    );
+    expect(posted, hasLength(1));
+
+    // Firebase rotates the token mid-session: getToken() answers fresh from now on
+    // and the rotation stream fires. The watch — not another ensureRegistered call —
+    // must drive the re-registration.
+    tokens.token = _rotatedToken;
+    tokens.refreshes.add(_rotatedToken);
+    for (var i = 0; i < 100 && posted.length < 2; i++) {
+      await Future<void>.delayed(Duration.zero);
+    }
+    expect(posted, hasLength(2));
+    expect(posted.last['token'], _rotatedToken);
+    expect(serverRows.containsKey(_rotatedToken), isTrue);
+    expect(store.snapshot.registrations, hasLength(1));
+  });
+
+  test('a refresh event for the already-registered token sends nothing', () async {
+    store.snapshot = FamilyPushRegistrationSnapshot.knownNone;
+    final tokens = _FakeTokens();
+    final registrar = FamilyPushRegistrar(
+      client: client,
+      tokens: tokens,
+      store: store,
+    );
+    addTearDown(registrar.reset);
+
+    expect(await registrar.ensureRegistered(familyId: _family, idToken: 'id'), isTrue);
+    await registrar.watchTokenRefresh(
+      familyId: _family,
+      idToken: () async => 'live-owner',
+    );
+    expect(posted, hasLength(1));
+
+    tokens.refreshes.add(_firstToken);
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(posted, hasLength(1));
+  });
+
+  test('sign-out stops the refresh watch', () async {
+    store.snapshot = FamilyPushRegistrationSnapshot.knownNone;
+    final tokens = _FakeTokens();
+    final registrar = FamilyPushRegistrar(
+      client: client,
+      tokens: tokens,
+      store: store,
+    );
+
+    expect(await registrar.ensureRegistered(familyId: _family, idToken: 'id'), isTrue);
+    await registrar.watchTokenRefresh(
+      familyId: _family,
+      idToken: () async => 'live-owner',
+    );
+    expect(posted, hasLength(1));
+
+    registrar.reset();
+    tokens.token = _rotatedToken;
+    tokens.refreshes.add(_rotatedToken);
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(posted, hasLength(1));
   });
 }

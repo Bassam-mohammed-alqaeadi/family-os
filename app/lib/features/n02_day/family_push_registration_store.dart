@@ -18,8 +18,10 @@ final class FamilyPushRegistrationRecord {
 
 /// Durable knowledge about registrations this installation may still own.
 ///
-/// A missing row (or a row written by the pre-ledger release) is **unknown**, not
-/// known-empty: that older client could have registered an FCM token without writing
+/// A missing row is **unknown** — unless the store proves this installation never
+/// persisted anything, in which case it is known-empty (see
+/// [LocalKvFamilyPushRegistrationStore.read]). A row written by the pre-ledger release
+/// stays unknown: that older client could have registered an FCM token without writing
 /// its server UUID to disk. The token-scoped cleanup route intentionally returns the
 /// same response for an absent token and a token owned by another guardian, so its 204
 /// cannot clear this uncertainty. A successful registration POST durably records the UUID
@@ -65,7 +67,9 @@ abstract interface class FamilyPushRegistrationStore {
   /// False for Memory fallback: callers must not create server state they cannot recover.
   bool get isRestartSafe;
 
-  /// Absence means [FamilyPushRegistrationSnapshot.unknown], never known-empty.
+  /// Absence means [FamilyPushRegistrationSnapshot.unknown], unless the store can
+  /// prove a genuinely fresh installation — then it seeds and returns
+  /// [FamilyPushRegistrationSnapshot.knownNone]. Never claims known-empty on doubt.
   Future<FamilyPushRegistrationSnapshot> read();
   Future<void> save(FamilyPushRegistrationSnapshot snapshot);
 }
@@ -104,7 +108,7 @@ final class LocalKvFamilyPushRegistrationStore
       whereArgs: const [_namespace, _key],
       limit: 1,
     );
-    if (rows.isEmpty) return FamilyPushRegistrationSnapshot.unknown;
+    if (rows.isEmpty) return _resolveAbsentRow();
 
     final raw = rows.single['value'];
     if (raw is! String || raw.isEmpty) {
@@ -161,6 +165,34 @@ final class LocalKvFamilyPushRegistrationStore
           decoded['hasUntrackedRegistration'] == true || malformedRecord,
       registrations: List<FamilyPushRegistrationRecord>.unmodifiable(records),
     );
+  }
+
+  /// Distinguishes a genuinely fresh installation from a legacy upgrade.
+  ///
+  /// A missing ledger row on a database that never persisted anything means no older
+  /// client could have registered from this installation: seed and return known-empty
+  /// so fresh installs are not warned forever about a registration that cannot exist.
+  /// Any other absence (legacy namespaces present, a missing table, an unreadable
+  /// probe, or a non-durable store that cannot prove anything across restarts) keeps
+  /// the historic unknown verdict. Fail-closed: doubt is never resolved as empty.
+  Future<FamilyPushRegistrationSnapshot> _resolveAbsentRow() async {
+    if (!isRestartSafe) return FamilyPushRegistrationSnapshot.unknown;
+    try {
+      final anyRow = await _database.query(_table, limit: 1);
+      if (anyRow.isEmpty) {
+        const fresh = FamilyPushRegistrationSnapshot.knownNone;
+        try {
+          await save(fresh);
+        } on Object {
+          // The seed is an optimization; the proven-fresh verdict stands in memory
+          // and the next read re-probes the same empty store.
+        }
+        return fresh;
+      }
+    } on Object {
+      // Table missing or probe unreadable: legacy caution stands.
+    }
+    return FamilyPushRegistrationSnapshot.unknown;
   }
 
   @override

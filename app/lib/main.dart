@@ -453,10 +453,21 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
       guardianPushRegistration: ({
         required String familyId,
         required String idToken,
-      }) => pushRegistrar.ensureRegistered(
-        familyId: familyId,
-        idToken: idToken,
-      ),
+      }) async {
+        final registered = await pushRegistrar.ensureRegistered(
+          familyId: familyId,
+          idToken: idToken,
+        );
+        if (registered) {
+          // Stay current when FCM rotates the token mid-session; the watch is
+          // cancelled by onSessionSignedOut -> pushRegistrar.reset on sign-out.
+          await pushRegistrar.watchTokenRefresh(
+            familyId: familyId,
+            idToken: identity.currentIdToken,
+          );
+        }
+        return registered;
+      },
       guardianPushUnregistration: ({required Future<String> Function() idToken}) =>
           pushRegistrar.unregister(idToken: idToken),
       onSessionSignedOut: pushRegistrar.reset,
