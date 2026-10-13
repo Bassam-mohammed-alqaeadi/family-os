@@ -59,18 +59,22 @@ class EncryptedFixQueueStore(
         queue.due(limit, nowMillis)
     }
 
-    override fun remove(fixIds: Set<String>): Unit = synchronized(lock) {
-        ensureLoaded()
-        if (queue.remove(fixIds) > 0) persist()
+    override fun remove(fixIds: Set<String>) {
+        synchronized(lock) {
+            ensureLoaded()
+            if (queue.remove(fixIds) > 0) persist()
+        }
     }
 
-    override fun dropAll(): Unit = synchronized(lock) {
-        loaded = true // A dropped session must not resurrect the file it just deleted.
-        queue.dropAll()
-        try {
-            if (file.exists() && !file.delete()) persistFailures++
-        } catch (_: Exception) {
-            persistFailures++
+    override fun dropAll() {
+        synchronized(lock) {
+            loaded = true // A dropped session must not resurrect the file it just deleted.
+            queue.dropAll()
+            try {
+                if (file.exists() && !file.delete()) persistFailures++
+            } catch (_: Exception) {
+                persistFailures++
+            }
         }
     }
 

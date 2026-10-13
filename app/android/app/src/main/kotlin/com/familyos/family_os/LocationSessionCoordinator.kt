@@ -104,18 +104,22 @@ class LocationSessionCoordinator<C : Any>(
      * the stored pairing: a replaced pairing's leftovers are dropped by [dropQueue] on the
      * pairing path, never confirmed away piecemeal.
      */
-    fun confirmDrained(config: C, fixIds: Set<String>): Unit = synchronized(lock) {
-        val port = queue ?: return@synchronized
-        if (store.current() != config) return@synchronized
-        port.remove(fixIds)
+    fun confirmDrained(config: C, fixIds: Set<String>) {
+        synchronized(lock) {
+            val port = queue ?: return@synchronized
+            if (store.current() != config) return@synchronized
+            port.remove(fixIds)
+        }
     }
 
     /**
      * Drops the queue with its loss counters. Called on the re-pairing path *before* the
      * new session starts (rule 4); revocation drops through [settle] instead.
      */
-    fun dropQueue(): Unit = synchronized(lock) {
-        queue?.dropAll()
+    fun dropQueue() {
+        synchronized(lock) {
+            queue?.dropAll()
+        }
     }
 }
 
