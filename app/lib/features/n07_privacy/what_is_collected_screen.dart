@@ -283,9 +283,6 @@ class _WhatIsCollectedScreenState extends State<WhatIsCollectedScreen> {
                     message: l10n.whatIsCollectedHonestyNote,
                     variant: BannerVariant.t,
                   ),
-                  // S2 resilience verdict — mirrored from native, honest when absent.
-                  const SizedBox(height: 16),
-                  const ProtectionStatusCard(),
                   if (_policy.updatedAt != null) ...[
                     const SizedBox(height: 12),
                     Text(
@@ -354,6 +351,10 @@ class _WhatIsCollectedScreenState extends State<WhatIsCollectedScreen> {
                       ],
                     ),
                   ],
+                  // S2 resilience verdict — below the transparency stack so the
+                  // FS-004/FS-007 cards stay inside the first viewport.
+                  const SizedBox(height: 20),
+                  const ProtectionStatusCard(),
                   const ShellTabMoreTools(tabId: 'me'),
                 ],
               ),
