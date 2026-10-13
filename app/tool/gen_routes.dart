@@ -323,6 +323,7 @@ const Map<String, String> screenBuilders = {
   'SCR-CHD-035': 'ChildFocusSoundsScreen()',
   'SCR-CHD-036': 'ChildCallPlayScreen()',
   'SCR-CHD-037': 'ChildStickersBackgroundsScreen()',
+  'SCR-CHD-038': 'BatteryGuidanceScreen()',
   'SCR-FAT-025': 'SettingsHubScreen()',
   'SCR-FAT-026':
       "DeviceHealthDetailScreen(deviceId: state.uri.queryParameters['deviceId'])",
@@ -426,6 +427,7 @@ const List<String> screenBuilderImports = [
   "import 'package:family_os/features/n10_emergency/child_sos_in_progress_screen.dart';",
   "import 'package:family_os/features/n11_billing/plans_screen.dart';",
   "import 'package:family_os/features/n11_billing/manage_subscription_screen.dart';",
+  "import 'package:family_os/features/n07_privacy/battery_guidance_screen.dart';",
   "import 'package:family_os/features/n07_privacy/what_is_collected_screen.dart';",
   "import 'package:family_os/features/n13_coming_soon/coming_soon_screen.dart';",
   "import 'package:family_os/features/n02_day/child_arrival_screen.dart';",

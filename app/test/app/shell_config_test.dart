@@ -21,7 +21,7 @@ void main() {
     );
 
     expect(parentTablessScreenIds, hasLength(17));
-    expect(childTablessScreenIds, hasLength(5));
+    expect(childTablessScreenIds, hasLength(6));
   });
 
   test('every active screen id appears exactly once across tabs ∪ tabless', () {

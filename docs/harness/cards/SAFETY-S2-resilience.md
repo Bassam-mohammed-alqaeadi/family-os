@@ -62,6 +62,6 @@
 2026-10-13 (D0–D3، تحقق استاتيكي — لا Flutter/JVM محلياً في هذه البيئة، فأول ترجمة حقيقية في CI):
 - D1: `QueuedFix`/`FixQueue.drainBatch`/`ServerTimeOffset.observeDateHeader`/`ProtectionStateMachine.evaluate`/`BootBackoff.nextDelay`/`BatteryOemMap`/`EncryptedFixQueueStore`/`LocationReportCoordinator` (ربط الطابور) — توازن الأقواس ٠/٠/٠ في الملفات الثمانية، و٦ ملفات اختبار JVM بأسماء مطابقة للعقود.
 - D2: توازن ٠/٠/٠ (`ProtectionBootReceiver`/`ChildTelemetryService`/`MainActivity`) · المانيفست + ملفا النصوص XML صالح · ٣ مفاتيح نصوص × لغتين حاضرة · كل `R.string.protection_*` المستعمل موجود · `HttpAnswer` بثلاثة حقول وكل النداءات داخلية.
-- D3: قالبا ARB JSON صالحان (١٩ مفتاح `s2*` في كل منهما) · المولّدات الثلاثة متزامنة (٣٨ = ١٩ توثيق + ١٩ getter في المجرد، ١٩ في كل لغة) · مسار `/protection/battery-guidance` متطابق بين البطاقة والموجّه · الحارس يسمح به لكل الأدوار افتراضياً · مفاتيح الاختبار الستة معرّفة ومركّبة.
+- D3: قالبا ARB JSON صالحان (١٩ مفتاح `s2*` في كل منهما) · المولّدات الثلاثة متزامنة (٣٨ = ١٩ توثيق + ١٩ getter في المجرد، ١٩ في كل لغة) · المسار `SCR-CHD-038` (`/scr-chd-038`) عبر سجل الشاشات والمولّد (لا تحرير يدوي للموجّه) · الحارس يسمح به لكل الأدوار افتراضياً · مفاتيح الاختبار الستة معرّفة ومركّبة.
 - الانحرافات الثلاثة عن نية الخطة موثقة في §٢ (D10/D11/D12) قبل أي PR، حسب §12-15.
 - CI (يُملأ بعد PR): بوابة الاختبارات الأصلية (أول ترجمة JVM) + `analyze-test` + `flutter test` — النتائج هنا قبل الدمج.

@@ -11948,37 +11948,74 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sys3PushCleanupWarning =>
       'Signed out, but an old notification registration for this phone could not be confirmed removed. Cleanup will be rechecked at the next sign-in.';
 
-  String get s2ProtectionTitle => '['Protection status']';
-  String get s2ProtectionFullyProtected => '['Protection is fully running']';
-  String get s2ProtectionDegraded => '['Protection is partially limited']';
-  String get s2ProtectionStopped => '['Protection is stopped']';
+  @override
+  String get s2ProtectionTitle => 'Protection status';
+
+  @override
+  String get s2ProtectionFullyProtected => 'Protection is fully running';
+
+  @override
+  String get s2ProtectionDegraded => 'Protection is partially limited';
+
+  @override
+  String get s2ProtectionStopped => 'Protection is stopped';
+
+  @override
   String get s2ProtectionNotConfigured =>
-      '['This phone is not set up for protection yet']';
+      'This phone is not set up for protection yet';
+
+  @override
   String get s2ProtectionUnavailable =>
-      '['The protection state could not be read']';
+      'The protection state could not be read';
+
+  @override
   String get s2ProtectionQueuedNote =>
-      '['Delayed fixes will send when the network returns']';
-  String get s2ProtectionBatteryButton => '['Battery guidance']';
-  String get s2BatteryTitle => '['Battery exemption']';
+      'Delayed fixes will send when the network returns';
+
+  @override
+  String get s2ProtectionBatteryButton => 'Battery guidance';
+
+  @override
+  String get s2BatteryTitle => 'Battery exemption';
+
+  @override
   String get s2BatteryBody =>
-      '['The phone system restricts background work to save battery, delaying location reports. Grant the exemption in Settings so reporting continues.']';
-  String get s2BatteryOpenSettings => '['Open battery settings']';
+      'The phone system restricts background work to save battery, delaying location reports. Grant the exemption in Settings so reporting continues.';
+
+  @override
+  String get s2BatteryOpenSettings => 'Open battery settings';
+
+  @override
   String get s2BatteryOpenedNote =>
-      '['Settings opened. After granting the exemption, return to the app.']';
+      'Settings opened. After granting the exemption, return to the app.';
+
+  @override
   String get s2BatteryFallbackNote =>
-      '['The vendor page could not be opened. App settings opened instead: find Battery, then allow Unrestricted.']';
+      'The vendor page could not be opened. App settings opened instead: find Battery, then allow Unrestricted.';
+
+  @override
   String get s2BatteryOemXiaomi =>
-      '['Xiaomi/Redmi: Settings, Battery, Autostart: allow the app, then set background activity to Unrestricted.']';
+      'Xiaomi/Redmi: Settings, Battery, Autostart: allow the app, then set background activity to Unrestricted.';
+
+  @override
   String get s2BatteryOemHuawei =>
-      '['Huawei/Honor: Phone Manager, Auto-launch: enable the app manually and allow background activity.']';
+      'Huawei/Honor: Phone Manager, Auto-launch: enable the app manually and allow background activity.';
+
+  @override
   String get s2BatteryOemOppo =>
-      '['Oppo/Realme/OnePlus: Settings, Battery, Battery optimization: choose the app and turn optimization off.']';
+      'Oppo/Realme/OnePlus: Settings, Battery, Battery optimization: choose the app and turn optimization off.';
+
+  @override
   String get s2BatteryOemVivo =>
-      '['Vivo: Settings, Battery, Background power consumption: allow high background activity.']';
+      'Vivo: Settings, Battery, Background power consumption: allow high background activity.';
+
+  @override
   String get s2BatteryOemSamsung =>
-      '['Samsung: Settings, Battery, Background usage limits: add the app to Never sleeping.']';
+      'Samsung: Settings, Battery, Background usage limits: add the app to Never sleeping.';
+
+  @override
   String get s2BatteryOemStock =>
-      '['Android: Settings, Battery, Battery optimization: choose All apps, then turn optimization off for the app.']';
+      'Android: Settings, Battery, Battery optimization: choose All apps, then turn optimization off for the app.';
 
   @override
   String get sys3ErrorTitle => 'Unable to complete';

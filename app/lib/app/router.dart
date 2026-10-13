@@ -276,6 +276,7 @@ const List<String> generatedScreenIds = [
   'SCR-CHD-037',
   'SCR-FAT-085',
   'SCR-FAT-086',
+  'SCR-CHD-038',
 ];
 
 /// Tombstone screen_ids kept in CSV historically but never routed (ADR-034).
@@ -553,11 +554,6 @@ GoRouter createAppRouter({
       path: '/scr-chd-010',
       name: 'SCR-CHD-010',
       builder: (context, state) => WhatIsCollectedScreen(monitoringChildId: routeChildId(context, state).value),
-    ),
-    GoRoute(
-      path: '/protection/battery-guidance',
-      name: 'protection-battery-guidance',
-      builder: (context, state) => BatteryGuidanceScreen(),
     ),
     GoRoute(
       path: '/scr-shr-005',
@@ -993,6 +989,12 @@ GoRouter createAppRouter({
       path: '/scr-fat-086',
       name: 'SCR-FAT-086',
       builder: (context, state) => FamilyMomentsScreen(),
+    ),
+
+    GoRoute(
+      path: '/scr-chd-038',
+      name: 'SCR-CHD-038',
+      builder: (context, state) => BatteryGuidanceScreen(),
     ),
     ], showShowcase),
   );

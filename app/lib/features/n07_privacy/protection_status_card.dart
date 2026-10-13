@@ -29,7 +29,7 @@ class ProtectionStatusCard extends StatefulWidget {
 
   final VoidCallback? onBatteryGuidance;
 
-  static const batteryGuidanceRoute = '/protection/battery-guidance';
+  static const batteryGuidanceRoute = '/scr-chd-038';
 
   @override
   State<ProtectionStatusCard> createState() => _ProtectionStatusCardState();
