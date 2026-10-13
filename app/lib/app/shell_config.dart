@@ -247,6 +247,7 @@ const List<String> childTablessScreenIds = <String>[
   'SCR-CHD-003',
   'SCR-CHD-005',
   'SCR-CHD-006',
+  'SCR-CHD-038',
 ];
 
 /// Hub index keyed by tabId — registry order, type→icon from frozen prototype.

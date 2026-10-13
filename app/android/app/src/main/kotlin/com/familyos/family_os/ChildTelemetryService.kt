@@ -11,12 +11,16 @@ import android.content.IntentFilter
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.net.ConnectivityManager
+import android.net.Network
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.PowerManager
 import android.os.SystemClock
+import android.os.UserManager
 import android.util.Base64
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -29,6 +33,7 @@ import java.security.KeyStore
 import java.util.Locale
 import java.util.UUID
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
@@ -64,15 +69,68 @@ class ChildTelemetryService : Service(), LocationListener {
     /** Main-thread only: when the last reading was handed to [executor] (monotonic clock). */
     private var lastReportedElapsedMillis: Long? = null
 
+    // -- S2 resilience state. Volatiles are read across threads; queue mutations hold --
+    // -- [queueLock] inside the store. Everything here degrades to "unknown", never lies. --
+
+    private lateinit var queueStore: EncryptedFixQueueStore
+    private val queueLock = Any()
+    private val scheduler = Executors.newSingleThreadScheduledExecutor()
+
+    /** Last server-time sighting from a telemetry `Date` header (null = no knowledge yet). */
+    @Volatile private var timeObservation: ServerTimeOffset.Observation? = null
+
+    /** Monotonic reading of the last acknowledged heartbeat (null = never). */
+    @Volatile private var lastHeartbeatAckElapsedMillis: Long? = null
+
+    /** Fixes the server refused during drains since the last heartbeat (surfaced, not hidden). */
+    @Volatile private var drainRefusedTotal: Long = 0L
+
+    /** Queue-loss baseline already reported to the server (the machine is stateless). */
+    @Volatile private var queueLostReportedBaseline: Long = 0L
+
+    /** Seconds between locked boot and this start (-1 = no direct-boot marker was found). */
+    @Volatile private var lockedBootGapSeconds: Long = -1L
+
+    @Volatile private var networkAvailable: Boolean = true
+    private var networkCallback: ConnectivityManager.NetworkCallback? = null
+
     override fun onCreate() {
         super.onCreate()
         configStore = TelemetryConfigStore(this)
         reportStatus = LocationReportStatusStore(this)
-        session = LocationSessionCoordinator(configStore, reportStatus, TelemetryConfigStore.LOCK) {
+        // S2: the encrypted retry queue, owned by the coordinator (rule 4) - never a
+        // parallel pipeline. noBackupFilesDir survives app updates; Keystore holds the key.
+        queueStore = EncryptedFixQueueStore(
+            File(noBackupFilesDir, QUEUE_FILE_NAME),
+            KeystoreFixQueueCipher(),
+            queueLock,
+        )
+        session = LocationSessionCoordinator(configStore, reportStatus, TelemetryConfigStore.LOCK, queueStore) {
             System.currentTimeMillis()
         }
         locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         createNotificationChannels()
+        // Measure the direct-boot gap (if any) so the next heartbeat reports it as evidence.
+        try {
+            val marker = ProtectionBootReceiver.takeLockedBootAt(this)
+            lockedBootGapSeconds = if (marker == null) -1L else {
+                ((System.currentTimeMillis() - marker) / 1000L).coerceAtLeast(0L)
+            }
+        } catch (_: Exception) {
+            lockedBootGapSeconds = -1L
+        }
+        networkAvailable = readNetworkAvailable()
+        registerNetworkCallback()
+        try {
+            scheduler.scheduleAtFixedRate(
+                { heartbeatNow() },
+                HEARTBEAT_INITIAL_DELAY_MINUTES,
+                HEARTBEAT_PERIOD_MINUTES,
+                TimeUnit.MINUTES,
+            )
+        } catch (_: Exception) {
+            // No scheduler = no periodic heartbeat; boot/drain heartbeats still run.
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -104,6 +162,30 @@ class ChildTelemetryService : Service(), LocationListener {
             stopSelf(startId)
             return START_NOT_STICKY
         }
+        if (intent?.getBooleanExtra(EXTRA_BOOT_START, false) == true) {
+            // S2: a boot/update/unlock start that reached here is healthy - the pacing
+            // counter served its purpose. Drain what the outage queued, then heartbeat.
+            try {
+                ProtectionBootReceiver.setBootAttempts(this, 0)
+            } catch (_: Exception) {
+                // Best effort; the counter only paces retries.
+            }
+            val bootConfig = try {
+                configStore.read()
+            } catch (_: Exception) {
+                null
+            }
+            if (bootConfig != null && session.mayReport(bootConfig)) {
+                try {
+                    executor.execute {
+                        drainQueued(bootConfig, DRAIN_LIMIT)
+                        heartbeatNow()
+                    }
+                } catch (_: java.util.concurrent.RejectedExecutionException) {
+                    // Shutting down already; the scheduler heartbeat covers it.
+                }
+            }
+        }
         return START_STICKY
     }
 
@@ -117,7 +199,10 @@ class ChildTelemetryService : Service(), LocationListener {
                 latitude = location.latitude,
                 longitude = location.longitude,
                 accuracyMeters = location.accuracy.toDouble(),
-                recordedAtEpochMillis = location.time,
+                // S2: upper-clamped against server time (never past now + 4 min). GPS time
+                // is already true UTC so no offset is *added* (that would corrupt it); the
+                // clamp only protects wall-clock-backed providers from the 5-minute rule.
+                recordedAtEpochMillis = correctedStamp(location.time),
                 fromMockProvider = isFromMockProvider(location),
             ),
         ) ?: return
@@ -145,6 +230,20 @@ class ChildTelemetryService : Service(), LocationListener {
             locationManager.removeUpdates(this)
         } catch (_: SecurityException) {
             // Permission can be revoked while the service is stopping.
+        }
+        try {
+            networkCallback?.let {
+                (getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager)
+                    ?.unregisterNetworkCallback(it)
+            }
+        } catch (_: Exception) {
+            // Best effort; the process is going away.
+        }
+        networkCallback = null
+        try {
+            scheduler.shutdownNow()
+        } catch (_: Exception) {
+            // Best effort.
         }
         executor.shutdownNow()
         super.onDestroy()
@@ -190,6 +289,24 @@ class ChildTelemetryService : Service(), LocationListener {
             LocationFixProtocol.idempotencyKey(reading.fixId),
         )
         val fixOutcome = LocationFixProtocol.classify(fixAnswer.statusCode, fixAnswer.errorBody)
+        learnDateHeader(fixAnswer.dateHeaderMillis)
+        // S2: no answer / "try later" queues the exact bytes for an ordered replay instead
+        // of dropping the reading. A refusal settles here and is never queued.
+        if (queueWorthy(fixOutcome)) {
+            val now = System.currentTimeMillis()
+            session.offerToQueue(
+                config,
+                QueuedFix(
+                    fixId = reading.fixId,
+                    recordedAtEpochMillis = reading.recordedAtEpochMillis,
+                    enqueuedAtEpochMillis = now,
+                    attempts = 0,
+                    payloadJson = LocationFixProtocol.body(reading),
+                ),
+                fixOutcome,
+                now,
+            )
+        }
         if (!settle(config, fixOutcome)) return
         if (!LocationFixProtocol.legacyHeartbeatAllowed(fixOutcome, reading) || battery == null) return
         // The W2 device card and children list still read battery, last-seen and this label
@@ -209,7 +326,10 @@ class ChildTelemetryService : Service(), LocationListener {
             null,
         )
         val heartbeatOutcome = LocationFixProtocol.classify(heartbeat.statusCode, heartbeat.errorBody)
+        learnDateHeader(heartbeat.dateHeaderMillis)
         if (heartbeatOutcome.endsSession) settle(config, heartbeatOutcome)
+        // S2: a healthy round-trip is the cheapest moment to replay what queued earlier.
+        if (fixOutcome == LocationReportOutcome.ACCEPTED) drainQueued(config, DRAIN_PIGGYBACK_LIMIT)
     }
 
     /**
@@ -267,11 +387,17 @@ class ChildTelemetryService : Service(), LocationListener {
                 connection.inputStream?.close()
                 null
             }
-            HttpAnswer(code, errorBody)
+            // S2: the server's Date header is the only clock trusted for skew tolerance.
+            val dateHeader = try {
+                connection.getHeaderFieldDate("Date", 0L).takeIf { it > 0L }
+            } catch (_: Exception) {
+                null
+            }
+            HttpAnswer(code, errorBody, dateHeader)
         } catch (_: Exception) {
             // No HTTP answer. The next genuine location callback is the retry; nothing
             // cached or fabricated is transmitted in its place.
-            HttpAnswer(null, null)
+            HttpAnswer(null, null, null)
         } finally {
             connection?.disconnect()
         }
@@ -289,6 +415,348 @@ class ChildTelemetryService : Service(), LocationListener {
                 total += read
             }
             if (total == 0) null else String(buffer, 0, total)
+        }
+    }
+
+    // -- S2 resilience: queue replay, skew-tolerant stamps, heartbeat, honest state. --
+    // All entry points catch everything: resilience code must never crash the service.
+
+    /** Upper-clamps a stamp against the best-known server time; the past passes through. */
+    private fun correctedStamp(candidateMillis: Long): Long {
+        return try {
+            val serverNow = ServerTimeOffset.correctedNow(
+                timeObservation,
+                System.currentTimeMillis(),
+                SystemClock.elapsedRealtime(),
+            )
+            ServerTimeOffset.clampRecordedAt(candidateMillis, serverNow)
+        } catch (_: Exception) {
+            candidateMillis // Correction must never break reporting; the server judges.
+        }
+    }
+
+    private fun learnDateHeader(dateHeaderMillis: Long?) {
+        try {
+            ServerTimeOffset.observe(dateHeaderMillis, SystemClock.elapsedRealtime())?.let {
+                timeObservation = it
+            }
+        } catch (_: Exception) {
+            // A clock we cannot read is knowledge we do not have.
+        }
+    }
+
+    /**
+     * Replays queued fixes oldest-first, at most [limit]. Stops at the first answer that
+     * says "not now" (the rest stay queued, still ordered); removes what the server
+     * settled. Runs on [executor] - never on the main thread. Sequential by design: the
+     * natural round-trip pacing stays far under the 120/minute device limit.
+     */
+    private fun drainQueued(config: TelemetryConfig, limit: Int) {
+        val due = try {
+            session.drainQueue(config, limit, System.currentTimeMillis())
+        } catch (_: Exception) {
+            return
+        }
+        for (queued in due) {
+            if (!session.mayReport(config)) return
+            val answer = post(
+                config,
+                LocationFixProtocol.path(config.deviceId),
+                queued.payloadJson,
+                LocationFixProtocol.idempotencyKey(queued.fixId),
+            )
+            learnDateHeader(answer.dateHeaderMillis)
+            when (LocationFixProtocol.classify(answer.statusCode, answer.errorBody)) {
+                LocationReportOutcome.ACCEPTED -> confirmOne(config, queued.fixId)
+                LocationReportOutcome.REJECTED, LocationReportOutcome.ACCESS_REFUSED -> {
+                    // Settled against us: remove so it is never retried, but count the loss.
+                    drainRefusedTotal++
+                    confirmOne(config, queued.fixId)
+                }
+                LocationReportOutcome.CREDENTIAL_REVOKED -> {
+                    settle(config, LocationReportOutcome.CREDENTIAL_REVOKED)
+                    return
+                }
+                LocationReportOutcome.NETWORK_UNREACHABLE, LocationReportOutcome.SERVER_UNAVAILABLE -> return
+            }
+        }
+    }
+
+    private fun confirmOne(config: TelemetryConfig, fixId: String) {
+        try {
+            session.confirmDrained(config, setOf(fixId))
+        } catch (_: Exception) {
+            // Unconfirmed but accepted: the idempotency key makes a re-send a no-op row.
+        }
+    }
+
+    /**
+     * The S2 heartbeat (D11): evaluates the protection verdict where the facts live,
+     * refreshes the ongoing notification to say exactly that, and reports the snapshot
+     * to the capability ledger. Service-owned by design - while the service runs, the
+     * verdict is fresh; when it dies, the server-side staleness tells the truth (D8).
+     */
+    private fun heartbeatNow() {
+        try {
+            val config = try {
+                configStore.read()
+            } catch (_: Exception) {
+                null
+            } ?: return
+            if (!session.mayReport(config)) return
+            val state = evaluateProtection()
+            lastProtectionState = state
+            refreshProtectionNotification(state)
+            if (reportProtectionSnapshot(config, state)) {
+                lastHeartbeatAckElapsedMillis = SystemClock.elapsedRealtime()
+                queueLostReportedBaseline = queueLossTotal()
+                lockedBootGapSeconds = -1L // Reported once; a new boot writes a new marker.
+            }
+        } catch (_: Exception) {
+            // Heartbeat failure is itself a signal (staleness), never a crash.
+        }
+    }
+
+    private fun evaluateProtection(): ProtectionState {
+        val stats = try {
+            queueStore.stats(System.currentTimeMillis())
+        } catch (_: Exception) {
+            null
+        }
+        val lastAck = lastHeartbeatAckElapsedMillis
+        val stale = lastAck != null &&
+            SystemClock.elapsedRealtime() - lastAck > HEARTBEAT_STALE_MILLIS
+        return ProtectionStateMachine.evaluate(
+            ProtectionSignals(
+                unlocked = isUserUnlocked(),
+                // Evaluated by the running service itself: if this code runs, it runs.
+                serviceRunning = true,
+                backgroundLocationGranted = hasBackgroundLocationPermission(),
+                notificationsGranted = hasNotificationsPermission(),
+                batteryUnrestricted = isBatteryUnrestricted(),
+                networkAvailable = networkAvailable,
+                queueDepth = stats?.depth ?: 0,
+                queueLostSinceReported = (queueLossTotal() - queueLostReportedBaseline).coerceAtLeast(0L),
+                heartbeatStale = stale,
+            ),
+        )
+    }
+
+    /** Every loss the queue counted, plus refused drains: the number the family may audit. */
+    private fun queueLossTotal(): Long {
+        return try {
+            val stats = queueStore.stats(System.currentTimeMillis())
+            stats.evictedTotal + stats.expiredTotal + stats.corruptTotal +
+                queueStore.loadFailures + drainRefusedTotal
+        } catch (_: Exception) {
+            drainRefusedTotal
+        }
+    }
+
+    /**
+     * Reports under the existing S0 keys (no new endpoints, no new keys): the ledger
+     * upsert already tolerates heartbeat duplicates. Returns true on a 2xx answer.
+     */
+    private fun reportProtectionSnapshot(config: TelemetryConfig, state: ProtectionState): Boolean {
+        val now = System.currentTimeMillis()
+        val stats = try {
+            queueStore.stats(now)
+        } catch (_: Exception) {
+            null
+        }
+        val body = buildString {
+            append("{\"capabilities\":[")
+            // Reporting at all proves the boot path re-armed: this entry says so.
+            appendCapability(this, "boot_persistence", "confirmed", now, heartbeatEvidence(stats?.depth ?: 0, state.wire))
+            append(',')
+            val locationState = if (hasBackgroundLocationPermission()) "confirmed" else "permission_needed"
+            appendCapability(this, "background_location", locationState, now, null)
+            append(',')
+            appendCapability(this, "battery_reporting", "confirmed", now, batteryEvidence())
+            append("]}")
+        }
+        val answer = post(
+            config,
+            "/v1/devices/${config.deviceId}/capabilities",
+            body,
+            "protection-hb-" + UUID.randomUUID().toString(),
+        )
+        learnDateHeader(answer.dateHeaderMillis)
+        val outcome = LocationFixProtocol.classify(answer.statusCode, answer.errorBody)
+        if (outcome == LocationReportOutcome.CREDENTIAL_REVOKED) {
+            settle(config, outcome)
+            return false
+        }
+        return outcome == LocationReportOutcome.ACCEPTED
+    }
+
+    private fun appendCapability(
+        out: StringBuilder,
+        key: String,
+        state: String,
+        nowMillis: Long,
+        evidence: String?,
+    ) {
+        out.append("{\"capabilityKey\":\"").append(key).append("\",")
+        out.append("\"state\":\"").append(state).append('"')
+        if (state == "confirmed") {
+            // Explicit pairing (the server would default it, but the stamp is ours to state).
+            out.append(",\"confirmedAt\":\"").append(LocationFixProtocol.isoInstant(nowMillis)).append('"')
+        }
+        if (evidence != null) out.append(",\"evidence\":\"").append(evidence).append('"')
+        out.append('}')
+    }
+
+    /**
+     * Compact heartbeat facts, controlled alphabet only (`[a-z0-9=+.,;_-]`), far under the
+     * 512-char evidence bound: `v` schema, `oem` vendor, `ex` battery exemption (0/1),
+     * `q` queue depth, `lost` cumulative queue loss, `ref` cumulative drain refusals,
+     * `off` server-offset seconds (`?` = unknown), `gap` locked-boot gap seconds (-1 = none),
+     * `st` the verdict wire (`fully_protected` / `degraded` / `stopped`).
+     */
+    private fun heartbeatEvidence(queueDepth: Int, stateWire: String): String {
+        val oem = try {
+            BatteryOemMap.guidance(Build.MANUFACTURER).vendorWire
+        } catch (_: Exception) {
+            "stock"
+        }
+        val exempt = if (isBatteryUnrestricted()) "1" else "0"
+        val offsetSeconds = try {
+            val wall = System.currentTimeMillis()
+            val corrected = ServerTimeOffset.correctedNow(
+                timeObservation,
+                wall,
+                SystemClock.elapsedRealtime(),
+            )
+            if (timeObservation == null) "?" else ((corrected - wall) / 1000L).toString()
+        } catch (_: Exception) {
+            "?"
+        }
+        return "v=1;oem=$oem;ex=$exempt;q=$queueDepth;lost=${queueLossTotal()};" +
+            "ref=$drainRefusedTotal;off=$offsetSeconds;gap=$lockedBootGapSeconds;st=$stateWire"
+    }
+
+    private fun batteryEvidence(): String {
+        val oem = try {
+            BatteryOemMap.guidance(Build.MANUFACTURER).vendorWire
+        } catch (_: Exception) {
+            "stock"
+        }
+        return "oem=$oem;ex=" + if (isBatteryUnrestricted()) "1" else "0"
+    }
+
+    /** The ongoing notification always says the current verdict - or the permission gap. */
+    private fun refreshProtectionNotification(state: ProtectionState) {
+        try {
+            val text = when (state) {
+                is ProtectionState.FullyProtected ->
+                    getString(R.string.location_sharing_notification_text)
+                is ProtectionState.Degraded ->
+                    getString(
+                        R.string.protection_notification_degraded_text,
+                        state.reasons.joinToString(", ") { it.wire },
+                    )
+                is ProtectionState.Stopped ->
+                    getString(
+                        R.string.protection_notification_stopped_text,
+                        state.reason.wire,
+                    )
+            }
+            NotificationManagerCompat.from(this).notify(NOTIFICATION_ID, buildOngoingNotification(text))
+        } catch (_: Exception) {
+            // POST_NOTIFICATIONS withdrawn mid-flight: the in-app status still says it.
+        }
+    }
+
+    private fun buildOngoingNotification(text: String): Notification {
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(com.familyos.family_os.R.mipmap.ic_launcher)
+            .setContentTitle(getString(R.string.location_sharing_notification_title))
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setContentIntent(openAppIntent())
+            .setOngoing(true)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .build()
+    }
+
+    private fun hasBackgroundLocationPermission(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return hasFineLocationPermission()
+        return ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_BACKGROUND_LOCATION) ==
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun hasNotificationsPermission(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
+        return ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) ==
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun isBatteryUnrestricted(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return true
+        return try {
+            val power = getSystemService(Context.POWER_SERVICE) as? PowerManager ?: return false
+            power.isIgnoringBatteryOptimizations(packageName)
+        } catch (_: Exception) {
+            false // Unreadable = restricted (fail closed: doubt is never healthy).
+        }
+    }
+
+    private fun isUserUnlocked(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return true
+        return try {
+            val users = getSystemService(Context.USER_SERVICE) as? UserManager ?: return false
+            users.isUserUnlocked
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun readNetworkAvailable(): Boolean {
+        return try {
+            val connectivity = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+                ?: return false
+            connectivity.activeNetworkInfo?.isConnected == true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun registerNetworkCallback() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return
+        try {
+            val connectivity = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+                ?: return
+            val callback = object : ConnectivityManager.NetworkCallback() {
+                override fun onAvailable(network: Network) {
+                    networkAvailable = true
+                    try {
+                        executor.execute {
+                            val config = try {
+                                configStore.read()
+                            } catch (_: Exception) {
+                                null
+                            }
+                            if (config != null && session.mayReport(config)) {
+                                drainQueued(config, DRAIN_LIMIT)
+                                heartbeatNow()
+                            }
+                        }
+                    } catch (_: java.util.concurrent.RejectedExecutionException) {
+                        // Shutting down; the scheduler heartbeat covers it.
+                    }
+                }
+
+                override fun onLost(network: Network) {
+                    networkAvailable = false
+                }
+            }
+            networkCallback = callback
+            connectivity.registerDefaultNetworkCallback(callback)
+        } catch (_: Exception) {
+            networkCallback = null
         }
     }
 
@@ -323,19 +791,8 @@ class ChildTelemetryService : Service(), LocationListener {
         )
     }
 
-    private fun foregroundNotification(): Notification {
-        val text = getString(R.string.location_sharing_notification_text)
-        return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(com.familyos.family_os.R.mipmap.ic_launcher)
-            .setContentTitle(getString(R.string.location_sharing_notification_title))
-            .setContentText(text)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
-            .setContentIntent(openAppIntent())
-            .setOngoing(true)
-            .setCategory(NotificationCompat.CATEGORY_SERVICE)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .build()
-    }
+    private fun foregroundNotification(): Notification =
+        buildOngoingNotification(getString(R.string.location_sharing_notification_text))
 
     private fun postSharingStoppedNotification() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
@@ -370,7 +827,7 @@ class ChildTelemetryService : Service(), LocationListener {
     }
 
     private data class BatteryReading(val level: Int, val status: String)
-    private data class HttpAnswer(val statusCode: Int?, val errorBody: String?)
+    private data class HttpAnswer(val statusCode: Int?, val errorBody: String?, val dateHeaderMillis: Long?)
 
     companion object {
         const val CHANNEL_ID = "child_telemetry"
@@ -378,10 +835,26 @@ class ChildTelemetryService : Service(), LocationListener {
         const val NOTIFICATION_ID = 91201
         const val STOPPED_NOTIFICATION_ID = 91202
         @Volatile var isRunning: Boolean = false
+
+        /** Set by [ProtectionBootReceiver] on boot/update/unlock starts. */
+        const val EXTRA_BOOT_START = "com.familyos.family_os.extra.BOOT_START"
+
+        /** Last heartbeat verdict, for the Flutter mirror and the stopped screen. */
+        @Volatile var lastProtectionState: ProtectionState? = null
+
         private const val UPDATE_INTERVAL_MILLIS = 5 * 60 * 1000L
         private const val UPDATE_DISTANCE_METERS = 50f
         private const val CONNECT_TIMEOUT_MILLIS = 15_000
         private const val READ_TIMEOUT_MILLIS = 15_000
+
+        // S2 resilience tuning. Drains stay far under the 120/minute device limit by
+        // staying small and sequential; the heartbeat is the freshness claim (D8).
+        private const val QUEUE_FILE_NAME = "fix-queue.v1"
+        private const val HEARTBEAT_INITIAL_DELAY_MINUTES = 1L
+        private const val HEARTBEAT_PERIOD_MINUTES = 15L
+        private const val HEARTBEAT_STALE_MILLIS = 30L * 60 * 1000
+        private const val DRAIN_LIMIT = 20
+        private const val DRAIN_PIGGYBACK_LIMIT = 5
     }
 }
 

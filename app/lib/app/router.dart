@@ -107,6 +107,7 @@ import 'package:family_os/features/n10_emergency/child_sos_button_screen.dart';
 import 'package:family_os/features/n10_emergency/child_sos_in_progress_screen.dart';
 import 'package:family_os/features/n11_billing/plans_screen.dart';
 import 'package:family_os/features/n11_billing/manage_subscription_screen.dart';
+import 'package:family_os/features/n07_privacy/battery_guidance_screen.dart';
 import 'package:family_os/features/n07_privacy/what_is_collected_screen.dart';
 import 'package:family_os/features/n13_coming_soon/coming_soon_screen.dart';
 import 'package:family_os/features/n02_day/child_arrival_screen.dart';
@@ -143,7 +144,7 @@ import 'package:family_os/features/n17_child_learn/child_interactive_stories_scr
 import 'package:family_os/features/n17_child_learn/child_family_challenges_screen.dart';
 import 'package:family_os/features/n17_child_learn/child_focus_sounds_screen.dart';
 
-/// Active registry screen_ids mirrored as routes (129 rows).
+/// Active registry screen_ids mirrored as routes (130 rows).
 /// Tombstones (ADR-034) are excluded — see [tombstoneScreenIds].
 const List<String> generatedScreenIds = [
   'SCR-SHR-001',
@@ -275,6 +276,7 @@ const List<String> generatedScreenIds = [
   'SCR-CHD-037',
   'SCR-FAT-085',
   'SCR-FAT-086',
+  'SCR-CHD-038',
 ];
 
 /// Tombstone screen_ids kept in CSV historically but never routed (ADR-034).
@@ -987,6 +989,11 @@ GoRouter createAppRouter({
       path: '/scr-fat-086',
       name: 'SCR-FAT-086',
       builder: (context, state) => FamilyMomentsScreen(),
+    ),
+    GoRoute(
+      path: '/scr-chd-038',
+      name: 'SCR-CHD-038',
+      builder: (context, state) => BatteryGuidanceScreen(),
     ),
     ], showShowcase),
   );

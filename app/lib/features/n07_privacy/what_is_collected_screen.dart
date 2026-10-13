@@ -21,6 +21,7 @@ import 'package:family_os/core/policy/privacy_collection_repository.dart';
 import 'package:family_os/core/policy/privacy_collection_sync_bus.dart';
 import 'package:family_os/core/prefs_misc/prefs_misc_runtime.dart';
 import 'package:family_os/core/screen_camera/screen_camera.dart';
+import 'package:family_os/features/n07_privacy/protection_status_card.dart';
 import 'package:family_os/features/n08_platform/effective_monitoring_transparency.dart';
 import 'package:family_os/foundation_gate/native_child_telemetry_bridge.dart';
 
@@ -350,6 +351,10 @@ class _WhatIsCollectedScreenState extends State<WhatIsCollectedScreen> {
                       ],
                     ),
                   ],
+                  // S2 resilience verdict — below the transparency stack so the
+                  // FS-004/FS-007 cards stay inside the first viewport.
+                  const SizedBox(height: 20),
+                  const ProtectionStatusCard(),
                   const ShellTabMoreTools(tabId: 'me'),
                 ],
               ),

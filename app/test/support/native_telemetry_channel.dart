@@ -14,9 +14,18 @@ const MethodChannel _nativeChildTelemetryChannel = MethodChannel(
 /// honest "native unavailable" path, exactly as a non-Android host would.
 ///
 /// Call from `setUp` (or inside a `testWidgets` before pumping).
-void mockNativeChildTelemetryChannel() {
+///
+/// [responses] optionally cans a reply per method name (S2 resilience screens
+/// read `protectionState`, `batteryGuidance`, `openBatterySettings`). Methods
+/// without a canned reply still answer `null` — the honest "native
+/// unavailable" path.
+void mockNativeChildTelemetryChannel({
+  Map<String, Object?>? responses,
+}) {
   TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-      .setMockMethodCallHandler(_nativeChildTelemetryChannel, (call) async => null);
+      .setMockMethodCallHandler(_nativeChildTelemetryChannel, (call) async {
+        return responses?[call.method];
+      });
   addTearDown(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(_nativeChildTelemetryChannel, null);

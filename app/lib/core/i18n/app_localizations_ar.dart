@@ -11776,6 +11776,72 @@ class AppLocalizationsAr extends AppLocalizations {
       'تم تسجيل الخروج، لكن تعذّر تأكيد إزالة تسجيل إشعارات قديم لهذا الهاتف. سيُعاد فحص التنظيف عند تسجيل الدخول مجددًا.';
 
   @override
+  String get s2ProtectionTitle => 'حالة الحماية';
+
+  @override
+  String get s2ProtectionFullyProtected => 'الحماية تعمل بالكامل';
+
+  @override
+  String get s2ProtectionDegraded => 'الحماية تعمل جزئياً';
+
+  @override
+  String get s2ProtectionStopped => 'الحماية متوقفة';
+
+  @override
+  String get s2ProtectionNotConfigured => 'هذا الهاتف غير مُعدّ للحماية بعد';
+
+  @override
+  String get s2ProtectionUnavailable => 'تعذّرت قراءة حالة الحماية';
+
+  @override
+  String get s2ProtectionQueuedNote => 'نقاط مؤجلة ستُرسل عند عودة الشبكة';
+
+  @override
+  String get s2ProtectionBatteryButton => 'إرشاد البطارية';
+
+  @override
+  String get s2BatteryTitle => 'استثناء البطارية';
+
+  @override
+  String get s2BatteryBody =>
+      'يقيّد نظام الهاتف عمل التطبيق في الخلفية لتوفير البطارية، فيتأخر إرسال الموقع. امنح الاستثناء من الإعدادات ليستمر الإرسال.';
+
+  @override
+  String get s2BatteryOpenSettings => 'فتح إعدادات البطارية';
+
+  @override
+  String get s2BatteryOpenedNote =>
+      'فُتحت الإعدادات. بعد منح الاستثناء ارجع إلى التطبيق.';
+
+  @override
+  String get s2BatteryFallbackNote =>
+      'تعذّر فتح صفحة الشركة. فُتحت إعدادات التطبيق: ابحث عن البطارية ثم امنح «عدم التقييد».';
+
+  @override
+  String get s2BatteryOemXiaomi =>
+      'شاومي/ريدمي: الإعدادات ← البطارية ← تشغيل تلقائي: اسمح للتطبيق، ثم فعّل «عدم تقييد النشاط في الخلفية».';
+
+  @override
+  String get s2BatteryOemHuawei =>
+      'هواوي/هونر: مدير الهاتف ← بدء التشغيل التلقائي: فعّل التطبيق يدوياً واسمح بالعمل في الخلفية.';
+
+  @override
+  String get s2BatteryOemOppo =>
+      'أوبو/ريلمي/ون بلس: الإعدادات ← البطارية ← تحسين البطارية: اختر التطبيق وامنح «عدم التحسين».';
+
+  @override
+  String get s2BatteryOemVivo =>
+      'فيفو: الإعدادات ← البطارية ← استهلاك الخلفية: اسمح للتطبيق بالعمل المرتفع في الخلفية.';
+
+  @override
+  String get s2BatteryOemSamsung =>
+      'سامسونغ: الإعدادات ← البطارية ← حدود استخدام الخلفية: أضف التطبيق إلى «عدم السكون أبداً».';
+
+  @override
+  String get s2BatteryOemStock =>
+      'أندرويد: الإعدادات ← البطارية ← تحسين البطارية: اختر «كل التطبيقات» ثم امنح التطبيق «عدم التحسين».';
+
+  @override
   String get sys3ErrorTitle => 'تعذر الإكمال';
 
   @override

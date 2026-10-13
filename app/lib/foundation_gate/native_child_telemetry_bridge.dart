@@ -50,6 +50,53 @@ class NativeChildTelemetryBridge {
     }
   }
 
+  /// S2 resilience: the protection verdict computed where the facts live.
+  ///
+  /// The verdict's state word comes from a closed vocabulary; anything outside
+  /// it (or any platform failure) yields [NativeProtectionState.unavailable].
+  /// See [NativeProtectionState.effectiveState] for the one rule Dart applies.
+  static Future<NativeProtectionState> protectionState() async {
+    try {
+      final result = await _channel.invokeMapMethod<String, dynamic>(
+        'protectionState',
+      );
+      return NativeProtectionState.fromMap(result);
+    } on MissingPluginException {
+      return const NativeProtectionState.unavailable();
+    } on PlatformException {
+      return const NativeProtectionState.unavailable();
+    }
+  }
+
+  /// S2 resilience: which settings door opens this vendor's battery exemption.
+  static Future<NativeBatteryGuidance> batteryGuidance() async {
+    try {
+      final result = await _channel.invokeMapMethod<String, dynamic>(
+        'batteryGuidance',
+      );
+      return NativeBatteryGuidance.fromMap(result);
+    } on MissingPluginException {
+      return const NativeBatteryGuidance.unavailable();
+    } on PlatformException {
+      return const NativeBatteryGuidance.unavailable();
+    }
+  }
+
+  /// S2 resilience: opens the vendor's battery settings (resolve-checked natively;
+  /// falls back to the app-details screen). True only when a vendor door opened.
+  static Future<bool> openBatterySettings() async {
+    try {
+      final result = await _channel.invokeMapMethod<String, dynamic>(
+        'openBatterySettings',
+      );
+      return result?['opened'] == true;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException {
+      return false;
+    }
+  }
+
   /// Moves the one-time device credential directly into Android Keystore-backed
   /// storage, then starts the foreground service only if real location access
   /// has been granted by the device owner/guardian.
@@ -209,6 +256,161 @@ class NativeTelemetryStatus {
         fineLocationGranted: value?['fineLocationGranted'] == true,
         backgroundLocationGranted: value?['backgroundLocationGranted'] == true,
       );
+}
+
+/// S2 resilience: the protection verdict, mirrored - never re-derived - from native.
+///
+/// The native layer computes the verdict; Dart applies exactly one rule on top
+/// ([effectiveState]): when the live grant overlay explicitly says background
+/// location is *not* granted, a healthy-looking verdict is distrusted into
+/// `stopped/permission_revoked`, because the overlay is fresher than any verdict
+/// the service computed before the grant was pulled. Missing overlay fields mean
+/// "not re-read", never a flip: doubt about the overlay does not rewrite the
+/// verdict, it just renders it.
+class NativeProtectionState {
+  const NativeProtectionState({
+    required this.state,
+    required this.reasons,
+    required this.reason,
+    required this.queueDepth,
+    required this.live,
+    required this.backgroundLocationGranted,
+    required this.notificationsGranted,
+    required this.available,
+  });
+
+  const NativeProtectionState.unavailable()
+    : state = NativeProtectionVerdict.unavailable,
+      reasons = const [],
+      reason = null,
+      queueDepth = 0,
+      live = false,
+      backgroundLocationGranted = null,
+      notificationsGranted = null,
+      available = false;
+
+  /// Closed vocabulary from the native contract (`not_configured` included).
+  /// Anything outside it parses as [NativeProtectionVerdict.unavailable].
+  final NativeProtectionVerdict state;
+
+  /// Degraded reason wires (`battery_restricted`, `offline`, ...), possibly empty.
+  final List<String> reasons;
+
+  /// Stopped reason wire (`service_down`, `permission_revoked`, ...), if stopped.
+  final String? reason;
+
+  final int queueDepth;
+
+  /// False when the service never reported in this process (verdict derived locally).
+  final bool live;
+
+  /// Live grant overlay, re-read by the activity. Null = not re-read.
+  final bool? backgroundLocationGranted;
+  final bool? notificationsGranted;
+
+  final bool available;
+
+  /// The verdict to render after the single overlay-distrust rule.
+  NativeProtectionState get effective {
+    if ((state == NativeProtectionVerdict.fullyProtected ||
+            state == NativeProtectionVerdict.degraded) &&
+        backgroundLocationGranted == false) {
+      return NativeProtectionState(
+        state: NativeProtectionVerdict.stopped,
+        reasons: const [],
+        reason: 'permission_revoked',
+        queueDepth: queueDepth,
+        live: live,
+        backgroundLocationGranted: backgroundLocationGranted,
+        notificationsGranted: notificationsGranted,
+        available: available,
+      );
+    }
+    return this;
+  }
+
+  factory NativeProtectionState.fromMap(Map<String, dynamic>? value) {
+    if (value == null || value['available'] != true) {
+      return const NativeProtectionState.unavailable();
+    }
+    final parsed = NativeProtectionVerdict.parse(value['state']);
+    if (parsed == null) return const NativeProtectionState.unavailable();
+    final rawReasons = value['reasons'];
+    return NativeProtectionState(
+      state: parsed,
+      reasons: rawReasons is List
+          ? rawReasons.whereType<String>().toList(growable: false)
+          : const [],
+      reason: value['reason'] as String?,
+      queueDepth: (value['queueDepth'] as num?)?.toInt() ?? 0,
+      live: value['live'] != false,
+      backgroundLocationGranted: value['backgroundLocationGranted'] as bool?,
+      notificationsGranted: value['notificationsGranted'] as bool?,
+      available: true,
+    );
+  }
+}
+
+enum NativeProtectionVerdict {
+  fullyProtected('fully_protected'),
+  degraded('degraded'),
+  stopped('stopped'),
+  notConfigured('not_configured'),
+  unavailable('unavailable');
+
+  const NativeProtectionVerdict(this.wire);
+
+  final String wire;
+
+  static NativeProtectionVerdict? parse(Object? wire) {
+    for (final verdict in NativeProtectionVerdict.values) {
+      if (verdict.wire == wire) return verdict;
+    }
+    return null;
+  }
+}
+
+/// S2 resilience: the vendor's battery-settings door (guidance only).
+class NativeBatteryGuidance {
+  const NativeBatteryGuidance({
+    required this.vendor,
+    required this.action,
+    required this.packageName,
+    required this.activity,
+    required this.stepsKey,
+    required this.available,
+  });
+
+  const NativeBatteryGuidance.unavailable()
+    : vendor = 'stock',
+      action = '',
+      packageName = '',
+      activity = '',
+      stepsKey = 'oem_stock',
+      available = false;
+
+  final String vendor;
+  final String action;
+  final String packageName;
+  final String activity;
+
+  /// Copy key the guidance screen maps to localized steps (closed switch).
+  final String stepsKey;
+  final bool available;
+
+  factory NativeBatteryGuidance.fromMap(Map<String, dynamic>? value) {
+    if (value == null || value['available'] != true) {
+      return const NativeBatteryGuidance.unavailable();
+    }
+    return NativeBatteryGuidance(
+      vendor: value['vendor'] as String? ?? 'stock',
+      action: value['action'] as String? ?? '',
+      packageName: value['package'] as String? ?? '',
+      activity: value['activity'] as String? ?? '',
+      stepsKey: value['stepsKey'] as String? ?? 'oem_stock',
+      available: true,
+    );
+  }
 }
 
 /// One consent answer from the server, carried across the native boundary as the

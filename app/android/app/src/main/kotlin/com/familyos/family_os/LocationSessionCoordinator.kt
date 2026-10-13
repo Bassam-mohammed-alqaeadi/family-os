@@ -16,11 +16,17 @@ package com.familyos.family_os
  *  3. Only a new pairing clears the mark. It writes the new credential and resets the
  *     status under the same [lock], so "the revoked pairing is still on disk" and "a new
  *     pairing arrived" can never be confused: the mark tells them apart, not the file.
+ *  4. The offline queue belongs to the session, not beside it (S2, coherence §5). Only a
+ *     retryable answer for the *current* pairing may enqueue; only the current pairing
+ *     may drain; revocation drops the queue with the credential; re-pairing must call
+ *     [dropQueue] before the new session starts, so the old pairing's fixes are never
+ *     sent as the new one's.
  */
 class LocationSessionCoordinator<C : Any>(
     private val store: PairingSessionStore<C>,
     private val status: ReportStatusSink,
     private val lock: Any,
+    private val queue: FixQueuePort? = null,
     private val clock: () -> Long,
 ) {
     /** Whether collection may start (or restart after the OS recreated the service). */
@@ -44,6 +50,9 @@ class LocationSessionCoordinator<C : Any>(
         if (!outcome.endsSession) return@synchronized Settlement(SettleDecision.CONTINUE, null)
         // Mark first: from here on nothing speaks with this pairing, whatever the delete does.
         status.markCredentialRevoked(clock())
+        // The queue dies with its session (rule 4): a dead pairing's fixes must neither be
+        // sent nor linger. The port is safe under this lock by contract.
+        queue?.dropAll()
         Settlement(SettleDecision.STOP_SESSION, store.forgetIfCurrent(used))
     }
 
@@ -62,6 +71,55 @@ class LocationSessionCoordinator<C : Any>(
         if (!status.credentialRevoked()) return@synchronized null
         val leftOver = store.current() ?: return@synchronized ForgetResult.FORGOTTEN
         store.forgetIfCurrent(leftOver)
+    }
+
+    /**
+     * Queues [fix] when [outcome] is retryable (see [queueWorthy]) and [config] is still
+     * the current, unrevoked pairing. Anything else - a refusal, a revoked mark, a
+     * superseded pairing, no queue wired - refuses without touching the queue.
+     */
+    fun offerToQueue(config: C, fix: QueuedFix, outcome: LocationReportOutcome, nowMillis: Long): Boolean =
+        synchronized(lock) {
+            val port = queue ?: return@synchronized false
+            if (status.credentialRevoked() || store.current() != config) return@synchronized false
+            if (!queueWorthy(outcome)) return@synchronized false
+            port.enqueue(fix, nowMillis)
+            true
+        }
+
+    /**
+     * The next queued fixes for [config], oldest first, at most [limit]. Only the current,
+     * unrevoked pairing may drain; the caller removes what the server acknowledges via
+     * [confirmDrained] (a crash between drain and confirm re-sends, and the per-fix
+     * idempotency key makes the re-send a no-op row, not a duplicate).
+     */
+    fun drainQueue(config: C, limit: Int, nowMillis: Long): List<QueuedFix> = synchronized(lock) {
+        val port = queue ?: return@synchronized emptyList()
+        if (status.credentialRevoked() || store.current() != config) return@synchronized emptyList()
+        port.due(limit, nowMillis)
+    }
+
+    /**
+     * Removes drained fixes the server settled. Refuses silently unless [config] is still
+     * the stored pairing: a replaced pairing's leftovers are dropped by [dropQueue] on the
+     * pairing path, never confirmed away piecemeal.
+     */
+    fun confirmDrained(config: C, fixIds: Set<String>) {
+        synchronized(lock) {
+            val port = queue ?: return@synchronized
+            if (store.current() != config) return@synchronized
+            port.remove(fixIds)
+        }
+    }
+
+    /**
+     * Drops the queue with its loss counters. Called on the re-pairing path *before* the
+     * new session starts (rule 4); revocation drops through [settle] instead.
+     */
+    fun dropQueue() {
+        synchronized(lock) {
+            queue?.dropAll()
+        }
     }
 }
 

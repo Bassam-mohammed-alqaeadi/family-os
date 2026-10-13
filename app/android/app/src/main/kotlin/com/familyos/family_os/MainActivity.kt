@@ -53,6 +53,9 @@ class MainActivity : FlutterActivity() {
                     "capabilitySnapshot" -> capabilitySnapshot(result)
                     "stop" -> stopTelemetry(result)
                     "status" -> telemetryStatus(result)
+                    "protectionState" -> protectionState(result)
+                    "batteryGuidance" -> batteryGuidance(result)
+                    "openBatterySettings" -> openBatterySettings(result)
                     else -> result.notImplemented()
                 }
             }
@@ -201,6 +204,126 @@ class MainActivity : FlutterActivity() {
             "fineLocationGranted" to hasFineLocation(),
             "backgroundLocationGranted" to hasBackgroundLocation(),
         ) + LocationReportStatusStore(this).snapshot())
+    }
+
+    /**
+     * S2 resilience: the protection verdict for the Flutter mirror (D7).
+     *
+     * Contract: `state` is one of `fully_protected` / `degraded` / `stopped` /
+     * `not_configured`. `live=false` means the service never reported in this process
+     * and the verdict was derived here (paired-but-silent = down). The activity always
+     * re-reads the grants itself (`backgroundLocationGranted`, `notificationsGranted`)
+     * so Dart can distrust a stale verdict instead of rendering it.
+     */
+    private fun protectionState(result: MethodChannel.Result) {
+        try {
+            val state = ChildTelemetryService.lastProtectionState
+            if (state == null) {
+                val configured = try {
+                    TelemetryConfigStore(this).read() != null
+                } catch (_: Exception) {
+                    false
+                }
+                if (!configured) {
+                    result.success(mapOf("available" to true, "state" to "not_configured"))
+                    return
+                }
+                result.success(
+                    mapOf(
+                        "available" to true,
+                        "state" to ProtectionState.Stopped(StoppedReason.SERVICE_DOWN, 0).wire,
+                        "reason" to StoppedReason.SERVICE_DOWN.wire,
+                        "queueDepth" to 0,
+                        "live" to false,
+                        "backgroundLocationGranted" to hasBackgroundLocation(),
+                        "notificationsGranted" to hasNotifications(),
+                    ),
+                )
+                return
+            }
+            val answer = mutableMapOf<String, Any>(
+                "available" to true,
+                "state" to state.wire,
+                "live" to true,
+                "backgroundLocationGranted" to hasBackgroundLocation(),
+                "notificationsGranted" to hasNotifications(),
+            )
+            when (state) {
+                is ProtectionState.FullyProtected -> Unit
+                is ProtectionState.Degraded -> {
+                    answer["reasons"] = state.reasons.map { it.wire }
+                    answer["queueDepth"] = state.queueDepth
+                }
+                is ProtectionState.Stopped -> {
+                    answer["reason"] = state.reason.wire
+                    answer["queueDepth"] = state.queueDepth
+                }
+            }
+            result.success(answer)
+        } catch (_: Exception) {
+            result.error("protection_state_unreadable", "The protection state could not be read.", null)
+        }
+    }
+
+    /**
+     * S2 resilience: which settings door opens the battery/autostart exemption for this
+     * manufacturer (guidance only - nothing is requested programmatically, §12 row 2).
+     */
+    private fun batteryGuidance(result: MethodChannel.Result) {
+        try {
+            val entry = BatteryOemMap.guidance(Build.MANUFACTURER)
+            result.success(
+                mapOf(
+                    "available" to true,
+                    "vendor" to entry.vendorWire,
+                    "action" to entry.action,
+                    "package" to (entry.targetPackage ?: ""),
+                    "activity" to (entry.targetActivity ?: ""),
+                    "stepsKey" to entry.stepsKey,
+                ),
+            )
+        } catch (_: Exception) {
+            result.error("battery_guidance_unreadable", "The battery guidance could not be read.", null)
+        }
+    }
+
+    /**
+     * Opens the vendor's battery/autostart settings (resolve-checked: OEM component names
+     * drift, so an unresolvable door falls back to the app-details screen and reports
+     * `false` rather than crashing). Returns whether a vendor door was opened.
+     */
+    private fun openBatterySettings(result: MethodChannel.Result) {
+        try {
+            val entry = BatteryOemMap.guidance(Build.MANUFACTURER)
+            val vendorIntent = if (entry.targetPackage != null && entry.targetActivity != null) {
+                // Vendor activities are exported inconsistently; resolve before trusting.
+                Intent(entry.action).setClassName(entry.targetPackage, entry.targetActivity)
+            } else {
+                Intent(entry.action)
+            }
+            val resolved = packageManager.resolveActivity(vendorIntent, PackageManager.MATCH_DEFAULT_ONLY)
+            if (resolved != null) {
+                startActivity(vendorIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                result.success(mapOf("available" to true, "opened" to true, "vendor" to entry.vendorWire))
+                return
+            }
+            val details = Intent(
+                android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.fromParts("package", packageName, null),
+            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            if (packageManager.resolveActivity(details, PackageManager.MATCH_DEFAULT_ONLY) != null) {
+                startActivity(details)
+            }
+            result.success(mapOf("available" to true, "opened" to false, "vendor" to entry.vendorWire))
+        } catch (_: Exception) {
+            result.success(mapOf("available" to true, "opened" to false, "vendor" to "stock"))
+        }
+    }
+
+    private fun hasNotifications(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
     }
 
     /**
