@@ -386,6 +386,8 @@ export class NotificationDispatcher {
     this.clientFactory = clientFactory;
     this.now = now;
     this.running = false;
+    this.retryTimer = null;
+    this.retryTimerAt = null;
   }
 
   /** Called by the store only after the event's transaction has committed. */
@@ -419,6 +421,11 @@ export class NotificationDispatcher {
       return { processed: results.length, results };
     } finally {
       this.running = false;
+      try {
+        await this.#armEarliestPendingRetry();
+      } catch (error) {
+        logDispatchFailure(null, 'notification.retry_wakeup', safeFailureReason(error));
+      }
     }
   }
 
@@ -437,6 +444,11 @@ export class NotificationDispatcher {
         logDispatchFailure(row.id, row.event_type, safeFailureReason(error));
         results.push({ outboxId: row.id, status: 'failed', reason: safeFailureReason(error) });
       }
+    }
+    try {
+      await this.#armEarliestPendingRetry();
+    } catch (error) {
+      logDispatchFailure(null, 'notification.retry_wakeup', safeFailureReason(error));
     }
     return { processed: results.length, results };
   }
@@ -889,6 +901,71 @@ export class NotificationDispatcher {
     }
   }
 
+  #armRetryWakeup(retryAt) {
+    const dueAt = retryAt instanceof Date ? retryAt.getTime() : Date.parse(String(retryAt));
+    if (!Number.isFinite(dueAt)) return;
+    // Keep an already armed earlier wakeup; an early wake simply re-reads the durable queue.
+    if (this.retryTimer != null && this.retryTimerAt != null && this.retryTimerAt <= dueAt) return;
+    if (this.retryTimer != null) clearTimeout(this.retryTimer);
+    this.retryTimerAt = dueAt;
+    const delay = Math.max(0, Math.min(2_147_483_647, dueAt - Date.now() + 25));
+    this.retryTimer = setTimeout(() => {
+      this.retryTimer = null;
+      this.retryTimerAt = null;
+      void (async () => {
+        try {
+          await this.sweep({ limit: MAX_SWEEP_LIMIT });
+        } catch (error) {
+          logDispatchFailure(null, 'notification.retry_wakeup', safeFailureReason(error));
+        }
+        try {
+          await this.#armEarliestPendingRetry();
+        } catch (error) {
+          logDispatchFailure(null, 'notification.retry_wakeup', safeFailureReason(error));
+          // A database blip must not strand a durable retry. Use a single bounded recovery wakeup.
+          this.#armRetryWakeup(new Date(Date.now() + 1_000));
+        }
+      })();
+    }, delay);
+    this.retryTimer.unref?.();
+  }
+
+  async #armEarliestPendingRetry() {
+    const client = await this.clientFactory();
+    if (!client || typeof client.query !== 'function') return;
+    try {
+      const { rows } = await client.query(
+        `SELECT MIN(event.available_at) AS retry_at
+           FROM outbox_events event
+          WHERE event.status = 'pending'
+            AND EXISTS (
+              SELECT 1
+                FROM outbox_delivery_attempts attempt
+               WHERE attempt.outbox_id = event.id
+                 AND attempt.outcome = 'retryable_failure'
+                 AND attempt.attempt_number < $1
+                 AND attempt.attempt_number = (
+                   SELECT MAX(previous.attempt_number)
+                     FROM outbox_delivery_attempts previous
+                    WHERE previous.outbox_id = event.id
+                      AND previous.registration_id = attempt.registration_id
+                 )
+            )`,
+        [MAX_FCM_SEND_ATTEMPTS],
+      );
+      const retryAt = rows[0]?.retry_at;
+      if (retryAt == null) {
+        if (this.retryTimer != null) clearTimeout(this.retryTimer);
+        this.retryTimer = null;
+        this.retryTimerAt = null;
+        return;
+      }
+      this.#armRetryWakeup(retryAt);
+    } finally {
+      client.release?.();
+    }
+  }
+
   async #scheduleRetry(outboxId) {
     const client = await this.clientFactory();
     try {
@@ -911,6 +988,7 @@ export class NotificationDispatcher {
         [outboxId, MAX_FCM_SEND_ATTEMPTS],
       );
       if (rows.length === 0 || !rows[0].available_at) throw new Error('notification_retry_schedule_missing');
+      this.#armRetryWakeup(rows[0].available_at);
       return rows[0].available_at;
     } catch (error) {
       throw preserveLease(error);

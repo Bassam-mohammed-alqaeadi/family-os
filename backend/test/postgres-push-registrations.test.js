@@ -253,7 +253,13 @@ test('registration is guardian-only, a token moves to its latest guardian, and r
         method: 'DELETE',
         headers: authorized('test-co'),
       });
-      assert.equal(stolen.status, 404);
+      assert.equal(stolen.status, 204);
+      const stillOwned = await client.query(
+        'SELECT membership_id FROM family_push_registrations WHERE id = $1',
+        [moved.body.registration.id],
+      );
+      assert.deepEqual(stillOwned.rows, [{ membership_id: h.co2 }],
+        'a concealed foreign UUID must not delete the other guardian registration');
       const removed = await call(baseUrl, `${registerPath(h.familyId)}/${moved.body.registration.id}`, {
         method: 'DELETE',
         headers: authorized('test-co2'),

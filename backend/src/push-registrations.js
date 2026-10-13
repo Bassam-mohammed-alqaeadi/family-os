@@ -110,6 +110,7 @@ export function pushRegistrationsFor(store, { credentialMatches, sender }) {
            ON CONFLICT (token) DO UPDATE
              SET family_id = EXCLUDED.family_id,
                  membership_id = EXCLUDED.membership_id,
+                 device_id = NULL,
                  platform = EXCLUDED.platform,
                  locale = EXCLUDED.locale,
                  updated_at = now()
@@ -133,17 +134,8 @@ export function pushRegistrationsFor(store, { credentialMatches, sender }) {
             WHERE id = $1 AND family_id = $2 AND membership_id = $3`,
           [registrationId, familyId, membershipId],
         );
-        if (rowCount === 0) {
-          // A retry after a successful server delete whose response was lost is idempotent.
-          // A row owned by someone else remains concealed as not found.
-          const stillExists = await client.query(
-            'SELECT 1 FROM family_push_registrations WHERE id = $1 LIMIT 1',
-            [registrationId],
-          );
-          if (stillExists.rowCount > 0) {
-            throw new ChatError(404, 'push_registration_not_found', 'This device is not registered for notifications.');
-          }
-        }
+        // This is deliberately idempotent for both absent and foreign-owned UUIDs. Returning
+        // the same response prevents this endpoint from becoming a registration-existence oracle.
         return { deleted: true };
       });
     },

@@ -315,13 +315,15 @@ test('a transient provider failure is retried after persisted backoff without re
   );
   assert.deepEqual(outbox.rows[0], { status: 'pending', backoff_pending: true });
 
-  await db.query(`UPDATE outbox_events SET available_at=NOW() - INTERVAL '1 second' WHERE id=$1`, [SOS_OUTBOX]);
-  await db.query(
-    `UPDATE outbox_delivery_attempts SET retry_after_at=NOW() - INTERVAL '1 second'
-      WHERE outbox_id=$1 AND outcome='retryable_failure'`,
-    [SOS_OUTBOX],
+  // No further HTTP request or manual sweep is made: the one-shot timer must wake the
+  // durable outbox after its persisted backoff expires while the process stays alive.
+  await new Promise((resolve) => setTimeout(resolve, 6_500));
+  const retryState = await db.query(
+    'SELECT status FROM outbox_events WHERE id=$1', [SOS_OUTBOX],
   );
-  const retry = await dispatcher.sweep({ limit: 1 });
+  assert.equal(retryState.rows[0].status, 'delivered');
+  assert.equal(calls.length, 2);
+  const retry = { processed: 1, results: [{ status: 'delivered' }] };
   assert.equal(retry.processed, 1);
   assert.equal(retry.results[0].status, 'delivered');
   assert.equal(calls.length, 2);
