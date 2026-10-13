@@ -41,6 +41,24 @@ fetch https://repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-cor
   66fdef91e9739348df7a096aa384a5685f4e875584cce89386a7a47251c4d8e9
 
 CLASSPATH="$WORK/lib/junit-4.13.2.jar:$WORK/lib/hamcrest-core-1.3.jar"
-kotlinc -nowarn -cp "$CLASSPATH" -d "$WORK/classes" "${SOURCES[@]}" "${TESTS[@]}"
+# TEMP-DIAG (revert after reading): surface tool output as annotations.
+set +e
+kotlinc -nowarn -cp "$CLASSPATH" -d "$WORK/classes" "${SOURCES[@]}" "${TESTS[@]}" >"$WORK/kotlinc.log" 2>&1
+KOTLIN_STATUS=$?
+set -e
+if [ "$KOTLIN_STATUS" -ne 0 ]; then
+  echo "::error title=TEMP kotlinc failed::$KOTLIN_STATUS"
+  head -n 30 "$WORK/kotlinc.log" | sed 's/^/::error title=TEMP kotlinc::/'
+  exit 1
+fi
+set +e
 java -cp "$WORK/classes:$CLASSPATH:$(dirname "$(command -v kotlinc)")/../lib/kotlin-stdlib.jar" \
-  org.junit.runner.JUnitCore "${TEST_CLASSES[@]}"
+  org.junit.runner.JUnitCore "${TEST_CLASSES[@]}" >"$WORK/junit.log" 2>&1
+JUNIT_STATUS=$?
+set -e
+if [ "$JUNIT_STATUS" -ne 0 ]; then
+  echo "::error title=TEMP junit failed::$JUNIT_STATUS"
+  head -n 40 "$WORK/junit.log" | sed 's/^/::error title=TEMP junit::/'
+  exit 1
+fi
+tail -n 4 "$WORK/junit.log"

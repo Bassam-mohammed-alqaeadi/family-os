@@ -144,7 +144,7 @@ import 'package:family_os/features/n17_child_learn/child_interactive_stories_scr
 import 'package:family_os/features/n17_child_learn/child_family_challenges_screen.dart';
 import 'package:family_os/features/n17_child_learn/child_focus_sounds_screen.dart';
 
-/// Active registry screen_ids mirrored as routes (129 rows).
+/// Active registry screen_ids mirrored as routes (130 rows).
 /// Tombstones (ADR-034) are excluded — see [tombstoneScreenIds].
 const List<String> generatedScreenIds = [
   'SCR-SHR-001',
@@ -990,7 +990,6 @@ GoRouter createAppRouter({
       name: 'SCR-FAT-086',
       builder: (context, state) => FamilyMomentsScreen(),
     ),
-
     GoRoute(
       path: '/scr-chd-038',
       name: 'SCR-CHD-038',
