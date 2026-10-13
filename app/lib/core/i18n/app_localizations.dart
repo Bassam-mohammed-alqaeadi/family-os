@@ -20897,6 +20897,12 @@ abstract class AppLocalizations {
   /// **'تم تطبيق تغيير الهوية محليًا.'**
   String get sys3SuccessBody;
 
+  /// No description provided for @sys3PushCleanupWarning.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم تسجيل الخروج، لكن تعذّر تأكيد إزالة تسجيل إشعارات قديم لهذا الهاتف. سيُعاد فحص التنظيف عند تسجيل الدخول مجددًا.'**
+  String get sys3PushCleanupWarning;
+
   /// No description provided for @sys3ErrorTitle.
   ///
   /// In ar, this message translates to:

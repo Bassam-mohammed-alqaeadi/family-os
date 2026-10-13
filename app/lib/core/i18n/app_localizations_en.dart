@@ -11945,6 +11945,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sys3SuccessBody => 'The identity change was applied locally.';
 
   @override
+  String get sys3PushCleanupWarning =>
+      'Signed out, but an old notification registration for this phone could not be confirmed removed. Cleanup will be rechecked at the next sign-in.';
+
+  @override
   String get sys3ErrorTitle => 'Unable to complete';
 
   @override

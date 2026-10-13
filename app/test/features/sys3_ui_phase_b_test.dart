@@ -301,9 +301,13 @@ void main() {
       expect(unregisterCalls, 1);
       expect(identity.signOutCalls, 1);
       expect(foundationRuntime.phase, FoundationGatePhase.signedOut);
+      // Two facts, two presentations: the logout completed (success result) and
+      // the push cleanup is unconfirmed (localized amber banner, not a success
+      // title carrying a warning body).
       expect(find.byKey(Sys3Keys.success), findsOneWidget);
+      expect(find.byKey(Sys3Keys.pushCleanupWarning), findsOneWidget);
       expect(
-        find.textContaining('قد يستمر في تلقي التنبيهات'),
+        find.textContaining('could not be confirmed removed'),
         findsOneWidget,
       );
     },

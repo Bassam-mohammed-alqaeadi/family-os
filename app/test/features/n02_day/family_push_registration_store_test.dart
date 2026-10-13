@@ -20,7 +20,7 @@ void main() {
     databaseFactory = databaseFactoryFfi;
   });
 
-  test('unknown, known-empty, UUIDs and pending cleanup survive SQLite reopen', () async {
+  test('fresh installs seed known-empty; UUIDs and pending cleanup survive SQLite reopen', () async {
     final directory = await Directory.systemTemp.createTemp('family_push_restart_');
     final path = p.join(directory.path, 'push-registration.db');
     var database = await SqliteLocalDatabase.openAt(path);
@@ -29,13 +29,12 @@ void main() {
       isRestartSafe: true,
     );
 
-    // No row is not proof of no remote registration: this is an app upgraded from the
-    // process-local implementation, so it starts in the conservative unknown state.
+    // A fresh database never persisted anything, so no older client could have
+    // registered from this installation: the first read seeds known-empty instead
+    // of warning forever about a registration that cannot exist.
     final absent = await store.read();
-    expect(absent.hasUntrackedRegistration, isTrue);
+    expect(absent.hasUntrackedRegistration, isFalse);
     expect(absent.registrations, isEmpty);
-
-    await store.save(FamilyPushRegistrationSnapshot.knownNone);
     await database.close();
 
     database = await SqliteLocalDatabase.openAt(path);
@@ -103,6 +102,52 @@ void main() {
     expect(migrated.hasUntrackedRegistration, isTrue);
     expect(migrated.registrations, hasLength(1));
     expect(migrated.registrations.single.registrationId, _registrationId);
+
+    await database.close();
+    await directory.delete(recursive: true);
+  });
+
+  test('a populated database without a ledger row stays unknown (legacy upgrade)', () async {
+    final directory = await Directory.systemTemp.createTemp('family_push_legacy_db_');
+    final path = p.join(directory.path, 'push-registration.db');
+    final database = await SqliteLocalDatabase.openAt(path);
+    // Another feature persisted here before the ledger existed: an older client may
+    // have registered a token without writing its UUID, so absence stays unknown.
+    await database.insert(
+      'kv_store',
+      {
+        'namespace': 'some_older_feature',
+        'key': 'installed_at',
+        'value': '2026-01-01',
+        'updated_at': DateTime.utc(2026).millisecondsSinceEpoch,
+      },
+      conflictAlgorithm: LocalConflictAlgorithm.replace,
+    );
+
+    final store = LocalKvFamilyPushRegistrationStore(
+      database,
+      isRestartSafe: true,
+    );
+    final legacy = await store.read();
+    expect(legacy.hasUntrackedRegistration, isTrue);
+    expect(legacy.registrations, isEmpty);
+
+    await database.close();
+    await directory.delete(recursive: true);
+  });
+
+  test('a non-durable store never claims known-empty, even when empty', () async {
+    final directory = await Directory.systemTemp.createTemp('family_push_memory_');
+    final path = p.join(directory.path, 'push-registration.db');
+    final database = await SqliteLocalDatabase.openAt(path);
+    final store = LocalKvFamilyPushRegistrationStore(
+      database,
+      isRestartSafe: false,
+    );
+    // Durable proof requires durable storage: doubt stands on memory fallback.
+    final verdict = await store.read();
+    expect(verdict.hasUntrackedRegistration, isTrue);
+    expect(verdict.registrations, isEmpty);
 
     await database.close();
     await directory.delete(recursive: true);

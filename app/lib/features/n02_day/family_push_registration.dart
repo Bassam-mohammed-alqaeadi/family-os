@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -16,6 +18,10 @@ abstract interface class PushTokenSource {
   /// Best-effort token retrieval without requesting notification permission. Used only to remove
   /// an old registration; a null result means that the server state remains unknown.
   Future<String?> currentTokenForCleanup();
+
+  /// Fires with the fresh token whenever FCM rotates it, including late iOS
+  /// availability after APNs registration. Empty when push is unavailable.
+  Stream<String> tokenRefreshes();
 }
 
 /// The real token source, through Firebase Cloud Messaging.
@@ -58,6 +64,16 @@ final class FirebasePushTokenSource implements PushTokenSource {
     }
   }
 
+  @override
+  Stream<String> tokenRefreshes() {
+    try {
+      if (Firebase.apps.isEmpty) return const Stream.empty();
+      return FirebaseMessaging.instance.onTokenRefresh;
+    } on Object {
+      return const Stream.empty();
+    }
+  }
+
   Future<FirebaseMessaging> _messaging() async {
     if (Firebase.apps.isEmpty) await Firebase.initializeApp();
     return FirebaseMessaging.instance;
@@ -95,12 +111,49 @@ final class FamilyPushRegistrar {
       FamilyPushRegistrationSnapshot.unknown;
   String? _registeredToken;
   var _loaded = false;
+  StreamSubscription<String>? _refreshWatch;
 
   /// Clears process-local state after sign-out; durable pending/unknown state is not erased.
   void reset() {
+    unawaited(_refreshWatch?.cancel());
+    _refreshWatch = null;
     _snapshot = FamilyPushRegistrationSnapshot.unknown;
     _registeredToken = null;
     _loaded = false;
+  }
+
+  /// Re-runs the authenticated upsert whenever FCM rotates the token mid-session.
+  ///
+  /// The composition root calls this after a successful [ensureRegistered] with the
+  /// active family and a live account-token provider; [reset] cancels the watch on
+  /// sign-out. A rotation that arrives here re-registers the new token under the same
+  /// family, so the backend never keeps targeting a stale token until the next
+  /// startup. Failures are swallowed deliberately: the next startup or sign-in retries.
+  Future<void> watchTokenRefresh({
+    required String familyId,
+    required Future<String> Function() idToken,
+  }) async {
+    await _refreshWatch?.cancel();
+    _refreshWatch = _tokens.tokenRefreshes().listen(
+      (token) => unawaited(
+        _resyncAfterRefresh(token, familyId: familyId, idToken: idToken),
+      ),
+      onError: (_) {},
+    );
+  }
+
+  Future<void> _resyncAfterRefresh(
+    String token, {
+    required String familyId,
+    required Future<String> Function() idToken,
+  }) async {
+    if (token.isEmpty || token == _registeredToken) return;
+    try {
+      await ensureRegistered(familyId: familyId, idToken: await idToken());
+    } on Object {
+      // Offline, signed out, or Firebase unavailable: the next authenticated
+      // startup or sign-in retries the same upsert.
+    }
   }
 
   /// Attempts cleanup before the provider session is cleared.

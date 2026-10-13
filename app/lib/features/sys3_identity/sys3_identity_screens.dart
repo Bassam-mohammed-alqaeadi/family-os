@@ -23,6 +23,7 @@ abstract final class Sys3Keys {
   static const sessionRestore = Key('sys3_session_restore');
   static const sessionExpired = Key('sys3_session_expired');
   static const logout = Key('sys3_logout');
+  static const pushCleanupWarning = Key('sys3_push_cleanup_warning');
   static const recovery = Key('sys3_account_recovery');
   static const deactivate = Key('sys3_account_deactivate');
   static const familySelector = Key('sys3_family_selector');
@@ -201,6 +202,7 @@ class _LogoutConfirmScreenState extends State<LogoutConfirmScreen> {
   bool? _done;
   bool _submitting = false;
   String? _message;
+  bool _pushCleanupWarning = false;
 
   Future<void> _signOut() async {
     if (_submitting) return;
@@ -212,13 +214,14 @@ class _LogoutConfirmScreenState extends State<LogoutConfirmScreen> {
         await remoteIdentity.signOut();
         if (!mounted) return;
         setState(() => _done = true);
-      } on GuardianPushUnregistrationException catch (error) {
-        // The provider session was cleared; this exception is a warning that
-        // the server-side push registration could not be deleted.
+      } on GuardianPushUnregistrationException {
+        // The provider session was cleared; the server-side push cleanup could
+        // not be confirmed. Two facts, two presentations: the success result for
+        // the logout that completed, and a localized amber banner for the warning.
         if (!mounted) return;
         setState(() {
           _done = true;
-          _message = error.message;
+          _pushCleanupWarning = true;
         });
       } on Object {
         if (!mounted) return;
@@ -251,6 +254,15 @@ class _LogoutConfirmScreenState extends State<LogoutConfirmScreen> {
             key: const Key('sys3_logout_action'),
             label: l10n.sys3LogoutAction,
             onPressed: _submitting ? null : _signOut,
+          ),
+        if (_pushCleanupWarning)
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: BannerNote(
+              key: Sys3Keys.pushCleanupWarning,
+              variant: BannerVariant.a,
+              message: l10n.sys3PushCleanupWarning,
+            ),
           ),
       ],
     );

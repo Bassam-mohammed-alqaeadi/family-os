@@ -11772,6 +11772,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get sys3SuccessBody => 'تم تطبيق تغيير الهوية محليًا.';
 
   @override
+  String get sys3PushCleanupWarning =>
+      'تم تسجيل الخروج، لكن تعذّر تأكيد إزالة تسجيل إشعارات قديم لهذا الهاتف. سيُعاد فحص التنظيف عند تسجيل الدخول مجددًا.';
+
+  @override
   String get sys3ErrorTitle => 'تعذر الإكمال';
 
   @override

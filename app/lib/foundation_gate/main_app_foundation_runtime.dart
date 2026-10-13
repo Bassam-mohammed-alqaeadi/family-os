@@ -42,6 +42,10 @@ typedef GuardianPushUnregistrationCallback = Future<void> Function({
 final class GuardianPushUnregistrationException implements Exception {
   const GuardianPushUnregistrationException();
 
+  /// Stable machine-readable signal. UI renders localized text for this code
+  /// and never displays [message], which is log/debug detail only.
+  String get code => 'push-cleanup-unconfirmed';
+
   String get message =>
       'تم تسجيل الخروج، لكن تعذّر تأكيد إزالة تسجيل إشعارات قديم لهذا الهاتف. '
       'قد يستمر في تلقي التنبيهات؛ سيُعاد فحص التنظيف عند تسجيل الدخول مجددًا. '
