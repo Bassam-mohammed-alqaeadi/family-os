@@ -183,7 +183,9 @@ class ResilientFixQueue(
         if (!reader.expect("}")) return null
         if (!reader.atEnd()) return null
         if (fixId.isEmpty() || payload.isEmpty()) return null
-        if (recordedAt <= 0L || enqueuedAt < 0L || attempts < 0L) return null
+        // recordedAt == 0 is the valid epoch (expires via TTL, not corruption);
+        // negatives are unrepresentable — number() only reads digits.
+        if (enqueuedAt < 0L || attempts < 0L) return null
         if (attempts > Int.MAX_VALUE) return null
         return QueuedFix(
             fixId = fixId,
