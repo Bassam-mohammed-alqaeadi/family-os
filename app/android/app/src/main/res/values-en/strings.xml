@@ -8,6 +8,9 @@
     <string name="location_sharing_stopped_channel_name">Location sharing stopped</string>
     <string name="location_sharing_stopped_title">Location sharing stopped</string>
     <string name="location_sharing_stopped_text">This phone was disconnected from the family, so it no longer sends its location. Sharing again needs a new pairing from a guardian\'s phone.</string>
+    <string name="protection_notification_degraded_text">Protection is partially limited: %1$s. Open Family OS to see the limitation and clear it.</string>
+    <string name="protection_notification_stopped_text">Protection is stopped: %1$s. Open Family OS to restore it.</string>
+    <string name="protection_boot_exhausted_text">Protection could not restart automatically after boot. Open the app once to resume it.</string>
 
     <string name="familyos_sos_channel_name">Family SOS alerts</string>
     <string name="familyos_sos_channel_description">Urgent alerts when a child in the family presses the SOS button.</string>

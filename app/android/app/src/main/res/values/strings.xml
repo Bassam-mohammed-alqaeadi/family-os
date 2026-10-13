@@ -15,6 +15,9 @@
     <string name="location_sharing_stopped_channel_name">توقّف مشاركة الموقع</string>
     <string name="location_sharing_stopped_title">توقّفت مشاركة الموقع</string>
     <string name="location_sharing_stopped_text">فُصل هذا الهاتف عن العائلة، فتوقّف عن إرسال موقعه. لإعادة المشاركة يلزم إقران جديد من هاتف وليّ الأمر.</string>
+    <string name="protection_notification_degraded_text">الحماية تعمل جزئياً: %1$s. افتح Family OS لترى القيد وتزيله.</string>
+    <string name="protection_notification_stopped_text">الحماية متوقفة: %1$s. افتح Family OS لإعادتها.</string>
+    <string name="protection_boot_exhausted_text">تعذّرت إعادة تشغيل الحماية تلقائياً بعد الإقلاع. افتح التطبيق مرة واحدة لاستئنافها.</string>
 
     <string name="familyos_sos_channel_name">استغاثات العائلة</string>
     <string name="familyos_sos_channel_description">تنبيهات عاجلة عندما يضغط طفل في العائلة زر الاستغاثة.</string>

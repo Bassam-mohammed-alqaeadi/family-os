@@ -10,6 +10,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- S2 resilience: re-activate collection after reboot / app update / unlock, only
+         when background location is still granted (checked at every wake). -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- BATTERY_STATS is signature-only: normal apps cannot request or receive
          it. ChildTelemetryService reads the real public battery broadcast. -->
 
@@ -30,6 +33,21 @@
             android:name=".ChildTelemetryService"
             android:exported="false"
             android:foregroundServiceType="location" />
+        <!-- S2 resilience. BOOT_COMPLETED / MY_PACKAGE_REPLACED / USER_UNLOCKED restart the
+             location service (background-grant gated, backoff paced). LOCKED_BOOT_COMPLETED
+             only records a marker: the Keystore key and pairing are unavailable before first
+             unlock, so claiming protection there would be a lie (D3). -->
+        <receiver
+            android:name=".ProtectionBootReceiver"
+            android:exported="true"
+            android:directBootAware="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.USER_UNLOCKED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
         <activity
             android:name=".MainActivity"
             android:exported="true"
