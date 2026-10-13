@@ -170,7 +170,8 @@ class ResilientFixQueue(
         val reader = LineReader(line)
         if (!reader.expect("{\"fixId\":\"")) return null
         val fixId = reader.quoted() ?: return null
-        if (!reader.expect("\",\"recordedAt\":")) return null
+        // quoted() consumed the closing quote; the literal resumes after it.
+        if (!reader.expect(",\"recordedAt\":")) return null
         val recordedAt = reader.number() ?: return null
         if (!reader.expect(",\"enqueuedAt\":")) return null
         val enqueuedAt = reader.number() ?: return null
@@ -178,7 +179,8 @@ class ResilientFixQueue(
         val attempts = reader.number() ?: return null
         if (!reader.expect(",\"payload\":\"")) return null
         val payload = reader.quoted() ?: return null
-        if (!reader.expect("\"}")) return null
+        // quoted() consumed the closing quote; only the brace remains.
+        if (!reader.expect("}")) return null
         if (!reader.atEnd()) return null
         if (fixId.isEmpty() || payload.isEmpty()) return null
         if (recordedAt <= 0L || enqueuedAt < 0L || attempts < 0L) return null
