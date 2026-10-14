@@ -388,16 +388,16 @@ test('a reversal is a new row, once per credit, by the primary only, and never a
     const targetId = credited.entry.id;
 
     await assertRejects(on(client, (tx) => adjust(tx, { ...ids, actorMembershipId: ids.coId,
-      targetEntryId: targetId, minutes: 5 })), 'minutes_forbidden');
+      targetEntryId: targetId, minutes: 5, reason: 'typo' })), 'minutes_forbidden');
     await assertRejects(on(client, (tx) => adjust(tx, { ...ids, actorMembershipId: ids.primaryId,
-      targetEntryId: targetId, minutes: 21 })), 'minutes_reversal_exceeds_balance');
+      targetEntryId: targetId, minutes: 21, reason: 'typo' })), 'minutes_reversal_exceeds_balance');
 
     const reversed = await on(client, (tx) => adjust(tx, { ...ids, actorMembershipId: ids.primaryId,
       targetEntryId: targetId, minutes: 5, reason: 'typo' }));
     assert.equal(reversed.reversalEntry.entryKind, 'reversal');
     assert.equal(reversed.balance.total, 15);
     await assertRejects(on(client, (tx) => adjust(tx, { ...ids, actorMembershipId: ids.primaryId,
-      targetEntryId: targetId, minutes: 5 })), 'minutes_duplicate_source');
+      targetEntryId: targetId, minutes: 5, reason: 'typo' })), 'minutes_duplicate_source');
 
     const rows = await ledgerRows(client, ids.childId);
     assert.ok(rows.some((row) => row.entry_kind === 'credit' && row.minutes === 20),
@@ -418,9 +418,13 @@ test('an allocation moves minutes between wallets and creates none', { skip },
     assert.equal(moved.balance.free, 12);
     assert.deepEqual(moved.balance.apps, [{ appId: 'com.game', minutes: 8 }]);
 
+    // D21: daily and temporary wallets are never an allocation end, on either side.
     await assertRejects(on(client, (tx) => allocate(tx, { ...ids, actorMembershipId: ids.primaryId,
       from: { scope: 'free' }, to: { scope: 'temporary' }, minutes: 1, transferId: randomUUID() })),
-    'minutes_expiry_scope_mismatch');
+    'minutes_invalid_scope');
+    await assertRejects(on(client, (tx) => allocate(tx, { ...ids, actorMembershipId: ids.primaryId,
+      from: { scope: 'daily' }, to: { scope: 'free' }, minutes: 1, transferId: randomUUID() })),
+    'minutes_invalid_scope');
   }));
 
 test('the app projection is rebuilt from the ledger, never trusted', { skip },
@@ -486,3 +490,76 @@ test('the ledger reads newest first, page by page, with no row twice', { skip },
     assert.equal(third.nextCursor, null);
     assert.equal(first.entries[0].minutes, 5, 'newest first');
   }));
+
+test('D22: a reversal needs a reason of 1-500 characters; a blank or long one is refused', { skip },
+  () => withFreshDatabase(async ({ client }) => {
+    const ids = await seedFamily(client, 'reason');
+    const credited = await on(client, (tx) => earn(tx, { ...ids, actorMembershipId: ids.primaryId,
+      channel: 'athkar', minutes: 9, source: src('athkar', 'reason-1') }));
+    const targetId = credited.entry.id;
+    await assertRejects(on(client, (tx) => adjust(tx, { ...ids, actorMembershipId: ids.primaryId,
+      targetEntryId: targetId, minutes: 1 })), 'minutes_invalid_reason');
+    await assertRejects(on(client, (tx) => adjust(tx, { ...ids, actorMembershipId: ids.primaryId,
+      targetEntryId: targetId, minutes: 1, reason: '   ' })), 'minutes_invalid_reason');
+    await assertRejects(on(client, (tx) => adjust(tx, { ...ids, actorMembershipId: ids.primaryId,
+      targetEntryId: targetId, minutes: 1, reason: 'x'.repeat(501) })), 'minutes_invalid_reason');
+    const ok = await on(client, (tx) => adjust(tx, { ...ids, actorMembershipId: ids.primaryId,
+      targetEntryId: targetId, minutes: 1, reason: 'x'.repeat(500) }));
+    assert.equal(ok.reversalEntry.creditRef, targetId, 'the reversal names the credit it undoes');
+  }));
+
+test('D20: every row is 1..1440 minutes, for a grant and for an allocation alike', { skip },
+  () => withFreshDatabase(async ({ client }) => {
+    const ids = await seedFamily(client, 'cap');
+    await assertRejects(on(client, (tx) => grant(tx, { ...ids, actorMembershipId: ids.primaryId,
+      minutes: 1441, scope: 'free', source: src('guardian_grant', 'cap-1441') })), 'minutes_invalid_amount');
+    await on(client, (tx) => grant(tx, { ...ids, actorMembershipId: ids.primaryId,
+      minutes: 1440, scope: 'free', source: src('guardian_grant', 'cap-1440') }));
+    assert.equal((await readBalance(client, ids)).total, 1440);
+    await assertRejects(on(client, (tx) => allocate(tx, { ...ids, actorMembershipId: ids.primaryId,
+      from: { scope: 'free' }, to: { scope: 'app', appId: 'com.game' }, minutes: 1441,
+      transferId: randomUUID() })), 'minutes_invalid_amount');
+  }));
+
+test('D25: an expiry records each credit\'s unspent remainder, one row per credit', { skip },
+  () => withFreshDatabase(async ({ client }) => {
+    const ids = await seedFamily(client, 'per-credit');
+    const expiresAt = new Date(Date.now() + 2000);
+    const first = await on(client, (tx) => grant(tx, { ...ids, actorMembershipId: ids.primaryId,
+      minutes: 10, scope: 'temporary', expiresAt, source: src('guardian_grant', 'pc-1') }));
+    const second = await on(client, (tx) => grant(tx, { ...ids, actorMembershipId: ids.primaryId,
+      minutes: 8, scope: 'temporary', expiresAt, source: src('guardian_grant', 'pc-2') }));
+    // Two spends of 4 draw the earlier credit first (FEFO, then FIFO): it keeps 2, the second keeps 8.
+    await on(client, (tx) => consume(tx, { ...ids, appId: 'com.game', minutes: 4,
+      source: src('session', 'pc-spend-1') }));
+    const spent = await on(client, (tx) => consume(tx, { ...ids, appId: 'com.game', minutes: 4,
+      source: src('session', 'pc-spend-2') }));
+    assert.ok(spent.entries.every((entry) => entry.creditRef !== null), 'every draw names its credit');
+    assert.equal(spent.entries[0].creditRef, first.entry.id, 'the earlier credit is drawn first');
+    assert.equal((await readBalance(client, ids)).total, 10, '2 left in the first, 8 in the second');
+
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+    const result = await on(client, (tx) => expire(tx, ids));
+    assert.equal(result.expired, 2, 'one expiry row per credit');
+    const got = result.entries.map((entry) => [entry.creditRef, entry.minutes]).sort(([a], [b]) => (a < b ? -1 : 1));
+    const want = [[first.entry.id, 2], [second.entry.id, 8]].sort(([a], [b]) => (a < b ? -1 : 1));
+    assert.deepEqual(got, want, 'each expiry records exactly what its credit still held');
+    assert.equal((await readBalance(client, ids)).total, 0);
+    const again = await on(client, (tx) => expire(tx, ids));
+    assert.equal(again.expired, 0, 'a second expiry records nothing');
+  }));
+
+test('D23: the balance is derived from the ledger, never read from the stored projection', { skip },
+  () => withFreshDatabase(async ({ client }) => {
+    const ids = await seedFamily(client, 'derived');
+    await on(client, (tx) => earn(tx, { ...ids, actorMembershipId: ids.primaryId,
+      channel: 'quran_portion', minutes: 12, appId: 'com.game', source: src('quran', 'derived-1') }));
+    const before = await readBalance(client, ids);
+    // Corrupt the stored projection on purpose. A balance that read it would now be wrong.
+    await client.query('UPDATE family_app_wallets SET earned_minutes = 999 WHERE child_id = $1', [ids.childId]);
+    const after = await readBalance(client, ids);
+    const strip = ({ asOf, ...rest }) => rest; // asOf is the read instant, which moves with the clock
+    assert.deepEqual(strip(after), strip(before), 'the balance ignores the projection');
+    assert.equal(after.total, 12);
+  }));
+

@@ -65,8 +65,10 @@ export const GUARDIAN_GRANT_CEILING = 30;
 export const MAX_EARN_MINUTES = 1440;
 export const MAX_CONSUME_MINUTES = 1440;
 /** A technical bound against integer overflow, not a product ceiling: primary has no cap. */
-export const MAX_ENTRY_MINUTES = 1_000_000;
-export const MAX_REASON_LENGTH = 200;
+/** D20: every ledger row, in every operation, is 1..1440 minutes. No other per-row ceiling exists. */
+export const MAX_MINUTES_PER_ENTRY = 1440;
+/** D22: a reversal's reason is mandatory, 1..500 characters. */
+export const MAX_REASON_LENGTH = 500;
 export const DEFAULT_LEDGER_LIMIT = 50;
 export const MAX_LEDGER_LIMIT = 100;
 
@@ -225,20 +227,64 @@ export function temporaryPoolsAt(rows, at) {
 }
 
 /**
- * The order in which a spend draws minutes: today's allowance, then temporary pools (earliest
- * expiry first), then the app's own wallet, then the free wallet. This order is the law the
- * card pins; a spend that draws from the free wallet first would strand the minutes that a
- * family granted for a purpose.
+ * Minutes still held by one credit: the credit itself, less every row that names it through
+ * `credit_ref` (consumption, reversal, expiry). The ledger alone answers "how much of this
+ * grant is left", so an expiry can record exactly the unspent part of each credit.
  */
-export function consumptionSources(snapshot, rows, at, appId) {
-  const sources = [{ scope: 'daily', appId: null, expiresAt: null, minutes: snapshot.daily }];
-  for (const pool of temporaryPoolsAt(rows, at)) {
-    sources.push({ scope: 'temporary', appId: null, expiresAt: pool.expiresAt, minutes: pool.minutes });
+export function remainingOf(rows, creditId) {
+  let remaining = 0;
+  for (const row of rows) {
+    if (row.id === creditId || row.credit_ref === creditId) remaining += signedMinutes(row);
   }
-  const appMinutes = snapshot.apps.find((app) => app.appId === appId)?.minutes ?? 0;
-  sources.push({ scope: 'app', appId, expiresAt: null, minutes: appMinutes });
-  sources.push({ scope: 'free', appId: null, expiresAt: null, minutes: snapshot.free });
-  return sources;
+  return remaining;
+}
+
+function creditOrder(a, b) {
+  const byExpiry = (a.expiresAt ? a.expiresAt.getTime() : 0) - (b.expiresAt ? b.expiresAt.getTime() : 0);
+  if (byExpiry !== 0) return byExpiry;
+  const byCreated = a.createdAt.getTime() - b.createdAt.getTime();
+  if (byCreated !== 0) return byCreated;
+  return a.creditId < b.creditId ? -1 : a.creditId > b.creditId ? 1 : 0;
+}
+
+/**
+ * Every credit that still holds minutes at `at`, in draw order: earliest expiry first, then the
+ * earlier credit (FEFO, then FIFO). Daily credits count only on today's local day; temporary
+ * credits only before their expiry. Rows created after `at` are invisible.
+ */
+export function creditSources(rows, at, offsetMinutes) {
+  const today = dayKey(at, offsetMinutes);
+  const live = rows.filter((row) => row.created_at <= at);
+  const out = [];
+  for (const row of live) {
+    if (row.entry_kind !== 'credit') continue;
+    if (row.wallet_scope === 'daily' && dayKey(row.created_at, offsetMinutes) !== today) continue;
+    if (row.wallet_scope === 'temporary' && row.expires_at <= at) continue;
+    const minutes = remainingOf(live, row.id);
+    if (minutes <= 0) continue;
+    out.push({
+      creditId: row.id, scope: row.wallet_scope, appId: row.app_id ?? null,
+      expiresAt: row.expires_at ?? null, createdAt: row.created_at, minutes,
+    });
+  }
+  return out.sort(creditOrder);
+}
+
+/**
+ * The order in which a spend draws minutes: today's allowance, then temporary credits (earliest
+ * expiry first), then the app's own credits, then free credits. A draw is per credit, so every
+ * consumption row names the credit it came from. Spending from the free wallet first would
+ * strand the minutes a family granted for a purpose.
+ */
+export function consumptionSources(rows, at, offsetMinutes, appId) {
+  const credits = creditSources(rows, at, offsetMinutes);
+  const of = (scope, pick = () => true) => credits.filter((c) => c.scope === scope && pick(c));
+  return [
+    ...of('daily'),
+    ...of('temporary'),
+    ...of('app', (c) => c.appId === appId),
+    ...of('free'),
+  ];
 }
 
 /** Greedy draw over ordered sources. Never draws more than a source holds. */
@@ -250,6 +296,7 @@ export function planDraws(minutes, sources) {
     const take = Math.min(remaining, Math.max(0, source.minutes));
     if (take > 0) {
       draws.push({
+        creditId: source.creditId ?? null,
         scope: source.scope,
         appId: source.appId ?? null,
         expiresAt: source.expiresAt ?? null,
@@ -294,6 +341,7 @@ export function entryView(row) {
     walletScope: row.wallet_scope,
     appId: row.app_id ?? null,
     expiresAt: iso(row.expires_at),
+    creditRef: row.credit_ref ?? null,
     sourceType: row.source_type,
     sourceId: row.source_id,
     actorMembershipId: row.actor_membership_id ?? null,
@@ -367,7 +415,7 @@ async function loadRows(client, { familyId, childId }) {
   const { rows } = await client.query(
     `SELECT id, family_id, child_id, entry_kind, channel, minutes, wallet_scope, app_id,
             expires_at, source_type, source_id, actor_membership_id, awarded_by_device_id,
-            balance_after_minutes, created_at
+            balance_after_minutes, created_at, credit_ref
        FROM family_minutes_ledger
       WHERE family_id = $1 AND child_id = $2
       ORDER BY created_at, id`,
@@ -450,13 +498,13 @@ async function appendRow(client, ctx, row) {
       `INSERT INTO family_minutes_ledger
          (id, family_id, child_id, entry_kind, channel, minutes, wallet_scope, app_id,
           expires_at, source_type, source_id, actor_membership_id, awarded_by_device_id,
-          balance_after_minutes, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+          balance_after_minutes, created_at, credit_ref)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
       [
         id, ctx.familyId, ctx.childId, row.entry_kind, row.channel, row.minutes,
         row.wallet_scope, row.app_id ?? null, row.expires_at ?? null,
         row.source_type, row.source_id, row.actor_membership_id ?? null,
-        row.awarded_by_device_id ?? null, total, createdAt,
+        row.awarded_by_device_id ?? null, total, createdAt, row.credit_ref ?? null,
       ],
     );
   } catch (error) {
@@ -467,7 +515,7 @@ async function appendRow(client, ctx, row) {
     throw error;
   }
   const stored = { ...row, id, family_id: ctx.familyId, child_id: ctx.childId,
-    app_id: row.app_id ?? null, expires_at: row.expires_at ?? null,
+    app_id: row.app_id ?? null, expires_at: row.expires_at ?? null, credit_ref: row.credit_ref ?? null,
     actor_membership_id: row.actor_membership_id ?? null,
     awarded_by_device_id: row.awarded_by_device_id ?? null,
     balance_after_minutes: total, created_at: createdAt };
@@ -633,7 +681,7 @@ export async function grant(client, {
   familyId, childId, actorMembershipId, minutes, scope, appId = null, expiresAt = null,
   source, reason = '',
 }) {
-  assertInteger(minutes, { min: 1, max: MAX_ENTRY_MINUTES, code: 'minutes_invalid_amount', field: 'minutes' });
+  assertInteger(minutes, { min: 1, max: MAX_MINUTES_PER_ENTRY, code: 'minutes_invalid_amount', field: 'minutes' });
   if (typeof reason !== 'string' || reason.length > MAX_REASON_LENGTH) {
     throw fail(400, 'minutes_invalid_reason', `reason must be at most ${MAX_REASON_LENGTH} characters.`);
   }
@@ -709,11 +757,10 @@ export async function consume(client, {
     if (!isCountable(appRows[0].category)) {
       throw fail(409, 'minutes_non_countable', 'This app does not spend minutes.');
     }
-    const firstSourceId = `${src.id}#0`;
+    const firstSourceId = `${src.id}#1`;
     await assertNoDuplicateSource(tx, { childId, sourceType: src.type, sourceId: firstSourceId });
 
-    const snapshot = balanceAt(ctx.rows, ctx.now, ctx.offset);
-    const sources = consumptionSources(snapshot, ctx.rows, ctx.now, appId);
+    const sources = consumptionSources(ctx.rows, ctx.now, ctx.offset, appId);
     const { draws, shortfall } = planDraws(minutes, sources);
     if (shortfall > 0) {
       throw fail(409, 'minutes_insufficient', 'Not enough minutes for this spend.');
@@ -728,8 +775,9 @@ export async function consume(client, {
         wallet_scope: draw.scope,
         app_id: draw.scope === 'app' ? appId : null,
         expires_at: draw.expiresAt,
+        credit_ref: draw.creditId,
         source_type: src.type,
-        source_id: `${src.id}#${index}`,
+        source_id: `${src.id}#${index + 1}`,
       });
       entries.push(entryView(row));
     }
@@ -746,13 +794,15 @@ export async function consume(client, {
 export async function allocate(client, {
   familyId, childId, actorMembershipId, from, to, minutes, transferId, reason = '',
 }) {
-  assertInteger(minutes, { min: 1, max: MAX_ENTRY_MINUTES, code: 'minutes_invalid_amount', field: 'minutes' });
+  assertInteger(minutes, { min: 1, max: MAX_MINUTES_PER_ENTRY, code: 'minutes_invalid_amount', field: 'minutes' });
   assertUuid(transferId, 'transferId');
   if (typeof reason !== 'string' || reason.length > MAX_REASON_LENGTH) {
     throw fail(400, 'minutes_invalid_reason', `reason must be at most ${MAX_REASON_LENGTH} characters.`);
   }
-  if (to?.scope === 'temporary') {
-    throw fail(400, 'minutes_expiry_scope_mismatch', 'Minutes cannot be allocated into a temporary wallet.');
+  // D21: an allocation moves minutes only between app and free wallets. A daily or temporary
+  // wallet on either end would let a parent dodge expiry, so both are refused.
+  if (!['app', 'free'].includes(from?.scope) || !['app', 'free'].includes(to?.scope)) {
+    throw fail(400, 'minutes_invalid_scope', 'An allocation moves minutes only between app and free wallets.');
   }
   return withChild(client, { familyId, childId }, async (tx, ctx) => {
     const actor = await readActor(tx, { familyId, membershipId: actorMembershipId });
@@ -771,9 +821,8 @@ export async function allocate(client, {
     if (source.scope === target.scope && source.appId === target.appId) {
       throw fail(400, 'minutes_invalid_scope', 'An allocation must move minutes between two different wallets.');
     }
-    await assertNoDuplicateSource(tx, { childId, sourceType: 'scope_transfer', sourceId: `${transferId}:out#0` });
-    const snapshot = balanceAt(ctx.rows, ctx.now, ctx.offset);
-    const sources = consumptionSources(snapshot, ctx.rows, ctx.now, source.appId).filter(
+    await assertNoDuplicateSource(tx, { childId, sourceType: 'scope_transfer', sourceId: `${transferId}:out#1` });
+    const sources = consumptionSources(ctx.rows, ctx.now, ctx.offset, source.appId).filter(
       (candidate) => candidate.scope === source.scope
         && (source.scope !== 'app' || candidate.appId === source.appId),
     );
@@ -792,7 +841,8 @@ export async function allocate(client, {
         app_id: draw.scope === 'app' ? source.appId : null,
         expires_at: draw.expiresAt,
         source_type: 'scope_transfer',
-        source_id: `${transferId}:out#${index}`,
+        credit_ref: draw.creditId,
+        source_id: `${transferId}:out#${index + 1}`,
         actor_membership_id: actor.id,
       });
       outEntries.push(entryView(row));
@@ -824,12 +874,13 @@ export async function allocate(client, {
  * The original stays in the ledger: the parent sees the mistake and its correction together.
  */
 export async function adjust(client, {
-  familyId, childId, actorMembershipId, targetEntryId, minutes, reason = '',
+  familyId, childId, actorMembershipId, targetEntryId, minutes, reason,
 }) {
   assertUuid(targetEntryId, 'targetEntryId');
-  assertInteger(minutes, { min: 1, max: MAX_ENTRY_MINUTES, code: 'minutes_invalid_amount', field: 'minutes' });
-  if (typeof reason !== 'string' || reason.length > MAX_REASON_LENGTH) {
-    throw fail(400, 'minutes_invalid_reason', `reason must be at most ${MAX_REASON_LENGTH} characters.`);
+  assertInteger(minutes, { min: 1, max: MAX_MINUTES_PER_ENTRY, code: 'minutes_invalid_amount', field: 'minutes' });
+  // D22: a reversal always says why. Mandatory, 1..500 characters, at the operation level.
+  if (typeof reason !== 'string' || reason.trim().length < 1 || reason.length > MAX_REASON_LENGTH) {
+    throw fail(400, 'minutes_invalid_reason', `reason is required: 1-${MAX_REASON_LENGTH} characters.`);
   }
   return withChild(client, { familyId, childId }, async (tx, ctx) => {
     const actor = await readActor(tx, { familyId, membershipId: actorMembershipId });
@@ -843,14 +894,14 @@ export async function adjust(client, {
     if (target.entry_kind !== 'credit') {
       throw fail(409, 'minutes_not_reversible', 'Only a credit can be reversed.');
     }
-    if (minutes > target.minutes) {
-      throw fail(409, 'minutes_reversal_exceeds_balance', 'The reversal is larger than the credit it undoes.');
+    if (target.wallet_scope === 'temporary' && target.expires_at <= ctx.now) {
+      throw fail(409, 'minutes_not_reversible', 'An expired credit cannot be reversed; it has already expired.');
     }
     await assertNoDuplicateSource(tx, { childId, sourceType: 'minutes_reversal', sourceId: targetEntryId });
-    const snapshot = balanceAt(ctx.rows, ctx.now, ctx.offset);
-    const available = availableIn(snapshot, ctx.rows, ctx.now, target);
+    // What this credit still holds, after spends and expiry: a reversal never takes more than that.
+    const available = remainingOf(ctx.rows, target.id);
     if (minutes > available) {
-      throw fail(409, 'minutes_reversal_exceeds_balance', 'The wallet holds fewer minutes than this reversal.');
+      throw fail(409, 'minutes_reversal_exceeds_balance', 'The credit holds fewer minutes than this reversal.');
     }
     const row = await appendRow(tx, ctx, {
       entry_kind: 'reversal',
@@ -859,6 +910,7 @@ export async function adjust(client, {
       wallet_scope: target.wallet_scope,
       app_id: target.app_id ?? null,
       expires_at: target.expires_at ?? null,
+      credit_ref: target.id,
       source_type: 'minutes_reversal',
       source_id: targetEntryId,
       actor_membership_id: actor.id,
@@ -868,54 +920,33 @@ export async function adjust(client, {
   });
 }
 
-function availableIn(snapshot, rows, at, target) {
-  switch (target.wallet_scope) {
-    case 'daily':
-      return snapshot.daily;
-    case 'free':
-      return snapshot.free;
-    case 'app':
-      return snapshot.apps.find((app) => app.appId === target.app_id)?.minutes ?? 0;
-    case 'temporary': {
-      const pool = temporaryPoolsAt(rows, at)
-        .find((candidate) => candidate.expiresAt.getTime() === target.expires_at.getTime());
-      return pool?.minutes ?? 0;
-    }
-    default:
-      return 0;
-  }
-}
-
 /**
- * Materialize the expiry of temporary pools whose time has passed. Idempotent: one expiry
- * row per pool, keyed by its expiry instant. Reads never depend on this having run, because
- * `balanceAt` already excludes an expired pool by the clock; this only makes the record say
- * so explicitly.
+ * Materialize the expiry of temporary credits whose time has passed (D25). One expiry row per
+ * credit, carrying the part of that credit still unspent at expiry (`credit_ref` names it).
+ * Idempotent: the source is the credit itself, so a second run records nothing. Reads never
+ * depend on this having run: `balanceAt` already excludes an expired credit by the clock.
  */
 export async function expire(client, { familyId, childId }) {
   return withChild(client, { familyId, childId }, async (tx, ctx) => {
-    const pools = new Map();
-    for (const row of ctx.rows) {
-      if (row.wallet_scope !== 'temporary' || row.expires_at > ctx.now) continue;
-      const key = row.expires_at.toISOString();
-      const current = pools.get(key) ?? { expiresAt: row.expires_at, minutes: 0 };
-      current.minutes += signedMinutes(row);
-      pools.set(key, current);
-    }
+    const due = ctx.rows
+      .filter((row) => row.entry_kind === 'credit' && row.wallet_scope === 'temporary' && row.expires_at <= ctx.now)
+      .sort((a, b) => a.expires_at - b.expires_at || a.created_at - b.created_at
+        || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
     const written = [];
-    for (const pool of [...pools.values()].sort((a, b) => a.expiresAt - b.expiresAt)) {
-      if (pool.minutes <= 0) continue;
-      const sourceId = pool.expiresAt.toISOString();
-      if (await hasSource(tx, { childId, sourceType: 'minutes_expiry', sourceId })) continue;
+    for (const credit of due) {
+      const minutes = remainingOf(ctx.rows, credit.id);
+      if (minutes <= 0) continue;
+      if (await hasSource(tx, { childId, sourceType: 'minutes_expiry', sourceId: credit.id })) continue;
       const row = await appendRow(tx, ctx, {
         entry_kind: 'expiry',
         channel: 'guardian_grant',
-        minutes: pool.minutes,
+        minutes,
         wallet_scope: 'temporary',
         app_id: null,
-        expires_at: pool.expiresAt,
+        expires_at: credit.expires_at,
+        credit_ref: credit.id,
         source_type: 'minutes_expiry',
-        source_id: sourceId,
+        source_id: credit.id,
       });
       written.push(entryView(row));
     }

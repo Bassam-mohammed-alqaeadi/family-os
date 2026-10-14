@@ -18,6 +18,8 @@ import {
   assertWalletRef,
   assertWalletShape,
   balanceAt,
+  remainingOf,
+  creditSources,
   consumptionSources,
   dayKey,
   grantRuleViolation,
@@ -34,8 +36,12 @@ const migrationDirectory = join(here, '..', 'db', 'migrations');
 const OFFSET = 180;
 const at = (iso) => new Date(iso);
 
+let rowSeq = 0;
 function row(overrides) {
+  rowSeq += 1;
   return {
+    id: `row-${rowSeq}`,
+    credit_ref: null,
     entry_kind: 'credit',
     channel: 'quran_portion',
     minutes: 10,
@@ -98,6 +104,22 @@ test('a row created after the requested instant is invisible to it', () => {
   assert.equal(balanceAt(rows, at('2026-10-14T11:00:00Z'), OFFSET).total, 50);
 });
 
+test('a credit holds what its spends have not taken; ties draw the earlier credit first (FEFO, then FIFO)', () => {
+  const early = row({ id: 'early', wallet_scope: 'temporary', minutes: 10, expires_at: at('2026-10-14T12:00:00Z'),
+    channel: 'guardian_grant', created_at: at('2026-10-14T09:00:00Z') });
+  const late = row({ id: 'late', wallet_scope: 'temporary', minutes: 10, expires_at: at('2026-10-14T12:00:00Z'),
+    channel: 'guardian_grant', created_at: at('2026-10-14T09:30:00Z') });
+  const spend = row({ id: 'spend', entry_kind: 'consumption', channel: 'usage_consumption',
+    wallet_scope: 'temporary', minutes: 4, expires_at: at('2026-10-14T12:00:00Z'), credit_ref: 'early',
+    created_at: at('2026-10-14T10:00:00Z') });
+  const rows = [early, late, spend];
+  const now = at('2026-10-14T10:30:00Z');
+  assert.equal(remainingOf(rows, 'early'), 6);
+  assert.equal(remainingOf(rows, 'late'), 10);
+  const order = creditSources(rows, now, OFFSET).map((c) => [c.creditId, c.minutes]);
+  assert.deepEqual(order, [['early', 6], ['late', 10]], 'the earlier credit draws first among equal expiries');
+});
+
 test('the draw order is daily, then temporary earliest-expiry first, then the app, then free', () => {
   const rows = [
     row({ wallet_scope: 'daily', minutes: 5, created_at: at('2026-10-14T10:00:00Z') }),
@@ -109,8 +131,7 @@ test('the draw order is daily, then temporary earliest-expiry first, then the ap
     row({ wallet_scope: 'free', minutes: 9 }),
   ];
   const now = at('2026-10-14T11:00:00Z');
-  const snapshot = balanceAt(rows, now, OFFSET);
-  const sources = consumptionSources(snapshot, rows, now, 'com.game');
+  const sources = consumptionSources(rows, now, OFFSET, 'com.game');
   const { draws, shortfall } = planDraws(20, sources);
   assert.equal(shortfall, 0);
   assert.deepEqual(draws.map((draw) => [draw.scope, draw.minutes]), [

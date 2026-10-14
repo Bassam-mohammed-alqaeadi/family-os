@@ -135,7 +135,7 @@ export const FOUNDATION_SCHEMA_MIGRATIONS = Object.freeze([
   }),
   Object.freeze({
     name: '130_family_minutes_ledger.sql',
-    sha256: '922e8dcc0d9720412cf36d00711f59088bdc3f6a0d673da4e5c6640968c6b329',
+    sha256: '65d4f3b7e1b3633bc253bc297bea4ad5beb5b3c18fa638483358417886c08111',
   }),
   Object.freeze({
     name: '131_family_app_wallets.sql',

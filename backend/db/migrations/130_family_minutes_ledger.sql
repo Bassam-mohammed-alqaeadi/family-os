@@ -43,7 +43,8 @@ CREATE TABLE family_minutes_ledger (
     'guardian_reversal',
     'migration_from_points'
   )),
-  minutes INTEGER NOT NULL CHECK (minutes > 0 AND minutes <= 1000000),
+  -- D20: every row is 1..1440 minutes. No other per-row ceiling exists.
+  minutes INTEGER NOT NULL CHECK (minutes > 0 AND minutes <= 1440),
   wallet_scope TEXT NOT NULL CHECK (wallet_scope IN ('daily', 'app', 'free', 'temporary')),
   app_id TEXT NULL,
   -- The wallet an app row belongs to is the app itself; a free or daily row names no app.
@@ -65,12 +66,22 @@ CREATE TABLE family_minutes_ledger (
   -- it would make the balance negative, so a stored negative would be a bug, not a debt.
   balance_after_minutes INTEGER NOT NULL CHECK (balance_after_minutes >= 0),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  -- D25: which credit a spend, reversal or expiry draws from. A credit row names none; every
+  -- other row names exactly one credit of the same child. This is what makes "how much of this
+  -- grant is still unspent" a fact of the ledger, so an expiry records the true remainder.
+  credit_ref UUID NULL,
+  CONSTRAINT family_minutes_ledger_credit_ref_shape
+    CHECK ((entry_kind = 'credit') = (credit_ref IS NULL)),
   CONSTRAINT family_minutes_ledger_child_fk FOREIGN KEY (family_id, child_id)
     REFERENCES family_children (family_id, id) ON DELETE RESTRICT,
   -- The idempotency law (E-5): one source produces one row. Two phones pressing the same
   -- button, or a retried request, cannot credit or spend twice at the storage layer.
   CONSTRAINT family_minutes_ledger_one_row_per_source
-    UNIQUE (child_id, source_type, source_id)
+    UNIQUE (child_id, source_type, source_id),
+  -- Lets a credit reference be checked against the same child (composite key, below).
+  CONSTRAINT family_minutes_ledger_id_child_key UNIQUE (id, child_id),
+  CONSTRAINT family_minutes_ledger_credit_ref_same_child
+    FOREIGN KEY (credit_ref, child_id) REFERENCES family_minutes_ledger (id, child_id) ON DELETE RESTRICT
 );
 
 CREATE INDEX family_minutes_ledger_child_created
@@ -78,6 +89,9 @@ CREATE INDEX family_minutes_ledger_child_created
 
 CREATE INDEX family_minutes_ledger_child_wallet
   ON family_minutes_ledger (child_id, wallet_scope);
+
+CREATE INDEX family_minutes_ledger_credit_ref
+  ON family_minutes_ledger (credit_ref) WHERE credit_ref IS NOT NULL;
 
 -- Append-only, enforced where it cannot be bypassed.
 CREATE FUNCTION family_minutes_ledger_refuse_mutation() RETURNS trigger
