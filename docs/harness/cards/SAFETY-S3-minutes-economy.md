@@ -80,6 +80,14 @@ FKs بـ ON DELETE RESTRICT · فهارس (child_id, created_at) و(child_id, wa
 كل صف `task_confirmed` ⇒ `credit` بقناة `migration_from_points` و`source=('point_ledger_migration', معرّف الصف القديم)`
 بنسبة **1:1** · الهبوط في النطاق **`free`** (علم 15) · تُعاد بلا أثر (`ON CONFLICT DO NOTHING` على E-5).
 
+30. **(مطابقة §٢٫٤ — D1، قبل D2) الأسماء المصدَّرة فعلاً** من `minutes-economy.js`: `earn`, `attribute`, `credit`, `grant`, `consume`, `allocate`, `adjust`, `expire`, `readBalance`, `readLedger` (+ مساعدون: `withMinutesTransaction`, `rebuildAppWalletProjection`, `readAppWalletProjection`، ودوال نقية: `balanceAt`, `planDraws`, `grantRuleViolation`…).
+    - **مطابق**: الأسماء التسعة المجمّدة كلها موجودة حرفياً (`earn`, `attribute`, `credit`, `readBalance`, `allocate`, `consume`, `expire`, `adjust`, `readLedger`).
+    - **زائد — `grant`**: ليس في الجدول المجمّد بعنوان عملية؛ الجدول يذكر `grants` مساراً و`credit` «عبر earn/grants». الفعل في الكود `grant(client,{familyId,childId,actorMembershipId,…})` يغلّف `credit` لمنح الوصي (سقف ٣٠). **القرار المطلوب**: إمّا اعتماده اسماً تاسعاً رسمياً (فيصير 10 بدل 9) أو دمجه في `credit` لاحقاً.
+    - **فرق توقيع — `attribute` و`credit`**: الجدول يكتبهما `(client, {…})` / `داخلية`، والكود `(client, ctx, {…})` لأن `ctx` (الرصيد المحمَّل داخل القفل) يُمرَّر إليهما. لا يغيّر السلوك؛ هو تفصيل تنفيذ داخلي مُعلَن.
+    - **ناقص**: لا يوجد مساعد «projection» مُدرج في الجدول، لكن الكود يصدّر `rebuildAppWalletProjection` و`readAppWalletProjection` — هذان لا يحملان عقد عملية؛ يُعتمدان كجزء من الإسقاط (§٢٫٦/§٢٫٧) لا كعمليات تسع.
+    - **لم يُعدَّل شيء صامتاً**: الأسماء والمعاملات كما هي؛ الفرق مُعلَن هنا فقط بانتظار قرار المالك.
+31. **(D16–D22 عُرضت على المالك للمراجعة)** — انظر §١٫٢٧ (نصّ كامل مُسجَّل هناك).
+
 ### ٢٫٤ العمليات التسع — `backend/src/minutes-economy.js`
 
 كل عملية تأخذ `client` (عميل معاملة — قابل للاستدعاء داخل معاملات س١١) أولاً ·
