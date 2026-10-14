@@ -29,6 +29,7 @@
 import { randomUUID } from 'node:crypto';
 
 import { HttpError } from './http-error.js';
+import { earn, joinMinutesTransaction } from './minutes-economy.js';
 import {
   COLLABORATION_POLICY_DEFAULTS,
   collaborationRoleAllowed,
@@ -478,22 +479,30 @@ export function createTaskDecision({ port }) {
           decisionNote: normalizeTaskNote(note),
           pointsAwarded: confirmed ? task.points : null,
         });
-        let ledgerRow = null;
+        let credited = null;
         if (confirmed) {
-          // The unique index on claim_id is the last line of defence: if two confirmations
-          // ever raced, one of them writes no entry at all rather than a second award.
-          ledgerRow = await port.insertLedgerEntry(tx, {
+          // S3 D2: a confirmation credits minutes, in this same transaction as the decision.
+          // The minutes ledger's one-row-per-source rule is the last line of defence: a claim
+          // can be rewarded once, never twice.
+          credited = await port.creditConfirmedTask(tx, {
             familyId,
             childId,
-            points: task.points,
-            reason: 'task_confirmed',
+            actorMembershipId: actor.id,
             claimId: decided.id,
-            awardedByMembershipId: actor.id,
+            points: task.points,
           });
-          if (ledgerRow == null) {
+          if (credited == null) {
             throw new TaskError(409, 'task_already_confirmed', 'This claim has already been rewarded.');
           }
         }
+        const ledgerRow = credited == null ? null : {
+          id: credited.entry.id,
+          points: credited.entry.minutes,
+          reason: 'task_confirmed',
+          claim_id: decided.id,
+          awarded_by_membership_id: actor.id,
+          created_at: new Date(credited.entry.createdAt),
+        };
         await port.audit(tx, {
           familyId,
           actorMembershipId: actor.id,
@@ -508,6 +517,7 @@ export function createTaskDecision({ port }) {
           task: taskView(task, decided),
           points: pointsView(ledger),
           awarded: ledgerRow == null ? null : pointEntryView(ledgerRow),
+          minutes: credited == null ? null : credited.balance,
         };
       },
     );
@@ -546,9 +556,6 @@ const CLAIM_COLUMNS = `id, family_id, task_id, child_id, status, note,
                        claimed_by_device_id, claimed_by_membership_id,
                        decided_by_membership_id, decided_at, decision_note,
                        points_awarded, created_at`;
-
-const LEDGER_COLUMNS = `id, family_id, child_id, points, reason, claim_id,
-                        awarded_by_membership_id, created_at`;
 
 export function postgresTasksPort(store, { credentialMatches }) {
   return {
@@ -745,23 +752,47 @@ export function postgresTasksPort(store, { credentialMatches }) {
 
     /// Returns null when the claim already produced an entry. The caller turns that into a
     /// refusal - never into a second credit.
-    async insertLedgerEntry(client, { familyId, childId, points, reason, claimId, awardedByMembershipId }) {
-      const { rows } = await client.query(
-        `INSERT INTO family_point_ledger
-           (id, family_id, child_id, points, reason, claim_id, awarded_by_membership_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
-         ON CONFLICT (claim_id) DO NOTHING
-         RETURNING ${LEDGER_COLUMNS}`,
-        [randomUUID(), familyId, childId, points, reason, claimId, awardedByMembershipId],
-      );
-      return rows[0] ?? null;
+    /// S3 D2: credit the minutes of a confirmed task (channel family_task_child, source = the
+    /// claim). Returns null when this claim was already credited; the caller refuses that.
+    /// The role rule (task_roles) is enforced by the minutes module itself.
+    async creditConfirmedTask(client, { familyId, childId, actorMembershipId, claimId, points }) {
+      try {
+        return await joinMinutesTransaction(client, () => earn(client, {
+          familyId,
+          childId,
+          actorMembershipId,
+          channel: 'family_task_child',
+          minutes: points,
+          source: { type: 'family_task_claim', id: claimId },
+        }));
+      } catch (error) {
+        if (error?.code === 'minutes_duplicate_source') return null;
+        if (error?.code === 'minutes_forbidden') {
+          throw new TaskError(403, 'task_forbidden', 'Your role may not confirm family tasks.');
+        }
+        throw error;
+      }
     },
 
+    /// The points a child earned from tasks, read from the minutes ledger (S3 D2). Migrated
+    /// awards keep their history: the old point row supplies the claim they came from.
+    /// The points table is read only for that history and is never written again.
     async readLedger(client, { familyId, childId }) {
       const { rows } = await client.query(
-        `SELECT ${LEDGER_COLUMNS} FROM family_point_ledger
-          WHERE family_id = $1 AND child_id = $2
-          ORDER BY created_at DESC, id DESC`,
+        `SELECT m.id, m.minutes AS points, 'task_confirmed' AS reason,
+                COALESCE(
+                  CASE WHEN m.source_type = 'family_task_claim' THEN m.source_id END,
+                  p.claim_id::text
+                ) AS claim_id,
+                m.actor_membership_id AS awarded_by_membership_id,
+                m.created_at
+           FROM family_minutes_ledger m
+           LEFT JOIN family_point_ledger p
+             ON m.source_type = 'point_ledger_migration' AND p.id::text = m.source_id
+          WHERE m.family_id = $1 AND m.child_id = $2
+            AND m.entry_kind = 'credit'
+            AND m.channel IN ('family_task_child', 'migration_from_points')
+          ORDER BY m.created_at DESC, m.id DESC`,
         [familyId, childId],
       );
       return rows;

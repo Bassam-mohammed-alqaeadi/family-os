@@ -388,6 +388,22 @@ export async function withMinutesTransaction(client, fn) {
   }
 }
 
+/**
+ * Run `fn` inside a transaction the CALLER already opened (BEGIN is theirs, COMMIT is theirs).
+ * A task confirmation is one atomic fact: the claim is decided and the minutes are credited in
+ * the same transaction, so neither can exist without the other. Opening a second BEGIN here
+ * would commit the caller's work early, which is why this never issues one.
+ */
+export async function joinMinutesTransaction(client, fn) {
+  if (client[TRANSACTION]) return fn(client);
+  client[TRANSACTION] = true;
+  try {
+    return await fn(client);
+  } finally {
+    client[TRANSACTION] = false;
+  }
+}
+
 function lockKey(childId) {
   return `minutes-economy:${childId}`;
 }

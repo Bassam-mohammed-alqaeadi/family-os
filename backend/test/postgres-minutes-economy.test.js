@@ -72,6 +72,13 @@ async function withFreshDatabase(run) {
     await run({ client, open });
   } finally {
     for (const client of clients) await client.end().catch(() => {});
+    // A retry wakeup or sweep still in flight can hold a connection after the store closes;
+    // WITH (FORCE) would kill it and surface as an uncaught error in whichever test runs next.
+    for (let waited = 0; waited < 10_000; waited += 50) {
+      const open = await admin.query(`SELECT count(*)::int AS n FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()`, [name]);
+      if (open.rows[0].n === 0) break;
+      await new Promise((r) => setTimeout(r, 50));
+    }
     await admin.query(`DROP DATABASE IF EXISTS ${name} WITH (FORCE)`);
     await admin.end();
   }
@@ -561,5 +568,53 @@ test('D23: the balance is derived from the ledger, never read from the stored pr
     const strip = ({ asOf, ...rest }) => rest; // asOf is the read instant, which moves with the clock
     assert.deepEqual(strip(after), strip(before), 'the balance ignores the projection');
     assert.equal(after.total, 12);
+  }));
+
+test('D2: migration 132 copies every point award into the free wallet 1:1, idempotently, and proves its totals', { skip },
+  () => withFreshDatabase(async ({ client }) => {
+    const ids = await seedFamily(client, 'points');
+    // Awards earned in the past, before the transfer runs. The copy keeps each award's own time,
+    // so the minutes are visible from the moment they were earned, not from the moment of copying.
+    // Seconds ago: the larger offset is the older award, so 15 was earned first.
+    for (const [offset, points] of [[3, 15], [2, 5], [1, 200]]) {
+      await client.query(
+        `INSERT INTO family_point_ledger
+           (id, family_id, child_id, points, reason, claim_id, awarded_by_membership_id, created_at)
+         VALUES (gen_random_uuid(), $1, $2, $3, 'task_confirmed', NULL, $4, NOW() - make_interval(secs => $5))`,
+        [ids.familyId, ids.childId, points, ids.primaryId, offset],
+      );
+    }
+    const sql = await readFile(join(migrationDirectory, '132_point_ledger_to_minutes.sql'), 'utf8');
+    await client.query(sql);
+    await client.query(sql); // a second run adds nothing: the source key already exists
+
+    const { rows } = await client.query(
+      `SELECT channel, wallet_scope, minutes, source_type FROM family_minutes_ledger
+        WHERE child_id = $1 AND source_type = 'point_ledger_migration' ORDER BY created_at`,
+      [ids.childId],
+    );
+    assert.equal(rows.length, 3, 'one credit per award, however many times the file ran');
+    assert.deepEqual(rows.map((row) => row.minutes), [15, 5, 200], '1 point = 1 minute');
+    assert.ok(rows.every((row) => row.channel === 'migration_from_points' && row.wallet_scope === 'free'));
+
+    // The three confirmations the migration itself enforces, checked again from outside.
+    const counts = await client.query(
+      `SELECT (SELECT COUNT(*) FROM family_point_ledger WHERE reason = 'task_confirmed')::int AS awards,
+              (SELECT SUM(points) FROM family_point_ledger WHERE reason = 'task_confirmed')::int AS points,
+              (SELECT COUNT(*) FROM family_minutes_ledger WHERE source_type = 'point_ledger_migration')::int AS credits,
+              (SELECT SUM(minutes) FROM family_minutes_ledger WHERE source_type = 'point_ledger_migration')::int AS minutes`,
+    );
+    assert.equal(counts.rows[0].awards, counts.rows[0].credits, 'count');
+    assert.equal(counts.rows[0].points, counts.rows[0].minutes, 'sum');
+    const uncovered = await client.query(
+      `SELECT COUNT(*)::int AS n FROM family_point_ledger p
+        WHERE NOT EXISTS (SELECT 1 FROM family_minutes_ledger m
+          WHERE m.source_type = 'point_ledger_migration' AND m.source_id = p.id::text)`,
+    );
+    assert.equal(uncovered.rows[0].n, 0, 'coverage: no award without its credit');
+
+    const balance = await readBalance(client, ids);
+    assert.equal(balance.free, 220);
+    assert.equal(balance.total, 220);
   }));
 

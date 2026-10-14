@@ -141,4 +141,8 @@ export const FOUNDATION_SCHEMA_MIGRATIONS = Object.freeze([
     name: '131_family_app_wallets.sql',
     sha256: 'fa8ac4b4f885cd8ab12a0221e0817c9a742dc9643fe64845a845a580ad1de01e',
   }),
+  Object.freeze({
+    name: '132_point_ledger_to_minutes.sql',
+    sha256: '21d9c7efdd1ee192a80646d5d243752be8adc486fd1581d1c8ffcfee0b7ee77b',
+  }),
 ]);

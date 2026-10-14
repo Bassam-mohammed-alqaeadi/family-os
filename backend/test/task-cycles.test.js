@@ -175,17 +175,18 @@ function recordingPort({
           points_awarded: input.pointsAwarded,
         });
       },
-      async insertLedgerEntry(_client, input) {
-        calls.ledger.push(input);
+      // S3 D2: a confirmation credits minutes (channel family_task_child, source = the claim).
+      async creditConfirmedTask(_client, input) {
+        calls.ledger.push({ points: input.points, reason: 'task_confirmed', claimId: input.claimId,
+          actorMembershipId: input.actorMembershipId });
         return {
-          id: '99999999-9999-4999-8999-999999999999',
-          family_id: input.familyId,
-          child_id: input.childId,
-          points: input.points,
-          reason: input.reason,
-          claim_id: input.claimId,
-          awarded_by_membership_id: input.awardedByMembershipId,
-          created_at: new Date('2026-10-08T08:00:00.000Z'),
+          entry: {
+            id: '99999999-9999-4999-8999-999999999999',
+            minutes: input.points,
+            channel: 'family_task_child',
+            createdAt: '2026-10-08T08:00:00.000Z',
+          },
+          balance: { total: input.points, free: input.points, daily: 0, temporary: 0, apps: [] },
         };
       },
       async readLedger() {
@@ -358,7 +359,7 @@ test('a claim that already produced an entry cannot produce a second one', async
   // The database index is the last line of defence; this proves the module turns its
   // violation into a refusal rather than into a second credit.
   const { port } = recordingPort({ pendingClaim: claimRow() });
-  port.insertLedgerEntry = async () => null;
+  port.creditConfirmedTask = async () => null;
   const decide = createTaskDecision({ port });
   await assert.rejects(
     () => decide({

@@ -55,6 +55,13 @@ async function withFreshDatabase(run) {
       await client.end();
     }
   } finally {
+    // A retry wakeup or sweep still in flight can hold a connection after the store closes;
+    // WITH (FORCE) would kill it and surface as an uncaught error in whichever test runs next.
+    for (let waited = 0; waited < 10_000; waited += 50) {
+      const open = await admin.query(`SELECT count(*)::int AS n FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()`, [name]);
+      if (open.rows[0].n === 0) break;
+      await new Promise((r) => setTimeout(r, 50));
+    }
     await admin.query(`DROP DATABASE IF EXISTS ${name} WITH (FORCE)`);
     await admin.end();
   }
@@ -3581,15 +3588,24 @@ test('a chore is claimed by a child, confirmed by a guardian, and the points can
         assert.equal(again.status, 409);
         assert.equal(again.body.error.code, 'task_claim_not_pending');
 
-        // 7. And the storage layer refuses it too, which is what makes the refusal a rule
-        //    rather than a code path: the same claim cannot produce a second entry.
+        // 7. S3 D2: a confirmation credits minutes, and the points table is history only - the
+        //    confirmation wrote no new point row. The storage layer refuses a second credit for
+        //    the same claim, which is what makes the refusal a rule rather than a code path.
+        const pointRowsForClaim = await client.query(
+          'SELECT COUNT(*)::int AS n FROM family_point_ledger WHERE claim_id = $1',
+          [confirmed.body.task.claim.id],
+        );
+        assert.equal(pointRowsForClaim.rows[0].n, 0, 'no new point row: the points table is history only');
         await assert.rejects(
           () => client.query(
-            `INSERT INTO family_point_ledger (id, family_id, child_id, points, reason, claim_id, awarded_by_membership_id)
-             VALUES (gen_random_uuid(), $1, $2, 15, 'task_confirmed', $3, $4)`,
+            `INSERT INTO family_minutes_ledger
+               (id, family_id, child_id, entry_kind, channel, minutes, wallet_scope, source_type, source_id,
+                actor_membership_id, balance_after_minutes, created_at)
+             VALUES (gen_random_uuid(), $1, $2, 'credit', 'family_task_child', 15, 'free',
+                     'family_task_claim', $3, $4, 15, NOW())`,
             [familyId, childId, confirmed.body.task.claim.id, primaryMembershipId],
           ),
-          /one_entry_per_claim/,
+          /one_row_per_source/,
         );
 
         // 8. A number the client tries to send is refused as an unknown field: the reward is
