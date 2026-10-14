@@ -133,4 +133,12 @@ export const FOUNDATION_SCHEMA_MIGRATIONS = Object.freeze([
     name: '124_geofence_notification_payload_minimization.sql',
     sha256: '44929dc7031ad3bc7614b6613f41c3e0cf331cebcb0e745eb507ed1e44e6c114',
   }),
+  Object.freeze({
+    name: '130_family_minutes_ledger.sql',
+    sha256: '922e8dcc0d9720412cf36d00711f59088bdc3f6a0d673da4e5c6640968c6b329',
+  }),
+  Object.freeze({
+    name: '131_family_app_wallets.sql',
+    sha256: 'fa8ac4b4f885cd8ab12a0221e0817c9a742dc9643fe64845a845a580ad1de01e',
+  }),
 ]);
