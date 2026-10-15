@@ -48,6 +48,11 @@ void main() {
     // The server balance arrives after the screen is ready (async chain).
     await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 20)));
     await tester.pump();
+    // DIAG (temporary): show what the screen rendered.
+    expect(
+      [for (final e in find.byType(Text).evaluate()) (e.widget as Text).data],
+      isEmpty,
+    );
     expect(find.byKey(const Key('wallet_minutes_youtube')), findsOneWidget);
     expect(find.textContaining('25'), findsWidgets);
     expect(find.textContaining('99'), findsNothing);
