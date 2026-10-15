@@ -223,6 +223,14 @@ test('every protected operation declares OIDC security, rate limiting and idempo
       '/v1/devices/{deviceId}/capabilities',
       '/v1/devices/{deviceId}/commands/pending',
       '/v1/devices/{deviceId}/command-receipts',
+      // S3 (minutes economy) adds two, and they are the same decision again. The child's own
+      // handset reports the minutes it spent, and reads its own full balance. Neither names a
+      // child in the path that the device could type: the credential is what proves which
+      // child is speaking. The consume path keeps the family/child shape the card freezes,
+      // because a spend belongs to a child in a family; the economy refuses any device that
+      // is not that child's own.
+      '/v1/families/{familyId}/children/{childId}/minutes/consume',
+      '/v1/devices/{deviceId}/minutes-balance',
     ]);
     // A media upload is idempotent by its own `clientMediaId` (same id, same file, same media;
     // a different file under that id is refused), so it does not take the platform's

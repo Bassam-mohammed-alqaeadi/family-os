@@ -13,6 +13,7 @@ import { sosEmergencyFor } from './sos-emergency.js';
 import { screenTimeFor } from './screen-time.js';
 import { webFilterFor } from './web-filter.js';
 import { tasksFor } from './tasks.js';
+import { deviceFingerprintSubject, minutesFor } from './minutes-service.js';
 import { calendarFor } from './calendar.js';
 import { familyChatFor } from './family-chat.js';
 import { chatMediaFor } from './family-chat-media.js';
@@ -64,6 +65,12 @@ import {
     webFilterEvaluateQuery,
     taskCreateInput,
     taskClaimInput,
+    minutesEarnInput,
+    minutesConsumeInput,
+    minutesGrantInput,
+    minutesAllocationInput,
+    minutesReversalInput,
+    minutesLedgerQuery,
     taskDecisionInput,
     eventCreateInput,
     eventUpdateInput,
@@ -201,6 +208,8 @@ export function createApp({
     // arrangement as every wave before it - one credential check, data access through the
     // store's published helpers, and no decision in the route layer.
     tasks = tasksFor(store, { credentialMatches: capabilityMatches }),
+    // S3. The minutes economy: the rules live in minutes-economy.js; this wave only adds who may ask.
+    minutes = minutesFor(store, { credentialMatches: capabilityMatches }),
     // W8. The family calendar. Same arrangement as every wave before it, and the same one
     // law that matters here: what a phone may claim about a person is decided in the module,
     // not in a route - attendance is recorded by a guardian after the fact, never inferred.
@@ -1726,6 +1735,166 @@ export function createApp({
                 principal: request.principal,
                 familyId,
             });
+            response.status(200).json(result);
+        }),
+    );
+
+    // ── S3 — the minutes economy ────────────────────────────────────────────────────
+    //
+    // Minutes are a ledger, never a stored number. Every write below is idempotent by its
+    // Idempotency-Key and runs in one transaction with the economy's own rules. Who may ask is
+    // decided here and in the service: guardians by membership, the child's handset by the
+    // credential issued at pairing. No body names a child for a handset, and no body names
+    // the device that is speaking.
+
+    // A guardian route (bearer token) or a handset route (the device credential), nothing else.
+    const minutesRoute = (method, path, { device = false, handler }) => {
+        app[method](
+            path,
+            device ? requireTelemetryActor : requirePrincipal,
+            device ? deviceTelemetryRateLimit : protectedApiRateLimit,
+            requireRuntimeReady,
+            asyncRoute(handler),
+        );
+    };
+    const idempotencyOf = (request) => requireIdempotencyKey(request.get('Idempotency-Key'));
+    const deviceSubjectOf = (request) => (
+        request.deviceCredential ? deviceFingerprintSubject(request.deviceCredential) : 'no-device'
+    );
+
+    // A guardian credits minutes for a channel the economy allows (quran, athkar, tasks…).
+    minutesRoute('post', '/v1/families/:familyId/children/:childId/minutes/earn', {
+        handler: async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            requireNoQueryParameters(request.query);
+            const body = minutesEarnInput(request.body);
+            const idempotencyKey = idempotencyOf(request);
+            const result = await minutes.earn({
+                principal: request.principal, familyId, childId, body, idempotencyKey,
+                requestHash: requestFingerprint({
+                    action: 'minutes.earn', principal: request.principal, input: { familyId, childId, body },
+                }),
+            });
+            response.status(201).json(result);
+        },
+    });
+
+    // The child's handset spends minutes in one session. The credential names the device, and
+    // the device must belong to this child: a sibling's phone cannot spend this child's time.
+    minutesRoute('post', '/v1/families/:familyId/children/:childId/minutes/consume', {
+        device: true,
+        handler: async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            requireNoQueryParameters(request.query);
+            const body = minutesConsumeInput(request.body);
+            const idempotencyKey = idempotencyOf(request);
+            const result = await minutes.consume({
+                deviceCredential: request.deviceCredential, familyId, childId, body, idempotencyKey,
+                requestHash: requestFingerprint({
+                    action: 'minutes.consume', principal: { subject: deviceSubjectOf(request) },
+                    input: { familyId, childId, body },
+                }),
+            });
+            response.status(201).json(result);
+        },
+    });
+
+    // A guardian grants minutes outright. A co-guardian is held to the per-request ceiling.
+    minutesRoute('post', '/v1/families/:familyId/children/:childId/minutes/grants', {
+        handler: async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            requireNoQueryParameters(request.query);
+            const body = minutesGrantInput(request.body);
+            const idempotencyKey = idempotencyOf(request);
+            const result = await minutes.grant({
+                principal: request.principal, familyId, childId, body, idempotencyKey,
+                requestHash: requestFingerprint({
+                    action: 'minutes.grant', principal: request.principal, input: { familyId, childId, body },
+                }),
+            });
+            response.status(201).json(result);
+        },
+    });
+
+    // A guardian moves minutes between a child's app wallet and free wallet. It creates none.
+    minutesRoute('post', '/v1/families/:familyId/children/:childId/minutes/allocations', {
+        handler: async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            requireNoQueryParameters(request.query);
+            const body = minutesAllocationInput(request.body);
+            const idempotencyKey = idempotencyOf(request);
+            const result = await minutes.allocate({
+                principal: request.principal, familyId, childId, body, idempotencyKey,
+                requestHash: requestFingerprint({
+                    action: 'minutes.allocate', principal: request.principal, input: { familyId, childId, body },
+                }),
+            });
+            response.status(201).json(result);
+        },
+    });
+
+    // The primary guardian reverses one credit, once, for a stated reason, up to what it holds.
+    minutesRoute('post', '/v1/families/:familyId/children/:childId/minutes/reversals', {
+        handler: async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            requireNoQueryParameters(request.query);
+            const body = minutesReversalInput(request.body);
+            const idempotencyKey = idempotencyOf(request);
+            const result = await minutes.reverse({
+                principal: request.principal, familyId, childId, body, idempotencyKey,
+                requestHash: requestFingerprint({
+                    action: 'minutes.reverse', principal: request.principal, input: { familyId, childId, body },
+                }),
+            });
+            response.status(201).json(result);
+        },
+    });
+
+    // The ledger, for the guardians - the transparency a co-parent is owed.
+    app.get(
+        '/v1/families/:familyId/children/:childId/minutes/ledger',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            const query = minutesLedgerQuery(request.query);
+            const result = await minutes.ledger({ principal: request.principal, familyId, childId, query });
+            response.status(200).json(result);
+        }),
+    );
+
+    // The balance a guardian sees, derived from the ledger at the moment of the read.
+    app.get(
+        '/v1/families/:familyId/children/:childId/minutes/balance',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            const childId = requireUuid(request.params.childId, 'childId');
+            requireNoQueryParameters(request.query);
+            const result = await minutes.balance({ principal: request.principal, familyId, childId });
+            response.status(200).json(result);
+        }),
+    );
+
+    // The child's own handset: the full balance, including each app's wallet.
+    app.get(
+        '/v1/devices/:deviceId/minutes-balance',
+        requireTelemetryActor,
+        deviceTelemetryRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const deviceId = requireUuid(request.params.deviceId, 'deviceId');
+            requireNoQueryParameters(request.query);
+            const result = await minutes.deviceBalance({ deviceId, deviceCredential: request.deviceCredential });
             response.status(200).json(result);
         }),
     );

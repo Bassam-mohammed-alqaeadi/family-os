@@ -7702,6 +7702,591 @@
           }
         }
       }
+    },
+    "/v1/families/{familyId}/children/{childId}/minutes/earn": {
+      "post": {
+        "operationId": "earnChildMinutes",
+        "summary": "Credits minutes earned in an allowed channel",
+        "description": "A guardian credits minutes for a channel the economy allows. The source names what earned them, and the same source cannot be credited twice.",
+        "tags": [
+          "Minutes economy"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MinutesEarnRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The change as recorded, with the balance after it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MinutesEntryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "409": {
+            "description": "The same idempotency key was used for a different request, or the economy refused the change (for example minutes_duplicate_source, minutes_reversal_exceeds_balance, minutes_insufficient).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A value is outside its allowed range.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/minutes/consume": {
+      "post": {
+        "operationId": "consumeChildMinutes",
+        "summary": "Spends minutes from the child handset in one session",
+        "description": "The child's own device reports minutes spent in one session of one app. The device credential names the device; the device must belong to this child. The draw order is daily, temporary, the app wallet, then free.",
+        "tags": [
+          "Minutes economy"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MinutesConsumeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The change as recorded, with the balance after it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MinutesConsumeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "403": {
+            "description": "The device credential is not accepted for this child.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          },
+          "409": {
+            "description": "The economy refused the spend, for example minutes_insufficient or minutes_locked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/minutes/grants": {
+      "post": {
+        "operationId": "grantChildMinutes",
+        "summary": "Grants minutes outright to a child",
+        "description": "A guardian grants minutes in one wallet. A co-guardian is held to the per-request ceiling of 30; the primary guardian has none. The idempotency key is the grant's source.",
+        "tags": [
+          "Minutes economy"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MinutesGrantRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The change as recorded, with the balance after it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MinutesEntryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "409": {
+            "description": "The same idempotency key was used for a different request, or the economy refused the change (for example minutes_duplicate_source, minutes_reversal_exceeds_balance, minutes_insufficient).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A value is outside its allowed range.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/minutes/allocations": {
+      "post": {
+        "operationId": "allocateChildMinutes",
+        "summary": "Moves minutes between a child's app and free wallets",
+        "description": "Moves minutes between the app and free wallets only. It creates no minutes, and a daily or temporary wallet on either side is refused.",
+        "tags": [
+          "Minutes economy"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MinutesAllocationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The change as recorded, with the balance after it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MinutesAllocationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "409": {
+            "description": "The same idempotency key was used for a different request, or the economy refused the change (for example minutes_duplicate_source, minutes_reversal_exceeds_balance, minutes_insufficient).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A value is outside its allowed range.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/minutes/reversals": {
+      "post": {
+        "operationId": "reverseChildMinutes",
+        "summary": "Reverses one credit, once, by the primary guardian",
+        "description": "The primary guardian reverses a credit once, for a stated reason, never above what the credit still holds after spending and expiry. The original stays in the ledger.",
+        "tags": [
+          "Minutes economy"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MinutesReversalRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The change as recorded, with the balance after it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MinutesReversalResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "409": {
+            "description": "The same idempotency key was used for a different request, or the economy refused the change (for example minutes_duplicate_source, minutes_reversal_exceeds_balance, minutes_insufficient).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A value is outside its allowed range.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/minutes/ledger": {
+      "get": {
+        "operationId": "listChildMinutesLedger",
+        "summary": "Lists the minutes ledger for a child, page by page",
+        "description": "Every row ever written, newest first. Guardians see the whole record, including the entries a correction reversed.",
+        "tags": [
+          "Minutes economy"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of ledger rows.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MinutesLedgerResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/minutes/balance": {
+      "get": {
+        "operationId": "readChildMinutesBalance",
+        "summary": "Reads a child's minutes balance, derived from the ledger",
+        "description": "The balance is a sum over the ledger at the moment of the read, never a stored number. Guardians read it here.",
+        "tags": [
+          "Minutes economy"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The balance by wallet.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MinutesBalance"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/minutes-balance": {
+      "get": {
+        "operationId": "readDeviceMinutesBalance",
+        "summary": "Reads the child's own minutes balance from the child's handset",
+        "description": "The handset sees its own full balance, including each app wallet, because its wallet view needs the detail. The device credential names the child; no child id is taken.",
+        "tags": [
+          "Minutes economy"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The full balance for this child.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MinutesBalance"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "403": {
+            "description": "The device credential is not accepted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -15065,6 +15650,435 @@
             }
           }
         }
+      },
+      "MinutesSource": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          }
+        },
+        "required": [
+          "type",
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "MinutesWalletRef": {
+        "type": "object",
+        "properties": {
+          "scope": {
+            "type": "string",
+            "enum": [
+              "daily",
+              "temporary",
+              "app",
+              "free"
+            ]
+          },
+          "appId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "scope"
+        ],
+        "additionalProperties": false
+      },
+      "MinutesEntry": {
+        "type": "object",
+        "description": "One row of the append-only minutes ledger.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "entryKind": {
+            "type": "string",
+            "enum": [
+              "credit",
+              "consumption",
+              "reversal",
+              "expiry"
+            ]
+          },
+          "channel": {
+            "type": "string"
+          },
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1440
+          },
+          "walletScope": {
+            "type": "string",
+            "enum": [
+              "daily",
+              "temporary",
+              "app",
+              "free"
+            ]
+          },
+          "appId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "creditRef": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "sourceType": {
+            "type": "string"
+          },
+          "sourceId": {
+            "type": "string"
+          },
+          "actorMembershipId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "awardedByDeviceId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "balanceAfterMinutes": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "entryKind",
+          "channel",
+          "minutes",
+          "walletScope",
+          "sourceType",
+          "sourceId",
+          "balanceAfterMinutes",
+          "createdAt"
+        ]
+      },
+      "MinutesBalance": {
+        "type": "object",
+        "description": "Derived from the ledger at the moment of the read; never a stored number.",
+        "properties": {
+          "daily": {
+            "type": "integer"
+          },
+          "temporary": {
+            "type": "integer"
+          },
+          "free": {
+            "type": "integer"
+          },
+          "apps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "appId": {
+                  "type": "string"
+                },
+                "minutes": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "appId",
+                "minutes"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "total": {
+            "type": "integer"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "daily",
+          "temporary",
+          "free",
+          "apps",
+          "total",
+          "asOf"
+        ]
+      },
+      "MinutesEarnRequest": {
+        "type": "object",
+        "properties": {
+          "channel": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1440
+          },
+          "appId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "source": {
+            "$ref": "#/components/schemas/MinutesSource"
+          }
+        },
+        "required": [
+          "channel",
+          "minutes",
+          "source"
+        ],
+        "additionalProperties": false
+      },
+      "MinutesConsumeRequest": {
+        "type": "object",
+        "properties": {
+          "appId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1440
+          },
+          "sessionId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          }
+        },
+        "required": [
+          "appId",
+          "minutes",
+          "sessionId"
+        ],
+        "additionalProperties": false
+      },
+      "MinutesGrantRequest": {
+        "type": "object",
+        "properties": {
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1440
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "daily",
+              "temporary",
+              "app",
+              "free"
+            ]
+          },
+          "appId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "minutes",
+          "scope"
+        ],
+        "additionalProperties": false
+      },
+      "MinutesAllocationRequest": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "$ref": "#/components/schemas/MinutesWalletRef"
+          },
+          "to": {
+            "$ref": "#/components/schemas/MinutesWalletRef"
+          },
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1440
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "minutes"
+        ],
+        "additionalProperties": false
+      },
+      "MinutesReversalRequest": {
+        "type": "object",
+        "properties": {
+          "targetEntryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1440
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "targetEntryId",
+          "minutes",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "MinutesEntryResponse": {
+        "type": "object",
+        "properties": {
+          "entry": {
+            "$ref": "#/components/schemas/MinutesEntry"
+          },
+          "balance": {
+            "$ref": "#/components/schemas/MinutesBalance"
+          }
+        },
+        "required": [
+          "entry",
+          "balance"
+        ],
+        "additionalProperties": false
+      },
+      "MinutesConsumeResponse": {
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MinutesEntry"
+            }
+          },
+          "balance": {
+            "$ref": "#/components/schemas/MinutesBalance"
+          }
+        },
+        "required": [
+          "entries",
+          "balance"
+        ],
+        "additionalProperties": false
+      },
+      "MinutesAllocationResponse": {
+        "type": "object",
+        "properties": {
+          "outEntry": {
+            "$ref": "#/components/schemas/MinutesEntry"
+          },
+          "outEntries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MinutesEntry"
+            }
+          },
+          "inEntry": {
+            "$ref": "#/components/schemas/MinutesEntry"
+          },
+          "balance": {
+            "$ref": "#/components/schemas/MinutesBalance"
+          }
+        },
+        "required": [
+          "outEntry",
+          "outEntries",
+          "inEntry",
+          "balance"
+        ],
+        "additionalProperties": false
+      },
+      "MinutesReversalResponse": {
+        "type": "object",
+        "properties": {
+          "reversalEntry": {
+            "$ref": "#/components/schemas/MinutesEntry"
+          },
+          "balance": {
+            "$ref": "#/components/schemas/MinutesBalance"
+          }
+        },
+        "required": [
+          "reversalEntry",
+          "balance"
+        ],
+        "additionalProperties": false
+      },
+      "MinutesLedgerResponse": {
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MinutesEntry"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "entries",
+          "nextCursor"
+        ],
+        "additionalProperties": false
       }
     }
   }
