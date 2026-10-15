@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/role_controller.dart';
@@ -184,7 +185,7 @@ class _AttributionRewardScreenState extends State<AttributionRewardScreen> {
   }
 
   /// One day at most per reward: the parent's amount must be a whole number of minutes in that range.
-  static const int _maxRewardMinutes = 1440;
+  static const int _maxRewardMinutes = attributionRewardMaxMinutes;
 
   void _onRewardMinutes(String rewardId, int minutes) {
     if (!_canEdit) return;
@@ -753,6 +754,11 @@ class _RewardRow extends StatelessWidget {
               // must be able to type a positive amount back into the same field.
               enabled: enabled,
               keyboardType: TextInputType.number,
+              // A value above the ceiling is refused in the field itself: the last good value stays.
+              inputFormatters: const [
+                FilteringTextInputFormatter.digitsOnly,
+                _RewardMinutesFormatter(attributionRewardMaxMinutes),
+              ],
               textAlign: TextAlign.center,
               decoration: const InputDecoration(isDense: true),
               onChanged: (v) {
@@ -771,5 +777,26 @@ class _RewardRow extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// The ceiling of one reward, and of an assignment's total (owner ruling, S3 D20/D21).
+const int attributionRewardMaxMinutes = 1440;
+
+/// Keeps the last good value when the typed one is above the ceiling.
+final class _RewardMinutesFormatter extends TextInputFormatter {
+  const _RewardMinutesFormatter(this.max);
+
+  final int max;
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) return newValue;
+    final value = int.tryParse(newValue.text);
+    if (value == null || value > max) return oldValue;
+    return newValue;
   }
 }
