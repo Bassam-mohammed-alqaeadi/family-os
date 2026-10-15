@@ -2108,6 +2108,9 @@ abstract class AppLocalizations {
   /// **'محافظ التطبيقات'**
   String get childScreenTimeWalletsHeading;
 
+  /// SCR-FAT-032 note when the shown balance is the last good server reading
+  String get childScreenTimeBalanceStale;
+
   /// SCR-FAT-032 wallet balance line
   ///
   /// In ar, this message translates to:

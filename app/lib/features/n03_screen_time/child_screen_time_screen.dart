@@ -80,7 +80,7 @@ class ChildScreenTimeScreen extends StatefulWidget {
   });
 
   /// Reads a child's balance per app from the server. Null → the guardian's bound server read.
-  final Future<Map<String, int>?> Function(String childId)? balanceReader;
+  final Future<MinutesBalanceReading?> Function(String childId)? balanceReader;
 
   /// Explicit child; null → Identity active child → stage1 canonical.
   final ChildId? childId;
@@ -124,6 +124,8 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
   var _policyUnavailable = false;
   /// Server balance per wallet app. Null → the server gave no balance: no number is shown.
   Map<String, int>? _balanceByApp;
+  /// True when the shown balance is the last good reading and the newest read failed.
+  bool _balanceStale = false;
   PolicySyncStatus? _syncStatus;
   int _temporaryGrantRemaining = 0;
   late TimeRequestService _timeRequestService;
@@ -301,7 +303,10 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
     final reader = widget.balanceReader ?? guardianMinutesBalanceByApp;
     final balanceByApp = await reader(_childId.value);
     if (!mounted) return;
-    setState(() => _balanceByApp = balanceByApp);
+    setState(() {
+      _balanceByApp = balanceByApp?.byApp;
+      _balanceStale = balanceByApp?.stale ?? false;
+    });
   }
 
   bool get _canEdit {
@@ -653,6 +658,7 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
                           l10n: l10n,
                           policy: _policy,
                           balanceByApp: _balanceByApp,
+                          balanceStale: _balanceStale,
                           capController: _capController,
                           canEdit: canEdit && _canSavePolicy,
                           colors: colors,
@@ -712,6 +718,7 @@ class _CapsSection extends StatelessWidget {
     required this.l10n,
     required this.policy,
     required this.balanceByApp,
+    required this.balanceStale,
     required this.capController,
     required this.canEdit,
     required this.colors,
@@ -725,6 +732,7 @@ class _CapsSection extends StatelessWidget {
   final ScreenTimePolicy policy;
   /// Server balance per wallet app; null → no number is shown.
   final Map<String, int>? balanceByApp;
+  final bool balanceStale;
   final TextEditingController capController;
   final bool canEdit;
   final FamilyColors colors;
@@ -812,6 +820,12 @@ class _CapsSection extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
+            if (balanceStale)
+              Text(
+                key: const Key('wallet_balance_stale'),
+                l10n.childScreenTimeBalanceStale,
+                style: TextStyle(fontSize: 13, color: colors.coral),
+              ),
             for (final wallet in policy.wallets) ...[
               Semantics(
                 label: balanceByApp?[wallet.appId] == null

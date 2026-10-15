@@ -19,7 +19,7 @@ const _balanceBody =
 final class _Transport implements FoundationGateHttpTransport {
   _Transport(this.status, this.body);
 
-  final int status;
+  int status;
   final String body;
   final List<String> calls = <String>[];
 
@@ -105,7 +105,9 @@ void main() {
           familyId: () => _familyId,
         );
 
-    expect(await authority(_Transport(200, _balanceBody)).balanceByApp(_childId), {'youtube': 25});
+    final fresh = await authority(_Transport(200, _balanceBody)).balanceByApp(_childId);
+    expect(fresh?.byApp, {'youtube': 25});
+    expect(fresh?.stale, isFalse);
     expect(await authority(_Transport(403, _balanceBody)).balanceByApp(_childId), isNull);
     expect(await authority(_Transport(200, _balanceBody)).balanceByApp('not-a-uuid'), isNull);
 
@@ -115,5 +117,22 @@ void main() {
       familyId: () => null,
     );
     expect(await noFamily.balanceByApp(_childId), isNull);
+  });
+
+  test('a failed read after a good one shows the last good reading, flagged stale', () async {
+    final transport = _Transport(200, _balanceBody);
+    final authority = GuardianMinutesBalanceAuthority(
+      api: _api(transport),
+      idToken: () async => 'token',
+      familyId: () => _familyId,
+    );
+
+    final fresh = await authority.balanceByApp(_childId);
+    expect(fresh?.stale, isFalse);
+
+    transport.status = 503;
+    final stale = await authority.balanceByApp(_childId);
+    expect(stale?.stale, isTrue);
+    expect(stale?.byApp, {'youtube': 25});
   });
 }

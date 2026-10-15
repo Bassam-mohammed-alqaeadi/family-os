@@ -1103,6 +1103,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get childScreenTimeWalletsHeading => 'محافظ التطبيقات';
 
   @override
+  String get childScreenTimeBalanceStale => 'الأرقام المعروضة قديمة: آخر قراءة ناجحة من الخادم';
+
+  @override
   String childScreenTimeWalletMinutes(int minutes) {
     return '$minutes دقيقة مكتسبة';
   }

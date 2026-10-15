@@ -1328,6 +1328,10 @@
     "description": "SCR-FAT-032 Ruling B helper under overflow switch"
   },
   "childScreenTimeWalletsHeading": "محافظ التطبيقات",
+  "childScreenTimeBalanceStale": "الأرقام المعروضة قديمة: آخر قراءة ناجحة من الخادم",
+  "@childScreenTimeBalanceStale": {
+    "description": "SCR-FAT-032 note when the shown balance is the last good server reading"
+  },
   "@childScreenTimeWalletsHeading": {
     "description": "SCR-FAT-032 wallets list heading"
   },
