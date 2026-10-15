@@ -41,8 +41,10 @@ void main() {
       find.byKey(AttributionRewardKeys.rewardSwitch('play')),
       findsOneWidget,
     );
-    expect(find.textContaining('20 minutes to their wallet'), findsOneWidget);
-    expect(find.textContaining('+15 play minutes'), findsOneWidget);
+    // S3: no minute figure on the reward rows; the server counts them on certification.
+    expect(find.textContaining('Counted soon'), findsWidgets);
+    expect(find.textContaining('20 minutes'), findsNothing);
+    expect(find.textContaining('+15 play minutes'), findsNothing);
 
     await tester.ensureVisible(find.byKey(AttributionRewardKeys.assignCta));
     await tester.pumpAndSettle();

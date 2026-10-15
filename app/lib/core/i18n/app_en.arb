@@ -2561,6 +2561,10 @@
       }
     }
   },
+  "attributionRewardCountedSoon": "Counted soon",
+  "@attributionRewardCountedSoon": {
+    "description": "SCR-FAT-045 reward row value while the server counts the amount; no minute figure"
+  },
   "attributionRewardWalletMinutes": "{minutes} minutes to their wallet",
   "@attributionRewardWalletMinutes": {
     "description": "SCR-FAT-045 wallet minutes reward",

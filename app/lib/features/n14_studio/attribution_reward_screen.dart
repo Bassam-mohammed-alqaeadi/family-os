@@ -177,15 +177,9 @@ class _AttributionRewardScreenState extends State<AttributionRewardScreen> {
     };
   }
 
+  /// No minute figure here: the server counts the reward on certification (ع-١ / S3).
   String _rewardTitle(AppLocalizations l10n, AttributionRewardToggle reward) {
-    return switch (reward.kind) {
-      AttributionRewardKind.wallet => l10n.attributionRewardWalletMinutes(
-        reward.minutes,
-      ),
-      AttributionRewardKind.play => l10n.attributionRewardPlayMinutes(
-        reward.minutes,
-      ),
-    };
+    return l10n.attributionRewardCountedSoon;
   }
 
   void _onSelectChild(String childId) {

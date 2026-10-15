@@ -2099,6 +2099,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get attributionRewardCountedSoon => 'Counted soon';
+
+  @override
   String attributionRewardWalletMinutes(int minutes) {
     return '$minutes minutes to their wallet';
   }

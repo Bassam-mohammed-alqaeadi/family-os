@@ -2066,6 +2066,9 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get attributionRewardCountedSoon => 'تُحتسب قريباً';
+
+  @override
   String attributionRewardWalletMinutes(int minutes) {
     return '$minutes دقيقة لمحفظته';
   }

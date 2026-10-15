@@ -3812,6 +3812,12 @@ abstract class AppLocalizations {
   /// **'المكافأة عند الإتقان (≥{percent}٪)'**
   String attributionRewardRewardsHeading(int percent);
 
+  /// SCR-FAT-045 reward row value while the server counts the amount; no minute figure
+  ///
+  /// In ar, this message translates to:
+  /// **'تُحتسب قريباً'**
+  String get attributionRewardCountedSoon;
+
   /// SCR-FAT-045 wallet minutes reward
   ///
   /// In ar, this message translates to:
