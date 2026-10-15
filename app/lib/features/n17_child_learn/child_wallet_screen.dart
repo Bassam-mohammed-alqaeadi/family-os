@@ -7,6 +7,7 @@ import 'package:family_os/core/design/components/enforcement_status_badge.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
