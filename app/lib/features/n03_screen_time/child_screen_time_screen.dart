@@ -649,6 +649,7 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
                         _CapsSection(
                           l10n: l10n,
                           policy: _policy,
+                          balanceByApp: _balanceByApp,
                           capController: _capController,
                           canEdit: canEdit && _canSavePolicy,
                           colors: colors,
@@ -707,6 +708,7 @@ class _CapsSection extends StatelessWidget {
   const _CapsSection({
     required this.l10n,
     required this.policy,
+    required this.balanceByApp,
     required this.capController,
     required this.canEdit,
     required this.colors,
@@ -718,6 +720,8 @@ class _CapsSection extends StatelessWidget {
 
   final AppLocalizations l10n;
   final ScreenTimePolicy policy;
+  /// Server balance per wallet app; null → no number is shown.
+  final Map<String, int>? balanceByApp;
   final TextEditingController capController;
   final bool canEdit;
   final FamilyColors colors;
@@ -807,9 +811,9 @@ class _CapsSection extends StatelessWidget {
             const SizedBox(height: 8),
             for (final wallet in policy.wallets) ...[
               Semantics(
-                label: _balanceByApp?[wallet.appId] == null
+                label: balanceByApp?[wallet.appId] == null
                     ? walletLabel(wallet.appId)
-                    : '${walletLabel(wallet.appId)} ${l10n.childScreenTimeWalletMinutes(_balanceByApp![wallet.appId]!)}',
+                    : '${walletLabel(wallet.appId)} ${l10n.childScreenTimeWalletMinutes(balanceByApp![wallet.appId]!)}',
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6),
                   child: ConstrainedBox(
@@ -826,11 +830,11 @@ class _CapsSection extends StatelessWidget {
                             ),
                           ),
                         ),
-                        if (_balanceByApp?[wallet.appId] != null)
+                        if (balanceByApp?[wallet.appId] != null)
                           Text(
                             key: Key('wallet_minutes_${wallet.appId}'),
                             l10n.childScreenTimeWalletMinutes(
-                              _balanceByApp![wallet.appId]!,
+                              balanceByApp![wallet.appId]!,
                             ),
                             style: TextStyle(
                               fontSize: 14,
