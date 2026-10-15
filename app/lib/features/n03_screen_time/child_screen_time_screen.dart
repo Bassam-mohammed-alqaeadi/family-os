@@ -286,6 +286,19 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
     final grantRemaining = await _timeRequestService.activeGrantRemaining(
       _childId,
     );
+    if (!mounted) return;
+    setState(() {
+      _windows = loaded;
+      _policy = policy;
+      _temporaryGrantRemaining = grantRemaining;
+      _capController.text = '${policy.dailyCapMinutes}';
+      _loading = false;
+    });
+    _loadBalance();
+  }
+
+  /// The server balance never blocks the screen: it arrives after the screen is ready.
+  Future<void> _loadBalance() async {
     Map<String, int>? balanceByApp;
     try {
       final balance = await (widget.balanceClient ?? stage1ChildMinutesBalanceClient).read();
@@ -294,14 +307,7 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
       balanceByApp = null;
     }
     if (!mounted) return;
-    setState(() {
-      _windows = loaded;
-      _policy = policy;
-      _balanceByApp = balanceByApp;
-      _temporaryGrantRemaining = grantRemaining;
-      _capController.text = '${policy.dailyCapMinutes}';
-      _loading = false;
-    });
+    setState(() => _balanceByApp = balanceByApp);
   }
 
   bool get _canEdit {
