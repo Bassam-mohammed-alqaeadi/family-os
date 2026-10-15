@@ -1,9 +1,6 @@
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/minutes.dart';
-import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/identity/active_child_resolver.dart';
-import 'package:family_os/core/policy/wallet_ledger.dart';
-import 'package:family_os/core/screen_time/screen_time_local_persistence.dart';
 import 'package:family_os/features/n14_studio/quran_progress_models.dart';
 import 'package:family_os/features/quran/quran_local_bridge.dart';
 import 'package:family_os/features/quran/quran_recitation_models.dart';
@@ -35,21 +32,17 @@ final class InMemoryQuranProgressRepository implements QuranProgressRepository {
     QuranProgressSnapshot? seed,
     QuranWardPlanRepository? plans,
     QuranRecitationRepository? recitations,
-    WalletLedger? wallet,
     ChildId? childId,
     QuranLocalBridge? bridge,
   }) : _snap = seed ?? quranProgressEmptyFixture(),
        _plans = plans ?? stage1QuranWardPlanRepository,
        _recitations = recitations ?? stage1QuranRecitationRepository,
-       _injectedWallet = wallet,
        _explicitChildId = childId,
        _bridgeOverride = bridge;
 
   QuranProgressSnapshot _snap;
   final QuranWardPlanRepository _plans;
   final QuranRecitationRepository _recitations;
-  final WalletLedger? _injectedWallet;
-  WalletLedger? _resolvedWallet;
   final ChildId? _explicitChildId;
 
   /// Null explicit id → family context's selected child at call time.
@@ -60,14 +53,6 @@ final class InMemoryQuranProgressRepository implements QuranProgressRepository {
   var downloadCount = 0;
 
   QuranLocalBridge get _bridge => _bridgeOverride ?? stage1QuranLocalBridge;
-
-  Future<WalletLedger> _wallet() async {
-    final injected = _injectedWallet;
-    if (injected != null) return injected;
-    return _resolvedWallet ??= WalletLedger(
-      await ScreenTimeLocalPersistence.openPolicyRepository(),
-    );
-  }
 
   @override
   Future<QuranProgressSnapshot> load() async {
@@ -109,16 +94,7 @@ final class InMemoryQuranProgressRepository implements QuranProgressRepository {
     if (pending != null) {
       await _recitations.approve(pending.id);
     }
-    // Rule 5 — earn only through WalletLedger / PolicyEngine.
-    if (reward.inMinutes > 0) {
-      final wallet = await _wallet();
-      await wallet.earn(
-        childId: pending?.childId ?? _childId,
-        appId: QuranWalletApps.play,
-        assignee: AppRole.child,
-        fatherSetReward: reward,
-      );
-    }
+    // S3: no local minute write. The approval is recorded; the minutes are not deposited here.
     final next = (_snap.completedAyahs + 5).clamp(0, _snap.toAyah);
     _snap = _snap.copyWith(
       completedAyahs: next,

@@ -2587,15 +2587,12 @@
   "@attributionRewardLibraryCta": {
     "description": "SCR-FAT-045 secondary CTA → FAT-046"
   },
-  "attributionRewardAssignedToast": "أُسند لـ{name} — وصله: «والدك جهّز لك تحديًا — {minutes} دقيقة تنتظرك!»",
+  "attributionRewardAssignedToast": "أُسند لـ{name} — وصله التحدي",
   "@attributionRewardAssignedToast": {
     "description": "SCR-FAT-045 assign success toast",
     "placeholders": {
       "name": {
         "type": "String"
-      },
-      "minutes": {
-        "type": "int"
       }
     }
   },
@@ -11722,28 +11719,20 @@
   "@quranProgressPlaySemantics": {
     "description": "SCR-FAT-072 play a11y"
   },
-  "quranProgressApproveCta": "اعتماد وصرف المكافأة (+{minutes} د)",
+  "quranProgressApproveCta": "اعتماد الورد",
   "@quranProgressApproveCta": {
-    "description": "SCR-FAT-072 approve CTA minutes-only",
-    "placeholders": {
-      "minutes": {
-        "type": "int"
-      }
-    }
+    "description": "SCR-FAT-072 approve CTA, no minute figure"
   },
   "quranProgressWhisperCta": "همسة 💬",
   "@quranProgressWhisperCta": {
     "description": "SCR-FAT-072 whisper"
   },
-  "quranProgressApproveToast": "تم اعتماد تلاوة {name} وإضافة +{minutes} دقيقة لوقت اللعب",
+  "quranProgressApproveToast": "تم اعتماد تلاوة {name}",
   "@quranProgressApproveToast": {
     "description": "SCR-FAT-072 approve toast",
     "placeholders": {
       "name": {
         "type": "String"
-      },
-      "minutes": {
-        "type": "int"
       }
     }
   },
@@ -11756,14 +11745,9 @@
       }
     }
   },
-  "quranProgressApprovedBanner": "⭐ تم اعتماد هذا الورد وصرف مكافأة +{minutes} دقيقة بنجاح",
+  "quranProgressApprovedBanner": "⭐ تم اعتماد هذا الورد — المكافأة تُحتسب قريباً",
   "@quranProgressApprovedBanner": {
-    "description": "SCR-FAT-072 approved banner",
-    "placeholders": {
-      "minutes": {
-        "type": "int"
-      }
-    }
+    "description": "SCR-FAT-072 approved banner, no minute figure"
   },
   "quranProgressPlanHeading": "خطة الورد والمكافأة",
   "@quranProgressPlanHeading": {
@@ -11781,14 +11765,9 @@
   "@quranProgressPlanReward": {
     "description": "SCR-FAT-072 plan row"
   },
-  "quranProgressPlanRewardValue": "+{minutes} دقيقة لعب للمحفظة",
+  "quranProgressPlanRewardValue": "تُحتسب قريباً",
   "@quranProgressPlanRewardValue": {
-    "description": "SCR-FAT-072 reward value minutes-only",
-    "placeholders": {
-      "minutes": {
-        "type": "int"
-      }
-    }
+    "description": "SCR-FAT-072 reward value, no minute figure"
   },
   "quranProgressSurahNaba": "النبأ",
   "@quranProgressSurahNaba": {
@@ -15230,15 +15209,12 @@
   "@quranProgressPublishPlanCta": {
     "description": "SCR-FAT-072 publish ward plan CTA (P15-QUR-002)"
   },
-  "quranProgressPublishPlanToast": "أُرسلت خطة الورد — {surah} · مكافأة +{minutes} دقيقة",
+  "quranProgressPublishPlanToast": "أُرسلت خطة الورد — {surah}",
   "@quranProgressPublishPlanToast": {
     "description": "SCR-FAT-072 publish plan toast",
     "placeholders": {
       "surah": {
         "type": "String"
-      },
-      "minutes": {
-        "type": "int"
       }
     }
   },

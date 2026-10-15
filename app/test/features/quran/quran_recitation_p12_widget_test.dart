@@ -10,8 +10,6 @@ import 'package:family_os/core/domain/minutes.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
-import 'package:family_os/core/policy/screen_time_policy_repository.dart';
-import 'package:family_os/core/policy/wallet_ledger.dart';
 import 'package:family_os/features/n14_studio/quran_progress_models.dart';
 import 'package:family_os/features/n14_studio/quran_progress_repository.dart';
 import 'package:family_os/features/n14_studio/quran_progress_screen.dart';
@@ -24,9 +22,7 @@ import 'package:family_os/features/quran/quran_ward_plan_repository.dart';
 void main() {
   tearDown(AppToast.dismiss);
 
-  test('approve earns play minutes via WalletLedger', () async {
-    final prefs = MemoryScreenTimePolicyPrefsStore();
-    final wallet = WalletLedger(PrefsScreenTimePolicyRepository(prefs));
+  test('approve records the recitation and writes no minutes (S3)', () async {
     final bus = InMemoryQuranRecitationRepository();
     addTearDown(bus.dispose);
     final childId = ChildId('child_a');
@@ -40,13 +36,9 @@ void main() {
     final repo = InMemoryQuranProgressRepository(
       seed: quranProgressOneFixture(),
       recitations: bus,
-      wallet: wallet,
       childId: childId,
     );
-    final before = await wallet.balance(childId: childId, appId: 'play');
     await repo.approveRecitation();
-    final after = await wallet.balance(childId: childId, appId: 'play');
-    expect(after.inMinutes, before.inMinutes + 30);
     final latest = await bus.latestForChild(childId);
     expect(latest!.status, QuranRecitationSubmitStatus.approved);
   });
@@ -58,8 +50,6 @@ void main() {
     final bus = InMemoryQuranRecitationRepository();
     addTearDown(plans.dispose);
     addTearDown(bus.dispose);
-    final prefs = MemoryScreenTimePolicyPrefsStore();
-    final wallet = WalletLedger(PrefsScreenTimePolicyRepository(prefs));
 
     final childRepo = InMemoryChildQuranWardRepository(
       seed: childQuranWardOneFixture(),
@@ -72,7 +62,6 @@ void main() {
       ),
       plans: plans,
       recitations: bus,
-      wallet: wallet,
     );
 
     await _pumpChild(tester, repository: childRepo);

@@ -227,13 +227,12 @@ class _AttributionRewardScreenState extends State<AttributionRewardScreen> {
     }
     final child = _snap.selectedChild!;
     final name = _childName(l10n, child);
-    final minutes = _snap.totalEnabledMinutes;
     final snap = await _repo.assign();
     if (!mounted) return;
     setState(() => _snap = snap);
     AppToast.show(
       context,
-      message: l10n.attributionRewardAssignedToast(name, minutes),
+      message: l10n.attributionRewardAssignedToast(name),
     );
     _go('SCR-FAT-046');
   }
