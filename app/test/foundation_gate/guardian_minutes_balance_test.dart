@@ -5,7 +5,9 @@
 // the authority returning null on every non-answer so no screen shows a number this device made up.
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:family_os/core/fs_foundation/memory_local_database.dart';
 import 'package:family_os/features/n03_screen_time/guardian_minutes_balance_authority.dart';
+import 'package:family_os/features/n03_screen_time/minutes_balance_cache.dart';
 import 'package:family_os/foundation_gate/family_tasks_api_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_http.dart';
@@ -103,6 +105,7 @@ void main() {
           api: _api(transport),
           idToken: () async => 'token',
           familyId: () => _familyId,
+          cacheOpener: () async => null,
         );
 
     final fresh = await authority(_Transport(200, _balanceBody)).balanceByApp(_childId);
@@ -115,24 +118,78 @@ void main() {
       api: _api(_Transport(200, _balanceBody)),
       idToken: () async => 'token',
       familyId: () => null,
+      cacheOpener: () async => null,
     );
     expect(await noFamily.balanceByApp(_childId), isNull);
   });
 
-  test('a failed read after a good one shows the last good reading, flagged stale', () async {
+  test('a failed read shows the reading kept on this device, flagged stale', () async {
+    final db = MemoryLocalDatabase();
+    await db.open();
     final transport = _Transport(200, _balanceBody);
     final authority = GuardianMinutesBalanceAuthority(
       api: _api(transport),
       idToken: () async => 'token',
       familyId: () => _familyId,
+      cacheOpener: () async => SqliteMinutesBalanceCache(db),
     );
 
-    final fresh = await authority.balanceByApp(_childId);
-    expect(fresh?.stale, isFalse);
+    expect((await authority.balanceByApp(_childId))?.stale, isFalse);
 
     transport.status = 503;
     final stale = await authority.balanceByApp(_childId);
     expect(stale?.stale, isTrue);
     expect(stale?.byApp, {'youtube': 25});
+  });
+
+  test('the cached reading survives a restart: a new authority on the same store', () async {
+    final db = MemoryLocalDatabase();
+    await db.open();
+    final before = GuardianMinutesBalanceAuthority(
+      api: _api(_Transport(200, _balanceBody)),
+      idToken: () async => 'token',
+      familyId: () => _familyId,
+      cacheOpener: () async => SqliteMinutesBalanceCache(db),
+    );
+    expect((await before.balanceByApp(_childId))?.byApp, {'youtube': 25});
+
+    // Restart: a brand-new authority and cache object, offline, no family selected yet.
+    final after = GuardianMinutesBalanceAuthority(
+      api: _api(_Transport(503, _balanceBody)),
+      idToken: () async => 'token',
+      familyId: () => null,
+      cacheOpener: () async => SqliteMinutesBalanceCache(db),
+    );
+    final offline = await after.balanceByApp(_childId);
+    expect(offline?.stale, isTrue);
+    expect(offline?.byApp, {'youtube': 25});
+  });
+
+  test('a fresh answer replaces the cached one, and a child never sees another child', () async {
+    final db = MemoryLocalDatabase();
+    await db.open();
+    final cache = SqliteMinutesBalanceCache(db);
+    await cache.write(_childId, {'youtube': 25});
+    await cache.write('33333333-3333-4333-8333-333333333333', {'games': 9});
+
+    final authority = GuardianMinutesBalanceAuthority(
+      api: _api(_Transport(200, '{"daily":0,"temporary":0,"free":0,"apps":[{"appId":"youtube","minutes":7}],"total":7,"asOf":"2026-10-15T11:00:00.000Z"}')),
+      idToken: () async => 'token',
+      familyId: () => _familyId,
+      cacheOpener: () async => cache,
+    );
+    expect((await authority.balanceByApp(_childId))?.byApp, {'youtube': 7});
+    expect((await cache.read(_childId))?.values.single, 7);
+    expect(await cache.read('33333333-3333-4333-8333-333333333333'), {'games': 9});
+  });
+
+  test('with no durable store and a failed read, no number is shown', () async {
+    final authority = GuardianMinutesBalanceAuthority(
+      api: _api(_Transport(503, _balanceBody)),
+      idToken: () async => 'token',
+      familyId: () => _familyId,
+      cacheOpener: () async => null,
+    );
+    expect(await authority.balanceByApp(_childId), isNull);
   });
 }

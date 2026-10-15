@@ -51,6 +51,7 @@ import 'package:family_os/features/n03_screen_time/screen_time_server_authority.
 import 'package:family_os/features/n04_web_filter/web_filter_server_authority.dart';
 import 'package:family_os/features/n15_calendar/calendar_server_authority.dart';
 import 'package:family_os/features/n03_screen_time/guardian_minutes_balance_authority.dart';
+import 'package:family_os/features/n03_screen_time/minutes_balance_cache.dart';
 import 'package:family_os/features/n16_tasks/tasks_server_authority.dart';
 import 'package:family_os/features/n10_emergency/sos_server_authority.dart';
 import 'package:family_os/features/n02_day/location_ux_bridge.dart';
@@ -242,6 +243,7 @@ Future<void> main() async {
           api: tasksApi,
           idToken: familyEntryRuntime.currentIdToken,
           familyId: () => familyEntryRuntime.selectedFamilyId,
+          cacheOpener: openDurableMinutesBalanceCache,
         ),
       );
     }
