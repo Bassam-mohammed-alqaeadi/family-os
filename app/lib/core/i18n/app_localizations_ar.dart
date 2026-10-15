@@ -8976,7 +8976,8 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get quranProgressApprovedBanner => '⭐ تم اعتماد هذا الورد — المكافأة تُحتسب قريباً';
+  String get quranProgressApprovedBanner =>
+      '⭐ تم اعتماد هذا الورد — المكافأة تُحتسب قريباً';
 
   @override
   String get quranProgressPlanHeading => 'خطة الورد والمكافأة';

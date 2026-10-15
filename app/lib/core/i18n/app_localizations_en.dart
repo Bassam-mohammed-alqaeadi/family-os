@@ -9103,7 +9103,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get quranProgressApprovedBanner => '⭐ This ward was approved — reward counted soon';
+  String get quranProgressApprovedBanner =>
+      '⭐ This ward was approved — reward counted soon';
 
   @override
   String get quranProgressPlanHeading => 'Ward plan & reward';
