@@ -81,11 +81,7 @@ final class InMemoryChildWalletRepository implements ChildWalletRepository {
 }
 
 final ChildWalletRepository stage1ChildWalletRepository =
-    ServerChildWalletRepository(
-      client: ChildMinutesBalanceClient(
-        transport: NativeChildMinutesBalanceTransport(),
-      ),
-    );
+    ServerChildWalletRepository(client: stage1ChildMinutesBalanceClient);
 
 ChildWalletSnapshot childWalletEmptyFixture() =>
     const ChildWalletSnapshot(simulated: true);

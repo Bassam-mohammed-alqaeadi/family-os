@@ -172,3 +172,7 @@ final class ChildMinutesBalanceClient {
   static FoundationGateApiException _invalid() =>
       const FoundationGateApiException(FoundationGateApiFailure.invalidResponse);
 }
+
+/// The one production reader of the handset's own balance (CHD-019 and the screen-time view).
+final ChildMinutesBalanceClient stage1ChildMinutesBalanceClient =
+    ChildMinutesBalanceClient(transport: NativeChildMinutesBalanceTransport());

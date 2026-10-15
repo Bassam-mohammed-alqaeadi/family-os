@@ -32,6 +32,8 @@ import 'package:family_os/features/n12_devices/mother_permission_level_repositor
 import 'package:family_os/features/n03_screen_time/screen_time_server_authority.dart';
 import 'package:family_os/features/n03_screen_time/screen_time_server_panel.dart';
 import 'package:family_os/features/n03_screen_time/stage1_child_scope.dart';
+import 'package:family_os/foundation_gate/child_minutes_balance_client.dart';
+import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
 /// Optional time-picker override for widget tests.
 typedef ScheduleTimePicker =
@@ -75,7 +77,11 @@ class ChildScreenTimeScreen extends StatefulWidget {
     this.motherLevel = MotherLevel.partner,
     this.timeRequestService,
     this.policyUnavailableOverride,
+    this.balanceClient,
   });
+
+  /// The handset's own balance reader (CHD-019). Null → the stage-1 production reader.
+  final ChildMinutesBalanceClient? balanceClient;
 
   /// Explicit child; null → Identity active child → stage1 canonical.
   final ChildId? childId;
@@ -117,6 +123,8 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
   var _loading = true;
   var _saving = false;
   var _policyUnavailable = false;
+  /// Server balance per wallet app. Null → the server gave no balance: no number is shown.
+  Map<String, int>? _balanceByApp;
   PolicySyncStatus? _syncStatus;
   int _temporaryGrantRemaining = 0;
   late TimeRequestService _timeRequestService;
@@ -278,10 +286,18 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
     final grantRemaining = await _timeRequestService.activeGrantRemaining(
       _childId,
     );
+    Map<String, int>? balanceByApp;
+    try {
+      final balance = await (widget.balanceClient ?? stage1ChildMinutesBalanceClient).read();
+      balanceByApp = {for (final app in balance.apps) app.appId: app.minutes};
+    } on FoundationGateApiException {
+      balanceByApp = null;
+    }
     if (!mounted) return;
     setState(() {
       _windows = loaded;
       _policy = policy;
+      _balanceByApp = balanceByApp;
       _temporaryGrantRemaining = grantRemaining;
       _capController.text = '${policy.dailyCapMinutes}';
       _loading = false;
@@ -791,8 +807,9 @@ class _CapsSection extends StatelessWidget {
             const SizedBox(height: 8),
             for (final wallet in policy.wallets) ...[
               Semantics(
-                label:
-                    '${walletLabel(wallet.appId)} ${l10n.childScreenTimeWalletMinutes(wallet.earnedMinutes.inMinutes)}',
+                label: _balanceByApp?[wallet.appId] == null
+                    ? walletLabel(wallet.appId)
+                    : '${walletLabel(wallet.appId)} ${l10n.childScreenTimeWalletMinutes(_balanceByApp![wallet.appId]!)}',
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6),
                   child: ConstrainedBox(
@@ -809,17 +826,18 @@ class _CapsSection extends StatelessWidget {
                             ),
                           ),
                         ),
-                        Text(
-                          key: Key('wallet_minutes_${wallet.appId}'),
-                          l10n.childScreenTimeWalletMinutes(
-                            wallet.earnedMinutes.inMinutes,
+                        if (_balanceByApp?[wallet.appId] != null)
+                          Text(
+                            key: Key('wallet_minutes_${wallet.appId}'),
+                            l10n.childScreenTimeWalletMinutes(
+                              _balanceByApp![wallet.appId]!,
+                            ),
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: colors.ink2,
+                            ),
                           ),
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: colors.ink2,
-                          ),
-                        ),
                       ],
                     ),
                   ),
