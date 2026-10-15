@@ -243,6 +243,13 @@ class _ChildWalletScreenState extends State<ChildWalletScreen> {
             ),
             const SizedBox(height: 10),
           ],
+          if (_snap.stale) ...[
+            Text(
+              l10n.childScreenTimeBalanceStale,
+              key: const Key('child_wallet_balance_stale'),
+            ),
+            const SizedBox(height: 10),
+          ],
           DecoratedBox(
             key: ChildWalletKeys.hero,
             decoration: BoxDecoration(

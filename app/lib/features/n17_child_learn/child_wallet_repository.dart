@@ -1,8 +1,10 @@
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/policy/screen_time_policy.dart';
+import 'package:family_os/features/n03_screen_time/minutes_balance_cache.dart';
 import 'package:family_os/features/n03_screen_time/stage1_child_scope.dart';
 import 'package:family_os/features/n17_child_learn/child_wallet_models.dart';
 import 'package:family_os/foundation_gate/child_minutes_balance_client.dart';
+import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
 abstract class ChildWalletRepository {
   Future<ChildWalletSnapshot> load();
@@ -13,10 +15,15 @@ final ChildId kStage1WalletChildId = activeScopedChildId();
 
 /// CHD-019 — the child's wallet, read from the server. Nothing is computed on the device.
 final class ServerChildWalletRepository implements ChildWalletRepository {
-  ServerChildWalletRepository({required ChildMinutesBalanceClient client})
-    : _client = client;
+  ServerChildWalletRepository({
+    required ChildMinutesBalanceClient client,
+    this.cacheOpener,
+  }) : _client = client;
 
   final ChildMinutesBalanceClient _client;
+
+  /// The durable cache for this handset's last good reading; null when there is no store.
+  final Future<MinutesBalanceCache?> Function()? cacheOpener;
 
   Future<void> Function()? loadGate;
 
@@ -25,24 +32,64 @@ final class ServerChildWalletRepository implements ChildWalletRepository {
     final gate = loadGate;
     if (gate != null) await gate();
 
-    final balance = await _client.read();
+    final deviceId = await _client.pairedDeviceId();
+    final cache = await cacheOpener?.call();
+    try {
+      final balance = await _client.read();
+      if (deviceId != null) {
+        await writeCachedMinutes(
+          cache,
+          deviceId,
+          CachedMinutesBalance(
+            scope: deviceId,
+            total: balance.total,
+            byApp: {for (final app in balance.apps) app.appId: app.minutes},
+          ),
+        );
+      }
+      return _snapshot(
+        total: balance.total,
+        apps: [for (final app in balance.apps) (app.appId, app.minutes)],
+        stale: false,
+      );
+    } on FoundationGateApiException {
+      // The read failed. The last reading of this same pairing is shown flagged stale; a
+      // reading from a different pairing is ignored and nothing is shown.
+      final cached = deviceId == null
+          ? null
+          : await readCachedMinutes(cache, deviceId, scope: deviceId);
+      if (cached == null) rethrow;
+      return _snapshot(
+        total: cached.total,
+        apps: [for (final e in cached.byApp.entries) (e.key, e.value)],
+        stale: true,
+      );
+    }
+  }
+
+  static ChildWalletSnapshot _snapshot({
+    required int total,
+    required List<(String, int)> apps,
+    required bool stale,
+  }) {
     return ChildWalletSnapshot(
-      totalMinutes: balance.total,
+      totalMinutes: total,
       // No server source for streaks or badges yet: they stay empty until real activity
       // provides them (owner ruling 2026-10-15). Never a fabricated number.
       streakDays: 0,
       recordStreakDays: 0,
       apps: [
-        for (final app in balance.apps)
+        for (final (appId, minutes) in apps)
           ChildWalletApp(
-            id: app.appId,
-            nameKey: _nameKeyFor(app.appId),
-            iconKey: app.appId,
-            walletMinutes: app.minutes,
+            id: appId,
+            nameKey: _nameKeyFor(appId),
+            iconKey: appId,
+            walletMinutes: minutes,
           ),
       ],
       badges: const [],
       simulated: false,
+      stale: stale,
     );
   }
 
@@ -81,7 +128,10 @@ final class InMemoryChildWalletRepository implements ChildWalletRepository {
 }
 
 final ChildWalletRepository stage1ChildWalletRepository =
-    ServerChildWalletRepository(client: stage1ChildMinutesBalanceClient);
+    ServerChildWalletRepository(
+      client: stage1ChildMinutesBalanceClient,
+      cacheOpener: openDurableMinutesBalanceCache,
+    );
 
 ChildWalletSnapshot childWalletEmptyFixture() =>
     const ChildWalletSnapshot(simulated: true);

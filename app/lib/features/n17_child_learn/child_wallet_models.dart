@@ -39,6 +39,7 @@ final class ChildWalletSnapshot {
     this.apps = const [],
     this.badges = const [],
     this.simulated = true,
+    this.stale = false,
   });
 
   final int totalMinutes;
@@ -49,6 +50,9 @@ final class ChildWalletSnapshot {
 
   /// Stage-1 honesty — balances come from mock/policy prefs, not a live device.
   final bool simulated;
+
+  /// The last good server reading, shown because the newest read failed (never presented as fresh).
+  final bool stale;
 
   bool get isEmpty => apps.isEmpty && badges.isEmpty && totalMinutes == 0;
 

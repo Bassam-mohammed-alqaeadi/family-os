@@ -16,9 +16,9 @@ final class MinutesBalanceReading {
 /// S3 — the guardian's read of a child's minutes balance, with the guardian's own session.
 ///
 /// A guardian's phone holds no device credential, so the balance is read as the guardian.
-/// A fresh answer is written to the device's durable cache. When the read fails, the cached
-/// reading is shown flagged stale, so the screen still works offline. With no reading at all,
-/// the answer is null and no number is shown.
+/// A fresh answer is written to the device's durable cache under the family it was read for.
+/// When the read fails, the cached reading for that same family is shown flagged stale. With no
+/// family selected there is no pairing to verify a cached reading against, so nothing is shown.
 final class GuardianMinutesBalanceAuthority {
   GuardianMinutesBalanceAuthority({
     required this.api,
@@ -33,53 +33,39 @@ final class GuardianMinutesBalanceAuthority {
   final Future<MinutesBalanceCache?> Function() cacheOpener;
 
   Future<MinutesBalanceReading?> balanceByApp(String childId) async {
-    final cache = await cacheOpener();
     final family = familyId();
-    if (family != null) {
-      try {
-        final token = await idToken();
-        final balance = await api.readMinutesBalance(
-          familyId: family,
-          childId: childId,
-          idToken: token,
-        );
-        final byApp = {for (final app in balance.apps) app.appId: app.minutes};
-        await _writeCache(cache, childId, byApp);
-        return MinutesBalanceReading(byApp);
-      } on FoundationGateApiException {
-        // Fall through to the cached reading.
-      } on ArgumentError {
-        // Fall through to the cached reading.
-      }
-    }
-    final cached = await _readCache(cache, childId);
-    return cached == null ? null : MinutesBalanceReading(cached, stale: true);
-  }
-
-  static Future<void> _writeCache(
-    MinutesBalanceCache? cache,
-    String childId,
-    Map<String, int> byApp,
-  ) async {
-    if (cache == null) return;
+    if (family == null) return null;
+    final cache = await cacheOpener();
     try {
-      await cache.write(childId, byApp);
-    } on Object {
-      // A failed cache write never hides a fresh answer.
-      return;
+      final token = await idToken();
+      final balance = await api.readMinutesBalance(
+        familyId: family,
+        childId: childId,
+        idToken: token,
+      );
+      final byApp = {for (final app in balance.apps) app.appId: app.minutes};
+      await writeCachedMinutes(
+        cache,
+        childId,
+        CachedMinutesBalance(scope: family, total: balance.total, byApp: byApp),
+      );
+      return MinutesBalanceReading(byApp);
+    } on FoundationGateApiException {
+      return _stale(cache, childId, family);
+    } on ArgumentError {
+      return _stale(cache, childId, family);
     }
   }
 
-  static Future<Map<String, int>?> _readCache(
+  Future<MinutesBalanceReading?> _stale(
     MinutesBalanceCache? cache,
     String childId,
+    String family,
   ) async {
-    if (cache == null) return null;
-    try {
-      return await cache.read(childId);
-    } on Object {
-      return null;
-    }
+    final cached = await readCachedMinutes(cache, childId, scope: family);
+    return cached == null
+        ? null
+        : MinutesBalanceReading(cached.byApp, stale: true);
   }
 }
 

@@ -100,6 +100,9 @@ final class ChildMinutesBalanceClient {
 
   final ChildMinutesBalanceTransport _transport;
 
+  /// The paired device id this handset reads under, or null when unpaired. The cache's pairing key.
+  Future<String?> pairedDeviceId() => _transport.configuredDeviceId();
+
   Future<ChildMinutesBalance> read() async {
     final deviceId = await _transport.configuredDeviceId();
     if (deviceId == null) {
