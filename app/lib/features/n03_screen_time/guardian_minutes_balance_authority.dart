@@ -1,7 +1,6 @@
 import 'package:family_os/features/n03_screen_time/minutes_balance_cache.dart';
 import 'package:family_os/foundation_gate/family_tasks_api_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
-import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
 /// One reading of a child's balance per app.
 ///
