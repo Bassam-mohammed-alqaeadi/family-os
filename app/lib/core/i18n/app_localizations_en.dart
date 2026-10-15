@@ -1116,7 +1116,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get childScreenTimeWalletsHeading => 'Per-app wallets';
 
   @override
-  String get childScreenTimeBalanceStale => 'Showing the last good server reading; the latest read failed';
+  String get childScreenTimeBalanceStale =>
+      'Showing the last good server reading; the latest read failed';
 
   @override
   String childScreenTimeWalletMinutes(int minutes) {
