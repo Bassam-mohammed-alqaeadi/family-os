@@ -45,6 +45,9 @@ void main() {
       ),
     );
 
+    // The server balance arrives after the screen is ready (async chain).
+    await tester.pump();
+    await tester.pump();
     expect(find.byKey(const Key('wallet_minutes_youtube')), findsOneWidget);
     expect(find.textContaining('25'), findsWidgets);
     expect(find.textContaining('99'), findsNothing);
