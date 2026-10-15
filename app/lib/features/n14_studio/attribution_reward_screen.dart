@@ -749,7 +749,9 @@ class _RewardRow extends StatelessWidget {
             child: TextFormField(
               key: Key('reward_minutes_${reward.id}'),
               initialValue: '${reward.minutes}',
-              enabled: enabled && reward.enabled,
+              // Stays editable while the screen is: a 0 turns the reward off, and the parent
+              // must be able to type a positive amount back into the same field.
+              enabled: enabled,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.center,
               decoration: const InputDecoration(isDense: true),

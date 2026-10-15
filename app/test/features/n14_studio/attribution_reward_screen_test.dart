@@ -71,10 +71,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byWidgetPredicate((w) => w is EditableText && w.controller.text == '30'), findsOneWidget);
 
-    // 0 is accepted: it turns the reward off locally and it is never counted.
+    // 0 is accepted: it turns the reward off locally (never counted), and a positive amount
+    // typed back turns it on again.
     await tester.enterText(find.byKey(const Key('reward_minutes_wallet')), '0');
     await tester.pumpAndSettle();
-    expect(find.byWidgetPredicate((w) => w is EditableText && w.controller.text == '0'), findsOneWidget);
+    expect(tester.widget<Switch>(find.byKey(AttributionRewardKeys.rewardSwitch('wallet'))).value, isFalse);
+    await tester.enterText(find.byKey(const Key('reward_minutes_wallet')), '12');
+    await tester.pumpAndSettle();
+    expect(tester.widget<Switch>(find.byKey(AttributionRewardKeys.rewardSwitch('wallet'))).value, isTrue);
   });
 
   testWidgets('library CTA → FAT-046', (tester) async {
