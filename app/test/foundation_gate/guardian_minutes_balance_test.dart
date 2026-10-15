@@ -165,6 +165,22 @@ void main() {
     expect(offline?.byApp, {'youtube': 25});
   });
 
+  test('a refused read (token expired) never falls back to the kept reading', () async {
+    final db = MemoryLocalDatabase();
+    await db.open();
+    final transport = _Transport(200, _balanceBody);
+    final authority = GuardianMinutesBalanceAuthority(
+      api: _api(transport),
+      idToken: () async => 'token',
+      familyId: () => _familyId,
+      cacheOpener: () async => SqliteMinutesBalanceCache(db),
+    );
+    expect((await authority.balanceByApp(_childId))?.stale, isFalse);
+
+    transport.status = 401;
+    expect(await authority.balanceByApp(_childId), isNull);
+  });
+
   test('no family selected means no pairing to verify: nothing is shown from the cache', () async {
     final db = MemoryLocalDatabase();
     await db.open();

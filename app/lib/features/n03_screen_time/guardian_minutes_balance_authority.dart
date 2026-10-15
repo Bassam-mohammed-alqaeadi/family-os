@@ -1,6 +1,7 @@
 import 'package:family_os/features/n03_screen_time/minutes_balance_cache.dart';
 import 'package:family_os/foundation_gate/family_tasks_api_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
+import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
 /// One reading of a child's balance per app.
 ///
@@ -50,7 +51,12 @@ final class GuardianMinutesBalanceAuthority {
         CachedMinutesBalance(scope: family, total: balance.total, byApp: byApp),
       );
       return MinutesBalanceReading(byApp);
-    } on FoundationGateApiException {
+    } on FoundationGateApiException catch (e) {
+      // A refusal is not a reason to show the kept reading (token expired, access revoked).
+      if (e.failure != FoundationGateApiFailure.networkUnavailable &&
+          e.failure != FoundationGateApiFailure.serviceUnavailable) {
+        return null;
+      }
       return _stale(cache, childId, family);
     } on ArgumentError {
       return _stale(cache, childId, family);

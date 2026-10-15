@@ -52,9 +52,15 @@ final class ServerChildWalletRepository implements ChildWalletRepository {
         apps: [for (final app in balance.apps) (app.appId, app.minutes)],
         stale: false,
       );
-    } on FoundationGateApiException {
-      // The read failed. The last reading of this same pairing is shown flagged stale; a
-      // reading from a different pairing is ignored and nothing is shown.
+    } on FoundationGateApiException catch (e) {
+      // Only a temporary fault may fall back to the kept reading. A refusal (revoked, not paired,
+      // forbidden) must never keep showing minutes the server no longer stands behind.
+      if (e.failure != FoundationGateApiFailure.networkUnavailable &&
+          e.failure != FoundationGateApiFailure.serviceUnavailable) {
+        rethrow;
+      }
+      // The last reading of this same pairing is shown flagged stale; a reading from a
+      // different pairing is ignored and nothing is shown.
       final cached = deviceId == null
           ? null
           : await readCachedMinutes(cache, deviceId, scope: deviceId);

@@ -70,6 +70,17 @@ void main() {
     );
   });
 
+  test('a refused read (revoked handset) never falls back to the kept balance', () async {
+    final db = MemoryLocalDatabase();
+    await db.open();
+    await _repo(_Handset(deviceId: 'dev-a'), db).load();
+
+    await expectLater(
+      _repo(_Handset(deviceId: 'dev-a', status: 401), db).load(),
+      throwsA(isA<FoundationGateApiException>()),
+    );
+  });
+
   test('with no durable store, a failed read is an error, never a number', () async {
     final repo = ServerChildWalletRepository(
       client: ChildMinutesBalanceClient(

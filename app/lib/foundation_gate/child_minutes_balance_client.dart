@@ -86,12 +86,18 @@ final class NativeChildMinutesBalanceTransport
       throw const FoundationGateApiException(
         FoundationGateApiFailure.networkUnavailable,
       );
-    } on PlatformException {
-      throw const FoundationGateApiException(
-        FoundationGateApiFailure.networkUnavailable,
-      );
+    } on PlatformException catch (e) {
+      throw FoundationGateApiException(_failureFor(e.code));
     }
   }
+
+  /// The native side refuses about the pairing, which is not a network fault: a handset that is
+  /// not (or no longer) the paired device must not look merely offline.
+  static FoundationGateApiFailure _failureFor(String code) => switch (code) {
+    'device_minutes_not_configured' ||
+    'device_minutes_scope_mismatch' => FoundationGateApiFailure.unauthenticated,
+    _ => FoundationGateApiFailure.networkUnavailable,
+  };
 }
 
 final class ChildMinutesBalanceClient {
