@@ -41,10 +41,9 @@ void main() {
       find.byKey(AttributionRewardKeys.rewardSwitch('play')),
       findsOneWidget,
     );
-    // S3: no minute figure on the reward rows; the server counts them on certification.
-    expect(find.textContaining('Counted soon'), findsWidgets);
-    expect(find.textContaining('20 minutes'), findsNothing);
-    expect(find.textContaining('+15 play minutes'), findsNothing);
+    // The amounts are the parent's own (control panel), shown as set.
+    expect(find.textContaining('20 minutes to their wallet'), findsOneWidget);
+    expect(find.textContaining('+15 play minutes'), findsOneWidget);
 
     await tester.ensureVisible(find.byKey(AttributionRewardKeys.assignCta));
     await tester.pumpAndSettle();
@@ -53,6 +52,22 @@ void main() {
     AppToast.dismiss();
     await tester.pumpAndSettle();
     expect(nav, contains('SCR-FAT-046'));
+  });
+
+  testWidgets('the parent sets the reward minutes; out-of-range values are refused', (tester) async {
+    final nav = <String>[];
+    final repo = InMemoryAttributionRewardRepository(
+      seed: attributionRewardPrototypeFixture(),
+    );
+    await _pump(tester, repository: repo, onNavigate: nav.add);
+
+    await tester.enterText(find.byKey(const Key('reward_minutes_wallet')), '30');
+    await tester.pumpAndSettle();
+    expect(find.textContaining('30 minutes to their wallet'), findsOneWidget);
+
+    await tester.enterText(find.byKey(const Key('reward_minutes_wallet')), '99999');
+    await tester.pumpAndSettle();
+    expect(find.textContaining('30 minutes to their wallet'), findsOneWidget);
   });
 
   testWidgets('library CTA → FAT-046', (tester) async {

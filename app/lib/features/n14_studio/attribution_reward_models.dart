@@ -53,11 +53,11 @@ final class AttributionRewardToggle {
   /// Prototype: play minutes «تُضاف تلقائيًا».
   final bool autoAdded;
 
-  AttributionRewardToggle copyWith({bool? enabled}) {
+  AttributionRewardToggle copyWith({bool? enabled, int? minutes}) {
     return AttributionRewardToggle(
       id: id,
       kind: kind,
-      minutes: minutes,
+      minutes: minutes ?? this.minutes,
       enabled: enabled ?? this.enabled,
       autoAdded: autoAdded,
     );
@@ -134,6 +134,21 @@ final class AttributionRewardSnapshot {
       rewards: [
         for (final r in rewards)
           if (r.id == rewardId) r.copyWith(enabled: enabled) else r,
+      ],
+      masteryPercent: masteryPercent,
+      assigned: assigned,
+    );
+  }
+
+  /// The parent sets the amount in the control panel; the server receives exactly this value.
+  AttributionRewardSnapshot withRewardMinutes(String rewardId, int minutes) {
+    return AttributionRewardSnapshot(
+      children: children,
+      selectedChildId: selectedChildId,
+      schedule: schedule,
+      rewards: [
+        for (final r in rewards)
+          if (r.id == rewardId) r.copyWith(minutes: minutes) else r,
       ],
       masteryPercent: masteryPercent,
       assigned: assigned,

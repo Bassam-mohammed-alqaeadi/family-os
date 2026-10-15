@@ -177,9 +177,24 @@ class _AttributionRewardScreenState extends State<AttributionRewardScreen> {
     };
   }
 
-  /// No minute figure here: the server counts the reward on certification (ع-١ / S3).
   String _rewardTitle(AppLocalizations l10n, AttributionRewardToggle reward) {
-    return l10n.attributionRewardCountedSoon;
+    return switch (reward.kind) {
+      AttributionRewardKind.wallet => l10n.attributionRewardWalletMinutes(
+        reward.minutes,
+      ),
+      AttributionRewardKind.play => l10n.attributionRewardPlayMinutes(
+        reward.minutes,
+      ),
+    };
+  }
+
+  /// One day at most per reward: the parent's amount must be a whole number of minutes in that range.
+  static const int _maxRewardMinutes = 1440;
+
+  void _onRewardMinutes(String rewardId, int minutes) {
+    if (!_canEdit) return;
+    if (minutes < 0 || minutes > _maxRewardMinutes) return;
+    setState(() => _snap = _snap.withRewardMinutes(rewardId, minutes));
   }
 
   void _onSelectChild(String childId) {
@@ -370,6 +385,7 @@ class _AttributionRewardScreenState extends State<AttributionRewardScreen> {
             canEdit: _canEdit,
             titleOf: (r) => _rewardTitle(l10n, r),
             onToggle: _onToggleReward,
+            onMinutes: _onRewardMinutes,
           ),
           const SizedBox(height: 16),
           PrimaryBtn(
@@ -623,6 +639,7 @@ class _RewardsCard extends StatelessWidget {
     required this.canEdit,
     required this.titleOf,
     required this.onToggle,
+    required this.onMinutes,
   });
 
   final AttributionRewardSnapshot snap;
@@ -632,6 +649,7 @@ class _RewardsCard extends StatelessWidget {
   final bool canEdit;
   final String Function(AttributionRewardToggle) titleOf;
   final void Function(String id, bool enabled) onToggle;
+  final void Function(String id, int minutes) onMinutes;
 
   @override
   Widget build(BuildContext context) {
@@ -665,7 +683,9 @@ class _RewardsCard extends StatelessWidget {
                     ? l10n.attributionRewardAutoAdded
                     : null,
                 enabled: canEdit,
+                minutesLabel: l10n.attributionRewardMinutesField,
                 onChanged: (v) => onToggle(reward.id, v),
+                onMinutes: (m) => onMinutes(reward.id, m),
               ),
           ],
         ),
@@ -681,6 +701,8 @@ class _RewardRow extends StatelessWidget {
     required this.title,
     required this.enabled,
     required this.onChanged,
+    required this.onMinutes,
+    required this.minutesLabel,
     this.subtitle,
   });
 
@@ -690,6 +712,8 @@ class _RewardRow extends StatelessWidget {
   final String? subtitle;
   final bool enabled;
   final ValueChanged<bool> onChanged;
+  final ValueChanged<int> onMinutes;
+  final String minutesLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -723,6 +747,25 @@ class _RewardRow extends StatelessWidget {
               ],
             ),
           ),
+          Semantics(
+            label: minutesLabel,
+            child: SizedBox(
+            width: 64,
+            child: TextFormField(
+              key: Key('reward_minutes_${reward.id}'),
+              initialValue: '${reward.minutes}',
+              enabled: enabled && reward.enabled,
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.center,
+              decoration: const InputDecoration(isDense: true),
+              onChanged: (v) {
+                final n = int.tryParse(v.trim());
+                if (n != null) onMinutes(n);
+              },
+            ),
+          ),
+          ),
+          const SizedBox(width: 6),
           Switch.adaptive(
             key: AttributionRewardKeys.rewardSwitch(reward.id),
             value: reward.enabled,

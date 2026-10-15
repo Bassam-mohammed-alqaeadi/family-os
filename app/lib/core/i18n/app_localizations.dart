@@ -3812,6 +3812,12 @@ abstract class AppLocalizations {
   /// **'المكافأة عند الإتقان (≥{percent}٪)'**
   String attributionRewardRewardsHeading(int percent);
 
+  /// SCR-FAT-045 accessible label for the parent-set minutes of a reward
+  ///
+  /// In ar, this message translates to:
+  /// **'الدقائق'**
+  String get attributionRewardMinutesField;
+
   /// SCR-FAT-045 reward row value while the server counts the amount; no minute figure
   ///
   /// In ar, this message translates to:

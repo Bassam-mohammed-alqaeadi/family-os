@@ -2099,6 +2099,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get attributionRewardMinutesField => 'Minutes';
+
+  @override
   String get attributionRewardCountedSoon => 'Counted soon';
 
   @override

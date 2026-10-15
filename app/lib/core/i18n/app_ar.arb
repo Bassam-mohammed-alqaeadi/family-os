@@ -2561,6 +2561,10 @@
       }
     }
   },
+  "attributionRewardMinutesField": "الدقائق",
+  "@attributionRewardMinutesField": {
+    "description": "SCR-FAT-045 accessible label for the parent-set minutes of a reward"
+  },
   "attributionRewardCountedSoon": "تُحتسب قريباً",
   "@attributionRewardCountedSoon": {
     "description": "SCR-FAT-045 reward row value while the server counts the amount; no minute figure"
