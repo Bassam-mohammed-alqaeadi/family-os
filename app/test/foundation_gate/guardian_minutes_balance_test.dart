@@ -6,7 +6,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:family_os/features/n03_screen_time/guardian_minutes_balance_authority.dart';
-import 'package:family_os/foundation_gate/child_minutes_balance_client.dart';
 import 'package:family_os/foundation_gate/family_tasks_api_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_http.dart';
@@ -18,7 +17,7 @@ const _balanceBody =
     '{"daily":0,"temporary":0,"free":0,"apps":[{"appId":"youtube","minutes":25}],"total":25,"asOf":"2026-10-15T10:00:00.000Z"}';
 
 final class _Transport implements FoundationGateHttpTransport {
-  _Transport(this.status, [this.body = _balanceBody]);
+  _Transport(this.status, this.body);
 
   final int status;
   final String body;
@@ -64,7 +63,7 @@ FamilyTasksApiClient _api(_Transport transport) => FamilyTasksApiClient(
 
 void main() {
   test('reads the guardian balance with GET on the family child path', () async {
-    final transport = _Transport(200);
+    final transport = _Transport(200, _balanceBody);
     final balance = await _api(transport).readMinutesBalance(
       familyId: _familyId,
       childId: _childId,
@@ -85,7 +84,7 @@ void main() {
       418: FoundationGateApiFailure.invalidResponse,
     }.entries) {
       await expectLater(
-        _api(_Transport(entry.key)).readMinutesBalance(
+        _api(_Transport(entry.key, _balanceBody)).readMinutesBalance(
           familyId: _familyId,
           childId: _childId,
           idToken: 'token',
@@ -106,12 +105,12 @@ void main() {
           familyId: () => _familyId,
         );
 
-    expect(await authority(_Transport(200)).balanceByApp(_childId), {'youtube': 25});
-    expect(await authority(_Transport(403)).balanceByApp(_childId), isNull);
-    expect(await authority(_Transport(200)).balanceByApp('not-a-uuid'), isNull);
+    expect(await authority(_Transport(200, _balanceBody)).balanceByApp(_childId), {'youtube': 25});
+    expect(await authority(_Transport(403, _balanceBody)).balanceByApp(_childId), isNull);
+    expect(await authority(_Transport(200, _balanceBody)).balanceByApp('not-a-uuid'), isNull);
 
     final noFamily = GuardianMinutesBalanceAuthority(
-      api: _api(_Transport(200)),
+      api: _api(_Transport(200, _balanceBody)),
       idToken: () async => 'token',
       familyId: () => null,
     );
