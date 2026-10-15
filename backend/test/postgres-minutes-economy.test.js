@@ -618,3 +618,36 @@ test('D2: migration 132 copies every point award into the free wallet 1:1, idemp
     assert.equal(balance.total, 220);
   }));
 
+test('the mutation guards: D16 suffixes start at #1, a reversal cannot exceed what the credit still holds after spending, and the table itself caps a row at 1440',
+  { skip }, () => withFreshDatabase(async ({ client }) => {
+    const ids = await seedFamily(client, 'guards');
+    const first = await on(client, (tx) => earn(tx, { ...ids, actorMembershipId: ids.primaryId,
+      channel: 'athkar', minutes: 10, source: src('athkar', 'guard-a') }));
+    await on(client, (tx) => earn(tx, { ...ids, actorMembershipId: ids.primaryId,
+      channel: 'athkar', minutes: 10, source: src('athkar', 'guard-b') }));
+
+    // D16: a spend that draws from two credits writes one row per credit, suffixed #1, #2.
+    await on(client, (tx) => consume(tx, { ...ids, appId: 'com.game', minutes: 15,
+      source: src('session', 'sess-guard') }));
+    const spends = (await ledgerRows(client, ids.childId))
+      .filter((row) => row.entry_kind === 'consumption').map((row) => row.source_id).sort();
+    assert.deepEqual(spends, ['sess-guard#1', 'sess-guard#2']);
+
+    // D22: 5 of the first credit is spent, so it holds 5. Reversing 10 of it must refuse, even
+    // though the credit was originally 10 (the cap is what it still holds, not what it was).
+    await assertRejects(on(client, (tx) => adjust(tx, { ...ids, actorMembershipId: ids.primaryId,
+      targetEntryId: first.entry.id, minutes: 10, reason: 'typo' })), 'minutes_reversal_exceeds_balance');
+
+    // D20 at the storage layer: the CHECK refuses 1441 even if code is bypassed.
+    await assert.rejects(
+      () => client.query(
+        `INSERT INTO family_minutes_ledger
+           (id, family_id, child_id, entry_kind, channel, minutes, wallet_scope, source_type, source_id,
+            actor_membership_id, balance_after_minutes, created_at)
+         VALUES (gen_random_uuid(), $1, $2, 'credit', 'athkar', 1441, 'free', 'athkar', 'raw-1441', NULL, 1441, NOW())`,
+        [ids.familyId, ids.childId],
+      ),
+      /check constraint/,
+    );
+  }));
+
