@@ -1,10 +1,8 @@
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/policy/screen_time_policy.dart';
-import 'package:family_os/core/policy/screen_time_policy_repository.dart';
-import 'package:family_os/core/policy/wallet_ledger.dart';
-import 'package:family_os/core/screen_time/screen_time_local_persistence.dart';
 import 'package:family_os/features/n03_screen_time/stage1_child_scope.dart';
 import 'package:family_os/features/n17_child_learn/child_wallet_models.dart';
+import 'package:family_os/foundation_gate/child_minutes_balance_client.dart';
 
 abstract class ChildWalletRepository {
   Future<ChildWalletSnapshot> load();
@@ -13,67 +11,38 @@ abstract class ChildWalletRepository {
 /// Stage-1 childId for wallet surfaces (same demo child as FAT-032).
 final ChildId kStage1WalletChildId = activeScopedChildId();
 
-/// Loads per-app earned [Minutes] from [ScreenTimePolicy] / [WalletLedger].
-///
-/// Does **not** invent a free wallet — only AppWallet balances from policy.
-final class PolicyChildWalletRepository implements ChildWalletRepository {
-  PolicyChildWalletRepository({
-    ScreenTimePolicyRepository? policyRepository,
-    WalletLedger? walletLedger,
-    ChildId? childId,
-    List<ChildWalletBadge>? prestigeBadges,
-  }) : _injectedPolicy = policyRepository,
-       _ledger = walletLedger,
-       _childId = childId ?? activeScopedChildId(),
-       _badges = prestigeBadges ?? _defaultPrestigeBadges;
+/// CHD-019 — the child's wallet, read from the server. Nothing is computed on the device.
+final class ServerChildWalletRepository implements ChildWalletRepository {
+  ServerChildWalletRepository({required ChildMinutesBalanceClient client})
+    : _client = client;
 
-  final ScreenTimePolicyRepository? _injectedPolicy;
-  ScreenTimePolicyRepository? _resolvedPolicy;
-  final WalletLedger? _ledger;
-  final ChildId _childId;
-  final List<ChildWalletBadge> _badges;
+  final ChildMinutesBalanceClient _client;
 
   Future<void> Function()? loadGate;
-
-  Future<ScreenTimePolicyRepository> _policyRepo() async {
-    final injected = _injectedPolicy;
-    if (injected != null) return injected;
-    return _resolvedPolicy ??=
-        await ScreenTimeLocalPersistence.openPolicyRepository();
-  }
 
   @override
   Future<ChildWalletSnapshot> load() async {
     final gate = loadGate;
     if (gate != null) await gate();
 
-    final policyRepo = await _policyRepo();
-    final policy = await policyRepo.load(_childId);
-    final ledger = _ledger ?? WalletLedger(policyRepo);
-
-    final apps = <ChildWalletApp>[];
-    var total = 0;
-    for (final w in policy.wallets) {
-      final balance = await ledger.balance(childId: _childId, appId: w.appId);
-      final mins = balance.inMinutes;
-      total += mins;
-      apps.add(
-        ChildWalletApp(
-          id: w.appId,
-          nameKey: _nameKeyFor(w.appId),
-          iconKey: w.appId,
-          walletMinutes: mins,
-        ),
-      );
-    }
-
+    final balance = await _client.read();
     return ChildWalletSnapshot(
-      totalMinutes: total,
+      totalMinutes: balance.total,
+      // No server source for streaks or badges yet: they stay empty until real activity
+      // provides them (owner ruling 2026-10-15). Never a fabricated number.
       streakDays: 0,
       recordStreakDays: 0,
-      apps: apps,
-      badges: List<ChildWalletBadge>.from(_badges),
-      simulated: true,
+      apps: [
+        for (final app in balance.apps)
+          ChildWalletApp(
+            id: app.appId,
+            nameKey: _nameKeyFor(app.appId),
+            iconKey: app.appId,
+            walletMinutes: app.minutes,
+          ),
+      ],
+      badges: const [],
+      simulated: false,
     );
   }
 
@@ -112,15 +81,11 @@ final class InMemoryChildWalletRepository implements ChildWalletRepository {
 }
 
 final ChildWalletRepository stage1ChildWalletRepository =
-    PolicyChildWalletRepository();
-
-const List<ChildWalletBadge> _defaultPrestigeBadges = [
-  ChildWalletBadge(id: 'b1', labelKey: 'firstWird', earned: true),
-  ChildWalletBadge(id: 'b2', labelKey: 'adhkarWeek', earned: true),
-  ChildWalletBadge(id: 'b3', labelKey: 'focusFive', earned: true),
-  ChildWalletBadge(id: 'b4', labelKey: 'monthStreak', earned: false),
-  ChildWalletBadge(id: 'b5', labelKey: 'familyHero', earned: false),
-];
+    ServerChildWalletRepository(
+      client: ChildMinutesBalanceClient(
+        transport: NativeChildMinutesBalanceTransport(),
+      ),
+    );
 
 ChildWalletSnapshot childWalletEmptyFixture() =>
     const ChildWalletSnapshot(simulated: true);
