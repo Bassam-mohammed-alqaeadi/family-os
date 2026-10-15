@@ -128,6 +128,9 @@ final class ChildMinutesBalanceClient {
     };
   }
 
+  /// The one reader of the balance wire shape, shared with the guardian's read.
+  static ChildMinutesBalance parseBody(String body) => _parse(body);
+
   static ChildMinutesBalance _parse(String body) {
     final Object? decoded;
     try {

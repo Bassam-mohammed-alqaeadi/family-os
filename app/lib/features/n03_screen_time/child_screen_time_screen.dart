@@ -29,11 +29,10 @@ import 'package:family_os/core/policy/time_request_service.dart';
 import 'package:family_os/core/screen_time/screen_time_runtime.dart';
 import 'package:family_os/core/screen_time/stage1_time_request_runtime.dart';
 import 'package:family_os/features/n12_devices/mother_permission_level_repository.dart';
+import 'package:family_os/features/n03_screen_time/guardian_minutes_balance_authority.dart';
 import 'package:family_os/features/n03_screen_time/screen_time_server_authority.dart';
 import 'package:family_os/features/n03_screen_time/screen_time_server_panel.dart';
 import 'package:family_os/features/n03_screen_time/stage1_child_scope.dart';
-import 'package:family_os/foundation_gate/child_minutes_balance_client.dart';
-import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
 /// Optional time-picker override for widget tests.
 typedef ScheduleTimePicker =
@@ -77,11 +76,11 @@ class ChildScreenTimeScreen extends StatefulWidget {
     this.motherLevel = MotherLevel.partner,
     this.timeRequestService,
     this.policyUnavailableOverride,
-    this.balanceClient,
+    this.balanceReader,
   });
 
-  /// The handset's own balance reader (CHD-019). Null → the stage-1 production reader.
-  final ChildMinutesBalanceClient? balanceClient;
+  /// Reads a child's balance per app from the server. Null → the guardian's bound server read.
+  final Future<Map<String, int>?> Function(String childId)? balanceReader;
 
   /// Explicit child; null → Identity active child → stage1 canonical.
   final ChildId? childId;
@@ -299,13 +298,8 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
 
   /// The server balance never blocks the screen: it arrives after the screen is ready.
   Future<void> _loadBalance() async {
-    Map<String, int>? balanceByApp;
-    try {
-      final balance = await (widget.balanceClient ?? stage1ChildMinutesBalanceClient).read();
-      balanceByApp = {for (final app in balance.apps) app.appId: app.minutes};
-    } on FoundationGateApiException {
-      balanceByApp = null;
-    }
+    final reader = widget.balanceReader ?? guardianMinutesBalanceByApp;
+    final balanceByApp = await reader(_childId.value);
     if (!mounted) return;
     setState(() => _balanceByApp = balanceByApp);
   }

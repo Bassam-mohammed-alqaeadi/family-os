@@ -437,6 +437,10 @@ class FoundationGateConfiguration {
       _familyChildTaskCrumbUri(familyId, childId, taskId, 'decision');
 
   /// The balance and the entries that produced it.
+  /// The guardian's read of one child's minutes balance: the same answer the child's handset reads.
+  Uri familyChildMinutesBalanceUri(String familyId, String childId) =>
+      _familyChildCrumbUri(familyId, childId, 'minutes/balance');
+
   Uri familyChildPointsUri(String familyId, String childId) =>
       _familyChildCrumbUri(familyId, childId, 'points');
 

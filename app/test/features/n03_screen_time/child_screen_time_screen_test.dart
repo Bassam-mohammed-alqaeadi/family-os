@@ -19,8 +19,6 @@ import 'package:family_os/core/policy/time_request_repository.dart';
 import 'package:family_os/core/policy/time_request_service.dart';
 import 'package:family_os/features/n12_devices/mother_permission_level_repository.dart';
 import 'package:family_os/features/n03_screen_time/child_screen_time_screen.dart';
-import 'package:family_os/foundation_gate/child_minutes_balance_client.dart';
-import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 
 void main() {
   tearDown(AppToast.dismiss);
@@ -38,11 +36,7 @@ void main() {
       childId: child,
       role: AppRole.father,
       policyRepository: policy,
-      balanceClient: ChildMinutesBalanceClient(
-        transport: _ServerBalance(
-          '{"daily":0,"temporary":0,"free":0,"apps":[{"appId":"youtube","minutes":25}],"total":25,"asOf":"2026-10-15T10:00:00.000Z"}',
-        ),
-      ),
+      balanceReader: (_) async => {'youtube': 25},
     );
 
     // The server balance arrives after the screen is ready (async chain).
@@ -72,7 +66,7 @@ void main() {
       childId: child,
       role: AppRole.father,
       policyRepository: policy,
-      balanceClient: ChildMinutesBalanceClient(transport: _ServerBalance(null)),
+      balanceReader: (_) async => null,
     );
 
     expect(find.byKey(const Key('wallet_minutes_youtube')), findsNothing);
@@ -445,7 +439,7 @@ Future<void> _pump(
   ScreenTimePolicyRepository? policyRepository,
   ScheduleTimePicker? pickTime,
   TimeRequestService? timeRequestService,
-  ChildMinutesBalanceClient? balanceClient,
+  Future<Map<String, int>?> Function(String)? balanceReader,
 }) async {
   final roleCtrl = RoleController(role);
   await tester.pumpWidget(
@@ -467,7 +461,7 @@ Future<void> _pump(
           policyRepository: policyRepository,
           pickTime: pickTime,
           timeRequestService: timeRequestService,
-          balanceClient: balanceClient,
+          balanceReader: balanceReader,
         ),
       ),
     ),
@@ -478,18 +472,4 @@ Future<void> _pump(
 Future<void> _settleToast(WidgetTester tester) async {
   AppToast.dismiss();
   await tester.pump(const Duration(milliseconds: 2600));
-}
-
-/// Answers at the transport seam only. A null body means "this handset is not paired".
-final class _ServerBalance implements ChildMinutesBalanceTransport {
-  _ServerBalance(this._body);
-
-  final String? _body;
-
-  @override
-  Future<String?> configuredDeviceId() async => _body == null ? null : 'device-1';
-
-  @override
-  Future<FoundationGateHttpResponse> readBalance(String deviceId) async =>
-      FoundationGateHttpResponse(statusCode: 200, body: _body!);
 }
