@@ -23,6 +23,7 @@ import 'package:family_os/core/events/local_event_policy_bridge.dart';
 import 'package:family_os/core/family_ops/family_ops_local_persistence.dart';
 import 'package:family_os/core/fs_foundation/fs_composition_runtime.dart';
 import 'package:family_os/core/fs_foundation/fs_session_kernel.dart';
+import 'package:family_os/core/fs_foundation/selected_family_sqlite_store.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/i18n/locale_controller.dart';
 import 'package:family_os/core/identity/identity_local_persistence.dart';
@@ -85,7 +86,6 @@ import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 import 'package:family_os/foundation_gate/foundation_gate_identity.dart';
 import 'package:family_os/foundation_gate/foundation_gate_session_controller.dart';
-import 'package:family_os/foundation_gate/selected_family_store.dart';
 import 'package:family_os/foundation_gate/main_app_foundation_runtime.dart';
 
 Future<void> main() async {
