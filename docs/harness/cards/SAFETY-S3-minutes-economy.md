@@ -72,7 +72,7 @@ FKs بـ ON DELETE RESTRICT · فهارس (child_id, created_at) و(child_id, wa
 
 > **تعديل D25/D20 قبل الدمج (علم ٣٣)**: `minutes` ⇒ `CHECK (minutes > 0 AND minutes <= 1440)`؛ وأُضيف `credit_ref UUID NULL` مع `UNIQUE (id, child_id)` و`FOREIGN KEY (credit_ref, child_id)` و`CHECK ((entry_kind='credit') = (credit_ref IS NULL))` وفهرس جزئي. الدفتر ما يزال إلحاقياً بمشغّل منع التعديل.
 
-> **سؤال 1440 (حكم المالك، علم ٤٢)**: الحدّ موجود **في الجدول نفسه** كقيد `CHECK (minutes > 0 AND minutes <= 1440)` (الهجرة 130، السطر ٤٧) **وفي الكود** كثابت `MAX_MINUTES_PER_ENTRY = 1440`. الاثنان مُختبَران (الكود بـ1441 ↦ `minutes_invalid_amount`، والجدول بـ1441 مباشرة ↦ `check constraint`).
+> **سؤال 1440 (حكم المالك، علم ٤٢ — معتمد بأثر رجعي، علم ٤٦)**: الحدّ موجود **في الجدول نفسه** كقيد `CHECK (minutes > 0 AND minutes <= 1440)` (الهجرة 130، السطر ٤٧) **وفي الكود** كثابت `MAX_MINUTES_PER_ENTRY = 1440`. الاثنان مُختبَران (الكود بـ1441 ↦ `minutes_invalid_amount`، والجدول بـ1441 مباشرة ↦ `check constraint`).
 
 ### ٢٫٢ الهجرة 131 — `family_app_wallets` (إسقاط مخزّن، ليس الحقيقة)
 
@@ -118,6 +118,17 @@ FKs بـ ON DELETE RESTRICT · فهارس (child_id, created_at) و(child_id, wa
    (هـ) **قائمة التطبيقات** تصل من تقرير وقت الشاشة للجهاز (W5)، وهي خارج هذه الموجة؛ رحلة D3 تزرع تطبيقاً واحداً مباشرة في الإعداد وتعلّق ذلك في الاختبار.
    (و) **الاستعلام**: `limit` 1..100 و`cursor` فقط؛ أي مفتاح آخر ⇒ `400`. **الرصيد** يُقرأ من الدفتر دائماً (علم ٢٣).
    **الاختبار**: رحلة HTTP واحدة على PostgreSQL (20 خطوة) تغطي الأدوار والحقول المغلقة والسقوف والمنح والاستهلاك والتخصيص والعكس والقراءات والمقارنة بين الجهاز والوصي. عقد OpenAPI 18/18 (الحيّ ⇔ المُعلَن في الاتجاهين).
+46. **(حكم المالك على D3 — مُعتمد ومُسجَّل)**: (1) **قيد 1440 في الجدول معتمد بأثر رجعي** (دفاع عمقي + مسجّل + مُختبَر) — **ملاحظة لس١١**: كل صف في دفتر الدقائق ≤ 1440 دائماً، بلا استثناء. (2) **تصحيح §٤** («primary كامل · co ≤ 30») صحيح. (3) **قرارات D3 الثلاثة (أ)(ب)(ج) ثم (د)(هـ)(و) كلها معتمدة**. (4) **`minutes_unknown_app`** مسجّل في جدول رموز §٢٫٥ (409): تطبيق لم يُسجَّل للطفل بعد لا يُستهلك منه ولا يُنقل إليه.
+   **مصفوفة الأدوار — كل حالة برقم خطوة في رحلة `S3 D3`**:
+   | الحالة | الخطوة | النتيجة المُختبَرة |
+   |---|---|---|
+   | وصي > 30 يُرفض | **5** | `403 minutes_grant_ceiling` |
+   | طفل لا يكسب | **2** | `403 minutes_forbidden` |
+   | طفل لا يقرأ الدفتر | **9** | `403` |
+   | جهاز يكسب | **2ب** | `401 authentication_required` — **انحراف مُعلَن** (انظر أدناه) |
+   | عكس بواسطة primary يعمل | **8** | `201` ويُخفض الرصيد |
+   | عكس بواسطة غيره | **8** | `403 minutes_forbidden` |
+   **الانحراف (يحتاج نقضاً أو تأكيداً من المالك)**: المصفوفة تقول `403` للجهاز الذي يكسب، والكود يعيد `401`. السبب: منطق المنصة القائم، فكل مسار للوصي يقبل توكن الوصي فقط، ويُرفض أي توكن آخر (ومنه بيانات الجهاز) قبل بلوغ قاعدة الدور. تغيير هذا المسار وحده إلى `403` يكسر الاتساق مع بقية المنصة. **الرفض حاصل** (لا تُكتب دقيقة — تثبته المجاميع في الخطوة 10)، والرمز هو الخلاف الوحيد.
 35. **(تنفيذ D16–D25 — تفاصيل)**: `consume`/`allocate` يكتبان صفاً لكل ائتمان يُسحب منه، مع `credit_ref`. `adjust` يحسب الحدّ بـ`remainingOf(ctx.rows, targetId)` لا بالبركة، ويرفض عكس ائتمان **منتهٍ** بـ`409 minutes_not_reversible`. `availableIn` حُذفت.
 
 ### ٢٫٤ العمليات العشر — `backend/src/minutes-economy.js` (`grant` عاشرة معتمدة — علم ٣٢)
@@ -160,7 +171,7 @@ FKs بـ ON DELETE RESTRICT · فهارس (child_id, created_at) و(child_id, wa
 
 عضوية الطفل ⇒ `403` على مسارات العوائل (سابقة القراءة) · الطفل خارج العائلة ⇒ `404` ·
 رموز مغلقة: `minutes_invalid_channel` · `minutes_non_countable` · `minutes_insufficient` · `minutes_locked` ·
-`minutes_grant_ceiling` · `minutes_duplicate_source` · `minutes_expiry_scope_mismatch` · `minutes_reversal_exceeds_balance` · **(D20–D25)** `minutes_invalid_scope` لتخصيص يمسّ يومياً/مؤقتاً (400) · `minutes_invalid_reason` للعكس بلا سبب أو >500 (400) · `minutes_not_reversible` لعكس ائتمان منتهٍ (409) · `minutes_invalid_amount` لكل صف خارج 1..1440 (400).
+`minutes_grant_ceiling` · `minutes_duplicate_source` · `minutes_unknown_app` (409، تطبيق لم يُسجَّل للطفل بعد — علم ٤٦) · `minutes_expiry_scope_mismatch` · `minutes_reversal_exceeds_balance` · **(D20–D25)** `minutes_invalid_scope` لتخصيص يمسّ يومياً/مؤقتاً (400) · `minutes_invalid_reason` للعكس بلا سبب أو >500 (400) · `minutes_not_reversible` لعكس ائتمان منتهٍ (409) · `minutes_invalid_amount` لكل صف خارج 1..1440 (400).
 
 ### ٢٫٦ أحداث التدقيق (8 حيّة + 1 محجوزة — تدقيق فقط، بلا FCM)
 

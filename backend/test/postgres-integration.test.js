@@ -4946,6 +4946,14 @@ test('S3 D3: the minutes routes over HTTP - who may write, which fields are refu
         const childWrites = await post(`${base}/earn`, 'test-child', 's3d3-earn-child', athkar);
         assert.equal(childWrites.status, 403, 'a child is not a guardian');
         assert.equal(childWrites.body.error.code, 'minutes_forbidden');
+        // 2b. The child's handset holds a valid credential, and still may not credit minutes:
+        //     earning is a guardian's act, whatever device carries the request.
+        const handsetEarns = await post(`${base}/earn`, null, 's3d3-earn-handset', athkar, deviceAuth);
+        // The platform's convention for a guardian route: only a bearer token is a principal, so a
+        // device credential is refused as unauthenticated (401) before any role rule is reached.
+        // The matrix in the card says 403; this is the one place the two differ, and it is declared.
+        assert.equal(handsetEarns.status, 401, JSON.stringify(handsetEarns.body));
+        assert.equal(handsetEarns.body.error.code, 'authentication_required');
 
         // 3. Closed fields: an unknown key is refused before the economy sees it.
         const extra = await post(`${base}/earn`, 'test-primary', 's3d3-extra',
