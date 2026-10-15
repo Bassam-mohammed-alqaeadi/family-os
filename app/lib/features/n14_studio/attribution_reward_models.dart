@@ -93,16 +93,21 @@ final class AttributionRewardSnapshot {
     return null;
   }
 
+  /// Sum of the rewards that are on and above zero: the only amount an assignment may carry.
   int get totalEnabledMinutes {
     var sum = 0;
     for (final r in rewards) {
-      if (r.enabled) sum += r.minutes;
+      if (r.enabled && r.minutes > 0) sum += r.minutes;
     }
     return sum;
   }
 
+  /// An assignment carries 1..1440 minutes in total (the same ceiling as a grant).
   bool get canAssign =>
-      !assigned && selectedChild != null && totalEnabledMinutes > 0;
+      !assigned &&
+      selectedChild != null &&
+      totalEnabledMinutes > 0 &&
+      totalEnabledMinutes <= 1440;
 
   AttributionRewardSnapshot withSelectedChild(String childId) {
     return AttributionRewardSnapshot(
@@ -148,7 +153,8 @@ final class AttributionRewardSnapshot {
       schedule: schedule,
       rewards: [
         for (final r in rewards)
-          if (r.id == rewardId) r.copyWith(minutes: minutes) else r,
+          // 0 means off: the reward stays on the screen but is never counted or sent.
+          if (r.id == rewardId) r.copyWith(minutes: minutes, enabled: minutes > 0) else r,
       ],
       masteryPercent: masteryPercent,
       assigned: assigned,

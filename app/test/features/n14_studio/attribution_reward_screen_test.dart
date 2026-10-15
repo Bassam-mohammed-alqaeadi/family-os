@@ -42,8 +42,10 @@ void main() {
       findsOneWidget,
     );
     // The amounts are the parent's own (control panel), shown as set.
-    expect(find.textContaining('20 minutes to their wallet'), findsOneWidget);
-    expect(find.textContaining('+15 play minutes'), findsOneWidget);
+    // No row states a minute figure as granted; the amounts sit in the parent's fields.
+    expect(find.textContaining('20 minutes to their wallet'), findsNothing);
+    expect(find.textContaining('+15 play minutes'), findsNothing);
+    expect(find.byWidgetPredicate((w) => w is EditableText && w.controller.text == '20'), findsOneWidget);
 
     await tester.ensureVisible(find.byKey(AttributionRewardKeys.assignCta));
     await tester.pumpAndSettle();
@@ -63,11 +65,16 @@ void main() {
 
     await tester.enterText(find.byKey(const Key('reward_minutes_wallet')), '30');
     await tester.pumpAndSettle();
-    expect(find.textContaining('30 minutes to their wallet'), findsOneWidget);
+    expect(find.byWidgetPredicate((w) => w is EditableText && w.controller.text == '30'), findsOneWidget);
 
     await tester.enterText(find.byKey(const Key('reward_minutes_wallet')), '99999');
     await tester.pumpAndSettle();
-    expect(find.textContaining('30 minutes to their wallet'), findsOneWidget);
+    expect(find.byWidgetPredicate((w) => w is EditableText && w.controller.text == '30'), findsOneWidget);
+
+    // 0 is accepted: it turns the reward off locally and it is never counted.
+    await tester.enterText(find.byKey(const Key('reward_minutes_wallet')), '0');
+    await tester.pumpAndSettle();
+    expect(find.byWidgetPredicate((w) => w is EditableText && w.controller.text == '0'), findsOneWidget);
   });
 
   testWidgets('library CTA → FAT-046', (tester) async {

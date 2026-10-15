@@ -228,6 +228,8 @@ class FamilyTasksApiClient {
     String note = '',
     String? audienceThreadId,
   }) async {
+    // The server's own ceiling (W7): a task that pays 0 or more than 200 is never sent.
+    RangeError.checkValueInInterval(points, 1, 200, 'points');
     final body = <String, Object>{
       'title': title,
       'points': points,

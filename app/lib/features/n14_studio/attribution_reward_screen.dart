@@ -177,15 +177,10 @@ class _AttributionRewardScreenState extends State<AttributionRewardScreen> {
     };
   }
 
+  /// The row states nothing as granted: the amount the parent entered is shown in its field,
+  /// and the reward is counted only when the server counts it (owner ruling, S3 D4).
   String _rewardTitle(AppLocalizations l10n, AttributionRewardToggle reward) {
-    return switch (reward.kind) {
-      AttributionRewardKind.wallet => l10n.attributionRewardWalletMinutes(
-        reward.minutes,
-      ),
-      AttributionRewardKind.play => l10n.attributionRewardPlayMinutes(
-        reward.minutes,
-      ),
-    };
+    return l10n.attributionRewardCountedSoon;
   }
 
   /// One day at most per reward: the parent's amount must be a whole number of minutes in that range.
