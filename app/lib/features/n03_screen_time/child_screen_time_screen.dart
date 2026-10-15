@@ -609,7 +609,10 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
                           dailyMinutes: remaining.dailyRemaining.inMinutes,
                           grantMinutes:
                               remaining.temporaryGrantRemaining.inMinutes,
-                          walletMinutes: remaining.earnedWalletTotal.inMinutes,
+                          walletMinutes: _balanceByApp?.values.fold<int>(
+                            0,
+                            (sum, minutes) => sum + minutes,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         for (final kind in ScheduleKind.values) ...[
