@@ -22,7 +22,8 @@
     "verify:staging:backup-restore": "node scripts/verify-staging-backup-restore.mjs",
     "verify:staging:family-discovery": "node scripts/verify-staging-family-discovery.mjs",
     "verify:staging:children-roster": "node scripts/verify-staging-children-roster.mjs",
-    "verify:staging:device-telemetry": "node scripts/verify-staging-device-telemetry.mjs"
+    "verify:staging:device-telemetry": "node scripts/verify-staging-device-telemetry.mjs",
+    "seed:test-family": "node scripts/seed-test-family.mjs"
   },
   "dependencies": {
     "express": "^5.2.1",

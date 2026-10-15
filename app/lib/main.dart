@@ -85,6 +85,7 @@ import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 import 'package:family_os/foundation_gate/foundation_gate_identity.dart';
 import 'package:family_os/foundation_gate/foundation_gate_session_controller.dart';
+import 'package:family_os/foundation_gate/selected_family_store.dart';
 import 'package:family_os/foundation_gate/main_app_foundation_runtime.dart';
 
 Future<void> main() async {
@@ -243,6 +244,7 @@ Future<void> main() async {
           api: tasksApi,
           idToken: familyEntryRuntime.currentIdToken,
           familyId: () => familyEntryRuntime.selectedFamilyId,
+          persistedFamilyId: sharedSelectedFamilyStore.read,
           cacheOpener: openDurableMinutesBalanceCache,
         ),
       );
@@ -417,6 +419,7 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
           configuration: configuration,
           transport: PackageFoundationGateHttpTransport(),
         ),
+        selectedFamilyStore: sharedSelectedFamilyStore,
       ),
       identity: identity,
       deviceApi: FamilyDeviceApiClient(

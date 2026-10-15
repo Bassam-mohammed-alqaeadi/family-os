@@ -18,26 +18,40 @@ final class MinutesBalanceReading {
 /// A guardian's phone holds no device credential, so the balance is read as the guardian.
 /// A fresh answer is written to the device's durable cache under the family it was read for.
 /// When the read fails, the cached reading for that same family is shown flagged stale. With no
-/// family selected there is no pairing to verify a cached reading against, so nothing is shown.
+/// family known there is no pairing to verify a cached reading against, so nothing is shown.
+///
+/// After a cold start the family is the one remembered on this device ([persistedFamilyId]),
+/// so a restart offline still shows the kept reading, flagged stale.
 final class GuardianMinutesBalanceAuthority {
   GuardianMinutesBalanceAuthority({
     required this.api,
     required this.idToken,
     required this.familyId,
     required this.cacheOpener,
+    this.persistedFamilyId = _noPersistedFamily,
   });
 
   final FamilyTasksApiClient api;
   final Future<String> Function() idToken;
   final String? Function() familyId;
   final Future<MinutesBalanceCache?> Function() cacheOpener;
+  final Future<String?> Function() persistedFamilyId;
+
+  static Future<String?> _noPersistedFamily() async => null;
 
   Future<MinutesBalanceReading?> balanceByApp(String childId) async {
-    final family = familyId();
+    final family = familyId() ?? await persistedFamilyId();
     if (family == null) return null;
     final cache = await cacheOpener();
+    final String token;
     try {
-      final token = await idToken();
+      token = await idToken();
+    } on Object {
+      // No usable session (for example a cold start with no network to refresh it): the kept
+      // reading for this family is the only thing to show, flagged stale.
+      return _stale(cache, childId, family);
+    }
+    try {
       final balance = await api.readMinutesBalance(
         familyId: family,
         childId: childId,
