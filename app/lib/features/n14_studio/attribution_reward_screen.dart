@@ -755,7 +755,7 @@ class _RewardRow extends StatelessWidget {
               enabled: enabled,
               keyboardType: TextInputType.number,
               // A value above the ceiling is refused in the field itself: the last good value stays.
-              inputFormatters: const [
+              inputFormatters: [
                 FilteringTextInputFormatter.digitsOnly,
                 _RewardMinutesFormatter(attributionRewardMaxMinutes),
               ],
