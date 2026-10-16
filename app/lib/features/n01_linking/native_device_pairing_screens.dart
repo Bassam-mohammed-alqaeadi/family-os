@@ -14,8 +14,8 @@ import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 import 'package:family_os/foundation_gate/main_app_foundation_runtime.dart';
 import 'package:family_os/foundation_gate/native_child_pairing_copy.dart';
-import 'package:family_os/foundation_gate/pairing_contract.g.dart';
-import 'package:family_os/foundation_gate/pairing_contract.g.dart';
+import 'package:family_os/foundation_gate/pairing_contract.generated.dart';
+import 'package:family_os/foundation_gate/pairing_contract.generated.dart';
 import 'package:family_os/foundation_gate/native_child_telemetry_bridge.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────

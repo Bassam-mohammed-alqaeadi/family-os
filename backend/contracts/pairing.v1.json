@@ -1,5 +1,5 @@
 {
-  "$comment": "Single source of truth for the one-time child pairing code. Read by the backend (backend/src/pairing-code.js), by OpenAPI conformance tests, and by the Flutter app through the generated pairing_contract.g.dart (tools/contracts/generate-dart.mjs). Change it here, regenerate, and the contract tests show every consumer that still disagrees.",
+  "$comment": "Single source of truth for the one-time child pairing code. Read by the backend (backend/src/pairing-code.js), by OpenAPI conformance tests, and by the Flutter app through the generated pairing_contract.generated.dart (tools/contracts/generate-dart.mjs). Change it here, regenerate, and the contract tests show every consumer that still disagrees.",
   "contract": "pairing.v1",
   "pairingCode": {
     "length": 6,

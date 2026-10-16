@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'foundation_gate_configuration.dart';
-import 'pairing_contract.g.dart';
+import 'pairing_contract.generated.dart';
 import 'foundation_gate_http.dart';
 import 'foundation_gate_models.dart';
 import 'device_lifecycle.dart';

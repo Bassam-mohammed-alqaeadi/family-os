@@ -6,7 +6,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:family_os/foundation_gate/pairing_contract.g.dart';
+import 'package:family_os/foundation_gate/pairing_contract.generated.dart';
 
 void main() {
   final contract =

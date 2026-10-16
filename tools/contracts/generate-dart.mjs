@@ -3,13 +3,14 @@
 //   node tools/contracts/generate-dart.mjs          -> writes the file
 //   node tools/contracts/generate-dart.mjs --check  -> exits 1 if the committed file is stale
 // Never hand-edit the generated file: change the contract, then regenerate.
+import { spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const contractPath = join(root, 'backend', 'contracts', 'pairing.v1.json');
-const outPath = join(root, 'app', 'lib', 'foundation_gate', 'pairing_contract.g.dart');
+const outPath = join(root, 'app', 'lib', 'foundation_gate', 'pairing_contract.generated.dart');
 
 const contract = JSON.parse(readFileSync(contractPath, 'utf8'));
 const { length, pattern } = contract.pairingCode;
@@ -29,6 +30,12 @@ abstract final class PairingContract {
 `;
 
 if (process.argv.includes('--check')) {
+  // A generated file that git ignores never reaches CI. Refuse that state explicitly.
+  const ignored = spawnSync('git', ['check-ignore', '-q', outPath], { cwd: root });
+  if (ignored.status === 0) {
+    console.error(`stale: ${outPath} is ignored by git and would not reach CI. Rename it or fix .gitignore.`);
+    process.exit(1);
+  }
   let current = '';
   try { current = readFileSync(outPath, 'utf8'); } catch { /* missing counts as stale */ }
   if (current !== dart) {

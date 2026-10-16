@@ -7,7 +7,7 @@ Each contract has one source file. Everything else is generated from it or teste
 
 | Contract | Source of truth | Consumers |
 |---|---|---|
-| Pairing code (`pairing.v1`) | `backend/contracts/pairing.v1.json` | `backend/src/pairing-code.js`, validation, the production and test stores, `backend/openapi/foundation.v1.json`, `app/lib/foundation_gate/pairing_contract.g.dart` (generated) |
+| Pairing code (`pairing.v1`) | `backend/contracts/pairing.v1.json` | `backend/src/pairing-code.js`, validation, the production and test stores, `backend/openapi/foundation.v1.json`, `app/lib/foundation_gate/pairing_contract.generated.dart` (generated) |
 
 ## Changing a contract
 
