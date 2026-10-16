@@ -1,7 +1,7 @@
-// A-01 regression: the child's manual pairing field must carry the whole one-time code.
-// The server issues base64url(32 random bytes) = 43 characters, case-sensitive, and accepts
-// 32..128 characters (backend/src/validation.js claimDevicePairingInput). The field used to cap
-// input at 10 characters and force capitals, so a valid code could never reach the server.
+// The child's manual pairing field takes the six-digit code the server issues.
+// A-01 history: the field used to cap input at 10 characters and force capitals, so a longer
+// code could never reach the server. The code is now six digits (backend
+// claimDevicePairingInput: ^\d{6}$), so the field is numeric, capped at six, and digits only.
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,8 +12,7 @@ import 'package:family_os/features/n01_linking/native_device_pairing_screens.dar
 import 'package:family_os/foundation_gate/family_device_api_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
-// Exactly 43 characters, mixed case, with '-' and '_': the shape the server issues.
-const _issuedCode = 'aB3-xY9_qW2eR7tL0pN5mZ8vC1bH4gJ6kD0sF9uT3yA';
+const _issuedCode = '482913';
 
 final class _CapturingClient extends Fake implements FamilyDeviceApiClient {
   String? claimed;
@@ -49,7 +48,7 @@ Future<_CapturingClient> _pumpChildEntry(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('the manual field keeps the whole 43-character code, case intact', (
+  testWidgets('the manual field takes the whole six-digit code and sends it unchanged', (
     tester,
   ) async {
     final client = await _pumpChildEntry(tester);
@@ -60,9 +59,8 @@ void main() {
     await tester.pump();
 
     final widget = tester.widget<TextField>(field);
-    expect(widget.maxLength, greaterThanOrEqualTo(_issuedCode.length));
-    expect(widget.maxLength, lessThanOrEqualTo(128));
-    expect(widget.textCapitalization, TextCapitalization.none);
+    expect(widget.maxLength, _issuedCode.length);
+    expect(widget.keyboardType, TextInputType.number);
     expect(widget.controller!.text, _issuedCode);
 
     await tester.testTextInput.receiveAction(TextInputAction.done);
@@ -71,16 +69,15 @@ void main() {
     expect(client.claimed, _issuedCode, reason: 'the server must receive the full code, unchanged');
   });
 
-  testWidgets('a 128-character code (the server maximum) is not truncated', (tester) async {
+  testWidgets('letters and spaces are not accepted into the code field', (tester) async {
     final client = await _pumpChildEntry(tester);
-    final longest = (_issuedCode + _issuedCode + _issuedCode).substring(0, 128);
 
-    await tester.enterText(find.byType(TextField), longest);
+    await tester.enterText(find.byType(TextField), '48a 2913');
     await tester.pump();
+    expect(tester.widget<TextField>(find.byType(TextField)).controller!.text, '482913');
+
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pump(const Duration(milliseconds: 100));
-
-    expect(client.claimed, longest);
-    expect(client.claimed!.length, 128);
+    expect(client.claimed, '482913');
   });
 }

@@ -51,7 +51,7 @@ test('one-time pairing returns a device-only credential and it can submit real-s
     });
     assert.equal(pairing.status, 201);
     const pairingBody = await pairing.json();
-    assert.match(pairingBody.pairing.pairingCode, /^[A-Za-z0-9_-]{32,128}$/);
+    assert.match(pairingBody.pairing.pairingCode, /^\d{6}$/);
     assert.equal(pairingBody.pairing.deviceLabel, 'Amani Android');
     // Server/test persistence retains hashes and a non-sensitive issuance
     // marker, never the raw pairing capability that was returned once.

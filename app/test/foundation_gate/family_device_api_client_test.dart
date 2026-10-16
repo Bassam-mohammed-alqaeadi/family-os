@@ -146,7 +146,7 @@ void main() {
     'native child pairing creates a guardian capability then claims a device credential once',
     () async {
       const pairingBody =
-          '{"pairing":{"id":"$deviceId","childId":"$childId","deviceLabel":"Amani Android","pairingCode":"abcdefghijklmnopqrstuvwxyzABCDEF0123456789_-","expiresAt":"2026-10-04T12:10:00.000Z"}}';
+          '{"pairing":{"id":"$deviceId","childId":"$childId","deviceLabel":"Amani Android","pairingCode":"482913","expiresAt":"2026-10-04T12:10:00.000Z"}}';
       final transport = FakeTransport(
         const FoundationGateHttpResponse(statusCode: 201, body: pairingBody),
       );
@@ -180,6 +180,22 @@ void main() {
       expect(claim.deviceCredential, hasLength(44));
     },
   );
+
+  test('claim accepts only a six-digit pairing code, rejected before HTTP otherwise', () async {
+    final transport = FakeTransport(
+      const FoundationGateHttpResponse(statusCode: 201, body: '{}'),
+    );
+    for (final code in [
+      'abcdefghijklmnopqrstuvwxyzABCDEF0123456789_-',
+      '48291',
+      '48 2913',
+    ]) {
+      await expectLater(
+        clientFor(transport).claimPairing(pairingCode: code),
+        throwsA(isA<FoundationGateApiException>()),
+      );
+    }
+  });
 
   test('device client rejects out-of-range telemetry before HTTP', () async {
     final transport = FakeTransport(

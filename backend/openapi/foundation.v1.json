@@ -9104,9 +9104,9 @@
         "properties": {
           "pairingCode": {
             "type": "string",
-            "minLength": 32,
-            "maxLength": 128,
-            "pattern": "^[A-Za-z0-9_-]+$"
+            "minLength": 6,
+            "maxLength": 6,
+            "pattern": "^[0-9]{6}$"
           }
         },
         "additionalProperties": false
@@ -9134,8 +9134,9 @@
           },
           "pairingCode": {
             "type": "string",
-            "minLength": 32,
-            "maxLength": 128
+            "minLength": 6,
+            "maxLength": 6,
+            "pattern": "^[0-9]{6}$"
           },
           "expiresAt": {
             "type": "string",
