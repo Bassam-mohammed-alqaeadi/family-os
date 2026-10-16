@@ -3,7 +3,6 @@
 // 32..128 characters (backend/src/validation.js claimDevicePairingInput). The field used to cap
 // input at 10 characters and force capitals, so a valid code could never reach the server.
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
