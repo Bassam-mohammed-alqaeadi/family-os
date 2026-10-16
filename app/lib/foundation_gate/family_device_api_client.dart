@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'foundation_gate_configuration.dart';
+import 'pairing_contract.g.dart';
 import 'foundation_gate_http.dart';
 import 'foundation_gate_models.dart';
 import 'device_lifecycle.dart';
@@ -199,7 +200,7 @@ class FamilyDeviceApiClient {
   Future<FoundationGateClaimedDevice> claimPairing({
     required String pairingCode,
   }) async {
-    if (!RegExp(r'^\d{6}$').hasMatch(pairingCode)) {
+    if (!RegExp(PairingContract.codePattern).hasMatch(pairingCode)) {
       throw const FoundationGateApiException(
         FoundationGateApiFailure.invalidInput,
       );
@@ -490,7 +491,7 @@ class FamilyDeviceApiClient {
           deviceLabel is! String ||
           !_validText(deviceLabel, 80) ||
           pairingCode is! String ||
-          !RegExp(r'^\d{6}$').hasMatch(pairingCode) ||
+          !RegExp(PairingContract.codePattern).hasMatch(pairingCode) ||
           parsedExpiry == null) {
         throw const FormatException();
       }

@@ -5,10 +5,12 @@ on:
   push:
     paths:
       - "app/**"
+      - "backend/contracts/**"
       - ".github/workflows/flutter_ci.yml"
   pull_request:
     paths:
       - "app/**"
+      - "backend/contracts/**"
       - ".github/workflows/flutter_ci.yml"
 
 permissions:

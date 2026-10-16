@@ -1,5 +1,6 @@
 // Test-only fixture. It is never imported by the runtime server and is not a development fallback.
-import { createHash, randomInt, randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import { generatePairingCode } from '../src/pairing-code.js';
 import { AI_EVENT_SCHEMA_VERSION, aiEventDefinition } from '../src/ai-events.js';
 import { HttpError } from '../src/http-error.js';
 import { toGuardianDeviceView } from '../src/device-lifecycle.js';
@@ -125,9 +126,9 @@ export class MemoryFoundationStore {
     return `${randomUUID().replaceAll('-', '')}${randomUUID().replaceAll('-', '')}`;
   }
 
-  // Mirrors the production store: a 6-digit code, and never one that matches an active pairing.
+  // The same generator as production (the contract's issue range).
   newPairingCode() {
-    return String(randomInt(100000, 1000000));
+    return generatePairingCode();
   }
 
   issuePairingCode(now) {

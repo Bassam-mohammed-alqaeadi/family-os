@@ -14,6 +14,8 @@ import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 import 'package:family_os/foundation_gate/main_app_foundation_runtime.dart';
 import 'package:family_os/foundation_gate/native_child_pairing_copy.dart';
+import 'package:family_os/foundation_gate/pairing_contract.g.dart';
+import 'package:family_os/foundation_gate/pairing_contract.g.dart';
 import 'package:family_os/foundation_gate/native_child_telemetry_bridge.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -244,7 +246,7 @@ class _NativeParentPairingScreenState
 
   /// Formats "ABCDEF" → "ABC DEF" for readability.
   String _formatPairingCode(String raw) {
-    if (raw.length == 6) return '${raw.substring(0, 3)} ${raw.substring(3)}';
+    if (raw.length == PairingContract.codeLength) return '${raw.substring(0, 3)} ${raw.substring(3)}';
     return raw;
   }
 }
@@ -517,7 +519,7 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
             fontWeight: FontWeight.w800,
             color: colors.tealDeep,
           ),
-          maxLength: 6,
+          maxLength: PairingContract.codeLength,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           decoration: InputDecoration(
             labelText: copy.pairingCodeLabel,

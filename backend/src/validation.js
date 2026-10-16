@@ -1,5 +1,6 @@
 import { CONSENT_CAPABILITIES } from './child-consents.js';
 import { HttpError } from './http-error.js';
+import { PAIRING_CODE_LENGTH, PAIRING_CODE_PATTERN } from './pairing-code.js';
 
 const MAX_DISPLAY_NAME_LENGTH = 120;
 const MAX_SUBJECT_LENGTH = 255;
@@ -103,8 +104,8 @@ export function createDevicePairingInput(value) {
 export function claimDevicePairingInput(value) {
   const body = bodyObject(value);
   onlyKnownFields(body, new Set(['pairingCode']));
-  const pairingCode = requiredText(body.pairingCode, 'pairingCode', { maxLength: 6 });
-  if (!/^\d{6}$/.test(pairingCode)) {
+  const pairingCode = requiredText(body.pairingCode, 'pairingCode', { maxLength: PAIRING_CODE_LENGTH });
+  if (!PAIRING_CODE_PATTERN.test(pairingCode)) {
     throw new HttpError(400, 'invalid_request', 'pairingCode is invalid.');
   }
   return { pairingCode };

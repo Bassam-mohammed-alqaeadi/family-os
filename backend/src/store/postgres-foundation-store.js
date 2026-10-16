@@ -1,7 +1,8 @@
-import { createHash, randomBytes, randomInt, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import pg from 'pg';
 import { AI_EVENT_SCHEMA_VERSION, aiEventDefinition, aiEventView } from '../ai-events.js';
 import { HttpError } from '../http-error.js';
+import { generatePairingCode } from '../pairing-code.js';
 import { toGuardianDeviceView } from '../device-lifecycle.js';
 import { PERMISSION_POLICY_VERSION, buildPermissionSnapshot } from '../permission-policy.js';
 import { FOUNDATION_SCHEMA_MIGRATIONS } from '../schema-manifest.js';
@@ -102,15 +103,6 @@ function newCapability() {
   return randomBytes(32).toString('base64url');
 }
 
-/**
- * Generates a human-typeable 6-digit pairing code (100000-999999).
- * crypto.randomInt is uniform (no modulo bias). Pairing codes are short-lived and typed by a
- * person; device credentials are machine-held and stay long (newCapability).
- */
-function newPairingCode() {
-  return String(randomInt(100000, 1000000));
-}
-
 const PAIRING_CODE_ISSUE_ATTEMPTS = 5;
 
 /**
@@ -120,7 +112,7 @@ const PAIRING_CODE_ISSUE_ATTEMPTS = 5;
  */
 async function issueUnambiguousPairingCode(client) {
   for (let attempt = 0; attempt < PAIRING_CODE_ISSUE_ATTEMPTS; attempt += 1) {
-    const candidate = newPairingCode();
+    const candidate = generatePairingCode();
     const clash = await client.query(
       `SELECT 1 FROM family_device_pairings
        WHERE pairing_code_hash = $1 AND claimed_at IS NULL AND expires_at > NOW()

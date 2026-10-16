@@ -11,6 +11,7 @@
     "start": "node src/server.js",
     "test": "node --test test/*.test.js",
     "check": "node scripts/check-source.mjs",
+    "verify:stage": "node ../tools/contracts/verify-stage.mjs",
     "migrate": "node src/migrate.js",
     "verify:staging": "node scripts/verify-staging-foundation.mjs",
     "verify:staging:authenticated": "node scripts/verify-staging-authenticated.mjs",
