@@ -490,7 +490,7 @@ class FamilyDeviceApiClient {
           deviceLabel is! String ||
           !_validText(deviceLabel, 80) ||
           pairingCode is! String ||
-          !RegExp(r'^[A-Za-z0-9_-]{32,128}$').hasMatch(pairingCode) ||
+          !RegExp(r'^\d{6}$').hasMatch(pairingCode) ||
           parsedExpiry == null) {
         throw const FormatException();
       }

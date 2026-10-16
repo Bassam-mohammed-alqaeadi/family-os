@@ -212,6 +212,9 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     required String password,
   }) async {
     await _controller.signUp(email: email, password: password);
+    if (_controller.phase == FoundationGatePhase.signInFailed) {
+      throw const FoundationGateIdentityException();
+    }
     await _selectConfiguredFamily();
     final snapshot = await _refreshIdentitySnapshot();
     await registerGuardianPush();
