@@ -509,7 +509,7 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
           autocorrect: false,
           enableSuggestions: false,
           textCapitalization: TextCapitalization.none,
-          keyboardType: TextInputType.number,
+          keyboardType: TextInputType.visiblePassword,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 24,
@@ -517,8 +517,7 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
             fontWeight: FontWeight.w800,
             color: colors.tealDeep,
           ),
-          maxLength: 6,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          maxLength: 128,
           decoration: InputDecoration(
             labelText: copy.pairingCodeLabel,
             hintText: copy.pairingCodeHint,

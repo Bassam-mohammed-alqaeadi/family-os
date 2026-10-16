@@ -1,4 +1,4 @@
-import { createHash, randomBytes, randomInt, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import pg from 'pg';
 import { AI_EVENT_SCHEMA_VERSION, aiEventDefinition, aiEventView } from '../ai-events.js';
 import { HttpError } from '../http-error.js';
@@ -100,16 +100,6 @@ function capabilityHash(value) {
 
 function newCapability() {
   return randomBytes(32).toString('base64url');
-}
-
-/**
- * Generates a human-typeable 6-digit pairing code (100000–999999).
- * Uses crypto.randomInt for uniform distribution with no modulo bias.
- * Intentionally separate from newCapability(): pairing codes are short-lived
- * and human-entered; device credentials are machine-held and must stay long.
- */
-function newPairingCode() {
-  return String(randomInt(100000, 1000000));
 }
 
 /**
@@ -760,7 +750,7 @@ export class PostgresFoundationStore {
       if (child.rowCount === 0) {
         throw new HttpError(404, 'family_child_not_found', 'Child profile was not found in this family.');
       }
-      const pairingCode = newPairingCode();
+      const pairingCode = newCapability();
       const pairing = await client.query(
         `INSERT INTO family_device_pairings
          (id, family_id, child_id, pairing_code_hash, device_label, expires_at, created_by_membership_id)
