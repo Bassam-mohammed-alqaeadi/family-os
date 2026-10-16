@@ -13,7 +13,7 @@ const familyId = '11111111-1111-4111-8111-111111111111';
 const childId = '22222222-2222-4222-8222-222222222222';
 const deviceId = '33333333-3333-4333-8333-333333333333';
 const idempotencyKey = '44444444-4444-4444-8444-444444444444';
-const deviceCredentialValue = 'Cred-0123456789_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefgh';
+const deviceCredentialValue = 'Cred-0123456789_ABCDEFGHIJKLMNOPQRSTUVWXYZab'; // 44 characters, the length the test asserts
 /// The device payload as the server now declares it, lifecycle included.
 ///
 /// The previous fixture carried eleven keys and the client demanded exactly eleven, so an
