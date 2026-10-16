@@ -1,5 +1,7 @@
 import 'package:flutter/widgets.dart';
 
+import 'pairing_contract.generated.dart';
+
 /// Localized user-facing copy for the real native child-device hand-off.
 ///
 /// This is deliberately presentation-only: it carries no pairing state,
@@ -69,6 +71,9 @@ class NativeChildPairingCopy {
   String childModeStartFailed(String reason) => isArabic
       ? 'تعذر بدء وضع الابن: $reason'
       : 'Child Mode could not start: $reason';
+  String get pairingRateLimited => isArabic
+      ? 'محاولات كثيرة. انتظر ${PairingContract.claimWindowMinutes} دقائق ثم حاول مرة أخرى.'
+      : 'Too many attempts. Wait ${PairingContract.claimWindowMinutes} minutes, then try again.';
   String get pairingClaimFailed => isArabic
       ? 'رمز الربط غير صالح أو منتهٍ أو مستخدم سابقًا، أو أن الخادم غير متاح.'
       : 'The pairing code is invalid, expired, already used, or the server is unavailable.';

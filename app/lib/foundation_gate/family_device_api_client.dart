@@ -217,6 +217,12 @@ class FamilyDeviceApiClient {
           FoundationGateApiFailure.invalidInput,
         );
       case 429:
+        // Too many failed claims from this network. Not an outage: the screen says to wait.
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.serviceUnavailable,
+          statusCode: 429,
+          serverCode: 'rate_limit_exceeded',
+        );
       case 503:
         throw const FoundationGateApiException(
           FoundationGateApiFailure.serviceUnavailable,

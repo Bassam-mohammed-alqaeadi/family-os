@@ -24,6 +24,7 @@ import { createChatEventBus } from './chat-realtime.js';
 import { CHAT_CURRENT_CAPABILITIES } from './family-chat.js';
 import { collaborationPolicyFor } from './collaboration-policy.js';
 import { capabilityMatches } from './store/postgres-foundation-store.js';
+import { PAIRING_CLAIM_MAX_FAILURES, PAIRING_CLAIM_WINDOW_MINUTES } from './pairing-code.js';
 import {
     claimDevicePairingInput,
     createChildInput,
@@ -348,9 +349,13 @@ export function createApp({
         },
     });
 
+    // A child types a code that a parent issued for ten minutes. Only failed claims count, so a
+    // correct code is never blocked by earlier typos, and a guessing source gets a few tries per
+    // code lifetime. The numbers come from the pairing contract (backend/contracts/pairing.v1.json).
     const pairingClaimRateLimit = rateLimit({
-        windowMs: 60_000,
-        limit: 12,
+        windowMs: PAIRING_CLAIM_WINDOW_MINUTES * 60_000,
+        limit: PAIRING_CLAIM_MAX_FAILURES,
+        skipSuccessfulRequests: true,
         standardHeaders: 'draft-7',
         legacyHeaders: false,
         validate: { xForwardedForHeader: false },

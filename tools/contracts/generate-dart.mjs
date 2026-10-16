@@ -14,8 +14,12 @@ const outPath = join(root, 'app', 'lib', 'foundation_gate', 'pairing_contract.ge
 
 const contract = JSON.parse(readFileSync(contractPath, 'utf8'));
 const { length, pattern } = contract.pairingCode;
+const { maxFailures, windowMinutes } = contract.claimAttempts;
 if (!Number.isInteger(length) || typeof pattern !== 'string' || pattern.includes("'")) {
   throw new Error('pairing contract is malformed');
+}
+if (!Number.isInteger(maxFailures) || !Number.isInteger(windowMinutes)) {
+  throw new Error('pairing contract claimAttempts is malformed');
 }
 
 const dart = `// GENERATED from backend/contracts/pairing.v1.json by tools/contracts/generate-dart.mjs.
@@ -26,6 +30,9 @@ abstract final class PairingContract {
   static const String contractId = '${contract.contract}';
   static const int codeLength = ${length};
   static const String codePattern = r'${pattern}';
+  /// Failed claims a source may make within one window. A claim that succeeds is not counted.
+  static const int claimMaxFailures = ${maxFailures};
+  static const int claimWindowMinutes = ${windowMinutes};
 }
 `;
 

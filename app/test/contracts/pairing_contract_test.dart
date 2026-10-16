@@ -21,6 +21,9 @@ void main() {
     expect(PairingContract.contractId, contract['contract']);
     expect(PairingContract.codeLength, pairing['length']);
     expect(PairingContract.codePattern, pairing['pattern']);
+    final attempts = contract['claimAttempts'] as Map<String, dynamic>;
+    expect(PairingContract.claimMaxFailures, attempts['maxFailures']);
+    expect(PairingContract.claimWindowMinutes, attempts['windowMinutes']);
   });
 
   test('accepts every example the contract accepts', () {

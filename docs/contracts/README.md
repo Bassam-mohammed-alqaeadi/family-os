@@ -26,6 +26,21 @@ Each contract has one source file. Everything else is generated from it or teste
 - Raise `backend/contracts/baseline.json` (`backendPassMinimum`) to the new passing count.
   Never lower it to make a red build green.
 
+## Claim-attempt policy (pairing.v1)
+
+- At most **5 failed claims per source (IP) within 10 minutes**. A successful claim is not counted.
+- The values live in the contract (`claimAttempts`). The limiter, the generated Dart constants, and
+  the copy read them. `pairing-contract.test.js` pins them, so a change is deliberate.
+- A refused claim returns `429 rate_limit_exceeded`. The app shows "Too many attempts. Wait N minutes".
+
+**Why per source, not per code.** A claim carries only the code. A wrong guess matches no pairing,
+so the server cannot say which code it was aimed at. A true per-code counter needs a pairing
+handle in the request (the parent's QR could carry it). That is a larger change to the child's
+entry flow and is a decision for the owner, not something the contract can silently do.
+
+**Limits of this version.** The counter is in process memory. With more than one server instance
+it becomes per instance. Before scaling out, move the counter to shared storage.
+
 ## What the gate does and does not check
 
 - Checks: the generated Dart file is current; the backend suite is green; the pass count is at or

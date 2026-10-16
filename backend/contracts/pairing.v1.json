@@ -1,13 +1,20 @@
 {
-  "$comment": "Single source of truth for the one-time child pairing code. Read by the backend (backend/src/pairing-code.js), by OpenAPI conformance tests, and by the Flutter app through the generated pairing_contract.generated.dart (tools/contracts/generate-dart.mjs). Change it here, regenerate, and the contract tests show every consumer that still disagrees.",
+  "$comment": "Single source of truth for the one-time child pairing code. Read by the backend (backend/src/pairing-code.js), by OpenAPI conformance tests, and by the Flutter app through the generated pairing_contract.generated.dart (tools/contracts/generate-dart.mjs). Change it here, regenerate, and the contract tests show every consumer that still disagrees. claimAttempts: at most maxFailures failed claims per source within windowMinutes; successful claims are not counted. Scope is the source (IP) because a claim carries only the code, so a wrong guess cannot be tied to one pairing.",
   "contract": "pairing.v1",
   "pairingCode": {
     "length": 6,
     "pattern": "^\\d{6}$",
-    "issueRange": [100000, 999999]
+    "issueRange": [
+      100000,
+      999999
+    ]
   },
   "examples": {
-    "accept": ["100000", "482913", "999999"],
+    "accept": [
+      "100000",
+      "482913",
+      "999999"
+    ],
     "reject": [
       "",
       "12345",
@@ -15,8 +22,14 @@
       "48 2913",
       "48a913",
       "abcdef",
-      "\u0661\u0662\u0663\u0664\u0665\u0666",
+      "١٢٣٤٥٦",
       "abcdefghijklmnopqrstuvwxyzABCDEF0123456789_-"
     ]
+  },
+  "claimAttempts": {
+    "maxFailures": 5,
+    "windowMinutes": 10,
+    "scope": "source",
+    "countsSuccess": false
   }
 }

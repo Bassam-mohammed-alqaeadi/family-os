@@ -198,6 +198,23 @@ void main() {
     }
   });
 
+  test('a refused claim (429) is reported as a rate limit, not as an outage', () async {
+    final transport = FakeTransport(
+      const FoundationGateHttpResponse(
+        statusCode: 429,
+        body: '{"error":{"code":"rate_limit_exceeded"}}',
+      ),
+    );
+    await expectLater(
+      clientFor(transport).claimPairing(pairingCode: '482913'),
+      throwsA(
+        isA<FoundationGateApiException>()
+            .having((e) => e.statusCode, 'statusCode', 429)
+            .having((e) => e.serverCode, 'serverCode', 'rate_limit_exceeded'),
+      ),
+    );
+  });
+
   test('device client rejects out-of-range telemetry before HTTP', () async {
     final transport = FakeTransport(
       const FoundationGateHttpResponse(

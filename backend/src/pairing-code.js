@@ -13,6 +13,9 @@ export const PAIRING_CONTRACT = JSON.parse(
 export const PAIRING_CODE_LENGTH = PAIRING_CONTRACT.pairingCode.length;
 export const PAIRING_CODE_PATTERN = new RegExp(PAIRING_CONTRACT.pairingCode.pattern);
 
+export const PAIRING_CLAIM_MAX_FAILURES = PAIRING_CONTRACT.claimAttempts.maxFailures;
+export const PAIRING_CLAIM_WINDOW_MINUTES = PAIRING_CONTRACT.claimAttempts.windowMinutes;
+
 const [ISSUE_MIN, ISSUE_MAX] = PAIRING_CONTRACT.pairingCode.issueRange;
 
 /**

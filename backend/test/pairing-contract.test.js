@@ -5,7 +5,14 @@ import { dirname, join, relative } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import { generatePairingCode, PAIRING_CODE_LENGTH, PAIRING_CODE_PATTERN, PAIRING_CONTRACT } from '../src/pairing-code.js';
+import {
+  generatePairingCode,
+  PAIRING_CLAIM_MAX_FAILURES,
+  PAIRING_CLAIM_WINDOW_MINUTES,
+  PAIRING_CODE_LENGTH,
+  PAIRING_CODE_PATTERN,
+  PAIRING_CONTRACT,
+} from '../src/pairing-code.js';
 import { claimDevicePairingInput } from '../src/validation.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -25,6 +32,15 @@ test('the contract examples decide the backend claim rule: accept and reject exa
 test('the pattern and length the backend enforces are the contract, not a copy of it', () => {
   assert.equal(PAIRING_CODE_LENGTH, PAIRING_CONTRACT.pairingCode.length);
   assert.equal(PAIRING_CODE_PATTERN.source, PAIRING_CONTRACT.pairingCode.pattern);
+});
+
+test('the claim-attempt policy is the agreed one, and the limiter reads it from the contract', () => {
+  // A policy change must be deliberate: change the contract AND this assertion together.
+  assert.equal(PAIRING_CONTRACT.claimAttempts.maxFailures, 5);
+  assert.equal(PAIRING_CONTRACT.claimAttempts.windowMinutes, 10);
+  assert.equal(PAIRING_CONTRACT.claimAttempts.countsSuccess, false);
+  assert.equal(PAIRING_CLAIM_MAX_FAILURES, PAIRING_CONTRACT.claimAttempts.maxFailures);
+  assert.equal(PAIRING_CLAIM_WINDOW_MINUTES, PAIRING_CONTRACT.claimAttempts.windowMinutes);
 });
 
 test('OpenAPI declares the same pattern and length as the contract', () => {

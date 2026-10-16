@@ -368,8 +368,12 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
             : copy.childModeStartFailed(result.reason),
       );
       await _refreshServiceStatus();
-    } on FoundationGateApiException {
-      if (mounted) setState(() => _message = copy.pairingClaimFailed);
+    } on FoundationGateApiException catch (error) {
+      if (mounted) {
+        setState(() => _message = error.statusCode == 429
+            ? copy.pairingRateLimited
+            : copy.pairingClaimFailed);
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
