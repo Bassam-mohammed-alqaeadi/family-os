@@ -2482,7 +2482,12 @@ test('the family sets the minutes, the phone reports what it measured, and only 
         // The guardian's read and the handset's read are the same answer, compared field by
         // field rather than described: that is the difference between one rule and two.
         const guardianRead = await jsonRequest(baseUrl, screenPath, { headers: authorized('test-primary') });
-        assert.deepEqual(guardianRead.body.state, firstReport.body.state);
+        // minuteOfDay is the wall clock at each read, so it may tick between the two reads. Every
+        // policy field must match exactly; the clock field must agree to within a minute.
+        const { minuteOfDay: guardianMinute, ...guardianPolicy } = guardianRead.body.state;
+        const { minuteOfDay: firstMinute, ...firstPolicy } = firstReport.body.state;
+        assert.deepEqual(guardianPolicy, firstPolicy);
+        assert.ok(Math.abs(guardianMinute - firstMinute) <= 1, `clock moved ${guardianMinute - firstMinute} minutes between reads`);
         assert.deepEqual(guardianRead.body.usage, firstReport.body.usage);
 
         // 5. Minutes never shrink. A second report - a real one, with its own key - that
