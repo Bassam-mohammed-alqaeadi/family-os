@@ -1,5 +1,6 @@
 import { CONSENT_CAPABILITIES } from './child-consents.js';
 import { HttpError } from './http-error.js';
+import { PAIRING_CODE_LENGTH, PAIRING_CODE_PATTERN } from './pairing-code.js';
 
 const MAX_DISPLAY_NAME_LENGTH = 120;
 const MAX_SUBJECT_LENGTH = 255;
@@ -103,8 +104,8 @@ export function createDevicePairingInput(value) {
 export function claimDevicePairingInput(value) {
   const body = bodyObject(value);
   onlyKnownFields(body, new Set(['pairingCode']));
-  const pairingCode = requiredText(body.pairingCode, 'pairingCode', { maxLength: 128 });
-  if (!/^[A-Za-z0-9_-]{32,128}$/.test(pairingCode)) {
+  const pairingCode = requiredText(body.pairingCode, 'pairingCode', { maxLength: PAIRING_CODE_LENGTH });
+  if (!PAIRING_CODE_PATTERN.test(pairingCode)) {
     throw new HttpError(400, 'invalid_request', 'pairingCode is invalid.');
   }
   return { pairingCode };
@@ -1864,4 +1865,96 @@ export function pendingCommandsQuery(value) {
   const limit = value?.limit === undefined || value?.limit === ''
     ? 20 : requiredWholeNumber(Number(value.limit), 'limit', 1, 100);
   return { limit };
+}
+
+// ── S3 minutes economy: closed request bodies (D3) ──
+// Only the shape is closed here: no unknown field, and an object wherever an object belongs.
+// The values are checked by the economy itself, which owns the codes the card names
+// (minutes_invalid_amount, minutes_invalid_scope, minutes_invalid_reason, …).
+function closedObject(value, allowed) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(allowed));
+  return body;
+}
+
+function minutesOptionalInstant(value) {
+  if (value === undefined || value === null) return null;
+  const instant = new Date(value);
+  if (typeof value !== 'string' || Number.isNaN(instant.getTime())) {
+    throw new HttpError(400, 'invalid_request', 'expiresAt must be an ISO 8601 instant.');
+  }
+  return instant;
+}
+
+/** A child's minutes earned by a guardian. The source is the caller's own reference. */
+export function minutesEarnInput(value) {
+  const body = closedObject(value, ['channel', 'minutes', 'appId', 'source']);
+  const source = closedObject(body.source, ['type', 'id']);
+  return {
+    channel: body.channel,
+    minutes: body.minutes,
+    appId: body.appId ?? null,
+    source: { type: source.type, id: source.id },
+  };
+}
+
+/** A handset reports minutes spent in one session of one app. The handset names no child. */
+export function minutesConsumeInput(value) {
+  const body = closedObject(value, ['appId', 'minutes', 'sessionId']);
+  return {
+    appId: body.appId,
+    minutes: body.minutes,
+    sessionId: requiredText(body.sessionId, 'sessionId', { maxLength: 160 }),
+  };
+}
+
+/** A guardian grants minutes. Co-guardians are held to the per-request ceiling by the economy. */
+export function minutesGrantInput(value) {
+  const body = closedObject(value, ['minutes', 'scope', 'appId', 'expiresAt', 'reason']);
+  return {
+    minutes: body.minutes,
+    scope: body.scope,
+    appId: body.appId ?? null,
+    expiresAt: minutesOptionalInstant(body.expiresAt),
+    reason: body.reason ?? '',
+  };
+}
+
+/** A guardian moves minutes between the app and free wallets of one child. */
+export function minutesAllocationInput(value) {
+  const body = closedObject(value, ['from', 'to', 'minutes', 'reason']);
+  const from = closedObject(body.from, ['scope', 'appId']);
+  const to = closedObject(body.to, ['scope', 'appId']);
+  return {
+    from: { scope: from.scope, appId: from.appId ?? null },
+    to: { scope: to.scope, appId: to.appId ?? null },
+    minutes: body.minutes,
+    reason: body.reason ?? '',
+  };
+}
+
+/** The primary guardian reverses one credit. The reason is mandatory; the economy checks it. */
+export function minutesReversalInput(value) {
+  const body = closedObject(value, ['targetEntryId', 'minutes', 'reason']);
+  return {
+    targetEntryId: requireUuid(body.targetEntryId, 'targetEntryId'),
+    minutes: body.minutes,
+    reason: body.reason,
+  };
+}
+
+/** The ledger page query: a limit and an opaque cursor, nothing else. */
+export function minutesLedgerQuery(query) {
+  const allowed = new Set(['limit', 'cursor']);
+  for (const key of Object.keys(query ?? {})) {
+    if (!allowed.has(key)) throw new HttpError(400, 'invalid_request', 'Query contains unsupported parameters.');
+  }
+  const limit = query.limit === undefined ? undefined : Number(query.limit);
+  if (limit !== undefined && (!Number.isInteger(limit) || limit < 1 || limit > 100)) {
+    throw new HttpError(400, 'invalid_request', 'limit must be a whole number from 1 to 100.');
+  }
+  return {
+    limit,
+    cursor: query.cursor === undefined ? null : requiredText(query.cursor, 'cursor', { maxLength: 512 }),
+  };
 }

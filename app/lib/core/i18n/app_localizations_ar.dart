@@ -1103,6 +1103,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get childScreenTimeWalletsHeading => 'محافظ التطبيقات';
 
   @override
+  String get childScreenTimeBalanceStale =>
+      'الأرقام المعروضة قديمة: آخر قراءة ناجحة من الخادم';
+
+  @override
   String childScreenTimeWalletMinutes(int minutes) {
     return '$minutes دقيقة مكتسبة';
   }
@@ -2062,6 +2066,12 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get attributionRewardMinutesField => 'الدقائق';
+
+  @override
+  String get attributionRewardCountedSoon => 'تُحتسب قريباً';
+
+  @override
   String attributionRewardWalletMinutes(int minutes) {
     return '$minutes دقيقة لمحفظته';
   }
@@ -2081,8 +2091,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get attributionRewardLibraryCta => 'مكتبة المجتمع';
 
   @override
-  String attributionRewardAssignedToast(String name, int minutes) {
-    return 'أُسند لـ$name — وصله: «والدك جهّز لك تحديًا — $minutes دقيقة تنتظرك!»';
+  String attributionRewardAssignedToast(String name) {
+    return 'أُسند لـ$name — وصله التحدي';
   }
 
   @override
@@ -8960,16 +8970,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get quranProgressPlaySemantics => 'تشغيل أو إيقاف التلاوة';
 
   @override
-  String quranProgressApproveCta(int minutes) {
-    return 'اعتماد وصرف المكافأة (+$minutes د)';
-  }
+  String get quranProgressApproveCta => 'اعتماد الورد';
 
   @override
   String get quranProgressWhisperCta => 'همسة 💬';
 
   @override
-  String quranProgressApproveToast(String name, int minutes) {
-    return 'تم اعتماد تلاوة $name وإضافة +$minutes دقيقة لوقت اللعب';
+  String quranProgressApproveToast(String name) {
+    return 'تم اعتماد تلاوة $name';
   }
 
   @override
@@ -8978,9 +8986,8 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String quranProgressApprovedBanner(int minutes) {
-    return '⭐ تم اعتماد هذا الورد وصرف مكافأة +$minutes دقيقة بنجاح';
-  }
+  String get quranProgressApprovedBanner =>
+      '⭐ تم اعتماد هذا الورد — المكافأة تُحتسب قريباً';
 
   @override
   String get quranProgressPlanHeading => 'خطة الورد والمكافأة';
@@ -8995,9 +9002,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get quranProgressPlanReward => 'مكافأة الإتمام';
 
   @override
-  String quranProgressPlanRewardValue(int minutes) {
-    return '+$minutes دقيقة لعب للمحفظة';
-  }
+  String get quranProgressPlanRewardValue => 'تُحتسب قريباً';
 
   @override
   String get quranProgressSurahNaba => 'النبأ';
@@ -11612,8 +11617,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get quranProgressPublishPlanCta => 'حفظ الخطة للابن';
 
   @override
-  String quranProgressPublishPlanToast(String surah, int minutes) {
-    return 'أُرسلت خطة الورد — $surah · مكافأة +$minutes دقيقة';
+  String quranProgressPublishPlanToast(String surah) {
+    return 'أُرسلت خطة الورد — $surah';
   }
 
   @override

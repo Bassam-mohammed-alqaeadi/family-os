@@ -23,6 +23,7 @@ import 'package:family_os/core/events/local_event_policy_bridge.dart';
 import 'package:family_os/core/family_ops/family_ops_local_persistence.dart';
 import 'package:family_os/core/fs_foundation/fs_composition_runtime.dart';
 import 'package:family_os/core/fs_foundation/fs_session_kernel.dart';
+import 'package:family_os/core/fs_foundation/selected_family_sqlite_store.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/i18n/locale_controller.dart';
 import 'package:family_os/core/identity/identity_local_persistence.dart';
@@ -50,6 +51,8 @@ import 'package:family_os/features/n06_notifications/family_notification_router.
 import 'package:family_os/features/n03_screen_time/screen_time_server_authority.dart';
 import 'package:family_os/features/n04_web_filter/web_filter_server_authority.dart';
 import 'package:family_os/features/n15_calendar/calendar_server_authority.dart';
+import 'package:family_os/features/n03_screen_time/guardian_minutes_balance_authority.dart';
+import 'package:family_os/features/n03_screen_time/minutes_balance_cache.dart';
 import 'package:family_os/features/n16_tasks/tasks_server_authority.dart';
 import 'package:family_os/features/n10_emergency/sos_server_authority.dart';
 import 'package:family_os/features/n02_day/location_ux_bridge.dart';
@@ -235,6 +238,16 @@ Future<void> main() async {
           familyId: () => familyEntryRuntime.selectedFamilyId,
         ),
       );
+      // S3 — the guardian reads a child's minutes balance from the server, never from this device.
+      bindGuardianMinutesBalance(
+        GuardianMinutesBalanceAuthority(
+          api: tasksApi,
+          idToken: familyEntryRuntime.currentIdToken,
+          familyId: () => familyEntryRuntime.selectedFamilyId,
+          persistedFamilyId: sharedSelectedFamilyStore.read,
+          cacheOpener: openDurableMinutesBalanceCache,
+        ),
+      );
     }
     // W8 - the family's week: what was agreed to, what was called off and why, who said
     // they are coming and what actually happened. Before this binding the calendar screen
@@ -406,6 +419,7 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
           configuration: configuration,
           transport: PackageFoundationGateHttpTransport(),
         ),
+        selectedFamilyStore: sharedSelectedFamilyStore,
       ),
       identity: identity,
       deviceApi: FamilyDeviceApiClient(

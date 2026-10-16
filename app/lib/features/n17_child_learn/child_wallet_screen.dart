@@ -7,14 +7,13 @@ import 'package:family_os/core/design/components/enforcement_status_badge.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
-import 'package:family_os/core/identity/active_child_resolver.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
-import 'package:family_os/features/n03_screen_time/stage1_child_scope.dart';
 import 'package:family_os/features/n17_child_learn/child_wallet_models.dart';
 import 'package:family_os/features/n17_child_learn/child_wallet_repository.dart';
+import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
 /// Widget keys for SCR-CHD-019 acceptance.
 abstract final class ChildWalletKeys {
@@ -93,21 +92,26 @@ class _ChildWalletScreenState extends State<ChildWalletScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (widget.repository != null || _scopedRepoBound) return;
-    final runtime = CurrentIdentity.maybeOf(context);
-    final childId = runtime == null
-        ? resolveActiveChildId()
-        : familyScopedChildId(
-            familyId: runtime.activeFamilyId,
-            childId: runtime.activeChildId,
-          );
-    _repo = PolicyChildWalletRepository(childId: childId);
+    // The handset's own device credential identifies the child on the server (CHD-019).
+    _repo = stage1ChildWalletRepository;
     _scopedRepoBound = true;
     _load();
   }
 
   Future<void> _load() async {
     setState(() => _loading = true);
-    final snap = await _repo.load();
+    final ChildWalletSnapshot snap;
+    try {
+      snap = await _repo.load();
+    } on FoundationGateApiException {
+      // The server gave no balance: show no number at all (S3 — no invented minutes).
+      if (!mounted) return;
+      setState(() {
+        _snap = const ChildWalletSnapshot();
+        _loading = false;
+      });
+      return;
+    }
     if (!mounted) return;
     setState(() {
       _snap = snap;
@@ -236,6 +240,13 @@ class _ChildWalletScreenState extends State<ChildWalletScreen> {
               child: EnforcementStatusBadge(
                 label: l10n.childWalletSimulatedTag,
               ),
+            ),
+            const SizedBox(height: 10),
+          ],
+          if (_snap.stale) ...[
+            Text(
+              l10n.childScreenTimeBalanceStale,
+              key: const Key('child_wallet_balance_stale'),
             ),
             const SizedBox(height: 10),
           ],

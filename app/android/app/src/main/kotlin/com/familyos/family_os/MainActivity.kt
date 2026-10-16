@@ -49,6 +49,7 @@ class MainActivity : FlutterActivity() {
                     "configureAndStart" -> configureAndStart(call, result)
                     "startConfigured" -> startConfiguredTelemetry(result)
                     "chatRequest" -> proxyFamilyChatRequest(call, result)
+                    "minutesBalanceRequest" -> proxyMinutesBalanceRequest(call, result)
                     "consentRequest" -> proxyFamilyConsentRequest(call, result)
                     "capabilitySnapshot" -> capabilitySnapshot(result)
                     "stop" -> stopTelemetry(result)
@@ -383,6 +384,43 @@ class MainActivity : FlutterActivity() {
                 // Credentials, message bodies and server response text are never logged.
                 runOnUiThread {
                     result.error("device_chat_unreachable", "The family chat service did not answer.", null)
+                }
+            }
+        }
+    }
+
+    /// The child's own balance, read with the device credential that never leaves this layer.
+    /// Only the scope check and the GET happen here; the body returns exactly as the server wrote it.
+    private fun proxyMinutesBalanceRequest(call: MethodCall, result: MethodChannel.Result) {
+        val config = TelemetryConfigStore(this).read()
+        if (config == null) {
+            result.error("device_minutes_not_configured", "No paired device session is available.", null)
+            return
+        }
+        val requestedDeviceId = call.argument<String>("deviceId")?.trim()
+        if (requestedDeviceId != config.deviceId) {
+            result.error("device_minutes_scope_mismatch", "The device scope does not match this paired handset.", null)
+            return
+        }
+        chatExecutor.execute {
+            try {
+                val request = Request.Builder()
+                    .url("${config.apiOrigin}/v1/devices/${config.deviceId}/minutes-balance")
+                    .header("Authorization", "Device ${config.deviceCredential}")
+                    .header("Accept", "application/json")
+                    .get()
+                    .build()
+                val answer = chatHttpClient.newCall(request).execute().use { response ->
+                    mapOf(
+                        "statusCode" to response.code,
+                        "body" to (response.body?.string() ?: ""),
+                    )
+                }
+                runOnUiThread { result.success(answer) }
+            } catch (_: Exception) {
+                // Credentials and balance bodies are never logged.
+                runOnUiThread {
+                    result.error("device_minutes_unreachable", "The minutes service did not answer.", null)
                 }
             }
         }

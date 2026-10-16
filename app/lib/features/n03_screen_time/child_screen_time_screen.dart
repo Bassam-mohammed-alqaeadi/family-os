@@ -29,6 +29,7 @@ import 'package:family_os/core/policy/time_request_service.dart';
 import 'package:family_os/core/screen_time/screen_time_runtime.dart';
 import 'package:family_os/core/screen_time/stage1_time_request_runtime.dart';
 import 'package:family_os/features/n12_devices/mother_permission_level_repository.dart';
+import 'package:family_os/features/n03_screen_time/guardian_minutes_balance_authority.dart';
 import 'package:family_os/features/n03_screen_time/screen_time_server_authority.dart';
 import 'package:family_os/features/n03_screen_time/screen_time_server_panel.dart';
 import 'package:family_os/features/n03_screen_time/stage1_child_scope.dart';
@@ -75,7 +76,11 @@ class ChildScreenTimeScreen extends StatefulWidget {
     this.motherLevel = MotherLevel.partner,
     this.timeRequestService,
     this.policyUnavailableOverride,
+    this.balanceReader,
   });
+
+  /// Reads a child's balance per app from the server. Null → the guardian's bound server read.
+  final Future<MinutesBalanceReading?> Function(String childId)? balanceReader;
 
   /// Explicit child; null → Identity active child → stage1 canonical.
   final ChildId? childId;
@@ -117,6 +122,10 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
   var _loading = true;
   var _saving = false;
   var _policyUnavailable = false;
+  /// Server balance per wallet app. Null → the server gave no balance: no number is shown.
+  Map<String, int>? _balanceByApp;
+  /// True when the shown balance is the last good reading and the newest read failed.
+  bool _balanceStale = false;
   PolicySyncStatus? _syncStatus;
   int _temporaryGrantRemaining = 0;
   late TimeRequestService _timeRequestService;
@@ -285,6 +294,18 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
       _temporaryGrantRemaining = grantRemaining;
       _capController.text = '${policy.dailyCapMinutes}';
       _loading = false;
+    });
+    _loadBalance();
+  }
+
+  /// The server balance never blocks the screen: it arrives after the screen is ready.
+  Future<void> _loadBalance() async {
+    final reader = widget.balanceReader ?? guardianMinutesBalanceByApp;
+    final balanceByApp = await reader(_childId.value);
+    if (!mounted) return;
+    setState(() {
+      _balanceByApp = balanceByApp?.byApp;
+      _balanceStale = balanceByApp?.stale ?? false;
     });
   }
 
@@ -587,7 +608,10 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
                           dailyMinutes: remaining.dailyRemaining.inMinutes,
                           grantMinutes:
                               remaining.temporaryGrantRemaining.inMinutes,
-                          walletMinutes: remaining.earnedWalletTotal.inMinutes,
+                          walletMinutes: _balanceByApp?.values.fold<int>(
+                            0,
+                            (sum, minutes) => sum + minutes,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         for (final kind in ScheduleKind.values) ...[
@@ -633,6 +657,8 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
                         _CapsSection(
                           l10n: l10n,
                           policy: _policy,
+                          balanceByApp: _balanceByApp,
+                          balanceStale: _balanceStale,
                           capController: _capController,
                           canEdit: canEdit && _canSavePolicy,
                           colors: colors,
@@ -691,6 +717,8 @@ class _CapsSection extends StatelessWidget {
   const _CapsSection({
     required this.l10n,
     required this.policy,
+    required this.balanceByApp,
+    required this.balanceStale,
     required this.capController,
     required this.canEdit,
     required this.colors,
@@ -702,6 +730,9 @@ class _CapsSection extends StatelessWidget {
 
   final AppLocalizations l10n;
   final ScreenTimePolicy policy;
+  /// Server balance per wallet app; null → no number is shown.
+  final Map<String, int>? balanceByApp;
+  final bool balanceStale;
   final TextEditingController capController;
   final bool canEdit;
   final FamilyColors colors;
@@ -789,10 +820,17 @@ class _CapsSection extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
+            if (balanceStale)
+              Text(
+                key: const Key('wallet_balance_stale'),
+                l10n.childScreenTimeBalanceStale,
+                style: TextStyle(fontSize: 13, color: colors.coral),
+              ),
             for (final wallet in policy.wallets) ...[
               Semantics(
-                label:
-                    '${walletLabel(wallet.appId)} ${l10n.childScreenTimeWalletMinutes(wallet.earnedMinutes.inMinutes)}',
+                label: balanceByApp?[wallet.appId] == null
+                    ? walletLabel(wallet.appId)
+                    : '${walletLabel(wallet.appId)} ${l10n.childScreenTimeWalletMinutes(balanceByApp![wallet.appId]!)}',
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6),
                   child: ConstrainedBox(
@@ -809,17 +847,18 @@ class _CapsSection extends StatelessWidget {
                             ),
                           ),
                         ),
-                        Text(
-                          key: Key('wallet_minutes_${wallet.appId}'),
-                          l10n.childScreenTimeWalletMinutes(
-                            wallet.earnedMinutes.inMinutes,
+                        if (balanceByApp?[wallet.appId] != null)
+                          Text(
+                            key: Key('wallet_minutes_${wallet.appId}'),
+                            l10n.childScreenTimeWalletMinutes(
+                              balanceByApp![wallet.appId]!,
+                            ),
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: colors.ink2,
+                            ),
                           ),
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: colors.ink2,
-                          ),
-                        ),
                       ],
                     ),
                   ),

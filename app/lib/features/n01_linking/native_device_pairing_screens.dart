@@ -14,6 +14,7 @@ import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 import 'package:family_os/foundation_gate/main_app_foundation_runtime.dart';
 import 'package:family_os/foundation_gate/native_child_pairing_copy.dart';
+import 'package:family_os/foundation_gate/pairing_contract.generated.dart';
 import 'package:family_os/foundation_gate/native_child_telemetry_bridge.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -244,7 +245,7 @@ class _NativeParentPairingScreenState
 
   /// Formats "ABCDEF" → "ABC DEF" for readability.
   String _formatPairingCode(String raw) {
-    if (raw.length == 6) return '${raw.substring(0, 3)} ${raw.substring(3)}';
+    if (raw.length == PairingContract.codeLength) return '${raw.substring(0, 3)} ${raw.substring(3)}';
     return raw;
   }
 }
@@ -367,8 +368,12 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
             : copy.childModeStartFailed(result.reason),
       );
       await _refreshServiceStatus();
-    } on FoundationGateApiException {
-      if (mounted) setState(() => _message = copy.pairingClaimFailed);
+    } on FoundationGateApiException catch (error) {
+      if (mounted) {
+        setState(() => _message = error.statusCode == 429
+            ? copy.pairingRateLimited
+            : copy.pairingClaimFailed);
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -508,8 +513,8 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
           controller: _code,
           autocorrect: false,
           enableSuggestions: false,
-          textCapitalization: TextCapitalization.characters,
-          keyboardType: TextInputType.visiblePassword,
+          textCapitalization: TextCapitalization.none,
+          keyboardType: TextInputType.number,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 24,
@@ -517,7 +522,8 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
             fontWeight: FontWeight.w800,
             color: colors.tealDeep,
           ),
-          maxLength: 10,
+          maxLength: PairingContract.codeLength,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           decoration: InputDecoration(
             labelText: copy.pairingCodeLabel,
             hintText: copy.pairingCodeHint,

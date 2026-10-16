@@ -2108,6 +2108,12 @@ abstract class AppLocalizations {
   /// **'محافظ التطبيقات'**
   String get childScreenTimeWalletsHeading;
 
+  /// SCR-FAT-032 note when the shown balance is the last good server reading
+  ///
+  /// In ar, this message translates to:
+  /// **'الأرقام المعروضة قديمة: آخر قراءة ناجحة من الخادم'**
+  String get childScreenTimeBalanceStale;
+
   /// SCR-FAT-032 wallet balance line
   ///
   /// In ar, this message translates to:
@@ -3806,6 +3812,18 @@ abstract class AppLocalizations {
   /// **'المكافأة عند الإتقان (≥{percent}٪)'**
   String attributionRewardRewardsHeading(int percent);
 
+  /// SCR-FAT-045 accessible label for the parent-set minutes of a reward
+  ///
+  /// In ar, this message translates to:
+  /// **'الدقائق'**
+  String get attributionRewardMinutesField;
+
+  /// SCR-FAT-045 reward row value while the server counts the amount; no minute figure
+  ///
+  /// In ar, this message translates to:
+  /// **'تُحتسب قريباً'**
+  String get attributionRewardCountedSoon;
+
   /// SCR-FAT-045 wallet minutes reward
   ///
   /// In ar, this message translates to:
@@ -3839,8 +3857,8 @@ abstract class AppLocalizations {
   /// SCR-FAT-045 assign success toast
   ///
   /// In ar, this message translates to:
-  /// **'أُسند لـ{name} — وصله: «والدك جهّز لك تحديًا — {minutes} دقيقة تنتظرك!»'**
-  String attributionRewardAssignedToast(String name, int minutes);
+  /// **'أُسند لـ{name} — وصله التحدي'**
+  String attributionRewardAssignedToast(String name);
 
   /// SCR-FAT-045 cannot assign toast
   ///
@@ -15899,11 +15917,11 @@ abstract class AppLocalizations {
   /// **'تشغيل أو إيقاف التلاوة'**
   String get quranProgressPlaySemantics;
 
-  /// SCR-FAT-072 approve CTA minutes-only
+  /// SCR-FAT-072 approve CTA, no minute figure
   ///
   /// In ar, this message translates to:
-  /// **'اعتماد وصرف المكافأة (+{minutes} د)'**
-  String quranProgressApproveCta(int minutes);
+  /// **'اعتماد الورد'**
+  String get quranProgressApproveCta;
 
   /// SCR-FAT-072 whisper
   ///
@@ -15914,8 +15932,8 @@ abstract class AppLocalizations {
   /// SCR-FAT-072 approve toast
   ///
   /// In ar, this message translates to:
-  /// **'تم اعتماد تلاوة {name} وإضافة +{minutes} دقيقة لوقت اللعب'**
-  String quranProgressApproveToast(String name, int minutes);
+  /// **'تم اعتماد تلاوة {name}'**
+  String quranProgressApproveToast(String name);
 
   /// SCR-FAT-072 whisper toast
   ///
@@ -15923,11 +15941,11 @@ abstract class AppLocalizations {
   /// **'حُفظ التشجيع محليًا لـ {name} — إشعار الابن سيصل إلى الأجهزة الأخرى في تحديث قادم'**
   String quranProgressWhisperToast(String name);
 
-  /// SCR-FAT-072 approved banner
+  /// SCR-FAT-072 approved banner, no minute figure
   ///
   /// In ar, this message translates to:
-  /// **'⭐ تم اعتماد هذا الورد وصرف مكافأة +{minutes} دقيقة بنجاح'**
-  String quranProgressApprovedBanner(int minutes);
+  /// **'⭐ تم اعتماد هذا الورد — المكافأة تُحتسب قريباً'**
+  String get quranProgressApprovedBanner;
 
   /// SCR-FAT-072 plan
   ///
@@ -15953,11 +15971,11 @@ abstract class AppLocalizations {
   /// **'مكافأة الإتمام'**
   String get quranProgressPlanReward;
 
-  /// SCR-FAT-072 reward value minutes-only
+  /// SCR-FAT-072 reward value, no minute figure
   ///
   /// In ar, this message translates to:
-  /// **'+{minutes} دقيقة لعب للمحفظة'**
-  String quranProgressPlanRewardValue(int minutes);
+  /// **'تُحتسب قريباً'**
+  String get quranProgressPlanRewardValue;
 
   /// SCR-FAT-072 surah key
   ///
@@ -20600,8 +20618,8 @@ abstract class AppLocalizations {
   /// SCR-FAT-072 publish plan toast
   ///
   /// In ar, this message translates to:
-  /// **'أُرسلت خطة الورد — {surah} · مكافأة +{minutes} دقيقة'**
-  String quranProgressPublishPlanToast(String surah, int minutes);
+  /// **'أُرسلت خطة الورد — {surah}'**
+  String quranProgressPublishPlanToast(String surah);
 
   /// SCR-CHD-025 licensed An-Naba 1 (never AI-generated)
   ///

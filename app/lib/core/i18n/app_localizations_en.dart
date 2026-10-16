@@ -1116,6 +1116,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get childScreenTimeWalletsHeading => 'Per-app wallets';
 
   @override
+  String get childScreenTimeBalanceStale =>
+      'Showing the last good server reading; the latest read failed';
+
+  @override
   String childScreenTimeWalletMinutes(int minutes) {
     return '$minutes min earned';
   }
@@ -2095,6 +2099,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get attributionRewardMinutesField => 'Minutes';
+
+  @override
+  String get attributionRewardCountedSoon => 'Counted soon';
+
+  @override
   String attributionRewardWalletMinutes(int minutes) {
     return '$minutes minutes to their wallet';
   }
@@ -2114,8 +2124,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get attributionRewardLibraryCta => 'Community library';
 
   @override
-  String attributionRewardAssignedToast(String name, int minutes) {
-    return 'Assigned to $name — they see: \"Your parent prepared a challenge — $minutes minutes waiting!\"';
+  String attributionRewardAssignedToast(String name) {
+    return 'Assigned to $name — challenge delivered';
   }
 
   @override
@@ -9087,16 +9097,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quranProgressPlaySemantics => 'Play or pause recitation';
 
   @override
-  String quranProgressApproveCta(int minutes) {
-    return 'Approve & reward (+$minutes min)';
-  }
+  String get quranProgressApproveCta => 'Approve ward';
 
   @override
   String get quranProgressWhisperCta => 'Whisper 💬';
 
   @override
-  String quranProgressApproveToast(String name, int minutes) {
-    return 'Approved $name\'s recitation and added +$minutes minutes of play';
+  String quranProgressApproveToast(String name) {
+    return 'Approved $name\'s recitation';
   }
 
   @override
@@ -9105,9 +9113,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String quranProgressApprovedBanner(int minutes) {
-    return '⭐ This ward was approved and +$minutes minutes rewarded';
-  }
+  String get quranProgressApprovedBanner =>
+      '⭐ This ward was approved — reward counted soon';
 
   @override
   String get quranProgressPlanHeading => 'Ward plan & reward';
@@ -9122,9 +9129,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quranProgressPlanReward => 'Completion reward';
 
   @override
-  String quranProgressPlanRewardValue(int minutes) {
-    return '+$minutes play minutes to the wallet';
-  }
+  String get quranProgressPlanRewardValue => 'Counted soon';
 
   @override
   String get quranProgressSurahNaba => 'An-Naba';
@@ -11779,8 +11784,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quranProgressPublishPlanCta => 'Save plan to child';
 
   @override
-  String quranProgressPublishPlanToast(String surah, int minutes) {
-    return 'Ward plan sent — $surah · +$minutes minutes reward';
+  String quranProgressPublishPlanToast(String surah) {
+    return 'Ward plan sent — $surah';
   }
 
   @override

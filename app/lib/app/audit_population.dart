@@ -2,10 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 import 'package:family_os/app/role_guard.dart';
-import 'package:family_os/core/domain/minutes.dart';
 import 'package:family_os/core/domain/role.dart';
-import 'package:family_os/core/policy/wallet_ledger.dart';
-import 'package:family_os/core/screen_time/screen_time_local_persistence.dart';
 import 'package:family_os/features/education/learning_assignment_repository.dart';
 import 'package:family_os/features/education/learning_result_repository.dart';
 import 'package:family_os/features/n02_day/alert_detail_mock.dart';
@@ -19,7 +16,6 @@ import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/features/n03_screen_time/child_apps_real_local_seed_mock.dart';
 import 'package:family_os/features/n03_screen_time/child_apps_repository.dart';
 import 'package:family_os/features/n03_screen_time/child_usage_report_repository.dart';
-import 'package:family_os/features/n03_screen_time/stage1_child_scope.dart';
 import 'package:family_os/features/n05_lock/tamper_alerts_repository.dart';
 import 'package:family_os/features/n07_advisor/advisor_voice_repository.dart';
 import 'package:family_os/features/n07_advisor/agent_action_log_repository.dart';
@@ -351,9 +347,6 @@ Future<int> applyAuditPopulation({required bool enabled}) async {
     stage1ChildWalletRepository,
     (r) => r.seed(childWalletOneFixture()),
   );
-  if (stage1ChildWalletRepository is PolicyChildWalletRepository) {
-    await _depositAuditWalletMinutes();
-  }
   return n;
 }
 
@@ -406,25 +399,6 @@ int _seedProfileKidToolFixtures() {
 }
 
 /// Father-set reward deposited for the active child. No raw balance write.
-Future<void> _depositAuditWalletMinutes() async {
-  try {
-    final policyRepo = await ScreenTimeLocalPersistence.openPolicyRepository();
-    final childId = activeScopedChildId();
-    final policy = await policyRepo.load(childId);
-    final appId = policy.wallets.isEmpty
-        ? 'youtube'
-        : policy.wallets.first.appId;
-    await WalletLedger(policyRepo).earn(
-      childId: childId,
-      appId: appId,
-      assignee: AppRole.child,
-      fatherSetReward: Minutes(15),
-    );
-  } catch (e, st) {
-    debugPrint('audit wallet earn skipped: $e\n$st');
-  }
-}
-
 /// Strip a query before GoRouter path checks. Audit flag is read separately.
 String auditRoutePath(String platformRoute) {
   final q = platformRoute.indexOf('?');

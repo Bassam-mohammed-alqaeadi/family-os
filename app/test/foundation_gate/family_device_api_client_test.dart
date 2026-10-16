@@ -13,6 +13,7 @@ const familyId = '11111111-1111-4111-8111-111111111111';
 const childId = '22222222-2222-4222-8222-222222222222';
 const deviceId = '33333333-3333-4333-8333-333333333333';
 const idempotencyKey = '44444444-4444-4444-8444-444444444444';
+const deviceCredentialValue = 'Cred-0123456789_ABCDEFGHIJKLMNOPQRSTUVWXYZab'; // 44 characters, the length the test asserts
 /// The device payload as the server now declares it, lifecycle included.
 ///
 /// The previous fixture carried eleven keys and the client demanded exactly eleven, so an
@@ -146,7 +147,7 @@ void main() {
     'native child pairing creates a guardian capability then claims a device credential once',
     () async {
       const pairingBody =
-          '{"pairing":{"id":"$deviceId","childId":"$childId","deviceLabel":"Amani Android","pairingCode":"abcdefghijklmnopqrstuvwxyzABCDEF0123456789_-","expiresAt":"2026-10-04T12:10:00.000Z"}}';
+          '{"pairing":{"id":"$deviceId","childId":"$childId","deviceLabel":"Amani Android","pairingCode":"482913","expiresAt":"2026-10-04T12:10:00.000Z"}}';
       final transport = FakeTransport(
         const FoundationGateHttpResponse(statusCode: 201, body: pairingBody),
       );
@@ -168,7 +169,7 @@ void main() {
       transport.postResponse = const FoundationGateHttpResponse(
         statusCode: 201,
         body:
-            '{"device":$deviceBody,"deviceCredential":"abcdefghijklmnopqrstuvwxyzABCDEF0123456789_-"}',
+            '{"device":$deviceBody,"deviceCredential":"$deviceCredentialValue"}',
       );
       final claim = await client.claimPairing(pairingCode: pairing.pairingCode);
       expect(
@@ -180,6 +181,39 @@ void main() {
       expect(claim.deviceCredential, hasLength(44));
     },
   );
+
+  test('claim accepts only a six-digit pairing code, rejected before HTTP otherwise', () async {
+    final transport = FakeTransport(
+      const FoundationGateHttpResponse(statusCode: 201, body: '{}'),
+    );
+    for (final code in [
+      List.filled(43, 'A').join(),
+      '48291',
+      '48 2913',
+    ]) {
+      await expectLater(
+        clientFor(transport).claimPairing(pairingCode: code),
+        throwsA(isA<FoundationGateApiException>()),
+      );
+    }
+  });
+
+  test('a refused claim (429) is reported as a rate limit, not as an outage', () async {
+    final transport = FakeTransport(
+      const FoundationGateHttpResponse(
+        statusCode: 429,
+        body: '{"error":{"code":"rate_limit_exceeded"}}',
+      ),
+    );
+    await expectLater(
+      clientFor(transport).claimPairing(pairingCode: '482913'),
+      throwsA(
+        isA<FoundationGateApiException>()
+            .having((e) => e.statusCode, 'statusCode', 429)
+            .having((e) => e.serverCode, 'serverCode', 'rate_limit_exceeded'),
+      ),
+    );
+  });
 
   test('device client rejects out-of-range telemetry before HTTP', () async {
     final transport = FakeTransport(

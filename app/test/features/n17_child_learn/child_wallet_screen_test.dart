@@ -6,14 +6,32 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/tokens.dart';
-import 'package:family_os/core/domain/child_id.dart';
-import 'package:family_os/core/domain/minutes.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
-import 'package:family_os/core/policy/screen_time_policy.dart';
-import 'package:family_os/core/policy/screen_time_policy_repository.dart';
 import 'package:family_os/features/n17_child_learn/child_wallet_repository.dart';
 import 'package:family_os/features/n17_child_learn/child_wallet_screen.dart';
+import 'package:family_os/foundation_gate/child_minutes_balance_client.dart';
+import 'package:family_os/foundation_gate/foundation_gate_http.dart';
+
+const _balanceBody =
+    '{"daily":0,"temporary":0,"free":0,'
+    '"apps":[{"appId":"youtube","minutes":25},{"appId":"games","minutes":10}],'
+    '"total":35,"asOf":"2026-10-15T10:00:00.000Z"}';
+
+/// Answers at the transport seam only: the client and the repository run for real.
+final class _FakeBalanceTransport implements ChildMinutesBalanceTransport {
+  _FakeBalanceTransport(this._body, {this.deviceId = 'device-1'});
+
+  final String _body;
+  final String? deviceId;
+
+  @override
+  Future<String?> configuredDeviceId() async => deviceId;
+
+  @override
+  Future<FoundationGateHttpResponse> readBalance(String id) async =>
+      FoundationGateHttpResponse(statusCode: 200, body: _body);
+}
 
 void main() {
   testWidgets('empty → CHD-012', (tester) async {
@@ -81,28 +99,34 @@ void main() {
     expect(sos, 1);
   });
 
-  testWidgets('CHD-019 reflects policy wallet projection', (tester) async {
-    final childId = ChildId('demo-child');
-    final policyRepo = InMemoryScreenTimePolicyRepository({
-      childId.value: ScreenTimePolicy(
-        wallets: [
-          AppWallet(appId: 'youtube', earnedMinutes: Minutes(25)),
-          AppWallet(appId: 'games', earnedMinutes: Minutes(10)),
-        ],
-      ),
-    });
-
-    await _pump(
-      tester,
-      repository: PolicyChildWalletRepository(
-        policyRepository: policyRepo,
-        childId: childId,
-      ),
+  testWidgets('CHD-019 reads the server balance and is never simulated', (tester) async {
+    final client = ChildMinutesBalanceClient(
+      transport: _FakeBalanceTransport(_balanceBody),
     );
+    final repo = ServerChildWalletRepository(client: client);
+
+    final snap = await repo.load();
+    expect(snap.simulated, isFalse);
+    expect(snap.totalMinutes, 35);
+
+    await _pump(tester, repository: repo);
 
     expect(find.byKey(ChildWalletKeys.appRow('youtube')), findsOneWidget);
     expect(find.byKey(ChildWalletKeys.appRow('games')), findsOneWidget);
     expect(find.textContaining('35'), findsWidgets);
+  });
+
+  testWidgets('unpaired handset shows the empty state, never a number', (tester) async {
+    final repo = ServerChildWalletRepository(
+      client: ChildMinutesBalanceClient(
+        transport: _FakeBalanceTransport(_balanceBody, deviceId: null),
+      ),
+    );
+
+    await _pump(tester, repository: repo);
+
+    expect(find.byKey(ChildWalletKeys.empty), findsOneWidget);
+    expect(find.textContaining('35'), findsNothing);
   });
 }
 

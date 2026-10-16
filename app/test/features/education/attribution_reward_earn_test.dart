@@ -2,55 +2,26 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/minutes.dart';
-import 'package:family_os/core/policy/screen_time_policy_repository.dart';
-import 'package:family_os/core/policy/wallet_ledger.dart';
 import 'package:family_os/features/education/learning_assignment_repository.dart';
 import 'package:family_os/features/n14_studio/attribution_reward_repository.dart';
 
 void main() {
-  test('assign deposits wallet+play via PolicyEngine/WalletLedger', () async {
-    final policy = InMemoryScreenTimePolicyRepository();
-    final ledger = WalletLedger(policy);
+  test('assign publishes the challenge and writes no minutes (S3)', () async {
     final assignments = InMemoryLearningAssignmentRepository();
     addTearDown(assignments.dispose);
 
-    final repo = InMemoryAttributionRewardRepository(
-      assignments: assignments,
-      wallet: ledger,
-    );
-
-    final child = ChildId('demo-child');
-    expect(
-      await ledger.balance(
-        childId: child,
-        appId: AttributionWalletApps.education,
-      ),
-      Minutes.zero,
-    );
+    final repo = InMemoryAttributionRewardRepository(assignments: assignments);
 
     final snap = await repo.assign();
     expect(snap.assigned, isTrue);
 
-    expect(
-      await ledger.balance(
-        childId: child,
-        appId: AttributionWalletApps.education,
-      ),
-      Minutes(20),
-    );
-    expect(
-      await ledger.balance(childId: child, appId: AttributionWalletApps.play),
-      Minutes(15),
-    );
-
+    final child = ChildId('demo-child');
     final published = await assignments.latestForChild(child);
     expect(published, isNotNull);
     expect(published!.rewardMinutes, Minutes(35));
   });
 
-  test('disabled rewards skip deposit', () async {
-    final policy = InMemoryScreenTimePolicyRepository();
-    final ledger = WalletLedger(policy);
+  test('disabled rewards are left out of the published challenge', () async {
     final assignments = InMemoryLearningAssignmentRepository();
     addTearDown(assignments.dispose);
 
@@ -61,21 +32,10 @@ void main() {
     final repo = InMemoryAttributionRewardRepository(
       seed: seed,
       assignments: assignments,
-      wallet: ledger,
     );
 
     await repo.assign();
-    final child = ChildId('demo-child');
-    expect(
-      await ledger.balance(
-        childId: child,
-        appId: AttributionWalletApps.education,
-      ),
-      Minutes(20),
-    );
-    expect(
-      await ledger.balance(childId: child, appId: AttributionWalletApps.play),
-      Minutes.zero,
-    );
+    final published = await assignments.latestForChild(ChildId('demo-child'));
+    expect(published!.rewardMinutes, Minutes(20));
   });
 }

@@ -10,8 +10,6 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
-import 'package:family_os/core/policy/screen_time_policy_repository.dart';
-import 'package:family_os/core/policy/wallet_ledger.dart';
 import 'package:family_os/features/n14_studio/quran_progress_models.dart';
 import 'package:family_os/features/n14_studio/quran_progress_repository.dart';
 import 'package:family_os/features/n14_studio/quran_progress_screen.dart';
@@ -30,9 +28,6 @@ void main() {
       seed: seed,
       recitations: bus,
       plans: plans,
-      wallet: WalletLedger(
-        PrefsScreenTimePolicyRepository(MemoryScreenTimePolicyPrefsStore()),
-      ),
     );
   }
 
@@ -47,7 +42,7 @@ void main() {
     expect(nav, contains('SCR-FAT-003'));
   });
 
-  testWidgets('prototype hero + approve minutes reward', (tester) async {
+  testWidgets('prototype hero + approve, no minute figure', (tester) async {
     final repo = isolated(seed: quranProgressPrototypeFixture());
     await _pump(tester, repository: repo);
 

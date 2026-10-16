@@ -19,9 +19,85 @@ import 'package:family_os/core/policy/time_request_repository.dart';
 import 'package:family_os/core/policy/time_request_service.dart';
 import 'package:family_os/features/n12_devices/mother_permission_level_repository.dart';
 import 'package:family_os/features/n03_screen_time/child_screen_time_screen.dart';
+import 'package:family_os/features/n03_screen_time/guardian_minutes_balance_authority.dart';
 
 void main() {
   tearDown(AppToast.dismiss);
+
+  testWidgets('wallet minutes come from the server, not the local policy (S3)', (tester) async {
+    final child = ChildId('wallet-child');
+    final policy = InMemoryScreenTimePolicyRepository({
+      child.value: ScreenTimePolicy(
+        wallets: [AppWallet(appId: 'youtube', earnedMinutes: Minutes(99))],
+      ),
+    });
+    await _pump(
+      tester,
+      repository: PrefsScheduleWindowRepository(MemorySchedulePrefsStore(<String, String>{})),
+      childId: child,
+      role: AppRole.father,
+      policyRepository: policy,
+      balanceReader: (_) async => const MinutesBalanceReading({'youtube': 25}),
+    );
+
+    // The server balance arrives after the screen is ready (async chain).
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 20)));
+    await tester.pump();
+    // The wallet rows sit below the fold of the lazy settings list: scroll to them.
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('wallet_minutes_youtube')),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.byKey(const Key('wallet_minutes_youtube')), findsOneWidget);
+    expect(find.textContaining('25'), findsWidgets);
+    expect(find.textContaining('99'), findsNothing);
+  });
+
+  testWidgets('a failed read shows the last good reading flagged stale', (tester) async {
+    final child = ChildId('wallet-child-3');
+    final policy = InMemoryScreenTimePolicyRepository({
+      child.value: ScreenTimePolicy(
+        wallets: [AppWallet(appId: 'youtube', earnedMinutes: Minutes(99))],
+      ),
+    });
+    await _pump(
+      tester,
+      repository: PrefsScheduleWindowRepository(MemorySchedulePrefsStore(<String, String>{})),
+      childId: child,
+      role: AppRole.father,
+      policyRepository: policy,
+      balanceReader: (_) async => const MinutesBalanceReading({'youtube': 25}, stale: true),
+    );
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('wallet_balance_stale')),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.byKey(const Key('wallet_balance_stale')), findsOneWidget);
+    expect(find.byKey(const Key('wallet_minutes_youtube')), findsOneWidget);
+  });
+
+  testWidgets('no server balance → wallet row shows no number', (tester) async {
+    final child = ChildId('wallet-child-2');
+    final policy = InMemoryScreenTimePolicyRepository({
+      child.value: ScreenTimePolicy(
+        wallets: [AppWallet(appId: 'youtube', earnedMinutes: Minutes(99))],
+      ),
+    });
+    await _pump(
+      tester,
+      repository: PrefsScheduleWindowRepository(MemorySchedulePrefsStore(<String, String>{})),
+      childId: child,
+      role: AppRole.father,
+      policyRepository: policy,
+      balanceReader: (_) async => null,
+    );
+
+    expect(find.byKey(const Key('wallet_minutes_youtube')), findsNothing);
+    expect(find.textContaining('99'), findsNothing);
+  });
 
   final child = ChildId('widget-child');
 
@@ -389,6 +465,7 @@ Future<void> _pump(
   ScreenTimePolicyRepository? policyRepository,
   ScheduleTimePicker? pickTime,
   TimeRequestService? timeRequestService,
+  Future<MinutesBalanceReading?> Function(String)? balanceReader,
 }) async {
   final roleCtrl = RoleController(role);
   await tester.pumpWidget(
@@ -410,6 +487,7 @@ Future<void> _pump(
           policyRepository: policyRepository,
           pickTime: pickTime,
           timeRequestService: timeRequestService,
+          balanceReader: balanceReader,
         ),
       ),
     ),
