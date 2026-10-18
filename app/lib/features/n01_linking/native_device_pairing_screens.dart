@@ -5,6 +5,8 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import 'package:family_os/core/design/components/primary_btn.dart';
+import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/runtime/app_scope.dart';
@@ -215,15 +217,18 @@ class _NativeParentPairingScreenState
 
               // Manual code — large, selectable, copyable
               Center(
-                child: SelectableText(
-                  _formatPairingCode(pairing.pairingCode),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 28,
-                    letterSpacing: 6,
-                    fontWeight: FontWeight.w800,
-                    color: colors.tealDeep,
-                    fontFeatures: const [FontFeature.tabularFigures()],
+                child: Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: SelectableText(
+                    _formatPairingCode(pairing.pairingCode),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 28,
+                      letterSpacing: 6,
+                      fontWeight: FontWeight.w800,
+                      color: colors.tealDeep,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
                   ),
                 ),
               ),
@@ -235,6 +240,18 @@ class _NativeParentPairingScreenState
                   icon: const Icon(Icons.copy_outlined, size: 18),
                   label: Text(copy.copyCode),
                 ),
+              ),
+              const SizedBox(height: 16),
+              PrimaryBtn(
+                label: copy.isArabic ? 'متابعة إلى ملف الابن' : 'Continue to Child Profile',
+                onPressed: () {
+                  final cid = pairing.childId;
+                  if (cid.isNotEmpty) {
+                    context.go('/scr-fat-013?childId=');
+                  } else {
+                    context.go('/scr-fat-013');
+                  }
+                },
               ),
             ],
           ],
@@ -368,6 +385,10 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
             : copy.childModeStartFailed(result.reason),
       );
       await _refreshServiceStatus();
+      if (mounted) {
+        CurrentRole.maybeNotifierOf(context)?.value = AppRole.child;
+        context.go('/scr-chd-003');
+      }
     } on FoundationGateApiException catch (error) {
       if (mounted) {
         setState(() => _message = error.statusCode == 429

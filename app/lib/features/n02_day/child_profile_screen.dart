@@ -24,6 +24,10 @@ import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/safe_zones_repository.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
+import 'package:family_os/core/runtime/family_roster_source.dart';
+import 'package:family_os/core/runtime/family_device_source.dart';
+import 'package:family_os/foundation_gate/device_lifecycle.dart';
+import 'package:family_os/features/n02_day/day_child_mock.dart';
 
 /// Widget keys for SCR-FAT-013 acceptance.
 abstract final class ChildProfileKeys {
@@ -173,6 +177,8 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
   bool _maxDevicesBlocked = false;
   String? _rosterProvenance;
   int _assignedZonesCount = 0;
+  List<FamilyRosterChild> _cachedRosterChildren = const [];
+  FamilyChildDeviceSummary? _cachedChildDeviceSummary;
 
   AppRole get _role =>
       widget.roleOverride ??
@@ -182,8 +188,15 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
 
   String? get _resolvedChildId {
     final raw = widget.childId?.trim();
-    if (raw == null || raw.isEmpty) return null;
-    return raw;
+    if (raw != null && raw.isNotEmpty) return raw;
+    final identity = CurrentIdentity.maybeOf(context);
+    if (identity != null && identity.activeChildId.value.isNotEmpty) {
+      return identity.activeChildId.value;
+    }
+    if (_cachedRosterChildren.isNotEmpty) {
+      return _cachedRosterChildren.first.childId.value;
+    }
+    return null;
   }
 
   @override
@@ -211,9 +224,24 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
   }
 
   FamilyId? get _activeFamilyId =>
+      AppScope.maybeOf(context)?.identity.value.familyId ??
       CurrentIdentity.maybeOf(context)?.activeFamilyId;
 
   ChildManagementCapabilities _capabilities() {
+    final scope = AppScope.maybeOf(context);
+    if (scope != null && scope.identity.value.isRemoteAuthoritative) {
+      final role = scope.identity.value.role;
+      final isParent = role == AppRole.father || role == AppRole.mother;
+      return ChildManagementCapabilities(
+        canCreateChild: isParent,
+        canDeleteChild: isParent,
+        canManageDevices: isParent,
+        canCloseNuclearEnrollment: isParent,
+        canManageLogoutPermission: isParent,
+        canEndChildSession: isParent,
+        canChangePrimaryDevice: isParent,
+      );
+    }
     final familyId = _activeFamilyId;
     if (familyId == null) {
       return const ChildManagementCapabilities(
@@ -229,10 +257,65 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
     return _managementRepo.capabilitiesFor(familyId);
   }
 
+  static String _formatLastSeen(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inSeconds < 60) return 'الآن';
+    if (diff.inMinutes < 60) return 'قبل ${diff.inMinutes} د';
+    if (diff.inHours < 24) return 'قبل ${diff.inHours} س';
+    return 'قبل ${diff.inDays} يوم';
+  }
+
   List<ManagedDeviceRecord> _devicesForCurrentChild() {
     final familyId = _activeFamilyId;
     final childId = _resolvedChildId;
     if (familyId == null || childId == null) return const [];
+
+    final summary = _cachedChildDeviceSummary;
+    if (summary != null && summary.devices.isNotEmpty) {
+      return summary.devices.map((d) {
+        return ManagedDeviceRecord(
+          familyId: familyId,
+          childId: ChildId(childId),
+          deviceId: DeviceId(d.id),
+          primary: d == summary.devices.first,
+          enrollments: [
+            Enrollment(
+              id: EnrollmentId('enr_${d.id}'),
+              deviceId: DeviceId(d.id),
+              familyId: familyId,
+              childId: ChildId(childId),
+              createdAt: d.linkedAt ?? DateTime.now(),
+              state: d.credentialState ==
+                      FoundationGateDeviceCredentialState.revoked
+                  ? EnrollmentState.revoked
+                  : EnrollmentState.enrolled,
+            ),
+          ],
+        );
+      }).toList(growable: false);
+    }
+
+    if (summary != null && summary.deviceCount > 0) {
+      return [
+        ManagedDeviceRecord(
+          familyId: familyId,
+          childId: ChildId(childId),
+          deviceId: DeviceId('dev_$childId'),
+          primary: true,
+          enrollments: [
+            Enrollment(
+              id: EnrollmentId('enr_$childId'),
+              deviceId: DeviceId('dev_$childId'),
+              familyId: familyId,
+              childId: ChildId(childId),
+              createdAt: summary.lastSeenAt ?? DateTime.now(),
+              state: EnrollmentState.enrolled,
+            ),
+          ],
+        ),
+      ];
+    }
+
     return _managementRepo.listDevices(
       familyId: familyId,
       childId: ChildId(childId),
@@ -334,9 +417,75 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
       _loadFailed = false;
     });
     try {
-      final familyId = CurrentIdentity.maybeOf(context)?.activeFamilyId;
-      final profile = await _repo.loadById(id, familyId: familyId);
-      final provenance = await _childrenListRepo.loadProvenance(
+      final scope = AppScope.maybeOf(context);
+      final familyId = scope?.identity.value.familyId ??
+          CurrentIdentity.maybeOf(context)?.activeFamilyId;
+      final rosterSource = scope?.roster;
+      final deviceSource = scope?.devices;
+
+      ChildProfile? profile;
+      String? provenance;
+      FamilyChildDeviceSummary? childDeviceSummary;
+      List<FamilyRosterChild> rosterChildren = const [];
+
+      if (scope != null &&
+          scope.identity.value.isRemoteAuthoritative &&
+          familyId != null &&
+          rosterSource != null) {
+        final roster = await rosterSource.load(familyId);
+        rosterChildren = roster.children;
+        FamilyRosterChild? matchedChild;
+        for (final c in roster.children) {
+          if (c.childId.value == id) {
+            matchedChild = c;
+            break;
+          }
+        }
+
+        if (deviceSource != null) {
+          final devSnapshot = await deviceSource.load(familyId);
+          childDeviceSummary = devSnapshot.forChild(ChildId(id));
+        }
+
+        if (matchedChild != null) {
+          final swatch = switch (matchedChild.themeColor) {
+            'amber' => DayChildSwatch.amber,
+            'sky' => DayChildSwatch.sky,
+            _ => DayChildSwatch.purple,
+          };
+          final locationLabel = childDeviceSummary?.locationLabel ?? '';
+          final batteryLabel = childDeviceSummary?.batteryLevel != null
+              ? '${childDeviceSummary!.batteryLevel}%'
+              : '';
+          final lastSeen = childDeviceSummary?.lastSeenAt;
+          final lastSeenLabel = lastSeen != null
+              ? _formatLastSeen(lastSeen)
+              : '';
+
+          profile = ChildProfile(
+            id: matchedChild.childId.value,
+            displayName: matchedChild.displayName ?? 'الابن',
+            emoji: matchedChild.avatarEmoji ?? '🧒',
+            swatch: swatch,
+            ageYears: matchedChild.ageYears ?? 10,
+            locationLabel: locationLabel,
+            lastSeenLabel: lastSeenLabel,
+            batteryLabel: batteryLabel,
+            walletLabel: '',
+            todayUsedLabel: '',
+            todayCapLabel: '',
+            lastHeartbeatLabel: lastSeenLabel,
+            health: childDeviceSummary?.needsAttention == true
+                ? ChildListHealth.atRisk
+                : ChildListHealth.excellent,
+            warnRing: childDeviceSummary?.connectionState ==
+                ChildDeviceConnectionState.needsAttention,
+          );
+        }
+      }
+
+      profile ??= await _repo.loadById(id, familyId: familyId);
+      provenance = await _childrenListRepo.loadProvenance(
         familyId: familyId,
       );
       var zonesCount = 0;
@@ -357,6 +506,8 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
         _profile = profile;
         _rosterProvenance = provenance;
         _assignedZonesCount = zonesCount;
+        _cachedRosterChildren = rosterChildren;
+        _cachedChildDeviceSummary = childDeviceSummary;
         _loading = false;
         _loadFailed = false;
         _maxDevicesBlocked = false;
@@ -459,6 +610,11 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
   List<ManagedChildRecord> _selectableChildren() {
     final familyId = _activeFamilyId;
     if (familyId == null) return const [];
+    if (_cachedRosterChildren.isNotEmpty) {
+      return _cachedRosterChildren
+          .map((c) => ManagedChildRecord(familyId: familyId, childId: c.childId))
+          .toList(growable: false);
+    }
     return _managementRepo.listChildren(familyId);
   }
 

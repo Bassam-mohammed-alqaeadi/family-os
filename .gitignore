@@ -106,3 +106,4 @@ coverage/
 # Web
 **/web/libraries/
 lib/generated_plugin_registrant.dart
+shots/
