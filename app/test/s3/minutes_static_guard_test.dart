@@ -21,7 +21,7 @@ void main() {
   test('no minute write (earn / deposit) exists in lib/ outside the ledger', () {
     final offenders = <String>[];
     for (final file in libFiles) {
-      if (file.path.endsWith('core/policy/wallet_ledger.dart')) continue;
+      if (file.path.replaceAll('\\', '/').endsWith('core/policy/wallet_ledger.dart')) continue;
       final lines = file.readAsLinesSync();
       for (var i = 0; i < lines.length; i++) {
         final line = lines[i];
@@ -37,7 +37,9 @@ void main() {
   test('the local ledger is constructed only inside its own file', () {
     final offenders = <String>[];
     for (final file in libFiles) {
-      if (file.path.endsWith('core/policy/wallet_ledger.dart')) continue;
+      // Normalise separators: on Windows file.path uses backslashes.
+      final portable = file.path.replaceAll('\\', '/');
+      if (portable.endsWith('core/policy/wallet_ledger.dart')) continue;
       final lines = file.readAsLinesSync();
       for (var i = 0; i < lines.length; i++) {
         final line = lines[i];
