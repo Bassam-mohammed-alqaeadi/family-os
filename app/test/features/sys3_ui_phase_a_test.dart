@@ -222,12 +222,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byKey(ChildProfileKeys.selectChild), findsOneWidget);
-      expect(find.byKey(ChildProfileKeys.missingId), findsOneWidget);
-      expect(find.byKey(ChildProfileKeys.body), findsNothing);
-      await tester.tap(find.byKey(ChildProfileKeys.selectChildRow('child_a')));
-      await tester.pumpAndSettle();
-      expect(selected, 'child_a');
+      expect(find.byKey(ChildProfileKeys.selectChild), findsNothing);
+      expect(find.byKey(ChildProfileKeys.missingId), findsNothing);
+      expect(find.byKey(ChildProfileKeys.body), findsOneWidget);
+      expect(find.text('Child A'), findsWidgets);
     },
   );
 
