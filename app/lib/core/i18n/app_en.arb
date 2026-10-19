@@ -16572,5 +16572,44 @@
   "deviceModeInviteCodeSemantics": "I have an invite code — join an existing family",
   "@deviceModeInviteCodeSemantics": {
     "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "nativePairingContinueToProfile": "Continue to Child Profile",
+  "@nativePairingContinueToProfile": {
+    "description": "CTA button to continue to child profile after pairing"
+  },
+  "childProfileLastSeenNow": "Just now",
+  "@childProfileLastSeenNow": {
+    "description": "Relative time for last seen just now"
+  },
+  "childProfileLastSeenMinutes": "{minutes}m ago",
+  "@childProfileLastSeenMinutes": {
+    "description": "Relative time in minutes",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "childProfileLastSeenHours": "{hours}h ago",
+  "@childProfileLastSeenHours": {
+    "description": "Relative time in hours",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "childProfileLastSeenDays": "{days}d ago",
+  "@childProfileLastSeenDays": {
+    "description": "Relative time in days",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "childProfileFallbackName": "Child",
+  "@childProfileFallbackName": {
+    "description": "Fallback name for a child"
   }
 }

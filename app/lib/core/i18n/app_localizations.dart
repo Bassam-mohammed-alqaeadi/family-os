@@ -23042,6 +23042,42 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'عندي رمز دعوة — الانضمام إلى عائلة موجودة'**
   String get deviceModeInviteCodeSemantics;
+
+  /// CTA button to continue to child profile after pairing
+  ///
+  /// In ar, this message translates to:
+  /// **'متابعة إلى ملف الابن'**
+  String get nativePairingContinueToProfile;
+
+  /// Relative time for last seen just now
+  ///
+  /// In ar, this message translates to:
+  /// **'الآن'**
+  String get childProfileLastSeenNow;
+
+  /// Relative time in minutes
+  ///
+  /// In ar, this message translates to:
+  /// **'قبل {minutes} د'**
+  String childProfileLastSeenMinutes(int minutes);
+
+  /// Relative time in hours
+  ///
+  /// In ar, this message translates to:
+  /// **'قبل {hours} س'**
+  String childProfileLastSeenHours(int hours);
+
+  /// Relative time in days
+  ///
+  /// In ar, this message translates to:
+  /// **'قبل {days} يوم'**
+  String childProfileLastSeenDays(int days);
+
+  /// Fallback name for a child
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن'**
+  String get childProfileFallbackName;
 }
 
 class _AppLocalizationsDelegate

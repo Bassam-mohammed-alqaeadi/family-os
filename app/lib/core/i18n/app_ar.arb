@@ -16587,5 +16587,44 @@
   "deviceModeInviteCodeSemantics": "عندي رمز دعوة — الانضمام إلى عائلة موجودة",
   "@deviceModeInviteCodeSemantics": {
     "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "nativePairingContinueToProfile": "متابعة إلى ملف الابن",
+  "@nativePairingContinueToProfile": {
+    "description": "CTA button to continue to child profile after pairing"
+  },
+  "childProfileLastSeenNow": "الآن",
+  "@childProfileLastSeenNow": {
+    "description": "Relative time for last seen just now"
+  },
+  "childProfileLastSeenMinutes": "قبل {minutes} د",
+  "@childProfileLastSeenMinutes": {
+    "description": "Relative time in minutes",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "childProfileLastSeenHours": "قبل {hours} س",
+  "@childProfileLastSeenHours": {
+    "description": "Relative time in hours",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "childProfileLastSeenDays": "قبل {days} يوم",
+  "@childProfileLastSeenDays": {
+    "description": "Relative time in days",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "childProfileFallbackName": "الابن",
+  "@childProfileFallbackName": {
+    "description": "Fallback name for a child"
   }
 }

@@ -257,12 +257,12 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
     return _managementRepo.capabilitiesFor(familyId);
   }
 
-  static String _formatLastSeen(DateTime dt) {
+  static String _formatLastSeen(AppLocalizations l10n, DateTime dt) {
     final diff = DateTime.now().difference(dt);
-    if (diff.inSeconds < 60) return 'الآن';
-    if (diff.inMinutes < 60) return 'قبل ${diff.inMinutes} د';
-    if (diff.inHours < 24) return 'قبل ${diff.inHours} س';
-    return 'قبل ${diff.inDays} يوم';
+    if (diff.inSeconds < 60) return l10n.childProfileLastSeenNow;
+    if (diff.inMinutes < 60) return l10n.childProfileLastSeenMinutes(diff.inMinutes);
+    if (diff.inHours < 24) return l10n.childProfileLastSeenHours(diff.inHours);
+    return l10n.childProfileLastSeenDays(diff.inDays);
   }
 
   List<ManagedDeviceRecord> _devicesForCurrentChild() {
@@ -457,14 +457,15 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
           final batteryLabel = childDeviceSummary?.batteryLevel != null
               ? '${childDeviceSummary!.batteryLevel}%'
               : '';
+          final l10n = AppLocalizations.of(context);
           final lastSeen = childDeviceSummary?.lastSeenAt;
           final lastSeenLabel = lastSeen != null
-              ? _formatLastSeen(lastSeen)
+              ? _formatLastSeen(l10n, lastSeen)
               : '';
 
           profile = ChildProfile(
             id: matchedChild.childId.value,
-            displayName: matchedChild.displayName ?? 'الابن',
+            displayName: matchedChild.displayName ?? l10n.childProfileFallbackName,
             emoji: matchedChild.avatarEmoji ?? '🧒',
             swatch: swatch,
             ageYears: matchedChild.ageYears ?? 10,

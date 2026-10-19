@@ -12981,4 +12981,28 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get deviceModeInviteCodeSemantics =>
       'عندي رمز دعوة — الانضمام إلى عائلة موجودة';
+
+  @override
+  String get nativePairingContinueToProfile => 'متابعة إلى ملف الابن';
+
+  @override
+  String get childProfileLastSeenNow => 'الآن';
+
+  @override
+  String childProfileLastSeenMinutes(int minutes) {
+    return 'قبل $minutes د';
+  }
+
+  @override
+  String childProfileLastSeenHours(int hours) {
+    return 'قبل $hours س';
+  }
+
+  @override
+  String childProfileLastSeenDays(int days) {
+    return 'قبل $days يوم';
+  }
+
+  @override
+  String get childProfileFallbackName => 'الابن';
 }

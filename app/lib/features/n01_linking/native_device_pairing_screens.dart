@@ -7,6 +7,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/app/role_controller.dart';
+import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/runtime/app_scope.dart';
@@ -87,6 +88,7 @@ class _NativeParentPairingScreenState
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final copy = NativeChildPairingCopy.of(context);
+    final l10n = AppLocalizations.of(context);
     final pairing = _pairing;
     return Scaffold(
       backgroundColor: colors.bg,
@@ -243,7 +245,7 @@ class _NativeParentPairingScreenState
               ),
               const SizedBox(height: 16),
               PrimaryBtn(
-                label: copy.isArabic ? 'متابعة إلى ملف الابن' : 'Continue to Child Profile',
+                label: l10n.nativePairingContinueToProfile,
                 onPressed: () {
                   final cid = pairing.childId;
                   if (cid.isNotEmpty) {

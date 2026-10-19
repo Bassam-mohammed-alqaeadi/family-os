@@ -13183,4 +13183,28 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get deviceModeInviteCodeSemantics =>
       'I have an invite code — join an existing family';
+
+  @override
+  String get nativePairingContinueToProfile => 'Continue to Child Profile';
+
+  @override
+  String get childProfileLastSeenNow => 'Just now';
+
+  @override
+  String childProfileLastSeenMinutes(int minutes) {
+    return '${minutes}m ago';
+  }
+
+  @override
+  String childProfileLastSeenHours(int hours) {
+    return '${hours}h ago';
+  }
+
+  @override
+  String childProfileLastSeenDays(int days) {
+    return '${days}d ago';
+  }
+
+  @override
+  String get childProfileFallbackName => 'Child';
 }
