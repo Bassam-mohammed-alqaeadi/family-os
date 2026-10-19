@@ -54,6 +54,12 @@ final class _Transport implements FoundationGateHttpTransport {
     required Map<String, String> headers,
     required String body,
   }) => throw StateError('the balance read must not write');
+
+  @override
+  Future<FoundationGateHttpResponse> delete(
+    Uri uri, {
+    required Map<String, String> headers,
+  }) async => throw StateError('the balance read must not write');
 }
 
 FamilyTasksApiClient _api(_Transport transport) => FamilyTasksApiClient(

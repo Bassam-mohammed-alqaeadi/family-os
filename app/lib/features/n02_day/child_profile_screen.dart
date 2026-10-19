@@ -41,6 +41,16 @@ abstract final class ChildProfileKeys {
   static const toolsGrid = Key('child_profile_tools');
   static const childLean = Key('child_profile_child_lean');
   static const deleteChild = Key('child_profile_delete_child');
+  static const deleteChildConfirm = Key('child_profile_delete_child_confirm');
+  static const deleteChildConfirmCancel = Key(
+    'child_profile_delete_child_confirm_cancel',
+  );
+  static const deleteChildConfirmAccept = Key(
+    'child_profile_delete_child_confirm_accept',
+  );
+  static const deleteChildConfirmField = Key(
+    'child_profile_delete_child_confirm_field',
+  );
   static const addDevice = Key('child_profile_add_device');
   static const maxDevicesBanner = Key('child_profile_max_devices_banner');
   static const remoteEndConfirm = Key('child_profile_remote_end_confirm');
@@ -546,13 +556,59 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
       AppToast.show(context, message: l10n.childScreenTimeReadOnly);
       return;
     }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          key: ChildProfileKeys.deleteChildConfirm,
+          title: Text(l10n.childProfileDeleteConfirmTitle),
+          content: Text(l10n.childProfileDeleteConfirmPrompt),
+          actions: [
+            TextButton(
+              key: ChildProfileKeys.deleteChildConfirmCancel,
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
+            ),
+            FilledButton(
+              key: ChildProfileKeys.deleteChildConfirmAccept,
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(l10n.childProfileDeleteConfirmAction),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+    if (!mounted) return;
+
     final scope = AppScope.maybeOf(context);
     if (scope != null && scope.identity.value.isRemoteAuthoritative) {
-      // In remote mode, no backend client deletion path exists in AppRuntime.
-      // Fail closed rather than delegating to the local test repository.
-      AppToast.show(context, message: l10n.settingsPersistError);
+      final deleteResult = await scope.childDeletion.deleteChild(
+        familyId: familyId,
+        childId: ChildId(childId),
+        idempotencyKey: newFoundationGateIdempotencyKey(),
+      );
+      if (!mounted) return;
+      if (!deleteResult.isSuccess) {
+        AppToast.show(context, message: l10n.settingsPersistError);
+        return;
+      }
+      setState(() {
+        _cachedRosterChildren =
+            _cachedRosterChildren.where((c) => c.childId.value != childId).toList();
+      });
+      AppToast.show(context, message: l10n.childProfileDeleteSuccessToast);
+      if (widget.onDeletedChild != null) {
+        widget.onDeletedChild!();
+        return;
+      }
+      context.pop();
       return;
     }
+
     final deleted = _managementRepo.deleteChild(
       familyId: familyId,
       childId: ChildId(childId),
@@ -562,7 +618,11 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
       AppToast.show(context, message: l10n.settingsPersistError);
       return;
     }
-    AppToast.show(context, message: l10n.childScreenTimeSaveToast);
+    setState(() {
+      _cachedRosterChildren =
+          _cachedRosterChildren.where((c) => c.childId.value != childId).toList();
+    });
+    AppToast.show(context, message: l10n.childProfileDeleteSuccessToast);
     if (widget.onDeletedChild != null) {
       widget.onDeletedChild!();
       return;
@@ -1505,7 +1565,7 @@ class _ProfileBody extends StatelessWidget {
                   key: ChildProfileKeys.deleteChild,
                   onPressed: onDeleteChild,
                   child: Text(
-                    l10n.acceptMotherInviteDecline,
+                    l10n.childProfileDeleteButton,
                     style: TextStyle(
                       color: colors.coral,
                       fontWeight: FontWeight.w800,

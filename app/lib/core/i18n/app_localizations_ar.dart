@@ -13005,4 +13005,23 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childProfileFallbackName => 'الابن';
+
+  @override
+  String get childProfileDeleteButton => 'حذف ملف الابن';
+
+  @override
+  String get childProfileDeleteConfirmTitle => 'حذف ملف الابن';
+
+  @override
+  String get childProfileDeleteConfirmPrompt =>
+      'هذا الإجراء نهائي ولا يمكن التراجع عنه. لتأكيد الحذف، اكتب CONFIRM DELETE أدناه:';
+
+  @override
+  String get childProfileDeleteConfirmTokenHint => 'CONFIRM DELETE';
+
+  @override
+  String get childProfileDeleteConfirmAction => 'تأكيد الحذف';
+
+  @override
+  String get childProfileDeleteSuccessToast => 'تم حذف ملف الابن بنجاح';
 }

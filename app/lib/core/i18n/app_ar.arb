@@ -16626,5 +16626,29 @@
   "childProfileFallbackName": "الابن",
   "@childProfileFallbackName": {
     "description": "Fallback name for a child"
+  },
+  "childProfileDeleteButton": "حذف ملف الابن",
+  "@childProfileDeleteButton": {
+    "description": "Button to initiate child profile deletion"
+  },
+  "childProfileDeleteConfirmTitle": "حذف ملف الابن",
+  "@childProfileDeleteConfirmTitle": {
+    "description": "SCR-FAT-013 delete child confirm dialog title"
+  },
+  "childProfileDeleteConfirmPrompt": "هذا الإجراء نهائي ولا يمكن التراجع عنه. لتأكيد الحذف، اكتب CONFIRM DELETE أدناه:",
+  "@childProfileDeleteConfirmPrompt": {
+    "description": "SCR-FAT-013 delete child confirmation prompt"
+  },
+  "childProfileDeleteConfirmTokenHint": "CONFIRM DELETE",
+  "@childProfileDeleteConfirmTokenHint": {
+    "description": "SCR-FAT-013 delete child confirm token hint"
+  },
+  "childProfileDeleteConfirmAction": "تأكيد الحذف",
+  "@childProfileDeleteConfirmAction": {
+    "description": "SCR-FAT-013 delete child confirm action button"
+  },
+  "childProfileDeleteSuccessToast": "تم حذف ملف الابن بنجاح",
+  "@childProfileDeleteSuccessToast": {
+    "description": "SCR-FAT-013 delete child success toast"
   }
 }

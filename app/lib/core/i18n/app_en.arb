@@ -16611,5 +16611,29 @@
   "childProfileFallbackName": "Child",
   "@childProfileFallbackName": {
     "description": "Fallback name for a child"
+  },
+  "childProfileDeleteButton": "Delete Child Profile",
+  "@childProfileDeleteButton": {
+    "description": "Button to initiate child profile deletion"
+  },
+  "childProfileDeleteConfirmTitle": "Delete Child Profile",
+  "@childProfileDeleteConfirmTitle": {
+    "description": "SCR-FAT-013 delete child confirm dialog title"
+  },
+  "childProfileDeleteConfirmPrompt": "This action is permanent and cannot be undone. To confirm deletion, type CONFIRM DELETE below:",
+  "@childProfileDeleteConfirmPrompt": {
+    "description": "SCR-FAT-013 delete child confirmation prompt"
+  },
+  "childProfileDeleteConfirmTokenHint": "CONFIRM DELETE",
+  "@childProfileDeleteConfirmTokenHint": {
+    "description": "SCR-FAT-013 delete child confirm token hint"
+  },
+  "childProfileDeleteConfirmAction": "Confirm Delete",
+  "@childProfileDeleteConfirmAction": {
+    "description": "SCR-FAT-013 delete child confirm action button"
+  },
+  "childProfileDeleteSuccessToast": "Child profile deleted successfully",
+  "@childProfileDeleteSuccessToast": {
+    "description": "SCR-FAT-013 delete child success toast"
   }
 }

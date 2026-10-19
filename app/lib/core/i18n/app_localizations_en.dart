@@ -13207,4 +13207,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get childProfileFallbackName => 'Child';
+
+  @override
+  String get childProfileDeleteButton => 'Delete Child Profile';
+
+  @override
+  String get childProfileDeleteConfirmTitle => 'Delete Child Profile';
+
+  @override
+  String get childProfileDeleteConfirmPrompt =>
+      'This action is permanent and cannot be undone. To confirm deletion, type CONFIRM DELETE below:';
+
+  @override
+  String get childProfileDeleteConfirmTokenHint => 'CONFIRM DELETE';
+
+  @override
+  String get childProfileDeleteConfirmAction => 'Confirm Delete';
+
+  @override
+  String get childProfileDeleteSuccessToast =>
+      'Child profile deleted successfully';
 }

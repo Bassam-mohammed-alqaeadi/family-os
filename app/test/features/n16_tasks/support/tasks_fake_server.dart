@@ -201,4 +201,13 @@ final class TasksFakeServer implements FoundationGateHttpTransport {
     bodies.add(body);
     return _answer(uri);
   }
+
+  @override
+  Future<FoundationGateHttpResponse> delete(
+    Uri uri, {
+    required Map<String, String> headers,
+  }) async {
+    calls.add('DELETE ${uri.path}');
+    return _answer(uri);
+  }
 }

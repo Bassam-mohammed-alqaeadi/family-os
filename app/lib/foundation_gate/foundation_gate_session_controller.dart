@@ -255,6 +255,88 @@ class FoundationGateSessionController extends ChangeNotifier {
     }
   }
 
+  /// Deletes a minimal child profile only after server authorization succeeds.
+  ///
+  /// The returned result is presentation-safe; no API error body, token or identifier is
+  /// retained in controller state or exposed to the UI.
+  Future<FoundationGateChildDeleteResult> deleteChild({
+    required String familyId,
+    required String childId,
+    String? idempotencyKey,
+  }) async {
+    final family = _selectedFamily;
+    if (family == null ||
+        family.id != familyId ||
+        (_phase != FoundationGatePhase.childrenAvailable &&
+            _phase != FoundationGatePhase.noChildren &&
+            _phase != FoundationGatePhase.serviceUnavailable &&
+            _phase != FoundationGatePhase.networkUnavailable)) {
+      return FoundationGateChildDeleteResult.invalidInput;
+    }
+
+    String? idToken;
+    try {
+      idToken = await _identity.currentIdToken();
+      await _rosterApi.delete(
+        familyId: family.id,
+        childId: childId,
+        idToken: idToken,
+        idempotencyKey: idempotencyKey,
+      );
+
+      try {
+        final roster = await _rosterApi.list(
+          familyId: family.id,
+          idToken: idToken,
+        );
+        _children = roster;
+        _phase = roster.isEmpty
+            ? FoundationGatePhase.noChildren
+            : FoundationGatePhase.childrenAvailable;
+        notifyListeners();
+      } catch (_) {
+        _children = _children.where((c) => c.id != childId).toList();
+        _phase = _children.isEmpty
+            ? FoundationGatePhase.noChildren
+            : FoundationGatePhase.childrenAvailable;
+        notifyListeners();
+      }
+      return FoundationGateChildDeleteResult.deleted;
+    } on FoundationGateIdentityException {
+      _clearAllVolatileState();
+      await _signOutProviderSilently();
+      _setPhase(FoundationGatePhase.sessionInvalid);
+      return FoundationGateChildDeleteResult.sessionInvalid;
+    } on FoundationGateApiException catch (error) {
+      switch (error.failure) {
+        case FoundationGateApiFailure.invalidInput:
+          return FoundationGateChildDeleteResult.invalidInput;
+        case FoundationGateApiFailure.notFound:
+          return FoundationGateChildDeleteResult.notFound;
+        case FoundationGateApiFailure.conflict:
+          return FoundationGateChildDeleteResult.conflict;
+        case FoundationGateApiFailure.unauthenticated:
+          _clearAllVolatileState();
+          await _signOutProviderSilently();
+          _setPhase(FoundationGatePhase.sessionInvalid);
+          return FoundationGateChildDeleteResult.sessionInvalid;
+        case FoundationGateApiFailure.accessDenied:
+          _clearRoster();
+          _setPhase(FoundationGatePhase.rosterAccessDenied);
+          return FoundationGateChildDeleteResult.accessDenied;
+        case FoundationGateApiFailure.serviceUnavailable:
+          await _handleRosterFailure(error.failure);
+          return FoundationGateChildDeleteResult.serviceUnavailable;
+        case FoundationGateApiFailure.networkUnavailable:
+        case FoundationGateApiFailure.invalidResponse:
+          await _handleRosterFailure(error.failure);
+          return FoundationGateChildDeleteResult.networkUnavailable;
+      }
+    } finally {
+      idToken = null;
+    }
+  }
+
   void returnToFamilySelection() {
     if (_families.isEmpty || _creatingChild) {
       return;

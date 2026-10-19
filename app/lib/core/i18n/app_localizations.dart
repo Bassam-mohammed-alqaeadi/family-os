@@ -23078,6 +23078,42 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'الابن'**
   String get childProfileFallbackName;
+
+  /// Button to initiate child profile deletion
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف ملف الابن'**
+  String get childProfileDeleteButton;
+
+  /// SCR-FAT-013 delete child confirm dialog title
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف ملف الابن'**
+  String get childProfileDeleteConfirmTitle;
+
+  /// SCR-FAT-013 delete child confirmation prompt
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا الإجراء نهائي ولا يمكن التراجع عنه. لتأكيد الحذف، اكتب CONFIRM DELETE أدناه:'**
+  String get childProfileDeleteConfirmPrompt;
+
+  /// SCR-FAT-013 delete child confirm token hint
+  ///
+  /// In ar, this message translates to:
+  /// **'CONFIRM DELETE'**
+  String get childProfileDeleteConfirmTokenHint;
+
+  /// SCR-FAT-013 delete child confirm action button
+  ///
+  /// In ar, this message translates to:
+  /// **'تأكيد الحذف'**
+  String get childProfileDeleteConfirmAction;
+
+  /// SCR-FAT-013 delete child success toast
+  ///
+  /// In ar, this message translates to:
+  /// **'تم حذف ملف الابن بنجاح'**
+  String get childProfileDeleteSuccessToast;
 }
 
 class _AppLocalizationsDelegate

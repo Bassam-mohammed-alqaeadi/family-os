@@ -33,6 +33,7 @@ import 'package:family_os/core/policy/advisor_repository.dart';
 import 'package:family_os/core/prefs_misc/prefs_misc_runtime.dart';
 import 'package:family_os/core/runtime/app_runtime.dart';
 import 'package:family_os/core/runtime/app_scope.dart';
+import 'package:family_os/core/runtime/family_child_deletion_source.dart';
 import 'package:family_os/core/runtime/family_device_source.dart';
 import 'package:family_os/core/runtime/family_policy_source.dart';
 import 'package:family_os/core/runtime/family_roster_source.dart';
@@ -558,6 +559,9 @@ class _FamilyOsAppState extends State<FamilyOsApp> {
       childProfiles: foundationRuntime == null
           ? null
           : RemoteFamilyChildProfileSource(foundationRuntime),
+      childDeletion: foundationRuntime == null
+          ? LocalFamilyChildDeletionSource(_identity)
+          : RemoteFamilyChildDeletionSource(foundationRuntime),
       familyCreation: foundationRuntime == null
           ? null
           : RemoteFamilyCreationSource(foundationRuntime),

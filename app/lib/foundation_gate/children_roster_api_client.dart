@@ -149,10 +149,168 @@ class ChildrenRosterApiClient {
     }
   }
 
+  /// Removes one child from the family on the server.
+  ///
+  /// This operation is primary-guardian only, transactional and idempotent.
+  Future<FoundationGateChildRemovalResult> delete({
+    required String familyId,
+    required String childId,
+    String? idToken,
+    String? idempotencyKey,
+  }) async {
+    if (!isFoundationGateUuid(familyId) || !isFoundationGateUuid(childId)) {
+      throw const FoundationGateApiException(
+        FoundationGateApiFailure.invalidInput,
+      );
+    }
+    final token = idToken?.trim();
+    if (token == null || token.isEmpty) {
+      throw const FoundationGateApiException(
+        FoundationGateApiFailure.unauthenticated,
+      );
+    }
+    final key = idempotencyKey?.trim() ?? newFoundationGateIdempotencyKey();
+    if (!_isValidIdempotencyKey(key)) {
+      throw const FoundationGateApiException(
+        FoundationGateApiFailure.invalidInput,
+      );
+    }
+
+    final childUri = _childUri(familyId, childId);
+
+    FoundationGateHttpResponse response;
+    try {
+      response = await _transport.delete(
+        childUri,
+        headers: {
+          'accept': 'application/json',
+          'authorization': 'Bearer $token',
+          'idempotency-key': key,
+        },
+      );
+    } on FoundationGateApiException {
+      rethrow;
+    } catch (_) {
+      throw const FoundationGateApiException(
+        FoundationGateApiFailure.networkUnavailable,
+      );
+    }
+
+    switch (response.statusCode) {
+      case 200:
+        return _parseRemovalResult(response.body);
+      case 400:
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.invalidInput,
+        );
+      case 401:
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.unauthenticated,
+        );
+      case 403:
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.accessDenied,
+        );
+      case 404:
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.notFound,
+        );
+      case 409:
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.conflict,
+        );
+      case 429:
+      case 503:
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.serviceUnavailable,
+        );
+      default:
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.invalidResponse,
+        );
+    }
+  }
+
   Uri _rosterUri(String familyId) {
     try {
       return _configuration.childrenRosterUri(familyId);
     } on ArgumentError {
+      throw const FoundationGateApiException(
+        FoundationGateApiFailure.invalidResponse,
+      );
+    }
+  }
+
+  Uri _childUri(String familyId, String childId) {
+    try {
+      return _configuration.familyChildUri(familyId, childId);
+    } on ArgumentError {
+      throw const FoundationGateApiException(
+        FoundationGateApiFailure.invalidInput,
+      );
+    }
+  }
+
+  FoundationGateChildRemovalResult _parseRemovalResult(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is! Map<String, Object?>) {
+        throw const FormatException();
+      }
+      final rawChild = decoded['child'];
+      if (rawChild is! Map<String, Object?>) {
+        throw const FormatException();
+      }
+      final childId = rawChild['id'];
+      final displayName = rawChild['displayName'];
+      final archivedAt = rawChild['archivedAt'];
+      if (childId is! String ||
+          !isFoundationGateUuid(childId) ||
+          displayName is! String ||
+          displayName.trim().isEmpty ||
+          archivedAt is! String ||
+          DateTime.tryParse(archivedAt) == null) {
+        throw const FormatException();
+      }
+
+      final rawErased = decoded['erased'];
+      if (rawErased is! Map<String, Object?>) {
+        throw const FormatException();
+      }
+      final locationFixes = rawErased['locationFixes'];
+      final geofenceEvents = rawErased['geofenceEvents'];
+      final deviceSnapshots = rawErased['deviceSnapshots'];
+      final sosFixReferences = rawErased['sosFixReferences'];
+      final consentsWithdrawn = decoded['consentsWithdrawn'];
+      final devicesRevoked = decoded['devicesRevoked'];
+
+      if (locationFixes is! int ||
+          locationFixes < 0 ||
+          geofenceEvents is! int ||
+          geofenceEvents < 0 ||
+          deviceSnapshots is! int ||
+          deviceSnapshots < 0 ||
+          sosFixReferences is! int ||
+          sosFixReferences < 0 ||
+          consentsWithdrawn is! int ||
+          consentsWithdrawn < 0 ||
+          devicesRevoked is! int ||
+          devicesRevoked < 0) {
+        throw const FormatException();
+      }
+
+      return FoundationGateChildRemovalResult(
+        childId: childId,
+        displayName: displayName,
+        archivedAt: DateTime.parse(archivedAt),
+        locationFixesErased: locationFixes,
+        geofenceEventsErased: geofenceEvents,
+        deviceSnapshotsErased: deviceSnapshots,
+        sosFixReferencesErased: sosFixReferences,
+        consentsWithdrawn: consentsWithdrawn,
+        devicesRevoked: devicesRevoked,
+      );
+    } catch (_) {
       throw const FoundationGateApiException(
         FoundationGateApiFailure.invalidResponse,
       );

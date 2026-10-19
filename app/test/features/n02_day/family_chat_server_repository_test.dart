@@ -202,6 +202,13 @@ class _QueueTransport implements FoundationGateHttpTransport {
     required String body,
   }) =>
       _next('PUT', uri, headers, body);
+
+  @override
+  Future<FoundationGateHttpResponse> delete(
+    Uri uri, {
+    required Map<String, String> headers,
+  }) =>
+      _next('DELETE', uri, headers, '');
 }
 
 void main() {

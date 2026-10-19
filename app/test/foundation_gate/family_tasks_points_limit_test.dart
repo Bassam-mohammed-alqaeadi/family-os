@@ -30,6 +30,12 @@ final class _NoWriteTransport implements FoundationGateHttpTransport {
     required Map<String, String> headers,
     required String body,
   }) => throw StateError('no put here');
+
+  @override
+  Future<FoundationGateHttpResponse> delete(
+    Uri uri, {
+    required Map<String, String> headers,
+  }) => throw StateError('no delete here');
 }
 
 void main() {
