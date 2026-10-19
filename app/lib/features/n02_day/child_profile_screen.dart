@@ -463,25 +463,36 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
               ? _formatLastSeen(l10n, lastSeen)
               : '';
 
-          profile = ChildProfile(
-            id: matchedChild.childId.value,
-            displayName: matchedChild.displayName ?? l10n.childProfileFallbackName,
-            emoji: matchedChild.avatarEmoji ?? '🧒',
-            swatch: swatch,
-            ageYears: matchedChild.ageYears ?? 10,
-            locationLabel: locationLabel,
-            lastSeenLabel: lastSeenLabel,
-            batteryLabel: batteryLabel,
-            walletLabel: '',
-            todayUsedLabel: '',
-            todayCapLabel: '',
-            lastHeartbeatLabel: lastSeenLabel,
-            health: childDeviceSummary?.needsAttention == true
+          final health = switch (childDeviceSummary?.connectionState) {
+            ChildDeviceConnectionState.active => ChildListHealth.excellent,
+            ChildDeviceConnectionState.needsAttention => ChildListHealth.atRisk,
+            _ => childDeviceSummary?.needsAttention == true
                 ? ChildListHealth.atRisk
-                : ChildListHealth.excellent,
-            warnRing: childDeviceSummary?.connectionState ==
-                ChildDeviceConnectionState.needsAttention,
-          );
+                : ChildListHealth.unknown,
+          };
+
+          if (matchedChild.hasCompleteDisplayProfile) {
+            profile = ChildProfile(
+              id: matchedChild.childId.value,
+              displayName: matchedChild.displayName!,
+              emoji: (matchedChild.avatarEmoji != null &&
+                      matchedChild.avatarEmoji!.isNotEmpty)
+                  ? matchedChild.avatarEmoji!
+                  : '',
+              swatch: swatch,
+              ageYears: matchedChild.ageYears!,
+              locationLabel: locationLabel,
+              lastSeenLabel: lastSeenLabel,
+              batteryLabel: batteryLabel,
+              walletLabel: '',
+              todayUsedLabel: '',
+              todayCapLabel: '',
+              lastHeartbeatLabel: lastSeenLabel,
+              health: health,
+              warnRing: childDeviceSummary?.connectionState ==
+                  ChildDeviceConnectionState.needsAttention,
+            );
+          }
         }
       }
 
@@ -533,6 +544,13 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
     final capabilities = _capabilities();
     if (!capabilities.canDeleteChild) {
       AppToast.show(context, message: l10n.childScreenTimeReadOnly);
+      return;
+    }
+    final scope = AppScope.maybeOf(context);
+    if (scope != null && scope.identity.value.isRemoteAuthoritative) {
+      // In remote mode, no backend client deletion path exists in AppRuntime.
+      // Fail closed rather than delegating to the local test repository.
+      AppToast.show(context, message: l10n.settingsPersistError);
       return;
     }
     final deleted = _managementRepo.deleteChild(
@@ -1026,14 +1044,17 @@ class _ProfileBody extends StatelessWidget {
     final statusLabel = switch (profile.health) {
       ChildListHealth.excellent => l10n.childProfileStatusOk,
       ChildListHealth.atRisk => l10n.childProfileStatusAtRisk,
+      ChildListHealth.unknown => l10n.childrenListDeviceStateUnavailable,
     };
     final connectionLabel = switch (profile.health) {
       ChildListHealth.excellent => l10n.childrenListHealthExcellent,
       ChildListHealth.atRisk => l10n.childrenListHealthAtRisk,
+      ChildListHealth.unknown => l10n.childrenListDeviceStateUnavailable,
     };
     final healthTag = switch (profile.health) {
       ChildListHealth.excellent => TagVariant.g,
       ChildListHealth.atRisk => TagVariant.a,
+      ChildListHealth.unknown => TagVariant.p,
     };
     final identitySemantics = l10n.childProfileIdentitySemantics(
       profile.displayName,

@@ -249,7 +249,9 @@ class _NativeParentPairingScreenState
                 onPressed: () {
                   final cid = pairing.childId;
                   if (cid.isNotEmpty) {
-                    context.go('/scr-fat-013?childId=');
+                    context.go(
+                      '/scr-fat-013?childId=${Uri.encodeComponent(cid)}',
+                    );
                   } else {
                     context.go('/scr-fat-013');
                   }
