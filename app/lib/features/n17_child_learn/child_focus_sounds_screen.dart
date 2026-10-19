@@ -258,63 +258,65 @@ class _ChildFocusSoundsScreenState extends State<ChildFocusSoundsScreen> {
             ],
           ),
           const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: colors.surface,
+          Material(
+            color: colors.surface,
+            shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(radii.card),
-              border: Border.all(color: colors.border),
+              side: BorderSide(color: colors.border),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.childFocusSoundsWithFocusTitle,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: colors.ink,
-                  ),
-                ),
-                SwitchListTile(
-                  key: ChildFocusSoundsKeys.autoToggle,
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    l10n.childFocusSoundsAutoTitle,
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.childFocusSoundsWithFocusTitle,
                     style: TextStyle(
-                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
                       color: colors.ink,
-                      fontSize: 13,
                     ),
                   ),
-                  subtitle: Text(
-                    l10n.childFocusSoundsAutoSub,
-                    style: TextStyle(color: colors.ink2, fontSize: 11.5),
-                  ),
-                  value: _snap.autoWithFocus,
-                  activeThumbColor: colors.teal,
-                  onChanged: _toggleAuto,
-                ),
-                SwitchListTile(
-                  key: ChildFocusSoundsKeys.fadeToggle,
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    l10n.childFocusSoundsFadeTitle,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: colors.ink,
-                      fontSize: 13,
+                  SwitchListTile(
+                    key: ChildFocusSoundsKeys.autoToggle,
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      l10n.childFocusSoundsAutoTitle,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: colors.ink,
+                        fontSize: 13,
+                      ),
                     ),
+                    subtitle: Text(
+                      l10n.childFocusSoundsAutoSub,
+                      style: TextStyle(color: colors.ink2, fontSize: 11.5),
+                    ),
+                    value: _snap.autoWithFocus,
+                    activeThumbColor: colors.teal,
+                    onChanged: _toggleAuto,
                   ),
-                  subtitle: Text(
-                    l10n.childFocusSoundsFadeSub,
-                    style: TextStyle(color: colors.ink2, fontSize: 11.5),
+                  SwitchListTile(
+                    key: ChildFocusSoundsKeys.fadeToggle,
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      l10n.childFocusSoundsFadeTitle,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: colors.ink,
+                        fontSize: 13,
+                      ),
+                    ),
+                    subtitle: Text(
+                      l10n.childFocusSoundsFadeSub,
+                      style: TextStyle(color: colors.ink2, fontSize: 11.5),
+                    ),
+                    value: _snap.fadeLastTwoMinutes,
+                    activeThumbColor: colors.teal,
+                    onChanged: _toggleFade,
                   ),
-                  value: _snap.fadeLastTwoMinutes,
-                  activeThumbColor: colors.teal,
-                  onChanged: _toggleFade,
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 12),
