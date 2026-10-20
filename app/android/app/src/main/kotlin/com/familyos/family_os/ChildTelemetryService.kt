@@ -547,9 +547,8 @@ class ChildTelemetryService : Service(), LocationListener {
             } catch (_: SecurityException) { null }
 
             if (bestLoc != null && battery != null) {
-                val isDebug = (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
                 val isMock = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) bestLoc.isMock else @Suppress("DEPRECATION") bestLoc.isFromMockProvider
-                if (isDebug || !isMock) {
+                if (!isMock) {
                     val locationLabel = String.format(
                         Locale.US,
                         "GPS %.5f, %.5f",
