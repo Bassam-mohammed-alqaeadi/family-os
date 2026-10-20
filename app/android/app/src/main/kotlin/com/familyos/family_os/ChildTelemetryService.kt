@@ -323,8 +323,7 @@ class ChildTelemetryService : Service(), LocationListener {
             )
         }
         if (!settle(config, fixOutcome)) return
-        val isDebug = (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
-        if (!LocationFixProtocol.legacyHeartbeatAllowed(fixOutcome, reading, isDebug) || battery == null) return
+        if (!LocationFixProtocol.legacyHeartbeatAllowed(fixOutcome, reading) || battery == null) return
         // The W2 device card and children list still read battery, last-seen and this label
         // from the legacy route, so its body is unchanged. It is sent from the same genuine
         // reading, never on its own schedule. Narrowing what this route stores is a later,
