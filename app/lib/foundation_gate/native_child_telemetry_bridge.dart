@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 /// Android boundary for the real child-device telemetry engine.
@@ -29,16 +28,26 @@ class NativeChildTelemetryBridge {
   static bool _initialized = false;
   static void _ensureInitialized() {
     if (_initialized) return;
+    try {
+      // Guard against headless test environments where ServicesBinding is uninitialized.
+      ServicesBinding.instance.defaultBinaryMessenger;
+    } catch (_) {
+      return;
+    }
     _initialized = true;
-    _channel.setMethodCallHandler((call) async {
-      if (call.method == 'onDeviceRevoked') {
-        for (final listener in List<VoidCallback>.from(_revocationListeners)) {
-          try {
-            listener();
-          } catch (_) {}
+    try {
+      _channel.setMethodCallHandler((call) async {
+        if (call.method == 'onDeviceRevoked') {
+          for (final listener in List<VoidCallback>.from(_revocationListeners)) {
+            try {
+              listener();
+            } catch (_) {}
+          }
         }
-      }
-    });
+      });
+    } catch (_) {
+      _initialized = false;
+    }
   }
 
   /// Triggers an immediate heartbeat on the native child service.
@@ -49,6 +58,8 @@ class NativeChildTelemetryBridge {
     } on MissingPluginException {
       return false;
     } on PlatformException {
+      return false;
+    } catch (_) {
       return false;
     }
   }

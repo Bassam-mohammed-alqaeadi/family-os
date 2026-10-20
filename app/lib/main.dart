@@ -591,13 +591,15 @@ class _FamilyOsAppState extends State<FamilyOsApp> {
     }
     _role.addListener(_syncLegacyRoleFallback);
     _syncLegacyRoleFallback();
-    NativeChildTelemetryBridge.addRevocationListener(_onDeviceRevoked);
     _router = createAppRouter(
       roleListenable: _role,
       initialLocation: resolveAppInitialLocation(),
     );
     _notificationRouter = FamilyNotificationRouter(router: _router);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        NativeChildTelemetryBridge.addRevocationListener(_onDeviceRevoked);
+      }
       unawaited(_notificationRouter.attach());
       final foundationRuntime = widget.foundationRuntime;
       if (foundationRuntime != null) {

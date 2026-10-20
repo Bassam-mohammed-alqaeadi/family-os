@@ -411,7 +411,7 @@ class _FakeChildDeletionSource implements FamilyChildDeletionSource {
 class _FakeIdentitySource extends ChangeNotifier implements IdentitySource {
   _FakeIdentitySource(this._snapshot);
 
-  IdentitySnapshot _snapshot;
+  final IdentitySnapshot _snapshot;
 
   @override
   IdentitySnapshot get value => _snapshot;

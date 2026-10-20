@@ -457,6 +457,8 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
           childDeviceSummary = devSnapshot.forChild(ChildId(id));
         }
 
+        if (!mounted) return;
+
         if (matchedChild != null) {
           final swatch = switch (matchedChild.themeColor) {
             'amber' => DayChildSwatch.amber,

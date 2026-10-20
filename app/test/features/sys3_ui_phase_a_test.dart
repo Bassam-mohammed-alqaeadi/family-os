@@ -208,7 +208,6 @@ void main() {
       final management = RuntimeChildDeviceManagementRepository(
         runtime: runtime,
       );
-      String? selected;
       await tester.pumpWidget(
         _app(
           runtime: runtime,
@@ -216,7 +215,7 @@ void main() {
             repository: profileRepo(),
             managementRepository: management,
             roleOverride: AppRole.father,
-            onSelectChild: (id) => selected = id,
+            onSelectChild: (_) {},
           ),
         ),
       );
