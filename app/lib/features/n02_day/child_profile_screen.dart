@@ -605,7 +605,11 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
         widget.onDeletedChild!();
         return;
       }
-      context.pop();
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/scr-fat-012');
+      }
       return;
     }
 
@@ -627,7 +631,11 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
       widget.onDeletedChild!();
       return;
     }
-    context.pop();
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/scr-fat-012');
+    }
   }
 
   Future<void> _addDevice() async {
@@ -1195,7 +1203,9 @@ class _ProfileBody extends StatelessWidget {
                       Expanded(
                         child: _MetricTile(
                           emoji: '🔋',
-                          value: profile.batteryLabel,
+                          value: profile.batteryLabel.isNotEmpty
+                              ? profile.batteryLabel
+                              : '—',
                           label: l10n.childProfileMetricBattery,
                         ),
                       ),
@@ -1203,7 +1213,9 @@ class _ProfileBody extends StatelessWidget {
                       Expanded(
                         child: _MetricTile(
                           emoji: '📶',
-                          value: connectionLabel,
+                          value: connectionLabel.isNotEmpty
+                              ? connectionLabel
+                              : '—',
                           label: l10n.childProfileMetricConnection,
                         ),
                       ),
@@ -1211,7 +1223,9 @@ class _ProfileBody extends StatelessWidget {
                       Expanded(
                         child: _MetricTile(
                           emoji: '📍',
-                          value: profile.locationLabel,
+                          value: profile.locationLabel.isNotEmpty
+                              ? profile.locationLabel
+                              : '—',
                           label: l10n.childProfileMetricLocation,
                         ),
                       ),

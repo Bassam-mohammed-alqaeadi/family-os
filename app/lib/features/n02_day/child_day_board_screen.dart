@@ -26,6 +26,10 @@ import 'package:family_os/core/screen_time/screen_time_runtime.dart';
 import 'package:family_os/core/screen_time/stage1_time_request_runtime.dart';
 import 'package:family_os/features/n02_day/day_board_motion.dart';
 import 'package:family_os/features/n09_smart_modes/modes_ux_bridge.dart';
+import 'package:family_os/app/role_controller.dart';
+import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/foundation_gate/native_child_pairing_copy.dart';
+import 'package:family_os/foundation_gate/native_child_telemetry_bridge.dart';
 
 /// Widget keys for SCR-CHD-004 / SET-019 / UI-005 / UI-017 acceptance.
 abstract final class ChildDayBoardKeys {
@@ -164,6 +168,29 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
     });
     stage1TimeRequestDecisionBus.addListener(_onDecision);
     _bootstrapTimeRequests();
+    _setupRevocationWatcher();
+  }
+
+  Timer? _revocationWatcher;
+
+  void _setupRevocationWatcher() {
+    NativeChildTelemetryBridge.addRevocationListener(_onDeviceRevocationTriggered);
+    _revocationWatcher = Timer.periodic(const Duration(seconds: 4), (_) async {
+      final status = await NativeChildTelemetryBridge.status();
+      if (status.credentialRevoked) {
+        _onDeviceRevocationTriggered();
+      }
+    });
+  }
+
+  void _onDeviceRevocationTriggered() {
+    if (!mounted) return;
+    _revocationWatcher?.cancel();
+    _revocationWatcher = null;
+    final copy = NativeChildPairingCopy.of(context);
+    AppToast.show(context, message: copy.deviceUnlinkedFromFamily);
+    CurrentRole.maybeNotifierOf(context)?.value = AppRole.father;
+    context.go('/scr-shr-001');
   }
 
   Future<void> _bootstrapTimeRequests() async {
@@ -191,6 +218,8 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
 
   @override
   void dispose() {
+    _revocationWatcher?.cancel();
+    NativeChildTelemetryBridge.removeRevocationListener(_onDeviceRevocationTriggered);
     _activationBus.removeListener(_onActivationBus);
     _policySub?.cancel();
     stage1TimeRequestDecisionBus.removeListener(_onDecision);

@@ -94,8 +94,12 @@ object LocationFixProtocol {
      * the older route - and never for a mock-provider reading, because the legacy route has
      * no field to say "test position" and would show it as a real one.
      */
-    fun legacyHeartbeatAllowed(fixOutcome: LocationReportOutcome, reading: Reading): Boolean =
-        fixOutcome == LocationReportOutcome.ACCEPTED && !reading.fromMockProvider
+    fun legacyHeartbeatAllowed(
+        fixOutcome: LocationReportOutcome,
+        reading: Reading,
+        allowMock: Boolean = false,
+    ): Boolean =
+        fixOutcome == LocationReportOutcome.ACCEPTED && (!reading.fromMockProvider || allowMock)
 
     /** The JSON body, field for field what `locationFixInput` in the backend accepts. */
     fun body(reading: Reading): String = buildString {

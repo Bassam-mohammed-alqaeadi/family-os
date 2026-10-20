@@ -121,12 +121,14 @@ class ChildTelemetryService : Service(), LocationListener {
         }
         networkAvailable = readNetworkAvailable()
         registerNetworkCallback()
+        activeInstance = this
         try {
+            val isDebug = (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
             scheduler.scheduleAtFixedRate(
                 { heartbeatNow() },
-                HEARTBEAT_INITIAL_DELAY_MINUTES,
-                HEARTBEAT_PERIOD_MINUTES,
-                TimeUnit.MINUTES,
+                if (isDebug) 10L else HEARTBEAT_INITIAL_DELAY_MINUTES * 60L,
+                if (isDebug) 15L else HEARTBEAT_PERIOD_MINUTES * 60L,
+                TimeUnit.SECONDS,
             )
         } catch (_: Exception) {
             // No scheduler = no periodic heartbeat; boot/drain heartbeats still run.
@@ -161,6 +163,16 @@ class ChildTelemetryService : Service(), LocationListener {
         } catch (_: SecurityException) {
             stopSelf(startId)
             return START_NOT_STICKY
+        }
+        try {
+            val lastGps = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+            val lastNet = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+            val initial = lastGps ?: lastNet
+            if (initial != null) {
+                onLocationChanged(initial)
+            }
+        } catch (_: SecurityException) {
+            // Best effort; fine location already verified above.
         }
         if (intent?.getBooleanExtra(EXTRA_BOOT_START, false) == true) {
             // S2: a boot/update/unlock start that reached here is healthy - the pacing
@@ -245,6 +257,9 @@ class ChildTelemetryService : Service(), LocationListener {
         } catch (_: Exception) {
             // Best effort.
         }
+        if (activeInstance == this) {
+            activeInstance = null
+        }
         executor.shutdownNow()
         super.onDestroy()
     }
@@ -308,7 +323,8 @@ class ChildTelemetryService : Service(), LocationListener {
             )
         }
         if (!settle(config, fixOutcome)) return
-        if (!LocationFixProtocol.legacyHeartbeatAllowed(fixOutcome, reading) || battery == null) return
+        val isDebug = (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+        if (!LocationFixProtocol.legacyHeartbeatAllowed(fixOutcome, reading, isDebug) || battery == null) return
         // The W2 device card and children list still read battery, last-seen and this label
         // from the legacy route, so its body is unchanged. It is sent from the same genuine
         // reading, never on its own schedule. Narrowing what this route stores is a later,
@@ -364,6 +380,14 @@ class ChildTelemetryService : Service(), LocationListener {
             postSharingStoppedNotification()
             stopForegroundCompat()
             stopSelf()
+            try {
+                val intent = Intent(ACTION_DEVICE_REVOKED).apply {
+                    setPackage(packageName)
+                }
+                sendBroadcast(intent)
+            } catch (_: Exception) {
+                // Best effort broadcast
+            }
         }
     }
 
@@ -496,7 +520,7 @@ class ChildTelemetryService : Service(), LocationListener {
      * to the capability ledger. Service-owned by design - while the service runs, the
      * verdict is fresh; when it dies, the server-side staleness tells the truth (D8).
      */
-    private fun heartbeatNow() {
+    fun heartbeatNow() {
         try {
             val config = try {
                 configStore.read()
@@ -511,6 +535,38 @@ class ChildTelemetryService : Service(), LocationListener {
                 lastHeartbeatAckElapsedMillis = SystemClock.elapsedRealtime()
                 queueLostReportedBaseline = queueLossTotal()
                 lockedBootGapSeconds = -1L // Reported once; a new boot writes a new marker.
+            }
+            val battery = readBattery()
+            val bestLoc = try {
+                val gps = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                val net = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+                when {
+                    gps != null && net != null -> if (gps.time >= net.time) gps else net
+                    gps != null -> gps
+                    else -> net
+                }
+            } catch (_: SecurityException) { null }
+
+            if (bestLoc != null && battery != null) {
+                val isDebug = (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+                val isMock = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) bestLoc.isMock else @Suppress("DEPRECATION") bestLoc.isFromMockProvider
+                if (isDebug || !isMock) {
+                    val locationLabel = String.format(
+                        Locale.US,
+                        "GPS %.5f, %.5f",
+                        bestLoc.latitude,
+                        bestLoc.longitude,
+                    )
+                    val heartbeat = post(
+                        config,
+                        "/v1/devices/${config.deviceId}/telemetry",
+                        """{"batteryLevel":${battery.level},"batteryStatus":"${battery.status}","locationLat":${bestLoc.latitude},"locationLng":${bestLoc.longitude},"locationLabel":"$locationLabel"}""",
+                        null,
+                    )
+                    val heartbeatOutcome = LocationFixProtocol.classify(heartbeat.statusCode, heartbeat.errorBody)
+                    learnDateHeader(heartbeat.dateHeaderMillis)
+                    if (heartbeatOutcome.endsSession) settle(config, heartbeatOutcome)
+                }
             }
         } catch (_: Exception) {
             // Heartbeat failure is itself a signal (staleness), never a crash.
@@ -834,7 +890,9 @@ class ChildTelemetryService : Service(), LocationListener {
         const val STOPPED_CHANNEL_ID = "child_location_sharing_stopped"
         const val NOTIFICATION_ID = 91201
         const val STOPPED_NOTIFICATION_ID = 91202
+        const val ACTION_DEVICE_REVOKED = "com.familyos.family_os.ACTION_DEVICE_REVOKED"
         @Volatile var isRunning: Boolean = false
+        @Volatile var activeInstance: ChildTelemetryService? = null
 
         /** Set by [ProtectionBootReceiver] on boot/update/unlock starts. */
         const val EXTRA_BOOT_START = "com.familyos.family_os.extra.BOOT_START"

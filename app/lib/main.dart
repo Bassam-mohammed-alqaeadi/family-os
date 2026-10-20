@@ -88,6 +88,7 @@ import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 import 'package:family_os/foundation_gate/foundation_gate_identity.dart';
 import 'package:family_os/foundation_gate/foundation_gate_session_controller.dart';
 import 'package:family_os/foundation_gate/main_app_foundation_runtime.dart';
+import 'package:family_os/foundation_gate/native_child_telemetry_bridge.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -590,6 +591,7 @@ class _FamilyOsAppState extends State<FamilyOsApp> {
     }
     _role.addListener(_syncLegacyRoleFallback);
     _syncLegacyRoleFallback();
+    NativeChildTelemetryBridge.addRevocationListener(_onDeviceRevoked);
     _router = createAppRouter(
       roleListenable: _role,
       initialLocation: resolveAppInitialLocation(),
@@ -604,6 +606,12 @@ class _FamilyOsAppState extends State<FamilyOsApp> {
     });
   }
 
+  void _onDeviceRevoked() {
+    if (!mounted) return;
+    _role.value = AppRole.father;
+    _router.go('/scr-shr-001');
+  }
+
   void _syncLegacyRoleFallback() {
     // Temporary bridge: role picker remains for stage-1 compatibility only.
     _identity.setLegacyRoleFallback(_role.value);
@@ -611,6 +619,7 @@ class _FamilyOsAppState extends State<FamilyOsApp> {
 
   @override
   void dispose() {
+    NativeChildTelemetryBridge.removeRevocationListener(_onDeviceRevoked);
     _role.removeListener(_syncLegacyRoleFallback);
     if (_ownsRole) {
       _role.dispose();

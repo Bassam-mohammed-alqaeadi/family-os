@@ -91,6 +91,10 @@ class NativeChildPairingCopy {
       ? 'إيقاف وضع الابن على هذا الجهاز'
       : 'Stop Child Mode on this device';
 
+  String get deviceUnlinkedFromFamily => isArabic
+      ? 'تم فصل هذا الجهاز عن العائلة.'
+      : 'This device has been unlinked from the family.';
+
   // ── QR Code pairing strings ──────────────────────────────────────────────
 
   String get scanQrCode =>

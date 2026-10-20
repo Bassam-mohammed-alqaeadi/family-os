@@ -2,7 +2,10 @@ package com.familyos.family_os
 
 import android.Manifest
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -31,6 +34,7 @@ import java.util.concurrent.TimeUnit
  */
 class MainActivity : FlutterActivity() {
     private var pendingPermissionResult: MethodChannel.Result? = null
+    private var telemetryMethodChannel: MethodChannel? = null
     private var notificationMethodChannel: MethodChannel? = null
     private var pendingNotificationRoute: String? = null
     private val chatExecutor = Executors.newSingleThreadExecutor()
@@ -40,10 +44,16 @@ class MainActivity : FlutterActivity() {
         .writeTimeout(15, TimeUnit.SECONDS)
         .build()
 
+    private val revocationReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            telemetryMethodChannel?.invokeMethod("onDeviceRevoked", null)
+        }
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, TELEMETRY_CHANNEL)
-            .setMethodCallHandler { call, result ->
+        telemetryMethodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, TELEMETRY_CHANNEL).apply {
+            setMethodCallHandler { call, result ->
                 when (call.method) {
                     "requestLocationPermissions" -> requestLocationPermissions(result)
                     "configureAndStart" -> configureAndStart(call, result)
@@ -57,9 +67,24 @@ class MainActivity : FlutterActivity() {
                     "protectionState" -> protectionState(result)
                     "batteryGuidance" -> batteryGuidance(result)
                     "openBatterySettings" -> openBatterySettings(result)
+                    "heartbeat" -> {
+                        ChildTelemetryService.activeInstance?.heartbeatNow()
+                        result.success(true)
+                    }
                     else -> result.notImplemented()
                 }
             }
+        }
+        try {
+            ContextCompat.registerReceiver(
+                this,
+                revocationReceiver,
+                IntentFilter(ChildTelemetryService.ACTION_DEVICE_REVOKED),
+                ContextCompat.RECEIVER_NOT_EXPORTED,
+            )
+        } catch (_: Exception) {
+            // Best effort
+        }
         notificationMethodChannel = MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
             NOTIFICATION_CHANNEL,
@@ -553,6 +578,11 @@ class MainActivity : FlutterActivity() {
         !value.isNullOrBlank() && value.length <= 128
 
     override fun onDestroy() {
+        try {
+            unregisterReceiver(revocationReceiver)
+        } catch (_: Exception) {
+            // Already unregistered or not registered
+        }
         chatExecutor.shutdownNow()
         super.onDestroy()
     }
