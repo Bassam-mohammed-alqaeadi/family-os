@@ -1,0 +1,140 @@
+# .understandignore — patterns for files/dirs to exclude from analysis
+# Syntax: same as .gitignore (globs, # comments, ! negation, trailing / for dirs)
+# Lines below are suggestions — uncomment to activate.
+# Use ! prefix to force-include something excluded by defaults.
+#
+# Built-in defaults (always excluded unless negated):
+#   node_modules/, .git/, dist/, build/, obj/, *.lock, *.min.js, etc.
+#
+
+# --- From .gitignore (uncomment to exclude) ---
+
+# .DS_Store
+# Thumbs.db
+# Desktop.ini
+# *.swp
+# *.swo
+# *~
+# *.iml
+# .env
+# .env.*
+# !.env.example
+# *.pem
+# credentials.json
+# firebase-adminsdk.json
+# *firebase-adminsdk*.json
+# *service-account*.json
+# *service_account*.json
+# **/node_modules/
+# *.tar.gz
+# *.tgz
+# **/__pycache__/
+# *.py[cod]
+# .freebuff/
+# .kilo/
+# tmp_*.txt
+# *_tmp.txt
+# test_output*.json
+# .verify/
+# **/doc/api/
+# **/ios/Flutter/.last_build_id
+# .dart_tool/
+# .flutter-plugins
+# .flutter-plugins-dependencies
+# .pub-cache/
+# .pub/
+# *.g.dart
+# *.freezed.dart
+# **/android/**/gradle-wrapper.jar
+# **/android/.gradle/
+# **/android/captures/
+# **/android/local.properties
+# **/android/**/GeneratedPluginRegistrant.java
+# **/android/key.properties
+# *.jks
+# **/ios/**/*.mode1v3
+# **/ios/**/*.mode2v3
+# **/ios/**/*.moved-aside
+# **/ios/**/*.pbxuser
+# **/ios/**/*.perspectivev3
+# **/ios/**/*sync/
+# **/ios/**/.sconsign.dblite
+# **/ios/**/.tags*
+# **/ios/**/.vagrant/
+# **/ios/**/DerivedData/
+# **/ios/**/Icon?
+# **/ios/**/Pods/
+# **/ios/**/.symlinks/
+# **/ios/**/profile
+# **/ios/**/xcuserdata
+# **/ios/.generated/
+# **/ios/Flutter/App.framework
+# **/ios/Flutter/Flutter.framework
+# **/ios/Flutter/Flutter.podspec
+# **/ios/Flutter/Generated.xcconfig
+# **/ios/Flutter/ephemeral
+# **/ios/Flutter/app.flx
+# **/ios/Flutter/app.zip
+# **/ios/Flutter/flutter_assets/
+# **/ios/Flutter/flutter_export_environment.sh
+# **/ios/ServiceDefinitions.json
+# **/ios/Runner/GeneratedPluginRegistrant.*
+# **/web/libraries/
+# lib/generated_plugin_registrant.dart
+# shots/
+
+# --- Detected directories (uncomment to exclude) ---
+
+# docs/
+# scripts/
+
+# --- Test file patterns (uncomment to exclude) ---
+
+# JS / TS
+# *.test.*
+# *.spec.*
+# *.snap
+# C# / .NET
+# **/*Tests.cs
+# **/*Test.cs
+# **/*Fixture.cs
+# **/*.Tests.csproj
+# Java / Kotlin
+# **/src/test/**
+# **/*Test.java
+# **/*IT.java
+# **/*Spec.kt
+# Go
+# **/*_test.go
+# C++
+# **/*_test.cc
+# **/*_test.cpp
+# **/*_test.cxx
+# **/*Test.cc
+# **/*Test.cpp
+# **/*_unittest.cc
+# **/*_unittest.cpp
+# **/*_browsertest.cc
+# **/*_benchmark.cc
+# **/*Benchmark.cpp
+# Python
+# **/test_*.py
+# **/*_test.py
+# **/tests.py
+# **/conftest.py
+# Rust
+# **/tests.rs
+# **/test_*.rs
+# **/*_test.rs
+# **/bench_*.rs
+# **/*_bench.rs
+# Ruby
+# **/*_spec.rb
+# **/*_test.rb
+# **/test_*.rb
+# **/spec_helper.rb
+# **/test_helper.rb
+# **/rails_helper.rb
+# Swift
+# **/Tests/**/*.swift
+# **/Specs/**/*.swift
