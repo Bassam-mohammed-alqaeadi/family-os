@@ -85,8 +85,9 @@ String? _resolveImport(String uri, String fromFile) {
 }
 
 String _normalise(String path) {
+  // Windows reports native separators; every comparison here uses '/'.
   final parts = <String>[];
-  for (final segment in path.split('/')) {
+  for (final segment in path.replaceAll('\\', '/').split('/')) {
     if (segment == '.' || segment.isEmpty) continue;
     if (segment == '..') {
       if (parts.isNotEmpty) parts.removeLast();
