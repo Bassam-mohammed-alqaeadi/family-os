@@ -218,13 +218,14 @@
     "id": "s3_minutes_economy",
     "name_ar": "اقتصاد الدقائق على الخادم",
     "name_en": "Server Minutes Economy",
-    "status": "ci-verified",
+    "status": "ci-verified-ledger-only; device bridge open (S3 D5 prerequisite)",
     "contract_doc": "docs/contracts/s3_minutes_economy.md",
     "owned_files": [
-      "backend/migrations/130_family_minute_wallets.sql",
-      "backend/migrations/131_family_minute_ledger.sql",
-      "backend/migrations/132_tasks_minutes_reward.sql",
-      "backend/src/minutes-economy.js"
+      "backend/db/migrations/130_family_minutes_ledger.sql",
+      "backend/db/migrations/131_family_app_wallets.sql",
+      "backend/db/migrations/132_point_ledger_to_minutes.sql",
+      "backend/src/minutes-economy.js",
+      "backend/src/minutes-service.js"
     ],
     "tests": [
       "backend/test/postgres-minutes-economy.test.js",
