@@ -2713,8 +2713,14 @@ export function createApp({
                 'Content-Length': String(bytes.length),
                 'Content-Disposition': 'inline',
                 'Content-Security-Policy': "default-src 'none'; sandbox",
+                'X-Content-Type-Options': 'nosniff',
                 'Cache-Control': 'private, no-store',
             });
+            // Reviewed (direct-response-write): mimeType is never caller input. Upload accepts media
+            // only when the sniffed signature equals the declared type (family-chat-media.js), and the
+            // stored type is the sniffed one, an allowlisted image or audio type. The response is sent
+            // under CSP `default-src 'none'; sandbox` with nosniff, so the bytes cannot run as HTML.
+            // nosemgrep: javascript.express.security.audit.xss.direct-response-write.direct-response-write
             response.send(bytes);
         }),
     );
@@ -3034,8 +3040,14 @@ export function createApp({
                 'Content-Length': String(bytes.length),
                 'Content-Disposition': 'inline',
                 'Content-Security-Policy': "default-src 'none'; sandbox",
+                'X-Content-Type-Options': 'nosniff',
                 'Cache-Control': 'private, no-store',
             });
+            // Reviewed (direct-response-write): mimeType is never caller input. Upload accepts media
+            // only when the sniffed signature equals the declared type (family-chat-media.js), and the
+            // stored type is the sniffed one, an allowlisted image or audio type. The response is sent
+            // under CSP `default-src 'none'; sandbox` with nosniff, so the bytes cannot run as HTML.
+            // nosemgrep: javascript.express.security.audit.xss.direct-response-write.direct-response-write
             response.send(bytes);
         }),
     );
