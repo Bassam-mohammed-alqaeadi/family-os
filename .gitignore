@@ -48,6 +48,13 @@ tmp_*.txt
 *_tmp.txt
 test_output*.json
 
+# One-off test-run logs captured at the repository root (historical clutter)
+/test-*.txt
+/analyze-*.txt
+/failing-*.txt
+/fail-handover.txt
+/listtile-errors.txt
+
 # Harness ship-gate evidence (machine-generated per-card verification records)
 .verify/
 
