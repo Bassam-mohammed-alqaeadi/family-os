@@ -1,20 +1,32 @@
 #!/usr/bin/env node
 import { execSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
-import { resolve, relative } from 'node:path';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 export function runCheckProtected({ baseRef = 'HEAD~1', repoRoot = process.cwd() } = {}) {
   const protectedPath = resolve(repoRoot, 'docs/safety_phase/PROTECTED_SYSTEMS.json');
-  const contractChangesPath = resolve(repoRoot, 'docs/safety_phase/CONTRACT_CHANGES.md');
 
   if (!existsSync(protectedPath)) {
     throw new Error(`PROTECTED_SYSTEMS.json not found at ${protectedPath}`);
   }
 
   const protectedSystems = JSON.parse(readFileSync(protectedPath, 'utf8'));
-  let contractChangesContent = '';
-  if (existsSync(contractChangesPath)) {
-    contractChangesContent = readFileSync(contractChangesPath, 'utf8');
+
+  // Get added lines in CONTRACT_CHANGES.md relative to baseRef
+  let addedContractChangesLines = [];
+  try {
+    const diffDoc = execSync(`git diff ${baseRef} -- docs/safety_phase/CONTRACT_CHANGES.md`, {
+      cwd: repoRoot,
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'pipe']
+    });
+    addedContractChangesLines = diffDoc
+      .split(/\r?\n/)
+      .filter(line => line.startsWith('+') && !line.startsWith('+++'))
+      .map(line => line.slice(1));
+  } catch (err) {
+    addedContractChangesLines = [];
   }
 
   // Get changed files
@@ -26,7 +38,7 @@ export function runCheckProtected({ baseRef = 'HEAD~1', repoRoot = process.cwd()
       stdio: ['pipe', 'pipe', 'pipe']
     });
   } catch (err) {
-    // If baseRef comparison fails (e.g., initial commit or invalid ref), fallback to git status or empty
+    // If baseRef comparison fails (e.g., initial commit or invalid ref), fallback to empty
     diffOutput = '';
   }
 
@@ -65,10 +77,12 @@ export function runCheckProtected({ baseRef = 'HEAD~1', repoRoot = process.cwd()
     console.log(`\n  -> System: ${sysId} (${system.name_en})`);
     console.log(`     Changed owned files: ${files.join(', ')}`);
 
-    // Check if sysId or system name is mentioned in CONTRACT_CHANGES.md
-    const hasRecord = contractChangesContent.includes(sysId) ||
-                      contractChangesContent.includes(system.name_en) ||
-                      contractChangesContent.includes(system.name_ar);
+    // A system counts as recorded only if one added line mentions its sysId, name_en, or name_ar
+    const hasRecord = addedContractChangesLines.some(line =>
+      line.includes(sysId) ||
+      (system.name_en && line.includes(system.name_en)) ||
+      (system.name_ar && line.includes(system.name_ar))
+    );
 
     if (!hasRecord) {
       unrecordedSystems.push({ sysId, files });
@@ -103,7 +117,13 @@ export function runCheckProtected({ baseRef = 'HEAD~1', repoRoot = process.cwd()
   return { success: true, unrecordedSystems: [], testsToRun: Array.from(testsToRun) };
 }
 
-if (import.meta.url === `file://${process.argv[1]}`.replace(/\\/g, '/')) {
+const isMain = process.argv[1] && (
+  resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url)) ||
+  import.meta.url === `file://${process.argv[1]}`.replace(/\\/g, '/') ||
+  import.meta.url === `file:///${process.argv[1]}`.replace(/\\/g, '/')
+);
+
+if (isMain) {
   const baseRef = process.argv[2] || 'HEAD~1';
   const result = runCheckProtected({ baseRef });
   if (!result.success) {
