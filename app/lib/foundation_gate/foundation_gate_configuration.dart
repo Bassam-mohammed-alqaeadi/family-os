@@ -158,6 +158,17 @@ class FoundationGateConfiguration {
     return stagingApiOrigin.replace(path: '/v1/devices/$deviceId/telemetry');
   }
 
+  Uri deviceScreenTimeUri(String deviceId) {
+    if (!isFoundationGateUuid(deviceId)) {
+      throw ArgumentError.value(
+        deviceId,
+        'deviceId',
+        'A server-returned UUID device identifier is required.',
+      );
+    }
+    return stagingApiOrigin.replace(path: '/v1/devices/$deviceId/screen-time');
+  }
+
   Uri familyChildDevicePairingsUri(String familyId, String childId) {
     if (!isFoundationGateUuid(familyId) || !isFoundationGateUuid(childId)) {
       throw ArgumentError(
