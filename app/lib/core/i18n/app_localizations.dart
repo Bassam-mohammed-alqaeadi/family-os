@@ -23150,6 +23150,18 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'تم حذف ملف الابن بنجاح'**
   String get childProfileDeleteSuccessToast;
+
+  /// Child day board note when earned minutes extend today limit
+  ///
+  /// In ar, this message translates to:
+  /// **'الدقائق التي تكسبها من أنشطتك تُضاف إلى وقتك اليومي'**
+  String get childDayBoardEarnedExtendsOn;
+
+  /// Child day board note when earned minutes do not extend today limit
+  ///
+  /// In ar, this message translates to:
+  /// **'الدقائق التي تكسبها من أنشطتك لا تُضاف إلى وقت اليوم — تُحفظ لك'**
+  String get childDayBoardEarnedExtendsOff;
 }
 
 class _AppLocalizationsDelegate

@@ -16659,5 +16659,13 @@
   "childProfileDeleteSuccessToast": "Child profile deleted successfully",
   "@childProfileDeleteSuccessToast": {
     "description": "SCR-FAT-013 delete child success toast"
+  },
+  "childDayBoardEarnedExtendsOn": "Minutes you earn from your activities are added to your daily screen time",
+  "@childDayBoardEarnedExtendsOn": {
+    "description": "Child day board note when earned minutes extend today limit"
+  },
+  "childDayBoardEarnedExtendsOff": "Minutes you earn from your activities are not added to today's screen time — they stay for you",
+  "@childDayBoardEarnedExtendsOff": {
+    "description": "Child day board note when earned minutes do not extend today limit"
   }
 }

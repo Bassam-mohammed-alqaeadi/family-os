@@ -13047,4 +13047,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childProfileDeleteSuccessToast => 'تم حذف ملف الابن بنجاح';
+
+  @override
+  String get childDayBoardEarnedExtendsOn =>
+      'الدقائق التي تكسبها من أنشطتك تُضاف إلى وقتك اليومي';
+
+  @override
+  String get childDayBoardEarnedExtendsOff =>
+      'الدقائق التي تكسبها من أنشطتك لا تُضاف إلى وقت اليوم — تُحفظ لك';
 }

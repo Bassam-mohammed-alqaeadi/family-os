@@ -38,6 +38,7 @@ abstract final class ChildDayBoardKeys {
   static const modeExpiry = Key('child_day_board_mode_expiry');
   static const idleStatus = Key('child_day_board_idle_status');
   static const remainingMinutes = Key('child_day_board_remaining');
+  static const earnedExtensionNote = Key('child_day_board_earned_note');
   static const warningBanner = Key('child_day_board_warning_banner');
   static const warningRequest = Key('child_day_board_warning_request');
   static const warningQuran = Key('child_day_board_warning_quran');
@@ -453,6 +454,19 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
                         fontSize: 32,
                         fontWeight: FontWeight.w800,
                         color: colors.ink,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      key: ChildDayBoardKeys.earnedExtensionNote,
+                      _mirror.policy.earnedMinutesExtendLimit
+                          ? l10n.childDayBoardEarnedExtendsOn
+                          : l10n.childDayBoardEarnedExtendsOff,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colors.ink2,
                       ),
                     ),
                     if (TimeWarningBanner.shouldShow(_effectiveRemaining)) ...[

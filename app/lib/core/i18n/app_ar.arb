@@ -16674,5 +16674,13 @@
   "childProfileDeleteSuccessToast": "تم حذف ملف الابن بنجاح",
   "@childProfileDeleteSuccessToast": {
     "description": "SCR-FAT-013 delete child success toast"
+  },
+  "childDayBoardEarnedExtendsOn": "الدقائق التي تكسبها من أنشطتك تُضاف إلى وقتك اليومي",
+  "@childDayBoardEarnedExtendsOn": {
+    "description": "Child day board note when earned minutes extend today limit"
+  },
+  "childDayBoardEarnedExtendsOff": "الدقائق التي تكسبها من أنشطتك لا تُضاف إلى وقت اليوم — تُحفظ لك",
+  "@childDayBoardEarnedExtendsOff": {
+    "description": "Child day board note when earned minutes do not extend today limit"
   }
 }

@@ -13250,4 +13250,12 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get childProfileDeleteSuccessToast =>
       'Child profile deleted successfully';
+
+  @override
+  String get childDayBoardEarnedExtendsOn =>
+      'Minutes you earn from your activities are added to your daily screen time';
+
+  @override
+  String get childDayBoardEarnedExtendsOff =>
+      'Minutes you earn from your activities are not added to today\'s screen time — they stay for you';
 }
