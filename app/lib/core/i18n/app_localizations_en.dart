@@ -1075,6 +1075,17 @@ class AppLocalizationsEn extends AppLocalizations {
       'Screen time settings unavailable — local storage could not open. Saving is disabled.';
 
   @override
+  String get childScreenTimeEarnedExtensionNotice =>
+      'Earned minutes automatically extend your daily screen time';
+
+  @override
+  String get childScreenTimeEmptyTitle => 'No screen time limits configured';
+
+  @override
+  String get childScreenTimeEmptyMessage =>
+      'No schedule windows or daily limit have been configured yet.';
+
+  @override
   String get childScreenTimeSleep => 'Sleep';
 
   @override

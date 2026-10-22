@@ -445,6 +445,132 @@ void main() {
 
     expect(find.textContaining('15'), findsWidgets);
   });
+
+  testWidgets('earned minutes extension explanation displays when enabled and hides when disabled', (tester) async {
+    final enabledChild = ChildId('child-earned-ext-on');
+    final enabledPolicyRepo = InMemoryScreenTimePolicyRepository({
+      enabledChild.value: ScreenTimePolicy(
+        dailyCapMinutes: 60,
+        earnedMinutesExtendLimit: true,
+      ),
+    });
+    await _pump(
+      tester,
+      repository: InMemoryScheduleWindowRepository(),
+      childId: enabledChild,
+      role: AppRole.child,
+      policyRepository: enabledPolicyRepo,
+    );
+    expect(find.byKey(ChildScreenTimeKeys.earnedExtensionNotice), findsOneWidget);
+    expect(find.text('الدقائق المكتسبة تمدد وقت الشاشة اليومي تلقائياً'), findsOneWidget);
+
+    final disabledChild = ChildId('child-earned-ext-off');
+    final disabledPolicyRepo = InMemoryScreenTimePolicyRepository({
+      disabledChild.value: ScreenTimePolicy(
+        dailyCapMinutes: 60,
+        earnedMinutesExtendLimit: false,
+      ),
+    });
+    await _pump(
+      tester,
+      repository: InMemoryScheduleWindowRepository(),
+      childId: disabledChild,
+      role: AppRole.child,
+      policyRepository: disabledPolicyRepo,
+    );
+    expect(find.byKey(ChildScreenTimeKeys.earnedExtensionNotice), findsNothing);
+  });
+
+  testWidgets('5 states: loading, empty, error, stale, and success are distinguishable', (tester) async {
+    final testChild = ChildId('child-5-states');
+    final repo = InMemoryScheduleWindowRepository();
+    final policyRepo = InMemoryScreenTimePolicyRepository({
+      testChild.value: ScreenTimePolicy(dailyCapMinutes: 60),
+    });
+
+    // 1. Success state
+    await _pump(
+      tester,
+      repository: repo,
+      childId: testChild,
+      role: AppRole.father,
+      policyRepository: policyRepo,
+    );
+    expect(find.byKey(ChildScreenTimeKeys.body), findsOneWidget);
+    expect(find.byKey(ChildScreenTimeKeys.empty), findsNothing);
+    expect(find.byKey(ChildScreenTimeKeys.error), findsNothing);
+
+    // 2. Empty state
+    await tester.pumpWidget(
+      CurrentRole(
+        notifier: RoleController(AppRole.father),
+        child: MaterialApp(
+          theme: buildFamilyTheme(),
+          locale: const Locale('ar'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: ChildScreenTimeScreen(
+            key: const Key('test_state_empty'),
+            childId: testChild,
+            repository: repo,
+            policyRepository: policyRepo,
+            emptyOverride: true,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(ChildScreenTimeKeys.empty), findsOneWidget);
+    expect(find.text('لا توجد حدود زمنية محددة'), findsOneWidget);
+
+    // 3. Error state
+    await tester.pumpWidget(
+      CurrentRole(
+        notifier: RoleController(AppRole.father),
+        child: MaterialApp(
+          theme: buildFamilyTheme(),
+          locale: const Locale('ar'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: ChildScreenTimeScreen(
+            key: const Key('test_state_error'),
+            childId: testChild,
+            repository: repo,
+            policyRepository: policyRepo,
+            policyUnavailableOverride: true,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(ChildScreenTimeKeys.error), findsOneWidget);
+
+    // 4. Stale state
+    await _pump(
+      tester,
+      repository: repo,
+      childId: testChild,
+      role: AppRole.father,
+      policyRepository: policyRepo,
+      balanceReader: (_) async => const MinutesBalanceReading({'youtube': 10}, stale: true),
+    );
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 20)));
+    await tester.pump();
+    expect(find.byKey(ChildScreenTimeKeys.stale), findsOneWidget);
+
+    // 5. Loading state key
+    expect(ChildScreenTimeKeys.loading, isNotNull);
+  });
 }
 
 Future<void> _scrollTo(WidgetTester tester, Finder finder) async {

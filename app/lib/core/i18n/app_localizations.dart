@@ -2030,6 +2030,24 @@ abstract class AppLocalizations {
   /// **'إعدادات وقت الشاشة غير متاحة — تعذّر فتح التخزين المحلي. الحفظ معطّل.'**
   String get childScreenTimePolicyUnavailable;
 
+  /// SCR: child screen time — notice when earned minutes extend limit is enabled
+  ///
+  /// In ar, this message translates to:
+  /// **'الدقائق المكتسبة تمدد وقت الشاشة اليومي تلقائياً'**
+  String get childScreenTimeEarnedExtensionNotice;
+
+  /// SCR: child screen time — empty state title
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد حدود زمنية محددة'**
+  String get childScreenTimeEmptyTitle;
+
+  /// SCR: child screen time — empty state message
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يتم ضبط أي نوافذ زمنية أو حد يومي لهذا الحساب بعد.'**
+  String get childScreenTimeEmptyMessage;
+
   /// SCR-FAT-032 sleep schedule row
   ///
   /// In ar, this message translates to:

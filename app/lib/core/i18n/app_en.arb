@@ -1279,6 +1279,18 @@
   "@childScreenTimePolicyUnavailable": {
     "description": "SCR-FAT-032 fail-closed when Local KV refused"
   },
+  "childScreenTimeEarnedExtensionNotice": "Earned minutes automatically extend your daily screen time",
+  "@childScreenTimeEarnedExtensionNotice": {
+    "description": "SCR: child screen time — notice when earned minutes extend limit is enabled"
+  },
+  "childScreenTimeEmptyTitle": "No screen time limits configured",
+  "@childScreenTimeEmptyTitle": {
+    "description": "SCR: child screen time — empty state title"
+  },
+  "childScreenTimeEmptyMessage": "No schedule windows or daily limit have been configured yet.",
+  "@childScreenTimeEmptyMessage": {
+    "description": "SCR: child screen time — empty state message"
+  },
   "childScreenTimeSleep": "Sleep",
   "@childScreenTimeSleep": {
     "description": "SCR-FAT-032 sleep schedule row"

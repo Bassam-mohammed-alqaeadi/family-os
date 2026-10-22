@@ -25,6 +25,7 @@ The Server Minutes Economy governs family minute allowances, temporary pools, ap
 - `backend/src/minutes-economy.js`
 - `app/lib/core/policy/screen_time_policy.dart`
 - `app/lib/core/policy/wallet_ledger.dart`
+- `app/lib/features/n03_screen_time/child_screen_time_screen.dart`
 - `app/lib/features/n03_screen_time/screen_time_server_panel.dart`
 - `app/lib/features/n17_child_learn/child_wallet_repository.dart`
 
@@ -59,6 +60,9 @@ The Server Minutes Economy governs family minute allowances, temporary pools, ap
   - `single formula for remaining minutes and phone state (worked example)`
 - `app/test/core/policy/screen_time_policy_test.dart`:
   - `earnedMinutesExtendLimit DTO serialization defaults to false and round-trips true`
+- `app/test/features/n03_screen_time/child_screen_time_screen_test.dart`:
+  - `earned minutes extension explanation displays when enabled and hides when disabled`
+  - `5 states: loading, empty, error, stale, and success are distinguishable`
 - `app/test/features/n03_screen_time/screen_time_server_panel_test.dart`:
   - `earned minutes toggle renders, displays subtitle & preview breakdown, and writes to server`
 - `app/test/s3/minutes_static_guard_test.dart`:

@@ -1062,6 +1062,17 @@ class AppLocalizationsAr extends AppLocalizations {
       'إعدادات وقت الشاشة غير متاحة — تعذّر فتح التخزين المحلي. الحفظ معطّل.';
 
   @override
+  String get childScreenTimeEarnedExtensionNotice =>
+      'الدقائق المكتسبة تمدد وقت الشاشة اليومي تلقائياً';
+
+  @override
+  String get childScreenTimeEmptyTitle => 'لا توجد حدود زمنية محددة';
+
+  @override
+  String get childScreenTimeEmptyMessage =>
+      'لم يتم ضبط أي نوافذ زمنية أو حد يومي لهذا الحساب بعد.';
+
+  @override
   String get childScreenTimeSleep => 'نوم';
 
   @override

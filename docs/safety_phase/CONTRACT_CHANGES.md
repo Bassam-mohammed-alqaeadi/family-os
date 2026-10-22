@@ -4,6 +4,7 @@
 
 ## سجل التعديلات المعتمدة
 
+- **2026-10-22 | w5_screen_time, s3_minutes_economy:** دعم الحالات الخمس (loading, empty, error, stale, success) وإيضاح تمديد الحد بالدقائق المكتسبة في واجهة الطفل ChildScreenTimeScreen (Step 6).
 - **2026-10-22 | w5_screen_time, s3_minutes_economy:** إضافة مفتاح التبديل earnedMinutesExtendLimit في نماذج العميل ScreenTimePolicy وFoundationGateScreenPolicy وعميل HTTP ولوحة تحكم ولي الأمر (Step 5).
 - **2026-10-22 | w5_screen_time, s3_minutes_economy:** إضافة عمود ومفتاح earned_minutes_extend_limit (الهجرة 133) في سياسة وقت الشاشة لدعم جسر D4.
 - **2026-10-22 | w5_screen_time, s3_minutes_economy:** تسجيل رصيد الائتمان المؤقت في جدول family_minutes_ledger عند موافقة ولي الأمر على طلب الوقت (Step 2 - time_request_grant).
