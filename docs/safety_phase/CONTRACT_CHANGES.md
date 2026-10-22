@@ -4,6 +4,7 @@
 
 ## سجل التعديلات المعتمدة
 
+- **2026-10-23 | s3_minutes_economy, w5_screen_time:** استبعاد أسطر تقارير استخدام الهاتف (source_type = 'device_report') من حساب رصيد المحافظ في balanceAt (قرار المالك: استهلاك الهاتف لا يخصم من المحافظ).
 - **2026-10-23 | w5_screen_time, s3_minutes_economy:** إضافة فلتر source_type = 'device_report' و wallet_scope = 'daily' في readPhoneConsumption لضمان عدم احتساب استهلاك المحفظة كاستهلاك للهاتف (استهلاك المحفظة ليس قياس الهاتف).
 - **2026-10-22 | w5_screen_time, s3_minutes_economy:** دمج تصنيفات التطبيقات في حساب الدقائق المحتسبة لتقرير استخدام الهاتف وتصحيح قيد credit_ref في الهجرة 134 لدعم استهلاك الجلسات واستهلاك الحد اليومي.
 - **2026-10-22 | w5_screen_time, s3_minutes_economy:** دعم الحالات الخمس (loading, empty, error, stale, success) وإيضاح تمديد الحد بالدقائق المكتسبة في واجهة الطفل ChildScreenTimeScreen (Step 6).

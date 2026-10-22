@@ -184,6 +184,10 @@ export function balanceAt(rows, at, offsetMinutes) {
   const apps = new Map();
   for (const row of rows) {
     if (row.created_at > at) continue;
+    // A phone usage report is a measurement of screen time, not a movement of wallet money.
+    // It shares the ledger so the meter has one source of truth, but it must never change
+    // what a child's wallets hold (owner decision: phone usage never debits earned minutes).
+    if (row.source_type === 'device_report') continue;
     const amount = signedMinutes(row);
     switch (row.wallet_scope) {
       case 'daily':

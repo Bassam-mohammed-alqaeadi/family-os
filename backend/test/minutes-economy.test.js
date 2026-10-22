@@ -237,3 +237,30 @@ test('migrations 130 to 133 are recorded in the manifest in order', () => {
   ]);
   assert.equal(names.includes('125_'), false, 'the reserved gap 125 is never used');
 });
+
+test('a phone usage report is a measurement and never changes a wallet', () => {
+  const instant = at('2026-10-14T12:00:00Z');
+  const rows = [
+    row({
+      wallet_scope: 'free',
+      minutes: 20,
+      channel: 'athkar',
+      created_at: at('2026-10-14T10:00:00Z'),
+    }),
+    row({
+      entry_kind: 'consumption',
+      channel: 'usage_consumption',
+      wallet_scope: 'daily',
+      minutes: 40,
+      credit_ref: null,
+      source_type: 'device_report',
+      created_at: at('2026-10-14T11:00:00Z'),
+    }),
+  ];
+  const balance = balanceAt(rows, instant, OFFSET);
+  assert.equal(balance.total, 20);
+  assert.equal(balance.free, 20);
+  assert.equal(balance.daily, 0);
+  assert.equal(creditSources(rows, instant, OFFSET)[0].minutes, 20);
+});
+

@@ -15,6 +15,7 @@ The Server Minutes Economy governs family minute allowances, temporary pools, ap
 9. **Bounded Row Mutations**: All credit, draw, and transfer rows are bounded between 1 and 1440 minutes per entry.
 10. **Audited Reversals**: A reversal is recorded as a distinct row by the primary guardian only, requires an explanation of 1 to 500 characters, and cannot exceed the credit's remaining unspent balance.
 11. **Client Isolation**: Client-side production code in Flutter (`lib/`) is prohibited from performing local earn/deposit calculations or using simulated wallet states.
+12. **Measurement Is Not Money**: a device usage report (`source_type = 'device_report'`) never participates in a wallet balance; it feeds only the phone meter and the daily-limit state.
 
 ## Owned Files
 - `backend/migrations/130_family_minute_wallets.sql`
