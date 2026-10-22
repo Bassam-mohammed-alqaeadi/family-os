@@ -2374,6 +2374,25 @@ test('the family sets the minutes, the phone reports what it measured, and only 
         assert.equal(stale.status, 409);
         assert.equal(stale.body.error.code, 'screen_time_stale_version');
 
+        // Guardian can toggle earnedMinutesExtendLimit
+        const switchOn = await jsonRequest(baseUrl, screenPath, {
+          method: 'PATCH',
+          headers: guard('w5a-policy-switch-on'),
+          body: { earnedMinutesExtendLimit: true },
+        });
+        assert.equal(switchOn.status, 200);
+        assert.equal(switchOn.body.policy.earnedMinutesExtendLimit, true);
+        assert.equal(switchOn.body.policy.version, 3);
+
+        // A child cannot change the policy (403 screen_time_forbidden)
+        const childAttempt = await jsonRequest(baseUrl, screenPath, {
+          method: 'PATCH',
+          headers: authorized('test-child', { 'idempotency-key': 'w5a-policy-child-forbidden' }),
+          body: { earnedMinutesExtendLimit: false },
+        });
+        assert.equal(childAttempt.status, 403);
+        assert.equal(childAttempt.body.error.code, 'screen_time_forbidden');
+
         // 4. The handset reports what it measured and what is installed, in one call. The
         //    response is the same state a guardian reads, computed from the same rows.
         const report = (key, body) =>

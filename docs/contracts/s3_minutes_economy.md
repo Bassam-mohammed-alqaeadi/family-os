@@ -20,6 +20,7 @@ The Server Minutes Economy governs family minute allowances, temporary pools, ap
 - `backend/migrations/130_family_minute_wallets.sql`
 - `backend/migrations/131_family_minute_ledger.sql`
 - `backend/migrations/132_tasks_minutes_reward.sql`
+- `backend/db/migrations/133_screen_time_earned_minutes_switch.sql`
 - `backend/src/minutes-economy.js`
 - `app/lib/core/policy/wallet_ledger.dart`
 - `app/lib/features/n17_child_learn/child_wallet_repository.dart`
@@ -48,7 +49,7 @@ The Server Minutes Economy governs family minute allowances, temporary pools, ap
   - `Quran and education surfaces are never countable (S-1)`
   - `guardian channels can never be earned by a child, and earn channels are a subset`
   - `the JS vocabularies match the CHECK lists in migration 130 exactly`
-  - `migrations 130 to 132 are recorded in the manifest in order`
+  - `migrations 130 to 133 are recorded in the manifest in order`
 - `app/test/s3/minutes_static_guard_test.dart`:
   - `no minute write (earn / deposit) exists in lib/ outside the ledger`
   - `the local ledger is constructed only inside its own file`

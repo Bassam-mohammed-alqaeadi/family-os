@@ -146,6 +146,7 @@ export const DEFAULT_POLICY = Object.freeze({
   bedtimeStartMinute: 1260,
   bedtimeEndMinute: 360,
   timezoneOffsetMinutes: 180,
+  earnedMinutesExtendLimit: false,
 });
 
 // ---------------------------------------------------------------------------------------
@@ -301,6 +302,7 @@ export function policyFromRow(row) {
     bedtimeStartMinute: row.bedtime_start_minute,
     bedtimeEndMinute: row.bedtime_end_minute,
     timezoneOffsetMinutes: row.timezone_offset_minutes,
+    earnedMinutesExtendLimit: row.earned_minutes_extend_limit ?? false,
   };
 }
 
@@ -315,6 +317,7 @@ export function mergePolicy(base, patch) {
   const merged = { ...base };
   if (patch.dailyLimitMinutes !== undefined) merged.dailyLimitMinutes = patch.dailyLimitMinutes;
   if (patch.timezoneOffsetMinutes !== undefined) merged.timezoneOffsetMinutes = patch.timezoneOffsetMinutes;
+  if (patch.earnedMinutesExtendLimit !== undefined) merged.earnedMinutesExtendLimit = patch.earnedMinutesExtendLimit;
   if (patch.schoolMode !== undefined) {
     const { enabled, days, startMinute, endMinute } = patch.schoolMode;
     merged.schoolModeEnabled = enabled ?? base.schoolModeEnabled;
@@ -378,6 +381,7 @@ export function screenTimePolicyView(row, childId = null) {
         endMinute: DEFAULT_POLICY.bedtimeEndMinute,
       }),
       timezoneOffsetMinutes: DEFAULT_POLICY.timezoneOffsetMinutes,
+      earnedMinutesExtendLimit: DEFAULT_POLICY.earnedMinutesExtendLimit,
       version: null,
       updatedAt: null,
     });
@@ -397,6 +401,7 @@ export function screenTimePolicyView(row, childId = null) {
       endMinute: row.bedtime_end_minute,
     }),
     timezoneOffsetMinutes: row.timezone_offset_minutes,
+    earnedMinutesExtendLimit: row.earned_minutes_extend_limit ?? false,
     version: row.version,
     updatedAt: row.updated_at,
   });
@@ -582,6 +587,9 @@ export function createScreenTimePolicyUpdate({ port }) {
           subjectId: childId,
           subjectType: 'screen_time_policy',
           eventType: 'family.screen_time_policy_updated',
+          payload: {
+            earnedMinutesExtendLimit: row.earned_minutes_extend_limit ?? merged.earnedMinutesExtendLimit,
+          },
         });
         return { policy: screenTimePolicyView(row) };
       },
@@ -1163,7 +1171,8 @@ export function createDeviceScreenTimeRead({ port, now = () => new Date() }) {
 
 const POLICY_COLUMNS = `child_id, family_id, daily_limit_minutes, school_mode_enabled, school_days,
                         school_start_minute, school_end_minute, bedtime_start_minute,
-                        bedtime_end_minute, timezone_offset_minutes, version, updated_at`;
+                        bedtime_end_minute, timezone_offset_minutes, earned_minutes_extend_limit,
+                        version, updated_at`;
 
 const RULE_COLUMNS = `id, family_id, child_id, app_id, status, limit_minutes, unlimited, version,
                       updated_at`;
@@ -1219,8 +1228,8 @@ export function postgresScreenTimePort(store, { credentialMatches }) {
         `INSERT INTO family_child_screen_time_policies
            (child_id, family_id, daily_limit_minutes, school_mode_enabled, school_days,
             school_start_minute, school_end_minute, bedtime_start_minute, bedtime_end_minute,
-            timezone_offset_minutes, updated_by_membership_id)
-         VALUES ($1, $2, $3, $4, $5::smallint[], $6, $7, $8, $9, $10, $11)
+            timezone_offset_minutes, earned_minutes_extend_limit, updated_by_membership_id)
+         VALUES ($1, $2, $3, $4, $5::smallint[], $6, $7, $8, $9, $10, $11, $12)
          ON CONFLICT (child_id) DO UPDATE
             SET daily_limit_minutes = EXCLUDED.daily_limit_minutes,
                 school_mode_enabled = EXCLUDED.school_mode_enabled,
@@ -1230,6 +1239,7 @@ export function postgresScreenTimePort(store, { credentialMatches }) {
                 bedtime_start_minute = EXCLUDED.bedtime_start_minute,
                 bedtime_end_minute = EXCLUDED.bedtime_end_minute,
                 timezone_offset_minutes = EXCLUDED.timezone_offset_minutes,
+                earned_minutes_extend_limit = EXCLUDED.earned_minutes_extend_limit,
                 updated_by_membership_id = EXCLUDED.updated_by_membership_id,
                 version = family_child_screen_time_policies.version + 1,
                 updated_at = NOW()
@@ -1245,6 +1255,7 @@ export function postgresScreenTimePort(store, { credentialMatches }) {
           policy.bedtimeStartMinute,
           policy.bedtimeEndMinute,
           policy.timezoneOffsetMinutes,
+          policy.earnedMinutesExtendLimit ?? false,
           actorMembershipId,
         ],
       );
@@ -1499,7 +1510,7 @@ export function postgresScreenTimePort(store, { credentialMatches }) {
 
     credentialMatches,
 
-    async audit(client, { familyId, actorMembershipId, correlationId, subjectId, subjectType, eventType }) {
+    async audit(client, { familyId, actorMembershipId, correlationId, subjectId, subjectType, eventType, payload = {} }) {
       await store.appendAuditAndOutbox(client, {
         familyId,
         actorMembershipId,
@@ -1507,6 +1518,7 @@ export function postgresScreenTimePort(store, { credentialMatches }) {
         eventType,
         subjectType,
         subjectId,
+        payload,
       });
     },
   };

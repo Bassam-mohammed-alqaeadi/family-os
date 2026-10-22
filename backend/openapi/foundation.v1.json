@@ -11534,10 +11534,15 @@
           "schoolMode",
           "bedtime",
           "timezoneOffsetMinutes",
+          "earnedMinutesExtendLimit",
           "version",
           "updatedAt"
         ],
         "properties": {
+          "earnedMinutesExtendLimit": {
+            "type": "boolean",
+            "description": "True when the guardian allows earned minutes to extend the daily phone limit. Default false."
+          },
           "childId": {
             "$ref": "#/components/schemas/Uuid"
           },
@@ -11627,6 +11632,9 @@
         "type": "object",
         "minProperties": 1,
         "properties": {
+          "earnedMinutesExtendLimit": {
+            "type": "boolean"
+          },
           "dailyLimitMinutes": {
             "type": "integer",
             "minimum": 0,

@@ -225,12 +225,15 @@ test('the JS vocabularies match the CHECK lists in migration 130 exactly', async
   assert.deepEqual([...WALLET_SCOPES].sort(), listAfter('wallet_scope TEXT NOT NULL CHECK (wallet_scope IN').sort());
 });
 
-test('migrations 130 to 132 are recorded in the manifest in order', () => {
+test('migrations 130 to 133 are recorded in the manifest in order', () => {
   const names = FOUNDATION_SCHEMA_MIGRATIONS.map((migration) => migration.name);
-  assert.deepEqual(names.slice(-3), [
+  const start = names.indexOf('130_family_minutes_ledger.sql');
+  assert.notEqual(start, -1, 'migration 130 is recorded');
+  assert.deepEqual(names.slice(start, start + 4), [
     '130_family_minutes_ledger.sql',
     '131_family_app_wallets.sql',
     '132_point_ledger_to_minutes.sql',
+    '133_screen_time_earned_minutes_switch.sql',
   ]);
   assert.equal(names.includes('125_'), false, 'the reserved gap 125 is never used');
 });

@@ -24,6 +24,8 @@ import {
   isCountable,
   remainingMinutes,
   windowContains,
+  createScreenTimePolicyUpdate,
+  screenTimePolicyView,
 } from '../src/screen-time.js';
 
 const policy = (overrides = {}) => ({ ...DEFAULT_POLICY, ...overrides });
@@ -269,4 +271,80 @@ test('the published defaults are the ones a screen may show before a family deci
   assert.equal(DEFAULT_POLICY.schoolEndMinute, 840);
   assert.equal(DEFAULT_POLICY.bedtimeStartMinute, 1260);
   assert.equal(DEFAULT_POLICY.bedtimeEndMinute, 360);
+});
+
+test('guardian PATCH sets earnedMinutesExtendLimit true/false; default is false for a child with no policy row; a child/handset cannot change it (403)', async () => {
+  // 1. DEFAULT_POLICY and unconfigured policy view must default earnedMinutesExtendLimit to false
+  assert.equal(DEFAULT_POLICY.earnedMinutesExtendLimit, false);
+  const unconfigured = screenTimePolicyView(null, 'child-1');
+  assert.equal(unconfigured.earnedMinutesExtendLimit, false);
+  assert.equal(unconfigured.configured, false);
+
+  // 2. Policy update port mock
+  let storedRow = null;
+  let auditedPayload = null;
+  const mockPort = {
+    idempotent: async (_scope, _key, _hash, fn) => fn({}),
+    authorize: async (_tx, { subject }) => {
+      if (subject === 'child-sub' || subject === 'device-sub') {
+        return { id: 'm-child', role: 'child' };
+      }
+      return { id: 'm-guardian', role: 'primary_guardian' };
+    },
+    readPolicy: async () => storedRow,
+    readChild: async () => ({ id: 'child-1' }),
+    upsertPolicy: async (_tx, { policy: pol }) => {
+      storedRow = {
+        child_id: 'child-1',
+        daily_limit_minutes: pol.dailyLimitMinutes,
+        school_mode_enabled: pol.schoolModeEnabled,
+        school_days: pol.schoolDays,
+        school_start_minute: pol.schoolStartMinute,
+        school_end_minute: pol.schoolEndMinute,
+        bedtime_start_minute: pol.bedtimeStartMinute,
+        bedtime_end_minute: pol.bedtimeEndMinute,
+        timezone_offset_minutes: pol.timezoneOffsetMinutes,
+        earned_minutes_extend_limit: pol.earnedMinutesExtendLimit,
+        version: 1,
+        updated_at: new Date(),
+      };
+      return storedRow;
+    },
+    audit: async (_tx, event) => {
+      auditedPayload = event;
+    },
+  };
+
+  const update = createScreenTimePolicyUpdate({ port: mockPort });
+
+  // Guardian updates earnedMinutesExtendLimit to true
+  const res = await update({
+    principal: { subject: 'guardian-sub' },
+    familyId: 'fam-1',
+    childId: 'child-1',
+    policy: { earnedMinutesExtendLimit: true },
+    idempotencyKey: 'k1',
+    requestHash: 'h1',
+    correlationId: 'c1',
+  });
+  assert.equal(res.policy.earnedMinutesExtendLimit, true);
+  assert.equal(storedRow.earned_minutes_extend_limit, true);
+  assert.equal(auditedPayload.eventType, 'family.screen_time_policy_updated');
+  assert.equal(auditedPayload.payload.earnedMinutesExtendLimit, true);
+
+  // Child / handset caller cannot change it -> 403 screen_time_forbidden
+  await assert.rejects(
+    async () => {
+      await update({
+        principal: { subject: 'child-sub' },
+        familyId: 'fam-1',
+        childId: 'child-1',
+        policy: { earnedMinutesExtendLimit: false },
+        idempotencyKey: 'k2',
+        requestHash: 'h2',
+        correlationId: 'c2',
+      });
+    },
+    (err) => err.status === 403 && err.code === 'screen_time_forbidden',
+  );
 });

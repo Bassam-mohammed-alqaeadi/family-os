@@ -817,10 +817,18 @@ export function screenTimePolicyInput(value) {
       'schoolMode',
       'bedtime',
       'timezoneOffsetMinutes',
+      'earnedMinutesExtendLimit',
       'expectedVersion',
     ]),
   );
   const policy = {};
+  if (body.earnedMinutesExtendLimit !== undefined) {
+    policy.earnedMinutesExtendLimit = optionalBoolean(
+      body.earnedMinutesExtendLimit,
+      'earnedMinutesExtendLimit',
+      false,
+    );
+  }
   if (body.dailyLimitMinutes !== undefined) {
     policy.dailyLimitMinutes = requiredWholeNumber(
       body.dailyLimitMinutes,
