@@ -5113,3 +5113,90 @@ test('S3 D3: the minutes routes over HTTP - who may write, which fields are refu
   });
 });
 
+test('phone usage counts what the handset measured, not what a wallet already paid for', { skip }, async () => {
+  await withFreshDatabase(async (client) => {
+    await migrate(client);
+    const store = new PostgresFoundationStore({
+      connectionString: withDatabase(DATABASE_URL, client.database),
+    });
+    const app = createApp({
+      store,
+      authVerifier: new TestAuthVerifier(),
+      readiness: () => ({ ready: true, missing: [] }),
+    });
+    try {
+      await withServer(app, async (baseUrl) => {
+        const household = await seedScreenTimeFamily(baseUrl, client, 'w5c');
+        const { familyId, childId, deviceId, deviceAuth } = household;
+        const screenPath = `/v1/families/${familyId}/children/${childId}/screen-time`;
+        const minutesPath = `/v1/families/${familyId}/children/${childId}/minutes`;
+
+        // 2. PATCH screen-time with dailyLimitMinutes: 60 (earned_minutes_extend_limit remains default false)
+        const patched = await jsonRequest(baseUrl, screenPath, {
+          method: 'PATCH',
+          headers: authorized('test-primary', { 'idempotency-key': 'w5c-policy-1' }),
+          body: { dailyLimitMinutes: 60 },
+        });
+        assert.equal(patched.status, 200, JSON.stringify(patched.body));
+
+        // 3. Handset reports initial zero usage and declares app in child inventory
+        const initialReport = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/screen-time`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w5c-report-0' },
+          body: {
+            usage: [{ appId: 'com.w5c.game', usedMinutes: 0 }],
+            apps: [{ appId: 'com.w5c.game', displayName: 'لعبة', category: 'games' }],
+          },
+        });
+        assert.equal(initialReport.status, 201, JSON.stringify(initialReport.body));
+
+        // 4. Primary guardian grants 30 to app wallet
+        const granted = await jsonRequest(baseUrl, `${minutesPath}/grants`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w5c-grant-1' }),
+          body: { minutes: 30, scope: 'app', appId: 'com.w5c.game', reason: 'w5c' },
+        });
+        assert.equal(granted.status, 201, JSON.stringify(granted.body));
+
+        // 5. Child device consumes 10 from app wallet
+        const spent = await jsonRequest(baseUrl, `${minutesPath}/consume`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w5c-consume-1' },
+          body: { appId: 'com.w5c.game', minutes: 10, sessionId: 'w5c-session-1' },
+        });
+        assert.equal(spent.status, 201, JSON.stringify(spent.body));
+
+        // 6. Handset reports 40 minutes usage
+        const reportUsage = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/screen-time`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w5c-report-40' },
+          body: {
+            usage: [{ appId: 'com.w5c.game', usedMinutes: 40 }],
+            apps: [],
+          },
+        });
+        assert.equal(reportUsage.status, 201, JSON.stringify(reportUsage.body));
+
+        // 7. GET screen-time policy & usage
+        const read = await jsonRequest(baseUrl, screenPath, {
+          headers: authorized('test-primary'),
+        });
+        assert.equal(read.status, 200, JSON.stringify(read.body));
+        assert.equal(
+          read.body.usage.countableUsedMinutes,
+          40,
+          'a wallet spend must not be counted as phone usage twice',
+        );
+        assert.equal(
+          read.body.state.remainingMinutes,
+          20,
+          'a wallet spend must not be counted as phone usage twice',
+        );
+      });
+    } finally {
+      await store.close();
+    }
+  });
+});
+
+

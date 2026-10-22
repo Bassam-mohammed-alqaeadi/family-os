@@ -1534,6 +1534,8 @@ export function postgresScreenTimePort(store, { credentialMatches }) {
           WHERE child_id = $1
             AND entry_kind = 'consumption'
             AND channel = 'usage_consumption'
+            AND source_type = 'device_report'
+            AND wallet_scope = 'daily'
             AND (created_at AT TIME ZONE 'UTC' + ($2 || ' minutes')::interval)::date = $3::date`,
         [childId, timezoneOffsetMinutes, usageDate],
       );
