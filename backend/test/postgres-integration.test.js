@@ -2709,8 +2709,8 @@ test('the family sets the minutes, the phone reports what it measured, and only 
         await assert.rejects(
           () => client.query(
             `INSERT INTO family_child_app_usage_daily (id, family_id, child_id, app_id, usage_date, used_minutes)
-             VALUES (gen_random_uuid(), $1, $2, 'com.example.puzzle', CURRENT_DATE, 5)`,
-            [familyId, childId],
+             VALUES (gen_random_uuid(), $1, $2, 'com.example.puzzle', $3, 5)`,
+            [familyId, childId, familyLocalParts(new Date(), household.timezoneOffsetMinutes).date],
           ),
           /duplicate key value violates unique constraint/i,
           'one row per app per day is what makes a cumulative figure trustworthy',
@@ -3036,8 +3036,8 @@ test('the lock has an author, the question has an answer, and the credential is 
             `INSERT INTO family_child_time_requests
                (id, family_id, child_id, usage_date, requested_minutes, requested_by_kind,
                 expires_at)
-             VALUES (gen_random_uuid(), $1, $2, CURRENT_DATE, 10, 'guardian', NOW() + INTERVAL '1 hour')`,
-            [familyId, childId],
+             VALUES (gen_random_uuid(), $1, $2, $3, 10, 'guardian', NOW() + INTERVAL '1 hour')`,
+            [familyId, childId, familyLocalParts(new Date(), household.timezoneOffsetMinutes).date],
           ),
           /violates check constraint/i,
           'a request attributed to a guardian must name the guardian',
@@ -3047,8 +3047,8 @@ test('the lock has an author, the question has an answer, and the credential is 
             `INSERT INTO family_child_time_requests
                (id, family_id, child_id, usage_date, requested_minutes, requested_by_kind,
                 requested_by_membership_id, expires_at)
-             VALUES (gen_random_uuid(), $1, $2, CURRENT_DATE, 10, 'child', $3, NOW() + INTERVAL '1 hour')`,
-            [familyId, childId, household.primaryMembershipId],
+             VALUES (gen_random_uuid(), $1, $2, $3, 10, 'child', $4, NOW() + INTERVAL '1 hour')`,
+            [familyId, childId, familyLocalParts(new Date(), household.timezoneOffsetMinutes).date, household.primaryMembershipId],
           ),
           /violates check constraint/i,
           "a request from the child's own handset does not name a guardian",
@@ -5198,5 +5198,104 @@ test('phone usage counts what the handset measured, not what a wallet already pa
     }
   });
 });
+
+test('the earned-minutes switch changes the phone\'s remaining minutes and never touches the earned balance', { skip }, async () => {
+  await withFreshDatabase(async (client) => {
+    await migrate(client);
+    const store = new PostgresFoundationStore({
+      connectionString: withDatabase(DATABASE_URL, client.database),
+    });
+    const app = createApp({
+      store,
+      authVerifier: new TestAuthVerifier(),
+      readiness: () => ({ ready: true, missing: [] }),
+    });
+    try {
+      await withServer(app, async (baseUrl) => {
+        const household = await seedScreenTimeFamily(baseUrl, client, 'w5d');
+        const { familyId, childId, deviceId, deviceAuth } = household;
+        const screenPath = `/v1/families/${familyId}/children/${childId}/screen-time`;
+        const minutesPath = `/v1/families/${familyId}/children/${childId}/minutes`;
+
+        // 2. PATCH screen-time { dailyLimitMinutes: 60, timezoneOffsetMinutes: household.timezoneOffsetMinutes }
+        const patchPolicy = await jsonRequest(baseUrl, screenPath, {
+          method: 'PATCH',
+          headers: authorized('test-primary', { 'idempotency-key': 'w5d-policy-1' }),
+          body: {
+            dailyLimitMinutes: 60,
+            timezoneOffsetMinutes: household.timezoneOffsetMinutes,
+          },
+        });
+        assert.equal(patchPolicy.status, 200, JSON.stringify(patchPolicy.body));
+
+        // 3. Grant 20 earned minutes by primary guardian
+        const earnRes = await jsonRequest(baseUrl, `${minutesPath}/earn`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w5d-earn-1' }),
+          body: {
+            channel: 'quran_portion',
+            minutes: 20,
+            source: { type: 'quran', id: 'w5d-quran-1' },
+          },
+        });
+        assert.equal(earnRes.status, 201, JSON.stringify(earnRes.body));
+
+        // 4. Device reports 40 minutes usage for entertainment app
+        const report = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/screen-time`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w5d-report-1' },
+          body: {
+            usage: [{ appId: 'com.w5d.game', usedMinutes: 40 }],
+            apps: [{ appId: 'com.w5d.game', displayName: 'لعبة ترفيهية', category: 'games' }],
+          },
+        });
+        assert.equal(report.status, 201, JSON.stringify(report.body));
+
+        // 5. GET screen-time -> remainingMinutes === 20 (switch is false)
+        const read1 = await jsonRequest(baseUrl, screenPath, {
+          headers: authorized('test-primary'),
+        });
+        assert.equal(read1.status, 200, JSON.stringify(read1.body));
+        assert.equal(read1.body.state.remainingMinutes, 20, 'when switch is off, remaining is 60 - 40 = 20');
+
+        // 6. PATCH { earnedMinutesExtendLimit: true } -> remainingMinutes === 40
+        const patchTrue = await jsonRequest(baseUrl, screenPath, {
+          method: 'PATCH',
+          headers: authorized('test-primary', { 'idempotency-key': 'w5d-policy-switch-on' }),
+          body: { earnedMinutesExtendLimit: true },
+        });
+        assert.equal(patchTrue.status, 200, JSON.stringify(patchTrue.body));
+        const read2 = await jsonRequest(baseUrl, screenPath, {
+          headers: authorized('test-primary'),
+        });
+        assert.equal(read2.status, 200, JSON.stringify(read2.body));
+        assert.equal(read2.body.state.remainingMinutes, 40, 'when switch is on, remaining is 60 + 20 - 40 = 40');
+
+        // 7. PATCH { earnedMinutesExtendLimit: false } -> remainingMinutes === 20
+        const patchFalse = await jsonRequest(baseUrl, screenPath, {
+          method: 'PATCH',
+          headers: authorized('test-primary', { 'idempotency-key': 'w5d-policy-switch-off' }),
+          body: { earnedMinutesExtendLimit: false },
+        });
+        assert.equal(patchFalse.status, 200, JSON.stringify(patchFalse.body));
+        const read3 = await jsonRequest(baseUrl, screenPath, {
+          headers: authorized('test-primary'),
+        });
+        assert.equal(read3.status, 200, JSON.stringify(read3.body));
+        assert.equal(read3.body.state.remainingMinutes, 20, 'when switch is toggled back off, remaining is 60 - 40 = 20');
+
+        // 8. GET .../minutes/balance -> total === 20
+        const balance = await jsonRequest(baseUrl, `${minutesPath}/balance`, {
+          headers: authorized('test-primary'),
+        });
+        assert.equal(balance.status, 200, JSON.stringify(balance.body));
+        assert.equal(balance.body.total, 20, 'phone consumption against daily limit never touches the earned wallet balance');
+      });
+    } finally {
+      await store.close();
+    }
+  });
+});
+
 
 
