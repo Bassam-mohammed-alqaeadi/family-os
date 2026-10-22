@@ -26,6 +26,7 @@ import {
   windowContains,
   createScreenTimePolicyUpdate,
   createTimeRequestDecision,
+  createDeviceScreenTimeReport,
   screenTimePolicyView,
 } from '../src/screen-time.js';
 
@@ -503,4 +504,156 @@ test('approving a time request writes a temporary credit row to the ledger, and 
   });
   assert.equal(res3.request.status, 'approved');
   assert.equal(ledgerRows.length, 1, 'approval with 0 minutes writes NO ledger row');
+});
+
+test('device usage report writes ledger consumption for delta, ignoring zero/negative deltas', async () => {
+  const consumptionRows = [];
+  const storedUsage = new Map(); // key: `${childId}:${appId}:${usageDate}` -> row
+  const storedApps = new Map();
+
+  const mockPort = {
+    idempotent: async (_scope, _key, _hash, fn) => fn({}),
+    readReportingDevice: async () => ({
+      id: 'dev-1',
+      family_id: 'fam-1',
+      child_id: 'child-1',
+      credential_hash: 'hash-1',
+      credential_revoked_at: null,
+    }),
+    credentialMatches: () => true,
+    readChild: async () => ({ id: 'child-1' }),
+    expirePendingRequests: async () => {},
+    readPolicy: async () => ({
+      child_id: 'child-1',
+      family_id: 'fam-1',
+      daily_limit_minutes: 60,
+      timezone_offset_minutes: 180,
+      earned_minutes_extend_limit: false,
+      school_mode_enabled: false,
+      school_days: [],
+      school_start_minute: 480,
+      school_end_minute: 900,
+      bedtime_start_minute: 1260,
+      bedtime_end_minute: 360,
+      version: 1,
+      updated_at: new Date(),
+    }),
+    readUsageForDate: async (_tx, { childId, usageDate }) => {
+      const list = [];
+      for (const row of storedUsage.values()) {
+        if (row.child_id === childId && row.usage_date === usageDate) {
+          list.push(row);
+        }
+      }
+      return list;
+    },
+    readAppRules: async () => [
+      { app_id: 'com.game', status: 'allowed', category: 'games' },
+    ],
+    readGrantedMinutes: async () => 0,
+    readLiveLock: async () => null,
+    readPendingRequest: async () => null,
+    readApps: async () => [
+      { app_id: 'com.game', display_name: 'Game', category: 'games' },
+    ],
+    upsertUsage: async (_tx, { rows }) => {
+      for (const r of rows) {
+        const key = `${r.childId}:${r.appId}:${r.usageDate}`;
+        const existing = storedUsage.get(key);
+        const usedMinutes = existing ? Math.max(existing.used_minutes, r.usedMinutes) : r.usedMinutes;
+        storedUsage.set(key, {
+          id: r.id,
+          family_id: r.familyId,
+          child_id: r.childId,
+          app_id: r.appId,
+          usage_date: r.usageDate,
+          used_minutes: usedMinutes,
+          reported_by_device_id: r.deviceId,
+          reported_at: new Date(),
+          category: 'games',
+        });
+      }
+    },
+    upsertApps: async () => {},
+    recordUsageConsumption: async (_tx, entry) => {
+      consumptionRows.push(entry);
+    },
+  };
+
+  let mockTime = new Date('2026-10-22T10:00:00.000Z');
+  const report = createDeviceScreenTimeReport({
+    port: mockPort,
+    now: () => mockTime,
+  });
+
+  // 1. First report with 15 mins -> 1 row with minutes = 15
+  await report({
+    deviceCredential: 'cred',
+    deviceId: 'dev-1',
+    usage: [{ appId: 'com.game', usedMinutes: 15 }],
+    apps: [],
+    requestMinutes: null,
+    requestReasonCode: null,
+    idempotencyKey: 'k-rep-1',
+    requestHash: 'h-rep-1',
+    correlationId: 'c-rep-1',
+  });
+
+  assert.equal(consumptionRows.length, 1, 'first report with 15 mins inserts 1 row');
+  assert.equal(consumptionRows[0].family_id, 'fam-1');
+  assert.equal(consumptionRows[0].child_id, 'child-1');
+  assert.equal(consumptionRows[0].entry_kind, 'consumption');
+  assert.equal(consumptionRows[0].channel, 'usage_consumption');
+  assert.equal(consumptionRows[0].minutes, 15);
+  assert.equal(consumptionRows[0].wallet_scope, 'daily');
+  assert.equal(consumptionRows[0].source_type, 'device_report');
+
+  // 2. Second report with 15 mins -> 0 new rows (delta 0)
+  mockTime = new Date('2026-10-22T10:05:00.000Z');
+  await report({
+    deviceCredential: 'cred',
+    deviceId: 'dev-1',
+    usage: [{ appId: 'com.game', usedMinutes: 15 }],
+    apps: [],
+    requestMinutes: null,
+    requestReasonCode: null,
+    idempotencyKey: 'k-rep-2',
+    requestHash: 'h-rep-2',
+    correlationId: 'c-rep-2',
+  });
+  assert.equal(consumptionRows.length, 1, 'second report with same 15 mins writes 0 new rows');
+
+  // 3. Third report with 10 mins (handset clock reset) -> 0 new rows (delta 0, never negative)
+  mockTime = new Date('2026-10-22T10:10:00.000Z');
+  await report({
+    deviceCredential: 'cred',
+    deviceId: 'dev-1',
+    usage: [{ appId: 'com.game', usedMinutes: 10 }],
+    apps: [],
+    requestMinutes: null,
+    requestReasonCode: null,
+    idempotencyKey: 'k-rep-3',
+    requestHash: 'h-rep-3',
+    correlationId: 'c-rep-3',
+  });
+  assert.equal(consumptionRows.length, 1, 'third report with lower usage (10 mins) writes 0 new rows');
+
+  // 4. Fourth report with 25 mins -> 1 row with minutes = 10 (25 - 15)
+  mockTime = new Date('2026-10-22T10:15:00.000Z');
+  await report({
+    deviceCredential: 'cred',
+    deviceId: 'dev-1',
+    usage: [{ appId: 'com.game', usedMinutes: 25 }],
+    apps: [],
+    requestMinutes: null,
+    requestReasonCode: null,
+    idempotencyKey: 'k-rep-4',
+    requestHash: 'h-rep-4',
+    correlationId: 'c-rep-4',
+  });
+  assert.equal(consumptionRows.length, 2, 'fourth report with 25 mins inserts 1 row');
+  assert.equal(consumptionRows[1].minutes, 10, 'delta is 25 - 15 = 10');
+  assert.equal(consumptionRows[1].channel, 'usage_consumption');
+  assert.equal(consumptionRows[1].entry_kind, 'consumption');
+  assert.equal(consumptionRows[1].wallet_scope, 'daily');
 });

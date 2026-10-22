@@ -1086,6 +1086,11 @@ export function createDeviceScreenTimeReport({ port, now = () => new Date() }) {
           new Date(reportedAt.getTime() - 48 * 60 * 60 * 1000),
           offset,
         ).date;
+
+        const oldUsage = await port.readUsageForDate(tx, { childId, usageDate: today });
+        const appRules = await port.readAppRules(tx, { childId });
+        const oldTotalCountable = countableMinutes({ usage: oldUsage, rules: appRules });
+
         const rows = [];
         for (const entry of usage) {
           const usageDate = entry.date ?? today;
@@ -1107,6 +1112,24 @@ export function createDeviceScreenTimeReport({ port, now = () => new Date() }) {
           });
         }
         if (rows.length > 0) await port.upsertUsage(tx, { rows });
+
+        const newUsage = await port.readUsageForDate(tx, { childId, usageDate: today });
+        const newTotalCountable = countableMinutes({ usage: newUsage, rules: appRules });
+        const delta = Math.max(0, newTotalCountable - oldTotalCountable);
+
+        if (delta > 0 && port.recordUsageConsumption) {
+          await port.recordUsageConsumption(tx, {
+            family_id: familyId,
+            child_id: childId,
+            entry_kind: 'consumption',
+            channel: 'usage_consumption',
+            minutes: delta,
+            source_type: 'device_report',
+            source_id: `${deviceId}:${reportedAt.toISOString()}`,
+            wallet_scope: 'daily',
+            deviceId,
+          });
+        }
         if (apps.length > 0) {
           await port.upsertApps(tx, {
             rows: apps.map((entry) => ({
@@ -1537,6 +1560,28 @@ export function postgresScreenTimePort(store, { credentialMatches }) {
             NOW(), NULL)
          ON CONFLICT (child_id, source_type, source_id) DO NOTHING`,
         [family_id, child_id, minutes, expires_at, source_id, actorMembershipId],
+      );
+    },
+
+    async recordUsageConsumption(client, {
+      family_id,
+      child_id,
+      minutes,
+      source_id,
+      deviceId,
+    }) {
+      await client.query(
+        `INSERT INTO family_minutes_ledger
+           (id, family_id, child_id, entry_kind, channel, minutes, wallet_scope, app_id,
+            expires_at, source_type, source_id, actor_membership_id, awarded_by_device_id,
+            balance_after_minutes, created_at, credit_ref)
+         VALUES
+           (gen_random_uuid(), $1, $2, 'consumption', 'usage_consumption', $3, 'daily', NULL,
+            NULL, 'device_report', $4, NULL, $5,
+            GREATEST(0, COALESCE((SELECT balance_after_minutes FROM family_minutes_ledger WHERE child_id = $2 ORDER BY created_at DESC, id DESC LIMIT 1), 0) - $3),
+            NOW(), NULL)
+         ON CONFLICT (child_id, source_type, source_id) DO NOTHING`,
+        [family_id, child_id, minutes, source_id, deviceId],
       );
     },
 
