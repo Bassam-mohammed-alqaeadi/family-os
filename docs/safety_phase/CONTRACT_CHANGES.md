@@ -7,5 +7,6 @@
 - **2026-10-22 | w5_screen_time, s3_minutes_economy:** إضافة عمود ومفتاح earned_minutes_extend_limit (الهجرة 133) في سياسة وقت الشاشة لدعم جسر D4.
 - **2026-10-22 | w5_screen_time, s3_minutes_economy:** تسجيل رصيد الائتمان المؤقت في جدول family_minutes_ledger عند موافقة ولي الأمر على طلب الوقت (Step 2 - time_request_grant).
 - **2026-10-22 | w5_screen_time, s3_minutes_economy:** تسجيل استهلاك وقت الشاشة للهاتف كـ consumption في family_minutes_ledger بحساب الـ delta (الهجرة 134 لتعديل قيد credit_ref).
+- **2026-10-22 | w5_screen_time, s3_minutes_economy:** توحيد معادلة رصيد الشاشة المتبقي Remaining = max(0, dailyLimitMinutes + activeGrants - phoneConsumption) وقراءة الرصيد الممنوح والاستهلاك من سجل الدقائق (Step 4).
 - **2026-10-20 | app_shell_and_gate, w2_child_device_lifecycle:** إغلاق ثغرات الاختبارات وإضافة حارس mounted ونقل مستمع الإبطال إلى ما بعد تحميل الإطار (commit `8f0417f`).
 - **2026-10-21 | w2_child_device_lifecycle:** debug builds no longer send mock-location heartbeats, matching release.

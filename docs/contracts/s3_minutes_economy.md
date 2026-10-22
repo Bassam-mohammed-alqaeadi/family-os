@@ -54,6 +54,7 @@ The Server Minutes Economy governs family minute allowances, temporary pools, ap
 - `backend/test/screen-time.test.js`:
   - `approving a time request writes a temporary credit row to the ledger, and duplicates are refused`
   - `device usage report writes ledger consumption for delta, ignoring zero/negative deltas`
+  - `single formula for remaining minutes and phone state (worked example)`
 - `app/test/s3/minutes_static_guard_test.dart`:
   - `no minute write (earn / deposit) exists in lib/ outside the ledger`
   - `the local ledger is constructed only inside its own file`

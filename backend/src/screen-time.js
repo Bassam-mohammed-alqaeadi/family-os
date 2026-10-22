@@ -166,41 +166,68 @@ export function evaluateScreenState({
   policy,
   countableUsedMinutes = 0,
   grantedMinutes = 0,
+  activeGrants = null,
+  phoneConsumption = null,
+  earnedMinutes = 0,
+  grantMinutes = null,
   lock = null,
   now = new Date(),
 }) {
   const local = familyLocalParts(now, policy.timezoneOffsetMinutes);
+  const effectiveGrants = activeGrants !== null
+    ? activeGrants
+    : (grantMinutes !== null ? grantMinutes : grantedMinutes) + (policy.earnedMinutesExtendLimit ? earnedMinutes : 0);
+  const effectiveConsumption = phoneConsumption !== null ? phoneConsumption : countableUsedMinutes;
+
   if (lock != null) {
-    return stateView('blocked', 'instant_lock', { lock, local, policy, countableUsedMinutes, grantedMinutes });
+    return stateView('blocked', 'instant_lock', { lock, local, policy, effectiveGrants, effectiveConsumption });
   }
   if (windowContains(policy.bedtimeStartMinute, policy.bedtimeEndMinute, local.minuteOfDay)) {
-    return stateView('blocked', 'bedtime', { lock, local, policy, countableUsedMinutes, grantedMinutes });
+    return stateView('blocked', 'bedtime', { lock, local, policy, effectiveGrants, effectiveConsumption });
   }
   if (
     policy.schoolModeEnabled &&
     policy.schoolDays.includes(local.weekday) &&
     windowContains(policy.schoolStartMinute, policy.schoolEndMinute, local.minuteOfDay)
   ) {
-    return stateView('blocked', 'school_mode', { lock, local, policy, countableUsedMinutes, grantedMinutes });
+    return stateView('blocked', 'school_mode', { lock, local, policy, effectiveGrants, effectiveConsumption });
   }
-  const remaining = remainingMinutes({ policy, countableUsedMinutes, grantedMinutes });
+  const remaining = remainingMinutes({
+    policy,
+    countableUsedMinutes: effectiveConsumption,
+    grantedMinutes: effectiveGrants,
+    activeGrants: effectiveGrants,
+    phoneConsumption: effectiveConsumption,
+  });
   if (policy.dailyLimitMinutes > 0 && remaining <= 0) {
-    return stateView('blocked', 'daily_limit', { lock, local, policy, countableUsedMinutes, grantedMinutes });
+    return stateView('blocked', 'daily_limit', { lock, local, policy, effectiveGrants, effectiveConsumption });
   }
   return stateView(
     policy.dailyLimitMinutes > 0 ? 'limited' : 'free',
     null,
-    { lock, local, policy, countableUsedMinutes, grantedMinutes },
+    { lock, local, policy, effectiveGrants, effectiveConsumption },
   );
 }
 
 /** Minutes left under the cap, or null when the family set no cap for the day. */
-export function remainingMinutes({ policy, countableUsedMinutes, grantedMinutes }) {
+export function remainingMinutes({
+  policy,
+  countableUsedMinutes = 0,
+  grantedMinutes = 0,
+  activeGrants = null,
+  phoneConsumption = null,
+  earnedMinutes = 0,
+  grantMinutes = null,
+}) {
   if (policy.dailyLimitMinutes <= 0) return null;
-  return Math.max(0, policy.dailyLimitMinutes + grantedMinutes - countableUsedMinutes);
+  const effectiveGrants = activeGrants !== null
+    ? activeGrants
+    : (grantMinutes !== null ? grantMinutes : grantedMinutes) + (policy.earnedMinutesExtendLimit ? earnedMinutes : 0);
+  const effectiveConsumption = phoneConsumption !== null ? phoneConsumption : countableUsedMinutes;
+  return Math.max(0, policy.dailyLimitMinutes + effectiveGrants - effectiveConsumption);
 }
 
-function stateView(kind, reasonCode, { lock, local, policy, countableUsedMinutes, grantedMinutes }) {
+function stateView(kind, reasonCode, { lock, local, policy, effectiveGrants, effectiveConsumption }) {
   return Object.freeze({
     kind,
     reasonCode,
@@ -211,9 +238,9 @@ function stateView(kind, reasonCode, { lock, local, policy, countableUsedMinutes
     minuteOfDay: local.minuteOfDay,
     weekday: local.weekday,
     capMinutes: policy.dailyLimitMinutes > 0 ? policy.dailyLimitMinutes : null,
-    grantedMinutes,
-    countableUsedMinutes,
-    remainingMinutes: remainingMinutes({ policy, countableUsedMinutes, grantedMinutes }),
+    grantedMinutes: effectiveGrants,
+    countableUsedMinutes: effectiveConsumption,
+    remainingMinutes: remainingMinutes({ policy, activeGrants: effectiveGrants, phoneConsumption: effectiveConsumption }),
     lock: lock == null ? null : lockView(lock),
   });
 }
@@ -483,9 +510,33 @@ async function readScreenTimeInside(port, tx, { familyId, childId, now }) {
   const usage = await port.readUsageForDate(tx, { childId, usageDate: local.date });
   const rules = await port.readAppRules(tx, { childId });
   const countableUsedMinutes = countableMinutes({ usage, rules });
-  const grantedMinutes = await port.readGrantedMinutes(tx, { childId, usageDate: local.date });
+  const grantedMinutes = await port.readGrantedMinutes(tx, {
+    childId,
+    usageDate: local.date,
+    earnedMinutesExtendLimit: policy.earnedMinutesExtendLimit,
+    timezoneOffsetMinutes: policy.timezoneOffsetMinutes,
+    now: now(),
+  });
+  let phoneConsumption = port.readPhoneConsumption
+    ? await port.readPhoneConsumption(tx, {
+        childId,
+        usageDate: local.date,
+        timezoneOffsetMinutes: policy.timezoneOffsetMinutes,
+      })
+    : 0;
+  if (phoneConsumption === 0 && countableUsedMinutes > 0) {
+    phoneConsumption = countableUsedMinutes;
+  }
   const lock = await port.readLiveLock(tx, { childId });
-  const state = evaluateScreenState({ policy, countableUsedMinutes, grantedMinutes, lock, now: now() });
+  const state = evaluateScreenState({
+    policy,
+    countableUsedMinutes: phoneConsumption,
+    grantedMinutes,
+    activeGrants: grantedMinutes,
+    phoneConsumption,
+    lock,
+    now: now(),
+  });
   const pending = await port.readPendingRequest(tx, { childId });
   return {
     childId,
@@ -495,7 +546,7 @@ async function readScreenTimeInside(port, tx, { familyId, childId, now }) {
     lock: lockView(lock),
     usage: Object.freeze({
       date: local.date,
-      countableUsedMinutes,
+      countableUsedMinutes: phoneConsumption,
       grantedMinutes,
       remainingMinutes: state.remainingMinutes,
       byApp: Object.freeze(
@@ -621,7 +672,20 @@ async function appsInside(port, tx, { familyId, childId, now }) {
   const policy = policyRow == null ? DEFAULT_POLICY : policyFromRow(policyRow);
   const local = familyLocalParts(now(), policy.timezoneOffsetMinutes);
   const usage = await port.readUsageForDate(tx, { childId, usageDate: local.date });
-  const grantedMinutes = await port.readGrantedMinutes(tx, { childId, usageDate: local.date });
+  const grantedMinutes = await port.readGrantedMinutes(tx, {
+    childId,
+    usageDate: local.date,
+    earnedMinutesExtendLimit: policy.earnedMinutesExtendLimit,
+    timezoneOffsetMinutes: policy.timezoneOffsetMinutes,
+    now: now(),
+  });
+  let phoneConsumption = port.readPhoneConsumption
+    ? await port.readPhoneConsumption(tx, {
+        childId,
+        usageDate: local.date,
+        timezoneOffsetMinutes: policy.timezoneOffsetMinutes,
+      })
+    : 0;
   const lock = await port.readLiveLock(tx, { childId });
   const rulesByApp = new Map(rules.map((rule) => [rule.app_id, rule]));
   const usageByApp = new Map(usage.map((entry) => [entry.app_id, entry.used_minutes]));
@@ -644,7 +708,18 @@ async function appsInside(port, tx, { familyId, childId, now }) {
     usage,
     rules: mergedRules.map((rule) => ({ ...rule, category: inventoryByApp.get(rule.app_id)?.category })),
   });
-  const state = evaluateScreenState({ policy, countableUsedMinutes, grantedMinutes, lock, now: now() });
+  if (phoneConsumption === 0 && countableUsedMinutes > 0) {
+    phoneConsumption = countableUsedMinutes;
+  }
+  const state = evaluateScreenState({
+    policy,
+    countableUsedMinutes: phoneConsumption,
+    grantedMinutes,
+    activeGrants: grantedMinutes,
+    phoneConsumption,
+    lock,
+    now: now(),
+  });
 
   return {
     childId,
@@ -1408,14 +1483,43 @@ export function postgresScreenTimePort(store, { credentialMatches }) {
       }
     },
 
-    async readGrantedMinutes(client, { childId, usageDate }) {
+    async readGrantedMinutes(client, { childId, usageDate, earnedMinutesExtendLimit = false, timezoneOffsetMinutes = 180, now = new Date() }) {
       const { rows } = await client.query(
+        `SELECT COALESCE(SUM(minutes), 0)::int AS granted
+           FROM family_minutes_ledger
+          WHERE child_id = $1
+            AND entry_kind = 'credit'
+            AND (
+              (channel = 'time_request_grant' AND (expires_at IS NULL OR expires_at > $2))
+              OR ($3::boolean = TRUE AND channel IN ('quran_portion', 'athkar', 'learning_challenge', 'family_task_child')
+                  AND (created_at AT TIME ZONE 'UTC' + ($4 || ' minutes')::interval)::date = $5::date)
+            )`,
+        [childId, now, earnedMinutesExtendLimit, timezoneOffsetMinutes, usageDate],
+      );
+      const ledgerGranted = rows[0]?.granted ?? 0;
+      if (ledgerGranted > 0) return ledgerGranted;
+
+      // Fallback for requests created prior to ledger or in legacy tests:
+      const { rows: legacyRows } = await client.query(
         `SELECT COALESCE(SUM(granted_minutes), 0)::int AS granted
            FROM family_child_time_requests
           WHERE child_id = $1 AND usage_date = $2 AND status = 'approved'`,
         [childId, usageDate],
       );
-      return rows[0]?.granted ?? 0;
+      return legacyRows[0]?.granted ?? 0;
+    },
+
+    async readPhoneConsumption(client, { childId, usageDate, timezoneOffsetMinutes = 180 }) {
+      const { rows } = await client.query(
+        `SELECT COALESCE(SUM(minutes), 0)::int AS consumed
+           FROM family_minutes_ledger
+          WHERE child_id = $1
+            AND entry_kind = 'consumption'
+            AND channel = 'usage_consumption'
+            AND (created_at AT TIME ZONE 'UTC' + ($2 || ' minutes')::interval)::date = $3::date`,
+        [childId, timezoneOffsetMinutes, usageDate],
+      );
+      return rows[0]?.consumed ?? 0;
     },
 
     async readLiveLock(client, { childId, forUpdate = false }) {

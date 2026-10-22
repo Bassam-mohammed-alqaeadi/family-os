@@ -657,3 +657,33 @@ test('device usage report writes ledger consumption for delta, ignoring zero/neg
   assert.equal(consumptionRows[1].entry_kind, 'consumption');
   assert.equal(consumptionRows[1].wallet_scope, 'daily');
 });
+
+test('single formula for remaining minutes and phone state (worked example)', () => {
+  const policyOff = policy({ dailyLimitMinutes: 60, earnedMinutesExtendLimit: false });
+  const policyOn = policy({ dailyLimitMinutes: 60, earnedMinutesExtendLimit: true });
+
+  // limit 60, grant 20, earned 15, usage 50
+  // switch OFF -> activeGrants = 20, remaining = max(0, 60 + 20 - 50) = 30
+  const stateOff = evaluateScreenState({
+    policy: policyOff,
+    grantMinutes: 20,
+    earnedMinutes: 15,
+    phoneConsumption: 50,
+    now: at('2026-10-07T12:00:00.000Z'),
+  });
+  assert.equal(stateOff.grantedMinutes, 20);
+  assert.equal(stateOff.remainingMinutes, 30);
+  assert.equal(stateOff.kind, 'limited');
+
+  // switch ON -> activeGrants = 35, remaining = max(0, 60 + 35 - 50) = 45
+  const stateOn = evaluateScreenState({
+    policy: policyOn,
+    grantMinutes: 20,
+    earnedMinutes: 15,
+    phoneConsumption: 50,
+    now: at('2026-10-07T12:00:00.000Z'),
+  });
+  assert.equal(stateOn.grantedMinutes, 35);
+  assert.equal(stateOn.remainingMinutes, 45);
+  assert.equal(stateOn.kind, 'limited');
+});
