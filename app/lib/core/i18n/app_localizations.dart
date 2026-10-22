@@ -21801,6 +21801,24 @@ abstract class AppLocalizations {
   /// **'وضع المدرسة'**
   String get screenTimeServerSchoolMode;
 
+  /// SCR: screen-time server panel — toggle title for earned minutes limit extension
+  ///
+  /// In ar, this message translates to:
+  /// **'تمديد الحد بالدقائق المكتسبة'**
+  String get screenTimeServerEarnedMinutesTitle;
+
+  /// SCR: screen-time server panel — toggle subtitle for earned minutes limit extension
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة الدقائق المكتسبة من الأنشطة والمهام إلى وقت الشاشة اليومي'**
+  String get screenTimeServerEarnedMinutesSubtitle;
+
+  /// SCR: screen-time server panel — formula breakdown preview for earned minutes
+  ///
+  /// In ar, this message translates to:
+  /// **'المتبقي = الحد اليومي + المنح + الدقائق المكتسبة − الاستهلاك'**
+  String get screenTimeServerEarnedMinutesPreview;
+
   /// SCR: screen-time server panel — save CTA
   ///
   /// In ar, this message translates to:

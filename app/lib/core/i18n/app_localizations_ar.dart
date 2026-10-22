@@ -12278,6 +12278,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get screenTimeServerSchoolMode => 'وضع المدرسة';
 
   @override
+  String get screenTimeServerEarnedMinutesTitle =>
+      'تمديد الحد بالدقائق المكتسبة';
+
+  @override
+  String get screenTimeServerEarnedMinutesSubtitle =>
+      'إضافة الدقائق المكتسبة من الأنشطة والمهام إلى وقت الشاشة اليومي';
+
+  @override
+  String get screenTimeServerEarnedMinutesPreview =>
+      'المتبقي = الحد اليومي + المنح + الدقائق المكتسبة − الاستهلاك';
+
+  @override
   String get screenTimeServerSave => 'احفظ على الخادم';
 
   @override

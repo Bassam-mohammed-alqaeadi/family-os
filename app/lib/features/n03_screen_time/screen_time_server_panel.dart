@@ -200,6 +200,14 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
     ),
   );
 
+  Future<void> _toggleEarnedMinutes(bool enabled) => _run(
+    (authority) => authority.writePolicy(
+      widget.childId.value,
+      earnedMinutesExtendLimit: enabled,
+      idempotencyKey: _key,
+    ),
+  );
+
   Future<void> _toggleLock({required bool lock}) => _run(
     (authority) => lock
         ? authority.lockNow(widget.childId.value, idempotencyKey: _key)
@@ -240,18 +248,18 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
 
     return ListView(
       key: const Key('screen_time_server_panel'),
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
       children: [
         _statusBanner(l10n, status, snapshot),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         if (snapshot != null) ...[
           _stateCard(l10n, colors, snapshot),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           _policyCard(l10n, colors, snapshot),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           _lockCard(l10n, colors, snapshot),
           if (snapshot.openRequest != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             _requestCard(l10n, colors, snapshot.openRequest!),
           ],
         ],
@@ -327,35 +335,35 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
     return Card(
       key: const Key('screen_time_server_state_card'),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               sentence,
               style: TextStyle(
-                fontSize: 17,
+                fontSize: 16,
                 fontWeight: FontWeight.w800,
                 color: colors.ink,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               l10n.screenTimeServerTodayMinutes(snapshot.countableUsedMinutes),
-              style: TextStyle(fontSize: 14, color: colors.ink2),
+              style: TextStyle(fontSize: 13, color: colors.ink2),
             ),
             if (remaining != null) ...[
               const SizedBox(height: 4),
               Text(
                 l10n.childTimeMirrorRemainingMinutes(remaining),
-                style: TextStyle(fontSize: 14, color: colors.ink2),
+                style: TextStyle(fontSize: 13, color: colors.ink2),
               ),
             ],
             if (snapshot.grantedMinutes > 0) ...[
               const SizedBox(height: 4),
               Text(
                 l10n.remainingMinutesGrantLabel,
-                style: TextStyle(fontSize: 13, color: colors.ink2),
+                style: TextStyle(fontSize: 12, color: colors.ink2),
               ),
             ],
           ],
@@ -374,7 +382,7 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
     return Card(
       key: const Key('screen_time_server_policy_card'),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -403,13 +411,13 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             Text(
               '${l10n.screenTimeServerBedtime} · ${_clock(policy.bedtimeStartMinute)} – '
               '${_clock(policy.bedtimeEndMinute)}',
-              style: TextStyle(fontSize: 14, color: colors.ink),
+              style: TextStyle(fontSize: 13, color: colors.ink),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Row(
               children: [
                 TextButton(
@@ -434,15 +442,29 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
             SwitchListTile(
               key: const Key('screen_time_server_school_toggle'),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
               value: policy.schoolModeEnabled,
               onChanged: editable ? _toggleSchoolMode : null,
               title: Text(l10n.screenTimeServerSchoolMode),
               subtitle: Text(
                 '${_clock(policy.schoolStartMinute)} – ${_clock(policy.schoolEndMinute)}',
               ),
+            ),
+            SwitchListTile(
+              key: const Key('screen_time_server_earned_minutes_toggle'),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              value: policy.earnedMinutesExtendLimit,
+              onChanged: editable ? _toggleEarnedMinutes : null,
+              title: Text(l10n.screenTimeServerEarnedMinutesTitle),
+              subtitle: Text(l10n.screenTimeServerEarnedMinutesSubtitle),
+            ),
+            Text(
+              l10n.screenTimeServerEarnedMinutesPreview,
+              style: TextStyle(fontSize: 12, color: colors.ink2),
             ),
           ],
         ),
@@ -461,7 +483,7 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
     return Card(
       key: const Key('screen_time_server_lock_card'),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -478,7 +500,7 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
               live ? l10n.screenTimeServerStateLock : l10n.screenTimeServerStateFree,
               style: TextStyle(fontSize: 14, color: colors.ink2),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             PrimaryBtn(
               key: const Key('screen_time_server_lock_button'),
               label: live

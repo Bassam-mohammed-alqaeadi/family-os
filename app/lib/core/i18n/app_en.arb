@@ -15790,6 +15790,18 @@
   "@screenTimeServerSchoolMode": {
       "description": "SCR: screen-time server panel — school mode"
   },
+  "screenTimeServerEarnedMinutesTitle": "Extend limit with earned minutes",
+  "@screenTimeServerEarnedMinutesTitle": {
+      "description": "SCR: screen-time server panel — toggle title for earned minutes limit extension"
+  },
+  "screenTimeServerEarnedMinutesSubtitle": "Add earned minutes from activities and tasks to daily screen time",
+  "@screenTimeServerEarnedMinutesSubtitle": {
+      "description": "SCR: screen-time server panel — toggle subtitle for earned minutes limit extension"
+  },
+  "screenTimeServerEarnedMinutesPreview": "Remaining = Daily limit + Grants + Earned minutes − Usage",
+  "@screenTimeServerEarnedMinutesPreview": {
+      "description": "SCR: screen-time server panel — formula breakdown preview for earned minutes"
+  },
   "screenTimeServerSave": "Save to the server",
   "@screenTimeServerSave": {
       "description": "SCR: screen-time server panel — save CTA"

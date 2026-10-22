@@ -229,4 +229,46 @@ void main() {
     );
     expect(save.onPressed, isNull);
   });
+
+  testWidgets('earned minutes toggle renders, displays subtitle & preview breakdown, and writes to server', (tester) async {
+    final transport = ScreenTimeFakeTransport({
+      '/screen-time': FoundationGateHttpResponse(
+        statusCode: 200,
+        body: screenTimeSnapshotJson(kind: 'limited', reason: null),
+      ),
+    });
+    await _pump(tester, authority: screenTimeAuthorityFor(transport));
+
+    final toggleFinder = find.byKey(const Key('screen_time_server_earned_minutes_toggle'));
+    expect(toggleFinder, findsOneWidget);
+    expect(find.text('تمديد الحد بالدقائق المكتسبة'), findsOneWidget);
+    expect(
+      find.text('إضافة الدقائق المكتسبة من الأنشطة والمهام إلى وقت الشاشة اليومي'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('المتبقي = الحد اليومي + المنح + الدقائق المكتسبة − الاستهلاك'),
+      findsOneWidget,
+    );
+
+    final switchTile = tester.widget<SwitchListTile>(toggleFinder);
+    expect(switchTile.value, isFalse);
+
+    await tester.ensureVisible(toggleFinder);
+    await tester.tap(toggleFinder);
+    await tester.pumpAndSettle();
+
+    expect(
+      transport.calls.any(
+        (call) =>
+            call ==
+            'PATCH /v1/families/$screenTimeFamilyId/children/$screenTimeChildId/screen-time',
+      ),
+      isTrue,
+    );
+    final patchBody = jsonDecode(
+      transport.bodies.firstWhere((b) => b.contains('earnedMinutesExtendLimit')),
+    ) as Map<String, Object?>;
+    expect(patchBody['earnedMinutesExtendLimit'], isTrue);
+  });
 }

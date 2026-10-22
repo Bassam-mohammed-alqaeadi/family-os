@@ -12457,6 +12457,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get screenTimeServerSchoolMode => 'School mode';
 
   @override
+  String get screenTimeServerEarnedMinutesTitle =>
+      'Extend limit with earned minutes';
+
+  @override
+  String get screenTimeServerEarnedMinutesSubtitle =>
+      'Add earned minutes from activities and tasks to daily screen time';
+
+  @override
+  String get screenTimeServerEarnedMinutesPreview =>
+      'Remaining = Daily limit + Grants + Earned minutes − Usage';
+
+  @override
   String get screenTimeServerSave => 'Save to the server';
 
   @override

@@ -105,6 +105,7 @@ final class ScreenTimeServerAuthority {
   Future<ScreenTimeAuthorityAnswer<FoundationGateScreenPolicy>> writePolicy(
     String childId, {
     int? dailyLimitMinutes,
+    bool? earnedMinutesExtendLimit,
     bool? schoolModeEnabled,
     List<int>? schoolDays,
     int? schoolStartMinute,
@@ -121,6 +122,7 @@ final class ScreenTimeServerAuthority {
       idempotencyKey: idempotencyKey(),
       idToken: token,
       dailyLimitMinutes: dailyLimitMinutes,
+      earnedMinutesExtendLimit: earnedMinutesExtendLimit,
       schoolModeEnabled: schoolModeEnabled,
       schoolDays: schoolDays,
       schoolStartMinute: schoolStartMinute,

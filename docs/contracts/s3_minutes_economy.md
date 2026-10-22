@@ -23,7 +23,9 @@ The Server Minutes Economy governs family minute allowances, temporary pools, ap
 - `backend/db/migrations/133_screen_time_earned_minutes_switch.sql`
 - `backend/db/migrations/134_usage_consumption_ledger_shape.sql`
 - `backend/src/minutes-economy.js`
+- `app/lib/core/policy/screen_time_policy.dart`
 - `app/lib/core/policy/wallet_ledger.dart`
+- `app/lib/features/n03_screen_time/screen_time_server_panel.dart`
 - `app/lib/features/n17_child_learn/child_wallet_repository.dart`
 
 ## Enforcing Tests
@@ -55,6 +57,10 @@ The Server Minutes Economy governs family minute allowances, temporary pools, ap
   - `approving a time request writes a temporary credit row to the ledger, and duplicates are refused`
   - `device usage report writes ledger consumption for delta, ignoring zero/negative deltas`
   - `single formula for remaining minutes and phone state (worked example)`
+- `app/test/core/policy/screen_time_policy_test.dart`:
+  - `earnedMinutesExtendLimit DTO serialization defaults to false and round-trips true`
+- `app/test/features/n03_screen_time/screen_time_server_panel_test.dart`:
+  - `earned minutes toggle renders, displays subtitle & preview breakdown, and writes to server`
 - `app/test/s3/minutes_static_guard_test.dart`:
   - `no minute write (earn / deposit) exists in lib/ outside the ledger`
   - `the local ledger is constructed only inside its own file`
