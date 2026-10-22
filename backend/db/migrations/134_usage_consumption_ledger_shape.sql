@@ -6,5 +6,12 @@ ALTER TABLE family_minutes_ledger
 
 ALTER TABLE family_minutes_ledger
   ADD CONSTRAINT family_minutes_ledger_credit_ref_shape
-  CHECK ((entry_kind = 'credit' OR channel = 'usage_consumption') = (credit_ref IS NULL));
+  CHECK (
+    CASE
+      WHEN entry_kind = 'credit' THEN credit_ref IS NULL
+      WHEN channel = 'usage_consumption' THEN TRUE
+      ELSE credit_ref IS NOT NULL
+    END
+  );
+
 

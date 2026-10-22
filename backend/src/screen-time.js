@@ -509,7 +509,15 @@ async function readScreenTimeInside(port, tx, { familyId, childId, now }) {
   const local = familyLocalParts(now(), policy.timezoneOffsetMinutes);
   const usage = await port.readUsageForDate(tx, { childId, usageDate: local.date });
   const rules = await port.readAppRules(tx, { childId });
-  const countableUsedMinutes = countableMinutes({ usage, rules });
+  const inventory = port.readApps ? await port.readApps(tx, { childId }) : [];
+  const inventoryByApp = new Map(inventory.map((entry) => [entry.app_id, entry]));
+  const rulesByApp = new Map(rules.map((rule) => [rule.app_id, rule]));
+  const appIds = [...new Set([...rulesByApp.keys(), ...inventoryByApp.keys()])].sort();
+  const mergedRules = appIds.map((appId) => ({
+    ...(rulesByApp.get(appId) ?? { status: 'pending' }),
+    category: inventoryByApp.get(appId)?.category,
+  }));
+  const countableUsedMinutes = countableMinutes({ usage, rules: mergedRules });
   const grantedMinutes = await port.readGrantedMinutes(tx, {
     childId,
     usageDate: local.date,
@@ -1162,9 +1170,33 @@ export function createDeviceScreenTimeReport({ port, now = () => new Date() }) {
           offset,
         ).date;
 
-        const oldUsage = await port.readUsageForDate(tx, { childId, usageDate: today });
+        if (apps.length > 0) {
+          await port.upsertApps(tx, {
+            rows: apps.map((entry) => ({
+              id: randomUUID(),
+              familyId,
+              childId,
+              appId: entry.appId,
+              displayName: entry.displayName,
+              category: entry.category,
+              ageRating: entry.ageRating ?? '',
+              deviceId,
+            })),
+          });
+        }
+
+        const appInventory = port.readApps ? await port.readApps(tx, { childId }) : [];
+        const inventoryByApp = new Map(appInventory.map((entry) => [entry.app_id, entry]));
         const appRules = await port.readAppRules(tx, { childId });
-        const oldTotalCountable = countableMinutes({ usage: oldUsage, rules: appRules });
+        const rulesByApp = new Map(appRules.map((rule) => [rule.app_id, rule]));
+        const allAppIds = [...new Set([...rulesByApp.keys(), ...inventoryByApp.keys()])].sort();
+        const mergedRulesForCountable = allAppIds.map((appId) => ({
+          ...(rulesByApp.get(appId) ?? { status: 'pending' }),
+          category: inventoryByApp.get(appId)?.category,
+        }));
+
+        const oldUsage = await port.readUsageForDate(tx, { childId, usageDate: today });
+        const oldTotalCountable = countableMinutes({ usage: oldUsage, rules: mergedRulesForCountable });
 
         const rows = [];
         for (const entry of usage) {
@@ -1189,7 +1221,7 @@ export function createDeviceScreenTimeReport({ port, now = () => new Date() }) {
         if (rows.length > 0) await port.upsertUsage(tx, { rows });
 
         const newUsage = await port.readUsageForDate(tx, { childId, usageDate: today });
-        const newTotalCountable = countableMinutes({ usage: newUsage, rules: appRules });
+        const newTotalCountable = countableMinutes({ usage: newUsage, rules: mergedRulesForCountable });
         const delta = Math.max(0, newTotalCountable - oldTotalCountable);
 
         if (delta > 0 && port.recordUsageConsumption) {
@@ -1203,20 +1235,6 @@ export function createDeviceScreenTimeReport({ port, now = () => new Date() }) {
             source_id: `${deviceId}:${reportedAt.toISOString()}`,
             wallet_scope: 'daily',
             deviceId,
-          });
-        }
-        if (apps.length > 0) {
-          await port.upsertApps(tx, {
-            rows: apps.map((entry) => ({
-              id: randomUUID(),
-              familyId,
-              childId,
-              appId: entry.appId,
-              displayName: entry.displayName,
-              category: entry.category,
-              ageRating: entry.ageRating ?? '',
-              deviceId,
-            })),
           });
         }
         let request = null;
