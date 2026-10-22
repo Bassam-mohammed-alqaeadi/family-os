@@ -2955,6 +2955,22 @@ test('the lock has an author, the question has an answer, and the credential is 
         assert.equal(approved.body.request.grantedMinutes, 20);
         assert.equal(approved.body.request.decidedByMembershipId, household.primaryMembershipId);
 
+        const { rows: ledgerGrantRows } = await client.query(
+          `SELECT channel, minutes, wallet_scope, source_type, source_id, actor_membership_id
+             FROM family_minutes_ledger
+            WHERE child_id = $1 AND source_type = 'time_request' AND source_id = $2`,
+          [childId, pendingId],
+        );
+        assert.equal(ledgerGrantRows.length, 1);
+        assert.deepEqual(ledgerGrantRows[0], {
+          channel: 'time_request_grant',
+          minutes: 20,
+          wallet_scope: 'temporary',
+          source_type: 'time_request',
+          source_id: pendingId,
+          actor_membership_id: household.primaryMembershipId,
+        });
+
         // The granted minutes extend the day they were granted for, on the state a handset
         // reads as well as the state a parent reads.
         const afterGrant = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/screen-time`, {

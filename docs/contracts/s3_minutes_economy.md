@@ -50,6 +50,8 @@ The Server Minutes Economy governs family minute allowances, temporary pools, ap
   - `guardian channels can never be earned by a child, and earn channels are a subset`
   - `the JS vocabularies match the CHECK lists in migration 130 exactly`
   - `migrations 130 to 133 are recorded in the manifest in order`
+- `backend/test/screen-time.test.js`:
+  - `approving a time request writes a temporary credit row to the ledger, and duplicates are refused`
 - `app/test/s3/minutes_static_guard_test.dart`:
   - `no minute write (earn / deposit) exists in lib/ outside the ledger`
   - `the local ledger is constructed only inside its own file`

@@ -1004,6 +1004,25 @@ export function createTimeRequestDecision({ port, now = () => new Date() }) {
           grantedMinutes: granting,
           actorMembershipId: actor.id,
         });
+        if (decision === 'approve' && granting > 0 && port.recordTimeRequestGrant) {
+          const expiresAt = decided.expires_at
+            ?? endOfFamilyDay(now(), row.timezone_offset_minutes ?? 180);
+          await port.recordTimeRequestGrant(tx, {
+            family_id: familyId,
+            child_id: childId,
+            entry_kind: 'credit',
+            channel: 'time_request_grant',
+            minutes: granting,
+            source_type: 'time_request',
+            source_id: requestId,
+            wallet_scope: 'temporary',
+            expires_at: expiresAt,
+            metadata: {
+              approved_by: actor.id,
+              request_id: requestId,
+            },
+          });
+        }
         await port.audit(tx, {
           familyId,
           actorMembershipId: actor.id,
@@ -1495,6 +1514,30 @@ export function postgresScreenTimePort(store, { credentialMatches }) {
         [requestId, status, grantedMinutes, actorMembershipId],
       );
       return rows[0];
+    },
+
+    async recordTimeRequestGrant(client, {
+      family_id,
+      child_id,
+      minutes,
+      expires_at,
+      source_id,
+      metadata,
+    }) {
+      const actorMembershipId = metadata?.approved_by ?? null;
+      await client.query(
+        `INSERT INTO family_minutes_ledger
+           (id, family_id, child_id, entry_kind, channel, minutes, wallet_scope, app_id,
+            expires_at, source_type, source_id, actor_membership_id, awarded_by_device_id,
+            balance_after_minutes, created_at, credit_ref)
+         VALUES
+           (gen_random_uuid(), $1, $2, 'credit', 'time_request_grant', $3, 'temporary', NULL,
+            $4, 'time_request', $5, $6, NULL,
+            COALESCE((SELECT balance_after_minutes FROM family_minutes_ledger WHERE child_id = $2 ORDER BY created_at DESC, id DESC LIMIT 1), 0) + $3,
+            NOW(), NULL)
+         ON CONFLICT (child_id, source_type, source_id) DO NOTHING`,
+        [family_id, child_id, minutes, expires_at, source_id, actorMembershipId],
+      );
     },
 
     async readReportingDevice(client, { deviceId }) {

@@ -25,6 +25,7 @@ import {
   remainingMinutes,
   windowContains,
   createScreenTimePolicyUpdate,
+  createTimeRequestDecision,
   screenTimePolicyView,
 } from '../src/screen-time.js';
 
@@ -347,4 +348,159 @@ test('guardian PATCH sets earnedMinutesExtendLimit true/false; default is false 
     },
     (err) => err.status === 403 && err.code === 'screen_time_forbidden',
   );
+});
+
+test('approving a time request writes a temporary credit row to the ledger, and duplicates are refused', async () => {
+  const ledgerRows = [];
+  const requests = new Map([
+    [
+      'req-1',
+      {
+        id: 'req-1',
+        family_id: 'fam-1',
+        child_id: 'child-1',
+        usage_date: '2026-10-22',
+        status: 'pending',
+        requested_minutes: 20,
+        timezone_offset_minutes: 180,
+        expires_at: new Date('2026-10-22T21:00:00Z'),
+        version: 1,
+        created_at: new Date('2026-10-22T09:00:00Z'),
+      },
+    ],
+    [
+      'req-2',
+      {
+        id: 'req-2',
+        family_id: 'fam-1',
+        child_id: 'child-1',
+        usage_date: '2026-10-22',
+        status: 'pending',
+        requested_minutes: 15,
+        timezone_offset_minutes: 180,
+        expires_at: new Date('2026-10-22T21:00:00Z'),
+        version: 1,
+        created_at: new Date('2026-10-22T09:00:00Z'),
+      },
+    ],
+    [
+      'req-3',
+      {
+        id: 'req-3',
+        family_id: 'fam-1',
+        child_id: 'child-1',
+        usage_date: '2026-10-22',
+        status: 'pending',
+        requested_minutes: 10,
+        timezone_offset_minutes: 180,
+        expires_at: new Date('2026-10-22T21:00:00Z'),
+        version: 1,
+        created_at: new Date('2026-10-22T09:00:00Z'),
+      },
+    ],
+  ]);
+
+  const mockPort = {
+    idempotent: async (_scope, _key, _hash, fn) => fn({}),
+    authorize: async (_tx, _req) => ({ id: 'guardian-mem-1', role: 'primary_guardian' }),
+    readChild: async () => ({ id: 'child-1' }),
+    expirePendingRequests: async () => {},
+    readRequest: async (_tx, { requestId }) => requests.get(requestId) ?? null,
+    decideRequest: async (_tx, { requestId, status, grantedMinutes, actorMembershipId }) => {
+      const existing = requests.get(requestId);
+      existing.status = status;
+      existing.granted_minutes = grantedMinutes;
+      existing.decided_by_membership_id = actorMembershipId;
+      existing.decided_at = new Date();
+      return existing;
+    },
+    recordTimeRequestGrant: async (_tx, entry) => {
+      ledgerRows.push(entry);
+    },
+    audit: async () => {},
+  };
+
+  const decide = createTimeRequestDecision({
+    port: mockPort,
+    now: () => new Date('2026-10-22T10:00:00Z'),
+  });
+
+  // 1. Approving a 20-min request inserts 1 ledger row with the exact fields
+  const res1 = await decide({
+    principal: { subject: 'guardian-sub' },
+    familyId: 'fam-1',
+    childId: 'child-1',
+    requestId: 'req-1',
+    decision: 'approve',
+    grantedMinutes: 20,
+    idempotencyKey: 'k1',
+    requestHash: 'h1',
+    correlationId: 'c1',
+  });
+  assert.equal(res1.request.status, 'approved');
+  assert.equal(res1.request.grantedMinutes, 20);
+  assert.equal(ledgerRows.length, 1, 'approving a 20-min request inserts 1 ledger row');
+  assert.deepEqual(ledgerRows[0], {
+    family_id: 'fam-1',
+    child_id: 'child-1',
+    entry_kind: 'credit',
+    channel: 'time_request_grant',
+    minutes: 20,
+    source_type: 'time_request',
+    source_id: 'req-1',
+    wallet_scope: 'temporary',
+    expires_at: new Date('2026-10-22T21:00:00Z'),
+    metadata: {
+      approved_by: 'guardian-mem-1',
+      request_id: 'req-1',
+    },
+  });
+
+  // 2. Duplicate approval of the same request does not insert a second row
+  await assert.rejects(
+    async () => {
+      await decide({
+        principal: { subject: 'guardian-sub' },
+        familyId: 'fam-1',
+        childId: 'child-1',
+        requestId: 'req-1',
+        decision: 'approve',
+        grantedMinutes: 20,
+        idempotencyKey: 'k1-dup',
+        requestHash: 'h1-dup',
+        correlationId: 'c1-dup',
+      });
+    },
+    (err) => err.status === 409 && err.code === 'time_request_decided',
+  );
+  assert.equal(ledgerRows.length, 1, 'duplicate approval does not insert a second row');
+
+  // 3. Rejection inserts 0 rows
+  const res2 = await decide({
+    principal: { subject: 'guardian-sub' },
+    familyId: 'fam-1',
+    childId: 'child-1',
+    requestId: 'req-2',
+    decision: 'deny',
+    idempotencyKey: 'k2',
+    requestHash: 'h2',
+    correlationId: 'c2',
+  });
+  assert.equal(res2.request.status, 'denied');
+  assert.equal(ledgerRows.length, 1, 'rejection inserts 0 rows');
+
+  // 4. Approval with 0 minutes inserts 0 rows
+  const res3 = await decide({
+    principal: { subject: 'guardian-sub' },
+    familyId: 'fam-1',
+    childId: 'child-1',
+    requestId: 'req-3',
+    decision: 'approve',
+    grantedMinutes: 0,
+    idempotencyKey: 'k3',
+    requestHash: 'h3',
+    correlationId: 'c3',
+  });
+  assert.equal(res3.request.status, 'approved');
+  assert.equal(ledgerRows.length, 1, 'approval with 0 minutes writes NO ledger row');
 });
