@@ -170,6 +170,9 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining('وصل طلبك'), findsNothing);
+    // The toast owns a dismissal timer; the tree must be left with none.
+    AppToast.dismiss();
+    await tester.pumpAndSettle();
   });
 }
 
