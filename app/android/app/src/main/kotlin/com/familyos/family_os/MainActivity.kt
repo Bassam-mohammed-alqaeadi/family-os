@@ -60,6 +60,7 @@ class MainActivity : FlutterActivity() {
                     "startConfigured" -> startConfiguredTelemetry(result)
                     "chatRequest" -> proxyFamilyChatRequest(call, result)
                     "minutesBalanceRequest" -> proxyMinutesBalanceRequest(call, result)
+                    "screenTimeStateRequest" -> proxyScreenTimeStateRequest(result)
                     "consentRequest" -> proxyFamilyConsentRequest(call, result)
                     "capabilitySnapshot" -> capabilitySnapshot(result)
                     "stop" -> stopTelemetry(result)
@@ -446,6 +447,36 @@ class MainActivity : FlutterActivity() {
                 // Credentials and balance bodies are never logged.
                 runOnUiThread {
                     result.error("device_minutes_unreachable", "The minutes service did not answer.", null)
+                }
+            }
+        }
+    }
+
+    private fun proxyScreenTimeStateRequest(result: MethodChannel.Result) {
+        val config = TelemetryConfigStore(this).read()
+        if (config == null) {
+            result.error("device_screen_time_not_configured", "No paired device session is available.", null)
+            return
+        }
+        chatExecutor.execute {
+            try {
+                val request = Request.Builder()
+                    .url("${config.apiOrigin}/v1/devices/${config.deviceId}/screen-time")
+                    .header("Authorization", "Device ${config.deviceCredential}")
+                    .header("Accept", "application/json")
+                    .get()
+                    .build()
+                val answer = chatHttpClient.newCall(request).execute().use { response ->
+                    mapOf(
+                        "statusCode" to response.code,
+                        "body" to (response.body?.string() ?: ""),
+                    )
+                }
+                runOnUiThread { result.success(answer) }
+            } catch (_: Exception) {
+                // Credential and response body are never logged.
+                runOnUiThread {
+                    result.error("device_screen_time_unreachable", "The screen time service did not answer.", null)
                 }
             }
         }
