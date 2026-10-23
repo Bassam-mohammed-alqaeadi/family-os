@@ -5,6 +5,7 @@ import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/features/n03_screen_time/app_usage_breakdown.dart';
 import 'package:family_os/features/n03_screen_time/screen_time_server_authority.dart';
 import 'package:family_os/foundation_gate/family_screen_time_api_client.dart';
 
@@ -254,6 +255,8 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
         const SizedBox(height: 8),
         if (snapshot != null) ...[
           _stateCard(l10n, colors, snapshot),
+          const SizedBox(height: 8),
+          AppUsageBreakdown(usage: snapshot.usageByApp),
           const SizedBox(height: 8),
           _policyCard(l10n, colors, snapshot),
           const SizedBox(height: 8),
