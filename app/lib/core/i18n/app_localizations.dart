@@ -23162,6 +23162,18 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'الدقائق التي تكسبها من أنشطتك لا تُضاف إلى وقت اليوم — تُحفظ لك'**
   String get childDayBoardEarnedExtendsOff;
+
+  /// Screen time server panel loading state
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ تحميل حالة وقت الشاشة من الخادم…'**
+  String get screenTimeServerLoading;
+
+  /// Screen time server panel empty state when no limits are set
+  ///
+  /// In ar, this message translates to:
+  /// **'لم تُضبط حدود وقت الشاشة لهذا الطفل بعد — لا شيء مفروض الآن.'**
+  String get screenTimeServerEmpty;
 }
 
 class _AppLocalizationsDelegate

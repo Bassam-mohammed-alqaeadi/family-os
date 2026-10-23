@@ -13055,4 +13055,11 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get childDayBoardEarnedExtendsOff =>
       'الدقائق التي تكسبها من أنشطتك لا تُضاف إلى وقت اليوم — تُحفظ لك';
+
+  @override
+  String get screenTimeServerLoading => 'جارٍ تحميل حالة وقت الشاشة من الخادم…';
+
+  @override
+  String get screenTimeServerEmpty =>
+      'لم تُضبط حدود وقت الشاشة لهذا الطفل بعد — لا شيء مفروض الآن.';
 }

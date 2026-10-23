@@ -98,12 +98,13 @@ String screenTimeSnapshotJson({
   int? remaining = 30,
   int cap = 60,
   bool earnedMinutesExtendLimit = false,
+  bool configured = true,
 }) => jsonEncode(<String, Object?>{
   'childId': screenTimeChildId,
   'date': '2026-10-07',
   'policy': <String, Object?>{
     'childId': screenTimeChildId,
-    'configured': true,
+    'configured': configured,
     'dailyLimitMinutes': cap,
     'earnedMinutesExtendLimit': earnedMinutesExtendLimit,
     'schoolMode': <String, Object?>{

@@ -13258,4 +13258,12 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get childDayBoardEarnedExtendsOff =>
       'Minutes you earn from your activities are not added to today\'s screen time — they stay for you';
+
+  @override
+  String get screenTimeServerLoading =>
+      'Loading the screen-time state from the server…';
+
+  @override
+  String get screenTimeServerEmpty =>
+      'No screen-time limits are set for this child yet — nothing is being enforced.';
 }

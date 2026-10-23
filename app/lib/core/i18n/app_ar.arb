@@ -16682,5 +16682,13 @@
   "childDayBoardEarnedExtendsOff": "الدقائق التي تكسبها من أنشطتك لا تُضاف إلى وقت اليوم — تُحفظ لك",
   "@childDayBoardEarnedExtendsOff": {
     "description": "Child day board note when earned minutes do not extend today limit"
+  },
+  "screenTimeServerLoading": "جارٍ تحميل حالة وقت الشاشة من الخادم…",
+  "@screenTimeServerLoading": {
+    "description": "Screen time server panel loading state"
+  },
+  "screenTimeServerEmpty": "لم تُضبط حدود وقت الشاشة لهذا الطفل بعد — لا شيء مفروض الآن.",
+  "@screenTimeServerEmpty": {
+    "description": "Screen time server panel empty state when no limits are set"
   }
 }

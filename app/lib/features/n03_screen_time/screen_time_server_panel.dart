@@ -278,7 +278,7 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
     final (Key key, String message, BannerVariant variant) = switch (status) {
       null => (
         const Key('screen_time_server_loading'),
-        l10n.screenTimeServerNoSession,
+        l10n.screenTimeServerLoading,
         BannerVariant.t,
       ),
       ScreenTimeAuthorityStatus.ready => (
@@ -310,6 +310,13 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
       ),
     };
     if (status == ScreenTimeAuthorityStatus.ready) {
+      if (snapshot != null && !snapshot.policy.configured) {
+        return BannerNote(
+          key: const Key('screen_time_server_empty'),
+          variant: BannerVariant.t,
+          message: l10n.screenTimeServerEmpty,
+        );
+      }
       // The quiet case: nothing to warn about, and a green banner every load is noise.
       return const SizedBox.shrink();
     }
