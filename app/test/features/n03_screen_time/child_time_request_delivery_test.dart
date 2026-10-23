@@ -152,7 +152,10 @@ void main() {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        home: ChildTimeRequestScreen(repository: _UndeliveredRepository()),
+        home: ChildTimeRequestScreen(
+          repository: _UndeliveredRepository(),
+          onNavigate: (screenId) {},
+        ),
       ),
     );
     await tester.pumpAndSettle();

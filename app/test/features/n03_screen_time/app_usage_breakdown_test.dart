@@ -47,9 +47,9 @@ void main() {
 
   testWidgets('the minutes are the server\'s, in the server\'s order', (tester) async {
     await _pump(tester, const <FoundationGateAppUsage>[
-      FoundationGateAppUsage(appId: 'com.small.app', usedMinutes: 5),
-      FoundationGateAppUsage(appId: 'com.big.game', usedMinutes: 35),
-      FoundationGateAppUsage(appId: 'com.mid.app', usedMinutes: 12),
+      FoundationGateAppUsage(appId: 'com.small.notes', usedMinutes: 5),
+      FoundationGateAppUsage(appId: 'com.big.puzzle', usedMinutes: 35),
+      FoundationGateAppUsage(appId: 'com.mid.maps', usedMinutes: 12),
     ]);
 
     final labels = tester
@@ -62,7 +62,7 @@ void main() {
 
     expect(
       labels.take(6).toList(),
-      <String>['Big game', '35', 'Mid app', '12', 'Small app', '5'],
+      <String>['Puzzle', '35', 'Maps', '12', 'Notes', '5'],
       reason: 'the biggest cost is read first, and a package is shown as a name',
     );
   });
@@ -82,13 +82,13 @@ void main() {
 
   testWidgets('the tail is folded into one honest line', (tester) async {
     await _pump(tester, const <FoundationGateAppUsage>[
-      FoundationGateAppUsage(appId: 'com.a.app', usedMinutes: 50),
-      FoundationGateAppUsage(appId: 'com.b.app', usedMinutes: 40),
-      FoundationGateAppUsage(appId: 'com.c.app', usedMinutes: 30),
-      FoundationGateAppUsage(appId: 'com.d.app', usedMinutes: 20),
-      FoundationGateAppUsage(appId: 'com.e.app', usedMinutes: 10),
-      FoundationGateAppUsage(appId: 'com.f.app', usedMinutes: 5),
-      FoundationGateAppUsage(appId: 'com.g.app', usedMinutes: 4),
+      FoundationGateAppUsage(appId: 'com.x.alpha', usedMinutes: 50),
+      FoundationGateAppUsage(appId: 'com.x.bravo', usedMinutes: 40),
+      FoundationGateAppUsage(appId: 'com.x.charlie', usedMinutes: 30),
+      FoundationGateAppUsage(appId: 'com.x.delta', usedMinutes: 20),
+      FoundationGateAppUsage(appId: 'com.x.echo', usedMinutes: 10),
+      FoundationGateAppUsage(appId: 'com.x.foxtrot', usedMinutes: 5),
+      FoundationGateAppUsage(appId: 'com.x.golf', usedMinutes: 4),
     ]);
 
     expect(find.text('وبقية التطبيقات'), findsOneWidget);
@@ -97,8 +97,8 @@ void main() {
       findsOneWidget,
       reason: '20 + 10 + 5 + 4: the folded rows still add up',
     );
-    expect(find.text('A app'), findsOneWidget);
-    expect(find.text('F app'), findsNothing);
+    expect(find.text('Alpha'), findsOneWidget);
+    expect(find.text('Echo'), findsNothing);
   });
 
   testWidgets('a zero-minute row is not a bar', (tester) async {

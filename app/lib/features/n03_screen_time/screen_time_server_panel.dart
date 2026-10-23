@@ -298,11 +298,14 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel>
             ],
             _stateCard(l10n, colors, snapshot),
             const SizedBox(height: 8),
-            AppUsageBreakdown(usage: snapshot.usageByApp),
-            const SizedBox(height: 8),
             _policyCard(l10n, colors, snapshot),
             const SizedBox(height: 8),
             _lockCard(l10n, colors, snapshot),
+            // The detail sits under the controls on purpose: a parent opening this screen is
+            // here to decide, and the decision must stay one thumb-reach away. The breakdown
+            // is what they read *after* the decision.
+            const SizedBox(height: 8),
+            AppUsageBreakdown(usage: snapshot.usageByApp),
           ],
         ],
       ),
