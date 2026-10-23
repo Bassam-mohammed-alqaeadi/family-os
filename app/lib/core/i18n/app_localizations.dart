@@ -23222,6 +23222,42 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'دقائق التطبيقات المحتسبة'**
   String get screenTimeAppUsageTotal;
+
+  /// Guardian screen-time cap validation message
+  ///
+  /// In ar, this message translates to:
+  /// **'الحد اليومي بين ٠ و١٤٤٠ دقيقة.'**
+  String get screenTimeServerCapRange;
+
+  /// Guardian screen-time retry button in an error banner
+  ///
+  /// In ar, this message translates to:
+  /// **'إعادة المحاولة'**
+  String get screenTimeServerRetry;
+
+  /// Guardian screen-time quick grant section title
+  ///
+  /// In ar, this message translates to:
+  /// **'منح دقائق لليوم'**
+  String get screenTimeServerGrantTitle;
+
+  /// Guardian screen-time quick grant of fifteen minutes
+  ///
+  /// In ar, this message translates to:
+  /// **'‎+١٥ دقيقة'**
+  String get screenTimeServerGrant15;
+
+  /// Guardian screen-time quick grant of thirty minutes
+  ///
+  /// In ar, this message translates to:
+  /// **'‎+٣٠ دقيقة'**
+  String get screenTimeServerGrant30;
+
+  /// Guardian screen-time confirmation after a grant
+  ///
+  /// In ar, this message translates to:
+  /// **'أُضيفت الدقائق إلى اليوم.'**
+  String get screenTimeServerGrantDone;
 }
 
 class _AppLocalizationsDelegate

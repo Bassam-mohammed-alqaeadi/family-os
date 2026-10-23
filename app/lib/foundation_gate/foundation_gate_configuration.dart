@@ -349,6 +349,10 @@ class FoundationGateConfiguration {
     return _familyChildCrumbUri(familyId, childId, 'apps/$appId/rule');
   }
 
+  /// A guardian granting minutes outright, for today.
+  Uri familyChildMinutesGrantsUri(String familyId, String childId) =>
+      _familyChildCrumbUri(familyId, childId, 'minutes/grants');
+
   /// The minutes a child asked for and what the family answered.
   ///
   /// `status` selects rows, so it belongs in the URL rather than in a body - and `all` is

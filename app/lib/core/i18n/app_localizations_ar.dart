@@ -13089,4 +13089,22 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get screenTimeAppUsageTotal => 'دقائق التطبيقات المحتسبة';
+
+  @override
+  String get screenTimeServerCapRange => 'الحد اليومي بين ٠ و١٤٤٠ دقيقة.';
+
+  @override
+  String get screenTimeServerRetry => 'إعادة المحاولة';
+
+  @override
+  String get screenTimeServerGrantTitle => 'منح دقائق لليوم';
+
+  @override
+  String get screenTimeServerGrant15 => '‎+١٥ دقيقة';
+
+  @override
+  String get screenTimeServerGrant30 => '‎+٣٠ دقيقة';
+
+  @override
+  String get screenTimeServerGrantDone => 'أُضيفت الدقائق إلى اليوم.';
 }

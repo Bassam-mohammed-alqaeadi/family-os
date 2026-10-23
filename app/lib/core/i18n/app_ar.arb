@@ -16722,5 +16722,29 @@
   "screenTimeAppUsageTotal": "دقائق التطبيقات المحتسبة",
   "@screenTimeAppUsageTotal": {
     "description": "Guardian screen-time per-app breakdown total label"
+  },
+  "screenTimeServerCapRange": "الحد اليومي بين ٠ و١٤٤٠ دقيقة.",
+  "@screenTimeServerCapRange": {
+    "description": "Guardian screen-time cap validation message"
+  },
+  "screenTimeServerRetry": "إعادة المحاولة",
+  "@screenTimeServerRetry": {
+    "description": "Guardian screen-time retry button in an error banner"
+  },
+  "screenTimeServerGrantTitle": "منح دقائق لليوم",
+  "@screenTimeServerGrantTitle": {
+    "description": "Guardian screen-time quick grant section title"
+  },
+  "screenTimeServerGrant15": "‎+١٥ دقيقة",
+  "@screenTimeServerGrant15": {
+    "description": "Guardian screen-time quick grant of fifteen minutes"
+  },
+  "screenTimeServerGrant30": "‎+٣٠ دقيقة",
+  "@screenTimeServerGrant30": {
+    "description": "Guardian screen-time quick grant of thirty minutes"
+  },
+  "screenTimeServerGrantDone": "أُضيفت الدقائق إلى اليوم.",
+  "@screenTimeServerGrantDone": {
+    "description": "Guardian screen-time confirmation after a grant"
   }
 }

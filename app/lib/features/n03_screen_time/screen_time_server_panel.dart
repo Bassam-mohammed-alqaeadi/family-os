@@ -69,6 +69,15 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel>
   int _capVersion = 0;
   Timer? _poll;
 
+  /// The cap the parent typed, when it is not a number a day can hold.
+  ///
+  /// A field that quietly ignores a bad number is the worst of the three answers: the parent
+  /// believes they saved, the server never heard, and the child keeps yesterday's limit.
+  String? _capError;
+
+  /// The last amount handed over in this session, so the card can say it happened.
+  int? _lastGrant;
+
   /// How often an open panel looks for a question that was asked while it was open.
   ///
   /// The server has no push channel for screen time, so "instant" is this: a read every
@@ -166,14 +175,19 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel>
     openRequest: snapshot.openRequest,
   );
 
-  Future<void> _run<T>(
+  /// Runs one write and settles the screen afterwards.
+  ///
+  /// Returns the value the server answered with, or null when the write failed - the caller
+  /// that needs the number (a grant, which wants to say how much was given) reads it here
+  /// instead of reconstructing it from the state a moment later.
+  Future<T?> _run<T>(
     Future<ScreenTimeAuthorityAnswer<T>> Function(ScreenTimeServerAuthority) action,
   ) async {
     final authority = _authority;
-    if (authority == null || _busy) return;
+    if (authority == null || _busy) return null;
     setState(() => _busy = true);
     final answer = await action(authority);
-    if (!mounted) return;
+    if (!mounted) return null;
     setState(() {
       _busy = false;
       _apply(answer);
@@ -182,12 +196,22 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel>
       // The write answered with part of the truth; the read settles the rest, so nothing on
       // this screen is a guess assembled from two different moments by hand.
       await _refresh();
+      return answer.value;
     }
+    return null;
   }
 
+  /// The server's own ceiling for one day (`MAX_USAGE_MINUTES_PER_APP` is the same number).
+  static const int _maxCapMinutes = 1440;
+
   Future<void> _saveCap() async {
+    final l10n = AppLocalizations.of(context);
     final parsed = int.tryParse(_capController.text.trim());
-    if (parsed == null || parsed < 0 || parsed > 1440) return;
+    if (parsed == null || parsed < 0 || parsed > _maxCapMinutes) {
+      setState(() => _capError = l10n.screenTimeServerCapRange);
+      return;
+    }
+    if (_capError != null) setState(() => _capError = null);
     await _run(
       (authority) => authority.writePolicy(
         widget.childId.value,
@@ -239,6 +263,26 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel>
       idempotencyKey: _key,
     ),
   );
+
+  /// Hands [minutes] to the child for the rest of the family's day.
+  ///
+  /// The expiry is what makes this a day's gift rather than a permanent raise: the server
+  /// counts an expiring grant toward today and lets it lapse tomorrow. It is sent from the
+  /// phone's own clock, which is the one the parent is reading the day on.
+  Future<void> _grantMinutes(int minutes) async {
+    final now = DateTime.now();
+    final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    final granted = await _run<FoundationGateMinuteGrant>(
+      (authority) => authority.grantMinutes(
+        widget.childId.value,
+        minutes: minutes,
+        expiresAt: endOfDay,
+        idempotencyKey: _key,
+      ),
+    );
+    if (!mounted || granted == null) return;
+    setState(() => _lastGrant = granted.minutes);
+  }
 
   Future<void> _toggleLock({required bool lock}) => _run(
     (authority) => lock
@@ -369,7 +413,27 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel>
       // The quiet case: nothing to warn about, and a green banner every load is noise.
       return const SizedBox.shrink();
     }
-    return BannerNote(key: key, variant: variant, message: message);
+    // A banner that only describes a problem is a dead end. When the server is the problem,
+    // the banner carries the one thing a parent can do about it.
+    final retryable =
+        status == ScreenTimeAuthorityStatus.unreachable ||
+        status == ScreenTimeAuthorityStatus.refused;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        BannerNote(key: key, variant: variant, message: message),
+        if (retryable)
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: TextButton.icon(
+              key: const Key('screen_time_server_retry'),
+              onPressed: _busy ? null : () => _refresh(),
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: Text(l10n.screenTimeServerRetry),
+            ),
+          ),
+      ],
+    );
   }
 
   Widget _stateCard(
@@ -392,9 +456,13 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel>
       key: const Key('screen_time_server_state_card'),
       child: Padding(
         padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
             Text(
               sentence,
               style: TextStyle(
@@ -422,8 +490,66 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel>
                 style: TextStyle(fontSize: 12, color: colors.ink2),
               ),
             ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 14),
+            _usageRing(colors, snapshot),
           ],
         ),
+      ),
+    );
+  }
+
+  /// The day, as a ring.
+  ///
+  /// Beside the numbers rather than under them on purpose: this card sits above every
+  /// control on the screen, and a parent should not have to scroll past a chart to reach
+  /// the switch that stops a phone. The colour is the only opinion here - green while there
+  /// is room, amber when the day is nearly gone, red when the phone is about to stop - and
+  /// the *angle* is the server's arithmetic: spent over (cap plus today's grants).
+  Widget _usageRing(FamilyColors colors, FoundationGateScreenTimeSnapshot snapshot) {
+    final cap = snapshot.policy.dailyLimitMinutes;
+    final allowance = cap + snapshot.grantedMinutes;
+    final ratio = allowance <= 0
+        ? 1.0
+        : (snapshot.countableUsedMinutes / allowance).clamp(0.0, 1.0);
+    final tint = ratio >= 0.9
+        ? colors.coral
+        : ratio >= 0.7
+        ? colors.amber
+        : colors.mint;
+    final percent = (ratio * 100).round();
+    return SizedBox(
+      key: const Key('screen_time_server_usage_ring'),
+      width: 62,
+      height: 62,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Positioned.fill(
+            child: TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: 0, end: ratio),
+              duration: const Duration(milliseconds: 620),
+              curve: Curves.easeOutCubic,
+              builder: (context, value, _) => CircularProgressIndicator(
+                value: value,
+                strokeWidth: 6,
+                strokeCap: StrokeCap.round,
+                backgroundColor: colors.bg,
+                color: tint,
+              ),
+            ),
+          ),
+          Text(
+            '$percent%',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: colors.ink,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -450,8 +576,12 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel>
                     controller: _capController,
                     enabled: editable,
                     keyboardType: TextInputType.number,
+                    onChanged: (_) {
+                      if (_capError != null) setState(() => _capError = null);
+                    },
                     decoration: InputDecoration(
                       labelText: l10n.screenTimeServerCap,
+                      errorText: _capError,
                     ),
                   ),
                 ),
@@ -563,6 +693,71 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel>
                   ? l10n.screenTimeServerUnlock
                   : l10n.screenTimeServerLockNow,
               onPressed: editable ? () => _toggleLock(lock: !live) : null,
+            ),
+            const SizedBox(height: 14),
+            Divider(height: 1, color: colors.border),
+            const SizedBox(height: 12),
+            Text(
+              l10n.screenTimeServerGrantTitle,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: colors.ink2,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                PrimaryBtn(
+                  key: const Key('screen_time_server_grant_15'),
+                  fullWidth: false,
+                  variant: PrimaryBtnVariant.teal,
+                  label: l10n.screenTimeServerGrant15,
+                  onPressed: editable ? () => _grantMinutes(15) : null,
+                ),
+                PrimaryBtn(
+                  key: const Key('screen_time_server_grant_30'),
+                  fullWidth: false,
+                  variant: PrimaryBtnVariant.teal,
+                  label: l10n.screenTimeServerGrant30,
+                  onPressed: editable ? () => _grantMinutes(30) : null,
+                ),
+              ],
+            ),
+            // Only after one has actually been granted, and cleared by the next one: a
+            // confirmation that never goes away stops being a confirmation.
+            AnimatedSize(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOut,
+              alignment: AlignmentDirectional.topStart,
+              child: _lastGrant == null
+                  ? const SizedBox(width: double.infinity)
+                  : Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.check_circle_rounded,
+                            size: 16,
+                            color: colors.mintInk,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              l10n.screenTimeServerGrantDone,
+                              key: const Key('screen_time_server_grant_done'),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: colors.mintInk,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
             ),
           ],
         ),

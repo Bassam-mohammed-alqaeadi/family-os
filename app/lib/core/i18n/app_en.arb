@@ -16707,5 +16707,29 @@
   "screenTimeAppUsageTotal": "Counted app minutes",
   "@screenTimeAppUsageTotal": {
     "description": "Guardian screen-time per-app breakdown total label"
+  },
+  "screenTimeServerCapRange": "The daily limit is between 0 and 1440 minutes.",
+  "@screenTimeServerCapRange": {
+    "description": "Guardian screen-time cap validation message"
+  },
+  "screenTimeServerRetry": "Try again",
+  "@screenTimeServerRetry": {
+    "description": "Guardian screen-time retry button in an error banner"
+  },
+  "screenTimeServerGrantTitle": "Grant minutes for today",
+  "@screenTimeServerGrantTitle": {
+    "description": "Guardian screen-time quick grant section title"
+  },
+  "screenTimeServerGrant15": "+15 min",
+  "@screenTimeServerGrant15": {
+    "description": "Guardian screen-time quick grant of fifteen minutes"
+  },
+  "screenTimeServerGrant30": "+30 min",
+  "@screenTimeServerGrant30": {
+    "description": "Guardian screen-time quick grant of thirty minutes"
+  },
+  "screenTimeServerGrantDone": "Minutes added to today.",
+  "@screenTimeServerGrantDone": {
+    "description": "Guardian screen-time confirmation after a grant"
   }
 }

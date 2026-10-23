@@ -13293,4 +13293,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get screenTimeAppUsageTotal => 'Counted app minutes';
+
+  @override
+  String get screenTimeServerCapRange =>
+      'The daily limit is between 0 and 1440 minutes.';
+
+  @override
+  String get screenTimeServerRetry => 'Try again';
+
+  @override
+  String get screenTimeServerGrantTitle => 'Grant minutes for today';
+
+  @override
+  String get screenTimeServerGrant15 => '+15 min';
+
+  @override
+  String get screenTimeServerGrant30 => '+30 min';
+
+  @override
+  String get screenTimeServerGrantDone => 'Minutes added to today.';
 }

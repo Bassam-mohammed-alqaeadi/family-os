@@ -1509,6 +1509,10 @@ export function postgresScreenTimePort(store, { credentialMatches }) {
             AND entry_kind = 'credit'
             AND (
               (channel = 'time_request_grant' AND (expires_at IS NULL OR expires_at > $2))
+              -- A guardian's own grant, when it was given an expiry, extends the day it
+              -- was given for. Without the expiry clause a grant would be a permanent raise:
+              -- it would still count tomorrow, and the day after, and forever.
+              OR (channel = 'guardian_grant' AND expires_at IS NOT NULL AND expires_at > $2)
               OR ($3::boolean = TRUE AND channel IN ('quran_portion', 'athkar', 'learning_challenge', 'family_task_child')
                   AND (created_at AT TIME ZONE 'UTC' + ($4 || ' minutes')::interval)::date = $5::date)
             )`,

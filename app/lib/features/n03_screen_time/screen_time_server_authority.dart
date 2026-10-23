@@ -243,6 +243,28 @@ final class ScreenTimeServerAuthority {
     ),
   );
 
+  /// A gift, not an answer: minutes granted outright, for today.
+  ///
+  /// The expiry is end of the family's day on the *phone's* clock. It is the only thing that
+  /// keeps a gift from becoming a permanent raise, so it is not optional here.
+  Future<ScreenTimeAuthorityAnswer<FoundationGateMinuteGrant>> grantMinutes(
+    String childId, {
+    required int minutes,
+    required DateTime expiresAt,
+    String reason = '',
+    required String Function() idempotencyKey,
+  }) => _ask(
+    (family, token) => api.grantMinutes(
+      familyId: family,
+      childId: childId,
+      minutes: minutes,
+      expiresAt: expiresAt,
+      reason: reason,
+      idempotencyKey: idempotencyKey(),
+      idToken: token,
+    ),
+  );
+
   /// The one place an exception becomes a status, so no screen has to translate failures
   /// and no screen can invent a value out of one.
   Future<ScreenTimeAuthorityAnswer<T>> _ask<T>(

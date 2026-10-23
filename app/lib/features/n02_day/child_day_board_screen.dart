@@ -74,6 +74,7 @@ class ChildDayBoardScreen extends StatefulWidget {
     this.serverScreenTime,
     this.usageReporter,
     this.reportRhythm,
+    this.clock,
     this.activationBus,
     this.syncBus,
     this.modes,
@@ -99,6 +100,9 @@ class ChildDayBoardScreen extends StatefulWidget {
 
   /// Test seam for the reporting cadence. Null means the production rhythm.
   final UsageReportRhythm? reportRhythm;
+
+  /// Test seam for the countdown's clock. Null means the device's own.
+  final DateTime Function()? clock;
 
   /// P12 smart-mode sync — null → [stage1SmartModeActivationBus].
   final SmartModeActivationBus? activationBus;
@@ -151,6 +155,17 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen>
   late final UsageReportRhythm _rhythm =
       widget.reportRhythm ?? UsageReportRhythm();
   Timer? _reportTicker;
+
+  /// The moment the last server reading arrived, and the day it belonged to.
+  ///
+  /// The number on this screen is a countdown, so it has to move between reads - but it may
+  /// only move by time that has actually passed since the server said so. These two fields
+  /// are what makes the drift honest: one minute per minute, and never below zero.
+  DateTime? _readAt;
+  String? _readDay;
+
+  /// A tick that does nothing but let the minute counter redraw.
+  Timer? _minuteTicker;
   DeviceScreenTimeReading? _serverReading;
   var _serverStale = false;
   /// Only ever true when the phone *has* the bridge and the family has not granted access.
@@ -163,6 +178,8 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen>
   }
 
   String get _childKey => widget.childId.value;
+
+  DateTime _now() => (widget.clock ?? DateTime.now)();
 
   ChildId get _screenTimeChild => widget.screenTimeChildId ?? widget.childId;
 
@@ -218,12 +235,47 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen>
       const Duration(minutes: 1),
       (_) => _maybeReportUsage(),
     );
+    // The countdown is the child's whole relationship with this screen: a number that only
+    // changes when a request completes looks frozen, and a frozen number reads as a broken
+    // app. This tick moves it by the minute and rolls the day over at midnight.
+    _minuteTicker = Timer.periodic(const Duration(minutes: 1), (_) => _tickClock());
+  }
+
+  void _tickClock() {
+    if (!mounted) return;
+    final now = _now();
+    final day = '${now.year}-${now.month}-${now.day}';
+    if (_readDay != null && day != _readDay) {
+      // Midnight happened under an open screen. The server decides what a new day means, so
+      // the only honest move is to ask it rather than to reset numbers by hand.
+      _readAt = null;
+      _readDay = day;
+      _loadServerState();
+      return;
+    }
+    setState(() {});
+  }
+
+  /// What the countdown shows: the server's number, minus the whole minutes that have
+  /// actually passed since it arrived.
+  ///
+  /// Never below zero, and never applied to a number the server said was unlimited.
+  int _tickingRemaining(int remaining) {
+    final at = _readAt;
+    if (at == null) return remaining;
+    final elapsed = _now().difference(at).inMinutes;
+    if (elapsed <= 0) return remaining;
+    final left = remaining - elapsed;
+    return left < 0 ? 0 : left;
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Coming back to the foreground is when the number most likely changed.
-    if (state == AppLifecycleState.resumed) _maybeReportUsage(resumed: true);
+    if (state != AppLifecycleState.resumed) return;
+    // Coming back is when the number most likely changed - and the screen must not show the
+    // number it froze on. No loader: the last true answer stays until a better one arrives.
+    _loadServerState();
+    _maybeReportUsage(resumed: true);
   }
 
   /// Reports only when the rhythm allows it, and records the attempt either way.
@@ -240,9 +292,12 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen>
     try {
       final reading = await _serverClient.read();
       if (!mounted) return;
+      final now = _now();
       setState(() {
         _serverReading = reading;
         _serverStale = false;
+        _readAt = now;
+        _readDay = '${now.year}-${now.month}-${now.day}';
       });
     } on FoundationGateApiException {
       if (!mounted) return;
@@ -273,6 +328,13 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen>
 
   Future<void> _openUsageAccess() async {
     await _usageReporter.openUsageAccessSettings();
+  }
+
+  /// Measures, reports, then reads - in that order, for the reason the order exists:
+  /// a read before a report draws the day as it was at the previous report.
+  Future<void> _refreshNow() async {
+    await _reportUsage();
+    await _loadServerState();
   }
 
   /// Hook to trigger server state refresh.
@@ -325,6 +387,7 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen>
 
   @override
   void dispose() {
+    _minuteTicker?.cancel();
     _reportTicker?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _revocationWatcher?.cancel();
@@ -491,8 +554,14 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen>
         ),
       ),
       body: SafeArea(
-        child: widget.emptyDay
+        child: RefreshIndicator(
+          // A child pulling down is asking the same question the report asks on its own
+          // schedule: how much of today is left. It answers by measuring first and reading
+          // after, so the number that comes back is this minute's, not the last one's.
+          onRefresh: _refreshNow,
+          child: widget.emptyDay
             ? ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 32),
                 children: [
                   AppEmptyState(
@@ -504,6 +573,7 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen>
                 ],
               )
             : ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 32),
                 children: [
                   if (_childOffline) ...[
@@ -584,7 +654,9 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen>
                           ? (_serverReading!.remainingMinutes == null
                               ? l10n.childDayBoardNoLimit
                               : l10n.childTimeMirrorRemainingMinutes(
-                                  _serverReading!.remainingMinutes!,
+                                  _tickingRemaining(
+                                    _serverReading!.remainingMinutes!,
+                                  ),
                                 ))
                           : l10n.childTimeMirrorRemainingMinutes(
                               _effectiveRemaining,
@@ -746,6 +818,7 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen>
                   const ShellTabMoreTools(tabId: 'myday'),
                 ],
               ),
+        ),
       ),
     );
   }

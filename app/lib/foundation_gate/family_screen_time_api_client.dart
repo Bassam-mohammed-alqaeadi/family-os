@@ -325,6 +325,13 @@ class FoundationGateScreenTimeSnapshot {
   final FoundationGateTimeRequest? openRequest;
 }
 
+/// Minutes a guardian granted outright, as the ledger recorded them.
+class FoundationGateMinuteGrant {
+  const FoundationGateMinuteGrant({required this.minutes});
+
+  final int minutes;
+}
+
 /// The answer to releasing a lock: whether there was one to release, and the state after.
 class FoundationGateUnlockOutcome {
   const FoundationGateUnlockOutcome({
@@ -703,6 +710,77 @@ class FamilyScreenTimeApiClient {
         FoundationGateApiFailure.invalidResponse,
       ),
     };
+  }
+
+  /// A guardian granting minutes outright, for today.
+  ///
+  /// Separate from answering a question on purpose: this is a gift, not a reply, and it
+  /// must not be recorded as an answer to something the child did not ask. The expiry is
+  /// what makes it a day's grant instead of a permanent raise - the server counts an
+  /// expiring grant toward the day it was given in, and refuses to count one that never
+  /// ends.
+  Future<FoundationGateMinuteGrant> grantMinutes({
+    required String familyId,
+    required String childId,
+    required int minutes,
+    required DateTime expiresAt,
+    required String idempotencyKey,
+    required String idToken,
+    String reason = '',
+  }) async {
+    final response = await _post(
+      _configuration.familyChildMinutesGrantsUri(familyId, childId),
+      idToken,
+      <String, Object>{
+        'minutes': minutes,
+        'scope': 'temporary',
+        'expiresAt': expiresAt.toUtc().toIso8601String(),
+        'reason': reason,
+      },
+      idempotencyKey: idempotencyKey,
+    );
+    return switch (response.statusCode) {
+      201 || 200 => _parseMinuteGrant(response.body, minutes),
+      400 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.invalidInput,
+      ),
+      401 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.unauthenticated,
+      ),
+      403 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.accessDenied,
+      ),
+      404 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.notFound,
+      ),
+      409 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.conflict,
+      ),
+      429 || 503 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.serviceUnavailable,
+      ),
+      _ => throw const FoundationGateApiException(
+        FoundationGateApiFailure.invalidResponse,
+      ),
+    };
+  }
+
+  FoundationGateMinuteGrant _parseMinuteGrant(String body, int requested) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is! Map<String, Object?>) return FoundationGateMinuteGrant(minutes: requested);
+      final entry = decoded['entry'];
+      if (entry is! Map<String, Object?>) return FoundationGateMinuteGrant(minutes: requested);
+      final written = entry['minutes'];
+      return FoundationGateMinuteGrant(
+        minutes: written is int ? written : requested,
+      );
+    } on FormatException {
+      // The server answered 201, so the minutes were written. A body this build cannot read
+      // is a parsing gap, not a failed grant, and calling it a failure would invite a second,
+      // duplicate grant.
+      return FoundationGateMinuteGrant(minutes: requested);
+    }
   }
 
   /// The open question's id, when the server refused a second one.
