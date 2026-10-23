@@ -277,15 +277,36 @@ final class ChildScreenTimeReportClient {
       total += app.minutes;
     }
 
-    final response = await _transport.postUsage(
-      body: jsonEncode(<String, Object>{'usage': usage, 'apps': apps}),
-      idempotencyKey: keyFor(_clock()),
+    final body = jsonEncode(<String, Object>{'usage': usage, 'apps': apps});
+    final day = keyFor(_clock());
+    var response = await _transport.postUsage(
+      body: body,
+      idempotencyKey: day,
     );
+
+    // The day's key is stable on purpose: a retry after a dropped answer must replay the
+    // first report instead of filing a second one. But the numbers keep growing while the
+    // day does, and the server hashes the body - so a *later* report under the same key is
+    // refused with `idempotency_key_reused`, which would throw away the newer measurement.
+    // The retry below is the whole fix: same report, a key that names this measurement.
+    if (response.statusCode == 409 && _isKeyReuse(response.body)) {
+      response = await _transport.postUsage(
+        body: body,
+        idempotencyKey: '$day-${_clock().microsecondsSinceEpoch}',
+      );
+    }
+
     if (response.statusCode == 201 || response.statusCode == 200) {
       return ReportOutcome.sent(appCount: kept.length, totalMinutes: total);
     }
     return ReportOutcome.refused(response.statusCode);
   }
+
+  /// Whether a 409 is about the key rather than about the family's state.
+  ///
+  /// A 409 from this route can also mean "a question is already waiting" or "no cap to
+  /// extend", and retrying those would ask the same question twice.
+  static bool _isKeyReuse(String body) => body.contains('idempotency_key_reused');
 
   /// Opens the system settings screen so a guardian can grant usage access.
   Future<bool> openUsageAccessSettings() => _transport.openUsageAccessSettings();
