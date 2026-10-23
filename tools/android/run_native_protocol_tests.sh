@@ -14,9 +14,9 @@ cd "$ROOT"
 
 MAIN="app/android/app/src/main/kotlin/com/familyos/family_os"
 TEST="app/android/app/src/test/kotlin/com/familyos/family_os"
-SOURCES=("$MAIN/LocationFixProtocol.kt" "$MAIN/LocationSessionCoordinator.kt" "$MAIN/ResilientFixQueue.kt" "$MAIN/ServerTimeOffset.kt" "$MAIN/ProtectionStateMachine.kt" "$MAIN/BootBackoff.kt" "$MAIN/BatteryOemMap.kt" "$MAIN/FixQueuePort.kt" "$MAIN/FixQueueCipher.kt" "$MAIN/EncryptedFixQueueStore.kt")
-TESTS=("$TEST/LocationFixProtocolTest.kt" "$TEST/LocationSessionCoordinatorTest.kt" "$TEST/ResilientFixQueueTest.kt" "$TEST/ServerTimeOffsetTest.kt" "$TEST/ProtectionStateMachineTest.kt" "$TEST/BootBackoffTest.kt" "$TEST/BatteryOemMapTest.kt" "$TEST/EncryptedFixQueueStoreTest.kt" "$TEST/ResilienceCoordinatorTest.kt")
-TEST_CLASSES=("com.familyos.family_os.LocationFixProtocolTest" "com.familyos.family_os.LocationSessionCoordinatorTest" "com.familyos.family_os.ResilientFixQueueTest" "com.familyos.family_os.ServerTimeOffsetTest" "com.familyos.family_os.ProtectionStateMachineTest" "com.familyos.family_os.BootBackoffTest" "com.familyos.family_os.BatteryOemMapTest" "com.familyos.family_os.EncryptedFixQueueStoreTest" "com.familyos.family_os.ResilienceCoordinatorTest")
+SOURCES=("$MAIN/LocationFixProtocol.kt" "$MAIN/LocationSessionCoordinator.kt" "$MAIN/ResilientFixQueue.kt" "$MAIN/ServerTimeOffset.kt" "$MAIN/ProtectionStateMachine.kt" "$MAIN/BootBackoff.kt" "$MAIN/BatteryOemMap.kt" "$MAIN/FixQueuePort.kt" "$MAIN/FixQueueCipher.kt" "$MAIN/EncryptedFixQueueStore.kt" "$MAIN/UsageStatsAggregator.kt")
+TESTS=("$TEST/LocationFixProtocolTest.kt" "$TEST/LocationSessionCoordinatorTest.kt" "$TEST/ResilientFixQueueTest.kt" "$TEST/ServerTimeOffsetTest.kt" "$TEST/ProtectionStateMachineTest.kt" "$TEST/BootBackoffTest.kt" "$TEST/BatteryOemMapTest.kt" "$TEST/EncryptedFixQueueStoreTest.kt" "$TEST/ResilienceCoordinatorTest.kt" "$TEST/UsageStatsReaderTest.kt")
+TEST_CLASSES=("com.familyos.family_os.LocationFixProtocolTest" "com.familyos.family_os.LocationSessionCoordinatorTest" "com.familyos.family_os.ResilientFixQueueTest" "com.familyos.family_os.ServerTimeOffsetTest" "com.familyos.family_os.ProtectionStateMachineTest" "com.familyos.family_os.BootBackoffTest" "com.familyos.family_os.BatteryOemMapTest" "com.familyos.family_os.EncryptedFixQueueStoreTest" "com.familyos.family_os.ResilienceCoordinatorTest" "com.familyos.family_os.UsageStatsReaderTest")
 
 for source in "${SOURCES[@]}"; do
   if grep -qE '^import android\.|^import androidx\.' "$source"; then
