@@ -4,6 +4,7 @@ import 'package:family_os/core/policy/time_request_repository.dart';
 import 'package:family_os/core/policy/time_request_service.dart';
 import 'package:family_os/core/screen_time/stage1_time_request_runtime.dart';
 import 'package:family_os/features/n03_screen_time/child_time_request_models.dart';
+import 'package:family_os/foundation_gate/child_time_request_client.dart';
 import 'package:family_os/features/n03_screen_time/stage1_child_scope.dart';
 
 abstract class ChildTimeRequestRepository {
@@ -34,15 +35,21 @@ final class ServiceChildTimeRequestRepository
     required TimeRequestService service,
     TimeRequestRepository? repository,
     ChildId? childId,
+    ChildTimeRequestClient? delivery,
   }) : _service = service,
        _repo =
            repository ??
            PrefsTimeRequestRepository(stage1TimeRequestPrefsStore),
-       _childId = childId ?? activeScopedChildId();
+       _childId = childId ?? activeScopedChildId(),
+       _delivery = delivery;
 
   final TimeRequestService _service;
   final TimeRequestRepository _repo;
   final ChildId _childId;
+
+  /// The handset's road to the family's server. Null means nobody is told: a fixture, a
+  /// local-only build, or a widget test.
+  final ChildTimeRequestClient? _delivery;
 
   ChildTimeRequestSnapshot _form = const ChildTimeRequestSnapshot();
 
@@ -143,6 +150,7 @@ final class ServiceChildTimeRequestRepository
         requestedMinutes: _form.selectedMinutes,
         childReason: _composeReason(),
       );
+      final delivered = await _deliver(created.requestedMinutes);
       _form = _form.copyWith(
         status: ChildTimeRequestStatus.pending,
         requestedMinutes: created.requestedMinutes,
@@ -150,6 +158,7 @@ final class ServiceChildTimeRequestRepository
         clearGrantedMinutes: true,
         clearDecisionReason: true,
         clearSubmitError: true,
+        deliveredToServer: delivered,
       );
       return _form.copyWith();
     } on TimeRequestNotAllowedException {
@@ -160,6 +169,22 @@ final class ServiceChildTimeRequestRepository
       );
       return _form.copyWith();
     }
+  }
+
+  /// Tells the family's server about a question that is already saved here.
+  ///
+  /// The local save is not undone when delivery fails: the child asked, and losing the ask
+  /// because a network was down would be a worse answer than saying it has not arrived yet.
+  /// The outcome is recorded on the snapshot instead, so the screen can say which of the two
+  /// true sentences applies.
+  Future<bool?> _deliver(int requestedMinutes) async {
+    final delivery = _delivery;
+    if (delivery == null) return null;
+    final outcome = await delivery.ask(
+      requestedMinutes: requestedMinutes,
+      reasonCode: _form.reasonKey,
+    );
+    return outcome.reachedGuardian;
   }
 
   String _composeReason() {
@@ -237,6 +262,7 @@ openProductionChildTimeRequestRepository({ChildId? childId}) async {
     service: service,
     repository: Stage1TimeRequestRuntime.repository,
     childId: childId ?? activeScopedChildId(),
+    delivery: childTimeRequestClient(),
   );
 }
 

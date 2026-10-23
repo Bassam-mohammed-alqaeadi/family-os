@@ -232,7 +232,15 @@ class _ChildTimeRequestScreenState extends State<ChildTimeRequestScreen> {
       AppToast.show(context, message: l10n.childTimeRequestDuplicateError);
       return;
     }
-    AppToast.show(context, message: l10n.childTimeRequestSubmitToast);
+    // Two true sentences, and the screen may only say the one it knows. `null` means nobody
+    // attempted delivery (a local-only build, a fixture), which is the older behaviour;
+    // `false` is a fact - the question is safe on this device and has not left it.
+    AppToast.show(
+      context,
+      message: snap.deliveredToServer == false
+          ? l10n.childTimeRequestNotDelivered
+          : l10n.childTimeRequestSubmitToast,
+    );
     _go('SCR-CHD-004');
   }
 

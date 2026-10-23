@@ -16687,5 +16687,25 @@
   "childDayBoardUsageAccessOpen": "Open settings",
   "@childDayBoardUsageAccessOpen": {
     "description": "Child day board button that opens the Usage access settings"
+  },
+  "childTimeRequestNotDelivered": "We saved your request on this device, but it has not reached your parents yet - try again when the phone is connected.",
+  "@childTimeRequestNotDelivered": {
+    "description": "Child time request saved locally but not delivered to the server"
+  },
+  "screenTimeAppUsageTitle": "Where the minutes went",
+  "@screenTimeAppUsageTitle": {
+    "description": "Guardian screen-time per-app breakdown title"
+  },
+  "screenTimeAppUsageEmpty": "No app detail yet - it arrives with the phone's report.",
+  "@screenTimeAppUsageEmpty": {
+    "description": "Guardian screen-time per-app breakdown when the server has no rows"
+  },
+  "screenTimeAppUsageRest": "The rest of the apps",
+  "@screenTimeAppUsageRest": {
+    "description": "Guardian screen-time per-app breakdown row for the apps beyond the visible ones"
+  },
+  "screenTimeAppUsageTotal": "Counted app minutes",
+  "@screenTimeAppUsageTotal": {
+    "description": "Guardian screen-time per-app breakdown total label"
   }
 }

@@ -23192,6 +23192,36 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'فتح الإعدادات'**
   String get childDayBoardUsageAccessOpen;
+
+  /// Child time request saved locally but not delivered to the server
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظنا طلبك على هذا الجهاز، لكنه لم يصل إلى والديك بعد — أعد المحاولة حين يتصل الهاتف.'**
+  String get childTimeRequestNotDelivered;
+
+  /// Guardian screen-time per-app breakdown title
+  ///
+  /// In ar, this message translates to:
+  /// **'أين ذهبت الدقائق'**
+  String get screenTimeAppUsageTitle;
+
+  /// Guardian screen-time per-app breakdown when the server has no rows
+  ///
+  /// In ar, this message translates to:
+  /// **'لا تفاصيل تطبيقات بعد — تصل مع تقرير الهاتف.'**
+  String get screenTimeAppUsageEmpty;
+
+  /// Guardian screen-time per-app breakdown row for the apps beyond the visible ones
+  ///
+  /// In ar, this message translates to:
+  /// **'وبقية التطبيقات'**
+  String get screenTimeAppUsageRest;
+
+  /// Guardian screen-time per-app breakdown total label
+  ///
+  /// In ar, this message translates to:
+  /// **'دقائق التطبيقات المحتسبة'**
+  String get screenTimeAppUsageTotal;
 }
 
 class _AppLocalizationsDelegate

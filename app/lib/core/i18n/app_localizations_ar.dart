@@ -13072,4 +13072,21 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childDayBoardUsageAccessOpen => 'فتح الإعدادات';
+
+  @override
+  String get childTimeRequestNotDelivered =>
+      'حفظنا طلبك على هذا الجهاز، لكنه لم يصل إلى والديك بعد — أعد المحاولة حين يتصل الهاتف.';
+
+  @override
+  String get screenTimeAppUsageTitle => 'أين ذهبت الدقائق';
+
+  @override
+  String get screenTimeAppUsageEmpty =>
+      'لا تفاصيل تطبيقات بعد — تصل مع تقرير الهاتف.';
+
+  @override
+  String get screenTimeAppUsageRest => 'وبقية التطبيقات';
+
+  @override
+  String get screenTimeAppUsageTotal => 'دقائق التطبيقات المحتسبة';
 }

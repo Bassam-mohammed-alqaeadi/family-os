@@ -13276,4 +13276,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get childDayBoardUsageAccessOpen => 'Open settings';
+
+  @override
+  String get childTimeRequestNotDelivered =>
+      'We saved your request on this device, but it has not reached your parents yet - try again when the phone is connected.';
+
+  @override
+  String get screenTimeAppUsageTitle => 'Where the minutes went';
+
+  @override
+  String get screenTimeAppUsageEmpty =>
+      'No app detail yet - it arrives with the phone\'s report.';
+
+  @override
+  String get screenTimeAppUsageRest => 'The rest of the apps';
+
+  @override
+  String get screenTimeAppUsageTotal => 'Counted app minutes';
 }

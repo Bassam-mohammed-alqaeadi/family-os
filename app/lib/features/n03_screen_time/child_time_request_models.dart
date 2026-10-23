@@ -24,6 +24,7 @@ final class ChildTimeRequestSnapshot {
     this.formLocked = false,
     this.decisionReason,
     this.submitErrorKey,
+    this.deliveredToServer,
   });
 
   final ChildTimeRequestStatus status;
@@ -45,6 +46,14 @@ final class ChildTimeRequestSnapshot {
   /// ARB-facing error key, e.g. `duplicatePending`.
   final String? submitErrorKey;
 
+  /// Whether this question actually reached the family's server.
+  ///
+  /// Null means nobody asked: a local-only repository, a fixture, or a build that never
+  /// attempts delivery. False is a fact worth telling a child - the question is safe on
+  /// this device and a parent has not seen it - and it is the difference between the two
+  /// sentences the submit button may say.
+  final bool? deliveredToServer;
+
   bool get isEmpty => !formAvailable;
 
   ChildTimeRequestSnapshot copyWith({
@@ -60,6 +69,7 @@ final class ChildTimeRequestSnapshot {
     bool? formLocked,
     String? decisionReason,
     String? submitErrorKey,
+    bool? deliveredToServer,
     bool clearGrantedMinutes = false,
     bool clearDecisionReason = false,
     bool clearSubmitError = false,
@@ -83,6 +93,7 @@ final class ChildTimeRequestSnapshot {
       submitErrorKey: clearSubmitError
           ? null
           : (submitErrorKey ?? this.submitErrorKey),
+      deliveredToServer: deliveredToServer ?? this.deliveredToServer,
     );
   }
 }

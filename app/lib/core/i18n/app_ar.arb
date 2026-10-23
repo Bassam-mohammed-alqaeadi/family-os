@@ -16702,5 +16702,25 @@
   "childDayBoardUsageAccessOpen": "فتح الإعدادات",
   "@childDayBoardUsageAccessOpen": {
     "description": "Child day board button that opens the Usage access settings"
+  },
+  "childTimeRequestNotDelivered": "حفظنا طلبك على هذا الجهاز، لكنه لم يصل إلى والديك بعد — أعد المحاولة حين يتصل الهاتف.",
+  "@childTimeRequestNotDelivered": {
+    "description": "Child time request saved locally but not delivered to the server"
+  },
+  "screenTimeAppUsageTitle": "أين ذهبت الدقائق",
+  "@screenTimeAppUsageTitle": {
+    "description": "Guardian screen-time per-app breakdown title"
+  },
+  "screenTimeAppUsageEmpty": "لا تفاصيل تطبيقات بعد — تصل مع تقرير الهاتف.",
+  "@screenTimeAppUsageEmpty": {
+    "description": "Guardian screen-time per-app breakdown when the server has no rows"
+  },
+  "screenTimeAppUsageRest": "وبقية التطبيقات",
+  "@screenTimeAppUsageRest": {
+    "description": "Guardian screen-time per-app breakdown row for the apps beyond the visible ones"
+  },
+  "screenTimeAppUsageTotal": "دقائق التطبيقات المحتسبة",
+  "@screenTimeAppUsageTotal": {
+    "description": "Guardian screen-time per-app breakdown total label"
   }
 }
