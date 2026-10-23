@@ -13266,4 +13266,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get screenTimeServerEmpty =>
       'No screen-time limits are set for this child yet — nothing is being enforced.';
+
+  @override
+  String get childDayBoardNoLimit => 'No daily limit right now';
 }

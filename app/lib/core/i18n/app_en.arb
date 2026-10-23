@@ -16675,5 +16675,9 @@
   "screenTimeServerEmpty": "No screen-time limits are set for this child yet — nothing is being enforced.",
   "@screenTimeServerEmpty": {
     "description": "Screen time server panel empty state when no limits are set"
+  },
+  "childDayBoardNoLimit": "No daily limit right now",
+  "@childDayBoardNoLimit": {
+    "description": "Child day board when no screen time daily limit is set"
   }
 }

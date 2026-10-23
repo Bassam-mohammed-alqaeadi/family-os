@@ -13062,4 +13062,7 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get screenTimeServerEmpty =>
       'لم تُضبط حدود وقت الشاشة لهذا الطفل بعد — لا شيء مفروض الآن.';
+
+  @override
+  String get childDayBoardNoLimit => 'بلا حد يومي الآن';
 }

@@ -16690,5 +16690,9 @@
   "screenTimeServerEmpty": "لم تُضبط حدود وقت الشاشة لهذا الطفل بعد — لا شيء مفروض الآن.",
   "@screenTimeServerEmpty": {
     "description": "Screen time server panel empty state when no limits are set"
+  },
+  "childDayBoardNoLimit": "بلا حد يومي الآن",
+  "@childDayBoardNoLimit": {
+    "description": "Child day board when no screen time daily limit is set"
   }
 }

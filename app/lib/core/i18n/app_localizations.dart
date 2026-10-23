@@ -23174,6 +23174,12 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'لم تُضبط حدود وقت الشاشة لهذا الطفل بعد — لا شيء مفروض الآن.'**
   String get screenTimeServerEmpty;
+
+  /// Child day board when no screen time daily limit is set
+  ///
+  /// In ar, this message translates to:
+  /// **'بلا حد يومي الآن'**
+  String get childDayBoardNoLimit;
 }
 
 class _AppLocalizationsDelegate

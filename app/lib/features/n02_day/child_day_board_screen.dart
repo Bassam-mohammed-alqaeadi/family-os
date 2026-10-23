@@ -23,6 +23,9 @@ import 'package:family_os/core/policy/smart_mode_prefs.dart';
 import 'package:family_os/core/policy/smart_modes.dart';
 import 'package:family_os/core/policy/time_request_service.dart';
 import 'package:family_os/core/screen_time/screen_time_runtime.dart';
+import 'package:family_os/foundation_gate/child_screen_time_state_client.dart';
+import 'package:family_os/foundation_gate/device_screen_time_client.dart';
+import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 import 'package:family_os/core/screen_time/stage1_time_request_runtime.dart';
 import 'package:family_os/features/n02_day/day_board_motion.dart';
 import 'package:family_os/features/n09_smart_modes/modes_ux_bridge.dart';
@@ -39,6 +42,7 @@ abstract final class ChildDayBoardKeys {
   static const idleStatus = Key('child_day_board_idle_status');
   static const remainingMinutes = Key('child_day_board_remaining');
   static const earnedExtensionNote = Key('child_day_board_earned_note');
+  static const serverStale = Key('child_day_board_server_stale');
   static const warningBanner = Key('child_day_board_warning_banner');
   static const warningRequest = Key('child_day_board_warning_request');
   static const warningQuran = Key('child_day_board_warning_quran');
@@ -63,6 +67,7 @@ class ChildDayBoardScreen extends StatefulWidget {
     super.key,
     ChildId? childId,
     this.screenTimeChildId,
+    this.serverScreenTime,
     this.activationBus,
     this.syncBus,
     this.modes,
@@ -79,6 +84,9 @@ class ChildDayBoardScreen extends StatefulWidget {
   /// Same child in the Screen Time family-scoped key (policy mirror + time
   /// grants); null → [childId].
   final ChildId? screenTimeChildId;
+
+  /// The child's own server-read screen time state client (via native proxy).
+  final ChildScreenTimeStateClient? serverScreenTime;
 
   /// P12 smart-mode sync — null → [stage1SmartModeActivationBus].
   final SmartModeActivationBus? activationBus;
@@ -121,6 +129,10 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
   BuiltInModeId? _prevModeId;
   var _prevActive = false;
   var _hasExplicitPolicy = false;
+  late final ChildScreenTimeStateClient _serverClient =
+      widget.serverScreenTime ?? childScreenTimeState();
+  DeviceScreenTimeReading? _serverReading;
+  var _serverStale = false;
   bool _isExplicitMirror(ChildPolicyMirror mirror) {
     return mirror.lastAppliedAt != null ||
         mirror.applyCount > 0 ||
@@ -170,7 +182,29 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
     stage1TimeRequestDecisionBus.addListener(_onDecision);
     _bootstrapTimeRequests();
     _setupRevocationWatcher();
+    _loadServerState();
   }
+
+  Future<void> _loadServerState() async {
+    try {
+      final reading = await _serverClient.read();
+      if (!mounted) return;
+      setState(() {
+        _serverReading = reading;
+        _serverStale = false;
+      });
+    } on FoundationGateApiException {
+      if (!mounted) return;
+      // No previous answer: say nothing and keep the local behaviour.
+      // A later failure must not silently pass the old number off as current.
+      setState(() {
+        _serverStale = _serverReading != null;
+      });
+    }
+  }
+
+  /// Hook to trigger server state refresh.
+  Future<void> loadServerState() => _loadServerState();
 
   Timer? _revocationWatcher;
 
@@ -349,7 +383,11 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
     return '$h:$m';
   }
 
-  bool get _showRemaining => _hasExplicitPolicy && !widget.emptyDay;
+  bool get _showRemaining {
+    if (widget.emptyDay) return false;
+    if (_serverReading != null) return true;
+    return _hasExplicitPolicy && !widget.emptyDay;
+  }
 
   bool get _childOffline => !_syncBus.isChildOnline(_screenTimeChild);
 
@@ -433,6 +471,14 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
                     ),
                   ],
                   if (_showRemaining) ...[
+                    if (_serverStale) ...[
+                      BannerNote(
+                        key: ChildDayBoardKeys.serverStale,
+                        message: l10n.screenTimeServerUnreachable,
+                        variant: BannerVariant.a,
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                     const SizedBox(height: 16),
                     Text(
                       l10n.childTimeMirrorRemainingLabel,
@@ -447,7 +493,15 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
                     const SizedBox(height: 8),
                     Text(
                       key: ChildDayBoardKeys.remainingMinutes,
-                      l10n.childTimeMirrorRemainingMinutes(_effectiveRemaining),
+                      _serverReading != null
+                          ? (_serverReading!.remainingMinutes == null
+                              ? l10n.childDayBoardNoLimit
+                              : l10n.childTimeMirrorRemainingMinutes(
+                                  _serverReading!.remainingMinutes!,
+                                ))
+                          : l10n.childTimeMirrorRemainingMinutes(
+                              _effectiveRemaining,
+                            ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -459,7 +513,8 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
                     const SizedBox(height: 8),
                     Text(
                       key: ChildDayBoardKeys.earnedExtensionNote,
-                      _mirror.policy.earnedMinutesExtendLimit
+                      (_serverReading?.earnedMinutesExtendLimit ??
+                              _mirror.policy.earnedMinutesExtendLimit)
                           ? l10n.childDayBoardEarnedExtendsOn
                           : l10n.childDayBoardEarnedExtendsOff,
                       maxLines: 3,
@@ -469,11 +524,21 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
                         color: colors.ink2,
                       ),
                     ),
-                    if (TimeWarningBanner.shouldShow(_effectiveRemaining)) ...[
+                    if ((_serverReading != null
+                            ? _serverReading!.remainingMinutes
+                            : _effectiveRemaining) !=
+                        null &&
+                        TimeWarningBanner.shouldShow(
+                          _serverReading != null
+                              ? _serverReading!.remainingMinutes!
+                              : _effectiveRemaining,
+                        )) ...[
                       const SizedBox(height: 8),
                       TimeWarningBanner(
                         key: ChildDayBoardKeys.warningBanner,
-                        remainingMinutes: _effectiveRemaining,
+                        remainingMinutes: _serverReading != null
+                            ? _serverReading!.remainingMinutes!
+                            : _effectiveRemaining,
                       ),
                       const SizedBox(height: 8),
                       Wrap(
