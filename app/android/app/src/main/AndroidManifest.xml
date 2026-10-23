@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
     <!-- Voice notes in a family chat. Asked for at the moment a person starts a recording. -->
@@ -9,6 +10,12 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Screen time: how long each app held the foreground today. This is not a runtime
+         permission and no dialog can grant it: a guardian turns on "Usage access" in the
+         system settings screen, which is why the app opens that screen instead of asking. -->
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- S2 resilience: re-activate collection after reboot / app update / unlock, only
          when background location is still granted (checked at every wake). -->

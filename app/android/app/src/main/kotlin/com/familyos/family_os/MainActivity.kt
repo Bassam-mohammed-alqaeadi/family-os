@@ -9,6 +9,7 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -62,6 +63,9 @@ class MainActivity : FlutterActivity() {
                     "minutesBalanceRequest" -> proxyMinutesBalanceRequest(call, result)
                     "screenTimeStateRequest" -> proxyScreenTimeStateRequest(result)
                     "consentRequest" -> proxyFamilyConsentRequest(call, result)
+                    "usageStatsSnapshot" -> usageStatsSnapshot(result)
+                    "openUsageAccessSettings" -> openUsageAccessSettings(result)
+                    "screenTimeReportRequest" -> proxyScreenTimeReportRequest(call, result)
                     "capabilitySnapshot" -> capabilitySnapshot(result)
                     "stop" -> stopTelemetry(result)
                     "status" -> telemetryStatus(result)
@@ -482,6 +486,119 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    /**
+     * What the phone measured today, and whether it was allowed to look.
+     *
+     * `permissionGranted` is reported even when false: a screen that cannot tell "no usage
+     * yet today" from "no access to see usage" would blame the child for the guardian's
+     * missing setting.
+     */
+    private fun usageStatsSnapshot(result: MethodChannel.Result) {
+        val granted = UsageStatsReader.hasUsageAccess(this)
+        val rows: List<AppUsage> = if (granted) {
+            UsageStatsReader.readToday(this, System.currentTimeMillis())
+        } else {
+            emptyList()
+        }
+        result.success(
+            mapOf(
+                "available" to true,
+                "permissionGranted" to granted,
+                "apps" to rows.map {
+                    mapOf(
+                        "packageName" to it.packageName,
+                        "displayName" to labelOf(it.packageName),
+                        "categoryName" to it.categoryName,
+                        "minutes" to it.minutes,
+                    )
+                },
+            ),
+        )
+    }
+
+    /**
+     * The name a person reads in the family's own list.
+     *
+     * A package name is not a name: "com.quran.reader" is a fact about the package, and the
+     * guardian's screen is about their child's phone. When the system has no label the
+     * package name is still better than an empty row, and it says what it is.
+     */
+    private fun labelOf(packageName: String): String = try {
+        val info = packageManager.getApplicationInfo(packageName, 0)
+        packageManager.getApplicationLabel(info).toString()
+    } catch (_: Exception) {
+        packageName
+    }
+
+    private fun openUsageAccessSettings(result: MethodChannel.Result) {
+        val opened = try {
+            val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(intent)
+            true
+        } catch (_: Exception) {
+            false
+        }
+        if (!opened) {
+            // Some builds hide the usage-access screen. The app list is the honest fallback.
+            try {
+                startActivity(
+                    Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                )
+                result.success(true)
+                return
+            } catch (_: Exception) {
+                // Fall through to the refusal below.
+            }
+        }
+        result.success(opened)
+    }
+
+    /**
+     * Sends the handset's own measurement of today.
+     *
+     * The device id and the credential never come from Dart: the pairing on disk decides
+     * which handset is speaking, so a compromised screen cannot report on a sibling's
+     * phone. The body is the only thing Dart chooses, and its shape is the server's.
+     */
+    private fun proxyScreenTimeReportRequest(call: MethodCall, result: MethodChannel.Result) {
+        val config = TelemetryConfigStore(this).read()
+        if (config == null) {
+            result.error("device_screen_time_not_configured", "No paired device session is available.", null)
+            return
+        }
+        val body = call.argument<String>("body")
+        val idempotencyKey = call.argument<String>("idempotencyKey")
+        if (!validUsageReportBody(body) || !validIdempotencyKey(idempotencyKey)) {
+            result.error("device_screen_time_invalid_request", "The report is not a valid request.", null)
+            return
+        }
+        chatExecutor.execute {
+            try {
+                val request = Request.Builder()
+                    .url("${config.apiOrigin}/v1/devices/${config.deviceId}/screen-time")
+                    .header("Authorization", "Device ${config.deviceCredential}")
+                    .header("Accept", "application/json")
+                    .header("Content-Type", "application/json")
+                    .header("Idempotency-Key", idempotencyKey!!)
+                    .post(body!!.toRequestBody("application/json".toMediaType()))
+                    .build()
+                val answer = chatHttpClient.newCall(request).execute().use { response ->
+                    mapOf(
+                        "statusCode" to response.code,
+                        "body" to (response.body?.string() ?: ""),
+                    )
+                }
+                runOnUiThread { result.success(answer) }
+            } catch (_: Exception) {
+                // The measurement and the credential are never logged.
+                runOnUiThread {
+                    result.error("device_screen_time_unreachable", "The screen time service did not answer.", null)
+                }
+            }
+        }
+    }
+
     private fun familyChatRequestSpec(
         operation: String,
         deviceId: String,
@@ -536,6 +653,20 @@ class MainActivity : FlutterActivity() {
             } else null
             else -> null
         }
+    }
+
+    /**
+     * A usage report is not a chat message.
+     *
+     * `validJsonObject` bounds a body at 4 KB because a chat message is a sentence; a
+     * handset reporting two hundred apps sends far more than that, and reusing that bound
+     * would have refused every honest report on a busy phone. The shape is still checked.
+     */
+    private fun validUsageReportBody(value: String?): Boolean = try {
+        value != null && value.length <= MAX_USAGE_REPORT_CHARS &&
+            org.json.JSONObject(value).length() >= 0
+    } catch (_: Exception) {
+        false
     }
 
     private fun validJsonObject(value: String?): Boolean = try {
@@ -803,6 +934,8 @@ class MainActivity : FlutterActivity() {
         private const val NOTIFICATION_CHANNEL = "com.familyos.family_os/family_notifications"
         private const val REQUEST_FOREGROUND_LOCATION = 8101
         private const val REQUEST_BACKGROUND_LOCATION = 8102
+        // 200 rows (the server's own cap) of package names and labels, with room to spare.
+        private const val MAX_USAGE_REPORT_CHARS = 262_144
         const val EXTRA_FLUTTER_ROUTE = "flutter_route"
         const val EXTRA_FLUTTER_AUDIT = "flutter_audit"
         private const val EXTRA_NOTIFICATION_ROUTE = "family_notification_route"
