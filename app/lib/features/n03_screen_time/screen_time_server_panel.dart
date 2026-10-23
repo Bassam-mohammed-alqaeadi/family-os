@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:family_os/core/design/components/banner.dart';
@@ -58,12 +60,23 @@ class ScreenTimeServerPanel extends StatefulWidget {
   State<ScreenTimeServerPanel> createState() => _ScreenTimeServerPanelState();
 }
 
-class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
+class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel>
+    with WidgetsBindingObserver {
   FoundationGateScreenTimeSnapshot? _snapshot;
   ScreenTimeAuthorityStatus? _status;
   var _busy = false;
   late final TextEditingController _capController;
   int _capVersion = 0;
+  Timer? _poll;
+
+  /// How often an open panel looks for a question that was asked while it was open.
+  ///
+  /// The server has no push channel for screen time, so "instant" is this: a read every
+  /// twenty seconds plus one whenever the app comes back to the foreground, which is when a
+  /// parent actually looks. Twenty is chosen against the battery, not against the clock -
+  /// a read is one small GET, and a parent waiting for an answer to their child is exactly
+  /// the moment not to be stingy about it.
+  static const Duration _pollEvery = Duration(seconds: 20);
 
   ScreenTimeServerAuthority? get _authority =>
       widget.authority ?? activeScreenTimeServerAuthority;
@@ -76,16 +89,33 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
   void initState() {
     super.initState();
     _capController = TextEditingController();
+    WidgetsBinding.instance.addObserver(this);
+    _poll = Timer.periodic(_pollEvery, (_) => _refresh(silent: true));
     WidgetsBinding.instance.addPostFrameCallback((_) => _refresh());
   }
 
   @override
   void dispose() {
+    _poll?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     _capController.dispose();
     super.dispose();
   }
 
-  Future<void> _refresh() async {
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // A phone that was in a pocket has not been reading. Coming back is the one moment the
+    // numbers on screen are most likely to be stale, so it is the moment to ask.
+    if (state == AppLifecycleState.resumed) _refresh(silent: true);
+  }
+
+  /// Reads the state again.
+  ///
+  /// [silent] is the background poll. A poll that fails leaves the last true answer and the
+  /// last truthful status exactly where they are: a screen that was read a minute ago is
+  /// not a screen that just lost its server, and flashing a warning every twenty seconds
+  /// would teach a parent to ignore the one that matters.
+  Future<void> _refresh({bool silent = false}) async {
     final authority = _authority;
     if (authority == null) {
       setState(() {
@@ -96,6 +126,7 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
     }
     final answer = await authority.read(widget.childId.value);
     if (!mounted) return;
+    if (silent && !answer.isReady) return;
     setState(() => _apply(answer));
     if (answer.isReady) {
       _capController.text = '${answer.value!.policy.dailyLimitMinutes}';
@@ -247,26 +278,34 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
     final snapshot = _snapshot;
     final status = _status;
 
-    return ListView(
-      key: const Key('screen_time_server_panel'),
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-      children: [
-        _statusBanner(l10n, status, snapshot),
-        const SizedBox(height: 8),
-        if (snapshot != null) ...[
-          _stateCard(l10n, colors, snapshot),
+    return RefreshIndicator(
+      // A parent pulling down is asking the same question the poll asks every twenty
+      // seconds; it should simply be allowed to ask it now.
+      onRefresh: _refresh,
+      child: ListView(
+        key: const Key('screen_time_server_panel'),
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+        children: [
+          _statusBanner(l10n, status, snapshot),
           const SizedBox(height: 8),
-          AppUsageBreakdown(usage: snapshot.usageByApp),
-          const SizedBox(height: 8),
-          _policyCard(l10n, colors, snapshot),
-          const SizedBox(height: 8),
-          _lockCard(l10n, colors, snapshot),
-          if (snapshot.openRequest != null) ...[
+          if (snapshot != null) ...[
+            // The question is the only thing on this screen that expires while nobody is
+            // looking, so when it exists it goes first - above the numbers, not under them.
+            if (snapshot.openRequest != null) ...[
+              _requestCard(l10n, colors, snapshot.openRequest!),
+              const SizedBox(height: 12),
+            ],
+            _stateCard(l10n, colors, snapshot),
             const SizedBox(height: 8),
-            _requestCard(l10n, colors, snapshot.openRequest!),
+            AppUsageBreakdown(usage: snapshot.usageByApp),
+            const SizedBox(height: 8),
+            _policyCard(l10n, colors, snapshot),
+            const SizedBox(height: 8),
+            _lockCard(l10n, colors, snapshot),
           ],
         ],
-      ],
+      ),
     );
   }
 
@@ -530,43 +569,71 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
     FoundationGateTimeRequest request,
   ) {
     final editable = widget.canEdit && !_busy;
-    return Card(
+    // It arrives while the screen is open, so it must be *seen* arriving: a card that simply
+    // exists on the next frame is one a parent scrolling a list will miss.
+    return TweenAnimationBuilder<double>(
       key: const Key('screen_time_server_request_card'),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.screenTimeServerOpenRequest(request.requestedMinutes),
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: colors.ink,
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) => Opacity(
+        opacity: value,
+        child: Transform.translate(
+          offset: Offset(0, (1 - value) * 8),
+          child: child,
+        ),
+      ),
+      child: Card(
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(radii.card),
+            border: BorderDirectional(
+              start: BorderSide(color: colors.amber, width: 4),
+            ),
+          ),
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.schedule_rounded, size: 20, color: colors.amberDeep),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      l10n.screenTimeServerOpenRequest(request.requestedMinutes),
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: colors.ink,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                PrimaryBtn(
-                  key: const Key('screen_time_server_request_approve'),
-                  fullWidth: false,
-                  label: l10n.screenTimeServerApprove,
-                  onPressed: editable
-                      ? () => _answer(request, approve: true)
-                      : null,
-                ),
-                const SizedBox(width: 12),
-                TextButton(
-                  key: const Key('screen_time_server_request_deny'),
-                  onPressed: editable
-                      ? () => _answer(request, approve: false)
-                      : null,
-                  child: Text(l10n.screenTimeServerDeny),
-                ),
-              ],
-            ),
-          ],
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  PrimaryBtn(
+                    key: const Key('screen_time_server_request_approve'),
+                    fullWidth: false,
+                    label: l10n.screenTimeServerApprove,
+                    onPressed: editable
+                        ? () => _answer(request, approve: true)
+                        : null,
+                  ),
+                  const SizedBox(width: 12),
+                  TextButton(
+                    key: const Key('screen_time_server_request_deny'),
+                    onPressed: editable
+                        ? () => _answer(request, approve: false)
+                        : null,
+                    child: Text(l10n.screenTimeServerDeny),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
