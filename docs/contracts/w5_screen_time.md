@@ -3,9 +3,13 @@
 ## Scope
 نظام إدارة حدود وقت الشاشة للتطبيقات وقواعد الحجب والقفل الفوري للجهاز من قبل الأولياء.
 
-> **حالة النظام: غير مبني على الهاتف (Not built, no contract yet)**
-> 
-> لا يوجد وكيل تنفيذي على الهاتف لقياس الاستخدام (`PACKAGE_USAGE_STATS`) أو تطبيق حدود الحجب الفعلية أو شاشة القفل (`SYSTEM_ALERT_WINDOW`). مسارات الجهاز `GET/POST /v1/devices/{id}/screen-time` تعمل بلا عميل.
+> **حالة النظام: القياس مبني، والفرض غير مبني (Measurement built, enforcement not built)**
+>
+> **صحيح حتى 2026-10-23:**
+> * **القياس موجود.** `UsageStatsAggregator.kt` (طبقة نقية، تُختبر على JVM) و`UsageStatsReader.kt` (قراءة `UsageStatsManager` والتحقق من `PACKAGE_USAGE_STATS` عبر `AppOpsManager`) يعملان، ويعرض `child_screen_time_report_client.dart` نتيجتهما عبر `POST /v1/devices/{id}/screen-time`. الكوتلن المذكور مُدرَج في `tools/android/run_native_protocol_tests.sh`، فتترجمه بوابة Android Native وتشغّل اختباراته.
+> * **الطلب موجود.** طلب الوقت الإضافي يخرج من الهاتف داخل جسم التقرير نفسه (`{usage, apps, request}`) عبر `child_time_request_client.dart`، ويقرأه ولي الأمر من `GET /v1/families/{familyId}/children/{childId}/time-requests` ويجيب عليه.
+> * **الفرض غير مبني — وهذا مقصود ومؤجَّل إلى S11.** لا يوجد `SYSTEM_ALERT_WINDOW` ولا حجب فعلي لأي تطبيق؛ الأرقام تُقاس وتُعرض وتُحسب، لكن هاتف الطفل لا يُغلق تطبيقاً بعد. لا يجوز لأي شاشة أن تقول otherwise.
+> * **الرحلة الخلفية محدودة.** الإرسال التراكمي يحدث والتطبيق في المقدمة (أو لحظة عودته)، بإيقاع محدود في `usage_report_rhythm.dart`. لا `WorkManager` بعد: هذا قيد معروف لا ادّعاء مُنجز.
 
 ## Invariants
 1. [غير مبني / untested] قياس استخدام التطبيقات بالدقائق على نظام أندرويد وإرسالها للخادم دورياً.

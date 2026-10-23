@@ -129,6 +129,7 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel>
     if (silent && !answer.isReady) return;
     setState(() => _apply(answer));
     if (answer.isReady) {
+      unawaited(_ensureAppNames());
       _capController.text = '${answer.value!.policy.dailyLimitMinutes}';
       _capVersion = answer.value!.policy.version ?? 0;
     }
@@ -143,6 +144,34 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel>
       if (current != null) _snapshot = _withPolicy(current, value);
     }
     if (value is FoundationGateUnlockOutcome) _snapshot = value.snapshot;
+  }
+
+  /// The family's own names for the apps in the breakdown.
+  ///
+  /// The state read carries ids only, so a name has to be asked for separately - once, and
+  /// only when a row arrives that this panel cannot name. A failed name lookup is not a
+  /// failed screen: the rows keep their derived labels and nothing else changes.
+  Map<String, String> _appNames = const <String, String>{};
+  var _namesAskedFor = const <String>{};
+
+  Future<void> _ensureAppNames() async {
+    final authority = _authority;
+    final snapshot = _snapshot;
+    if (authority == null || snapshot == null) return;
+    final unknown = snapshot.usageByApp
+        .map((row) => row.appId)
+        .where((id) => !_appNames.containsKey(id) && !_namesAskedFor.contains(id))
+        .toSet();
+    if (unknown.isEmpty) return;
+    _namesAskedFor = <String>{..._namesAskedFor, ...unknown};
+    final answer = await authority.apps(widget.childId.value);
+    if (!mounted || !answer.isReady) return;
+    final named = <String, String>{
+      for (final app in answer.value!)
+        if (app.displayName.trim().isNotEmpty) app.appId: app.displayName.trim(),
+    };
+    if (named.isEmpty) return;
+    setState(() => _appNames = <String, String>{..._appNames, ...named});
   }
 
   /// The policy the server just answered with, folded into the last snapshot.
@@ -305,7 +334,10 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel>
             // here to decide, and the decision must stay one thumb-reach away. The breakdown
             // is what they read *after* the decision.
             const SizedBox(height: 8),
-            AppUsageBreakdown(usage: snapshot.usageByApp),
+            AppUsageBreakdown(
+              usage: snapshot.usageByApp,
+              displayNames: _appNames,
+            ),
           ],
         ],
       ),
