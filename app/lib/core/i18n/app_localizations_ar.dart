@@ -13065,4 +13065,30 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childDayBoardNoLimit => 'بلا حد يومي الآن';
+
+  @override
+  String get screenTimeServerRetry => 'إعادة المحاولة';
+
+  @override
+  String get screenTimeServerQuickGrantTitle => 'منح وقت إضافي سريع';
+
+  @override
+  String get screenTimeServerGrant15 => '+15 دقيقة';
+
+  @override
+  String get screenTimeServerGrant30 => '+30 دقيقة';
+
+  @override
+  String get screenTimeServerGrant60 => '+60 دقيقة';
+
+  @override
+  String get screenTimeServerCapInvalid => 'يرجى إدخال عدد دقائق بين 0 و 1440';
+
+  @override
+  String screenTimeServerTotalLimit(int minutes) {
+    return 'الحد الكلي: $minutes دقيقة';
+  }
+
+  @override
+  String get screenTimeServerProgressLabel => 'نسبة استهلاك وقت الشاشة اليومي';
 }

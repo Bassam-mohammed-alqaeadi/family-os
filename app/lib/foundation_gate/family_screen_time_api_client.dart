@@ -705,6 +705,52 @@ class FamilyScreenTimeApiClient {
     };
   }
 
+  /// Direct minutes grant for a child by a guardian outright.
+  Future<FoundationGateHttpResponse> grantMinutesDirect({
+    required String familyId,
+    required String childId,
+    required int minutes,
+    required String idempotencyKey,
+    required String idToken,
+    String? reason,
+  }) async {
+    final body = <String, Object>{
+      'minutes': minutes,
+      'scope': 'daily',
+      'reason': reason ?? 'guardian_instant_grant',
+    };
+    final response = await _post(
+      _configuration.familyChildMinutesGrantsUri(familyId, childId),
+      idToken,
+      body,
+      idempotencyKey: idempotencyKey,
+    );
+    return switch (response.statusCode) {
+      200 || 201 => response,
+      400 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.invalidInput,
+      ),
+      401 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.unauthenticated,
+      ),
+      403 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.accessDenied,
+      ),
+      404 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.notFound,
+      ),
+      409 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.conflict,
+      ),
+      429 || 503 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.serviceUnavailable,
+      ),
+      _ => throw const FoundationGateApiException(
+        FoundationGateApiFailure.invalidResponse,
+      ),
+    };
+  }
+
   /// The open question's id, when the server refused a second one.
   ///
   /// A conflict here is not an error a family caused: it means the child already asked. The

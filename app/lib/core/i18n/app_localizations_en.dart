@@ -13269,4 +13269,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get childDayBoardNoLimit => 'No daily limit right now';
+
+  @override
+  String get screenTimeServerRetry => 'Retry';
+
+  @override
+  String get screenTimeServerQuickGrantTitle => 'Quick time grant';
+
+  @override
+  String get screenTimeServerGrant15 => '+15 min';
+
+  @override
+  String get screenTimeServerGrant30 => '+30 min';
+
+  @override
+  String get screenTimeServerGrant60 => '+60 min';
+
+  @override
+  String get screenTimeServerCapInvalid =>
+      'Please enter minutes between 0 and 1440';
+
+  @override
+  String screenTimeServerTotalLimit(int minutes) {
+    return 'Total limit: $minutes min';
+  }
+
+  @override
+  String get screenTimeServerProgressLabel =>
+      'Daily screen time consumption progress';
 }

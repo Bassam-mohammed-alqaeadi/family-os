@@ -1509,6 +1509,8 @@ export function postgresScreenTimePort(store, { credentialMatches }) {
             AND entry_kind = 'credit'
             AND (
               (channel = 'time_request_grant' AND (expires_at IS NULL OR expires_at > $2))
+              OR (channel = 'guardian_grant' AND wallet_scope = 'daily'
+                  AND (created_at AT TIME ZONE 'UTC' + ($4 || ' minutes')::interval)::date = $5::date)
               OR ($3::boolean = TRUE AND channel IN ('quran_portion', 'athkar', 'learning_challenge', 'family_task_child')
                   AND (created_at AT TIME ZONE 'UTC' + ($4 || ' minutes')::interval)::date = $5::date)
             )`,

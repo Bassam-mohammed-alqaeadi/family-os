@@ -16679,5 +16679,42 @@
   "childDayBoardNoLimit": "No daily limit right now",
   "@childDayBoardNoLimit": {
     "description": "Child day board when no screen time daily limit is set"
+  },
+  "screenTimeServerRetry": "Retry",
+  "@screenTimeServerRetry": {
+    "description": "Retry action on screen time server panel"
+  },
+  "screenTimeServerQuickGrantTitle": "Quick time grant",
+  "@screenTimeServerQuickGrantTitle": {
+    "description": "Title for quick extra minutes grant buttons on server panel"
+  },
+  "screenTimeServerGrant15": "+15 min",
+  "@screenTimeServerGrant15": {
+    "description": "Quick grant 15 minutes"
+  },
+  "screenTimeServerGrant30": "+30 min",
+  "@screenTimeServerGrant30": {
+    "description": "Quick grant 30 minutes"
+  },
+  "screenTimeServerGrant60": "+60 min",
+  "@screenTimeServerGrant60": {
+    "description": "Quick grant 60 minutes"
+  },
+  "screenTimeServerCapInvalid": "Please enter minutes between 0 and 1440",
+  "@screenTimeServerCapInvalid": {
+    "description": "Validation message when screen time daily cap is invalid"
+  },
+  "screenTimeServerTotalLimit": "Total limit: {minutes} min",
+  "@screenTimeServerTotalLimit": {
+    "description": "Total limit minutes label on screen time server panel",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "screenTimeServerProgressLabel": "Daily screen time consumption progress",
+  "@screenTimeServerProgressLabel": {
+    "description": "Accessibility semantics label for daily screen time consumption progress bar"
   }
 }

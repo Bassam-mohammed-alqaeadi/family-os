@@ -463,6 +463,9 @@ class FoundationGateConfiguration {
   Uri familyChildMinutesBalanceUri(String familyId, String childId) =>
       _familyChildCrumbUri(familyId, childId, 'minutes/balance');
 
+  Uri familyChildMinutesGrantsUri(String familyId, String childId) =>
+      _familyChildCrumbUri(familyId, childId, 'minutes/grants');
+
   Uri familyChildPointsUri(String familyId, String childId) =>
       _familyChildCrumbUri(familyId, childId, 'points');
 

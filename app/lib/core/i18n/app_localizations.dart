@@ -23180,6 +23180,54 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'بلا حد يومي الآن'**
   String get childDayBoardNoLimit;
+
+  /// Retry action on screen time server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'إعادة المحاولة'**
+  String get screenTimeServerRetry;
+
+  /// Title for quick extra minutes grant buttons on server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'منح وقت إضافي سريع'**
+  String get screenTimeServerQuickGrantTitle;
+
+  /// Quick grant 15 minutes
+  ///
+  /// In ar, this message translates to:
+  /// **'+15 دقيقة'**
+  String get screenTimeServerGrant15;
+
+  /// Quick grant 30 minutes
+  ///
+  /// In ar, this message translates to:
+  /// **'+30 دقيقة'**
+  String get screenTimeServerGrant30;
+
+  /// Quick grant 60 minutes
+  ///
+  /// In ar, this message translates to:
+  /// **'+60 دقيقة'**
+  String get screenTimeServerGrant60;
+
+  /// Validation message when screen time daily cap is invalid
+  ///
+  /// In ar, this message translates to:
+  /// **'يرجى إدخال عدد دقائق بين 0 و 1440'**
+  String get screenTimeServerCapInvalid;
+
+  /// Total limit minutes label on screen time server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'الحد الكلي: {minutes} دقيقة'**
+  String screenTimeServerTotalLimit(int minutes);
+
+  /// Accessibility semantics label for daily screen time consumption progress bar
+  ///
+  /// In ar, this message translates to:
+  /// **'نسبة استهلاك وقت الشاشة اليومي'**
+  String get screenTimeServerProgressLabel;
 }
 
 class _AppLocalizationsDelegate

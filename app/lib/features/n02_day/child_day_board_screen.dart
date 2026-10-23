@@ -116,7 +116,8 @@ class ChildDayBoardScreen extends StatefulWidget {
   State<ChildDayBoardScreen> createState() => _ChildDayBoardScreenState();
 }
 
-class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
+class _ChildDayBoardScreenState extends State<ChildDayBoardScreen>
+    with WidgetsBindingObserver {
   late final SmartModeActivationBus _activationBus;
   late final PolicySyncBus _syncBus;
   StreamSubscription<ChildPolicyMirror>? _policySub;
@@ -133,6 +134,8 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
       widget.serverScreenTime ?? childScreenTimeState();
   DeviceScreenTimeReading? _serverReading;
   var _serverStale = false;
+  DateTime _lastLoadedDate = DateTime.now();
+  Timer? _midnightTimer;
   bool _isExplicitMirror(ChildPolicyMirror mirror) {
     return mirror.lastAppliedAt != null ||
         mirror.applyCount > 0 ||
@@ -182,7 +185,35 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
     stage1TimeRequestDecisionBus.addListener(_onDecision);
     _bootstrapTimeRequests();
     _setupRevocationWatcher();
+    WidgetsBinding.instance.addObserver(this);
+    _lastLoadedDate = DateTime.now();
+    _scheduleMidnightCheck();
     _loadServerState();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      final now = DateTime.now();
+      if (now.day != _lastLoadedDate.day || now.month != _lastLoadedDate.month) {
+        _lastLoadedDate = now;
+        _scheduleMidnightCheck();
+      }
+      _loadServerState();
+    }
+  }
+
+  void _scheduleMidnightCheck() {
+    _midnightTimer?.cancel();
+    final now = DateTime.now();
+    final midnight = DateTime(now.year, now.month, now.day + 1);
+    final duration = midnight.difference(now) + const Duration(seconds: 1);
+    _midnightTimer = Timer(duration, () {
+      if (!mounted) return;
+      _lastLoadedDate = DateTime.now();
+      _loadServerState();
+      _scheduleMidnightCheck();
+    });
   }
 
   Future<void> _loadServerState() async {
@@ -253,6 +284,8 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _midnightTimer?.cancel();
     _revocationWatcher?.cancel();
     NativeChildTelemetryBridge.removeRevocationListener(_onDeviceRevocationTriggered);
     _activationBus.removeListener(_onActivationBus);
@@ -417,20 +450,24 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
         ),
       ),
       body: SafeArea(
-        child: widget.emptyDay
-            ? ListView(
-                padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 32),
-                children: [
-                  AppEmptyState(
-                    key: ChildDayBoardKeys.emptyState,
-                    contextName: l10n.childDayBoardTitle,
-                    onAction: widget.onEmptyAction,
-                  ),
-                  const ShellTabMoreTools(tabId: 'myday'),
-                ],
-              )
-            : ListView(
-                padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 32),
+        child: RefreshIndicator(
+          onRefresh: _loadServerState,
+          child: widget.emptyDay
+              ? ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 32),
+                  children: [
+                    AppEmptyState(
+                      key: ChildDayBoardKeys.emptyState,
+                      contextName: l10n.childDayBoardTitle,
+                      onAction: widget.onEmptyAction,
+                    ),
+                    const ShellTabMoreTools(tabId: 'myday'),
+                  ],
+                )
+              : ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 32),
                 children: [
                   if (_childOffline) ...[
                     BannerNote(
@@ -659,6 +696,7 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
                   const ShellTabMoreTools(tabId: 'myday'),
                 ],
               ),
+        ),
       ),
     );
   }

@@ -227,6 +227,76 @@ void main() {
       expect(find.text('متبقي 60 دقيقة'), findsOneWidget);
     },
   );
+
+  testWidgets(
+    'pull to refresh reloads server screen time reading',
+    (tester) async {
+      final transport = _FakeChildScreenTimeTransport(
+        FoundationGateHttpResponse(
+          statusCode: 200,
+          body: _screenTimePayload(remainingMinutes: 45),
+        ),
+      );
+      final client = ChildScreenTimeStateClient(transport: transport);
+
+      await tester.pumpWidget(
+        _wrap(
+          ChildDayBoardScreen(
+            childId: testChildId,
+            serverScreenTime: client,
+            showModeNotices: false,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('متبقي 45 دقيقة'), findsOneWidget);
+
+      transport.response = FoundationGateHttpResponse(
+        statusCode: 200,
+        body: _screenTimePayload(remainingMinutes: 60),
+      );
+
+      await tester.fling(find.byType(RefreshIndicator), const Offset(0, 300), 1000);
+      await tester.pumpAndSettle();
+
+      expect(find.text('متبقي 60 دقيقة'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'resuming app reloads server screen time reading',
+    (tester) async {
+      final transport = _FakeChildScreenTimeTransport(
+        FoundationGateHttpResponse(
+          statusCode: 200,
+          body: _screenTimePayload(remainingMinutes: 45),
+        ),
+      );
+      final client = ChildScreenTimeStateClient(transport: transport);
+
+      await tester.pumpWidget(
+        _wrap(
+          ChildDayBoardScreen(
+            childId: testChildId,
+            serverScreenTime: client,
+            showModeNotices: false,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('متبقي 45 دقيقة'), findsOneWidget);
+
+      transport.response = FoundationGateHttpResponse(
+        statusCode: 200,
+        body: _screenTimePayload(remainingMinutes: 30),
+      );
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+
+      expect(find.text('متبقي 30 دقيقة'), findsOneWidget);
+    },
+  );
 }
 
 // Lack of pairing (401 / unauthenticated) is not an error shown to the child.
