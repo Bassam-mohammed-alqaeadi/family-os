@@ -24,6 +24,7 @@ import 'package:family_os/core/policy/smart_modes.dart';
 import 'package:family_os/core/policy/time_request_service.dart';
 import 'package:family_os/core/screen_time/screen_time_runtime.dart';
 import 'package:family_os/foundation_gate/child_screen_time_report_client.dart';
+import 'package:family_os/foundation_gate/usage_report_rhythm.dart';
 import 'package:family_os/foundation_gate/child_screen_time_state_client.dart';
 import 'package:family_os/foundation_gate/device_screen_time_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
@@ -72,6 +73,7 @@ class ChildDayBoardScreen extends StatefulWidget {
     this.screenTimeChildId,
     this.serverScreenTime,
     this.usageReporter,
+    this.reportRhythm,
     this.activationBus,
     this.syncBus,
     this.modes,
@@ -94,6 +96,9 @@ class ChildDayBoardScreen extends StatefulWidget {
 
   /// Reports what this handset measured today. Null means the production reporter.
   final ChildScreenTimeReportClient? usageReporter;
+
+  /// Test seam for the reporting cadence. Null means the production rhythm.
+  final UsageReportRhythm? reportRhythm;
 
   /// P12 smart-mode sync — null → [stage1SmartModeActivationBus].
   final SmartModeActivationBus? activationBus;
@@ -123,7 +128,8 @@ class ChildDayBoardScreen extends StatefulWidget {
   State<ChildDayBoardScreen> createState() => _ChildDayBoardScreenState();
 }
 
-class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
+class _ChildDayBoardScreenState extends State<ChildDayBoardScreen>
+    with WidgetsBindingObserver {
   late final SmartModeActivationBus _activationBus;
   late final PolicySyncBus _syncBus;
   StreamSubscription<ChildPolicyMirror>? _policySub;
@@ -140,6 +146,11 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
       widget.serverScreenTime ?? childScreenTimeState();
   late final ChildScreenTimeReportClient _usageReporter =
       widget.usageReporter ?? childScreenTimeReport();
+
+  /// When this handset is willing to tell the server what the day has cost so far.
+  late final UsageReportRhythm _rhythm =
+      widget.reportRhythm ?? UsageReportRhythm();
+  Timer? _reportTicker;
   DeviceScreenTimeReading? _serverReading;
   var _serverStale = false;
   /// Only ever true when the phone *has* the bridge and the family has not granted access.
@@ -194,6 +205,32 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
     _bootstrapTimeRequests();
     _setupRevocationWatcher();
     _loadServerState();
+
+    // The day grows while the app is open, and the report is cumulative, so the question is
+    // never *whether* to tell the server but *how often*. A one-minute tick asks the rhythm,
+    // which answers "yes" at most every ten minutes (and every forty-five seconds after the
+    // phone comes back to a hand). The tick itself does no I/O.
+    WidgetsBinding.instance.addObserver(this);
+    _reportUsage();
+    _reportTicker = Timer.periodic(
+      const Duration(minutes: 1),
+      (_) => _maybeReportUsage(),
+    );
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Coming back to the foreground is when the number most likely changed.
+    if (state == AppLifecycleState.resumed) _maybeReportUsage(resumed: true);
+  }
+
+  /// Reports only when the rhythm allows it, and records the attempt either way.
+  ///
+  /// A failed attempt is recorded too: the next scheduled one is minutes away, which is the
+  /// point - a dead network must not turn this into a tight retry loop.
+  void _maybeReportUsage({bool resumed = false}) {
+    if (!_rhythm.shouldReport(resumed: resumed)) return;
+    _rhythm.recordAttempt();
     _reportUsage();
   }
 
@@ -215,7 +252,7 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
     }
   }
 
-  /// Reports this handset's own measurement, once per screen load, then reads the state.
+  /// Reports this handset's own measurement, then reads the state.
   ///
   /// The order matters: a report is what makes the number move, so asking the server
   /// before saying anything would draw yesterday's figure and call it today's. Every
@@ -286,6 +323,8 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
 
   @override
   void dispose() {
+    _reportTicker?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     _revocationWatcher?.cancel();
     NativeChildTelemetryBridge.removeRevocationListener(_onDeviceRevocationTriggered);
     _activationBus.removeListener(_onActivationBus);
