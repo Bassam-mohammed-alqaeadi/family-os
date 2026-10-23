@@ -211,7 +211,9 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen>
     // which answers "yes" at most every ten minutes (and every forty-five seconds after the
     // phone comes back to a hand). The tick itself does no I/O.
     WidgetsBinding.instance.addObserver(this);
-    _reportUsage();
+    // The first look goes through the rhythm too, so the ticker a minute later cannot send
+    // the same measurement twice: the attempt is recorded either way.
+    _maybeReportUsage();
     _reportTicker = Timer.periodic(
       const Duration(minutes: 1),
       (_) => _maybeReportUsage(),
