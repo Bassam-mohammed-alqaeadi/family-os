@@ -23214,4 +23214,16 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
     'on GitHub with a reproducible sample app and the gen-l10n configuration '
     'that was used.',
   );
+
+  /// Child day board note when the handset needs Usage access to measure screen time
+  ///
+  /// In ar, this message translates to:
+  /// **'لقياس وقت الشاشة يحتاج هذا الهاتف إذن «الوصول إلى الاستخدام».'**
+  String get childDayBoardUsageAccessNeeded;
+
+  /// Child day board button that opens the Usage access settings
+  ///
+  /// In ar, this message translates to:
+  /// **'فتح الإعدادات'**
+  String get childDayBoardUsageAccessOpen;
 }

@@ -37,11 +37,21 @@ final class AppUsageSample {
 
 /// What one look at the phone's own measurement returned.
 final class UsageSnapshot {
-  const UsageSnapshot({required this.permissionGranted, required this.apps});
+  const UsageSnapshot({
+    required this.permissionGranted,
+    required this.apps,
+    this.available = true,
+  });
 
   /// False when the family has not granted "Usage access". It is reported rather than
   /// thrown: a missing setting is a thing to explain, not a fault to retry.
   final bool permissionGranted;
+
+  /// False when the phone could not be asked at all — no native bridge in this build, or
+  /// the bridge answered with a failure. It is a third answer on purpose: "we cannot see"
+  /// is not "you did not allow us", and a screen must not tell a family to change a
+  /// setting that was never the problem.
+  final bool available;
 
   final List<AppUsageSample> apps;
 
@@ -103,11 +113,19 @@ final class NativeChildScreenTimeReportTransport
       }
       return UsageSnapshot(permissionGranted: granted, apps: apps);
     } on MissingPluginException {
-      // A build without the native bridge has not been told anything — which is not the
-      // same as being told "no access", but it is also not a fault to show a child.
-      return const UsageSnapshot(permissionGranted: false, apps: <AppUsageSample>[]);
+      // A build without the native bridge was never asked anything. Saying "no access"
+      // here would send a family to a settings screen that cannot help them.
+      return const UsageSnapshot(
+        permissionGranted: false,
+        apps: <AppUsageSample>[],
+        available: false,
+      );
     } on PlatformException {
-      return const UsageSnapshot(permissionGranted: false, apps: <AppUsageSample>[]);
+      return const UsageSnapshot(
+        permissionGranted: false,
+        apps: <AppUsageSample>[],
+        available: false,
+      );
     }
   }
 
@@ -167,7 +185,13 @@ final class NativeChildScreenTimeReportTransport
 
 /// What one attempt to report produced. Four answers, because there are four things that
 /// can be true, and "it did not work" would hide which one.
-enum ReportOutcomeKind { sent, permissionMissing, nothingMeasured, refused }
+enum ReportOutcomeKind {
+  sent,
+  unavailable,
+  permissionMissing,
+  nothingMeasured,
+  refused,
+}
 
 final class ReportOutcome {
   const ReportOutcome._(
@@ -181,6 +205,8 @@ final class ReportOutcome {
     required int appCount,
     required int totalMinutes,
   }) : this._(ReportOutcomeKind.sent, appCount: appCount, totalMinutes: totalMinutes);
+
+  const ReportOutcome.unavailable() : this._(ReportOutcomeKind.unavailable);
 
   const ReportOutcome.permissionMissing()
     : this._(ReportOutcomeKind.permissionMissing);
@@ -198,6 +224,7 @@ final class ReportOutcome {
 
   bool get isSent => kind == ReportOutcomeKind.sent;
   bool get needsUsageAccess => kind == ReportOutcomeKind.permissionMissing;
+  bool get isUnavailable => kind == ReportOutcomeKind.unavailable;
 }
 
 /// Reports what the phone measured, once a day, in the server's own words.
@@ -217,6 +244,7 @@ final class ChildScreenTimeReportClient {
 
   Future<ReportOutcome> report() async {
     final snapshot = await _transport.snapshot();
+    if (!snapshot.available) return const ReportOutcome.unavailable();
     if (!snapshot.permissionGranted) {
       return const ReportOutcome.permissionMissing();
     }

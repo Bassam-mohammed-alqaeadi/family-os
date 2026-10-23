@@ -16679,5 +16679,13 @@
   "childDayBoardNoLimit": "No daily limit right now",
   "@childDayBoardNoLimit": {
     "description": "Child day board when no screen time daily limit is set"
+  },
+  "childDayBoardUsageAccessNeeded": "To measure screen time this phone needs Usage access.",
+  "@childDayBoardUsageAccessNeeded": {
+    "description": "Child day board note when the handset needs Usage access to measure screen time"
+  },
+  "childDayBoardUsageAccessOpen": "Open settings",
+  "@childDayBoardUsageAccessOpen": {
+    "description": "Child day board button that opens the Usage access settings"
   }
 }

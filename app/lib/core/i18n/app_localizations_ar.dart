@@ -13065,4 +13065,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get childDayBoardNoLimit => 'بلا حد يومي الآن';
+
+  @override
+  String get childDayBoardUsageAccessNeeded =>
+      'لقياس وقت الشاشة يحتاج هذا الهاتف إذن «الوصول إلى الاستخدام».';
+
+  @override
+  String get childDayBoardUsageAccessOpen => 'فتح الإعدادات';
 }

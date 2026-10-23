@@ -13269,4 +13269,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get childDayBoardNoLimit => 'No daily limit right now';
+
+  @override
+  String get childDayBoardUsageAccessNeeded =>
+      'To measure screen time this phone needs Usage access.';
+
+  @override
+  String get childDayBoardUsageAccessOpen => 'Open settings';
 }

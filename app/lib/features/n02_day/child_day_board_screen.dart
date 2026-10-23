@@ -23,6 +23,7 @@ import 'package:family_os/core/policy/smart_mode_prefs.dart';
 import 'package:family_os/core/policy/smart_modes.dart';
 import 'package:family_os/core/policy/time_request_service.dart';
 import 'package:family_os/core/screen_time/screen_time_runtime.dart';
+import 'package:family_os/foundation_gate/child_screen_time_report_client.dart';
 import 'package:family_os/foundation_gate/child_screen_time_state_client.dart';
 import 'package:family_os/foundation_gate/device_screen_time_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
@@ -43,6 +44,8 @@ abstract final class ChildDayBoardKeys {
   static const remainingMinutes = Key('child_day_board_remaining');
   static const earnedExtensionNote = Key('child_day_board_earned_note');
   static const serverStale = Key('child_day_board_server_stale');
+  static const usageAccessNote = Key('child_day_board_usage_access');
+  static const usageAccessOpen = Key('child_day_board_usage_access_open');
   static const warningBanner = Key('child_day_board_warning_banner');
   static const warningRequest = Key('child_day_board_warning_request');
   static const warningQuran = Key('child_day_board_warning_quran');
@@ -68,6 +71,7 @@ class ChildDayBoardScreen extends StatefulWidget {
     ChildId? childId,
     this.screenTimeChildId,
     this.serverScreenTime,
+    this.usageReporter,
     this.activationBus,
     this.syncBus,
     this.modes,
@@ -87,6 +91,9 @@ class ChildDayBoardScreen extends StatefulWidget {
 
   /// The child's own server-read screen time state client (via native proxy).
   final ChildScreenTimeStateClient? serverScreenTime;
+
+  /// Reports what this handset measured today. Null means the production reporter.
+  final ChildScreenTimeReportClient? usageReporter;
 
   /// P12 smart-mode sync — null → [stage1SmartModeActivationBus].
   final SmartModeActivationBus? activationBus;
@@ -131,8 +138,12 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
   var _hasExplicitPolicy = false;
   late final ChildScreenTimeStateClient _serverClient =
       widget.serverScreenTime ?? childScreenTimeState();
+  late final ChildScreenTimeReportClient _usageReporter =
+      widget.usageReporter ?? childScreenTimeReport();
   DeviceScreenTimeReading? _serverReading;
   var _serverStale = false;
+  /// Only ever true when the phone *has* the bridge and the family has not granted access.
+  var _needsUsageAccess = false;
   bool _isExplicitMirror(ChildPolicyMirror mirror) {
     return mirror.lastAppliedAt != null ||
         mirror.applyCount > 0 ||
@@ -183,6 +194,7 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
     _bootstrapTimeRequests();
     _setupRevocationWatcher();
     _loadServerState();
+    _reportUsage();
   }
 
   Future<void> _loadServerState() async {
@@ -201,6 +213,27 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
         _serverStale = _serverReading != null;
       });
     }
+  }
+
+  /// Reports this handset's own measurement, once per screen load, then reads the state.
+  ///
+  /// The order matters: a report is what makes the number move, so asking the server
+  /// before saying anything would draw yesterday's figure and call it today's. Every
+  /// outcome that is not "sent" is silent here except one: a phone that has the bridge and
+  /// lacks the grant is told, because that is the one case a person can fix in ten seconds.
+  Future<void> _reportUsage() async {
+    final outcome = await _usageReporter.report();
+    if (!mounted) return;
+    if (outcome.needsUsageAccess) {
+      setState(() => _needsUsageAccess = true);
+      return;
+    }
+    if (!outcome.isSent) return;
+    await _loadServerState();
+  }
+
+  Future<void> _openUsageAccess() async {
+    await _usageReporter.openUsageAccessSettings();
   }
 
   /// Hook to trigger server state refresh.
@@ -468,6 +501,19 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
                         color: colors.ink2,
                         fontWeight: FontWeight.w600,
                       ),
+                    ),
+                  ],
+                  if (_needsUsageAccess) ...[
+                    BannerNote(
+                      key: ChildDayBoardKeys.usageAccessNote,
+                      message: l10n.childDayBoardUsageAccessNeeded,
+                      variant: BannerVariant.t,
+                    ),
+                    const SizedBox(height: 8),
+                    PrimaryBtn(
+                      key: ChildDayBoardKeys.usageAccessOpen,
+                      onPressed: _openUsageAccess,
+                      child: Text(l10n.childDayBoardUsageAccessOpen),
                     ),
                   ],
                   if (_showRemaining) ...[

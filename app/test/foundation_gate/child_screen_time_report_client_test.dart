@@ -16,12 +16,14 @@ final class _FakeTransport implements ChildScreenTimeReportTransport {
     List<AppUsageSample>? apps,
     this.statusCode = 201,
     this.openedSettings = true,
+    this.available = true,
   }) : apps = apps ?? <AppUsageSample>[];
 
   final bool permissionGranted;
   final List<AppUsageSample> apps;
   final int statusCode;
   final bool openedSettings;
+  final bool available;
 
   String? sentBody;
   String? sentKey;
@@ -29,8 +31,11 @@ final class _FakeTransport implements ChildScreenTimeReportTransport {
   int settingsOpened = 0;
 
   @override
-  Future<UsageSnapshot> snapshot() async =>
-      UsageSnapshot(permissionGranted: permissionGranted, apps: apps);
+  Future<UsageSnapshot> snapshot() async => UsageSnapshot(
+    permissionGranted: permissionGranted,
+    apps: apps,
+    available: available,
+  );
 
   @override
   Future<bool> openUsageAccessSettings() async {
@@ -188,5 +193,22 @@ void main() {
       isTrue,
     );
     expect(opened.settingsOpened, 1);
+  });
+
+  test('a phone without the native bridge is unavailable, not unauthorised',
+      () async {
+    final transport = _FakeTransport(available: false, permissionGranted: false);
+    final client = ChildScreenTimeReportClient(transport: transport);
+
+    final outcome = await client.report();
+
+    expect(outcome.kind, ReportOutcomeKind.unavailable);
+    expect(outcome.isUnavailable, isTrue);
+    expect(
+      outcome.needsUsageAccess,
+      isFalse,
+      reason: 'a family must not be sent to a settings screen that cannot help them',
+    );
+    expect(transport.posts, 0);
   });
 }
