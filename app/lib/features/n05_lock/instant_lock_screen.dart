@@ -657,12 +657,15 @@ class _AntiTamperSection extends StatelessWidget {
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final radii = Theme.of(context).extension<FamilyRadii>()!;
 
-    return DecoratedBox(
+    // Material (not DecoratedBox) so the SwitchListTiles below paint on this
+    // surface: Flutter 3.47 asserts when a ListTile sits under a coloured
+    // DecoratedBox with no Material between them.
+    return Material(
       key: AntiTamperKeys.section,
-      decoration: BoxDecoration(
-        color: colors.surface,
+      color: colors.surface,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(radii.card),
-        border: Border.all(color: colors.border),
+        side: BorderSide(color: colors.border),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),

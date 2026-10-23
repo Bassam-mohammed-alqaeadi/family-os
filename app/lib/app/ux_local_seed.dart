@@ -2,15 +2,9 @@ import 'package:flutter/foundation.dart';
 
 import 'package:family_os/core/app_control/app_control_runtime.dart';
 import 'package:family_os/core/domain/child_id.dart';
-import 'package:family_os/core/domain/minutes.dart';
-import 'package:family_os/core/domain/role.dart';
-import 'package:family_os/core/fs_foundation/fs_session_kernel.dart';
 import 'package:family_os/core/policy/notification_prefs.dart';
-import 'package:family_os/core/policy/wallet_ledger.dart';
 import 'package:family_os/core/prefs_misc/prefs_misc_runtime.dart';
-import 'package:family_os/core/screen_time/screen_time_local_persistence.dart';
 import 'package:family_os/core/screen_time/screen_time_runtime.dart';
-import 'package:family_os/features/n03_screen_time/stage1_child_scope.dart';
 
 /// Stage-1 UX local seed — fills **producers** the projecting hubs already read.
 ///
@@ -28,7 +22,6 @@ Future<int> applyUxLocalSeed({bool? isReleaseMode}) async {
   n += await _seedPendingAppInstall();
   n += await _seedNotificationPrefsRows();
   n += await _ensureTimeRequestSeed();
-  n += await _seedWalletMinutes();
   return n;
 }
 
@@ -91,30 +84,3 @@ Future<int> _ensureTimeRequestSeed() async {
   }
 }
 
-Future<int> _seedWalletMinutes() async {
-  try {
-    if (FsSessionKernel.sqliteFallbackToMemory) return 0;
-    final policyRepo = await ScreenTimeLocalPersistence.openPolicyRepository();
-    final childId = activeScopedChildId();
-    final policy = await policyRepo.load(childId);
-    final alreadyEarned = policy.wallets.any((w) => !w.earnedMinutes.isZero);
-    if (alreadyEarned) return 0;
-    final appId = policy.wallets.isEmpty
-        ? 'youtube'
-        : policy.wallets.first.appId;
-    await WalletLedger(policyRepo).earn(
-      childId: childId,
-      appId: appId,
-      assignee: AppRole.child,
-      fatherSetReward: Minutes(20),
-    );
-    return 1;
-  } catch (e, st) {
-    debugPrint('UX-LOCAL-SEED wallet skipped: $e');
-    assert(() {
-      debugPrint('$st');
-      return true;
-    }());
-    return 0;
-  }
-}

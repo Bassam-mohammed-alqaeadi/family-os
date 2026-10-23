@@ -5,6 +5,9 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import 'package:family_os/core/design/components/primary_btn.dart';
+import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/app/role_controller.dart';
+import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/runtime/app_scope.dart';
@@ -14,6 +17,7 @@ import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 import 'package:family_os/foundation_gate/main_app_foundation_runtime.dart';
 import 'package:family_os/foundation_gate/native_child_pairing_copy.dart';
+import 'package:family_os/foundation_gate/pairing_contract.generated.dart';
 import 'package:family_os/foundation_gate/native_child_telemetry_bridge.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -84,6 +88,7 @@ class _NativeParentPairingScreenState
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final copy = NativeChildPairingCopy.of(context);
+    final l10n = AppLocalizations.of(context);
     final pairing = _pairing;
     return Scaffold(
       backgroundColor: colors.bg,
@@ -214,15 +219,18 @@ class _NativeParentPairingScreenState
 
               // Manual code — large, selectable, copyable
               Center(
-                child: SelectableText(
-                  _formatPairingCode(pairing.pairingCode),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 28,
-                    letterSpacing: 6,
-                    fontWeight: FontWeight.w800,
-                    color: colors.tealDeep,
-                    fontFeatures: const [FontFeature.tabularFigures()],
+                child: Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: SelectableText(
+                    _formatPairingCode(pairing.pairingCode),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 28,
+                      letterSpacing: 6,
+                      fontWeight: FontWeight.w800,
+                      color: colors.tealDeep,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
                   ),
                 ),
               ),
@@ -235,6 +243,20 @@ class _NativeParentPairingScreenState
                   label: Text(copy.copyCode),
                 ),
               ),
+              const SizedBox(height: 16),
+              PrimaryBtn(
+                label: l10n.nativePairingContinueToProfile,
+                onPressed: () {
+                  final cid = pairing.childId;
+                  if (cid.isNotEmpty) {
+                    context.go(
+                      '/scr-fat-013?childId=${Uri.encodeComponent(cid)}',
+                    );
+                  } else {
+                    context.go('/scr-fat-013');
+                  }
+                },
+              ),
             ],
           ],
         ),
@@ -244,7 +266,7 @@ class _NativeParentPairingScreenState
 
   /// Formats "ABCDEF" → "ABC DEF" for readability.
   String _formatPairingCode(String raw) {
-    if (raw.length == 6) return '${raw.substring(0, 3)} ${raw.substring(3)}';
+    if (raw.length == PairingContract.codeLength) return '${raw.substring(0, 3)} ${raw.substring(3)}';
     return raw;
   }
 }
@@ -367,8 +389,16 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
             : copy.childModeStartFailed(result.reason),
       );
       await _refreshServiceStatus();
-    } on FoundationGateApiException {
-      if (mounted) setState(() => _message = copy.pairingClaimFailed);
+      if (mounted) {
+        CurrentRole.maybeNotifierOf(context)?.value = AppRole.child;
+        context.go('/scr-chd-003');
+      }
+    } on FoundationGateApiException catch (error) {
+      if (mounted) {
+        setState(() => _message = error.statusCode == 429
+            ? copy.pairingRateLimited
+            : copy.pairingClaimFailed);
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -508,8 +538,8 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
           controller: _code,
           autocorrect: false,
           enableSuggestions: false,
-          textCapitalization: TextCapitalization.characters,
-          keyboardType: TextInputType.visiblePassword,
+          textCapitalization: TextCapitalization.none,
+          keyboardType: TextInputType.number,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 24,
@@ -517,7 +547,8 @@ class _ChildModePairingScreenState extends State<ChildModePairingScreen> {
             fontWeight: FontWeight.w800,
             color: colors.tealDeep,
           ),
-          maxLength: 10,
+          maxLength: PairingContract.codeLength,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           decoration: InputDecoration(
             labelText: copy.pairingCodeLabel,
             hintText: copy.pairingCodeHint,

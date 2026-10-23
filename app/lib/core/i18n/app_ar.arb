@@ -1279,6 +1279,18 @@
   "@childScreenTimePolicyUnavailable": {
     "description": "SCR-FAT-032 fail-closed when Local KV refused"
   },
+  "childScreenTimeEarnedExtensionNotice": "الدقائق المكتسبة تمدد وقت الشاشة اليومي تلقائياً",
+  "@childScreenTimeEarnedExtensionNotice": {
+    "description": "SCR: child screen time — notice when earned minutes extend limit is enabled"
+  },
+  "childScreenTimeEmptyTitle": "لا توجد حدود زمنية محددة",
+  "@childScreenTimeEmptyTitle": {
+    "description": "SCR: child screen time — empty state title"
+  },
+  "childScreenTimeEmptyMessage": "لم يتم ضبط أي نوافذ زمنية أو حد يومي لهذا الحساب بعد.",
+  "@childScreenTimeEmptyMessage": {
+    "description": "SCR: child screen time — empty state message"
+  },
   "childScreenTimeSleep": "نوم",
   "@childScreenTimeSleep": {
     "description": "SCR-FAT-032 sleep schedule row"
@@ -1328,6 +1340,10 @@
     "description": "SCR-FAT-032 Ruling B helper under overflow switch"
   },
   "childScreenTimeWalletsHeading": "محافظ التطبيقات",
+  "childScreenTimeBalanceStale": "الأرقام المعروضة قديمة: آخر قراءة ناجحة من الخادم",
+  "@childScreenTimeBalanceStale": {
+    "description": "SCR-FAT-032 note when the shown balance is the last good server reading"
+  },
   "@childScreenTimeWalletsHeading": {
     "description": "SCR-FAT-032 wallets list heading"
   },
@@ -2557,6 +2573,14 @@
       }
     }
   },
+  "attributionRewardMinutesField": "الدقائق",
+  "@attributionRewardMinutesField": {
+    "description": "SCR-FAT-045 accessible label for the parent-set minutes of a reward"
+  },
+  "attributionRewardCountedSoon": "تُحتسب قريباً",
+  "@attributionRewardCountedSoon": {
+    "description": "SCR-FAT-045 reward row value while the server counts the amount; no minute figure"
+  },
   "attributionRewardWalletMinutes": "{minutes} دقيقة لمحفظته",
   "@attributionRewardWalletMinutes": {
     "description": "SCR-FAT-045 wallet minutes reward",
@@ -2587,15 +2611,12 @@
   "@attributionRewardLibraryCta": {
     "description": "SCR-FAT-045 secondary CTA → FAT-046"
   },
-  "attributionRewardAssignedToast": "أُسند لـ{name} — وصله: «والدك جهّز لك تحديًا — {minutes} دقيقة تنتظرك!»",
+  "attributionRewardAssignedToast": "أُسند لـ{name} — وصله التحدي",
   "@attributionRewardAssignedToast": {
     "description": "SCR-FAT-045 assign success toast",
     "placeholders": {
       "name": {
         "type": "String"
-      },
-      "minutes": {
-        "type": "int"
       }
     }
   },
@@ -11722,28 +11743,20 @@
   "@quranProgressPlaySemantics": {
     "description": "SCR-FAT-072 play a11y"
   },
-  "quranProgressApproveCta": "اعتماد وصرف المكافأة (+{minutes} د)",
+  "quranProgressApproveCta": "اعتماد الورد",
   "@quranProgressApproveCta": {
-    "description": "SCR-FAT-072 approve CTA minutes-only",
-    "placeholders": {
-      "minutes": {
-        "type": "int"
-      }
-    }
+    "description": "SCR-FAT-072 approve CTA, no minute figure"
   },
   "quranProgressWhisperCta": "همسة 💬",
   "@quranProgressWhisperCta": {
     "description": "SCR-FAT-072 whisper"
   },
-  "quranProgressApproveToast": "تم اعتماد تلاوة {name} وإضافة +{minutes} دقيقة لوقت اللعب",
+  "quranProgressApproveToast": "تم اعتماد تلاوة {name}",
   "@quranProgressApproveToast": {
     "description": "SCR-FAT-072 approve toast",
     "placeholders": {
       "name": {
         "type": "String"
-      },
-      "minutes": {
-        "type": "int"
       }
     }
   },
@@ -11756,14 +11769,9 @@
       }
     }
   },
-  "quranProgressApprovedBanner": "⭐ تم اعتماد هذا الورد وصرف مكافأة +{minutes} دقيقة بنجاح",
+  "quranProgressApprovedBanner": "⭐ تم اعتماد هذا الورد — المكافأة تُحتسب قريباً",
   "@quranProgressApprovedBanner": {
-    "description": "SCR-FAT-072 approved banner",
-    "placeholders": {
-      "minutes": {
-        "type": "int"
-      }
-    }
+    "description": "SCR-FAT-072 approved banner, no minute figure"
   },
   "quranProgressPlanHeading": "خطة الورد والمكافأة",
   "@quranProgressPlanHeading": {
@@ -11781,14 +11789,9 @@
   "@quranProgressPlanReward": {
     "description": "SCR-FAT-072 plan row"
   },
-  "quranProgressPlanRewardValue": "+{minutes} دقيقة لعب للمحفظة",
+  "quranProgressPlanRewardValue": "تُحتسب قريباً",
   "@quranProgressPlanRewardValue": {
-    "description": "SCR-FAT-072 reward value minutes-only",
-    "placeholders": {
-      "minutes": {
-        "type": "int"
-      }
-    }
+    "description": "SCR-FAT-072 reward value, no minute figure"
   },
   "quranProgressSurahNaba": "النبأ",
   "@quranProgressSurahNaba": {
@@ -15230,15 +15233,12 @@
   "@quranProgressPublishPlanCta": {
     "description": "SCR-FAT-072 publish ward plan CTA (P15-QUR-002)"
   },
-  "quranProgressPublishPlanToast": "أُرسلت خطة الورد — {surah} · مكافأة +{minutes} دقيقة",
+  "quranProgressPublishPlanToast": "أُرسلت خطة الورد — {surah}",
   "@quranProgressPublishPlanToast": {
     "description": "SCR-FAT-072 publish plan toast",
     "placeholders": {
       "surah": {
         "type": "String"
-      },
-      "minutes": {
-        "type": "int"
       }
     }
   },
@@ -15801,6 +15801,18 @@
   "screenTimeServerSchoolMode": "وضع المدرسة",
   "@screenTimeServerSchoolMode": {
       "description": "SCR: screen-time server panel — school mode"
+  },
+  "screenTimeServerEarnedMinutesTitle": "تمديد الحد بالدقائق المكتسبة",
+  "@screenTimeServerEarnedMinutesTitle": {
+      "description": "SCR: screen-time server panel — toggle title for earned minutes limit extension"
+  },
+  "screenTimeServerEarnedMinutesSubtitle": "إضافة الدقائق المكتسبة من الأنشطة والمهام إلى وقت الشاشة اليومي",
+  "@screenTimeServerEarnedMinutesSubtitle": {
+      "description": "SCR: screen-time server panel — toggle subtitle for earned minutes limit extension"
+  },
+  "screenTimeServerEarnedMinutesPreview": "المتبقي = الحد اليومي + المنح + الدقائق المكتسبة − الاستهلاك",
+  "@screenTimeServerEarnedMinutesPreview": {
+      "description": "SCR: screen-time server panel — formula breakdown preview for earned minutes"
   },
   "screenTimeServerSave": "احفظ على الخادم",
   "@screenTimeServerSave": {
@@ -16599,5 +16611,125 @@
   "deviceModeInviteCodeSemantics": "عندي رمز دعوة — الانضمام إلى عائلة موجودة",
   "@deviceModeInviteCodeSemantics": {
     "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "nativePairingContinueToProfile": "متابعة إلى ملف الابن",
+  "@nativePairingContinueToProfile": {
+    "description": "CTA button to continue to child profile after pairing"
+  },
+  "childProfileLastSeenNow": "الآن",
+  "@childProfileLastSeenNow": {
+    "description": "Relative time for last seen just now"
+  },
+  "childProfileLastSeenMinutes": "قبل {minutes} د",
+  "@childProfileLastSeenMinutes": {
+    "description": "Relative time in minutes",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "childProfileLastSeenHours": "قبل {hours} س",
+  "@childProfileLastSeenHours": {
+    "description": "Relative time in hours",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "childProfileLastSeenDays": "قبل {days} يوم",
+  "@childProfileLastSeenDays": {
+    "description": "Relative time in days",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "childProfileFallbackName": "الابن",
+  "@childProfileFallbackName": {
+    "description": "Fallback name for a child"
+  },
+  "childProfileDeleteButton": "حذف ملف الابن",
+  "@childProfileDeleteButton": {
+    "description": "Button to initiate child profile deletion"
+  },
+  "childProfileDeleteConfirmTitle": "حذف ملف الابن",
+  "@childProfileDeleteConfirmTitle": {
+    "description": "SCR-FAT-013 delete child confirm dialog title"
+  },
+  "childProfileDeleteConfirmPrompt": "هذا الإجراء نهائي ولا يمكن التراجع عنه. لتأكيد الحذف، اكتب CONFIRM DELETE أدناه:",
+  "@childProfileDeleteConfirmPrompt": {
+    "description": "SCR-FAT-013 delete child confirmation prompt"
+  },
+  "childProfileDeleteConfirmTokenHint": "CONFIRM DELETE",
+  "@childProfileDeleteConfirmTokenHint": {
+    "description": "SCR-FAT-013 delete child confirm token hint"
+  },
+  "childProfileDeleteConfirmAction": "تأكيد الحذف",
+  "@childProfileDeleteConfirmAction": {
+    "description": "SCR-FAT-013 delete child confirm action button"
+  },
+  "childProfileDeleteSuccessToast": "تم حذف ملف الابن بنجاح",
+  "@childProfileDeleteSuccessToast": {
+    "description": "SCR-FAT-013 delete child success toast"
+  },
+  "childDayBoardEarnedExtendsOn": "الدقائق التي تكسبها من أنشطتك تُضاف إلى وقتك اليومي",
+  "@childDayBoardEarnedExtendsOn": {
+    "description": "Child day board note when earned minutes extend today limit"
+  },
+  "childDayBoardEarnedExtendsOff": "الدقائق التي تكسبها من أنشطتك لا تُضاف إلى وقت اليوم — تُحفظ لك",
+  "@childDayBoardEarnedExtendsOff": {
+    "description": "Child day board note when earned minutes do not extend today limit"
+  },
+  "screenTimeServerLoading": "جارٍ تحميل حالة وقت الشاشة من الخادم…",
+  "@screenTimeServerLoading": {
+    "description": "Screen time server panel loading state"
+  },
+  "screenTimeServerEmpty": "لم تُضبط حدود وقت الشاشة لهذا الطفل بعد — لا شيء مفروض الآن.",
+  "@screenTimeServerEmpty": {
+    "description": "Screen time server panel empty state when no limits are set"
+  },
+  "childDayBoardNoLimit": "بلا حد يومي الآن",
+  "@childDayBoardNoLimit": {
+    "description": "Child day board when no screen time daily limit is set"
+  },
+  "screenTimeServerRetry": "إعادة المحاولة",
+  "@screenTimeServerRetry": {
+    "description": "Retry action on screen time server panel"
+  },
+  "screenTimeServerQuickGrantTitle": "منح وقت إضافي سريع",
+  "@screenTimeServerQuickGrantTitle": {
+    "description": "Title for quick extra minutes grant buttons on server panel"
+  },
+  "screenTimeServerGrant15": "+15 دقيقة",
+  "@screenTimeServerGrant15": {
+    "description": "Quick grant 15 minutes"
+  },
+  "screenTimeServerGrant30": "+30 دقيقة",
+  "@screenTimeServerGrant30": {
+    "description": "Quick grant 30 minutes"
+  },
+  "screenTimeServerGrant60": "+60 دقيقة",
+  "@screenTimeServerGrant60": {
+    "description": "Quick grant 60 minutes"
+  },
+  "screenTimeServerCapInvalid": "يرجى إدخال عدد دقائق بين 0 و 1440",
+  "@screenTimeServerCapInvalid": {
+    "description": "Validation message when screen time daily cap is invalid"
+  },
+  "screenTimeServerTotalLimit": "الحد الكلي: {minutes} دقيقة",
+  "@screenTimeServerTotalLimit": {
+    "description": "Total limit minutes label on screen time server panel",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "screenTimeServerProgressLabel": "نسبة استهلاك وقت الشاشة اليومي",
+  "@screenTimeServerProgressLabel": {
+    "description": "Accessibility semantics label for daily screen time consumption progress bar"
   }
 }

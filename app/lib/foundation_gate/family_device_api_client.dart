@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'foundation_gate_configuration.dart';
+import 'pairing_contract.generated.dart';
 import 'foundation_gate_http.dart';
 import 'foundation_gate_models.dart';
 import 'device_lifecycle.dart';
@@ -199,7 +200,7 @@ class FamilyDeviceApiClient {
   Future<FoundationGateClaimedDevice> claimPairing({
     required String pairingCode,
   }) async {
-    if (!RegExp(r'^[A-Za-z0-9_-]{32,128}$').hasMatch(pairingCode)) {
+    if (!RegExp(PairingContract.codePattern).hasMatch(pairingCode)) {
       throw const FoundationGateApiException(
         FoundationGateApiFailure.invalidInput,
       );
@@ -216,6 +217,12 @@ class FamilyDeviceApiClient {
           FoundationGateApiFailure.invalidInput,
         );
       case 429:
+        // Too many failed claims from this network. Not an outage: the screen says to wait.
+        throw const FoundationGateApiException(
+          FoundationGateApiFailure.serviceUnavailable,
+          statusCode: 429,
+          serverCode: 'rate_limit_exceeded',
+        );
       case 503:
         throw const FoundationGateApiException(
           FoundationGateApiFailure.serviceUnavailable,
@@ -490,7 +497,7 @@ class FamilyDeviceApiClient {
           deviceLabel is! String ||
           !_validText(deviceLabel, 80) ||
           pairingCode is! String ||
-          !RegExp(r'^[A-Za-z0-9_-]{32,128}$').hasMatch(pairingCode) ||
+          !RegExp(PairingContract.codePattern).hasMatch(pairingCode) ||
           parsedExpiry == null) {
         throw const FormatException();
       }

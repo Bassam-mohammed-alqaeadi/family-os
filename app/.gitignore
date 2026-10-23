@@ -55,3 +55,5 @@ app.*.map.json
 /lib/foundation_gate/local/firebase_options.dart
 /lib/foundation_gate/local/foundation_gate_local_configuration.dart
 /lib/foundation_gate/local/main.dart
+# Widget Preview related
+.widget_preview/

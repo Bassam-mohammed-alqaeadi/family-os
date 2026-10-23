@@ -17,6 +17,26 @@ void main() {
       expect(policy.allowWalletOverflow, isFalse);
     });
 
+    test('earnedMinutesExtendLimit DTO serialization defaults to false and round-trips true', () {
+      final defaultPolicy = ScreenTimePolicy();
+      expect(defaultPolicy.earnedMinutesExtendLimit, isFalse);
+      expect(defaultPolicy.toJson()['earnedMinutesExtendLimit'], isFalse);
+
+      final fromEmpty = ScreenTimePolicy.fromJson(const {});
+      expect(fromEmpty.earnedMinutesExtendLimit, isFalse);
+
+      final enabled = ScreenTimePolicy.defaults().copyWith(earnedMinutesExtendLimit: true);
+      expect(enabled.earnedMinutesExtendLimit, isTrue);
+      expect(enabled.toJson()['earnedMinutesExtendLimit'], isTrue);
+
+      final decoded = ScreenTimePolicy.fromJson(enabled.toJson());
+      expect(decoded.earnedMinutesExtendLimit, isTrue);
+      expect(decoded, equals(enabled));
+
+      final updated = defaultPolicy.copyWith(earnedMinutesExtendLimit: true);
+      expect(updated.earnedMinutesExtendLimit, isTrue);
+    });
+
     test('education app cannot be marked countable=true', () {
       final quran = AppWallet(
         appId: 'quran',

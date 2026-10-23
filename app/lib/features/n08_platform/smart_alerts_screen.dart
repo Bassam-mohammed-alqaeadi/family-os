@@ -501,11 +501,11 @@ class _SmartAlertsScreenState extends State<SmartAlertsScreen> {
             ),
           ],
           const SizedBox(height: 12),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: colors.surface,
+          Material(
+            color: colors.surface,
+            shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(radii.card),
-              border: Border.all(color: colors.border),
+              side: BorderSide(color: colors.border),
             ),
             child: IntrinsicHeight(
               child: Row(
@@ -595,11 +595,11 @@ class _SmartAlertsScreenState extends State<SmartAlertsScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: colors.surface,
+          Material(
+            color: colors.surface,
+            shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(radii.card),
-              border: Border.all(color: colors.border),
+              side: BorderSide(color: colors.border),
             ),
             child: Padding(
               padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),

@@ -215,10 +215,7 @@ class _QuranProgressScreenState extends State<QuranProgressScreen> {
     setState(() => _busy = false);
     AppToast.show(
       context,
-      message: l10n.quranProgressPublishPlanToast(
-        _surah(l10n),
-        _snap.rewardMinutes,
-      ),
+      message: l10n.quranProgressPublishPlanToast(_surah(l10n)),
     );
   }
 
@@ -244,10 +241,7 @@ class _QuranProgressScreenState extends State<QuranProgressScreen> {
     });
     AppToast.show(
       context,
-      message: l10n.quranProgressApproveToast(
-        _childName(l10n),
-        snap.rewardMinutes,
-      ),
+      message: l10n.quranProgressApproveToast(_childName(l10n)),
     );
   }
 
@@ -620,7 +614,7 @@ class _QuranProgressScreenState extends State<QuranProgressScreen> {
                         key: QuranProgressKeys.approvedBanner,
                         padding: const EdgeInsets.only(top: 10),
                         child: Text(
-                          l10n.quranProgressApprovedBanner(_snap.rewardMinutes),
+                          l10n.quranProgressApprovedBanner,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 12,
@@ -636,9 +630,7 @@ class _QuranProgressScreenState extends State<QuranProgressScreen> {
                           Expanded(
                             child: PrimaryBtn(
                               key: QuranProgressKeys.approveCta,
-                              label: l10n.quranProgressApproveCta(
-                                _snap.rewardMinutes,
-                              ),
+                              label: l10n.quranProgressApproveCta,
                               variant: PrimaryBtnVariant.mint,
                               onPressed: _busy || !_canAct ? null : _approve,
                             ),
@@ -697,9 +689,7 @@ class _QuranProgressScreenState extends State<QuranProgressScreen> {
                   _PlanRow(
                     emoji: '🎁',
                     title: l10n.quranProgressPlanReward,
-                    value: l10n.quranProgressPlanRewardValue(
-                      _snap.rewardMinutes,
-                    ),
+                    value: l10n.quranProgressPlanRewardValue,
                     colors: colors,
                   ),
                   const SizedBox(height: 10),

@@ -83,6 +83,15 @@ final class _Transport implements FoundationGateHttpTransport {
     this.headers.add(headers);
     return _reply(uri, body);
   }
+
+  @override
+  Future<FoundationGateHttpResponse> delete(
+    Uri uri, {
+    required Map<String, String> headers,
+  }) async {
+    this.headers.add(headers);
+    return _reply(uri, null);
+  }
 }
 
 FamilyTasksApiClient _client(_Transport transport) => FamilyTasksApiClient(

@@ -64,8 +64,8 @@ class FoundationGateCopy {
   String get noActiveFamily =>
       isArabic ? 'لا توجد عائلة نشطة متاحة.' : 'No active family is available.';
   String get createAccountFailed => isArabic
-      ? 'حدث خطأ أثناء إنشاء الحساب. تأكد من صحة البيانات أو حاول مرة أخرى.'
-      : 'Creating the account failed. Check your details and try again.';
+      ? 'تعذر إنشاء الحساب. إذا كان لديك حساب مسجل بالفعل بهذا البريد، يرجى التوجه إلى تسجيل الدخول.'
+      : 'Account creation failed. If you already have an account with this email, please sign in.';
 
   String get alreadyHaveAccountSignIn => isArabic
       ? 'لديك حساب بالفعل؟ تسجيل الدخول'

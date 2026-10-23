@@ -1,4 +1,5 @@
 import 'package:family_os/foundation_gate/family_screen_time_api_client.dart';
+import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 
 /// Why the server could not answer, in the words a screen needs.
@@ -105,6 +106,7 @@ final class ScreenTimeServerAuthority {
   Future<ScreenTimeAuthorityAnswer<FoundationGateScreenPolicy>> writePolicy(
     String childId, {
     int? dailyLimitMinutes,
+    bool? earnedMinutesExtendLimit,
     bool? schoolModeEnabled,
     List<int>? schoolDays,
     int? schoolStartMinute,
@@ -121,6 +123,7 @@ final class ScreenTimeServerAuthority {
       idempotencyKey: idempotencyKey(),
       idToken: token,
       dailyLimitMinutes: dailyLimitMinutes,
+      earnedMinutesExtendLimit: earnedMinutesExtendLimit,
       schoolModeEnabled: schoolModeEnabled,
       schoolDays: schoolDays,
       schoolStartMinute: schoolStartMinute,
@@ -236,6 +239,21 @@ final class ScreenTimeServerAuthority {
       requestId: requestId,
       decision: decision,
       grantedMinutes: grantedMinutes,
+      idempotencyKey: idempotencyKey(),
+      idToken: token,
+    ),
+  );
+
+  /// Direct minutes grant outright using the server's minutes grants route.
+  Future<ScreenTimeAuthorityAnswer<FoundationGateHttpResponse>> grantInstantMinutes(
+    String childId, {
+    required int minutes,
+    required String Function() idempotencyKey,
+  }) => _ask(
+    (family, token) => api.grantMinutesDirect(
+      familyId: family,
+      childId: childId,
+      minutes: minutes,
       idempotencyKey: idempotencyKey(),
       idToken: token,
     ),

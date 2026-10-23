@@ -1,18 +1,25 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import 'children_roster_api_client.dart';
 import 'family_discovery_api_client.dart';
 import 'foundation_gate_identity.dart';
 import 'foundation_gate_models.dart';
+import 'selected_family_store.dart';
 
 class FoundationGateSessionController extends ChangeNotifier {
   FoundationGateSessionController({
     required FoundationGateIdentity identity,
     required FamilyDiscoveryApiClient discoveryApi,
     required ChildrenRosterApiClient rosterApi,
+    SelectedFamilyStore? selectedFamilyStore,
   }) : _identity = identity,
        _discoveryApi = discoveryApi,
-       _rosterApi = rosterApi;
+       _rosterApi = rosterApi,
+       _selectedFamilyStore = selectedFamilyStore;
+
+  final SelectedFamilyStore? _selectedFamilyStore;
 
   final FoundationGateIdentity _identity;
   final FamilyDiscoveryApiClient _discoveryApi;
@@ -41,6 +48,7 @@ class FoundationGateSessionController extends ChangeNotifier {
     }
 
     _clearAllVolatileState();
+    await _forgetSelectedFamily();
     _setPhase(FoundationGatePhase.signingIn);
     String? idToken;
     try {
@@ -69,6 +77,7 @@ class FoundationGateSessionController extends ChangeNotifier {
     }
 
     _clearAllVolatileState();
+    await _forgetSelectedFamily();
     _setPhase(FoundationGatePhase.signingIn);
     String? idToken;
     try {
@@ -123,6 +132,7 @@ class FoundationGateSessionController extends ChangeNotifier {
     }
 
     _selectedFamily = family;
+    await _selectedFamilyStore?.write(family.id);
     _clearRoster();
     _setPhase(FoundationGatePhase.loadingRoster);
     await _loadSelectedRoster();
@@ -245,12 +255,95 @@ class FoundationGateSessionController extends ChangeNotifier {
     }
   }
 
+  /// Deletes a minimal child profile only after server authorization succeeds.
+  ///
+  /// The returned result is presentation-safe; no API error body, token or identifier is
+  /// retained in controller state or exposed to the UI.
+  Future<FoundationGateChildDeleteResult> deleteChild({
+    required String familyId,
+    required String childId,
+    String? idempotencyKey,
+  }) async {
+    final family = _selectedFamily;
+    if (family == null ||
+        family.id != familyId ||
+        (_phase != FoundationGatePhase.childrenAvailable &&
+            _phase != FoundationGatePhase.noChildren &&
+            _phase != FoundationGatePhase.serviceUnavailable &&
+            _phase != FoundationGatePhase.networkUnavailable)) {
+      return FoundationGateChildDeleteResult.invalidInput;
+    }
+
+    String? idToken;
+    try {
+      idToken = await _identity.currentIdToken();
+      await _rosterApi.delete(
+        familyId: family.id,
+        childId: childId,
+        idToken: idToken,
+        idempotencyKey: idempotencyKey,
+      );
+
+      try {
+        final roster = await _rosterApi.list(
+          familyId: family.id,
+          idToken: idToken,
+        );
+        _children = roster;
+        _phase = roster.isEmpty
+            ? FoundationGatePhase.noChildren
+            : FoundationGatePhase.childrenAvailable;
+        notifyListeners();
+      } catch (_) {
+        _children = _children.where((c) => c.id != childId).toList();
+        _phase = _children.isEmpty
+            ? FoundationGatePhase.noChildren
+            : FoundationGatePhase.childrenAvailable;
+        notifyListeners();
+      }
+      return FoundationGateChildDeleteResult.deleted;
+    } on FoundationGateIdentityException {
+      _clearAllVolatileState();
+      await _signOutProviderSilently();
+      _setPhase(FoundationGatePhase.sessionInvalid);
+      return FoundationGateChildDeleteResult.sessionInvalid;
+    } on FoundationGateApiException catch (error) {
+      switch (error.failure) {
+        case FoundationGateApiFailure.invalidInput:
+          return FoundationGateChildDeleteResult.invalidInput;
+        case FoundationGateApiFailure.notFound:
+          return FoundationGateChildDeleteResult.notFound;
+        case FoundationGateApiFailure.conflict:
+          return FoundationGateChildDeleteResult.conflict;
+        case FoundationGateApiFailure.unauthenticated:
+          _clearAllVolatileState();
+          await _signOutProviderSilently();
+          _setPhase(FoundationGatePhase.sessionInvalid);
+          return FoundationGateChildDeleteResult.sessionInvalid;
+        case FoundationGateApiFailure.accessDenied:
+          _clearRoster();
+          _setPhase(FoundationGatePhase.rosterAccessDenied);
+          return FoundationGateChildDeleteResult.accessDenied;
+        case FoundationGateApiFailure.serviceUnavailable:
+          await _handleRosterFailure(error.failure);
+          return FoundationGateChildDeleteResult.serviceUnavailable;
+        case FoundationGateApiFailure.networkUnavailable:
+        case FoundationGateApiFailure.invalidResponse:
+          await _handleRosterFailure(error.failure);
+          return FoundationGateChildDeleteResult.networkUnavailable;
+      }
+    } finally {
+      idToken = null;
+    }
+  }
+
   void returnToFamilySelection() {
     if (_families.isEmpty || _creatingChild) {
       return;
     }
     _clearRoster();
     _selectedFamily = null;
+    unawaited(_forgetSelectedFamily());
     _setPhase(FoundationGatePhase.familiesAvailable);
   }
 
@@ -337,6 +430,7 @@ class FoundationGateSessionController extends ChangeNotifier {
     }
     await _signOutProviderSilently();
     _clearAllVolatileState();
+    await _forgetSelectedFamily();
     _setPhase(FoundationGatePhase.signedOut);
   }
 
@@ -349,6 +443,10 @@ class FoundationGateSessionController extends ChangeNotifier {
     _selectedFamily = null;
     _lastCreatedChildId = null;
     _clearRoster();
+  }
+
+  Future<void> _forgetSelectedFamily() async {
+    await _selectedFamilyStore?.clear();
   }
 
   Future<void> _signOutProviderSilently() async {

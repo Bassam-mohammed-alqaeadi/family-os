@@ -23,9 +23,16 @@ import 'package:family_os/core/policy/smart_mode_prefs.dart';
 import 'package:family_os/core/policy/smart_modes.dart';
 import 'package:family_os/core/policy/time_request_service.dart';
 import 'package:family_os/core/screen_time/screen_time_runtime.dart';
+import 'package:family_os/foundation_gate/child_screen_time_state_client.dart';
+import 'package:family_os/foundation_gate/device_screen_time_client.dart';
+import 'package:family_os/foundation_gate/foundation_gate_models.dart';
 import 'package:family_os/core/screen_time/stage1_time_request_runtime.dart';
 import 'package:family_os/features/n02_day/day_board_motion.dart';
 import 'package:family_os/features/n09_smart_modes/modes_ux_bridge.dart';
+import 'package:family_os/app/role_controller.dart';
+import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/foundation_gate/native_child_pairing_copy.dart';
+import 'package:family_os/foundation_gate/native_child_telemetry_bridge.dart';
 
 /// Widget keys for SCR-CHD-004 / SET-019 / UI-005 / UI-017 acceptance.
 abstract final class ChildDayBoardKeys {
@@ -34,6 +41,8 @@ abstract final class ChildDayBoardKeys {
   static const modeExpiry = Key('child_day_board_mode_expiry');
   static const idleStatus = Key('child_day_board_idle_status');
   static const remainingMinutes = Key('child_day_board_remaining');
+  static const earnedExtensionNote = Key('child_day_board_earned_note');
+  static const serverStale = Key('child_day_board_server_stale');
   static const warningBanner = Key('child_day_board_warning_banner');
   static const warningRequest = Key('child_day_board_warning_request');
   static const warningQuran = Key('child_day_board_warning_quran');
@@ -58,6 +67,7 @@ class ChildDayBoardScreen extends StatefulWidget {
     super.key,
     ChildId? childId,
     this.screenTimeChildId,
+    this.serverScreenTime,
     this.activationBus,
     this.syncBus,
     this.modes,
@@ -74,6 +84,9 @@ class ChildDayBoardScreen extends StatefulWidget {
   /// Same child in the Screen Time family-scoped key (policy mirror + time
   /// grants); null → [childId].
   final ChildId? screenTimeChildId;
+
+  /// The child's own server-read screen time state client (via native proxy).
+  final ChildScreenTimeStateClient? serverScreenTime;
 
   /// P12 smart-mode sync — null → [stage1SmartModeActivationBus].
   final SmartModeActivationBus? activationBus;
@@ -103,7 +116,8 @@ class ChildDayBoardScreen extends StatefulWidget {
   State<ChildDayBoardScreen> createState() => _ChildDayBoardScreenState();
 }
 
-class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
+class _ChildDayBoardScreenState extends State<ChildDayBoardScreen>
+    with WidgetsBindingObserver {
   late final SmartModeActivationBus _activationBus;
   late final PolicySyncBus _syncBus;
   StreamSubscription<ChildPolicyMirror>? _policySub;
@@ -116,6 +130,12 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
   BuiltInModeId? _prevModeId;
   var _prevActive = false;
   var _hasExplicitPolicy = false;
+  late final ChildScreenTimeStateClient _serverClient =
+      widget.serverScreenTime ?? childScreenTimeState();
+  DeviceScreenTimeReading? _serverReading;
+  var _serverStale = false;
+  DateTime _lastLoadedDate = DateTime.now();
+  Timer? _midnightTimer;
   bool _isExplicitMirror(ChildPolicyMirror mirror) {
     return mirror.lastAppliedAt != null ||
         mirror.applyCount > 0 ||
@@ -164,6 +184,79 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
     });
     stage1TimeRequestDecisionBus.addListener(_onDecision);
     _bootstrapTimeRequests();
+    _setupRevocationWatcher();
+    WidgetsBinding.instance.addObserver(this);
+    _lastLoadedDate = DateTime.now();
+    _scheduleMidnightCheck();
+    _loadServerState();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      final now = DateTime.now();
+      if (now.day != _lastLoadedDate.day || now.month != _lastLoadedDate.month) {
+        _lastLoadedDate = now;
+        _scheduleMidnightCheck();
+      }
+      _loadServerState();
+    }
+  }
+
+  void _scheduleMidnightCheck() {
+    _midnightTimer?.cancel();
+    final now = DateTime.now();
+    final midnight = DateTime(now.year, now.month, now.day + 1);
+    final duration = midnight.difference(now) + const Duration(seconds: 1);
+    _midnightTimer = Timer(duration, () {
+      if (!mounted) return;
+      _lastLoadedDate = DateTime.now();
+      _loadServerState();
+      _scheduleMidnightCheck();
+    });
+  }
+
+  Future<void> _loadServerState() async {
+    try {
+      final reading = await _serverClient.read();
+      if (!mounted) return;
+      setState(() {
+        _serverReading = reading;
+        _serverStale = false;
+      });
+    } on FoundationGateApiException {
+      if (!mounted) return;
+      // No previous answer: say nothing and keep the local behaviour.
+      // A later failure must not silently pass the old number off as current.
+      setState(() {
+        _serverStale = _serverReading != null;
+      });
+    }
+  }
+
+  /// Hook to trigger server state refresh.
+  Future<void> loadServerState() => _loadServerState();
+
+  Timer? _revocationWatcher;
+
+  void _setupRevocationWatcher() {
+    NativeChildTelemetryBridge.addRevocationListener(_onDeviceRevocationTriggered);
+    _revocationWatcher = Timer.periodic(const Duration(seconds: 4), (_) async {
+      final status = await NativeChildTelemetryBridge.status();
+      if (status.credentialRevoked) {
+        _onDeviceRevocationTriggered();
+      }
+    });
+  }
+
+  void _onDeviceRevocationTriggered() {
+    if (!mounted) return;
+    _revocationWatcher?.cancel();
+    _revocationWatcher = null;
+    final copy = NativeChildPairingCopy.of(context);
+    AppToast.show(context, message: copy.deviceUnlinkedFromFamily);
+    CurrentRole.maybeNotifierOf(context)?.value = AppRole.father;
+    context.go('/scr-shr-001');
   }
 
   Future<void> _bootstrapTimeRequests() async {
@@ -191,6 +284,10 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _midnightTimer?.cancel();
+    _revocationWatcher?.cancel();
+    NativeChildTelemetryBridge.removeRevocationListener(_onDeviceRevocationTriggered);
     _activationBus.removeListener(_onActivationBus);
     _policySub?.cancel();
     stage1TimeRequestDecisionBus.removeListener(_onDecision);
@@ -319,7 +416,11 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
     return '$h:$m';
   }
 
-  bool get _showRemaining => _hasExplicitPolicy && !widget.emptyDay;
+  bool get _showRemaining {
+    if (widget.emptyDay) return false;
+    if (_serverReading != null) return true;
+    return _hasExplicitPolicy && !widget.emptyDay;
+  }
 
   bool get _childOffline => !_syncBus.isChildOnline(_screenTimeChild);
 
@@ -349,20 +450,24 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
         ),
       ),
       body: SafeArea(
-        child: widget.emptyDay
-            ? ListView(
-                padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 32),
-                children: [
-                  AppEmptyState(
-                    key: ChildDayBoardKeys.emptyState,
-                    contextName: l10n.childDayBoardTitle,
-                    onAction: widget.onEmptyAction,
-                  ),
-                  const ShellTabMoreTools(tabId: 'myday'),
-                ],
-              )
-            : ListView(
-                padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 32),
+        child: RefreshIndicator(
+          onRefresh: _loadServerState,
+          child: widget.emptyDay
+              ? ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 32),
+                  children: [
+                    AppEmptyState(
+                      key: ChildDayBoardKeys.emptyState,
+                      contextName: l10n.childDayBoardTitle,
+                      onAction: widget.onEmptyAction,
+                    ),
+                    const ShellTabMoreTools(tabId: 'myday'),
+                  ],
+                )
+              : ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 32),
                 children: [
                   if (_childOffline) ...[
                     BannerNote(
@@ -403,6 +508,14 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
                     ),
                   ],
                   if (_showRemaining) ...[
+                    if (_serverStale) ...[
+                      BannerNote(
+                        key: ChildDayBoardKeys.serverStale,
+                        message: l10n.screenTimeServerUnreachable,
+                        variant: BannerVariant.a,
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                     const SizedBox(height: 16),
                     Text(
                       l10n.childTimeMirrorRemainingLabel,
@@ -417,7 +530,15 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
                     const SizedBox(height: 8),
                     Text(
                       key: ChildDayBoardKeys.remainingMinutes,
-                      l10n.childTimeMirrorRemainingMinutes(_effectiveRemaining),
+                      _serverReading != null
+                          ? (_serverReading!.remainingMinutes == null
+                              ? l10n.childDayBoardNoLimit
+                              : l10n.childTimeMirrorRemainingMinutes(
+                                  _serverReading!.remainingMinutes!,
+                                ))
+                          : l10n.childTimeMirrorRemainingMinutes(
+                              _effectiveRemaining,
+                            ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -426,11 +547,35 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
                         color: colors.ink,
                       ),
                     ),
-                    if (TimeWarningBanner.shouldShow(_effectiveRemaining)) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      key: ChildDayBoardKeys.earnedExtensionNote,
+                      (_serverReading?.earnedMinutesExtendLimit ??
+                              _mirror.policy.earnedMinutesExtendLimit)
+                          ? l10n.childDayBoardEarnedExtendsOn
+                          : l10n.childDayBoardEarnedExtendsOff,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colors.ink2,
+                      ),
+                    ),
+                    if ((_serverReading != null
+                            ? _serverReading!.remainingMinutes
+                            : _effectiveRemaining) !=
+                        null &&
+                        TimeWarningBanner.shouldShow(
+                          _serverReading != null
+                              ? _serverReading!.remainingMinutes!
+                              : _effectiveRemaining,
+                        )) ...[
                       const SizedBox(height: 8),
                       TimeWarningBanner(
                         key: ChildDayBoardKeys.warningBanner,
-                        remainingMinutes: _effectiveRemaining,
+                        remainingMinutes: _serverReading != null
+                            ? _serverReading!.remainingMinutes!
+                            : _effectiveRemaining,
                       ),
                       const SizedBox(height: 8),
                       Wrap(
@@ -551,6 +696,7 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
                   const ShellTabMoreTools(tabId: 'myday'),
                 ],
               ),
+        ),
       ),
     );
   }

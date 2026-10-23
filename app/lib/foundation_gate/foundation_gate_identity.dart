@@ -31,7 +31,7 @@ class FirebaseEmailPasswordIdentity implements FoundationGateIdentity {
         email: email,
         password: password,
       );
-      return _tokenFromUser(credential.user);
+      return await _tokenFromUser(credential.user);
     } catch (_) {
       throw const FoundationGateIdentityException();
     }
@@ -47,7 +47,7 @@ class FirebaseEmailPasswordIdentity implements FoundationGateIdentity {
         email: email,
         password: password,
       );
-      return _tokenFromUser(credential.user);
+      return await _tokenFromUser(credential.user);
     } catch (_) {
       throw const FoundationGateIdentityException();
     }
@@ -56,7 +56,7 @@ class FirebaseEmailPasswordIdentity implements FoundationGateIdentity {
   @override
   Future<String> currentIdToken() async {
     try {
-      return _tokenFromUser(_auth.currentUser);
+      return await _tokenFromUser(_auth.currentUser);
     } catch (_) {
       throw const FoundationGateIdentityException();
     }

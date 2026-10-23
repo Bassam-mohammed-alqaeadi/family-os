@@ -2030,6 +2030,24 @@ abstract class AppLocalizations {
   /// **'إعدادات وقت الشاشة غير متاحة — تعذّر فتح التخزين المحلي. الحفظ معطّل.'**
   String get childScreenTimePolicyUnavailable;
 
+  /// SCR: child screen time — notice when earned minutes extend limit is enabled
+  ///
+  /// In ar, this message translates to:
+  /// **'الدقائق المكتسبة تمدد وقت الشاشة اليومي تلقائياً'**
+  String get childScreenTimeEarnedExtensionNotice;
+
+  /// SCR: child screen time — empty state title
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد حدود زمنية محددة'**
+  String get childScreenTimeEmptyTitle;
+
+  /// SCR: child screen time — empty state message
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يتم ضبط أي نوافذ زمنية أو حد يومي لهذا الحساب بعد.'**
+  String get childScreenTimeEmptyMessage;
+
   /// SCR-FAT-032 sleep schedule row
   ///
   /// In ar, this message translates to:
@@ -2107,6 +2125,12 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'محافظ التطبيقات'**
   String get childScreenTimeWalletsHeading;
+
+  /// SCR-FAT-032 note when the shown balance is the last good server reading
+  ///
+  /// In ar, this message translates to:
+  /// **'الأرقام المعروضة قديمة: آخر قراءة ناجحة من الخادم'**
+  String get childScreenTimeBalanceStale;
 
   /// SCR-FAT-032 wallet balance line
   ///
@@ -3806,6 +3830,18 @@ abstract class AppLocalizations {
   /// **'المكافأة عند الإتقان (≥{percent}٪)'**
   String attributionRewardRewardsHeading(int percent);
 
+  /// SCR-FAT-045 accessible label for the parent-set minutes of a reward
+  ///
+  /// In ar, this message translates to:
+  /// **'الدقائق'**
+  String get attributionRewardMinutesField;
+
+  /// SCR-FAT-045 reward row value while the server counts the amount; no minute figure
+  ///
+  /// In ar, this message translates to:
+  /// **'تُحتسب قريباً'**
+  String get attributionRewardCountedSoon;
+
   /// SCR-FAT-045 wallet minutes reward
   ///
   /// In ar, this message translates to:
@@ -3839,8 +3875,8 @@ abstract class AppLocalizations {
   /// SCR-FAT-045 assign success toast
   ///
   /// In ar, this message translates to:
-  /// **'أُسند لـ{name} — وصله: «والدك جهّز لك تحديًا — {minutes} دقيقة تنتظرك!»'**
-  String attributionRewardAssignedToast(String name, int minutes);
+  /// **'أُسند لـ{name} — وصله التحدي'**
+  String attributionRewardAssignedToast(String name);
 
   /// SCR-FAT-045 cannot assign toast
   ///
@@ -15899,11 +15935,11 @@ abstract class AppLocalizations {
   /// **'تشغيل أو إيقاف التلاوة'**
   String get quranProgressPlaySemantics;
 
-  /// SCR-FAT-072 approve CTA minutes-only
+  /// SCR-FAT-072 approve CTA, no minute figure
   ///
   /// In ar, this message translates to:
-  /// **'اعتماد وصرف المكافأة (+{minutes} د)'**
-  String quranProgressApproveCta(int minutes);
+  /// **'اعتماد الورد'**
+  String get quranProgressApproveCta;
 
   /// SCR-FAT-072 whisper
   ///
@@ -15914,8 +15950,8 @@ abstract class AppLocalizations {
   /// SCR-FAT-072 approve toast
   ///
   /// In ar, this message translates to:
-  /// **'تم اعتماد تلاوة {name} وإضافة +{minutes} دقيقة لوقت اللعب'**
-  String quranProgressApproveToast(String name, int minutes);
+  /// **'تم اعتماد تلاوة {name}'**
+  String quranProgressApproveToast(String name);
 
   /// SCR-FAT-072 whisper toast
   ///
@@ -15923,11 +15959,11 @@ abstract class AppLocalizations {
   /// **'حُفظ التشجيع محليًا لـ {name} — إشعار الابن سيصل إلى الأجهزة الأخرى في تحديث قادم'**
   String quranProgressWhisperToast(String name);
 
-  /// SCR-FAT-072 approved banner
+  /// SCR-FAT-072 approved banner, no minute figure
   ///
   /// In ar, this message translates to:
-  /// **'⭐ تم اعتماد هذا الورد وصرف مكافأة +{minutes} دقيقة بنجاح'**
-  String quranProgressApprovedBanner(int minutes);
+  /// **'⭐ تم اعتماد هذا الورد — المكافأة تُحتسب قريباً'**
+  String get quranProgressApprovedBanner;
 
   /// SCR-FAT-072 plan
   ///
@@ -15953,11 +15989,11 @@ abstract class AppLocalizations {
   /// **'مكافأة الإتمام'**
   String get quranProgressPlanReward;
 
-  /// SCR-FAT-072 reward value minutes-only
+  /// SCR-FAT-072 reward value, no minute figure
   ///
   /// In ar, this message translates to:
-  /// **'+{minutes} دقيقة لعب للمحفظة'**
-  String quranProgressPlanRewardValue(int minutes);
+  /// **'تُحتسب قريباً'**
+  String get quranProgressPlanRewardValue;
 
   /// SCR-FAT-072 surah key
   ///
@@ -20600,8 +20636,8 @@ abstract class AppLocalizations {
   /// SCR-FAT-072 publish plan toast
   ///
   /// In ar, this message translates to:
-  /// **'أُرسلت خطة الورد — {surah} · مكافأة +{minutes} دقيقة'**
-  String quranProgressPublishPlanToast(String surah, int minutes);
+  /// **'أُرسلت خطة الورد — {surah}'**
+  String quranProgressPublishPlanToast(String surah);
 
   /// SCR-CHD-025 licensed An-Naba 1 (never AI-generated)
   ///
@@ -21782,6 +21818,24 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'وضع المدرسة'**
   String get screenTimeServerSchoolMode;
+
+  /// SCR: screen-time server panel — toggle title for earned minutes limit extension
+  ///
+  /// In ar, this message translates to:
+  /// **'تمديد الحد بالدقائق المكتسبة'**
+  String get screenTimeServerEarnedMinutesTitle;
+
+  /// SCR: screen-time server panel — toggle subtitle for earned minutes limit extension
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة الدقائق المكتسبة من الأنشطة والمهام إلى وقت الشاشة اليومي'**
+  String get screenTimeServerEarnedMinutesSubtitle;
+
+  /// SCR: screen-time server panel — formula breakdown preview for earned minutes
+  ///
+  /// In ar, this message translates to:
+  /// **'المتبقي = الحد اليومي + المنح + الدقائق المكتسبة − الاستهلاك'**
+  String get screenTimeServerEarnedMinutesPreview;
 
   /// SCR: screen-time server panel — save CTA
   ///
@@ -23024,6 +23078,156 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'عندي رمز دعوة — الانضمام إلى عائلة موجودة'**
   String get deviceModeInviteCodeSemantics;
+
+  /// CTA button to continue to child profile after pairing
+  ///
+  /// In ar, this message translates to:
+  /// **'متابعة إلى ملف الابن'**
+  String get nativePairingContinueToProfile;
+
+  /// Relative time for last seen just now
+  ///
+  /// In ar, this message translates to:
+  /// **'الآن'**
+  String get childProfileLastSeenNow;
+
+  /// Relative time in minutes
+  ///
+  /// In ar, this message translates to:
+  /// **'قبل {minutes} د'**
+  String childProfileLastSeenMinutes(int minutes);
+
+  /// Relative time in hours
+  ///
+  /// In ar, this message translates to:
+  /// **'قبل {hours} س'**
+  String childProfileLastSeenHours(int hours);
+
+  /// Relative time in days
+  ///
+  /// In ar, this message translates to:
+  /// **'قبل {days} يوم'**
+  String childProfileLastSeenDays(int days);
+
+  /// Fallback name for a child
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن'**
+  String get childProfileFallbackName;
+
+  /// Button to initiate child profile deletion
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف ملف الابن'**
+  String get childProfileDeleteButton;
+
+  /// SCR-FAT-013 delete child confirm dialog title
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف ملف الابن'**
+  String get childProfileDeleteConfirmTitle;
+
+  /// SCR-FAT-013 delete child confirmation prompt
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا الإجراء نهائي ولا يمكن التراجع عنه. لتأكيد الحذف، اكتب CONFIRM DELETE أدناه:'**
+  String get childProfileDeleteConfirmPrompt;
+
+  /// SCR-FAT-013 delete child confirm token hint
+  ///
+  /// In ar, this message translates to:
+  /// **'CONFIRM DELETE'**
+  String get childProfileDeleteConfirmTokenHint;
+
+  /// SCR-FAT-013 delete child confirm action button
+  ///
+  /// In ar, this message translates to:
+  /// **'تأكيد الحذف'**
+  String get childProfileDeleteConfirmAction;
+
+  /// SCR-FAT-013 delete child success toast
+  ///
+  /// In ar, this message translates to:
+  /// **'تم حذف ملف الابن بنجاح'**
+  String get childProfileDeleteSuccessToast;
+
+  /// Child day board note when earned minutes extend today limit
+  ///
+  /// In ar, this message translates to:
+  /// **'الدقائق التي تكسبها من أنشطتك تُضاف إلى وقتك اليومي'**
+  String get childDayBoardEarnedExtendsOn;
+
+  /// Child day board note when earned minutes do not extend today limit
+  ///
+  /// In ar, this message translates to:
+  /// **'الدقائق التي تكسبها من أنشطتك لا تُضاف إلى وقت اليوم — تُحفظ لك'**
+  String get childDayBoardEarnedExtendsOff;
+
+  /// Screen time server panel loading state
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ تحميل حالة وقت الشاشة من الخادم…'**
+  String get screenTimeServerLoading;
+
+  /// Screen time server panel empty state when no limits are set
+  ///
+  /// In ar, this message translates to:
+  /// **'لم تُضبط حدود وقت الشاشة لهذا الطفل بعد — لا شيء مفروض الآن.'**
+  String get screenTimeServerEmpty;
+
+  /// Child day board when no screen time daily limit is set
+  ///
+  /// In ar, this message translates to:
+  /// **'بلا حد يومي الآن'**
+  String get childDayBoardNoLimit;
+
+  /// Retry action on screen time server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'إعادة المحاولة'**
+  String get screenTimeServerRetry;
+
+  /// Title for quick extra minutes grant buttons on server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'منح وقت إضافي سريع'**
+  String get screenTimeServerQuickGrantTitle;
+
+  /// Quick grant 15 minutes
+  ///
+  /// In ar, this message translates to:
+  /// **'+15 دقيقة'**
+  String get screenTimeServerGrant15;
+
+  /// Quick grant 30 minutes
+  ///
+  /// In ar, this message translates to:
+  /// **'+30 دقيقة'**
+  String get screenTimeServerGrant30;
+
+  /// Quick grant 60 minutes
+  ///
+  /// In ar, this message translates to:
+  /// **'+60 دقيقة'**
+  String get screenTimeServerGrant60;
+
+  /// Validation message when screen time daily cap is invalid
+  ///
+  /// In ar, this message translates to:
+  /// **'يرجى إدخال عدد دقائق بين 0 و 1440'**
+  String get screenTimeServerCapInvalid;
+
+  /// Total limit minutes label on screen time server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'الحد الكلي: {minutes} دقيقة'**
+  String screenTimeServerTotalLimit(int minutes);
+
+  /// Accessibility semantics label for daily screen time consumption progress bar
+  ///
+  /// In ar, this message translates to:
+  /// **'نسبة استهلاك وقت الشاشة اليومي'**
+  String get screenTimeServerProgressLabel;
 }
 
 class _AppLocalizationsDelegate

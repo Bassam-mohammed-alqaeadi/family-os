@@ -1,9 +1,4 @@
-import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/minutes.dart';
-import 'package:family_os/core/domain/role.dart';
-import 'package:family_os/core/policy/wallet_ledger.dart';
-import 'package:family_os/core/screen_time/screen_time_local_persistence.dart';
-import 'package:family_os/features/n03_screen_time/stage1_child_scope.dart';
 import 'package:family_os/features/n16_tasks/family_tasks_models.dart';
 
 /// Rule 25 seam — Stage-1 local family tasks authority (no backend).
@@ -15,8 +10,8 @@ abstract class FamilyTasksRepository {
 
   /// Local approve — pending → completed (FAT-054).
   ///
-  /// Deposits [FamilyChildTask.reward] via [WalletLedger.earn] / PolicyEngine
-  /// when assignee is a child (Q-CEX-003 / Rule 5).
+  /// Completes the task. Minutes are never written here: the reward is credited by the
+  /// server (S3 — no local minute writes).
   Future<void> approveTask(String taskId);
 
   /// Child proof submit — assigned → pendingApproval (CHD-022).
@@ -31,17 +26,10 @@ abstract class FamilyTasksRepository {
 
 /// In-memory mock — empty-first (Rule 23). Tests/fixtures seed explicitly.
 final class InMemoryFamilyTasksRepository implements FamilyTasksRepository {
-  InMemoryFamilyTasksRepository({
-    FamilyTasksSnapshot? seed,
-    WalletLedger? walletLedger,
-    ChildId Function(String assigneeNameKey)? resolveChildId,
-  }) : _snap = seed ?? familyTasksEmptyFixture(),
-       _walletLedger = walletLedger,
-       _resolveChildId = resolveChildId;
+  InMemoryFamilyTasksRepository({FamilyTasksSnapshot? seed})
+    : _snap = seed ?? familyTasksEmptyFixture();
 
   FamilyTasksSnapshot _snap;
-  final WalletLedger? _walletLedger;
-  final ChildId Function(String assigneeNameKey)? _resolveChildId;
 
   /// Optional gate for loading-state widget tests.
   Future<void> Function()? loadGate;
@@ -68,7 +56,6 @@ final class InMemoryFamilyTasksRepository implements FamilyTasksRepository {
       childTasks: tasks,
       motherHelpTasks: _snap.motherHelpTasks,
     );
-    await _depositReward(task);
   }
 
   @override
@@ -105,26 +92,6 @@ final class InMemoryFamilyTasksRepository implements FamilyTasksRepository {
       childTasks: [..._snap.childTasks, task],
       motherHelpTasks: _snap.motherHelpTasks,
     );
-  }
-
-  Future<void> _depositReward(FamilyChildTask task) async {
-    if (task.reward.isZero) return;
-    if (task.assigneeNameKey == 'mother') return;
-    try {
-      final ledger =
-          _walletLedger ??
-          WalletLedger(await ScreenTimeLocalPersistence.openPolicyRepository());
-      final childId =
-          _resolveChildId?.call(task.assigneeNameKey) ?? activeScopedChildId();
-      await ledger.earn(
-        childId: childId,
-        appId: 'family_tasks',
-        assignee: AppRole.child,
-        fatherSetReward: task.reward,
-      );
-    } catch (_) {
-      // Soft-fail deposit — task status already completed locally.
-    }
   }
 
   void seed(FamilyTasksSnapshot snap) {

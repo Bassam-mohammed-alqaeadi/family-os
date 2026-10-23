@@ -63,6 +63,7 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
   var _busy = false;
   late final TextEditingController _capController;
   int _capVersion = 0;
+  String? _capError;
 
   ScreenTimeServerAuthority? get _authority =>
       widget.authority ?? activeScreenTimeServerAuthority;
@@ -75,11 +76,17 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
   void initState() {
     super.initState();
     _capController = TextEditingController();
+    _capController.addListener(_onCapChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) => _refresh());
+  }
+
+  void _onCapChanged() {
+    if (_capError != null) setState(() => _capError = null);
   }
 
   @override
   void dispose() {
+    _capController.removeListener(_onCapChanged);
     _capController.dispose();
     super.dispose();
   }
@@ -154,13 +161,34 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
   }
 
   Future<void> _saveCap() async {
-    final parsed = int.tryParse(_capController.text.trim());
-    if (parsed == null || parsed < 0 || parsed > 1440) return;
+    final raw = _capController.text.trim();
+    final parsed = int.tryParse(raw);
+    if (parsed == null || parsed < 0 || parsed > 1440) {
+      setState(() {
+        _capError = AppLocalizations.of(context).screenTimeServerCapInvalid;
+      });
+      return;
+    }
     await _run(
       (authority) => authority.writePolicy(
         widget.childId.value,
         dailyLimitMinutes: parsed,
         expectedVersion: _capVersion,
+        idempotencyKey: _key,
+      ),
+    );
+  }
+
+  Future<void> _instantGrant(int minutes) async {
+    final snapshot = _snapshot;
+    if (snapshot?.openRequest != null) {
+      await _answer(snapshot!.openRequest!, approve: true);
+      return;
+    }
+    await _run(
+      (authority) => authority.grantInstantMinutes(
+        widget.childId.value,
+        minutes: minutes,
         idempotencyKey: _key,
       ),
     );
@@ -196,6 +224,14 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
     (authority) => authority.writePolicy(
       widget.childId.value,
       schoolModeEnabled: enabled,
+      idempotencyKey: _key,
+    ),
+  );
+
+  Future<void> _toggleEarnedMinutes(bool enabled) => _run(
+    (authority) => authority.writePolicy(
+      widget.childId.value,
+      earnedMinutesExtendLimit: enabled,
       idempotencyKey: _key,
     ),
   );
@@ -238,24 +274,29 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
     final snapshot = _snapshot;
     final status = _status;
 
-    return ListView(
-      key: const Key('screen_time_server_panel'),
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-      children: [
-        _statusBanner(l10n, status, snapshot),
-        const SizedBox(height: 12),
-        if (snapshot != null) ...[
-          _stateCard(l10n, colors, snapshot),
-          const SizedBox(height: 12),
-          _policyCard(l10n, colors, snapshot),
-          const SizedBox(height: 12),
-          _lockCard(l10n, colors, snapshot),
-          if (snapshot.openRequest != null) ...[
-            const SizedBox(height: 12),
-            _requestCard(l10n, colors, snapshot.openRequest!),
+    return RefreshIndicator(
+      onRefresh: _refresh,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        key: const Key('screen_time_server_panel'),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+        children: [
+          _statusBanner(l10n, status, snapshot),
+          const SizedBox(height: 4),
+          if (snapshot != null) ...[
+            _stateCard(l10n, colors, snapshot),
+            const SizedBox(height: 4),
+            _policyCard(l10n, colors, snapshot),
+            const SizedBox(height: 4),
+            _lockCard(l10n, colors, snapshot),
+            const SizedBox(height: 4),
+            if (snapshot.openRequest != null)
+              _requestCard(l10n, colors, snapshot.openRequest!)
+            else
+              _quickGrantCard(l10n, colors, snapshot),
           ],
         ],
-      ],
+      ),
     );
   }
 
@@ -270,7 +311,7 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
     final (Key key, String message, BannerVariant variant) = switch (status) {
       null => (
         const Key('screen_time_server_loading'),
-        l10n.screenTimeServerNoSession,
+        l10n.screenTimeServerLoading,
         BannerVariant.t,
       ),
       ScreenTimeAuthorityStatus.ready => (
@@ -302,8 +343,34 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
       ),
     };
     if (status == ScreenTimeAuthorityStatus.ready) {
+      if (snapshot != null && !snapshot.policy.configured) {
+        return BannerNote(
+          key: const Key('screen_time_server_empty'),
+          variant: BannerVariant.t,
+          message: l10n.screenTimeServerEmpty,
+        );
+      }
       // The quiet case: nothing to warn about, and a green banner every load is noise.
       return const SizedBox.shrink();
+    }
+    if (status == ScreenTimeAuthorityStatus.unreachable) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          BannerNote(key: key, variant: variant, message: message),
+          const SizedBox(height: 4),
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: TextButton.icon(
+              key: const Key('screen_time_server_retry_button'),
+              icon: const Icon(Icons.refresh, size: 16),
+              label: Text(l10n.screenTimeServerRetry),
+              onPressed: _busy ? null : _refresh,
+            ),
+          ),
+        ],
+      );
     }
     return BannerNote(key: key, variant: variant, message: message);
   }
@@ -324,40 +391,79 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
           : l10n.screenTimeServerStateFree,
     };
     final remaining = snapshot.remainingMinutes;
+    final used = snapshot.countableUsedMinutes;
+    final dailyCap = snapshot.policy.dailyLimitMinutes;
+    final granted = snapshot.grantedMinutes;
+    final totalAllowed = dailyCap + granted;
+    final progress = totalAllowed > 0
+        ? (used / totalAllowed).clamp(0.0, 1.0)
+        : (used > 0 ? 1.0 : 0.0);
+
+    final progressColor = (remaining != null && remaining == 0)
+        ? colors.coral
+        : ((remaining != null && remaining <= 15)
+            ? colors.amberDeep
+            : colors.mintInk);
+
     return Card(
       key: const Key('screen_time_server_state_card'),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               sentence,
               style: TextStyle(
-                fontSize: 17,
+                fontSize: 16,
                 fontWeight: FontWeight.w800,
                 color: colors.ink,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
-              l10n.screenTimeServerTodayMinutes(snapshot.countableUsedMinutes),
-              style: TextStyle(fontSize: 14, color: colors.ink2),
+              l10n.screenTimeServerTodayMinutes(used),
+              style: TextStyle(fontSize: 13, color: colors.ink2),
             ),
             if (remaining != null) ...[
               const SizedBox(height: 4),
               Text(
                 l10n.childTimeMirrorRemainingMinutes(remaining),
-                style: TextStyle(fontSize: 14, color: colors.ink2),
-              ),
-            ],
-            if (snapshot.grantedMinutes > 0) ...[
-              const SizedBox(height: 4),
-              Text(
-                l10n.remainingMinutesGrantLabel,
                 style: TextStyle(fontSize: 13, color: colors.ink2),
               ),
             ],
+            if (granted > 0) ...[
+              const SizedBox(height: 4),
+              Text(
+                l10n.remainingMinutesGrantLabel,
+                style: TextStyle(fontSize: 12, color: colors.ink2),
+              ),
+            ],
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: LinearProgressIndicator(
+                key: const Key('screen_time_server_progress_bar'),
+                value: progress,
+                minHeight: 6,
+                backgroundColor: colors.border,
+                valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+              ),
+            ),
+            const SizedBox(height: 2),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  l10n.screenTimeServerProgressLabel,
+                  style: TextStyle(fontSize: 10, color: colors.ink2),
+                ),
+                Text(
+                  l10n.screenTimeServerTotalLimit(totalAllowed),
+                  style: TextStyle(fontSize: 10, color: colors.ink2),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -374,7 +480,7 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
     return Card(
       key: const Key('screen_time_server_policy_card'),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -388,6 +494,7 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
                       labelText: l10n.screenTimeServerCap,
+                      errorText: _capError,
                     ),
                   ),
                 ),
@@ -403,13 +510,13 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             Text(
               '${l10n.screenTimeServerBedtime} · ${_clock(policy.bedtimeStartMinute)} – '
               '${_clock(policy.bedtimeEndMinute)}',
-              style: TextStyle(fontSize: 14, color: colors.ink),
+              style: TextStyle(fontSize: 13, color: colors.ink),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Row(
               children: [
                 TextButton(
@@ -434,15 +541,29 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
             SwitchListTile(
               key: const Key('screen_time_server_school_toggle'),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
               value: policy.schoolModeEnabled,
               onChanged: editable ? _toggleSchoolMode : null,
               title: Text(l10n.screenTimeServerSchoolMode),
               subtitle: Text(
                 '${_clock(policy.schoolStartMinute)} – ${_clock(policy.schoolEndMinute)}',
               ),
+            ),
+            SwitchListTile(
+              key: const Key('screen_time_server_earned_minutes_toggle'),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              value: policy.earnedMinutesExtendLimit,
+              onChanged: editable ? _toggleEarnedMinutes : null,
+              title: Text(l10n.screenTimeServerEarnedMinutesTitle),
+              subtitle: Text(l10n.screenTimeServerEarnedMinutesSubtitle),
+            ),
+            Text(
+              l10n.screenTimeServerEarnedMinutesPreview,
+              style: TextStyle(fontSize: 12, color: colors.ink2),
             ),
           ],
         ),
@@ -461,7 +582,7 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
     return Card(
       key: const Key('screen_time_server_lock_card'),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -478,13 +599,68 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
               live ? l10n.screenTimeServerStateLock : l10n.screenTimeServerStateFree,
               style: TextStyle(fontSize: 14, color: colors.ink2),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             PrimaryBtn(
               key: const Key('screen_time_server_lock_button'),
               label: live
                   ? l10n.screenTimeServerUnlock
                   : l10n.screenTimeServerLockNow,
               onPressed: editable ? () => _toggleLock(lock: !live) : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _quickGrantCard(
+    AppLocalizations l10n,
+    FamilyColors colors,
+    FoundationGateScreenTimeSnapshot snapshot,
+  ) {
+    final editable = widget.canEdit && !_busy;
+    return Card(
+      key: const Key('screen_time_server_quick_grant_card'),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.screenTimeServerQuickGrantTitle,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: colors.ink,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    key: const Key('screen_time_server_quick_grant_15'),
+                    onPressed: editable ? () => _instantGrant(15) : null,
+                    child: Text(l10n.screenTimeServerGrant15),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton(
+                    key: const Key('screen_time_server_quick_grant_30'),
+                    onPressed: editable ? () => _instantGrant(30) : null,
+                    child: Text(l10n.screenTimeServerGrant30),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton(
+                    key: const Key('screen_time_server_quick_grant_60'),
+                    onPressed: editable ? () => _instantGrant(60) : null,
+                    child: Text(l10n.screenTimeServerGrant60),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
