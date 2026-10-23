@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -22,6 +24,8 @@ import 'package:family_os/features/n03_screen_time/app_control_ux_bridge.dart';
 import 'package:family_os/features/n03_screen_time/app_deny_page.dart';
 import 'package:family_os/features/n03_screen_time/child_apps_models.dart';
 import 'package:family_os/features/n03_screen_time/child_apps_repository.dart';
+import 'package:family_os/features/n03_screen_time/child_apps_server_sync.dart';
+import 'package:family_os/features/n03_screen_time/screen_time_server_authority.dart';
 import 'package:family_os/features/n03_screen_time/stage1_child_scope.dart';
 
 /// Widget keys for SCR-FAT-034 acceptance.
@@ -106,6 +110,9 @@ class ChildAppsScreen extends StatefulWidget {
 class _ChildAppsScreenState extends State<ChildAppsScreen> {
   late ChildId _childId;
   late ChildAppsRepository _repo;
+
+  /// Null until the screen owns a repository it may replace with the server's answer.
+  ChildAppsServerSync? _serverSync;
   late final SosFireService _sos;
   AppControlService? _appControl;
   var _sosBusy = false;
@@ -171,6 +178,7 @@ class _ChildAppsScreenState extends State<ChildAppsScreen> {
             accessRules: Stage1AppControlRuntime.accessRules,
           );
           _bindRepo(_repo);
+          _syncFromServer();
         }
         if (widget.appControl == null) {
           _appControl = Stage1AppControlRuntime.service;
@@ -203,8 +211,27 @@ class _ChildAppsScreenState extends State<ChildAppsScreen> {
 
   @override
   void dispose() {
+    _serverSync?.dispose();
     _unbindRepo();
     super.dispose();
+  }
+
+  /// The server owns the family's decisions; this list is the fallback.
+  ///
+  /// Fire-and-forget on purpose. The screen is already drawn with the rows the handset
+  /// knows, and a guardian should read a list rather than a spinner. A read that fails
+  /// leaves those rows alone; [ChildAppsServerSync] is what decides whether the result may
+  /// still be called current.
+  void _syncFromServer() {
+    final repo = _repo;
+    final authority = activeScreenTimeServerAuthority;
+    if (repo is! InMemoryChildAppsRepository || authority == null) return;
+    _serverSync?.dispose();
+    _serverSync = childAppsServerSyncForAuthority(
+      authority: authority,
+      repository: repo,
+    );
+    unawaited(_serverSync!.sync(_childId));
   }
 
   ChildId _resolveChildId(String? raw) {

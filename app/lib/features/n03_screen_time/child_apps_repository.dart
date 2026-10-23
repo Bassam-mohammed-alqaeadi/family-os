@@ -157,6 +157,28 @@ final class InMemoryChildAppsRepository extends ChangeNotifier
     notifyListeners();
   }
 
+  /// Replaces this child's inventory with what the server last said.
+  ///
+  /// The server owns the family's decisions, so a successful read is written over the
+  /// local list instead of being merged into it: merging would resurrect an app the
+  /// family has since removed, which is a decision nobody made.
+  ///
+  /// Deliberately does not touch [AppAccessRulesRepository]. That store is the offline
+  /// mirror a handset reads while it cannot reach the server; overwriting it here would
+  /// make a guardian's screen rewrite the child device's fallback with a stale copy.
+  void replaceFromServer(ChildId childId, List<ChildAppEntry> apps) {
+    _byChild[childId.value] = List<ChildAppEntry>.from(apps);
+    notifyListeners();
+  }
+
+  /// One app from the current list, or null when this child has no such row.
+  ChildAppEntry? appOf(ChildId childId, String appId) {
+    for (final app in _byChild[childId.value] ?? const <ChildAppEntry>[]) {
+      if (app.id == appId) return app;
+    }
+    return null;
+  }
+
   String? _resolveChildKey(String raw) {
     if (_byChild.containsKey(raw)) return raw;
     final sep = raw.indexOf('::');
