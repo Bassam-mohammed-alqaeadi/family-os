@@ -11,7 +11,7 @@ import 'package:family_os/features/n03_screen_time/child_apps_repository.dart';
 import 'package:family_os/features/n03_screen_time/child_apps_server_sync.dart';
 import 'package:family_os/foundation_gate/family_screen_time_api_client.dart';
 
-const _child = ChildId('child-sync-a');
+final _child = ChildId('child-sync-a');
 
 ChildAppEntry _entry(
   String id, {
