@@ -56,7 +56,7 @@ ServiceChildTimeRequestRepository _repository({
   return ServiceChildTimeRequestRepository(
     service: service,
     repository: store,
-    childId: const ChildId('child-1'),
+    childId: ChildId('child-1'),
     delivery: delivery,
   );
 }

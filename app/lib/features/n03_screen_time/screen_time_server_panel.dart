@@ -586,7 +586,7 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel>
       child: Card(
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(radii.card),
+            borderRadius: BorderRadius.circular(FamilyRadii.defaults.card),
             border: BorderDirectional(
               start: BorderSide(color: colors.amber, width: 4),
             ),

@@ -8,8 +8,6 @@
 //
 // These tests pin both halves of that: a real repeat still replays, and a grown measurement
 // still lands.
-import 'dart:convert';
-
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:family_os/foundation_gate/child_screen_time_report_client.dart';
