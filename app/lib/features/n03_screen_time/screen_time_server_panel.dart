@@ -248,6 +248,31 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel>
     );
   }
 
+  /// The school window, picked the same way bedtime is.
+  ///
+  /// It writes one end at a time, like every other edit on this screen, so a screen that
+  /// moves the morning bell cannot silently rewrite the cap.
+  Future<void> _pickSchool(String label, int? current) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _asTimeOfDay(current),
+      helpText: label,
+    );
+    if (picked == null) return;
+    final minutes = picked.hour * 60 + picked.minute;
+    final snapshot = _snapshot;
+    if (snapshot == null) return;
+    final isStart = current == snapshot.policy.schoolStartMinute;
+    await _run(
+      (authority) => authority.writePolicy(
+        widget.childId.value,
+        schoolStartMinute: isStart ? minutes : null,
+        schoolEndMinute: isStart ? null : minutes,
+        idempotencyKey: _key,
+      ),
+    );
+  }
+
   Future<void> _toggleSchoolMode(bool enabled) => _run(
     (authority) => authority.writePolicy(
       widget.childId.value,
@@ -597,34 +622,39 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel>
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              '${l10n.screenTimeServerBedtime} · ${_clock(policy.bedtimeStartMinute)} – '
-              '${_clock(policy.bedtimeEndMinute)}',
-              style: TextStyle(fontSize: 13, color: colors.ink),
-            ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 10),
             Row(
               children: [
-                TextButton(
-                  key: const Key('screen_time_server_bedtime_start'),
-                  onPressed: editable
-                      ? () => _pickBedtime(
-                          l10n.screenTimeServerBedtime,
-                          policy.bedtimeStartMinute,
-                        )
-                      : null,
-                  child: Text(l10n.childScreenTimeStart),
+                Expanded(
+                  child: _timeChip(
+                    key: const Key('screen_time_server_bedtime_start'),
+                    colors: colors,
+                    icon: Icons.bedtime_outlined,
+                    label: '${l10n.screenTimeServerBedtime} · ${l10n.childScreenTimeStart}',
+                    value: _clock(policy.bedtimeStartMinute),
+                    onTap: editable
+                        ? () => _pickBedtime(
+                            l10n.screenTimeServerBedtime,
+                            policy.bedtimeStartMinute,
+                          )
+                        : null,
+                  ),
                 ),
-                TextButton(
-                  key: const Key('screen_time_server_bedtime_end'),
-                  onPressed: editable
-                      ? () => _pickBedtime(
-                          l10n.screenTimeServerBedtime,
-                          policy.bedtimeEndMinute,
-                        )
-                      : null,
-                  child: Text(l10n.childScreenTimeEnd),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _timeChip(
+                    key: const Key('screen_time_server_bedtime_end'),
+                    colors: colors,
+                    icon: Icons.wb_sunny_outlined,
+                    label: '${l10n.screenTimeServerBedtime} · ${l10n.childScreenTimeEnd}',
+                    value: _clock(policy.bedtimeEndMinute),
+                    onTap: editable
+                        ? () => _pickBedtime(
+                            l10n.screenTimeServerBedtime,
+                            policy.bedtimeEndMinute,
+                          )
+                        : null,
+                  ),
                 ),
               ],
             ),
@@ -635,10 +665,49 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel>
               value: policy.schoolModeEnabled,
               onChanged: editable ? _toggleSchoolMode : null,
               title: Text(l10n.screenTimeServerSchoolMode),
-              subtitle: Text(
-                '${_clock(policy.schoolStartMinute)} – ${_clock(policy.schoolEndMinute)}',
-              ),
             ),
+            // The window only matters while the mode is on, so it only appears while it is
+            // on - and it is two tappable times rather than a sentence nobody can change.
+            if (policy.schoolModeEnabled) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: _timeChip(
+                      key: const Key('screen_time_server_school_start'),
+                      colors: colors,
+                      icon: Icons.school_outlined,
+                      label:
+                          '${l10n.screenTimeServerSchoolMode} · ${l10n.childScreenTimeStart}',
+                      value: _clock(policy.schoolStartMinute),
+                      onTap: editable
+                          ? () => _pickSchool(
+                              l10n.screenTimeServerSchoolMode,
+                              policy.schoolStartMinute,
+                            )
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _timeChip(
+                      key: const Key('screen_time_server_school_end'),
+                      colors: colors,
+                      icon: Icons.school_outlined,
+                      label:
+                          '${l10n.screenTimeServerSchoolMode} · ${l10n.childScreenTimeEnd}',
+                      value: _clock(policy.schoolEndMinute),
+                      onTap: editable
+                          ? () => _pickSchool(
+                              l10n.screenTimeServerSchoolMode,
+                              policy.schoolEndMinute,
+                            )
+                          : null,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+            ],
             SwitchListTile(
               key: const Key('screen_time_server_earned_minutes_toggle'),
               dense: true,
@@ -653,6 +722,70 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel>
               style: TextStyle(fontSize: 12, color: colors.ink2),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// A time you can press.
+  ///
+  /// The label says what it is and the value is large enough to read at arm's length; the
+  /// whole tile is the target, because a 44-pixel decimal point is not a control.
+  Widget _timeChip({
+    required Key key,
+    required FamilyColors colors,
+    required IconData icon,
+    required String label,
+    required String value,
+    required VoidCallback? onTap,
+  }) {
+    final enabled = onTap != null;
+    return Semantics(
+      button: enabled,
+      label: '$label $value',
+      child: Material(
+        color: enabled ? colors.surface : colors.bg,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          key: key,
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: colors.border),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, size: 16, color: colors.ink2),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 10, color: colors.ink2),
+                      ),
+                      Text(
+                        value,
+                        maxLines: 1,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: enabled ? colors.ink : colors.ink2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
