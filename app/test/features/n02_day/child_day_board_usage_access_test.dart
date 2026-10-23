@@ -20,15 +20,10 @@ import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 final _child = ChildId(SmartModePrefs.defaultChildId);
 
 final class _ReportTransport implements ChildScreenTimeReportTransport {
-  _ReportTransport({
-    this.available = true,
-    this.permissionGranted = false,
-    this.opened = true,
-  });
+  _ReportTransport({this.available = true, this.permissionGranted = false});
 
   final bool available;
   final bool permissionGranted;
-  final bool opened;
 
   int openedSettings = 0;
 
@@ -42,7 +37,7 @@ final class _ReportTransport implements ChildScreenTimeReportTransport {
   @override
   Future<bool> openUsageAccessSettings() async {
     openedSettings++;
-    return opened;
+    return true;
   }
 
   @override

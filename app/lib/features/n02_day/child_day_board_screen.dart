@@ -512,8 +512,8 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen> {
                     const SizedBox(height: 8),
                     PrimaryBtn(
                       key: ChildDayBoardKeys.usageAccessOpen,
+                      label: l10n.childDayBoardUsageAccessOpen,
                       onPressed: _openUsageAccess,
-                      child: Text(l10n.childDayBoardUsageAccessOpen),
                     ),
                   ],
                   if (_showRemaining) ...[
