@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 
+import 'package:family_os/core/design/components/app_card.dart';
 import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/features/n03_screen_time/screen_time_app_rules_sheet.dart';
+import 'package:family_os/features/n03_screen_time/screen_time_panel_cards.dart';
+import 'package:family_os/features/n03_screen_time/screen_time_panel_contracts.dart';
 import 'package:family_os/features/n03_screen_time/screen_time_server_authority.dart';
 import 'package:family_os/foundation_gate/family_screen_time_api_client.dart';
 
@@ -29,7 +33,13 @@ import 'package:family_os/foundation_gate/family_screen_time_api_client.dart';
 ///   * the instant lock: who it belongs to, when it started, and one button that either
 ///     switches the phone off now or switches it back on. The state drawn afterwards is the
 ///     server's answer, not the intent;
-///   * the child's open question, with the two answers a family has: give minutes, or say no.
+///   * the child's open question, with the two answers a family has: give minutes, or say no;
+///   * the extension block: the quick presets beside a custom number, the instant lock with
+///     the server's own confirmation, today's usage per app, the earned-minutes decision, the
+///     week's school-day set, and the app and category rules behind one sheet;
+///   * what the contract does not carry yet — a separate weekend bedtime, a daily budget per
+///     category — shown as a control **and** a sentence saying where it stops, rather than a
+///     field that saves into this build's memory and calls it a setting.
 ///
 /// When the server cannot be reached, the last true answer stays on screen **and says that it
 /// is the last one**. When there was never an answer, the panel shows no numbers at all.
@@ -65,12 +75,34 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
   int _capVersion = 0;
   String? _capError;
 
+  /// The school-day set as the parent has it in the chips, against `policy.schoolDays`.
+  Set<int> _schoolDaysDraft = const {};
+
+  /// The fields the base contract does not carry (see `screen_time_panel_contracts.dart`).
+  /// Both are the source's answer, never a local guess: null means "nothing has answered".
+  ScreenTimePolicyExtension? _extension;
+  ScreenTimeExtensionStatus? _extensionStatus;
+  String? _weekendWriteLine;
+
+  /// True only between a lock write and the next read, and only when that read agrees.
+  /// The pill therefore says "the server confirmed this", not "a button was pressed".
+  var _lockAcknowledged = false;
+
+  /// The cap's quick picks. `0` is unlimited, which is the family's right and the one number
+  /// the contract already answers for without a second field.
+  static const List<int> _capPresets = [0, 30, 60, 90, 120, 180];
+
   ScreenTimeServerAuthority? get _authority =>
       widget.authority ?? activeScreenTimeServerAuthority;
 
   String _key() =>
       widget.idempotencyKey?.call() ??
       'w5-${DateTime.now().microsecondsSinceEpoch}';
+
+  /// The one read-only rule on this panel: someone who may not write gets a control with no
+  /// `onPressed`, not a control that is hidden. A greyed button says "you can see this decision
+  /// and you are not making it"; a missing button looks like a broken screen.
+  bool get _editable => widget.canEdit && !_busy;
 
   @override
   void initState() {
@@ -97,16 +129,38 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
       setState(() {
         _status = ScreenTimeAuthorityStatus.notConfigured;
         _snapshot = null;
+        _lockAcknowledged = false;
       });
       return;
     }
     final answer = await authority.read(widget.childId.value);
     if (!mounted) return;
-    setState(() => _apply(answer));
+    setState(() {
+      // A refresh is the panel admitting it no longer knows what the phone is doing, so the
+      // "confirmed by the server" pill does not survive one.
+      _lockAcknowledged = false;
+      _apply(answer);
+    });
     if (answer.isReady) {
-      _capController.text = '${answer.value!.policy.dailyLimitMinutes}';
-      _capVersion = answer.value!.policy.version ?? 0;
+      final policy = answer.value!.policy;
+      _capController.text = '${policy.dailyLimitMinutes}';
+      _capVersion = policy.version ?? 0;
+      setState(() => _schoolDaysDraft = {...policy.schoolDays});
+      await _loadExtension();
     }
+  }
+
+  /// The read of the not-yet-built fields. Unbound, this answers `notConfigured` without
+  /// touching the network — which is what keeps the panel's contract "one read per open".
+  Future<void> _loadExtension() async {
+    final answer = await screenTimePolicyExtensionSource.read(
+      widget.childId.value,
+    );
+    if (!mounted) return;
+    setState(() {
+      _extensionStatus = answer.status;
+      _extension = answer.value;
+    });
   }
 
   void _apply<T>(ScreenTimeAuthorityAnswer<T> answer) {
@@ -236,10 +290,117 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
     ),
   );
 
-  Future<void> _toggleLock({required bool lock}) => _run(
-    (authority) => lock
-        ? authority.lockNow(widget.childId.value, idempotencyKey: _key)
-        : authority.releaseLock(widget.childId.value, idempotencyKey: _key),
+  Future<void> _toggleLock({required bool lock}) async {
+    setState(() => _lockAcknowledged = false);
+    await _run(
+      (authority) => lock
+          ? authority.lockNow(widget.childId.value, idempotencyKey: _key)
+          : authority.releaseLock(widget.childId.value, idempotencyKey: _key),
+    );
+    if (!mounted) return;
+    // `_run` already re-read, so this compares the press against the server's latest answer —
+    // a lock it refused stays unconfirmed, and the card keeps drawing what it was told.
+    if ((_snapshot?.lock?.live ?? false) == lock) {
+      setState(() => _lockAcknowledged = true);
+    }
+  }
+
+  /// A custom number of minutes, asked for in a sheet and granted through the same write the
+  /// presets use. One path, so "+15" and "23" cannot drift into two different meanings.
+  Future<void> _openCustomGrant() async {
+    final l10n = AppLocalizations.of(context);
+    final minutes = await showScreenTimeCustomGrantSheet(
+      context,
+      title: l10n.screenTimeServerExtensionCustomTitle,
+      helper: l10n.screenTimeServerExtensionCustomHelper,
+      confirmLabel: l10n.screenTimeServerExtensionCustomConfirm,
+      invalidLabel: l10n.screenTimeServerExtensionCustomInvalid,
+    );
+    if (minutes == null) return;
+    await _instantGrant(minutes);
+  }
+
+  /// The school-day set is written as one decision, not as seven.
+  Future<void> _saveSchoolDays() => _run(
+    (authority) => authority.writePolicy(
+      widget.childId.value,
+      schoolDays: (_schoolDaysDraft.toList()..sort()),
+      expectedVersion: _capVersion,
+      idempotencyKey: _key,
+    ),
+  );
+
+  void _toggleDay(int weekday) {
+    setState(() {
+      final next = Set<int>.of(_schoolDaysDraft);
+      if (!next.add(weekday)) next.remove(weekday);
+      _schoolDaysDraft = next;
+    });
+  }
+
+  /// The weekend bedtime, which the base contract has no field for.
+  ///
+  /// The picker is open and the write is real — it goes to the extension source. Unbound, that
+  /// source answers `notConfigured`, and the card says exactly that instead of pretending the
+  /// window was saved. Building the control now is what makes the backend's job a route
+  /// instead of a redesign.
+  Future<void> _pickWeekendBedtime({required bool startsNight}) async {
+    final l10n = AppLocalizations.of(context);
+    final current = _extension?.bedtimeWindows[ScreenTimeWeekPart.weekend];
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _asTimeOfDay(
+        startsNight ? current?.startMinute : current?.endMinute,
+      ),
+      helpText: startsNight
+          ? l10n.screenTimeServerWeekWeekendBedtimeStart
+          : l10n.screenTimeServerWeekWeekendBedtimeEnd,
+    );
+    if (picked == null) return;
+    final minutes = picked.hour * 60 + picked.minute;
+    final start = startsNight
+        ? minutes
+        : (current?.startMinute ?? _snapshot?.policy.bedtimeStartMinute ?? 0);
+    final end = startsNight
+        ? (current?.endMinute ?? _snapshot?.policy.bedtimeEndMinute ?? 0)
+        : minutes;
+    final windows = Map<ScreenTimeWeekPart, ScreenTimeBedtimeWindow>.of(
+      _extension?.bedtimeWindows ?? const {},
+    );
+    windows[ScreenTimeWeekPart.weekend] = ScreenTimeBedtimeWindow(
+      weekPart: ScreenTimeWeekPart.weekend,
+      startMinute: start,
+      endMinute: end,
+    );
+    setState(() {
+      _busy = true;
+      _weekendWriteLine = null;
+    });
+    final answer = await screenTimePolicyExtensionSource.write(
+      widget.childId.value,
+      policyExtension: ScreenTimePolicyExtension(
+        bedtimeWindows: windows,
+        categoryBudgets: _extension?.categoryBudgets ?? const {},
+      ),
+      idempotencyKey: _key,
+    );
+    if (!mounted) return;
+    setState(() {
+      _busy = false;
+      _extensionStatus = answer.status;
+      _weekendWriteLine = answer.isReady
+          ? l10n.screenTimeServerSaved
+          : screenTimeExtensionStatusLabel(l10n, answer.status);
+    });
+    await _loadExtension();
+  }
+
+  Future<void> _openAppRules() => showScreenTimeAppRulesSheet(
+    context,
+    authority: _authority,
+    childId: widget.childId.value,
+    canEdit: widget.canEdit,
+    idempotencyKey: _key,
   );
 
   Future<void> _answer(
@@ -260,6 +421,19 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
     final value = minutes ?? 0;
     return TimeOfDay(hour: (value ~/ 60) % 24, minute: value % 60);
   }
+
+  String _stamp(DateTime at) => _clock(at.toLocal().hour * 60 + at.toLocal().minute);
+
+  /// ISO weekday (Mon = 1 … Sun = 7) → the localized name, so the card never hardcodes one.
+  static Map<int, String> _dayLabels(AppLocalizations l10n) => {
+    1: l10n.screenTimeServerDayMon,
+    2: l10n.screenTimeServerDayTue,
+    3: l10n.screenTimeServerDayWed,
+    4: l10n.screenTimeServerDayThu,
+    5: l10n.screenTimeServerDayFri,
+    6: l10n.screenTimeServerDaySat,
+    7: l10n.screenTimeServerDaySun,
+  };
 
   String _clock(int minutes) {
     final hour = (minutes ~/ 60).toString().padLeft(2, '0');
@@ -283,17 +457,28 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
         children: [
           _statusBanner(l10n, status, snapshot),
           const SizedBox(height: 4),
+          // The order is a guardian's day, not a list of endpoints: what is true now, what to
+          // do about it now, then the rules to set up. The cap stays the third card because
+          // its field is the one control a parent comes here to fix in passing.
           if (snapshot != null) ...[
             _stateCard(l10n, colors, snapshot),
             const SizedBox(height: 4),
-            _policyCard(l10n, colors, snapshot),
+            _lockCard(l10n, snapshot),
             const SizedBox(height: 4),
-            _lockCard(l10n, colors, snapshot),
+            _capCard(l10n, snapshot),
             const SizedBox(height: 4),
             if (snapshot.openRequest != null)
               _requestCard(l10n, colors, snapshot.openRequest!)
             else
-              _quickGrantCard(l10n, colors, snapshot),
+              _extensionCard(l10n, snapshot),
+            const SizedBox(height: 4),
+            _insightsCard(l10n, snapshot),
+            const SizedBox(height: 4),
+            _earnedMinutesCard(l10n, snapshot),
+            const SizedBox(height: 4),
+            _weekCard(l10n, snapshot),
+            const SizedBox(height: 4),
+            _appsCard(l10n, snapshot),
           ],
         ],
       ),
@@ -398,273 +583,265 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
     final progress = totalAllowed > 0
         ? (used / totalAllowed).clamp(0.0, 1.0)
         : (used > 0 ? 1.0 : 0.0);
-
     final progressColor = (remaining != null && remaining == 0)
         ? colors.coral
         : ((remaining != null && remaining <= 15)
             ? colors.amberDeep
             : colors.mintInk);
 
-    return Card(
+    return AppCard(
       key: const Key('screen_time_server_state_card'),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              sentence,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: colors.ink,
-              ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            sentence,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: colors.ink,
             ),
-            const SizedBox(height: 6),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            l10n.screenTimeServerTodayMinutes(used),
+            style: TextStyle(fontSize: 13, color: colors.ink2),
+          ),
+          if (remaining != null) ...[
+            const SizedBox(height: 4),
             Text(
-              l10n.screenTimeServerTodayMinutes(used),
+              l10n.childTimeMirrorRemainingMinutes(remaining),
               style: TextStyle(fontSize: 13, color: colors.ink2),
             ),
-            if (remaining != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                l10n.childTimeMirrorRemainingMinutes(remaining),
-                style: TextStyle(fontSize: 13, color: colors.ink2),
-              ),
-            ],
-            if (granted > 0) ...[
-              const SizedBox(height: 4),
-              Text(
-                l10n.remainingMinutesGrantLabel,
-                style: TextStyle(fontSize: 12, color: colors.ink2),
-              ),
-            ],
-            const SizedBox(height: 6),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(3),
-              child: LinearProgressIndicator(
-                key: const Key('screen_time_server_progress_bar'),
-                value: progress,
-                minHeight: 6,
-                backgroundColor: colors.border,
-                valueColor: AlwaysStoppedAnimation<Color>(progressColor),
-              ),
-            ),
-            const SizedBox(height: 2),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  l10n.screenTimeServerProgressLabel,
-                  style: TextStyle(fontSize: 10, color: colors.ink2),
-                ),
-                Text(
-                  l10n.screenTimeServerTotalLimit(totalAllowed),
-                  style: TextStyle(fontSize: 10, color: colors.ink2),
-                ),
-              ],
-            ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _policyCard(
-    AppLocalizations l10n,
-    FamilyColors colors,
-    FoundationGateScreenTimeSnapshot snapshot,
-  ) {
-    final policy = snapshot.policy;
-    final editable = widget.canEdit && !_busy;
-    return Card(
-      key: const Key('screen_time_server_policy_card'),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    key: const Key('screen_time_server_cap_field'),
-                    controller: _capController,
-                    enabled: editable,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: l10n.screenTimeServerCap,
-                      errorText: _capError,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                PrimaryBtn(
-                  key: const Key('screen_time_server_cap_save'),
-                  // Beside a field, not across the panel: `fullWidth` means
-                  // `width: double.infinity`, and an infinite width inside a Row is a
-                  // layout assertion, not a wide button.
-                  fullWidth: false,
-                  label: l10n.screenTimeServerSave,
-                  onPressed: editable ? _saveCap : null,
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '${l10n.screenTimeServerBedtime} · ${_clock(policy.bedtimeStartMinute)} – '
-              '${_clock(policy.bedtimeEndMinute)}',
-              style: TextStyle(fontSize: 13, color: colors.ink),
-            ),
+          if (granted > 0) ...[
             const SizedBox(height: 4),
-            Row(
-              children: [
-                TextButton(
-                  key: const Key('screen_time_server_bedtime_start'),
-                  onPressed: editable
-                      ? () => _pickBedtime(
-                          l10n.screenTimeServerBedtime,
-                          policy.bedtimeStartMinute,
-                        )
-                      : null,
-                  child: Text(l10n.childScreenTimeStart),
-                ),
-                TextButton(
-                  key: const Key('screen_time_server_bedtime_end'),
-                  onPressed: editable
-                      ? () => _pickBedtime(
-                          l10n.screenTimeServerBedtime,
-                          policy.bedtimeEndMinute,
-                        )
-                      : null,
-                  child: Text(l10n.childScreenTimeEnd),
-                ),
-              ],
-            ),
-            SwitchListTile(
-              key: const Key('screen_time_server_school_toggle'),
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              value: policy.schoolModeEnabled,
-              onChanged: editable ? _toggleSchoolMode : null,
-              title: Text(l10n.screenTimeServerSchoolMode),
-              subtitle: Text(
-                '${_clock(policy.schoolStartMinute)} – ${_clock(policy.schoolEndMinute)}',
-              ),
-            ),
-            SwitchListTile(
-              key: const Key('screen_time_server_earned_minutes_toggle'),
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              value: policy.earnedMinutesExtendLimit,
-              onChanged: editable ? _toggleEarnedMinutes : null,
-              title: Text(l10n.screenTimeServerEarnedMinutesTitle),
-              subtitle: Text(l10n.screenTimeServerEarnedMinutesSubtitle),
-            ),
             Text(
-              l10n.screenTimeServerEarnedMinutesPreview,
+              l10n.remainingMinutesGrantLabel,
               style: TextStyle(fontSize: 12, color: colors.ink2),
             ),
           ],
-        ),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: LinearProgressIndicator(
+              key: const Key('screen_time_server_progress_bar'),
+              value: progress,
+              minHeight: 6,
+              backgroundColor: colors.border,
+              valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                l10n.screenTimeServerProgressLabel,
+                style: TextStyle(fontSize: 10, color: colors.ink2),
+              ),
+              Text(
+                l10n.screenTimeServerTotalLimit(totalAllowed),
+                style: TextStyle(fontSize: 10, color: colors.ink2),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
+  /// The instant lock: what the server decided, when it decided it, and the one button that
+  /// changes it. The confirmed pill is the only thing on this panel that speaks about the
+  /// write itself, and it only appears once a read agrees with it.
   Widget _lockCard(
     AppLocalizations l10n,
-    FamilyColors colors,
     FoundationGateScreenTimeSnapshot snapshot,
   ) {
     final lock = snapshot.lock;
     final live = lock?.live ?? false;
-    final editable = widget.canEdit && !_busy;
-    return Card(
-      key: const Key('screen_time_server_lock_card'),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.instantLockTitle,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                color: colors.ink,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              live ? l10n.screenTimeServerStateLock : l10n.screenTimeServerStateFree,
-              style: TextStyle(fontSize: 14, color: colors.ink2),
-            ),
-            const SizedBox(height: 8),
-            PrimaryBtn(
-              key: const Key('screen_time_server_lock_button'),
-              label: live
-                  ? l10n.screenTimeServerUnlock
-                  : l10n.screenTimeServerLockNow,
-              onPressed: editable ? () => _toggleLock(lock: !live) : null,
-            ),
-          ],
-        ),
-      ),
+    return ScreenTimeLockControlCard(
+      title: l10n.instantLockTitle,
+      stateLine: live
+          ? l10n.screenTimeServerLockStateLocked
+          : l10n.screenTimeServerLockStateUnlocked,
+      buttonLabel: live
+          ? l10n.screenTimeServerUnlock
+          : l10n.screenTimeServerLockNow,
+      live: live,
+      enabled: _editable,
+      onToggle: () => _toggleLock(lock: !live),
+      sinceLine: live && lock != null
+          ? l10n.screenTimeServerLockSince(_stamp(lock.lockedAt))
+          : null,
+      confirmedLabel: _lockAcknowledged
+          ? l10n.screenTimeServerLockConfirmed
+          : null,
+      busyLabel: _busy ? l10n.screenTimeServerLockBusy : null,
+      releaseNote: live ? l10n.screenTimeServerLockReleaseNote : null,
     );
   }
 
-  Widget _quickGrantCard(
+  /// The daily cap, its quick picks, and the write that saves it.
+  Widget _capCard(
     AppLocalizations l10n,
-    FamilyColors colors,
+    FoundationGateScreenTimeSnapshot snapshot,
+  ) => ScreenTimeCapCard(
+    // The heading and the field label are deliberately different strings: the same sentence
+    // twice in one card reads like a bug, and `screenTimeServerCap` is the one the field
+    // needs because it carries the "0 = no limit" rule.
+    title: l10n.childScreenTimeDailyCap,
+    fieldLabel: l10n.screenTimeServerCap,
+    controller: _capController,
+    errorText: _capError,
+    saveLabel: l10n.screenTimeServerSave,
+    presetsLabel: l10n.screenTimeServerCapPresets,
+    presetMinutes: _capPresets,
+    presetLabel: l10n.screenTimeServerCapPresetValue,
+    unlimitedLabel: l10n.screenTimeServerCapUnlimited,
+    selectedMinutes: snapshot.policy.dailyLimitMinutes,
+    enabled: _editable,
+    onSave: _saveCap,
+    onPickPreset: (minutes) => _capController.text = '$minutes',
+  );
+
+  /// Quick minutes, a custom number, and the answer each one got.
+  ///
+  /// A pending question wins over this card on purpose: while a question is open, "+15" IS the
+  /// answer to it, and drawing both would let a parent grant twice for one ask.
+  Widget _extensionCard(
+    AppLocalizations l10n,
+    FoundationGateScreenTimeSnapshot snapshot,
+  ) => ScreenTimeExtensionCard(
+    title: l10n.screenTimeServerExtensionTitle,
+    hint: l10n.screenTimeServerExtensionHint,
+    presets: {
+      15: l10n.screenTimeServerGrant15,
+      30: l10n.screenTimeServerGrant30,
+      60: l10n.screenTimeServerGrant60,
+    },
+    customLabel: l10n.screenTimeServerExtensionCustom,
+    onGrant: _instantGrant,
+    onCustom: _openCustomGrant,
+    enabled: _editable,
+    busyLabel: _busy ? l10n.screenTimeServerExtensionPending : null,
+  );
+
+  /// Today's minutes, split per app — all of it from the read that already happened.
+  Widget _insightsCard(
+    AppLocalizations l10n,
+    FoundationGateScreenTimeSnapshot snapshot,
+  ) => ScreenTimeInsightsCard(
+    title: l10n.screenTimeServerInsightsTitle,
+    usedLabel: l10n.screenTimeServerInsightsUsed,
+    capLabel: l10n.screenTimeServerInsightsCap,
+    grantedLabel: l10n.screenTimeServerInsightsGranted,
+    hint: l10n.screenTimeServerInsightsHint,
+    topLabel: l10n.screenTimeServerInsightsTop,
+    emptyLabel: l10n.screenTimeServerInsightsNoUsage,
+    overCapLabel: l10n.screenTimeServerInsightsOverCap,
+    shareLabel: l10n.screenTimeServerInsightsShare,
+    minutesLabel: l10n.remainingMinutesValue,
+    unlimitedLabel: l10n.screenTimeServerCapUnlimited,
+    usedMinutes: snapshot.countableUsedMinutes,
+    capMinutes: snapshot.policy.dailyLimitMinutes,
+    grantedMinutes: snapshot.grantedMinutes,
+    usageByApp: snapshot.usageByApp,
+    onOpenApps: _busy ? null : _openAppRules,
+    openAppsLabel: l10n.screenTimeServerAppsRules,
+  );
+
+  /// The earned-minutes decision, with both sides of its arithmetic spelled out.
+  Widget _earnedMinutesCard(
+    AppLocalizations l10n,
     FoundationGateScreenTimeSnapshot snapshot,
   ) {
-    final editable = widget.canEdit && !_busy;
-    return Card(
-      key: const Key('screen_time_server_quick_grant_card'),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.screenTimeServerQuickGrantTitle,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: colors.ink,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    key: const Key('screen_time_server_quick_grant_15'),
-                    onPressed: editable ? () => _instantGrant(15) : null,
-                    child: Text(l10n.screenTimeServerGrant15),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton(
-                    key: const Key('screen_time_server_quick_grant_30'),
-                    onPressed: editable ? () => _instantGrant(30) : null,
-                    child: Text(l10n.screenTimeServerGrant30),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton(
-                    key: const Key('screen_time_server_quick_grant_60'),
-                    onPressed: editable ? () => _instantGrant(60) : null,
-                    child: Text(l10n.screenTimeServerGrant60),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+    final enabled = snapshot.policy.earnedMinutesExtendLimit;
+    return ScreenTimeEarnedMinutesCard(
+      title: l10n.screenTimeServerEarnedMinutesTitle,
+      subtitle: l10n.screenTimeServerEarnedMinutesSubtitle,
+      preview: l10n.screenTimeServerEarnedMinutesPreview,
+      hint: enabled
+          ? l10n.screenTimeServerEarnedMinutesOnHint
+          : l10n.screenTimeServerEarnedMinutesOffHint,
+      value: enabled,
+      enabled: _editable,
+      onChanged: _toggleEarnedMinutes,
+    );
+  }
+
+  /// The week: school-day chips, the bedtime window, and the weekend window the extension
+  /// carries when the deployment has one.
+  Widget _weekCard(
+    AppLocalizations l10n,
+    FoundationGateScreenTimeSnapshot snapshot,
+  ) {
+    final policy = snapshot.policy;
+    final weekend = _extension?.bedtimeWindows[ScreenTimeWeekPart.weekend];
+    final stored = weekend != null &&
+        _extensionStatus == ScreenTimeExtensionStatus.ready;
+    return ScreenTimeWeekScheduleCard(
+      title: l10n.screenTimeServerWeekTitle,
+      schoolModeLabel: l10n.screenTimeServerSchoolMode,
+      schoolRangeLine:
+          '${_clock(policy.schoolStartMinute)} – ${_clock(policy.schoolEndMinute)}',
+      schoolDaysLabel: l10n.screenTimeServerWeekSchoolDays,
+      weekdaysLabel: l10n.screenTimeServerWeekWeekdays,
+      weekendLabel: l10n.screenTimeServerWeekWeekend,
+      dayLabels: _dayLabels(l10n),
+      draftDays: _schoolDaysDraft,
+      savedDays: policy.schoolDays,
+      schoolEnabled: policy.schoolModeEnabled,
+      bedtimeLabel: l10n.screenTimeServerBedtime,
+      bedtimeLine:
+          '${_clock(policy.bedtimeStartMinute)} – ${_clock(policy.bedtimeEndMinute)}',
+      bedtimeHint: l10n.screenTimeServerWeekBedtimeHint,
+      weekendLabelLine: l10n.screenTimeServerWeekWeekend,
+      weekendLine: stored
+          ? '${weekend.startClock} – ${weekend.endClock}'
+          : l10n.screenTimeServerWeekWeekendNote,
+      weekendPending: !stored,
+      weekendStartLabel: l10n.screenTimeServerWeekWeekendBedtimeStart,
+      weekendEndLabel: l10n.screenTimeServerWeekWeekendBedtimeEnd,
+      bedtimeStartLabel: l10n.screenTimeServerWeekBedtimeStart,
+      bedtimeEndLabel: l10n.screenTimeServerWeekBedtimeEnd,
+      saveLabel: l10n.screenTimeServerWeekSave,
+      weekendWriteLine: _weekendWriteLine,
+      enabled: _editable,
+      onToggleDay: _toggleDay,
+      onToggleSchoolMode: _toggleSchoolMode,
+      onPickBedtimeStart: () => _pickBedtime(
+        l10n.screenTimeServerWeekBedtimeStart,
+        policy.bedtimeStartMinute,
       ),
+      onPickBedtimeEnd: () => _pickBedtime(
+        l10n.screenTimeServerWeekBedtimeEnd,
+        policy.bedtimeEndMinute,
+      ),
+      onPickWeekendStart: () => _pickWeekendBedtime(startsNight: true),
+      onPickWeekendEnd: () => _pickWeekendBedtime(startsNight: false),
+      onSaveDays: _saveSchoolDays,
+    );
+  }
+
+  /// The app-rules door. The panel does not read the app list on its own — the sheet does,
+  /// when the parent opens it, so one panel load is still exactly one read.
+  Widget _appsCard(
+    AppLocalizations l10n,
+    FoundationGateScreenTimeSnapshot snapshot,
+  ) {
+    final status = _extensionStatus;
+    return ScreenTimeAppsCard(
+      title: l10n.screenTimeServerAppsTitle,
+      subtitle: l10n.screenTimeServerAppsSubtitle,
+      actionLabel: l10n.screenTimeServerAppsOpen,
+      enabled: !_busy,
+      onOpen: _openAppRules,
+      summaryLine: status == null || status == ScreenTimeExtensionStatus.ready
+          ? null
+          : screenTimeExtensionStatusLabel(l10n, status),
     );
   }
 
@@ -673,45 +850,43 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
     FamilyColors colors,
     FoundationGateTimeRequest request,
   ) {
-    final editable = widget.canEdit && !_busy;
-    return Card(
+    return AppCard(
       key: const Key('screen_time_server_request_card'),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.screenTimeServerOpenRequest(request.requestedMinutes),
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: colors.ink,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.screenTimeServerOpenRequest(request.requestedMinutes),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: colors.ink,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              PrimaryBtn(
+                key: const Key('screen_time_server_request_approve'),
+                fullWidth: false,
+                label: l10n.screenTimeServerApprove,
+                onPressed: _editable
+                    ? () => _answer(request, approve: true)
+                    : null,
               ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                PrimaryBtn(
-                  key: const Key('screen_time_server_request_approve'),
-                  fullWidth: false,
-                  label: l10n.screenTimeServerApprove,
-                  onPressed: editable
-                      ? () => _answer(request, approve: true)
-                      : null,
-                ),
-                const SizedBox(width: 12),
-                TextButton(
-                  key: const Key('screen_time_server_request_deny'),
-                  onPressed: editable
-                      ? () => _answer(request, approve: false)
-                      : null,
-                  child: Text(l10n.screenTimeServerDeny),
-                ),
-              ],
-            ),
-          ],
-        ),
+              const SizedBox(width: 12),
+              TextButton(
+                key: const Key('screen_time_server_request_deny'),
+                onPressed: _editable
+                    ? () => _answer(request, approve: false)
+                    : null,
+                child: Text(l10n.screenTimeServerDeny),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

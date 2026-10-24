@@ -13091,4 +13091,398 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get screenTimeServerProgressLabel => 'نسبة استهلاك وقت الشاشة اليومي';
+
+  @override
+  String get childDayBoardTimeHeroTitle => 'وقتك اليوم';
+
+  @override
+  String get childDayBoardTimeHeroBase => 'الحد الأساسي';
+
+  @override
+  String get childDayBoardTimeHeroEarned => 'دقائق كسبتها';
+
+  @override
+  String get childDayBoardTimeHeroGrant => 'منحة من أهلي';
+
+  @override
+  String get childDayBoardTimeHeroNoLimit => 'وقتك مفتوح اليوم';
+
+  @override
+  String get childDayBoardTimeHeroLoading => 'نقرأ وقتك من الخادم…';
+
+  @override
+  String get childDayBoardTimeHeroAbundant => 'أمامك وقت مريح — استمتع بذكاء';
+
+  @override
+  String get childDayBoardTimeHeroNearEnd => 'بقي القليل — أنهِ لعبتك بهدوء';
+
+  @override
+  String get childDayBoardTimeHeroDepleted => 'انتهى وقت اليوم — غداً وقت جديد';
+
+  @override
+  String get childDayBoardTimeHeroWindDown => 'اقترب وقت النوم — خفف الشاشة';
+
+  @override
+  String childDayBoardTimeHeroRingSemantics(int percent) {
+    return 'حلبة وقت الشاشة: $percent% مستهلك';
+  }
+
+  @override
+  String get childDayBoardRoutineTitle => 'روتين اليوم';
+
+  @override
+  String get childDayBoardRoutineSleep => 'وقت النوم 🌙';
+
+  @override
+  String get childDayBoardRoutineSchool => 'وقت الدوام 🎒';
+
+  @override
+  String get childDayBoardRoutineFree => 'وقت اللعب 🎮';
+
+  @override
+  String get childDayBoardRoutineWindDown => 'تهدئة قبل النوم';
+
+  @override
+  String get childDayBoardRoutineHint => 'النوم والدوام واللعب حسب جدول عائلتك';
+
+  @override
+  String get childDayBoardTasksTitle => 'مهامي ومكافآتي';
+
+  @override
+  String get childDayBoardTasksSubtitle => 'أنهِ مهمتك لتربح دقائق';
+
+  @override
+  String childDayBoardTasksPoints(int points) {
+    return '$points نقطة';
+  }
+
+  @override
+  String get childDayBoardTasksStatusPending => 'لم تبدأ بعد';
+
+  @override
+  String get childDayBoardTasksStatusClaimed => 'أرسلتها — بانتظار أهل';
+
+  @override
+  String get childDayBoardTasksStatusConfirmed => 'موافق عليها';
+
+  @override
+  String get childDayBoardTasksStatusDeclined => 'ردّها أهل هذه المرة';
+
+  @override
+  String get childDayBoardTasksStatusArchived => 'مؤرشفة';
+
+  @override
+  String get childDayBoardTasksOpenAll => 'كل المهام';
+
+  @override
+  String get childDayBoardTasksEmpty => 'لا مهام اليوم';
+
+  @override
+  String get childDayBoardTasksLoading => 'نقرأ مهامك…';
+
+  @override
+  String get childDayBoardTasksUnavailable => 'لم يُربط خادم المهام بعد';
+
+  @override
+  String get childDayBoardTasksRefused => 'لم أستطع قراءة مهامك الآن';
+
+  @override
+  String get childDayBoardSafetyTitle => 'زر الأمان';
+
+  @override
+  String get childDayBoardSafetyReady => 'جاهز — اضغط مطولاً للنجدة';
+
+  @override
+  String get childDayBoardSafetyHold => 'اضغط مطولاً 3 ثوانٍ';
+
+  @override
+  String childDayBoardSafetyProgress(int seconds) {
+    return 'استمر بالضغط — $seconds';
+  }
+
+  @override
+  String get childDayBoardSafetyReleased => 'أُرسل طلب النجدة';
+
+  @override
+  String get childDayBoardSafetySemantics =>
+      'زر النجدة — اضغط مطولاً لثلاث ثوانٍ';
+
+  @override
+  String get childDayBoardTouchpointsTitle => 'عائلتي';
+
+  @override
+  String get childDayBoardTouchpointsSubtitle => 'اتصال أو رسالة بضغطة واحدة';
+
+  @override
+  String get childDayBoardTouchpointsFamilyThread => 'محادثة العائلة';
+
+  @override
+  String get childDayBoardTouchpointsAllChats => 'كل المحادثات';
+
+  @override
+  String get childDayBoardTouchpointsAskTime => 'أطلب دقائق إضافية';
+
+  @override
+  String get childDayBoardTouchpointsQuran => 'وردي من القرآن';
+
+  @override
+  String get childDayBoardTouchpointsWallet => 'دفتر دقائق';
+
+  @override
+  String get screenTimeServerExtensionTitle => 'تمديد الوقت';
+
+  @override
+  String get screenTimeServerExtensionHint =>
+      'تُضاف الدقائق بقرار من الخادم وتصل للطفل عند مزامنته';
+
+  @override
+  String get screenTimeServerExtensionCustom => 'دقائق مخصصة';
+
+  @override
+  String get screenTimeServerExtensionCustomTitle => 'كم دقيقة تمنح الآن؟';
+
+  @override
+  String get screenTimeServerExtensionCustomHelper => 'من 1 إلى 240 دقيقة';
+
+  @override
+  String get screenTimeServerExtensionCustomConfirm => 'امنح على الخادم';
+
+  @override
+  String get screenTimeServerExtensionCustomInvalid =>
+      'أدخل عدد دقائق بين 1 و 240';
+
+  @override
+  String get screenTimeServerExtensionPending => 'الخادم ينفذ التمديد…';
+
+  @override
+  String get screenTimeServerLockStateLocked => 'الهاتف موقوف الآن بقرارك';
+
+  @override
+  String get screenTimeServerLockStateUnlocked => 'الهاتف يعمل ضمن حد اليوم';
+
+  @override
+  String screenTimeServerLockSince(String time) {
+    return 'أوقف عند $time';
+  }
+
+  @override
+  String get screenTimeServerLockBusy => 'الخادم ينفذ…';
+
+  @override
+  String get screenTimeServerLockConfirmed => 'تم التأكيد من الخادم';
+
+  @override
+  String get screenTimeServerLockReleaseNote => 'الإعادة لا تلغي حد اليوم';
+
+  @override
+  String get screenTimeServerAppsTitle => 'التطبيقات والفئات';
+
+  @override
+  String get screenTimeServerAppsSubtitle => 'قرارك لكل تطبيق يُحفظ على الخادم';
+
+  @override
+  String get screenTimeServerAppsOpen => 'أدر التطبيقات';
+
+  @override
+  String get screenTimeServerAppsRules => 'قواعد التطبيقات';
+
+  @override
+  String get screenTimeServerAppsClose => 'تم';
+
+  @override
+  String get screenTimeServerAppsLoading => 'نقرأ تطبيقات الهاتف…';
+
+  @override
+  String get screenTimeServerAppsEmpty => 'لم يبلّغ الهاتف عن تطبيقات بعد';
+
+  @override
+  String get screenTimeServerAppsDenied =>
+      'لا يملك هذا الحساب إدارة تطبيقات هذا الابن';
+
+  @override
+  String get screenTimeServerAppsStale =>
+      'لم يستجب الخادم — هذه آخر قائمة وصلت';
+
+  @override
+  String get screenTimeServerAppsNoSession =>
+      'لا توجد جلسة خادم — لا نغير شيئاً';
+
+  @override
+  String get screenTimeServerAppAllow => 'اسمح';
+
+  @override
+  String get screenTimeServerAppBlock => 'احجب';
+
+  @override
+  String get screenTimeServerAppStateAllowed => 'مسموح';
+
+  @override
+  String get screenTimeServerAppStateBlocked => 'محجوب';
+
+  @override
+  String get screenTimeServerAppPending => 'بانتظار القرار';
+
+  @override
+  String get screenTimeServerAppFree => 'مسموح دائماً';
+
+  @override
+  String get screenTimeServerAppLimitSet => 'حد يومي للتطبيق';
+
+  @override
+  String screenTimeServerAppLimitValue(int minutes) {
+    return 'حد $minutes دقيقة';
+  }
+
+  @override
+  String get screenTimeServerAppUnlimited => 'بلا حد لهذا التطبيق';
+
+  @override
+  String screenTimeServerAppUsed(int minutes) {
+    return 'استهلك $minutes دقيقة';
+  }
+
+  @override
+  String get screenTimeServerAppUnknown =>
+      'التطبيق غير معروف على هذا الهاتف بعد';
+
+  @override
+  String get screenTimeServerAppSaveError => 'رفض الخادم القرار — لم يتغير شيء';
+
+  @override
+  String get screenTimeServerCategoryGames => 'ألعاب';
+
+  @override
+  String get screenTimeServerCategorySocial => 'تواصل';
+
+  @override
+  String get screenTimeServerCategoryVideo => 'فيديو ويوتيوب';
+
+  @override
+  String get screenTimeServerCategoryEducation => 'تعليم';
+
+  @override
+  String get screenTimeServerCategoryOther => 'أخرى';
+
+  @override
+  String get screenTimeServerCategoryBlockAll => 'احجب الفئة';
+
+  @override
+  String get screenTimeServerCategoryAllowAll => 'اسمح للفئة';
+
+  @override
+  String screenTimeServerCategoryApplied(int count) {
+    return 'طبق على $count تطبيق';
+  }
+
+  @override
+  String get screenTimeServerCategoryBudget => 'ميزانية الفئة اليومية';
+
+  @override
+  String get screenTimeServerCategoryBudgetPending =>
+      'ميزانية الفئة تحتاج مساراً جديداً على الخادم';
+
+  @override
+  String get screenTimeServerInsightsTitle => 'تحليل استهلاك اليوم';
+
+  @override
+  String get screenTimeServerInsightsUsed => 'المستهلك';
+
+  @override
+  String get screenTimeServerInsightsCap => 'حد اليوم';
+
+  @override
+  String get screenTimeServerInsightsGranted => 'منح إضافية';
+
+  @override
+  String get screenTimeServerInsightsTop => 'أكثر التطبيقات استهلاكاً';
+
+  @override
+  String get screenTimeServerInsightsNoUsage => 'لا استهلاك مسجلاً اليوم';
+
+  @override
+  String get screenTimeServerInsightsOverCap => 'تجاوز الاستهلاك حد اليوم';
+
+  @override
+  String screenTimeServerInsightsShare(int percent) {
+    return '$percent% من وقت اليوم';
+  }
+
+  @override
+  String get screenTimeServerInsightsHint =>
+      'الأرقام كما حسابها الخادم اليوم، على ساعة الجهاز';
+
+  @override
+  String get screenTimeServerWeekTitle => 'جدول الأسبوع';
+
+  @override
+  String get screenTimeServerWeekSchoolDays => 'أيام وضع المدرسة';
+
+  @override
+  String get screenTimeServerWeekWeekend => 'عطلة الأسبوع';
+
+  @override
+  String get screenTimeServerWeekWeekdays => 'أيام الدراسة';
+
+  @override
+  String get screenTimeServerWeekBedtimeHint =>
+      'الخادم يخزن نافذة نوم واحدة لكل الأيام حتى تُبنى نافذة للعطلة';
+
+  @override
+  String get screenTimeServerWeekWeekendNote =>
+      'نافذة نوم منفصلة للعطلة تحتاج امتداداً في عقد الخادم';
+
+  @override
+  String get screenTimeServerWeekSave => 'احفظ أيام الأسبوع';
+
+  @override
+  String get screenTimeServerWeekBedtimeStart => 'بداية النوم';
+
+  @override
+  String get screenTimeServerWeekBedtimeEnd => 'نهاية النوم';
+
+  @override
+  String get screenTimeServerWeekWeekendBedtimeStart => 'بداية نوم العطلة';
+
+  @override
+  String get screenTimeServerWeekWeekendBedtimeEnd => 'نهاية نوم العطلة';
+
+  @override
+  String get screenTimeServerDaySat => 'السبت';
+
+  @override
+  String get screenTimeServerDaySun => 'الأحد';
+
+  @override
+  String get screenTimeServerDayMon => 'الاثنين';
+
+  @override
+  String get screenTimeServerDayTue => 'الثلاثاء';
+
+  @override
+  String get screenTimeServerDayWed => 'الأربعاء';
+
+  @override
+  String get screenTimeServerDayThu => 'الخميس';
+
+  @override
+  String get screenTimeServerDayFri => 'الجمعة';
+
+  @override
+  String get screenTimeServerEarnedMinutesOnHint =>
+      'دقائق مهامك تُضاف إلى حد اليوم مباشرة';
+
+  @override
+  String get screenTimeServerEarnedMinutesOffHint =>
+      'دقائق مهامك محفوظة لك ولا تُطيل حد اليوم';
+
+  @override
+  String get screenTimeServerCapPresets => 'اقتراحات سريعة';
+
+  @override
+  String get screenTimeServerCapUnlimited => 'بلا حد';
+
+  @override
+  String screenTimeServerCapPresetValue(int minutes) {
+    return '$minutes دقيقة';
+  }
 }
