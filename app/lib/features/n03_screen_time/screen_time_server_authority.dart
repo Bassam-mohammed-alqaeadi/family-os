@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import 'package:family_os/foundation_gate/family_screen_time_api_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
@@ -91,12 +93,21 @@ final class ScreenTimeServerAuthority {
   final Future<String> Function() idToken;
   final String? Function() familyId;
 
+  /// Safely extracts the server UUID if [childId] was passed as a composite key (`familyId::childId`).
+  static String unscopeChildId(String childId) {
+    final idx = childId.indexOf('::');
+    if (idx != -1 && idx < childId.length - 2) {
+      return childId.substring(idx + 2);
+    }
+    return childId;
+  }
+
   Future<ScreenTimeAuthorityAnswer<FoundationGateScreenTimeSnapshot>> read(
     String childId,
   ) => _ask(
     (family, token) => api.readSnapshot(
       familyId: family,
-      childId: childId,
+      childId: unscopeChildId(childId),
       idToken: token,
     ),
   );
@@ -119,7 +130,7 @@ final class ScreenTimeServerAuthority {
   }) => _ask(
     (family, token) => api.updatePolicy(
       familyId: family,
-      childId: childId,
+      childId: unscopeChildId(childId),
       idempotencyKey: idempotencyKey(),
       idToken: token,
       dailyLimitMinutes: dailyLimitMinutes,
@@ -140,7 +151,7 @@ final class ScreenTimeServerAuthority {
   ) => _ask(
     (family, token) => api.listApps(
       familyId: family,
-      childId: childId,
+      childId: unscopeChildId(childId),
       idToken: token,
     ),
   );
@@ -155,7 +166,7 @@ final class ScreenTimeServerAuthority {
   }) => _ask(
     (family, token) => api.setAppRule(
       familyId: family,
-      childId: childId,
+      childId: unscopeChildId(childId),
       appId: appId,
       status: status,
       limitMinutes: limitMinutes,
@@ -173,7 +184,7 @@ final class ScreenTimeServerAuthority {
   }) => _ask(
     (family, token) => api.lock(
       familyId: family,
-      childId: childId,
+      childId: unscopeChildId(childId),
       reasonCode: reasonCode,
       idempotencyKey: idempotencyKey(),
       idToken: token,
@@ -187,7 +198,7 @@ final class ScreenTimeServerAuthority {
   }) => _ask(
     (family, token) => api.unlock(
       familyId: family,
-      childId: childId,
+      childId: unscopeChildId(childId),
       idempotencyKey: idempotencyKey(),
       idToken: token,
     ),
@@ -199,7 +210,7 @@ final class ScreenTimeServerAuthority {
   }) => _ask(
     (family, token) => api.listTimeRequests(
       familyId: family,
-      childId: childId,
+      childId: unscopeChildId(childId),
       status: status,
       idToken: token,
     ),
@@ -218,7 +229,7 @@ final class ScreenTimeServerAuthority {
   }) => _ask(
     (family, token) => api.requestMinutes(
       familyId: family,
-      childId: childId,
+      childId: unscopeChildId(childId),
       requestedMinutes: requestedMinutes,
       reasonCode: reasonCode,
       idempotencyKey: idempotencyKey(),
@@ -235,7 +246,7 @@ final class ScreenTimeServerAuthority {
   }) => _ask(
     (family, token) => api.decideTimeRequest(
       familyId: family,
-      childId: childId,
+      childId: unscopeChildId(childId),
       requestId: requestId,
       decision: decision,
       grantedMinutes: grantedMinutes,
@@ -252,7 +263,7 @@ final class ScreenTimeServerAuthority {
   }) => _ask(
     (family, token) => api.grantMinutesDirect(
       familyId: family,
-      childId: childId,
+      childId: unscopeChildId(childId),
       minutes: minutes,
       idempotencyKey: idempotencyKey(),
       idToken: token,
@@ -301,7 +312,8 @@ final class ScreenTimeServerAuthority {
         },
         openRequestId: FamilyScreenTimeApiClient.openRequestIdFrom(exception),
       );
-    } on Object {
+    } on Object catch (error, stack) {
+      debugPrint('[ScreenTimeServerAuthority] _ask unhandled error: $error\n$stack');
       return const ScreenTimeAuthorityAnswer.unavailable(
         ScreenTimeAuthorityStatus.unreachable,
       );

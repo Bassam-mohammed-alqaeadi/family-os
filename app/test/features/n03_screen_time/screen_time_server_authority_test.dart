@@ -303,4 +303,16 @@ void main() {
     bindScreenTimeServerAuthority(null);
     expect(activeScreenTimeServerAuthority, isNull);
   });
+
+  test('scoped childId (familyId::childId) is automatically unscoped', () async {
+    final transport = _Transport(
+      response: FoundationGateHttpResponse(
+        statusCode: 200,
+        body: snapshotBody(),
+      ),
+    );
+    final answer = await _authorityFor(transport).read('$_familyId::$_childId');
+    expect(answer.status, ScreenTimeAuthorityStatus.ready);
+    expect(transport.calls, contains('GET /v1/families/$_familyId/children/$_childId/screen-time'));
+  });
 }

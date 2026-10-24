@@ -168,6 +168,7 @@ Future<void> main() async {
   if (familyEntryRuntime != null) {
     FamilyNotificationRouter.registerBackgroundHandler();
     await familyEntryRuntime.refreshIdentity();
+    await familyEntryRuntime.registerGuardianPush();
     // FE-W1-FAT-027 — the members roster and its three commands come from the server when
     // a server is configured. Without this, the screen keeps the local projection: it can
     // show who this device recorded and cannot invite, accept or revoke anything.

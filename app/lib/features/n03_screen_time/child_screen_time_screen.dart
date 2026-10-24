@@ -571,7 +571,7 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
         ),
         body: SafeArea(
           child: ScreenTimeServerPanel(
-            childId: _childId,
+            childId: ChildId(ScreenTimeServerAuthority.unscopeChildId(_childId.value)),
             authority: serverAuthority,
             canEdit: canEdit,
           ),
