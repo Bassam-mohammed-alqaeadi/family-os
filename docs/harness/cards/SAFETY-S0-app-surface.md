@@ -2,7 +2,7 @@
 
 > **النوع:** إتمام شريحة س٠ من جهة الشاشة. العقد والعميلان كانا موجودين؛ الشاشة التي يراهما عليها الوصي لم تكن موجودة. هذه البطاقة هي ذلك العمودان الناقصان: **شاشة موصولة** و**اختبار رحلة**.
 > **الحالة:** مودعة على الفرع `arena/04666ad2-family-os` (2026-10-26) · **بانتظار CI** — لا Flutter SDK في هذه المساحة، فـ`flutter analyze` و`flutter test` لا يجريان هنا إطلاقاً؛ CI هو المُحلِّل الوحيد، ولا يُدَّعى خضرة قبل ظهور رقمها أدناه.
-> **البوابات التي جرت محلياً:** `check_dart_imports.mjs` (٦٥١٣ استيراداً، ٠ ميت) · `check_manifest_policy.mjs` (أخضر) · بوابة نصّية خاصة بالشريحة (بنية، استيراد، مفاتيح ARB في الاتجاهين، قاعدة ١٢، بوابات لغة ARB) · `harness_check.sh` (لا خلل إلا «عمل غير مُودَع» قبل الإيداع).
+> **البوابات التي جرت محلياً:** `check_dart_imports.mjs` (٦٥١٣ استيراداً، ٠ ميت) · `check_manifest_policy.mjs` (أخضر) · بوابة نصّية خاصة بالشريحة (بنية، استيراد، مفاتيح ARB في الاتجاهين، قاعدة ١٢، بوابات لغة ARB) · `harness_check.sh` (أخضر بعد الإيداع) · **CI (`analyze-test`) أخضر على `748c405`** — رقم التشغيل `40239550334`.
 
 ---
 
@@ -14,7 +14,7 @@
 | **النظام** | العمود الفقري المشترك — الجزء المرئي منه للوصي |
 | **الشاشة** | `SCR-FAT-026` — تفاصيل صحة الجهاز (`app/lib/features/n12_devices/device_health_detail_screen.dart`) |
 | **المرحلة** | `REAL_ENGINE` |
-| **الملفات المملوكة** | `app/lib/features/n12_devices/device_ledger_server_authority.dart` (جديد، 333 سطراً) · `app/lib/features/n12_devices/device_capability_ledger_panel.dart` (جديد، 749 سطراً) · `app/lib/core/design/components/device_capability_honesty_badge.dart` (مُعدَّل: كلماته صارت في ARB) · `app/lib/features/n12_devices/device_health_detail_screen.dart` (الموضع + مفتاح) · `app/lib/foundation_gate/main_app_foundation_runtime.dart` (`capabilityApi` و`commandApi`) · `app/lib/main.dart` (بناء العميلين وربط السلطة وفكّها) · `app/lib/core/i18n/app_ar.arb` و`app_en.arb` والمولَّد (٦١ مفتاحاً) · `app/tool/arb_messages.py` و`app/tool/messages/n12_device_ledger.json` (أداة إيداع النصوص) · الاختبارات أدناه |
+| **الملفات المملوكة** | `app/lib/features/n12_devices/device_ledger_server_authority.dart` (جديد، 359 سطراً) · `app/lib/features/n12_devices/device_capability_ledger_panel.dart` (جديد، 779 سطراً) · `app/lib/core/design/components/device_capability_honesty_badge.dart` (مُعدَّل: كلماته صارت في ARB) · `app/lib/features/n12_devices/device_health_detail_screen.dart` (الموضع + مفتاح) · `app/lib/foundation_gate/main_app_foundation_runtime.dart` (`capabilityApi` و`commandApi`) · `app/lib/main.dart` (بناء العميلين وربط السلطة وفكّها) · `app/lib/core/i18n/app_ar.arb` و`app_en.arb` والمولَّد (٦٢ مفتاحاً) · `app/tool/arb_messages.py` و`app/tool/messages/n12_device_ledger.json` (أداة إيداع النصوص) · الاختبارات أدناه |
 | **لا يلمس** | `app/lib/app/router.dart` · `app/tool/gen_routes.dart` (خط أحمر) — الشاشة موصولة داخل شاشة موجودة، لا بمسار جديد |
 
 ## ٢) مشكلة المستخدم
@@ -56,10 +56,11 @@
 | `device_ledger_server_authority_test.dart` | ١٣ قانوناً — الأربع رفضات، نصف-القراءة، لا-معرّف-وهمي، ترتيب الإنفاذ، الجسم والـheaders (Idempotency-Key + Bearer)، 409 رفضاً مبيَّناً، 404 تسمية صحيحة، والربط الفارغ |
 | `device_capability_ledger_panel_test.dart` | ٩ رحلات — قراءة كاملة بكلماتها وأوقاتها، أمر تحديث واحد ثم إعادة قراءة، رفضٌ لا يُمسح، بناية بلا خادم لا تعرض بطاقة ولا زراً، سجلّ placeholder مسمّى كما هو، هاتف لم يبلّغ، وسطح ٣٢٠×٤٨٠ عند ٢٫٠ بلا فائض |
 | `device_health_detail_screen_test.dart` | ٩ حالات (٧ سابقة + **٢ جديدتان**): الدفتر موجود على الشاشة الحقيقية ويقرأ من الخادم، ولا يُختلق حين تكون العيّنة زرعة |
-| بديل مشترك للاختبارات | `test/features/n12_devices/support/device_ledger_fake_server.dart` — نقلpayloads بشكل الخادم على السلك (`capabilityKey`/`reportedAt`/`receipt`) لأنّ الأخطاء التي نريد الإمساك بها هي بالضبط ما يخفيه كائن مصنوع يدوياً |
-| `check_dart_imports.mjs` | ٦٥١٣ استيراداً · ٣٧٤٧ تُخطّى · **٠ ميت** |
+| بديل مشترك للاختبارات | `test/features/n12_devices/support/device_ledger_fake_server.dart` — يكتب ردوداً بشكل السلك الذي يرد به الخادم (`capabilityKey`/`reportedAt`/`receipt`) لأنّ الأخطاء التي نريد الإمساك بها هي بالضبط ما يخفيه كائن مصنوع يدوياً |
+| `check_dart_imports.mjs` | ٦٥١٥ استيراداً · ٣٧٤٧ تُخطّى · **٠ ميت** |
 | `check_manifest_policy.mjs` | أخضر |
-| `flutter analyze` / `flutter test` | **لم تجرِ هنا** (لا SDK). CI هو الحكم؛ يُذكر رقم التشغيل ونتيجته في وثيقة الإيداع `07_DEVICE_LEDGER_SURFACE_DELIVERY.md` عند ظهورها |
+| `flutter analyze` / `flutter test` | لم تجرِ هنا (لا SDK في هذه المساحة). **جرَت في CI: `Analyze` أخضر و`Run tests` أخضر على `748c405`** (`0 failing test(s)`، رقم التشغيل `40239550334`)؛ أمسكت الجولة الأولى ٤ أخطاء محلّل والثانية ٥ اختبارات، وكلّها عُيوب حقيقية في هذه الشريحة أُصلحت — التفصيل سطراً سطراً في §CI من `07_DEVICE_LEDGER_SURFACE_DELIVERY.md` |
+| `harness_check.sh` | أخضر: «النتيجة: الحلقة سليمة ومتّسقة» بعد إيداع هذه الشريحة |
 
 ## ٦) فحص الهاتف المطلوب (لا يُختَم النظام بدونه)
 
