@@ -69,6 +69,7 @@ void main() {
 
     expect(read.status, DeviceLedgerStatus.notLinked);
     expect(write.status, DeviceLedgerStatus.notLinked);
+    expect(write.refusal, DeviceLedgerRefusal.none);
     expect(transport.calls, isEmpty);
   });
 
@@ -96,11 +97,24 @@ void main() {
     // Enforcement first, then what it rests on, then what only observes. Alphabetical order here
     // would bury the one line a parent came to read.
     expect(reading.capabilities.first.key, FoundationGateCapabilityKey.instantLock);
+    // The fixture reported these three at different minutes; the ledger ignores both the server's
+    // map order and the clock, because what protects the child is listed first.
     expect(
       reading.capabilities.map((row) => row.key).toList(),
-      contains(FoundationGateCapabilityKey.appBlockOverlay),
+      const [
+        FoundationGateCapabilityKey.instantLock,
+        FoundationGateCapabilityKey.appBlockOverlay,
+        FoundationGateCapabilityKey.usageMetering,
+      ],
     );
-    expect(reading.capabilities[1].record.state, FoundationGateCapabilityState.permissionNeeded);
+    expect(
+      reading.capabilities[1].record.state,
+      FoundationGateCapabilityState.awaitingSetup,
+    );
+    expect(
+      reading.capabilities[2].record.state,
+      FoundationGateCapabilityState.permissionNeeded,
+    );
     expect(reading.lastReportAt, isNotNull);
     expect(reading.lastReportAt!.toIso8601String(), startsWith('2026-10-07T09:00'));
     expect(
@@ -199,9 +213,9 @@ void main() {
     );
 
     // The 404 came from the server, so the server was asked — and what it said is kept: this
-    // device is not one this family may order about. That is a different sentence from "the
-    // server refused", and a parent can act on it.
-    expect(answer.status, DeviceLedgerStatus.notLinked);
+    // device will not take orders. That is a different sentence from a refused read, and a parent
+    // can act on it.
+    expect(answer.status, DeviceLedgerStatus.refused);
     expect(answer.refusal, DeviceLedgerRefusal.deviceNotEligible);
     expect(transport.calls, const ['POST $deviceLedgerCommandWritePath']);
   });

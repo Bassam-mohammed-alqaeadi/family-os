@@ -249,7 +249,9 @@ void main() {
       initial: const [
         DeviceHealthSnapshot(
           deviceId: deviceLedgerDeviceId,
-          familyId: deviceLedgerFamilyId,
+          // The stage-one family scope is what this screen asks the seam under; the child and
+          // device ids are the server's, so the ledger has something real to read.
+          familyId: 'fam_stage1',
           childId: deviceLedgerChildId,
           displayLabel: 'ابن ١',
           modelLabel: 'Redmi Note 13',

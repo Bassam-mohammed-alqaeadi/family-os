@@ -75,6 +75,12 @@ class _DeviceCapabilityLedgerPanelState extends State<DeviceCapabilityLedgerPane
   DeviceLedgerStatus _status = DeviceLedgerStatus.notConfigured;
   String? _note;
   bool _noteIsGood = false;
+
+  /// The order the server just accepted, kept until the command list itself carries a row
+  /// with the same id. Without this the screen would answer a successful write by showing
+  /// nothing, which a guardian reads as the order having vanished.
+  FoundationGateCommand? _justIssued;
+
   bool _loading = false;
 
   DeviceLedgerAuthority? get _authority =>
@@ -94,6 +100,24 @@ class _DeviceCapabilityLedgerPanelState extends State<DeviceCapabilityLedgerPane
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void didUpdateWidget(DeviceCapabilityLedgerPanel old) {
+    super.didUpdateWidget(old);
+    // This panel can be re-targeted at another child or another device without its screen being
+    // built again. Whatever the last one showed - its rows, its in-flight order, its note - is not
+    // information about this one, so it goes before the new read starts.
+    if (old.childId != widget.childId ||
+        old.deviceId != widget.deviceId ||
+        old.canEdit != widget.canEdit) {
+      _reading = null;
+      _justIssued = null;
+      _note = null;
+      _noteIsGood = false;
+      _status = DeviceLedgerStatus.notConfigured;
+      _load();
+    }
   }
 
   Future<void> _load() async {
@@ -138,6 +162,7 @@ class _DeviceCapabilityLedgerPanelState extends State<DeviceCapabilityLedgerPane
       _note = _noteIsGood
           ? AppLocalizations.of(context).deviceLedgerRefreshSent
           : _refusalWord(answer.status, answer.refusal);
+      if (answer.value != null) _justIssued = answer.value;
     });
     if (answer.isReady) await _load();
   }
@@ -150,7 +175,7 @@ class _DeviceCapabilityLedgerPanelState extends State<DeviceCapabilityLedgerPane
   /// will wait for a reply that is not coming.
   String _refusalWord(DeviceLedgerStatus status, DeviceLedgerRefusal refusal) {
     final l10n = AppLocalizations.of(context);
-    if (refusal != DeviceLedgerRefusal.none) {
+    if (status == DeviceLedgerStatus.refused) {
       return refusal == DeviceLedgerRefusal.deviceNotEligible
           ? l10n.deviceLedgerRefuseDevice
           : l10n.deviceLedgerRefuseOther;
@@ -280,7 +305,12 @@ class _DeviceCapabilityLedgerPanelState extends State<DeviceCapabilityLedgerPane
     FamilyColors colors,
     DeviceLedgerReading reading,
   ) {
-    final shown = reading.orders.take(8).toList(growable: false);
+    final issued = _justIssued;
+    final known =
+        issued != null && !reading.orders.any((c) => c.id == issued.id)
+        ? <FoundationGateCommand>[issued, ...reading.orders]
+        : reading.orders;
+    final shown = known.take(8).toList(growable: false);
     return _LedgerCard(
       key: DeviceLedgerKeys.ordersCard,
       title: l10n.deviceLedgerCommandsTitle,
@@ -323,12 +353,12 @@ class _DeviceCapabilityLedgerPanelState extends State<DeviceCapabilityLedgerPane
           // A shortened list must say it is shortened. The server answers newest first and caps
           // what it sends; a parent who reads eight rows and no count learns a lesson that is not
           // true - that this is everything the device was ever told.
-          if (reading.orders.length > shown.length)
+          if (known.length > shown.length)
             Padding(
               key: DeviceLedgerKeys.ordersCount,
               padding: const EdgeInsets.only(top: 6),
               child: Text(
-                l10n.deviceLedgerOrdersShown(shown.length, reading.orders.length),
+                l10n.deviceLedgerOrdersShown(shown.length, known.length),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: colors.p600,
                   fontWeight: FontWeight.w600,

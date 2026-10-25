@@ -166,7 +166,7 @@ final class DeviceLedgerAuthority {
     required String childId,
     String? deviceId,
   }) async {
-    final gate = await _session(childId);
+    final gate = await _session(childId, deviceId: deviceId);
     if (gate.status != null) {
       return DeviceLedgerAnswer.unavailable(gate.status!);
     }
@@ -221,7 +221,7 @@ final class DeviceLedgerAuthority {
     required String deviceId,
     required String idempotencyKey,
   }) async {
-    final gate = await _session(childId);
+    final gate = await _session(childId, deviceId: deviceId);
     if (gate.status != null) {
       return DeviceLedgerAnswer.unavailable(gate.status!);
     }
@@ -237,12 +237,9 @@ final class DeviceLedgerAuthority {
       );
       return DeviceLedgerAnswer.ready(created);
     } on FoundationGateApiException catch (error) {
-      final status = _statusFor(error.failure);
       return DeviceLedgerAnswer.unavailable(
-        status == DeviceLedgerStatus.ready ? DeviceLedgerStatus.refused : status,
-        error.failure == FoundationGateApiFailure.notFound
-            ? DeviceLedgerRefusal.deviceNotEligible
-            : DeviceLedgerRefusal.unexplained,
+        _statusForWrite(error.failure),
+        _refusalForWrite(error.failure),
       );
     } on Object {
       return const DeviceLedgerAnswer.unavailable(DeviceLedgerStatus.unreachable);
@@ -260,8 +257,15 @@ final class DeviceLedgerAuthority {
 
   static DeviceLedgerAuthority? get bound => _bound;
 
-  Future<_LedgerGate> _session(String childId) async {
+  Future<_LedgerGate> _session(String childId, {String? deviceId}) async {
     if (!isFoundationGateUuid(childId)) {
+      return const _LedgerGate(DeviceLedgerStatus.notLinked);
+    }
+    // A device id that is not a server id cannot be asked for anything, and it must not
+    // be sent to be rejected: the clients throw on it, and that throw would arrive on the
+    // screen as a fact about the family. `notLinked` is the sentence a parent or a
+    // developer can act on - this record is not a server device.
+    if (deviceId != null && !isFoundationGateUuid(deviceId)) {
       return const _LedgerGate(DeviceLedgerStatus.notLinked);
     }
     final family = familyId();
@@ -300,6 +304,28 @@ final class DeviceLedgerAuthority {
     });
     return List<DeviceLedgerCapabilityRow>.unmodifiable(rows);
   }
+
+  /// What a refused write means on screen.
+  ///
+  /// A 404 is not the same sentence as it is on a read: nobody was looking for a record,
+  /// a guardian asked a device to act and was told it will not take orders. And a refusal
+  /// carries a reason only when the server actually gave one this build can name - silence
+  /// is reported as silence, never as a broken answer.
+  static DeviceLedgerStatus _statusForWrite(FoundationGateApiFailure failure) =>
+      switch (failure) {
+        FoundationGateApiFailure.notFound => DeviceLedgerStatus.refused,
+        _ => _statusFor(failure),
+      };
+
+  static DeviceLedgerRefusal _refusalForWrite(FoundationGateApiFailure failure) =>
+      switch (failure) {
+        FoundationGateApiFailure.notFound =>
+          DeviceLedgerRefusal.deviceNotEligible,
+        FoundationGateApiFailure.conflict ||
+        FoundationGateApiFailure.invalidInput =>
+          DeviceLedgerRefusal.unexplained,
+        _ => DeviceLedgerRefusal.none,
+      };
 
   static DeviceLedgerStatus _statusFor(FoundationGateApiFailure failure) =>
       switch (failure) {
