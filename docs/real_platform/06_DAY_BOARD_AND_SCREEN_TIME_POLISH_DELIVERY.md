@@ -128,11 +128,42 @@ Ran in this checkout:
   `screen_time_server_authority_test` (11 cases, untouched), `vx_b3_arb_human_language_test`,
   `l10n_generated_shape_test`.
 
-**Not run here, and required before merge:** `flutter test` and `flutter analyze` in `app/`, and
-`flutter gen-l10n`. This sandbox has no Dart/Flutter SDK on `PATH`, so `test/tool/ui_016_hardcoded_strings_test.dart`
+**Not run here:** this sandbox has no Dart/Flutter SDK on `PATH`, so `flutter analyze`, `flutter test`
+and `flutter gen-l10n` could not be executed locally, and `test/tool/ui_016_hardcoded_strings_test.dart`
 — which shells out to `dart` — fails here for that reason alone. The gates above are static replicas of
-what those tools check, chosen because they are the checks this wave could break; they are not a
-substitute for running the suite.
+what those tools check; they are not a substitute for running the suite. The suite was run where it can
+be run: on CI, five times, and it is the record below that decides whether this wave ships.
+
+## CI — the only record that counts
+
+| Run | Commit | Result |
+|---|---|---|
+| 40145928678 | `8138b63` | `flutter analyze --fatal-infos`: 17 issues. Tests never ran. |
+| 40224755737 | `e233728` | Analyze ✅ — the suite ran for the first time: **13 failures**, and two of them were real defects, not test noise: a `SwitchListTile` inside `AppCard`'s `DecoratedBox` painted no ink (the earned-minutes switch answered taps with nothing visible), and cards below the fold were absent from the element tree. |
+| 40226086848 | `ad21e09` | Analyze ✗ — `cacheExtent` is deprecated after v3.41; the fix had to speak the new vocabulary. |
+| 40226533448 | `97b12a6` | Analyze ✅ and the ink assertion is **gone** ✅ — 8 failures left. |
+| 40227402782 | `2a0195f` | Analyze ✅, same 8 failures. |
+
+**The open part, stated plainly.** Failing now: `the cards are drawn from the snapshot and nothing
+else`, `a day with no usage is stated as such…`, `minutes past the cap are said out loud`, `the day
+chips are a draft…`, `a weekend window appears when the contract carries one` (all from
+`screen_time_panel_polish_test.dart`), plus the pre-existing `earned minutes toggle renders…`
+(`screen_time_server_panel_test.dart:243`), `AC1 CHD-004 status card survives textScale 2.0…`
+(`ui_017_a11y_day_boards_test.dart:131`) and `child myday shows 4 tabs…` (`test/app/family_shell_test.dart:123`).
+
+What the evidence now says: every finder that fails reports **0 widgets** for a key that exists in
+`lib/` and is wired (`screen_time_server_insights_card`, `…_earned_minutes_toggle`, `…_week_card`,
+`child_day_board_status_card`, `family_shell_hub`) — i.e. from the insights card down, the panel does
+not exist in the element tree, and from the hero ring down, the board does not either. Widening the
+scroll cache did not change a single failure, so the lazy-viewport explanation is **refuted**: what is
+left is a throw in layout inside one composed subtree per screen, and the same widgets pumped
+*directly* in `child_day_board_polish_test.dart` pass — which localises it to how the screens compose
+them, not to the widgets.
+
+Closing that honestly needs a Flutter SDK in the loop (`flutter test --plain-name …`, `debugDumpRenderTree`)
+rather than more CI round-trips of guesses. **Until those eight are green this wave is not mergeable, and
+no claim in this file should be read as "the phone works" — the fifth column is still ❌ for و٤/و٥/و٦
+regardless of what the UI does.**
 
 ## Follow-ups this wave deliberately left open
 
