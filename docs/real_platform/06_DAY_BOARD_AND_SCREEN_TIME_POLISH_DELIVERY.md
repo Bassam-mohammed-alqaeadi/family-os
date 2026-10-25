@@ -159,19 +159,70 @@ chips are a draft…`, `a weekend window appears when the contract carries one` 
 (`screen_time_server_panel_test.dart:243`), `AC1 CHD-004 status card survives textScale 2.0…`
 (`ui_017_a11y_day_boards_test.dart:131`) and `child myday shows 4 tabs…` (`test/app/family_shell_test.dart:123`).
 
-What the evidence now says: every finder that fails reports **0 widgets** for a key that exists in
-`lib/` and is wired (`screen_time_server_insights_card`, `…_earned_minutes_toggle`, `…_week_card`,
-`child_day_board_status_card`, `family_shell_hub`) — i.e. from the insights card down, the panel does
-not exist in the element tree, and from the hero ring down, the board does not either. Widening the
-scroll cache did not change a single failure, so the lazy-viewport explanation is **refuted**: what is
-left is a throw in layout inside one composed subtree per screen, and the same widgets pumped
-*directly* in `child_day_board_polish_test.dart` pass — which localises it to how the screens compose
-them, not to the widgets.
+What the evidence said then, and what it says now: every finder that failed reported **0 widgets** for a
+key that exists in `lib/` and is wired (`screen_time_server_insights_card`, `…_earned_minutes_toggle`,
+`…_week_card`, `child_day_board_status_card`, `family_shell_hub`). Two scroll-cache experiments changed
+nothing, and from that the note above concluded that lazy building was **refuted**. That conclusion was
+wrong twice. `viewport(4.0)` on an 800×600 surface and `pixels(size.height * 4)` on the same surface are
+the *same* 2400px, so the second experiment had already been run by the first; and when the extent was
+finally taken far past any plausible content — CI reported `cache=ScrollCacheExtent.viewport(50.0)
+sz=Size(800.0, 600.0) e0,b4,t24,1,1,1,0,0,0,0,0,1` — eight cards were owed, **four** were built, and
+`e0` said no exception was thrown anywhere. Lazily built children, and a cache knob these `ListView`s
+did not answer to. That is the whole of the "eight red tests", and the section below closes them.
 
-Closing that honestly needs a Flutter SDK in the loop (`flutter test --plain-name …`, `debugDumpRenderTree`)
-rather than more CI round-trips of guesses. **Until those eight are green this wave is not mergeable, and
-no claim in this file should be read as "the phone works" — the fifth column is still ❌ for و٤/و٥/و٦
-regardless of what the UI does.**
+**Until the run named at the end of that section is green this wave is not mergeable, and nothing in this
+file may be read as "the phone works" — the fifth column is still ❌ for و٤/و٥/و٦ regardless of what the UI
+does.**
+
+## How the eight red tests were closed
+
+The probe that ended the argument was a temporary test file whose facts rode inside a failing expectation,
+because that is the only channel this CI shows a stranger: `print` and `debugPrint` land in the step log,
+which is not exposed, while a failed expectation's `Expected / Actual / Which` block is. It is also the
+reason the file had to sort first in `test/` — the summariser only prints the first twelve events.
+
+| run | head | what it said |
+| --- | --- | --- |
+| 40224755737 | `77e206a` | 13 cases / 8 descriptions failing; `ListTile … ink splashes may be invisible` |
+| 40227402782 | `2a0195f` | the same 8 — cache experiment #2, which measured the same 2400px as #1 |
+| 40232056752 | `e42c852` | the same 8; probe: 30000px of cache, `e0` errors, four cards built of eight |
+| 40233152417 | `540fdc4` | **5 failing, `cards built=8 missing=none`** — the composition bug is gone |
+| 40234259198 | `3b9f0bb` | the four defects the probe then exposed, fixed |
+
+The fix in one line: **the guardian panel, the child board and the app-rules sheet are fixed lists, not
+feeds, so they are built whole** — a `Column` inside a `SingleChildScrollView`, keeping the same key,
+padding, physics and `RefreshIndicator`. Nothing about the design changed; four cards stopped being
+optional.
+
+What that unblocked is the part that matters, because every item below is a defect on a real handset and
+not in a test:
+
+* the state card's progress line overflowed by **399px** at `textScale 2.0` on a 320-pt phone — it is a
+  `Wrap` now, so both sentences stay whole and stack only when the width asks;
+* the daily-cap row's save button overflowed by **85px**, because a `PrimaryBtn` that cannot give up width
+  starves the `Expanded` field beside it — the button is `Flexible` now: the label wraps, the 48dp target
+  stays;
+* a **read-only** guardian was handed the manage door. `screen_time_server_apps_open` was gated on "the
+  panel is idle" rather than "this guardian may write", and the insights card had its own looser copy of
+  the same rule. Both follow `canEdit` now — one capability, one gate, one truth;
+* the app-rules sheet kept its app rows *and* the sentence that says how many rules a category action wrote
+  below its own fold, so a parent had to scroll to learn whether the write they had just made did anything.
+
+Two of the eight — `ui_017_a11y_day_boards_test.dart:131` and `family_shell_test.dart:123`, the two PR #43
+already carried without this wave — went green with the same change: the board's status card at `textScale
+2.0` and the in-scroll «More tools» hub exist on the tree now. `2a0195f` is still offered to that branch,
+and this is the version of the fix that works, so the offer should be replaced by it.
+
+Guarded by `test/features/n03_screen_time/screen_time_panel_reachability_test.dart` (kept, not temporary):
+it pumps the panel at 390×844 / 2.0 and 320×480 / 1.3, demands all fourteen cards and controls by key, and
+puts `built=` / `missing=` counts in the reason line so the next person to read a failure here gets facts
+instead of "Found 0 widgets".
+
+**Still not claimed:** no phone check happened. `docs/harness/cards/SAFETY-S3-D5-device-check.md` remains
+لم يُنفَّذ; the enforcement gap is untouched by any of this — no `UsageStatsManager`, `DevicePolicyManager`,
+`VpnService` or `AccessibilityService` in the 16 Kotlin files, no App Extension, entitlements,
+FamilyControls/DeviceActivity/ManagedSettings on iOS, and no `google-services.json` or
+`GoogleService-Info.plist`, so there is still no live push and nothing that can block a screen on a device.
 
 ## Follow-ups this wave deliberately left open
 
