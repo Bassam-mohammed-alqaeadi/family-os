@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 
 import 'package:family_os/core/design/components/app_card.dart';
 import 'package:family_os/core/design/components/banner.dart';
@@ -451,41 +450,48 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
 
     return RefreshIndicator(
       onRefresh: _refresh,
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
+      // A guardian panel is a fixed set of decisions, not a feed, so it is built whole: a
+      // `Column` inside a scroll view, not a lazily filled list. Nine cards that all exist means
+      // a screen reader reads the panel from top to end, `ensureVisible` reaches any of them, and
+      // a parent who arrives here from a notification has already been shown the decision they
+      // came to make, whether or not it happens to be on screen. A list that builds what fits the
+      // viewport showed only four of them on a small surface, and a card that is not built is not
+      // "below the fold" - it is absent.
+      child: SingleChildScrollView(
         key: const Key('screen_time_server_panel'),
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-        // A guardian panel is a fixed set of decisions, not a feed. Building it whole keeps
-        // every card reachable to a screen reader, to `ensureVisible`, and to a parent who
-        // taps "review the request" from the notification before they have scrolled at all.
-        scrollCacheExtent: ScrollCacheExtent.viewport(50.0),
-        children: [
-          _statusBanner(l10n, status, snapshot),
-          const SizedBox(height: 4),
-          // The order is a guardian's day, not a list of endpoints: what is true now, what to
-          // do about it now, then the rules to set up. The cap stays the third card because
-          // its field is the one control a parent comes here to fix in passing.
-          if (snapshot != null) ...[
-            _stateCard(l10n, colors, snapshot),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _statusBanner(l10n, status, snapshot),
             const SizedBox(height: 4),
-            _lockCard(l10n, snapshot),
-            const SizedBox(height: 4),
-            _capCard(l10n, snapshot),
-            const SizedBox(height: 4),
-            if (snapshot.openRequest != null)
-              _requestCard(l10n, colors, snapshot.openRequest!)
-            else
-              _extensionCard(l10n, snapshot),
-            const SizedBox(height: 4),
-            _insightsCard(l10n, snapshot),
-            const SizedBox(height: 4),
-            _earnedMinutesCard(l10n, snapshot),
-            const SizedBox(height: 4),
-            _weekCard(l10n, snapshot),
-            const SizedBox(height: 4),
-            _appsCard(l10n, snapshot),
+            // The order is a guardian's day, not a list of endpoints: what is true now, what to
+            // do about it now, then the rules to set up. The cap stays the third card because
+            // its field is the one control a parent comes here to fix in passing.
+            if (snapshot != null) ...[
+              _stateCard(l10n, colors, snapshot),
+              const SizedBox(height: 4),
+              _lockCard(l10n, snapshot),
+              const SizedBox(height: 4),
+              _capCard(l10n, snapshot),
+              const SizedBox(height: 4),
+              if (snapshot.openRequest != null)
+                _requestCard(l10n, colors, snapshot.openRequest!)
+              else
+                _extensionCard(l10n, snapshot),
+              const SizedBox(height: 4),
+              _insightsCard(l10n, snapshot),
+              const SizedBox(height: 4),
+              _earnedMinutesCard(l10n, snapshot),
+              const SizedBox(height: 4),
+              _weekCard(l10n, snapshot),
+              const SizedBox(height: 4),
+              _appsCard(l10n, snapshot),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

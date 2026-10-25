@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/role_guard.dart';
@@ -632,289 +631,290 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen>
         child: RefreshIndicator(
           onRefresh: _refreshAll,
           child: widget.emptyDay
-              ? ListView(
+              ? SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 32),
-                  // 50 viewports of cache on a list of nine children means one thing: every
-                  // child is built. `SliverList` otherwise builds what fits the viewport plus
-                  // the cache, and a guardian or a child on a small phone with large text gets
-                  // a board whose lower cards do not exist - not hidden, absent, unreachable by
-                  // voice and by `ensureVisible`. There is nothing for laziness to win here.
-                  scrollCacheExtent: ScrollCacheExtent.viewport(50.0),
-                  children: [
-                    AppEmptyState(
-                      key: ChildDayBoardKeys.emptyState,
-                      contextName: l10n.childDayBoardTitle,
-                      onAction: widget.onEmptyAction,
-                    ),
-                    const ShellTabMoreTools(tabId: 'myday'),
-                  ],
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AppEmptyState(
+                        key: ChildDayBoardKeys.emptyState,
+                        contextName: l10n.childDayBoardTitle,
+                        onAction: widget.onEmptyAction,
+                      ),
+                      const ShellTabMoreTools(tabId: 'myday'),
+                    ],
+                  ),
                 )
-              : ListView(
+              : SingleChildScrollView(
                   // The board is short and it is the child's whole day: the ring, the routine,
                   // the tasks, the safety button and the people to call are read together by a
                   // screen reader, and a card that is lazily absent is a card a child cannot
-                  // reach by voice. `SliverList` builds the viewport plus the cache, so at
-                  // textScale 2.0 the lower half of this board stopped existing on a small
-                  // phone. There is nothing for laziness to win in a list of nine children.
-                  scrollCacheExtent: ScrollCacheExtent.viewport(50.0),
+                  // reach by voice. `SliverList` builds the viewport plus its cache, which is
+                  // how the lower half of this board came to not exist at all on a small phone
+                  // at large text. Built whole, in a `Column`, it exists at every size.
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 32),
-                  children: [
-                    if (_childOffline) ...[
-                      BannerNote(
-                        key: ChildDayBoardKeys.offlineBanner,
-                        message: l10n.childDayBoardOfflineBanner(
-                          _mirror.lastAppliedAt != null
-                              ? _formatSyncedAt(_mirror.lastAppliedAt!)
-                              : l10n.dayBoardSyncUnknown,
-                        ),
-                        variant: BannerVariant.a,
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                    Text(
-                      l10n.childDayBoardSubtitle,
-                      maxLines: 4,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: colors.ink2,
-                        height: 1.5,
-                      ),
-                    ),
-                    if (_mirror.lastAppliedAt != null) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        key: ChildDayBoardKeys.lastSyncedLine,
-                        l10n.childDayBoardLastSynced(
-                          _formatSyncedAt(_mirror.lastAppliedAt!),
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: colors.ink2,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                    if (_showRemaining) ...[
-                      const SizedBox(height: 14),
-                      if (_serverStale) ...[
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_childOffline) ...[
                         BannerNote(
-                          key: ChildDayBoardKeys.serverStale,
-                          message: l10n.screenTimeServerUnreachable,
+                          key: ChildDayBoardKeys.offlineBanner,
+                          message: l10n.childDayBoardOfflineBanner(
+                            _mirror.lastAppliedAt != null
+                                ? _formatSyncedAt(_mirror.lastAppliedAt!)
+                                : l10n.dayBoardSyncUnknown,
+                          ),
                           variant: BannerVariant.a,
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 12),
                       ],
-                      ChildTimeHeroRing(
-                        model: ring,
-                        title: l10n.childDayBoardTimeHeroTitle,
-                        remainingLabel: l10n.childTimeMirrorRemainingLabel,
-                        remainingKey: ChildDayBoardKeys.remainingMinutes,
-                        remainingValue: _serverReading != null
-                            ? (_serverReading!.remainingMinutes == null
-                                  ? l10n.childDayBoardNoLimit
-                                  : l10n.childTimeMirrorRemainingMinutes(
-                                      _serverReading!.remainingMinutes!,
-                                    ))
-                            : l10n.childTimeMirrorRemainingMinutes(
-                                _effectiveRemaining,
-                              ),
-                        baseLabel: l10n.childDayBoardTimeHeroBase,
-                        earnedLabel: l10n.childDayBoardTimeHeroEarned,
-                        grantLabel: l10n.childDayBoardTimeHeroGrant,
-                        toneLine: _toneLine(l10n, ring),
-                        semanticsLabel: ring.usedFraction == null
-                            ? l10n.childDayBoardTimeHeroNoLimit
-                            : l10n.childDayBoardTimeHeroRingSemantics(
-                                (ring.usedFraction! * 100).round(),
-                              ),
-                        pulse:
-                            remaining != null &&
-                            remaining >= 0 &&
-                            remaining <= 5,
-                        extendNote: Text(
-                          key: ChildDayBoardKeys.earnedExtensionNote,
-                          (_serverReading?.earnedMinutesExtendLimit ??
-                                  _mirror.policy.earnedMinutesExtendLimit)
-                              ? l10n.childDayBoardEarnedExtendsOn
-                              : l10n.childDayBoardEarnedExtendsOff,
-                          maxLines: 3,
+                      Text(
+                        l10n.childDayBoardSubtitle,
+                        maxLines: 4,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: colors.ink2,
+                          height: 1.5,
+                        ),
+                      ),
+                      if (_mirror.lastAppliedAt != null) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          key: ChildDayBoardKeys.lastSyncedLine,
+                          l10n.childDayBoardLastSynced(
+                            _formatSyncedAt(_mirror.lastAppliedAt!),
+                          ),
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 12,
                             color: colors.ink2,
-                            height: 1.45,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                        footer: remaining != null &&
-                                TimeWarningBanner.shouldShow(remaining)
-                            ? _warningFooter(l10n, colors, remaining)
-                            : null,
-                      ),
-                    ],
-                    const SizedBox(height: 12),
-                    DayBoardMotionPulse(
-                      key: ChildDayBoardKeys.statusMotion,
-                      preferredDuration: const Duration(milliseconds: 1400),
-                      enabled: active,
-                      mode: DayBoardMotionPulseMode.opacity,
-                      child: Container(
-                        key: ChildDayBoardKeys.statusCard,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: active ? _modeTint(colors, modeId!) : colors.surface,
-                          borderRadius: BorderRadius.circular(radii.cardChild),
-                          border: Border.all(
-                            color: active
-                                ? _modeBorder(colors, modeId!)
-                                : colors.border,
-                            width: active ? 1.5 : 1,
+                      ],
+                      if (_showRemaining) ...[
+                        const SizedBox(height: 14),
+                        if (_serverStale) ...[
+                          BannerNote(
+                            key: ChildDayBoardKeys.serverStale,
+                            message: l10n.screenTimeServerUnreachable,
+                            variant: BannerVariant.a,
                           ),
+                          const SizedBox(height: 10),
+                        ],
+                        ChildTimeHeroRing(
+                          model: ring,
+                          title: l10n.childDayBoardTimeHeroTitle,
+                          remainingLabel: l10n.childTimeMirrorRemainingLabel,
+                          remainingKey: ChildDayBoardKeys.remainingMinutes,
+                          remainingValue: _serverReading != null
+                              ? (_serverReading!.remainingMinutes == null
+                                    ? l10n.childDayBoardNoLimit
+                                    : l10n.childTimeMirrorRemainingMinutes(
+                                        _serverReading!.remainingMinutes!,
+                                      ))
+                              : l10n.childTimeMirrorRemainingMinutes(
+                                  _effectiveRemaining,
+                                ),
+                          baseLabel: l10n.childDayBoardTimeHeroBase,
+                          earnedLabel: l10n.childDayBoardTimeHeroEarned,
+                          grantLabel: l10n.childDayBoardTimeHeroGrant,
+                          toneLine: _toneLine(l10n, ring),
+                          semanticsLabel: ring.usedFraction == null
+                              ? l10n.childDayBoardTimeHeroNoLimit
+                              : l10n.childDayBoardTimeHeroRingSemantics(
+                                  (ring.usedFraction! * 100).round(),
+                                ),
+                          pulse:
+                              remaining != null &&
+                              remaining >= 0 &&
+                              remaining <= 5,
+                          extendNote: Text(
+                            key: ChildDayBoardKeys.earnedExtensionNote,
+                            (_serverReading?.earnedMinutesExtendLimit ??
+                                    _mirror.policy.earnedMinutesExtendLimit)
+                                ? l10n.childDayBoardEarnedExtendsOn
+                                : l10n.childDayBoardEarnedExtendsOff,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: colors.ink2,
+                              height: 1.45,
+                            ),
+                          ),
+                          footer: remaining != null &&
+                                  TimeWarningBanner.shouldShow(remaining)
+                              ? _warningFooter(l10n, colors, remaining)
+                              : null,
                         ),
-                        child: active
-                            ? Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                    children: [
-                                      _ModeGlyph(modeId: modeId!),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: Text(
-                                          key: ChildDayBoardKeys.activeModeLabel,
-                                          l10n.childDayBoardActiveStatus(
-                                            _modeLabel(l10n, modeId),
+                      ],
+                      const SizedBox(height: 12),
+                      DayBoardMotionPulse(
+                        key: ChildDayBoardKeys.statusMotion,
+                        preferredDuration: const Duration(milliseconds: 1400),
+                        enabled: active,
+                        mode: DayBoardMotionPulseMode.opacity,
+                        child: Container(
+                          key: ChildDayBoardKeys.statusCard,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: active ? _modeTint(colors, modeId!) : colors.surface,
+                            borderRadius: BorderRadius.circular(radii.cardChild),
+                            border: Border.all(
+                              color: active
+                                  ? _modeBorder(colors, modeId!)
+                                  : colors.border,
+                              width: active ? 1.5 : 1,
+                            ),
+                          ),
+                          child: active
+                              ? Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        _ModeGlyph(modeId: modeId!),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Text(
+                                            key: ChildDayBoardKeys.activeModeLabel,
+                                            l10n.childDayBoardActiveStatus(
+                                              _modeLabel(l10n, modeId),
+                                            ),
+                                            maxLines: 3,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w800,
+                                              color: colors.ink,
+                                              height: 1.3,
+                                            ),
                                           ),
-                                          maxLines: 3,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w800,
-                                            color: colors.ink,
-                                            height: 1.3,
-                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    if (_activation.expiresAt != null) ...[
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        key: ChildDayBoardKeys.modeExpiry,
+                                        l10n.childDayBoardModeExpiry(
+                                          _formatExpiry(_activation.expiresAt!),
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          color: colors.ink2,
                                         ),
                                       ),
                                     ],
-                                  ),
-                                  if (_activation.expiresAt != null) ...[
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      key: ChildDayBoardKeys.modeExpiry,
-                                      l10n.childDayBoardModeExpiry(
-                                        _formatExpiry(_activation.expiresAt!),
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: colors.ink2,
-                                      ),
-                                    ),
                                   ],
-                                ],
-                              )
-                            : Text(
-                                key: ChildDayBoardKeys.idleStatus,
-                                l10n.childDayBoardIdleStatus,
-                                maxLines: 3,
+                                )
+                              : Text(
+                                  key: ChildDayBoardKeys.idleStatus,
+                                  l10n.childDayBoardIdleStatus,
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: colors.ink2,
+                                    height: 1.35,
+                                  ),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      ChildRoutineBadgeCard(
+                        phase: _routinePhase,
+                        title: l10n.childDayBoardRoutineTitle,
+                        hint: l10n.childDayBoardRoutineHint,
+                        sleepLabel: l10n.childDayBoardRoutineSleep,
+                        schoolLabel: l10n.childDayBoardRoutineSchool,
+                        freeLabel: l10n.childDayBoardRoutineFree,
+                        windDownLabel: l10n.childDayBoardRoutineWindDown,
+                      ),
+                      if (_modesEval != null) ...[
+                        const SizedBox(height: 12),
+                        KeyedSubtree(
+                          key: ChildDayBoardKeys.modeDisclosure,
+                          child: ModeDisclosureCard(
+                            evaluation: _modesEval!,
+                            labelsByModeId: _modeDocLabels(l10n),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      ChildEarnTasksCard(
+                        economy: _economy,
+                        title: l10n.childDayBoardTasksTitle,
+                        subtitle: l10n.childDayBoardTasksSubtitle,
+                        stateMessage: (phase) => _economyStateMessage(l10n, phase),
+                        pointsLabel: (points) =>
+                            l10n.childDayBoardTasksPoints(points),
+                        statusLabel: (status) => _taskStatusLabel(l10n, status),
+                        openAllLabel: l10n.childDayBoardTasksOpenAll,
+                        onOpenAll: () => context.push(screenPath('SCR-CHD-022')),
+                      ),
+                      const SizedBox(height: 12),
+                      DecoratedBox(
+                        key: ChildDayBoardKeys.safetyCard,
+                        decoration: BoxDecoration(
+                          color: colors.surface,
+                          borderRadius: BorderRadius.circular(radii.cardChild),
+                          border: Border.all(color: colors.border),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Text(
+                                l10n.childDayBoardSafetyTitle,
+                                maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: colors.ink2,
-                                  height: 1.35,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w900,
+                                  color: colors.ink,
+                                  height: 1.3,
                                 ),
                               ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    ChildRoutineBadgeCard(
-                      phase: _routinePhase,
-                      title: l10n.childDayBoardRoutineTitle,
-                      hint: l10n.childDayBoardRoutineHint,
-                      sleepLabel: l10n.childDayBoardRoutineSleep,
-                      schoolLabel: l10n.childDayBoardRoutineSchool,
-                      freeLabel: l10n.childDayBoardRoutineFree,
-                      windDownLabel: l10n.childDayBoardRoutineWindDown,
-                    ),
-                    if (_modesEval != null) ...[
-                      const SizedBox(height: 12),
-                      KeyedSubtree(
-                        key: ChildDayBoardKeys.modeDisclosure,
-                        child: ModeDisclosureCard(
-                          evaluation: _modesEval!,
-                          labelsByModeId: _modeDocLabels(l10n),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 12),
-                    ChildEarnTasksCard(
-                      economy: _economy,
-                      title: l10n.childDayBoardTasksTitle,
-                      subtitle: l10n.childDayBoardTasksSubtitle,
-                      stateMessage: (phase) => _economyStateMessage(l10n, phase),
-                      pointsLabel: (points) =>
-                          l10n.childDayBoardTasksPoints(points),
-                      statusLabel: (status) => _taskStatusLabel(l10n, status),
-                      openAllLabel: l10n.childDayBoardTasksOpenAll,
-                      onOpenAll: () => context.push(screenPath('SCR-CHD-022')),
-                    ),
-                    const SizedBox(height: 12),
-                    DecoratedBox(
-                      key: ChildDayBoardKeys.safetyCard,
-                      decoration: BoxDecoration(
-                        color: colors.surface,
-                        borderRadius: BorderRadius.circular(radii.cardChild),
-                        border: Border.all(color: colors.border),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              l10n.childDayBoardSafetyTitle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w900,
-                                color: colors.ink,
-                                height: 1.3,
+                              const SizedBox(height: 10),
+                              ChildSafetyHoldButton(
+                                holdDuration: widget.safetyHoldDuration,
+                                onHoldCompleted:
+                                    () => context.push(screenPath('SCR-CHD-005')),
+                                title: l10n.childDayBoardSafetyReady,
+                                instruction: l10n.childDayBoardSafetyHold,
+                                releasedMessage: l10n.childDayBoardSafetyReleased,
+                                progressLabel: (seconds) =>
+                                    l10n.childDayBoardSafetyProgress(seconds),
+                                semanticsLabel: l10n.childDayBoardSafetySemantics,
                               ),
-                            ),
-                            const SizedBox(height: 10),
-                            ChildSafetyHoldButton(
-                              holdDuration: widget.safetyHoldDuration,
-                              onHoldCompleted:
-                                  () => context.push(screenPath('SCR-CHD-005')),
-                              title: l10n.childDayBoardSafetyReady,
-                              instruction: l10n.childDayBoardSafetyHold,
-                              releasedMessage: l10n.childDayBoardSafetyReleased,
-                              progressLabel: (seconds) =>
-                                  l10n.childDayBoardSafetyProgress(seconds),
-                              semanticsLabel: l10n.childDayBoardSafetySemantics,
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    FamilyTouchpointStrip(
-                      title: l10n.childDayBoardTouchpointsTitle,
-                      subtitle: l10n.childDayBoardTouchpointsSubtitle,
-                      points: _touchpoints(l10n),
-                    ),
-                    const ShellTabMoreTools(tabId: 'myday'),
-                  ],
+                      const SizedBox(height: 12),
+                      FamilyTouchpointStrip(
+                        title: l10n.childDayBoardTouchpointsTitle,
+                        subtitle: l10n.childDayBoardTouchpointsSubtitle,
+                        points: _touchpoints(l10n),
+                      ),
+                      const ShellTabMoreTools(tabId: 'myday'),
+                    ],
+                  ),
                 ),
         ),
       ),
