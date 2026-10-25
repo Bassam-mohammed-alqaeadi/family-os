@@ -93,7 +93,7 @@ Future<String> _pumpAndRead(
       '${MediaQuery.sizeOf(tester.element(find.byKey(_panelKey)))} '
       '${count.join(',')}';
   if (facts.isNotEmpty) {
-    line = '${line} !! ${facts.first}';
+    line = '$line !! ${facts.first}';
   }
   return line.length <= 300 ? line : line.substring(0, 300);
 }

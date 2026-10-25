@@ -458,9 +458,7 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
         // A guardian panel is a fixed set of decisions, not a feed. Building it whole keeps
         // every card reachable to a screen reader, to `ensureVisible`, and to a parent who
         // taps "review the request" from the notification before they have scrolled at all.
-        scrollCacheExtent: ScrollCacheExtent.pixels(
-          MediaQuery.sizeOf(context).height * 4,
-        ),
+        scrollCacheExtent: ScrollCacheExtent.viewport(50.0),
         children: [
           _statusBanner(l10n, status, snapshot),
           const SizedBox(height: 4),

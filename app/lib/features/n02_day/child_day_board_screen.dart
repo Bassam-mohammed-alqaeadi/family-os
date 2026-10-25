@@ -635,9 +635,12 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen>
               ? ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 32),
-                  scrollCacheExtent: ScrollCacheExtent.pixels(
-                  MediaQuery.sizeOf(context).height * 4,
-                ),
+                  // 50 viewports of cache on a list of nine children means one thing: every
+                  // child is built. `SliverList` otherwise builds what fits the viewport plus
+                  // the cache, and a guardian or a child on a small phone with large text gets
+                  // a board whose lower cards do not exist - not hidden, absent, unreachable by
+                  // voice and by `ensureVisible`. There is nothing for laziness to win here.
+                  scrollCacheExtent: ScrollCacheExtent.viewport(50.0),
                   children: [
                     AppEmptyState(
                       key: ChildDayBoardKeys.emptyState,
@@ -651,10 +654,10 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen>
                   // The board is short and it is the child's whole day: the ring, the routine,
                   // the tasks, the safety button and the people to call are read together by a
                   // screen reader, and a card that is lazily absent is a card a child cannot
-                  // reach by voice. So the viewport is spent once, here, not per scroll.
-                  scrollCacheExtent: ScrollCacheExtent.pixels(
-                  MediaQuery.sizeOf(context).height * 4,
-                ),
+                  // reach by voice. `SliverList` builds the viewport plus the cache, so at
+                  // textScale 2.0 the lower half of this board stopped existing on a small
+                  // phone. There is nothing for laziness to win in a list of nine children.
+                  scrollCacheExtent: ScrollCacheExtent.viewport(50.0),
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 32),
                   children: [
