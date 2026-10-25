@@ -634,7 +634,7 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen>
               ? ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 32),
-                  cacheExtent: MediaQuery.sizeOf(context).height * 4,
+                  scrollCacheExtent: const ScrollCacheExtent.viewport(4.0),
                   children: [
                     AppEmptyState(
                       key: ChildDayBoardKeys.emptyState,
@@ -649,7 +649,7 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen>
                   // the tasks, the safety button and the people to call are read together by a
                   // screen reader, and a card that is lazily absent is a card a child cannot
                   // reach by voice. So the viewport is spent once, here, not per scroll.
-                  cacheExtent: MediaQuery.sizeOf(context).height * 4,
+                  scrollCacheExtent: const ScrollCacheExtent.viewport(4.0),
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 32),
                   children: [
