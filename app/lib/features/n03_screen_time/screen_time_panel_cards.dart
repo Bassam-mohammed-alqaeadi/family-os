@@ -1174,7 +1174,12 @@ class _PanelCard extends StatelessWidget {
       key: cardKey,
       backgroundColor: backgroundColor,
       borderColor: borderColor,
-      child: child,
+      // `AppCard` paints its surface in a `DecoratedBox`, and a `ListTile` looks for the
+      // nearest Material to draw its background and tap splash on - without one here the
+      // earned-minutes switch answers a tap with nothing visible, which Flutter reports as an
+      // assertion. A transparent Material is the smallest honest fix: the ink lands, and the
+      // card keeps the colour the theme gave it.
+      child: Material(type: MaterialType.transparency, child: child),
     );
   }
 }

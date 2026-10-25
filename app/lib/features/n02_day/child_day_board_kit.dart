@@ -205,7 +205,11 @@ class ChildTimeHeroRing extends StatelessWidget {
                     ),
                   ),
                 ),
-                _RingChip(label: remainingLabel, color: palette.accent),
+                const SizedBox(width: 8),
+                // Flexible, not bare: at text scale 2.0 the remaining-minutes chip is exactly
+                // the child that pushes a row off a 360 dp phone, and a chip that clips its own
+                // number is worse than a chip that ellipsises it.
+                Flexible(child: _RingChip(label: remainingLabel, color: palette.accent)),
               ],
             ),
             const SizedBox(height: 14),
