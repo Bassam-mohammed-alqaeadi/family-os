@@ -144,6 +144,14 @@ be run: on CI, five times, and it is the record below that decides whether this 
 | 40226533448 | `97b12a6` | Analyze ✅ and the ink assertion is **gone** ✅ — 8 failures left. |
 | 40227402782 | `2a0195f` | Analyze ✅, same 8 failures. |
 
+**Two of the eight are not this wave's.** PR #43 (the branch this work is stacked on, which is 108
+commits ahead of `main`) fails the same two on its own CI, without anything from this wave:
+`AC1 CHD-004 status card survives textScale 2.0 without overflow` and `child myday shows 4 tabs + SOS
+FAB + in-scroll more tools` — both are the *earlier* polish commits on that branch (`cbd894f`,
+`eaf052f`, `b5d438a`) pushing the day board's children below what a lazily-built viewport keeps.
+The remaining six are this wave's and this wave's to fix. The pixels-cache change in `2a0195f` is the
+candidate fix for both sets, and it is small enough to offer to #43 as its own commit.
+
 **The open part, stated plainly.** Failing now: `the cards are drawn from the snapshot and nothing
 else`, `a day with no usage is stated as such…`, `minutes past the cap are said out loud`, `the day
 chips are a draft…`, `a weekend window appears when the contract carries one` (all from
