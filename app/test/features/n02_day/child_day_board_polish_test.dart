@@ -92,7 +92,7 @@ FoundationGateTask _task({
           claimedByMembershipId: null,
           decidedByMembershipId: null,
           decidedAt: null,
-          decisionNote: null,
+          decisionNote: '',
           pointsAwarded: 0,
           createdAt: DateTime.utc(2026, 10, 7),
         ),
@@ -379,7 +379,7 @@ void main() {
   });
 
   group('hero ring widget', () {
-    test('it names the day, the number, and the three sources of minutes', (tester) async {
+    testWidgets('it names the day, the number, and the three sources of minutes', (tester) async {
       await _pump(
         tester,
         ChildTimeHeroRing(
@@ -417,7 +417,7 @@ void main() {
       );
     });
 
-    test('an open day says so and hides the arcs it has no number for', (tester) async {
+    testWidgets('an open day says so and hides the arcs it has no number for', (tester) async {
       await _pump(
         tester,
         ChildTimeHeroRing(
@@ -442,7 +442,7 @@ void main() {
       );
     });
 
-    test('the breathing ring is only for the moment it helps', (tester) async {
+    testWidgets('the breathing ring is only for the moment it helps', (tester) async {
       await _pump(
         tester,
         ChildTimeHeroRing(
@@ -469,7 +469,7 @@ void main() {
   });
 
   group('safety hold', () {
-    test('three seconds of holding is what sends it', (tester) async {
+    testWidgets('three seconds of holding is what sends it', (tester) async {
       var sent = 0;
       await _pump(
         tester,
@@ -514,7 +514,7 @@ void main() {
       );
     });
 
-    test('a finger that leaves early sends nothing', (tester) async {
+    testWidgets('a finger that leaves early sends nothing', (tester) async {
       var sent = 0;
       await _pump(
         tester,
@@ -541,7 +541,7 @@ void main() {
       expect(find.textContaining('KEEP'), findsNothing);
     });
 
-    test('a disabled button holds forever and sends nothing', (tester) async {
+    testWidgets('a disabled button holds forever and sends nothing', (tester) async {
       var sent = 0;
       await _pump(
         tester,
@@ -567,7 +567,7 @@ void main() {
   });
 
   group('routine badges and touchpoints', () {
-    test('every phase of the day is visible, the live one named first', (tester) async {
+    testWidgets('every phase of the day is visible, the live one named first', (tester) async {
       await _pump(
         tester,
         ChildRoutineBadgeCard(
@@ -597,7 +597,7 @@ void main() {
       );
     });
 
-    test('one tap on a touchpoint is one call', (tester) async {
+    testWidgets('one tap on a touchpoint is one call', (tester) async {
       var calls = 0;
       await _pump(
         tester,
@@ -615,6 +615,7 @@ void main() {
               id: 'ask',
               label: 'ASK',
               glyph: Icons.more_time,
+              onTap: null,
             ),
           ],
         ),
@@ -670,7 +671,7 @@ void main() {
       ),
     );
 
-    test('a ready day draws the task, its number and its status', (tester) async {
+    testWidgets('a ready day draws the task, its number and its status', (tester) async {
       await pumpCard(
         tester,
         ChildDayBoardEconomy.ready([
@@ -689,7 +690,7 @@ void main() {
       ChildDayBoardEconomyPhase.noServer,
       ChildDayBoardEconomyPhase.error,
     ]) {
-      test('${phase.name} is drawn as itself, not as an empty list', (tester) async {
+      testWidgets('${phase.name} is drawn as itself, not as an empty list', (tester) async {
         final economy = switch (phase) {
           ChildDayBoardEconomyPhase.empty => ChildDayBoardEconomy.ready(const []),
           ChildDayBoardEconomyPhase.loading => const ChildDayBoardEconomy.loading(),

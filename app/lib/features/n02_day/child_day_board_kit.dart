@@ -214,7 +214,7 @@ class ChildTimeHeroRing extends StatelessWidget {
                 final available = constraints.maxWidth.isFinite
                     ? constraints.maxWidth
                     : 320.0;
-                final size = math.min(math.max(available * 0.72, 168), 216);
+                final size = math.min(math.max(available * 0.72, 168.0), 216.0);
                 return Center(
                   // The breathing is reserved for the one moment it helps: when the day is
                   // nearly out the ring softens its own edges instead of the app shouting.
@@ -1002,7 +1002,6 @@ class ChildSafetyHoldButtonState extends State<ChildSafetyHoldButton> {
                     children: [
                       CircularProgressIndicator(
                         value: _progress,
-                        minHeight: 44,
                         strokeWidth: 4,
                         backgroundColor: colors.coral100,
                         valueColor: AlwaysStoppedAnimation<Color>(

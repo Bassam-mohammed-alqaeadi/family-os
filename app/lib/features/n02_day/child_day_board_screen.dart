@@ -775,7 +775,7 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen>
                                         child: Text(
                                           key: ChildDayBoardKeys.activeModeLabel,
                                           l10n.childDayBoardActiveStatus(
-                                            _modeLabel(l10n, modeId!),
+                                            _modeLabel(l10n, modeId),
                                           ),
                                           maxLines: 3,
                                           overflow: TextOverflow.ellipsis,

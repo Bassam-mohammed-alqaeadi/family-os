@@ -837,7 +837,7 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
       title: l10n.screenTimeServerAppsTitle,
       subtitle: l10n.screenTimeServerAppsSubtitle,
       actionLabel: l10n.screenTimeServerAppsOpen,
-      enabled: !_busy,
+      enabled: widget.canEdit && !_busy,
       onOpen: _openAppRules,
       summaryLine: status == null || status == ScreenTimeExtensionStatus.ready
           ? null
