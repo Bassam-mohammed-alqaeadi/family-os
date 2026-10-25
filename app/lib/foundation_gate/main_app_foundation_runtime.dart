@@ -16,6 +16,8 @@ import 'package:family_os/core/runtime/runtime_data_origin.dart';
 import 'device_lifecycle.dart';
 import 'family_calendar_api_client.dart';
 import 'family_chat_api_client.dart';
+import 'family_capability_api_client.dart';
+import 'family_command_api_client.dart';
 import 'family_creation_api_client.dart';
 import 'family_device_api_client.dart';
 import 'family_invite_code_api_client.dart';
@@ -77,6 +79,8 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     FamilyTasksApiClient? tasksApi,
     FamilyCalendarApiClient? calendarApi,
     FamilyChatApiClient? chatApi,
+    FamilyCapabilityApiClient? capabilityApi,
+    FamilyCommandApiClient? commandApi,
     String? preferredFamilyId,
     GuardianPushRegistrationCallback? guardianPushRegistration,
     GuardianPushUnregistrationCallback? guardianPushUnregistration,
@@ -94,6 +98,8 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
        _tasksApi = tasksApi,
        _calendarApi = calendarApi,
        _chatApi = chatApi,
+       _capabilityApi = capabilityApi,
+       _commandApi = commandApi,
        _preferredFamilyId = preferredFamilyId?.trim(),
        _guardianPushRegistration = guardianPushRegistration,
        _guardianPushUnregistration = guardianPushUnregistration,
@@ -117,6 +123,8 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   final FamilyTasksApiClient? _tasksApi;
   final FamilyCalendarApiClient? _calendarApi;
   final FamilyChatApiClient? _chatApi;
+  final FamilyCapabilityApiClient? _capabilityApi;
+  final FamilyCommandApiClient? _commandApi;
   final String? _preferredFamilyId;
   final GuardianPushRegistrationCallback? _guardianPushRegistration;
   final GuardianPushUnregistrationCallback? _guardianPushUnregistration;
@@ -165,6 +173,16 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   /// The licensed family-chat contract. Device-scoped calls keep their credential in native
   /// protected storage; this runtime exposes only the typed client, never the secret.
   FamilyChatApiClient? get chatApi => _chatApi;
+
+  /// The device capability ledger's client: what each handset said it can do, and when it said so.
+  /// Null when this build has no server to ask - and the ledger screen says that out loud instead
+  /// of drawing capabilities nobody reported.
+  FamilyCapabilityApiClient? get capabilityApi => _capabilityApi;
+
+  /// The command bus's client: the orders a family issued to a device, and the receipt each one
+  /// came back with. Read here, never written from here: the phone answers to the server, and a
+  /// second door into the same power would leave two truths about whether a child's phone stopped.
+  FamilyCommandApiClient? get commandApi => _commandApi;
 
   /// Best-effort push registration for the active guardian session.
   ///

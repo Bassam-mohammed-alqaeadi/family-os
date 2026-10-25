@@ -1,0 +1,503 @@
+{
+  "_comment": [
+    "Message table for the S0 spine's app surface (SCR-FAT-026 device capability ledger and",
+    "command board). Applied once with: python3 tool/arb_messages.py tool/messages/n12_device_ledger.json",
+    "Arabic is the template language; every value here is written for a parent, not an engineer.",
+    "Keep the file after applying: it is the reviewable record of what was added and why."
+  ],
+  "messages": [
+    {
+      "key": "capabilityStateConfirmed",
+      "ar": "يعمل على الهاتف",
+      "en": "Working on the phone",
+      "desc": "S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — the device reported this capability as confirmed)"
+    },
+    {
+      "key": "capabilityStateAwaitingSetup",
+      "ar": "في انتظار إعدادك",
+      "en": "Waiting for your setup",
+      "desc": "S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — the capability exists but a family step is still missing)"
+    },
+    {
+      "key": "capabilityStatePermissionNeeded",
+      "ar": "يحتاج إذناً من الهاتف",
+      "en": "Needs a permission on the phone",
+      "desc": "S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — the operating system has not granted this yet)"
+    },
+    {
+      "key": "capabilityStateUnsupported",
+      "ar": "لا يقدر هذا الهاتف عليه",
+      "en": "This phone cannot do it",
+      "desc": "S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — the device reported the capability as unsupported)"
+    },
+    {
+      "key": "capabilityStateRevoked",
+      "ar": "سُحب الإذن",
+      "en": "The permission was withdrawn",
+      "desc": "S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — the capability was revoked after it worked)"
+    },
+    {
+      "key": "capabilityStateUnknown",
+      "ar": "لم يخبرنا الهاتف بعد",
+      "en": "The phone has not told us yet",
+      "desc": "S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — no report exists for this capability)"
+    },
+    {
+      "key": "deviceLedgerTitle",
+      "ar": "ما يقدر عليه هذا الهاتف",
+      "en": "What this phone can do",
+      "desc": "SCR-FAT-026 — heading of the device capability ledger the phone itself reported",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerHonestyLine",
+      "ar": "كل سطر هنا هو آخر ما بلّغ عنه الهاتف نفسه، لا ما نتمناه له.",
+      "en": "Every line here is the last thing the phone itself reported, not what we hope for it.",
+      "desc": "SCR-FAT-026 — the honesty line under the capability ledger heading"
+    },
+    {
+      "key": "deviceLedgerSubtitle",
+      "ar": "قدرة الهاتف وأوامره",
+      "en": "What the phone can do, and what was ordered",
+      "desc": "SCR-FAT-026 — subtitle stating the source of every capability row",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerLoading",
+      "ar": "نسأل الخادم عن قدرات هذا الجهاز…",
+      "en": "Asking the server what this device can do…",
+      "desc": "SCR-FAT-026 — while the capability ledger read is in flight",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerRefresh",
+      "ar": "طلب تحديث من الهاتف",
+      "en": "Asking the phone to check again",
+      "desc": "SCR-FAT-026 — label of the button that re-reads the ledger and the orders",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerNoSession",
+      "ar": "لا توجد جلسة خادم — لم نعرض أي قدرة",
+      "en": "No server session — not one capability is shown",
+      "desc": "SCR-FAT-026 — this build has no server session, so the ledger is empty by choice",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerDenied",
+      "ar": "لا يملك هذا الحساب أن يرى هذا الجهاز",
+      "en": "This account may not see this device",
+      "desc": "SCR-FAT-026 — the server refused the capability read for this account",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerUnreachable",
+      "ar": "لم يستجب الخادم — هذه آخر حالة وصلت",
+      "en": "The server did not answer — this is the last state that arrived",
+      "desc": "SCR-FAT-026 — the ledger could not be re-read; the screen keeps the last answer and says so",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerBadReply",
+      "ar": "جواب الخادم لم يُفهم — لم نعرض شيئاً",
+      "en": "The server's answer could not be read — nothing is shown",
+      "desc": "SCR-FAT-026 — a malformed ledger answer is stated as a defect, not papered over",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerNoReport",
+      "ar": "لم يبلّغ هذا الجهاز عن أي قدرة بعد",
+      "en": "This device has not reported a single capability yet",
+      "desc": "SCR-FAT-026 — the ledger is genuinely empty for this device",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerNoChild",
+      "ar": "هذا السجل غير مربوط بابن على الخادم",
+      "en": "This record is not linked to a child on the server",
+      "desc": "SCR-FAT-026 — the device entry carries no server child identifier, so nothing was asked",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerSummary",
+      "ar": "{working} تعمل، و{waiting} تنتظر إعدادك",
+      "en": "{working} work, {waiting} still wait for your setup",
+      "desc": "SCR-FAT-026 — one-line count of confirmed and not-yet-working capabilities",
+      "placeholders": [
+        [
+          "working",
+          "int"
+        ],
+        [
+          "waiting",
+          "int"
+        ]
+      ]
+    },
+    {
+      "key": "deviceLedgerLastReport",
+      "ar": "آخر بلاغ: {when}",
+      "en": "Last report: {when}",
+      "desc": "SCR-FAT-026 — when the device last spoke about one capability",
+      "placeholders": [
+        [
+          "when",
+          "String"
+        ]
+      ]
+    },
+    {
+      "key": "deviceLedgerConfirmedSince",
+      "ar": "مؤكَّد منذ {when}",
+      "en": "Confirmed since {when}",
+      "desc": "SCR-FAT-026 — the moment the server recorded a capability as confirmed",
+      "placeholders": [
+        [
+          "when",
+          "String"
+        ]
+      ]
+    },
+    {
+      "key": "deviceLedgerFromApp",
+      "ar": "من تطبيق إصدار {version}",
+      "en": "From app version {version}",
+      "desc": "SCR-FAT-026 — which app build on the phone made the report",
+      "placeholders": [
+        [
+          "version",
+          "String"
+        ]
+      ]
+    },
+    {
+      "key": "deviceLedgerOnSystem",
+      "ar": "على نظام {os}",
+      "en": "On system {os}",
+      "desc": "SCR-FAT-026 — which operating system the report came from",
+      "placeholders": [
+        [
+          "os",
+          "String"
+        ]
+      ]
+    },
+    {
+      "key": "deviceLedgerCapUsage",
+      "ar": "عدّ الدقائق المستهلكة",
+      "en": "Counting the minutes used",
+      "desc": "SCR-FAT-026 — capability row for usage metering",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerCapApps",
+      "ar": "معرفة التطبيقات الموجودة",
+      "en": "Knowing the installed apps",
+      "desc": "SCR-FAT-026 — capability row for the app inventory",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerCapBlock",
+      "ar": "إظهار شاشة الحجب فوق التطبيق",
+      "en": "Showing the block screen over an app",
+      "desc": "SCR-FAT-026 — capability row for the blocking overlay",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerCapFollow",
+      "ar": "المتابعة أثناء الاستخدام الفعلي",
+      "en": "Following the app while it is used",
+      "desc": "SCR-FAT-026 — capability row for accessibility-based enforcement",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerCapLock",
+      "ar": "إيقاف الهاتف فوراً بأمرك",
+      "en": "Stopping the phone at once, on your word",
+      "desc": "SCR-FAT-026 — capability row for the instant lock",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerCapWeb",
+      "ar": "حجب المواقع غير اللائقة",
+      "en": "Blocking unsuitable sites",
+      "desc": "SCR-FAT-026 — capability row for web filtering",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerCapPlace",
+      "ar": "معرفة المكان أثناء اليوم",
+      "en": "Knowing the place during the day",
+      "desc": "SCR-FAT-026 — capability row for background location",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerCapRestart",
+      "ar": "البقاء فعّالاً بعد إعادة التشغيل",
+      "en": "Still working after a restart",
+      "desc": "SCR-FAT-026 — capability row for boot persistence",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerCapAlerts",
+      "ar": "وصول التنبيهات إلى الهاتف",
+      "en": "Alerts reaching the phone",
+      "desc": "SCR-FAT-026 — capability row for push delivery",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerCapBattery",
+      "ar": "الإبلاغ عن مستوى البطارية",
+      "en": "Reporting the battery level",
+      "desc": "SCR-FAT-026 — capability row for battery reporting",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerCapTamper",
+      "ar": "تنبيهك عند محاولة إيقافه",
+      "en": "Telling you when someone tries to switch it off",
+      "desc": "SCR-FAT-026 — capability row for tamper signals",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerCommandsTitle",
+      "ar": "أوامرك لهذا الجهاز",
+      "en": "Your orders for this device",
+      "desc": "SCR-FAT-026 — heading of the command ledger section",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerCommandsHint",
+      "ar": "لا يقبل الخادم أمراً بقدرة لم يؤكد الهاتف أنه يملكها",
+      "en": "The server takes no order for a capability the phone has not confirmed",
+      "desc": "SCR-FAT-026 — the spine invariant stated in the parent's words",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerCommandsEmpty",
+      "ar": "لا أمر معلّق ولا سابق على هذا الجهاز",
+      "en": "No pending and no past order on this device",
+      "desc": "SCR-FAT-026 — the command ledger is empty",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerCommandsDenied",
+      "ar": "لا يملك هذا الحساب أن يرى أوامر هذا الجهاز",
+      "en": "This account may not see this device's orders",
+      "desc": "SCR-FAT-026 — the server refused the command list for this account",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerRefuseDevice",
+      "ar": "لا يقبل الجهاز أمراً الآن — إما مقطوع أو سُحب اعتماده",
+      "en": "The device will not take an order now — it is cut off or its trust was withdrawn",
+      "desc": "SCR-FAT-026 — refusal when the device itself is not eligible for commands",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerRefuseOther",
+      "ar": "رفض الخادم أمرك",
+      "en": "The server refused your order",
+      "desc": "SCR-FAT-026 — a command the server refused. The sentence stops at the refusal on purpose: the server may or may not have explained itself, and promising that it said nothing would be the screen talking about an answer it did not read",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerCommandWindow",
+      "ar": "سُجّل {recorded} · نافذته مفتوحة حتى {until}",
+      "en": "Recorded {recorded} · open until {until}",
+      "desc": "SCR-FAT-026 — the window a command was valid for, in the device's own reported minutes",
+      "placeholders": [
+        [
+          "recorded",
+          "String"
+        ],
+        [
+          "until",
+          "String"
+        ]
+      ]
+    },
+    {
+      "key": "deviceLedgerCommandClosed",
+      "ar": "انتهت نافذته قبل أن يصل",
+      "en": "Its window closed before it arrived",
+      "desc": "SCR-FAT-026 — an order whose expiry passed unexecuted",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerCommandAccepted",
+      "ar": "استلمه الخادم",
+      "en": "Taken by the server",
+      "desc": "SCR-FAT-026 — command state accepted",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerCommandDispatched",
+      "ar": "أُرسل إلى الهاتف",
+      "en": "Sent to the phone",
+      "desc": "SCR-FAT-026 — command state dispatched",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerCommandReceived",
+      "ar": "وصل إلى الهاتف",
+      "en": "Arrived at the phone",
+      "desc": "SCR-FAT-026 — command state received",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerCommandApplied",
+      "ar": "نُفّذ على الهاتف",
+      "en": "Done on the phone",
+      "desc": "SCR-FAT-026 — command state applied",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerCommandLimited",
+      "ar": "نُفّذ بعضه",
+      "en": "Partly done",
+      "desc": "SCR-FAT-026 — command state limited",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerCommandRejected",
+      "ar": "رفضه الخادم",
+      "en": "Refused by the server",
+      "desc": "SCR-FAT-026 — command state rejected",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerCommandExpired",
+      "ar": "انتهت صلاحيته",
+      "en": "It expired",
+      "desc": "SCR-FAT-026 — command state expired",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerCommandFailed",
+      "ar": "فشل تنفيذه",
+      "en": "It failed",
+      "desc": "SCR-FAT-026 — command state failed",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerTypeLock",
+      "ar": "إيقاف الهاتف",
+      "en": "Stop the phone",
+      "desc": "SCR-FAT-026 — one-line name of a lock_now command",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerTypeRelease",
+      "ar": "رفع الإيقاف",
+      "en": "Lift the stop",
+      "desc": "SCR-FAT-026 — one-line name of a release_lock command",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerTypeRefresh",
+      "ar": "تحديث الإعدادات",
+      "en": "Refresh the settings",
+      "desc": "SCR-FAT-026 — one-line name of a refresh_policy command",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerAskRefresh",
+      "ar": "حدّث إعدادات الهاتف",
+      "en": "Refresh the phone's settings",
+      "desc": "SCR-FAT-026 — the action that issues a refresh_policy command",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerActionWaiting",
+      "ar": "لا يظهر الأمر حتى يؤكد الهاتف قدرته",
+      "en": "An order appears only once the phone confirms the capability",
+      "desc": "SCR-FAT-026 — why no action button is offered for a capability that is not confirmed",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerBusy",
+      "ar": "أمرُك قيد الإرسال…",
+      "en": "Your order is on its way…",
+      "desc": "SCR-FAT-026 — while a command write is in flight",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerReceiptLine",
+      "ar": "ردّ الهاتف: {state} · {at}",
+      "en": "The phone answered: {state} · {at}",
+      "desc": "SCR-FAT-026 — a command receipt: what the device said it did, and when",
+      "placeholders": [
+        [
+          "state",
+          "String"
+        ],
+        [
+          "at",
+          "String"
+        ]
+      ]
+    },
+    {
+      "key": "deviceLedgerReceiptFailure",
+      "ar": "سبب الفشل: {reason}",
+      "en": "Why it failed: {reason}",
+      "desc": "SCR-FAT-026 — the failure reason the device or the server gave for an order",
+      "placeholders": [
+        [
+          "reason",
+          "String"
+        ]
+      ]
+    },
+    {
+      "key": "deviceLedgerRepliedAt",
+      "ar": "ردّ الهاتف: {when}",
+      "en": "The phone answered: {when}",
+      "desc": "SCR-FAT-026 — when the receipt for an order arrived",
+      "placeholders": [
+        [
+          "when",
+          "String"
+        ]
+      ]
+    },
+    {
+      "key": "deviceLedgerRefreshNote",
+      "ar": "لا يغيّر هذا الأمر وقت طفلك ولا يحجب تطبيقاً — يطلب من الهاتف أن يأخذ الإعدادات المحفوظة مرة أخرى",
+      "en": "This order changes no minutes and blocks no app — it asks the phone to take the stored settings again",
+      "desc": "SCR-FAT-026 — what the refresh command does and does not do, said before it is pressed",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerLockElsewhere",
+      "ar": "أمر الإيقاف ورفعه يُتخذان من لوحة وقت الشاشة — وهنا ترى أثره وإيصال الهاتف به",
+      "en": "Stopping and lifting the stop are decided on the screen-time panel — here you see the effect and the phone's receipt",
+      "desc": "SCR-FAT-026 — where the lock decision lives, so this screen offers one truth and not a second button",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerRefreshSent",
+      "ar": "طلب التحديث مسجّل عند الخادم",
+      "en": "The refresh request is recorded with the server",
+      "desc": "SCR-FAT-026 — after a refresh_policy order was accepted",
+      "placeholders": []
+    },
+    {
+      "key": "deviceLedgerOrdersShown",
+      "ar": "يظهر {shown} من {total}، الأحدث أولاً",
+      "en": "Showing {shown} of {total}, newest first",
+      "desc": "SCR-FAT-026 — how many commands the screen drew out of how many the server returned, so a shortened list is never read as the whole history",
+      "placeholders": [
+        [
+          "shown",
+          "int"
+        ],
+        [
+          "total",
+          "int"
+        ]
+      ]
+    }
+  ]
+}

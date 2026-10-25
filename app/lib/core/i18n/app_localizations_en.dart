@@ -13709,4 +13709,228 @@ class AppLocalizationsEn extends AppLocalizations {
   String screenTimeServerCapPresetValue(int minutes) {
     return '$minutes min';
   }
+
+  @override
+  String get capabilityStateConfirmed => 'Working on the phone';
+
+  @override
+  String get capabilityStateAwaitingSetup => 'Waiting for your setup';
+
+  @override
+  String get capabilityStatePermissionNeeded =>
+      'Needs a permission on the phone';
+
+  @override
+  String get capabilityStateUnsupported => 'This phone cannot do it';
+
+  @override
+  String get capabilityStateRevoked => 'The permission was withdrawn';
+
+  @override
+  String get capabilityStateUnknown => 'The phone has not told us yet';
+
+  @override
+  String get deviceLedgerTitle => 'What this phone can do';
+
+  @override
+  String get deviceLedgerHonestyLine =>
+      'Every line here is the last thing the phone itself reported, not what we hope for it.';
+
+  @override
+  String get deviceLedgerSubtitle =>
+      'What the phone can do, and what was ordered';
+
+  @override
+  String get deviceLedgerLoading =>
+      'Asking the server what this device can do…';
+
+  @override
+  String get deviceLedgerRefresh => 'Asking the phone to check again';
+
+  @override
+  String get deviceLedgerNoSession =>
+      'No server session — not one capability is shown';
+
+  @override
+  String get deviceLedgerDenied => 'This account may not see this device';
+
+  @override
+  String get deviceLedgerUnreachable =>
+      'The server did not answer — this is the last state that arrived';
+
+  @override
+  String get deviceLedgerBadReply =>
+      'The server\'s answer could not be read — nothing is shown';
+
+  @override
+  String get deviceLedgerNoReport =>
+      'This device has not reported a single capability yet';
+
+  @override
+  String get deviceLedgerNoChild =>
+      'This record is not linked to a child on the server';
+
+  @override
+  String deviceLedgerSummary(int working, int waiting) {
+    return '$working work, $waiting still wait for your setup';
+  }
+
+  @override
+  String deviceLedgerLastReport(String when) {
+    return 'Last report: $when';
+  }
+
+  @override
+  String deviceLedgerConfirmedSince(String when) {
+    return 'Confirmed since $when';
+  }
+
+  @override
+  String deviceLedgerFromApp(String version) {
+    return 'From app version $version';
+  }
+
+  @override
+  String deviceLedgerOnSystem(String os) {
+    return 'On system $os';
+  }
+
+  @override
+  String get deviceLedgerCapUsage => 'Counting the minutes used';
+
+  @override
+  String get deviceLedgerCapApps => 'Knowing the installed apps';
+
+  @override
+  String get deviceLedgerCapBlock => 'Showing the block screen over an app';
+
+  @override
+  String get deviceLedgerCapFollow => 'Following the app while it is used';
+
+  @override
+  String get deviceLedgerCapLock => 'Stopping the phone at once, on your word';
+
+  @override
+  String get deviceLedgerCapWeb => 'Blocking unsuitable sites';
+
+  @override
+  String get deviceLedgerCapPlace => 'Knowing the place during the day';
+
+  @override
+  String get deviceLedgerCapRestart => 'Still working after a restart';
+
+  @override
+  String get deviceLedgerCapAlerts => 'Alerts reaching the phone';
+
+  @override
+  String get deviceLedgerCapBattery => 'Reporting the battery level';
+
+  @override
+  String get deviceLedgerCapTamper =>
+      'Telling you when someone tries to switch it off';
+
+  @override
+  String get deviceLedgerCommandsTitle => 'Your orders for this device';
+
+  @override
+  String get deviceLedgerCommandsHint =>
+      'The server takes no order for a capability the phone has not confirmed';
+
+  @override
+  String get deviceLedgerCommandsEmpty =>
+      'No pending and no past order on this device';
+
+  @override
+  String get deviceLedgerCommandsDenied =>
+      'This account may not see this device\'s orders';
+
+  @override
+  String get deviceLedgerRefuseDevice =>
+      'The device will not take an order now — it is cut off or its trust was withdrawn';
+
+  @override
+  String get deviceLedgerRefuseOther => 'The server refused your order';
+
+  @override
+  String deviceLedgerCommandWindow(String recorded, String until) {
+    return 'Recorded $recorded · open until $until';
+  }
+
+  @override
+  String get deviceLedgerCommandClosed => 'Its window closed before it arrived';
+
+  @override
+  String get deviceLedgerCommandAccepted => 'Taken by the server';
+
+  @override
+  String get deviceLedgerCommandDispatched => 'Sent to the phone';
+
+  @override
+  String get deviceLedgerCommandReceived => 'Arrived at the phone';
+
+  @override
+  String get deviceLedgerCommandApplied => 'Done on the phone';
+
+  @override
+  String get deviceLedgerCommandLimited => 'Partly done';
+
+  @override
+  String get deviceLedgerCommandRejected => 'Refused by the server';
+
+  @override
+  String get deviceLedgerCommandExpired => 'It expired';
+
+  @override
+  String get deviceLedgerCommandFailed => 'It failed';
+
+  @override
+  String get deviceLedgerTypeLock => 'Stop the phone';
+
+  @override
+  String get deviceLedgerTypeRelease => 'Lift the stop';
+
+  @override
+  String get deviceLedgerTypeRefresh => 'Refresh the settings';
+
+  @override
+  String get deviceLedgerAskRefresh => 'Refresh the phone\'s settings';
+
+  @override
+  String get deviceLedgerActionWaiting =>
+      'An order appears only once the phone confirms the capability';
+
+  @override
+  String get deviceLedgerBusy => 'Your order is on its way…';
+
+  @override
+  String deviceLedgerReceiptLine(String state, String at) {
+    return 'The phone answered: $state · $at';
+  }
+
+  @override
+  String deviceLedgerReceiptFailure(String reason) {
+    return 'Why it failed: $reason';
+  }
+
+  @override
+  String deviceLedgerRepliedAt(String when) {
+    return 'The phone answered: $when';
+  }
+
+  @override
+  String get deviceLedgerRefreshNote =>
+      'This order changes no minutes and blocks no app — it asks the phone to take the stored settings again';
+
+  @override
+  String get deviceLedgerLockElsewhere =>
+      'Stopping and lifting the stop are decided on the screen-time panel — here you see the effect and the phone\'s receipt';
+
+  @override
+  String get deviceLedgerRefreshSent =>
+      'The refresh request is recorded with the server';
+
+  @override
+  String deviceLedgerOrdersShown(int shown, int total) {
+    return 'Showing $shown of $total, newest first';
+  }
 }

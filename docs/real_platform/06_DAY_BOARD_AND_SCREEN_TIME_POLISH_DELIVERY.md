@@ -55,7 +55,7 @@ Seven cards, ordered as a guardian's day rather than as a list of endpoints:
 | `app/test/features/n02_day/child_day_board_polish_test.dart` | 705 | new — this wave's acceptance test for the board |
 | `app/test/features/n03_screen_time/screen_time_panel_polish_test.dart` | 628 | new — this wave's acceptance test for the panel |
 | `app/lib/core/i18n/app_ar.arb` / `app_en.arb` + 3 generated files | +529 / +529 / +726 / +394 / +412 | 121 new messages, ar/en key parity exact (3973 keys each) |
-| `app/tool/_polish_add_arb.py` | 462 | the one-shot ARB + l10n writer for those 121 messages (run once; rerunning collides by design) |
+| `app/tool/arb_messages.py` + `app/tool/messages/*.json` | — | the table-driven ARB + l10n writer. The one-shot script this wave used (`app/tool/_polish_add_arb.py`, 462 lines) was retired in the next wave: it edited the ARB and the generated files in place and could only be run once, while `arb_messages.py` reads a JSON table, refuses any entry that would fail a CI gate before writing, and leaves the table in `tool/messages/` as the record of what was added |
 
 `app/lib/app/router.dart` and `app/tool/gen_routes.dart` were **not** opened. `ScreenTimeAuthority.unscopeChildId`
 is untouched and `test/features/n03_screen_time/screen_time_server_authority_test.dart` still has its 11 cases.

@@ -10,14 +10,34 @@
 4. نبض القلب الدوري المتطابق في الحالة لا يولد أحداثاً جديدة في `ai_events` تفادياً لإغراق قاعدة البيانات.
 5. لا يمكن إصدار أمر لجهاز مقطوع أو ملغى اعتماده (`revoked`).
 
+## App Surface (admitted 2026-10-26)
+
+The guardian screen that reads this spine is `SCR-FAT-026` (device health detail), mounted last in
+`app/lib/features/n12_devices/device_health_detail_screen.dart` by
+`app/lib/features/n12_devices/device_capability_ledger_panel.dart`, behind
+`app/lib/features/n12_devices/device_ledger_server_authority.dart`. Two rules bind that surface:
+
+6. **One capability, one road to the handset.** This screen issues `refresh_policy` only. `lock_now`
+   and `release_lock` belong to the screen-time panel until S11 moves that decision onto this bus, and
+   the ledger says so instead of offering a second button. A control that would duplicate an existing
+   power is a contract violation, not a UI choice.
+7. **No identifier that is not the server's.** A child or device id that is not a UUID is answered as
+   `notLinked` by the authority and never sent; the server's 404 must not be allowed to become a
+   statement about a child it has never met.
+
 ## Owned Files
 - `backend/migrations/117_family_device_capabilities.sql`
 - `backend/migrations/118_family_commands.sql`
 - `backend/migrations/119_ai_events_spine.sql`
 - `backend/src/device-capabilities.js`
 - `backend/src/command-lifecycle.js`
+- `app/lib/features/n12_devices/device_ledger_server_authority.dart`
+- `app/lib/features/n12_devices/device_capability_ledger_panel.dart`
+- `app/lib/core/design/components/device_capability_honesty_badge.dart`
 
 ## Enforcing Tests
+- `app/test/features/n12_devices/device_ledger_server_authority_test.dart` (13) ·  `device_capability_ledger_panel_test.dart` (7) ·  `device_health_detail_screen_test.dart` (9, two of them the ledger's screen wiring)
+
 - `backend/test/postgres-spine-s0-migrations.test.js`
 - `backend/test/spine-command-lifecycle.test.js`:
   - `S0 only enables lock_now / release_lock / refresh_policy`
@@ -29,7 +49,7 @@
   - `a revoked device credential is refused`
 
 ## Phone Evidence
-- لا يلزمه فحص أجهزة منفصل في هذه الشريحة (none).
+- العمود الخامس لم يُمنح بعد. الفحص المطلوب محدَّد في  [`docs/harness/cards/SAFETY-S0-app-surface.md`](../harness/cards/SAFETY-S0-app-surface.md) §٦  (٤ بنود على هاتفين)، ولا ✅ إلا بسطر مؤرَّخ في `docs/safety_phase/PHONE_CHECKS.md`.
 
 ## Change Rule
 أي إضافة لأنواع الأوامر أو القدرات تتطلب تعديل ENUM في هجرة SQL معتمدة وتحديث العقد وحارس الانحراف.

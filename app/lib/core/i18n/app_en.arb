@@ -17245,5 +17245,315 @@
         "type": "int"
       }
     }
+  },
+  "capabilityStateConfirmed": "Working on the phone",
+  "@capabilityStateConfirmed": {
+    "description": "S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — the device reported this capability as confirmed)"
+  },
+  "capabilityStateAwaitingSetup": "Waiting for your setup",
+  "@capabilityStateAwaitingSetup": {
+    "description": "S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — the capability exists but a family step is still missing)"
+  },
+  "capabilityStatePermissionNeeded": "Needs a permission on the phone",
+  "@capabilityStatePermissionNeeded": {
+    "description": "S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — the operating system has not granted this yet)"
+  },
+  "capabilityStateUnsupported": "This phone cannot do it",
+  "@capabilityStateUnsupported": {
+    "description": "S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — the device reported the capability as unsupported)"
+  },
+  "capabilityStateRevoked": "The permission was withdrawn",
+  "@capabilityStateRevoked": {
+    "description": "S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — the capability was revoked after it worked)"
+  },
+  "capabilityStateUnknown": "The phone has not told us yet",
+  "@capabilityStateUnknown": {
+    "description": "S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — no report exists for this capability)"
+  },
+  "deviceLedgerTitle": "What this phone can do",
+  "@deviceLedgerTitle": {
+    "description": "SCR-FAT-026 — heading of the device capability ledger the phone itself reported"
+  },
+  "deviceLedgerHonestyLine": "Every line here is the last thing the phone itself reported, not what we hope for it.",
+  "@deviceLedgerHonestyLine": {
+    "description": "SCR-FAT-026 — the honesty line under the capability ledger heading"
+  },
+  "deviceLedgerSubtitle": "What the phone can do, and what was ordered",
+  "@deviceLedgerSubtitle": {
+    "description": "SCR-FAT-026 — subtitle stating the source of every capability row"
+  },
+  "deviceLedgerLoading": "Asking the server what this device can do…",
+  "@deviceLedgerLoading": {
+    "description": "SCR-FAT-026 — while the capability ledger read is in flight"
+  },
+  "deviceLedgerRefresh": "Asking the phone to check again",
+  "@deviceLedgerRefresh": {
+    "description": "SCR-FAT-026 — label of the button that re-reads the ledger and the orders"
+  },
+  "deviceLedgerNoSession": "No server session — not one capability is shown",
+  "@deviceLedgerNoSession": {
+    "description": "SCR-FAT-026 — this build has no server session, so the ledger is empty by choice"
+  },
+  "deviceLedgerDenied": "This account may not see this device",
+  "@deviceLedgerDenied": {
+    "description": "SCR-FAT-026 — the server refused the capability read for this account"
+  },
+  "deviceLedgerUnreachable": "The server did not answer — this is the last state that arrived",
+  "@deviceLedgerUnreachable": {
+    "description": "SCR-FAT-026 — the ledger could not be re-read; the screen keeps the last answer and says so"
+  },
+  "deviceLedgerBadReply": "The server's answer could not be read — nothing is shown",
+  "@deviceLedgerBadReply": {
+    "description": "SCR-FAT-026 — a malformed ledger answer is stated as a defect, not papered over"
+  },
+  "deviceLedgerNoReport": "This device has not reported a single capability yet",
+  "@deviceLedgerNoReport": {
+    "description": "SCR-FAT-026 — the ledger is genuinely empty for this device"
+  },
+  "deviceLedgerNoChild": "This record is not linked to a child on the server",
+  "@deviceLedgerNoChild": {
+    "description": "SCR-FAT-026 — the device entry carries no server child identifier, so nothing was asked"
+  },
+  "deviceLedgerSummary": "{working} work, {waiting} still wait for your setup",
+  "@deviceLedgerSummary": {
+    "description": "SCR-FAT-026 — one-line count of confirmed and not-yet-working capabilities",
+    "placeholders": {
+      "working": {
+        "type": "int"
+      },
+      "waiting": {
+        "type": "int"
+      }
+    }
+  },
+  "deviceLedgerLastReport": "Last report: {when}",
+  "@deviceLedgerLastReport": {
+    "description": "SCR-FAT-026 — when the device last spoke about one capability",
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "deviceLedgerConfirmedSince": "Confirmed since {when}",
+  "@deviceLedgerConfirmedSince": {
+    "description": "SCR-FAT-026 — the moment the server recorded a capability as confirmed",
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "deviceLedgerFromApp": "From app version {version}",
+  "@deviceLedgerFromApp": {
+    "description": "SCR-FAT-026 — which app build on the phone made the report",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "deviceLedgerOnSystem": "On system {os}",
+  "@deviceLedgerOnSystem": {
+    "description": "SCR-FAT-026 — which operating system the report came from",
+    "placeholders": {
+      "os": {
+        "type": "String"
+      }
+    }
+  },
+  "deviceLedgerCapUsage": "Counting the minutes used",
+  "@deviceLedgerCapUsage": {
+    "description": "SCR-FAT-026 — capability row for usage metering"
+  },
+  "deviceLedgerCapApps": "Knowing the installed apps",
+  "@deviceLedgerCapApps": {
+    "description": "SCR-FAT-026 — capability row for the app inventory"
+  },
+  "deviceLedgerCapBlock": "Showing the block screen over an app",
+  "@deviceLedgerCapBlock": {
+    "description": "SCR-FAT-026 — capability row for the blocking overlay"
+  },
+  "deviceLedgerCapFollow": "Following the app while it is used",
+  "@deviceLedgerCapFollow": {
+    "description": "SCR-FAT-026 — capability row for accessibility-based enforcement"
+  },
+  "deviceLedgerCapLock": "Stopping the phone at once, on your word",
+  "@deviceLedgerCapLock": {
+    "description": "SCR-FAT-026 — capability row for the instant lock"
+  },
+  "deviceLedgerCapWeb": "Blocking unsuitable sites",
+  "@deviceLedgerCapWeb": {
+    "description": "SCR-FAT-026 — capability row for web filtering"
+  },
+  "deviceLedgerCapPlace": "Knowing the place during the day",
+  "@deviceLedgerCapPlace": {
+    "description": "SCR-FAT-026 — capability row for background location"
+  },
+  "deviceLedgerCapRestart": "Still working after a restart",
+  "@deviceLedgerCapRestart": {
+    "description": "SCR-FAT-026 — capability row for boot persistence"
+  },
+  "deviceLedgerCapAlerts": "Alerts reaching the phone",
+  "@deviceLedgerCapAlerts": {
+    "description": "SCR-FAT-026 — capability row for push delivery"
+  },
+  "deviceLedgerCapBattery": "Reporting the battery level",
+  "@deviceLedgerCapBattery": {
+    "description": "SCR-FAT-026 — capability row for battery reporting"
+  },
+  "deviceLedgerCapTamper": "Telling you when someone tries to switch it off",
+  "@deviceLedgerCapTamper": {
+    "description": "SCR-FAT-026 — capability row for tamper signals"
+  },
+  "deviceLedgerCommandsTitle": "Your orders for this device",
+  "@deviceLedgerCommandsTitle": {
+    "description": "SCR-FAT-026 — heading of the command ledger section"
+  },
+  "deviceLedgerCommandsHint": "The server takes no order for a capability the phone has not confirmed",
+  "@deviceLedgerCommandsHint": {
+    "description": "SCR-FAT-026 — the spine invariant stated in the parent's words"
+  },
+  "deviceLedgerCommandsEmpty": "No pending and no past order on this device",
+  "@deviceLedgerCommandsEmpty": {
+    "description": "SCR-FAT-026 — the command ledger is empty"
+  },
+  "deviceLedgerCommandsDenied": "This account may not see this device's orders",
+  "@deviceLedgerCommandsDenied": {
+    "description": "SCR-FAT-026 — the server refused the command list for this account"
+  },
+  "deviceLedgerRefuseDevice": "The device will not take an order now — it is cut off or its trust was withdrawn",
+  "@deviceLedgerRefuseDevice": {
+    "description": "SCR-FAT-026 — refusal when the device itself is not eligible for commands"
+  },
+  "deviceLedgerRefuseOther": "The server refused your order",
+  "@deviceLedgerRefuseOther": {
+    "description": "SCR-FAT-026 — a command the server refused. The sentence stops at the refusal on purpose: the server may or may not have explained itself, and promising that it said nothing would be the screen talking about an answer it did not read"
+  },
+  "deviceLedgerCommandWindow": "Recorded {recorded} · open until {until}",
+  "@deviceLedgerCommandWindow": {
+    "description": "SCR-FAT-026 — the window a command was valid for, in the device's own reported minutes",
+    "placeholders": {
+      "recorded": {
+        "type": "String"
+      },
+      "until": {
+        "type": "String"
+      }
+    }
+  },
+  "deviceLedgerCommandClosed": "Its window closed before it arrived",
+  "@deviceLedgerCommandClosed": {
+    "description": "SCR-FAT-026 — an order whose expiry passed unexecuted"
+  },
+  "deviceLedgerCommandAccepted": "Taken by the server",
+  "@deviceLedgerCommandAccepted": {
+    "description": "SCR-FAT-026 — command state accepted"
+  },
+  "deviceLedgerCommandDispatched": "Sent to the phone",
+  "@deviceLedgerCommandDispatched": {
+    "description": "SCR-FAT-026 — command state dispatched"
+  },
+  "deviceLedgerCommandReceived": "Arrived at the phone",
+  "@deviceLedgerCommandReceived": {
+    "description": "SCR-FAT-026 — command state received"
+  },
+  "deviceLedgerCommandApplied": "Done on the phone",
+  "@deviceLedgerCommandApplied": {
+    "description": "SCR-FAT-026 — command state applied"
+  },
+  "deviceLedgerCommandLimited": "Partly done",
+  "@deviceLedgerCommandLimited": {
+    "description": "SCR-FAT-026 — command state limited"
+  },
+  "deviceLedgerCommandRejected": "Refused by the server",
+  "@deviceLedgerCommandRejected": {
+    "description": "SCR-FAT-026 — command state rejected"
+  },
+  "deviceLedgerCommandExpired": "It expired",
+  "@deviceLedgerCommandExpired": {
+    "description": "SCR-FAT-026 — command state expired"
+  },
+  "deviceLedgerCommandFailed": "It failed",
+  "@deviceLedgerCommandFailed": {
+    "description": "SCR-FAT-026 — command state failed"
+  },
+  "deviceLedgerTypeLock": "Stop the phone",
+  "@deviceLedgerTypeLock": {
+    "description": "SCR-FAT-026 — one-line name of a lock_now command"
+  },
+  "deviceLedgerTypeRelease": "Lift the stop",
+  "@deviceLedgerTypeRelease": {
+    "description": "SCR-FAT-026 — one-line name of a release_lock command"
+  },
+  "deviceLedgerTypeRefresh": "Refresh the settings",
+  "@deviceLedgerTypeRefresh": {
+    "description": "SCR-FAT-026 — one-line name of a refresh_policy command"
+  },
+  "deviceLedgerAskRefresh": "Refresh the phone's settings",
+  "@deviceLedgerAskRefresh": {
+    "description": "SCR-FAT-026 — the action that issues a refresh_policy command"
+  },
+  "deviceLedgerActionWaiting": "An order appears only once the phone confirms the capability",
+  "@deviceLedgerActionWaiting": {
+    "description": "SCR-FAT-026 — why no action button is offered for a capability that is not confirmed"
+  },
+  "deviceLedgerBusy": "Your order is on its way…",
+  "@deviceLedgerBusy": {
+    "description": "SCR-FAT-026 — while a command write is in flight"
+  },
+  "deviceLedgerReceiptLine": "The phone answered: {state} · {at}",
+  "@deviceLedgerReceiptLine": {
+    "description": "SCR-FAT-026 — a command receipt: what the device said it did, and when",
+    "placeholders": {
+      "state": {
+        "type": "String"
+      },
+      "at": {
+        "type": "String"
+      }
+    }
+  },
+  "deviceLedgerReceiptFailure": "Why it failed: {reason}",
+  "@deviceLedgerReceiptFailure": {
+    "description": "SCR-FAT-026 — the failure reason the device or the server gave for an order",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "deviceLedgerRepliedAt": "The phone answered: {when}",
+  "@deviceLedgerRepliedAt": {
+    "description": "SCR-FAT-026 — when the receipt for an order arrived",
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "deviceLedgerRefreshNote": "This order changes no minutes and blocks no app — it asks the phone to take the stored settings again",
+  "@deviceLedgerRefreshNote": {
+    "description": "SCR-FAT-026 — what the refresh command does and does not do, said before it is pressed"
+  },
+  "deviceLedgerLockElsewhere": "Stopping and lifting the stop are decided on the screen-time panel — here you see the effect and the phone's receipt",
+  "@deviceLedgerLockElsewhere": {
+    "description": "SCR-FAT-026 — where the lock decision lives, so this screen offers one truth and not a second button"
+  },
+  "deviceLedgerRefreshSent": "The refresh request is recorded with the server",
+  "@deviceLedgerRefreshSent": {
+    "description": "SCR-FAT-026 — after a refresh_policy order was accepted"
+  },
+  "deviceLedgerOrdersShown": "Showing {shown} of {total}, newest first",
+  "@deviceLedgerOrdersShown": {
+    "description": "SCR-FAT-026 — how many commands the screen drew out of how many the server returned, so a shortened list is never read as the whole history",
+    "placeholders": {
+      "shown": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
   }
 }

@@ -23954,6 +23954,378 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'{minutes} دقيقة'**
   String screenTimeServerCapPresetValue(int minutes);
+
+  /// S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — the device reported this capability as confirmed)
+  ///
+  /// In ar, this message translates to:
+  /// **'يعمل على الهاتف'**
+  String get capabilityStateConfirmed;
+
+  /// S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — the capability exists but a family step is still missing)
+  ///
+  /// In ar, this message translates to:
+  /// **'في انتظار إعدادك'**
+  String get capabilityStateAwaitingSetup;
+
+  /// S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — the operating system has not granted this yet)
+  ///
+  /// In ar, this message translates to:
+  /// **'يحتاج إذناً من الهاتف'**
+  String get capabilityStatePermissionNeeded;
+
+  /// S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — the device reported the capability as unsupported)
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يقدر هذا الهاتف عليه'**
+  String get capabilityStateUnsupported;
+
+  /// S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — the capability was revoked after it worked)
+  ///
+  /// In ar, this message translates to:
+  /// **'سُحب الإذن'**
+  String get capabilityStateRevoked;
+
+  /// S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — no report exists for this capability)
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يخبرنا الهاتف بعد'**
+  String get capabilityStateUnknown;
+
+  /// SCR-FAT-026 — heading of the device capability ledger the phone itself reported
+  ///
+  /// In ar, this message translates to:
+  /// **'ما يقدر عليه هذا الهاتف'**
+  String get deviceLedgerTitle;
+
+  /// SCR-FAT-026 — the honesty line under the capability ledger heading
+  ///
+  /// In ar, this message translates to:
+  /// **'كل سطر هنا هو آخر ما بلّغ عنه الهاتف نفسه، لا ما نتمناه له.'**
+  String get deviceLedgerHonestyLine;
+
+  /// SCR-FAT-026 — subtitle stating the source of every capability row
+  ///
+  /// In ar, this message translates to:
+  /// **'قدرة الهاتف وأوامره'**
+  String get deviceLedgerSubtitle;
+
+  /// SCR-FAT-026 — while the capability ledger read is in flight
+  ///
+  /// In ar, this message translates to:
+  /// **'نسأل الخادم عن قدرات هذا الجهاز…'**
+  String get deviceLedgerLoading;
+
+  /// SCR-FAT-026 — label of the button that re-reads the ledger and the orders
+  ///
+  /// In ar, this message translates to:
+  /// **'طلب تحديث من الهاتف'**
+  String get deviceLedgerRefresh;
+
+  /// SCR-FAT-026 — this build has no server session, so the ledger is empty by choice
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد جلسة خادم — لم نعرض أي قدرة'**
+  String get deviceLedgerNoSession;
+
+  /// SCR-FAT-026 — the server refused the capability read for this account
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يملك هذا الحساب أن يرى هذا الجهاز'**
+  String get deviceLedgerDenied;
+
+  /// SCR-FAT-026 — the ledger could not be re-read; the screen keeps the last answer and says so
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يستجب الخادم — هذه آخر حالة وصلت'**
+  String get deviceLedgerUnreachable;
+
+  /// SCR-FAT-026 — a malformed ledger answer is stated as a defect, not papered over
+  ///
+  /// In ar, this message translates to:
+  /// **'جواب الخادم لم يُفهم — لم نعرض شيئاً'**
+  String get deviceLedgerBadReply;
+
+  /// SCR-FAT-026 — the ledger is genuinely empty for this device
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يبلّغ هذا الجهاز عن أي قدرة بعد'**
+  String get deviceLedgerNoReport;
+
+  /// SCR-FAT-026 — the device entry carries no server child identifier, so nothing was asked
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا السجل غير مربوط بابن على الخادم'**
+  String get deviceLedgerNoChild;
+
+  /// SCR-FAT-026 — one-line count of confirmed and not-yet-working capabilities
+  ///
+  /// In ar, this message translates to:
+  /// **'{working} تعمل، و{waiting} تنتظر إعدادك'**
+  String deviceLedgerSummary(int working, int waiting);
+
+  /// SCR-FAT-026 — when the device last spoke about one capability
+  ///
+  /// In ar, this message translates to:
+  /// **'آخر بلاغ: {when}'**
+  String deviceLedgerLastReport(String when);
+
+  /// SCR-FAT-026 — the moment the server recorded a capability as confirmed
+  ///
+  /// In ar, this message translates to:
+  /// **'مؤكَّد منذ {when}'**
+  String deviceLedgerConfirmedSince(String when);
+
+  /// SCR-FAT-026 — which app build on the phone made the report
+  ///
+  /// In ar, this message translates to:
+  /// **'من تطبيق إصدار {version}'**
+  String deviceLedgerFromApp(String version);
+
+  /// SCR-FAT-026 — which operating system the report came from
+  ///
+  /// In ar, this message translates to:
+  /// **'على نظام {os}'**
+  String deviceLedgerOnSystem(String os);
+
+  /// SCR-FAT-026 — capability row for usage metering
+  ///
+  /// In ar, this message translates to:
+  /// **'عدّ الدقائق المستهلكة'**
+  String get deviceLedgerCapUsage;
+
+  /// SCR-FAT-026 — capability row for the app inventory
+  ///
+  /// In ar, this message translates to:
+  /// **'معرفة التطبيقات الموجودة'**
+  String get deviceLedgerCapApps;
+
+  /// SCR-FAT-026 — capability row for the blocking overlay
+  ///
+  /// In ar, this message translates to:
+  /// **'إظهار شاشة الحجب فوق التطبيق'**
+  String get deviceLedgerCapBlock;
+
+  /// SCR-FAT-026 — capability row for accessibility-based enforcement
+  ///
+  /// In ar, this message translates to:
+  /// **'المتابعة أثناء الاستخدام الفعلي'**
+  String get deviceLedgerCapFollow;
+
+  /// SCR-FAT-026 — capability row for the instant lock
+  ///
+  /// In ar, this message translates to:
+  /// **'إيقاف الهاتف فوراً بأمرك'**
+  String get deviceLedgerCapLock;
+
+  /// SCR-FAT-026 — capability row for web filtering
+  ///
+  /// In ar, this message translates to:
+  /// **'حجب المواقع غير اللائقة'**
+  String get deviceLedgerCapWeb;
+
+  /// SCR-FAT-026 — capability row for background location
+  ///
+  /// In ar, this message translates to:
+  /// **'معرفة المكان أثناء اليوم'**
+  String get deviceLedgerCapPlace;
+
+  /// SCR-FAT-026 — capability row for boot persistence
+  ///
+  /// In ar, this message translates to:
+  /// **'البقاء فعّالاً بعد إعادة التشغيل'**
+  String get deviceLedgerCapRestart;
+
+  /// SCR-FAT-026 — capability row for push delivery
+  ///
+  /// In ar, this message translates to:
+  /// **'وصول التنبيهات إلى الهاتف'**
+  String get deviceLedgerCapAlerts;
+
+  /// SCR-FAT-026 — capability row for battery reporting
+  ///
+  /// In ar, this message translates to:
+  /// **'الإبلاغ عن مستوى البطارية'**
+  String get deviceLedgerCapBattery;
+
+  /// SCR-FAT-026 — capability row for tamper signals
+  ///
+  /// In ar, this message translates to:
+  /// **'تنبيهك عند محاولة إيقافه'**
+  String get deviceLedgerCapTamper;
+
+  /// SCR-FAT-026 — heading of the command ledger section
+  ///
+  /// In ar, this message translates to:
+  /// **'أوامرك لهذا الجهاز'**
+  String get deviceLedgerCommandsTitle;
+
+  /// SCR-FAT-026 — the spine invariant stated in the parent's words
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يقبل الخادم أمراً بقدرة لم يؤكد الهاتف أنه يملكها'**
+  String get deviceLedgerCommandsHint;
+
+  /// SCR-FAT-026 — the command ledger is empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا أمر معلّق ولا سابق على هذا الجهاز'**
+  String get deviceLedgerCommandsEmpty;
+
+  /// SCR-FAT-026 — the server refused the command list for this account
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يملك هذا الحساب أن يرى أوامر هذا الجهاز'**
+  String get deviceLedgerCommandsDenied;
+
+  /// SCR-FAT-026 — refusal when the device itself is not eligible for commands
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يقبل الجهاز أمراً الآن — إما مقطوع أو سُحب اعتماده'**
+  String get deviceLedgerRefuseDevice;
+
+  /// SCR-FAT-026 — a command the server refused. The sentence stops at the refusal on purpose: the server may or may not have explained itself, and promising that it said nothing would be the screen talking about an answer it did not read
+  ///
+  /// In ar, this message translates to:
+  /// **'رفض الخادم أمرك'**
+  String get deviceLedgerRefuseOther;
+
+  /// SCR-FAT-026 — the window a command was valid for, in the device's own reported minutes
+  ///
+  /// In ar, this message translates to:
+  /// **'سُجّل {recorded} · نافذته مفتوحة حتى {until}'**
+  String deviceLedgerCommandWindow(String recorded, String until);
+
+  /// SCR-FAT-026 — an order whose expiry passed unexecuted
+  ///
+  /// In ar, this message translates to:
+  /// **'انتهت نافذته قبل أن يصل'**
+  String get deviceLedgerCommandClosed;
+
+  /// SCR-FAT-026 — command state accepted
+  ///
+  /// In ar, this message translates to:
+  /// **'استلمه الخادم'**
+  String get deviceLedgerCommandAccepted;
+
+  /// SCR-FAT-026 — command state dispatched
+  ///
+  /// In ar, this message translates to:
+  /// **'أُرسل إلى الهاتف'**
+  String get deviceLedgerCommandDispatched;
+
+  /// SCR-FAT-026 — command state received
+  ///
+  /// In ar, this message translates to:
+  /// **'وصل إلى الهاتف'**
+  String get deviceLedgerCommandReceived;
+
+  /// SCR-FAT-026 — command state applied
+  ///
+  /// In ar, this message translates to:
+  /// **'نُفّذ على الهاتف'**
+  String get deviceLedgerCommandApplied;
+
+  /// SCR-FAT-026 — command state limited
+  ///
+  /// In ar, this message translates to:
+  /// **'نُفّذ بعضه'**
+  String get deviceLedgerCommandLimited;
+
+  /// SCR-FAT-026 — command state rejected
+  ///
+  /// In ar, this message translates to:
+  /// **'رفضه الخادم'**
+  String get deviceLedgerCommandRejected;
+
+  /// SCR-FAT-026 — command state expired
+  ///
+  /// In ar, this message translates to:
+  /// **'انتهت صلاحيته'**
+  String get deviceLedgerCommandExpired;
+
+  /// SCR-FAT-026 — command state failed
+  ///
+  /// In ar, this message translates to:
+  /// **'فشل تنفيذه'**
+  String get deviceLedgerCommandFailed;
+
+  /// SCR-FAT-026 — one-line name of a lock_now command
+  ///
+  /// In ar, this message translates to:
+  /// **'إيقاف الهاتف'**
+  String get deviceLedgerTypeLock;
+
+  /// SCR-FAT-026 — one-line name of a release_lock command
+  ///
+  /// In ar, this message translates to:
+  /// **'رفع الإيقاف'**
+  String get deviceLedgerTypeRelease;
+
+  /// SCR-FAT-026 — one-line name of a refresh_policy command
+  ///
+  /// In ar, this message translates to:
+  /// **'تحديث الإعدادات'**
+  String get deviceLedgerTypeRefresh;
+
+  /// SCR-FAT-026 — the action that issues a refresh_policy command
+  ///
+  /// In ar, this message translates to:
+  /// **'حدّث إعدادات الهاتف'**
+  String get deviceLedgerAskRefresh;
+
+  /// SCR-FAT-026 — why no action button is offered for a capability that is not confirmed
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يظهر الأمر حتى يؤكد الهاتف قدرته'**
+  String get deviceLedgerActionWaiting;
+
+  /// SCR-FAT-026 — while a command write is in flight
+  ///
+  /// In ar, this message translates to:
+  /// **'أمرُك قيد الإرسال…'**
+  String get deviceLedgerBusy;
+
+  /// SCR-FAT-026 — a command receipt: what the device said it did, and when
+  ///
+  /// In ar, this message translates to:
+  /// **'ردّ الهاتف: {state} · {at}'**
+  String deviceLedgerReceiptLine(String state, String at);
+
+  /// SCR-FAT-026 — the failure reason the device or the server gave for an order
+  ///
+  /// In ar, this message translates to:
+  /// **'سبب الفشل: {reason}'**
+  String deviceLedgerReceiptFailure(String reason);
+
+  /// SCR-FAT-026 — when the receipt for an order arrived
+  ///
+  /// In ar, this message translates to:
+  /// **'ردّ الهاتف: {when}'**
+  String deviceLedgerRepliedAt(String when);
+
+  /// SCR-FAT-026 — what the refresh command does and does not do, said before it is pressed
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يغيّر هذا الأمر وقت طفلك ولا يحجب تطبيقاً — يطلب من الهاتف أن يأخذ الإعدادات المحفوظة مرة أخرى'**
+  String get deviceLedgerRefreshNote;
+
+  /// SCR-FAT-026 — where the lock decision lives, so this screen offers one truth and not a second button
+  ///
+  /// In ar, this message translates to:
+  /// **'أمر الإيقاف ورفعه يُتخذان من لوحة وقت الشاشة — وهنا ترى أثره وإيصال الهاتف به'**
+  String get deviceLedgerLockElsewhere;
+
+  /// SCR-FAT-026 — after a refresh_policy order was accepted
+  ///
+  /// In ar, this message translates to:
+  /// **'طلب التحديث مسجّل عند الخادم'**
+  String get deviceLedgerRefreshSent;
+
+  /// SCR-FAT-026 — how many commands the screen drew out of how many the server returned, so a shortened list is never read as the whole history
+  ///
+  /// In ar, this message translates to:
+  /// **'يظهر {shown} من {total}، الأحدث أولاً'**
+  String deviceLedgerOrdersShown(int shown, int total);
 }
 
 class _AppLocalizationsDelegate

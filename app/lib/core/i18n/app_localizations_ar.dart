@@ -13485,4 +13485,217 @@ class AppLocalizationsAr extends AppLocalizations {
   String screenTimeServerCapPresetValue(int minutes) {
     return '$minutes دقيقة';
   }
+
+  @override
+  String get capabilityStateConfirmed => 'يعمل على الهاتف';
+
+  @override
+  String get capabilityStateAwaitingSetup => 'في انتظار إعدادك';
+
+  @override
+  String get capabilityStatePermissionNeeded => 'يحتاج إذناً من الهاتف';
+
+  @override
+  String get capabilityStateUnsupported => 'لا يقدر هذا الهاتف عليه';
+
+  @override
+  String get capabilityStateRevoked => 'سُحب الإذن';
+
+  @override
+  String get capabilityStateUnknown => 'لم يخبرنا الهاتف بعد';
+
+  @override
+  String get deviceLedgerTitle => 'ما يقدر عليه هذا الهاتف';
+
+  @override
+  String get deviceLedgerHonestyLine =>
+      'كل سطر هنا هو آخر ما بلّغ عنه الهاتف نفسه، لا ما نتمناه له.';
+
+  @override
+  String get deviceLedgerSubtitle => 'قدرة الهاتف وأوامره';
+
+  @override
+  String get deviceLedgerLoading => 'نسأل الخادم عن قدرات هذا الجهاز…';
+
+  @override
+  String get deviceLedgerRefresh => 'طلب تحديث من الهاتف';
+
+  @override
+  String get deviceLedgerNoSession => 'لا توجد جلسة خادم — لم نعرض أي قدرة';
+
+  @override
+  String get deviceLedgerDenied => 'لا يملك هذا الحساب أن يرى هذا الجهاز';
+
+  @override
+  String get deviceLedgerUnreachable => 'لم يستجب الخادم — هذه آخر حالة وصلت';
+
+  @override
+  String get deviceLedgerBadReply => 'جواب الخادم لم يُفهم — لم نعرض شيئاً';
+
+  @override
+  String get deviceLedgerNoReport => 'لم يبلّغ هذا الجهاز عن أي قدرة بعد';
+
+  @override
+  String get deviceLedgerNoChild => 'هذا السجل غير مربوط بابن على الخادم';
+
+  @override
+  String deviceLedgerSummary(int working, int waiting) {
+    return '$working تعمل، و$waiting تنتظر إعدادك';
+  }
+
+  @override
+  String deviceLedgerLastReport(String when) {
+    return 'آخر بلاغ: $when';
+  }
+
+  @override
+  String deviceLedgerConfirmedSince(String when) {
+    return 'مؤكَّد منذ $when';
+  }
+
+  @override
+  String deviceLedgerFromApp(String version) {
+    return 'من تطبيق إصدار $version';
+  }
+
+  @override
+  String deviceLedgerOnSystem(String os) {
+    return 'على نظام $os';
+  }
+
+  @override
+  String get deviceLedgerCapUsage => 'عدّ الدقائق المستهلكة';
+
+  @override
+  String get deviceLedgerCapApps => 'معرفة التطبيقات الموجودة';
+
+  @override
+  String get deviceLedgerCapBlock => 'إظهار شاشة الحجب فوق التطبيق';
+
+  @override
+  String get deviceLedgerCapFollow => 'المتابعة أثناء الاستخدام الفعلي';
+
+  @override
+  String get deviceLedgerCapLock => 'إيقاف الهاتف فوراً بأمرك';
+
+  @override
+  String get deviceLedgerCapWeb => 'حجب المواقع غير اللائقة';
+
+  @override
+  String get deviceLedgerCapPlace => 'معرفة المكان أثناء اليوم';
+
+  @override
+  String get deviceLedgerCapRestart => 'البقاء فعّالاً بعد إعادة التشغيل';
+
+  @override
+  String get deviceLedgerCapAlerts => 'وصول التنبيهات إلى الهاتف';
+
+  @override
+  String get deviceLedgerCapBattery => 'الإبلاغ عن مستوى البطارية';
+
+  @override
+  String get deviceLedgerCapTamper => 'تنبيهك عند محاولة إيقافه';
+
+  @override
+  String get deviceLedgerCommandsTitle => 'أوامرك لهذا الجهاز';
+
+  @override
+  String get deviceLedgerCommandsHint =>
+      'لا يقبل الخادم أمراً بقدرة لم يؤكد الهاتف أنه يملكها';
+
+  @override
+  String get deviceLedgerCommandsEmpty =>
+      'لا أمر معلّق ولا سابق على هذا الجهاز';
+
+  @override
+  String get deviceLedgerCommandsDenied =>
+      'لا يملك هذا الحساب أن يرى أوامر هذا الجهاز';
+
+  @override
+  String get deviceLedgerRefuseDevice =>
+      'لا يقبل الجهاز أمراً الآن — إما مقطوع أو سُحب اعتماده';
+
+  @override
+  String get deviceLedgerRefuseOther => 'رفض الخادم أمرك';
+
+  @override
+  String deviceLedgerCommandWindow(String recorded, String until) {
+    return 'سُجّل $recorded · نافذته مفتوحة حتى $until';
+  }
+
+  @override
+  String get deviceLedgerCommandClosed => 'انتهت نافذته قبل أن يصل';
+
+  @override
+  String get deviceLedgerCommandAccepted => 'استلمه الخادم';
+
+  @override
+  String get deviceLedgerCommandDispatched => 'أُرسل إلى الهاتف';
+
+  @override
+  String get deviceLedgerCommandReceived => 'وصل إلى الهاتف';
+
+  @override
+  String get deviceLedgerCommandApplied => 'نُفّذ على الهاتف';
+
+  @override
+  String get deviceLedgerCommandLimited => 'نُفّذ بعضه';
+
+  @override
+  String get deviceLedgerCommandRejected => 'رفضه الخادم';
+
+  @override
+  String get deviceLedgerCommandExpired => 'انتهت صلاحيته';
+
+  @override
+  String get deviceLedgerCommandFailed => 'فشل تنفيذه';
+
+  @override
+  String get deviceLedgerTypeLock => 'إيقاف الهاتف';
+
+  @override
+  String get deviceLedgerTypeRelease => 'رفع الإيقاف';
+
+  @override
+  String get deviceLedgerTypeRefresh => 'تحديث الإعدادات';
+
+  @override
+  String get deviceLedgerAskRefresh => 'حدّث إعدادات الهاتف';
+
+  @override
+  String get deviceLedgerActionWaiting => 'لا يظهر الأمر حتى يؤكد الهاتف قدرته';
+
+  @override
+  String get deviceLedgerBusy => 'أمرُك قيد الإرسال…';
+
+  @override
+  String deviceLedgerReceiptLine(String state, String at) {
+    return 'ردّ الهاتف: $state · $at';
+  }
+
+  @override
+  String deviceLedgerReceiptFailure(String reason) {
+    return 'سبب الفشل: $reason';
+  }
+
+  @override
+  String deviceLedgerRepliedAt(String when) {
+    return 'ردّ الهاتف: $when';
+  }
+
+  @override
+  String get deviceLedgerRefreshNote =>
+      'لا يغيّر هذا الأمر وقت طفلك ولا يحجب تطبيقاً — يطلب من الهاتف أن يأخذ الإعدادات المحفوظة مرة أخرى';
+
+  @override
+  String get deviceLedgerLockElsewhere =>
+      'أمر الإيقاف ورفعه يُتخذان من لوحة وقت الشاشة — وهنا ترى أثره وإيصال الهاتف به';
+
+  @override
+  String get deviceLedgerRefreshSent => 'طلب التحديث مسجّل عند الخادم';
+
+  @override
+  String deviceLedgerOrdersShown(int shown, int total) {
+    return 'يظهر $shown من $total، الأحدث أولاً';
+  }
 }

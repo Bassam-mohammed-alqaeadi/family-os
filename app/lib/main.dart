@@ -59,6 +59,7 @@ import 'package:family_os/features/n10_emergency/sos_server_authority.dart';
 import 'package:family_os/features/n02_day/location_ux_bridge.dart';
 import 'package:family_os/features/n03_screen_time/child_apps_local_persistence.dart';
 import 'package:family_os/features/n07_privacy/audit_log_local_persistence.dart';
+import 'package:family_os/features/n12_devices/device_ledger_server_authority.dart';
 import 'package:family_os/features/n12_devices/mother_permission_level_identity_repository.dart';
 import 'package:family_os/features/n12_devices/family_members_remote_repository.dart';
 import 'package:family_os/features/n12_devices/family_members_repository.dart';
@@ -217,6 +218,24 @@ Future<void> main() async {
     // local policy and a shield nobody had checked: a family could see "protected" on a
     // phone that had last spoken days ago. A build without this binding now says the server
     // did not answer rather than drawing a green dot.
+    // S0 - what a phone can actually enforce, and every order that was issued to it, are server
+    // facts. Before this binding the device screen drew a health picture from this handset's own
+    // record: a family could read "connected" with no proof that blocking, locking or location
+    // survived a restart. A build with no server now says nobody was asked, which is the truth.
+    final capabilityApi = familyEntryRuntime.capabilityApi;
+    final commandApi = familyEntryRuntime.commandApi;
+    if (capabilityApi != null && commandApi != null) {
+      DeviceLedgerAuthority.bind(
+        DeviceLedgerAuthority(
+          capabilities: capabilityApi,
+          commands: commandApi,
+          idToken: familyEntryRuntime.currentIdToken,
+          familyId: () => familyEntryRuntime.selectedFamilyId,
+        ),
+      );
+    } else {
+      DeviceLedgerAuthority.bind(null);
+    }
     final webFilterApi = familyEntryRuntime.webFilterApi;
     if (webFilterApi != null) {
       bindWebFilterServerAuthority(
@@ -330,6 +349,7 @@ Future<void> main() async {
     );
   } else {
     bindFamilyChatServerAuthority(null);
+    DeviceLedgerAuthority.bind(null);
   }
   runApp(
     FamilyOsApp(
@@ -466,6 +486,14 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
         transport: PackageFoundationGateHttpTransport(),
       ),
       chatApi: _familyChatApi(configuration),
+      capabilityApi: FamilyCapabilityApiClient(
+        configuration: configuration,
+        transport: PackageFoundationGateHttpTransport(),
+      ),
+      commandApi: FamilyCommandApiClient(
+        configuration: configuration,
+        transport: PackageFoundationGateHttpTransport(),
+      ),
       preferredFamilyId: preferredFamilyId,
       guardianPushRegistration: ({
         required String familyId,
