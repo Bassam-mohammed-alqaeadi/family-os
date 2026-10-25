@@ -960,11 +960,16 @@ class ScreenTimeCapCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              PrimaryBtn(
-                key: const Key('screen_time_server_cap_save'),
-                fullWidth: false,
-                label: saveLabel,
-                onPressed: enabled ? onSave : null,
+              // `Flexible`, so the field keeps its share and the button gives up width instead
+              // of pushing the row past the card: at textScale 2.0 on a small phone the save
+              // label wraps onto a second line rather than overflowing the card.
+              Flexible(
+                child: PrimaryBtn(
+                  key: const Key('screen_time_server_cap_save'),
+                  fullWidth: false,
+                  label: saveLabel,
+                  onPressed: enabled ? onSave : null,
+                ),
               ),
             ],
           ),

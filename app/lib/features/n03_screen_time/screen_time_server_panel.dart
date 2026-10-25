@@ -646,8 +646,15 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
             ),
           ),
           const SizedBox(height: 2),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // A Row would have to ellipsize one of these two sentences on a 320-pt phone at
+          // large text, and a parent who cannot read the limit is worse off than one whose
+          // line is two lines tall. `Wrap` keeps both whole and only stacks them when the
+          // width asks for it.
+          Wrap(
+            spacing: 6,
+            runSpacing: 2,
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(
                 l10n.screenTimeServerProgressLabel,
@@ -760,7 +767,7 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
     capMinutes: snapshot.policy.dailyLimitMinutes,
     grantedMinutes: snapshot.grantedMinutes,
     usageByApp: snapshot.usageByApp,
-    onOpenApps: _busy ? null : _openAppRules,
+    onOpenApps: _editable ? _openAppRules : null,
     openAppsLabel: l10n.screenTimeServerAppsRules,
   );
 
@@ -848,7 +855,11 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
       title: l10n.screenTimeServerAppsTitle,
       subtitle: l10n.screenTimeServerAppsSubtitle,
       actionLabel: l10n.screenTimeServerAppsOpen,
-      enabled: !_busy,
+      // The manage entry point follows the right to manage, not the right to look: a viewer
+      // reads every number in this panel and in the sheet, and is not offered a button that
+      // leads to writes they cannot make. Same gate as the cap field two cards above, so the
+      // panel does not hold two answers to one question.
+      enabled: _editable,
       onOpen: _openAppRules,
       summaryLine: status == null || status == ScreenTimeExtensionStatus.ready
           ? null

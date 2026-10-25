@@ -360,99 +360,108 @@ class _AppRulesSheetState extends State<_AppRulesSheet> {
           ),
           const Divider(height: 1),
           Expanded(
-            child: ListView(
+            // A decision sheet is read from top to bottom, and the sentence that answers a tap
+            // - "written on one app" - sits at the very end of it. A lazily built list does not
+            // build what is below the fold, so the rows and the answer did not exist until the
+            // parent scrolled. The sections here are few and fixed, so they are built whole in a
+            // `Column`, and the sheet keeps its own scroll view for the drag handle.
+            child: SingleChildScrollView(
               controller: scrollController,
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
-              children: [
-                if (_loading)
-                  AppLoadingState(message: l10n.screenTimeServerAppsLoading)
-                else if (status == ScreenTimeAuthorityStatus.notConfigured)
-                  _Notice(
-                    key: const Key('screen_time_server_apps_no_session'),
-                    label: l10n.screenTimeServerAppsNoSession,
-                    radius: radii.banner,
-                  )
-                else if (status == ScreenTimeAuthorityStatus.accessDenied)
-                  _Notice(
-                    key: const Key('screen_time_server_apps_denied'),
-                    label: l10n.screenTimeServerAppsDenied,
-                    radius: radii.banner,
-                  )
-                else if (status != null && status != ScreenTimeAuthorityStatus.ready)
-                  AppErrorState(
-                    key: const Key('screen_time_server_apps_stale'),
-                    kind: AppErrorKind.network,
-                    message: l10n.screenTimeServerAppsStale,
-                    onRetry: _busy ? null : _load,
-                  )
-                else ...[
-                  _CategoryRules(
-                    groups: groups,
-                    budgets: _budgets,
-                    controllers: _budgetControllers,
-                    editable: _editable,
-                    extensionStatus: _extensionStatus,
-                    onBlock: (category) =>
-                        _applyToCategory(category, blocked: true),
-                    onAllow: (category) =>
-                        _applyToCategory(category, blocked: false),
-                    onSaveBudget: _saveBudget,
-                  ),
-                  const SizedBox(height: 12),
-                  if (_apps.isEmpty)
-                    AppEmptyState(
-                      key: const Key('screen_time_server_apps_empty'),
-                      title: l10n.screenTimeServerAppsEmpty,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_loading)
+                    AppLoadingState(message: l10n.screenTimeServerAppsLoading)
+                  else if (status == ScreenTimeAuthorityStatus.notConfigured)
+                    _Notice(
+                      key: const Key('screen_time_server_apps_no_session'),
+                      label: l10n.screenTimeServerAppsNoSession,
+                      radius: radii.banner,
                     )
-                  else
-                    for (final app in _apps)
-                      _AppRuleRow(
-                        key: Key('screen_time_server_app_row_${app.appId}'),
-                        app: app,
-                        categoryLabel: screenTimeCategoryLabel(
-                          l10n,
-                          _categoryOf(app),
-                        ),
-                        open: _openAppId == app.appId,
-                        busy: _busyAppId == app.appId,
-                        editable: _editable,
-                        controller: _limitControllerFor(app.appId),
-                        onToggleOpen: () => setState(() {
-                          _openAppId = _openAppId == app.appId
-                              ? null
-                              : app.appId;
-                        }),
-                        onAllow: () => _setRule(
-                          app,
-                          status: FoundationGateAppRuleStatus.allowed,
-                          unlimited: true,
-                        ),
-                        onBlock: () =>
-                            _setRule(app, status: FoundationGateAppRuleStatus.blocked),
-                        onLimit: () {
-                          final minutes =
-                              int.tryParse(
-                                _limitControllerFor(app.appId).text.trim(),
-                              ) ??
-                              0;
-                          _setRule(
+                  else if (status == ScreenTimeAuthorityStatus.accessDenied)
+                    _Notice(
+                      key: const Key('screen_time_server_apps_denied'),
+                      label: l10n.screenTimeServerAppsDenied,
+                      radius: radii.banner,
+                    )
+                  else if (status != null && status != ScreenTimeAuthorityStatus.ready)
+                    AppErrorState(
+                      key: const Key('screen_time_server_apps_stale'),
+                      kind: AppErrorKind.network,
+                      message: l10n.screenTimeServerAppsStale,
+                      onRetry: _busy ? null : _load,
+                    )
+                  else ...[
+                    _CategoryRules(
+                      groups: groups,
+                      budgets: _budgets,
+                      controllers: _budgetControllers,
+                      editable: _editable,
+                      extensionStatus: _extensionStatus,
+                      onBlock: (category) =>
+                          _applyToCategory(category, blocked: true),
+                      onAllow: (category) =>
+                          _applyToCategory(category, blocked: false),
+                      onSaveBudget: _saveBudget,
+                    ),
+                    const SizedBox(height: 12),
+                    if (_apps.isEmpty)
+                      AppEmptyState(
+                        key: const Key('screen_time_server_apps_empty'),
+                        title: l10n.screenTimeServerAppsEmpty,
+                      )
+                    else
+                      for (final app in _apps)
+                        _AppRuleRow(
+                          key: Key('screen_time_server_app_row_${app.appId}'),
+                          app: app,
+                          categoryLabel: screenTimeCategoryLabel(
+                            l10n,
+                            _categoryOf(app),
+                          ),
+                          open: _openAppId == app.appId,
+                          busy: _busyAppId == app.appId,
+                          editable: _editable,
+                          controller: _limitControllerFor(app.appId),
+                          onToggleOpen: () => setState(() {
+                            _openAppId = _openAppId == app.appId
+                                ? null
+                                : app.appId;
+                          }),
+                          onAllow: () => _setRule(
                             app,
                             status: FoundationGateAppRuleStatus.allowed,
-                            limitMinutes: minutes <= 0 ? null : minutes,
-                            unlimited: minutes <= 0,
-                          );
-                        },
-                      ),
+                            unlimited: true,
+                          ),
+                          onBlock: () =>
+                              _setRule(app, status: FoundationGateAppRuleStatus.blocked),
+                          onLimit: () {
+                            final minutes =
+                                int.tryParse(
+                                  _limitControllerFor(app.appId).text.trim(),
+                                ) ??
+                                0;
+                            _setRule(
+                              app,
+                              status: FoundationGateAppRuleStatus.allowed,
+                              limitMinutes: minutes <= 0 ? null : minutes,
+                              unlimited: minutes <= 0,
+                            );
+                          },
+                        ),
+                  ],
+                  if (_note != null) ...[
+                    const SizedBox(height: 12),
+                    _Notice(
+                      key: const Key('screen_time_server_apps_note'),
+                      label: _note!,
+                      radius: radii.banner,
+                    ),
+                  ],
                 ],
-                if (_note != null) ...[
-                  const SizedBox(height: 12),
-                  _Notice(
-                    key: const Key('screen_time_server_apps_note'),
-                    label: _note!,
-                    radius: radii.banner,
-                  ),
-                ],
-              ],
+              ),
             ),
           ),
         ],
