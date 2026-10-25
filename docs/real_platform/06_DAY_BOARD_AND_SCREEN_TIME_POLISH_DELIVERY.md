@@ -170,9 +170,11 @@ sz=Size(800.0, 600.0) e0,b4,t24,1,1,1,0,0,0,0,0,1` — eight cards were owed, **
 `e0` said no exception was thrown anywhere. Lazily built children, and a cache knob these `ListView`s
 did not answer to. That is the whole of the "eight red tests", and the section below closes them.
 
-**Until the run named at the end of that section is green this wave is not mergeable, and nothing in this
-file may be read as "the phone works" — the fifth column is still ❌ for و٤/و٥/و٦ regardless of what the UI
-does.**
+**Closure: run 40234259198 on `3b9f0bb` is `completed / success` — `Analyze` clean, `0 failing test(s)`,
+the generated-source gate green, and with the 2288 collected cases of the run before it that is every case in
+the suite. The eight are closed, so this wave is CI-green and ready for the phone. It is still not merged and
+nothing here may be read as "the phone works": the fifth column for و٤/و٥/و٦ is still ❌ until
+`SAFETY-S3-D5-device-check.md` is executed on a device or an emulator.**
 
 ## How the eight red tests were closed
 
@@ -187,7 +189,7 @@ reason the file had to sort first in `test/` — the summariser only prints the 
 | 40227402782 | `2a0195f` | the same 8 — cache experiment #2, which measured the same 2400px as #1 |
 | 40232056752 | `e42c852` | the same 8; probe: 30000px of cache, `e0` errors, four cards built of eight |
 | 40233152417 | `540fdc4` | **5 failing, `cards built=8 missing=none`** — the composition bug is gone |
-| 40234259198 | `3b9f0bb` | the four defects the probe then exposed, fixed |
+| 40234259198 | `3b9f0bb` | **completed / success — `0 failing test(s)`**, the whole suite green |
 
 The fix in one line: **the guardian panel, the child board and the app-rules sheet are fixed lists, not
 feeds, so they are built whole** — a `Column` inside a `SingleChildScrollView`, keeping the same key,
