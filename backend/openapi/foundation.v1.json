@@ -6179,6 +6179,111 @@
         }
       }
     },
+    "/v1/families/{familyId}/customization": {
+      "get": {
+        "operationId": "readFamilyCustomizationProfile",
+        "summary": "Reads the family's week, rest days and addressing words",
+        "description": "Returns the persisted profile, or the default view with `source: default` when this family has never written one - a family that opens nothing sees what it has always seen. Any active guardian of the family may read it; the values are the server's, never a client snapshot.",
+        "tags": [
+          "Family customization"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The family profile, persisted or default.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyCustomizationProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateFamilyCustomizationProfile",
+        "summary": "Sets the family's week, rest days and addressing words",
+        "description": "Writes the family's own choices with optimistic version checking. Only the primary guardian may change the profile: these values are read by every system in the family, and one capability must have one writer. A co-guardian is refused with a named reason rather than silently ignored, and an empty rest-day list is refused by the same law the database holds.",
+        "tags": [
+          "Family customization"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FamilyCustomizationPatchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated profile, as the server stored it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyCustomizationProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
     "/v1/devices/{deviceId}/chat/participants": {
       "get": {
         "operationId": "listDeviceChatParticipants",
@@ -16088,6 +16193,198 @@
           "nextCursor"
         ],
         "additionalProperties": false
+      },
+      "CustomizationDayKey": {
+        "type": "string",
+        "enum": [
+          "sun",
+          "mon",
+          "tue",
+          "wed",
+          "thu",
+          "fri",
+          "sat"
+        ],
+        "description": "A day of the week named by key rather than numbered. A family's week is a fact about that family, so it travels as a word that reads itself in a log instead of an ordinal two implementations can number differently."
+      },
+      "GuardianLabelWords": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "The words this family wants the app to use for the people in it. These four keys are the whole vocabulary the product speaks with; any other key is refused, and a value is a word of 1 to 24 characters. A key that is absent means the app's own language files speak for that person - absence is not silence.",
+        "properties": {
+          "father": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 24
+          },
+          "mother": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 24
+          },
+          "guardian": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 24
+          },
+          "child": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 24
+          }
+        }
+      },
+      "GuardianLabelWordsPatch": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "The same four words, with one addition a partial update needs: `null` drops a word and hands that person back to the app's language files. Omitting a key leaves it untouched; naming it null removes it.",
+        "properties": {
+          "father": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 24
+          },
+          "mother": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 24
+          },
+          "guardian": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 24
+          },
+          "child": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 24
+          }
+        }
+      },
+      "FamilyCustomizationProfile": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "version",
+          "weekStartDay",
+          "numerals",
+          "restDays",
+          "guardianLabels",
+          "updatedAt",
+          "updatedByMembershipId",
+          "source"
+        ],
+        "description": "What this family decided for itself. `restDays` is derived from one stored flag per day, so the list is canonical - never duplicated, never dependent on the order a client typed it in.",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Optimistic concurrency token. 0 means the family has never written a row, and what is reported is the default view."
+          },
+          "weekStartDay": {
+            "$ref": "#/components/schemas/CustomizationDayKey"
+          },
+          "restDays": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 7,
+            "items": {
+              "$ref": "#/components/schemas/CustomizationDayKey"
+            },
+            "description": "Canonical sun to sat order."
+          },
+          "guardianLabels": {
+            "$ref": "#/components/schemas/GuardianLabelWords"
+          },
+          "updatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "updatedByMembershipId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Constrained to a membership of this family, in the database."
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "default",
+              "family"
+            ],
+            "description": "'default' is not a stored row; it is what the app falls back to."
+          },
+          "numerals": {
+            "type": "string",
+            "enum": [
+              "western",
+              "eastern"
+            ],
+            "description": "How this family's numbers are written. 'western' is the default every screen drew before the choice existed; the family may pick 'eastern'. Every number in the app passes through one reader that consults this value, which is why the value exists."
+          }
+        }
+      },
+      "FamilyCustomizationProfileResponse": {
+        "type": "object",
+        "required": [
+          "profile"
+        ],
+        "properties": {
+          "profile": {
+            "$ref": "#/components/schemas/FamilyCustomizationProfile"
+          }
+        }
+      },
+      "FamilyCustomizationPatchRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "expectedVersion"
+        ],
+        "description": "Partial update. `expectedVersion` must be the version the caller read: a profile two guardians opened cannot be saved twice with the second write winning in silence. `numerals` is the family's own choice of digit system. `restDays: []` is refused - a family may rest any day it likes, but not every day, because the weekday rules of other systems are measured against the days that are not rest.",
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "weekStartDay": {
+            "$ref": "#/components/schemas/CustomizationDayKey"
+          },
+          "restDays": {
+            "type": "array",
+            "maxItems": 7,
+            "items": {
+              "$ref": "#/components/schemas/CustomizationDayKey"
+            }
+          },
+          "labels": {
+            "$ref": "#/components/schemas/GuardianLabelWordsPatch"
+          },
+          "numerals": {
+            "type": "string",
+            "enum": [
+              "western",
+              "eastern"
+            ]
+          }
+        }
       }
     }
   }

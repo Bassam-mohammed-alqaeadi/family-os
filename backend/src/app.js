@@ -23,6 +23,7 @@ import { commandLifecycleFor } from './command-lifecycle.js';
 import { createChatEventBus } from './chat-realtime.js';
 import { CHAT_CURRENT_CAPABILITIES } from './family-chat.js';
 import { collaborationPolicyFor } from './collaboration-policy.js';
+import { familyCustomizationFor } from './family-customization.js';
 import { capabilityMatches } from './store/postgres-foundation-store.js';
 import { PAIRING_CLAIM_MAX_FAILURES, PAIRING_CLAIM_WINDOW_MINUTES } from './pairing-code.js';
 import {
@@ -81,6 +82,7 @@ import {
     eventRangeQuery,
     chatThreadCreateInput,
     collaborationPolicyInput,
+    familyCustomizationInput,
     chatThreadMemberInput,
     chatMessageInput,
     chatMessageEditInput,
@@ -230,6 +232,11 @@ export function createApp({
     notificationDispatcher = null,
     chatBus = createChatEventBus(),
     collaborationPolicy = collaborationPolicyFor(store),
+    // Programme «family character», slice 1. What day this family's week opens with, which days it
+    // rests, and what the app calls the people in it — three facts that lived in code until a family
+    // could own them. Read by any active guardian, written by the primary guardian only, versioned so
+    // two guardians editing the same page cannot overwrite each other in silence.
+    familyCustomization = familyCustomizationFor(store),
     // S0 spine. The device-capability ledger and the command bus share the same one
     // credential check as every device route; data access goes through the published
     // store helpers.
@@ -2359,6 +2366,46 @@ export function createApp({
             requireNoQueryParameters(request.query);
             const { change, expectedVersion } = collaborationPolicyInput(request.body);
             const result = await collaborationPolicy.update({
+                principal: request.principal,
+                familyId,
+                change,
+                expectedVersion,
+                correlationId: request.correlationId,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // ── Family character profile ─────────────────────────────────────────────────────────
+    //
+    // The three cultural switches every system reads and none of them owns: a week's first day,
+    // this family's rest days, and the words the app uses for the people in it. Per-child
+    // screen-time windows, filter categories and task decisions are NOT here - they keep their own
+    // endpoints, so a family never has to reconcile two answers about one capability.
+
+    app.get(
+        '/v1/families/:familyId/customization',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            requireNoQueryParameters(request.query);
+            const result = await familyCustomization.read({ principal: request.principal, familyId });
+            response.status(200).json(result);
+        }),
+    );
+
+    app.patch(
+        '/v1/families/:familyId/customization',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            requireNoQueryParameters(request.query);
+            const { change, expectedVersion } = familyCustomizationInput(request.body);
+            const result = await familyCustomization.update({
                 principal: request.principal,
                 familyId,
                 change,

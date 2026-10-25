@@ -127,6 +127,10 @@ const auditOnlyEvents = {
   'family.web_filter_temp_allow_requested': 'audit_only',
   'family.web_filter_temp_allow_denied': 'audit_only',
   'family.web_filter_temp_allow_approved': 'audit_only',
+  // Programme «family character» (migration 135). Which days a family rests, how its week opens and
+  // what its members are called are decisions the whole household shares, and the household is in
+  // the room that shows them: no phone should buzz because someone edited a preference.
+  'family.customization_updated': 'audit_only',
 };
 export const AUDIT_ONLY_REASONS = Object.freeze(auditOnlyEvents);
 

@@ -1,4 +1,9 @@
 import { CONSENT_CAPABILITIES } from './child-consents.js';
+import {
+  CUSTOMIZATION_DAYS,
+  CUSTOMIZATION_LABEL_KEYS,
+  NUMERAL_SYSTEMS,
+} from './family-customization.js';
 import { HttpError } from './http-error.js';
 import { PAIRING_CODE_LENGTH, PAIRING_CODE_PATTERN } from './pairing-code.js';
 
@@ -1965,4 +1970,102 @@ export function minutesLedgerQuery(query) {
     limit,
     cursor: query.cursor === undefined ? null : requiredText(query.cursor, 'cursor', { maxLength: 512 }),
   };
+}
+
+const CUSTOMIZATION_DAY_KEYS = new Set(CUSTOMIZATION_DAYS);
+const NUMERAL_SYSTEM_KEYS = new Set(NUMERAL_SYSTEMS);
+const CUSTOMIZATION_LABEL_KEY_SET = new Set(CUSTOMIZATION_LABEL_KEYS);
+const MAX_CUSTOMIZATION_LABEL_LENGTH = 24;
+
+/**
+ * Family character profile: which day the week opens with, which days this family rests, and what
+ * the app calls the people in it. `expectedVersion` is required because the profile is edited by a
+ * person, not appended to: a write that read an older page is refused rather than silently winning.
+ *
+ * Rest days arrive as day names and leave as a canonical, duplicate-free, day-ordered list, so the
+ * seven boolean columns below the wire can never disagree with each other depending on how a client
+ * happened to type them.
+ */
+export function familyCustomizationInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['weekStartDay', 'restDays', 'numerals', 'labels', 'expectedVersion']));
+  if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 0) {
+    throw new HttpError(400, 'invalid_request', 'expectedVersion must be a whole number from 0.');
+  }
+
+  const change = {};
+
+  if (body.weekStartDay !== undefined) {
+    if (typeof body.weekStartDay !== 'string' || !CUSTOMIZATION_DAY_KEYS.has(body.weekStartDay)) {
+      throw new HttpError(
+        400,
+        'invalid_request',
+        `weekStartDay must be one of ${[...CUSTOMIZATION_DAYS].join(', ')}.`,
+      );
+    }
+    change.weekStartDay = body.weekStartDay;
+  }
+
+  if (body.numerals !== undefined) {
+    if (typeof body.numerals !== 'string' || !NUMERAL_SYSTEM_KEYS.has(body.numerals)) {
+      throw new HttpError(400, 'invalid_request', 'numerals must be western or eastern.');
+    }
+    change.numerals = body.numerals;
+  }
+
+  if (body.restDays !== undefined) {
+    if (!Array.isArray(body.restDays) || body.restDays.length > CUSTOMIZATION_DAYS.length) {
+      throw new HttpError(400, 'invalid_request', 'restDays must be a list of day keys.');
+    }
+    const chosen = new Set();
+    for (const [index, day] of body.restDays.entries()) {
+      if (typeof day !== 'string' || !CUSTOMIZATION_DAY_KEYS.has(day)) {
+        throw new HttpError(400, 'invalid_request', `restDays[${index}] must be a day key.`);
+      }
+      if (chosen.has(day)) {
+        throw new HttpError(400, 'invalid_request', 'restDays must not repeat a day.');
+      }
+      chosen.add(day);
+    }
+    // An empty list is accepted here and refused by the module, where the answer carries the name of
+    // the law ("a family must keep at least one rest day") instead of a constraint number.
+    change.restDays = CUSTOMIZATION_DAYS.filter((day) => chosen.has(day));
+  }
+
+  if (body.labels !== undefined) {
+    const raw = body.labels;
+    if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+      throw new HttpError(400, 'invalid_request', 'labels must be an object of addressing words.');
+    }
+    const labels = {};
+    for (const [key, entry] of Object.entries(raw)) {
+      if (!CUSTOMIZATION_LABEL_KEY_SET.has(key)) {
+        throw new HttpError(400, 'invalid_request', `labels.${key} is not a word this app speaks with.`);
+      }
+      if (entry === null) {
+        labels[key] = null;
+        continue;
+      }
+      if (typeof entry !== 'string') {
+        throw new HttpError(400, 'invalid_request', `labels.${key} must be text, or null to drop it.`);
+      }
+      const word = entry.trim();
+      if (word.length === 0 || word.length > MAX_CUSTOMIZATION_LABEL_LENGTH) {
+        throw new HttpError(
+          400,
+          'invalid_request',
+          `labels.${key} must be ${MAX_CUSTOMIZATION_LABEL_LENGTH} characters or fewer, and not blank.`,
+        );
+      }
+      // A "word" that carries a newline or a control code is not a word, and this one is pasted
+      // into the middle of sentences on a child's screen.
+      if (/[\u0000-\u001f\u007f\u2028\u2029]/.test(word)) {
+        throw new HttpError(400, 'invalid_request', `labels.${key} must not contain control characters.`);
+      }
+      labels[key] = word;
+    }
+    change.labels = labels;
+  }
+
+  return { change, expectedVersion: body.expectedVersion };
 }

@@ -153,4 +153,8 @@ export const FOUNDATION_SCHEMA_MIGRATIONS = Object.freeze([
     name: '134_usage_consumption_ledger_shape.sql',
     sha256: '8b39d4cb82b16b0e91ecad0096fcc7866d8570d6a7d9270de3ede4f783b259d5',
   }),
+  Object.freeze({
+    name: '135_family_customization_profile.sql',
+    sha256: 'd8ac5120899c4885c491c325ad0221d6c460baf18920b5f8f3164c1fac7c5f0f',
+  }),
 ]);
