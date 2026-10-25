@@ -41,7 +41,7 @@ final class DeviceLedgerFakeTransport implements FoundationGateHttpTransport {
 
   final List<String> calls = <String>[];
   final List<String> bodies = <String>[];
-  final List<Map<String, String>> headers = <String, String>[];
+  final List<Map<String, String>> headers = <Map<String, String>>[];
 
   Map<String, Object?>? get lastBody =>
       bodies.isEmpty ? null : jsonDecode(bodies.last) as Map<String, Object?>;
