@@ -114,6 +114,11 @@ needed, and each verdict was read from the check-run annotations, never from the
 | 2 | `d523192` | ❌ failure | `Analyze` clean, `Verify generated source is committed` clean, `Run tests` → **2307 tests passed, 5 failed**. All five failures inside this slice. |
 | 3 | `748c405` | ✅ **completed / success** | `0 failing test(s); 1 event(s); 1 chunk(s)`. Every step green through `Verify generated source is committed`. Run [`40239550334`](https://github.com/Bassam-mohammed-alqaeadi/family-os/actions/runs/40239550334/job/121308213768). The single `failure`-level annotation is the pre-existing `FsSessionKernel: SQLite open failed — Memory fallback` stdout line, which is printed in green runs as well. |
 
+**Scope of that verdict.** Flutter CI's push trigger is filtered to `app/**`, `backend/contracts/**`
+and the workflow file itself, so the docs-only commit `5c04dd3` that carries this record starts no
+run — by design, not by omission. The code this section certifies is `748c405`; between the two,
+`git diff --stat` is three markdown files and no line of `app/`.
+
 Round 2 caught four defects in the shipped code and two assertions written from a wrong model of that
 code. They stay in this record because the last run being green is worth nothing if the way it got
 there is rewritten out:
