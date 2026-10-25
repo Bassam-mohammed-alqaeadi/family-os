@@ -640,7 +640,7 @@ class ScreenTimeWeekScheduleCard extends StatelessWidget {
                 child: TextButton.icon(
                   key: const Key('screen_time_server_bedtime_end'),
                   onPressed: enabled ? onPickBedtimeEnd : null,
-                  icon: const Icon(Icons.wake, size: 16),
+                  icon: const Icon(Icons.alarm, size: 16),
                   label: Text(bedtimeEndLabel),
                 ),
               ),
