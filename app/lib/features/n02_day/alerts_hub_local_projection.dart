@@ -84,7 +84,7 @@ final class ProjectingAlertsHubRepository implements AlertsHubRepository {
     try {
       await Stage1LocationRuntime.ensureOpen();
       final domain = _locationDomain ?? Stage1LocationRuntime.store;
-      return domain.listGeofenceEvents(family, limit: 12);
+      return await domain.listGeofenceEvents(family, limit: 12);
     } catch (_) {
       return const [];
     }

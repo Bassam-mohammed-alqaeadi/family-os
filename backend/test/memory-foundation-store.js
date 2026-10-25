@@ -1,5 +1,6 @@
 // Test-only fixture. It is never imported by the runtime server and is not a development fallback.
 import { createHash, randomUUID } from 'node:crypto';
+import { generatePairingCode } from '../src/pairing-code.js';
 import { AI_EVENT_SCHEMA_VERSION, aiEventDefinition } from '../src/ai-events.js';
 import { HttpError } from '../src/http-error.js';
 import { toGuardianDeviceView } from '../src/device-lifecycle.js';
@@ -123,6 +124,22 @@ export class MemoryFoundationStore {
 
   newCapability() {
     return `${randomUUID().replaceAll('-', '')}${randomUUID().replaceAll('-', '')}`;
+  }
+
+  // The same generator as production (the contract's issue range).
+  newPairingCode() {
+    return generatePairingCode();
+  }
+
+  issuePairingCode(now) {
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const candidate = this.newPairingCode();
+      const hash = this.capabilityHash(candidate);
+      const clash = [...this.devicePairings.values()].some((item) =>
+        item.pairingCodeHash === hash && item.claimedAt == null && item.expiresAt > now);
+      if (!clash) return candidate;
+    }
+    throw new HttpError(503, 'pairing_code_unavailable', 'A pairing code could not be issued right now. Try again.');
   }
 
   // The same derivation the real store uses, with this fixture's own clock. A test
@@ -358,7 +375,7 @@ export class MemoryFoundationStore {
       }
       throw new HttpError(409, 'pairing_code_not_replayable', 'A pairing code was already issued. Create a new pairing code.');
     }
-    const pairingCode = this.newCapability();
+    const pairingCode = this.issuePairingCode(this.now().toISOString());
     const pairing = {
       id: randomUUID(), familyId, childId, deviceLabel,
       pairingCodeHash: this.capabilityHash(pairingCode),
@@ -377,10 +394,12 @@ export class MemoryFoundationStore {
 
   async claimDevicePairing({ pairingCode, correlationId }) {
     const now = this.now().toISOString();
-    const pairing = [...this.devicePairings.values()].find((item) =>
+    const matches = [...this.devicePairings.values()].filter((item) =>
       item.pairingCodeHash === this.capabilityHash(pairingCode) &&
       item.claimedAt == null && item.expiresAt > now,
     );
+    // Fail closed, as the production store does: an ambiguous code never picks a pairing.
+    const pairing = matches.length === 1 ? matches[0] : undefined;
     if (!pairing) {
       throw new HttpError(400, 'pairing_not_claimable', 'This pairing code is invalid, expired, or already used.');
     }

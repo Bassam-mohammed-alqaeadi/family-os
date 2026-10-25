@@ -24,6 +24,10 @@ import 'package:family_os/features/n02_day/children_list_repository.dart';
 import 'package:family_os/features/n02_day/safe_zones_repository.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
+import 'package:family_os/core/runtime/family_roster_source.dart';
+import 'package:family_os/core/runtime/family_device_source.dart';
+import 'package:family_os/foundation_gate/device_lifecycle.dart';
+import 'package:family_os/features/n02_day/day_child_mock.dart';
 
 /// Widget keys for SCR-FAT-013 acceptance.
 abstract final class ChildProfileKeys {
@@ -37,6 +41,16 @@ abstract final class ChildProfileKeys {
   static const toolsGrid = Key('child_profile_tools');
   static const childLean = Key('child_profile_child_lean');
   static const deleteChild = Key('child_profile_delete_child');
+  static const deleteChildConfirm = Key('child_profile_delete_child_confirm');
+  static const deleteChildConfirmCancel = Key(
+    'child_profile_delete_child_confirm_cancel',
+  );
+  static const deleteChildConfirmAccept = Key(
+    'child_profile_delete_child_confirm_accept',
+  );
+  static const deleteChildConfirmField = Key(
+    'child_profile_delete_child_confirm_field',
+  );
   static const addDevice = Key('child_profile_add_device');
   static const maxDevicesBanner = Key('child_profile_max_devices_banner');
   static const remoteEndConfirm = Key('child_profile_remote_end_confirm');
@@ -173,6 +187,8 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
   bool _maxDevicesBlocked = false;
   String? _rosterProvenance;
   int _assignedZonesCount = 0;
+  List<FamilyRosterChild> _cachedRosterChildren = const [];
+  FamilyChildDeviceSummary? _cachedChildDeviceSummary;
 
   AppRole get _role =>
       widget.roleOverride ??
@@ -182,8 +198,15 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
 
   String? get _resolvedChildId {
     final raw = widget.childId?.trim();
-    if (raw == null || raw.isEmpty) return null;
-    return raw;
+    if (raw != null && raw.isNotEmpty) return raw;
+    final identity = CurrentIdentity.maybeOf(context);
+    if (identity != null && identity.activeChildId.value.isNotEmpty) {
+      return identity.activeChildId.value;
+    }
+    if (_cachedRosterChildren.isNotEmpty) {
+      return _cachedRosterChildren.first.childId.value;
+    }
+    return null;
   }
 
   @override
@@ -211,9 +234,24 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
   }
 
   FamilyId? get _activeFamilyId =>
+      AppScope.maybeOf(context)?.identity.value.familyId ??
       CurrentIdentity.maybeOf(context)?.activeFamilyId;
 
   ChildManagementCapabilities _capabilities() {
+    final scope = AppScope.maybeOf(context);
+    if (scope != null && scope.identity.value.isRemoteAuthoritative) {
+      final role = scope.identity.value.role;
+      final isParent = role == AppRole.father || role == AppRole.mother;
+      return ChildManagementCapabilities(
+        canCreateChild: isParent,
+        canDeleteChild: isParent,
+        canManageDevices: isParent,
+        canCloseNuclearEnrollment: isParent,
+        canManageLogoutPermission: isParent,
+        canEndChildSession: isParent,
+        canChangePrimaryDevice: isParent,
+      );
+    }
     final familyId = _activeFamilyId;
     if (familyId == null) {
       return const ChildManagementCapabilities(
@@ -229,10 +267,65 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
     return _managementRepo.capabilitiesFor(familyId);
   }
 
+  static String _formatLastSeen(AppLocalizations l10n, DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inSeconds < 60) return l10n.childProfileLastSeenNow;
+    if (diff.inMinutes < 60) return l10n.childProfileLastSeenMinutes(diff.inMinutes);
+    if (diff.inHours < 24) return l10n.childProfileLastSeenHours(diff.inHours);
+    return l10n.childProfileLastSeenDays(diff.inDays);
+  }
+
   List<ManagedDeviceRecord> _devicesForCurrentChild() {
     final familyId = _activeFamilyId;
     final childId = _resolvedChildId;
     if (familyId == null || childId == null) return const [];
+
+    final summary = _cachedChildDeviceSummary;
+    if (summary != null && summary.devices.isNotEmpty) {
+      return summary.devices.map((d) {
+        return ManagedDeviceRecord(
+          familyId: familyId,
+          childId: ChildId(childId),
+          deviceId: DeviceId(d.id),
+          primary: d == summary.devices.first,
+          enrollments: [
+            Enrollment(
+              id: EnrollmentId('enr_${d.id}'),
+              deviceId: DeviceId(d.id),
+              familyId: familyId,
+              childId: ChildId(childId),
+              createdAt: d.linkedAt ?? DateTime.now(),
+              state: d.credentialState ==
+                      FoundationGateDeviceCredentialState.revoked
+                  ? EnrollmentState.revoked
+                  : EnrollmentState.enrolled,
+            ),
+          ],
+        );
+      }).toList(growable: false);
+    }
+
+    if (summary != null && summary.deviceCount > 0) {
+      return [
+        ManagedDeviceRecord(
+          familyId: familyId,
+          childId: ChildId(childId),
+          deviceId: DeviceId('dev_$childId'),
+          primary: true,
+          enrollments: [
+            Enrollment(
+              id: EnrollmentId('enr_$childId'),
+              deviceId: DeviceId('dev_$childId'),
+              familyId: familyId,
+              childId: ChildId(childId),
+              createdAt: summary.lastSeenAt ?? DateTime.now(),
+              state: EnrollmentState.enrolled,
+            ),
+          ],
+        ),
+      ];
+    }
+
     return _managementRepo.listDevices(
       familyId: familyId,
       childId: ChildId(childId),
@@ -334,9 +427,89 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
       _loadFailed = false;
     });
     try {
-      final familyId = CurrentIdentity.maybeOf(context)?.activeFamilyId;
-      final profile = await _repo.loadById(id, familyId: familyId);
-      final provenance = await _childrenListRepo.loadProvenance(
+      final scope = AppScope.maybeOf(context);
+      final familyId = scope?.identity.value.familyId ??
+          CurrentIdentity.maybeOf(context)?.activeFamilyId;
+      final rosterSource = scope?.roster;
+      final deviceSource = scope?.devices;
+
+      ChildProfile? profile;
+      String? provenance;
+      FamilyChildDeviceSummary? childDeviceSummary;
+      List<FamilyRosterChild> rosterChildren = const [];
+
+      if (scope != null &&
+          scope.identity.value.isRemoteAuthoritative &&
+          familyId != null &&
+          rosterSource != null) {
+        final roster = await rosterSource.load(familyId);
+        rosterChildren = roster.children;
+        FamilyRosterChild? matchedChild;
+        for (final c in roster.children) {
+          if (c.childId.value == id) {
+            matchedChild = c;
+            break;
+          }
+        }
+
+        if (deviceSource != null) {
+          final devSnapshot = await deviceSource.load(familyId);
+          childDeviceSummary = devSnapshot.forChild(ChildId(id));
+        }
+
+        if (!mounted) return;
+
+        if (matchedChild != null) {
+          final swatch = switch (matchedChild.themeColor) {
+            'amber' => DayChildSwatch.amber,
+            'sky' => DayChildSwatch.sky,
+            _ => DayChildSwatch.purple,
+          };
+          final locationLabel = childDeviceSummary?.locationLabel ?? '';
+          final batteryLabel = childDeviceSummary?.batteryLevel != null
+              ? '${childDeviceSummary!.batteryLevel}%'
+              : '';
+          final l10n = AppLocalizations.of(context);
+          final lastSeen = childDeviceSummary?.lastSeenAt;
+          final lastSeenLabel = lastSeen != null
+              ? _formatLastSeen(l10n, lastSeen)
+              : '';
+
+          final health = switch (childDeviceSummary?.connectionState) {
+            ChildDeviceConnectionState.active => ChildListHealth.excellent,
+            ChildDeviceConnectionState.needsAttention => ChildListHealth.atRisk,
+            _ => childDeviceSummary?.needsAttention == true
+                ? ChildListHealth.atRisk
+                : ChildListHealth.unknown,
+          };
+
+          if (matchedChild.hasCompleteDisplayProfile) {
+            profile = ChildProfile(
+              id: matchedChild.childId.value,
+              displayName: matchedChild.displayName!,
+              emoji: (matchedChild.avatarEmoji != null &&
+                      matchedChild.avatarEmoji!.isNotEmpty)
+                  ? matchedChild.avatarEmoji!
+                  : '',
+              swatch: swatch,
+              ageYears: matchedChild.ageYears!,
+              locationLabel: locationLabel,
+              lastSeenLabel: lastSeenLabel,
+              batteryLabel: batteryLabel,
+              walletLabel: '',
+              todayUsedLabel: '',
+              todayCapLabel: '',
+              lastHeartbeatLabel: lastSeenLabel,
+              health: health,
+              warnRing: childDeviceSummary?.connectionState ==
+                  ChildDeviceConnectionState.needsAttention,
+            );
+          }
+        }
+      }
+
+      profile ??= await _repo.loadById(id, familyId: familyId);
+      provenance = await _childrenListRepo.loadProvenance(
         familyId: familyId,
       );
       var zonesCount = 0;
@@ -357,6 +530,8 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
         _profile = profile;
         _rosterProvenance = provenance;
         _assignedZonesCount = zonesCount;
+        _cachedRosterChildren = rosterChildren;
+        _cachedChildDeviceSummary = childDeviceSummary;
         _loading = false;
         _loadFailed = false;
         _maxDevicesBlocked = false;
@@ -383,6 +558,63 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
       AppToast.show(context, message: l10n.childScreenTimeReadOnly);
       return;
     }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          key: ChildProfileKeys.deleteChildConfirm,
+          title: Text(l10n.childProfileDeleteConfirmTitle),
+          content: Text(l10n.childProfileDeleteConfirmPrompt),
+          actions: [
+            TextButton(
+              key: ChildProfileKeys.deleteChildConfirmCancel,
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
+            ),
+            FilledButton(
+              key: ChildProfileKeys.deleteChildConfirmAccept,
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(l10n.childProfileDeleteConfirmAction),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+    if (!mounted) return;
+
+    final scope = AppScope.maybeOf(context);
+    if (scope != null && scope.identity.value.isRemoteAuthoritative) {
+      final deleteResult = await scope.childDeletion.deleteChild(
+        familyId: familyId,
+        childId: ChildId(childId),
+        idempotencyKey: newFoundationGateIdempotencyKey(),
+      );
+      if (!mounted) return;
+      if (!deleteResult.isSuccess) {
+        AppToast.show(context, message: l10n.settingsPersistError);
+        return;
+      }
+      setState(() {
+        _cachedRosterChildren =
+            _cachedRosterChildren.where((c) => c.childId.value != childId).toList();
+      });
+      AppToast.show(context, message: l10n.childProfileDeleteSuccessToast);
+      if (widget.onDeletedChild != null) {
+        widget.onDeletedChild!();
+        return;
+      }
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/scr-fat-012');
+      }
+      return;
+    }
+
     final deleted = _managementRepo.deleteChild(
       familyId: familyId,
       childId: ChildId(childId),
@@ -392,12 +624,20 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
       AppToast.show(context, message: l10n.settingsPersistError);
       return;
     }
-    AppToast.show(context, message: l10n.childScreenTimeSaveToast);
+    setState(() {
+      _cachedRosterChildren =
+          _cachedRosterChildren.where((c) => c.childId.value != childId).toList();
+    });
+    AppToast.show(context, message: l10n.childProfileDeleteSuccessToast);
     if (widget.onDeletedChild != null) {
       widget.onDeletedChild!();
       return;
     }
-    context.pop();
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/scr-fat-012');
+    }
   }
 
   Future<void> _addDevice() async {
@@ -459,6 +699,11 @@ class ChildProfileScreenState extends State<ChildProfileScreen> {
   List<ManagedChildRecord> _selectableChildren() {
     final familyId = _activeFamilyId;
     if (familyId == null) return const [];
+    if (_cachedRosterChildren.isNotEmpty) {
+      return _cachedRosterChildren
+          .map((c) => ManagedChildRecord(familyId: familyId, childId: c.childId))
+          .toList(growable: false);
+    }
     return _managementRepo.listChildren(familyId);
   }
 
@@ -869,14 +1114,17 @@ class _ProfileBody extends StatelessWidget {
     final statusLabel = switch (profile.health) {
       ChildListHealth.excellent => l10n.childProfileStatusOk,
       ChildListHealth.atRisk => l10n.childProfileStatusAtRisk,
+      ChildListHealth.unknown => l10n.childrenListDeviceStateUnavailable,
     };
     final connectionLabel = switch (profile.health) {
       ChildListHealth.excellent => l10n.childrenListHealthExcellent,
       ChildListHealth.atRisk => l10n.childrenListHealthAtRisk,
+      ChildListHealth.unknown => l10n.childrenListDeviceStateUnavailable,
     };
     final healthTag = switch (profile.health) {
       ChildListHealth.excellent => TagVariant.g,
       ChildListHealth.atRisk => TagVariant.a,
+      ChildListHealth.unknown => TagVariant.p,
     };
     final identitySemantics = l10n.childProfileIdentitySemantics(
       profile.displayName,
@@ -957,7 +1205,9 @@ class _ProfileBody extends StatelessWidget {
                       Expanded(
                         child: _MetricTile(
                           emoji: '🔋',
-                          value: profile.batteryLabel,
+                          value: profile.batteryLabel.isNotEmpty
+                              ? profile.batteryLabel
+                              : '—',
                           label: l10n.childProfileMetricBattery,
                         ),
                       ),
@@ -965,7 +1215,9 @@ class _ProfileBody extends StatelessWidget {
                       Expanded(
                         child: _MetricTile(
                           emoji: '📶',
-                          value: connectionLabel,
+                          value: connectionLabel.isNotEmpty
+                              ? connectionLabel
+                              : '—',
                           label: l10n.childProfileMetricConnection,
                         ),
                       ),
@@ -973,7 +1225,9 @@ class _ProfileBody extends StatelessWidget {
                       Expanded(
                         child: _MetricTile(
                           emoji: '📍',
-                          value: profile.locationLabel,
+                          value: profile.locationLabel.isNotEmpty
+                              ? profile.locationLabel
+                              : '—',
                           label: l10n.childProfileMetricLocation,
                         ),
                       ),
@@ -1327,7 +1581,7 @@ class _ProfileBody extends StatelessWidget {
                   key: ChildProfileKeys.deleteChild,
                   onPressed: onDeleteChild,
                   child: Text(
-                    l10n.acceptMotherInviteDecline,
+                    l10n.childProfileDeleteButton,
                     style: TextStyle(
                       color: colors.coral,
                       fontWeight: FontWeight.w800,

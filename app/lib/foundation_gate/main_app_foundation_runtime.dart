@@ -4,6 +4,7 @@ import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/runtime/family_child_deletion_source.dart';
 import 'package:family_os/core/runtime/family_child_profile_source.dart';
 import 'package:family_os/core/runtime/family_creation_source.dart';
 import 'package:family_os/core/runtime/family_device_revocation.dart';
@@ -212,6 +213,9 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     required String password,
   }) async {
     await _controller.signUp(email: email, password: password);
+    if (_controller.phase == FoundationGatePhase.signInFailed) {
+      throw const FoundationGateIdentityException();
+    }
     await _selectConfiguredFamily();
     final snapshot = await _refreshIdentitySnapshot();
     await registerGuardianPush();
@@ -536,6 +540,59 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
         FamilyChildProfileCreateFailure.serviceUnavailable,
       FoundationGateChildCreateResult.networkUnavailable =>
         FamilyChildProfileCreateFailure.networkUnavailable,
+    };
+  }
+
+  /// Removes one child profile only after server confirmation succeeds.
+  Future<FamilyChildDeleteResult> deleteChild({
+    required FamilyId familyId,
+    required ChildId childId,
+    String? idempotencyKey,
+  }) async {
+    await refreshIdentity();
+    final selected = _controller.selectedFamily;
+    if (!_identityValue.isRemoteAuthoritative ||
+        !_identityValue.isPrimaryOwner ||
+        selected == null ||
+        selected.id != familyId.value) {
+      return const FamilyChildDeleteResult.failed(
+        FamilyChildDeleteFailure.unavailable,
+      );
+    }
+
+    final result = await _controller.deleteChild(
+      familyId: familyId.value,
+      childId: childId.value,
+      idempotencyKey: idempotencyKey,
+    );
+
+    if (result == FoundationGateChildDeleteResult.deleted) {
+      _publishCurrentRemoteRoster(familyId);
+      return const FamilyChildDeleteResult.success();
+    }
+    return FamilyChildDeleteResult.failed(_mapDeleteFailure(result));
+  }
+
+  FamilyChildDeleteFailure _mapDeleteFailure(
+    FoundationGateChildDeleteResult result,
+  ) {
+    return switch (result) {
+      FoundationGateChildDeleteResult.deleted =>
+        FamilyChildDeleteFailure.unavailable,
+      FoundationGateChildDeleteResult.invalidInput =>
+        FamilyChildDeleteFailure.invalidInput,
+      FoundationGateChildDeleteResult.notFound =>
+        FamilyChildDeleteFailure.notFound,
+      FoundationGateChildDeleteResult.conflict =>
+        FamilyChildDeleteFailure.conflict,
+      FoundationGateChildDeleteResult.accessDenied =>
+        FamilyChildDeleteFailure.accessDenied,
+      FoundationGateChildDeleteResult.sessionInvalid =>
+        FamilyChildDeleteFailure.sessionInvalid,
+      FoundationGateChildDeleteResult.serviceUnavailable =>
+        FamilyChildDeleteFailure.serviceUnavailable,
+      FoundationGateChildDeleteResult.networkUnavailable =>
+        FamilyChildDeleteFailure.networkUnavailable,
     };
   }
 
@@ -1048,6 +1105,27 @@ final class RemoteFamilyChildProfileSource implements FamilyChildProfileSource {
 
   @override
   void dispose() => _runtime.dispose();
+}
+
+final class RemoteFamilyChildDeletionSource
+    implements FamilyChildDeletionSource {
+  RemoteFamilyChildDeletionSource(this._runtime);
+
+  final MainAppFoundationRuntime _runtime;
+
+  @override
+  Future<FamilyChildDeleteResult> deleteChild({
+    required FamilyId familyId,
+    required ChildId childId,
+    String? idempotencyKey,
+  }) => _runtime.deleteChild(
+    familyId: familyId,
+    childId: childId,
+    idempotencyKey: idempotencyKey,
+  );
+
+  @override
+  void dispose() {}
 }
 
 final class RemoteFamilyCreationSource implements FamilyCreationSource {

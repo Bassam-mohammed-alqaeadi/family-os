@@ -84,6 +84,16 @@ final class _RoutedTransport implements FoundationGateHttpTransport {
     return _match(uri);
   }
 
+  @override
+  Future<FoundationGateHttpResponse> delete(
+    Uri uri, {
+    required Map<String, String> headers,
+  }) async {
+    calls.add('DELETE ${uri.path}');
+    this.headers.add(Map.unmodifiable(headers));
+    return _match(uri);
+  }
+
   FoundationGateHttpResponse _match(Uri uri) {
     for (final entry in responses.entries) {
       if (uri.path.endsWith(entry.key)) return entry.value;

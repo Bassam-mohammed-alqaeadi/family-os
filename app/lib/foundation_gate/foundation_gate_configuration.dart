@@ -97,6 +97,17 @@ class FoundationGateConfiguration {
     return stagingApiOrigin.replace(path: '/v1/families/$familyId/children');
   }
 
+  Uri familyChildUri(String familyId, String childId) {
+    if (!isFoundationGateUuid(familyId) || !isFoundationGateUuid(childId)) {
+      throw ArgumentError(
+        'Server-returned UUID family and child identifiers are required.',
+      );
+    }
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/children/$childId',
+    );
+  }
+
   Uri familyDevicesUri(String familyId) {
     if (!isFoundationGateUuid(familyId)) {
       throw ArgumentError.value(
@@ -145,6 +156,17 @@ class FoundationGateConfiguration {
       );
     }
     return stagingApiOrigin.replace(path: '/v1/devices/$deviceId/telemetry');
+  }
+
+  Uri deviceScreenTimeUri(String deviceId) {
+    if (!isFoundationGateUuid(deviceId)) {
+      throw ArgumentError.value(
+        deviceId,
+        'deviceId',
+        'A server-returned UUID device identifier is required.',
+      );
+    }
+    return stagingApiOrigin.replace(path: '/v1/devices/$deviceId/screen-time');
   }
 
   Uri familyChildDevicePairingsUri(String familyId, String childId) {
@@ -437,6 +459,13 @@ class FoundationGateConfiguration {
       _familyChildTaskCrumbUri(familyId, childId, taskId, 'decision');
 
   /// The balance and the entries that produced it.
+  /// The guardian's read of one child's minutes balance: the same answer the child's handset reads.
+  Uri familyChildMinutesBalanceUri(String familyId, String childId) =>
+      _familyChildCrumbUri(familyId, childId, 'minutes/balance');
+
+  Uri familyChildMinutesGrantsUri(String familyId, String childId) =>
+      _familyChildCrumbUri(familyId, childId, 'minutes/grants');
+
   Uri familyChildPointsUri(String familyId, String childId) =>
       _familyChildCrumbUri(familyId, childId, 'points');
 

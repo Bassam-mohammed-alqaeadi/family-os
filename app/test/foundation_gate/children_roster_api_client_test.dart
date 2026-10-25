@@ -12,6 +12,8 @@ const rosterBody =
     '{"children":[{"id":"$childId","displayName":"Synthetic child","ageYears":8,"avatarEmoji":"🧒","themeColor":"purple","version":1,"createdAt":"2026-10-03T10:00:00.000Z","updatedAt":"2026-10-03T10:00:00.000Z"}]}';
 const createdChildBody =
     '{"child":{"id":"$childId","displayName":"Synthetic child","ageYears":8,"avatarEmoji":"🧒","themeColor":"purple","version":1,"createdAt":"2026-10-03T10:00:00.000Z","updatedAt":"2026-10-03T10:00:00.000Z"}}';
+const removedChildBody =
+    '{"child":{"id":"$childId","displayName":"Synthetic child","archivedAt":"2026-10-19T01:00:00.000Z"},"erased":{"locationFixes":5,"geofenceEvents":2,"deviceSnapshots":1,"sosFixReferences":0},"consentsWithdrawn":1,"devicesRevoked":1}';
 const idempotencyKey = '33333333-3333-4333-8333-333333333333';
 
 void main() {
@@ -250,6 +252,168 @@ void main() {
             (error) => error.failure,
             'failure',
             FoundationGateApiFailure.invalidResponse,
+          ),
+        ),
+      );
+    },
+  );
+
+  test(
+    'child deletion sends DELETE to the family child URI with authorization and idempotency headers',
+    () async {
+      final transport = FakeTransport(
+        const FoundationGateHttpResponse(
+          statusCode: 200,
+          body: removedChildBody,
+        ),
+      );
+
+      final result = await clientFor(transport).delete(
+        familyId: familyId,
+        childId: childId,
+        idToken: 'synthetic-token',
+        idempotencyKey: idempotencyKey,
+      );
+
+      expect(
+        transport.deletedUri.toString(),
+        'https://staging.example.test/v1/families/$familyId/children/$childId',
+      );
+      expect(transport.deletedHeaders, {
+        'accept': 'application/json',
+        'authorization': 'Bearer synthetic-token',
+        'idempotency-key': idempotencyKey,
+      });
+      expect(result.childId, childId);
+      expect(result.displayName, 'Synthetic child');
+      expect(result.archivedAt, DateTime.parse('2026-10-19T01:00:00.000Z'));
+      expect(result.locationFixesErased, 5);
+      expect(result.geofenceEventsErased, 2);
+      expect(result.deviceSnapshotsErased, 1);
+      expect(result.sosFixReferencesErased, 0);
+      expect(result.consentsWithdrawn, 1);
+      expect(result.devicesRevoked, 1);
+    },
+  );
+
+  test(
+    'child deletion maps server rejection classes without parsing error bodies',
+    () async {
+      for (final entry in <int, FoundationGateApiFailure>{
+        400: FoundationGateApiFailure.invalidInput,
+        401: FoundationGateApiFailure.unauthenticated,
+        403: FoundationGateApiFailure.accessDenied,
+        404: FoundationGateApiFailure.notFound,
+        409: FoundationGateApiFailure.conflict,
+        429: FoundationGateApiFailure.serviceUnavailable,
+        503: FoundationGateApiFailure.serviceUnavailable,
+        500: FoundationGateApiFailure.invalidResponse,
+      }.entries) {
+        await expectLater(
+          clientFor(
+            FakeTransport(
+              FoundationGateHttpResponse(
+                statusCode: entry.key,
+                body: 'raw-body',
+              ),
+            ),
+          ).delete(
+            familyId: familyId,
+            childId: childId,
+            idToken: 'synthetic-token',
+            idempotencyKey: idempotencyKey,
+          ),
+          throwsA(
+            isA<FoundationGateApiException>().having(
+              (error) => error.failure,
+              'failure',
+              entry.value,
+            ),
+          ),
+        );
+      }
+    },
+  );
+
+  test(
+    'child deletion rejects invalid local input before a request is sent',
+    () async {
+      final transport = FakeTransport(
+        const FoundationGateHttpResponse(
+          statusCode: 200,
+          body: removedChildBody,
+        ),
+      );
+
+      await expectLater(
+        clientFor(transport).delete(
+          familyId: 'bad-family-id',
+          childId: childId,
+          idToken: 'synthetic-token',
+        ),
+        throwsA(
+          isA<FoundationGateApiException>().having(
+            (error) => error.failure,
+            'failure',
+            FoundationGateApiFailure.invalidInput,
+          ),
+        ),
+      );
+
+      await expectLater(
+        clientFor(transport).delete(
+          familyId: familyId,
+          childId: 'bad-child-id',
+          idToken: 'synthetic-token',
+        ),
+        throwsA(
+          isA<FoundationGateApiException>().having(
+            (error) => error.failure,
+            'failure',
+            FoundationGateApiFailure.invalidInput,
+          ),
+        ),
+      );
+
+      await expectLater(
+        clientFor(transport).delete(
+          familyId: familyId,
+          childId: childId,
+          idToken: '',
+        ),
+        throwsA(
+          isA<FoundationGateApiException>().having(
+            (error) => error.failure,
+            'failure',
+            FoundationGateApiFailure.unauthenticated,
+          ),
+        ),
+      );
+      expect(transport.deletedUri, isNull);
+    },
+  );
+
+  test(
+    'child deletion maps network failures to networkUnavailable',
+    () async {
+      final transport = FakeTransport(
+        const FoundationGateHttpResponse(
+          statusCode: 200,
+          body: removedChildBody,
+        ),
+      )..deleteFailure = Exception('SocketException');
+
+      await expectLater(
+        clientFor(transport).delete(
+          familyId: familyId,
+          childId: childId,
+          idToken: 'synthetic-token',
+        ),
+        throwsA(
+          isA<FoundationGateApiException>().having(
+            (error) => error.failure,
+            'failure',
+            FoundationGateApiFailure.networkUnavailable,
           ),
         ),
       );

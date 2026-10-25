@@ -1,0 +1,256 @@
+[
+  {
+    "id": "w1_identity_and_family",
+    "name_ar": "العائلة والهوية ورموز الدعوة",
+    "name_en": "Family Identity & Invite Codes",
+    "status": "emulator-verified",
+    "contract_doc": "docs/contracts/w1_identity_and_family.md",
+    "owned_files": [
+      "backend/src/family-invite-codes.js",
+      "backend/migrations/115_family_invite_codes.sql",
+      "app/lib/core/identity/identity_runtime.dart",
+      "app/lib/features/n01_linking/invite_mother_screen.dart",
+      "app/lib/features/n01_linking/accept_mother_invite_screen.dart",
+      "app/lib/foundation_gate/family_invite_code_api_client.dart"
+    ],
+    "tests": [
+      "backend/test/postgres-invite-codes.test.js",
+      "backend/test/family-invite-codes.test.js",
+      "app/test/foundation_gate/family_invite_code_api_client_test.dart"
+    ],
+    "phone_checks_row": "F1.2, F1.3 (emulator)"
+  },
+  {
+    "id": "w2_child_device_lifecycle",
+    "name_ar": "إقران وتلميتري وقطع جهاز الطفل",
+    "name_en": "Child Device Pairing, Telemetry & Revocation",
+    "status": "emulator-verified",
+    "contract_doc": "docs/contracts/w2_child_device_lifecycle.md",
+    "owned_files": [
+      "app/android/app/src/main/kotlin/com/familyos/family_os/ChildTelemetryService.kt",
+      "app/android/app/src/main/kotlin/com/familyos/family_os/MainActivity.kt",
+      "app/lib/foundation_gate/native_child_telemetry_bridge.dart",
+      "app/lib/features/n02_day/child_profile_screen.dart",
+      "backend/src/device-lifecycle.js",
+      "backend/src/device-revocation.js"
+    ],
+    "tests": [
+      "backend/test/postgres-integration.test.js",
+      "backend/test/device-revocation-sql.test.js",
+      "app/test/features/device_revocation_server_first_test.dart",
+      "app/test/foundation_gate/family_device_api_client_test.dart"
+    ],
+    "phone_checks_row": "F1.4, F1.5, F1.6, F1.7, F1.8 (emulator)"
+  },
+  {
+    "id": "w2_w3_child_consents",
+    "name_ar": "موافقات وإفصاح الطفل",
+    "name_en": "Child Consents & Prominent Disclosure",
+    "status": "ci-verified",
+    "contract_doc": "docs/contracts/w2_w3_child_consents.md",
+    "owned_files": [
+      "backend/migrations/114_family_child_consents.sql",
+      "backend/src/child-consents.js",
+      "app/lib/core/policy/child_consents.dart"
+    ],
+    "tests": [
+      "backend/test/postgres-child-consents.test.js",
+      "backend/test/child-consents.test.js"
+    ],
+    "phone_checks_row": "none"
+  },
+  {
+    "id": "w3_location_retention_erasure",
+    "name_ar": "الاحتفاظ بموقع الطفل ومحو البيانات",
+    "name_en": "Location Retention & Data Erasure",
+    "status": "ci-verified",
+    "contract_doc": "docs/contracts/w3_location_retention_erasure.md",
+    "owned_files": [
+      "backend/migrations/116_location_retention_erasure.sql",
+      "backend/src/data-erasure.js",
+      "backend/src/location-telemetry.js"
+    ],
+    "tests": [
+      "backend/test/postgres-data-erasure.test.js",
+      "backend/test/data-erasure.test.js"
+    ],
+    "phone_checks_row": "none"
+  },
+  {
+    "id": "w4_sos_emergency",
+    "name_ar": "طوارئ الطفل SOS",
+    "name_en": "Child SOS Emergency",
+    "status": "not-built",
+    "contract_doc": "docs/contracts/w4_sos_emergency.md",
+    "owned_files": [
+      "backend/src/sos-emergency.js"
+    ],
+    "tests": [],
+    "phone_checks_row": "none"
+  },
+  {
+    "id": "w5_screen_time",
+    "name_ar": "وقت الشاشة والقفل الفوري",
+    "name_en": "Screen Time & Instant Lock",
+    "status": "not-built",
+    "contract_doc": "docs/contracts/w5_screen_time.md",
+    "owned_files": [
+      "backend/src/screen-time.js"
+    ],
+    "tests": [],
+    "phone_checks_row": "none"
+  },
+  {
+    "id": "w6_web_filtering",
+    "name_ar": "فلترة الويب ومقاومة العبث",
+    "name_en": "Web Filtering & Anti-Tamper",
+    "status": "not-built",
+    "contract_doc": "docs/contracts/w6_web_filtering.md",
+    "owned_files": [
+      "backend/src/web-filter.js"
+    ],
+    "tests": [],
+    "phone_checks_row": "none"
+  },
+  {
+    "id": "w8_family_calendar",
+    "name_ar": "التقويم العائلي",
+    "name_en": "Family Calendar",
+    "status": "ci-verified",
+    "contract_doc": "docs/contracts/w8_family_calendar.md",
+    "owned_files": [
+      "backend/migrations/108_family_calendar.sql",
+      "backend/src/calendar.js",
+      "app/lib/features/n15_calendar/family_calendar_screen.dart",
+      "app/lib/foundation_gate/family_calendar_api_client.dart"
+    ],
+    "tests": [
+      "backend/test/event-cycles.test.js",
+      "app/test/foundation_gate/family_calendar_api_client_test.dart"
+    ],
+    "phone_checks_row": "none"
+  },
+  {
+    "id": "w9_family_chat",
+    "name_ar": "دردشة العائلة والوسائط",
+    "name_en": "Family Chat & Media",
+    "status": "ci-verified",
+    "contract_doc": "docs/contracts/w9_family_chat.md",
+    "owned_files": [
+      "backend/migrations/112_family_chat_media.sql",
+      "backend/src/family-chat.js",
+      "backend/src/chat-media-store.js",
+      "app/lib/features/n02_day/family_chat_screen.dart",
+      "app/lib/foundation_gate/family_chat_api_client.dart"
+    ],
+    "tests": [
+      "backend/test/postgres-chat-realtime-media.test.js",
+      "backend/test/family-chat-laws.test.js",
+      "app/test/foundation_gate/family_chat_api_client_test.dart"
+    ],
+    "phone_checks_row": "none"
+  },
+  {
+    "id": "s0_spine_commands",
+    "name_ar": "العمود الفقري للأوامر والقدرات",
+    "name_en": "Spine Commands & Device Capabilities",
+    "status": "ci-verified",
+    "contract_doc": "docs/contracts/s0_spine_commands.md",
+    "owned_files": [
+      "backend/migrations/117_family_device_capabilities.sql",
+      "backend/migrations/118_family_commands.sql",
+      "backend/migrations/119_ai_events_spine.sql",
+      "backend/src/device-capabilities.js",
+      "backend/src/command-lifecycle.js"
+    ],
+    "tests": [
+      "backend/test/postgres-spine-s0-migrations.test.js",
+      "backend/test/spine-command-lifecycle.test.js",
+      "backend/test/spine-device-capabilities.test.js"
+    ],
+    "phone_checks_row": "none"
+  },
+  {
+    "id": "s1_notification_delivery",
+    "name_ar": "ناقل الإشعارات والتنبيهات",
+    "name_en": "Notification Delivery & Outbox",
+    "status": "ci-verified",
+    "contract_doc": "docs/contracts/s1_notification_delivery.md",
+    "owned_files": [
+      "backend/migrations/120_family_push_registrations.sql",
+      "backend/migrations/121_notification_delivery_proof.sql",
+      "backend/migrations/122_notification_preferences.sql",
+      "backend/migrations/123_notification_attempts.sql",
+      "backend/migrations/124_notification_geofence_privacy.sql",
+      "backend/src/notification-dispatcher.js",
+      "app/lib/core/runtime/family_notification_router.dart"
+    ],
+    "tests": [
+      "backend/test/postgres-push-registrations.test.js",
+      "backend/test/postgres-notification-delivery.integration.test.js",
+      "backend/test/postgres-notification-delivery.test.js",
+      "app/test/family_notification_router_test.dart"
+    ],
+    "phone_checks_row": "none"
+  },
+  {
+    "id": "s2_native_resilience",
+    "name_ar": "متانة هاتف الطفل الأصلية",
+    "name_en": "Native Handset Resilience",
+    "status": "ci-verified",
+    "contract_doc": "docs/contracts/s2_native_resilience.md",
+    "owned_files": [
+      "app/android/app/src/main/kotlin/com/familyos/family_os/ResilientFixQueue.kt",
+      "app/android/app/src/main/kotlin/com/familyos/family_os/EncryptedFixQueueStore.kt",
+      "app/android/app/src/main/kotlin/com/familyos/family_os/ServerTimeOffset.kt",
+      "app/android/app/src/main/kotlin/com/familyos/family_os/ProtectionStateMachine.kt",
+      "app/android/app/src/main/kotlin/com/familyos/family_os/BatteryOemMap.kt",
+      "app/android/app/src/main/kotlin/com/familyos/family_os/BootBackoff.kt"
+    ],
+    "tests": [
+      "tools/android/run_native_protocol_tests.sh",
+      "app/test/s2_protection_card_test.dart",
+      "app/test/s2_battery_guidance_test.dart"
+    ],
+    "phone_checks_row": "none"
+  },
+  {
+    "id": "s3_minutes_economy",
+    "name_ar": "اقتصاد الدقائق على الخادم",
+    "name_en": "Server Minutes Economy",
+    "status": "ci-verified-ledger-only; device bridge open (S3 D5 prerequisite)",
+    "contract_doc": "docs/contracts/s3_minutes_economy.md",
+    "owned_files": [
+      "backend/db/migrations/130_family_minutes_ledger.sql",
+      "backend/db/migrations/131_family_app_wallets.sql",
+      "backend/db/migrations/132_point_ledger_to_minutes.sql",
+      "backend/src/minutes-economy.js",
+      "backend/src/minutes-service.js"
+    ],
+    "tests": [
+      "backend/test/postgres-minutes-economy.test.js",
+      "backend/test/minutes-economy.test.js",
+      "app/test/s3/minutes_static_guard_test.dart"
+    ],
+    "phone_checks_row": "none"
+  },
+  {
+    "id": "app_shell_and_gate",
+    "name_ar": "غلاف التطبيق وبوابة الأساس",
+    "name_en": "App Shell & Foundation Gate",
+    "status": "emulator-verified",
+    "contract_doc": "docs/contracts/app_shell_and_gate.md",
+    "owned_files": [
+      "app/lib/main.dart",
+      "app/lib/app/router.dart",
+      "app/lib/core/runtime/app_runtime.dart",
+      "app/lib/foundation_gate/main_app_foundation_runtime.dart"
+    ],
+    "tests": [
+      "app/test/foundation_gate/foundation_gate_app_test.dart",
+      "app/test/app/router_routes_test.dart",
+      "tools/harness/check_dart_imports.mjs"
+    ],
+    "phone_checks_row": "F1.1, F1.9 (emulator)"
+  }
+]

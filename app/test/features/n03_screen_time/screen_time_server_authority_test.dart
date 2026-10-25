@@ -76,6 +76,16 @@ final class _Transport implements FoundationGateHttpTransport {
     if (failure != null) throw failure!;
     return response!;
   }
+
+  @override
+  Future<FoundationGateHttpResponse> delete(
+    Uri uri, {
+    required Map<String, String> headers,
+  }) async {
+    calls.add('DELETE ${uri.path}');
+    if (failure != null) throw failure!;
+    return response!;
+  }
 }
 
 ScreenTimeServerAuthority _authorityFor(
@@ -292,5 +302,17 @@ void main() {
     expect(activeScreenTimeServerAuthority, same(authority));
     bindScreenTimeServerAuthority(null);
     expect(activeScreenTimeServerAuthority, isNull);
+  });
+
+  test('scoped childId (familyId::childId) is automatically unscoped', () async {
+    final transport = _Transport(
+      response: FoundationGateHttpResponse(
+        statusCode: 200,
+        body: snapshotBody(),
+      ),
+    );
+    final answer = await _authorityFor(transport).read('$_familyId::$_childId');
+    expect(answer.status, ScreenTimeAuthorityStatus.ready);
+    expect(transport.calls, contains('GET /v1/families/$_familyId/children/$_childId/screen-time'));
   });
 }

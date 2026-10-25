@@ -95,6 +95,14 @@ class FakeTransport implements FoundationGateHttpTransport {
 
   set putResponse(FoundationGateHttpResponse? value) => _putResponse = value;
 
+  FoundationGateHttpResponse? _deleteResponse;
+  Uri? deletedUri;
+  Map<String, String>? deletedHeaders;
+  Object? deleteFailure;
+
+  set deleteResponse(FoundationGateHttpResponse? value) =>
+      _deleteResponse = value;
+
   @override
   Future<FoundationGateHttpResponse> get(
     Uri uri, {
@@ -161,6 +169,22 @@ class FakeTransport implements FoundationGateHttpTransport {
       throw failure!;
     }
     return _putResponse ?? response;
+  }
+
+  @override
+  Future<FoundationGateHttpResponse> delete(
+    Uri uri, {
+    required Map<String, String> headers,
+  }) async {
+    deletedUri = uri;
+    deletedHeaders = headers;
+    if (deleteFailure != null) {
+      throw deleteFailure!;
+    }
+    if (failure != null) {
+      throw failure!;
+    }
+    return _deleteResponse ?? response;
   }
 }
 

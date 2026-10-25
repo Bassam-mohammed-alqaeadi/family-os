@@ -146,6 +146,7 @@ export const DEFAULT_POLICY = Object.freeze({
   bedtimeStartMinute: 1260,
   bedtimeEndMinute: 360,
   timezoneOffsetMinutes: 180,
+  earnedMinutesExtendLimit: false,
 });
 
 // ---------------------------------------------------------------------------------------
@@ -165,41 +166,68 @@ export function evaluateScreenState({
   policy,
   countableUsedMinutes = 0,
   grantedMinutes = 0,
+  activeGrants = null,
+  phoneConsumption = null,
+  earnedMinutes = 0,
+  grantMinutes = null,
   lock = null,
   now = new Date(),
 }) {
   const local = familyLocalParts(now, policy.timezoneOffsetMinutes);
+  const effectiveGrants = activeGrants !== null
+    ? activeGrants
+    : (grantMinutes !== null ? grantMinutes : grantedMinutes) + (policy.earnedMinutesExtendLimit ? earnedMinutes : 0);
+  const effectiveConsumption = phoneConsumption !== null ? phoneConsumption : countableUsedMinutes;
+
   if (lock != null) {
-    return stateView('blocked', 'instant_lock', { lock, local, policy, countableUsedMinutes, grantedMinutes });
+    return stateView('blocked', 'instant_lock', { lock, local, policy, effectiveGrants, effectiveConsumption });
   }
   if (windowContains(policy.bedtimeStartMinute, policy.bedtimeEndMinute, local.minuteOfDay)) {
-    return stateView('blocked', 'bedtime', { lock, local, policy, countableUsedMinutes, grantedMinutes });
+    return stateView('blocked', 'bedtime', { lock, local, policy, effectiveGrants, effectiveConsumption });
   }
   if (
     policy.schoolModeEnabled &&
     policy.schoolDays.includes(local.weekday) &&
     windowContains(policy.schoolStartMinute, policy.schoolEndMinute, local.minuteOfDay)
   ) {
-    return stateView('blocked', 'school_mode', { lock, local, policy, countableUsedMinutes, grantedMinutes });
+    return stateView('blocked', 'school_mode', { lock, local, policy, effectiveGrants, effectiveConsumption });
   }
-  const remaining = remainingMinutes({ policy, countableUsedMinutes, grantedMinutes });
+  const remaining = remainingMinutes({
+    policy,
+    countableUsedMinutes: effectiveConsumption,
+    grantedMinutes: effectiveGrants,
+    activeGrants: effectiveGrants,
+    phoneConsumption: effectiveConsumption,
+  });
   if (policy.dailyLimitMinutes > 0 && remaining <= 0) {
-    return stateView('blocked', 'daily_limit', { lock, local, policy, countableUsedMinutes, grantedMinutes });
+    return stateView('blocked', 'daily_limit', { lock, local, policy, effectiveGrants, effectiveConsumption });
   }
   return stateView(
     policy.dailyLimitMinutes > 0 ? 'limited' : 'free',
     null,
-    { lock, local, policy, countableUsedMinutes, grantedMinutes },
+    { lock, local, policy, effectiveGrants, effectiveConsumption },
   );
 }
 
 /** Minutes left under the cap, or null when the family set no cap for the day. */
-export function remainingMinutes({ policy, countableUsedMinutes, grantedMinutes }) {
+export function remainingMinutes({
+  policy,
+  countableUsedMinutes = 0,
+  grantedMinutes = 0,
+  activeGrants = null,
+  phoneConsumption = null,
+  earnedMinutes = 0,
+  grantMinutes = null,
+}) {
   if (policy.dailyLimitMinutes <= 0) return null;
-  return Math.max(0, policy.dailyLimitMinutes + grantedMinutes - countableUsedMinutes);
+  const effectiveGrants = activeGrants !== null
+    ? activeGrants
+    : (grantMinutes !== null ? grantMinutes : grantedMinutes) + (policy.earnedMinutesExtendLimit ? earnedMinutes : 0);
+  const effectiveConsumption = phoneConsumption !== null ? phoneConsumption : countableUsedMinutes;
+  return Math.max(0, policy.dailyLimitMinutes + effectiveGrants - effectiveConsumption);
 }
 
-function stateView(kind, reasonCode, { lock, local, policy, countableUsedMinutes, grantedMinutes }) {
+function stateView(kind, reasonCode, { lock, local, policy, effectiveGrants, effectiveConsumption }) {
   return Object.freeze({
     kind,
     reasonCode,
@@ -210,9 +238,9 @@ function stateView(kind, reasonCode, { lock, local, policy, countableUsedMinutes
     minuteOfDay: local.minuteOfDay,
     weekday: local.weekday,
     capMinutes: policy.dailyLimitMinutes > 0 ? policy.dailyLimitMinutes : null,
-    grantedMinutes,
-    countableUsedMinutes,
-    remainingMinutes: remainingMinutes({ policy, countableUsedMinutes, grantedMinutes }),
+    grantedMinutes: effectiveGrants,
+    countableUsedMinutes: effectiveConsumption,
+    remainingMinutes: remainingMinutes({ policy, activeGrants: effectiveGrants, phoneConsumption: effectiveConsumption }),
     lock: lock == null ? null : lockView(lock),
   });
 }
@@ -301,6 +329,7 @@ export function policyFromRow(row) {
     bedtimeStartMinute: row.bedtime_start_minute,
     bedtimeEndMinute: row.bedtime_end_minute,
     timezoneOffsetMinutes: row.timezone_offset_minutes,
+    earnedMinutesExtendLimit: row.earned_minutes_extend_limit ?? false,
   };
 }
 
@@ -315,6 +344,7 @@ export function mergePolicy(base, patch) {
   const merged = { ...base };
   if (patch.dailyLimitMinutes !== undefined) merged.dailyLimitMinutes = patch.dailyLimitMinutes;
   if (patch.timezoneOffsetMinutes !== undefined) merged.timezoneOffsetMinutes = patch.timezoneOffsetMinutes;
+  if (patch.earnedMinutesExtendLimit !== undefined) merged.earnedMinutesExtendLimit = patch.earnedMinutesExtendLimit;
   if (patch.schoolMode !== undefined) {
     const { enabled, days, startMinute, endMinute } = patch.schoolMode;
     merged.schoolModeEnabled = enabled ?? base.schoolModeEnabled;
@@ -378,6 +408,7 @@ export function screenTimePolicyView(row, childId = null) {
         endMinute: DEFAULT_POLICY.bedtimeEndMinute,
       }),
       timezoneOffsetMinutes: DEFAULT_POLICY.timezoneOffsetMinutes,
+      earnedMinutesExtendLimit: DEFAULT_POLICY.earnedMinutesExtendLimit,
       version: null,
       updatedAt: null,
     });
@@ -397,6 +428,7 @@ export function screenTimePolicyView(row, childId = null) {
       endMinute: row.bedtime_end_minute,
     }),
     timezoneOffsetMinutes: row.timezone_offset_minutes,
+    earnedMinutesExtendLimit: row.earned_minutes_extend_limit ?? false,
     version: row.version,
     updatedAt: row.updated_at,
   });
@@ -477,10 +509,42 @@ async function readScreenTimeInside(port, tx, { familyId, childId, now }) {
   const local = familyLocalParts(now(), policy.timezoneOffsetMinutes);
   const usage = await port.readUsageForDate(tx, { childId, usageDate: local.date });
   const rules = await port.readAppRules(tx, { childId });
-  const countableUsedMinutes = countableMinutes({ usage, rules });
-  const grantedMinutes = await port.readGrantedMinutes(tx, { childId, usageDate: local.date });
+  const inventory = port.readApps ? await port.readApps(tx, { childId }) : [];
+  const inventoryByApp = new Map(inventory.map((entry) => [entry.app_id, entry]));
+  const rulesByApp = new Map(rules.map((rule) => [rule.app_id, rule]));
+  const appIds = [...new Set([...rulesByApp.keys(), ...inventoryByApp.keys()])].sort();
+  const mergedRules = appIds.map((appId) => ({
+    ...(rulesByApp.get(appId) ?? { status: 'pending' }),
+    category: inventoryByApp.get(appId)?.category,
+  }));
+  const countableUsedMinutes = countableMinutes({ usage, rules: mergedRules });
+  const grantedMinutes = await port.readGrantedMinutes(tx, {
+    childId,
+    usageDate: local.date,
+    earnedMinutesExtendLimit: policy.earnedMinutesExtendLimit,
+    timezoneOffsetMinutes: policy.timezoneOffsetMinutes,
+    now: now(),
+  });
+  let phoneConsumption = port.readPhoneConsumption
+    ? await port.readPhoneConsumption(tx, {
+        childId,
+        usageDate: local.date,
+        timezoneOffsetMinutes: policy.timezoneOffsetMinutes,
+      })
+    : 0;
+  if (phoneConsumption === 0 && countableUsedMinutes > 0) {
+    phoneConsumption = countableUsedMinutes;
+  }
   const lock = await port.readLiveLock(tx, { childId });
-  const state = evaluateScreenState({ policy, countableUsedMinutes, grantedMinutes, lock, now: now() });
+  const state = evaluateScreenState({
+    policy,
+    countableUsedMinutes: phoneConsumption,
+    grantedMinutes,
+    activeGrants: grantedMinutes,
+    phoneConsumption,
+    lock,
+    now: now(),
+  });
   const pending = await port.readPendingRequest(tx, { childId });
   return {
     childId,
@@ -490,7 +554,7 @@ async function readScreenTimeInside(port, tx, { familyId, childId, now }) {
     lock: lockView(lock),
     usage: Object.freeze({
       date: local.date,
-      countableUsedMinutes,
+      countableUsedMinutes: phoneConsumption,
       grantedMinutes,
       remainingMinutes: state.remainingMinutes,
       byApp: Object.freeze(
@@ -582,6 +646,9 @@ export function createScreenTimePolicyUpdate({ port }) {
           subjectId: childId,
           subjectType: 'screen_time_policy',
           eventType: 'family.screen_time_policy_updated',
+          payload: {
+            earnedMinutesExtendLimit: row.earned_minutes_extend_limit ?? merged.earnedMinutesExtendLimit,
+          },
         });
         return { policy: screenTimePolicyView(row) };
       },
@@ -613,7 +680,20 @@ async function appsInside(port, tx, { familyId, childId, now }) {
   const policy = policyRow == null ? DEFAULT_POLICY : policyFromRow(policyRow);
   const local = familyLocalParts(now(), policy.timezoneOffsetMinutes);
   const usage = await port.readUsageForDate(tx, { childId, usageDate: local.date });
-  const grantedMinutes = await port.readGrantedMinutes(tx, { childId, usageDate: local.date });
+  const grantedMinutes = await port.readGrantedMinutes(tx, {
+    childId,
+    usageDate: local.date,
+    earnedMinutesExtendLimit: policy.earnedMinutesExtendLimit,
+    timezoneOffsetMinutes: policy.timezoneOffsetMinutes,
+    now: now(),
+  });
+  let phoneConsumption = port.readPhoneConsumption
+    ? await port.readPhoneConsumption(tx, {
+        childId,
+        usageDate: local.date,
+        timezoneOffsetMinutes: policy.timezoneOffsetMinutes,
+      })
+    : 0;
   const lock = await port.readLiveLock(tx, { childId });
   const rulesByApp = new Map(rules.map((rule) => [rule.app_id, rule]));
   const usageByApp = new Map(usage.map((entry) => [entry.app_id, entry.used_minutes]));
@@ -636,7 +716,18 @@ async function appsInside(port, tx, { familyId, childId, now }) {
     usage,
     rules: mergedRules.map((rule) => ({ ...rule, category: inventoryByApp.get(rule.app_id)?.category })),
   });
-  const state = evaluateScreenState({ policy, countableUsedMinutes, grantedMinutes, lock, now: now() });
+  if (phoneConsumption === 0 && countableUsedMinutes > 0) {
+    phoneConsumption = countableUsedMinutes;
+  }
+  const state = evaluateScreenState({
+    policy,
+    countableUsedMinutes: phoneConsumption,
+    grantedMinutes,
+    activeGrants: grantedMinutes,
+    phoneConsumption,
+    lock,
+    now: now(),
+  });
 
   return {
     childId,
@@ -996,6 +1087,25 @@ export function createTimeRequestDecision({ port, now = () => new Date() }) {
           grantedMinutes: granting,
           actorMembershipId: actor.id,
         });
+        if (decision === 'approve' && granting > 0 && port.recordTimeRequestGrant) {
+          const expiresAt = decided.expires_at
+            ?? endOfFamilyDay(now(), row.timezone_offset_minutes ?? 180);
+          await port.recordTimeRequestGrant(tx, {
+            family_id: familyId,
+            child_id: childId,
+            entry_kind: 'credit',
+            channel: 'time_request_grant',
+            minutes: granting,
+            source_type: 'time_request',
+            source_id: requestId,
+            wallet_scope: 'temporary',
+            expires_at: expiresAt,
+            metadata: {
+              approved_by: actor.id,
+              request_id: requestId,
+            },
+          });
+        }
         await port.audit(tx, {
           familyId,
           actorMembershipId: actor.id,
@@ -1059,6 +1169,35 @@ export function createDeviceScreenTimeReport({ port, now = () => new Date() }) {
           new Date(reportedAt.getTime() - 48 * 60 * 60 * 1000),
           offset,
         ).date;
+
+        if (apps.length > 0) {
+          await port.upsertApps(tx, {
+            rows: apps.map((entry) => ({
+              id: randomUUID(),
+              familyId,
+              childId,
+              appId: entry.appId,
+              displayName: entry.displayName,
+              category: entry.category,
+              ageRating: entry.ageRating ?? '',
+              deviceId,
+            })),
+          });
+        }
+
+        const appInventory = port.readApps ? await port.readApps(tx, { childId }) : [];
+        const inventoryByApp = new Map(appInventory.map((entry) => [entry.app_id, entry]));
+        const appRules = await port.readAppRules(tx, { childId });
+        const rulesByApp = new Map(appRules.map((rule) => [rule.app_id, rule]));
+        const allAppIds = [...new Set([...rulesByApp.keys(), ...inventoryByApp.keys()])].sort();
+        const mergedRulesForCountable = allAppIds.map((appId) => ({
+          ...(rulesByApp.get(appId) ?? { status: 'pending' }),
+          category: inventoryByApp.get(appId)?.category,
+        }));
+
+        const oldUsage = await port.readUsageForDate(tx, { childId, usageDate: today });
+        const oldTotalCountable = countableMinutes({ usage: oldUsage, rules: mergedRulesForCountable });
+
         const rows = [];
         for (const entry of usage) {
           const usageDate = entry.date ?? today;
@@ -1080,18 +1219,22 @@ export function createDeviceScreenTimeReport({ port, now = () => new Date() }) {
           });
         }
         if (rows.length > 0) await port.upsertUsage(tx, { rows });
-        if (apps.length > 0) {
-          await port.upsertApps(tx, {
-            rows: apps.map((entry) => ({
-              id: randomUUID(),
-              familyId,
-              childId,
-              appId: entry.appId,
-              displayName: entry.displayName,
-              category: entry.category,
-              ageRating: entry.ageRating ?? '',
-              deviceId,
-            })),
+
+        const newUsage = await port.readUsageForDate(tx, { childId, usageDate: today });
+        const newTotalCountable = countableMinutes({ usage: newUsage, rules: mergedRulesForCountable });
+        const delta = Math.max(0, newTotalCountable - oldTotalCountable);
+
+        if (delta > 0 && port.recordUsageConsumption) {
+          await port.recordUsageConsumption(tx, {
+            family_id: familyId,
+            child_id: childId,
+            entry_kind: 'consumption',
+            channel: 'usage_consumption',
+            minutes: delta,
+            source_type: 'device_report',
+            source_id: `${deviceId}:${reportedAt.toISOString()}`,
+            wallet_scope: 'daily',
+            deviceId,
           });
         }
         let request = null;
@@ -1163,7 +1306,8 @@ export function createDeviceScreenTimeRead({ port, now = () => new Date() }) {
 
 const POLICY_COLUMNS = `child_id, family_id, daily_limit_minutes, school_mode_enabled, school_days,
                         school_start_minute, school_end_minute, bedtime_start_minute,
-                        bedtime_end_minute, timezone_offset_minutes, version, updated_at`;
+                        bedtime_end_minute, timezone_offset_minutes, earned_minutes_extend_limit,
+                        version, updated_at`;
 
 const RULE_COLUMNS = `id, family_id, child_id, app_id, status, limit_minutes, unlimited, version,
                       updated_at`;
@@ -1219,8 +1363,8 @@ export function postgresScreenTimePort(store, { credentialMatches }) {
         `INSERT INTO family_child_screen_time_policies
            (child_id, family_id, daily_limit_minutes, school_mode_enabled, school_days,
             school_start_minute, school_end_minute, bedtime_start_minute, bedtime_end_minute,
-            timezone_offset_minutes, updated_by_membership_id)
-         VALUES ($1, $2, $3, $4, $5::smallint[], $6, $7, $8, $9, $10, $11)
+            timezone_offset_minutes, earned_minutes_extend_limit, updated_by_membership_id)
+         VALUES ($1, $2, $3, $4, $5::smallint[], $6, $7, $8, $9, $10, $11, $12)
          ON CONFLICT (child_id) DO UPDATE
             SET daily_limit_minutes = EXCLUDED.daily_limit_minutes,
                 school_mode_enabled = EXCLUDED.school_mode_enabled,
@@ -1230,6 +1374,7 @@ export function postgresScreenTimePort(store, { credentialMatches }) {
                 bedtime_start_minute = EXCLUDED.bedtime_start_minute,
                 bedtime_end_minute = EXCLUDED.bedtime_end_minute,
                 timezone_offset_minutes = EXCLUDED.timezone_offset_minutes,
+                earned_minutes_extend_limit = EXCLUDED.earned_minutes_extend_limit,
                 updated_by_membership_id = EXCLUDED.updated_by_membership_id,
                 version = family_child_screen_time_policies.version + 1,
                 updated_at = NOW()
@@ -1245,6 +1390,7 @@ export function postgresScreenTimePort(store, { credentialMatches }) {
           policy.bedtimeStartMinute,
           policy.bedtimeEndMinute,
           policy.timezoneOffsetMinutes,
+          policy.earnedMinutesExtendLimit ?? false,
           actorMembershipId,
         ],
       );
@@ -1355,14 +1501,47 @@ export function postgresScreenTimePort(store, { credentialMatches }) {
       }
     },
 
-    async readGrantedMinutes(client, { childId, usageDate }) {
+    async readGrantedMinutes(client, { childId, usageDate, earnedMinutesExtendLimit = false, timezoneOffsetMinutes = 180, now = new Date() }) {
       const { rows } = await client.query(
+        `SELECT COALESCE(SUM(minutes), 0)::int AS granted
+           FROM family_minutes_ledger
+          WHERE child_id = $1
+            AND entry_kind = 'credit'
+            AND (
+              (channel = 'time_request_grant' AND (expires_at IS NULL OR expires_at > $2))
+              OR (channel = 'guardian_grant' AND wallet_scope = 'daily'
+                  AND (created_at AT TIME ZONE 'UTC' + ($4 || ' minutes')::interval)::date = $5::date)
+              OR ($3::boolean = TRUE AND channel IN ('quran_portion', 'athkar', 'learning_challenge', 'family_task_child')
+                  AND (created_at AT TIME ZONE 'UTC' + ($4 || ' minutes')::interval)::date = $5::date)
+            )`,
+        [childId, now, earnedMinutesExtendLimit, timezoneOffsetMinutes, usageDate],
+      );
+      const ledgerGranted = rows[0]?.granted ?? 0;
+      if (ledgerGranted > 0) return ledgerGranted;
+
+      // Fallback for requests created prior to ledger or in legacy tests:
+      const { rows: legacyRows } = await client.query(
         `SELECT COALESCE(SUM(granted_minutes), 0)::int AS granted
            FROM family_child_time_requests
           WHERE child_id = $1 AND usage_date = $2 AND status = 'approved'`,
         [childId, usageDate],
       );
-      return rows[0]?.granted ?? 0;
+      return legacyRows[0]?.granted ?? 0;
+    },
+
+    async readPhoneConsumption(client, { childId, usageDate, timezoneOffsetMinutes = 180 }) {
+      const { rows } = await client.query(
+        `SELECT COALESCE(SUM(minutes), 0)::int AS consumed
+           FROM family_minutes_ledger
+          WHERE child_id = $1
+            AND entry_kind = 'consumption'
+            AND channel = 'usage_consumption'
+            AND source_type = 'device_report'
+            AND wallet_scope = 'daily'
+            AND (created_at AT TIME ZONE 'UTC' + ($2 || ' minutes')::interval)::date = $3::date`,
+        [childId, timezoneOffsetMinutes, usageDate],
+      );
+      return rows[0]?.consumed ?? 0;
     },
 
     async readLiveLock(client, { childId, forUpdate = false }) {
@@ -1486,6 +1665,52 @@ export function postgresScreenTimePort(store, { credentialMatches }) {
       return rows[0];
     },
 
+    async recordTimeRequestGrant(client, {
+      family_id,
+      child_id,
+      minutes,
+      expires_at,
+      source_id,
+      metadata,
+    }) {
+      const actorMembershipId = metadata?.approved_by ?? null;
+      await client.query(
+        `INSERT INTO family_minutes_ledger
+           (id, family_id, child_id, entry_kind, channel, minutes, wallet_scope, app_id,
+            expires_at, source_type, source_id, actor_membership_id, awarded_by_device_id,
+            balance_after_minutes, created_at, credit_ref)
+         VALUES
+           (gen_random_uuid(), $1, $2, 'credit', 'time_request_grant', $3, 'temporary', NULL,
+            $4, 'time_request', $5, $6, NULL,
+            COALESCE((SELECT balance_after_minutes FROM family_minutes_ledger WHERE child_id = $2 ORDER BY created_at DESC, id DESC LIMIT 1), 0) + $3,
+            NOW(), NULL)
+         ON CONFLICT (child_id, source_type, source_id) DO NOTHING`,
+        [family_id, child_id, minutes, expires_at, source_id, actorMembershipId],
+      );
+    },
+
+    async recordUsageConsumption(client, {
+      family_id,
+      child_id,
+      minutes,
+      source_id,
+      deviceId,
+    }) {
+      await client.query(
+        `INSERT INTO family_minutes_ledger
+           (id, family_id, child_id, entry_kind, channel, minutes, wallet_scope, app_id,
+            expires_at, source_type, source_id, actor_membership_id, awarded_by_device_id,
+            balance_after_minutes, created_at, credit_ref)
+         VALUES
+           (gen_random_uuid(), $1, $2, 'consumption', 'usage_consumption', $3, 'daily', NULL,
+            NULL, 'device_report', $4, NULL, $5,
+            GREATEST(0, COALESCE((SELECT balance_after_minutes FROM family_minutes_ledger WHERE child_id = $2 ORDER BY created_at DESC, id DESC LIMIT 1), 0) - $3),
+            NOW(), NULL)
+         ON CONFLICT (child_id, source_type, source_id) DO NOTHING`,
+        [family_id, child_id, minutes, source_id, deviceId],
+      );
+    },
+
     async readReportingDevice(client, { deviceId }) {
       const { rows } = await client.query(
         `SELECT id, family_id, child_id, credential_hash, credential_revoked_at
@@ -1499,7 +1724,7 @@ export function postgresScreenTimePort(store, { credentialMatches }) {
 
     credentialMatches,
 
-    async audit(client, { familyId, actorMembershipId, correlationId, subjectId, subjectType, eventType }) {
+    async audit(client, { familyId, actorMembershipId, correlationId, subjectId, subjectType, eventType, payload = {} }) {
       await store.appendAuditAndOutbox(client, {
         familyId,
         actorMembershipId,
@@ -1507,6 +1732,7 @@ export function postgresScreenTimePort(store, { credentialMatches }) {
         eventType,
         subjectType,
         subjectId,
+        payload,
       });
     },
   };

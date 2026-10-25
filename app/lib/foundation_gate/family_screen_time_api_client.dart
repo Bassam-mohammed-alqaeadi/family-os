@@ -105,6 +105,7 @@ class FoundationGateScreenPolicy {
     required this.childId,
     required this.configured,
     required this.dailyLimitMinutes,
+    required this.earnedMinutesExtendLimit,
     required this.schoolModeEnabled,
     required this.schoolDays,
     required this.schoolStartMinute,
@@ -122,6 +123,7 @@ class FoundationGateScreenPolicy {
   /// 0 means no cap. It is a number rather than null so a screen shows one thing for
   /// "unset" and "unlimited", which is what the family means by both.
   final int dailyLimitMinutes;
+  final bool earnedMinutesExtendLimit;
   final bool schoolModeEnabled;
   final List<int> schoolDays;
   final int schoolStartMinute;
@@ -399,6 +401,7 @@ class FamilyScreenTimeApiClient {
     required String idempotencyKey,
     required String idToken,
     int? dailyLimitMinutes,
+    bool? earnedMinutesExtendLimit,
     bool? schoolModeEnabled,
     List<int>? schoolDays,
     int? schoolStartMinute,
@@ -411,6 +414,9 @@ class FamilyScreenTimeApiClient {
     final body = <String, Object>{};
     if (dailyLimitMinutes != null) {
       body['dailyLimitMinutes'] = dailyLimitMinutes;
+    }
+    if (earnedMinutesExtendLimit != null) {
+      body['earnedMinutesExtendLimit'] = earnedMinutesExtendLimit;
     }
     if (timezoneOffsetMinutes != null) {
       body['timezoneOffsetMinutes'] = timezoneOffsetMinutes;
@@ -699,6 +705,52 @@ class FamilyScreenTimeApiClient {
     };
   }
 
+  /// Direct minutes grant for a child by a guardian outright.
+  Future<FoundationGateHttpResponse> grantMinutesDirect({
+    required String familyId,
+    required String childId,
+    required int minutes,
+    required String idempotencyKey,
+    required String idToken,
+    String? reason,
+  }) async {
+    final body = <String, Object>{
+      'minutes': minutes,
+      'scope': 'daily',
+      'reason': reason ?? 'guardian_instant_grant',
+    };
+    final response = await _post(
+      _configuration.familyChildMinutesGrantsUri(familyId, childId),
+      idToken,
+      body,
+      idempotencyKey: idempotencyKey,
+    );
+    return switch (response.statusCode) {
+      200 || 201 => response,
+      400 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.invalidInput,
+      ),
+      401 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.unauthenticated,
+      ),
+      403 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.accessDenied,
+      ),
+      404 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.notFound,
+      ),
+      409 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.conflict,
+      ),
+      429 || 503 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.serviceUnavailable,
+      ),
+      _ => throw const FoundationGateApiException(
+        FoundationGateApiFailure.invalidResponse,
+      ),
+    };
+  }
+
   /// The open question's id, when the server refused a second one.
   ///
   /// A conflict here is not an error a family caused: it means the child already asked. The
@@ -938,6 +990,7 @@ class FamilyScreenTimeApiClient {
       childId: _uuid(value['childId']),
       configured: configured,
       dailyLimitMinutes: _int(value['dailyLimitMinutes']),
+      earnedMinutesExtendLimit: value['earnedMinutesExtendLimit'] as bool? ?? false,
       schoolModeEnabled: _bool(schoolMode['enabled']),
       schoolDays: List<int>.unmodifiable(days.map(_int)),
       schoolStartMinute: _int(schoolMode['startMinute']),

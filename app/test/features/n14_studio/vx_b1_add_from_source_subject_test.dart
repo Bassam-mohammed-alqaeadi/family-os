@@ -24,18 +24,18 @@ void main() {
 
     final math = find.byKey(AddFromSourceKeys.pdfOptionMath);
     final science = find.byKey(AddFromSourceKeys.pdfOptionScience);
-    expect(tester.getSemantics(math), containsSemantics(isSelected: true));
+    expect(tester.getSemantics(math), isSemantics(isSelected: true));
     expect(
       tester.getSemantics(science),
-      isNot(containsSemantics(isSelected: true)),
+      isNot(isSemantics(isSelected: true)),
     );
 
     await tester.tap(science);
     await tester.pumpAndSettle();
-    expect(tester.getSemantics(science), containsSemantics(isSelected: true));
+    expect(tester.getSemantics(science), isSemantics(isSelected: true));
     expect(
       tester.getSemantics(math),
-      isNot(containsSemantics(isSelected: true)),
+      isNot(isSemantics(isSelected: true)),
     );
 
     // Close and reopen — the parent's choice is kept for this visit.
@@ -46,7 +46,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       tester.getSemantics(find.byKey(AddFromSourceKeys.pdfOptionScience)),
-      containsSemantics(isSelected: true),
+      isSemantics(isSelected: true),
     );
 
     semantics.dispose();

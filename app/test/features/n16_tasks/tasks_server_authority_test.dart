@@ -88,6 +88,16 @@ final class _Transport implements FoundationGateHttpTransport {
     return _match(uri);
   }
 
+  @override
+  Future<FoundationGateHttpResponse> delete(
+    Uri uri, {
+    required Map<String, String> headers,
+  }) async {
+    calls.add('DELETE ${uri.path}');
+    if (failure != null) throw failure!;
+    return _match(uri);
+  }
+
   /// The most specific registered path wins, so `/tasks/{id}/claim` is never answered by
   /// the `/tasks` entry beside it.
   FoundationGateHttpResponse _match(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:family_os/app/role_controller.dart';
@@ -177,15 +178,19 @@ class _AttributionRewardScreenState extends State<AttributionRewardScreen> {
     };
   }
 
+  /// The row states nothing as granted: the amount the parent entered is shown in its field,
+  /// and the reward is counted only when the server counts it (owner ruling, S3 D4).
   String _rewardTitle(AppLocalizations l10n, AttributionRewardToggle reward) {
-    return switch (reward.kind) {
-      AttributionRewardKind.wallet => l10n.attributionRewardWalletMinutes(
-        reward.minutes,
-      ),
-      AttributionRewardKind.play => l10n.attributionRewardPlayMinutes(
-        reward.minutes,
-      ),
-    };
+    return l10n.attributionRewardCountedSoon;
+  }
+
+  /// One day at most per reward: the parent's amount must be a whole number of minutes in that range.
+  static const int _maxRewardMinutes = attributionRewardMaxMinutes;
+
+  void _onRewardMinutes(String rewardId, int minutes) {
+    if (!_canEdit) return;
+    if (minutes < 0 || minutes > _maxRewardMinutes) return;
+    setState(() => _snap = _snap.withRewardMinutes(rewardId, minutes));
   }
 
   void _onSelectChild(String childId) {
@@ -227,13 +232,12 @@ class _AttributionRewardScreenState extends State<AttributionRewardScreen> {
     }
     final child = _snap.selectedChild!;
     final name = _childName(l10n, child);
-    final minutes = _snap.totalEnabledMinutes;
     final snap = await _repo.assign();
     if (!mounted) return;
     setState(() => _snap = snap);
     AppToast.show(
       context,
-      message: l10n.attributionRewardAssignedToast(name, minutes),
+      message: l10n.attributionRewardAssignedToast(name),
     );
     _go('SCR-FAT-046');
   }
@@ -377,6 +381,7 @@ class _AttributionRewardScreenState extends State<AttributionRewardScreen> {
             canEdit: _canEdit,
             titleOf: (r) => _rewardTitle(l10n, r),
             onToggle: _onToggleReward,
+            onMinutes: _onRewardMinutes,
           ),
           const SizedBox(height: 16),
           PrimaryBtn(
@@ -630,6 +635,7 @@ class _RewardsCard extends StatelessWidget {
     required this.canEdit,
     required this.titleOf,
     required this.onToggle,
+    required this.onMinutes,
   });
 
   final AttributionRewardSnapshot snap;
@@ -639,6 +645,7 @@ class _RewardsCard extends StatelessWidget {
   final bool canEdit;
   final String Function(AttributionRewardToggle) titleOf;
   final void Function(String id, bool enabled) onToggle;
+  final void Function(String id, int minutes) onMinutes;
 
   @override
   Widget build(BuildContext context) {
@@ -672,7 +679,9 @@ class _RewardsCard extends StatelessWidget {
                     ? l10n.attributionRewardAutoAdded
                     : null,
                 enabled: canEdit,
+                minutesLabel: l10n.attributionRewardMinutesField,
                 onChanged: (v) => onToggle(reward.id, v),
+                onMinutes: (m) => onMinutes(reward.id, m),
               ),
           ],
         ),
@@ -688,6 +697,8 @@ class _RewardRow extends StatelessWidget {
     required this.title,
     required this.enabled,
     required this.onChanged,
+    required this.onMinutes,
+    required this.minutesLabel,
     this.subtitle,
   });
 
@@ -697,6 +708,8 @@ class _RewardRow extends StatelessWidget {
   final String? subtitle;
   final bool enabled;
   final ValueChanged<bool> onChanged;
+  final ValueChanged<int> onMinutes;
+  final String minutesLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -730,6 +743,32 @@ class _RewardRow extends StatelessWidget {
               ],
             ),
           ),
+          Semantics(
+            label: minutesLabel,
+            child: SizedBox(
+            width: 64,
+            child: TextFormField(
+              key: Key('reward_minutes_${reward.id}'),
+              initialValue: '${reward.minutes}',
+              // Stays editable while the screen is: a 0 turns the reward off, and the parent
+              // must be able to type a positive amount back into the same field.
+              enabled: enabled,
+              keyboardType: TextInputType.number,
+              // A value above the ceiling is refused in the field itself: the last good value stays.
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                _RewardMinutesFormatter(attributionRewardMaxMinutes),
+              ],
+              textAlign: TextAlign.center,
+              decoration: const InputDecoration(isDense: true),
+              onChanged: (v) {
+                final n = int.tryParse(v.trim());
+                if (n != null) onMinutes(n);
+              },
+            ),
+          ),
+          ),
+          const SizedBox(width: 6),
           Switch.adaptive(
             key: AttributionRewardKeys.rewardSwitch(reward.id),
             value: reward.enabled,
@@ -738,5 +777,26 @@ class _RewardRow extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// The ceiling of one reward, and of an assignment's total (owner ruling, S3 D20/D21).
+const int attributionRewardMaxMinutes = 1440;
+
+/// Keeps the last good value when the typed one is above the ceiling.
+final class _RewardMinutesFormatter extends TextInputFormatter {
+  const _RewardMinutesFormatter(this.max);
+
+  final int max;
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) return newValue;
+    final value = int.tryParse(newValue.text);
+    if (value == null || value > max) return oldValue;
+    return newValue;
   }
 }

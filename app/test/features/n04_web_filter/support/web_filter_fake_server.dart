@@ -79,6 +79,16 @@ final class WebFilterFakeTransport implements FoundationGateHttpTransport {
     return _match(uri);
   }
 
+  @override
+  Future<FoundationGateHttpResponse> delete(
+    Uri uri, {
+    required Map<String, String> headers,
+  }) async {
+    calls.add('DELETE ${uri.path}');
+    if (failure != null) throw failure!;
+    return _match(uri);
+  }
+
   /// The most specific registered path wins, so `/web-filter/temp-allows` is never answered
   /// by the `/web-filter` entry.
   FoundationGateHttpResponse _match(

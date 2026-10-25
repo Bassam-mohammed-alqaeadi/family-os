@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:family_os/foundation_gate/child_minutes_balance_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_configuration.dart';
 import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';
@@ -227,6 +228,8 @@ class FamilyTasksApiClient {
     String note = '',
     String? audienceThreadId,
   }) async {
+    // The server's own ceiling (W7): a task that pays 0 or more than 200 is never sent.
+    RangeError.checkValueInInterval(points, 1, 200, 'points');
     final body = <String, Object>{
       'title': title,
       'points': points,
@@ -345,6 +348,36 @@ class FamilyTasksApiClient {
       ),
       409 => throw const FoundationGateApiException(
         FoundationGateApiFailure.conflict,
+      ),
+      429 || 503 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.serviceUnavailable,
+      ),
+      _ => throw const FoundationGateApiException(
+        FoundationGateApiFailure.invalidResponse,
+      ),
+    };
+  }
+
+  /// The guardian's read of one child's minutes balance. Read-only: nothing here writes minutes.
+  Future<ChildMinutesBalance> readMinutesBalance({
+    required String familyId,
+    required String childId,
+    required String idToken,
+  }) async {
+    final response = await _get(
+      _configuration.familyChildMinutesBalanceUri(familyId, childId),
+      idToken,
+    );
+    return switch (response.statusCode) {
+      200 => ChildMinutesBalanceClient.parseBody(response.body),
+      401 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.unauthenticated,
+      ),
+      403 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.accessDenied,
+      ),
+      404 => throw const FoundationGateApiException(
+        FoundationGateApiFailure.notFound,
       ),
       429 || 503 => throw const FoundationGateApiException(
         FoundationGateApiFailure.serviceUnavailable,

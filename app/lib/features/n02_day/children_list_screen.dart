@@ -1269,10 +1269,12 @@ class _ChildRosterCard extends StatelessWidget {
     final healthLabel = switch (entry.health) {
       ChildListHealth.excellent => l10n.childrenListHealthExcellent,
       ChildListHealth.atRisk => l10n.childrenListHealthAtRisk,
+      ChildListHealth.unknown => l10n.childrenListDeviceStateUnavailable,
     };
     final healthVariant = switch (entry.health) {
       ChildListHealth.excellent => TagVariant.g,
       ChildListHealth.atRisk => TagVariant.a,
+      ChildListHealth.unknown => TagVariant.p,
     };
     final semantics = l10n.childrenListRowSemantics(
       entry.displayName,

@@ -4,7 +4,7 @@ import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/features/n02_day/day_child_mock.dart';
 
 /// Device / link health chip on SCR-FAT-012 (prototype `.tag g|a`).
-enum ChildListHealth { excellent, atRisk }
+enum ChildListHealth { excellent, atRisk, unknown }
 
 /// One child row on قائمة الأبناء — values from repos, never planted in widgets.
 @immutable

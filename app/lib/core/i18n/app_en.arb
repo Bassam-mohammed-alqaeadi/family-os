@@ -1279,6 +1279,18 @@
   "@childScreenTimePolicyUnavailable": {
     "description": "SCR-FAT-032 fail-closed when Local KV refused"
   },
+  "childScreenTimeEarnedExtensionNotice": "Earned minutes automatically extend your daily screen time",
+  "@childScreenTimeEarnedExtensionNotice": {
+    "description": "SCR: child screen time — notice when earned minutes extend limit is enabled"
+  },
+  "childScreenTimeEmptyTitle": "No screen time limits configured",
+  "@childScreenTimeEmptyTitle": {
+    "description": "SCR: child screen time — empty state title"
+  },
+  "childScreenTimeEmptyMessage": "No schedule windows or daily limit have been configured yet.",
+  "@childScreenTimeEmptyMessage": {
+    "description": "SCR: child screen time — empty state message"
+  },
   "childScreenTimeSleep": "Sleep",
   "@childScreenTimeSleep": {
     "description": "SCR-FAT-032 sleep schedule row"
@@ -1328,6 +1340,10 @@
     "description": "SCR-FAT-032 Ruling B helper under overflow switch"
   },
   "childScreenTimeWalletsHeading": "Per-app wallets",
+  "childScreenTimeBalanceStale": "Showing the last good server reading; the latest read failed",
+  "@childScreenTimeBalanceStale": {
+    "description": "SCR-FAT-032 note when the shown balance is the last good server reading"
+  },
   "@childScreenTimeWalletsHeading": {
     "description": "SCR-FAT-032 wallets list heading"
   },
@@ -2557,6 +2573,14 @@
       }
     }
   },
+  "attributionRewardMinutesField": "Minutes",
+  "@attributionRewardMinutesField": {
+    "description": "SCR-FAT-045 accessible label for the parent-set minutes of a reward"
+  },
+  "attributionRewardCountedSoon": "Counted soon",
+  "@attributionRewardCountedSoon": {
+    "description": "SCR-FAT-045 reward row value while the server counts the amount; no minute figure"
+  },
   "attributionRewardWalletMinutes": "{minutes} minutes to their wallet",
   "@attributionRewardWalletMinutes": {
     "description": "SCR-FAT-045 wallet minutes reward",
@@ -2587,15 +2611,12 @@
   "@attributionRewardLibraryCta": {
     "description": "SCR-FAT-045 secondary CTA → FAT-046"
   },
-  "attributionRewardAssignedToast": "Assigned to {name} — they see: \"Your parent prepared a challenge — {minutes} minutes waiting!\"",
+  "attributionRewardAssignedToast": "Assigned to {name} — challenge delivered",
   "@attributionRewardAssignedToast": {
     "description": "SCR-FAT-045 assign success toast",
     "placeholders": {
       "name": {
         "type": "String"
-      },
-      "minutes": {
-        "type": "int"
       }
     }
   },
@@ -11722,28 +11743,20 @@
   "@quranProgressPlaySemantics": {
     "description": "SCR-FAT-072 play a11y"
   },
-  "quranProgressApproveCta": "Approve & reward (+{minutes} min)",
+  "quranProgressApproveCta": "Approve ward",
   "@quranProgressApproveCta": {
-    "description": "SCR-FAT-072 approve CTA minutes-only",
-    "placeholders": {
-      "minutes": {
-        "type": "int"
-      }
-    }
+    "description": "SCR-FAT-072 approve CTA, no minute figure"
   },
   "quranProgressWhisperCta": "Whisper 💬",
   "@quranProgressWhisperCta": {
     "description": "SCR-FAT-072 whisper"
   },
-  "quranProgressApproveToast": "Approved {name}'s recitation and added +{minutes} minutes of play",
+  "quranProgressApproveToast": "Approved {name}'s recitation",
   "@quranProgressApproveToast": {
     "description": "SCR-FAT-072 approve toast",
     "placeholders": {
       "name": {
         "type": "String"
-      },
-      "minutes": {
-        "type": "int"
       }
     }
   },
@@ -11756,14 +11769,9 @@
       }
     }
   },
-  "quranProgressApprovedBanner": "⭐ This ward was approved and +{minutes} minutes rewarded",
+  "quranProgressApprovedBanner": "⭐ This ward was approved — reward counted soon",
   "@quranProgressApprovedBanner": {
-    "description": "SCR-FAT-072 approved banner",
-    "placeholders": {
-      "minutes": {
-        "type": "int"
-      }
-    }
+    "description": "SCR-FAT-072 approved banner, no minute figure"
   },
   "quranProgressPlanHeading": "Ward plan & reward",
   "@quranProgressPlanHeading": {
@@ -11781,14 +11789,9 @@
   "@quranProgressPlanReward": {
     "description": "SCR-FAT-072 plan row"
   },
-  "quranProgressPlanRewardValue": "+{minutes} play minutes to the wallet",
+  "quranProgressPlanRewardValue": "Counted soon",
   "@quranProgressPlanRewardValue": {
-    "description": "SCR-FAT-072 reward value minutes-only",
-    "placeholders": {
-      "minutes": {
-        "type": "int"
-      }
-    }
+    "description": "SCR-FAT-072 reward value, no minute figure"
   },
   "quranProgressSurahNaba": "An-Naba",
   "@quranProgressSurahNaba": {
@@ -15230,15 +15233,12 @@
   "@quranProgressPublishPlanCta": {
     "description": "SCR-FAT-072 publish ward plan CTA (P15-QUR-002)"
   },
-  "quranProgressPublishPlanToast": "Ward plan sent — {surah} · +{minutes} minutes reward",
+  "quranProgressPublishPlanToast": "Ward plan sent — {surah}",
   "@quranProgressPublishPlanToast": {
     "description": "SCR-FAT-072 publish plan toast",
     "placeholders": {
       "surah": {
         "type": "String"
-      },
-      "minutes": {
-        "type": "int"
       }
     }
   },
@@ -15801,6 +15801,18 @@
   "screenTimeServerSchoolMode": "School mode",
   "@screenTimeServerSchoolMode": {
       "description": "SCR: screen-time server panel — school mode"
+  },
+  "screenTimeServerEarnedMinutesTitle": "Extend limit with earned minutes",
+  "@screenTimeServerEarnedMinutesTitle": {
+      "description": "SCR: screen-time server panel — toggle title for earned minutes limit extension"
+  },
+  "screenTimeServerEarnedMinutesSubtitle": "Add earned minutes from activities and tasks to daily screen time",
+  "@screenTimeServerEarnedMinutesSubtitle": {
+      "description": "SCR: screen-time server panel — toggle subtitle for earned minutes limit extension"
+  },
+  "screenTimeServerEarnedMinutesPreview": "Remaining = Daily limit + Grants + Earned minutes − Usage",
+  "@screenTimeServerEarnedMinutesPreview": {
+      "description": "SCR: screen-time server panel — formula breakdown preview for earned minutes"
   },
   "screenTimeServerSave": "Save to the server",
   "@screenTimeServerSave": {
@@ -16584,5 +16596,654 @@
   "deviceModeInviteCodeSemantics": "I have an invite code — join an existing family",
   "@deviceModeInviteCodeSemantics": {
     "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "nativePairingContinueToProfile": "Continue to Child Profile",
+  "@nativePairingContinueToProfile": {
+    "description": "CTA button to continue to child profile after pairing"
+  },
+  "childProfileLastSeenNow": "Just now",
+  "@childProfileLastSeenNow": {
+    "description": "Relative time for last seen just now"
+  },
+  "childProfileLastSeenMinutes": "{minutes}m ago",
+  "@childProfileLastSeenMinutes": {
+    "description": "Relative time in minutes",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "childProfileLastSeenHours": "{hours}h ago",
+  "@childProfileLastSeenHours": {
+    "description": "Relative time in hours",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "childProfileLastSeenDays": "{days}d ago",
+  "@childProfileLastSeenDays": {
+    "description": "Relative time in days",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "childProfileFallbackName": "Child",
+  "@childProfileFallbackName": {
+    "description": "Fallback name for a child"
+  },
+  "childProfileDeleteButton": "Delete Child Profile",
+  "@childProfileDeleteButton": {
+    "description": "Button to initiate child profile deletion"
+  },
+  "childProfileDeleteConfirmTitle": "Delete Child Profile",
+  "@childProfileDeleteConfirmTitle": {
+    "description": "SCR-FAT-013 delete child confirm dialog title"
+  },
+  "childProfileDeleteConfirmPrompt": "This action is permanent and cannot be undone. To confirm deletion, type CONFIRM DELETE below:",
+  "@childProfileDeleteConfirmPrompt": {
+    "description": "SCR-FAT-013 delete child confirmation prompt"
+  },
+  "childProfileDeleteConfirmTokenHint": "CONFIRM DELETE",
+  "@childProfileDeleteConfirmTokenHint": {
+    "description": "SCR-FAT-013 delete child confirm token hint"
+  },
+  "childProfileDeleteConfirmAction": "Confirm Delete",
+  "@childProfileDeleteConfirmAction": {
+    "description": "SCR-FAT-013 delete child confirm action button"
+  },
+  "childProfileDeleteSuccessToast": "Child profile deleted successfully",
+  "@childProfileDeleteSuccessToast": {
+    "description": "SCR-FAT-013 delete child success toast"
+  },
+  "childDayBoardEarnedExtendsOn": "Minutes you earn from your activities are added to your daily screen time",
+  "@childDayBoardEarnedExtendsOn": {
+    "description": "Child day board note when earned minutes extend today limit"
+  },
+  "childDayBoardEarnedExtendsOff": "Minutes you earn from your activities are not added to today's screen time — they stay for you",
+  "@childDayBoardEarnedExtendsOff": {
+    "description": "Child day board note when earned minutes do not extend today limit"
+  },
+  "screenTimeServerLoading": "Loading the screen-time state from the server…",
+  "@screenTimeServerLoading": {
+    "description": "Screen time server panel loading state"
+  },
+  "screenTimeServerEmpty": "No screen-time limits are set for this child yet — nothing is being enforced.",
+  "@screenTimeServerEmpty": {
+    "description": "Screen time server panel empty state when no limits are set"
+  },
+  "childDayBoardNoLimit": "No daily limit right now",
+  "@childDayBoardNoLimit": {
+    "description": "Child day board when no screen time daily limit is set"
+  },
+  "screenTimeServerRetry": "Retry",
+  "@screenTimeServerRetry": {
+    "description": "Retry action on screen time server panel"
+  },
+  "screenTimeServerQuickGrantTitle": "Quick time grant",
+  "@screenTimeServerQuickGrantTitle": {
+    "description": "Title for quick extra minutes grant buttons on server panel"
+  },
+  "screenTimeServerGrant15": "+15 min",
+  "@screenTimeServerGrant15": {
+    "description": "Quick grant 15 minutes"
+  },
+  "screenTimeServerGrant30": "+30 min",
+  "@screenTimeServerGrant30": {
+    "description": "Quick grant 30 minutes"
+  },
+  "screenTimeServerGrant60": "+60 min",
+  "@screenTimeServerGrant60": {
+    "description": "Quick grant 60 minutes"
+  },
+  "screenTimeServerCapInvalid": "Please enter minutes between 0 and 1440",
+  "@screenTimeServerCapInvalid": {
+    "description": "Validation message when screen time daily cap is invalid"
+  },
+  "screenTimeServerTotalLimit": "Total limit: {minutes} min",
+  "@screenTimeServerTotalLimit": {
+    "description": "Total limit minutes label on screen time server panel",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "screenTimeServerProgressLabel": "Daily screen time consumption progress",
+  "@screenTimeServerProgressLabel": {
+    "description": "Accessibility semantics label for daily screen time consumption progress bar"
+  },
+  "childDayBoardTimeHeroTitle": "Your time today",
+  "@childDayBoardTimeHeroTitle": {
+    "description": "SCR-CHD-004 daily time hero ring title"
+  },
+  "childDayBoardTimeHeroBase": "Daily base limit",
+  "@childDayBoardTimeHeroBase": {
+    "description": "SCR-CHD-004 hero ring legend for the guardian-set daily cap"
+  },
+  "childDayBoardTimeHeroEarned": "Minutes you earned",
+  "@childDayBoardTimeHeroEarned": {
+    "description": "SCR-CHD-004 hero ring legend for minutes earned by tasks and activities"
+  },
+  "childDayBoardTimeHeroGrant": "Gift from family",
+  "@childDayBoardTimeHeroGrant": {
+    "description": "SCR-CHD-004 hero ring legend for guardian-granted temporary minutes"
+  },
+  "childDayBoardTimeHeroNoLimit": "Your day is open",
+  "@childDayBoardTimeHeroNoLimit": {
+    "description": "SCR-CHD-004 hero ring when the server reports no daily limit"
+  },
+  "childDayBoardTimeHeroLoading": "Reading your time from the server…",
+  "@childDayBoardTimeHeroLoading": {
+    "description": "SCR-CHD-004 hero ring loading state"
+  },
+  "childDayBoardTimeHeroAbundant": "Plenty of time left — enjoy it wisely",
+  "@childDayBoardTimeHeroAbundant": {
+    "description": "SCR-CHD-004 hero ring calm tone when minutes are plentiful"
+  },
+  "childDayBoardTimeHeroNearEnd": "A little left — finish your game calmly",
+  "@childDayBoardTimeHeroNearEnd": {
+    "description": "SCR-CHD-004 hero ring warm tone when the day is nearly spent"
+  },
+  "childDayBoardTimeHeroDepleted": "Today's time is done — tomorrow brings a fresh one",
+  "@childDayBoardTimeHeroDepleted": {
+    "description": "SCR-CHD-004 hero ring when the day's minutes are spent"
+  },
+  "childDayBoardTimeHeroWindDown": "Bedtime is near — let the screen wind down",
+  "@childDayBoardTimeHeroWindDown": {
+    "description": "SCR-CHD-004 hero ring bedtime tone"
+  },
+  "childDayBoardTimeHeroRingSemantics": "Screen time ring: {percent}% used",
+  "@childDayBoardTimeHeroRingSemantics": {
+    "description": "SCR-CHD-004 hero ring accessibility sentence",
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "childDayBoardRoutineTitle": "Today's routine",
+  "@childDayBoardRoutineTitle": {
+    "description": "SCR-CHD-004 routine card title"
+  },
+  "childDayBoardRoutineSleep": "Bedtime 🌙",
+  "@childDayBoardRoutineSleep": {
+    "description": "SCR-CHD-004 routine badge for the sleep window"
+  },
+  "childDayBoardRoutineSchool": "School hours 🎒",
+  "@childDayBoardRoutineSchool": {
+    "description": "SCR-CHD-004 routine badge for the school window"
+  },
+  "childDayBoardRoutineFree": "Play time 🎮",
+  "@childDayBoardRoutineFree": {
+    "description": "SCR-CHD-004 routine badge when the child's own time is open"
+  },
+  "childDayBoardRoutineWindDown": "Winding down before sleep",
+  "@childDayBoardRoutineWindDown": {
+    "description": "SCR-CHD-004 routine badge in the minutes before bedtime"
+  },
+  "childDayBoardRoutineHint": "Sleep, school and play follow your family's schedule",
+  "@childDayBoardRoutineHint": {
+    "description": "SCR-CHD-004 routine card hint line"
+  },
+  "childDayBoardTasksTitle": "My tasks and rewards",
+  "@childDayBoardTasksTitle": {
+    "description": "SCR-CHD-004 tasks and rewards card title"
+  },
+  "childDayBoardTasksSubtitle": "Finish a task to earn minutes",
+  "@childDayBoardTasksSubtitle": {
+    "description": "SCR-CHD-004 tasks card subtitle"
+  },
+  "childDayBoardTasksPoints": "{points} points",
+  "@childDayBoardTasksPoints": {
+    "description": "SCR-CHD-004 reward shown on one task card",
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "childDayBoardTasksStatusPending": "Not started yet",
+  "@childDayBoardTasksStatusPending": {
+    "description": "SCR-CHD-004 status of a task nobody has sent"
+  },
+  "childDayBoardTasksStatusClaimed": "Sent — waiting for a guardian",
+  "@childDayBoardTasksStatusClaimed": {
+    "description": "SCR-CHD-004 status of a task awaiting a guardian's answer"
+  },
+  "childDayBoardTasksStatusConfirmed": "Approved",
+  "@childDayBoardTasksStatusConfirmed": {
+    "description": "SCR-CHD-004 status of an approved task"
+  },
+  "childDayBoardTasksStatusDeclined": "Declined this time",
+  "@childDayBoardTasksStatusDeclined": {
+    "description": "SCR-CHD-004 status of a declined task"
+  },
+  "childDayBoardTasksStatusArchived": "Archived",
+  "@childDayBoardTasksStatusArchived": {
+    "description": "SCR-CHD-004 status of a task closed for the day"
+  },
+  "childDayBoardTasksOpenAll": "All tasks",
+  "@childDayBoardTasksOpenAll": {
+    "description": "SCR-CHD-004 link from the tasks card to the tasks list"
+  },
+  "childDayBoardTasksEmpty": "No tasks today",
+  "@childDayBoardTasksEmpty": {
+    "description": "SCR-CHD-004 empty state of the tasks card"
+  },
+  "childDayBoardTasksLoading": "Reading your tasks…",
+  "@childDayBoardTasksLoading": {
+    "description": "SCR-CHD-004 loading state of the tasks card"
+  },
+  "childDayBoardTasksUnavailable": "The tasks server is not connected yet",
+  "@childDayBoardTasksUnavailable": {
+    "description": "SCR-CHD-004 state of the tasks card with no server bound"
+  },
+  "childDayBoardTasksRefused": "I could not read your tasks right now",
+  "@childDayBoardTasksRefused": {
+    "description": "SCR-CHD-004 error state of the tasks card"
+  },
+  "childDayBoardSafetyTitle": "Safety button",
+  "@childDayBoardSafetyTitle": {
+    "description": "SCR-CHD-004 safety card title"
+  },
+  "childDayBoardSafetyReady": "Ready — press and hold for help",
+  "@childDayBoardSafetyReady": {
+    "description": "SCR-CHD-004 safety button when it is armed"
+  },
+  "childDayBoardSafetyHold": "Press and hold for 3 seconds",
+  "@childDayBoardSafetyHold": {
+    "description": "SCR-CHD-004 instruction under the safety button"
+  },
+  "childDayBoardSafetyProgress": "Keep holding — {seconds}",
+  "@childDayBoardSafetyProgress": {
+    "description": "SCR-CHD-004 countdown inside the safety hold",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "childDayBoardSafetyReleased": "The help request was sent",
+  "@childDayBoardSafetyReleased": {
+    "description": "SCR-CHD-004 message once the hold completed"
+  },
+  "childDayBoardSafetySemantics": "Help button — press and hold for three seconds",
+  "@childDayBoardSafetySemantics": {
+    "description": "SCR-CHD-004 accessibility label of the safety button"
+  },
+  "childDayBoardTouchpointsTitle": "My family",
+  "@childDayBoardTouchpointsTitle": {
+    "description": "SCR-CHD-004 family touchpoints card title"
+  },
+  "childDayBoardTouchpointsSubtitle": "A call or a message with one tap",
+  "@childDayBoardTouchpointsSubtitle": {
+    "description": "SCR-CHD-004 family touchpoints card subtitle"
+  },
+  "childDayBoardTouchpointsFamilyThread": "Family thread",
+  "@childDayBoardTouchpointsFamilyThread": {
+    "description": "SCR-CHD-004 one-tap touchpoint to the shared family thread"
+  },
+  "childDayBoardTouchpointsAllChats": "All chats",
+  "@childDayBoardTouchpointsAllChats": {
+    "description": "SCR-CHD-004 one-tap touchpoint to the child's conversation list"
+  },
+  "childDayBoardTouchpointsAskTime": "Ask for extra minutes",
+  "@childDayBoardTouchpointsAskTime": {
+    "description": "SCR-CHD-004 one-tap touchpoint to the time-request screen"
+  },
+  "childDayBoardTouchpointsQuran": "My Qur'an page",
+  "@childDayBoardTouchpointsQuran": {
+    "description": "SCR-CHD-004 one-tap touchpoint to the child's Qur'an page"
+  },
+  "childDayBoardTouchpointsWallet": "My minutes ledger",
+  "@childDayBoardTouchpointsWallet": {
+    "description": "SCR-CHD-004 one-tap touchpoint to the child's minutes wallet"
+  },
+  "screenTimeServerExtensionTitle": "Extra time",
+  "@screenTimeServerExtensionTitle": {
+    "description": "SCR-FAT-032 server panel — quick and custom extension card title"
+  },
+  "screenTimeServerExtensionHint": "Minutes are added by the server and reach the child on their next sync",
+  "@screenTimeServerExtensionHint": {
+    "description": "SCR-FAT-032 server panel — extension card honesty hint"
+  },
+  "screenTimeServerExtensionCustom": "Custom minutes",
+  "@screenTimeServerExtensionCustom": {
+    "description": "SCR-FAT-032 server panel — open the custom extension sheet"
+  },
+  "screenTimeServerExtensionCustomTitle": "How many minutes now?",
+  "@screenTimeServerExtensionCustomTitle": {
+    "description": "SCR-FAT-032 server panel — custom extension sheet title"
+  },
+  "screenTimeServerExtensionCustomHelper": "Between 1 and 240 minutes",
+  "@screenTimeServerExtensionCustomHelper": {
+    "description": "SCR-FAT-032 server panel — custom extension helper text"
+  },
+  "screenTimeServerExtensionCustomConfirm": "Grant on the server",
+  "@screenTimeServerExtensionCustomConfirm": {
+    "description": "SCR-FAT-032 server panel — custom extension confirm button"
+  },
+  "screenTimeServerExtensionCustomInvalid": "Enter minutes between 1 and 240",
+  "@screenTimeServerExtensionCustomInvalid": {
+    "description": "SCR-FAT-032 server panel — custom extension validation error"
+  },
+  "screenTimeServerExtensionPending": "The server is applying the extension…",
+  "@screenTimeServerExtensionPending": {
+    "description": "SCR-FAT-032 server panel — extension write in flight"
+  },
+  "screenTimeServerLockStateLocked": "The phone is stopped now, by your decision",
+  "@screenTimeServerLockStateLocked": {
+    "description": "SCR-FAT-032 server panel — lock card when a lock is live"
+  },
+  "screenTimeServerLockStateUnlocked": "The phone works within today's cap",
+  "@screenTimeServerLockStateUnlocked": {
+    "description": "SCR-FAT-032 server panel — lock card when nothing is stopping the phone"
+  },
+  "screenTimeServerLockSince": "Stopped at {time}",
+  "@screenTimeServerLockSince": {
+    "description": "SCR-FAT-032 server panel — when the live lock began",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "screenTimeServerLockBusy": "The server is applying it…",
+  "@screenTimeServerLockBusy": {
+    "description": "SCR-FAT-032 server panel — lock write in flight"
+  },
+  "screenTimeServerLockConfirmed": "Confirmed by the server",
+  "@screenTimeServerLockConfirmed": {
+    "description": "SCR-FAT-032 server panel — confirmed-lock chip"
+  },
+  "screenTimeServerLockReleaseNote": "Releasing does not erase today's cap",
+  "@screenTimeServerLockReleaseNote": {
+    "description": "SCR-FAT-032 server panel — release lock note"
+  },
+  "screenTimeServerAppsTitle": "Apps and categories",
+  "@screenTimeServerAppsTitle": {
+    "description": "SCR-FAT-032 server panel — app rules card title"
+  },
+  "screenTimeServerAppsSubtitle": "Your decision for each app is saved on the server",
+  "@screenTimeServerAppsSubtitle": {
+    "description": "SCR-FAT-032 server panel — app rules card subtitle"
+  },
+  "screenTimeServerAppsOpen": "Manage apps",
+  "@screenTimeServerAppsOpen": {
+    "description": "SCR-FAT-032 server panel — open the app rules sheet"
+  },
+  "screenTimeServerAppsRules": "App rules",
+  "@screenTimeServerAppsRules": {
+    "description": "SCR-FAT-032 server panel — link from the insights card to app rules"
+  },
+  "screenTimeServerAppsClose": "Done",
+  "@screenTimeServerAppsClose": {
+    "description": "SCR-FAT-032 app rules sheet — dismiss control"
+  },
+  "screenTimeServerAppsLoading": "Reading the phone's apps…",
+  "@screenTimeServerAppsLoading": {
+    "description": "SCR-FAT-032 app rules sheet — loading state"
+  },
+  "screenTimeServerAppsEmpty": "The phone has not reported any apps yet",
+  "@screenTimeServerAppsEmpty": {
+    "description": "SCR-FAT-032 app rules sheet — empty state"
+  },
+  "screenTimeServerAppsDenied": "This account may not manage this child's apps",
+  "@screenTimeServerAppsDenied": {
+    "description": "SCR-FAT-032 app rules sheet — refused read"
+  },
+  "screenTimeServerAppsStale": "The server did not answer — this is the last list that arrived",
+  "@screenTimeServerAppsStale": {
+    "description": "SCR-FAT-032 app rules sheet — unreachable state"
+  },
+  "screenTimeServerAppsNoSession": "There is no server session — nothing is changed",
+  "@screenTimeServerAppsNoSession": {
+    "description": "SCR-FAT-032 app rules sheet — no session bound"
+  },
+  "screenTimeServerAppAllow": "Allow",
+  "@screenTimeServerAppAllow": {
+    "description": "SCR-FAT-032 app rules sheet — allow one app"
+  },
+  "screenTimeServerAppBlock": "Block",
+  "@screenTimeServerAppBlock": {
+    "description": "SCR-FAT-032 app rules sheet — block one app"
+  },
+  "screenTimeServerAppStateAllowed": "Allowed",
+  "@screenTimeServerAppStateAllowed": {
+    "description": "SCR-FAT-032 app rules sheet — the rule the server stores for one app"
+  },
+  "screenTimeServerAppStateBlocked": "Blocked",
+  "@screenTimeServerAppStateBlocked": {
+    "description": "SCR-FAT-032 app rules sheet — a blocked app, stated as the stored rule"
+  },
+  "screenTimeServerAppPending": "Awaiting a decision",
+  "@screenTimeServerAppPending": {
+    "description": "SCR-FAT-032 app rules sheet — a rule nobody has written yet"
+  },
+  "screenTimeServerAppFree": "Always allowed",
+  "@screenTimeServerAppFree": {
+    "description": "SCR-FAT-032 app rules sheet — an app with no limit on it"
+  },
+  "screenTimeServerAppLimitSet": "A daily limit for this app",
+  "@screenTimeServerAppLimitSet": {
+    "description": "SCR-FAT-032 app rules sheet — per-app limit field label"
+  },
+  "screenTimeServerAppLimitValue": "{minutes}-minute limit",
+  "@screenTimeServerAppLimitValue": {
+    "description": "SCR-FAT-032 app rules sheet — the stored per-app limit",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "screenTimeServerAppUnlimited": "No limit for this app",
+  "@screenTimeServerAppUnlimited": {
+    "description": "SCR-FAT-032 app rules sheet — helper under the limit field"
+  },
+  "screenTimeServerAppUsed": "Used {minutes} minutes",
+  "@screenTimeServerAppUsed": {
+    "description": "SCR-FAT-032 app rules sheet — today's minutes for one app",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "screenTimeServerAppUnknown": "This app is not known on this phone yet",
+  "@screenTimeServerAppUnknown": {
+    "description": "SCR-FAT-032 app rules sheet — a rule for an app no handset reported"
+  },
+  "screenTimeServerAppSaveError": "The server refused the decision — nothing changed",
+  "@screenTimeServerAppSaveError": {
+    "description": "SCR-FAT-032 app rules sheet — a write that did not land"
+  },
+  "screenTimeServerCategoryGames": "Games",
+  "@screenTimeServerCategoryGames": {
+    "description": "SCR-FAT-032 app rules sheet — the games category"
+  },
+  "screenTimeServerCategorySocial": "Social",
+  "@screenTimeServerCategorySocial": {
+    "description": "SCR-FAT-032 app rules sheet — the social category"
+  },
+  "screenTimeServerCategoryVideo": "Video and YouTube",
+  "@screenTimeServerCategoryVideo": {
+    "description": "SCR-FAT-032 app rules sheet — the video category"
+  },
+  "screenTimeServerCategoryEducation": "Learning",
+  "@screenTimeServerCategoryEducation": {
+    "description": "SCR-FAT-032 app rules sheet — the learning category"
+  },
+  "screenTimeServerCategoryOther": "Other",
+  "@screenTimeServerCategoryOther": {
+    "description": "SCR-FAT-032 app rules sheet — anything the phone reported without a category"
+  },
+  "screenTimeServerCategoryBlockAll": "Block category",
+  "@screenTimeServerCategoryBlockAll": {
+    "description": "SCR-FAT-032 app rules sheet — block every app in one category"
+  },
+  "screenTimeServerCategoryAllowAll": "Allow category",
+  "@screenTimeServerCategoryAllowAll": {
+    "description": "SCR-FAT-032 app rules sheet — allow every app in one category"
+  },
+  "screenTimeServerCategoryApplied": "Applied to {count} apps",
+  "@screenTimeServerCategoryApplied": {
+    "description": "SCR-FAT-032 app rules sheet — how many rules one category action wrote",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "screenTimeServerCategoryBudget": "Daily category budget",
+  "@screenTimeServerCategoryBudget": {
+    "description": "SCR-FAT-032 app rules sheet — per-category minute budget field"
+  },
+  "screenTimeServerCategoryBudgetPending": "A category budget needs a new route on the server",
+  "@screenTimeServerCategoryBudgetPending": {
+    "description": "SCR-FAT-032 app rules sheet — the contract a category budget waits on"
+  },
+  "screenTimeServerInsightsTitle": "Today's usage",
+  "@screenTimeServerInsightsTitle": {
+    "description": "SCR-FAT-032 server panel — usage insights card title"
+  },
+  "screenTimeServerInsightsUsed": "Used",
+  "@screenTimeServerInsightsUsed": {
+    "description": "SCR-FAT-032 server panel — minutes used today"
+  },
+  "screenTimeServerInsightsCap": "Daily cap",
+  "@screenTimeServerInsightsCap": {
+    "description": "SCR-FAT-032 server panel — the cap today's minutes are read against"
+  },
+  "screenTimeServerInsightsGranted": "Extra granted",
+  "@screenTimeServerInsightsGranted": {
+    "description": "SCR-FAT-032 server panel — minutes a guardian added to the cap"
+  },
+  "screenTimeServerInsightsTop": "Most-used apps",
+  "@screenTimeServerInsightsTop": {
+    "description": "SCR-FAT-032 server panel — heading over the per-app bars"
+  },
+  "screenTimeServerInsightsNoUsage": "No usage recorded today",
+  "@screenTimeServerInsightsNoUsage": {
+    "description": "SCR-FAT-032 server panel — insights when the day is untouched"
+  },
+  "screenTimeServerInsightsOverCap": "Usage went past today's cap",
+  "@screenTimeServerInsightsOverCap": {
+    "description": "SCR-FAT-032 server panel — insights when used minutes exceed what was allowed"
+  },
+  "screenTimeServerInsightsShare": "{percent}% of today's time",
+  "@screenTimeServerInsightsShare": {
+    "description": "SCR-FAT-032 server panel — one app's share of the day",
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "screenTimeServerInsightsHint": "The numbers as the server counted them today, on the device clock",
+  "@screenTimeServerInsightsHint": {
+    "description": "SCR-FAT-032 server panel — insights footnote"
+  },
+  "screenTimeServerWeekTitle": "Week schedule",
+  "@screenTimeServerWeekTitle": {
+    "description": "SCR-FAT-032 server panel — week schedule card title"
+  },
+  "screenTimeServerWeekSchoolDays": "School mode days",
+  "@screenTimeServerWeekSchoolDays": {
+    "description": "SCR-FAT-032 server panel — heading over the school-day chips"
+  },
+  "screenTimeServerWeekWeekend": "Weekend",
+  "@screenTimeServerWeekWeekend": {
+    "description": "SCR-FAT-032 server panel — the weekend group of days"
+  },
+  "screenTimeServerWeekWeekdays": "School days",
+  "@screenTimeServerWeekWeekdays": {
+    "description": "SCR-FAT-032 server panel — the weekday group of days"
+  },
+  "screenTimeServerWeekBedtimeHint": "The server stores one bedtime window for every day until a weekend window is built",
+  "@screenTimeServerWeekBedtimeHint": {
+    "description": "SCR-FAT-032 server panel — bedtime window explanation"
+  },
+  "screenTimeServerWeekWeekendNote": "A separate weekend bedtime window needs an extension of the server contract",
+  "@screenTimeServerWeekWeekendNote": {
+    "description": "SCR-FAT-032 server panel — what the weekend bedtime waits on"
+  },
+  "screenTimeServerWeekSave": "Save week days",
+  "@screenTimeServerWeekSave": {
+    "description": "SCR-FAT-032 server panel — write the school-day set"
+  },
+  "screenTimeServerWeekBedtimeStart": "Bedtime starts",
+  "@screenTimeServerWeekBedtimeStart": {
+    "description": "SCR-FAT-032 server panel — pick the bedtime start"
+  },
+  "screenTimeServerWeekBedtimeEnd": "Bedtime ends",
+  "@screenTimeServerWeekBedtimeEnd": {
+    "description": "SCR-FAT-032 server panel — pick the bedtime end"
+  },
+  "screenTimeServerWeekWeekendBedtimeStart": "Weekend bedtime starts",
+  "@screenTimeServerWeekWeekendBedtimeStart": {
+    "description": "SCR-FAT-032 server panel — pick the weekend bedtime start"
+  },
+  "screenTimeServerWeekWeekendBedtimeEnd": "Weekend bedtime ends",
+  "@screenTimeServerWeekWeekendBedtimeEnd": {
+    "description": "SCR-FAT-032 server panel — pick the weekend bedtime end"
+  },
+  "screenTimeServerDaySat": "Sat",
+  "@screenTimeServerDaySat": {
+    "description": "SCR-FAT-032 server panel — Saturday in the week editor"
+  },
+  "screenTimeServerDaySun": "Sun",
+  "@screenTimeServerDaySun": {
+    "description": "SCR-FAT-032 server panel — Sunday in the week editor"
+  },
+  "screenTimeServerDayMon": "Mon",
+  "@screenTimeServerDayMon": {
+    "description": "SCR-FAT-032 server panel — Monday in the week editor"
+  },
+  "screenTimeServerDayTue": "Tue",
+  "@screenTimeServerDayTue": {
+    "description": "SCR-FAT-032 server panel — Tuesday in the week editor"
+  },
+  "screenTimeServerDayWed": "Wed",
+  "@screenTimeServerDayWed": {
+    "description": "SCR-FAT-032 server panel — Wednesday in the week editor"
+  },
+  "screenTimeServerDayThu": "Thu",
+  "@screenTimeServerDayThu": {
+    "description": "SCR-FAT-032 server panel — Thursday in the week editor"
+  },
+  "screenTimeServerDayFri": "Fri",
+  "@screenTimeServerDayFri": {
+    "description": "SCR-FAT-032 server panel — Friday in the week editor"
+  },
+  "screenTimeServerEarnedMinutesOnHint": "Your task minutes go straight into today's cap",
+  "@screenTimeServerEarnedMinutesOnHint": {
+    "description": "SCR-FAT-032 server panel — earned-minutes switch on"
+  },
+  "screenTimeServerEarnedMinutesOffHint": "Your task minutes are saved for you and do not extend today's cap",
+  "@screenTimeServerEarnedMinutesOffHint": {
+    "description": "SCR-FAT-032 server panel — earned-minutes switch off"
+  },
+  "screenTimeServerCapPresets": "Quick picks",
+  "@screenTimeServerCapPresets": {
+    "description": "SCR-FAT-032 server panel — heading over the daily-cap quick picks"
+  },
+  "screenTimeServerCapUnlimited": "No limit",
+  "@screenTimeServerCapUnlimited": {
+    "description": "SCR-FAT-032 server panel — the zero-minute cap pick"
+  },
+  "screenTimeServerCapPresetValue": "{minutes} min",
+  "@screenTimeServerCapPresetValue": {
+    "description": "SCR-FAT-032 server panel — one daily-cap quick pick",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
   }
 }

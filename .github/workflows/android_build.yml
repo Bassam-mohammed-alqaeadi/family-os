@@ -111,7 +111,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.35.7"
+          flutter-version: "3.47.7"
           channel: stable
           cache: true
 
@@ -170,8 +170,11 @@ jobs:
 
       - name: Name artifact
         id: name
+        env:
+          # On pull_request runs GITHUB_SHA is the merge commit, not the commit under test.
+          UNDER_TEST_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          short="${GITHUB_SHA::7}"
+          short="${UNDER_TEST_SHA::7}"
           out="family-os-test-release-${short}-${{ github.run_number }}.apk"
           cp build/app/outputs/flutter-apk/app-release.apk "build/app/outputs/flutter-apk/$out"
           echo "file=$out" >> "$GITHUB_OUTPUT"
@@ -194,7 +197,7 @@ jobs:
           {
             echo "## Family OS test APK (release build, test-signed)"
             echo
-            echo "- Commit: \`${GITHUB_SHA::7}\` on \`${GITHUB_REF_NAME}\`, build number ${{ github.run_number }}"
+            echo "- Commit: \`${{ github.event.pull_request.head.sha || github.sha }}\` (\`${GITHUB_REF_NAME}\`), build number ${{ github.run_number }}"
             echo "- SHA-256: \`${{ steps.name.outputs.sha256 }}\`"
             echo "- Checked in the APK: not debuggable, \`isMonitoringTool=child_monitoring\` present"
             echo

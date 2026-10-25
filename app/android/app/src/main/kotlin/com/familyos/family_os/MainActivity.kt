@@ -2,7 +2,10 @@ package com.familyos.family_os
 
 import android.Manifest
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -31,6 +34,7 @@ import java.util.concurrent.TimeUnit
  */
 class MainActivity : FlutterActivity() {
     private var pendingPermissionResult: MethodChannel.Result? = null
+    private var telemetryMethodChannel: MethodChannel? = null
     private var notificationMethodChannel: MethodChannel? = null
     private var pendingNotificationRoute: String? = null
     private val chatExecutor = Executors.newSingleThreadExecutor()
@@ -40,15 +44,23 @@ class MainActivity : FlutterActivity() {
         .writeTimeout(15, TimeUnit.SECONDS)
         .build()
 
+    private val revocationReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            telemetryMethodChannel?.invokeMethod("onDeviceRevoked", null)
+        }
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, TELEMETRY_CHANNEL)
-            .setMethodCallHandler { call, result ->
+        telemetryMethodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, TELEMETRY_CHANNEL).apply {
+            setMethodCallHandler { call, result ->
                 when (call.method) {
                     "requestLocationPermissions" -> requestLocationPermissions(result)
                     "configureAndStart" -> configureAndStart(call, result)
                     "startConfigured" -> startConfiguredTelemetry(result)
                     "chatRequest" -> proxyFamilyChatRequest(call, result)
+                    "minutesBalanceRequest" -> proxyMinutesBalanceRequest(call, result)
+                    "screenTimeStateRequest" -> proxyScreenTimeStateRequest(result)
                     "consentRequest" -> proxyFamilyConsentRequest(call, result)
                     "capabilitySnapshot" -> capabilitySnapshot(result)
                     "stop" -> stopTelemetry(result)
@@ -56,9 +68,24 @@ class MainActivity : FlutterActivity() {
                     "protectionState" -> protectionState(result)
                     "batteryGuidance" -> batteryGuidance(result)
                     "openBatterySettings" -> openBatterySettings(result)
+                    "heartbeat" -> {
+                        ChildTelemetryService.activeInstance?.heartbeatNow()
+                        result.success(true)
+                    }
                     else -> result.notImplemented()
                 }
             }
+        }
+        try {
+            ContextCompat.registerReceiver(
+                this,
+                revocationReceiver,
+                IntentFilter(ChildTelemetryService.ACTION_DEVICE_REVOKED),
+                ContextCompat.RECEIVER_NOT_EXPORTED,
+            )
+        } catch (_: Exception) {
+            // Best effort
+        }
         notificationMethodChannel = MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
             NOTIFICATION_CHANNEL,
@@ -388,6 +415,73 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    /// The child's own balance, read with the device credential that never leaves this layer.
+    /// Only the scope check and the GET happen here; the body returns exactly as the server wrote it.
+    private fun proxyMinutesBalanceRequest(call: MethodCall, result: MethodChannel.Result) {
+        val config = TelemetryConfigStore(this).read()
+        if (config == null) {
+            result.error("device_minutes_not_configured", "No paired device session is available.", null)
+            return
+        }
+        val requestedDeviceId = call.argument<String>("deviceId")?.trim()
+        if (requestedDeviceId != config.deviceId) {
+            result.error("device_minutes_scope_mismatch", "The device scope does not match this paired handset.", null)
+            return
+        }
+        chatExecutor.execute {
+            try {
+                val request = Request.Builder()
+                    .url("${config.apiOrigin}/v1/devices/${config.deviceId}/minutes-balance")
+                    .header("Authorization", "Device ${config.deviceCredential}")
+                    .header("Accept", "application/json")
+                    .get()
+                    .build()
+                val answer = chatHttpClient.newCall(request).execute().use { response ->
+                    mapOf(
+                        "statusCode" to response.code,
+                        "body" to (response.body?.string() ?: ""),
+                    )
+                }
+                runOnUiThread { result.success(answer) }
+            } catch (_: Exception) {
+                // Credentials and balance bodies are never logged.
+                runOnUiThread {
+                    result.error("device_minutes_unreachable", "The minutes service did not answer.", null)
+                }
+            }
+        }
+    }
+
+    private fun proxyScreenTimeStateRequest(result: MethodChannel.Result) {
+        val config = TelemetryConfigStore(this).read()
+        if (config == null) {
+            result.error("device_screen_time_not_configured", "No paired device session is available.", null)
+            return
+        }
+        chatExecutor.execute {
+            try {
+                val request = Request.Builder()
+                    .url("${config.apiOrigin}/v1/devices/${config.deviceId}/screen-time")
+                    .header("Authorization", "Device ${config.deviceCredential}")
+                    .header("Accept", "application/json")
+                    .get()
+                    .build()
+                val answer = chatHttpClient.newCall(request).execute().use { response ->
+                    mapOf(
+                        "statusCode" to response.code,
+                        "body" to (response.body?.string() ?: ""),
+                    )
+                }
+                runOnUiThread { result.success(answer) }
+            } catch (_: Exception) {
+                // Credential and response body are never logged.
+                runOnUiThread {
+                    result.error("device_screen_time_unreachable", "The screen time service did not answer.", null)
+                }
+            }
+        }
+    }
+
     private fun familyChatRequestSpec(
         operation: String,
         deviceId: String,
@@ -515,6 +609,11 @@ class MainActivity : FlutterActivity() {
         !value.isNullOrBlank() && value.length <= 128
 
     override fun onDestroy() {
+        try {
+            unregisterReceiver(revocationReceiver)
+        } catch (_: Exception) {
+            // Already unregistered or not registered
+        }
         chatExecutor.shutdownNow()
         super.onDestroy()
     }

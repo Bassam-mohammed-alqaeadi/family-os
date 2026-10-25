@@ -94,6 +94,13 @@ async function withFreshDatabase(run) {
       await client.end();
     }
   } finally {
+    // A retry wakeup or sweep still in flight can hold a connection after the store closes;
+    // WITH (FORCE) would kill it and surface as an uncaught error in whichever test runs next.
+    for (let waited = 0; waited < 10_000; waited += 50) {
+      const open = await admin.query(`SELECT count(*)::int AS n FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()`, [name]);
+      if (open.rows[0].n === 0) break;
+      await new Promise((r) => setTimeout(r, 50));
+    }
     await admin.query(`DROP DATABASE IF EXISTS ${name} WITH (FORCE)`);
     await admin.end();
   }

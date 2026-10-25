@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import 'package:family_os/core/runtime/family_child_deletion_source.dart';
 import 'package:family_os/core/runtime/family_child_profile_source.dart';
 import 'package:family_os/core/runtime/family_creation_source.dart';
 import 'package:family_os/core/runtime/family_device_revocation.dart';
@@ -18,6 +19,7 @@ final class AppRuntime extends ChangeNotifier {
     required this.identity,
     FamilyRosterSource? roster,
     FamilyChildProfileSource? childProfiles,
+    FamilyChildDeletionSource? childDeletion,
     FamilyCreationSource? familyCreation,
     FamilyDeviceSource? devices,
     FamilyDeviceRevocationSource? deviceRevocation,
@@ -25,6 +27,7 @@ final class AppRuntime extends ChangeNotifier {
     FamilyPolicySource? policies,
   }) : roster = roster ?? UnavailableFamilyRosterSource(),
        childProfiles = childProfiles ?? UnavailableFamilyChildProfileSource(),
+       childDeletion = childDeletion ?? UnavailableFamilyChildDeletionSource(),
        familyCreation = familyCreation ?? UnavailableFamilyCreationSource(),
        devices = devices ?? UnavailableFamilyDeviceSource(),
        deviceRevocation =
@@ -47,6 +50,9 @@ final class AppRuntime extends ChangeNotifier {
   /// The only main-app child-profile creation source. An unavailable source
   /// fails closed rather than delegating to the legacy local roster.
   final FamilyChildProfileSource childProfiles;
+
+  /// Main-app child-deletion source.
+  final FamilyChildDeletionSource childDeletion;
 
   /// The main-app family-creation source. It fails closed: a route with no
   /// configured server session says so instead of fabricating a local family.
@@ -83,6 +89,11 @@ final class AppRuntime extends ChangeNotifier {
     if (!identical(childProfiles, identity) &&
         !identical(childProfiles, roster)) {
       childProfiles.dispose();
+    }
+    if (!identical(childDeletion, identity) &&
+        !identical(childDeletion, roster) &&
+        !identical(childDeletion, childProfiles)) {
+      childDeletion.dispose();
     }
     if (!identical(familyCreation, identity) &&
         !identical(familyCreation, roster) &&

@@ -1075,6 +1075,17 @@ class AppLocalizationsEn extends AppLocalizations {
       'Screen time settings unavailable — local storage could not open. Saving is disabled.';
 
   @override
+  String get childScreenTimeEarnedExtensionNotice =>
+      'Earned minutes automatically extend your daily screen time';
+
+  @override
+  String get childScreenTimeEmptyTitle => 'No screen time limits configured';
+
+  @override
+  String get childScreenTimeEmptyMessage =>
+      'No schedule windows or daily limit have been configured yet.';
+
+  @override
   String get childScreenTimeSleep => 'Sleep';
 
   @override
@@ -1114,6 +1125,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get childScreenTimeWalletsHeading => 'Per-app wallets';
+
+  @override
+  String get childScreenTimeBalanceStale =>
+      'Showing the last good server reading; the latest read failed';
 
   @override
   String childScreenTimeWalletMinutes(int minutes) {
@@ -2095,6 +2110,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get attributionRewardMinutesField => 'Minutes';
+
+  @override
+  String get attributionRewardCountedSoon => 'Counted soon';
+
+  @override
   String attributionRewardWalletMinutes(int minutes) {
     return '$minutes minutes to their wallet';
   }
@@ -2114,8 +2135,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get attributionRewardLibraryCta => 'Community library';
 
   @override
-  String attributionRewardAssignedToast(String name, int minutes) {
-    return 'Assigned to $name — they see: \"Your parent prepared a challenge — $minutes minutes waiting!\"';
+  String attributionRewardAssignedToast(String name) {
+    return 'Assigned to $name — challenge delivered';
   }
 
   @override
@@ -9087,16 +9108,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quranProgressPlaySemantics => 'Play or pause recitation';
 
   @override
-  String quranProgressApproveCta(int minutes) {
-    return 'Approve & reward (+$minutes min)';
-  }
+  String get quranProgressApproveCta => 'Approve ward';
 
   @override
   String get quranProgressWhisperCta => 'Whisper 💬';
 
   @override
-  String quranProgressApproveToast(String name, int minutes) {
-    return 'Approved $name\'s recitation and added +$minutes minutes of play';
+  String quranProgressApproveToast(String name) {
+    return 'Approved $name\'s recitation';
   }
 
   @override
@@ -9105,9 +9124,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String quranProgressApprovedBanner(int minutes) {
-    return '⭐ This ward was approved and +$minutes minutes rewarded';
-  }
+  String get quranProgressApprovedBanner =>
+      '⭐ This ward was approved — reward counted soon';
 
   @override
   String get quranProgressPlanHeading => 'Ward plan & reward';
@@ -9122,9 +9140,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quranProgressPlanReward => 'Completion reward';
 
   @override
-  String quranProgressPlanRewardValue(int minutes) {
-    return '+$minutes play minutes to the wallet';
-  }
+  String get quranProgressPlanRewardValue => 'Counted soon';
 
   @override
   String get quranProgressSurahNaba => 'An-Naba';
@@ -11779,8 +11795,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quranProgressPublishPlanCta => 'Save plan to child';
 
   @override
-  String quranProgressPublishPlanToast(String surah, int minutes) {
-    return 'Ward plan sent — $surah · +$minutes minutes reward';
+  String quranProgressPublishPlanToast(String surah) {
+    return 'Ward plan sent — $surah';
   }
 
   @override
@@ -12450,6 +12466,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get screenTimeServerSchoolMode => 'School mode';
+
+  @override
+  String get screenTimeServerEarnedMinutesTitle =>
+      'Extend limit with earned minutes';
+
+  @override
+  String get screenTimeServerEarnedMinutesSubtitle =>
+      'Add earned minutes from activities and tasks to daily screen time';
+
+  @override
+  String get screenTimeServerEarnedMinutesPreview =>
+      'Remaining = Daily limit + Grants + Earned minutes − Usage';
 
   @override
   String get screenTimeServerSave => 'Save to the server';
@@ -13178,4 +13206,507 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get deviceModeInviteCodeSemantics =>
       'I have an invite code — join an existing family';
+
+  @override
+  String get nativePairingContinueToProfile => 'Continue to Child Profile';
+
+  @override
+  String get childProfileLastSeenNow => 'Just now';
+
+  @override
+  String childProfileLastSeenMinutes(int minutes) {
+    return '${minutes}m ago';
+  }
+
+  @override
+  String childProfileLastSeenHours(int hours) {
+    return '${hours}h ago';
+  }
+
+  @override
+  String childProfileLastSeenDays(int days) {
+    return '${days}d ago';
+  }
+
+  @override
+  String get childProfileFallbackName => 'Child';
+
+  @override
+  String get childProfileDeleteButton => 'Delete Child Profile';
+
+  @override
+  String get childProfileDeleteConfirmTitle => 'Delete Child Profile';
+
+  @override
+  String get childProfileDeleteConfirmPrompt =>
+      'This action is permanent and cannot be undone. To confirm deletion, type CONFIRM DELETE below:';
+
+  @override
+  String get childProfileDeleteConfirmTokenHint => 'CONFIRM DELETE';
+
+  @override
+  String get childProfileDeleteConfirmAction => 'Confirm Delete';
+
+  @override
+  String get childProfileDeleteSuccessToast =>
+      'Child profile deleted successfully';
+
+  @override
+  String get childDayBoardEarnedExtendsOn =>
+      'Minutes you earn from your activities are added to your daily screen time';
+
+  @override
+  String get childDayBoardEarnedExtendsOff =>
+      'Minutes you earn from your activities are not added to today\'s screen time — they stay for you';
+
+  @override
+  String get screenTimeServerLoading =>
+      'Loading the screen-time state from the server…';
+
+  @override
+  String get screenTimeServerEmpty =>
+      'No screen-time limits are set for this child yet — nothing is being enforced.';
+
+  @override
+  String get childDayBoardNoLimit => 'No daily limit right now';
+
+  @override
+  String get screenTimeServerRetry => 'Retry';
+
+  @override
+  String get screenTimeServerQuickGrantTitle => 'Quick time grant';
+
+  @override
+  String get screenTimeServerGrant15 => '+15 min';
+
+  @override
+  String get screenTimeServerGrant30 => '+30 min';
+
+  @override
+  String get screenTimeServerGrant60 => '+60 min';
+
+  @override
+  String get screenTimeServerCapInvalid =>
+      'Please enter minutes between 0 and 1440';
+
+  @override
+  String screenTimeServerTotalLimit(int minutes) {
+    return 'Total limit: $minutes min';
+  }
+
+  @override
+  String get screenTimeServerProgressLabel =>
+      'Daily screen time consumption progress';
+
+  @override
+  String get childDayBoardTimeHeroTitle => 'Your time today';
+
+  @override
+  String get childDayBoardTimeHeroBase => 'Daily base limit';
+
+  @override
+  String get childDayBoardTimeHeroEarned => 'Minutes you earned';
+
+  @override
+  String get childDayBoardTimeHeroGrant => 'Gift from family';
+
+  @override
+  String get childDayBoardTimeHeroNoLimit => 'Your day is open';
+
+  @override
+  String get childDayBoardTimeHeroLoading =>
+      'Reading your time from the server…';
+
+  @override
+  String get childDayBoardTimeHeroAbundant =>
+      'Plenty of time left — enjoy it wisely';
+
+  @override
+  String get childDayBoardTimeHeroNearEnd =>
+      'A little left — finish your game calmly';
+
+  @override
+  String get childDayBoardTimeHeroDepleted =>
+      'Today\'s time is done — tomorrow brings a fresh one';
+
+  @override
+  String get childDayBoardTimeHeroWindDown =>
+      'Bedtime is near — let the screen wind down';
+
+  @override
+  String childDayBoardTimeHeroRingSemantics(int percent) {
+    return 'Screen time ring: $percent% used';
+  }
+
+  @override
+  String get childDayBoardRoutineTitle => 'Today\'s routine';
+
+  @override
+  String get childDayBoardRoutineSleep => 'Bedtime 🌙';
+
+  @override
+  String get childDayBoardRoutineSchool => 'School hours 🎒';
+
+  @override
+  String get childDayBoardRoutineFree => 'Play time 🎮';
+
+  @override
+  String get childDayBoardRoutineWindDown => 'Winding down before sleep';
+
+  @override
+  String get childDayBoardRoutineHint =>
+      'Sleep, school and play follow your family\'s schedule';
+
+  @override
+  String get childDayBoardTasksTitle => 'My tasks and rewards';
+
+  @override
+  String get childDayBoardTasksSubtitle => 'Finish a task to earn minutes';
+
+  @override
+  String childDayBoardTasksPoints(int points) {
+    return '$points points';
+  }
+
+  @override
+  String get childDayBoardTasksStatusPending => 'Not started yet';
+
+  @override
+  String get childDayBoardTasksStatusClaimed => 'Sent — waiting for a guardian';
+
+  @override
+  String get childDayBoardTasksStatusConfirmed => 'Approved';
+
+  @override
+  String get childDayBoardTasksStatusDeclined => 'Declined this time';
+
+  @override
+  String get childDayBoardTasksStatusArchived => 'Archived';
+
+  @override
+  String get childDayBoardTasksOpenAll => 'All tasks';
+
+  @override
+  String get childDayBoardTasksEmpty => 'No tasks today';
+
+  @override
+  String get childDayBoardTasksLoading => 'Reading your tasks…';
+
+  @override
+  String get childDayBoardTasksUnavailable =>
+      'The tasks server is not connected yet';
+
+  @override
+  String get childDayBoardTasksRefused =>
+      'I could not read your tasks right now';
+
+  @override
+  String get childDayBoardSafetyTitle => 'Safety button';
+
+  @override
+  String get childDayBoardSafetyReady => 'Ready — press and hold for help';
+
+  @override
+  String get childDayBoardSafetyHold => 'Press and hold for 3 seconds';
+
+  @override
+  String childDayBoardSafetyProgress(int seconds) {
+    return 'Keep holding — $seconds';
+  }
+
+  @override
+  String get childDayBoardSafetyReleased => 'The help request was sent';
+
+  @override
+  String get childDayBoardSafetySemantics =>
+      'Help button — press and hold for three seconds';
+
+  @override
+  String get childDayBoardTouchpointsTitle => 'My family';
+
+  @override
+  String get childDayBoardTouchpointsSubtitle =>
+      'A call or a message with one tap';
+
+  @override
+  String get childDayBoardTouchpointsFamilyThread => 'Family thread';
+
+  @override
+  String get childDayBoardTouchpointsAllChats => 'All chats';
+
+  @override
+  String get childDayBoardTouchpointsAskTime => 'Ask for extra minutes';
+
+  @override
+  String get childDayBoardTouchpointsQuran => 'My Qur\'an page';
+
+  @override
+  String get childDayBoardTouchpointsWallet => 'My minutes ledger';
+
+  @override
+  String get screenTimeServerExtensionTitle => 'Extra time';
+
+  @override
+  String get screenTimeServerExtensionHint =>
+      'Minutes are added by the server and reach the child on their next sync';
+
+  @override
+  String get screenTimeServerExtensionCustom => 'Custom minutes';
+
+  @override
+  String get screenTimeServerExtensionCustomTitle => 'How many minutes now?';
+
+  @override
+  String get screenTimeServerExtensionCustomHelper =>
+      'Between 1 and 240 minutes';
+
+  @override
+  String get screenTimeServerExtensionCustomConfirm => 'Grant on the server';
+
+  @override
+  String get screenTimeServerExtensionCustomInvalid =>
+      'Enter minutes between 1 and 240';
+
+  @override
+  String get screenTimeServerExtensionPending =>
+      'The server is applying the extension…';
+
+  @override
+  String get screenTimeServerLockStateLocked =>
+      'The phone is stopped now, by your decision';
+
+  @override
+  String get screenTimeServerLockStateUnlocked =>
+      'The phone works within today\'s cap';
+
+  @override
+  String screenTimeServerLockSince(String time) {
+    return 'Stopped at $time';
+  }
+
+  @override
+  String get screenTimeServerLockBusy => 'The server is applying it…';
+
+  @override
+  String get screenTimeServerLockConfirmed => 'Confirmed by the server';
+
+  @override
+  String get screenTimeServerLockReleaseNote =>
+      'Releasing does not erase today\'s cap';
+
+  @override
+  String get screenTimeServerAppsTitle => 'Apps and categories';
+
+  @override
+  String get screenTimeServerAppsSubtitle =>
+      'Your decision for each app is saved on the server';
+
+  @override
+  String get screenTimeServerAppsOpen => 'Manage apps';
+
+  @override
+  String get screenTimeServerAppsRules => 'App rules';
+
+  @override
+  String get screenTimeServerAppsClose => 'Done';
+
+  @override
+  String get screenTimeServerAppsLoading => 'Reading the phone\'s apps…';
+
+  @override
+  String get screenTimeServerAppsEmpty =>
+      'The phone has not reported any apps yet';
+
+  @override
+  String get screenTimeServerAppsDenied =>
+      'This account may not manage this child\'s apps';
+
+  @override
+  String get screenTimeServerAppsStale =>
+      'The server did not answer — this is the last list that arrived';
+
+  @override
+  String get screenTimeServerAppsNoSession =>
+      'There is no server session — nothing is changed';
+
+  @override
+  String get screenTimeServerAppAllow => 'Allow';
+
+  @override
+  String get screenTimeServerAppBlock => 'Block';
+
+  @override
+  String get screenTimeServerAppStateAllowed => 'Allowed';
+
+  @override
+  String get screenTimeServerAppStateBlocked => 'Blocked';
+
+  @override
+  String get screenTimeServerAppPending => 'Awaiting a decision';
+
+  @override
+  String get screenTimeServerAppFree => 'Always allowed';
+
+  @override
+  String get screenTimeServerAppLimitSet => 'A daily limit for this app';
+
+  @override
+  String screenTimeServerAppLimitValue(int minutes) {
+    return '$minutes-minute limit';
+  }
+
+  @override
+  String get screenTimeServerAppUnlimited => 'No limit for this app';
+
+  @override
+  String screenTimeServerAppUsed(int minutes) {
+    return 'Used $minutes minutes';
+  }
+
+  @override
+  String get screenTimeServerAppUnknown =>
+      'This app is not known on this phone yet';
+
+  @override
+  String get screenTimeServerAppSaveError =>
+      'The server refused the decision — nothing changed';
+
+  @override
+  String get screenTimeServerCategoryGames => 'Games';
+
+  @override
+  String get screenTimeServerCategorySocial => 'Social';
+
+  @override
+  String get screenTimeServerCategoryVideo => 'Video and YouTube';
+
+  @override
+  String get screenTimeServerCategoryEducation => 'Learning';
+
+  @override
+  String get screenTimeServerCategoryOther => 'Other';
+
+  @override
+  String get screenTimeServerCategoryBlockAll => 'Block category';
+
+  @override
+  String get screenTimeServerCategoryAllowAll => 'Allow category';
+
+  @override
+  String screenTimeServerCategoryApplied(int count) {
+    return 'Applied to $count apps';
+  }
+
+  @override
+  String get screenTimeServerCategoryBudget => 'Daily category budget';
+
+  @override
+  String get screenTimeServerCategoryBudgetPending =>
+      'A category budget needs a new route on the server';
+
+  @override
+  String get screenTimeServerInsightsTitle => 'Today\'s usage';
+
+  @override
+  String get screenTimeServerInsightsUsed => 'Used';
+
+  @override
+  String get screenTimeServerInsightsCap => 'Daily cap';
+
+  @override
+  String get screenTimeServerInsightsGranted => 'Extra granted';
+
+  @override
+  String get screenTimeServerInsightsTop => 'Most-used apps';
+
+  @override
+  String get screenTimeServerInsightsNoUsage => 'No usage recorded today';
+
+  @override
+  String get screenTimeServerInsightsOverCap => 'Usage went past today\'s cap';
+
+  @override
+  String screenTimeServerInsightsShare(int percent) {
+    return '$percent% of today\'s time';
+  }
+
+  @override
+  String get screenTimeServerInsightsHint =>
+      'The numbers as the server counted them today, on the device clock';
+
+  @override
+  String get screenTimeServerWeekTitle => 'Week schedule';
+
+  @override
+  String get screenTimeServerWeekSchoolDays => 'School mode days';
+
+  @override
+  String get screenTimeServerWeekWeekend => 'Weekend';
+
+  @override
+  String get screenTimeServerWeekWeekdays => 'School days';
+
+  @override
+  String get screenTimeServerWeekBedtimeHint =>
+      'The server stores one bedtime window for every day until a weekend window is built';
+
+  @override
+  String get screenTimeServerWeekWeekendNote =>
+      'A separate weekend bedtime window needs an extension of the server contract';
+
+  @override
+  String get screenTimeServerWeekSave => 'Save week days';
+
+  @override
+  String get screenTimeServerWeekBedtimeStart => 'Bedtime starts';
+
+  @override
+  String get screenTimeServerWeekBedtimeEnd => 'Bedtime ends';
+
+  @override
+  String get screenTimeServerWeekWeekendBedtimeStart =>
+      'Weekend bedtime starts';
+
+  @override
+  String get screenTimeServerWeekWeekendBedtimeEnd => 'Weekend bedtime ends';
+
+  @override
+  String get screenTimeServerDaySat => 'Sat';
+
+  @override
+  String get screenTimeServerDaySun => 'Sun';
+
+  @override
+  String get screenTimeServerDayMon => 'Mon';
+
+  @override
+  String get screenTimeServerDayTue => 'Tue';
+
+  @override
+  String get screenTimeServerDayWed => 'Wed';
+
+  @override
+  String get screenTimeServerDayThu => 'Thu';
+
+  @override
+  String get screenTimeServerDayFri => 'Fri';
+
+  @override
+  String get screenTimeServerEarnedMinutesOnHint =>
+      'Your task minutes go straight into today\'s cap';
+
+  @override
+  String get screenTimeServerEarnedMinutesOffHint =>
+      'Your task minutes are saved for you and do not extend today\'s cap';
+
+  @override
+  String get screenTimeServerCapPresets => 'Quick picks';
+
+  @override
+  String get screenTimeServerCapUnlimited => 'No limit';
+
+  @override
+  String screenTimeServerCapPresetValue(int minutes) {
+    return '$minutes min';
+  }
 }
