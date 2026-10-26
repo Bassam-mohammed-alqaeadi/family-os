@@ -13883,4 +13883,19 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get notificationPrefsNoDeliveryYet =>
       'لا تُرسَل إشعارات في هذا الإصدار — اختياراتك تُحفظ إلى أن يبدأ الإرسال';
+
+  @override
+  String get notificationPrefsDevicePermissionGranted =>
+      'إشعارات هذا الهاتف مسموحة — ما تكتبه هنا سينفذ على هذا الجهاز';
+
+  @override
+  String get notificationPrefsDevicePermissionDenied =>
+      'جهازك يمنع الإشعارات عن هذا التطبيق — لن يصلك شيء مهما كانت إعدادات هذه الصفحة';
+
+  @override
+  String get notificationPrefsDevicePermissionRequest => 'السماح بالإشعارات';
+
+  @override
+  String get notificationPrefsDevicePermissionUnknown =>
+      'لم نتمكن من قراءة إذن العرض من جهازك — فلا نعدك بوصولٍ ولا نمنعه';
 }

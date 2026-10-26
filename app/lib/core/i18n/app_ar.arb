@@ -17797,5 +17797,21 @@
   "notificationPrefsNoDeliveryYet": "لا تُرسَل إشعارات في هذا الإصدار — اختياراتك تُحفظ إلى أن يبدأ الإرسال",
   "@notificationPrefsNoDeliveryYet": {
     "description": "صدقٌ صريح بدل وعدٍ لا ينفَّذ."
+  },
+  "notificationPrefsDevicePermissionGranted": "إشعارات هذا الهاتف مسموحة — ما تكتبه هنا سينفذ على هذا الجهاز",
+  "@notificationPrefsDevicePermissionGranted": {
+    "description": "يُعرض حين يكون إذن العرض عند النظام ممنوحًا، فيعرف الأب أن الوعد بالإيصال له أساس."
+  },
+  "notificationPrefsDevicePermissionDenied": "جهازك يمنع الإشعارات عن هذا التطبيق — لن يصلك شيء مهما كانت إعدادات هذه الصفحة",
+  "@notificationPrefsDevicePermissionDenied": {
+    "description": "أمانة الوصل: لا تُوعِد أبًا بالوصول وقد رفض نظام الجهاز العرض. تُعرض مع زر الطلب أدناه."
+  },
+  "notificationPrefsDevicePermissionRequest": "السماح بالإشعارات",
+  "@notificationPrefsDevicePermissionRequest": {
+    "description": "زرٌّ يفتح طلب النظام لإذن العرض على هذا الجهاز."
+  },
+  "notificationPrefsDevicePermissionUnknown": "لم نتمكن من قراءة إذن العرض من جهازك — فلا نعدك بوصولٍ ولا نمنعه",
+  "@notificationPrefsDevicePermissionUnknown": {
+    "description": "الحال الأمين حين لا يجيب النظام (بناءٌ بلا قناة أصلية، أو منصة لا سؤال لديها في هذا الإصدار)."
   }
 }

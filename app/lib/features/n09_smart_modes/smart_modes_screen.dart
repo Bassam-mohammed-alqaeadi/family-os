@@ -8,6 +8,7 @@ import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/fs_foundation/capability_status.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/i18n/clock_format.dart';
 import 'package:family_os/core/modes/modes.dart';
 import 'package:family_os/core/policy/smart_mode_activation.dart';
 import 'package:family_os/core/policy/smart_mode_activation_bus.dart';
@@ -368,11 +369,12 @@ class _SmartModesScreenState extends State<SmartModesScreen> {
     BuiltInModeId.custom => l10n.smartModeCustom,
   };
 
+  /// The school window in the family's digits and the phone's own clock cycle —
+  /// the one clock grammar the notification card and the chat list use too.
+  /// `—` stays this screen's marker for "no window written yet".
   String _formatTod(TimeOfDay? tod) {
     if (tod == null) return '—';
-    final h = tod.hour.toString().padLeft(2, '0');
-    final m = tod.minute.toString().padLeft(2, '0');
-    return '$h:$m';
+    return formatFamilyClock(context, tod);
   }
 
   @override

@@ -8,6 +8,7 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/i18n/clock_format.dart';
 import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n07_privacy/audit_log_models.dart';
@@ -371,7 +372,7 @@ class _AuditRow extends StatelessWidget {
   }
 
   String _subtitle() {
-    final when = _formatWhen(entry.at);
+    final when = _formatWhen(context, entry.at);
     final actor = _actorLabel();
     final detail = _detailLabel();
     final parts = <String>[when];
@@ -413,11 +414,15 @@ class _AuditRow extends StatelessWidget {
     };
   }
 
-  String _formatWhen(DateTime at) {
+  /// The hour half is the family's clock (digits from the profile, cycle from
+  /// the phone); the date half stays `d/m/yyyy` because which calendar a family
+  /// writes is room ٧'s business, not this row's.
+  String _formatWhen(BuildContext context, DateTime at) {
     final d = at.day.toString().padLeft(2, '0');
     final m = at.month.toString().padLeft(2, '0');
-    final h = at.hour.toString().padLeft(2, '0');
-    final min = at.minute.toString().padLeft(2, '0');
-    return l10n.auditLogWhenStamp('$d/$m/${at.year}', '$h:$min');
+    return l10n.auditLogWhenStamp(
+      '$d/$m/${at.year}',
+      formatFamilyClockFromDateTime(context, at),
+    );
   }
 }

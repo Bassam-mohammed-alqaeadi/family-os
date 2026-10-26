@@ -18,6 +18,7 @@ import 'package:family_os/core/policy/notification_prefs.dart';
 import 'package:family_os/core/policy/notification_prefs_repository.dart';
 import 'package:family_os/core/policy/notification_tier.dart';
 import 'package:family_os/core/prefs_misc/prefs_misc_runtime.dart';
+import 'package:family_os/features/n06_notifications/device_notification_permission.dart';
 
 /// Optional time-picker override for widget tests.
 typedef QuietHoursTimePicker =
@@ -29,6 +30,11 @@ abstract final class NotificationPrefsKeys {
   static const quietStart = Key('notif_quiet_start');
   static const quietEnd = Key('notif_quiet_end');
   static const sosPierceBanner = Key('notif_sos_pierce_banner');
+
+  /// The phone's own answer about displaying anything. A page that promises delivery has to
+  /// know whether the operating system will allow it, and say so when it will not.
+  static const devicePermission = Key('notif_device_permission_banner');
+  static const devicePermissionRequest = Key('notif_device_permission_request');
   static const save = Key('notif_prefs_save');
   static const memberLabel = Key('notif_prefs_member_label');
   static const analysisNoticesSwitch = Key('notif_analysis_notices_switch');
@@ -85,6 +91,7 @@ class NotificationPrefsScreen extends StatefulWidget {
     this.pickTime,
     this.canEditOverride,
     this.now,
+    this.permissionBridge = const NativeNotificationPermissionBridge(),
   });
 
   /// Explicit member row; when null, resolved from [CurrentRole].
@@ -92,6 +99,10 @@ class NotificationPrefsScreen extends StatefulWidget {
 
   /// Rule 25 seam — null → Local KV via PrefsMiscLocalPersistence (DOM-PREFS-MISC).
   final NotificationPrefsRepository? repository;
+
+  /// The device's own display permission. Read from the operating system, never assumed:
+  /// a test answers on the device's behalf, and production asks the device.
+  final DeviceNotificationPermissionBridge permissionBridge;
 
   /// Test seam — when null, uses [showTimePicker].
   final QuietHoursTimePicker? pickTime;
@@ -124,6 +135,7 @@ class _NotificationPrefsScreenState extends State<NotificationPrefsScreen> {
   var _unavailable = false;
   var _saveFailed = false;
   Timer? _ticker;
+  DeviceNotificationPermission _permission = DeviceNotificationPermission.unknownAnswer;
 
   NotificationPrefs get _prefs =>
       _draft ?? _saved ?? NotificationPrefs.defaults(memberId: _memberId ?? 'father');
@@ -139,6 +151,9 @@ class _NotificationPrefsScreenState extends State<NotificationPrefsScreen> {
       _bootstrapLocal();
     }
     _saved = NotificationPrefs.defaults(memberId: widget.memberId ?? 'father');
+    // The delivery promise on this page is only as true as the phone's own answer, so it is
+    // read the moment the card opens — before any of the wording below can be taken as a promise.
+    _readDevicePermission();
     // "Right now" is a claim about a moving thing, so it is re-read on a clock: a parent watching
     // the screen at 22:00 should see the silence start while they are standing there.
     _ticker = Timer.periodic(const Duration(seconds: 30), (_) {
@@ -150,6 +165,18 @@ class _NotificationPrefsScreenState extends State<NotificationPrefsScreen> {
   void dispose() {
     _ticker?.cancel();
     super.dispose();
+  }
+
+  Future<void> _readDevicePermission() async {
+    final answer = await widget.permissionBridge.status();
+    if (mounted) setState(() => _permission = answer);
+  }
+
+  /// Hands the question to the operating system and records the answer it gives — including
+  /// "no", which stays visible rather than being retried into annoyance.
+  Future<void> _askDevicePermission() async {
+    final answer = await widget.permissionBridge.request();
+    if (mounted) setState(() => _permission = answer);
   }
 
   Future<void> _bootstrapLocal() async {
@@ -623,6 +650,37 @@ class _NotificationPrefsScreenState extends State<NotificationPrefsScreen> {
                                   variant: BannerVariant.p,
                                   message: l10n.notificationPrefsSosPierceBanner,
                                 ),
+                                if (canEdit) ...[
+                                  const SizedBox(height: 12),
+                                  BannerNote(
+                                    key: NotificationPrefsKeys.devicePermission,
+                                    variant: _permission ==
+                                            DeviceNotificationPermission.granted
+                                        ? BannerVariant.g
+                                        : BannerVariant.a,
+                                    message: switch (_permission) {
+                                      DeviceNotificationPermission.granted => l10n
+                                          .notificationPrefsDevicePermissionGranted,
+                                      DeviceNotificationPermission.denied => l10n
+                                          .notificationPrefsDevicePermissionDenied,
+                                      DeviceNotificationPermission.unknownAnswer => l10n
+                                          .notificationPrefsDevicePermissionUnknown,
+                                    },
+                                  ),
+                                  if (_permission ==
+                                      DeviceNotificationPermission.denied) ...[
+                                    const SizedBox(height: 8),
+                                    Align(
+                                      alignment: AlignmentDirectional.centerStart,
+                                      child: PrimaryBtn(
+                                        key: NotificationPrefsKeys.devicePermissionRequest,
+                                        label: l10n.notificationPrefsDevicePermissionRequest,
+                                        variant: PrimaryBtnVariant.sec,
+                                        onPressed: _askDevicePermission,
+                                      ),
+                                    ),
+                                  ],
+                                ],
                                 const SizedBox(height: 16),
                                 _card(
                                   key: NotificationPrefsKeys.cardCritical,

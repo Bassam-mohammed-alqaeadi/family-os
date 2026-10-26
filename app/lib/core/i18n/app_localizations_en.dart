@@ -14122,4 +14122,19 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get notificationPrefsNoDeliveryYet =>
       'No notifications are sent in this build — your choices are stored until sending begins';
+
+  @override
+  String get notificationPrefsDevicePermissionGranted =>
+      'Notifications are allowed on this phone — what you set here will be carried out on this device';
+
+  @override
+  String get notificationPrefsDevicePermissionDenied =>
+      'Your device is blocking notifications for this app — nothing will arrive no matter what this page says';
+
+  @override
+  String get notificationPrefsDevicePermissionRequest => 'Allow notifications';
+
+  @override
+  String get notificationPrefsDevicePermissionUnknown =>
+      'We could not read the display permission from your device — so we promise neither delivery nor refusal';
 }

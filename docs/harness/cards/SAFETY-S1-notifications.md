@@ -105,3 +105,23 @@ Backend وAndroid Build وAndroid Native وHarness/Git/Credential Guard وFounda
 **ما لم يتغيّر:** لم يُلَيَّن انتظارٌ ولا حُذف فحصٌ ليمرّ الأخضر.
 **خطأٌ محفوظ:** رسالةُ إيداعٍ في هذه الغرفة حملت tokenاً غيرَ عربيٍّ سهواً؛ لا سبيل إلى تعديلها بلا إعادة كتابة
 تاريخ، فحُفظ هنا، وصار فحصُ الرسائل جارياً مع فحصِ الملفات.
+
+## ٨) إغلاقُ الإطلاق — جولةُ ٢٠٢٦-١٠-٢٦ (م١/م٢/م٣)
+
+الأمرُ الحاكم: «لا نعود لاحقاً نُجمِّلُ شيئاً تمسُّهُ هذه الأنظمة»، فالجردُ جرى على **كلِّ سطحٍ يعرضُ
+وقتاً أو رقماً**، لا على شاشةِ التنبيهات وحدَها.
+
+| ما وُجِد | الدليلُ من الملفات | ما صار |
+|---|---|---|
+| أحدَ عشرَ وجهَ ساعةٍ مكتوباً باليد | `DateFormat.Hm(l10n.localeName)` في `child_chats_screen:623` و`child_conversation_screen:892` و`conversation_screen:1113` و`conversations_list_screen:864`؛ و`padLeft(2, '0')` في `create_safe_zone_screen:1111` و`safe_zones_screen:641` و`child_day_board_screen:460,467` و`child_screen_time_screen:526` و`screen_time_server_panel:439` و`audit_log_screen:419` | كلها `formatFamilyClock` / `formatFamilyClockFromDateTime`. لم يبقَ في `lib` وجهُ ساعةٍ يُنسَجُ باليد إلا ما هو **مدّة** (عدّادُ الرابط، مؤقّتُ الفيديو والصوت) أو **ختمٌ تشخيصي UTC** |
+| الدفعُ يأخذُ أرقامَهُ من لغةِ الجهاز | `formatNotificationTime(value, registration.locale)` + `ARABIC_INDIC_DIGITS` | الأرقامُ من `family_customization_profiles.numerals` عبر JOIN؛ والجملةُ من اللُّغة. «لا صفَّ ⇒ غربيّ» كما تفترضُ الشاشاتُ بالضبط |
+| إذنُ الإشعارات لا يُطلَبُ للوصيّ | `MainActivity.kt:116` يُضيفُ `POST_NOTIFICATIONS` داخل طلبِ **الموقع** فقط؛ ولا سؤالَ في `lib` | `notificationPermissionStatus`/`requestNotificationPermission` على القناة الموجودة + `device_notification_permission.dart` + شريطٌ في 058. ثلاثُ إجابات: مسموح/ممنوع/**لا جواب** |
+| مِصْقَبٌ على نصفِ المخطط | `migrations = [… '124…']` في `postgres-notification-delivery.test.js` | أُضيفت 135؛ والاختبارُ العربيُّ لا يمرُّ الآن إلا بـJOIN ملفِّ العائلة (صفحةٌ لا تُقرأ تُقلِبُ الأرقامَ وتفشَل) |
+
+**ما لم يُزَعْ ولم يُزَخرف:** اختبارُ وقتِ الشاشةِ واختبارا الأنماطِ واللوحِ كانت تُثبِّتُ `'21:00'` ونحوَها
+بلا إعلانِ دورةِ الساعات؛ الآن تُعلنُ `alwaysUse24HourFormat: true` في منصَّتِها. النصوصُ لم تتغيَّر —
+الافتراضُ الصامتُ صار حقيقةً مكتوبة. ولا حُذفَ فحصٌ ولا لُيِّنَ انتظارٌ ليمرَّ الأخضر.
+
+**مفتوحٌ ببواباتِهِ (لا يُغلَقُ بالنثر):** م٤ (مفاتيح FCM — يدُ المالك)، م٥ (أسلاكُ 122 الثلاثة + هجرةُ ١٣٦
++ قناةُ العائلةِ الأصلية)، م٦ (قرارُ المفاتيحِ الزخرفيَّة)، م٧ (أسطرُ الهاتف). القائمةُ في
+`docs/real_platform/09_NOTIFICATION_LAUNCH_CLOSURE_PLAN.md`.

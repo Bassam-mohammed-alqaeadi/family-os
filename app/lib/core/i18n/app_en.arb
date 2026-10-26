@@ -17782,5 +17782,21 @@
   "notificationPrefsNoDeliveryYet": "No notifications are sent in this build — your choices are stored until sending begins",
   "@notificationPrefsNoDeliveryYet": {
     "description": "صدقٌ صريح بدل وعدٍ لا ينفَّذ."
+  },
+  "notificationPrefsDevicePermissionGranted": "Notifications are allowed on this phone — what you set here will be carried out on this device",
+  "@notificationPrefsDevicePermissionGranted": {
+    "description": "يُعرض حين يكون إذن العرض عند النظام ممنوحًا، فيعرف الأب أن الوعد بالإيصال له أساس."
+  },
+  "notificationPrefsDevicePermissionDenied": "Your device is blocking notifications for this app — nothing will arrive no matter what this page says",
+  "@notificationPrefsDevicePermissionDenied": {
+    "description": "أمانة الوصل: لا تُوعِد أبًا بالوصول وقد رفض نظام الجهاز العرض. تُعرض مع زر الطلب أدناه."
+  },
+  "notificationPrefsDevicePermissionRequest": "Allow notifications",
+  "@notificationPrefsDevicePermissionRequest": {
+    "description": "زرٌّ يفتح طلب النظام لإذن العرض على هذا الجهاز."
+  },
+  "notificationPrefsDevicePermissionUnknown": "We could not read the display permission from your device — so we promise neither delivery nor refusal",
+  "@notificationPrefsDevicePermissionUnknown": {
+    "description": "الحال الأمين حين لا يجيب النظام (بناءٌ بلا قناة أصلية، أو منصة لا سؤال لديها في هذا الإصدار)."
   }
 }

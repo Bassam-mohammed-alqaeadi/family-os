@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
+import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
@@ -11,6 +12,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/i18n/numeral_format.dart';
 import 'package:family_os/core/policy/notification_prefs.dart';
 import 'package:family_os/core/policy/notification_prefs_repository.dart';
+import 'package:family_os/features/n06_notifications/device_notification_permission.dart';
 import 'package:family_os/features/n06_notifications/notification_prefs_screen.dart';
 
 /// The polished surface of SCR-FAT-058 — what the screen promises about its own state.
@@ -40,6 +42,7 @@ Future<void> _pump(
   Locale locale = const Locale('ar'),
   bool twentyFour = true,
   Key? screenKey,
+  DeviceNotificationPermissionBridge? permissionBridge,
 }) async {
   await _tallSurface(tester);
   await tester.pumpWidget(
@@ -66,6 +69,9 @@ Future<void> _pump(
           memberId: memberId,
           repository: repository,
           now: now,
+          permissionBridge:
+              permissionBridge ??
+              _AnsweringPermissionBridge(DeviceNotificationPermission.granted),
         ),
       ),
     ),
@@ -125,6 +131,28 @@ final class _FailingRepository implements NotificationPrefsRepository {
 
 /// Taps a control that may be below the fold: scrolling first is what a finger does, and a tap
 /// that lands on empty canvas only warns — which is how a test can pass on a screen nobody reaches.
+/// Answers the way a handset would: one answer until asked, another after.
+final class _AnsweringPermissionBridge extends DeviceNotificationPermissionBridge {
+  _AnsweringPermissionBridge(
+    this.answer, {
+    DeviceNotificationPermission? afterRequest,
+  }) : reply = afterRequest;
+
+  DeviceNotificationPermission answer;
+  final DeviceNotificationPermission? reply;
+  int requests = 0;
+
+  @override
+  Future<DeviceNotificationPermission> status() async => answer;
+
+  @override
+  Future<DeviceNotificationPermission> request() async {
+    requests++;
+    if (reply != null) answer = reply!;
+    return answer;
+  }
+}
+
 Future<void> _tap(WidgetTester tester, Key key) async {
   final target = find.byKey(key);
   await tester.ensureVisible(target);
@@ -410,5 +438,68 @@ void main() {
     final save = tester.widget<PrimaryBtn>(find.byKey(NotificationPrefsKeys.save));
     expect(save.onPressed, isNull);
     expect(save.label, 'حفظ الإشعارات');
+  });
+
+  testWidgets('a handset that blocks notifications stops the page promising delivery', (tester) async {
+    // The launch case the audit found: every family setting says "send it", and the operating
+    // system says "you may not display anything". A screen that reads only its own settings is a
+    // lying screen, so the page states the refusal and offers the ask.
+    final repo = _ServerBackedRepository();
+    final bridge = _AnsweringPermissionBridge(
+      DeviceNotificationPermission.denied,
+      afterRequest: DeviceNotificationPermission.granted,
+    );
+    await _pump(
+      tester,
+      repository: repo,
+      role: AppRole.father,
+      memberId: 'father',
+      screenKey: const Key('permission-denied'),
+      permissionBridge: bridge,
+    );
+
+    final banner = find.byKey(NotificationPrefsKeys.devicePermission);
+    expect(tester.widget<BannerNote>(banner).message, contains('يمنع الإشعارات'));
+    expect(tester.widget<BannerNote>(banner).variant, BannerVariant.a);
+    expect(find.text('إشعارات هذا الهاتف مسموحة'), findsNothing);
+
+    await _tap(tester, NotificationPrefsKeys.devicePermissionRequest);
+    expect(bridge.requests, 1);
+    expect(
+      tester.widget<BannerNote>(banner).message,
+      contains('إشعارات هذا الهاتف مسموحة'),
+    );
+    expect(
+      find.byKey(NotificationPrefsKeys.devicePermissionRequest),
+      findsNothing,
+      'an answered question stops being a button',
+    );
+  });
+
+  testWidgets('no answer from the device is reported as no answer', (tester) async {
+    // A build whose device channel does not reply must not be shown as "allowed" — that is the
+    // same claim in a different font. And there is nothing to tap, so no button is invented.
+    final repo = _ServerBackedRepository();
+    await _pump(
+      tester,
+      repository: repo,
+      role: AppRole.father,
+      memberId: 'father',
+      screenKey: const Key('permission-unknown'),
+      permissionBridge: _AnsweringPermissionBridge(
+        DeviceNotificationPermission.unknownAnswer,
+      ),
+    );
+
+    expect(
+      tester.widget<BannerNote>(
+        find.byKey(NotificationPrefsKeys.devicePermission),
+      ).message,
+      contains('لم نتمكن من قراءة إذن العرض'),
+    );
+    expect(
+      find.byKey(NotificationPrefsKeys.devicePermissionRequest),
+      findsNothing,
+    );
   });
 }

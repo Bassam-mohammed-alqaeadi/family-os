@@ -14,6 +14,7 @@ import 'package:family_os/core/design/components/time_warning_banner.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/i18n/clock_format.dart';
 import 'package:family_os/core/modes/modes.dart';
 import 'package:family_os/core/policy/policy_sync_bus.dart';
 import 'package:family_os/core/policy/screen_time_policy.dart';
@@ -455,19 +456,13 @@ class _ChildDayBoardScreenState extends State<ChildDayBoardScreen>
     BuiltInModeId.custom => colors.p400,
   };
 
-  String _formatExpiry(DateTime expiresAt) {
-    final local = expiresAt.toLocal();
-    final h = local.hour.toString().padLeft(2, '0');
-    final m = local.minute.toString().padLeft(2, '0');
-    return '$h:$m';
-  }
+  /// The expiry hour in the family's digits and the phone's own cycle — the same
+  /// clock grammar the notification card and the chat list use.
+  String _formatExpiry(DateTime expiresAt) =>
+      formatFamilyClockFromDateTime(context, expiresAt.toLocal());
 
-  String _formatSyncedAt(DateTime at) {
-    final local = at.toLocal();
-    final h = local.hour.toString().padLeft(2, '0');
-    final m = local.minute.toString().padLeft(2, '0');
-    return '$h:$m';
-  }
+  String _formatSyncedAt(DateTime at) =>
+      formatFamilyClockFromDateTime(context, at.toLocal());
 
   bool get _showRemaining {
     if (widget.emptyDay) return false;

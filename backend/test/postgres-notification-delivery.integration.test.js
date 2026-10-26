@@ -191,6 +191,17 @@ test('real PostgreSQL delivers an SOS despite quiet/history preferences and reco
       [FAMILY, MEMBERSHIP],
     );
 
+    // The family's own numerals profile, written on the customization spine. The
+    // assertion below still expects Arabic-Indic digits — and now it can only pass
+    // if the dispatcher joins this row, which is what makes the profile a real
+    // reader rather than a column nobody reads.
+    await client.query(
+      `INSERT INTO family_customization_profiles
+         (family_id, numerals, updated_by_membership_id)
+       VALUES ($1, 'eastern', $2)`,
+      [FAMILY, MEMBERSHIP],
+    );
+
     const sender = acceptedSender();
     const deliveredAt = new Date('2026-05-10T15:46:00.000Z');
     const dispatcher = new NotificationDispatcher(sender, () => pool.connect(), { now: () => deliveredAt });

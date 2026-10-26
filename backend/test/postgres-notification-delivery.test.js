@@ -25,6 +25,10 @@ const migrations = [
   '117_device_capabilities.sql','118_command_lifecycle.sql','119_ai_events_security_envelope.sql',
   '120_device_push_registrations.sql','121_delivery_states.sql','122_family_notification_preferences.sql',
   '123_notification_retries.sql','124_geofence_notification_payload_minimization.sql',
+  // Kept in sync by hand, and 135 had drifted out of it: the dispatcher joins
+  // family_customization_profiles for the family's digits, so this harness must
+  // create that table or it is testing a schema production no longer has.
+  '135_family_customization_profile.sql',
 ];
 
 const FAMILY = 'aaaaaaaa-1111-4111-8111-111111111111';
@@ -48,7 +52,7 @@ async function freshDb() {
   return db;
 }
 
-async function seedFamily(db, { locale = 'ar', token = TOKEN } = {}) {
+async function seedFamily(db, { locale = 'ar', token = TOKEN, numerals = 'eastern' } = {}) {
   await db.query(`INSERT INTO accounts (id, oidc_subject) VALUES ($1, 'notification-test-subject')`, [ACCOUNT]);
   await db.query(`INSERT INTO families (id, display_name) VALUES ($1, 'عائلة الاختبار')`, [FAMILY]);
   await db.query(
@@ -74,6 +78,16 @@ async function seedFamily(db, { locale = 'ar', token = TOKEN } = {}) {
        (id, family_id, membership_id, token, platform, locale)
      VALUES ($1, $2, $3, $4, 'android', $5)`,
     [REGISTRATION, FAMILY, MEMBERSHIP, token, locale],
+  );
+  // How this family writes its digits is a customization fact stored on the family
+  // profile, and the dispatcher joins that table. So every Arabic assertion below
+  // that expects ٦:٢٠ can only pass while that join is live — a profile nobody
+  // reads would turn them Western and this file would say so.
+  await db.query(
+    `INSERT INTO family_customization_profiles
+       (family_id, numerals, updated_by_membership_id)
+     VALUES ($1, $2, $3)`,
+    [FAMILY, numerals, MEMBERSHIP],
   );
 }
 
@@ -232,6 +246,23 @@ test('a committed Arabic geofence event is formatted, routed to FCM, and recorde
     assert.equal(Object.hasOwn(source.rows[0].payload, key), false,
       `geofence notification payload must not persist ${key}`);
   }
+  await db.close();
+});
+
+test('the same Arabic sentence keeps Western digits for a family that chose them', async () => {
+  // The other half of one rule, through real SQL: the digits in a push line come
+  // from the family profile, so the family that never picked Eastern is not
+  // silently restyled by its handset language.
+  const db = await freshDb();
+  await seedFamily(db, { numerals: 'western' });
+  await insertGeofenceOutbox(db);
+  const sender = fakeSender();
+  const dispatcher = new NotificationDispatcher(sender, clientFactory(db), {
+    now: () => new Date('2026-05-10T06:21:00.000Z'),
+  });
+
+  assert.equal((await dispatcher.notify(OUTBOX, 'family.geofence_entered')).status, 'delivered');
+  assert.equal(sender.calls[0].body, 'دخل المنطقة الآمنة الساعة 6:20 ص بتوقيت UTC');
   await db.close();
 });
 

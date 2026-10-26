@@ -36,6 +36,7 @@ class MainActivity : FlutterActivity() {
     private var pendingPermissionResult: MethodChannel.Result? = null
     private var telemetryMethodChannel: MethodChannel? = null
     private var notificationMethodChannel: MethodChannel? = null
+    private var pendingNotificationPermissionResult: MethodChannel.Result? = null
     private var pendingNotificationRoute: String? = null
     private val chatExecutor = Executors.newSingleThreadExecutor()
     private val chatHttpClient = OkHttpClient.Builder()
@@ -94,6 +95,8 @@ class MainActivity : FlutterActivity() {
                 when (call.method) {
                     "showForegroundNotification" -> showForegroundNotification(call, result)
                     "consumeNotificationRoute" -> result.success(consumeNotificationRoute())
+                    "notificationPermissionStatus" -> result.success(notificationPermissionState())
+                    "requestNotificationPermission" -> requestNotificationPermission(result)
                     else -> result.notImplemented()
                 }
             }
@@ -145,7 +148,53 @@ class MainActivity : FlutterActivity() {
                 if (hasFineLocation()) requestBackgroundLocation() else completePermissionRequest()
             }
             REQUEST_BACKGROUND_LOCATION -> completePermissionRequest()
+            REQUEST_NOTIFICATION_PERMISSION -> completeNotificationPermissionRequest()
         }
+    }
+
+    /**
+     * Whether the system will display anything for this app at all.
+     *
+     * The notification permission exists from API 33 on; below it there is no runtime question to
+     * ask, so "granted" is the truthful answer rather than an optimistic one. This is the state the
+     * guardian's own notification card reads: a parent who refused the system prompt must not be
+     * shown a page that promises delivery, whatever the family settings say.
+     */
+    private fun hasNotificationPermission(): Boolean =
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS,
+            ) == PackageManager.PERMISSION_GRANTED
+
+    private fun notificationPermissionState(): String =
+        if (hasNotificationPermission()) "granted" else "denied"
+
+    private fun requestNotificationPermission(result: MethodChannel.Result) {
+        if (hasNotificationPermission()) {
+            result.success(notificationPermissionState())
+            return
+        }
+        if (pendingNotificationPermissionResult != null) {
+            result.error(
+                "notification_permission_request_in_progress",
+                "A notification permission request is already active.",
+                null,
+            )
+            return
+        }
+        pendingNotificationPermissionResult = result
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+            REQUEST_NOTIFICATION_PERMISSION,
+        )
+    }
+
+    private fun completeNotificationPermissionRequest() {
+        val pending = pendingNotificationPermissionResult ?: return
+        pendingNotificationPermissionResult = null
+        pending.success(notificationPermissionState())
     }
 
     private fun completePermissionRequest() {
@@ -803,6 +852,7 @@ class MainActivity : FlutterActivity() {
         private const val NOTIFICATION_CHANNEL = "com.familyos.family_os/family_notifications"
         private const val REQUEST_FOREGROUND_LOCATION = 8101
         private const val REQUEST_BACKGROUND_LOCATION = 8102
+        private const val REQUEST_NOTIFICATION_PERMISSION = 8103
         const val EXTRA_FLUTTER_ROUTE = "flutter_route"
         const val EXTRA_FLUTTER_AUDIT = "flutter_audit"
         private const val EXTRA_NOTIFICATION_ROUTE = "family_notification_route"

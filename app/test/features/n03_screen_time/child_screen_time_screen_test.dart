@@ -597,7 +597,13 @@ Future<void> _pump(
   await tester.pumpWidget(
     CurrentRole(
       notifier: roleCtrl,
-      child: MaterialApp(
+      child: MediaQuery(
+        // The clock faces this screen shows follow the phone's own hour cycle
+        // (shared family formatter). The strings pinned below are 24-hour, so
+        // the fixture states that device setting; the screen is not locked to
+        // one clock grammar.
+        data: const MediaQueryData(alwaysUse24HourFormat: true),
+        child: MaterialApp(
         theme: buildFamilyTheme(),
         locale: const Locale('ar'),
         supportedLocales: AppLocalizations.supportedLocales,
@@ -615,6 +621,7 @@ Future<void> _pump(
           timeRequestService: timeRequestService,
           balanceReader: balanceReader,
         ),
+      ),
       ),
     ),
   );

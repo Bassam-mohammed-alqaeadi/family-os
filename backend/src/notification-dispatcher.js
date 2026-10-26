@@ -155,7 +155,22 @@ export function classifyNotificationEvent(eventType) {
   throw new Error('unclassified_outbox_event_type');
 }
 
-export function formatNotificationTime(value, locale = 'en') {
+/**
+ * The hour the parent reads in a push line.
+ *
+ * Digits belong to the family, not to the handset language. Room ١ of the
+ * customization programme made `numerals` a family fact stored once in
+ * `family_customization_profiles`, and the app reads it through
+ * `core/i18n/numeral_format.dart` — so the copy the dispatcher writes has to read
+ * the same column, or a family that chose ١٢٣٤٥٦٧٨٩٠ gets Arabic-Indic digits inside
+ * the app and Western ones on the lock screen. `locale` still picks the language of
+ * the sentence; it no longer picks the digits. A family with no profile row is read
+ * as 'western', which is exactly what the app assumes for that same missing row.
+ *
+ * English copy never receives Arabic-Indic digits: the profile is about how this
+ * family writes numbers in its own text, and an English sentence is not that text.
+ */
+export function formatNotificationTime(value, locale = 'en', numerals = 'western') {
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) throw new Error('notification_time_invalid');
   const parts = new Intl.DateTimeFormat('en-US', {
@@ -165,14 +180,23 @@ export function formatNotificationTime(value, locale = 'en') {
   const minute = parts.find((part) => part.type === 'minute')?.value;
   const period = parts.find((part) => part.type === 'dayPeriod')?.value;
   if (!hour || !minute || !period) throw new Error('notification_time_invalid');
-  if (locale === 'ar') {
-    const digits = `${hour}:${minute}`.replace(/[0-9]/g, (digit) => ARABIC_INDIC_DIGITS[Number(digit)]);
-    return `${digits} ${period === 'AM' ? 'ص' : 'م'} بتوقيت UTC`;
-  }
-  return `${hour}:${minute} ${period} UTC`;
+  // Two independent decisions, deliberately kept apart: the *sentence* belongs to
+  // the recipient's language, the *digits* belong to the family. Before this split
+  // they were one `if`, which meant an Arabic family on Western digits was handed
+  // the English phrase `3:45 PM UTC` instead of `3:45 م بتوقيت UTC`.
+  const isArabic = locale === 'ar';
+  const clock = isArabic && numerals === 'eastern'
+    ? `${hour}:${minute}`.replace(/[0-9]/g, (digit) => ARABIC_INDIC_DIGITS[Number(digit)])
+    : `${hour}:${minute}`;
+  return isArabic
+    ? `${clock} ${period === 'AM' ? 'ص' : 'م'} بتوقيت UTC`
+    : `${clock} ${period} UTC`;
 }
 
-export function renderAlertCopy(copyKey, { locale = 'en', child, zone = null, time }) {
+export function renderAlertCopy(
+  copyKey,
+  { locale = 'en', child, zone = null, time, numerals = 'western' },
+) {
   const template = ALERT_COPY[copyKey];
   if (!template || typeof child !== 'string' || child.trim().length === 0) {
     throw new Error('notification_copy_context_invalid');
@@ -181,7 +205,11 @@ export function renderAlertCopy(copyKey, { locale = 'en', child, zone = null, ti
   const safeZone = typeof zone === 'string' && zone.trim().length > 0
     ? zone.trim()
     : language === 'ar' ? 'منطقة آمنة' : 'a safe zone';
-  const values = { child: child.trim(), zone: safeZone, time: formatNotificationTime(time, language) };
+  const values = {
+    child: child.trim(),
+    zone: safeZone,
+    time: formatNotificationTime(time, language, numerals),
+  };
   const interpolate = (text) => text.replace(/\{(child|zone|time)\}/g, (whole, key) => {
     const value = values[key];
     if (typeof value !== 'string' || value.trim().length === 0) {
@@ -592,7 +620,8 @@ export class NotificationDispatcher {
       const recipientIds = isSos ? expectedSosRecipients.map((row) => row.membership_id) : null;
       const targetResult = await client.query(
         `SELECT registration.id AS registration_id, registration.token, registration.locale,
-                membership.id AS membership_id
+                membership.id AS membership_id,
+                COALESCE(customization.numerals, 'western') AS numerals
            FROM family_push_registrations registration
            JOIN family_memberships membership
              ON membership.family_id = registration.family_id
@@ -602,6 +631,8 @@ export class NotificationDispatcher {
            LEFT JOIN family_notification_preferences preferences
              ON preferences.family_id = registration.family_id
             AND preferences.membership_id = membership.id
+          LEFT JOIN family_customization_profiles customization
+             ON customization.family_id = registration.family_id
           WHERE registration.family_id = $1
             AND NOT (COALESCE(preferences.disabled_copy_keys, '{}'::text[]) @> ARRAY[$2]::text[])
             AND ($3::uuid[] IS NULL OR membership.id = ANY($3::uuid[]))
@@ -657,6 +688,7 @@ export class NotificationDispatcher {
       try {
         message = renderAlertCopy(definition.copyKey, {
           locale: target.locale,
+          numerals: target.numerals,
           child: subject.child,
           zone: subject.zone,
           time: subject.occurredAt,

@@ -43,3 +43,10 @@ String formatFamilyClockOrUnset(BuildContext context, TimeOfDay? time) {
   if (time != null) return formatFamilyClock(context, time);
   return AppLocalizations.of(context).notificationPrefsTimeUnset;
 }
+
+/// The same reading for a [DateTime] the caller already holds — a chat message,
+/// a mode expiry, a sync stamp. `.toLocal()` stays the caller's call, so this
+/// never invents a second rule about *which* clock the parent reads; it only
+/// settles *how* that clock is written.
+String formatFamilyClockFromDateTime(BuildContext context, DateTime time) =>
+    formatFamilyClock(context, TimeOfDay.fromDateTime(time));

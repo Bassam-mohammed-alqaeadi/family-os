@@ -18,6 +18,7 @@ import 'package:family_os/core/fs_foundation/fs_session_kernel.dart';
 import 'package:family_os/core/identity/active_child_resolver.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/i18n/clock_format.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/policy/policy_sync_bus.dart';
 import 'package:family_os/core/policy/schedule_window.dart';
@@ -521,11 +522,12 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
     };
   }
 
+  /// Digits and clock cycle are the family's and the phone's (shared formatter).
+  /// `--:--` stays this screen's own marker for "no window yet": it is not a
+  /// time, so it must not borrow the notification card's wording for one.
   String _formatTod(TimeOfDay? tod) {
     if (tod == null) return '--:--';
-    final h = tod.hour.toString().padLeft(2, '0');
-    final m = tod.minute.toString().padLeft(2, '0');
-    return '$h:$m';
+    return formatFamilyClock(context, tod);
   }
 
   @override

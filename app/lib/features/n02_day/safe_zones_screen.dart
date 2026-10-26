@@ -10,6 +10,7 @@ import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/i18n/clock_format.dart';
 import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/identity/active_child_resolver.dart';
 import 'package:family_os/core/identity/identity_runtime.dart';
@@ -620,7 +621,7 @@ class _ZoneCard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
               child: Text(
                 l10n.safeZonesNoShowDeadline(
-                  _formatNoShowDeadline(zone.noShowDeadlineMinutes!),
+                  _formatNoShowDeadline(context, zone.noShowDeadlineMinutes!),
                 ),
                 style: TextStyle(
                   fontSize: 12,
@@ -635,11 +636,11 @@ class _ZoneCard extends StatelessWidget {
   }
 }
 
-String _formatNoShowDeadline(int minutes) {
-  final h = (minutes ~/ 60).clamp(0, 23);
-  final m = (minutes % 60).clamp(0, 59);
-  return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
-}
+/// The same clock face as the editor that set it — family digits, device cycle.
+String _formatNoShowDeadline(BuildContext context, int minutes) => formatFamilyClock(
+  context,
+  TimeOfDay(hour: (minutes ~/ 60).clamp(0, 23), minute: (minutes % 60).clamp(0, 59)),
+);
 
 class _AlertFlagRow extends StatelessWidget {
   const _AlertFlagRow({

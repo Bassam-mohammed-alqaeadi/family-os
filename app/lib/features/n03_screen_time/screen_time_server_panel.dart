@@ -6,6 +6,7 @@ import 'package:family_os/core/design/components/primary_btn.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/i18n/clock_format.dart';
 import 'package:family_os/features/n03_screen_time/screen_time_app_rules_sheet.dart';
 import 'package:family_os/features/n03_screen_time/screen_time_panel_cards.dart';
 import 'package:family_os/features/n03_screen_time/screen_time_panel_contracts.dart';
@@ -422,7 +423,9 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
     return TimeOfDay(hour: (value ~/ 60) % 24, minute: value % 60);
   }
 
-  String _stamp(DateTime at) => _clock(at.toLocal().hour * 60 + at.toLocal().minute);
+  /// An event stamp (e.g. "locked since") read on the parent's own clock, with
+  /// the family's digits — the shared formatter, not a second hand-rolled one.
+  String _stamp(DateTime at) => formatFamilyClockFromDateTime(context, at.toLocal());
 
   /// ISO weekday (Mon = 1 … Sun = 7) → the localized name, so the card never hardcodes one.
   static Map<int, String> _dayLabels(AppLocalizations l10n) => {
@@ -435,11 +438,13 @@ class _ScreenTimeServerPanelState extends State<ScreenTimeServerPanel> {
     7: l10n.screenTimeServerDaySun,
   };
 
-  String _clock(int minutes) {
-    final hour = (minutes ~/ 60).toString().padLeft(2, '0');
-    final minute = (minutes % 60).toString().padLeft(2, '0');
-    return '$hour:$minute';
-  }
+  /// A window edge the server wrote in minutes-of-day. The family's digits and
+  /// the phone's cycle render it, so this panel cannot show `22:00` while the
+  /// notification card shows `10:00 م` for the same hour.
+  String _clock(int minutes) => formatFamilyClock(
+    context,
+    TimeOfDay(hour: (minutes ~/ 60).clamp(0, 23), minute: (minutes % 60).clamp(0, 59)),
+  );
 
   @override
   Widget build(BuildContext context) {

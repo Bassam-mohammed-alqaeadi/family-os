@@ -24632,6 +24632,30 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'لا تُرسَل إشعارات في هذا الإصدار — اختياراتك تُحفظ إلى أن يبدأ الإرسال'**
   String get notificationPrefsNoDeliveryYet;
+
+  /// يُعرض حين يكون إذن العرض عند النظام ممنوحًا، فيعرف الأب أن الوعد بالإيصال له أساس.
+  ///
+  /// In ar, this message translates to:
+  /// **'إشعارات هذا الهاتف مسموحة — ما تكتبه هنا سينفذ على هذا الجهاز'**
+  String get notificationPrefsDevicePermissionGranted;
+
+  /// أمانة الوصل: لا تُوعِد أبًا بالوصول وقد رفض نظام الجهاز العرض. تُعرض مع زر الطلب أدناه.
+  ///
+  /// In ar, this message translates to:
+  /// **'جهازك يمنع الإشعارات عن هذا التطبيق — لن يصلك شيء مهما كانت إعدادات هذه الصفحة'**
+  String get notificationPrefsDevicePermissionDenied;
+
+  /// زرٌّ يفتح طلب النظام لإذن العرض على هذا الجهاز.
+  ///
+  /// In ar, this message translates to:
+  /// **'السماح بالإشعارات'**
+  String get notificationPrefsDevicePermissionRequest;
+
+  /// الحال الأمين حين لا يجيب النظام (بناءٌ بلا قناة أصلية، أو منصة لا سؤال لديها في هذا الإصدار).
+  ///
+  /// In ar, this message translates to:
+  /// **'لم نتمكن من قراءة إذن العرض من جهازك — فلا نعدك بوصولٍ ولا نمنعه'**
+  String get notificationPrefsDevicePermissionUnknown;
 }
 
 class _AppLocalizationsDelegate
