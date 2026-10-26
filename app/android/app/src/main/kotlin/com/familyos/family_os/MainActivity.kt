@@ -693,6 +693,7 @@ class MainActivity : FlutterActivity() {
             FamilyOsApplication.CHANNEL_GEOFENCE,
             FamilyOsApplication.CHANNEL_PROTECTION,
             FamilyOsApplication.CHANNEL_CHAT,
+            FamilyOsApplication.CHANNEL_ALERTS,
         )
         if (title.isNullOrEmpty() || title.length > 160 || body.isNullOrEmpty() || body.length > 240 ||
             channelId == null || channelId !in allowedChannels || !isValidNotificationRoute(route)) {
@@ -713,6 +714,7 @@ class MainActivity : FlutterActivity() {
             FamilyOsApplication.CHANNEL_SOS -> ContextCompat.getColor(this, R.color.familyos_sos_notification)
             FamilyOsApplication.CHANNEL_GEOFENCE -> ContextCompat.getColor(this, R.color.familyos_geofence_notification)
             FamilyOsApplication.CHANNEL_PROTECTION -> ContextCompat.getColor(this, R.color.familyos_protection_notification)
+            FamilyOsApplication.CHANNEL_ALERTS -> ContextCompat.getColor(this, R.color.familyos_alerts_notification)
             else -> ContextCompat.getColor(this, R.color.familyos_chat_notification)
         }
         val openApp = Intent(this, MainActivity::class.java).apply {
@@ -733,7 +735,9 @@ class MainActivity : FlutterActivity() {
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setCategory(NotificationCompat.CATEGORY_EVENT)
             .setPriority(
-                if (channelId == FamilyOsApplication.CHANNEL_CHAT) NotificationCompat.PRIORITY_DEFAULT
+                if (channelId == FamilyOsApplication.CHANNEL_CHAT
+                    || channelId == FamilyOsApplication.CHANNEL_ALERTS
+                ) NotificationCompat.PRIORITY_DEFAULT
                 else NotificationCompat.PRIORITY_HIGH,
             )
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
@@ -743,7 +747,8 @@ class MainActivity : FlutterActivity() {
         when (channelId) {
             FamilyOsApplication.CHANNEL_SOS, FamilyOsApplication.CHANNEL_GEOFENCE ->
                 builder.setDefaults(NotificationCompat.DEFAULT_SOUND or NotificationCompat.DEFAULT_VIBRATE)
-            FamilyOsApplication.CHANNEL_CHAT -> builder.setDefaults(NotificationCompat.DEFAULT_SOUND)
+            FamilyOsApplication.CHANNEL_CHAT,
+            FamilyOsApplication.CHANNEL_ALERTS -> builder.setDefaults(NotificationCompat.DEFAULT_SOUND)
         }
         val notification = builder.build()
         try {
@@ -770,6 +775,8 @@ class MainActivity : FlutterActivity() {
                 validUuid(uri.getQueryParameter("childId"))
             "/scr-fat-026" -> keys == setOf("deviceId") && exactlyOne("deviceId") &&
                 validUuid(uri.getQueryParameter("deviceId"))
+            // The task board is reached empty; any parameter at all is a reason to refuse the tap.
+            "/scr-fat-054" -> keys.isEmpty()
             else -> false
         }
     }

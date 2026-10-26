@@ -42,6 +42,7 @@ const ANDROID_CHANNEL_COLORS = Object.freeze({
   familyos_geofence_alerts: '#FFB547',
   familyos_protection_alerts: '#7C5CE6',
   familyos_chat_nudges: '#26B3A9',
+  familyos_family_alerts: '#4C8DF6',
 });
 
 /**

@@ -1,13 +1,20 @@
 // One fail-closed dispatcher for the notification-shaped rows in outbox_events.
 //
-// Ordinary audit/outbox facts are not notifications. Only the four reviewed safety facts below
-// may reach FCM. Chat messages continue through the existing, idempotent chat nudger; every other
-// event is recorded as skipped with a reason. Unknown event types fail closed and remain visible
-// as failed outbox rows rather than disappearing into an open-ended notification rule. Protection
-// reports notify only for the explicitly registered tamper observations; healthy/unsupported
-// reports remain audit-only outcomes.
+// Ordinary audit/outbox facts are not notifications. Only the reviewed event types registered in
+// `NOTIFY_TYPES` below may reach FCM: the four safety alerts, plus the first ordinary alert —
+// a child's pending task claim, which exists so that a family's quiet hours, per-key muting and
+// digest choice act on something real. Chat messages continue through the existing, idempotent
+// chat nudger; every other event is recorded as skipped with a reason. Unknown event types fail
+// closed and remain visible as failed outbox rows rather than disappearing into an open-ended
+// notification rule. Protection reports notify only for the explicitly registered tamper
+// observations; healthy/unsupported reports remain audit-only outcomes.
+//
+// Which registered alert actually reaches which handset is decided by one module —
+// `notification-gating.js` — never by this file reading preferences on its own. A suppression is
+// recorded per recipient in `outbox_delivery_decisions`, so silence always has a reason.
 
 import { PROTECTION_OBSERVED_STATES, TAMPER_OBSERVED_STATES } from './web-filter.js';
+import { decideDelivery } from './notification-gating.js';
 
 const copy = (arTitle, arBody, enTitle, enBody) => Object.freeze({
   ar: Object.freeze({ title: arTitle, body: arBody }),
@@ -39,6 +46,12 @@ export const ALERT_COPY = Object.freeze({
     '{child}’s protection needs attention',
     'The device reported a protection concern at {time}',
   ),
+  'task.claimed': copy(
+    'طلبٌ من {child}',
+    '{child} اختار مهمة ويريد ردَّك — الساعة {time}',
+    'A request from {child}',
+    '{child} claimed a task and is waiting for your answer at {time}',
+  ),
 });
 
 export const NOTIFY_TYPES = Object.freeze({
@@ -53,6 +66,12 @@ export const NOTIFY_TYPES = Object.freeze({
   }),
   'family.device_protection_reported': Object.freeze({
     copyKey: 'protection.reported', subject: 'device', channelId: 'familyos_protection_alerts', ttlSeconds: 3600, urgency: 'high',
+  }),
+  // The first ordinary alert: quiet hours, `push_allowed`, `delivery_mode`, `disabled_copy_keys`
+  // and `child_requests_enabled` all act on it, and none of them may silence a safety alert.
+  'family.task_claimed': Object.freeze({
+    copyKey: 'task.claimed', subject: 'child', channelId: 'familyos_family_alerts', ttlSeconds: 7200, urgency: 'normal',
+    gatedByChildRequests: true,
   }),
 });
 
@@ -120,7 +139,6 @@ const auditOnlyEvents = {
   'guardian_transfer.completed': 'audit_only',
   'guardian_transfer.cancelled': 'audit_only',
   'family.task_created': 'audit_only',
-  'family.task_claimed': 'audit_only',
   'family.task_confirmed': 'audit_only',
   'family.task_declined': 'audit_only',
   'family.web_filter_policy_updated': 'audit_only',
@@ -326,6 +344,33 @@ export async function resolveNotificationSubject(client, event) {
     });
   }
 
+  // A task claim stores no clock of its own. The outbox row's creation instant is the truth about
+  // when the child asked, so the alert quotes that rather than a caller's guess.
+  if (event.event_type === 'family.task_claimed') {
+    const childId = payload.childId ?? payload.subjectId;
+    if (typeof childId !== 'string' || !UUID.test(childId)) throw new Error('notification_child_id_invalid');
+    const { rows } = await client.query(
+      `SELECT id, display_name
+         FROM family_children
+        WHERE family_id = $1 AND id = $2 AND archived_at IS NULL`,
+      [familyId, childId],
+    );
+    if (rows.length === 0) throw new Error('notification_subject_unavailable');
+    const occurredAt = event.created_at;
+    if (typeof occurredAt !== 'string' && !(occurredAt instanceof Date)) {
+      throw new Error('notification_time_invalid');
+    }
+    return Object.freeze({
+      familyId,
+      childId,
+      child: rows[0].display_name,
+      alertId: null,
+      zoneId: null,
+      zone: null,
+      occurredAt,
+    });
+  }
+
   throw new Error('notification_subject_type_unsupported');
 }
 
@@ -341,6 +386,39 @@ function dataPayload(event, definition, subject) {
       ? subject.occurredAt.toISOString()
       : new Date(subject.occurredAt).toISOString(),
   }).filter(([, value]) => value != null));
+}
+
+/** The preference row as the gate wants it. One mapping, in one place. */
+function preferencesOf(target) {
+  return {
+    pushAllowed: target.push_allowed,
+    deliveryMode: target.delivery_mode,
+    disabledCopyKeys: target.disabled_copy_keys,
+    childRequestsEnabled: target.child_requests_enabled,
+    quietHoursEnabled: target.quiet_hours_enabled,
+    quietHoursStart: target.quiet_hours_start,
+    quietHoursEnd: target.quiet_hours_end,
+    quietHoursOffsetMinutes: target.quiet_hours_offset_minutes,
+  };
+}
+
+/**
+ * Silence with its reason, once per recipient. A failure here is an evidence failure, so the lease
+ * is preserved rather than spent: a notification must not be swallowed by a ledger that was busy.
+ */
+async function recordGateDecision(client, familyId, event, target, definition, verdict) {
+  try {
+    await client.query(
+      `INSERT INTO outbox_delivery_decisions
+         (family_id, membership_id, outbox_id, registration_id, copy_key, decision, reason, blocked_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT (outbox_id, registration_id) DO NOTHING`,
+      [familyId, target.membership_id, event.id, target.registration_id, definition.copyKey,
+        verdict.decision, verdict.reason, verdict.blockedBy ?? null],
+    );
+  } catch (error) {
+    throw preserveLease(error);
+  }
 }
 
 function safeFailureReason(error) {
@@ -498,7 +576,7 @@ export class NotificationDispatcher {
     try {
       await client.query('BEGIN');
       const { rows } = await client.query(
-        `SELECT id, event_type, aggregate_id, payload, copy_key
+        `SELECT id, event_type, aggregate_id, payload, copy_key, created_at
            FROM outbox_events
           WHERE (
               (status = 'pending' AND available_at <= NOW() - ($1::int * INTERVAL '1 second'))
@@ -598,6 +676,7 @@ export class NotificationDispatcher {
     let subject;
     let targets;
     let attemptRows;
+    let allRecipientsGated = false;
     let expectedSosRecipients = [];
     const client = await this.clientFactory();
     try {
@@ -621,7 +700,15 @@ export class NotificationDispatcher {
       const targetResult = await client.query(
         `SELECT registration.id AS registration_id, registration.token, registration.locale,
                 membership.id AS membership_id,
-                COALESCE(customization.numerals, 'western') AS numerals
+                COALESCE(customization.numerals, 'western') AS numerals,
+                COALESCE(preferences.push_allowed, TRUE) AS push_allowed,
+                COALESCE(preferences.delivery_mode, 'interrupt') AS delivery_mode,
+                COALESCE(preferences.disabled_copy_keys, '{}'::text[]) AS disabled_copy_keys,
+                COALESCE(preferences.child_requests_enabled, TRUE) AS child_requests_enabled,
+                COALESCE(preferences.quiet_hours_enabled, FALSE) AS quiet_hours_enabled,
+                preferences.quiet_hours_start AS quiet_hours_start,
+                preferences.quiet_hours_end AS quiet_hours_end,
+                COALESCE(preferences.quiet_hours_offset_minutes, 0) AS quiet_hours_offset_minutes
            FROM family_push_registrations registration
            JOIN family_memberships membership
              ON membership.family_id = registration.family_id
@@ -634,12 +721,29 @@ export class NotificationDispatcher {
           LEFT JOIN family_customization_profiles customization
              ON customization.family_id = registration.family_id
           WHERE registration.family_id = $1
-            AND NOT (COALESCE(preferences.disabled_copy_keys, '{}'::text[]) @> ARRAY[$2]::text[])
-            AND ($3::uuid[] IS NULL OR membership.id = ANY($3::uuid[]))
+            AND ($2::uuid[] IS NULL OR membership.id = ANY($2::uuid[]))
           ORDER BY membership.joined_at ASC, membership.id ASC, registration.id ASC`,
-        [subject.familyId, definition.copyKey, recipientIds],
+        [subject.familyId, recipientIds],
       );
-      targets = targetResult.rows;
+      // A muted key stays in the list of targets until the gate has seen it, because a key the
+      // family switched off must leave a reason behind rather than disappear from a WHERE clause.
+      const moment = this.now();
+      const sendable = [];
+      let gatedRecipients = 0;
+      for (const target of targetResult.rows) {
+        const verdict = decideDelivery({ definition, preferences: preferencesOf(target), now: moment });
+        target.verdict = verdict;
+        if (verdict.decision === 'delivered' && verdict.reason === 'delivered') {
+          sendable.push(target);
+          continue;
+        }
+        gatedRecipients += 1;
+        await recordGateDecision(client, subject.familyId, event, target, definition, verdict);
+        if (verdict.decision === 'delivered') sendable.push(target);
+      }
+      targets = sendable;
+      allRecipientsGated = targetResult.rows.length > 0 && sendable.length === 0
+        && gatedRecipients === targetResult.rows.length;
       const attemptResult = await client.query(
         `SELECT registration_id, recipient_membership_id, attempt_number, outcome,
                 provider_message_id, failure_reason, retry_after_at,
@@ -805,8 +909,9 @@ export class NotificationDispatcher {
     }
 
     if (!isSos && targets.length === 0 && latest.size === 0) {
-      await this.#finish(event.id, 'skipped', 'no_active_registration');
-      return { outboxId: event.id, status: 'skipped', reason: 'no_active_registration' };
+      const reason = allRecipientsGated ? 'every_recipient_gated' : 'no_active_registration';
+      await this.#finish(event.id, 'skipped', reason);
+      return { outboxId: event.id, status: 'skipped', reason };
     }
 
     const counts = attemptCounts(latest);

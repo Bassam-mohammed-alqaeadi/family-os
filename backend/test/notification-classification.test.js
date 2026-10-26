@@ -82,12 +82,21 @@ test('every AUDIT_ONLY_REASONS key occurs in server code and has an explicit rea
   }
 });
 
-test('notification and audit-only classifications are disjoint and only four types notify', () => {
-  assert.equal(Object.keys(NOTIFY_TYPES).length, 4);
+// Four safety alerts plus the first ordinary one. A fifth ordinary type is added by promoting it
+// here, in the registry, in the copy table, and in migration 136's copy-key lists — in one slice.
+test('notification and audit-only classifications are disjoint and only the reviewed types notify', () => {
+  assert.equal(Object.keys(NOTIFY_TYPES).length, 5);
   assert.deepEqual(
     Object.keys(NOTIFY_TYPES).filter((event) => Object.hasOwn(AUDIT_ONLY_REASONS, event)),
     [],
   );
   assert.deepEqual([...Object.keys(NOTIFY_TYPES)].map((event) => NOTIFY_TYPES[event].copyKey).sort(),
-    ['geofence.entered', 'geofence.exited', 'protection.reported', 'sos.raised'].sort());
+    ['geofence.entered', 'geofence.exited', 'protection.reported', 'sos.raised', 'task.claimed'].sort());
+  // Safety keys are the four that may never be silenced; the ordinary ones are everything else.
+  const safetyKeys = ['geofence.entered', 'geofence.exited', 'protection.reported', 'sos.raised'];
+  for (const [eventType, definition] of Object.entries(NOTIFY_TYPES)) {
+    const isSafety = safetyKeys.includes(definition.copyKey);
+    assert.equal(definition.gatedByChildRequests === true, !isSafety,
+      `${eventType} must be gated exactly when it is not a safety alert`);
+  }
 });
