@@ -30,6 +30,7 @@ const migrations = [
   // create that table or it is testing a schema production no longer has.
   '135_family_customization_profile.sql',
   '136_notification_delivery_gating.sql',
+  '137_notification_preferences_versioning.sql',
 ];
 
 const FAMILY = 'aaaaaaaa-1111-4111-8111-111111111111';

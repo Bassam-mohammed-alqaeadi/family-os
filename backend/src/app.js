@@ -24,6 +24,7 @@ import { createChatEventBus } from './chat-realtime.js';
 import { CHAT_CURRENT_CAPABILITIES } from './family-chat.js';
 import { collaborationPolicyFor } from './collaboration-policy.js';
 import { familyCustomizationFor } from './family-customization.js';
+import { notificationPreferencesFor } from './notification-preferences.js';
 import { capabilityMatches } from './store/postgres-foundation-store.js';
 import { PAIRING_CLAIM_MAX_FAILURES, PAIRING_CLAIM_WINDOW_MINUTES } from './pairing-code.js';
 import {
@@ -83,6 +84,7 @@ import {
     chatThreadCreateInput,
     collaborationPolicyInput,
     familyCustomizationInput,
+    notificationPreferencesInput,
     chatThreadMemberInput,
     chatMessageInput,
     chatMessageEditInput,
@@ -237,9 +239,14 @@ export function createApp({
     // could own them. Read by any active guardian, written by the primary guardian only, versioned so
     // two guardians editing the same page cannot overwrite each other in silence.
     familyCustomization = familyCustomizationFor(store),
+    // Launch closure, slice س٣. The per-guardian notification row that migration 136's gate reads —
+    // written here, so a guardian's quiet hours are a fact about the family rather than a note left
+    // on one handset. A guardian reads and writes their own row and cannot reach a co-guardian's;
+    // a child has no row to write and is refused by name.
     // S0 spine. The device-capability ledger and the command bus share the same one
     // credential check as every device route; data access goes through the published
     // store helpers.
+    notificationPreferences = notificationPreferencesFor(store),
     deviceCapabilities = deviceCapabilitiesFor(store, { credentialMatches: capabilityMatches }),
     commands = commandLifecycleFor(store, { credentialMatches: capabilityMatches }),
     preAuthenticationRateLimit = {},
@@ -2406,6 +2413,41 @@ export function createApp({
             requireNoQueryParameters(request.query);
             const { change, expectedVersion } = familyCustomizationInput(request.body);
             const result = await familyCustomization.update({
+                principal: request.principal,
+                familyId,
+                change,
+                expectedVersion,
+                correlationId: request.correlationId,
+            });
+            response.status(200).json(result);
+        }),
+    );
+
+    // A guardian's own notification preferences. The row is theirs, the answer is the server's:
+    // the screen that reads this endpoint can say where the choice lives because this file wrote it.
+    app.get(
+        '/v1/families/:familyId/me/notification-preferences',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            requireNoQueryParameters(request.query);
+            const result = await notificationPreferences.read({ principal: request.principal, familyId });
+            response.status(200).json(result);
+        }),
+    );
+
+    app.patch(
+        '/v1/families/:familyId/me/notification-preferences',
+        requirePrincipal,
+        protectedApiRateLimit,
+        requireRuntimeReady,
+        asyncRoute(async(request, response) => {
+            const familyId = requireUuid(request.params.familyId, 'familyId');
+            requireNoQueryParameters(request.query);
+            const { change, expectedVersion } = notificationPreferencesInput(request.body);
+            const result = await notificationPreferences.update({
                 principal: request.principal,
                 familyId,
                 change,

@@ -5,6 +5,7 @@ import {
   NUMERAL_SYSTEMS,
 } from './family-customization.js';
 import { HttpError } from './http-error.js';
+import { DELIVERY_MODES } from './notification-preferences.js';
 import { PAIRING_CODE_LENGTH, PAIRING_CODE_PATTERN } from './pairing-code.js';
 
 const MAX_DISPLAY_NAME_LENGTH = 120;
@@ -33,6 +34,9 @@ const LOCATION_ACQUISITIONS = new Set(['located', 'stale_last_known', 'acquiring
 /// it looks on purpose: a handset with a wrong timezone is common, a handset reporting a
 /// crossing that has not happened yet is not, and migration 103 refuses the latter too.
 const MAX_FIX_CLOCK_SKEW_MS = 5 * 60 * 1000;
+/// The ways a family may ask to be reached, taken from the module that owns them rather than
+/// restated here, so a fourth mode cannot exist on the wire without existing in the gate.
+const DELIVERY_MODE_KEYS = new Set(DELIVERY_MODES);
 
 function bodyObject(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -2065,6 +2069,109 @@ export function familyCustomizationInput(value) {
       labels[key] = word;
     }
     change.labels = labels;
+  }
+
+  return { change, expectedVersion: body.expectedVersion };
+}
+
+/**
+ * Notification preferences for the guardian making the call — slice س٣ of the launch closure.
+ *
+ * Minutes of day, not clock faces, because that is the unit the app's own model already writes
+ * (`NotificationPrefs.toJson`) and the unit `notification-gating.js` reads; a third representation
+ * would be a third chance to be an hour off. `expectedVersion` is required: this is a page someone
+ * edits, not a log someone appends to.
+ *
+ * Fields the server has no engine for are refused here rather than stored and ignored, and the
+ * module re-checks the three floors (a quiet window needs both faces; safety is never muted; an
+ * unknown copy key is not muteable) where the refusal can name the law.
+ */
+const PREFERENCE_MINUTE_OF_DAY_MAX = 1_439;
+const PREFERENCE_FIELDS = new Set([
+  'expectedVersion', 'quietHoursEnabled', 'quietStartMinutes', 'quietEndMinutes',
+  'quietHoursOffsetMinutes', 'pushAllowed', 'deliveryMode', 'childRequestsEnabled',
+  'disabledCopyKeys',
+]);
+const PREFERENCE_BOOLEAN_FIELDS = new Set([
+  'quietHoursEnabled', 'pushAllowed', 'childRequestsEnabled',
+]);
+
+function preferenceMinute(value, field) {
+  if (value === null) return null;
+  if (!Number.isInteger(value) || value < 0 || value > PREFERENCE_MINUTE_OF_DAY_MAX) {
+    throw new HttpError(
+      400,
+      'invalid_request',
+      `${field} must be a whole minute of day between 0 and ${PREFERENCE_MINUTE_OF_DAY_MAX}, or null.`,
+    );
+  }
+  return value;
+}
+
+export function notificationPreferencesInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, PREFERENCE_FIELDS);
+  if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 0) {
+    throw new HttpError(400, 'invalid_request', 'expectedVersion must be a whole number from 0.');
+  }
+
+  const change = {};
+
+  for (const field of PREFERENCE_BOOLEAN_FIELDS) {
+    if (body[field] === undefined) continue;
+    if (typeof body[field] !== 'boolean') {
+      throw new HttpError(400, 'invalid_request', `${field} must be true or false.`);
+    }
+    change[field] = body[field];
+  }
+
+  for (const field of ['quietStartMinutes', 'quietEndMinutes']) {
+    if (body[field] === undefined) continue;
+    change[field] = preferenceMinute(body[field], field);
+  }
+
+  if (body.quietHoursOffsetMinutes !== undefined) {
+    const offset = body.quietHoursOffsetMinutes;
+    if (!Number.isInteger(offset) || Math.abs(offset) > 840) {
+      throw new HttpError(
+        400,
+        'invalid_request',
+        'quietHoursOffsetMinutes must be a whole number of minutes between -840 and 840.',
+      );
+    }
+    change.quietHoursOffsetMinutes = offset;
+  }
+
+  if (body.deliveryMode !== undefined) {
+    if (typeof body.deliveryMode !== 'string' || !DELIVERY_MODE_KEYS.has(body.deliveryMode)) {
+      throw new HttpError(
+        400,
+        'invalid_request',
+        `deliveryMode must be one of ${[...DELIVERY_MODES].join(', ')}.`,
+      );
+    }
+    change.deliveryMode = body.deliveryMode;
+  }
+
+  if (body.disabledCopyKeys !== undefined) {
+    const raw = body.disabledCopyKeys;
+    if (!Array.isArray(raw) || raw.length > 32) {
+      throw new HttpError(400, 'invalid_request', 'disabledCopyKeys must be a list of at most 32 keys.');
+    }
+    const seen = new Set();
+    for (const key of raw) {
+      if (typeof key !== 'string' || key.trim().length === 0) {
+        throw new HttpError(400, 'invalid_request', 'disabledCopyKeys must hold non-empty key strings.');
+      }
+      const normalized = key.trim();
+      if (seen.has(normalized)) {
+        throw new HttpError(400, 'invalid_request', 'disabledCopyKeys must not repeat a key.');
+      }
+      seen.add(normalized);
+    }
+    // Canonical order, so two clients that chose the same set write the same array and the audit
+    // trail of a family does not depend on the order a screen happened to list its switches in.
+    change.disabledCopyKeys = [...seen].sort();
   }
 
   return { change, expectedVersion: body.expectedVersion };

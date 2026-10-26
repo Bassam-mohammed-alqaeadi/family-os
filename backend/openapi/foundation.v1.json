@@ -6179,6 +6179,111 @@
         }
       }
     },
+    "/v1/families/{familyId}/me/notification-preferences": {
+      "get": {
+        "operationId": "readMyNotificationPreferences",
+        "summary": "Reads this guardian's own notification preferences",
+        "description": "The row `notification-gating.js` consults before any push leaves the server, exactly as it is stored. A guardian who never wrote anything receives the default view: an absent row is not a silenced family.",
+        "tags": [
+          "Family notifications"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "This guardian's preferences, stored or default.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationPreferencesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateMyNotificationPreferences",
+        "summary": "Writes this guardian's own notification preferences",
+        "description": "Per-guardian on purpose: one adult's night is not another's, so a guardian writes their own row and cannot reach a co-guardian's. A child has no row to write and is refused by name. Turning quiet hours off clears both faces, because the stored law is an equality between the switch and the pair. Muting a safety key is refused with 403 before the database constraint is ever reached.",
+        "tags": [
+          "Family notifications"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationPreferencesPatchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The preferences as the server stored them, with the version to write against next.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationPreferencesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
     "/v1/families/{familyId}/customization": {
       "get": {
         "operationId": "readFamilyCustomizationProfile",
@@ -16383,6 +16488,175 @@
               "western",
               "eastern"
             ]
+          }
+        }
+      },
+      "NotificationPreferences": {
+        "type": "object",
+        "required": [
+          "version",
+          "quietHoursEnabled",
+          "quietStartMinutes",
+          "quietEndMinutes",
+          "quietHoursOffsetMinutes",
+          "pushAllowed",
+          "deliveryMode",
+          "childRequestsEnabled",
+          "disabledCopyKeys",
+          "updatedAt",
+          "source"
+        ],
+        "description": "One guardian's own delivery wishes, as the gate reads them. Minutes of day on that guardian's clock - never a UTC face - because quiet hours that ignore where a person is sleeping are not quiet hours.",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Optimistic concurrency token. 0 means this guardian has never written a row and what is reported is the default view."
+          },
+          "quietHoursEnabled": {
+            "type": "boolean"
+          },
+          "quietStartMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1439,
+            "description": "Minute of day the window opens (0 = 00:00). Both faces or neither: `family_notification_preferences_quiet_pair` makes the switch and the pair one fact."
+          },
+          "quietEndMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1439,
+            "description": "Minute of day the window closes, exclusive. A window whose end is earlier than its start wraps midnight; equal faces silence the whole day."
+          },
+          "quietHoursOffsetMinutes": {
+            "type": "integer",
+            "minimum": -840,
+            "maximum": 840,
+            "description": "Minutes east of UTC on the handset that last saved this row. A traveller's window follows the phone when the app is opened and stays where it was left in between - said plainly on the screen rather than discovered at 2am."
+          },
+          "pushAllowed": {
+            "type": "boolean",
+            "description": "false is a request for silence, not a disconnect: registrations, alerts and history keep working."
+          },
+          "deliveryMode": {
+            "type": "string",
+            "enum": [
+              "interrupt",
+              "daily_digest",
+              "history_only"
+            ],
+            "description": "`daily_digest` defers ordinary alerts to the family's rollup instead of this instant; `history_only` records without pushing. No mode defers or mutes a safety alert."
+          },
+          "childRequestsEnabled": {
+            "type": "boolean",
+            "description": "Whether a child's ordinary requests (a claimed task waiting for an answer) may reach this guardian. Safety is outside this switch's reach."
+          },
+          "disabledCopyKeys": {
+            "type": "array",
+            "maxItems": 32,
+            "items": {
+              "type": "string"
+            },
+            "description": "Per-key muting, canonical order, bounded by the database. The four safety copy keys are refused by `family_notification_preferences_never_silence_safety`, and a key with no engine is refused here rather than stored as a decoration."
+          },
+          "updatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "default",
+              "stored"
+            ],
+            "description": "`default` is not a stored row; it is what a guardian who never opened the screen sees."
+          }
+        }
+      },
+      "NotificationPreferencesResponse": {
+        "type": "object",
+        "required": [
+          "preferences",
+          "mutableCopyKeys"
+        ],
+        "properties": {
+          "preferences": {
+            "$ref": "#/components/schemas/NotificationPreferences"
+          },
+          "mutableCopyKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The keys muting can act on today. A screen lists these and no others, so a switch never exists before the engine that reads it."
+          }
+        }
+      },
+      "NotificationPreferencesPatchRequest": {
+        "type": "object",
+        "required": [
+          "expectedVersion"
+        ],
+        "additionalProperties": false,
+        "description": "A partial write. `expectedVersion` is the version read a moment ago; a mismatch is refused with 409 rather than overwriting a choice someone else just made. A field the server has no engine for is refused on the wire, not stored and ignored.",
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "quietHoursEnabled": {
+            "type": "boolean"
+          },
+          "quietStartMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1439
+          },
+          "quietEndMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1439
+          },
+          "quietHoursOffsetMinutes": {
+            "type": "integer",
+            "minimum": -840,
+            "maximum": 840
+          },
+          "pushAllowed": {
+            "type": "boolean"
+          },
+          "deliveryMode": {
+            "type": "string",
+            "enum": [
+              "interrupt",
+              "daily_digest",
+              "history_only"
+            ]
+          },
+          "childRequestsEnabled": {
+            "type": "boolean"
+          },
+          "disabledCopyKeys": {
+            "type": "array",
+            "maxItems": 32,
+            "items": {
+              "type": "string"
+            }
           }
         }
       }

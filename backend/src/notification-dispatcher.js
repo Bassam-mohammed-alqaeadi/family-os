@@ -149,6 +149,9 @@ const auditOnlyEvents = {
   // what its members are called are decisions the whole household shares, and the household is in
   // the room that shows them: no phone should buzz because someone edited a preference.
   'family.customization_updated': 'audit_only',
+  // The door that writes the gate's row (slice س٣). A preference write is a fact about a family, not
+  // a notification: no push follows it, and `outbox_delivery_decisions` records what a push met.
+  'family.notification_preferences_updated': 'audit_only',
 };
 export const AUDIT_ONLY_REASONS = Object.freeze(auditOnlyEvents);
 
