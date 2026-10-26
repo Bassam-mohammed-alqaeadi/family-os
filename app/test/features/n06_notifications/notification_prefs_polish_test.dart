@@ -21,6 +21,16 @@ import 'package:family_os/features/n06_notifications/notification_prefs_screen.d
 /// says so and can be taken back; a disabled save explains itself; the "what happens right now"
 /// line is the app's own gate speaking; and the screen states where its rows live, following the
 /// repository it was given rather than a caption.
+/// The screen is taller than the default 800×600 test surface, and a `ListView` only builds what
+/// it can show — so the tests that reach a stepper or a state line ask for a tall phone first.
+/// The idiom is the one `link_success_screen_test.dart` already uses.
+Future<void> _tallSurface(WidgetTester tester) async {
+  tester.view.physicalSize = const Size(800, 2400);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+}
+
 Future<void> _pump(
   WidgetTester tester, {
   required NotificationPrefsRepository repository,
@@ -29,7 +39,9 @@ Future<void> _pump(
   DateTime Function()? now,
   Locale locale = const Locale('ar'),
   bool twentyFour = true,
+  Key? screenKey,
 }) async {
+  await _tallSurface(tester);
   await tester.pumpWidget(
     CurrentRole(
       notifier: RoleController(role),
@@ -50,6 +62,7 @@ Future<void> _pump(
           child: child ?? const SizedBox.shrink(),
         ),
         home: NotificationPrefsScreen(
+          key: screenKey,
           memberId: memberId,
           repository: repository,
           now: now,
@@ -110,6 +123,16 @@ final class _FailingRepository implements NotificationPrefsRepository {
   }
 }
 
+/// Taps a control that may be below the fold: scrolling first is what a finger does, and a tap
+/// that lands on empty canvas only warns — which is how a test can pass on a screen nobody reaches.
+Future<void> _tap(WidgetTester tester, Key key) async {
+  final target = find.byKey(key);
+  await tester.ensureVisible(target);
+  await tester.pumpAndSettle();
+  await tester.tap(target);
+  await tester.pumpAndSettle();
+}
+
 void main() {
   tearDown(AppToast.dismiss);
   tearDown(AppNumerals.clearFamilyChoice);
@@ -133,8 +156,7 @@ void main() {
       reason: 'nothing is pending when the screen opens',
     );
 
-    await tester.tap(find.byKey(NotificationPrefsKeys.quietStartLater));
-    await tester.pumpAndSettle();
+    await _tap(tester, NotificationPrefsKeys.quietStartLater);
 
     expect(find.byKey(NotificationPrefsKeys.draftBadge), findsOneWidget);
     expect(find.text('احفظ وقت الصمت'), findsOneWidget);
@@ -144,7 +166,7 @@ void main() {
       reason: 'the row must still hold the old time while the change is only on screen',
     );
 
-    await tester.tap(find.byKey(NotificationPrefsKeys.save));
+    await _tap(tester, NotificationPrefsKeys.save);
     await tester.pump();
     expect(find.text('تم حفظ إعدادات الإشعارات'), findsOneWidget);
     await tester.pump(const Duration(seconds: 4));
@@ -172,12 +194,10 @@ void main() {
     });
     await _pump(tester, repository: repo, role: AppRole.father, memberId: 'father');
 
-    await tester.tap(find.byKey(NotificationPrefsKeys.quietStartEarlier));
-    await tester.pumpAndSettle();
+    await _tap(tester, NotificationPrefsKeys.quietStartEarlier);
     expect(find.byKey(NotificationPrefsKeys.draftBadge), findsOneWidget);
 
-    await tester.tap(find.byKey(NotificationPrefsKeys.undo));
-    await tester.pumpAndSettle();
+    await _tap(tester, NotificationPrefsKeys.undo);
 
     expect(find.byKey(NotificationPrefsKeys.draftBadge), findsNothing);
     expect(
@@ -205,8 +225,7 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.tap(find.byKey(NotificationPrefsKeys.save));
-    await tester.pumpAndSettle();
+    await _tap(tester, NotificationPrefsKeys.save);
     expect(
       find.text('تم حفظ إعدادات الإشعارات'),
       findsNothing,
@@ -230,6 +249,7 @@ void main() {
       role: AppRole.father,
       memberId: 'father',
       now: () => DateTime(2026, 1, 1, 23, 30),
+      screenKey: const Key('inside'),
     );
     expect(
       find.text('الآن أنت داخل وقت الصمت: لا يصلك إلا نداء الاستغاثة'),
@@ -242,6 +262,7 @@ void main() {
       role: AppRole.father,
       memberId: 'father',
       now: () => DateTime(2026, 1, 1, 9, 0),
+      screenKey: const Key('outside'),
     );
     expect(
       find.text('الآن أنت خارج وقت الصمت: تصلك التنبيهات العادية لحظة حدوثها'),
@@ -256,6 +277,7 @@ void main() {
       role: AppRole.father,
       memberId: 'father',
       now: () => DateTime(2026, 1, 1, 23, 30),
+      screenKey: const Key('inside'),
     );
     expect(
       find.text('وقت الصمت متوقف: كل تنبيه يصلك لحظة حدوثه'),
@@ -284,7 +306,13 @@ void main() {
     );
 
     AppNumerals.applyFamilyChoice(AppNumeralSystem.eastern);
-    await _pump(tester, repository: repo, role: AppRole.father, memberId: 'father');
+    await _pump(
+      tester,
+      repository: repo,
+      role: AppRole.father,
+      memberId: 'father',
+      screenKey: const Key('eastern-digits'),
+    );
     expect(find.text('٢٢:٠٠'), findsWidgets);
     expect(find.text('مدة الصمت: ٩ ساعة و٣٠ دقيقة'), findsOneWidget);
   });
@@ -297,6 +325,7 @@ void main() {
       repository: InMemoryNotificationPrefsRepository(),
       role: AppRole.father,
       memberId: 'father',
+      screenKey: const Key('on-handset'),
     );
     expect(
       find.text('محفوظٌ على هذا الجهاز وحده — لا تقرأه بقية أجهزتك'),
@@ -315,6 +344,7 @@ void main() {
       repository: _ServerBackedRepository(),
       role: AppRole.father,
       memberId: 'father',
+      screenKey: const Key('in-family-account'),
     );
     expect(
       find.text('في حساب عائلتك — كل أجهزتك تقرؤها'),
@@ -332,11 +362,10 @@ void main() {
       memberId: 'father',
     );
 
-    await tester.tap(find.byKey(NotificationPrefsKeys.quietStartLater));
-    await tester.pumpAndSettle();
+    await _tap(tester, NotificationPrefsKeys.quietStartLater);
     expect(find.text('22:15'), findsWidgets);
 
-    await tester.tap(find.byKey(NotificationPrefsKeys.save));
+    await _tap(tester, NotificationPrefsKeys.save);
     await tester.pump();
     expect(find.text('تعذر الحفظ — حاول مرة أخرى'), findsOneWidget);
     await tester.pump(const Duration(seconds: 4));

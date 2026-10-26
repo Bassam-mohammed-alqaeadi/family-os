@@ -1018,8 +1018,12 @@ class _TimeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Name and reading go in the two slots assistive tech has for them, rather than one string
+    // joined by a hand-typed separator: a separator invented in code is copy that no translator
+    // owns, and it is exactly what the hardcoded-string guard exists to catch.
     return Semantics(
-      label: '$label، $value',
+      label: label,
+      value: value,
       hint: enabled ? tapHint : null,
       enabled: enabled,
       child: Column(
