@@ -568,10 +568,14 @@ class _NotificationPrefsScreenState extends State<NotificationPrefsScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 10),
-                                Wrap(
+                                // A Column, not a Wrap: a Wrap lays its children out on an
+                                // unbounded main axis, so a one-line tag takes its intrinsic width
+                                // and can run past the edge of a narrow phone instead of ellipsizing.
+                                // In this column each tag is bounded by the screen and gives up
+                                // letters rather than pushing the layout sideways.
+                                Column(
                                   key: NotificationPrefsKeys.provenance,
-                                  spacing: 8,
-                                  runSpacing: 6,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Tag(
                                       label: _serverBacked
@@ -581,6 +585,7 @@ class _NotificationPrefsScreenState extends State<NotificationPrefsScreen> {
                                           ? TagVariant.g
                                           : TagVariant.a,
                                     ),
+                                    const SizedBox(height: 6),
                                     Tag(
                                       label: l10n.notificationPrefsNoDeliveryYet,
                                       variant: TagVariant.p,
@@ -793,10 +798,9 @@ class _NotificationPrefsScreenState extends State<NotificationPrefsScreen> {
                                       ),
                                       if (duration != null || _crossesMidnight) ...[
                                         const SizedBox(height: 8),
-                                        Wrap(
+                                        Column(
                                           key: NotificationPrefsKeys.quietSummary,
-                                          spacing: 8,
-                                          runSpacing: 4,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             if (duration != null)
                                               Text(
@@ -813,6 +817,7 @@ class _NotificationPrefsScreenState extends State<NotificationPrefsScreen> {
                                                     .notificationPrefsQuietCrossesMidnight,
                                                 style: TextStyle(
                                                   fontSize: 12.5,
+                                                  height: 1.4,
                                                   color: colors.ink2,
                                                 ),
                                               ),
@@ -911,6 +916,10 @@ class _NotificationPrefsScreenState extends State<NotificationPrefsScreen> {
                                         key: NotificationPrefsKeys.undo,
                                         label: l10n.notificationPrefsUndo,
                                         variant: PrimaryBtnVariant.ghost,
+                                        // Not full width: inside a Row, PrimaryBtn's default
+                                        // `fullWidth` asks for infinity and nothing can be laid out
+                                        // at an infinite width. CI named this exact assertion.
+                                        fullWidth: false,
                                         onPressed: _undoDraft,
                                       ),
                                     ],
